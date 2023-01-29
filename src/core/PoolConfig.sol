@@ -10,18 +10,18 @@ contract PoolConfig is Owned {
   error PoolConfig_BadLen();
   error PoolConfig_BadArgs();
 
-  struct TokenConfig {
+  struct UnderlyingConfig {
     bool isAccept;
     uint8 decimals;
     uint64 weight;
   }
 
   IteratableAddressList.List public underlyingTokens;
-  mapping(address => TokenConfig) public underlyingTokenConfigs;
+  mapping(address => UnderlyingConfig) public underlyingConfigs;
   uint256 public totalUnderlyingWeight;
 
   event AddOrUpdateTokenConfigs(
-    address token, TokenConfig prevConfig, TokenConfig newConfig
+    address token, UnderlyingConfig prevConfig, UnderlyingConfig newConfig
   );
   event RemoveUnderlying(address token);
 
@@ -32,7 +32,7 @@ contract PoolConfig is Owned {
   /// @param configs The token configs to set.
   function addOrUpdateUnderlying(
     address[] calldata tokens,
-    TokenConfig[] calldata configs
+    UnderlyingConfig[] calldata configs
   ) external onlyOwner {
     if (tokens.length != configs.length) {
       revert PoolConfig_BadLen();
@@ -43,22 +43,22 @@ contract PoolConfig is Owned {
       // removing underlying token through this function.
       if (!configs[i].isAccept) revert PoolConfig_BadArgs();
 
-      // If underlyingTokenConfigs.isAccept is previously false,
+      // If UnderlyingConfig.isAccept is previously false,
       // then it is a new token to be added.
-      if (!underlyingTokenConfigs[tokens[i]].isAccept) {
+      if (!underlyingConfigs[tokens[i]].isAccept) {
         underlyingTokens.add(tokens[i]);
       }
 
       // Log
       emit AddOrUpdateTokenConfigs(
-        tokens[i], underlyingTokenConfigs[tokens[i]], configs[i]
+        tokens[i], underlyingConfigs[tokens[i]], configs[i]
         );
 
       // Update totalUnderlyingWeight accordingly
       totalUnderlyingWeight = (
-        totalUnderlyingWeight - underlyingTokenConfigs[tokens[i]].weight
+        totalUnderlyingWeight - underlyingConfigs[tokens[i]].weight
       ) + configs[i].weight;
-      underlyingTokenConfigs[tokens[i]] = configs[i];
+      underlyingConfigs[tokens[i]] = configs[i];
 
       unchecked {
         ++i;
@@ -66,14 +66,16 @@ contract PoolConfig is Owned {
     }
   }
 
+  /// @notice Remove underlying token.
+  /// @param token The token address to remove.
   function removeUnderlying(address token) external onlyOwner {
     // Update totalTokenWeight
-    totalUnderlyingWeight -= underlyingTokenConfigs[token].weight;
+    totalUnderlyingWeight -= underlyingConfigs[token].weight;
 
     // Delete token from underlyingTokens list
     underlyingTokens.remove(token, underlyingTokens.getPreviousOf(token));
-    // Delete underlying token config
-    delete underlyingTokenConfigs[token];
+    // Delete underlying config
+    delete underlyingConfigs[token];
 
     emit RemoveUnderlying(token);
   }
@@ -81,6 +83,6 @@ contract PoolConfig is Owned {
   /// @notice Return if the given token address is acceptable as underlying token.
   /// @param token The token address to check.
   function isAcceptUnderlying(address token) external view returns (bool) {
-    return underlyingTokenConfigs[token].isAccept;
+    return underlyingConfigs[token].isAccept;
   }
 }

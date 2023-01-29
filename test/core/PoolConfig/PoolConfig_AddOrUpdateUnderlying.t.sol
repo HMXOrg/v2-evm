@@ -15,14 +15,15 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     tokens[0] = address(weth);
 
     // prepare configs with different length
-    PoolConfig.TokenConfig[] memory configs = new PoolConfig.TokenConfig[](2);
-    configs[0] = PoolConfig.TokenConfig({
+    PoolConfig.UnderlyingConfig[] memory configs =
+      new PoolConfig.UnderlyingConfig[](2);
+    configs[0] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: weth.decimals(),
       weight: 100
     });
     configs[1] =
-      PoolConfig.TokenConfig({isAccept: true, decimals: 18, weight: 100});
+      PoolConfig.UnderlyingConfig({isAccept: true, decimals: 18, weight: 100});
 
     vm.expectRevert(abi.encodeWithSignature("PoolConfig_BadLen()"));
     poolConfig.addOrUpdateUnderlying(tokens, configs);
@@ -35,8 +36,9 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     tokens[0] = address(weth);
 
     // prepare configs with different length
-    PoolConfig.TokenConfig[] memory configs = new PoolConfig.TokenConfig[](1);
-    configs[0] = PoolConfig.TokenConfig({
+    PoolConfig.UnderlyingConfig[] memory configs =
+      new PoolConfig.UnderlyingConfig[](1);
+    configs[0] = PoolConfig.UnderlyingConfig({
       isAccept: false,
       decimals: weth.decimals(),
       weight: 100
@@ -53,8 +55,9 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     tokens[0] = address(weth);
 
     // prepare configs with different length
-    PoolConfig.TokenConfig[] memory configs = new PoolConfig.TokenConfig[](1);
-    configs[0] = PoolConfig.TokenConfig({
+    PoolConfig.UnderlyingConfig[] memory configs =
+      new PoolConfig.UnderlyingConfig[](1);
+    configs[0] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: weth.decimals(),
       weight: 100
@@ -73,8 +76,9 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     tokens[0] = address(weth);
 
     // prepare configs with different length
-    PoolConfig.TokenConfig[] memory configs = new PoolConfig.TokenConfig[](1);
-    configs[0] = PoolConfig.TokenConfig({
+    PoolConfig.UnderlyingConfig[] memory configs =
+      new PoolConfig.UnderlyingConfig[](1);
+    configs[0] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: weth.decimals(),
       weight: 100
@@ -85,7 +89,7 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
 
     // check correctness
     (bool isAccept, uint8 decimals, uint64 weight) =
-      poolConfig.underlyingTokenConfigs(address(weth));
+      poolConfig.underlyingConfigs(address(weth));
 
     assertTrue(isAccept);
     assertEq(decimals, weth.decimals());
@@ -100,8 +104,9 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     tokens[0] = address(weth);
 
     // prepare configs with different length
-    PoolConfig.TokenConfig[] memory configs = new PoolConfig.TokenConfig[](1);
-    configs[0] = PoolConfig.TokenConfig({
+    PoolConfig.UnderlyingConfig[] memory configs =
+      new PoolConfig.UnderlyingConfig[](1);
+    configs[0] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: weth.decimals(),
       weight: 100
@@ -112,7 +117,7 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
 
     // check correctness
     (bool isAccept, uint8 decimals, uint64 weight) =
-      poolConfig.underlyingTokenConfigs(address(weth));
+      poolConfig.underlyingConfigs(address(weth));
 
     assertTrue(isAccept);
     assertEq(decimals, weth.decimals());
@@ -120,7 +125,7 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     assertEq(poolConfig.totalUnderlyingWeight(), 100);
 
     // update underlying
-    configs[0] = PoolConfig.TokenConfig({
+    configs[0] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: weth.decimals(),
       weight: 200
@@ -128,8 +133,7 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     poolConfig.addOrUpdateUnderlying(tokens, configs);
 
     // check correctness
-    (isAccept, decimals, weight) =
-      poolConfig.underlyingTokenConfigs(address(weth));
+    (isAccept, decimals, weight) = poolConfig.underlyingConfigs(address(weth));
 
     assertTrue(isAccept);
     assertEq(decimals, weth.decimals());
@@ -145,13 +149,14 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     tokens[1] = address(usdc);
 
     // prepare configs with different length
-    PoolConfig.TokenConfig[] memory configs = new PoolConfig.TokenConfig[](2);
-    configs[0] = PoolConfig.TokenConfig({
+    PoolConfig.UnderlyingConfig[] memory configs =
+      new PoolConfig.UnderlyingConfig[](2);
+    configs[0] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: weth.decimals(),
       weight: 100
     });
-    configs[1] = PoolConfig.TokenConfig({
+    configs[1] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: usdc.decimals(),
       weight: 200
@@ -162,15 +167,14 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
 
     // check correctness
     (bool isAccept, uint8 decimals, uint64 weight) =
-      poolConfig.underlyingTokenConfigs(address(weth));
+      poolConfig.underlyingConfigs(address(weth));
 
     assertTrue(isAccept);
     assertEq(decimals, weth.decimals());
     assertEq(weight, 100);
     assertEq(poolConfig.totalUnderlyingWeight(), 300);
 
-    (isAccept, decimals, weight) =
-      poolConfig.underlyingTokenConfigs(address(usdc));
+    (isAccept, decimals, weight) = poolConfig.underlyingConfigs(address(usdc));
 
     assertTrue(isAccept);
     assertEq(decimals, usdc.decimals());
@@ -178,12 +182,12 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     assertEq(poolConfig.totalUnderlyingWeight(), 300);
 
     // update underlying
-    configs[0] = PoolConfig.TokenConfig({
+    configs[0] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: weth.decimals(),
       weight: 200
     });
-    configs[1] = PoolConfig.TokenConfig({
+    configs[1] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: usdc.decimals(),
       weight: 400
@@ -191,15 +195,13 @@ contract PoolConfig_AddOrUpdateUnderlyingTest is PoolConfig_BaseTest {
     poolConfig.addOrUpdateUnderlying(tokens, configs);
 
     // check correctness
-    (isAccept, decimals, weight) =
-      poolConfig.underlyingTokenConfigs(address(weth));
+    (isAccept, decimals, weight) = poolConfig.underlyingConfigs(address(weth));
 
     assertTrue(isAccept);
     assertEq(decimals, weth.decimals());
     assertEq(weight, 200);
 
-    (isAccept, decimals, weight) =
-      poolConfig.underlyingTokenConfigs(address(usdc));
+    (isAccept, decimals, weight) = poolConfig.underlyingConfigs(address(usdc));
 
     assertTrue(isAccept);
     assertEq(decimals, usdc.decimals());

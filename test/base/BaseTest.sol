@@ -7,6 +7,7 @@ import {StdAssertions} from "forge-std/StdAssertions.sol";
 import {MockErc20} from "../mocks/MockErc20.sol";
 import {MockPyth} from "pyth-sdk-solidity/MockPyth.sol";
 import {Deployment} from "../../script/Deployment.s.sol";
+import {PoolConfig} from "../../src/core/PoolConfig.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StdAssertions {
   address internal constant ALICE = address(234892);
@@ -21,15 +22,30 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
   MockErc20 internal dai;
   MockErc20 internal usdc;
 
+  MockErc20 internal bad;
+
+  bytes32 internal constant wethPriceId =
+    0x0000000000000000000000000000000000000000000000000000000000000001;
+  bytes32 internal constant wbtcPriceId =
+    0x0000000000000000000000000000000000000000000000000000000000000002;
+  bytes32 internal constant daiPriceId =
+    0x0000000000000000000000000000000000000000000000000000000000000003;
+  bytes32 internal constant usdcPriceId =
+    0x0000000000000000000000000000000000000000000000000000000000000004;
+
   constructor() {
+    // Creating a mock Pyth instance with 60 seconds valid time period
+    // and 1 wei for updating price.
     mockPyth = new MockPyth(60, 1);
 
     weth = deployMockErc20("Wrapped Ethereum", "WETH", 18);
     wbtc = deployMockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = deployMockErc20("DAI Stablecoin", "DAI", 18);
     usdc = deployMockErc20("USD Coin", "USDC", 6);
+    bad = deployMockErc20("Bad Coin", "BAD", 2);
   }
 
+  // --------- Deploy Helpers ---------
   function deployMockErc20(
     string memory name,
     string memory symbol,
@@ -42,6 +58,46 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
     internal
     returns (Deployment.DeployReturnVars memory)
   {
-    return deploy(mockPyth);
+    DeployLocalVars memory deployLocalVars =
+      DeployLocalVars({pyth: mockPyth, defaultOracleStaleTime: 300});
+    return deploy(deployLocalVars);
+  }
+
+  // --------- Setup Helpers ---------
+  function setupDefaultUnderlying()
+    internal
+    view
+    returns (address[] memory, PoolConfig.UnderlyingConfig[] memory)
+  {
+    address[] memory underlyings = new address[](4);
+    underlyings[0] = address(weth);
+    underlyings[1] = address(wbtc);
+    underlyings[2] = address(dai);
+    underlyings[3] = address(usdc);
+
+    PoolConfig.UnderlyingConfig[] memory underlyingConfigs =
+      new PoolConfig.UnderlyingConfig[](4);
+    underlyingConfigs[0] = PoolConfig.UnderlyingConfig({
+      isAccept: true,
+      decimals: weth.decimals(),
+      weight: 100
+    });
+    underlyingConfigs[1] = PoolConfig.UnderlyingConfig({
+      isAccept: true,
+      decimals: wbtc.decimals(),
+      weight: 100
+    });
+    underlyingConfigs[2] = PoolConfig.UnderlyingConfig({
+      isAccept: true,
+      decimals: dai.decimals(),
+      weight: 100
+    });
+    underlyingConfigs[3] = PoolConfig.UnderlyingConfig({
+      isAccept: true,
+      decimals: usdc.decimals(),
+      weight: 100
+    });
+
+    return (underlyings, underlyingConfigs);
   }
 }

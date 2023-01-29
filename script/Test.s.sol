@@ -5,7 +5,11 @@ import {console2} from "forge-std/console2.sol";
 
 contract TestScript {
   function run() external view {
-    address a = address(0x685B1ded8013785d6623CC18D214320b6Bb64759);
-    console2.logBytes32(bytes32(uint256(uint160(a))) << 96);
+    console2.logBytes32(keccak256("com.perp88.addLiquidity"));
+    console2.logBytes32(keccak256("com.perp88.removeLiquidity"));
+    console2.logBytes32(keccak256("com.perp88.swap"));
+    console2.logBytes32(keccak256("com.perp88.increasePosition"));
+    console2.logBytes32(keccak256("com.perp88.decreasePosition"));
+    console2.logBytes32(keccak256("com.perp88.liquidatePosition"));
   }
 }

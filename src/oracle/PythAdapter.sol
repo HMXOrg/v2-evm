@@ -65,6 +65,6 @@ contract PythAdapter is Owned, OracleAdapterInterface {
   {
     PythStructs.Price memory price = pyth.getPrice(pythPriceIdOf[assetId]);
 
-    return (convertToUint(price, 30), block.timestamp);
+    return (convertToUint(price, 30), price.publishTime);
   }
 }

@@ -6,6 +6,7 @@ import {PythAdapter} from "../../../src/oracle/PythAdapter.sol";
 import {OracleMiddleware} from "../../../src/oracle/OracleMiddleware.sol";
 import {PoolConfig} from "../../../src/core/PoolConfig.sol";
 import {Pool} from "../../../src/core/Pool.sol";
+import {PLPv2} from "../../../src/core/PLPv2.sol";
 import {AddressUtils} from "../../../src/libraries/AddressUtils.sol";
 
 abstract contract Pool_BaseTest is BaseTest {
@@ -15,12 +16,14 @@ abstract contract Pool_BaseTest is BaseTest {
   OracleMiddleware oracleMiddleware;
   PoolConfig poolConfig;
   Pool pool;
+  PLPv2 plpv2;
 
   function setUp() public virtual {
     DeployReturnVars memory deployed = deployPerp88v2();
 
     poolConfig = deployed.poolConfig;
     pool = deployed.pool;
+    plpv2 = deployed.plpv2;
 
     // Setup default underlyings
     (address[] memory underlyings, PoolConfig.UnderlyingConfig[] memory configs)

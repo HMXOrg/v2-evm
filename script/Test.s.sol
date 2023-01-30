@@ -11,5 +11,6 @@ contract TestScript {
     console2.logBytes32(keccak256("com.perp88.increasePosition"));
     console2.logBytes32(keccak256("com.perp88.decreasePosition"));
     console2.logBytes32(keccak256("com.perp88.liquidatePosition"));
+    console2.logBytes32(bytes32(uint256(1)));
   }
 }

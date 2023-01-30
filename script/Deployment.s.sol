@@ -30,7 +30,7 @@ abstract contract Deployment {
 
     vars.oracleMiddleware = new OracleMiddleware();
     vars.pythAdapter = new PythAdapter(localVars.pyth);
-    vars.poolConfig = new PoolConfig(localVars.defaultOracleStaleTime);
+    vars.poolConfig = new PoolConfig();
     vars.plpv2 = new PLPv2();
     vars.pool =
     new Pool(localVars.pyth, vars.oracleMiddleware, vars.plpv2, vars.poolConfig);

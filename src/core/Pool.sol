@@ -6,6 +6,7 @@ import {SafeERC20} from
   "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AddressUtils} from "../libraries/AddressUtils.sol";
 import {DecimalsUtils} from "../libraries/DecimalsUtils.sol";
+import {TransferEthUtils} from "../libraries/TransferEthUtils.sol";
 import {IPyth} from "pyth-sdk-solidity/IPyth.sol";
 import {PythStructs} from "pyth-sdk-solidity/PythStructs.sol";
 import {PLPv2} from "./PLPv2.sol";
@@ -17,11 +18,13 @@ contract Pool is Constants {
   // using libs for type
   using SafeERC20 for ERC20;
   using AddressUtils for address;
+  using TransferEthUtils for address;
   using DecimalsUtils for uint256;
 
   // erros
   error Pool_BadArgs();
   error Pool_InsufficientAmountIn();
+  error Pool_InsufficientMsgValue();
   error Pool_PriceStale();
   error Pool_Slippage();
 
@@ -59,13 +62,8 @@ contract Pool is Constants {
       // For example, combined ADD and REMOVE liquidity.
 
       // Get price and last update time.
-      (uint256 price, uint256 lastUpdate) =
+      (uint256 price,) =
         oracleMiddleware.getLatestPrice(whichUnderlying.toBytes32());
-      // Check if price is stale.
-      if (
-        block.timestamp - lastUpdate
-          > poolConfig.getActionStaleTime(ADD_LIQUIDITY_ACTION_ID)
-      ) revert Pool_PriceStale();
 
       // Get underlying balance.
       uint256 underlyingBalance = underlyingBalances[whichUnderlying];
@@ -92,15 +90,10 @@ contract Pool is Constants {
     view
     returns (uint256 liquidity)
   {
-    (uint256 price, uint256 lastUpdate) =
-      oracleMiddleware.getLatestPrice(token.toBytes32());
-    if (
-      block.timestamp - lastUpdate
-        > poolConfig.getActionStaleTime(ADD_LIQUIDITY_ACTION_ID)
-    ) revert Pool_PriceStale();
-    uint8 decimals = poolConfig.getDecimalsOf(token);
+    (uint256 price,) = oracleMiddleware.getLatestPrice(token.toBytes32());
+    // uint8 decimals = poolConfig.getDecimalsOf(token);
     uint256 amountInUSD = amountIn * price / ORACLE_PRICE_PRECISION;
-    amountInUSD = amountInUSD.convertDecimals(decimals, ORACLE_PRICE_DECIMALS);
+    // amountInUSD = amountInUSD.convertDecimals(decimals, ORACLE_PRICE_DECIMALS);
     if (amountInUSD == 0) revert Pool_InsufficientAmountIn();
 
     /// TODO: add mint fee calculation around here.
@@ -124,12 +117,15 @@ contract Pool is Constants {
     uint256 minLiquidity,
     address to,
     bytes[] calldata pythUpdateData
-  ) external returns (uint256 liquidity) {
+  ) external payable returns (uint256 liquidity) {
     // check if token is acceptable
     if (!poolConfig.isAcceptUnderlying(address(token))) revert Pool_BadArgs();
 
     // update prices
     uint256 pythUpdateFee = pyth.getUpdateFee(pythUpdateData);
+    // check if msg.value is enough to pay pyth update fee
+    if (msg.value < pythUpdateFee) revert Pool_InsufficientMsgValue();
+    // update price feeds
     pyth.updatePriceFeeds{value: pythUpdateFee}(pythUpdateData);
 
     // transfer token from msg.sender to this contract
@@ -141,7 +137,13 @@ contract Pool is Constants {
     // check min liquidity
     if (liquidity < minLiquidity) revert Pool_Slippage();
 
-    plpv2.mint(to, minLiquidity);
+    // interaction
+    // mint PLPv2 to "to" address
+    plpv2.mint(to, liquidity);
+    // refunds the over paid balance to msg.sender.
+    if (msg.value > pythUpdateFee) {
+      msg.sender.safeTransferETH(msg.value - pythUpdateFee);
+    }
   }
 
   /// @notice Internal function to perform ERC20 transfer in and return the amount actually transferred in.

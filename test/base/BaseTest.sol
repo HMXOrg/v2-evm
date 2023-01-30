@@ -100,4 +100,33 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
 
     return (underlyings, underlyingConfigs);
   }
+
+  // --------- Test Helpers ---------
+
+  /// @notice Helper function to create a price feed update data.
+  /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
+  /// @param priceData The price data to create the update data.
+  function buildPythUpdateData(int64[] memory priceData)
+    internal
+    view
+    returns (bytes[] memory)
+  {
+    require(priceData.length == 4, "invalid price data length");
+    bytes[] memory priceDataBytes = new bytes[](4);
+    for (uint256 i = 1; i <= priceData.length;) {
+      priceDataBytes[i - 1] = mockPyth.createPriceFeedUpdateData(
+        bytes32(uint256(i)),
+        priceData[i - 1] * 1e8,
+        0,
+        -8,
+        priceData[i - 1] * 1e8,
+        0,
+        uint64(block.timestamp)
+      );
+      unchecked {
+        ++i;
+      }
+    }
+    return priceDataBytes;
+  }
 }

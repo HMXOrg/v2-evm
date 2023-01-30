@@ -57,14 +57,14 @@ contract PythAdapter is Owned, OracleAdapterInterface {
   }
 
   /// @notice Get the latest price of the given asset. Returned price is in 30 decimals.
+  /// @dev The price returns here can be staled.
   /// @param assetId The asset id to get price.
   function getLatestPrice(bytes32 assetId)
     external
     view
     returns (uint256, uint256)
   {
-    PythStructs.Price memory price = pyth.getPrice(pythPriceIdOf[assetId]);
-
+    PythStructs.Price memory price = pyth.getPriceUnsafe(pythPriceIdOf[assetId]);
     return (convertToUint(price, 30), price.publishTime);
   }
 }

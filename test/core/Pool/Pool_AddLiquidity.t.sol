@@ -34,7 +34,8 @@ contract Pool_AddLiquidityTest is Pool_BaseTest {
     pool.addLiquidity{value: 4}(weth, 0, 0, address(this), pythUpdateData);
   }
 
-  /// @notice Test correctness when msg.value > pythUpdateFee
+  /// @notice Test correctness when msg.value > pythUpdateFee.
+  /// It should refunds the correct amount.
   function testCorrectness_WhenMsgValueGreaterThanPythUpdateFee() external {
     int64[] memory priceData = new int64[](4);
     priceData[0] = 1_000;

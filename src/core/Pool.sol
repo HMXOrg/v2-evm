@@ -58,9 +58,6 @@ contract Pool is Constants {
 
     // Find out underlying value in USD.
     while (whichUnderlying != ITERABLE_ADDRESS_LIST_END) {
-      // NOTE: Might be better to consolidate price stale action.
-      // For example, combined ADD and REMOVE liquidity.
-
       // Get price and last update time.
       (uint256 price,) =
         oracleMiddleware.getLatestPrice(whichUnderlying.toBytes32());
@@ -82,6 +79,14 @@ contract Pool is Constants {
     return aum;
   }
 
+  function _calcFee(
+    address token,
+    uint256 price,
+    uint256 baseFeeBps,
+    uint256 maxFeeDeltaBps,
+    bool isLong
+  ) internal view returns (uint256) {}
+
   /// @notice Calculate the amount of liquidity to mint for the given token and amountIn.
   /// @param token The token to add liquidity.
   /// @param amountIn The amount of token to add liquidity.
@@ -94,7 +99,6 @@ contract Pool is Constants {
     // uint8 decimals = poolConfig.getDecimalsOf(token);
     uint256 amountInUSD = amountIn * price / ORACLE_PRICE_PRECISION;
     // amountInUSD = amountInUSD.convertDecimals(decimals, ORACLE_PRICE_DECIMALS);
-    if (amountInUSD == 0) revert Pool_InsufficientAmountIn();
 
     /// TODO: add mint fee calculation around here.
 
@@ -120,6 +124,7 @@ contract Pool is Constants {
   ) external payable returns (uint256 liquidity) {
     // check if token is acceptable
     if (!poolConfig.isAcceptUnderlying(address(token))) revert Pool_BadArgs();
+    if (amountIn == 0) revert Pool_InsufficientAmountIn();
 
     // update prices
     uint256 pythUpdateFee = pyth.getUpdateFee(pythUpdateData);

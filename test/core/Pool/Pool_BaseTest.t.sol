@@ -36,12 +36,5 @@ abstract contract Pool_BaseTest is BaseTest {
     pythAdapter.setPythPriceId(address(wbtc).toBytes32(), wbtcPriceId);
     pythAdapter.setPythPriceId(address(dai).toBytes32(), daiPriceId);
     pythAdapter.setPythPriceId(address(usdc).toBytes32(), usdcPriceId);
-
-    // Setup oracle middleware
-    oracleMiddleware = deployed.oracleMiddleware;
-    oracleMiddleware.setOracle(address(weth).toBytes32(), pythAdapter);
-    oracleMiddleware.setOracle(address(wbtc).toBytes32(), pythAdapter);
-    oracleMiddleware.setOracle(address(dai).toBytes32(), pythAdapter);
-    oracleMiddleware.setOracle(address(usdc).toBytes32(), pythAdapter);
   }
 }

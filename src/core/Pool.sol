@@ -51,7 +51,9 @@ contract Pool is Constants {
 
   /// @notice Get the total AUM of the pool in USD with 30 decimals.
   /// @dev This uses to calculate the total value of the pool.
-  function getAum() public view returns (uint256) {
+  /// @param isUseMaxPrice Whether to use the max price of the price feed.
+  /// @return The total AUM of the pool in USD, 30 decimals.
+  function getAumE30(bool isUseMaxPrice) public view returns (uint256) {
     address whichUnderlying =
       poolConfig.getNextUnderlyingOf(ITERABLE_ADDRESS_LIST_START);
     uint256 aum = 0;
@@ -59,8 +61,9 @@ contract Pool is Constants {
     // Find out underlying value in USD.
     while (whichUnderlying != ITERABLE_ADDRESS_LIST_END) {
       // Get price and last update time.
-      (uint256 price,) =
-        oracleMiddleware.getLatestPrice(whichUnderlying.toBytes32());
+      (uint256 price,) = oracleMiddleware.getLatestPrice(
+        whichUnderlying.toBytes32(), isUseMaxPrice
+      );
 
       // Get underlying balance.
       uint256 underlyingBalance = underlyingBalances[whichUnderlying];
@@ -79,6 +82,14 @@ contract Pool is Constants {
     return aum;
   }
 
+  /// @notice Get the total AUM of the pool in USD.
+  /// @dev This uses to calculate the total value of the pool.
+  /// @param isUseMaxPrice Whether to use the max price of the price feed.
+  /// @return The total AUM of the pool in USD, 18 decimals.
+  function getAumE18(bool isUseMaxPrice) public view returns (uint256) {
+    return getAumE30(isUseMaxPrice) * 1e18 / 1e30;
+  }
+
   function _calcFee(
     address token,
     uint256 price,
@@ -95,14 +106,14 @@ contract Pool is Constants {
     view
     returns (uint256 liquidity)
   {
-    (uint256 price,) = oracleMiddleware.getLatestPrice(token.toBytes32());
+    (uint256 price,) = oracleMiddleware.getLatestPrice(token.toBytes32(), false);
     // uint8 decimals = poolConfig.getDecimalsOf(token);
     uint256 amountInUSD = amountIn * price / ORACLE_PRICE_PRECISION;
     // amountInUSD = amountInUSD.convertDecimals(decimals, ORACLE_PRICE_DECIMALS);
 
     /// TODO: add mint fee calculation around here.
 
-    uint256 poolAum = getAum();
+    uint256 poolAum = getAumE18(true);
     uint256 plpTotalSupply = plpv2.totalSupply();
 
     if (plpTotalSupply == 0) liquidity = amountInUSD;

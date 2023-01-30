@@ -6,11 +6,13 @@ import {PLPv2} from "../src/core/PLPv2.sol";
 import {Pool} from "../src/core/Pool.sol";
 import {IPyth} from "pyth-sdk-solidity/IPyth.sol";
 import {OracleMiddleware} from "../src/oracle/OracleMiddleware.sol";
+import {ChainlinkAdapter} from "../src/oracle/ChainlinkAdapter.sol";
 import {PythAdapter} from "../src/oracle/PythAdapter.sol";
 
 abstract contract Deployment {
   struct DeployReturnVars {
     OracleMiddleware oracleMiddleware;
+    ChainlinkAdapter chainlinkAdapter;
     PythAdapter pythAdapter;
     PoolConfig poolConfig;
     PLPv2 plpv2;
@@ -28,8 +30,10 @@ abstract contract Deployment {
   {
     DeployReturnVars memory vars;
 
-    vars.oracleMiddleware = new OracleMiddleware();
+    vars.chainlinkAdapter = new ChainlinkAdapter(3);
     vars.pythAdapter = new PythAdapter(localVars.pyth);
+    vars.oracleMiddleware =
+    new OracleMiddleware(localVars.pyth, vars.chainlinkAdapter, vars.pythAdapter);
     vars.poolConfig = new PoolConfig();
     vars.plpv2 = new PLPv2();
     vars.pool =

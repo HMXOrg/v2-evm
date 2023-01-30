@@ -1,83 +1,100 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import "../base/Owned.sol";
-import "@chainlink/contracts/src/v0.6/interfaces/AggregatorV3Interface.sol";
-
-import "../interfaces/OracleAdapterInterface.sol";
+import {Owned} from "../base/Owned.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {AggregatorV3Interface} from
+  "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {OracleAdapterInterface} from "../interfaces/OracleAdapterInterface.sol";
 
 contract ChainlinkAdapter is Owned, OracleAdapterInterface {
-  using SafeMath for uint256;
+  // dependencies
+  using SafeCast for int256;
 
-  // Mapping from asset id to source
+  // errors
+  error ChainlinkAdapter_BadLen();
+  error ChainlinkAdapter_PriceFeedNotAvailable();
+  error ChainlinkAdapter_UnableToFetchPrice();
+
+  // configs
+  uint64 public depth;
+  // mapping from asset id to source
   mapping(bytes32 => AggregatorV3Interface) public priceFeeds;
 
-  event SetPriceFeed(
-    address indexed token0, address indexed token1, AggregatorV3Interface source
-  );
+  event SetPriceFeed(bytes32 indexed assetId, AggregatorV3Interface source);
 
-  function initialize() external initializer {
-    OwnableUpgradeSafe.__Ownable_init();
+  constructor(uint64 _depth) {
+    depth = _depth;
   }
 
   /// @dev Set sources for multiple token pairs
-  /// @param token0s Token0 address to set source
-  /// @param token1s Token1 address to set source
-  /// @param allSources source for the token pair
+  /// @param assetIds The asset ids to set oracle sources
+  /// @param feeds The price feeds to set
   function setPriceFeeds(
-    address[] calldata token0s,
-    address[] calldata token1s,
-    AggregatorV3Interface[] calldata allSources
+    bytes32[] calldata assetIds,
+    AggregatorV3Interface[] calldata feeds
   ) external onlyOwner {
-    require(
-      token0s.length == token1s.length && token0s.length == allSources.length,
-      "ChainLinkPriceOracle::setPriceFeeds:: inconsistent length"
-    );
-    for (uint256 idx = 0; idx < token0s.length; idx++) {
-      _setPriceFeed(token0s[idx], token1s[idx], allSources[idx]);
+    if (assetIds.length != feeds.length) revert ChainlinkAdapter_BadLen();
+    for (uint256 i = 0; i < assetIds.length;) {
+      priceFeeds[assetIds[i]] = feeds[i];
+      emit SetPriceFeed(assetIds[i], feeds[i]);
+      unchecked {
+        ++i;
+      }
     }
   }
 
-  /// @dev Set source for the token pair
-  /// @param token0 Token0 address to set source
-  /// @param token1 Token1 address to set source
-  /// @param source source for the token pair
-  function _setPriceFeed(
-    address token0,
-    address token1,
-    AggregatorV3Interface source
-  ) internal {
-    require(
-      address(priceFeeds[token1][token0]) == address(0),
-      "ChainLinkPriceOracle::setPriceFeed:: source on existed pair"
-    );
-    priceFeeds[token0][token1] = source;
-    emit SetPriceFeed(token0, token1, source);
-  }
-
-  /// @dev Return the price of token0/token1, multiplied by 1e18
-  /// @param token0 Token0 to set oracle sources
-  /// @param token1 Token1 to set oracle sources
-  function getPrice(address token0, address token1)
+  /// @dev Return the price of the given assetId, 30 decimals.
+  /// @param assetId The asset id to get price
+  /// @param isMax Whether to get the max price or min price.
+  function getLatestPrice(bytes32 assetId, bool isMax)
     external
     view
     override
     returns (uint256, uint256)
   {
-    require(
-      address(priceFeeds[token0][token1]) != address(0)
-        || address(priceFeeds[token1][token0]) != address(0),
-      "ChainLinkPriceOracle::getPrice:: no source"
-    );
-    if (address(priceFeeds[token0][token1]) != address(0)) {
-      (, int256 price,, uint256 lastUpdate,) =
-        priceFeeds[token0][token1].latestRoundData();
-      uint256 decimals = uint256(priceFeeds[token0][token1].decimals());
-      return (uint256(price).mul(1e18) / (10 ** decimals), lastUpdate);
+    if (address(priceFeeds[assetId]) == address(0)) {
+      revert ChainlinkAdapter_PriceFeedNotAvailable();
     }
-    (, int256 price,, uint256 lastUpdate,) =
-      priceFeeds[token1][token0].latestRoundData();
-    uint256 decimals = uint256(priceFeeds[token1][token0].decimals());
-    return ((10 ** decimals).mul(1e18) / uint256(price), lastUpdate);
+
+    AggregatorV3Interface priceFeed = priceFeeds[assetId];
+    uint256 price = 0;
+    int256 _priceCursor = 0;
+    uint256 priceCursor = 0;
+    uint256 timestampCursor = 0;
+    (uint80 latestRoundId, int256 latestAnswer,, uint256 timestamp,) =
+      priceFeed.latestRoundData();
+
+    for (uint80 i = 0; i < depth; i++) {
+      if (i >= latestRoundId) break;
+
+      if (i == 0) {
+        priceCursor = latestAnswer.toUint256();
+      } else {
+        (, _priceCursor,, timestampCursor,) =
+          priceFeed.getRoundData(latestRoundId - i);
+        priceCursor = _priceCursor.toUint256();
+      }
+
+      if (price == 0) {
+        price = priceCursor;
+        continue;
+      }
+
+      if (isMax && price < priceCursor) {
+        price = priceCursor;
+        timestamp = timestampCursor;
+        continue;
+      }
+
+      if (!isMax && price > priceCursor) {
+        price = priceCursor;
+        timestamp = timestampCursor;
+      }
+    }
+
+    if (price == 0) revert ChainlinkAdapter_UnableToFetchPrice();
+
+    return ((price * 1e30) / 10 ** priceFeed.decimals(), timestamp);
   }
 }

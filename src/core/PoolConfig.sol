@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: MIT
+// $$$$$$$\                                 $$$$$$\   $$$$$$\
+// $$  __$$\                               $$  __$$\ $$  __$$\
+// $$ |  $$ | $$$$$$\   $$$$$$\   $$$$$$\  $$ /  $$ |$$ /  $$ |
+// $$$$$$$  |$$  __$$\ $$  __$$\ $$  __$$\  $$$$$$  | $$$$$$  |
+// $$  ____/ $$$$$$$$ |$$ |  \__|$$ /  $$ |$$  __$$< $$  __$$<
+// $$ |      $$   ____|$$ |      $$ |  $$ |$$ /  $$ |$$ /  $$ |
+// $$ |      \$$$$$$$\ $$ |      $$$$$$$  |\$$$$$$  |\$$$$$$  |
+// \__|       \_______|\__|      $$  ____/  \______/  \______/
+//                               $$ |
+//                               $$ |
+//                               \__|
+
 pragma solidity 0.8.17;
 
 import {Owned} from "../base/Owned.sol";
@@ -21,6 +33,9 @@ contract PoolConfig is Owned {
   mapping(address => UnderlyingConfig) public underlyingConfigs;
   uint64 public totalUnderlyingWeight;
 
+  // Fee configurations
+  bool public isDynamicFeeOn;
+
   event AddOrUpdateTokenConfigs(
     address token, UnderlyingConfig prevConfig, UnderlyingConfig newConfig
   );
@@ -29,6 +44,7 @@ contract PoolConfig is Owned {
   event SetActionStaleTime(
     bytes32 actionId, uint64 prevStaleTime, uint64 newStaleTime
   );
+  event ToggleDynamicFee(bool prevIsDynamicFeeOn, bool newIsDynamicFeeOn);
 
   constructor() {
     underlyingTokens.init();
@@ -87,6 +103,12 @@ contract PoolConfig is Owned {
     delete underlyingConfigs[token];
 
     emit RemoveUnderlying(token);
+  }
+
+  /// @notice Toggle dynamic fee.
+  function toggleDynamicFee() external onlyOwner {
+    emit ToggleDynamicFee(isDynamicFeeOn, !isDynamicFeeOn);
+    isDynamicFeeOn = !isDynamicFeeOn;
   }
 
   /// @notice Return if the given token address is acceptable as underlying token.

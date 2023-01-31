@@ -35,7 +35,8 @@ contract Pool is Constants {
   PoolConfig public poolConfig;
 
   // states
-  mapping(address => uint256) public underlyingBalances;
+  mapping(address => uint256) public totalOf;
+  mapping(address => uint256) public liquidityOf;
 
   constructor(
     IPyth _pyth,
@@ -52,8 +53,13 @@ contract Pool is Constants {
   /// @notice Get the total AUM of the pool in USD with 30 decimals.
   /// @dev This uses to calculate the total value of the pool.
   /// @param isUseMaxPrice Whether to use the max price of the price feed.
+  /// @param isStrict Whether to revert if the price is stale.
   /// @return The total AUM of the pool in USD, 30 decimals.
-  function getAumE30(bool isUseMaxPrice) public view returns (uint256) {
+  function getAumE30(bool isUseMaxPrice, bool isStrict)
+    public
+    view
+    returns (uint256)
+  {
     address whichUnderlying =
       poolConfig.getNextUnderlyingOf(ITERABLE_ADDRESS_LIST_START);
     uint256 aum = 0;
@@ -62,11 +68,11 @@ contract Pool is Constants {
     while (whichUnderlying != ITERABLE_ADDRESS_LIST_END) {
       // Get price and last update time.
       (uint256 price,) = oracleMiddleware.getLatestPrice(
-        whichUnderlying.toBytes32(), isUseMaxPrice
+        whichUnderlying.toBytes32(), isUseMaxPrice, isStrict
       );
 
-      // Get underlying balance.
-      uint256 underlyingBalance = underlyingBalances[whichUnderlying];
+      // Get underlying's liquidity.
+      uint256 underlyingBalance = liquidityOf[whichUnderlying];
       // Get underlying decimals.
       uint256 decimals = poolConfig.getDecimalsOf(whichUnderlying);
 
@@ -85,18 +91,25 @@ contract Pool is Constants {
   /// @notice Get the total AUM of the pool in USD.
   /// @dev This uses to calculate the total value of the pool.
   /// @param isUseMaxPrice Whether to use the max price of the price feed.
+  /// @param isStrict Whether to revert if the price is stale.
   /// @return The total AUM of the pool in USD, 18 decimals.
-  function getAumE18(bool isUseMaxPrice) public view returns (uint256) {
-    return getAumE30(isUseMaxPrice) * 1e18 / 1e30;
+  function getAumE18(bool isUseMaxPrice, bool isStrict)
+    public
+    view
+    returns (uint256)
+  {
+    return getAumE30(isUseMaxPrice, isStrict) * 1e18 / 1e30;
   }
 
-  function _calcFee(
-    address token,
-    uint256 price,
-    uint256 baseFeeBps,
-    uint256 maxFeeDeltaBps,
-    bool isLong
-  ) internal view returns (uint256) {}
+  // function _calcFee(
+  //   address token,
+  //   uint256 price,
+  //   uint256 baseFeeBps,
+  //   uint256 maxFeeDeltaBps,
+  //   bool isLong
+  // ) internal view returns (uint256) {
+  //   if (!poolConfig.isDynamicFeeOn()) return baseFeeBps;
+  // }
 
   /// @notice Calculate the amount of liquidity to mint for the given token and amountIn.
   /// @param token The token to add liquidity.
@@ -106,14 +119,16 @@ contract Pool is Constants {
     view
     returns (uint256 liquidity)
   {
-    (uint256 price,) = oracleMiddleware.getLatestPrice(token.toBytes32(), false);
+    (uint256 price,) =
+      oracleMiddleware.getLatestPrice(token.toBytes32(), false, true);
     // uint8 decimals = poolConfig.getDecimalsOf(token);
     uint256 amountInUSD = amountIn * price / ORACLE_PRICE_PRECISION;
     // amountInUSD = amountInUSD.convertDecimals(decimals, ORACLE_PRICE_DECIMALS);
+    if (amountInUSD == 0) revert Pool_InsufficientAmountIn();
 
     /// TODO: add mint fee calculation around here.
 
-    uint256 poolAum = getAumE18(true);
+    uint256 poolAum = getAumE18(true, true);
     uint256 plpTotalSupply = plpv2.totalSupply();
 
     if (plpTotalSupply == 0) liquidity = amountInUSD;
@@ -122,56 +137,40 @@ contract Pool is Constants {
 
   /// @notice Add liquidity to the pool.
   /// @param token The token to add liquidity.
-  /// @param amountIn The amount of token to add liquidity.
-  /// @param minLiquidity The minimum liquidity to mint.
   /// @param to The address to mint liquidity to.
-  /// @param pythUpdateData The data to update Pyth price feeds.
-  function addLiquidity(
-    ERC20 token,
-    uint256 amountIn,
-    uint256 minLiquidity,
-    address to,
-    bytes[] calldata pythUpdateData
-  ) external payable returns (uint256 liquidity) {
+  function addLiquidity(ERC20 token, address to)
+    external
+    returns (uint256 liquidity)
+  {
     // check if token is acceptable
     if (!poolConfig.isAcceptUnderlying(address(token))) revert Pool_BadArgs();
-    if (amountIn == 0) revert Pool_InsufficientAmountIn();
-
-    // update prices
-    uint256 pythUpdateFee = pyth.getUpdateFee(pythUpdateData);
-    // check if msg.value is enough to pay pyth update fee
-    if (msg.value < pythUpdateFee) revert Pool_InsufficientMsgValue();
-    // update price feeds
-    pyth.updatePriceFeeds{value: pythUpdateFee}(pythUpdateData);
 
     // transfer token from msg.sender to this contract
-    underlyingBalances[address(token)] += _doTransferIn(token, amountIn);
+    uint256 amountIn = _doTransferIn(token);
 
     // calculate liquidity
     liquidity = _calcAddLiquidity(address(token), amountIn);
 
-    // check min liquidity
-    if (liquidity < minLiquidity) revert Pool_Slippage();
+    // effects
+    // increase underlying balance
+    liquidityOf[address(token)] += amountIn;
 
     // interaction
     // mint PLPv2 to "to" address
     plpv2.mint(to, liquidity);
-    // refunds the over paid balance to msg.sender.
-    if (msg.value > pythUpdateFee) {
-      msg.sender.safeTransferETH(msg.value - pythUpdateFee);
-    }
   }
 
-  /// @notice Internal function to perform ERC20 transfer in and return the amount actually transferred in.
+  /// @notice Internal function to recognized balance and return the amount actually transferred in.
   /// @param token The ERC20 token to transfer in.
-  /// @param amountInCall The amount of token uses in transferFrom call.
-  function _doTransferIn(ERC20 token, uint256 amountInCall)
-    internal
-    returns (uint256)
-  {
-    uint256 balanceBefore = token.balanceOf(address(this));
-    token.safeTransferFrom(msg.sender, address(this), amountInCall);
+  function _doTransferIn(ERC20 token) internal returns (uint256) {
+    // get recognized balance.
+    uint256 balanceBefore = totalOf[address(token)];
+    // get actual balance.
     uint256 balanceAfter = token.balanceOf(address(this));
+
+    // update recognized balance.
+    totalOf[address(token)] = balanceAfter;
+
     return balanceAfter - balanceBefore;
   }
 }

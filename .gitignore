@@ -1,2 +1,4 @@
-out
-cache
+cache/
+out/
+.vscode
+node_modules

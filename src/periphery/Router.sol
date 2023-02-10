@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeERC20} from
-  "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IPyth} from "pyth-sdk-solidity/IPyth.sol";
-import {WrappedNativeInterface} from "../interfaces/WrappedNativeInterface.sol";
-import {TransferEthUtils} from "../libraries/TransferEthUtils.sol";
-import {Pool} from "../core/Pool.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { WrappedNativeInterface } from "../interfaces/WrappedNativeInterface.sol";
+import { TransferEthUtils } from "../libraries/TransferEthUtils.sol";
+import { Pool } from "../core/Pool.sol";
 
 contract Router {
   // dependencies
@@ -28,16 +27,15 @@ contract Router {
     pool = _pool;
   }
 
-  function _updatePythData(bytes[] memory pythUpdateData)
-    internal
-    returns (uint256 refundValue)
-  {
+  function _updatePythData(
+    bytes[] memory pythUpdateData
+  ) internal returns (uint256 refundValue) {
     // update prices
     uint256 pythUpdateFee = pyth.getUpdateFee(pythUpdateData);
     // check if msg.value is enough to pay pyth update fee
     if (msg.value < pythUpdateFee) revert Router_InsufficientMsgValue();
     // update price feeds
-    pyth.updatePriceFeeds{value: pythUpdateFee}(pythUpdateData);
+    pyth.updatePriceFeeds{ value: pythUpdateFee }(pythUpdateData);
     // return refund value
     return msg.value - pythUpdateFee;
   }

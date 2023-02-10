@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {TestBase} from "forge-std/Base.sol";
-import {console2} from "forge-std/console2.sol";
-import {StdAssertions} from "forge-std/StdAssertions.sol";
-import {MockErc20} from "../mocks/MockErc20.sol";
-import {MockPyth} from "pyth-sdk-solidity/MockPyth.sol";
-import {Deployment} from "../../script/Deployment.s.sol";
-import {PoolConfig} from "../../src/core/PoolConfig.sol";
+import { TestBase } from "forge-std/Base.sol";
+import { console2 } from "forge-std/console2.sol";
+import { StdAssertions } from "forge-std/StdAssertions.sol";
+import { MockErc20 } from "../mocks/MockErc20.sol";
+import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { Deployment } from "../../script/Deployment.s.sol";
+import { PoolConfig } from "../../src/core/PoolConfig.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StdAssertions {
   address internal constant ALICE = address(234892);
@@ -58,8 +58,10 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
     internal
     returns (Deployment.DeployReturnVars memory)
   {
-    DeployLocalVars memory deployLocalVars =
-      DeployLocalVars({pyth: mockPyth, defaultOracleStaleTime: 300});
+    DeployLocalVars memory deployLocalVars = DeployLocalVars({
+      pyth: mockPyth,
+      defaultOracleStaleTime: 300
+    });
     return deploy(deployLocalVars);
   }
 
@@ -75,8 +77,8 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
     underlyings[2] = address(dai);
     underlyings[3] = address(usdc);
 
-    PoolConfig.UnderlyingConfig[] memory underlyingConfigs =
-      new PoolConfig.UnderlyingConfig[](4);
+    PoolConfig.UnderlyingConfig[]
+      memory underlyingConfigs = new PoolConfig.UnderlyingConfig[](4);
     underlyingConfigs[0] = PoolConfig.UnderlyingConfig({
       isAccept: true,
       decimals: weth.decimals(),
@@ -106,14 +108,12 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
   /// @notice Helper function to create a price feed update data.
   /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
   /// @param priceData The price data to create the update data.
-  function buildPythUpdateData(int64[] memory priceData)
-    internal
-    view
-    returns (bytes[] memory)
-  {
+  function buildPythUpdateData(
+    int64[] memory priceData
+  ) internal view returns (bytes[] memory) {
     require(priceData.length == 4, "invalid price data length");
     bytes[] memory priceDataBytes = new bytes[](4);
-    for (uint256 i = 1; i <= priceData.length;) {
+    for (uint256 i = 1; i <= priceData.length; ) {
       priceDataBytes[i - 1] = mockPyth.createPriceFeedUpdateData(
         bytes32(uint256(i)),
         priceData[i - 1] * 1e8,

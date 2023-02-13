@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-interface IPerpOracle {
+interface IOracleMiddleware {
   /// @notice Get the latest price of the given asset. Returned price is in 30 decimals.
   /// @dev The price returns here can be staled.
   /// @param _assetId The asset id to get price.

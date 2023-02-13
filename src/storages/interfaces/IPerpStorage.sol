@@ -10,15 +10,15 @@ interface IPerpStorage {
   }
 
   struct Global {
-    uint256 reserveValueE30;
+    uint256 reserveValueE30; // accumulative of reserve value from all opening positions
     uint256 sumBorrowingRate;
     uint256 lastBorrowingTime;
   }
 
   // mapping marketId => globalPosition;
   struct GlobalMarket {
-    uint256 globalLongSize; // (Open interest) in Amount
-    uint256 globalShortSize; // (Open interest) in Amount
+    uint256 globalLongSize; // (Long Open interest) in Amount
+    uint256 globalShortSize; // (Short Open interest) in Amount
     uint256 globalLongAvgPrice;
     uint256 globalShortAvgPrice;
     uint256 globalLongFundingRate;
@@ -31,13 +31,13 @@ interface IPerpStorage {
     address primaryAccount;
     uint8 subAccount;
     uint256 marketIndex;
-    int256 positionSizeE30; // LONG (+), SHORT(-) Size
+    int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
     uint256 avgEntryPriceE30;
     uint256 entryBorrowingRate;
     uint256 entryFundingRate;
-    uint256 reserveValueE30; // Max Profit in USD (9X of collateral)
-    uint256 lastIncreaseTime; // To calculate minimum opening time of position
+    uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
+    uint256 lastIncreaseTimestamp; // To validate position lifetime
     uint256 openInterest;
-    uint256 realizedPnl; // for Partial Close
+    uint256 realizedPnl;
   }
 }

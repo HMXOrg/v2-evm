@@ -7,12 +7,14 @@ import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
 contract PerpStorage is IPerpStorage {
+  Global public global; // global state that accumulative value from all markets
+  
+  Position[] public positions;
+  mapping(bytes32 => uint256) public positionIndex;  // bytes32 = primaryAccount + subAccount + marketIndex
+
   mapping(address => CollateralToken) collateralToken;
-  // (marketIndex => GlobalMarket)
   mapping(uint256 => GlobalMarket) public globalMarket;
 
-  Position[] public positions;
-  mapping(bytes32 => uint256) public positionIndex;
-
-  Global public global;
+  constructor(){
+  }
 }

@@ -9,7 +9,7 @@ interface IPerpStorage {
     uint256 collateralFactor; // Loan-To-Value
   }
 
-  struct Global {
+  struct GlobalState {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
     uint256 sumBorrowingRate;
     uint256 lastBorrowingTime;

@@ -12,7 +12,7 @@ contract PerpStorage is IPerpStorage {
   Position[] public positions;
   mapping(bytes32 => uint256) public positionIndices; // bytes32 = primaryAccount + subAccount + marketIndex
 
-  mapping(address => CollateralToken) collateralTokens;
+  mapping(address => CollateralToken) public collateralTokens;
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
   constructor() {}

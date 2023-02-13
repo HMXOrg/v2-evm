@@ -30,8 +30,8 @@ contract ConfigStorage is IConfigStorage {
 
   MarketConfig[] marketConfigs;
 
-  mapping(address => IConfigStorage.PLPTokenConfig) plpTokenConfigs; // token => config
-  mapping(address => IConfigStorage.CollateralTokenConfig) colalteralTokenConfigs; // token => config
+  mapping(address => PLPTokenConfig) plpTokenConfigs; // token => config
+  mapping(address => CollateralTokenConfig) collateralTokenConfigs; // token => config
 
   mapping(address => bool) allowedLiquidators; // allowed contract to execute liquidation service
   mapping(address => mapping(address => bool)) serviceExecutors; // to allowed executor for service layer

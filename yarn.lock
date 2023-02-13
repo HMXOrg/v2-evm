@@ -576,7 +576,7 @@
     "@nomicfoundation/solidity-analyzer-win32-ia32-msvc" "0.1.0"
     "@nomicfoundation/solidity-analyzer-win32-x64-msvc" "0.1.0"
 
-"@nomiclabs/hardhat-ethers@^2.1.1":
+"@nomiclabs/hardhat-ethers@^2.0.5", "@nomiclabs/hardhat-ethers@^2.1.1":
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-ethers/-/hardhat-ethers-2.2.2.tgz#812d48929c3bf8fe840ec29eab4b613693467679"
   integrity sha512-NLDlDFL2us07C0jB/9wzvR0kuLivChJWCXTKcj3yqjZqMoYp7g7wwS157F70VHx/+9gHIBGzak5pKDwG8gEefA==

@@ -67,6 +67,6 @@ interface IConfigStorage {
 
   // Liquidation
   struct LiquidationConfig {
-    uint256 liquidationFee; // liquidation fee in USD
+    uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
 }

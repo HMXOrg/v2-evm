@@ -27,7 +27,6 @@ interface IConfigStorage {
     uint256 maxProfitRate; // maximum profit that trader could take per position
     uint256 longMaxOpenInterestUSDE30; // maximum to open long position
     uint256 shortMaxOpenInterestUSDE30; // maximum to open short position
-    uint256 maxLeverage; // maximum leverage that trader could open position
     uint256 minLeverage; // minimum leverage that trader could open position
     uint256 initialMarginFraction; // IMF
     uint256 maintenanceMarginFraction; // MMF

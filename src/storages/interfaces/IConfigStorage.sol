@@ -55,7 +55,7 @@ interface IConfigStorage {
 
   // Swap
   struct SwapConfig {
-    uint256 stablecoinSwapFee;
+    uint256 stablecoinSwapFeeRate;
     uint256 swapFeeRate;
   }
 

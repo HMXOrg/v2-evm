@@ -12,7 +12,7 @@ abstract contract VaultStorage is IVaultStorage {
     public liquidityProviderBalances;
   mapping(address => address[]) public liquidityProviderTokens;
 
-  // trader address => token => amount
+  // trader address (with sub-account) => token => amount
   mapping(address => mapping(address => uint256)) public traderBalances;
   mapping(address => address[]) public traderTokens;
 

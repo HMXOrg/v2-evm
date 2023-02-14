@@ -5,16 +5,21 @@ import { Owned } from "../base/Owned.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "pyth-sdk-solidity/PythStructs.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
+import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
 
-contract PythAdapter is Owned, IOracleAdapter {
+contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   // errors
   error PythAdapter_BrokenPythPrice();
   error PythAdapter_ConfidenceRatioTooHigh();
+  error PythAdapter_OnlyUpdater();
 
   // state variables
   IPyth public pyth;
   // mapping of our asset id to Pyth's price id
   mapping(bytes32 => bytes32) public pythPriceIdOf;
+
+  // whitelist mapping of price updater
+  mapping(address => bool) public isUpdater;
 
   // events
   event SetPythPriceId(
@@ -22,9 +27,17 @@ contract PythAdapter is Owned, IOracleAdapter {
     bytes32 prevPythPriceId,
     bytes32 pythPriceId
   );
+  event SetUpdater(address indexed account, bool isActive);
 
   constructor(IPyth _pyth) {
     pyth = _pyth;
+  }
+
+  modifier onlyUpdater() {
+    if (!isUpdater[msg.sender]) {
+      revert PythAdapter_OnlyUpdater();
+    }
+    _;
   }
 
   /// @notice Set the Pyth price id for the given asset.
@@ -103,5 +116,29 @@ contract PythAdapter is Owned, IOracleAdapter {
 
     validateConfidence(price, confidenceThreshold);
     return (convertToUint256(price, isMax, 30), price.publishTime);
+  }
+
+  /// @notice A function for setting updater who is able to updatePrices based on price update data
+  function setUpdater(address _account, bool _isActive) external onlyOwner {
+    isUpdater[_account] = _isActive;
+
+    emit SetUpdater(_account, _isActive);
+  }
+
+  /// @notice A function for updating prices based on price update data
+  /// @param _priceData - price update data
+  function updatePrices(
+    bytes[] memory _priceData
+  ) external payable onlyUpdater {
+    uint256 fee = pyth.getUpdateFee(_priceData);
+    pyth.updatePriceFeeds{ value: fee }(_priceData);
+  }
+
+  /// @notice A function for getting update fee based on price update data
+  /// @param _priceUpdateData - price update data
+  function getUpdateFee(
+    bytes[] memory _priceUpdateData
+  ) external view returns (uint256) {
+    return pyth.getUpdateFee(_priceUpdateData);
   }
 }

@@ -12,16 +12,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   // configs
   IPyth public pyth;
-  IOracleAdapter public chainlinkAdapter;
   IOracleAdapter public pythAdapter;
 
-  constructor(
-    IPyth _pyth,
-    IOracleAdapter _chainlinkAdapter,
-    IOracleAdapter _pythAdapter
-  ) {
+  constructor(IPyth _pyth, IOracleAdapter _pythAdapter) {
     pyth = _pyth;
-    chainlinkAdapter = _chainlinkAdapter;
     pythAdapter = _pythAdapter;
   }
 
@@ -45,6 +39,4 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     // 2. Return the price and last update
     return (price, lastUpdate);
   }
-
-  function updatePrices(bytes[] calldata _updateData) external {}
 }

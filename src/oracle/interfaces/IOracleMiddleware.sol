@@ -12,9 +12,4 @@ interface IOracleMiddleware {
     bool _isMax,
     uint8 _confidentTreshold
   ) external view returns (uint256, uint256);
-
-  /// @notice Update prices.
-  /// @dev The price returns here can be staled.
-  /// @param _updateData price data to update.
-  function updatePrices(bytes[] calldata _updateData) external;
 }

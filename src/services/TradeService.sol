@@ -65,7 +65,9 @@ contract TradeService is ITradeService {
     IPerpStorage.Position memory _position = IPerpStorage(perpStorage)
       .getPositionById(_positionId);
 
-    // pre validation
+    // =========================================
+    // | ---------- pre validation ----------- |
+    // =========================================
     // todo: check market status
     bool isLongPosition = _position.positionSizeE30 > 0;
     uint256 _absolutePositionSize = (
@@ -83,18 +85,14 @@ contract TradeService is ITradeService {
     }
 
     // check sub account is healty
-    {
-      uint256 _subAccountEquity = ICalculator(calculator).getEquity(
-        _subAccount
-      );
-      // maintenance margin requirement (MMR) = position size * maintenance margin fraction
-      // note: maintenanceMarginFraction is 1e18
-      uint256 _mmr = ICalculator(calculator).getMMR(_subAccount);
+    uint256 _subAccountEquity = ICalculator(calculator).getEquity(_subAccount);
+    // maintenance margin requirement (MMR) = position size * maintenance margin fraction
+    // note: maintenanceMarginFraction is 1e18
+    uint256 _mmr = ICalculator(calculator).getMMR(_subAccount);
 
-      // if sub account equity < MMR, then trader couln't decrease position
-      if (_subAccountEquity < _mmr) {
-        revert ITradeService_SubAccountEquityIsUnderMMR();
-      }
+    // if sub account equity < MMR, then trader couln't decrease position
+    if (_subAccountEquity < _mmr) {
+      revert ITradeService_SubAccountEquityIsUnderMMR();
     }
 
     // todo: update funding & borrowing fee rate
@@ -102,7 +100,9 @@ contract TradeService is ITradeService {
     // todo: collect fee
     // todo: calculate USD out
 
-    // update position state
+    // =========================================
+    // | ------ update perp storage ---------- |
+    // =========================================
     uint256 _newPositivePositionSize = _absolutePositionSize -
       _positionSizeE30ToDecrease;
 
@@ -115,7 +115,6 @@ contract TradeService is ITradeService {
       _newPositivePositionSize == 0 ? 0 : _position.avgEntryPriceE30 // _newAvgPriceE30
     );
 
-    // update market global state
     {
       // if position size > 0, then the position is Long position
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
@@ -141,16 +140,20 @@ contract TradeService is ITradeService {
       }
     }
 
+    // =========================================
+    // | ------- settlement position --------- |
+    // =========================================
     // todo: settle profit & loss
-    // post validate
+
+    // =========================================
+    // | --------- post validation ----------- |
+    // =========================================
     {
       // check sub account is healty
-      uint256 _subAccountEquity = ICalculator(calculator).getEquity(
-        _subAccount
-      );
+      _subAccountEquity = ICalculator(calculator).getEquity(_subAccount);
       // maintenance margin requirement (MMR) = position size * maintenance margin fraction
       // note: maintenanceMarginFraction is 1e18
-      uint256 _mmr = ICalculator(calculator).getMMR(_subAccount);
+      _mmr = ICalculator(calculator).getMMR(_subAccount);
 
       // if sub account equity < MMR, then trader couln't decrease position
       if (_subAccountEquity < _mmr) {

@@ -54,7 +54,7 @@ contract TradeService is ITradeService {
   ) external {
     // prepare
     // todo: integrate with oracle
-    uint256 _currentPrice = 1 ether;
+    uint256 _currentPrice = 1e30;
 
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
@@ -70,17 +70,17 @@ contract TradeService is ITradeService {
     // =========================================
     // todo: check market status
     bool isLongPosition = _position.positionSizeE30 > 0;
-    uint256 _absolutePositionSize = (
+    uint256 _absolutePositionSizeE30 = (
       isLongPosition ? _position.positionSizeE30 : -_position.positionSizeE30
     ).toUint256();
 
     // if position size is 0 means this position is already closed
-    if (_absolutePositionSize == 0) {
+    if (_absolutePositionSizeE30 == 0) {
       revert ITradeService_PositionAlreadyClosed();
     }
 
     // position size to decrease is greater then position size, should be revert
-    if (_positionSizeE30ToDecrease > _absolutePositionSize) {
+    if (_positionSizeE30ToDecrease > _absolutePositionSizeE30) {
       revert ITradeService_DecreaseTooHighPositionSize();
     }
 
@@ -103,7 +103,7 @@ contract TradeService is ITradeService {
     // =========================================
     // | ------ update perp storage ---------- |
     // =========================================
-    uint256 _newPositivePositionSize = _absolutePositionSize -
+    uint256 _newPositivePositionSize = _absolutePositionSizeE30 -
       _positionSizeE30ToDecrease;
 
     _position = IPerpStorage(perpStorage).updatePositionById(

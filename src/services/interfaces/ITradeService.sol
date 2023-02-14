@@ -6,4 +6,5 @@ interface ITradeService {
   error ITradeService_PositionAlreadyClosed();
   error ITradeService_DecreaseTooHighPositionSize();
   error ITradeService_SubAccountEquityIsUnderMMR();
+  error ITradeService_TooTinyPosition();
 }

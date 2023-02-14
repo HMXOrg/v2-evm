@@ -49,7 +49,7 @@ interface IPerpStorage {
     bytes32 _positionId
   ) external view returns (Position memory);
 
-  function globalMarkets(
+  function getGlobalMarketById(
     uint256 _marketId
   ) external view returns (GlobalMarket memory);
 
@@ -68,10 +68,10 @@ interface IPerpStorage {
     uint256 _newOpenInterest
   ) external;
 
-  function updateGlobaShortMarketById(
+  function updateGlobalShortMarketById(
     uint256 _marketId,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
-    uint256 _newSOpenInterest
+    uint256 _newOpenInterest
   ) external;
 }

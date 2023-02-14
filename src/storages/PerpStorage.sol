@@ -26,6 +26,12 @@ contract PerpStorage is IPerpStorage {
     return positions[_index];
   }
 
+  function getGlobalMarketById(
+    uint256 _marketId
+  ) external view returns (GlobalMarket memory) {
+    return globalMarkets[_marketId];
+  }
+
   // todo: add description
   // todo: support to update borrowing rate
   // todo: support to update funding rate
@@ -56,7 +62,7 @@ contract PerpStorage is IPerpStorage {
   }
 
   // todo: update funding rate
-  function updateGlobaShortMarketById(
+  function updateGlobalShortMarketById(
     uint256 _marketId,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,

@@ -13,9 +13,13 @@ import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 
 contract TradeService is ITradeService {
   using SafeCast for int256;
+  using SafeCast for uint256;
 
   // events
-  event LogDecreasePosition();
+  event LogDecreasePosition(
+    bytes32 indexed _positionId,
+    uint256 _decreasedSize
+  );
 
   // state
   address perpStorage;
@@ -41,18 +45,17 @@ contract TradeService is ITradeService {
   /// @param _account - address
   /// @param _subAccountId - address
   /// @param _marketId - market id
-  /// @param _positionSizeE30ToDecrease - position size to decrease,
-  ///                           if target position is Long position _size should be position,
-  ///                           otherwise _size should be negative
-  /// @param _priceE30 - asset price in USD e30
+  /// @param _positionSizeE30ToDecrease - position size to decrease
   function decreasePosition(
     address _account,
     uint256 _subAccountId,
     uint256 _marketId,
-    int256 _positionSizeE30ToDecrease,
-    uint256 _priceE30
+    uint256 _positionSizeE30ToDecrease
   ) external {
     // prepare
+    // todo: integrate with oracle
+    uint256 _currentPrice = 1 ether;
+
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
     ).getMarketConfigById(_marketId);
@@ -64,29 +67,34 @@ contract TradeService is ITradeService {
 
     // pre validation
     // todo: check market status
+    bool isLongPosition = _position.positionSizeE30 > 0;
+    uint256 _absolutePositionSize = (
+      isLongPosition ? _position.positionSizeE30 : -_position.positionSizeE30
+    ).toUint256();
+
     // if position size is 0 means this position is already closed
-    int256 _positionSize = _position.positionSizeE30;
-    if (_positionSize == 0) {
+    if (_absolutePositionSize == 0) {
       revert ITradeService_PositionAlreadyClosed();
     }
 
-    if (_positionSizeE30ToDecrease > _positionSize) {
+    // position size to decrease is greater then position size, should be revert
+    if (_positionSizeE30ToDecrease > _absolutePositionSize) {
       revert ITradeService_DecreaseTooHighPositionSize();
     }
 
     // check sub account is healty
-    uint256 _subAccountEquity = ICalculator(calculator).getEquity(_subAccount);
-    // absolute position size
-    uint256 _absPositionSize = (
-      _positionSize > 0 ? _positionSize : -_positionSize
-    ).toUint256();
-    // maintenanceMarginFraction is 1e18, mmr = position size * maintenance margin fraction
-    uint256 _mmr = (_absPositionSize *
-      _marketConfig.maintenanceMarginFraction) / 1e18;
+    {
+      uint256 _subAccountEquity = ICalculator(calculator).getEquity(
+        _subAccount
+      );
+      // maintenance margin requirement (MMR) = position size * maintenance margin fraction
+      // note: maintenanceMarginFraction is 1e18
+      uint256 _mmr = ICalculator(calculator).getMMR(_subAccount);
 
-    // if sub account equity < MMR, then trader couln't decrease position
-    if (_subAccountEquity < _mmr) {
-      revert ITradeService_SubAccountEquityIsUnderMMR();
+      // if sub account equity < MMR, then trader couln't decrease position
+      if (_subAccountEquity < _mmr) {
+        revert ITradeService_SubAccountEquityIsUnderMMR();
+      }
     }
 
     // todo: update funding & borrowing fee rate
@@ -95,21 +103,71 @@ contract TradeService is ITradeService {
     // todo: calculate USD out
 
     // update position state
-    int256 _newPositionSize = _positionSize - _positionSizeE30ToDecrease;
-    // absolute new position size
-    uint256 _absNewPositionSize = (
-      _positionSize > 0 ? _positionSize : -_positionSize
-    ).toUint256();
+    uint256 _newPositivePositionSize = _absolutePositionSize -
+      _positionSizeE30ToDecrease;
+
     _position = IPerpStorage(perpStorage).updatePositionById(
       _positionId,
-      _newPositionSize, // _newPositionSizeE30
-      (_absNewPositionSize * _marketConfig.maxProfitRate) / 1e18, // _newReserveValueE30
-      _newPositionSize == 0 ? 0 : _position.avgEntryPriceE30 // _newAvgPriceE30
+      isLongPosition
+        ? _newPositivePositionSize.toInt256()
+        : -(_newPositivePositionSize.toInt256()), // todo: optimized
+      (_newPositivePositionSize * _marketConfig.maxProfitRate) / 1e18, // _newReserveValueE30
+      _newPositivePositionSize == 0 ? 0 : _position.avgEntryPriceE30 // _newAvgPriceE30
     );
-    // todo: update market global state
+
+    // update market global state
+    {
+      // if position size > 0, then the position is Long position
+      IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
+        .getGlobalMarketById(_marketId);
+
+      uint256 _changedOpenInterest = (_positionSizeE30ToDecrease * 1e30) /
+        _currentPrice;
+
+      if (isLongPosition) {
+        IPerpStorage(perpStorage).updateGlobalLongMarketById(
+          _marketId,
+          _globalMarket.longPositionSize - _positionSizeE30ToDecrease,
+          _globalMarket.longAvgPrice, // todo: recalculate arg price
+          _globalMarket.longOpenInterest - _changedOpenInterest
+        );
+      } else {
+        IPerpStorage(perpStorage).updateGlobalShortMarketById(
+          _marketId,
+          _globalMarket.shortPositionSize - _positionSizeE30ToDecrease,
+          _globalMarket.shortAvgPrice, // todo: recalculate arg price
+          _globalMarket.shortOpenInterest - _changedOpenInterest
+        );
+      }
+    }
 
     // todo: settle profit & loss
     // post validate
+    {
+      // check sub account is healty
+      uint256 _subAccountEquity = ICalculator(calculator).getEquity(
+        _subAccount
+      );
+      // maintenance margin requirement (MMR) = position size * maintenance margin fraction
+      // note: maintenanceMarginFraction is 1e18
+      uint256 _mmr = ICalculator(calculator).getMMR(_subAccount);
+
+      // if sub account equity < MMR, then trader couln't decrease position
+      if (_subAccountEquity < _mmr) {
+        revert ITradeService_SubAccountEquityIsUnderMMR();
+      }
+
+      // check position is too tiny
+      // todo: now validate this at 1 USD, design where to keep this config
+      //       due to we has problem stack too deep in MarketConfig now
+      if (_newPositivePositionSize < 1e30) {
+        revert ITradeService_TooTinyPosition();
+      }
+    }
+
+    // todo: bad debt
+
+    emit LogDecreasePosition(_positionId, _positionSizeE30ToDecrease);
   }
 
   // todo: add description

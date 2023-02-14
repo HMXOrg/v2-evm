@@ -49,7 +49,7 @@ interface IConfigStorage {
     uint256 maxPLPUtilization;
     uint256 plpSafetyBufferThreshold;
     uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
-    uint256 dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
+    bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
     uint256 flashLoanFeeRate;
   }
 
@@ -69,4 +69,43 @@ interface IConfigStorage {
   struct LiquidationConfig {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
+
+  //errors
+  error ConfigStorage_NotWhiteListed();
+
+  // methods
+  function validateServiceExecutor(
+    address _contractAddress,
+    address _executorAddress
+  ) external;
+
+  function setServiceExecutor(
+    address _contractAddress,
+    address _executorAddress,
+    bool _isServiceExecutor
+  ) external;
+
+  function setCalculator(address _calculator) external;
+
+  function setPLP(address _plp) external;
+
+  function getPLPTokenConfig(
+    address _token
+  ) external view returns (PLPTokenConfig memory);
+
+  // methods for variable
+  function plp() external view returns (address);
+
+  function calculator() external view returns (address);
+
+  function dynamicFeeEnabled() external view returns (bool);
+
+  function getLiquidityConfig() external view returns (LiquidityConfig memory);
+
+  function getLiquidationConfig()
+    external
+    view
+    returns (LiquidationConfig memory);
+
+  function treasury() external view returns (address);
 }

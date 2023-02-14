@@ -6,71 +6,63 @@ import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
-abstract contract VaultStorage is IVaultStorage {
+contract VaultStorage is IVaultStorage {
   // liquidity provider address => token => amount
   mapping(address => mapping(address => uint256))
     public liquidityProviderBalances;
   mapping(address => address[]) public liquidityProviderTokens;
 
+  mapping(address => uint256) totalLiquidityTokens;
+
+  // fee in token unit
+  mapping(address => uint256) fees;
+
   // trader address (with sub-account) => token => amount
   mapping(address => mapping(address => uint256)) public traderBalances;
   mapping(address => address[]) public traderTokens;
 
-  // TODO: move to service
-  function incrementLPBalance(
-    address liquidityProviderAddress,
-    address token,
-    uint256 amount
+  function setLiquidityProviderBalances(
+    address _lpProvider,
+    address _token,
+    uint256 _amount
   ) external {
-    uint oldBalance = liquidityProviderBalances[liquidityProviderAddress][
-      token
-    ];
-    uint newBalance = oldBalance + amount;
-
-    liquidityProviderBalances[liquidityProviderAddress][token] = newBalance;
-
-    // register new token to a user
-    if (oldBalance == 0 && newBalance != 0) {
-      address[] storage liquidityProviderToken = liquidityProviderTokens[
-        liquidityProviderAddress
-      ];
-      liquidityProviderToken.push(token);
-    }
+    liquidityProviderBalances[_lpProvider][_token] = _amount;
   }
 
-  // TODO: move to service
-  function decrementLPBalance(
-    address liquidityProviderAddress,
-    address token,
-    uint256 amount
+  function setLiquidityProviderTokens(
+    address _lpProvider,
+    address _token
   ) external {
-    uint oldBalance = liquidityProviderBalances[liquidityProviderAddress][
-      token
-    ];
-    if (amount > oldBalance) revert("insufficient balance");
+    liquidityProviderTokens[_lpProvider].push(_token);
+  }
 
-    uint newBalance = oldBalance - amount;
-    liquidityProviderBalances[liquidityProviderAddress][token] = newBalance;
+  // TODO modifier?
+  function addFee(address _token, uint256 _amount) external {
+    fees[_token] += _amount;
+  }
 
-    // deregister token, if the use remove all of the token out
-    if (oldBalance != 0 && newBalance == 0) {
-      address[] storage liquidityProviderToken = liquidityProviderTokens[
-        liquidityProviderAddress
-      ];
-      uint256 tokenLen = liquidityProviderToken.length;
-      uint256 lastTokenIndex = tokenLen - 1;
+  function getLiquidityProviderTokens(
+    address _token
+  ) external view returns (address[] memory) {
+    return liquidityProviderTokens[_token];
+  }
 
-      // find and deregister the token
-      for (uint256 i; i < tokenLen; i++) {
-        if (liquidityProviderToken[i] == token) {
-          // delete the token by replacing it with the last one and then pop it from there
-          if (i != lastTokenIndex) {
-            liquidityProviderToken[i] = liquidityProviderToken[lastTokenIndex];
-          }
-          liquidityProviderToken.pop();
-          break;
-        }
-      }
-    }
+  function getLiquidityProviderBalances(
+    address _lpProvider,
+    address _token
+  ) external view returns (uint256) {
+    return liquidityProviderBalances[_lpProvider][_token];
+  }
+
+  function getTraderTokens(
+    address _trader
+  ) external view returns (address[] memory) {
+    return traderTokens[_trader];
+  }
+
+  function getTotalLiquidityTokens(
+    address _token
+  ) external view returns (uint256) {
+    return totalLiquidityTokens[_token];
   }
 }

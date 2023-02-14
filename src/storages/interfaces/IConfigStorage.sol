@@ -2,6 +2,10 @@
 pragma solidity 0.8.18;
 
 interface IConfigStorage {
+  // ERRORs
+  error NotAcceptedCollateral();
+  error NotWhiteListed();
+
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
     uint256 decimals;
@@ -69,4 +73,11 @@ interface IConfigStorage {
   struct LiquidationConfig {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
+
+  function validateServiceExecutor(
+    address _contractAddress,
+    address _executorAddress
+  ) external view;
+
+  function validateAcceptedCollateral(address _token) external view;
 }

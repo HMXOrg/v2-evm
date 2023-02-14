@@ -69,6 +69,8 @@ contract TradeService is ITradeService {
     // | ---------- pre validation ----------- |
     // =========================================
     // todo: check market status
+    // todo: check market config
+
     bool isLongPosition = _position.positionSizeE30 > 0;
     uint256 _absolutePositionSizeE30 = (
       isLongPosition ? _position.positionSizeE30 : -_position.positionSizeE30
@@ -106,12 +108,15 @@ contract TradeService is ITradeService {
     uint256 _newPositivePositionSize = _absolutePositionSizeE30 -
       _positionSizeE30ToDecrease;
 
+    uint256 _imr = (_newPositivePositionSize *
+      _marketConfig.initialMarginFraction) / 1e18;
+
     _position = IPerpStorage(perpStorage).updatePositionById(
       _positionId,
       isLongPosition
         ? _newPositivePositionSize.toInt256()
         : -(_newPositivePositionSize.toInt256()), // todo: optimized
-      (_newPositivePositionSize * _marketConfig.maxProfitRate) / 1e18, // _newReserveValueE30
+      (_imr * _marketConfig.maxProfitRate) / 1e18, // _newReserveValueE30
       _newPositivePositionSize == 0 ? 0 : _position.avgEntryPriceE30 // _newAvgPriceE30
     );
 

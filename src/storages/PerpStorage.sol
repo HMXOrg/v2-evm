@@ -29,7 +29,7 @@ contract PerpStorage is IPerpStorage {
   // todo: add description
   // todo: support to update borrowing rate
   // todo: support to update funding rate
-  function setPositionById(
+  function updatePositionById(
     bytes32 _positionId,
     int256 _newPositionSizeE30,
     uint256 _newReserveValueE30,

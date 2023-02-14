@@ -50,7 +50,7 @@ interface IPerpStorage {
   ) external view returns (Position memory);
 
   // setter
-  function setPositionById(
+  function updatePositionById(
     bytes32 _positionId,
     int256 _newPositionSizeE30,
     uint256 _newReserveValueE30,

@@ -100,7 +100,7 @@ contract TradeService is ITradeService {
     uint256 _absNewPositionSize = (
       _positionSize > 0 ? _positionSize : -_positionSize
     ).toUint256();
-    _position = IPerpStorage(perpStorage).setPositionById(
+    _position = IPerpStorage(perpStorage).updatePositionById(
       _positionId,
       _newPositionSize, // _newPositionSizeE30
       (_absNewPositionSize * _marketConfig.maxProfitRate) / 1e18, // _newReserveValueE30

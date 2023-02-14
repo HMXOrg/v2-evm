@@ -49,6 +49,10 @@ interface IPerpStorage {
     bytes32 _positionId
   ) external view returns (Position memory);
 
+  function globalMarkets(
+    uint256 _marketId
+  ) external view returns (GlobalMarket memory);
+
   // setter
   function updatePositionById(
     bytes32 _positionId,
@@ -56,4 +60,18 @@ interface IPerpStorage {
     uint256 _newReserveValueE30,
     uint256 _newAvgPriceE30
   ) external returns (Position memory _position);
+
+  function updateGlobalLongMarketById(
+    uint256 _marketId,
+    uint256 _newPositionSize,
+    uint256 _newAvgPrice,
+    uint256 _newOpenInterest
+  ) external;
+
+  function updateGlobaShortMarketById(
+    uint256 _marketId,
+    uint256 _newPositionSize,
+    uint256 _newAvgPrice,
+    uint256 _newSOpenInterest
+  ) external;
 }

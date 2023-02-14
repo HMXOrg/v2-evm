@@ -42,4 +42,28 @@ contract PerpStorage is IPerpStorage {
     _position.avgEntryPriceE30 = _newAvgPriceE30;
     positions[_index] = _position;
   }
+
+  // todo: update funding rate
+  function updateGlobalLongMarketById(
+    uint256 _marketId,
+    uint256 _newPositionSize,
+    uint256 _newAvgPrice,
+    uint256 _newOpenInterest
+  ) external {
+    globalMarkets[_marketId].longPositionSize = _newPositionSize;
+    globalMarkets[_marketId].longAvgPrice = _newAvgPrice;
+    globalMarkets[_marketId].longOpenInterest = _newOpenInterest;
+  }
+
+  // todo: update funding rate
+  function updateGlobaShortMarketById(
+    uint256 _marketId,
+    uint256 _newPositionSize,
+    uint256 _newAvgPrice,
+    uint256 _newOpenInterest
+  ) external {
+    globalMarkets[_marketId].shortPositionSize = _newPositionSize;
+    globalMarkets[_marketId].shortAvgPrice = _newAvgPrice;
+    globalMarkets[_marketId].longOpenInterest = _newOpenInterest;
+  }
 }

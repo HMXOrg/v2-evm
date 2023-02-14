@@ -6,12 +6,14 @@ import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { PythStructs } from "pyth-sdk-solidity/PythStructs.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   // errors
   error PythAdapter_BrokenPythPrice();
   error PythAdapter_ConfidenceRatioTooHigh();
   error PythAdapter_OnlyUpdater();
+  error PythAdapter_UnknownAssetId();
 
   // state variables
   IPyth public pyth;
@@ -51,12 +53,36 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
     pythPriceIdOf[assetId] = pythPriceId;
   }
 
+  /// @notice A function for setting updater who is able to updatePrices based on price update data
+  function setUpdater(address _account, bool _isActive) external onlyOwner {
+    isUpdater[_account] = _isActive;
+
+    emit SetUpdater(_account, _isActive);
+  }
+
+  /// @notice A function for updating prices based on price update data
+  /// @param _priceData - price update data
+  function updatePrices(
+    bytes[] memory _priceData
+  ) external payable onlyUpdater {
+    uint256 fee = pyth.getUpdateFee(_priceData);
+    pyth.updatePriceFeeds{ value: fee }(_priceData);
+  }
+
+  /// @notice A function for getting update fee based on price update data
+  /// @param _priceUpdateData - price update data
+  function getUpdateFee(
+    bytes[] memory _priceUpdateData
+  ) external view returns (uint256) {
+    return pyth.getUpdateFee(_priceUpdateData);
+  }
+
   /// @notice convert Pyth's price to uint256.
   /// @dev This is partially taken from https://github.com/pyth-network/pyth-crosschain/blob/main/target_chains/ethereum/examples/oracle_swap/contract/src/OracleSwap.sol#L92
   /// @param priceStruct The Pyth's price struct to convert.
   /// @param isMax Whether to use the max price or min price.
   /// @param targetDecimals The target decimals to convert to.
-  function convertToUint256(
+  function _convertToUint256(
     PythStructs.Price memory priceStruct,
     bool isMax,
     uint8 targetDecimals
@@ -84,17 +110,15 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   /// @dev To bypass the confidence check, the user can submit threshold = 1 ether
   /// @param priceStruct The Pyth's price struct to convert.
   /// @param confidenceThreshold The acceptable threshold confidence ratio. ex. confidenceRatio = 0.01 ether means 1%
-  function validateConfidence(
+  function _validateConfidence(
     PythStructs.Price memory priceStruct,
     uint256 confidenceThreshold
   ) private pure {
-    if (priceStruct.price < 0) {
-      revert PythAdapter_BrokenPythPrice();
-    }
+    if (priceStruct.price < 0) revert PythAdapter_BrokenPythPrice();
 
     // Calculate confidenceRatio in 1e18 base.
-    uint256 confidenceRatio = (priceStruct.conf * uint64(1e18)) /
-      uint64(priceStruct.price);
+    uint256 confidenceRatio = (uint256(priceStruct.conf) * 1e18) /
+      uint256(uint64(priceStruct.price));
 
     // Revert if confidence ratio is too high
     if (confidenceRatio > confidenceThreshold)
@@ -110,35 +134,13 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
     bool isMax,
     uint256 confidenceThreshold
   ) external view returns (uint256, uint256) {
-    PythStructs.Price memory price = pyth.getPriceUnsafe(
-      pythPriceIdOf[assetId]
-    );
+    // SLOAD
+    bytes32 pythPriceId = pythPriceIdOf[assetId];
+    if (pythPriceId == bytes32(0)) revert PythAdapter_UnknownAssetId();
 
-    validateConfidence(price, confidenceThreshold);
-    return (convertToUint256(price, isMax, 30), price.publishTime);
-  }
+    PythStructs.Price memory price = pyth.getPriceUnsafe(pythPriceId);
+    _validateConfidence(price, confidenceThreshold);
 
-  /// @notice A function for setting updater who is able to updatePrices based on price update data
-  function setUpdater(address _account, bool _isActive) external onlyOwner {
-    isUpdater[_account] = _isActive;
-
-    emit SetUpdater(_account, _isActive);
-  }
-
-  /// @notice A function for updating prices based on price update data
-  /// @param _priceData - price update data
-  function updatePrices(
-    bytes[] memory _priceData
-  ) external payable onlyUpdater {
-    uint256 fee = pyth.getUpdateFee(_priceData);
-    pyth.updatePriceFeeds{ value: fee }(_priceData);
-  }
-
-  /// @notice A function for getting update fee based on price update data
-  /// @param _priceUpdateData - price update data
-  function getUpdateFee(
-    bytes[] memory _priceUpdateData
-  ) external view returns (uint256) {
-    return pyth.getUpdateFee(_priceUpdateData);
+    return (_convertToUint256(price, isMax, 30), price.publishTime);
   }
 }

@@ -8,6 +8,8 @@ import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { Deployment } from "../../script/Deployment.s.sol";
 
+import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
+
 abstract contract BaseTest is TestBase, Deployment, StdAssertions {
   address internal constant ALICE = address(234892);
   address internal constant BOB = address(234893);
@@ -62,6 +64,13 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
       defaultOracleStaleTime: 300
     });
     return deploy(deployLocalVars);
+  }
+
+  function deployCrossMarginService(
+    address configStorage,
+    address vaultStorage
+  ) internal returns (CrossMarginService) {
+    return new CrossMarginService(configStorage, vaultStorage);
   }
 
   // --------- Setup Helpers ---------

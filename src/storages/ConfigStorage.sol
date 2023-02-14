@@ -30,11 +30,32 @@ contract ConfigStorage is IConfigStorage {
 
   constructor() {}
 
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  VALIDATION FUNCTION  ///////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  function validateServiceExecutor(
+    address _contractAddress,
+    address _executorAddress
+  ) external view {
+    if (!serviceExecutors[_contractAddress][_executorAddress])
+      revert NotWhiteListed();
+  }
+
+  function validateAcceptedCollateral(address _token) external view {
+    if (!collateralTokenConfigs[_token].accepted)
+      revert NotAcceptedCollateral();
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  SETTER FUNCTION  ///////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
+
   function setServiceExecutor(
     address _contractAddress,
     address _executorAddress,
     bool _isServiceExecutor
-  ) public {
+  ) external {
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
 
     emit SetServiceExecutor(
@@ -44,16 +65,30 @@ contract ConfigStorage is IConfigStorage {
     );
   }
 
-  function validateServiceExecutor(
-    address _contractAddress,
-    address _executorAddress
-  ) public view {
-    if (!serviceExecutors[_contractAddress][_executorAddress])
-      revert NotWhiteListed();
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  function getCollateralTokenConfigs(
+    address _token
+  ) external view returns (CollateralTokenConfig memory collateralTokenConfig) {
+    return collateralTokenConfigs[_token];
   }
 
-  function validateAcceptedCollateral(address _token) public view {
-    if (!collateralTokenConfigs[_token].accepted)
-      revert NotAcceptedCollateral();
+  function getMarketConfigByIndex(
+    uint256 _index
+  ) external view returns (MarketConfig memory marketConfig) {
+    return marketConfigs[_index];
+  }
+
+  function getMarketConfigByAssetId(
+    bytes32 _assetId
+  ) external view returns (MarketConfig memory marketConfig) {
+    for (uint i; i < marketConfigs.length; ) {
+      if (marketConfigs[i].assetId == _assetId) return marketConfigs[i];
+      unchecked {
+        i++;
+      }
+    }
   }
 }

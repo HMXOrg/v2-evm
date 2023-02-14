@@ -40,4 +40,8 @@ interface IPerpStorage {
     uint256 openInterest;
     uint256 realizedPnl;
   }
+
+  function getPositionBySubAccount(
+    address _trader
+  ) external view returns (Position[] memory traderPositions);
 }

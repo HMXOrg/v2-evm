@@ -80,4 +80,16 @@ interface IConfigStorage {
   ) external view;
 
   function validateAcceptedCollateral(address _token) external view;
+
+  function getCollateralTokenConfigs(
+    address _token
+  ) external view returns (CollateralTokenConfig memory collateralTokenConfig);
+
+  function getMarketConfigByIndex(
+    uint256 _index
+  ) external view returns (MarketConfig memory marketConfig);
+
+  function getMarketConfigByAssetId(
+    bytes32 _assetId
+  ) external view returns (MarketConfig memory marketConfig);
 }

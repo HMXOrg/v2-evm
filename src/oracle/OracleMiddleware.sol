@@ -21,8 +21,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   mapping(address => bool) public isUpdater;
 
   // events
-  event SetMarketStatus(bytes32 indexed assetId, uint8 status);
-  event SetUpdater(address indexed account, bool isActive);
+  event SetMarketStatus(bytes32 indexed _assetId, uint8 _status);
+  event SetUpdater(address indexed _account, bool _isActive);
 
   // states
   // MarketStatus
@@ -49,13 +49,16 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   }
 
   /// @notice Set market status for the given asset.
-  /// @param assetId The asset address to set.
-  /// @param status Status enum, see `marketStatus` comment section.
-  function setMarketStatus(bytes32 assetId, uint8 status) external onlyUpdater {
-    if (status > 2) revert OracleMiddleware_InvalidMarketStatus();
+  /// @param _assetId The asset address to set.
+  /// @param _status Status enum, see `marketStatus` comment section.
+  function setMarketStatus(
+    bytes32 _assetId,
+    uint8 _status
+  ) external onlyUpdater {
+    if (_status > 2) revert OracleMiddleware_InvalidMarketStatus();
 
-    marketStatus[assetId] = status;
-    emit SetMarketStatus(assetId, status);
+    marketStatus[_assetId] = _status;
+    emit SetMarketStatus(_assetId, _status);
   }
 
   /// @notice A function for setting updater who is able to setMarketStatus
@@ -83,14 +86,14 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _confidenceThreshold
   ) internal view returns (uint256, uint256) {
     // 1. get price from Pyth
-    (uint256 price, uint256 lastUpdate) = pythAdapter.getLatestPrice(
+    (uint256 _price, uint256 _lastUpdate) = pythAdapter.getLatestPrice(
       _assetId,
       _isMax,
       _confidenceThreshold
     );
 
     // 2. Return the price and last update
-    return (price, lastUpdate);
+    return (_price, _lastUpdate);
   }
 
   /// @notice Return the latest price in USD, last update of the given asset, along with market status.
@@ -103,14 +106,14 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     uint256 _confidenceThreshold
   ) external view returns (uint256, uint256, uint8) {
-    uint8 status = marketStatus[_assetId];
-    if (status == 0) revert OracleMiddleware_MarketStatusUndefined();
+    uint8 _status = marketStatus[_assetId];
+    if (_status == 0) revert OracleMiddleware_MarketStatusUndefined();
 
-    (uint price, uint lastUpdate) = _getLatestPrice(
+    (uint256 _price, uint256 _lastUpdate) = _getLatestPrice(
       _assetId,
       _isMax,
       _confidenceThreshold
     );
-    return (price, lastUpdate, status);
+    return (_price, _lastUpdate, _status);
   }
 }

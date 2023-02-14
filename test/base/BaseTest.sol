@@ -3,18 +3,36 @@ pragma solidity 0.8.18;
 
 import { TestBase } from "forge-std/Base.sol";
 import { console2 } from "forge-std/console2.sol";
+import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
-import { MockErc20 } from "../mocks/MockErc20.sol";
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
-import { Deployment } from "../../script/Deployment.s.sol";
 
-abstract contract BaseTest is TestBase, Deployment, StdAssertions {
-  address internal constant ALICE = address(234892);
-  address internal constant BOB = address(234893);
-  address internal constant CAROL = address(234894);
-  address internal constant DAVE = address(234895);
+import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+
+import { MockErc20 } from "../mocks/MockErc20.sol";
+import { MockCalculator } from "../mocks/MockCalculator.sol";
+
+import { Deployment } from "../../script/Deployment.s.sol";
+import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
+
+abstract contract BaseTest is
+  TestBase,
+  Deployment,
+  StorageDeployment,
+  StdAssertions,
+  StdCheatsSafe
+{
+  address internal ALICE;
+  address internal BOB;
+  address internal CAROL;
+  address internal DAVE;
+
+  // storages
+  address internal configStorage;
+  address internal perpStorage;
+  address internal vaultStorage;
 
   MockPyth internal mockPyth;
+  MockCalculator internal mockCalculator;
 
   MockErc20 internal weth;
   MockErc20 internal wbtc;
@@ -37,11 +55,22 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
     // and 1 wei for updating price.
     mockPyth = new MockPyth(60, 1);
 
+    ALICE = makeAddr("Alice");
+    BOB = makeAddr("BOB");
+    CAROL = makeAddr("CAROL");
+    DAVE = makeAddr("DAVE");
+
     weth = deployMockErc20("Wrapped Ethereum", "WETH", 18);
     wbtc = deployMockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = deployMockErc20("DAI Stablecoin", "DAI", 18);
     usdc = deployMockErc20("USD Coin", "USDC", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
+
+    configStorage = deployConfigStorage();
+    perpStorage = deployPerpStorage();
+    vaultStorage = deployVaultStorage();
+
+    mockCalculator = new MockCalculator();
   }
 
   // --------- Deploy Helpers ---------
@@ -62,70 +91,5 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
       defaultOracleStaleTime: 300
     });
     return deploy(deployLocalVars);
-  }
-
-  // --------- Setup Helpers ---------
-  // function setupDefaultUnderlying()
-  //   internal
-  //   view
-  //   returns (address[] memory, PoolConfig.UnderlyingConfig[] memory)
-  // {
-  //   address[] memory underlyings = new address[](4);
-  //   underlyings[0] = address(weth);
-  //   underlyings[1] = address(wbtc);
-  //   underlyings[2] = address(dai);
-  //   underlyings[3] = address(usdc);
-
-  //   PoolConfig.UnderlyingConfig[]
-  //     memory underlyingConfigs = new PoolConfig.UnderlyingConfig[](4);
-  //   underlyingConfigs[0] = PoolConfig.UnderlyingConfig({
-  //     isAccept: true,
-  //     decimals: weth.decimals(),
-  //     weight: 100
-  //   });
-  //   underlyingConfigs[1] = PoolConfig.UnderlyingConfig({
-  //     isAccept: true,
-  //     decimals: wbtc.decimals(),
-  //     weight: 100
-  //   });
-  //   underlyingConfigs[2] = PoolConfig.UnderlyingConfig({
-  //     isAccept: true,
-  //     decimals: dai.decimals(),
-  //     weight: 100
-  //   });
-  //   underlyingConfigs[3] = PoolConfig.UnderlyingConfig({
-  //     isAccept: true,
-  //     decimals: usdc.decimals(),
-  //     weight: 100
-  //   });
-
-  //   return (underlyings, underlyingConfigs);
-  // }
-
-  // --------- Test Helpers ---------
-
-  /// @notice Helper function to create a price feed update data.
-  /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
-  /// @param priceData The price data to create the update data.
-  function buildPythUpdateData(
-    int64[] memory priceData
-  ) internal view returns (bytes[] memory) {
-    require(priceData.length == 4, "invalid price data length");
-    bytes[] memory priceDataBytes = new bytes[](4);
-    for (uint256 i = 1; i <= priceData.length; ) {
-      priceDataBytes[i - 1] = mockPyth.createPriceFeedUpdateData(
-        bytes32(uint256(i)),
-        priceData[i - 1] * 1e8,
-        0,
-        -8,
-        priceData[i - 1] * 1e8,
-        0,
-        uint64(block.timestamp)
-      );
-      unchecked {
-        ++i;
-      }
-    }
-    return priceDataBytes;
   }
 }

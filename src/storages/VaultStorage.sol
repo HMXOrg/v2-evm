@@ -12,10 +12,10 @@ contract VaultStorage is IVaultStorage {
     public liquidityProviderBalances;
   mapping(address => address[]) public liquidityProviderTokens;
 
-  mapping(address => uint256) totalLiquidityTokens;
+  mapping(address => uint256) public totalLiquidityTokens;
 
   // fee in token unit
-  mapping(address => uint256) fees;
+  mapping(address => uint256) public fees;
 
   // trader address (with sub-account) => token => amount
   mapping(address => mapping(address => uint256)) public traderBalances;
@@ -58,11 +58,5 @@ contract VaultStorage is IVaultStorage {
     address _trader
   ) external view returns (address[] memory) {
     return traderTokens[_trader];
-  }
-
-  function getTotalLiquidityTokens(
-    address _token
-  ) external view returns (uint256) {
-    return totalLiquidityTokens[_token];
   }
 }

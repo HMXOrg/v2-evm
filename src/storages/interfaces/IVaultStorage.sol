@@ -20,9 +20,9 @@ interface IVaultStorage {
     address _token
   ) external view returns (address[] memory);
 
-  function getTotalLiquidityTokens(
-    address _token
-  ) external view returns (uint256);
+  function totalLiquidityTokens(address _token) external view returns (uint256);
+
+  function fees(address _token) external view returns (uint amount);
 
   function addFee(address _token, uint256 _amount) external;
 

@@ -11,8 +11,8 @@ import { PLPv2 } from "../contracts/PLPv2.sol";
 
 /// @title LiquidityService
 contract LiquidityService is ILiquidityService {
-  IConfigStorage configStorage;
-  IVaultStorage vaultStorage;
+  address configStorage;
+  address vaultStorage;
 
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
   uint256 internal constant USD_DECIMALS = 18;
@@ -23,8 +23,8 @@ contract LiquidityService is ILiquidityService {
   }
 
   constructor(address _configStorage, address _vaultStorage) {
-    configStorage = IConfigStorage(_configStorage);
-    vaultStorage = IVaultStorage(_vaultStorage);
+    configStorage = _configStorage;
+    vaultStorage = _vaultStorage;
   }
 
   function addLiquidity(
@@ -33,11 +33,16 @@ contract LiquidityService is ILiquidityService {
     uint256 _amount,
     uint256 _minAmount
   ) external {
-    configStorage.validateServiceExecutor(address(this), msg.sender);
+    IConfigStorage(configStorage).validateServiceExecutor(
+      address(this),
+      msg.sender
+    );
 
     // TODO: validate circuit break
     // 1. Calculate and cache new PLP Price
-    ICalculator _calculator = ICalculator(configStorage.calculator());
+    ICalculator _calculator = ICalculator(
+      IConfigStorage(configStorage).calculator()
+    );
 
     // TODO fix here
     uint256 price = 1 ether;
@@ -46,8 +51,9 @@ contract LiquidityService is ILiquidityService {
     // 2.1 cal tokenValue = amount* tokenPrice
     uint256 tokenValueUsd = (_amount * price) / PRICE_PRECISION;
 
-    IConfigStorage.PLPTokenConfig memory tokenConfig = configStorage
-      .getPLPTokenConfig(_token);
+    IConfigStorage.PLPTokenConfig memory tokenConfig = IConfigStorage(
+      configStorage
+    ).getPLPTokenConfig(_token);
 
     // if input incorrect or config accepted is false
     if (!tokenConfig.accepted) {
@@ -66,6 +72,8 @@ contract LiquidityService is ILiquidityService {
 
     // 3 collect deposit fee
     uint256 _tokenPriceUsd = 0;
+
+    // Accouting protocol fee
     uint256 amountAfterFee = _collectFee(
       _token,
       _tokenPriceUsd,
@@ -82,7 +90,6 @@ contract LiquidityService is ILiquidityService {
 
     // Increase token liquidity
     _incrementLPBalance(_lpProvider, _token, amountAfterFee);
-    // Increase protocol fee
 
     // Transfer Token from LiquidityHandler to VaultStorage
     ERC20(_token).transferFrom(
@@ -94,9 +101,10 @@ contract LiquidityService is ILiquidityService {
     // 6. Mint PLP to user
     uint256 mintAmount = _calculator.getAUM() == 0
       ? amountAfterFee
-      : (amountAfterFee * ERC20(configStorage.plp()).totalSupply()) /
+      : (amountAfterFee *
+        ERC20(IConfigStorage(configStorage).plp()).totalSupply()) /
         _calculator.getAUM();
-    PLPv2(configStorage.plp()).mint(_lpProvider, mintAmount);
+    PLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
   }
 
   function _incrementLPBalance(
@@ -104,17 +112,24 @@ contract LiquidityService is ILiquidityService {
     address _token,
     uint256 _amount
   ) internal {
-    uint oldBalance = vaultStorage.liquidityProviderBalances(
+    uint oldBalance = IVaultStorage(vaultStorage).liquidityProviderBalances(
       _lpProvider,
       _token
     );
     uint newBalance = oldBalance + _amount;
 
-    vaultStorage.setLiquidityProviderBalances(_lpProvider, _token, _amount);
+    IVaultStorage(vaultStorage).setLiquidityProviderBalances(
+      _lpProvider,
+      _token,
+      _amount
+    );
 
     // register new token to a user
     if (oldBalance == 0 && newBalance != 0) {
-      vaultStorage.setLiquidityProviderTokens(_lpProvider, _token);
+      IVaultStorage(vaultStorage).setLiquidityProviderTokens(
+        _lpProvider,
+        _token
+      );
     }
   }
 
@@ -159,8 +174,9 @@ contract LiquidityService is ILiquidityService {
     address _token,
     uint256 _tokenValue
   ) internal returns (uint256) {
-    IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage
-      .getLiquidityConfig();
+    IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(
+      configStorage
+    ).getLiquidityConfig();
     if (!_liquidityConfig.dynamicFeeEnabled) {
       return _liquidityConfig.depositFeeRate;
     }
@@ -179,7 +195,10 @@ contract LiquidityService is ILiquidityService {
     uint256 amountAfterFee = (_amount * (1e18 - _feeRate)) / _feeRate;
     uint256 fee = _amount - amountAfterFee;
 
-    vaultStorage.addFee(_token, fee);
+    IVaultStorage(vaultStorage).addFee(
+      _token,
+      fee + IVaultStorage(vaultStorage).fees(_token)
+    );
 
     return amountAfterFee;
     // TODO emit event seperately ???

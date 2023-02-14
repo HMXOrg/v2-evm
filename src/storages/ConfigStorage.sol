@@ -20,4 +20,10 @@ contract ConfigStorage is IConfigStorage {
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
   // service => handler => isOK
   mapping(address => mapping(address => bool)) public serviceExecutors; // to allowed executor for service layer
+
+  function getMarketConfigById(
+    uint256 _marketId
+  ) external view returns (MarketConfig memory) {
+    return marketConfigs[_marketId];
+  }
 }

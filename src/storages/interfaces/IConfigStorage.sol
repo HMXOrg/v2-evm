@@ -69,4 +69,9 @@ interface IConfigStorage {
   struct LiquidationConfig {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
+
+  // getter
+  function getMarketConfigById(
+    uint256 _marketId
+  ) external view returns (MarketConfig memory);
 }

@@ -17,12 +17,16 @@ interface IPerpStorage {
 
   // mapping marketId => globalPosition;
   struct GlobalMarket {
-    uint256 globalLongSize; // (Long Open interest) in Amount
-    uint256 globalShortSize; // (Short Open interest) in Amount
-    uint256 globalLongAvgPrice;
-    uint256 globalShortAvgPrice;
-    uint256 globalLongFundingRate;
-    uint256 globalShortFundingRate;
+    // LONG position
+    uint256 longPositionSize;
+    uint256 longAvgPrice;
+    uint256 longFundingRate;
+    uint256 longOpenInterest;
+    // SHORT position
+    uint256 shortPositionSize;
+    uint256 shortAvgPrice;
+    uint256 shortFundingRate;
+    uint256 shortOpenInterest;
     uint256 lastFundingTime;
   }
 
@@ -37,7 +41,19 @@ interface IPerpStorage {
     uint256 entryFundingRate;
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
-    uint256 openInterest;
     uint256 realizedPnl;
   }
+
+  // getter
+  function getPositionById(
+    bytes32 _positionId
+  ) external view returns (Position memory);
+
+  // setter
+  function setPositionById(
+    bytes32 _positionId,
+    int256 _newPositionSizeE30,
+    uint256 _newReserveValueE30,
+    uint256 _newAvgPriceE30
+  ) external returns (Position memory _position);
 }

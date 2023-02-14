@@ -33,7 +33,9 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     );
 
     vm.startPrank(ALICE);
-    pythAdapter.updatePrices{ value: 1 }(priceDataBytes);
+    pythAdapter.updatePrices{ value: pythAdapter.getUpdateFee(priceDataBytes) }(
+      priceDataBytes
+    );
     vm.stopPrank();
   }
 
@@ -51,7 +53,9 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     );
 
     vm.startPrank(ALICE);
-    pythAdapter.updatePrices{ value: 1 }(priceDataBytes);
+    pythAdapter.updatePrices{ value: pythAdapter.getUpdateFee(priceDataBytes) }(
+      priceDataBytes
+    );
     vm.stopPrank();
   }
 
@@ -81,7 +85,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     );
     (uint minPrice, ) = pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),
-      true,
+      false,
       1 ether
     );
     assertEq(maxPrice, 20_000 * 1e30);

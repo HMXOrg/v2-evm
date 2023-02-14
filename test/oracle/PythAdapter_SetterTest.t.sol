@@ -5,7 +5,7 @@ import { PythAdapter_BaseTest } from "./PythAdapter_BaseTest.t.sol";
 import { PythAdapter } from "../../src/oracle/PythAdapter.sol";
 import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
 
-contract PythAdapter_AccessControlTest is PythAdapter_BaseTest {
+contract PythAdapter_SetterTest is PythAdapter_BaseTest {
   using AddressUtils for address;
 
   function setUp() public override {
@@ -15,7 +15,7 @@ contract PythAdapter_AccessControlTest is PythAdapter_BaseTest {
     vm.deal(BOB, 1 ether);
   }
 
-  function testAccess_WhenSetPythPriceId() external {
+  function testCorrectness_AccessControlWhenSetPythPriceId() external {
     // Revert if not owner
     vm.expectRevert(abi.encodeWithSignature("Owned_NotOwner()"));
     vm.startPrank(address(ALICE));
@@ -28,7 +28,7 @@ contract PythAdapter_AccessControlTest is PythAdapter_BaseTest {
     vm.stopPrank();
   }
 
-  function testAccess_WhenSetUpdater() external {
+  function testCorrectness_AccessControlWhenSetUpdater() external {
     // Revert if not owner
     vm.expectRevert(abi.encodeWithSignature("Owned_NotOwner()"));
     vm.startPrank(address(ALICE));
@@ -41,7 +41,7 @@ contract PythAdapter_AccessControlTest is PythAdapter_BaseTest {
     vm.stopPrank();
   }
 
-  function testAccess_WhenUpdatePrices() external {
+  function testCorrectness_AccessControlWhenUpdatePrices() external {
     pythAdapter.setUpdater(ALICE, true);
 
     bytes[] memory priceDataBytes = new bytes[](0);

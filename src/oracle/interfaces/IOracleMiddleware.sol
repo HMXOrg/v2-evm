@@ -10,6 +10,6 @@ interface IOracleMiddleware {
   function getLatestPrice(
     bytes32 _assetId,
     bool _isMax,
-    uint8 _confidentTreshold
+    uint256 _confidentTreshold
   ) external view returns (uint256, uint256);
 }

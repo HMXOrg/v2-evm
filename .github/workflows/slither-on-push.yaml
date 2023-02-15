@@ -1,0 +1,20 @@
+name: test
+
+name: Slither Analysis
+on:
+  push:
+    branches:
+      - "release/**"
+      - "releases/**"
+      - "feat/**"
+      - "feature/**"
+      - "fix/**"
+      - "hotfix/**"
+      - "chore/**"
+      - "test/**"
+      - "unit/**"jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: crytic/slither-action@v0.2.0

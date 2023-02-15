@@ -11,7 +11,8 @@ on:
       - "hotfix/**"
       - "chore/**"
       - "test/**"
-      - "unit/**"jobs:
+      - "unit/**"
+  jobs:
   analyze:
     runs-on: ubuntu-latest
     steps:

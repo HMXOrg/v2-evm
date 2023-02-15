@@ -9,17 +9,30 @@ import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
 abstract contract PerpStorage is IPerpStorage {
   GlobalState public globalState; // global state that accumulative value from all markets
 
+  Position[] public positions;
+  mapping(bytes32 => uint256) public positionIndices; // bytes32 = primaryAccount + subAccount + marketIndex
+
+  mapping(address => uint256[]) public subAccountPositionIndices;
+
+  mapping(address => CollateralToken) public collateralTokens;
+
+  mapping(uint256 => GlobalMarket) public globalMarkets;
+
+  constructor() {}
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
+
   function getGlobalState() external view returns (GlobalState memory) {
     return globalState;
   }
 
-  function updateReserveValue(uint256 newReserveValue) external {
-    globalState.reserveValueE30 = newReserveValue;
+  function getGlobalMarketById(
+    uint256 _marketId
+  ) external view returns (GlobalMarket memory) {
+    return globalMarkets[_marketId];
   }
-
-  Position[] public positions;
-  mapping(bytes32 => uint256) public positionIndices; // bytes32 = primaryAccount + subAccount + marketIndex
-  bytes32 public lastKey;
 
   // sub account => position indices
   function getPositionById(
@@ -27,6 +40,14 @@ abstract contract PerpStorage is IPerpStorage {
   ) external view returns (Position memory) {
     uint256 _index = positionIndices[_positionId];
     return positions[_index];
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  SETTER FUNCTION  ///////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  function updateReserveValue(uint256 newReserveValue) external {
+    globalState.reserveValueE30 = newReserveValue;
   }
 
   function savePosition(
@@ -41,17 +62,4 @@ abstract contract PerpStorage is IPerpStorage {
       positions[_index] = position;
     }
   }
-
-  mapping(address => uint256[]) public subAccountPositionIndices;
-
-  mapping(address => CollateralToken) public collateralTokens;
-  mapping(uint256 => GlobalMarket) public globalMarkets;
-
-  function getGlobalMarketById(
-    uint256 _marketId
-  ) external view returns (GlobalMarket memory) {
-    return globalMarkets[_marketId];
-  }
-
-  constructor() {}
 }

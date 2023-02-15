@@ -9,8 +9,8 @@ abstract contract Owned {
   address public pendingOwner;
 
   event OwnershipTransferred(
-    address indexed previousOwner,
-    address indexed newOwner
+    address indexed _previousOwner,
+    address indexed _newOwner
   );
 
   constructor() {
@@ -23,9 +23,9 @@ abstract contract Owned {
     _;
   }
 
-  function transferOwnership(address newOwner) external onlyOwner {
-    // Move newOwner to pendingOwner
-    pendingOwner = newOwner;
+  function transferOwnership(address _newOwner) external onlyOwner {
+    // Move _newOwner to pendingOwner
+    pendingOwner = _newOwner;
   }
 
   function acceptOwnership() external {
@@ -37,6 +37,6 @@ abstract contract Owned {
 
     // Effect
     owner = pendingOwner;
-    pendingOwner = address(0);
+    delete pendingOwner;
   }
 }

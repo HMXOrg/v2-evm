@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 library AddressUtils {
-  function toBytes32(address addr) internal pure returns (bytes32) {
-    return bytes32(uint256(uint160(addr))) << 96;
+  function toBytes32(address _addr) internal pure returns (bytes32) {
+    return bytes32(uint256(uint160(_addr))) << 96;
   }
 }

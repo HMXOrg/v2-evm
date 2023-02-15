@@ -102,11 +102,11 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bytes32 _assetId,
     bool _isMax,
     uint256 _confidenceThreshold
-  ) external view returns (uint256, uint256, uint8) {
-    uint8 _status = marketStatus[_assetId];
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    _status = marketStatus[_assetId];
     if (_status == 0) revert OracleMiddleware_MarketStatusUndefined();
 
-    (uint256 _price, uint256 _lastUpdate) = _getLatestPrice(
+    (_price, _lastUpdate) = _getLatestPrice(
       _assetId,
       _isMax,
       _confidenceThreshold

@@ -68,11 +68,10 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   function updatePrices(
     bytes[] memory _priceData
   ) external payable onlyUpdater {
-    uint256 fee = pyth.getUpdateFee(_priceData);
-    pyth.updatePriceFeeds{ value: fee }(_priceData);
+    pyth.updatePriceFeeds{ value: pyth.getUpdateFee(_priceData) }(_priceData);
   }
 
-  /// @notice A function for getting update fee based on price update data
+  /// @notice A function for getting update _fee based on price update data
   /// @param _priceUpdateData - price update data
   function getUpdateFee(
     bytes[] memory _priceUpdateData
@@ -139,10 +138,10 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
     uint256 _confidenceThreshold
   ) external view returns (uint256, uint256) {
     // SLOAD
-    bytes32 pythPriceId = pythPriceIdOf[_assetId];
-    if (pythPriceId == bytes32(0)) revert PythAdapter_UnknownAssetId();
+    bytes32 _pythPriceId = pythPriceIdOf[_assetId];
+    if (_pythPriceId == bytes32(0)) revert PythAdapter_UnknownAssetId();
 
-    PythStructs.Price memory _price = pyth.getPriceUnsafe(pythPriceId);
+    PythStructs.Price memory _price = pyth.getPriceUnsafe(_pythPriceId);
     _validateConfidence(_price, _confidenceThreshold);
 
     return (_convertToUint256(_price, _isMax, 30), _price.publishTime);

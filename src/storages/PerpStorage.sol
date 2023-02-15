@@ -16,4 +16,10 @@ contract PerpStorage is IPerpStorage {
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
   constructor() {}
+
+  function getGlobalMarkets(
+    uint256 _key
+  ) external view returns (GlobalMarket memory) {
+    return globalMarkets[_key];
+  }
 }

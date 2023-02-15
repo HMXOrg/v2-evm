@@ -39,15 +39,20 @@ contract Calculator is ICalculator {
     perpStorage = _perpStorage;
   }
 
-  function getAUM(bool isMaxPrice) public returns (uint256) {
-    // TODO assetValue, pendingBorrowingFee
+  function getAUM(bool isMaxPrice) public view returns (uint256) {
+    // TODO  pendingBorrowingFee
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFee = 0;
-    return
-      _getPLPValue(isMaxPrice) +
-      _getGlobalPNL(PositionExposure.LONG) +
-      _getGlobalPNL(PositionExposure.SHORT) +
-      pendingBorrowingFee;
+    int256 pnl = _getGlobalPNL();
+
+    uint256 aum = _getPLPValue(isMaxPrice) + pendingBorrowingFee;
+    if (pnl < 0) {
+      aum -= uint256(-pnl);
+    } else {
+      aum += uint256(pnl);
+    }
+
+    return aum;
   }
 
   function _getPLPValue(bool isMaxPrice) internal view returns (uint256) {
@@ -85,23 +90,72 @@ contract Calculator is ICalculator {
     uint256 aum,
     uint256 plpSupply
   ) public pure returns (uint256) {
+    if (plpSupply == 0) return 0;
     return aum / plpSupply;
   }
 
-  function _getGlobalPNL(
-    PositionExposure _exposure
-  ) internal view returns (uint256) {
-    if (_exposure == PositionExposure.LONG) {
-      for (
-        uint256 i = 0;
-        i < IConfigStorage(configStorage).getMarketConfigsLength();
+  function _getGlobalPNL() internal view returns (int256) {
+    // TODO:: REFACTOR if someone dont want totalPnlLong and short.
+    int256 totalPnlLong = 0;
+    int256 totalPnlShort = 0;
+    for (
+      uint256 i = 0;
+      i < IConfigStorage(configStorage).getMarketConfigsLength();
 
+    ) {
+      IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(
+        configStorage
+      ).getMarketConfigs(i);
+
+      IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
+        .getGlobalMarkets(i);
+
+      int256 _pnlLongE30 = 0;
+      int256 _pnlShortE30 = 0;
+
+      //TODO PNL LONG and PNL SHORT use isMaxPrice same?
+      (uint priceE30, uint256 timestamp) = IOracleMiddleware(oracle)
+        .getLatestPrice(
+          marketConfig.assetId,
+          false,
+          marketConfig.priceConfidentThreshold
+        );
+
+      //TODO validate price, revert when crypto price stale, stock use Lastprice
+
+      if (
+        _globalMarket.globalLongAvgPrice > 0 && _globalMarket.globalLongSize > 0
       ) {
-        //TODO FIXME continue coding here
+        // reduce loop
+        _pnlLongE30 =
+          int256(priceE30) -
+          (int256(_globalMarket.globalLongAvgPrice) * 1e30) /
+          (int256(_globalMarket.globalLongAvgPrice) *
+            int256(_globalMarket.globalLongSize));
+      }
+
+      // TODO DOUBLE CHECK :: ask team globalMarket.globalShortSize store in negative???
+      if (
+        _globalMarket.globalShortAvgPrice > 0 &&
+        _globalMarket.globalShortSize > 0
+      ) {
+        _pnlShortE30 =
+          ((int256(_globalMarket.globalShortAvgPrice) - int256(priceE30)) *
+            1e30) /
+          (int256(_globalMarket.globalShortAvgPrice) *
+            int256(_globalMarket.globalShortSize));
+      }
+
+      {
+        unchecked {
+          i++;
+          totalPnlLong += _pnlLongE30;
+          totalPnlShort += _pnlShortE30;
+        }
       }
     }
-    //TODO calculate pnl short and long
-    return 0;
+
+    return totalPnlLong + totalPnlShort;
   }
 
   function getMintAmount(
@@ -122,7 +176,7 @@ contract Calculator is ICalculator {
 
   function getAddLiquidityFeeRate(
     address _token,
-    uint256 _tokenValue, //e18
+    uint256 _tokenValueE30,
     IConfigStorage _configStorage,
     IVaultStorage _vaultStorage
   ) external returns (uint256) {
@@ -132,9 +186,9 @@ contract Calculator is ICalculator {
 
     return
       _getFeeRate(
-        _tokenValue,
-        _vaultStorage.plpLiquidityUSD(_token),
-        _vaultStorage.plpTotalLiquidityUSD(),
+        _tokenValueE30,
+        _vaultStorage.plpLiquidityUSDE30(_token),
+        _vaultStorage.plpTotalLiquidityUSDE30(),
         _configStorage.plpTotalTokenWeight(),
         _configStorage.getLiquidityConfig(),
         _configStorage.getPLPTokenConfig(_token),
@@ -144,8 +198,8 @@ contract Calculator is ICalculator {
 
   function _getFeeRate(
     uint256 _value,
-    uint256 _liquidityUSD, //e18
-    uint256 _totalLiquidityUSD, //e18
+    uint256 _liquidityUSD, //e30
+    uint256 _totalLiquidityUSD, //e30
     uint256 _totalTokenWeight,
     IConfigStorage.LiquidityConfig memory _liquidityConfig,
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig,

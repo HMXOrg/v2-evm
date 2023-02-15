@@ -7,8 +7,8 @@ import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
 contract VaultStorage is IVaultStorage {
-  uint256 public plpTotalLiquidityUSD;
-  mapping(address => uint256) public plpLiquidityUSD; //token => PLPValueInUSD
+  uint256 public plpTotalLiquidityUSDE30;
+  mapping(address => uint256) public plpLiquidityUSDE30; //token => PLPValueInUSD
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
 
   // fee in token unit
@@ -30,13 +30,13 @@ contract VaultStorage is IVaultStorage {
   }
 
   // TODO modifier?
-  function addPLPLiquidityUSD(address _token, uint256 amount) external {
-    plpLiquidityUSD[_token] += amount;
+  function addPLPLiquidityUSDE30(address _token, uint256 amount) external {
+    plpLiquidityUSDE30[_token] += amount;
   }
 
   // TODO modifier?
-  function addPLPTotalLiquidityUSD(uint256 _liquidity) external {
-    plpTotalLiquidityUSD += _liquidity;
+  function addPLPTotalLiquidityUSDE30(uint256 _liquidity) external {
+    plpTotalLiquidityUSDE30 += _liquidity;
   }
 
   // TODO modifier?

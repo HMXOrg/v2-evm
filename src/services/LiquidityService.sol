@@ -18,7 +18,7 @@ contract LiquidityService is ILiquidityService {
   address vaultStorage;
 
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
-  uint256 internal constant USD_DECIMALS = 18;
+  uint256 internal constant USD_DECIMALS = 30;
 
   event AddLiquidity(
     address account,
@@ -128,6 +128,9 @@ contract LiquidityService is ILiquidityService {
       tokenValueUSDAfterFee
     );
 
+    // TODO need to validate (find formula)
+    // uint256 bufferLiquidity;
+    // uint256 maxWeightDiff;
     //5.1 accounting PLP
     _incrementLPBalance(_token, amountAfterFee, tokenValueUSDAfterFee);
 
@@ -159,7 +162,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _amount,
     uint256 _price
   ) internal returns (uint256) {
-    uint256 tokenUSDValue = ICalculator(
+    uint256 tokenUSDValueE30 = ICalculator(
       IConfigStorage(configStorage).calculator()
     ).convertTokenDecimals(
         ERC20(_token).decimals(),
@@ -167,14 +170,14 @@ contract LiquidityService is ILiquidityService {
         (_amount * _price) / PRICE_PRECISION // tokenValueInDecimal = amount * priceE30 / 1e30
       );
 
-    if (tokenUSDValue == 0) {
+    if (tokenUSDValueE30 == 0) {
       revert LiquidityService_InsufficientLiquidityMint();
     }
 
     uint256 _feeRate = ICalculator(IConfigStorage(configStorage).calculator())
       .getAddLiquidityFeeRate(
         _token,
-        tokenUSDValue, //e18
+        tokenUSDValueE30,
         IConfigStorage(configStorage),
         IVaultStorage(vaultStorage)
       );
@@ -226,15 +229,15 @@ contract LiquidityService is ILiquidityService {
   function _incrementLPBalance(
     address _token,
     uint256 _amountAfterFee,
-    uint256 _plpValueUSD
+    uint256 _plpValueUSDE30
   ) internal {
     // increase plpLiquidity
     IVaultStorage(_token).addPLPLiquidity(_token, _amountAfterFee);
 
     // increase plpLiquidityUSD
-    IVaultStorage(_token).addPLPLiquidityUSD(_token, _plpValueUSD);
+    IVaultStorage(_token).addPLPLiquidityUSDE30(_token, _plpValueUSDE30);
 
     // increase total
-    IVaultStorage(_token).addPLPTotalLiquidityUSD(_plpValueUSD);
+    IVaultStorage(_token).addPLPTotalLiquidityUSDE30(_plpValueUSDE30);
   }
 }

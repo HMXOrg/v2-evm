@@ -40,4 +40,8 @@ interface IPerpStorage {
     uint256 openInterest;
     uint256 realizedPnl;
   }
+
+  function getGlobalMarkets(
+    uint256 _key
+  ) external view returns (GlobalMarket memory);
 }

@@ -76,7 +76,7 @@ contract TradeService is ITradeService {
 
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
-    ).getPositionById(_marketId);
+    ).getMarketConfigById(_marketId);
 
     uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / 1e18;
     uint256 subAccountFreeCollateral = ICalculator(calculator)

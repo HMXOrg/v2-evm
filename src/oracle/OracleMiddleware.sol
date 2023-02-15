@@ -64,8 +64,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     emit SetUpdater(_account, _isActive);
   }
 
-  /// @notice Return the latest price in USD and last update of the given asset.
+  /// @notice Return the latest price and last update of the given asset id.
   /// @dev It is expected that the downstream contract should return the price in USD with 30 decimals.
+  /// @dev The currency of the price that will be quoted with depends on asset id. For example, we can have two BTC price but quoted differently.
+  ///      In that case, we can define two different asset ids as BTC/USD, BTC/EUR.
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
   /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
@@ -93,7 +95,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate);
   }
 
-  /// @notice Return the latest price in USD, last update of the given asset, along with market status.
+  /// @notice Return the latest price of asset, last update of the given asset id, along with market status.
   /// @dev Same as getLatestPrice(), but with market status. Revert if status is 0 (Undefined) which means we never utilize this assetId.
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.

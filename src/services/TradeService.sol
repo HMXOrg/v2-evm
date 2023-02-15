@@ -9,8 +9,6 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
-// import { console } from "forge-std/console.sol";
-
 contract TradeService is ITradeService {
   // events
   event LogDecreasePosition(

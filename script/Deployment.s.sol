@@ -22,10 +22,7 @@ abstract contract Deployment {
     DeployReturnVars memory vars;
 
     vars.pythAdapter = new PythAdapter(localVars.pyth);
-    vars.oracleMiddleware = new OracleMiddleware(
-      localVars.pyth,
-      vars.pythAdapter
-    );
+    vars.oracleMiddleware = new OracleMiddleware(vars.pythAdapter);
 
     return vars;
   }

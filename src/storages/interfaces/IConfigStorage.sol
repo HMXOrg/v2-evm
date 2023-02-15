@@ -53,8 +53,8 @@ interface IConfigStorage {
     uint256 maxPLPUtilization;
     uint256 plpSafetyBufferThreshold;
     uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
-    uint256 dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
     uint256 flashLoanFeeRate;
+    bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
   }
 
   // Swap
@@ -64,7 +64,7 @@ interface IConfigStorage {
   }
 
   // Trading
-  struct TrandingConfig {
+  struct TradingConfig {
     uint256 fundingInterval; // funding interval unit in seconds
     uint256 borrowingDevFeeRate;
   }
@@ -76,10 +76,6 @@ interface IConfigStorage {
 
   // STATES
   function pnlFactor() external view returns (uint256);
-
-  function getCollateralTokenConfigs(
-    address _token
-  ) external view returns (CollateralTokenConfig memory collateralTokenConfig);
 
   function getMarketConfigByIndex(
     uint256 _index
@@ -100,4 +96,35 @@ interface IConfigStorage {
   ) external view;
 
   function validateAcceptedCollateral(address _token) external view;
+
+  function getMarketConfigs(
+    uint256 _marketId
+  ) external view returns (MarketConfig memory);
+
+  function getPlpTokenConfigs(
+    address _token
+  ) external view returns (PLPTokenConfig memory);
+
+  function getCollateralTokenConfigs(
+    address _token
+  ) external view returns (CollateralTokenConfig memory);
+
+  function addMarketConfig(
+    MarketConfig calldata _newConfig
+  ) external returns (MarketConfig memory);
+
+  function setMarketConfig(
+    uint256 _marketId,
+    MarketConfig memory _newConfig
+  ) external returns (MarketConfig memory);
+
+  function setPlpTokenConfig(
+    address _token,
+    PLPTokenConfig memory _newConfig
+  ) external returns (PLPTokenConfig memory);
+
+  function setCollateralTokenConfig(
+    address _token,
+    CollateralTokenConfig memory _newConfig
+  ) external returns (CollateralTokenConfig memory);
 }

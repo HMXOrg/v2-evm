@@ -110,7 +110,9 @@ interface IConfigStorage {
 
   function getMarketConfigByToken(
     address _token
-  ) external view returns (MarketConfig memory marketConfig);
+  ) external view returns (MarketConfig memory);
+
+  function getMarketConfigsLength() external view returns (uint256);
 
   // SETTER
   function setPLP(address _plp) external;

@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { ICalculator } from "./interfaces/ICalculator.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
+import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -38,18 +39,18 @@ contract Calculator is ICalculator {
     perpStorage = _perpStorage;
   }
 
-  function getAUM(bool isMaxPrice) public view returns (uint256) {
+  function getAUM(bool isMaxPrice) public returns (uint256) {
     // TODO assetValue, pendingBorrowingFee
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFee = 0;
     return
       _getPLPValue(isMaxPrice) +
-      _getPLPPnl(PositionExposure.LONG) +
-      _getPLPPnl(PositionExposure.SHORT) +
+      _getGlobalPNL(PositionExposure.LONG) +
+      _getGlobalPNL(PositionExposure.SHORT) +
       pendingBorrowingFee;
   }
 
-  function _getPLPValue(bool isMaxPrice) internal returns (uint256) {
+  function _getPLPValue(bool isMaxPrice) internal view returns (uint256) {
     uint256 assetValue = 0;
     for (
       uint i = 0;
@@ -87,9 +88,18 @@ contract Calculator is ICalculator {
     return aum / plpSupply;
   }
 
-  function _getPLPPnl(
+  function _getGlobalPNL(
     PositionExposure _exposure
-  ) internal pure returns (uint256) {
+  ) internal view returns (uint256) {
+    if (_exposure == PositionExposure.LONG) {
+      for (
+        uint256 i = 0;
+        i < IConfigStorage(configStorage).getMarketConfigsLength();
+
+      ) {
+        //TODO FIXME continue coding here
+      }
+    }
     //TODO calculate pnl short and long
     return 0;
   }

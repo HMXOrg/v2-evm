@@ -76,6 +76,10 @@ contract ConfigStorage is IConfigStorage {
     return liquidationConfig;
   }
 
+  function getMarketConfigsLength() external view returns (uint256) {
+    return marketConfigs.length;
+  }
+
   function getMarketConfigByToken(
     address _token
   ) external view returns (MarketConfig memory marketConfig) {

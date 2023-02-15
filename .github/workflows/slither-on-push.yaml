@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-      - run: sudo git config --system --add safe.directory '/github/workspace'
+          set-safe-directory: "/github/workspace"
 
       - uses: actions/setup-node@v2
         with:
@@ -34,8 +34,20 @@ jobs:
         with:
           version: nightly
 
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run Forge tests
+        run: |
+          forge test -vvv --build-info
+        id: test
+
       - name: Run Slither
         uses: crytic/slither-action@v0.2.0
         with:
           node-version: 16.16.0
           target: "./"
+          ignore-compile: true

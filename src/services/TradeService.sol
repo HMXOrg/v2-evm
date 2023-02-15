@@ -60,35 +60,36 @@ contract TradeService is ITradeService {
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
     ).getMarketConfigById(_marketId);
+    uint256 _priceE30;
+    {
+      uint256 _lastPriceUpdated;
+      uint8 _marketStatus;
+      (_priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(oracle)
+        .getLatestPriceWithMarketStatus(
+          _marketConfig.assetId,
+          true,
+          _marketConfig.priceConfidentThreshold
+        );
 
-    (
-      uint256 _priceE30,
-      uint256 _lastPriceUpdated,
-      uint8 _marketStatus
-    ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
-        _marketConfig.assetId,
-        true,
-        _marketConfig.priceConfidentThreshold
-      );
+      // =========================================
+      // | ---------- pre validation ----------- |
+      // =========================================
+      // Market active represent the market is still listed on our protocol
+      if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
+
+      // if market status is 1, means that oracle couldn't get price from pyth
+      if (_marketStatus == 1) revert ITradeService_MarketIsClosed();
+
+      // check price stale for 30 seconds
+      // todo: do it as config
+      if (_lastPriceUpdated - block.timestamp > 30)
+        revert ITradeService_PriceStale();
+    }
 
     address _subAccount = _getSubAccount(_account, _subAccountId);
     bytes32 _positionId = _getPositionId(_subAccount, _marketId);
     IPerpStorage.Position memory _position = IPerpStorage(perpStorage)
       .getPositionById(_positionId);
-
-    // =========================================
-    // | ---------- pre validation ----------- |
-    // =========================================
-    // Market active represent the market is still listed on our protocol
-    if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
-
-    // if market status is 1, means that oracle couldn't get price from pyth
-    if (_marketStatus == 1) revert ITradeService_MarketIsClosed();
-
-    // check price stale for 30 seconds
-    // todo: do it as config
-    if (_lastPriceUpdated - block.timestamp > 30)
-      revert ITradeService_PriceStale();
 
     bool isLongPosition = _position.positionSizeE30 > 0;
     uint256 _absolutePositionSizeE30 = (

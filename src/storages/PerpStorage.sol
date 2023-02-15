@@ -47,5 +47,11 @@ abstract contract PerpStorage is IPerpStorage {
   mapping(address => CollateralToken) public collateralTokens;
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
+  function getGlobalMarketById(
+    uint256 _marketId
+  ) external view returns (GlobalMarket memory) {
+    return globalMarkets[_marketId];
+  }
+
   constructor() {}
 }

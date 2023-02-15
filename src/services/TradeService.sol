@@ -41,11 +41,11 @@ contract TradeService is ITradeService {
   function increasePosition(
     address _primaryAccount,
     uint256 _subAccountId,
-    bytes32 _marketId,
+    uint256 _marketIndex,
     int256 _sizeDelta
   ) external {
     address _subAccount = getSubAccount(_primaryAccount, _subAccountId);
-    bytes32 _posId = getPositionId(_subAccount, _marketId);
+    bytes32 _posId = getPositionId(_subAccount, _marketIndex);
     IPerpStorage.Position memory _position = IPerpStorage(perpStorage)
       .getPositionById(_posId);
 
@@ -56,7 +56,7 @@ contract TradeService is ITradeService {
 
     if (_position.sizeE30 != 0 && _sizeDelta != 0) {
       _position.avgPriceE30 = getPositionNextAveragePrice(
-        _marketId,
+        _marketIndex,
         _position.sizeE30,
         _sizeDelta,
         _position.avgPriceE30,
@@ -76,7 +76,7 @@ contract TradeService is ITradeService {
 
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
-    ).getMarketConfigById(_marketId);
+    ).getMarketConfigs(_marketIndex);
 
     uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / 1e18;
     uint256 subAccountFreeCollateral = ICalculator(calculator)
@@ -104,31 +104,54 @@ contract TradeService is ITradeService {
     //     revert ITradeService_SubAccountEquityIsUnderMMR();
     //   }
     // }
+
+    bool isLong = _sizeDelta > 0;
+
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
+      .getGlobalMarketById(_marketIndex);
+
+    uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _price;
+
+    if (isLong) {
+      IPerpStorage(perpStorage).updateGlobalLongMarketById(
+        _marketIndex,
+        _globalMarket.longPositionSize + _absSizeDelta,
+        _globalMarket.longAvgPrice, // todo: recalculate arg price
+        _globalMarket.longOpenInterest + _changedOpenInterest
+      );
+    } else {
+      IPerpStorage(perpStorage).updateGlobalShortMarketById(
+        _marketIndex,
+        _globalMarket.shortPositionSize + _absSizeDelta,
+        _globalMarket.shortAvgPrice, // todo: recalculate arg price
+        _globalMarket.shortOpenInterest + _changedOpenInterest
+      );
+    }
   }
 
   function getPositionId(
-    address account,
-    bytes32 marketId
+    address _account,
+    uint256 _marketId
   ) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(account, marketId));
+    return keccak256(abi.encodePacked(_account, _marketId));
   }
 
   function getSubAccount(
-    address primary,
-    uint256 subAccountId
+    address _primary,
+    uint256 _subAccountId
   ) internal pure returns (address) {
-    if (subAccountId > 255) revert BadSubAccountId();
-    return address(uint160(primary) ^ uint160(subAccountId));
+    if (_subAccountId > 255) revert BadSubAccountId();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 
   function getPositionNextAveragePrice(
-    bytes32 marketId,
+    uint256 marketIndex,
     int256 size,
     int256 sizeDelta,
     uint256 averagePrice,
     uint256 nextPrice
   ) internal pure returns (uint256) {
-    (bool isProfit, uint256 delta) = getDelta(marketId, size, averagePrice);
+    (bool isProfit, uint256 delta) = getDelta(marketIndex, size, averagePrice);
     uint256 nextSize = Math.abs(size + sizeDelta);
     // uint256 divisor = Math.abs(isProfit ? nextSize + delta : nextSize - delta);
     uint256 divisor;
@@ -142,7 +165,7 @@ contract TradeService is ITradeService {
   }
 
   function getDelta(
-    bytes32 /*marketId*/,
+    uint256 /*marketIndex*/,
     int256 size,
     uint256 averagePrice
   ) public pure returns (bool, uint256) {

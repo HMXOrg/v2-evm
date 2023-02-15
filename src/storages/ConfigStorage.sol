@@ -16,13 +16,6 @@ abstract contract ConfigStorage is IConfigStorage {
   MarketConfig[] public marketConfigs;
   mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
 
-  function getMarketConfigById(
-    bytes32 _assetId
-  ) external view returns (MarketConfig memory) {
-    uint256 _index = marketConfigIndices[_assetId];
-    return marketConfigs[_index];
-  }
-
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
   mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config
 

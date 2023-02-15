@@ -89,7 +89,6 @@ contract ConfigStorage is Ownable, IConfigStorage {
   //////////////////////  GETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
-  // @todo - Add Description
   function getMarketConfigByIndex(
     uint256 _index
   ) external view returns (MarketConfig memory marketConfig) {
@@ -102,7 +101,6 @@ contract ConfigStorage is Ownable, IConfigStorage {
     return marketConfigs[_marketId];
   }
 
-  // @todo - Add Description
   function getMarketConfigById(
     bytes32 _assetId
   ) external view returns (MarketConfig memory) {
@@ -110,7 +108,6 @@ contract ConfigStorage is Ownable, IConfigStorage {
     return marketConfigs[_index];
   }
 
-  // @todo - Add Description
   function getMarketConfigByToken(
     address _token
   ) external view returns (MarketConfig memory marketConfig) {
@@ -123,8 +120,6 @@ contract ConfigStorage is Ownable, IConfigStorage {
       }
     }
   }
-
-  // getter functions
 
   function getPlpTokenConfigs(
     address _token

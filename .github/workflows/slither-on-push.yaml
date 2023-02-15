@@ -45,6 +45,7 @@ jobs:
           forge test -vvv --build-info --build-info-path ./out/build-info
         id: test
       - run: ls -al
+      - run: pwd
       - name: Run Slither
         uses: crytic/slither-action@v0.2.0
         with:

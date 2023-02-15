@@ -10,11 +10,13 @@ import { Owned } from "../base/Owned.sol";
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
+import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 
 contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   // STATES
   address public configStorage;
   address public vaultStorage;
+  address public calculator;
 
   // EVENTS
   event LogSetConfigStorage(
@@ -26,6 +28,8 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     address indexed oldVaultStorage,
     address newVaultStorage
   );
+
+  event LogSetCalculator(address indexed oldCalculator, address newCalculator);
 
   event LogIncreaseTokenLiquidity(
     address indexed trader,
@@ -39,13 +43,36 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     uint amount
   );
 
-  constructor(address _configStorage, address _vaultStorage) {
-    // Sanity check
-    if (_configStorage == address(0) || _vaultStorage == address(0))
-      revert ICrossMarginService_InvalidAddress();
+  constructor(
+    address _configStorage,
+    address _vaultStorage,
+    address _calculator
+  ) {
+    // @todo - Sanity check
+    if (
+      _configStorage == address(0) ||
+      _vaultStorage == address(0) ||
+      _calculator == address(0)
+    ) revert ICrossMarginService_InvalidAddress();
 
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
+    calculator = _calculator;
+  }
+
+  // NOTE: Validate only whitelisted contract be able to call this function
+  modifier onlyWhitelistedExecutor() {
+    IConfigStorage(configStorage).validateServiceExecutor(
+      address(this),
+      msg.sender
+    );
+    _;
+  }
+
+  // NOTE: Validate only accepted collateral token to be deposited
+  modifier onlyAcceptedToken(address _token) {
+    IConfigStorage(configStorage).validateAcceptedCollateral(_token);
+    _;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
@@ -53,26 +80,34 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   ////////////////////////////////////////////////////////////////////////////////////
 
   /// @notice Set new ConfigStorage contract address.
-  /// @dev This uses to retrive all config information on protocal.
   /// @param _configStorage New ConfigStorage contract address.
   function setConfigStorage(address _configStorage) external onlyOwner {
-    // Sanity check
+    // @todo - Sanity check
     if (_configStorage == address(0))
       revert ICrossMarginService_InvalidAddress();
     emit LogSetConfigStorage(configStorage, _configStorage);
     configStorage = _configStorage;
   }
 
-  /// @notice Set new CaultStorage contract address.
-  /// @dev This uses to retrive all accounting information on protocal.
+  /// @notice Set new VaultStorage contract address.
   /// @param _vaultStorage New VaultStorage contract address.
   function setVaultStorage(address _vaultStorage) external onlyOwner {
-    // Sanity check
+    // @todo - Sanity check
     if (_vaultStorage == address(0))
       revert ICrossMarginService_InvalidAddress();
 
     emit LogSetVaultStorage(vaultStorage, _vaultStorage);
     vaultStorage = _vaultStorage;
+  }
+
+  /// @notice Set new Calculator contract address.
+  /// @param _calculator New Calculator contract address.
+  function setCalculator(address _calculator) external onlyOwner {
+    // @todo - Sanity check
+    if (_calculator == address(0)) revert ICrossMarginService_InvalidAddress();
+
+    emit LogSetCalculator(calculator, _calculator);
+    calculator = _calculator;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
@@ -88,15 +123,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     address _subAccount,
     address _token,
     uint256 _amount
-  ) external nonReentrant {
-    // Validate only whitelisted contract be able to call this function
-    IConfigStorage(configStorage).validateServiceExecutor(
-      address(this),
-      msg.sender
-    );
-    // Validate only accepted collateral token to be deposited
-    IConfigStorage(configStorage).validateAcceptedCollateral(_token);
-
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     // Get current collateral token balance of trader's account
     // and sum with new token depositing amount
     uint oldBalance = IVaultStorage(vaultStorage).traderBalances(
@@ -132,16 +159,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     address _subAccount,
     address _token,
     uint256 _amount
-  ) external nonReentrant {
-    // Validate only whitelisted contract be able to call this function
-    IConfigStorage(configStorage).validateServiceExecutor(
-      address(this),
-      msg.sender
-    );
-
-    // Validate only accepted collateral token to be withdrawn
-    IConfigStorage(configStorage).validateAcceptedCollateral(_token);
-
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     // Get current collateral token balance of trader's account
     // and deduct with new token withdrawing amount
     uint oldBalance = IVaultStorage(vaultStorage).traderBalances(
@@ -150,7 +168,6 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     );
     if (_amount > oldBalance) revert ICrossMarginService_InsufficientBalance();
 
-    // @todo - validate IMR in case withdraw
     uint newBalance = oldBalance - _amount;
 
     // Set new collateral token balance
@@ -159,6 +176,12 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
       _token,
       newBalance
     );
+
+    // Calculate validation for if new Equity is below IMR or not
+    if (
+      ICalculator(calculator).getEquity(_subAccount) <
+      ICalculator(calculator).getIMR(_subAccount)
+    ) revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
     // If trader withdraws all token out, then remove token on traderTokens list
     if (oldBalance != 0 && newBalance == 0) {

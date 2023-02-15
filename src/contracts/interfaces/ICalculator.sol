@@ -23,4 +23,25 @@ interface ICalculator {
     uint256 _positionSizeE30,
     uint256 _marketIndex
   ) external view returns (uint256 mmrE30);
+
+  /// @notice Calculate for value on trader's account including Equity, IMR and MMR.
+  /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
+  /// @param _subAccount Trader account's address.
+  /// @return equityValueE30 Total equity of trader's account.
+  function getEquity(
+    address _subAccount
+  ) external returns (uint equityValueE30);
+
+  // @todo - Add Description
+  function getUnrealizedPnl(
+    address _subAccount
+  ) external view returns (int unrealizedPnlE30);
+
+  // @todo - Add Description
+  /// @return imrValueE30 Total imr of trader's account.
+  function getIMR(address _subAccount) external view returns (uint imrValueE30);
+
+  // @todo - Add Description
+  /// @return mmrValueE30 Total mmr of trader's account
+  function getMMR(address _subAccount) external view returns (uint mmrValueE30);
 }

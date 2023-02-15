@@ -67,10 +67,11 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
   }
 
   function deployCrossMarginService(
-    address configStorage,
-    address vaultStorage
+    address _configStorage,
+    address _vaultStorage,
+    address _calculator
   ) internal returns (CrossMarginService) {
-    return new CrossMarginService(configStorage, vaultStorage);
+    return new CrossMarginService(_configStorage, _vaultStorage, _calculator);
   }
 
   // --------- Setup Helpers ---------

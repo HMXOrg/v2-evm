@@ -10,10 +10,12 @@ contract CrossMarginService_BaseTest is BaseTest {
     // @todo - implement Mock contract here
     address configStorage = address(1);
     address vaultStorage = address(2);
+    address calculator = address(3);
 
     crossMarginService = deployCrossMarginService(
-      address(configStorage),
-      address(vaultStorage)
+      configStorage,
+      vaultStorage,
+      calculator
     );
   }
 }

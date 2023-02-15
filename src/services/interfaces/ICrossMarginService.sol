@@ -5,6 +5,7 @@ interface ICrossMarginService {
   // ERRORs
   error ICrossMarginService_InvalidAddress();
   error ICrossMarginService_InsufficientBalance();
+  error ICrossMarginService_WithdrawBalanceBelowIMR();
 
   /// @notice Set new ConfigStorage contract address.
   /// @dev This uses to retrive all config information on protocal.

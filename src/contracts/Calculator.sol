@@ -43,7 +43,7 @@ contract Calculator is Owned, ICalculator {
     address _perpStorage,
     address _configStorage
   ) {
-    // Sanity check
+    // @todo - Sanity check
     if (
       _oracle == address(0) ||
       _vaultStorage == address(0) ||
@@ -62,6 +62,7 @@ contract Calculator is Owned, ICalculator {
 
   // @todo - add description
   function setOracle(address _oracle) external onlyOwner {
+    // @todo - Sanity check
     if (_oracle == address(0)) revert ICalculator_InvalidAddress();
     emit LogSetOracle(oracle, _oracle);
     oracle = _oracle;
@@ -69,6 +70,7 @@ contract Calculator is Owned, ICalculator {
 
   // @todo - add description
   function setVaultStorage(address _vaultStorage) external onlyOwner {
+    // @todo - Sanity check
     if (_vaultStorage == address(0)) revert ICalculator_InvalidAddress();
     emit LogSetVaultStorage(vaultStorage, _vaultStorage);
     vaultStorage = _vaultStorage;
@@ -76,6 +78,7 @@ contract Calculator is Owned, ICalculator {
 
   // @todo - add description
   function SetConfigStorage(address _configStorage) external onlyOwner {
+    // @todo - Sanity check
     if (_configStorage == address(0)) revert ICalculator_InvalidAddress();
     emit LogSetConfigStorage(configStorage, _configStorage);
     configStorage = _configStorage;
@@ -83,6 +86,7 @@ contract Calculator is Owned, ICalculator {
 
   // @todo - add description
   function SetPerpStorage(address _perpStorage) external onlyOwner {
+    // @todo - Sanity check
     if (_perpStorage == address(0)) revert ICalculator_InvalidAddress();
     emit LogSetPerpStorage(perpStorage, _perpStorage);
     perpStorage = _perpStorage;
@@ -128,7 +132,7 @@ contract Calculator is Owned, ICalculator {
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
   /// @return equityValueE30 Total equity of trader's account.
-  function getAccountInfo(
+  function getEquity(
     address _subAccount
   ) external returns (uint equityValueE30) {
     // Calculate collateral tokens' value on trader's account
@@ -289,8 +293,8 @@ contract Calculator is Owned, ICalculator {
       );
 
       bool isMaxPrice = false; // @note Collateral value always use Min price
-      // @todo - validate price age
       // Get price from oracle
+      // @todo - validate price age
       (uint priceE30, ) = IOracleAdapter(oracle).getLatestPrice(
         token.toBytes32(),
         isMaxPrice,

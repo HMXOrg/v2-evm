@@ -15,7 +15,10 @@ interface ICalculator {
     SHORT
   }
 
-  function getAUM() external returns (uint256);
+  error ICalculator_InvalidAddress();
+  error ICalculator_InvalidAveragePrice();
+
+  function getAUM(bool isMaxPrice) external returns (uint256);
 
   function getPLPPrice(uint256 aum, uint256 supply) external returns (uint256);
 
@@ -37,4 +40,6 @@ interface ICalculator {
     IConfigStorage _liquidityConfig,
     IVaultStorage _vaultStorage
   ) external returns (uint256);
+
+  function oracle() external returns (address);
 }

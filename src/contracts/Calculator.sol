@@ -4,20 +4,80 @@ pragma solidity 0.8.18;
 import { ICalculator } from "./interfaces/ICalculator.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
+import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract Calculator is ICalculator {
   uint256 internal constant MAX_RATE = 1e18;
+  // using libs for type
+  using AddressUtils for address;
 
-  function getAUM() public view returns (uint256) {
+  // STATES
+  address public oracle;
+  address public vaultStorage;
+  address public configStorage;
+  address public perpStorage;
+
+  constructor(
+    address _oracle,
+    address _vaultStorage,
+    address _perpStorage,
+    address _configStorage
+  ) {
+    // @todo - Sanity check
+    if (
+      _oracle == address(0) ||
+      _vaultStorage == address(0) ||
+      _perpStorage == address(0) ||
+      _configStorage == address(0)
+    ) revert ICalculator_InvalidAddress();
+    oracle = _oracle;
+    vaultStorage = _vaultStorage;
+    configStorage = _configStorage;
+    perpStorage = _perpStorage;
+  }
+
+  function getAUM(bool isMaxPrice) public view returns (uint256) {
     // TODO assetValue, pendingBorrowingFee
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
-    uint256 assetValue = 0;
     uint256 pendingBorrowingFee = 0;
     return
-      assetValue +
+      _getPLPValue(isMaxPrice) +
       _getPLPPnl(PositionExposure.LONG) +
       _getPLPPnl(PositionExposure.SHORT) +
       pendingBorrowingFee;
+  }
+
+  function _getPLPValue(bool isMaxPrice) internal returns (uint256) {
+    uint256 assetValue = 0;
+    for (
+      uint i = 0;
+      i <
+      IConfigStorage(configStorage).getLiquidityConfig().acceptedTokens.length;
+
+    ) {
+      address token = IConfigStorage(configStorage)
+        .getLiquidityConfig()
+        .acceptedTokens[i];
+
+      (uint priceE30, ) = IOracleMiddleware(oracle).getLatestPrice(
+        token.toBytes32(),
+        isMaxPrice,
+        IConfigStorage(configStorage)
+          .getMarketConfigByToken(token)
+          .priceConfidentThreshold
+      );
+
+      uint value = (IVaultStorage(vaultStorage).plpLiquidity(token) *
+        priceE30) / (10 ** ERC20(token).decimals());
+
+      unchecked {
+        assetValue += value;
+        i++;
+      }
+    }
+    return assetValue;
   }
 
   function getPLPPrice(
@@ -62,7 +122,6 @@ contract Calculator is ICalculator {
 
     return
       _getFeeRate(
-        _token,
         _tokenValue,
         _vaultStorage.plpLiquidityUSD(_token),
         _vaultStorage.plpTotalLiquidityUSD(),
@@ -74,7 +133,6 @@ contract Calculator is ICalculator {
   }
 
   function _getFeeRate(
-    address _token,
     uint256 _value,
     uint256 _liquidityUSD, //e18
     uint256 _totalLiquidityUSD, //e18
@@ -82,7 +140,7 @@ contract Calculator is ICalculator {
     IConfigStorage.LiquidityConfig memory _liquidityConfig,
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal view returns (uint256) {
+  ) internal pure returns (uint256) {
     uint256 _feeRate = _liquidityConfig.depositFeeRate;
     uint256 _taxRate = _liquidityConfig.taxFeeRate;
 
@@ -133,5 +191,51 @@ contract Calculator is ICalculator {
     if (totalLiquidityUSD == 0) return 0;
 
     return (totalLiquidityUSD * tokenWeight) / totalTokenWeight;
+  }
+
+  function getCollateralValue(
+    address _subAccount
+  ) public view returns (uint collateralValueE30) {
+    // Get list of current depositing tokens on trader's account
+    address[] memory traderTokens = IVaultStorage(vaultStorage).getTraderTokens(
+      _subAccount
+    );
+
+    // Loop through list of current depositing tokens
+    for (uint i; i < traderTokens.length; ) {
+      address token = traderTokens[i];
+
+      //Get token decimals from ConfigStorage
+      uint decimals = IConfigStorage(configStorage)
+        .getCollateralTokenConfigs(token)
+        .decimals;
+
+      //Get priceConfidentThreshold from ConfigStorage
+      uint priceConfidenceThreshold = IConfigStorage(configStorage)
+        .getMarketConfigByToken(token)
+        .priceConfidentThreshold;
+
+      // Get current collateral token balance of trader's account
+      uint amount = IVaultStorage(vaultStorage).traderBalances(
+        _subAccount,
+        token
+      );
+
+      bool isMaxPrice = false; // @note Collateral value always use Min price
+      // Get price from oracle
+      // @todo - validate price age
+      (uint priceE30, ) = IOracleMiddleware(oracle).getLatestPrice(
+        token.toBytes32(),
+        isMaxPrice,
+        priceConfidenceThreshold
+      );
+
+      // Calculate accumulative value of collateral tokens
+      collateralValueE30 += (amount * priceE30) / 10 ** decimals;
+
+      unchecked {
+        i++;
+      }
+    }
   }
 }

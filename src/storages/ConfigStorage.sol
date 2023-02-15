@@ -3,10 +3,13 @@ pragma solidity 0.8.18;
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
+import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
 contract ConfigStorage is IConfigStorage {
+  using AddressUtils for address;
+
   // GLOBAL Configs
   LiquidityConfig public liquidityConfig;
   SwapConfig public swapConfig;
@@ -37,7 +40,6 @@ contract ConfigStorage is IConfigStorage {
   event SetDynamicEnabled(bool enabled);
 
   // methods
-
   function getMarketConfigs(
     uint256 _marketId
   ) external view returns (MarketConfig memory) {
@@ -74,6 +76,19 @@ contract ConfigStorage is IConfigStorage {
     return liquidationConfig;
   }
 
+  function getMarketConfigByToken(
+    address _token
+  ) external view returns (MarketConfig memory marketConfig) {
+    for (uint i; i < marketConfigs.length; ) {
+      if (marketConfigs[i].assetId == _token.toBytes32())
+        return marketConfigs[i];
+
+      unchecked {
+        i++;
+      }
+    }
+  }
+
   function setCalculator(address _calculator) external {
     calculator = _calculator;
     emit SetCalculator(calculator);
@@ -99,14 +114,6 @@ contract ConfigStorage is IConfigStorage {
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external {
     if (_totalTokenWeight > 1e18) revert ConfigStorage_ExceedLimitSetting();
     plpTotalTokenWeight = _totalTokenWeight;
-  }
-
-  function validateServiceExecutor(
-    address contractAddress,
-    address executorAddress
-  ) external view {
-    if (!serviceExecutors[contractAddress][executorAddress])
-      revert ConfigStorage_NotWhiteListed();
   }
 
   // setter functions
@@ -151,5 +158,13 @@ contract ConfigStorage is IConfigStorage {
     bool _isServiceExecutor
   ) external {
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
+  }
+
+  function validateServiceExecutor(
+    address contractAddress,
+    address executorAddress
+  ) external view {
+    if (!serviceExecutors[contractAddress][executorAddress])
+      revert ConfigStorage_NotWhiteListed();
   }
 }

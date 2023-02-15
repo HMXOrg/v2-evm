@@ -3,11 +3,6 @@ pragma solidity 0.8.18;
 
 interface IVaultStorage {
   // GETTER
-  function liquidityProviderBalances(
-    address _liquidityProvider,
-    address _token
-  ) external view returns (uint _amount);
-
   function traderBalances(
     address _trader,
     address _token
@@ -15,10 +10,6 @@ interface IVaultStorage {
 
   function getTraderTokens(
     address _trader
-  ) external view returns (address[] memory);
-
-  function getLiquidityProviderTokens(
-    address _token
   ) external view returns (address[] memory);
 
   function fees(address _token) external view returns (uint256);
@@ -36,14 +27,5 @@ interface IVaultStorage {
 
   function addPLPTotalLiquidityUSD(uint256 _liquidity) external;
 
-  function setLiquidityProviderBalances(
-    address _lpProvider,
-    address _token,
-    uint256 _amount
-  ) external;
-
-  function setLiquidityProviderTokens(
-    address _lpProvider,
-    address _token
-  ) external;
+  function addPLPLiquidity(address _token, uint256 _amount) external;
 }

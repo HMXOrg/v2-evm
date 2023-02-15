@@ -46,11 +46,13 @@ interface IConfigStorage {
   struct LiquidityConfig {
     uint256 depositFeeRate; // PLP deposit fee rate
     uint256 withdrawFeeRate; // PLP withdraw fee rate
-    uint256 maxPLPUtilization;
+    uint256 maxPLPUtilization; //% of max utilization
     uint256 plpSafetyBufferThreshold;
     uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
     uint256 flashLoanFeeRate;
     bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
+    bool enabled; // Circuit breaker on Liquidity
+    address[] acceptedTokens;
   }
 
   // Swap
@@ -106,9 +108,11 @@ interface IConfigStorage {
     address _token
   ) external view returns (PLPTokenConfig memory);
 
-  // SETTER
-  function setCalculator(address _calculator) external;
+  function getMarketConfigByToken(
+    address _token
+  ) external view returns (MarketConfig memory marketConfig);
 
+  // SETTER
   function setPLP(address _plp) external;
 
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;

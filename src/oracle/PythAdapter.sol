@@ -33,6 +33,9 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
 
   constructor(IPyth _pyth) {
     pyth = _pyth;
+
+    // Sanity
+    pyth.getValidTimePeriod();
   }
 
   modifier onlyUpdater() {

@@ -4,7 +4,6 @@ pragma solidity 0.8.18;
 import { Owned } from "../base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 contract OracleMiddleware is Owned, IOracleMiddleware {
   // errors
@@ -14,7 +13,6 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   error OracleMiddleware_InvalidMarketStatus();
 
   // configs
-  IPyth public pyth;
   IOracleAdapter public pythAdapter;
 
   // whitelist mapping of market status updater
@@ -36,8 +34,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   // assetId => marketStatus
   mapping(bytes32 => uint8) public marketStatus;
 
-  constructor(IPyth _pyth, IOracleAdapter _pythAdapter) {
-    pyth = _pyth;
+  constructor(IOracleAdapter _pythAdapter) {
     pythAdapter = _pythAdapter;
   }
 
@@ -84,9 +81,9 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bytes32 _assetId,
     bool _isMax,
     uint256 _confidenceThreshold
-  ) internal view returns (uint256, uint256) {
+  ) internal view returns (uint256 _price, uint256 _lastUpdate) {
     // 1. get price from Pyth
-    (uint256 _price, uint256 _lastUpdate) = pythAdapter.getLatestPrice(
+    (_price, _lastUpdate) = pythAdapter.getLatestPrice(
       _assetId,
       _isMax,
       _confidenceThreshold

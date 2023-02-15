@@ -47,7 +47,9 @@ contract Calculator is ICalculator {
 
     uint256 aum = _getPLPValue(isMaxPrice) + pendingBorrowingFee;
     if (pnl < 0) {
-      aum -= uint256(-pnl);
+      uint256 _pnl = uint256(-pnl);
+      if (aum < _pnl) return 0;
+      aum -= _pnl;
     } else {
       aum += uint256(pnl);
     }

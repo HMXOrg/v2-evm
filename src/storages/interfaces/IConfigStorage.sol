@@ -74,6 +74,8 @@ interface IConfigStorage {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
 
+  function pnlFactor() external view returns (uint256);
+
   function validateServiceExecutor(
     address _contractAddress,
     address _executorAddress

@@ -3,5 +3,6 @@ pragma solidity 0.8.18;
 
 interface ICalculator {
   // ERRORs
-  error InvalidAddress();
+  error ICalculator_InvalidAddress();
+  error ICalculator_InvalidAveragePrice();
 }

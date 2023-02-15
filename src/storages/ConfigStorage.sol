@@ -13,6 +13,8 @@ contract ConfigStorage is IConfigStorage {
   TrandingConfig public trandingConfig;
   LiquidationConfig public liquidationConfig;
   MarketConfig[] public marketConfigs;
+  // assetId => index
+  mapping(bytes32 => uint256) public marketConfigIndices;
 
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
   mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config
@@ -20,6 +22,8 @@ contract ConfigStorage is IConfigStorage {
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
   // service => handler => isOK
   mapping(address => mapping(address => bool)) public serviceExecutors; // to allowed executor for service layer
+
+  uint256 public pnlFactor; // factor that calculate unrealized PnL after collateral factor
 
   // ERRORs
   event SetServiceExecutor(
@@ -90,5 +94,12 @@ contract ConfigStorage is IConfigStorage {
         i++;
       }
     }
+  }
+
+  function getMarketConfigById(
+    bytes32 _assetId
+  ) external view returns (MarketConfig memory) {
+    uint256 _index = marketConfigIndices[_assetId];
+    return marketConfigs[_index];
   }
 }

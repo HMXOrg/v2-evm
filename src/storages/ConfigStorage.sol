@@ -21,11 +21,11 @@ contract ConfigStorage is IConfigStorage {
   // service => handler => isOK
   mapping(address => mapping(address => bool)) public serviceExecutors; // to allowed executor for service layer
 
-  // TODO refactor later
+  // TODO refactor move to struct?
   address public calculator;
   address public plp;
   address public treasury;
-  bool public dynamicFeeEnabled;
+  uint256 public plpTotalTokenWeight;
 
   //events
   event SetServiceExecutor(address _service, address _handler, bool _isOk);
@@ -48,12 +48,22 @@ contract ConfigStorage is IConfigStorage {
     );
   }
 
-  function validateServiceExecutor(
-    address contractAddress,
-    address executorAddress
-  ) external view {
-    if (!serviceExecutors[contractAddress][executorAddress])
-      revert ConfigStorage_NotWhiteListed();
+  function getPLPTokenConfig(
+    address token
+  ) external view returns (PLPTokenConfig memory) {
+    return plpTokenConfigs[token];
+  }
+
+  function getLiquidityConfig() external view returns (LiquidityConfig memory) {
+    return liquidityConfig;
+  }
+
+  function getLiquidationConfig()
+    external
+    view
+    returns (LiquidationConfig memory)
+  {
+    return liquidationConfig;
   }
 
   function setCalculator(address _calculator) external {
@@ -74,25 +84,20 @@ contract ConfigStorage is IConfigStorage {
   }
 
   function setDynamicEnabled(bool enabled) external {
-    dynamicFeeEnabled = enabled;
+    liquidityConfig.dynamicFeeEnabled = enabled;
     emit SetDynamicEnabled(enabled);
   }
 
-  function getPLPTokenConfig(
-    address token
-  ) external view returns (PLPTokenConfig memory) {
-    return plpTokenConfigs[token];
+  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external {
+    if (_totalTokenWeight > 1e18) revert ConfigStorage_ExceedLimitSetting();
+    plpTotalTokenWeight = _totalTokenWeight;
   }
 
-  function getLiquidityConfig() external view returns (LiquidityConfig memory) {
-    return liquidityConfig;
-  }
-
-  function getLiquidationConfig()
-    external
-    view
-    returns (LiquidationConfig memory)
-  {
-    return liquidationConfig;
+  function validateServiceExecutor(
+    address contractAddress,
+    address executorAddress
+  ) external view {
+    if (!serviceExecutors[contractAddress][executorAddress])
+      revert ConfigStorage_NotWhiteListed();
   }
 }

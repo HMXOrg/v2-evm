@@ -17,16 +17,12 @@ contract LiquidityService is ILiquidityService {
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
   uint256 internal constant USD_DECIMALS = 18;
 
-  enum LiquidityDirection {
-    ADD,
-    REMOVE
-  }
-
   constructor(address _configStorage, address _vaultStorage) {
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
   }
 
+  //TODO add whitelisted (because to trust _amount is true)
   function addLiquidity(
     address _lpProvider,
     address _token,
@@ -39,18 +35,14 @@ contract LiquidityService is ILiquidityService {
     );
 
     // TODO: validate circuit break
-    // 1. Calculate and cache new PLP Price
     ICalculator _calculator = ICalculator(
       IConfigStorage(configStorage).calculator()
     );
 
     // TODO fix here
-    uint256 price = 1 ether;
+    uint256 _price = 1e30;
 
     // 2. Calculate PLP amount to mint
-    // 2.1 cal tokenValue = amount* tokenPrice
-    uint256 tokenValueUsd = (_amount * price) / PRICE_PRECISION;
-
     IConfigStorage.PLPTokenConfig memory tokenConfig = IConfigStorage(
       configStorage
     ).getPLPTokenConfig(_token);
@@ -59,6 +51,13 @@ contract LiquidityService is ILiquidityService {
     if (!tokenConfig.accepted) {
       revert LiquidityService_InvalidToken();
     }
+
+    if (_amount == 0) {
+      revert LiquidityService_BadAmount();
+    }
+
+    // 2.1 tokenValue = amount * priceE30 / 1e30
+    uint256 tokenValueUsd = (_amount * _price) / PRICE_PRECISION;
 
     uint256 tokenValueInDecimals = _calculator.convertTokenDecimals(
       ERC20(_token).decimals(),
@@ -70,22 +69,27 @@ contract LiquidityService is ILiquidityService {
       revert LiquidityService_InsufficientLiquidityMint();
     }
 
-    // 3 collect deposit fee
-    uint256 _tokenPriceUsd = 0;
+    uint256 _feeRate = _calculator.getAddLiquidityFeeRate(
+      _token,
+      tokenValueUsd, //e18
+      IConfigStorage(configStorage),
+      IVaultStorage(vaultStorage)
+    );
 
-    // Accouting protocol fee
     uint256 amountAfterFee = _collectFee(
       _token,
-      _tokenPriceUsd,
+      _price,
       _amount,
-      _getFeeAddLiquidityRate(_token, tokenValueInDecimals),
+      _feeRate,
       _lpProvider
     );
 
     // 4. Check slippage: revert on error
-    if (amountAfterFee < _minAmount) {
+    if (amountAfterFee < _minAmount)
       revert LiquidityService_InsufficientLiquidityMint();
-    }
+
+    // TODO validate maxWeightDiff
+
     // 5. Call VaultStorage: Add Liquidity and Collect Deposit Fee
 
     // Increase token liquidity
@@ -99,11 +103,11 @@ contract LiquidityService is ILiquidityService {
     );
 
     // 6. Mint PLP to user
-    uint256 mintAmount = _calculator.getAUM() == 0
-      ? amountAfterFee
-      : (amountAfterFee *
-        ERC20(IConfigStorage(configStorage).plp()).totalSupply()) /
-        _calculator.getAUM();
+    uint256 mintAmount = _calculator.getMintAmount(
+      _calculator.getAUM(),
+      ERC20(IConfigStorage(configStorage).plp()).totalSupply(),
+      amountAfterFee
+    );
     PLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
   }
 
@@ -170,21 +174,6 @@ contract LiquidityService is ILiquidityService {
     }
   } */
 
-  function _getFeeAddLiquidityRate(
-    address _token,
-    uint256 _tokenValue
-  ) internal returns (uint256) {
-    IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(
-      configStorage
-    ).getLiquidityConfig();
-    if (!_liquidityConfig.dynamicFeeEnabled) {
-      return _liquidityConfig.depositFeeRate;
-    }
-    //TODO feeLiquidity
-    return (0);
-    // return getFeeBps(token, value, _feeBps, _taxBps, direction);
-  }
-
   function _collectFee(
     address _token,
     uint256 _tokenPriceUsd,
@@ -224,66 +213,4 @@ contract LiquidityService is ILiquidityService {
         fee
       ); */
   }
-  /*
-
-  function getFeeBps(
-    address _token,
-    uint256 _value,
-    uint256 _feeBps,
-    uint256 _taxBps,
-    LiquidityDirection direction
-  ) internal view returns (uint256) {
-
-   
-
-    uint256 startValue = configStorage.[token];
-    uint256 nextValue = startValue + value;
-    if (direction == LiquidityDirection.REMOVE)
-      nextValue = value > startValue ? 0 : startValue - value;
-
-    uint256 targetValue = getTargetValue(token);
-    if (targetValue == 0) return _feeBps;
-
-    uint256 startTargetDiff = startValue > targetValue
-      ? startValue - targetValue
-      : targetValue - startValue;
-    uint256 nextTargetDiff = nextValue > targetValue
-      ? nextValue - targetValue
-      : targetValue - nextValue;
-
-    // nextValue moves closer to the targetValue -> positive case;
-    // Should apply rebate.
-    if (nextTargetDiff < startTargetDiff) {
-      uint256 rebateBps = (_taxBps * startTargetDiff) / targetValue;
-      return rebateBps > _feeBps ? 0 : _feeBps - rebateBps;
-    }
-
-    // If not then -> negative impact to the pool.
-    // Should apply tax.
-    uint256 midDiff = (startTargetDiff + nextTargetDiff) / 2;
-    if (midDiff > targetValue) {
-      midDiff = targetValue;
-    }
-    _taxBps = (_taxBps * midDiff) / targetValue;
-
-    return _feeBps + _taxBps;
-  }
-
-
-  function getTargetValue(address token) public view returns (uint256) {
-    // SLOAD
-    LibPoolV1.PoolV1DiamondStorage storage poolV1ds = LibPoolV1
-      .poolV1DiamondStorage();
-    // Load PoolConfigV1 diamond storage
-    LibPoolConfigV1.PoolConfigV1DiamondStorage
-      storage poolConfigDs = LibPoolConfigV1.poolConfigV1DiamondStorage();
-
-    uint256 cachedTotalUsdDebt = poolV1ds.totalUsdDebt;
-
-    if (cachedTotalUsdDebt == 0) return 0;
-
-    return
-      (cachedTotalUsdDebt * poolConfigDs.tokenMetas[token].weight) /
-      poolConfigDs.totalTokenWeight;
-  } */
 }

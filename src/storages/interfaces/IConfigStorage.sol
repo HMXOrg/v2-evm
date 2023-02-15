@@ -72,8 +72,36 @@ interface IConfigStorage {
 
   //errors
   error ConfigStorage_NotWhiteListed();
+  error ConfigStorage_ExceedLimitSetting();
 
-  // methods
+  // GETTER
+  function plp() external view returns (address);
+
+  function calculator() external view returns (address);
+
+  function getLiquidityConfig() external view returns (LiquidityConfig memory);
+
+  function getLiquidationConfig()
+    external
+    view
+    returns (LiquidationConfig memory);
+
+  function treasury() external view returns (address);
+
+  function plpTotalTokenWeight() external view returns (uint256);
+
+  function getPLPTokenConfig(
+    address _token
+  ) external view returns (PLPTokenConfig memory);
+
+  // SETTER
+  function setCalculator(address _calculator) external;
+
+  function setPLP(address _plp) external;
+
+  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;
+
+  // VALIDATION
   function validateServiceExecutor(
     address _contractAddress,
     address _executorAddress
@@ -84,28 +112,4 @@ interface IConfigStorage {
     address _executorAddress,
     bool _isServiceExecutor
   ) external;
-
-  function setCalculator(address _calculator) external;
-
-  function setPLP(address _plp) external;
-
-  function getPLPTokenConfig(
-    address _token
-  ) external view returns (PLPTokenConfig memory);
-
-  // methods for variable
-  function plp() external view returns (address);
-
-  function calculator() external view returns (address);
-
-  function dynamicFeeEnabled() external view returns (bool);
-
-  function getLiquidityConfig() external view returns (LiquidityConfig memory);
-
-  function getLiquidationConfig()
-    external
-    view
-    returns (LiquidationConfig memory);
-
-  function treasury() external view returns (address);
 }

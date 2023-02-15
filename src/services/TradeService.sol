@@ -10,6 +10,7 @@ import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
+import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
 contract TradeService is ITradeService {
   using SafeCast for int256;
@@ -22,22 +23,25 @@ contract TradeService is ITradeService {
   );
 
   // state
-  address perpStorage;
-  address vaultStorage;
-  address configStorage;
-  address calculator;
+  address public perpStorage;
+  address public vaultStorage;
+  address public configStorage;
+  address public calculator;
+  address public oracle;
 
   constructor(
     address _perpStorage,
     address _vaultStorage,
     address _configStorage,
-    address _calculator
+    address _calculator,
+    address _oracle
   ) {
     // todo: sanity check
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
     calculator = _calculator;
+    oracle = _oracle;
   }
 
   // todo: rewrite description
@@ -53,12 +57,19 @@ contract TradeService is ITradeService {
     uint256 _positionSizeE30ToDecrease
   ) external {
     // prepare
-    // todo: integrate with oracle
-    uint256 _currentPrice = 1e30;
-
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
     ).getMarketConfigById(_marketId);
+
+    (
+      uint256 _priceE30,
+      uint256 _lastPriceUpdated,
+      uint8 _marketStatus
+    ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+        _marketConfig.assetId,
+        true,
+        _marketConfig.priceConfidentThreshold
+      );
 
     address _subAccount = _getSubAccount(_account, _subAccountId);
     bytes32 _positionId = _getPositionId(_subAccount, _marketId);
@@ -68,8 +79,16 @@ contract TradeService is ITradeService {
     // =========================================
     // | ---------- pre validation ----------- |
     // =========================================
-    // todo: check market status
-    // todo: check market config
+    // Market active represent the market is still listed on our protocol
+    if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
+
+    // if market status is 1, means that oracle couldn't get price from pyth
+    if (_marketStatus == 1) revert ITradeService_MarketIsClosed();
+
+    // check price stale for 30 seconds
+    // todo: do it as config
+    if (_lastPriceUpdated - block.timestamp > 30)
+      revert ITradeService_PriceStale();
 
     bool isLongPosition = _position.positionSizeE30 > 0;
     uint256 _absolutePositionSizeE30 = (
@@ -129,7 +148,7 @@ contract TradeService is ITradeService {
         .getGlobalMarketById(_marketId);
 
       uint256 _changedOpenInterest = (_positionSizeE30ToDecrease * 1e30) /
-        _currentPrice;
+        _priceE30;
 
       if (isLongPosition) {
         IPerpStorage(perpStorage).updateGlobalLongMarketById(

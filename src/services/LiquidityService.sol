@@ -22,7 +22,7 @@ contract LiquidityService is ILiquidityService {
     vaultStorage = _vaultStorage;
   }
 
-  //TODO add whitelisted (because to trust _amount is true)
+  //TODO add whitelisted (because to trust _amount from handler)
   function addLiquidity(
     address _lpProvider,
     address _token,

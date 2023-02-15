@@ -1,6 +1,5 @@
-name: test
-
 name: Slither Analysis
+
 on:
   push:
     branches:

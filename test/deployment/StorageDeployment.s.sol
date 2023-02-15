@@ -6,15 +6,15 @@ import { PerpStorage } from "../../src/storages/PerpStorage.sol";
 import { VaultStorage } from "../../src/storages/VaultStorage.sol";
 
 abstract contract StorageDeployment {
-  function deployConfigStorage() internal returns (address) {
-    return address(new ConfigStorage());
+  function deployConfigStorage() internal returns (ConfigStorage) {
+    return new ConfigStorage();
   }
 
-  function deployPerpStorage() internal returns (address) {
-    return address(new PerpStorage());
+  function deployPerpStorage() internal returns (PerpStorage) {
+    return new PerpStorage();
   }
 
-  function deployVaultStorage() internal returns (address) {
-    return address(new VaultStorage());
+  function deployVaultStorage() internal returns (VaultStorage) {
+    return new VaultStorage();
   }
 }

@@ -14,6 +14,10 @@ import { MockCalculator } from "../mocks/MockCalculator.sol";
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
+import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
+import { PerpStorage } from "../../src/storages/PerpStorage.sol";
+import { VaultStorage } from "../../src/storages/VaultStorage.sol";
+
 abstract contract BaseTest is
   TestBase,
   Deployment,
@@ -27,9 +31,9 @@ abstract contract BaseTest is
   address internal DAVE;
 
   // storages
-  address internal configStorage;
-  address internal perpStorage;
-  address internal vaultStorage;
+  ConfigStorage internal configStorage;
+  PerpStorage internal perpStorage;
+  VaultStorage internal vaultStorage;
 
   MockPyth internal mockPyth;
   MockCalculator internal mockCalculator;

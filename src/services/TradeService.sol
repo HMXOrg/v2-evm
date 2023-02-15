@@ -75,26 +75,29 @@ contract TradeService is ITradeService {
     uint256 _absolutePositionSizeE30 = (
       isLongPosition ? _position.positionSizeE30 : -_position.positionSizeE30
     ).toUint256();
+    {
+      // if position size is 0 means this position is already closed
+      if (_absolutePositionSizeE30 == 0) {
+        revert ITradeService_PositionAlreadyClosed();
+      }
 
-    // if position size is 0 means this position is already closed
-    if (_absolutePositionSizeE30 == 0) {
-      revert ITradeService_PositionAlreadyClosed();
-    }
+      // position size to decrease is greater then position size, should be revert
+      if (_positionSizeE30ToDecrease > _absolutePositionSizeE30) {
+        revert ITradeService_DecreaseTooHighPositionSize();
+      }
 
-    // position size to decrease is greater then position size, should be revert
-    if (_positionSizeE30ToDecrease > _absolutePositionSizeE30) {
-      revert ITradeService_DecreaseTooHighPositionSize();
-    }
+      // check sub account is healty
+      uint256 _subAccountEquity = ICalculator(calculator).getEquity(
+        _subAccount
+      );
+      // maintenance margin requirement (MMR) = position size * maintenance margin fraction
+      // note: maintenanceMarginFraction is 1e18
+      uint256 _mmr = ICalculator(calculator).getMMR(_subAccount);
 
-    // check sub account is healty
-    uint256 _subAccountEquity = ICalculator(calculator).getEquity(_subAccount);
-    // maintenance margin requirement (MMR) = position size * maintenance margin fraction
-    // note: maintenanceMarginFraction is 1e18
-    uint256 _mmr = ICalculator(calculator).getMMR(_subAccount);
-
-    // if sub account equity < MMR, then trader couln't decrease position
-    if (_subAccountEquity < _mmr) {
-      revert ITradeService_SubAccountEquityIsUnderMMR();
+      // if sub account equity < MMR, then trader couln't decrease position
+      if (_subAccountEquity < _mmr) {
+        revert ITradeService_SubAccountEquityIsUnderMMR();
+      }
     }
 
     // todo: update funding & borrowing fee rate
@@ -108,19 +111,19 @@ contract TradeService is ITradeService {
     uint256 _newPositivePositionSize = _absolutePositionSizeE30 -
       _positionSizeE30ToDecrease;
 
-    uint256 _imr = (_newPositivePositionSize *
-      _marketConfig.initialMarginFraction) / 1e18;
-
-    _position = IPerpStorage(perpStorage).updatePositionById(
-      _positionId,
-      isLongPosition
-        ? _newPositivePositionSize.toInt256()
-        : -(_newPositivePositionSize.toInt256()), // todo: optimized
-      (_imr * _marketConfig.maxProfitRate) / 1e18, // _newReserveValueE30
-      _newPositivePositionSize == 0 ? 0 : _position.avgEntryPriceE30 // _newAvgPriceE30
-    );
-
     {
+      uint256 _imr = (_newPositivePositionSize *
+        _marketConfig.initialMarginFraction) / 1e18;
+
+      _position = IPerpStorage(perpStorage).updatePositionById(
+        _positionId,
+        isLongPosition
+          ? _newPositivePositionSize.toInt256()
+          : -(_newPositivePositionSize.toInt256()), // todo: optimized
+        (_imr * _marketConfig.maxProfitRate) / 1e18, // _newReserveValueE30
+        _newPositivePositionSize == 0 ? 0 : _position.avgEntryPriceE30 // _newAvgPriceE30
+      );
+
       // if position size > 0, then the position is Long position
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
         .getGlobalMarketById(_marketId);
@@ -154,27 +157,28 @@ contract TradeService is ITradeService {
     // | --------- post validation ----------- |
     // =========================================
     {
-      // check sub account is healty
-      _subAccountEquity = ICalculator(calculator).getEquity(_subAccount);
-      // maintenance margin requirement (MMR) = position size * maintenance margin fraction
-      // note: maintenanceMarginFraction is 1e18
-      _mmr = ICalculator(calculator).getMMR(_subAccount);
-
-      // if sub account equity < MMR, then trader couln't decrease position
-      if (_subAccountEquity < _mmr) {
-        revert ITradeService_SubAccountEquityIsUnderMMR();
-      }
-
       // check position is too tiny
       // todo: now validate this at 1 USD, design where to keep this config
       //       due to we has problem stack too deep in MarketConfig now
       if (_newPositivePositionSize < 1e30) {
         revert ITradeService_TooTinyPosition();
       }
+
+      // check sub account is healty
+      uint256 _subAccountEquity = ICalculator(calculator).getEquity(
+        _subAccount
+      );
+      // maintenance margin requirement (MMR) = position size * maintenance margin fraction
+      // note: maintenanceMarginFraction is 1e18
+      uint256 _mmr = ICalculator(calculator).getMMR(_subAccount);
+
+      // if sub account equity < MMR, then trader couln't decrease position
+      if (_subAccountEquity < _mmr) {
+        revert ITradeService_SubAccountEquityIsUnderMMR();
+      }
     }
 
-    // todo: bad debt
-
+    // todo: bad debt, when sub account has not enough free collateral
     emit LogDecreasePosition(_positionId, _positionSizeE30ToDecrease);
   }
 

@@ -43,6 +43,4 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
   // validate too tiny position
   function testRevert_RemainingPositionSizeIsTooTiny() external {}
-
-  // -- bad debt
 }

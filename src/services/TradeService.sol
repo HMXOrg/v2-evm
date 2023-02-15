@@ -178,7 +178,6 @@ contract TradeService is ITradeService {
       }
     }
 
-    // todo: bad debt, when sub account has not enough free collateral
     emit LogDecreasePosition(_positionId, _positionSizeE30ToDecrease);
   }
 

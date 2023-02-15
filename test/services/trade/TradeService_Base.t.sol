@@ -13,7 +13,8 @@ abstract contract TradeService_Base is BaseTest {
       address(configStorage),
       address(perpStorage),
       address(vaultStorage),
-      address(mockCalculator)
+      address(mockCalculator),
+      address(mockOracle)
     );
   }
 }

@@ -10,6 +10,7 @@ import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
+import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
@@ -37,6 +38,7 @@ abstract contract BaseTest is
 
   MockPyth internal mockPyth;
   MockCalculator internal mockCalculator;
+  MockOracleMiddleware internal mockOracle;
 
   MockErc20 internal weth;
   MockErc20 internal wbtc;
@@ -75,6 +77,7 @@ abstract contract BaseTest is
     vaultStorage = deployVaultStorage();
 
     mockCalculator = new MockCalculator();
+    mockOracle = new MockOracleMiddleware();
   }
 
   // --------- Deploy Helpers ---------

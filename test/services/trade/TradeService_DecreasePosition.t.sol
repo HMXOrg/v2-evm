@@ -13,6 +13,16 @@ contract TradeService_DecreasePosition is TradeService_Base {
   }
 
   // -- pre validation
+
+  // validate market active on perp protocol
+  function testRevert_WhenMarketIsDelistedFromPerp() external {}
+
+  // validate market status base on pyth network
+  function testRevert_WhenOracleTellMarketIsClose() external {}
+
+  // validate price stale
+  function testRevert_WhenPriceStale() external {}
+
   // validate MMR
   function testRevert_WhenSubAccountEquityIsLessThanMMR() external {}
 

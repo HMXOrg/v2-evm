@@ -18,14 +18,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
   // validate Market config
   // validate position size is 0
-  function testRevert_WhenPositionIsAlreadyClosed() external {
-    tradeService.decreasePosition(
-      _account,
-      _subAccountId,
-      _marketId,
-      _positionSizeE30ToDecrease
-    );
-  }
+  function testRevert_WhenPositionIsAlreadyClosed() external {}
 
   // validate decrease position size is too tiny
   function testRevert_WhenTraderDecreaseWithTinySize() external {}

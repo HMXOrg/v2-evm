@@ -18,7 +18,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          submodules: recursive # - run: sudo git config --system --add safe.directory '*'
+          submodules: recursive
+      - run: git config --system --add safe.directory '/github/workspace'
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16.16.0"
+
+      - name: Yarn
+        run: |
+          yarn
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
       - name: Run Slither
         uses: crytic/slither-action@v0.2.0
         with:

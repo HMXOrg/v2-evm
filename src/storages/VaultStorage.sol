@@ -27,7 +27,10 @@ contract VaultStorage is IVaultStorage {
   //////////////////////  VALIDATION FUNCTION  ///////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function validatAddTraderToken(address _trader, address _token) public view {
+  function validatAddTraderToken(
+    address _trader,
+    address _token
+  ) internal view {
     address[] storage traderToken = traderTokens[_trader];
 
     for (uint256 i; i < traderToken.length; ) {
@@ -42,7 +45,7 @@ contract VaultStorage is IVaultStorage {
   function validateRemoveTraderToken(
     address _trader,
     address _token
-  ) public view {
+  ) internal view {
     if (traderBalances[_trader][_token] != 0)
       revert IVaultStorage_TraderBalanceRemaining();
   }

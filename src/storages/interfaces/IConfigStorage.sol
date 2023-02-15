@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 interface IConfigStorage {
-  // ERRORs
+  // ERRORS
   error NotAcceptedCollateral();
   error NotWhiteListed();
 
@@ -74,14 +74,8 @@ interface IConfigStorage {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
 
+  // STATES
   function pnlFactor() external view returns (uint256);
-
-  function validateServiceExecutor(
-    address _contractAddress,
-    address _executorAddress
-  ) external view;
-
-  function validateAcceptedCollateral(address _token) external view;
 
   function getCollateralTokenConfigs(
     address _token
@@ -91,7 +85,19 @@ interface IConfigStorage {
     uint256 _index
   ) external view returns (MarketConfig memory marketConfig);
 
-  function getMarketConfigByAssetId(
-    bytes32 _assetId
+  function getMarketConfigByToken(
+    address _token
   ) external view returns (MarketConfig memory marketConfig);
+
+  // FUNCTIONS
+
+  /// @notice Validate only whitelisted executor contracts to be able to call Service contracts.
+  /// @param _contractAddress Service contract address to be executed.
+  /// @param _executorAddress Executor contract address to call service contract.
+  function validateServiceExecutor(
+    address _contractAddress,
+    address _executorAddress
+  ) external view;
+
+  function validateAcceptedCollateral(address _token) external view;
 }

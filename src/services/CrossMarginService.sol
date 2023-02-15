@@ -2,19 +2,21 @@
 pragma solidity 0.8.18;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+import { Owned } from "../base/Owned.sol";
 
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 
-contract CrossMarginService is Ownable, ReentrancyGuard, ICrossMarginService {
+contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
+  // STATES
   address public configStorage;
   address public vaultStorage;
 
-  // EVENTs
+  // EVENTS
   event LogSetConfigStorage(
     address indexed oldConfigStorage,
     address newConfigStorage
@@ -38,91 +40,134 @@ contract CrossMarginService is Ownable, ReentrancyGuard, ICrossMarginService {
   );
 
   constructor(address _configStorage, address _vaultStorage) {
+    // Sanity check
     if (_configStorage == address(0) || _vaultStorage == address(0))
       revert ICrossMarginService_InvalidAddress();
+
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER FUNCTION  ///////////////////////////////////////////
+  //////////////////////  SETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
+  /// @notice Set new ConfigStorage contract address.
+  /// @dev This uses to retrive all config information on protocal.
+  /// @param _configStorage New ConfigStorage contract address.
   function setConfigStorage(address _configStorage) external onlyOwner {
+    // Sanity check
     if (_configStorage == address(0))
       revert ICrossMarginService_InvalidAddress();
-    address oldConfigStorage = configStorage;
+    emit LogSetConfigStorage(configStorage, _configStorage);
     configStorage = _configStorage;
-    emit LogSetConfigStorage(oldConfigStorage, configStorage);
   }
 
+  /// @notice Set new CaultStorage contract address.
+  /// @dev This uses to retrive all accounting information on protocal.
+  /// @param _vaultStorage New VaultStorage contract address.
   function setVaultStorage(address _vaultStorage) external onlyOwner {
+    // Sanity check
     if (_vaultStorage == address(0))
       revert ICrossMarginService_InvalidAddress();
-    address oldVaultStorage = vaultStorage;
+
+    emit LogSetVaultStorage(vaultStorage, _vaultStorage);
     vaultStorage = _vaultStorage;
-    emit LogSetVaultStorage(oldVaultStorage, vaultStorage);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////
+  ////////////////////// CALCULATION
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function increaseTokenLiquidity(
-    address _trader,
+  /// @notice Calculate new trader balance after deposit collateral token.
+  /// @dev This uses to calculate new trader balance when they deposit token as collateral.
+  /// @param _subAccount Trader's address that combined between Primary account and Sub account.
+  /// @param _token Token that's deposited as collateral.
+  /// @param _amount Token depositing amount.
+  function depositCollateral(
+    address _subAccount,
     address _token,
     uint256 _amount
   ) external nonReentrant {
+    // Validate only whitelisted contract be able to call this function
     IConfigStorage(configStorage).validateServiceExecutor(
       address(this),
       msg.sender
     );
+    // Validate only accepted collateral token to be deposited
     IConfigStorage(configStorage).validateAcceptedCollateral(_token);
 
+    // Get current collateral token balance of trader's account
+    // and sum with new token depositing amount
     uint oldBalance = IVaultStorage(vaultStorage).traderBalances(
-      _trader,
+      _subAccount,
       _token
     );
     uint newBalance = oldBalance + _amount;
-    IVaultStorage(vaultStorage).setTraderBalance(_trader, _token, newBalance);
 
-    // register new token to a user
+    // Set new collateral token balance
+    IVaultStorage(vaultStorage).setTraderBalance(
+      _subAccount,
+      _token,
+      newBalance
+    );
+
+    // If trader's account never contain this token before then register new token to the account
     if (oldBalance == 0 && newBalance != 0) {
-      IVaultStorage(vaultStorage).addTraderToken(_trader, _token);
+      IVaultStorage(vaultStorage).addTraderToken(_subAccount, _token);
     }
 
+    // Transfer depositing token from trader's wallet to VaultStorage
     IERC20(_token).transferFrom(msg.sender, vaultStorage, _amount);
 
-    emit LogIncreaseTokenLiquidity(_trader, _token, _amount);
+    emit LogIncreaseTokenLiquidity(_subAccount, _token, _amount);
   }
 
-  function decreaseTokenLiquidity(
-    address _trader,
+  /// @notice Calculate new trader balance after withdraw collateral token.
+  /// @dev This uses to calculate new trader balance when they withdrawing token as collateral.
+  /// @param _subAccount Trader's address that combined between Primary account and Sub account.
+  /// @param _token Token that's withdrawn as collateral.
+  /// @param _amount Token withdrawing amount.
+  function withdrawCollateral(
+    address _subAccount,
     address _token,
     uint256 _amount
   ) external nonReentrant {
+    // Validate only whitelisted contract be able to call this function
     IConfigStorage(configStorage).validateServiceExecutor(
       address(this),
       msg.sender
     );
+
+    // Validate only accepted collateral token to be withdrawn
     IConfigStorage(configStorage).validateAcceptedCollateral(_token);
 
+    // Get current collateral token balance of trader's account
+    // and deduct with new token withdrawing amount
     uint oldBalance = IVaultStorage(vaultStorage).traderBalances(
-      _trader,
+      _subAccount,
       _token
     );
     if (_amount > oldBalance) revert ICrossMarginService_InsufficientBalance();
 
+    // @todo - validate IMR in case withdraw
     uint newBalance = oldBalance - _amount;
-    IVaultStorage(vaultStorage).setTraderBalance(_trader, _token, newBalance);
 
-    // deregister token, if the user remove all of the token out
+    // Set new collateral token balance
+    IVaultStorage(vaultStorage).setTraderBalance(
+      _subAccount,
+      _token,
+      newBalance
+    );
+
+    // If trader withdraws all token out, then remove token on traderTokens list
     if (oldBalance != 0 && newBalance == 0) {
-      IVaultStorage(vaultStorage).removeTraderToken(_trader, _token);
+      IVaultStorage(vaultStorage).removeTraderToken(_subAccount, _token);
     }
 
+    // Transfer withdrawing token from VaultStorage to trader's wallet
     IERC20(_token).transferFrom(vaultStorage, msg.sender, _amount);
 
-    emit LogDecreaseTokenLiquidity(_trader, _token, _amount);
+    emit LogDecreaseTokenLiquidity(_subAccount, _token, _amount);
   }
 }

@@ -1,31 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+// @todo - convert to upgradable
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+
+import { AddressUtils } from "../libraries/AddressUtils.sol";
+
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
-contract ConfigStorage is IConfigStorage {
-  // GLOBAL Configs
+contract ConfigStorage is Ownable, IConfigStorage {
+  // using libs for type
+  using AddressUtils for address;
+
+  // CONFIGS
   LiquidityConfig public liquidityConfig;
   SwapConfig public swapConfig;
   TrandingConfig public trandingConfig;
   LiquidationConfig public liquidationConfig;
   MarketConfig[] public marketConfigs;
-  // assetId => index
-  mapping(bytes32 => uint256) public marketConfigIndices;
 
+  // STATES
+  mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
   mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config
-
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
-  // service => handler => isOK
-  mapping(address => mapping(address => bool)) public serviceExecutors; // to allowed executor for service layer
-
+  mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer
   uint256 public pnlFactor; // factor that calculate unrealized PnL after collateral factor
 
-  // ERRORs
+  // EVENTS
   event SetServiceExecutor(
     address indexed contractAddress,
     address _xecutorAddress,
@@ -35,9 +40,12 @@ contract ConfigStorage is IConfigStorage {
   constructor() {}
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  VALIDATION FUNCTION  ///////////////////////////////////////
+  //////////////////////  VALIDATION
   ////////////////////////////////////////////////////////////////////////////////////
 
+  /// @notice Validate only whitelisted executor contracts to be able to call Service contracts.
+  /// @param _contractAddress Service contract address to be executed.
+  /// @param _executorAddress Executor contract address to call service contract.
   function validateServiceExecutor(
     address _contractAddress,
     address _executorAddress
@@ -46,20 +54,23 @@ contract ConfigStorage is IConfigStorage {
       revert NotWhiteListed();
   }
 
+  /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
+  /// @param _token Token address to be deposit/withdraw.
   function validateAcceptedCollateral(address _token) external view {
     if (!collateralTokenConfigs[_token].accepted)
       revert NotAcceptedCollateral();
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER FUNCTION  ///////////////////////////////////////////
+  //////////////////////  SETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
+  // @todo - Add Description
   function setServiceExecutor(
     address _contractAddress,
     address _executorAddress,
     bool _isServiceExecutor
-  ) external {
+  ) external onlyOwner {
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
 
     emit SetServiceExecutor(
@@ -70,32 +81,38 @@ contract ConfigStorage is IConfigStorage {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
+  //////////////////////  GETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
+  // @todo - Add Description
   function getCollateralTokenConfigs(
     address _token
   ) external view returns (CollateralTokenConfig memory collateralTokenConfig) {
     return collateralTokenConfigs[_token];
   }
 
+  // @todo - Add Description
   function getMarketConfigByIndex(
     uint256 _index
   ) external view returns (MarketConfig memory marketConfig) {
     return marketConfigs[_index];
   }
 
-  function getMarketConfigByAssetId(
-    bytes32 _assetId
+  // @todo - Add Description
+  function getMarketConfigByToken(
+    address _token
   ) external view returns (MarketConfig memory marketConfig) {
     for (uint i; i < marketConfigs.length; ) {
-      if (marketConfigs[i].assetId == _assetId) return marketConfigs[i];
+      if (marketConfigs[i].assetId == _token.toBytes32())
+        return marketConfigs[i];
+
       unchecked {
         i++;
       }
     }
   }
 
+  // @todo - Add Description
   function getMarketConfigById(
     bytes32 _assetId
   ) external view returns (MarketConfig memory) {

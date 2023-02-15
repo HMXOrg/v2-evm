@@ -31,9 +31,9 @@ contract ConfigStorage is IConfigStorage {
 
   // getter functions
   function getMarketConfigById(
-    uint256 _marketId
+    uint256 _marketIndex
   ) external view returns (MarketConfig memory) {
-    return marketConfigs[_marketId];
+    return marketConfigs[_marketIndex];
   }
 
   function getPlpTokenConfigs(
@@ -51,21 +51,24 @@ contract ConfigStorage is IConfigStorage {
   // setter functions
   function addMarketConfig(
     MarketConfig calldata _newConfig
-  ) external returns (MarketConfig memory) {
+  ) external returns (uint256) {
+    uint256 _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
-    uint256 _newMarketId = marketConfigs.length;
-    // update marketConfigIndices with new market id
-    marketConfigIndices[_newConfig.assetId] = _newMarketId;
-    // index = id - 1;
-    return marketConfigs[_newMarketId - 1];
+    // update marketConfigIndices with new market index
+    marketConfigIndices[_newConfig.assetId] = _newMarketIndex;
+    return _newMarketIndex;
+  }
+
+  function delistMarket(uint256 _marketIndex) external {
+    delete marketConfigs[_marketIndex].active;
   }
 
   function setMarketConfig(
-    uint256 _marketId,
+    uint256 _marketIndex,
     MarketConfig memory _newConfig
   ) external returns (MarketConfig memory) {
-    marketConfigs[_marketId] = _newConfig;
-    return marketConfigs[_marketId];
+    marketConfigs[_marketIndex] = _newConfig;
+    return marketConfigs[_marketIndex];
   }
 
   function setPlpTokenConfig(

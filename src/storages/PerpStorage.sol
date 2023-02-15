@@ -16,6 +16,7 @@ contract PerpStorage is IPerpStorage {
   mapping(address => uint256[]) public subAccountPositionIndices;
 
   mapping(address => CollateralToken) public collateralTokens;
+  // market id => GlobalMarket
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
   constructor() {}
@@ -28,10 +29,37 @@ contract PerpStorage is IPerpStorage {
     return positions[_index];
   }
 
+  // todo: remove
+  function addPosition(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    bytes32 _positionId,
+    int256 _newPositionSizeE30,
+    uint256 _newReserveValueE30,
+    uint256 _newAvgPriceE30
+  ) external {
+    positions.push(
+      Position({
+        primaryAccount: _primaryAccount,
+        subAccountId: _subAccountId,
+        marketIndex: _marketIndex,
+        positionSizeE30: _newPositionSizeE30,
+        avgEntryPriceE30: _newAvgPriceE30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: _newReserveValueE30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0
+      })
+    );
+    positionIndices[_positionId] = positions.length - 1;
+  }
+
   function getGlobalMarketById(
-    uint256 _marketId
+    uint256 _marketIndex
   ) external view returns (GlobalMarket memory) {
-    return globalMarkets[_marketId];
+    return globalMarkets[_marketIndex];
   }
 
   // todo: add description
@@ -53,25 +81,25 @@ contract PerpStorage is IPerpStorage {
 
   // todo: update funding rate
   function updateGlobalLongMarketById(
-    uint256 _marketId,
+    uint256 _marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
   ) external {
-    globalMarkets[_marketId].longPositionSize = _newPositionSize;
-    globalMarkets[_marketId].longAvgPrice = _newAvgPrice;
-    globalMarkets[_marketId].longOpenInterest = _newOpenInterest;
+    globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
+    globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
+    globalMarkets[_marketIndex].longOpenInterest = _newOpenInterest;
   }
 
   // todo: update funding rate
   function updateGlobalShortMarketById(
-    uint256 _marketId,
+    uint256 _marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
   ) external {
-    globalMarkets[_marketId].shortPositionSize = _newPositionSize;
-    globalMarkets[_marketId].shortAvgPrice = _newAvgPrice;
-    globalMarkets[_marketId].longOpenInterest = _newOpenInterest;
+    globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
+    globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
+    globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
   }
 }

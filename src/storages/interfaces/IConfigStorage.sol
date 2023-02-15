@@ -71,7 +71,7 @@ interface IConfigStorage {
   }
 
   function getMarketConfigById(
-    uint256 _marketId
+    uint256 _marketIndex
   ) external view returns (MarketConfig memory);
 
   function getPlpTokenConfigs(
@@ -84,10 +84,10 @@ interface IConfigStorage {
 
   function addMarketConfig(
     MarketConfig calldata _newConfig
-  ) external returns (MarketConfig memory);
+  ) external returns (uint256);
 
   function setMarketConfig(
-    uint256 _marketId,
+    uint256 _marketIndex,
     MarketConfig memory _newConfig
   ) external returns (MarketConfig memory);
 

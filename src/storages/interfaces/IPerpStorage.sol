@@ -15,7 +15,7 @@ interface IPerpStorage {
     uint256 lastBorrowingTime;
   }
 
-  // mapping marketId => globalPosition;
+  // mapping _marketIndex => globalPosition;
   struct GlobalMarket {
     // LONG position
     uint256 longPositionSize;
@@ -33,7 +33,7 @@ interface IPerpStorage {
   // Trade position
   struct Position {
     address primaryAccount;
-    uint8 subAccount;
+    uint256 subAccountId;
     uint256 marketIndex;
     int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
     uint256 avgEntryPriceE30;
@@ -50,7 +50,7 @@ interface IPerpStorage {
   ) external view returns (Position memory);
 
   function getGlobalMarketById(
-    uint256 _marketId
+    uint256 __marketIndex
   ) external view returns (GlobalMarket memory);
 
   // setter
@@ -62,14 +62,14 @@ interface IPerpStorage {
   ) external returns (Position memory _position);
 
   function updateGlobalLongMarketById(
-    uint256 _marketId,
+    uint256 __marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
   ) external;
 
   function updateGlobalShortMarketById(
-    uint256 _marketId,
+    uint256 __marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest

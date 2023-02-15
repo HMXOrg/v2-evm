@@ -42,7 +42,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test -vvv --build-info --build-info-path /home/runner/work/v2-evm/v2-evm/out/build-info
+          forge test -vvv --build-info --build-info-path /out/build-info
         id: test
       - run: ls -al
       - run: pwd

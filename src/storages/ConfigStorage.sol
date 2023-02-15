@@ -6,13 +6,23 @@ import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
-contract ConfigStorage is IConfigStorage {
+abstract contract ConfigStorage is IConfigStorage {
   // GLOBAL Configs
   LiquidityConfig public liquidityConfig;
   SwapConfig public swapConfig;
   TrandingConfig public trandingConfig;
   LiquidationConfig public liquidationConfig;
+
   MarketConfig[] public marketConfigs;
+  // assetId => index
+  mapping(bytes32 => uint256) public marketConfigIndices;
+
+  function getMarketConfigById(
+    bytes32 _assetId
+  ) external view returns (MarketConfig memory) {
+    uint256 _index = marketConfigIndices[_assetId];
+    return marketConfigs[_index];
+  }
 
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
   mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config

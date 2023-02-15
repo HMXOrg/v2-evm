@@ -63,10 +63,16 @@ interface IConfigStorage {
   struct TrandingConfig {
     uint256 fundingInterval; // funding interval unit in seconds
     uint256 borrowingDevFeeRate;
+    uint256 minProfitDuration;
   }
 
   // Liquidation
   struct LiquidationConfig {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
+
+  // function trandingConfig() external view returns (TrandingConfig memory);
+  function getPositionById(
+    bytes32 _assetId
+  ) external view returns (MarketConfig memory);
 }

@@ -14,24 +14,18 @@ on:
       - "unit/**"
 jobs:
   analyze:
+    name: Analyze
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-          set-safe-directory: "/github/workspace"
       - name: Run Slither
-        uses: crytic/slither-action@dev-git-safe-workspace # ref: https://github.com/crytic/slither-action/issues/49
+        # TODO: change to official version after it is bug free, ref: https://github.com/crytic/slither-action/issues/49
+        uses: crytic/slither-action@dev-git-safe-workspace
         with:
-          node-version: 16.16.0
+          node-version: 16.16.0 # should match .nvmrc or whatever your project required
           target: "./"
-          # sarif: results.sarif
-          # fail-on: none
+          fail-on: low # pipeline must panic when >= low finding detected
 
-      # - name: Upload SARIF file
-      #   uses: github/codeql-action/upload-sarif@v2
-      #   with:
-      #     sarif_file: ${{ steps.slither.outputs.sarif }}
 
       # ignore-compile: true # - uses: actions/setup-node@v2
   #   with:

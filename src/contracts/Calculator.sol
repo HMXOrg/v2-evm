@@ -141,8 +141,7 @@ contract Calculator is ICalculator {
       ) {
         // reduce loop
         _pnlLongE30 =
-          int256(priceE30Long) -
-          (int256(_globalMarket.globalLongAvgPrice) *
+          ((int256(priceE30Long) - (int256(_globalMarket.globalLongAvgPrice))) *
             int256(_globalMarket.globalLongSize)) /
           int256(_globalMarket.globalLongAvgPrice);
       }

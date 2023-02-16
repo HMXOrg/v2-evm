@@ -10,6 +10,14 @@ import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
 contract TradeService is ITradeService {
+  // struct
+  struct DecreasePositionVars {
+    uint256 absPositionSizeE30;
+    uint256 priceE30;
+    int256 currentPositionSizeE30;
+    bool isLongPosition;
+  }
+
   // events
   event LogDecreasePosition(
     bytes32 indexed _positionId,
@@ -60,37 +68,45 @@ contract TradeService is ITradeService {
     IPerpStorage.Position memory _position = IPerpStorage(perpStorage)
       .getPositionById(_positionId);
 
+    // init vars
+    DecreasePositionVars memory vars = DecreasePositionVars({
+      absPositionSizeE30: 0,
+      priceE30: 0,
+      currentPositionSizeE30: 0,
+      isLongPosition: false
+    });
+
     // =========================================
     // | ---------- pre validation ----------- |
     // =========================================
 
     // if position size is 0 means this position is already closed
-    int256 _currentPositionSizeE30 = _position.positionSizeE30;
-    if (_currentPositionSizeE30 == 0)
+    vars.currentPositionSizeE30 = _position.positionSizeE30;
+    if (vars.currentPositionSizeE30 == 0)
       revert ITradeService_PositionAlreadyClosed();
 
+    vars.isLongPosition = vars.currentPositionSizeE30 > 0;
+
     // convert position size to be uint256
-    uint256 _absPositionSizeE30 = uint256(
-      _currentPositionSizeE30 > 0
-        ? _currentPositionSizeE30
-        : -_currentPositionSizeE30
+    vars.absPositionSizeE30 = uint256(
+      vars.isLongPosition
+        ? vars.currentPositionSizeE30
+        : -vars.currentPositionSizeE30
     );
 
     // position size to decrease is greater then position size, should be revert
-    if (_positionSizeE30ToDecrease > _absPositionSizeE30)
+    if (_positionSizeE30ToDecrease > vars.absPositionSizeE30)
       revert ITradeService_DecreaseTooHighPositionSize();
 
-    bool isLongPosition = _currentPositionSizeE30 > 0;
-
-    uint256 _priceE30;
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(oracle)
-        .getLatestPriceWithMarketStatus(
+      (vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(
+        oracle
+      ).getLatestPriceWithMarketStatus(
           _marketConfig.assetId,
-          !isLongPosition, // if current position is SHORT position, then we use max price
+          !vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold
         );
 
@@ -125,44 +141,60 @@ contract TradeService is ITradeService {
     // =========================================
     // | ------ update perp storage ---------- |
     // =========================================
-    uint256 _newAbsPositionSizeE30 = _absPositionSizeE30 -
+    uint256 _newAbsPositionSizeE30 = vars.absPositionSizeE30 -
       _positionSizeE30ToDecrease;
 
+    // check position is too tiny
+    // todo: now validate this at 1 USD, design where to keep this config
+    //       due to we has problem stack too deep in MarketConfig now
+    if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30)
+      revert ITradeService_TooTinyPosition();
+
     {
-      uint256 _imr = (_newAbsPositionSizeE30 *
-        _marketConfig.initialMarginFraction) / 1e18;
+      uint256 _openInterestDelta = (_position.openInterest *
+        _positionSizeE30ToDecrease) / vars.absPositionSizeE30;
 
       // update position info
-      _position = IPerpStorage(perpStorage).updatePositionById(
+      IPerpStorage(perpStorage).updatePositionById(
         _positionId,
-        isLongPosition
+        vars.isLongPosition
           ? int256(_newAbsPositionSizeE30)
           : -int256(_newAbsPositionSizeE30), // todo: optimized
-        (_imr * _marketConfig.maxProfitRate) / 1e18,
-        _newAbsPositionSizeE30 == 0 ? 0 : _position.avgEntryPriceE30
+        // new position size * IMF * max profit rate
+        (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) /
+          1e18) * _marketConfig.maxProfitRate) / 1e18,
+        _position.avgEntryPriceE30,
+        _position.openInterest - _openInterestDelta
       );
 
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
         .getGlobalMarketById(_marketIndex);
 
-      uint256 _changedOpenInterest = (_positionSizeE30ToDecrease * 1e30) /
-        _priceE30;
-
-      if (isLongPosition) {
+      if (vars.isLongPosition) {
         IPerpStorage(perpStorage).updateGlobalLongMarketById(
           _marketIndex,
           _globalMarket.longPositionSize - _positionSizeE30ToDecrease,
           _globalMarket.longAvgPrice, // todo: recalculate arg price
-          _globalMarket.longOpenInterest - _changedOpenInterest
+          _globalMarket.longOpenInterest - _openInterestDelta
         );
       } else {
         IPerpStorage(perpStorage).updateGlobalShortMarketById(
           _marketIndex,
           _globalMarket.shortPositionSize - _positionSizeE30ToDecrease,
           _globalMarket.shortAvgPrice, // todo: recalculate arg price
-          _globalMarket.shortOpenInterest - _changedOpenInterest
+          _globalMarket.shortOpenInterest - _openInterestDelta
         );
       }
+      IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage)
+        .getGlobalState();
+
+      // update global storage
+      // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
+      IPerpStorage(perpStorage).updateGlobalState(
+        _globalState.reserveValueE30 -
+          ((_position.reserveValueE30 * _positionSizeE30ToDecrease) /
+            vars.absPositionSizeE30)
+      );
     }
 
     // =========================================
@@ -174,12 +206,6 @@ contract TradeService is ITradeService {
     // | --------- post validation ----------- |
     // =========================================
     {
-      // check position is too tiny
-      // todo: now validate this at 1 USD, design where to keep this config
-      //       due to we has problem stack too deep in MarketConfig now
-      if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30)
-        revert ITradeService_TooTinyPosition();
-
       // check sub account is healty
       uint256 _subAccountEquity = ICalculator(calculator).getEquity(
         _subAccount

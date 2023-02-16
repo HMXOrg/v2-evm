@@ -97,6 +97,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
   // -- normal case
   // -- LONG position
   // able to decrease long position
+  // todo: support open interest change when price changed
   function testCorrectness_WhenTraderDecreaseLongPosition() external {
     // ALICE open LONG position
     // sub account id - 0
@@ -114,7 +115,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // check before decrease position
     assertEq(_position.positionSizeE30, 1_000_000 * 1e30);
     assertEq(_position.avgEntryPriceE30, 1 * 1e30);
-    assertEq(_position.reserveValueE30, 9_000_000 * 1e30);
+    assertEq(_position.reserveValueE30, 90_000 * 1e30);
+    assertEq(_position.openInterest, 10_000 * 1e18);
 
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30);
 
@@ -125,6 +127,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
     assertEq(_position.positionSizeE30, 500_000 * 1e30);
     assertEq(_position.avgEntryPriceE30, 1 * 1e30);
     assertEq(_position.reserveValueE30, 45_000 * 1e30);
+    // new open interest = open interest * size delta / position size
+    //                   = 10000 * 500000 / 1000000 = 5000
+    assertEq(_position.openInterest, 5_000 * 1e18);
   }
 
   function testRevert_TraderDecreaseTooMuchLongPositionSize() external {
@@ -181,12 +186,15 @@ contract TradeService_DecreasePosition is TradeService_Base {
   }
 
   // -- SHORT position
+  // todo: support open interest change when price changed
   function testCorrectness_WhenTraderDecreaseShortPosition() external {
     // ALICE open SHORT position
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
+    // price          - 1 USD
+    // open interest  - 10,000 TOKENs
     openPosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
     // cache position
@@ -198,7 +206,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // check before decrease position
     assertEq(_position.positionSizeE30, -1_000_000 * 1e30);
     assertEq(_position.avgEntryPriceE30, 1 * 1e30);
-    assertEq(_position.reserveValueE30, 9_000_000 * 1e30);
+    assertEq(_position.reserveValueE30, 90_000 * 1e30);
+    assertEq(_position.openInterest, 10_000 * 1e18);
 
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30);
 
@@ -209,6 +218,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
     assertEq(_position.positionSizeE30, -500_000 * 1e30);
     assertEq(_position.avgEntryPriceE30, 1 * 1e30);
     assertEq(_position.reserveValueE30, 45_000 * 1e30);
+    // new open interest = open interest * size delta / position size
+    //                   = 10000 * 500000 / 1000000 = 5000
+    assertEq(_position.openInterest, 5_000 * 1e18);
   }
 
   function testRevert_TraderDecreaseTooMuchShortPositionSize() external {

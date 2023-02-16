@@ -63,7 +63,12 @@ contract LiquidityService is ILiquidityService {
     vaultStorage = _vaultStorage;
   }
 
-  //TODO add whitelisted (because to trust _amount from handler), emit event?
+  /* TODO 
+  checklist
+  -add whitelisted
+  -emit event
+  -realizedPNL
+  */
   function addLiquidity(
     address _lpProvider,
     address _token,
@@ -91,6 +96,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _feeRate = _getFeeRate(_token, _amount, _price);
 
     // 3. get aum and lpSupply before deduction fee
+    // TODO realize farm pnl to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(true);
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp())
       .totalSupply();
@@ -131,11 +137,7 @@ contract LiquidityService is ILiquidityService {
     _validatePLPHealthCheck(_token);
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
-    ERC20(_token).transferFrom(
-      msg.sender,
-      address(vaultStorage),
-      amountAfterFee
-    );
+    ERC20(_token).transferFrom(msg.sender, address(vaultStorage), _amount);
 
     PLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
@@ -151,6 +153,13 @@ contract LiquidityService is ILiquidityService {
 
     return mintAmount;
   }
+
+  /* TODO 
+  checklist
+  -add whitelisted
+  -emit event
+  -realizedPNL
+  */
 
   function removeLiquidity(
     address _lpProvider,
@@ -170,6 +179,7 @@ contract LiquidityService is ILiquidityService {
       IConfigStorage(configStorage).calculator()
     );
 
+    //TODO should realized to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(false);
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp())
       .totalSupply();

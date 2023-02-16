@@ -11,8 +11,7 @@ contract VaultStorage is IVaultStorage {
   mapping(address => uint256) public plpLiquidityUSDE30; //token => PLPValueInUSD
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
   mapping(address => uint256) public plpReserved; // token => reservedAmount
-  // fee in token unit
-  mapping(address => uint256) public fees;
+  mapping(address => uint256) public fees; // fee in token unit
 
   // trader address (with sub-account) => token => amount
   mapping(address => mapping(address => uint256)) public traderBalances;

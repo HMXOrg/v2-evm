@@ -84,7 +84,15 @@ interface IConfigStorage {
 
   function addMarketConfig(
     MarketConfig calldata _newConfig
-  ) external returns (uint256);
+  ) external returns (uint256 _index);
+
+  function setLiquidityConfig(LiquidityConfig memory _newConfig) external;
+
+  function setSwapConfig(SwapConfig memory _newConfig) external;
+
+  function setTradingConfig(TradingConfig memory _newConfig) external;
+
+  function setLiquidationConfig(LiquidationConfig memory _newConfig) external;
 
   function setMarketConfig(
     uint256 _marketIndex,

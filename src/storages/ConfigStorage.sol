@@ -12,6 +12,7 @@ contract ConfigStorage is IConfigStorage {
   SwapConfig public swapConfig;
   TradingConfig public tradingConfig;
   LiquidationConfig public liquidationConfig;
+
   MarketConfig[] public marketConfigs;
   mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
 
@@ -49,9 +50,25 @@ contract ConfigStorage is IConfigStorage {
   }
 
   // setter functions
+  function setLiquidityConfig(LiquidityConfig memory _newConfig) external {
+    liquidityConfig = _newConfig;
+  }
+
+  function setSwapConfig(SwapConfig memory _newConfig) external {
+    swapConfig = _newConfig;
+  }
+
+  function setTradingConfig(TradingConfig memory _newConfig) external {
+    tradingConfig = _newConfig;
+  }
+
+  function setLiquidationConfig(LiquidationConfig memory _newConfig) external {
+    liquidationConfig = _newConfig;
+  }
+
   function addMarketConfig(
     MarketConfig calldata _newConfig
-  ) external returns (uint256) {
+  ) external returns (uint256 _index) {
     uint256 _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
     // update marketConfigIndices with new market index

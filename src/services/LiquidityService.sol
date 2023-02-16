@@ -93,7 +93,6 @@ contract LiquidityService is ILiquidityService {
 
     // 2. Calculate PLP amount to mint
     // if input incorrect or config accepted is false
-    uint256 _feeRate = _getFeeRate(_token, _amount, _price);
 
     // 3. get aum and lpSupply before deduction fee
     // TODO realize farm pnl to get pendingBorrowingFee
@@ -101,44 +100,18 @@ contract LiquidityService is ILiquidityService {
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp())
       .totalSupply();
 
-    uint256 amountAfterFee = _collectFee(
-      CollectFeeRequest(
-        _token,
-        _price,
-        _amount,
-        _feeRate,
-        _lpProvider,
-        LiquidityAction.ADD_LIQUIDITY
-      )
-    );
-
-    // 4. Check slippage: revert on error
-    if (amountAfterFee < _minAmount)
-      revert LiquidityService_InsufficientLiquidityMint();
-
-    // 5. Calculate mintAmount
-    uint256 tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
-      ERC20(_token).decimals(),
-      USD_DECIMALS,
-      amountAfterFee
-    );
-
-    uint256 mintAmount = _calculator.getMintAmount(
+    (uint256 tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
+      _token,
+      _amount,
+      _price,
+      _lpProvider,
+      _minAmount,
       _aum,
-      _lpSupply,
-      tokenValueUSDAfterFee
+      _lpSupply
     );
-
-    //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
-    IVaultStorage(_token).addPLPLiquidity(_token, amountAfterFee);
-    IVaultStorage(_token).addPLPLiquidityUSDE30(_token, tokenValueUSDAfterFee);
-    IVaultStorage(_token).addPLPTotalLiquidityUSDE30(tokenValueUSDAfterFee);
-
-    _validatePLPHealthCheck(_token);
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
     ERC20(_token).transferFrom(msg.sender, address(vaultStorage), _amount);
-
     PLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
     emit AddLiquidity(
@@ -183,6 +156,94 @@ contract LiquidityService is ILiquidityService {
       .totalSupply();
 
     uint256 _lpUsdValue = (_amount * _aum) / _lpSupply;
+
+    uint256 _amountOut = _exitPool(
+      _tokenOut,
+      _lpUsdValue,
+      _amount,
+      _lpProvider,
+      _minAmount
+    );
+
+    // handler receive PLP of user then burn it from handler
+    PLPv2(IConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
+    ERC20(_tokenOut).transferFrom(msg.sender, _lpProvider, _amountOut);
+
+    emit RemoveLiquidity(
+      _lpProvider,
+      _tokenOut,
+      _amount,
+      _aum,
+      _lpSupply,
+      _lpUsdValue,
+      _amountOut
+    );
+
+    return _amountOut;
+  }
+
+  function _joinPool(
+    address _token,
+    uint256 _amount,
+    uint256 _price,
+    address _lpProvider,
+    uint256 _minAmount,
+    uint256 _aum,
+    uint256 _lpSupply
+  ) internal returns (uint256, uint256) {
+    ICalculator _calculator = ICalculator(
+      IConfigStorage(configStorage).calculator()
+    );
+
+    uint256 _feeRate = _getFeeRate(_token, _amount, _price);
+    uint256 amountAfterFee = _collectFee(
+      CollectFeeRequest(
+        _token,
+        _price,
+        _amount,
+        _feeRate,
+        _lpProvider,
+        LiquidityAction.ADD_LIQUIDITY
+      )
+    );
+
+    // 4. Check slippage: revert on error
+    if (amountAfterFee < _minAmount)
+      revert LiquidityService_InsufficientLiquidityMint();
+
+    // 5. Calculate mintAmount
+    uint256 tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
+      ERC20(_token).decimals(),
+      USD_DECIMALS,
+      amountAfterFee
+    );
+
+    uint256 mintAmount = _calculator.getMintAmount(
+      _aum,
+      _lpSupply,
+      tokenValueUSDAfterFee
+    );
+
+    //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
+    IVaultStorage(_token).addPLPLiquidity(_token, amountAfterFee);
+    IVaultStorage(_token).addPLPLiquidityUSDE30(_token, tokenValueUSDAfterFee);
+    IVaultStorage(_token).addPLPTotalLiquidityUSDE30(tokenValueUSDAfterFee);
+
+    _validatePLPHealthCheck(_token);
+
+    return (tokenValueUSDAfterFee, mintAmount);
+  }
+
+  function _exitPool(
+    address _tokenOut,
+    uint256 _lpUsdValue,
+    uint256 _amount,
+    address _lpProvider,
+    uint256 _minAmount
+  ) internal returns (uint256) {
+    ICalculator _calculator = ICalculator(
+      IConfigStorage(configStorage).calculator()
+    );
 
     // 2. Check totalLq < lpValue ()
     if (IVaultStorage(_tokenOut).plpTotalLiquidityUSDE30() < _lpUsdValue) {
@@ -235,19 +296,6 @@ contract LiquidityService is ILiquidityService {
     if (_minAmount > _amountOut) {
       revert LiquidityService_BadAmountOut();
     }
-
-    // handler receive PLP of user then burn it from handler
-    PLPv2(IConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
-
-    emit RemoveLiquidity(
-      _lpProvider,
-      _tokenOut,
-      _amount,
-      _aum,
-      _lpSupply,
-      _lpUsdValue,
-      _amountOut
-    );
 
     return _amountOut;
   }

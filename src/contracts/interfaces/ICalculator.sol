@@ -33,15 +33,15 @@ interface ICalculator {
   ) external view returns (uint256);
 
   function convertTokenDecimals(
-    uint256 fromTokenDecimals,
-    uint256 toTokenDecimals,
-    uint256 amount
+    uint256 _fromTokenDecimals,
+    uint256 _toTokenDecimals,
+    uint256 _amount
   ) external pure returns (uint256);
 
   function getAddLiquidityFeeRate(
     address _token,
     uint256 _tokenValue,
-    IConfigStorage _liquidityConfig,
+    IConfigStorage _configStorage,
     IVaultStorage _vaultStorage
   ) external returns (uint256);
 

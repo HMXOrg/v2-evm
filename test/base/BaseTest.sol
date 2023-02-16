@@ -58,6 +58,9 @@ abstract contract BaseTest is
 
   MockErc20 internal bad;
 
+  // market indexes
+  uint256 ethMarketIndex;
+
   bytes32 internal constant wethPriceId =
     0x0000000000000000000000000000000000000000000000000000000000000001;
   bytes32 internal constant wbtcPriceId =
@@ -89,6 +92,14 @@ abstract contract BaseTest is
 
     mockCalculator = new MockCalculator();
     mockOracle = new MockOracleMiddleware();
+    configStorage = new ConfigStorage();
+
+    setUpLiquidityConfig();
+    setUpSwapConfig();
+    setUpTradingConfig();
+    setUpMarketConfigs();
+    setUpPlpTokenConfigs();
+    setUpCollateralTokenConfigs();
   }
 
   // --------- Deploy Helpers ---------
@@ -128,46 +139,7 @@ abstract contract BaseTest is
     return new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
   }
 
-  // --------- Setup Helpers ---------
-  // function setupDefaultUnderlying()
-  //   internal
-  //   view
-  //   returns (address[] memory, PoolConfig.UnderlyingConfig[] memory)
-  // {
-  //   address[] memory underlyings = new address[](4);
-  //   underlyings[0] = address(weth);
-  //   underlyings[1] = address(wbtc);
-  //   underlyings[2] = address(dai);
-  //   underlyings[3] = address(usdc);
-
-  //   PoolConfig.UnderlyingConfig[]
-  //     memory underlyingConfigs = new PoolConfig.UnderlyingConfig[](4);
-  //   underlyingConfigs[0] = PoolConfig.UnderlyingConfig({
-  //     isAccept: true,
-  //     decimals: weth.decimals(),
-  //     weight: 100
-  //   });
-  //   underlyingConfigs[1] = PoolConfig.UnderlyingConfig({
-  //     isAccept: true,
-  //     decimals: wbtc.decimals(),
-  //     weight: 100
-  //   });
-  //   underlyingConfigs[2] = PoolConfig.UnderlyingConfig({
-  //     isAccept: true,
-  //     decimals: dai.decimals(),
-  //     weight: 100
-  //   });
-  //   underlyingConfigs[3] = PoolConfig.UnderlyingConfig({
-  //     isAccept: true,
-  //     decimals: usdc.decimals(),
-  //     weight: 100
-  //   });
-
-  //   return (underlyings, underlyingConfigs);
-  // }
-
   // --------- Test Helpers ---------
-
   /// @notice Helper function to create a price feed update data.
   /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
   /// @param priceData The price data to create the update data.
@@ -191,5 +163,91 @@ abstract contract BaseTest is
       }
     }
     return priceDataBytes;
+  }
+
+  /// --------- Setup helper ------------
+
+  /// @notice set up liquidity config
+  function setUpLiquidityConfig() internal {
+    configStorage.setLiquidityConfig(
+      IConfigStorage.LiquidityConfig({
+        depositFeeRate: 0,
+        withdrawFeeRate: 0,
+        maxPLPUtilization: 0,
+        plpSafetyBufferThreshold: 0,
+        taxFeeRate: 0,
+        flashLoanFeeRate: 0,
+        dynamicFeeEnabled: false
+      })
+    );
+  }
+
+  /// @notice set up swap config
+  function setUpSwapConfig() internal {
+    configStorage.setSwapConfig(
+      IConfigStorage.SwapConfig({ stablecoinSwapFeeRate: 0, swapFeeRate: 0 })
+    );
+  }
+
+  /// @notice set up trading config
+  function setUpTradingConfig() internal {
+    configStorage.setTradingConfig(
+      IConfigStorage.TradingConfig({
+        fundingInterval: 1,
+        borrowingDevFeeRate: 0
+      })
+    );
+  }
+
+  /// @notice set up all market configs in Perp
+  function setUpMarketConfigs() internal {
+    // add market config
+    IConfigStorage.MarketConfig memory _config = IConfigStorage.MarketConfig({
+      assetId: "ETH",
+      assetClass: 1,
+      maxProfitRate: 9e18,
+      longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+      shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+      minLeverage: 1,
+      initialMarginFraction: 0.01 * 1e18,
+      maintenanceMarginFraction: 0.005 * 1e18,
+      increasePositionFeeRate: 0,
+      decreasePositionFeeRate: 0,
+      maxFundingRate: 0,
+      priceConfidentThreshold: 0.01 * 1e18,
+      allowIncreasePosition: true,
+      active: true
+    });
+
+    ethMarketIndex = configStorage.addMarketConfig(_config);
+  }
+
+  /// @notice set up all plp token configs in Perp
+  function setUpPlpTokenConfigs() internal {
+    IConfigStorage.PLPTokenConfig memory _plpTokenConfig = IConfigStorage
+      .PLPTokenConfig({
+        decimals: 18,
+        targetWeight: 0,
+        bufferLiquidity: 0,
+        maxWeightDiff: 0,
+        isStableCoin: false,
+        accepted: true
+      });
+
+    configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig);
+  }
+
+  /// @notice set up all collateral token configs in Perp
+  function setUpCollateralTokenConfigs() internal {
+    IConfigStorage.CollateralTokenConfig
+      memory _collatTokenConfig = IConfigStorage.CollateralTokenConfig({
+        decimals: weth.decimals(),
+        collateralFactor: 0.8 * 1e18,
+        isStableCoin: false,
+        accepted: true,
+        settleStrategy: address(0)
+      });
+
+    configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfig);
   }
 }

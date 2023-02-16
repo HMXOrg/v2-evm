@@ -143,7 +143,7 @@ contract TradeService is ITradeService {
       );
 
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
-        .getGlobalMarketById(_marketIndex);
+        .getGlobalMarketByIndex(_marketIndex);
 
       uint256 _changedOpenInterest = (_positionSizeE30ToDecrease * 1e30) /
         _priceE30;

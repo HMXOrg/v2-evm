@@ -56,7 +56,7 @@ contract PerpStorage is IPerpStorage {
     positionIndices[_positionId] = positions.length - 1;
   }
 
-  function getGlobalMarketById(
+  function getGlobalMarketByIndex(
     uint256 _marketIndex
   ) external view returns (GlobalMarket memory) {
     return globalMarkets[_marketIndex];

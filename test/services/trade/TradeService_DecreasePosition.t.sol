@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 import { TradeService_Base } from "./TradeService_Base.t.sol";
+import { PositionTester } from "../../testers/PositionTester.sol";
 
 import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
 import { ITradeService } from "../../../src/services/interfaces/ITradeService.sol";
@@ -105,26 +106,20 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // leverage       - 100x
     openPosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
-    // cache position
+    // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
-    IPerpStorage.Position memory _position = perpStorage.getPositionById(
-      _positionId
-    );
-
-    // check before decrease position
-    assertEq(_position.positionSizeE30, 1_000_000 * 1e30);
-    assertEq(_position.avgEntryPriceE30, 1 * 1e30);
-    assertEq(_position.reserveValueE30, 9_000_000 * 1e30);
+    positionTester.watch(_positionId);
 
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30);
 
-    // update position info
-    _position = perpStorage.getPositionById(_positionId);
-
-    // check after decrease
-    assertEq(_position.positionSizeE30, 500_000 * 1e30);
-    assertEq(_position.avgEntryPriceE30, 1 * 1e30);
-    assertEq(_position.reserveValueE30, 45_000 * 1e30);
+    // check position after decrease
+    PositionTester.DecreaePositionAssertionData
+      memory _assertData = PositionTester.DecreaePositionAssertionData({
+        sizeDelta: 500_000 * 1e30,
+        avgPriceDelta: 0,
+        reserveValueDelta: 45_000 * 1e30
+      });
+    positionTester.assertDecreasePositionResult(_assertData);
   }
 
   function testRevert_TraderDecreaseTooMuchLongPositionSize() external {
@@ -191,24 +186,18 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // cache position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
-    IPerpStorage.Position memory _position = perpStorage.getPositionById(
-      _positionId
-    );
-
-    // check before decrease position
-    assertEq(_position.positionSizeE30, -1_000_000 * 1e30);
-    assertEq(_position.avgEntryPriceE30, 1 * 1e30);
-    assertEq(_position.reserveValueE30, 9_000_000 * 1e30);
+    positionTester.watch(_positionId);
 
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30);
 
-    // update position info
-    _position = perpStorage.getPositionById(_positionId);
-
-    // check after decrease
-    assertEq(_position.positionSizeE30, -500_000 * 1e30);
-    assertEq(_position.avgEntryPriceE30, 1 * 1e30);
-    assertEq(_position.reserveValueE30, 45_000 * 1e30);
+    // check position after decrease
+    PositionTester.DecreaePositionAssertionData
+      memory _assertData = PositionTester.DecreaePositionAssertionData({
+        sizeDelta: 500_000 * 1e30,
+        avgPriceDelta: 0,
+        reserveValueDelta: 45_000 * 1e30
+      });
+    positionTester.assertDecreasePositionResult(_assertData);
   }
 
   function testRevert_TraderDecreaseTooMuchShortPositionSize() external {

@@ -5,6 +5,8 @@ import { console } from "forge-std/console.sol";
 
 import { BaseTest } from "../../base/BaseTest.sol";
 
+import { PositionTester } from "../../testers/PositionTester.sol";
+
 import { TradeService } from "../../../src/services/TradeService.sol";
 import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
@@ -12,7 +14,11 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 abstract contract TradeService_Base is BaseTest {
   TradeService tradeService;
 
+  PositionTester positionTester;
+
   function setUp() public virtual {
+    positionTester = new PositionTester(perpStorage, mockOracle);
+
     // deploy trade service
     tradeService = new TradeService(
       address(perpStorage),
@@ -39,6 +45,8 @@ abstract contract TradeService_Base is BaseTest {
     uint256 _marketIndex,
     int256 _sizeE30
   ) internal {
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage
+      .getMarketConfigById(ethMarketIndex);
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     uint256 _absoluteSizeE30 = _sizeE30 > 0
       ? uint256(_sizeE30)
@@ -52,12 +60,13 @@ abstract contract TradeService_Base is BaseTest {
       _marketIndex,
       _positionId,
       _sizeE30,
-      _absoluteSizeE30 * 9, // assume max profit is 900%
+      (((_absoluteSizeE30 * _marketConfig.initialMarginFraction) / 1e18) *
+        _marketConfig.maxProfitRate) / 1e18, // assume max profit is 900%
       _priceE30
     );
 
     IPerpStorage.GlobalMarket memory _globalMarket = perpStorage
-      .getGlobalMarketById(_marketIndex);
+      .getGlobalMarketByIndex(_marketIndex);
 
     if (_sizeE30 > 0) {
       perpStorage.updateGlobalLongMarketById(

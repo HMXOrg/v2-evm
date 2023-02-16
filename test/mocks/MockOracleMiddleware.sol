@@ -4,9 +4,9 @@ pragma solidity 0.8.18;
 import { IOracleMiddleware } from "../../src/oracle/interfaces/IOracleMiddleware.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware {
-  uint256 priceE30;
-  uint256 lastUpdate;
-  uint8 marketStatus;
+  uint256 public priceE30;
+  uint256 public lastUpdate;
+  uint8 public marketStatus;
 
   constructor() {
     priceE30 = 1e30;

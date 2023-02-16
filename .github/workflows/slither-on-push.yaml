@@ -25,36 +25,3 @@ jobs:
           node-version: 16.16.0 # should match .nvmrc or whatever your project required
           target: "./"
           fail-on: low # pipeline must panic when >= low finding detected
-
-
-      # ignore-compile: true # - uses: actions/setup-node@v2
-  #   with:
-  #     node-version: "16.16.0"
-
-  # - name: Yarn
-  #   run: |
-  #     yarn
-
-  # - name: Install Foundry
-  #   uses: foundry-rs/foundry-toolchain@v1
-  #   with:
-  #     version: nightly
-
-  # - name: Run Forge build
-  #   run: |
-  #     forge --version
-  #     forge build --sizes
-  #   id: build
-
-  # - name: Run Forge tests
-  #   run: |
-  #     forge test -vvv --build-info --build-info-path /out/build-info
-  #   id: test
-  # - run: ls -al
-  # - run: pwd
-  # - name: Run Slither
-  #   uses: crytic/slither-action@v0.2.0
-  #   with:
-  #     node-version: 16.16.0
-  #     target: "./"
-  #     ignore-compile: true

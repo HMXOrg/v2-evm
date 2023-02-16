@@ -24,5 +24,5 @@ jobs:
         with:
           node-version: 16.16.0 # should match .nvmrc or whatever your project required
           target: "./"
-          fail-on: config # pipeline must panic when >= low finding detected
+          fail-on: all
           slither-config: ./slither.config.json

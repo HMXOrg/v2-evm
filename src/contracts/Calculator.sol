@@ -39,25 +39,30 @@ contract Calculator is ICalculator {
     perpStorage = _perpStorage;
   }
 
-  function getAUM(bool isMaxPrice) public view returns (uint256) {
-    // TODO  pendingBorrowingFee
+  // return in
+  function getAUME30(bool isMaxPrice) public view returns (uint256) {
+    // TODO  pendingBorrowingFeeE30
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
-    uint256 pendingBorrowingFee = 0;
-    int256 pnl = _getGlobalPNL();
+    uint256 pendingBorrowingFeeE30 = 0;
+    int256 pnlE30 = _getGlobalPNLE30();
 
-    uint256 aum = _getPLPValue(isMaxPrice) + pendingBorrowingFee;
-    if (pnl < 0) {
-      uint256 _pnl = uint256(-pnl);
+    uint256 aum = _getPLPValueE30(isMaxPrice) + pendingBorrowingFeeE30;
+    if (pnlE30 < 0) {
+      uint256 _pnl = uint256(-pnlE30);
       if (aum < _pnl) return 0;
       aum -= _pnl;
     } else {
-      aum += uint256(pnl);
+      aum += uint256(pnlE30);
     }
 
     return aum;
   }
 
-  function _getPLPValue(bool isMaxPrice) internal view returns (uint256) {
+  function getAUM(bool isMaxPrice) public view returns (uint256) {
+    return getAUME30(isMaxPrice) / 1e12;
+  }
+
+  function _getPLPValueE30(bool isMaxPrice) internal view returns (uint256) {
     uint256 assetValue = 0;
     address _plpUnderlyingToken = IConfigStorage(configStorage)
       .getNextAcceptedToken(
@@ -101,7 +106,7 @@ contract Calculator is ICalculator {
     return aum / plpSupply;
   }
 
-  function _getGlobalPNL() internal view returns (int256) {
+  function _getGlobalPNLE30() internal view returns (int256) {
     // TODO:: REFACTOR if someone dont want totalPnlLong and short.
     int256 totalPnlLong = 0;
     int256 totalPnlShort = 0;

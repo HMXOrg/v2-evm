@@ -173,8 +173,6 @@ contract LiquidityService is ILiquidityService {
       IVaultStorage(vaultStorage).plpLiquidity(_tokenOut)
     );
 
-    uint256 _liquidity = IVaultStorage(vaultStorage).plpLiquidity(_tokenOut);
-
     ICalculator _calculator = ICalculator(
       IConfigStorage(configStorage).calculator()
     );
@@ -184,7 +182,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp())
       .totalSupply();
 
-    uint256 _lpUsdValue = (_liquidity * _aum) / _lpSupply;
+    uint256 _lpUsdValue = (_amount * _aum) / _lpSupply;
 
     // 2. Check totalLq < lpValue ()
     if (IVaultStorage(_tokenOut).plpTotalLiquidityUSDE30() < _lpUsdValue) {
@@ -239,12 +237,12 @@ contract LiquidityService is ILiquidityService {
     }
 
     // handler receive PLP of user then burn it from handler
-    PLPv2(IConfigStorage(configStorage).plp()).burn(msg.sender, _liquidity);
+    PLPv2(IConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
 
     emit RemoveLiquidity(
       _lpProvider,
       _tokenOut,
-      _liquidity,
+      _amount,
       _aum,
       _lpSupply,
       _lpUsdValue,

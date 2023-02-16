@@ -5,6 +5,7 @@ import { IConfigStorage } from "../../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../../storages/interfaces/IVaultStorage.sol";
 
 interface ICalculator {
+  //TODO will be use in _getFeeRate
   enum LiquidityDirection {
     ADD,
     REMOVE
@@ -17,6 +18,7 @@ interface ICalculator {
 
   error ICalculator_InvalidAddress();
   error ICalculator_InvalidAveragePrice();
+  error ICalculator_PoolImbalance();
 
   function getAUM(bool isMaxPrice) external returns (uint256);
 
@@ -38,6 +40,13 @@ interface ICalculator {
     address _token,
     uint256 _tokenValue,
     IConfigStorage _liquidityConfig,
+    IVaultStorage _vaultStorage
+  ) external returns (uint256);
+
+  function getRemoveLiquidityFeeRate(
+    address _token,
+    uint256 _tokenValueE30,
+    IConfigStorage _configStorage,
     IVaultStorage _vaultStorage
   ) external returns (uint256);
 

@@ -21,4 +21,7 @@ interface ILiquidityService {
   error LiquidityService_InvalidToken();
   error LiquidityService_InsufficientLiquidityMint();
   error LiquidityService_BadAmount();
+  error LiquidityService_BadAmountOut();
+
+  error LiquidityService_InsufficientLiquidityBuffer();
 }

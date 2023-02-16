@@ -115,13 +115,18 @@ contract Calculator is ICalculator {
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
 
-      //TODO PNL LONG and PNL SHORT use isMaxPrice same?
-      (uint priceE30, uint256 timestamp) = IOracleMiddleware(oracle)
-        .getLatestPrice(
-          marketConfig.assetId,
-          false,
-          marketConfig.priceConfidentThreshold
-        );
+      //TODO validate timestamp of these
+      (uint priceE30Long, ) = IOracleMiddleware(oracle).getLatestPrice(
+        marketConfig.assetId,
+        false,
+        marketConfig.priceConfidentThreshold
+      );
+
+      (uint priceE30Short, ) = IOracleMiddleware(oracle).getLatestPrice(
+        marketConfig.assetId,
+        true,
+        marketConfig.priceConfidentThreshold
+      );
 
       //TODO validate price, revert when crypto price stale, stock use Lastprice
 
@@ -130,7 +135,7 @@ contract Calculator is ICalculator {
       ) {
         // reduce loop
         _pnlLongE30 =
-          int256(priceE30) -
+          int256(priceE30Long) -
           (int256(_globalMarket.globalLongAvgPrice) * 1e30) /
           (int256(_globalMarket.globalLongAvgPrice) *
             int256(_globalMarket.globalLongSize));
@@ -142,7 +147,7 @@ contract Calculator is ICalculator {
         _globalMarket.globalShortSize > 0
       ) {
         _pnlShortE30 =
-          ((int256(_globalMarket.globalShortAvgPrice) - int256(priceE30)) *
+          ((int256(_globalMarket.globalShortAvgPrice) - int256(priceE30Short)) *
             1e30) /
           (int256(_globalMarket.globalShortAvgPrice) *
             int256(_globalMarket.globalShortSize));
@@ -198,6 +203,28 @@ contract Calculator is ICalculator {
       );
   }
 
+  function getRemoveLiquidityFeeRate(
+    address _token,
+    uint256 _tokenValueE30,
+    IConfigStorage _configStorage,
+    IVaultStorage _vaultStorage
+  ) external returns (uint256) {
+    if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
+      return _configStorage.getLiquidityConfig().withdrawFeeRate;
+    }
+
+    return
+      _getFeeRate(
+        _tokenValueE30,
+        _vaultStorage.plpLiquidityUSDE30(_token),
+        _vaultStorage.plpTotalLiquidityUSDE30(),
+        _configStorage.plpTotalTokenWeight(),
+        _configStorage.getLiquidityConfig(),
+        _configStorage.getPLPTokenConfig(_token),
+        LiquidityDirection.REMOVE
+      );
+  }
+
   function _getFeeRate(
     uint256 _value,
     uint256 _liquidityUSD, //e30
@@ -207,7 +234,9 @@ contract Calculator is ICalculator {
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
   ) internal pure returns (uint256) {
-    uint256 _feeRate = _liquidityConfig.depositFeeRate;
+    uint256 _feeRate = direction == LiquidityDirection.ADD
+      ? _liquidityConfig.depositFeeRate
+      : _liquidityConfig.withdrawFeeRate;
     uint256 _taxRate = _liquidityConfig.taxFeeRate;
 
     uint256 startValue = _liquidityUSD;
@@ -235,6 +264,15 @@ contract Calculator is ICalculator {
     if (nextTargetDiff < startTargetDiff) {
       uint256 rebateRate = (_taxRate * startTargetDiff) / targetValue;
       return rebateRate > _feeRate ? 0 : _feeRate - rebateRate;
+    }
+
+    // TODO move this to service
+    uint256 _nextWeight = (nextValue * 1e18) / targetValue;
+    // if weight exceed targetWeight(e18) + maxWeight(e18)
+    if (
+      _nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff
+    ) {
+      revert ICalculator_PoolImbalance();
     }
 
     // If not then -> negative impact to the pool.

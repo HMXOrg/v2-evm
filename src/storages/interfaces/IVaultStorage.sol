@@ -18,6 +18,8 @@ interface IVaultStorage {
 
   function plpTotalLiquidityUSDE30() external returns (uint256);
 
+  function plpReserved(address _token) external view returns (uint256);
+
   function plpLiquidity(address _token) external view returns (uint256);
 
   // SETTER
@@ -28,4 +30,14 @@ interface IVaultStorage {
   function addPLPTotalLiquidityUSDE30(uint256 _liquidity) external;
 
   function addPLPLiquidity(address _token, uint256 _amount) external;
+
+  function removeFee(address _token, uint256 _amount) external;
+
+  function removePLPLiquidityUSDE30(address _token, uint256 amount) external;
+
+  function removePLPTotalLiquidityUSDE30(uint256 _liquidity) external;
+
+  function removePLPLiquidity(address _token, uint256 _amount) external;
+
+  function removePLPReserved(address _token, uint256 _amount) external;
 }

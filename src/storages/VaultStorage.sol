@@ -10,7 +10,7 @@ contract VaultStorage is IVaultStorage {
   uint256 public plpTotalLiquidityUSDE30;
   mapping(address => uint256) public plpLiquidityUSDE30; //token => PLPValueInUSD
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
-
+  mapping(address => uint256) public plpReserved; // token => reservedAmount
   // fee in token unit
   mapping(address => uint256) public fees;
 
@@ -42,5 +42,35 @@ contract VaultStorage is IVaultStorage {
   // TODO modifier?
   function addPLPLiquidity(address _token, uint256 _amount) external {
     plpLiquidity[_token] += _amount;
+  }
+
+  // TODO modifier?
+  function addPLPReserved(address _token, uint256 _amount) external {
+    plpReserved[_token] += _amount;
+  }
+
+  // TODO modifier?
+  function removeFee(address _token, uint256 _amount) external {
+    fees[_token] -= _amount;
+  }
+
+  // TODO modifier?
+  function removePLPLiquidityUSDE30(address _token, uint256 amount) external {
+    plpLiquidityUSDE30[_token] -= amount;
+  }
+
+  // TODO modifier?
+  function removePLPTotalLiquidityUSDE30(uint256 _liquidity) external {
+    plpTotalLiquidityUSDE30 -= _liquidity;
+  }
+
+  // TODO modifier?
+  function removePLPLiquidity(address _token, uint256 _amount) external {
+    plpLiquidity[_token] -= _amount;
+  }
+
+  // TODO modifier?
+  function removePLPReserved(address _token, uint256 _amount) external {
+    plpReserved[_token] -= _amount;
   }
 }

@@ -26,3 +26,4 @@ jobs:
           target: "./"
           fail-on: all
           slither-config: ./slither.config.json
+          slither-version: 0.9.2

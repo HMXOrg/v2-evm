@@ -28,7 +28,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
     vm.expectRevert(abi.encodeWithSignature("NotAcceptedCollateral()"));
     crossMarginService.withdrawCollateral(
       address(this),
-      address(wbtc),
+      address(dai),
       10 ether
     );
   }

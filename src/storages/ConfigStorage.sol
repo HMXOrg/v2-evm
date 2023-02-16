@@ -9,6 +9,8 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
+import { console } from "forge-std/console.sol"; //@todo - remove
+
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
 contract ConfigStorage is Ownable, IConfigStorage {

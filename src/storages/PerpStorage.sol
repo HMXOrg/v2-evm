@@ -46,4 +46,31 @@ contract PerpStorage is IPerpStorage {
       return _traderPositions;
     }
   }
+
+  // todo: remove
+  function addPosition(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    bytes32 _positionId,
+    int256 _newPositionSizeE30,
+    uint256 _newReserveValueE30,
+    uint256 _newAvgPriceE30
+  ) external {
+    positions.push(
+      Position({
+        primaryAccount: _primaryAccount,
+        subAccountId: _subAccountId,
+        marketIndex: _marketIndex,
+        positionSizeE30: _newPositionSizeE30,
+        avgEntryPriceE30: _newAvgPriceE30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: _newReserveValueE30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0
+      })
+    );
+    positionIndices[_positionId] = positions.length - 1;
+  }
 }

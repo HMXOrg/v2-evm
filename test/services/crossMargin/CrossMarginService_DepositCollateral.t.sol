@@ -26,11 +26,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   function testRevert_depositCollateral_onlyAcceptedToken() external {
     vm.prank(CROSS_MARGIN_HANDLER);
     vm.expectRevert(abi.encodeWithSignature("NotAcceptedCollateral()"));
-    crossMarginService.depositCollateral(
-      address(this),
-      address(wbtc),
-      10 ether
-    );
+    crossMarginService.depositCollateral(address(this), address(dai), 10 ether);
   }
 
   function testRevert_depositCollateral_InsufficientAllowance() external {

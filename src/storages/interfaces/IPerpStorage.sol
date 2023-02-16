@@ -29,7 +29,7 @@ interface IPerpStorage {
   // Trade position
   struct Position {
     address primaryAccount;
-    uint8 subAccount;
+    uint256 subAccountId;
     uint256 marketIndex;
     int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
     uint256 avgEntryPriceE30;
@@ -37,7 +37,6 @@ interface IPerpStorage {
     uint256 entryFundingRate;
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
-    uint256 openInterest;
     uint256 realizedPnl;
   }
 

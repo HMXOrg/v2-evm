@@ -14,9 +14,12 @@ import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
+import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
+import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 
 // Interfaces
+import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
 
 // Calculator
@@ -49,6 +52,8 @@ abstract contract BaseTest is
 
   MockPyth internal mockPyth;
   MockCalculator internal mockCalculator;
+  MockPerpStorage internal mockPerpStorage;
+  MockVaultStorage internal mockVaultStorage;
   MockOracleMiddleware internal mockOracle;
 
   MockErc20 internal weth;
@@ -91,6 +96,8 @@ abstract contract BaseTest is
     vaultStorage = deployVaultStorage();
 
     mockCalculator = new MockCalculator();
+    mockPerpStorage = new MockPerpStorage();
+    mockVaultStorage = new MockVaultStorage();
     mockOracle = new MockOracleMiddleware();
     configStorage = new ConfigStorage();
 
@@ -240,7 +247,7 @@ abstract contract BaseTest is
   /// @notice set up all collateral token configs in Perp
   function setUpCollateralTokenConfigs() internal {
     IConfigStorage.CollateralTokenConfig
-      memory _collatTokenConfig = IConfigStorage.CollateralTokenConfig({
+      memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
         decimals: weth.decimals(),
         collateralFactor: 0.8 * 1e18,
         isStableCoin: false,
@@ -248,6 +255,23 @@ abstract contract BaseTest is
         settleStrategy: address(0)
       });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfig);
+    configStorage.setCollateralTokenConfig(
+      address(weth),
+      _collatTokenConfigWeth
+    );
+
+    IConfigStorage.CollateralTokenConfig
+      memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
+        decimals: wbtc.decimals(),
+        collateralFactor: 0.9 * 1e18,
+        isStableCoin: false,
+        accepted: true,
+        settleStrategy: address(0)
+      });
+
+    configStorage.setCollateralTokenConfig(
+      address(wbtc),
+      _collatTokenConfigWbtc
+    );
   }
 }

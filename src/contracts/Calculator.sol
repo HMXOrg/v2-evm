@@ -13,6 +13,8 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
+import { console } from "forge-std/console.sol"; //@todo - remove
+
 contract Calculator is Owned, ICalculator {
   // using libs for type
   using AddressUtils for address;
@@ -202,6 +204,77 @@ contract Calculator is Owned, ICalculator {
     }
   }
 
+  /// @notice Calculate collateral tokens to value from trader's sub account.
+  /// @param _subAccount Trader's address that combined between Primary account and Sub account.
+  /// @return collateralValueE30
+  function getCollateralValue(
+    address _subAccount
+  ) public returns (uint collateralValueE30) {
+    // Get list of current depositing tokens on trader's account
+    address[] memory traderTokens = IVaultStorage(vaultStorage).getTraderTokens(
+      _subAccount
+    );
+
+    console.log("traderTokens.length", traderTokens.length);
+    // Loop through list of current depositing tokens
+    for (uint i; i < traderTokens.length; ) {
+      console.log("================================================");
+      address token = traderTokens[i];
+
+      // Get token decimals from ConfigStorage
+      uint decimals = ERC20(token).decimals();
+
+      console.log("decimals", decimals);
+
+      // Get collateralFactor from ConfigStorage
+      uint collateralFactor = IConfigStorage(configStorage)
+        .getCollateralTokenConfigs(token)
+        .collateralFactor;
+
+      console.log("collateralFactor", collateralFactor);
+
+      // Get priceConfidentThreshold from ConfigStorage
+      uint priceConfidenceThreshold = IConfigStorage(configStorage)
+        .getMarketConfigByToken(token)
+        .priceConfidentThreshold;
+
+      console.log("priceConfidenceThreshold", priceConfidenceThreshold);
+
+      // Get current collateral token balance of trader's account
+      uint amount = IVaultStorage(vaultStorage).traderBalances(
+        _subAccount,
+        token
+      );
+
+      console.log("amount", amount);
+
+      bool isMaxPrice = false; // @note Collateral value always use Min price
+      // Get price from oracle
+      // @todo - validate price age
+      (uint priceE30, , ) = IOracleMiddleware(oracle)
+        .getLatestPriceWithMarketStatus(
+          token.toBytes32(),
+          isMaxPrice,
+          priceConfidenceThreshold
+        );
+
+      console.log("priceE30", priceE30);
+
+      // Calculate accumulative value of collateral tokens
+      // collateal value = (collateral amount * price) * collateralFactor
+      // collateralFactor 1 ether = 100%
+      collateralValueE30 +=
+        (amount * priceE30 * collateralFactor) /
+        (10 ** decimals * 1e18);
+
+      console.log("collateralValueE30", collateralValueE30);
+
+      unchecked {
+        i++;
+      }
+    }
+  }
+
   /// @notice Calculate Intial Margin Requirement from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return imrValueE30 Total imr of trader's account.
@@ -214,11 +287,15 @@ contract Calculator is Owned, ICalculator {
     for (uint i; i < traderPositions.length; ) {
       IPerpStorage.Position memory position = traderPositions[i];
 
+      uint size;
+      if (position.positionSizeE30 < 0) {
+        size = uint(position.positionSizeE30 * -1);
+      } else {
+        size = uint(position.positionSizeE30);
+      }
+
       // Calculate IMR on position
-      imrValueE30 += calIMR(
-        uint(position.positionSizeE30),
-        position.marketIndex
-      );
+      imrValueE30 += calIMR(size, position.marketIndex);
 
       unchecked {
         i++;
@@ -238,68 +315,14 @@ contract Calculator is Owned, ICalculator {
     for (uint i; i < traderPositions.length; ) {
       IPerpStorage.Position memory position = traderPositions[i];
 
-      // Calculate MMR on position
-      mmrValueE30 += calIMR(
-        uint(position.positionSizeE30),
-        position.marketIndex
-      );
-
-      unchecked {
-        i++;
+      uint size;
+      if (position.positionSizeE30 < 0) {
+        size = uint(position.positionSizeE30 * -1);
+      } else {
+        size = uint(position.positionSizeE30);
       }
-    }
-  }
-
-  /// @notice Calculate collateral tokens to value from trader's sub account.
-  /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @return collateralValueE30
-  function getCollateralValue(
-    address _subAccount
-  ) public returns (uint collateralValueE30) {
-    // Get list of current depositing tokens on trader's account
-    address[] memory traderTokens = IVaultStorage(vaultStorage).getTraderTokens(
-      _subAccount
-    );
-
-    // Loop through list of current depositing tokens
-    for (uint i; i < traderTokens.length; ) {
-      address token = traderTokens[i];
-
-      // Get token decimals from ConfigStorage
-      uint decimals = ERC20(token).decimals();
-
-      // Get collateralFactor from ConfigStorage
-      uint collateralFactor = IConfigStorage(configStorage)
-        .getCollateralTokenConfigs(token)
-        .collateralFactor;
-
-      // Get priceConfidentThreshold from ConfigStorage
-      uint priceConfidenceThreshold = IConfigStorage(configStorage)
-        .getMarketConfigByToken(token)
-        .priceConfidentThreshold;
-
-      // Get current collateral token balance of trader's account
-      uint amount = IVaultStorage(vaultStorage).traderBalances(
-        _subAccount,
-        token
-      );
-
-      bool isMaxPrice = false; // @note Collateral value always use Min price
-      // Get price from oracle
-      // @todo - validate price age
-      (uint priceE30, , ) = IOracleMiddleware(oracle)
-        .getLatestPriceWithMarketStatus(
-          token.toBytes32(),
-          isMaxPrice,
-          priceConfidenceThreshold
-        );
-
-      // Calculate accumulative value of collateral tokens
-      // collateal value = (collateral amount * price) * collateralFactor
-      // collateralFactor 1 ether = 100%
-      collateralValueE30 +=
-        (amount * priceE30 * collateralFactor) /
-        (10 ** decimals * 1e18);
+      // Calculate MMR on position
+      mmrValueE30 += calMMR(size, position.marketIndex);
 
       unchecked {
         i++;

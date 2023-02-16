@@ -38,9 +38,9 @@ contract Calculator_Initialization is Calculator_Base {
 
   function testCorrectness_calculator_initializdStates() external {
     assertEq(calculator.oracle(), address(mockOracle));
-    assertEq(calculator.vaultStorage(), address(vaultStorage));
+    assertEq(calculator.vaultStorage(), address(mockVaultStorage));
     assertEq(calculator.configStorage(), address(configStorage));
-    assertEq(calculator.perpStorage(), address(perpStorage));
+    assertEq(calculator.perpStorage(), address(mockPerpStorage));
   }
 
   function testCorrectness_calculator_setOracle() external {
@@ -50,7 +50,7 @@ contract Calculator_Initialization is Calculator_Base {
   }
 
   function testCorrectness_calculator_setVaultStorage() external {
-    assertEq(calculator.vaultStorage(), address(vaultStorage));
+    assertEq(calculator.vaultStorage(), address(mockVaultStorage));
     calculator.setVaultStorage(address(1));
     assertEq(calculator.vaultStorage(), address(1));
   }
@@ -62,7 +62,7 @@ contract Calculator_Initialization is Calculator_Base {
   }
 
   function testCorrectness_calculator_setPerpStorage() external {
-    assertEq(calculator.perpStorage(), address(perpStorage));
+    assertEq(calculator.perpStorage(), address(mockPerpStorage));
     calculator.setPerpStorage(address(1));
     assertEq(calculator.perpStorage(), address(1));
   }

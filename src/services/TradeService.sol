@@ -122,7 +122,6 @@ contract TradeService is ITradeService {
     // todo: update funding & borrowing fee rate
     // todo: calculate trading, borrowing and funding fee
     // todo: collect fee
-    // todo: calculate USD out
 
     // =========================================
     // | ------ update perp storage ---------- |

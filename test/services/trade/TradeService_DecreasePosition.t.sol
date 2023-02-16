@@ -274,17 +274,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
   // validate MMR in post validation
   // note: this case need to open many position and then decrease 1 with a lot of loss size
   //       now we still not support about settle profit and loss todo: make this test valid
+  //       may can move this to complex test case
   // function testRevert_AfterPositionDecreasedAndSubAccountEquityIsLessThanMMR()
   //   external
-  // {
-  //   // ALICE open LONG position at sub account 0 with size 1,000,000 USD on max Leverage
-  //   openPosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-
-  //   vm.expectRevert(
-  //     abi.encodeWithSelector(
-  //       ITradeService.ITradeService_SubAccountEquityIsUnderMMR.selector
-  //     )
-  //   );
-  //   tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30);
-  // }
+  // {}
 }

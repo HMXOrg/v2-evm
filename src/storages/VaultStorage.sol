@@ -22,7 +22,7 @@ contract VaultStorage is IVaultStorage {
   event LogSetTraderBalance(
     address indexed trader,
     address token,
-    uint balance
+    uint256 balance
   );
 
   ////////////////////////////////////////////////////////////////////////////////////

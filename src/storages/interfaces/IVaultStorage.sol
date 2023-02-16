@@ -9,12 +9,12 @@ interface IVaultStorage {
   function liquidityProviderBalances(
     address _liquidityProvider,
     address _token
-  ) external view returns (uint _amount);
+  ) external view returns (uint256 _amount);
 
   function traderBalances(
     address _trader,
     address _token
-  ) external view returns (uint amount);
+  ) external view returns (uint256 amount);
 
   function getTraderTokens(address _trader) external returns (address[] memory);
 

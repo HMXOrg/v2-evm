@@ -34,8 +34,8 @@ contract PerpStorage is IPerpStorage {
         _subAccountPositionIndices.length
       );
 
-      for (uint i; i < _subAccountPositionIndices.length; ) {
-        uint _subAccountPositionIndex = _subAccountPositionIndices[i];
+      for (uint256 i; i < _subAccountPositionIndices.length; ) {
+        uint256 _subAccountPositionIndex = _subAccountPositionIndices[i];
         _traderPositions[i] = (positions[_subAccountPositionIndex]);
 
         unchecked {

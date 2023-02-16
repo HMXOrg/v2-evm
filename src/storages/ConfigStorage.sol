@@ -113,7 +113,7 @@ contract ConfigStorage is Ownable, IConfigStorage {
   function getMarketConfigByToken(
     address _token
   ) external view returns (MarketConfig memory marketConfig) {
-    for (uint i; i < marketConfigs.length; ) {
+    for (uint256 i; i < marketConfigs.length; ) {
       if (marketConfigs[i].assetId == _token.toBytes32())
         return marketConfigs[i];
 

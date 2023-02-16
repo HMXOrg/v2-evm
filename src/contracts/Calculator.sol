@@ -109,19 +109,19 @@ contract Calculator is Owned, ICalculator {
   /// @return equityValueE30 Total equity of trader's account.
   function getEquity(
     address _subAccount
-  ) external returns (uint equityValueE30) {
+  ) external returns (uint256 equityValueE30) {
     // Calculate collateral tokens' value on trader's account
-    uint collateralValueE30 = getCollateralValue(_subAccount);
+    uint256 collateralValueE30 = getCollateralValue(_subAccount);
 
     // Calculate unrealized PnL on opening trader's position
     int unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount);
 
     // Calculate Borrwing fee on opening trader's position
     // @todo - calculate borrowing fee
-    // uint borrowingFeeE30 = getBorrowingFee(_subAccount);
+    // uint256 borrowingFeeE30 = getBorrowingFee(_subAccount);
 
     // @todo - calculate funding fee
-    // uint fundingFeeE30 = getFundingFee(_subAccount);
+    // uint256 fundingFeeE30 = getFundingFee(_subAccount);
 
     // Sum all asset's values
     equityValueE30 += collateralValueE30;
@@ -147,10 +147,14 @@ contract Calculator is Owned, ICalculator {
     IPerpStorage.Position[] memory traderPositions = IPerpStorage(perpStorage)
       .getPositionBySubAccount(_subAccount);
 
+    console.log("traderPositions.length", traderPositions.length);
+
     // Loop through all trader's positions
-    for (uint i; i < traderPositions.length; ) {
+    for (uint256 i; i < traderPositions.length; ) {
       IPerpStorage.Position memory position = traderPositions[i];
       bool isLong = position.positionSizeE30 > 0 ? true : false;
+
+      console.log("isLong", isLong);
 
       if (position.avgEntryPriceE30 == 0)
         revert ICalculator_InvalidAveragePrice();
@@ -165,7 +169,7 @@ contract Calculator is Owned, ICalculator {
 
       // Get price from oracle
       // @todo - validate price age
-      (uint priceE30, , ) = IOracleMiddleware(oracle)
+      (uint256 priceE30, , ) = IOracleMiddleware(oracle)
         .getLatestPriceWithMarketStatus(
           marketConfig.assetId,
           isUseMaxPrice,
@@ -173,7 +177,7 @@ contract Calculator is Owned, ICalculator {
         );
 
       // Calculate for priceDelta
-      uint priceDeltaE30;
+      uint256 priceDeltaE30;
       unchecked {
         priceDeltaE30 = position.avgEntryPriceE30 > priceE30
           ? position.avgEntryPriceE30 - priceE30
@@ -209,7 +213,7 @@ contract Calculator is Owned, ICalculator {
   /// @return collateralValueE30
   function getCollateralValue(
     address _subAccount
-  ) public returns (uint collateralValueE30) {
+  ) public returns (uint256 collateralValueE30) {
     // Get list of current depositing tokens on trader's account
     address[] memory traderTokens = IVaultStorage(vaultStorage).getTraderTokens(
       _subAccount
@@ -217,31 +221,31 @@ contract Calculator is Owned, ICalculator {
 
     console.log("traderTokens.length", traderTokens.length);
     // Loop through list of current depositing tokens
-    for (uint i; i < traderTokens.length; ) {
+    for (uint256 i; i < traderTokens.length; ) {
       console.log("================================================");
       address token = traderTokens[i];
 
       // Get token decimals from ConfigStorage
-      uint decimals = ERC20(token).decimals();
+      uint256 decimals = ERC20(token).decimals();
 
       console.log("decimals", decimals);
 
       // Get collateralFactor from ConfigStorage
-      uint collateralFactor = IConfigStorage(configStorage)
+      uint256 collateralFactor = IConfigStorage(configStorage)
         .getCollateralTokenConfigs(token)
         .collateralFactor;
 
       console.log("collateralFactor", collateralFactor);
 
       // Get priceConfidentThreshold from ConfigStorage
-      uint priceConfidenceThreshold = IConfigStorage(configStorage)
+      uint256 priceConfidenceThreshold = IConfigStorage(configStorage)
         .getMarketConfigByToken(token)
         .priceConfidentThreshold;
 
       console.log("priceConfidenceThreshold", priceConfidenceThreshold);
 
       // Get current collateral token balance of trader's account
-      uint amount = IVaultStorage(vaultStorage).traderBalances(
+      uint256 amount = IVaultStorage(vaultStorage).traderBalances(
         _subAccount,
         token
       );
@@ -251,7 +255,7 @@ contract Calculator is Owned, ICalculator {
       bool isMaxPrice = false; // @note Collateral value always use Min price
       // Get price from oracle
       // @todo - validate price age
-      (uint priceE30, , ) = IOracleMiddleware(oracle)
+      (uint256 priceE30, , ) = IOracleMiddleware(oracle)
         .getLatestPriceWithMarketStatus(
           token.toBytes32(),
           isMaxPrice,
@@ -278,16 +282,18 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate Intial Margin Requirement from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return imrValueE30 Total imr of trader's account.
-  function getIMR(address _subAccount) public view returns (uint imrValueE30) {
+  function getIMR(
+    address _subAccount
+  ) public view returns (uint256 imrValueE30) {
     // Get all trader's opening positions
     IPerpStorage.Position[] memory traderPositions = IPerpStorage(perpStorage)
       .getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
-    for (uint i; i < traderPositions.length; ) {
+    for (uint256 i; i < traderPositions.length; ) {
       IPerpStorage.Position memory position = traderPositions[i];
 
-      uint size;
+      uint256 size;
       if (position.positionSizeE30 < 0) {
         size = uint(position.positionSizeE30 * -1);
       } else {
@@ -306,16 +312,18 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate Maintenance Margin Value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return mmrValueE30 Total mmr of trader's account
-  function getMMR(address _subAccount) public view returns (uint mmrValueE30) {
+  function getMMR(
+    address _subAccount
+  ) public view returns (uint256 mmrValueE30) {
     // Get all trader's opening positions
     IPerpStorage.Position[] memory traderPositions = IPerpStorage(perpStorage)
       .getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
-    for (uint i; i < traderPositions.length; ) {
+    for (uint256 i; i < traderPositions.length; ) {
       IPerpStorage.Position memory position = traderPositions[i];
 
-      uint size;
+      uint256 size;
       if (position.positionSizeE30 < 0) {
         size = uint(position.positionSizeE30 * -1);
       } else {

@@ -36,13 +36,13 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   event LogIncreaseTokenLiquidity(
     address indexed trader,
     address token,
-    uint amount
+    uint256 amount
   );
 
   event LogDecreaseTokenLiquidity(
     address indexed trader,
     address token,
-    uint amount
+    uint256 amount
   );
 
   constructor(
@@ -128,12 +128,12 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     // Get current collateral token balance of trader's account
     // and sum with new token depositing amount
-    uint oldBalance = IVaultStorage(vaultStorage).traderBalances(
+    uint256 oldBalance = IVaultStorage(vaultStorage).traderBalances(
       _subAccount,
       _token
     );
 
-    uint newBalance = oldBalance + _amount;
+    uint256 newBalance = oldBalance + _amount;
 
     // Set new collateral token balance
     IVaultStorage(vaultStorage).setTraderBalance(
@@ -165,13 +165,13 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     // Get current collateral token balance of trader's account
     // and deduct with new token withdrawing amount
-    uint oldBalance = IVaultStorage(vaultStorage).traderBalances(
+    uint256 oldBalance = IVaultStorage(vaultStorage).traderBalances(
       _subAccount,
       _token
     );
     if (_amount > oldBalance) revert ICrossMarginService_InsufficientBalance();
 
-    uint newBalance = oldBalance - _amount;
+    uint256 newBalance = oldBalance - _amount;
 
     // Set new collateral token balance
     IVaultStorage(vaultStorage).setTraderBalance(

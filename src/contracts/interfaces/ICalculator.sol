@@ -30,7 +30,7 @@ interface ICalculator {
   /// @return equityValueE30 Total equity of trader's account.
   function getEquity(
     address _subAccount
-  ) external returns (uint equityValueE30);
+  ) external returns (uint256 equityValueE30);
 
   // @todo - Add Description
   function getUnrealizedPnl(
@@ -39,9 +39,13 @@ interface ICalculator {
 
   // @todo - Add Description
   /// @return imrValueE30 Total imr of trader's account.
-  function getIMR(address _subAccount) external view returns (uint imrValueE30);
+  function getIMR(
+    address _subAccount
+  ) external view returns (uint256 imrValueE30);
 
   // @todo - Add Description
   /// @return mmrValueE30 Total mmr of trader's account
-  function getMMR(address _subAccount) external view returns (uint mmrValueE30);
+  function getMMR(
+    address _subAccount
+  ) external view returns (uint256 mmrValueE30);
 }

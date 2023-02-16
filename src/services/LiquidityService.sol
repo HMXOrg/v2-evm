@@ -71,11 +71,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _minAmount
   ) external returns (uint256) {
     // 1. _validate
-    _validatePreAddRemoveLiquidity(_token);
-
-    if (_amount == 0) {
-      revert LiquidityService_BadAmount();
-    }
+    _validatePreAddRemoveLiquidity(_token, _amount);
 
     ICalculator _calculator = ICalculator(
       IConfigStorage(configStorage).calculator()
@@ -127,14 +123,14 @@ contract LiquidityService is ILiquidityService {
       tokenValueUSDAfterFee
     );
 
-    //7 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
+    //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
     IVaultStorage(_token).addPLPLiquidity(_token, amountAfterFee);
     IVaultStorage(_token).addPLPLiquidityUSDE30(_token, tokenValueUSDAfterFee);
     IVaultStorage(_token).addPLPTotalLiquidityUSDE30(tokenValueUSDAfterFee);
 
     _validatePLPHealthCheck(_token);
 
-    //8 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
+    //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
     ERC20(_token).transferFrom(
       msg.sender,
       address(vaultStorage),
@@ -163,12 +159,12 @@ contract LiquidityService is ILiquidityService {
     uint256 _minAmount
   ) external returns (uint256) {
     // 1. _validate
-    _validatePreAddRemoveLiquidity(_tokenOut);
+    _validatePreAddRemoveLiquidity(
+      _tokenOut,
+      IVaultStorage(vaultStorage).plpLiquidity(_tokenOut)
+    );
 
     uint256 _liquidity = IVaultStorage(vaultStorage).plpLiquidity(_tokenOut);
-    if (_liquidity == 0) {
-      revert LiquidityService_BadAmount();
-    }
 
     ICalculator _calculator = ICalculator(
       IConfigStorage(configStorage).calculator()
@@ -180,7 +176,7 @@ contract LiquidityService is ILiquidityService {
 
     uint256 _lpUsdValue = (_liquidity * _aum) / _lpSupply;
 
-    // Check totalLq < lpValue ()
+    // 2. Check totalLq < lpValue ()
     if (IVaultStorage(_tokenOut).plpTotalLiquidityUSDE30() < _lpUsdValue) {
       IVaultStorage(_tokenOut).addPLPTotalLiquidityUSDE30(
         _lpUsdValue - IVaultStorage(_tokenOut).plpTotalLiquidityUSDE30()
@@ -330,7 +326,10 @@ contract LiquidityService is ILiquidityService {
     }
   }
 
-  function _validatePreAddRemoveLiquidity(address _token) internal {
+  function _validatePreAddRemoveLiquidity(
+    address _token,
+    uint256 _amount
+  ) internal {
     // 1. _validate
     IConfigStorage(configStorage).validateServiceExecutor(
       address(this),
@@ -343,6 +342,10 @@ contract LiquidityService is ILiquidityService {
 
     if (!IConfigStorage(configStorage).getPLPTokenConfig(_token).accepted) {
       revert LiquidityService_InvalidToken();
+    }
+
+    if (_amount == 0) {
+      revert LiquidityService_BadAmount();
     }
   }
 }

@@ -20,13 +20,13 @@ interface IPerpStorage {
     // LONG position
     uint256 longPositionSize;
     uint256 longAvgPrice;
-    uint256 longFundingRate;
     uint256 longOpenInterest;
     // SHORT position
     uint256 shortPositionSize;
     uint256 shortAvgPrice;
-    uint256 shortFundingRate;
     uint256 shortOpenInterest;
+    // funding rate
+    uint256 fundingRate;
     uint256 lastFundingTime;
   }
 

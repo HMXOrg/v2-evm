@@ -40,6 +40,20 @@ contract PositionTester is StdAssertions {
   }
 
   // assert cache position with current position from storage
+  // what this function check after decrease position
+  // - position
+  //    - size delta
+  //    - reserve delta
+  //    - average price
+  //    - open interest
+  // - global market
+  //    - long / short position size
+  //    - long / short open interest
+  //    - [pending] long / short average price
+  //    - [pending] funding rate
+  // - global state
+  //    - reserve value delta
+  //    - [pending] sum of borrowing fee
   function assertDecreasePositionResult(
     DecreasePositionAssertionData memory _data
   ) external {
@@ -81,8 +95,6 @@ contract PositionTester is StdAssertions {
       );
       // todo: support when has logic to recalculate average price
       // assertEq(cacheMarketGlobal.longAvgPrice - _currentMarketGlobal.longAvgPrice, 0);
-      // todo: support on funding rate calculation story
-      // assertEq(cacheMarketGlobal.longFundingRate - _currentMarketGlobal.longFundingRate, 0);
       assertEq(
         cacheMarketGlobal.longOpenInterest -
           _currentMarketGlobal.longOpenInterest,
@@ -96,8 +108,6 @@ contract PositionTester is StdAssertions {
       );
       // todo: support when has logic to recalculate average price
       // assertEq(cacheMarketGlobal.shortAvgPrice - _currentMarketGlobal.shortAvgPrice, 0);
-      // todo: support on funding rate calculation story
-      // assertEq(cacheMarketGlobal.shortFundingRate - _currentMarketGlobal.shortFundingRate, 0);
       assertEq(
         cacheMarketGlobal.shortOpenInterest -
           _currentMarketGlobal.shortOpenInterest,
@@ -106,6 +116,7 @@ contract PositionTester is StdAssertions {
     }
 
     // todo: support on funding rate calculation story
+    // assertEq(cacheMarketGlobal.fundingRate - _currentMarketGlobal.fundingRate, 0);
     // assertEq(_currentMarketGlobal.lastFundingTime, block.timestamp);
 
     // assert global state

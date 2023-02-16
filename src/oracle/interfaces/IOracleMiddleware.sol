@@ -12,4 +12,10 @@ interface IOracleMiddleware {
     bool _isMax,
     uint256 _confidentTreshold
   ) external view returns (uint256, uint256);
+
+  function getLatestPriceWithMarketStatus(
+    bytes32 _assetId,
+    bool _isMax,
+    uint256 _confidenceThreshold
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
 }

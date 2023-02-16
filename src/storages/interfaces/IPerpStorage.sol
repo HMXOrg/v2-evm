@@ -81,4 +81,8 @@ interface IPerpStorage {
   function getGlobalMarketById(
     uint256 _marketId
   ) external view returns (GlobalMarket memory);
+
+  function getNumberOfSubAccountPosition(
+    address _subAccount
+  ) external view returns (uint256);
 }

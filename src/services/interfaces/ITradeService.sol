@@ -11,6 +11,8 @@ interface ITradeService {
   error ITradeService_SubAccountEquityIsUnderMMR();
   error ITradeService_TooTinyPosition();
   error ITradeService_BadSubAccountId();
+  error ITradeService_BadNumberOfPosition();
+  error ITradeService_BadExposure();
   error ITradeService_InvalidAveragePrice();
   error ITradeService_BadPositionSize();
   error ITradeService_InsufficientLiquidity();

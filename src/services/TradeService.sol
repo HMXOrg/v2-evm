@@ -6,25 +6,27 @@ import { ITradeService } from "./interfaces/ITradeService.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
-
-import { Math } from "../utils/Math.sol";
+import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
 contract TradeService is ITradeService {
   address perpStorage;
   address vaultStorage;
   address configStorage;
   address calculator;
+  address public oracle;
 
   constructor(
     address _perpStorage,
     address _vaultStorage,
     address _configStorage,
-    address _calculator
+    address _calculator,
+    address _oracle
   ) {
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
     calculator = _calculator;
+    oracle = _oracle;
   }
 
   function increasePosition(
@@ -41,15 +43,64 @@ contract TradeService is ITradeService {
     IPerpStorage.Position memory _position = IPerpStorage(perpStorage)
       .getPositionById(_posId);
 
-    // set the price to a fixed value of 21700 * 1e30
-    uint256 _price = 21700 * 1e30;
+    // get the market configuration for the given market index
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
+      configStorage
+    ).getMarketConfigs(_marketIndex);
 
     // determine whether the new size delta is for a long position
-    bool isLong = _sizeDelta > 0;
+    bool _isLong = _sizeDelta > 0;
+
+    bool _isNewPosition = _position.sizeE30 == 0;
+
+    // Pre validation
+    // Verify that the number of positions has exceeds
+    {
+      // get the trading configuration.
+      IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(
+        configStorage
+      ).getTradingConfig();
+
+      if (
+        _isNewPosition &&
+        _tradingConfig.maxPosition <
+        IPerpStorage(perpStorage).getNumberOfSubAccountPosition(_subAccount) + 1
+      ) revert ITradeService_BadNumberOfPosition();
+    }
+    // Verify that the current position has the same exposure direction
+    if (!_isNewPosition && ((_position.sizeE30 > 0) == _isLong))
+      revert ITradeService_BadExposure();
+
+    // Get Price market.
+    uint256 _priceE30;
+    // market validation
+    {
+      uint256 _lastPriceUpdated;
+      uint8 _marketStatus;
+      (_priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(oracle)
+        .getLatestPriceWithMarketStatus(
+          _marketConfig.assetId,
+          _isLong, // if current position is SHORT position, then we use max price
+          _marketConfig.priceConfidentThreshold
+        );
+
+      // Market active represent the market is still listed on our protocol
+      if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
+
+      // if market status is 1, means that oracle couldn't get price from pyth
+      if (_marketStatus == 1) revert ITradeService_MarketIsClosed();
+
+      // check price stale for 30 seconds
+      // todo: do it as config, and fix related testcase
+      if (block.timestamp - _lastPriceUpdated > 30)
+        revert ITradeService_PriceStale();
+    }
+
+    // TODO: Validate AllowIncreasePosition
 
     // if the position size is zero, set the average price to the current price (new position)
     if (_position.sizeE30 == 0) {
-      _position.avgPriceE30 = _price;
+      _position.avgPriceE30 = _priceE30;
     }
 
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
@@ -57,10 +108,10 @@ contract TradeService is ITradeService {
       _position.avgPriceE30 = getPositionNextAveragePrice(
         _marketIndex,
         _position.sizeE30,
-        isLong,
+        _isLong,
         _sizeDelta,
         _position.avgPriceE30,
-        _price
+        _priceE30
       );
     }
 
@@ -73,29 +124,26 @@ contract TradeService is ITradeService {
     if (_position.sizeE30 == 0) revert ITradeService_BadPositionSize();
 
     // get the absolute value of the new size delta
-    uint256 _absSizeDelta = Math.abs(_sizeDelta);
-
-    // get the market configuration for the given market index
-    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
-      configStorage
-    ).getMarketConfigs(_marketIndex);
-
-    // get the amount of free collateral available for the sub-account
-    uint256 subAccountFreeCollateral = ICalculator(calculator)
-      .getFreeCollateral(_subAccount);
+    uint256 _absSizeDelta = abs(_sizeDelta);
 
     // calculate the initial margin required for the new position
     uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / 1e18;
 
-    // if the free collateral is less than the initial margin required, revert the transaction with an error
-    if (subAccountFreeCollateral < _imr)
-      revert ITradeService_InsufficientFreeCollateral();
+    {
+      // get the amount of free collateral available for the sub-account
+      uint256 subAccountFreeCollateral = ICalculator(calculator)
+        .getFreeCollateral(_subAccount);
+      // if the free collateral is less than the initial margin required, revert the transaction with an error
+      if (subAccountFreeCollateral < _imr)
+        revert ITradeService_InsufficientFreeCollateral();
+    }
 
-    // calculate the maximum amount of reserve required for the new position
-    uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / 1e18;
-
-    // increase the reserved amount by the maximum reserve required for the new position
-    increaseReserved(_maxReserve);
+    {
+      // calculate the maximum amount of reserve required for the new position
+      uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / 1e18;
+      // increase the reserved amount by the maximum reserve required for the new position
+      increaseReserved(_maxReserve);
+    }
 
     // save the updated position to the storage
     IPerpStorage(perpStorage).savePosition(_posId, _position);
@@ -104,24 +152,25 @@ contract TradeService is ITradeService {
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
       .getGlobalMarketById(_marketIndex);
 
-    // calculate the change in open interest for the new position
-    uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _price;
-
-    // update gobal market state
-    if (isLong) {
-      IPerpStorage(perpStorage).updateGlobalLongMarketById(
-        _marketIndex,
-        _globalMarket.longPositionSize + _absSizeDelta,
-        _globalMarket.longAvgPrice, // todo: recalculate arg price
-        _globalMarket.longOpenInterest + _changedOpenInterest
-      );
-    } else {
-      IPerpStorage(perpStorage).updateGlobalShortMarketById(
-        _marketIndex,
-        _globalMarket.shortPositionSize + _absSizeDelta,
-        _globalMarket.shortAvgPrice, // todo: recalculate arg price
-        _globalMarket.shortOpenInterest + _changedOpenInterest
-      );
+    {
+      // calculate the change in open interest for the new position
+      uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _priceE30;
+      // update gobal market state
+      if (_isLong) {
+        IPerpStorage(perpStorage).updateGlobalLongMarketById(
+          _marketIndex,
+          _globalMarket.longPositionSize + _absSizeDelta,
+          _globalMarket.longAvgPrice, // todo: recalculate arg price
+          _globalMarket.longOpenInterest + _changedOpenInterest
+        );
+      } else {
+        IPerpStorage(perpStorage).updateGlobalShortMarketById(
+          _marketIndex,
+          _globalMarket.shortPositionSize + _absSizeDelta,
+          _globalMarket.shortAvgPrice, // todo: recalculate arg price
+          _globalMarket.shortOpenInterest + _changedOpenInterest
+        );
+      }
     }
   }
 
@@ -155,7 +204,7 @@ contract TradeService is ITradeService {
     int256 sizeDelta,
     uint256 averagePrice,
     uint256 nextPrice
-  ) internal pure returns (uint256) {
+  ) internal view returns (uint256) {
     // Get the delta and isProfit value from the getDelta function
     (bool isProfit, uint256 delta) = getDelta(
       marketIndex,
@@ -164,9 +213,9 @@ contract TradeService is ITradeService {
       averagePrice
     );
     // Calculate the next size and divisor
-    uint256 nextSize = Math.abs(size + sizeDelta);
+    uint256 nextSize = abs(size + sizeDelta);
     uint256 divisor;
-    if (size > 0) {
+    if (isLong) {
       divisor = isProfit ? nextSize + delta : nextSize - delta;
     } else {
       divisor = isProfit ? nextSize - delta : nextSize + delta;
@@ -177,39 +226,48 @@ contract TradeService is ITradeService {
   }
 
   /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
-  /// @param size The size of the position.
-  /// @param averagePrice The average price of the position.
+  /// @param _marketIndex The
+  /// @param _size The size of the position.
+  /// @param _isLong The
+  /// @param _averagePrice The average price of the position.
   /// @return isProfit A boolean value indicating whether the position is profitable or not.
   /// @return delta The Profit between the average price and the fixed price, adjusted for the size of the order.
   function getDelta(
-    uint256 /*marketIndex*/,
-    int256 size,
-    bool isLong,
-    uint256 averagePrice
-  ) public pure returns (bool, uint256) {
+    uint256 _marketIndex,
+    int256 _size,
+    bool _isLong,
+    uint256 _averagePrice
+  ) public view returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
-    if (averagePrice == 0) revert ITradeService_InvalidAveragePrice();
+    if (_averagePrice == 0) revert ITradeService_InvalidAveragePrice();
 
-    // Set the fixed price.
-    uint256 price = 21700 * 1e30;
+    // Get Price market.
+    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(
+      configStorage
+    ).getMarketConfigs(_marketIndex);
+    (uint256 price, ) = IOracleMiddleware(oracle).getLatestPrice(
+      marketConfig.assetId,
+      _isLong,
+      marketConfig.priceConfidentThreshold
+    );
 
     // Calculate the difference between the average price and the fixed price.
     uint256 priceDelta;
     unchecked {
-      priceDelta = averagePrice > price
-        ? averagePrice - price
-        : price - averagePrice;
+      priceDelta = _averagePrice > price
+        ? _averagePrice - price
+        : price - _averagePrice;
     }
 
     // Calculate the delta, adjusted for the size of the order.
-    uint256 delta = (Math.abs(size) * priceDelta) / averagePrice;
+    uint256 delta = (abs(_size) * priceDelta) / _averagePrice;
 
     // Determine if the position is profitable or not based on the averagePrice and the mark price.
     bool isProfit;
-    if (isLong) {
-      isProfit = price > averagePrice;
+    if (_isLong) {
+      isProfit = price > _averagePrice;
     } else {
-      isProfit = price < averagePrice;
+      isProfit = price < _averagePrice;
     }
 
     // Return the values of isProfit and delta.
@@ -226,15 +284,28 @@ contract TradeService is ITradeService {
     IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage)
       .getGlobalState();
 
+    // // get the liquidity configuration
+    IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(
+      configStorage
+    ).getLiquidityConfig();
+
     // Increase the reserve value by adding the reservedValue
     _globalState.reserveValueE30 += reservedValue;
 
-    // Check if the new reserve value exceeds the AUM, and revert if it does
-    if (aum < _globalState.reserveValueE30) {
+    // Check if the new reserve value exceeds the % of AUM, and revert if it does
+    if (
+      (aum * _liquidityConfig.maxPLPUtilization) / 1e18 <
+      _globalState.reserveValueE30
+    ) {
       revert ITradeService_InsufficientLiquidity();
     }
+    // TODO: validate Max PLP Utilization
 
     // Update the new reserve value in the IPerpStorage contract
     IPerpStorage(perpStorage).updateReserveValue(_globalState.reserveValueE30);
+  }
+
+  function abs(int256 x) private pure returns (uint256) {
+    return uint256(x >= 0 ? x : -x);
   }
 }

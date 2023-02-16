@@ -37,6 +37,14 @@ abstract contract ConfigStorage is IConfigStorage {
     return marketConfigs[_marketId];
   }
 
+  function getTradingConfig() external view returns (TradingConfig memory) {
+    return tradingConfig;
+  }
+
+  function getLiquidityConfig() external view returns (LiquidityConfig memory) {
+    return liquidityConfig;
+  }
+
   function getPlpTokenConfigs(
     address _token
   ) external view returns (PLPTokenConfig memory) {

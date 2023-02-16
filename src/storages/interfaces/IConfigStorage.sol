@@ -64,6 +64,7 @@ interface IConfigStorage {
     uint256 fundingInterval; // funding interval unit in seconds
     uint256 borrowingDevFeeRate;
     uint256 minProfitDuration;
+    uint256 maxPosition;
   }
 
   // Liquidation
@@ -74,6 +75,10 @@ interface IConfigStorage {
   function getMarketConfigs(
     uint256 _marketId
   ) external view returns (MarketConfig memory);
+
+  function getTradingConfig() external view returns (TradingConfig memory);
+
+  function getLiquidityConfig() external view returns (LiquidityConfig memory);
 
   function getMarketConfigById(
     bytes32 _marketId

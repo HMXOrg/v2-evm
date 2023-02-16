@@ -59,32 +59,37 @@ contract Calculator is ICalculator {
 
   function _getPLPValue(bool isMaxPrice) internal view returns (uint256) {
     uint256 assetValue = 0;
-    for (
-      uint i = 0;
-      i <
-      IConfigStorage(configStorage).getLiquidityConfig().acceptedTokens.length;
+    address _plpUnderlyingToken = IConfigStorage(configStorage)
+      .getNextAcceptedToken(
+        IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_START()
+      );
 
+    while (
+      _plpUnderlyingToken !=
+      IConfigStorage(configStorage).getNextAcceptedToken(
+        IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END()
+      )
     ) {
-      address token = IConfigStorage(configStorage)
-        .getLiquidityConfig()
-        .acceptedTokens[i];
-
       (uint priceE30, ) = IOracleMiddleware(oracle).getLatestPrice(
-        token.toBytes32(),
+        _plpUnderlyingToken.toBytes32(),
         isMaxPrice,
         IConfigStorage(configStorage)
-          .getMarketConfigByToken(token)
+          .getMarketConfigByToken(_plpUnderlyingToken)
           .priceConfidentThreshold
       );
 
-      uint value = (IVaultStorage(vaultStorage).plpLiquidity(token) *
-        priceE30) / (10 ** ERC20(token).decimals());
+      uint value = (IVaultStorage(vaultStorage).plpLiquidity(
+        _plpUnderlyingToken
+      ) * priceE30) / (10 ** ERC20(_plpUnderlyingToken).decimals());
 
       unchecked {
         assetValue += value;
-        i++;
       }
+      _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(
+        _plpUnderlyingToken
+      );
     }
+
     return assetValue;
   }
 
@@ -196,7 +201,6 @@ contract Calculator is ICalculator {
         _tokenValueE30,
         _vaultStorage.plpLiquidityUSDE30(_token),
         _vaultStorage.plpTotalLiquidityUSDE30(),
-        _configStorage.plpTotalTokenWeight(),
         _configStorage.getLiquidityConfig(),
         _configStorage.getPLPTokenConfig(_token),
         LiquidityDirection.ADD
@@ -218,7 +222,6 @@ contract Calculator is ICalculator {
         _tokenValueE30,
         _vaultStorage.plpLiquidityUSDE30(_token),
         _vaultStorage.plpTotalLiquidityUSDE30(),
-        _configStorage.plpTotalTokenWeight(),
         _configStorage.getLiquidityConfig(),
         _configStorage.getPLPTokenConfig(_token),
         LiquidityDirection.REMOVE
@@ -229,7 +232,6 @@ contract Calculator is ICalculator {
     uint256 _value,
     uint256 _liquidityUSD, //e30
     uint256 _totalLiquidityUSD, //e30
-    uint256 _totalTokenWeight,
     IConfigStorage.LiquidityConfig memory _liquidityConfig,
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
@@ -238,6 +240,7 @@ contract Calculator is ICalculator {
       ? _liquidityConfig.depositFeeRate
       : _liquidityConfig.withdrawFeeRate;
     uint256 _taxRate = _liquidityConfig.taxFeeRate;
+    uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
     uint256 nextValue = startValue + _value;

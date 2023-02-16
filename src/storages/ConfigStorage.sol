@@ -4,11 +4,17 @@ pragma solidity 0.8.18;
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IteratableAddressList } from "../libraries/IteratableAddressList.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
-contract ConfigStorage is IConfigStorage {
+contract ConfigStorage is IConfigStorage, Ownable {
   using AddressUtils for address;
+  using IteratableAddressList for IteratableAddressList.List;
+
+  address public constant ITERABLE_ADDRESS_LIST_START = address(1);
+  address public constant ITERABLE_ADDRESS_LIST_END = address(1);
 
   // GLOBAL Configs
   LiquidityConfig public liquidityConfig;
@@ -16,6 +22,7 @@ contract ConfigStorage is IConfigStorage {
   TradingConfig public tradingConfig;
   LiquidationConfig public liquidationConfig;
   MarketConfig[] public marketConfigs;
+
   mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
 
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
@@ -30,7 +37,8 @@ contract ConfigStorage is IConfigStorage {
   address public calculator;
   address public plp;
   address public treasury;
-  uint256 public plpTotalTokenWeight;
+
+  IteratableAddressList.List public plpAcceptedTokens;
 
   //events
   event SetServiceExecutor(address _service, address _handler, bool _isOk);
@@ -38,6 +46,16 @@ contract ConfigStorage is IConfigStorage {
   event SetPLP(address _plp);
   event SetLiquidityConfig(LiquidityConfig _liquidityConfig);
   event SetDynamicEnabled(bool enabled);
+  event AddOrUpdatePLPTokenConfigs(
+    address _token,
+    PLPTokenConfig _config,
+    PLPTokenConfig _newConfig
+  );
+  event RemoveUnderlying(address _token);
+
+  constructor() {
+    plpAcceptedTokens.init();
+  }
 
   // methods
   function getMarketConfigs(
@@ -93,6 +111,13 @@ contract ConfigStorage is IConfigStorage {
     }
   }
 
+  /// @notice Return the next underlying token address.
+  /// @dev This uses to traverse all underlying tokens.
+  /// @param token The token address to query the next token. Can also be START and END.
+  function getNextAcceptedToken(address token) external view returns (address) {
+    return plpAcceptedTokens.getNextOf(token);
+  }
+
   function setCalculator(address _calculator) external {
     calculator = _calculator;
     emit SetCalculator(calculator);
@@ -117,12 +142,7 @@ contract ConfigStorage is IConfigStorage {
 
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external {
     if (_totalTokenWeight > 1e18) revert ConfigStorage_ExceedLimitSetting();
-    plpTotalTokenWeight = _totalTokenWeight;
-  }
-
-  // setter functions
-  function setLiquidityConfig(LiquidityConfig memory _newConfig) external {
-    liquidityConfig = _newConfig;
+    liquidityConfig.plpTotalTokenWeight = _totalTokenWeight;
   }
 
   function setSwapConfig(SwapConfig memory _newConfig) external {
@@ -177,6 +197,69 @@ contract ConfigStorage is IConfigStorage {
     bool _isServiceExecutor
   ) external {
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
+  }
+
+  /// @notice add or update AcceptedToken
+  /// @dev This function only allows to add new token or update existing token,
+  /// any atetempt to remove token will be reverted.
+  /// @param _tokens The token addresses to set.
+  /// @param _configs The token configs to set.
+  function addorUpdateAcceptedToken(
+    address[] calldata _tokens,
+    PLPTokenConfig[] calldata _configs
+  ) external onlyOwner {
+    if (_tokens.length != _configs.length) {
+      revert ConfigStorage_BadLen();
+    }
+
+    for (uint256 i = 0; i < _tokens.length; ) {
+      // Enforce that isAccept must be true to prevent
+      // removing underlying token through this function.
+      if (!_configs[i].accepted) revert ConfigStorage_BadArgs();
+
+      // If plpTokenConfigs.accepted is previously false,
+      // then it is a new token to be added.
+      if (!plpTokenConfigs[_tokens[i]].accepted) {
+        plpAcceptedTokens.add(_tokens[i]);
+      }
+
+      // Log
+      emit AddOrUpdatePLPTokenConfigs(
+        _tokens[i],
+        plpTokenConfigs[_tokens[i]],
+        _configs[i]
+      );
+
+      // Update totalWeight accordingly
+      liquidityConfig.plpTotalTokenWeight =
+        (liquidityConfig.plpTotalTokenWeight -
+          plpTokenConfigs[_tokens[i]].targetWeight) +
+        _configs[i].targetWeight;
+      plpTokenConfigs[_tokens[i]] = _configs[i];
+
+      if (liquidityConfig.plpTotalTokenWeight > 1e18) {
+        revert ConfigStorage_ExceedLimitSetting();
+      }
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  /// @notice Remove underlying token.
+  /// @param _token The token address to remove.
+  function removeAcceptedToken(address _token) external onlyOwner {
+    // Update totalTokenWeight
+    liquidityConfig.plpTotalTokenWeight -= plpTokenConfigs[_token].targetWeight;
+
+    // Delete token from plpAcceptedTokens list
+    plpAcceptedTokens.remove(_token, plpAcceptedTokens.getPreviousOf(_token));
+
+    // Delete plpTokenConfig
+    delete plpTokenConfigs[_token];
+
+    emit RemoveUnderlying(_token);
   }
 
   function validateServiceExecutor(

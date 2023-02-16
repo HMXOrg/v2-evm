@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 interface IConfigStorage {
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
-    uint256 decimals;
+    uint256 decimals; //token decimals
     uint256 targetWeight; // pecentage of all accepted PLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
@@ -47,12 +47,12 @@ interface IConfigStorage {
     uint256 depositFeeRate; // PLP deposit fee rate
     uint256 withdrawFeeRate; // PLP withdraw fee rate
     uint256 maxPLPUtilization; //% of max utilization
+    uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
     uint256 plpSafetyBufferThreshold;
     uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
     uint256 flashLoanFeeRate;
     bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
     bool enabled; // Circuit breaker on Liquidity
-    address[] acceptedTokens;
   }
 
   // Swap
@@ -75,6 +75,8 @@ interface IConfigStorage {
   //errors
   error ConfigStorage_NotWhiteListed();
   error ConfigStorage_ExceedLimitSetting();
+  error ConfigStorage_BadLen();
+  error ConfigStorage_BadArgs();
 
   // GETTER
   function getMarketConfigs(
@@ -102,8 +104,6 @@ interface IConfigStorage {
 
   function treasury() external view returns (address);
 
-  function plpTotalTokenWeight() external view returns (uint256);
-
   function getPLPTokenConfig(
     address _token
   ) external view returns (PLPTokenConfig memory);
@@ -113,6 +113,12 @@ interface IConfigStorage {
   ) external view returns (MarketConfig memory);
 
   function getMarketConfigsLength() external view returns (uint256);
+
+  function getNextAcceptedToken(address token) external view returns (address);
+
+  function ITERABLE_ADDRESS_LIST_START() external view returns (address);
+
+  function ITERABLE_ADDRESS_LIST_END() external view returns (address);
 
   // SETTER
   function setPLP(address _plp) external;

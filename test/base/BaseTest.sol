@@ -120,7 +120,9 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
         plpSafetyBufferThreshold: 0,
         taxFeeRate: 0,
         flashLoanFeeRate: 0,
-        dynamicFeeEnabled: false
+        dynamicFeeEnabled: false,
+        enabled: true,
+        plpTotalTokenWeight: 0
       })
     );
   }

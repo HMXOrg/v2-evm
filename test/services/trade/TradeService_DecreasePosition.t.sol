@@ -114,11 +114,12 @@ contract TradeService_DecreasePosition is TradeService_Base {
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30);
 
     // check position after decrease
-    PositionTester.DecreaePositionAssertionData
-      memory _assertData = PositionTester.DecreaePositionAssertionData({
-        sizeDelta: 500_000 * 1e30,
+    PositionTester.DecreasePositionAssertionData
+      memory _assertData = PositionTester.DecreasePositionAssertionData({
+        decreasedPositionSize: 500_000 * 1e30,
         avgPriceDelta: 0,
-        reserveValueDelta: 45_000 * 1e30
+        reserveValueDelta: 45_000 * 1e30,
+        openInterestDelta: 5_000 * 1e18
       });
     positionTester.assertDecreasePositionResult(_assertData);
   }
@@ -195,11 +196,12 @@ contract TradeService_DecreasePosition is TradeService_Base {
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30);
 
     // check position after decrease
-    PositionTester.DecreaePositionAssertionData
-      memory _assertData = PositionTester.DecreaePositionAssertionData({
-        sizeDelta: 500_000 * 1e30,
+    PositionTester.DecreasePositionAssertionData
+      memory _assertData = PositionTester.DecreasePositionAssertionData({
+        decreasedPositionSize: 500_000 * 1e30,
         avgPriceDelta: 0,
-        reserveValueDelta: 45_000 * 1e30
+        reserveValueDelta: 45_000 * 1e30,
+        openInterestDelta: 5_000 * 1e18
       });
     positionTester.assertDecreasePositionResult(_assertData);
   }

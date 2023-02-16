@@ -9,10 +9,11 @@ import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
 contract PositionTester is StdAssertions {
-  struct DecreaePositionAssertionData {
-    uint256 sizeDelta;
+  struct DecreasePositionAssertionData {
+    uint256 decreasedPositionSize;
     uint256 avgPriceDelta;
     uint256 reserveValueDelta;
+    uint256 openInterestDelta;
   }
 
   PerpStorage perpStorage;
@@ -21,6 +22,7 @@ contract PositionTester is StdAssertions {
   bytes32 cachePositionId;
   IPerpStorage.Position cachePosition;
   IPerpStorage.GlobalMarket cacheMarketGlobal;
+  IPerpStorage.GlobalState cacheGlobalState;
 
   constructor(PerpStorage _perpStorage, MockOracleMiddleware _oracle) {
     perpStorage = _perpStorage;
@@ -34,11 +36,12 @@ contract PositionTester is StdAssertions {
     cacheMarketGlobal = perpStorage.getGlobalMarketByIndex(
       cachePosition.marketIndex
     );
+    cacheGlobalState = perpStorage.getGlobalState();
   }
 
   // assert cache position with current position from storage
   function assertDecreasePositionResult(
-    DecreaePositionAssertionData memory _data
+    DecreasePositionAssertionData memory _data
   ) external {
     // assert position state
     IPerpStorage.Position memory _currentPosition = perpStorage.getPositionById(
@@ -49,7 +52,7 @@ contract PositionTester is StdAssertions {
 
     assertEq(
       uint256(_sizeDelta > 0 ? _sizeDelta : -_sizeDelta),
-      _data.sizeDelta
+      _data.decreasedPositionSize
     );
     assertEq(
       cachePosition.avgEntryPriceE30 - _currentPosition.avgEntryPriceE30,
@@ -58,6 +61,10 @@ contract PositionTester is StdAssertions {
     assertEq(
       cachePosition.reserveValueE30 - _currentPosition.reserveValueE30,
       _data.reserveValueDelta
+    );
+    assertEq(
+      cachePosition.openInterest - _currentPosition.openInterest,
+      _data.openInterestDelta
     );
 
     // assert market global
@@ -70,7 +77,7 @@ contract PositionTester is StdAssertions {
       assertEq(
         cacheMarketGlobal.longPositionSize -
           _currentMarketGlobal.longPositionSize,
-        _data.sizeDelta
+        _data.decreasedPositionSize
       );
       // todo: support when has logic to recalculate average price
       // assertEq(cacheMarketGlobal.longAvgPrice - _currentMarketGlobal.longAvgPrice, 0);
@@ -79,13 +86,13 @@ contract PositionTester is StdAssertions {
       assertEq(
         cacheMarketGlobal.longOpenInterest -
           _currentMarketGlobal.longOpenInterest,
-        (_data.sizeDelta * 1e30) / oracle.priceE30()
+        _data.openInterestDelta
       );
     } else {
       assertEq(
         cacheMarketGlobal.shortPositionSize -
           _currentMarketGlobal.shortPositionSize,
-        _data.sizeDelta
+        _data.decreasedPositionSize
       );
       // todo: support when has logic to recalculate average price
       // assertEq(cacheMarketGlobal.shortAvgPrice - _currentMarketGlobal.shortAvgPrice, 0);
@@ -94,11 +101,27 @@ contract PositionTester is StdAssertions {
       assertEq(
         cacheMarketGlobal.shortOpenInterest -
           _currentMarketGlobal.shortOpenInterest,
-        (_data.sizeDelta * 1e30) / oracle.priceE30()
+        _data.openInterestDelta
       );
     }
 
     // todo: support on funding rate calculation story
     // assertEq(_currentMarketGlobal.lastFundingTime, block.timestamp);
+
+    // assert global state
+    IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
+    assertEq(
+      cacheGlobalState.reserveValueE30 - _globalState.reserveValueE30,
+      _data.reserveValueDelta
+    );
+    // todo: support on borrowing fee story
+    // assertEq(
+    //   cacheGlobalState.sumBorrowingRate - _globalState.sumBorrowingRate,
+    //   _data.reserveValueDelta
+    // );
+    // assertEq(
+    //   cacheGlobalState.lastBorrowingTime,
+    //   block.timestamp
+    // );
   }
 }

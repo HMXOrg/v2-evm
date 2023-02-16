@@ -144,11 +144,15 @@ contract Calculator is ICalculator {
       if (
         _globalMarket.globalLongAvgPrice > 0 && _globalMarket.globalLongSize > 0
       ) {
-        // reduce loop
-        _pnlLongE30 =
-          ((int256(priceE30Long) - (int256(_globalMarket.globalLongAvgPrice))) *
-            int256(_globalMarket.globalLongSize)) /
-          int256(_globalMarket.globalLongAvgPrice);
+        if (priceE30Long < _globalMarket.globalLongAvgPrice) {
+          uint256 _absPNL = ((_globalMarket.globalLongAvgPrice - priceE30Long) *
+            _globalMarket.globalLongSize) / _globalMarket.globalLongAvgPrice;
+          _pnlLongE30 = -int256(_absPNL);
+        } else {
+          uint256 _absPNL = ((priceE30Long - _globalMarket.globalLongAvgPrice) *
+            _globalMarket.globalLongSize) / _globalMarket.globalLongAvgPrice;
+          _pnlLongE30 = int256(_absPNL);
+        }
       }
 
       // TODO DOUBLE CHECK :: ask team globalMarket.globalShortSize store in negative???
@@ -156,10 +160,18 @@ contract Calculator is ICalculator {
         _globalMarket.globalShortAvgPrice > 0 &&
         _globalMarket.globalShortSize > 0
       ) {
-        _pnlShortE30 =
-          ((int256(_globalMarket.globalShortAvgPrice) - int256(priceE30Short)) *
-            int256(_globalMarket.globalShortSize)) /
-          int256(_globalMarket.globalShortAvgPrice);
+        if (_globalMarket.globalShortAvgPrice < priceE30Short) {
+          uint256 _absPNL = ((priceE30Short -
+            _globalMarket.globalShortAvgPrice) *
+            _globalMarket.globalShortSize) / _globalMarket.globalShortAvgPrice;
+
+          _pnlShortE30 = -int256(_absPNL);
+        } else {
+          uint256 _absPNL = ((_globalMarket.globalShortAvgPrice -
+            priceE30Short) * _globalMarket.globalShortSize) /
+            _globalMarket.globalShortAvgPrice;
+          _pnlShortE30 = int256(_absPNL);
+        }
       }
 
       {

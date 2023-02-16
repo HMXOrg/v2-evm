@@ -49,15 +49,30 @@ contract ConfigStorage is IConfigStorage {
   }
 
   // setter functions
+  function setLiquidityConfig(LiquidityConfig memory _newConfig) external {
+    liquidityConfig = _newConfig;
+  }
+
+  function setSwapConfig(SwapConfig memory _newConfig) external {
+    swapConfig = _newConfig;
+  }
+
+  function setTradingConfig(TradingConfig memory _newConfig) external {
+    tradingConfig = _newConfig;
+  }
+
+  function setLiquidationConfig(LiquidationConfig memory _newConfig) external {
+    liquidationConfig = _newConfig;
+  }
+
   function addMarketConfig(
     MarketConfig calldata _newConfig
-  ) external returns (MarketConfig memory) {
+  ) external returns (uint256 _index) {
+    uint256 _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
-    uint256 _newMarketId = marketConfigs.length;
-    // update marketConfigIndices with new market id
-    marketConfigIndices[_newConfig.assetId] = _newMarketId;
-    // index = id - 1;
-    return marketConfigs[_newMarketId - 1];
+    // update marketConfigIndices with new market index
+    marketConfigIndices[_newConfig.assetId] = _newMarketIndex;
+    return _newMarketIndex;
   }
 
   function setMarketConfig(

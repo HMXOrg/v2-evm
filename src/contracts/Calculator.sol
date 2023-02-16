@@ -70,7 +70,7 @@ contract Calculator is ICalculator {
         IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END()
       )
     ) {
-      (uint priceE30, ) = IOracleMiddleware(oracle).getLatestPrice(
+      (uint256 priceE30, ) = IOracleMiddleware(oracle).getLatestPrice(
         _plpUnderlyingToken.toBytes32(),
         isMaxPrice,
         IConfigStorage(configStorage)
@@ -78,7 +78,7 @@ contract Calculator is ICalculator {
           .priceConfidentThreshold
       );
 
-      uint value = (IVaultStorage(vaultStorage).plpLiquidity(
+      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(
         _plpUnderlyingToken
       ) * priceE30) / (10 ** ERC20(_plpUnderlyingToken).decimals());
 
@@ -105,6 +105,7 @@ contract Calculator is ICalculator {
     // TODO:: REFACTOR if someone dont want totalPnlLong and short.
     int256 totalPnlLong = 0;
     int256 totalPnlShort = 0;
+
     for (
       uint256 i = 0;
       i < IConfigStorage(configStorage).getMarketConfigsLength();
@@ -141,9 +142,9 @@ contract Calculator is ICalculator {
         // reduce loop
         _pnlLongE30 =
           int256(priceE30Long) -
-          (int256(_globalMarket.globalLongAvgPrice) * 1e30) /
           (int256(_globalMarket.globalLongAvgPrice) *
-            int256(_globalMarket.globalLongSize));
+            int256(_globalMarket.globalLongSize)) /
+          int256(_globalMarket.globalLongAvgPrice);
       }
 
       // TODO DOUBLE CHECK :: ask team globalMarket.globalShortSize store in negative???
@@ -153,9 +154,8 @@ contract Calculator is ICalculator {
       ) {
         _pnlShortE30 =
           ((int256(_globalMarket.globalShortAvgPrice) - int256(priceE30Short)) *
-            1e30) /
-          (int256(_globalMarket.globalShortAvgPrice) *
-            int256(_globalMarket.globalShortSize));
+            int256(_globalMarket.globalShortSize)) /
+          int256(_globalMarket.globalShortAvgPrice);
       }
 
       {

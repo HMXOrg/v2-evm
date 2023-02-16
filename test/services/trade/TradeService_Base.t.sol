@@ -46,13 +46,16 @@ abstract contract TradeService_Base is BaseTest {
     int256 _sizeE30
   ) internal {
     IConfigStorage.MarketConfig memory _marketConfig = configStorage
-      .getMarketConfigById(ethMarketIndex);
+      .getMarketConfigById(_marketIndex);
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     uint256 _absoluteSizeE30 = _sizeE30 > 0
       ? uint256(_sizeE30)
       : uint256(-_sizeE30);
 
     uint256 _priceE30 = 1e30;
+    uint256 _imr = (_absoluteSizeE30 * _marketConfig.initialMarginFraction) /
+      1e18;
+    uint256 _reserveValueE30 = (_imr * _marketConfig.maxProfitRate) / 1e18;
 
     perpStorage.addPosition(
       _account,
@@ -60,9 +63,9 @@ abstract contract TradeService_Base is BaseTest {
       _marketIndex,
       _positionId,
       _sizeE30,
-      (((_absoluteSizeE30 * _marketConfig.initialMarginFraction) / 1e18) *
-        _marketConfig.maxProfitRate) / 1e18, // assume max profit is 900%
-      _priceE30
+      _reserveValueE30,
+      _priceE30,
+      (_imr * 1e18) / _priceE30
     );
 
     IPerpStorage.GlobalMarket memory _globalMarket = perpStorage
@@ -73,17 +76,18 @@ abstract contract TradeService_Base is BaseTest {
         _marketIndex,
         _globalMarket.longPositionSize + _absoluteSizeE30,
         _priceE30,
-        _globalMarket.longOpenInterest + ((_absoluteSizeE30 * 1e30) / _priceE30)
+        _globalMarket.longOpenInterest + ((_imr * 1e18) / _priceE30)
       );
     } else {
       perpStorage.updateGlobalShortMarketById(
         _marketIndex,
         _globalMarket.shortPositionSize + _absoluteSizeE30,
         _priceE30,
-        _globalMarket.shortOpenInterest +
-          ((_absoluteSizeE30 * 1e30) / _priceE30)
+        _globalMarket.shortOpenInterest + ((_imr * 1e18) / _priceE30)
       );
     }
+
+    perpStorage.updateGlobalState(_reserveValueE30);
 
     // MMR = 0.5% of position size
     mockCalculator.setMMR((_absoluteSizeE30 * 5e15) / 1e18);

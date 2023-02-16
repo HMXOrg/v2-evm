@@ -37,7 +37,8 @@ contract PerpStorage is IPerpStorage {
     bytes32 _positionId,
     int256 _newPositionSizeE30,
     uint256 _newReserveValueE30,
-    uint256 _newAvgPriceE30
+    uint256 _newAvgPriceE30,
+    uint256 _newOpenInterest
   ) external {
     positions.push(
       Position({
@@ -50,7 +51,8 @@ contract PerpStorage is IPerpStorage {
         entryFundingRate: 0,
         reserveValueE30: _newReserveValueE30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        openInterest: _newOpenInterest
       })
     );
     positionIndices[_positionId] = positions.length - 1;
@@ -62,6 +64,10 @@ contract PerpStorage is IPerpStorage {
     return globalMarkets[_marketIndex];
   }
 
+  function getGlobalState() external view returns (GlobalState memory) {
+    return globalState;
+  }
+
   // todo: add description
   // todo: support to update borrowing rate
   // todo: support to update funding rate
@@ -69,13 +75,15 @@ contract PerpStorage is IPerpStorage {
     bytes32 _positionId,
     int256 _newPositionSizeE30,
     uint256 _newReserveValueE30,
-    uint256 _newAvgPriceE30
+    uint256 _newAvgPriceE30,
+    uint256 _newOpenInterest
   ) external returns (Position memory _position) {
     uint256 _index = positionIndices[_positionId];
     _position = positions[_index];
     _position.positionSizeE30 = _newPositionSizeE30;
     _position.reserveValueE30 = _newReserveValueE30;
     _position.avgEntryPriceE30 = _newAvgPriceE30;
+    _position.openInterest = _newOpenInterest;
     positions[_index] = _position;
   }
 
@@ -101,5 +109,10 @@ contract PerpStorage is IPerpStorage {
     globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
     globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
+  }
+
+  // todo: update sumBorrowingRate, lastBorrowingTime
+  function updateGlobalState(uint256 _newReserveValueE30) external {
+    globalState.reserveValueE30 = _newReserveValueE30;
   }
 }

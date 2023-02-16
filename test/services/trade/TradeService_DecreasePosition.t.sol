@@ -98,6 +98,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
   // -- normal case
   // -- LONG position
   // able to decrease long position
+  // todo: support open interest change when price changed
   function testCorrectness_WhenTraderDecreaseLongPosition() external {
     // ALICE open LONG position
     // sub account id - 0
@@ -176,12 +177,15 @@ contract TradeService_DecreasePosition is TradeService_Base {
   }
 
   // -- SHORT position
+  // todo: support open interest change when price changed
   function testCorrectness_WhenTraderDecreaseShortPosition() external {
     // ALICE open SHORT position
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
+    // price          - 1 USD
+    // open interest  - 10,000 TOKENs
     openPosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
     // cache position

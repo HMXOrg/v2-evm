@@ -42,6 +42,7 @@ interface IPerpStorage {
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     uint256 realizedPnl;
+    uint256 openInterest;
   }
 
   // getter
@@ -53,12 +54,15 @@ interface IPerpStorage {
     uint256 __marketIndex
   ) external view returns (GlobalMarket memory);
 
+  function getGlobalState() external view returns (GlobalState memory);
+
   // setter
   function updatePositionById(
     bytes32 _positionId,
     int256 _newPositionSizeE30,
     uint256 _newReserveValueE30,
-    uint256 _newAvgPriceE30
+    uint256 _newAvgPriceE30,
+    uint256 _newOpenInterest
   ) external returns (Position memory _position);
 
   function updateGlobalLongMarketById(
@@ -74,4 +78,7 @@ interface IPerpStorage {
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
   ) external;
+
+  // todo: update sumBorrowingRate, lastBorrowingTime
+  function updateGlobalState(uint256 _newReserveValueE30) external;
 }

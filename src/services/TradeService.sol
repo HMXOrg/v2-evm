@@ -66,9 +66,8 @@ contract TradeService is ITradeService {
 
     // if position size is 0 means this position is already closed
     int256 _currentPositionSizeE30 = _position.positionSizeE30;
-    if (_currentPositionSizeE30 == 0) {
+    if (_currentPositionSizeE30 == 0)
       revert ITradeService_PositionAlreadyClosed();
-    }
 
     // convert position size to be uint256
     uint256 _absPositionSizeE30 = uint256(
@@ -178,9 +177,8 @@ contract TradeService is ITradeService {
       // check position is too tiny
       // todo: now validate this at 1 USD, design where to keep this config
       //       due to we has problem stack too deep in MarketConfig now
-      if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30) {
+      if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30)
         revert ITradeService_TooTinyPosition();
-      }
 
       // check sub account is healty
       uint256 _subAccountEquity = ICalculator(calculator).getEquity(
@@ -191,9 +189,8 @@ contract TradeService is ITradeService {
       uint256 _mmr = ICalculator(calculator).getMMR(_subAccount);
 
       // if sub account equity < MMR, then trader couln't decrease position
-      if (_subAccountEquity < _mmr) {
+      if (_subAccountEquity < _mmr)
         revert ITradeService_SubAccountEquityIsUnderMMR();
-      }
     }
 
     emit LogDecreasePosition(_positionId, _positionSizeE30ToDecrease);

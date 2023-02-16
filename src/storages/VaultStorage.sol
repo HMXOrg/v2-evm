@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 // interfaces
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
@@ -28,10 +30,10 @@ contract VaultStorage is IVaultStorage {
   ////////////////////////////////////////////////////////////////////////////////////
 
   function validatAddTraderToken(
-    address _trader,
+    address _subAccount,
     address _token
   ) internal view {
-    address[] storage traderToken = traderTokens[_trader];
+    address[] storage traderToken = traderTokens[_subAccount];
 
     for (uint256 i; i < traderToken.length; ) {
       if (traderToken[i] == _token)
@@ -43,10 +45,10 @@ contract VaultStorage is IVaultStorage {
   }
 
   function validateRemoveTraderToken(
-    address _trader,
+    address _subAccount,
     address _token
   ) internal view {
-    if (traderBalances[_trader][_token] != 0)
+    if (traderBalances[_subAccount][_token] != 0)
       revert IVaultStorage_TraderBalanceRemaining();
   }
 
@@ -55,9 +57,9 @@ contract VaultStorage is IVaultStorage {
   ////////////////////////////////////////////////////////////////////////////////////
 
   function getTraderTokens(
-    address _trader
+    address _subAccount
   ) external view returns (address[] memory) {
-    return traderTokens[_trader];
+    return traderTokens[_subAccount];
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
@@ -65,23 +67,23 @@ contract VaultStorage is IVaultStorage {
   ////////////////////////////////////////////////////////////////////////////////////
 
   function setTraderBalance(
-    address _trader,
+    address _subAccount,
     address _token,
     uint256 _balance
   ) external {
-    traderBalances[_trader][_token] = _balance;
-    emit LogSetTraderBalance(_trader, _token, _balance);
+    traderBalances[_subAccount][_token] = _balance;
+    emit LogSetTraderBalance(_subAccount, _token, _balance);
   }
 
-  function addTraderToken(address _trader, address _token) external {
-    validatAddTraderToken(_trader, _token);
-    traderTokens[_trader].push(_token);
+  function addTraderToken(address _subAccount, address _token) external {
+    validatAddTraderToken(_subAccount, _token);
+    traderTokens[_subAccount].push(_token);
   }
 
-  function removeTraderToken(address _trader, address _token) external {
-    validateRemoveTraderToken(_trader, _token);
+  function removeTraderToken(address _subAccount, address _token) external {
+    validateRemoveTraderToken(_subAccount, _token);
 
-    address[] storage traderToken = traderTokens[_trader];
+    address[] storage traderToken = traderTokens[_subAccount];
     uint256 tokenLen = traderToken.length;
     uint256 lastTokenIndex = tokenLen - 1;
 
@@ -100,5 +102,17 @@ contract VaultStorage is IVaultStorage {
         i++;
       }
     }
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
+  // @todo - add only whitelisted services
+  function transferToken(
+    address _subAccount,
+    address _token,
+    uint256 _amount
+  ) external {
+    IERC20(_token).transfer(_subAccount, _amount);
   }
 }

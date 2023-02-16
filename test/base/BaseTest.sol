@@ -9,14 +9,23 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
+// Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 
+// Interfaces
+import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
+
+// Calculator
+import { Calculator } from "../../src/contracts/Calculator.sol";
+
+// Services
 import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
 
+// Storages
 import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
 import { PerpStorage } from "../../src/storages/PerpStorage.sol";
 import { VaultStorage } from "../../src/storages/VaultStorage.sol";
@@ -108,6 +117,15 @@ abstract contract BaseTest is
     address _calculator
   ) internal returns (CrossMarginService) {
     return new CrossMarginService(_configStorage, _vaultStorage, _calculator);
+  }
+
+  function deployCalculator(
+    address _oracle,
+    address _vaultStorage,
+    address _perpStorage,
+    address _configStorage
+  ) internal returns (Calculator) {
+    return new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
   }
 
   // --------- Setup Helpers ---------

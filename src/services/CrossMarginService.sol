@@ -12,6 +12,8 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 
+import { console } from "forge-std/console.sol"; //@todo - remove
+
 contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   // STATES
   address public configStorage;
@@ -130,6 +132,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
       _subAccount,
       _token
     );
+
     uint newBalance = oldBalance + _amount;
 
     // Set new collateral token balance
@@ -189,7 +192,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     }
 
     // Transfer withdrawing token from VaultStorage to trader's wallet
-    IERC20(_token).transferFrom(vaultStorage, msg.sender, _amount);
+    IVaultStorage(vaultStorage).transferToken(_subAccount, _token, _amount);
 
     emit LogDecreaseTokenLiquidity(_subAccount, _token, _amount);
   }

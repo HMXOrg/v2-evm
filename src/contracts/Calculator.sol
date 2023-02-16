@@ -81,7 +81,7 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice Set new ConfigStorage contract address.
   /// @param _configStorage New ConfigStorage contract address.
-  function SetConfigStorage(address _configStorage) external onlyOwner {
+  function setConfigStorage(address _configStorage) external onlyOwner {
     // @todo - Sanity check
     if (_configStorage == address(0)) revert ICalculator_InvalidAddress();
     emit LogSetConfigStorage(configStorage, _configStorage);
@@ -90,7 +90,7 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice Set new PerpStorage contract address.
   /// @param _perpStorage New PerpStorage contract address.
-  function SetPerpStorage(address _perpStorage) external onlyOwner {
+  function setPerpStorage(address _perpStorage) external onlyOwner {
     // @todo - Sanity check
     if (_perpStorage == address(0)) revert ICalculator_InvalidAddress();
     emit LogSetPerpStorage(perpStorage, _perpStorage);

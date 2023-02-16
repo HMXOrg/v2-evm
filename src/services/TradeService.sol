@@ -19,6 +19,7 @@ contract TradeService is ITradeService {
   }
 
   // events
+  // todo: modify event parameters
   event LogDecreasePosition(
     bytes32 indexed _positionId,
     uint256 _decreasedSize

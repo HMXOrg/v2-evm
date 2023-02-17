@@ -143,10 +143,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _minAmount
   ) external returns (uint256) {
     // 1. _validate
-    _validatePreAddRemoveLiquidity(
-      _tokenOut,
-      IVaultStorage(vaultStorage).plpLiquidity(_tokenOut)
-    );
+    _validatePreAddRemoveLiquidity(_tokenOut, _amount);
 
     ICalculator _calculator = ICalculator(
       IConfigStorage(configStorage).calculator()
@@ -252,9 +249,12 @@ contract LiquidityService is ILiquidityService {
     );
 
     // 2. Check totalLq < lpValue ()
-    if (IVaultStorage(_tokenOut).plpTotalLiquidityUSDE30() < _lpUsdValue) {
+    uint256 _totalLiquidityE30 = IVaultStorage(_tokenOut)
+      .plpTotalLiquidityUSDE30();
+
+    if (_totalLiquidityE30 < _lpUsdValue) {
       IVaultStorage(_tokenOut).addPLPTotalLiquidityUSDE30(
-        _lpUsdValue - IVaultStorage(_tokenOut).plpTotalLiquidityUSDE30()
+        _lpUsdValue - _totalLiquidityE30
       );
     }
 
@@ -300,7 +300,7 @@ contract LiquidityService is ILiquidityService {
     );
 
     if (_minAmount > _amountOut) {
-      revert LiquidityService_BadAmountOut();
+      revert LiquidityService_Slippage();
     }
 
     return _amountOut;

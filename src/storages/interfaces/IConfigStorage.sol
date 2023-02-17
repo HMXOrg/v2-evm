@@ -106,19 +106,19 @@ interface IConfigStorage {
 
   function getMarketConfigByIndex(
     uint256 _index
-  ) external view returns (MarketConfig memory marketConfig);
+  ) external view returns (MarketConfig memory _marketConfig);
 
   function getMarketConfigByToken(
     address _token
-  ) external view returns (MarketConfig memory marketConfig);
+  ) external view returns (MarketConfig memory _marketConfig);
 
   function getMarketConfigById(
     uint256 _marketIndex
-  ) external view returns (MarketConfig memory marketConfig);
+  ) external view returns (MarketConfig memory _marketConfig);
 
   function getCollateralTokenConfigs(
     address _token
-  ) external view returns (CollateralTokenConfig memory);
+  ) external view returns (CollateralTokenConfig memory _collateralTokenConfig);
 
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  SETTER
@@ -139,15 +139,15 @@ interface IConfigStorage {
   function setMarketConfig(
     uint256 _marketIndex,
     MarketConfig memory _newConfig
-  ) external returns (MarketConfig memory);
+  ) external returns (MarketConfig memory _marketConfig);
 
   function setPlpTokenConfig(
     address _token,
     PLPTokenConfig memory _newConfig
-  ) external returns (PLPTokenConfig memory);
+  ) external returns (PLPTokenConfig memory _plpTokenConfig);
 
   function setCollateralTokenConfig(
     address _token,
     CollateralTokenConfig memory _newConfig
-  ) external returns (CollateralTokenConfig memory);
+  ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 }

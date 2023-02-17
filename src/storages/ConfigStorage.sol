@@ -73,19 +73,19 @@ contract ConfigStorage is Ownable, IConfigStorage {
 
   function getMarketConfigById(
     uint256 _marketIndex
-  ) external view returns (MarketConfig memory marketConfig) {
+  ) external view returns (MarketConfig memory _marketConfig) {
     return marketConfigs[_marketIndex];
   }
 
   function getMarketConfigByIndex(
     uint256 _index
-  ) external view returns (MarketConfig memory marketConfig) {
+  ) external view returns (MarketConfig memory _marketConfig) {
     return marketConfigs[_index];
   }
 
   function getMarketConfigByToken(
     address _token
-  ) external view returns (MarketConfig memory marketConfig) {
+  ) external view returns (MarketConfig memory _marketConfig) {
     for (uint256 i; i < marketConfigs.length; ) {
       if (marketConfigs[i].assetId == _token.toBytes32())
         return marketConfigs[i];
@@ -98,13 +98,17 @@ contract ConfigStorage is Ownable, IConfigStorage {
 
   function getPlpTokenConfigs(
     address _token
-  ) external view returns (PLPTokenConfig memory) {
+  ) external view returns (PLPTokenConfig memory _plpTokenConfig) {
     return plpTokenConfigs[_token];
   }
 
   function getCollateralTokenConfigs(
     address _token
-  ) external view returns (CollateralTokenConfig memory) {
+  )
+    external
+    view
+    returns (CollateralTokenConfig memory _collateralTokenConfig)
+  {
     return collateralTokenConfigs[_token];
   }
 
@@ -164,7 +168,7 @@ contract ConfigStorage is Ownable, IConfigStorage {
   function setMarketConfig(
     uint256 _marketIndex,
     MarketConfig memory _newConfig
-  ) external returns (MarketConfig memory) {
+  ) external returns (MarketConfig memory _marketConfig) {
     marketConfigs[_marketIndex] = _newConfig;
     return marketConfigs[_marketIndex];
   }
@@ -172,7 +176,7 @@ contract ConfigStorage is Ownable, IConfigStorage {
   function setPlpTokenConfig(
     address _token,
     PLPTokenConfig memory _newConfig
-  ) external returns (PLPTokenConfig memory) {
+  ) external returns (PLPTokenConfig memory _plpTokenConfig) {
     plpTokenConfigs[_token] = _newConfig;
     return plpTokenConfigs[_token];
   }
@@ -180,7 +184,7 @@ contract ConfigStorage is Ownable, IConfigStorage {
   function setCollateralTokenConfig(
     address _token,
     CollateralTokenConfig memory _newConfig
-  ) external returns (CollateralTokenConfig memory) {
+  ) external returns (CollateralTokenConfig memory _collateralTokenConfig) {
     collateralTokenConfigs[_token] = _newConfig;
     return collateralTokenConfigs[_token];
   }

@@ -12,6 +12,8 @@ import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 
+import { Calculator } from "../../src/contracts/Calculator.sol";
+
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
@@ -41,6 +43,10 @@ abstract contract BaseTest is
   VaultStorage internal vaultStorage;
 
   // other contracts
+  PLPv2 internal plp;
+  Calculator internal calculator;
+
+  // mock
   MockPyth internal mockPyth;
   MockCalculator internal mockCalculator;
   MockOracleMiddleware internal mockOracle;
@@ -51,8 +57,6 @@ abstract contract BaseTest is
   MockErc20 internal usdc;
 
   MockErc20 internal bad;
-
-  PLPv2 internal plp;
 
   // market indexes
   uint256 ethMarketIndex;

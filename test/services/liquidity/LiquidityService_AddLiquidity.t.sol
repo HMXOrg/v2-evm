@@ -22,13 +22,16 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - slippage check fail
 // What is this test not covered
 //   - PLP transfer in cooldown period
+//   - collect fee
 contract LiquidityService_AddLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
   }
 
   // add liquidity with dynamic fee
-  function testCorrectness_WhenPLPAddLiquidity_WithDynamicFee() external {}
+  function testCorrectness_WhenPLPAddLiquidity_WithDynamicFee() external {
+    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
+  }
 
   // add liquidity without dynamic fee
   function testCorrectness_WhenPLPAddLiquidity_WithoutDynamicFee() external {}
@@ -44,14 +47,14 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
     vm.expectRevert(
       abi.encodeWithSignature("LiquidityService_CircuitBreaker()")
     );
-    liquidityService.addLiquidity(ALICE, address(wbtc), 10 ether, 0);
+    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
   }
 
   // add liquidity on unlisted token
   function testRevert_WhenPLPAddLiquidity_WithUnlistedToken() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_InvalidToken()"));
     // wbtc is not listed as plp token
-    liquidityService.addLiquidity(ALICE, address(wbtc), 10 ether, 0);
+    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
   }
 
   // add liquidity on not accepted token

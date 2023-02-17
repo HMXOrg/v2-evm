@@ -89,15 +89,14 @@ contract LiquidityService is ILiquidityService {
       IConfigStorage(configStorage).calculator()
     );
 
-    //TODO price stale
-    (uint256 _price, ) = IOracleMiddleware(_calculator.oracle())
-      .unsafeGetLatestPrice(
-        _token.toBytes32(),
-        false,
-        IConfigStorage(configStorage)
-          .getMarketConfigByToken(_token)
-          .priceConfidentThreshold
-      );
+    (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(
+      _token.toBytes32(),
+      false,
+      IConfigStorage(configStorage)
+        .getMarketConfigByToken(_token)
+        .priceConfidentThreshold,
+      30 // trust price age (seconds) todo: from market config
+    );
 
     // 2. Calculate PLP amount to mint
     // if input incorrect or config accepted is false
@@ -339,7 +338,7 @@ contract LiquidityService is ILiquidityService {
     CollectFeeRequest memory _request
   ) internal returns (uint256) {
     uint256 amountAfterFee = (_request._amount * (1e18 - _request._feeRate)) /
-      _request._feeRate;
+      1e18;
     uint256 fee = _request._amount - amountAfterFee;
 
     IVaultStorage(vaultStorage).addFee(_request._token, fee);

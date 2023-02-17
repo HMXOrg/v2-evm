@@ -67,11 +67,11 @@ contract MockCalculator is ICalculator {
   }
 
   function convertTokenDecimals(
-    uint256 /* _fromTokenDecimals */,
-    uint256 /* _toTokenDecimals */,
-    uint256 /* _amount */
+    uint256 _fromTokenDecimals,
+    uint256 _toTokenDecimals,
+    uint256 _amount
   ) external pure returns (uint256) {
-    return 0;
+    return (_amount * 10 ** _toTokenDecimals) / 10 ** _fromTokenDecimals;
   }
 
   function getAddLiquidityFeeRate(

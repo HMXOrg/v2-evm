@@ -14,6 +14,7 @@ import { Calculator_Base, IPerpStorage } from "./Calculator_Base.t.sol";
 //   - Price Stale checking from Oracle
 //   - Borrowing Fee
 //   - Funding Fee
+//   - Realized PnL
 
 contract Calculator_Equity is Calculator_Base {
   function setUp() public virtual override {

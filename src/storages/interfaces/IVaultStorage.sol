@@ -2,7 +2,15 @@
 pragma solidity 0.8.18;
 
 interface IVaultStorage {
-  // GETTER
+  // ERRORs
+  error IVaultStorage_TraderTokenAlreadyExists();
+  error IVaultStorage_TraderBalanceRemaining();
+
+  function liquidityProviderBalances(
+    address _liquidityProvider,
+    address _token
+  ) external view returns (uint _amount);
+
   function traderBalances(
     address _trader,
     address _token
@@ -23,6 +31,7 @@ interface IVaultStorage {
   function plpLiquidity(address _token) external view returns (uint256);
 
   // SETTER
+
   function addFee(address _token, uint256 _amount) external;
 
   function addPLPLiquidityUSDE30(address _token, uint256 amount) external;
@@ -40,4 +49,14 @@ interface IVaultStorage {
   function removePLPLiquidity(address _token, uint256 _amount) external;
 
   function removePLPReserved(address _token, uint256 _amount) external;
+
+  function setTraderBalance(
+    address _trader,
+    address _token,
+    uint256 _balance
+  ) external;
+
+  function addTraderToken(address _trader, address _token) external;
+
+  function removeTraderToken(address _trader, address _token) external;
 }

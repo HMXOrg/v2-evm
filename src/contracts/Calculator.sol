@@ -58,6 +58,16 @@ contract Calculator is ICalculator {
     return aum;
   }
 
+  // @todo - pending implementing
+  function getEquity(address _subAccount) external returns (uint256) {
+    return 0;
+  }
+
+  // @todo - pending implementing
+  function getMMR(address _subAccount) external returns (uint256) {
+    return 0;
+  }
+
   function getAUM(bool isMaxPrice) public view returns (uint256) {
     return getAUME30(isMaxPrice) / 1e12;
   }
@@ -75,7 +85,7 @@ contract Calculator is ICalculator {
         IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END()
       )
     ) {
-      (uint256 priceE30, ) = IOracleMiddleware(oracle).getLatestPrice(
+      (uint256 priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
         _plpUnderlyingToken.toBytes32(),
         isMaxPrice,
         IConfigStorage(configStorage)
@@ -118,22 +128,22 @@ contract Calculator is ICalculator {
     ) {
       IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(
         configStorage
-      ).getMarketConfigs(i);
+      ).getMarketConfigById(i);
 
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
-        .getGlobalMarkets(i);
+        .getGlobalMarketByIndex(i);
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
 
       //TODO validate timestamp of these
-      (uint priceE30Long, ) = IOracleMiddleware(oracle).getLatestPrice(
+      (uint priceE30Long, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
         marketConfig.assetId,
         false,
         marketConfig.priceConfidentThreshold
       );
 
-      (uint priceE30Short, ) = IOracleMiddleware(oracle).getLatestPrice(
+      (uint priceE30Short, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
         marketConfig.assetId,
         true,
         marketConfig.priceConfidentThreshold
@@ -142,34 +152,31 @@ contract Calculator is ICalculator {
       //TODO validate price, revert when crypto price stale, stock use Lastprice
 
       if (
-        _globalMarket.globalLongAvgPrice > 0 && _globalMarket.globalLongSize > 0
+        _globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0
       ) {
-        if (priceE30Long < _globalMarket.globalLongAvgPrice) {
-          uint256 _absPNL = ((_globalMarket.globalLongAvgPrice - priceE30Long) *
-            _globalMarket.globalLongSize) / _globalMarket.globalLongAvgPrice;
+        if (priceE30Long < _globalMarket.longAvgPrice) {
+          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) *
+            _globalMarket.longPositionSize) / _globalMarket.longAvgPrice;
           _pnlLongE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((priceE30Long - _globalMarket.globalLongAvgPrice) *
-            _globalMarket.globalLongSize) / _globalMarket.globalLongAvgPrice;
+          uint256 _absPNL = ((priceE30Long - _globalMarket.longAvgPrice) *
+            _globalMarket.longPositionSize) / _globalMarket.longAvgPrice;
           _pnlLongE30 = int256(_absPNL);
         }
       }
 
-      // TODO DOUBLE CHECK :: ask team globalMarket.globalShortSize store in negative???
+      // TODO DOUBLE CHECK :: ask team globalMarket.shortPositionSize store in negative???
       if (
-        _globalMarket.globalShortAvgPrice > 0 &&
-        _globalMarket.globalShortSize > 0
+        _globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0
       ) {
-        if (_globalMarket.globalShortAvgPrice < priceE30Short) {
-          uint256 _absPNL = ((priceE30Short -
-            _globalMarket.globalShortAvgPrice) *
-            _globalMarket.globalShortSize) / _globalMarket.globalShortAvgPrice;
+        if (_globalMarket.shortAvgPrice < priceE30Short) {
+          uint256 _absPNL = ((priceE30Short - _globalMarket.shortAvgPrice) *
+            _globalMarket.shortPositionSize) / _globalMarket.shortAvgPrice;
 
           _pnlShortE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((_globalMarket.globalShortAvgPrice -
-            priceE30Short) * _globalMarket.globalShortSize) /
-            _globalMarket.globalShortAvgPrice;
+          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30Short) *
+            _globalMarket.shortPositionSize) / _globalMarket.shortAvgPrice;
           _pnlShortE30 = int256(_absPNL);
         }
       }
@@ -347,7 +354,7 @@ contract Calculator is ICalculator {
       bool isMaxPrice = false; // @note Collateral value always use Min price
       // Get price from oracle
       // @todo - validate price age
-      (uint priceE30, ) = IOracleMiddleware(oracle).getLatestPrice(
+      (uint priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
         token.toBytes32(),
         isMaxPrice,
         priceConfidenceThreshold

@@ -2,6 +2,11 @@
 pragma solidity 0.8.18;
 
 interface IConfigStorage {
+  error ConfigStorage_NotWhiteListed();
+  error ConfigStorage_ExceedLimitSetting();
+  error ConfigStorage_BadLen();
+  error ConfigStorage_BadArgs();
+
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
     uint256 decimals; //token decimals
@@ -72,15 +77,8 @@ interface IConfigStorage {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
 
-  //errors
-  error ConfigStorage_NotWhiteListed();
-  error ConfigStorage_ExceedLimitSetting();
-  error ConfigStorage_BadLen();
-  error ConfigStorage_BadArgs();
-
-  // GETTER
-  function getMarketConfigs(
-    uint256 _marketId
+  function getMarketConfigById(
+    uint256 _marketIndex
   ) external view returns (MarketConfig memory);
 
   function getPlpTokenConfigs(
@@ -144,7 +142,7 @@ interface IConfigStorage {
   function setLiquidationConfig(LiquidationConfig memory _newConfig) external;
 
   function setMarketConfig(
-    uint256 _marketId,
+    uint256 _marketIndex,
     MarketConfig memory _newConfig
   ) external returns (MarketConfig memory);
 

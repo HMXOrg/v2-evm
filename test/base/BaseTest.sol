@@ -3,24 +3,45 @@ pragma solidity 0.8.18;
 
 import { TestBase } from "forge-std/Base.sol";
 import { console2 } from "forge-std/console2.sol";
+import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
-import { MockErc20 } from "../mocks/MockErc20.sol";
+
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+
+import { MockErc20 } from "../mocks/MockErc20.sol";
+import { MockCalculator } from "../mocks/MockCalculator.sol";
+import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
+
 import { Deployment } from "../../script/Deployment.s.sol";
+import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
 import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
+import { PerpStorage } from "../../src/storages/PerpStorage.sol";
+import { VaultStorage } from "../../src/storages/VaultStorage.sol";
+
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
 
-abstract contract BaseTest is TestBase, Deployment, StdAssertions {
-  address internal constant ALICE = address(234892);
-  address internal constant BOB = address(234893);
-  address internal constant CAROL = address(234894);
-  address internal constant DAVE = address(234895);
+abstract contract BaseTest is
+  TestBase,
+  Deployment,
+  StorageDeployment,
+  StdAssertions,
+  StdCheatsSafe
+{
+  address internal ALICE;
+  address internal BOB;
+  address internal CAROL;
+  address internal DAVE;
 
   // storages
   ConfigStorage internal configStorage;
+  PerpStorage internal perpStorage;
+  VaultStorage internal vaultStorage;
 
+  // other contracts
   MockPyth internal mockPyth;
+  MockCalculator internal mockCalculator;
+  MockOracleMiddleware internal mockOracle;
 
   MockErc20 internal weth;
   MockErc20 internal wbtc;
@@ -46,13 +67,23 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions {
     // and 1 wei for updating price.
     mockPyth = new MockPyth(60, 1);
 
+    ALICE = makeAddr("Alice");
+    BOB = makeAddr("BOB");
+    CAROL = makeAddr("CAROL");
+    DAVE = makeAddr("DAVE");
+
     weth = deployMockErc20("Wrapped Ethereum", "WETH", 18);
     wbtc = deployMockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = deployMockErc20("DAI Stablecoin", "DAI", 18);
     usdc = deployMockErc20("USD Coin", "USDC", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
 
-    configStorage = new ConfigStorage();
+    configStorage = deployConfigStorage();
+    perpStorage = deployPerpStorage();
+    vaultStorage = deployVaultStorage();
+
+    mockCalculator = new MockCalculator();
+    mockOracle = new MockOracleMiddleware();
 
     setUpLiquidityConfig();
     setUpSwapConfig();

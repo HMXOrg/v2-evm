@@ -83,13 +83,14 @@ contract LiquidityService is ILiquidityService {
     );
 
     //TODO price stale
-    (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(
-      _token.toBytes32(),
-      false,
-      IConfigStorage(configStorage)
-        .getMarketConfigByToken(_token)
-        .priceConfidentThreshold
-    );
+    (uint256 _price, ) = IOracleMiddleware(_calculator.oracle())
+      .unsafeGetLatestPrice(
+        _token.toBytes32(),
+        false,
+        IConfigStorage(configStorage)
+          .getMarketConfigByToken(_token)
+          .priceConfidentThreshold
+      );
 
     // 2. Calculate PLP amount to mint
     // if input incorrect or config accepted is false
@@ -254,7 +255,7 @@ contract LiquidityService is ILiquidityService {
 
     // TODO price stale
     (uint256 _maxPrice, ) = IOracleMiddleware(_calculator.oracle())
-      .getLatestPrice(
+      .unsafeGetLatestPrice(
         _tokenOut.toBytes32(),
         true,
         IConfigStorage(configStorage)

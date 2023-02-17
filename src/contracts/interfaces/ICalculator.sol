@@ -20,6 +20,10 @@ interface ICalculator {
   error ICalculator_InvalidAveragePrice();
   error ICalculator_PoolImbalance();
 
+  function getEquity(address _subAccount) external returns (uint256);
+
+  function getMMR(address _subAccount) external returns (uint256);
+
   function getAUM(bool isMaxPrice) external returns (uint256);
 
   function getAUME30(bool isMaxPrice) external returns (uint256);

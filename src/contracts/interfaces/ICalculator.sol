@@ -12,4 +12,6 @@ interface ICalculator {
   function getIMR(bytes32 _marketId, uint256 _size) external returns (uint256);
 
   function getAum() external view returns (uint256);
+
+  function getPlpValue() external view returns (uint256);
 }

@@ -87,6 +87,7 @@ interface IPerpStorage {
   function updateGlobalState(uint256 _newReserveValueE30) external;
 
   function savePosition(
+    address _subAccount,
     bytes32 _positionId,
     Position calldata position
   ) external;

@@ -19,7 +19,23 @@ contract PerpStorage is IPerpStorage {
 
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
-  constructor() {}
+  constructor() {
+    positions.push(
+      Position({
+        primaryAccount: address(0),
+        subAccountId: 0,
+        marketIndex: 0,
+        positionSizeE30: 0,
+        avgEntryPriceE30: 0,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 0,
+        lastIncreaseTimestamp: 0,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+  }
 
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
@@ -58,12 +74,14 @@ contract PerpStorage is IPerpStorage {
   }
 
   function savePosition(
+    address _subAccount,
     bytes32 _positionId,
     Position calldata position
   ) public {
     uint256 _index = positionIndices[_positionId];
     if (_index == 0) {
       positionIndices[_positionId] = positions.length;
+      subAccountPositionIndices[_subAccount].push(positions.length);
       positions.push(position);
     } else {
       positions[_index] = position;

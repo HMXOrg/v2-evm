@@ -32,8 +32,6 @@ import { ITradeService } from "../../../src/services/interfaces/ITradeService.so
 // - post validation
 //   - sub account is unhealthy (equity < MMR) after decreased position
 
-//testRevert_AfterPositionDecreasedAndSubAccountEquityIsLessThanMMR
-
 contract TradeService_DecreasePosition is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();

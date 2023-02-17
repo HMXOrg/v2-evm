@@ -33,7 +33,7 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
 
   // add liquidity with dynamic fee
   function testCorrectness_WhenPLPAddLiquidity_WithDynamicFee() external {
-    // Test execute add liquidity for ALICE
+    // approve 10 WETH for service
     weth.approve(address(liquidityService), 10 ether);
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
   }

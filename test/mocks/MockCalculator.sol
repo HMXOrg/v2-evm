@@ -9,6 +9,7 @@ contract MockCalculator is ICalculator {
   uint256 mmr;
   uint256 imr;
   uint256 aum;
+  uint256 plpValue;
 
   function setEquity(uint256 _mockEquity) external {
     equity = _mockEquity;
@@ -16,6 +17,18 @@ contract MockCalculator is ICalculator {
 
   function setMMR(uint256 _mockMmr) external {
     mmr = _mockMmr;
+  }
+
+  function setFreeCollateral(uint256 _mockFreeCollateral) external {
+    freeCollateral = _mockFreeCollateral;
+  }
+
+  function setPlpValue(uint256 _mockPlpValue) external {
+    plpValue = _mockPlpValue;
+  }
+
+  function setIMR(uint256 _mockImr) external returns (uint256) {
+    imr = _mockImr;
   }
 
   function getEquity(address /*_subAccount*/) external view returns (uint256) {
@@ -30,6 +43,10 @@ contract MockCalculator is ICalculator {
     address /*_subAccount*/
   ) external view returns (uint256) {
     return freeCollateral;
+  }
+
+  function getPlpValue() external view returns (uint256) {
+    return plpValue;
   }
 
   function getIMR(

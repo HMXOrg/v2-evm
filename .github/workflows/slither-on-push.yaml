@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run Slither
+        continue-on-error: false
         # TODO: change to official version after it is bug free, ref: https://github.com/crytic/slither-action/issues/49
         uses: crytic/slither-action@dev-git-safe-workspace
         with:

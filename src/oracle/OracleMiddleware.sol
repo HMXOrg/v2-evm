@@ -65,7 +65,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
   /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
-  /// @param _trustPriceAge price age in seconds we believe it
+  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
   function getLatestPrice(
     bytes32 _assetId,
     bool _isMax,
@@ -122,7 +122,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
   /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
-  /// @param _trustPriceAge price age in seconds we believe it
+  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
   function getLatestPriceWithMarketStatus(
     bytes32 _assetId,
     bool _isMax,

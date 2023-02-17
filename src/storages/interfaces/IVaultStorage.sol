@@ -59,4 +59,10 @@ interface IVaultStorage {
   function addTraderToken(address _trader, address _token) external;
 
   function removeTraderToken(address _trader, address _token) external;
+
+  function transferToken(
+    address _subAccount,
+    address _token,
+    uint256 _amount
+  ) external;
 }

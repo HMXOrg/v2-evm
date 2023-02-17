@@ -169,7 +169,11 @@ contract LiquidityService is ILiquidityService {
 
     // handler receive PLP of user then burn it from handler
     PLPv2(IConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
-    ERC20(_tokenOut).transferFrom(msg.sender, _lpProvider, _amountOut);
+    IVaultStorage(vaultStorage).transferToken(
+      _lpProvider,
+      _tokenOut,
+      _amountOut
+    );
 
     emit RemoveLiquidity(
       _lpProvider,

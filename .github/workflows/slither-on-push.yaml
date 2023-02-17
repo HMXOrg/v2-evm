@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: 16.16.0 # should match .nvmrc or whatever your project required
           target: "./"
-          fail-on: all
           slither-config: ./slither.config.json
           slither-version: 0.9.2
           solc-version: 0.8.18
+          slither-args: --fail-pedantic

@@ -9,8 +9,7 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 
 // LiquidityService_RemoveLiquidity - unit test for remove liquidity function
 // What is this test DONE
-//   - remove liquidity with dynamic fee
-//   - remove liquidity without dynamic fee
+//   - remove liquidity
 // - revert
 //   - remove liquidity when circuit break
 //   - remove with zero amount
@@ -18,6 +17,7 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 // What is this test not covered
 // - correctness
 //   - remove liquidity of another PLP
+//   - remove liquidity with dynamic fee (will be test in Calculator and integration test)
 // - revert
 //   - PLP transfer in cooldown period
 contract LiquidityService_RemoveLiquidity is LiquidityService_Base {

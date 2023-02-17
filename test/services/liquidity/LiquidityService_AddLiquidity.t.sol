@@ -12,8 +12,7 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 // LiquidityService_AddLiquidity - unit test for add liquidity function
 // What is this test DONE
 // - correctness
-//   - add liquidity with dynamic fee
-//   - add liquidity without dynamic fee
+//   - add liquidity
 // - revert
 //   - add liquidity when circuit break
 //   - add liquidity on unlisted token
@@ -23,6 +22,7 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 // What is this test not covered
 //   - PLP transfer in cooldown period
 //   - collect fee
+//   - add liquidity with dynamic fee (will be test in Calculator and integration test)
 contract LiquidityService_AddLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -31,15 +31,8 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
     weth.mint(address(this), 100 ether);
   }
 
-  // add liquidity with dynamic fee
-  function testCorrectness_WhenPLPAddLiquidity_WithDynamicFee() external {
-    // approve 10 WETH for service
-    weth.approve(address(liquidityService), 10 ether);
-    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
-  }
-
-  // add liquidity without dynamic fee
-  function testCorrectness_WhenPLPAddLiquidity_WithoutDynamicFee() external {
+  // add liquidity
+  function testCorrectness_WhenPLPAddLiquidity() external {
     dai.mint(address(this), 100 ether);
     dai.approve(address(liquidityService), type(uint256).max);
     liquidityService.addLiquidity(ALICE, address(dai), 100 ether, 0);

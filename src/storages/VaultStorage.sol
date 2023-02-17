@@ -6,70 +6,95 @@ import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
-abstract contract VaultStorage is IVaultStorage {
+contract VaultStorage is IVaultStorage {
   // liquidity provider address => token => amount
   mapping(address => mapping(address => uint256))
     public liquidityProviderBalances;
   mapping(address => address[]) public liquidityProviderTokens;
-
   // trader address (with sub-account) => token => amount
   mapping(address => mapping(address => uint256)) public traderBalances;
+  // mapping(address => address[]) public traderTokens;
   mapping(address => address[]) public traderTokens;
 
-  // TODO: move to service
-  function incrementLPBalance(
-    address liquidityProviderAddress,
+  // EVENTs
+  event LogSetTraderBalance(
+    address indexed trader,
     address token,
-    uint256 amount
-  ) external {
-    uint oldBalance = liquidityProviderBalances[liquidityProviderAddress][
-      token
-    ];
-    uint newBalance = oldBalance + amount;
+    uint balance
+  );
 
-    liquidityProviderBalances[liquidityProviderAddress][token] = newBalance;
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  VALIDATION FUNCTION  ///////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
 
-    // register new token to a user
-    if (oldBalance == 0 && newBalance != 0) {
-      address[] storage liquidityProviderToken = liquidityProviderTokens[
-        liquidityProviderAddress
-      ];
-      liquidityProviderToken.push(token);
+  function validatAddTraderToken(address _trader, address _token) public view {
+    address[] storage traderToken = traderTokens[_trader];
+
+    for (uint256 i; i < traderToken.length; ) {
+      if (traderToken[i] == _token)
+        revert IVaultStorage_TraderTokenAlreadyExists();
+      unchecked {
+        i++;
+      }
     }
   }
 
-  // TODO: move to service
-  function decrementLPBalance(
-    address liquidityProviderAddress,
-    address token,
-    uint256 amount
+  function validateRemoveTraderToken(
+    address _trader,
+    address _token
+  ) public view {
+    if (traderBalances[_trader][_token] != 0)
+      revert IVaultStorage_TraderBalanceRemaining();
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  function getTraderTokens(
+    address _trader
+  ) external view returns (address[] memory) {
+    return traderTokens[_trader];
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  SETTER FUNCTION  ///////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  function setTraderBalance(
+    address _trader,
+    address _token,
+    uint256 _balance
   ) external {
-    uint oldBalance = liquidityProviderBalances[liquidityProviderAddress][
-      token
-    ];
-    if (amount > oldBalance) revert("insufficient balance");
+    traderBalances[_trader][_token] = _balance;
+    emit LogSetTraderBalance(_trader, _token, _balance);
+  }
 
-    uint newBalance = oldBalance - amount;
-    liquidityProviderBalances[liquidityProviderAddress][token] = newBalance;
+  function addTraderToken(address _trader, address _token) external {
+    validatAddTraderToken(_trader, _token);
+    traderTokens[_trader].push(_token);
+  }
 
-    // deregister token, if the use remove all of the token out
-    if (oldBalance != 0 && newBalance == 0) {
-      address[] storage liquidityProviderToken = liquidityProviderTokens[
-        liquidityProviderAddress
-      ];
-      uint256 tokenLen = liquidityProviderToken.length;
-      uint256 lastTokenIndex = tokenLen - 1;
+  function removeTraderToken(address _trader, address _token) external {
+    validateRemoveTraderToken(_trader, _token);
 
-      // find and deregister the token
-      for (uint256 i; i < tokenLen; i++) {
-        if (liquidityProviderToken[i] == token) {
-          // delete the token by replacing it with the last one and then pop it from there
-          if (i != lastTokenIndex) {
-            liquidityProviderToken[i] = liquidityProviderToken[lastTokenIndex];
-          }
-          liquidityProviderToken.pop();
-          break;
+    address[] storage traderToken = traderTokens[_trader];
+    uint256 tokenLen = traderToken.length;
+    uint256 lastTokenIndex = tokenLen - 1;
+
+    // find and deregister the token
+    for (uint256 i; i < tokenLen; ) {
+      if (traderToken[i] == _token) {
+        // delete the token by replacing it with the last one and then pop it from there
+        if (i != lastTokenIndex) {
+          traderToken[i] = traderToken[lastTokenIndex];
         }
+        traderToken.pop();
+        break;
+      }
+
+      unchecked {
+        i++;
       }
     }
   }

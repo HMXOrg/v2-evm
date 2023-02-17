@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
@@ -18,12 +19,18 @@ contract PerpStorage is IPerpStorage {
 
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
+  constructor() {}
+
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function getGlobalState() external view returns (GlobalState memory) {
-    return globalState;
+  // todo: add description
+  function getPositionById(
+    bytes32 _positionId
+  ) external view returns (Position memory) {
+    uint256 _index = positionIndices[_positionId];
+    return positions[_index];
   }
 
   function getGlobalMarketByIndex(
@@ -32,12 +39,8 @@ contract PerpStorage is IPerpStorage {
     return globalMarkets[_marketIndex];
   }
 
-  // todo: add description
-  function getPositionById(
-    bytes32 _positionId
-  ) external view returns (Position memory) {
-    uint256 _index = positionIndices[_positionId];
-    return positions[_index];
+  function getGlobalState() external view returns (GlobalState memory) {
+    return globalState;
   }
 
   function getNumberOfSubAccountPosition(

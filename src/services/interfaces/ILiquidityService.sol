@@ -24,4 +24,6 @@ interface ILiquidityService {
   error LiquidityService_BadAmountOut();
 
   error LiquidityService_InsufficientLiquidityBuffer();
+  error LiquidityService_MaxPLPUtilizationExceeded();
+  error LiquidityService_InsufficientPLPReserved();
 }

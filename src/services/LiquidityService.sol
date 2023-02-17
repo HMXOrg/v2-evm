@@ -5,6 +5,7 @@ pragma solidity 0.8.18;
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
+import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { PLPv2 } from "../contracts/PLPv2.sol";
@@ -16,6 +17,7 @@ contract LiquidityService is ILiquidityService {
   using AddressUtils for address;
   address configStorage;
   address vaultStorage;
+  address perpStorage;
 
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
   uint256 internal constant USD_DECIMALS = 30;
@@ -58,9 +60,14 @@ contract LiquidityService is ILiquidityService {
     uint256 fee
   );
 
-  constructor(address _configStorage, address _vaultStorage) {
+  constructor(
+    address _configStorage,
+    address _vaultStorage,
+    address _perpStorage
+  ) {
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
+    perpStorage = _perpStorage;
   }
 
   /* TODO 
@@ -378,6 +385,32 @@ contract LiquidityService is ILiquidityService {
       IConfigStorage(configStorage).getPlpTokenConfigs(_token).bufferLiquidity
     ) {
       revert LiquidityService_InsufficientLiquidityBuffer();
+    }
+
+    IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(
+      configStorage
+    ).getLiquidityConfig();
+    IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage)
+      .getGlobalState();
+    ICalculator _calculator = ICalculator(
+      IConfigStorage(configStorage).calculator()
+    );
+
+    // Validate Max PLP Utilization
+    // =====================================
+    // reserveValue / PLPTVL > maxPLPUtilization
+    // Transform to save precision:
+    // reserveValue > maxPLPUtilization * PLPTVL
+    uint256 plpTVL = _calculator.getPLPValueE30(false);
+    if (
+      _globalState.reserveValueE30 > _liquidityConfig.maxPLPUtilization * plpTVL
+    ) {
+      revert LiquidityService_MaxPLPUtilizationExceeded();
+    }
+
+    // Validate PLP Reserved
+    if (_globalState.reserveValueE30 > plpTVL) {
+      revert LiquidityService_InsufficientPLPReserved();
     }
   }
 

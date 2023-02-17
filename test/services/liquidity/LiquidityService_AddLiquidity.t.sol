@@ -26,16 +26,20 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
     super.setUp();
   }
 
+  // add liquidity with dynamic fee
   function testCorrectness_WhenPLPAddLiquidity_WithDynamicFee() external {}
 
+  // add liquidity without dynamic fee
   function testCorrectness_WhenPLPAddLiquidity_WithoutDynamicFee() external {}
 
+  // add liquidity on unlisted token
   function testRevert_WhenPLPAddLiquidity_WithUnlistedToken() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_InvalidToken()"));
     // wbtc is not listed as plp token
     liquidityService.addLiquidity(ALICE, address(wbtc), 10 ether, 0);
   }
 
+  // add liquidity on not accepted token
   function testRevert_WhenPLPAddLiquidity_WithNotAcceptedToken() external {
     // update weth to not accepted
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig = configStorage
@@ -47,12 +51,24 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
   }
 
+  // add liquidity with zero amount
   function testRevert_WhenPLPAddLiquidity_WithZeroAmount() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
     liquidityService.addLiquidity(ALICE, address(weth), 0, 0);
   }
 
-  function testRevert_WhenPLPAddLiquidity_AndSlippageCheckFail() external {}
+  // slippage check fail
+  function testRevert_WhenPLPAddLiquidity_AndSlippageCheckFail() external {
+    vm.expectRevert(
+      abi.encodeWithSignature("LiquidityService_InsufficientLiquidityMint()")
+    );
+    liquidityService.addLiquidity(
+      ALICE,
+      address(weth),
+      10 ether,
+      type(uint256).max
+    );
+  }
 
   // function testRevert_WhenPLPTransferToken_AfterAddLiquidity_InCoolDownPeriod()
   //   external

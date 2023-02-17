@@ -9,6 +9,12 @@ contract MockCalculator is ICalculator {
   uint256 equity;
   uint256 mmr;
 
+  address public oracle;
+
+  constructor(address _oracle) {
+    oracle = _oracle;
+  }
+
   function setEquity(uint256 _mockEquity) external {
     equity = _mockEquity;
   }
@@ -39,15 +45,19 @@ contract MockCalculator is ICalculator {
     uint256 /* aum */,
     uint256 /* supply */
   ) external pure returns (uint256) {
-    return 0;
+    // 1$
+    return 1e30;
   }
 
   function getMintAmount(
-    uint256 /* _aum */,
-    uint256 /* _totalSupply */,
-    uint256 /* _amount */
+    uint256 _aum,
+    uint256 _totalSupply,
+    uint256 _amount
   ) external pure returns (uint256) {
-    return 0;
+    return
+      _aum == 0 || _totalSupply == 0
+        ? _amount
+        : (_amount * _totalSupply) / _aum;
   }
 
   function convertTokenDecimals(
@@ -73,10 +83,6 @@ contract MockCalculator is ICalculator {
     IConfigStorage /*_configStorage*/,
     IVaultStorage /*_vaultStorage*/
   ) external pure returns (uint256) {
-    return 0;
-  }
-
-  function oracle() external pure returns (address) {
-    return address(0);
+    return 1e18;
   }
 }

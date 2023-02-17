@@ -58,12 +58,9 @@ contract MockCalculator is ICalculator {
   function getMintAmount(
     uint256 _aum,
     uint256 _totalSupply,
-    uint256 _amount
+    uint256 _value
   ) external pure returns (uint256) {
-    return
-      _aum == 0 || _totalSupply == 0
-        ? _amount
-        : (_amount * _totalSupply) / _aum;
+    return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
   }
 
   function convertTokenDecimals(
@@ -80,7 +77,7 @@ contract MockCalculator is ICalculator {
     IConfigStorage /*_configStorage*/,
     IVaultStorage /*_vaultStorage*/
   ) external pure returns (uint256) {
-    return 0;
+    return 0.003 ether;
   }
 
   function getRemoveLiquidityFeeRate(

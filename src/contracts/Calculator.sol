@@ -8,6 +8,7 @@ import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract Calculator is ICalculator {
   uint256 internal constant MAX_RATE = 1e18;
@@ -198,12 +199,14 @@ contract Calculator is ICalculator {
     return totalPnlLong + totalPnlShort;
   }
 
+  // @todo add more description
+  // return in 1e18
   function getMintAmount(
     uint256 _aum,
     uint256 _totalSupply,
-    uint256 _amount
+    uint256 _value
   ) public pure returns (uint256) {
-    return _aum == 0 ? _amount : (_amount * _totalSupply) / _aum;
+    return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
   }
 
   function convertTokenDecimals(
@@ -220,6 +223,10 @@ contract Calculator is ICalculator {
     IConfigStorage _configStorage,
     IVaultStorage _vaultStorage
   ) external returns (uint256) {
+    console2.log(
+      "_configStorage.getLiquidityConfig().depositFeeRate",
+      _configStorage.getLiquidityConfig().depositFeeRate
+    );
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
       return _configStorage.getLiquidityConfig().depositFeeRate;
     }

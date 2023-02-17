@@ -338,10 +338,7 @@ contract LiquidityService is ILiquidityService {
       _request._feeRate;
     uint256 fee = _request._amount - amountAfterFee;
 
-    IVaultStorage(vaultStorage).addFee(
-      _request._token,
-      fee + IVaultStorage(vaultStorage).fees(_request._token)
-    );
+    IVaultStorage(vaultStorage).addFee(_request._token, fee);
 
     if (_request._action == LiquidityAction.SWAP) {
       emit CollectSwapFee(

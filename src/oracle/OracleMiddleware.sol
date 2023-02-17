@@ -75,12 +75,9 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     (_price, _lastUpdate) = _getLatestPrice(
       _assetId,
       _isMax,
-      _confidenceThreshold
+      _confidenceThreshold,
+      _trustPriceAge
     );
-
-    // check price age
-    if (block.timestamp - _lastUpdate > _trustPriceAge)
-      revert IOracleMiddleware_PythPriceStale();
 
     return (_price, _lastUpdate);
   }
@@ -98,22 +95,12 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     uint256 _confidenceThreshold
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    return _getLatestPrice(_assetId, _isMax, _confidenceThreshold);
-  }
-
-  function _getLatestPrice(
-    bytes32 _assetId,
-    bool _isMax,
-    uint256 _confidenceThreshold
-  ) internal view returns (uint256 _price, uint256 _lastUpdate) {
-    // 1. get price from Pyth
-    (_price, _lastUpdate) = pythAdapter.getLatestPrice(
+    (_price, _lastUpdate) = _unsafeGetLatestPrice(
       _assetId,
       _isMax,
       _confidenceThreshold
     );
 
-    // 2. Return the price and last update
     return (_price, _lastUpdate);
   }
 
@@ -135,12 +122,9 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     (_price, _lastUpdate) = _getLatestPrice(
       _assetId,
       _isMax,
-      _confidenceThreshold
+      _confidenceThreshold,
+      _trustPriceAge
     );
-
-    // check price age
-    if (block.timestamp - _lastUpdate > _trustPriceAge)
-      revert IOracleMiddleware_PythPriceStale();
 
     return (_price, _lastUpdate, _status);
   }
@@ -158,11 +142,49 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, _lastUpdate) = _getLatestPrice(
+    (_price, _lastUpdate) = _unsafeGetLatestPrice(
       _assetId,
       _isMax,
       _confidenceThreshold
     );
+
     return (_price, _lastUpdate, _status);
+  }
+
+  function _getLatestPrice(
+    bytes32 _assetId,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge
+  ) private view returns (uint256 _price, uint256 _lastUpdate) {
+    // 1. get price from Pyth
+    (_price, _lastUpdate) = pythAdapter.getLatestPrice(
+      _assetId,
+      _isMax,
+      _confidenceThreshold
+    );
+
+    // check price age
+    if (block.timestamp - _lastUpdate > _trustPriceAge)
+      revert IOracleMiddleware_PythPriceStale();
+
+    // 2. Return the price and last update
+    return (_price, _lastUpdate);
+  }
+
+  function _unsafeGetLatestPrice(
+    bytes32 _assetId,
+    bool _isMax,
+    uint256 _confidenceThreshold
+  ) private view returns (uint256 _price, uint256 _lastUpdate) {
+    // 1. get price from Pyth
+    (_price, _lastUpdate) = pythAdapter.getLatestPrice(
+      _assetId,
+      _isMax,
+      _confidenceThreshold
+    );
+
+    // 2. Return the price and last update
+    return (_price, _lastUpdate);
   }
 }

@@ -502,7 +502,6 @@ contract TradeService is ITradeService {
     ) {
       revert ITradeService_InsufficientLiquidity();
     }
-    // TODO: validate Max PLP Utilization
 
     // Update the new reserve value in the IPerpStorage contract
     IPerpStorage(perpStorage).updateReserveValue(_globalState.reserveValueE30);

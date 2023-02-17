@@ -34,7 +34,7 @@ interface IOracleMiddleware {
     bytes32 _assetId,
     bool _isMax,
     uint256 _confidentTreshold
-  ) external view returns (uint256, uint256);
+  ) external view returns (uint256 _price, uint256 _lastUpdated);
 
   function unsafeGetLatestPriceWithMarketStatus(
     bytes32 _assetId,

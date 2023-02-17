@@ -17,12 +17,6 @@ contract Calculator is Owned, ICalculator {
   // using libs for type
   using AddressUtils for address;
 
-  // STATES
-  address public oracle;
-  address public vaultStorage;
-  address public configStorage;
-  address public perpStorage;
-
   // EVENTS
   event LogSetOracle(address indexed oldOracle, address indexed newOracle);
   event LogSetVaultStorage(
@@ -37,6 +31,13 @@ contract Calculator is Owned, ICalculator {
     address indexed oldPerpStorage,
     address indexed perpStorage
   );
+
+  // STATES
+  // @todo - move oracle config to storage
+  address public oracle;
+  address public vaultStorage;
+  address public configStorage;
+  address public perpStorage;
 
   constructor(
     address _oracle,
@@ -104,15 +105,15 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate for value on trader's account including Equity, IMR and MMR.
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
-  /// @return equityValueE30 Total equity of trader's account.
+  /// @return _equityValueE30 Total equity of trader's account.
   function getEquity(
     address _subAccount
-  ) external returns (uint256 equityValueE30) {
+  ) external returns (uint256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
-    uint256 collateralValueE30 = getCollateralValue(_subAccount);
+    uint256 _collateralValueE30 = getCollateralValue(_subAccount);
 
     // Calculate unrealized PnL on opening trader's position(s)
-    int256 unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount);
+    int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount);
 
     // Calculate Borrwing fee on opening trader's position(s)
     // @todo - calculate borrowing fee
@@ -122,249 +123,246 @@ contract Calculator is Owned, ICalculator {
     // uint256 fundingFeeE30 = getFundingFee(_subAccount);
 
     // Sum all asset's values
-    equityValueE30 += collateralValueE30;
+    _equityValueE30 += _collateralValueE30;
 
-    if (unrealizedPnlValueE30 > 0) {
-      equityValueE30 += _abs(unrealizedPnlValueE30);
+    if (_unrealizedPnlValueE30 > 0) {
+      _equityValueE30 += uint256(_unrealizedPnlValueE30);
     } else {
-      equityValueE30 -= _abs(unrealizedPnlValueE30);
+      _equityValueE30 -= uint256(-_unrealizedPnlValueE30);
     }
 
     // @todo - include borrowing and funding fee
-    // equityValueE30 -= borrowingFeeE30;
-    // equityValueE30 -= fundingFeeE30;
+    // _equityValueE30 -= borrowingFeeE30;
+    // _equityValueE30 -= fundingFeeE30;
 
-    return equityValueE30;
+    return _equityValueE30;
   }
 
   /// @notice Calculate unrealized PnL from trader's sub account.
   /// @dev This unrealized pnl deducted by collateral factor.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @return unrealizedPnlE30 PnL value after deducted by collateral factor.
+  /// @return _unrealizedPnlE30 PnL value after deducted by collateral factor.
   function getUnrealizedPnl(
     address _subAccount
-  ) public view returns (int256 unrealizedPnlE30) {
+  ) public view returns (int256 _unrealizedPnlE30) {
     // Get all trader's opening positions
-    IPerpStorage.Position[] memory traderPositions = IPerpStorage(perpStorage)
+    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage)
       .getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
-    for (uint256 i; i < traderPositions.length; ) {
-      IPerpStorage.Position memory position = traderPositions[i];
-      bool isLong = position.positionSizeE30 > 0 ? true : false;
+    for (uint256 i; i < _traderPositions.length; ) {
+      IPerpStorage.Position memory _position = _traderPositions[i];
+      bool _isLong = _position.positionSizeE30 > 0 ? true : false;
 
-      if (position.avgEntryPriceE30 == 0)
+      if (_position.avgEntryPriceE30 == 0)
         revert ICalculator_InvalidAveragePrice();
 
       // Get market config according to opening position
-      IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(
+      IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
         configStorage
-      ).getMarketConfigByIndex(position.marketIndex);
+      ).getMarketConfigByIndex(_position.marketIndex);
 
       // Long position always use MinPrice. Short position always use MaxPrice
-      bool isUseMaxPrice = isLong ? false : true;
+      bool _isUseMaxPrice = _isLong ? false : true;
 
       // Get price from oracle
       // @todo - validate price age
-      (uint256 priceE30, , ) = IOracleMiddleware(oracle)
+      (uint256 _priceE30, , ) = IOracleMiddleware(oracle)
         .getLatestPriceWithMarketStatus(
-          marketConfig.assetId,
-          isUseMaxPrice,
-          marketConfig.priceConfidentThreshold,
+          _marketConfig.assetId,
+          _isUseMaxPrice,
+          _marketConfig.priceConfidentThreshold,
           0
         );
 
       // Calculate for priceDelta
-      uint256 priceDeltaE30;
+      uint256 _priceDeltaE30;
       unchecked {
-        priceDeltaE30 = position.avgEntryPriceE30 > priceE30
-          ? position.avgEntryPriceE30 - priceE30
-          : priceE30 - position.avgEntryPriceE30;
+        _priceDeltaE30 = _position.avgEntryPriceE30 > _priceE30
+          ? _position.avgEntryPriceE30 - _priceE30
+          : _priceE30 - _position.avgEntryPriceE30;
       }
 
-      int256 delta = (position.positionSizeE30 * int(priceDeltaE30)) /
-        int(position.avgEntryPriceE30);
+      int256 _delta = (_position.positionSizeE30 * int(_priceDeltaE30)) /
+        int(_position.avgEntryPriceE30);
 
-      if (isLong) {
-        delta = priceE30 > position.avgEntryPriceE30 ? delta : -delta;
+      if (_isLong) {
+        _delta = _priceE30 > _position.avgEntryPriceE30 ? _delta : -_delta;
       } else {
-        delta = priceE30 < position.avgEntryPriceE30 ? -delta : delta;
+        _delta = _priceE30 < _position.avgEntryPriceE30 ? -_delta : _delta;
       }
 
       // If profit then deduct PnL with colleral factor.
-      delta = delta > 0
-        ? (int(IConfigStorage(configStorage).pnlFactor()) * delta) / 1e18
-        : delta;
+      _delta = _delta > 0
+        ? (int(IConfigStorage(configStorage).pnlFactor()) * _delta) / 1e18
+        : _delta;
 
       // Accumulative current unrealized PnL
-      unrealizedPnlE30 += delta;
+      _unrealizedPnlE30 += _delta;
 
       unchecked {
         i++;
       }
     }
 
-    return unrealizedPnlE30;
+    return _unrealizedPnlE30;
   }
 
   /// @notice Calculate collateral tokens to value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @return collateralValueE30
+  /// @return _collateralValueE30
   function getCollateralValue(
     address _subAccount
-  ) public returns (uint256 collateralValueE30) {
+  ) public returns (uint256 _collateralValueE30) {
     // Get list of current depositing tokens on trader's account
-    address[] memory traderTokens = IVaultStorage(vaultStorage).getTraderTokens(
-      _subAccount
-    );
+    address[] memory _traderTokens = IVaultStorage(vaultStorage)
+      .getTraderTokens(_subAccount);
 
     // Loop through list of current depositing tokens
-    for (uint256 i; i < traderTokens.length; ) {
-      address token = traderTokens[i];
+    for (uint256 i; i < _traderTokens.length; ) {
+      address _token = _traderTokens[i];
 
       // Get token decimals from ConfigStorage
-      uint256 decimals = ERC20(token).decimals();
+      uint256 _decimals = ERC20(_token).decimals();
 
       // Get collateralFactor from ConfigStorage
-      uint256 collateralFactor = IConfigStorage(configStorage)
-        .getCollateralTokenConfigs(token)
+      uint256 _collateralFactor = IConfigStorage(configStorage)
+        .getCollateralTokenConfigs(_token)
         .collateralFactor;
 
       // Get priceConfidentThreshold from ConfigStorage
-      uint256 priceConfidenceThreshold = IConfigStorage(configStorage)
-        .getMarketConfigByToken(token)
+      uint256 _priceConfidenceThreshold = IConfigStorage(configStorage)
+        .getMarketConfigByToken(_token)
         .priceConfidentThreshold;
 
       // Get current collateral token balance of trader's account
-      uint256 amount = IVaultStorage(vaultStorage).traderBalances(
+      uint256 _amount = IVaultStorage(vaultStorage).traderBalances(
         _subAccount,
-        token
+        _token
       );
 
-      bool isMaxPrice = false; // @note Collateral value always use Min price
+      bool _isMaxPrice = false; // @note Collateral value always use Min price
       // Get price from oracle
       // @todo - validate price age
-      (uint256 priceE30, , ) = IOracleMiddleware(oracle)
+      (uint256 _priceE30, , ) = IOracleMiddleware(oracle)
         .getLatestPriceWithMarketStatus(
-          token.toBytes32(),
-          isMaxPrice,
-          priceConfidenceThreshold,
+          _token.toBytes32(),
+          _isMaxPrice,
+          _priceConfidenceThreshold,
           0
         );
 
       // Calculate accumulative value of collateral tokens
       // collateal value = (collateral amount * price) * collateralFactor
       // collateralFactor 1 ether = 100%
-      collateralValueE30 +=
-        (amount * priceE30 * collateralFactor) /
-        (10 ** decimals * 1e18);
+      _collateralValueE30 +=
+        (_amount * _priceE30 * _collateralFactor) /
+        (10 ** _decimals * 1e18);
 
       unchecked {
         i++;
       }
     }
 
-    return collateralValueE30;
+    return _collateralValueE30;
   }
 
   /// @notice Calculate Intial Margin Requirement from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @return imrValueE30 Total imr of trader's account.
+  /// @return _imrValueE30 Total imr of trader's account.
   function getIMR(
     address _subAccount
-  ) public view returns (uint256 imrValueE30) {
+  ) public view returns (uint256 _imrValueE30) {
     // Get all trader's opening positions
-    IPerpStorage.Position[] memory traderPositions = IPerpStorage(perpStorage)
+    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage)
       .getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
-    for (uint256 i; i < traderPositions.length; ) {
-      IPerpStorage.Position memory position = traderPositions[i];
+    for (uint256 i; i < _traderPositions.length; ) {
+      IPerpStorage.Position memory _position = _traderPositions[i];
 
-      uint256 size;
-      if (position.positionSizeE30 < 0) {
-        size = uint(position.positionSizeE30 * -1);
+      uint256 _size;
+      if (_position.positionSizeE30 < 0) {
+        _size = uint(_position.positionSizeE30 * -1);
       } else {
-        size = uint(position.positionSizeE30);
+        _size = uint(_position.positionSizeE30);
       }
 
       // Calculate IMR on position
-      imrValueE30 += calculatePositionIMR(size, position.marketIndex);
+      _imrValueE30 += calculatePositionIMR(_size, _position.marketIndex);
 
       unchecked {
         i++;
       }
     }
 
-    return imrValueE30;
+    return _imrValueE30;
   }
 
   /// @notice Calculate Maintenance Margin Value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @return mmrValueE30 Total mmr of trader's account
+  /// @return _mmrValueE30 Total mmr of trader's account
   function getMMR(
     address _subAccount
-  ) public view returns (uint256 mmrValueE30) {
+  ) public view returns (uint256 _mmrValueE30) {
     // Get all trader's opening positions
-    IPerpStorage.Position[] memory traderPositions = IPerpStorage(perpStorage)
+    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage)
       .getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
-    for (uint256 i; i < traderPositions.length; ) {
-      IPerpStorage.Position memory position = traderPositions[i];
+    for (uint256 i; i < _traderPositions.length; ) {
+      IPerpStorage.Position memory _position = _traderPositions[i];
 
-      uint256 size;
-      if (position.positionSizeE30 < 0) {
-        size = uint(position.positionSizeE30 * -1);
+      uint256 _size;
+      if (_position.positionSizeE30 < 0) {
+        _size = uint(_position.positionSizeE30 * -1);
       } else {
-        size = uint(position.positionSizeE30);
+        _size = uint(_position.positionSizeE30);
       }
       // Calculate MMR on position
-      mmrValueE30 += calculatePositionMMR(size, position.marketIndex);
+      _mmrValueE30 += calculatePositionMMR(_size, _position.marketIndex);
 
       unchecked {
         i++;
       }
     }
 
-    return mmrValueE30;
+    return _mmrValueE30;
   }
 
   /// @notice Calculate for Initial Margin Requirement from position size.
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
-  /// @return imrE30 The IMR amount required on position size, 30 decimals.
+  /// @return _imrE30 The IMR amount required on position size, 30 decimals.
   function calculatePositionIMR(
     uint256 _positionSizeE30,
     uint256 _marketIndex
-  ) public view returns (uint256 imrE30) {
+  ) public view returns (uint256 _imrE30) {
     // Get market config according to position
-    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
     ).getMarketConfigByIndex(_marketIndex);
 
-    imrE30 = (_positionSizeE30 * marketConfig.initialMarginFraction) / 1e18;
-    return imrE30;
+    _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFraction) / 1e18;
+    return _imrE30;
   }
 
   /// @notice Calculate for Maintenance Margin Requirement from position size.
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
-  /// @return mmrE30 The MMR amount required on position size, 30 decimals.
+  /// @return _mmrE30 The MMR amount required on position size, 30 decimals.
   function calculatePositionMMR(
     uint256 _positionSizeE30,
     uint256 _marketIndex
-  ) public view returns (uint256 mmrE30) {
+  ) public view returns (uint256 _mmrE30) {
     // Get market config according to position
-    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
     ).getMarketConfigByIndex(_marketIndex);
 
-    mmrE30 = (_positionSizeE30 * marketConfig.maintenanceMarginFraction) / 1e18;
-    return mmrE30;
-  }
-
-  function _abs(int256 x) internal pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
+    _mmrE30 =
+      (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) /
+      1e18;
+    return _mmrE30;
   }
 }

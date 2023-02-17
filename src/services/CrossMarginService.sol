@@ -13,11 +13,6 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 
 contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
-  // STATES
-  address public configStorage;
-  address public vaultStorage;
-  address public calculator;
-
   // EVENTS
   event LogSetConfigStorage(
     address indexed oldConfigStorage,
@@ -42,6 +37,11 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     address token,
     uint256 amount
   );
+
+  // STATES
+  address public configStorage;
+  address public vaultStorage;
+  address public calculator;
 
   constructor(
     address _configStorage,
@@ -126,22 +126,22 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     // Get current collateral token balance of trader's account
     // and sum with new token depositing amount
-    uint256 oldBalance = IVaultStorage(vaultStorage).traderBalances(
+    uint256 _oldBalance = IVaultStorage(vaultStorage).traderBalances(
       _subAccount,
       _token
     );
 
-    uint256 newBalance = oldBalance + _amount;
+    uint256 _newBalance = _oldBalance + _amount;
 
     // Set new collateral token balance
     IVaultStorage(vaultStorage).setTraderBalance(
       _subAccount,
       _token,
-      newBalance
+      _newBalance
     );
 
     // If trader's account never contain this token before then register new token to the account
-    if (oldBalance == 0 && newBalance != 0) {
+    if (_oldBalance == 0 && _newBalance != 0) {
       IVaultStorage(vaultStorage).addTraderToken(_subAccount, _token);
     }
 
@@ -163,19 +163,19 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     // Get current collateral token balance of trader's account
     // and deduct with new token withdrawing amount
-    uint256 oldBalance = IVaultStorage(vaultStorage).traderBalances(
+    uint256 _oldBalance = IVaultStorage(vaultStorage).traderBalances(
       _subAccount,
       _token
     );
-    if (_amount > oldBalance) revert ICrossMarginService_InsufficientBalance();
+    if (_amount > _oldBalance) revert ICrossMarginService_InsufficientBalance();
 
-    uint256 newBalance = oldBalance - _amount;
+    uint256 _newBalance = _oldBalance - _amount;
 
     // Set new collateral token balance
     IVaultStorage(vaultStorage).setTraderBalance(
       _subAccount,
       _token,
-      newBalance
+      _newBalance
     );
 
     // Calculate validation for if new Equity is below IMR or not
@@ -185,7 +185,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     ) revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
     // If trader withdraws all token out, then remove token on traderTokens list
-    if (oldBalance != 0 && newBalance == 0) {
+    if (_oldBalance != 0 && _newBalance == 0) {
       IVaultStorage(vaultStorage).removeTraderToken(_subAccount, _token);
     }
 

@@ -22,15 +22,35 @@ contract MockOracleMiddleware is IOracleMiddleware {
     priceE30 = _newPriceE30;
   }
 
+  // todo: validate price stale here
   function getLatestPrice(
     bytes32 /* _assetId */,
     bool /* _isMax */,
-    uint256 /* _confidentTreshold */
+    uint256 /* _confidentTreshold */,
+    uint256 /* _trustPriceAge */
   ) external view returns (uint256, uint256) {
     return (priceE30, lastUpdate);
   }
 
+  // todo: validate price stale here
   function getLatestPriceWithMarketStatus(
+    bytes32 /* _assetId */,
+    bool /* _isMax */,
+    uint256 /* _confidenceThreshold */,
+    uint256 /* _trustPriceAge */
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    return (priceE30, lastUpdate, marketStatus);
+  }
+
+  function unsafeGetLatestPrice(
+    bytes32 /* _assetId */,
+    bool /* _isMax */,
+    uint256 /* _confidentTreshold */
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    return (priceE30, lastUpdate);
+  }
+
+  function unsafeGetLatestPriceWithMarketStatus(
     bytes32 /* _assetId */,
     bool /* _isMax */,
     uint256 /* _confidenceThreshold */

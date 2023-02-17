@@ -103,9 +103,10 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
+      // todo: update code to use normal get latest price, there is validate price
       (vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(
         oracle
-      ).getLatestPriceWithMarketStatus(
+      ).unsafeGetLatestPriceWithMarketStatus(
           _marketConfig.assetId,
           !vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold

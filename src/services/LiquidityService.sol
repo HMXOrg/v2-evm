@@ -250,13 +250,6 @@ contract LiquidityService is ILiquidityService {
       IConfigStorage(configStorage).calculator()
     );
 
-    // 2. Check totalLq < lpValue ()
-    if (IVaultStorage(_tokenOut).plpTotalLiquidityUSDE30() < _lpUsdValue) {
-      IVaultStorage(_tokenOut).addPLPTotalLiquidityUSDE30(
-        _lpUsdValue - IVaultStorage(_tokenOut).plpTotalLiquidityUSDE30()
-      );
-    }
-
     // TODO price stale
     (uint256 _maxPrice, ) = IOracleMiddleware(_calculator.oracle())
       .unsafeGetLatestPrice(
@@ -275,9 +268,12 @@ contract LiquidityService is ILiquidityService {
 
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
-    IVaultStorage(_tokenOut).removePLPLiquidity(_tokenOut, _amountOut);
-    IVaultStorage(_tokenOut).removePLPLiquidityUSDE30(_tokenOut, _lpUsdValue);
-    IVaultStorage(_tokenOut).removePLPTotalLiquidityUSDE30(_lpUsdValue);
+    IVaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
+    IVaultStorage(vaultStorage).removePLPLiquidityUSDE30(
+      _tokenOut,
+      _lpUsdValue
+    );
+    IVaultStorage(vaultStorage).removePLPTotalLiquidityUSDE30(_lpUsdValue);
 
     uint256 _feeRate = ICalculator(IConfigStorage(configStorage).calculator())
       .getRemoveLiquidityFeeRate(

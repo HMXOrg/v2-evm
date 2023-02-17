@@ -70,8 +70,8 @@ interface IConfigStorage {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
 
-  function getMarketConfigs(
-    uint256 _marketId
+  function getMarketConfigById(
+    uint256 _marketIndex
   ) external view returns (MarketConfig memory);
 
   function getPlpTokenConfigs(
@@ -95,7 +95,7 @@ interface IConfigStorage {
   function setLiquidationConfig(LiquidationConfig memory _newConfig) external;
 
   function setMarketConfig(
-    uint256 _marketId,
+    uint256 _marketIndex,
     MarketConfig memory _newConfig
   ) external returns (MarketConfig memory);
 

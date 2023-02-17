@@ -12,6 +12,7 @@ contract ConfigStorage is IConfigStorage {
   SwapConfig public swapConfig;
   TradingConfig public tradingConfig;
   LiquidationConfig public liquidationConfig;
+
   MarketConfig[] public marketConfigs;
   mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
 
@@ -30,10 +31,10 @@ contract ConfigStorage is IConfigStorage {
   uint256 public plpTotalTokenWeight;
 
   // getter functions
-  function getMarketConfigs(
-    uint256 _marketId
+  function getMarketConfigById(
+    uint256 _marketIndex
   ) external view returns (MarketConfig memory) {
-    return marketConfigs[_marketId];
+    return marketConfigs[_marketIndex];
   }
 
   function getPlpTokenConfigs(
@@ -75,12 +76,16 @@ contract ConfigStorage is IConfigStorage {
     return _newMarketIndex;
   }
 
+  function delistMarket(uint256 _marketIndex) external {
+    delete marketConfigs[_marketIndex].active;
+  }
+
   function setMarketConfig(
-    uint256 _marketId,
+    uint256 _marketIndex,
     MarketConfig memory _newConfig
   ) external returns (MarketConfig memory) {
-    marketConfigs[_marketId] = _newConfig;
-    return marketConfigs[_marketId];
+    marketConfigs[_marketIndex] = _newConfig;
+    return marketConfigs[_marketIndex];
   }
 
   function setPlpTokenConfig(

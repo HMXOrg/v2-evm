@@ -2,20 +2,36 @@
 pragma solidity 0.8.18;
 
 interface IOracleMiddleware {
-  /// @notice Get the latest price of the given asset. Returned price is in 30 decimals.
-  /// @dev The price returns here can be staled.
-  /// @param _assetId The asset id to get price.
-  /// @param _isMax Whether to use the max price or min price.
-  /// @param _confidentTreshold threshold to validate price confidential
+  // errors
+  error IOracleMiddleware_PythPriceStale();
+  error IOracleMiddleware_MarketStatusUndefined();
+  error IOracleMiddleware_OnlyUpdater();
+  error IOracleMiddleware_InvalidMarketStatus();
+
+  // functions
   function getLatestPrice(
     bytes32 _assetId,
     bool _isMax,
-    uint256 _confidentTreshold
-  ) external view returns (uint256, uint256);
+    uint256 _confidentTreshold,
+    uint256 _trustPriceAge
+  ) external view returns (uint256 _price, uint256 _lastUpdated);
 
   function getLatestPriceWithMarketStatus(
     bytes32 _assetId,
     bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge
+  ) external view returns (uint256 _price, uint256 _lastUpdated, uint8 _status);
+
+  function unsafeGetLatestPrice(
+    bytes32 _assetId,
+    bool _isMax,
+    uint256 _confidentTreshold
+  ) external view returns (uint256 _price, uint256 _lastUpdated);
+
+  function unsafeGetLatestPriceWithMarketStatus(
+    bytes32 _assetId,
+    bool _isMax,
     uint256 _confidenceThreshold
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
+  ) external view returns (uint256 _price, uint256 _lastUpdated, uint8 _status);
 }

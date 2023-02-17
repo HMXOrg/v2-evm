@@ -31,7 +31,7 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     external
   {}
 
-  // add liquidity when circuit break
+  // remove liquidity when circuit break
   function testRevert_WhenCircuitBreak_PLPShouldNotRemoveLiquidity() external {
     // disable liquidity config
     IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage

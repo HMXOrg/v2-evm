@@ -98,6 +98,7 @@ contract LiquidityService is ILiquidityService {
     // 3. get aum and lpSupply before deduction fee
     // TODO realize farm pnl to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(true);
+
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp())
       .totalSupply();
 
@@ -156,7 +157,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp())
       .totalSupply();
 
-    uint256 _lpUsdValue = (_amount * _aum) / _lpSupply;
+    uint256 _lpUsdValue = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
 
     uint256 _amountOut = _exitPool(
       _tokenOut,

@@ -21,6 +21,8 @@ import { VaultStorage } from "../../src/storages/VaultStorage.sol";
 
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
 
+import { PLPv2 } from "../../src/contracts/PLPv2.sol";
+
 abstract contract BaseTest is
   TestBase,
   Deployment,
@@ -50,6 +52,8 @@ abstract contract BaseTest is
 
   MockErc20 internal bad;
 
+  PLPv2 internal plp;
+
   // market indexes
   uint256 ethMarketIndex;
 
@@ -78,12 +82,14 @@ abstract contract BaseTest is
     usdc = deployMockErc20("USD Coin", "USDC", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
 
+    plp = new PLPv2();
+
     configStorage = deployConfigStorage();
     perpStorage = deployPerpStorage();
     vaultStorage = deployVaultStorage();
 
-    mockCalculator = new MockCalculator();
     mockOracle = new MockOracleMiddleware();
+    mockCalculator = new MockCalculator(address(mockOracle));
 
     _setUpLiquidityConfig();
     _setUpSwapConfig();
@@ -91,6 +97,9 @@ abstract contract BaseTest is
     _setUpMarketConfigs();
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
+
+    // set general config
+    configStorage.setCalculator(address(mockCalculator));
   }
 
   // --------- Deploy Helpers ---------
@@ -201,6 +210,10 @@ abstract contract BaseTest is
 
   /// @notice set up all plp token configs in Perp
   function _setUpPlpTokenConfigs() private {
+    // set PLP token
+    configStorage.setPLP(address(plp));
+
+    // add Accepted Token for LP config
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig = IConfigStorage
       .PLPTokenConfig({
         decimals: 18,

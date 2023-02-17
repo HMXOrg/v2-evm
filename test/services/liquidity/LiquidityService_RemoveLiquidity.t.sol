@@ -24,26 +24,24 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
 
-    // mint 100 WETH for ALICE
-    weth.mint(address(this), 100 ether);
-
-    // approve 10 WETH for service
-    weth.approve(address(liquidityService), 10 ether);
-    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
+    dai.mint(address(this), 100 ether);
+    dai.approve(address(liquidityService), type(uint256).max);
+    liquidityService.addLiquidity(address(this), address(dai), 100 ether, 0);
 
     // total supply = 10 ether after add liquidity for ALICE
-    // given tvl            - 10e30
+    // given Total Supply   - 99.7 ether, then TvL = 99.7 e30
     //       unrealized PnL - 0
     //       borrowing fee  - 0
-    // aum = tvl + unrealized pnl + borrowing fee = 10e30 + 0 + 0
-    mockCalculator.setAUM(10e30);
+    // aum = tvl + unrealized pnl + borrowing fee = 99.7 e30 + 0 + 0
+    mockCalculator.setAUM(99.7e30);
   }
 
-  function testCorrectness_WhenPLPRemoveLiquidity_WithDynamicFee() external {}
+  function testCorrectness_WhenPLPRemoveLiquidity() external {
+    liquidityService.removeLiquidity(address(this), address(dai), 50 ether, 0);
 
-  function testCorrectness_WhenPLPRemoveLiquidity_WithoutDynamicFee()
-    external
-  {}
+    assertEq(plp.totalSupply(), 49.7 ether, "PLP Total Supply");
+    assertEq(vaultStorage.plpTotalLiquidityUSDE30(), 49.7 * 10 ** 30);
+  }
 
   // remove liquidity when circuit break
   function testRevert_WhenCircuitBreak_PLPShouldNotRemoveLiquidity() external {
@@ -56,20 +54,20 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     vm.expectRevert(
       abi.encodeWithSignature("LiquidityService_CircuitBreaker()")
     );
-    liquidityService.removeLiquidity(ALICE, address(wbtc), 10 ether, 0);
+    liquidityService.removeLiquidity(ALICE, address(dai), 5 ether, 0);
   }
 
   function testRevert_WhenPLPRemoveLiquidity_WithZeroAmount() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
-    liquidityService.removeLiquidity(ALICE, address(weth), 0, 0);
+    liquidityService.removeLiquidity(ALICE, address(dai), 0, 0);
   }
 
   function testRevert_WhenPLPRemoveLiquidity_AndSlippageCheckFail() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_Slippage()"));
     liquidityService.removeLiquidity(
       ALICE,
-      address(weth),
-      10 ether,
+      address(dai),
+      5 ether,
       type(uint256).max
     );
   }

@@ -31,7 +31,7 @@ contract OracleMiddleware_SetterTest is OracleMiddleware_BaseTest {
   function testCorrectness_AccessControlWhenSetMarketStatus() external {
     assertEq(oracleMiddleware.marketStatus(address(wbtc).toBytes32()), 0);
     // Only updater could setMarketStatus()
-    vm.expectRevert(abi.encodeWithSignature("OracleMiddleware_OnlyUpdater()"));
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_OnlyUpdater()"));
     vm.startPrank(ALICE);
     oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 2);
     vm.stopPrank();
@@ -58,13 +58,13 @@ contract OracleMiddleware_SetterTest is OracleMiddleware_BaseTest {
 
     // Revert if status > 2
     vm.expectRevert(
-      abi.encodeWithSignature("OracleMiddleware_InvalidMarketStatus()")
+      abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()")
     );
     oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 3);
 
     // Revert if status > 2
     vm.expectRevert(
-      abi.encodeWithSignature("OracleMiddleware_InvalidMarketStatus()")
+      abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()")
     );
     oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 4);
 

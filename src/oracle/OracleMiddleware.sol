@@ -6,12 +6,6 @@ import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 
 contract OracleMiddleware is Owned, IOracleMiddleware {
-  // errors
-  error OracleMiddleware_PythPriceStale();
-  error OracleMiddleware_MarketStatusUndefined();
-  error OracleMiddleware_OnlyUpdater();
-  error OracleMiddleware_InvalidMarketStatus();
-
   // configs
   IOracleAdapter public pythAdapter;
 
@@ -40,7 +34,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   modifier onlyUpdater() {
     if (!isUpdater[msg.sender]) {
-      revert OracleMiddleware_OnlyUpdater();
+      revert IOracleMiddleware_OnlyUpdater();
     }
     _;
   }
@@ -52,7 +46,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bytes32 _assetId,
     uint8 _status
   ) external onlyUpdater {
-    if (_status > 2) revert OracleMiddleware_InvalidMarketStatus();
+    if (_status > 2) revert IOracleMiddleware_InvalidMarketStatus();
 
     marketStatus[_assetId] = _status;
     emit SetMarketStatus(_assetId, _status);
@@ -71,11 +65,39 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
   /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
+  /// @param _trustPriceAge price age in seconds we believe it
   function getLatestPrice(
     bytes32 _assetId,
     bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    (_price, _lastUpdate) = _getLatestPrice(
+      _assetId,
+      _isMax,
+      _confidenceThreshold
+    );
+
+    // check price age
+    if (block.timestamp - _lastUpdate > _trustPriceAge)
+      revert IOracleMiddleware_PythPriceStale();
+
+    return (_price, _lastUpdate);
+  }
+
+  /// @notice Return the latest price and last update of the given asset id.
+  /// @dev Same as getLatestPrice(), but unsafe function has no check price age
+  /// @dev It is expected that the downstream contract should return the price in USD with 30 decimals.
+  /// @dev The currency of the price that will be quoted with depends on asset id. For example, we can have two BTC price but quoted differently.
+  ///      In that case, we can define two different asset ids as BTC/USD, BTC/EUR.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
+  function unsafeGetLatestPrice(
+    bytes32 _assetId,
+    bool _isMax,
     uint256 _confidenceThreshold
-  ) external view returns (uint256, uint256) {
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
     return _getLatestPrice(_assetId, _isMax, _confidenceThreshold);
   }
 
@@ -100,13 +122,41 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
   /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
+  /// @param _trustPriceAge price age in seconds we believe it
   function getLatestPriceWithMarketStatus(
+    bytes32 _assetId,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    _status = marketStatus[_assetId];
+    if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
+
+    (_price, _lastUpdate) = _getLatestPrice(
+      _assetId,
+      _isMax,
+      _confidenceThreshold
+    );
+
+    // check price age
+    if (block.timestamp - _lastUpdate > _trustPriceAge)
+      revert IOracleMiddleware_PythPriceStale();
+
+    return (_price, _lastUpdate, _status);
+  }
+
+  /// @notice Return the latest price of asset, last update of the given asset id, along with market status.
+  /// @dev Same as unsafeGetLatestPrice(), but with market status. Revert if status is 0 (Undefined) which means we never utilize this assetId.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
+  function unsafeGetLatestPriceWithMarketStatus(
     bytes32 _assetId,
     bool _isMax,
     uint256 _confidenceThreshold
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
-    if (_status == 0) revert OracleMiddleware_MarketStatusUndefined();
+    if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
     (_price, _lastUpdate) = _getLatestPrice(
       _assetId,

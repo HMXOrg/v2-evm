@@ -28,7 +28,9 @@ import { ITradeService } from "../../../src/services/interfaces/ITradeService.so
 // What is this test not covered
 //   - borrowing fee
 //   - funding fee
-//   - settlement profit and loss
+//   - trading fee
+//   - settlement profit
+//   - settlement loss
 //   - protocol curcuit break
 //   - trading curcuit break
 // - post validation

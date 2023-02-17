@@ -352,12 +352,11 @@ contract Calculator is ICalculator {
         token
       );
 
-      bool isMaxPrice = false; // @note Collateral value always use Min price
       // Get price from oracle
       // @todo - validate price age
       (uint256 priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
         token.toBytes32(),
-        isMaxPrice,
+        false, // @note Collateral value always use Min price
         priceConfidenceThreshold
       );
 

@@ -19,6 +19,7 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - add liquidity on not accepted token
 //   - add liquidity with zero amount
 //   - slippage check fail
+// What is this test not covered
 //   - PLP transfer in cooldown period
 contract LiquidityService_AddLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
@@ -53,7 +54,7 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
 
   function testRevert_WhenPLPAddLiquidity_AndSlippageCheckFail() external {}
 
-  function testRevert_WhenPLPTransferToken_AfterAddLiquidity_InCoolDownPeriod()
-    external
-  {}
+  // function testRevert_WhenPLPTransferToken_AfterAddLiquidity_InCoolDownPeriod()
+  //   external
+  // {}
 }

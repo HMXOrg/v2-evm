@@ -15,9 +15,9 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 // - revert
 //   - remove liquidity of another PLP
 //   - remove with zero amount
-//   - remove liquidity in cooldown period
 //   - fail on slippage
-
+// What is this test not covered
+//   - PLP transfer in cooldown period
 contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -33,9 +33,9 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
 
   function testRevert_WhenPLPRemoveLiquidity_WithZeroAmount() external {}
 
-  function testRevert_WhenPLPRemoveLiquidity_AfterAddLiquidity_InCoolDownPeriod()
-    external
-  {}
-
   function testRevert_WhenPLPRemoveLiquidity_AndSlippageCheckFail() external {}
+
+  // function testRevert_WhenPLPRemoveLiquidity_AfterAddLiquidity_InCoolDownPeriod()
+  //   external
+  // {}
 }

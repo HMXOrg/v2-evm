@@ -13,10 +13,6 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
-import { Math } from "../utils/Math.sol";
-
-import { console } from "forge-std/console.sol"; //@todo - remove
-
 contract Calculator is Owned, ICalculator {
   // using libs for type
   using AddressUtils for address;
@@ -112,13 +108,13 @@ contract Calculator is Owned, ICalculator {
   function getEquity(
     address _subAccount
   ) external returns (uint256 equityValueE30) {
-    // Calculate collateral tokens' value on trader's account
+    // Calculate collateral tokens' value on trader's sub account
     uint256 collateralValueE30 = getCollateralValue(_subAccount);
 
-    // Calculate unrealized PnL on opening trader's position
+    // Calculate unrealized PnL on opening trader's position(s)
     int256 unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount);
 
-    // Calculate Borrwing fee on opening trader's position
+    // Calculate Borrwing fee on opening trader's position(s)
     // @todo - calculate borrowing fee
     // uint256 borrowingFeeE30 = getBorrowingFee(_subAccount);
 
@@ -129,9 +125,9 @@ contract Calculator is Owned, ICalculator {
     equityValueE30 += collateralValueE30;
 
     if (unrealizedPnlValueE30 > 0) {
-      equityValueE30 += Math.abs(unrealizedPnlValueE30);
+      equityValueE30 += _abs(unrealizedPnlValueE30);
     } else {
-      equityValueE30 -= Math.abs(unrealizedPnlValueE30);
+      equityValueE30 -= _abs(unrealizedPnlValueE30);
     }
 
     // @todo - include borrowing and funding fee
@@ -366,5 +362,9 @@ contract Calculator is Owned, ICalculator {
 
     mmrE30 = (_positionSizeE30 * marketConfig.maintenanceMarginFraction) / 1e18;
     return mmrE30;
+  }
+
+  function _abs(int256 x) internal pure returns (uint256) {
+    return uint256(x >= 0 ? x : -x);
   }
 }

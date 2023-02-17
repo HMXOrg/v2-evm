@@ -3,6 +3,11 @@ pragma solidity 0.8.18;
 
 import { Calculator_Base } from "./Calculator_Base.t.sol";
 
+// What is this test DONE
+// - success
+//   - Try get collateral values with NO depositing collateral tokens on trader's sub account
+//   - Try get collateral values with CONTAIN depositing collateral tokens on trader's sub account
+
 contract Calculator_IMR is Calculator_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -16,11 +21,13 @@ contract Calculator_IMR is Calculator_Base {
   // | ------- Test Correctness ------------ |
   // =========================================
 
+  // Try get collateral values with no depositing collateral tokens on trader's sub account
   function testCorrectness_getCollateralValue_noDepositCollateral() external {
     // ALICE never deposit collateral, so collateral value must return 0
     assertEq(calculator.getCollateralValue(ALICE), 0);
   }
 
+  // Try get collateral values with contain depositing collateral tokens on trader's sub account
   function testCorrectness_getCollateralValue_withDepositCollateral() external {
     // First, Assume ALICE only has one collateral token, WETH
     mockVaultStorage.setTraderTokens(ALICE, address(weth));

@@ -3,6 +3,16 @@ pragma solidity 0.8.18;
 
 import { Calculator_Base, IPerpStorage } from "./Calculator_Base.t.sol";
 
+// What is this test DONE
+// - success
+//   - Try get Unrealized PNL with no opening position on trader's sub account
+//   - Try get Unrealized PNL with LONG opening position with PROFIT on trader's sub account
+//   - Try get Unrealized PNL with LONG opening position with LOSS on trader's sub account
+//   - Try get Unrealized PNL with SHORT opening position with PROFIT on trader's sub account
+//   - Try get Unrealized PNL with SHORT opening position with LOSS on trader's sub account
+// What is this test not covered
+//   - Price Stale checking from Oracle
+
 contract Calculator_UnrealizedPnl is Calculator_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -41,11 +51,13 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
   // | ------- Test Correctness ------------ |
   // =========================================
 
+  // Try get Unrealized PNL with no opening position on trader's sub account
   function testCorrectness_getUnrealizedPnl_noPosition() external {
     // CAROL not has any opening position, so unrealized PNL must return 0
     assertEq(calculator.getUnrealizedPnl(BOB), 0);
   }
 
+  // Try get Unrealized PNL with LONG opening position with PROFIT on trader's sub account
   function testCorrectness_getUnrealizedPnl_profitLongPosition() external {
     // Simulate ALICE opening LONG position with profit
     mockPerpStorage.setPositionBySubAccount(
@@ -77,6 +89,7 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
     assertEq(calculator.getUnrealizedPnl(ALICE), 20_000 * 1e30);
   }
 
+  // Try get Unrealized PNL with SHORT opening position with PROFIT on trader's sub account
   function testCorrectness_getUnrealizedPnl_profitShortPosition() external {
     // Simulate ALICE opening SHORT positions with profit
     mockPerpStorage.setPositionBySubAccount(
@@ -108,6 +121,7 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
     assertEq(calculator.getUnrealizedPnl(ALICE), 10_000 * 1e30);
   }
 
+  // Try get Unrealized PNL with LONG opening position with LOSS on trader's sub account
   function testCorrectness_getUnrealizedPnl_notProfitLongPosition() external {
     // Simulate ALICE opening LONG position with loss
     mockPerpStorage.setPositionBySubAccount(
@@ -139,6 +153,7 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
     assertEq(calculator.getUnrealizedPnl(ALICE), -12_500 * 1e30);
   }
 
+  // Try get Unrealized PNL with SHORT opening position with LOSS on trader's sub account
   function testCorrectness_getUnrealizedPnl_notProfitShortPosition() external {
     // Simulate ALICE opening SHORT positions with Loss
     mockPerpStorage.setPositionBySubAccount(

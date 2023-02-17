@@ -3,6 +3,18 @@ pragma solidity 0.8.18;
 
 import { Calculator_Base, IPerpStorage } from "./Calculator_Base.t.sol";
 
+// What is this test DONE
+// - success
+//   - Try get Equity with no opening position on trader's sub account
+//   - Try get Equity with only collateral deposited on trader's sub account
+//   - Try get Equity with only position opening on trader's sub account [** In real life this should not happend]
+//   - Try get Equity with collateral depositing and position opening with loss on trader's sub account
+
+// What is this test not covered
+//   - Price Stale checking from Oracle
+//   - Borrowing Fee
+//   - Funding Fee
+
 contract Calculator_Equity is Calculator_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -16,11 +28,13 @@ contract Calculator_Equity is Calculator_Base {
   // | ------- Test Correctness ------------ |
   // =========================================
 
+  // Try get Equity with no opening position on trader's sub account
   function testCorrectness_getEquity_noPosition() external {
     // CAROL not has any opening position, so unrealized PNL must return 0
     assertEq(calculator.getEquity(CAROL), 0);
   }
 
+  // Try get Equity with only collateral deposited on trader's sub account
   function testCorrectness_getEquity_onlyCollateralToken() external {
     // First, Assume ALICE only has one collateral token, WETH
     mockVaultStorage.setTraderTokens(ALICE, address(weth));
@@ -44,6 +58,7 @@ contract Calculator_Equity is Calculator_Base {
     assertEq(calculator.getEquity(ALICE), 12_500 * 1e30);
   }
 
+  // Try get Equity with only position opening with profit on trader's sub account [** In real life this should not happend]
   function testCorrectness_getEquity_onlyUnrealizedPnl_withProfit() external {
     // Simulate ALICE opening LONG position with profit
     mockPerpStorage.setPositionBySubAccount(
@@ -76,6 +91,7 @@ contract Calculator_Equity is Calculator_Base {
     assertEq(calculator.getEquity(ALICE), 20_000 * 1e30);
   }
 
+  // Try get Equity with collateral depositing and position opening with loss on trader's sub account
   function testCorrectness_getEquity_unrealizedPnl_withLoss() external {
     // First, Assume ALICE only has one collateral token, WETH
     mockVaultStorage.setTraderTokens(ALICE, address(weth));

@@ -55,6 +55,7 @@ abstract contract BaseTest is
   MockErc20 internal wbtc;
   MockErc20 internal dai;
   MockErc20 internal usdc;
+  MockErc20 internal usdt;
 
   MockErc20 internal bad;
 
@@ -69,6 +70,8 @@ abstract contract BaseTest is
     0x0000000000000000000000000000000000000000000000000000000000000003;
   bytes32 internal constant usdcPriceId =
     0x0000000000000000000000000000000000000000000000000000000000000004;
+  bytes32 internal constant usdtPriceId =
+    0x0000000000000000000000000000000000000000000000000000000000000005;
 
   constructor() {
     // Creating a mock Pyth instance with 60 seconds valid time period
@@ -84,6 +87,7 @@ abstract contract BaseTest is
     wbtc = deployMockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = deployMockErc20("DAI Stablecoin", "DAI", 18);
     usdc = deployMockErc20("USD Coin", "USDC", 6);
+    usdc = deployMockErc20("USD Tether", "USDT", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
 
     plp = new PLPv2();
@@ -218,17 +222,59 @@ abstract contract BaseTest is
     configStorage.setPLP(address(plp));
 
     // add Accepted Token for LP config
-    IConfigStorage.PLPTokenConfig memory _plpTokenConfig = IConfigStorage
-      .PLPTokenConfig({
-        decimals: 18,
-        targetWeight: 1e18,
-        bufferLiquidity: 0,
-        maxWeightDiff: 0,
-        isStableCoin: false,
-        accepted: true
-      });
+    IConfigStorage.PLPTokenConfig[]
+      memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
+    // WETH
+    _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
+      decimals: 18,
+      targetWeight: 20e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: false,
+      accepted: true
+    });
+    // WBTC
+    _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
+      decimals: 8,
+      targetWeight: 20e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: false,
+      accepted: true
+    });
+    // DAI
+    _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
+      decimals: 18,
+      targetWeight: 10e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: true,
+      accepted: true
+    });
+    // USDC
+    _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
+      decimals: 6,
+      targetWeight: 30e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: true,
+      accepted: true
+    });
+    // USDT
+    _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
+      decimals: 6,
+      targetWeight: 20e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: true,
+      accepted: true
+    });
 
-    configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig);
+    configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig[0]);
+    configStorage.setPlpTokenConfig(address(wbtc), _plpTokenConfig[1]);
+    configStorage.setPlpTokenConfig(address(dai), _plpTokenConfig[2]);
+    configStorage.setPlpTokenConfig(address(usdc), _plpTokenConfig[3]);
+    configStorage.setPlpTokenConfig(address(usdt), _plpTokenConfig[4]);
   }
 
   /// @notice set up all collateral token configs in Perp

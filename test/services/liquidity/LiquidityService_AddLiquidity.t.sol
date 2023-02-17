@@ -39,7 +39,24 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
   }
 
   // add liquidity without dynamic fee
-  function testCorrectness_WhenPLPAddLiquidity_WithoutDynamicFee() external {}
+  function testCorrectness_WhenPLPAddLiquidity_WithoutDynamicFee() external {
+    dai.mint(address(this), 100 ether);
+    dai.approve(address(liquidityService), type(uint256).max);
+    liquidityService.addLiquidity(ALICE, address(dai), 100 ether, 0);
+
+    assertEq(
+      dai.balanceOf(address(this)),
+      0,
+      "DAI should be transferred from Handler."
+    );
+    assertEq(
+      dai.balanceOf(address(vaultStorage)),
+      100 ether,
+      "VaultStorage should receive DAI from Handler."
+    );
+    assertEq(plp.totalSupply(), 99.7 ether, "PLP Total Supply");
+    assertEq(vaultStorage.plpTotalLiquidityUSDE30(), 99.7 * 10 ** 30);
+  }
 
   // add liquidity when circuit break
   function testRevert_WhenCircuitBreak_PLPShouldNotAddLiquidity() external {
@@ -58,8 +75,8 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
   // add liquidity on unlisted token
   function testRevert_WhenPLPAddLiquidity_WithUnlistedToken() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_InvalidToken()"));
-    // wbtc is not listed as plp token
-    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
+    // bad is not listed as plp token
+    liquidityService.addLiquidity(ALICE, address(bad), 10 ether, 0);
   }
 
   // add liquidity on not accepted token

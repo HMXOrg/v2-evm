@@ -8,6 +8,7 @@ import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
 contract MockCalculator is ICalculator {
   uint256 equity;
   uint256 mmr;
+  uint256 aum;
 
   address public oracle;
 
@@ -23,6 +24,10 @@ contract MockCalculator is ICalculator {
     mmr = _mockMmr;
   }
 
+  function setAUM(uint256 _aum) external {
+    aum = _aum;
+  }
+
   function getEquity(
     address /* _subAccount */
   ) external view returns (uint256) {
@@ -33,12 +38,12 @@ contract MockCalculator is ICalculator {
     return mmr;
   }
 
-  function getAUM(bool /* isMaxPrice */) external pure returns (uint256) {
-    return 0;
+  function getAUM(bool /* isMaxPrice */) external view returns (uint256) {
+    return aum;
   }
 
-  function getAUME30(bool /* isMaxPrice */) external pure returns (uint256) {
-    return 0;
+  function getAUME30(bool /* isMaxPrice */) external view returns (uint256) {
+    return aum;
   }
 
   function getPLPValueE30(

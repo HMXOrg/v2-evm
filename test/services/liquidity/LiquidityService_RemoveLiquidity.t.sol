@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { console } from "forge-std/console.sol";
-
-import { BaseTest } from "../../base/BaseTest.sol";
+import { LiquidityService_Base } from "./LiquidityService_Base.t.sol";
 
 import { LiquidityService } from "../../../src/services/LiquidityService.sol";
 import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
@@ -20,15 +18,9 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - remove liquidity in cooldown period
 //   - fail on slippage
 
-abstract contract LiquidityService_RemoveLiquidity is BaseTest {
-  LiquidityService liquidityService;
-
-  function setUp() public virtual {
-    // deploy liquidity service
-    liquidityService = new LiquidityService(
-      address(configStorage),
-      address(vaultStorage)
-    );
+contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
+  function setUp() public virtual override {
+    super.setUp();
   }
 
   function testCorrectness_WhenPLPRemoveLiquidity_WithDynamicFee() external {}

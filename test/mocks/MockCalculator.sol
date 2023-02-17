@@ -17,61 +17,66 @@ contract MockCalculator is ICalculator {
     mmr = _mockMmr;
   }
 
-  function getEquity(address _subAccount) external view returns (uint256) {
+  function getEquity(
+    address /* _subAccount */
+  ) external view returns (uint256) {
     return equity;
   }
 
-  function getMMR(address _subAccount) external view returns (uint256) {
+  function getMMR(address /* _subAccount */) external view returns (uint256) {
     return mmr;
   }
 
-  function getAUM(bool isMaxPrice) external returns (uint256) {
+  function getAUM(bool /* isMaxPrice */) external pure returns (uint256) {
     return 0;
   }
 
-  function getAUME30(bool isMaxPrice) external returns (uint256) {
+  function getAUME30(bool /* isMaxPrice */) external pure returns (uint256) {
     return 0;
   }
 
-  function getPLPPrice(uint256 aum, uint256 supply) external returns (uint256) {
+  function getPLPPrice(
+    uint256 /* aum */,
+    uint256 /* supply */
+  ) external pure returns (uint256) {
     return 0;
   }
 
   function getMintAmount(
-    uint256 _aum,
-    uint256 _totalSupply,
-    uint256 _amount
-  ) external view returns (uint256) {
+    uint256 /* _aum */,
+    uint256 /* _totalSupply */,
+    uint256 /* _amount */
+  ) external pure returns (uint256) {
     return 0;
   }
 
   function convertTokenDecimals(
-    uint256 _fromTokenDecimals,
-    uint256 _toTokenDecimals,
-    uint256 _amount
+    uint256 /* _fromTokenDecimals */,
+    uint256 /* _toTokenDecimals */,
+    uint256 /* _amount */
   ) external pure returns (uint256) {
     return 0;
   }
 
   function getAddLiquidityFeeRate(
-    address _token,
-    uint256 _tokenValue,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
-  ) external returns (uint256) {
+    address /*_token*/,
+    uint256 /*_tokenValue*/,
+    IConfigStorage /*_configStorage*/,
+    IVaultStorage /*_vaultStorage*/
+  ) external pure returns (uint256) {
     return 0;
   }
 
   function getRemoveLiquidityFeeRate(
-    address _token,
-    uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
-  ) external returns (uint256) {
+    address /*_token*/,
+    uint256 /*_tokenValueE30*/,
+    IConfigStorage /*_configStorage*/,
+    IVaultStorage /*_vaultStorage*/
+  ) external pure returns (uint256) {
     return 0;
   }
 
-  function oracle() external returns (address) {
+  function oracle() external pure returns (address) {
     return address(0);
   }
 }

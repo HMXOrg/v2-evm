@@ -85,12 +85,12 @@ abstract contract BaseTest is
     mockCalculator = new MockCalculator();
     mockOracle = new MockOracleMiddleware();
 
-    setUpLiquidityConfig();
-    setUpSwapConfig();
-    setUpTradingConfig();
-    setUpMarketConfigs();
-    setUpPlpTokenConfigs();
-    setUpCollateralTokenConfigs();
+    _setUpLiquidityConfig();
+    _setUpSwapConfig();
+    _setUpTradingConfig();
+    _setUpMarketConfigs();
+    _setUpPlpTokenConfigs();
+    _setUpCollateralTokenConfigs();
   }
 
   // --------- Deploy Helpers ---------
@@ -114,6 +114,7 @@ abstract contract BaseTest is
   }
 
   // --------- Test Helpers ---------
+
   /// @notice Helper function to create a price feed update data.
   /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
   /// @param priceData The price data to create the update data.
@@ -142,7 +143,7 @@ abstract contract BaseTest is
   /// --------- Setup helper ------------
 
   /// @notice set up liquidity config
-  function setUpLiquidityConfig() internal {
+  function _setUpLiquidityConfig() private {
     configStorage.setLiquidityConfig(
       IConfigStorage.LiquidityConfig({
         depositFeeRate: 0,
@@ -159,14 +160,14 @@ abstract contract BaseTest is
   }
 
   /// @notice set up swap config
-  function setUpSwapConfig() internal {
+  function _setUpSwapConfig() private {
     configStorage.setSwapConfig(
       IConfigStorage.SwapConfig({ stablecoinSwapFeeRate: 0, swapFeeRate: 0 })
     );
   }
 
   /// @notice set up trading config
-  function setUpTradingConfig() internal {
+  function _setUpTradingConfig() private {
     configStorage.setTradingConfig(
       IConfigStorage.TradingConfig({
         fundingInterval: 1,
@@ -176,7 +177,7 @@ abstract contract BaseTest is
   }
 
   /// @notice set up all market configs in Perp
-  function setUpMarketConfigs() internal {
+  function _setUpMarketConfigs() private {
     // add market config
     IConfigStorage.MarketConfig memory _config = IConfigStorage.MarketConfig({
       assetId: "ETH",
@@ -199,11 +200,11 @@ abstract contract BaseTest is
   }
 
   /// @notice set up all plp token configs in Perp
-  function setUpPlpTokenConfigs() internal {
+  function _setUpPlpTokenConfigs() private {
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig = IConfigStorage
       .PLPTokenConfig({
         decimals: 18,
-        targetWeight: 0,
+        targetWeight: 1e18,
         bufferLiquidity: 0,
         maxWeightDiff: 0,
         isStableCoin: false,
@@ -214,7 +215,7 @@ abstract contract BaseTest is
   }
 
   /// @notice set up all collateral token configs in Perp
-  function setUpCollateralTokenConfigs() internal {
+  function _setUpCollateralTokenConfigs() private {
     IConfigStorage.CollateralTokenConfig
       memory _collatTokenConfig = IConfigStorage.CollateralTokenConfig({
         decimals: weth.decimals(),

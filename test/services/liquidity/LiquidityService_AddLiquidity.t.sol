@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { console } from "forge-std/console.sol";
 
-import { BaseTest } from "../../base/BaseTest.sol";
+import { LiquidityService_Base } from "./LiquidityService_Base.t.sol";
 
 import { LiquidityService } from "../../../src/services/LiquidityService.sol";
 import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
@@ -20,26 +20,36 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - add liquidity with zero amount
 //   - slippage check fail
 //   - PLP transfer in cooldown period
-abstract contract LiquidityService_AddLiquidity is BaseTest {
-  LiquidityService liquidityService;
-
-  function setUp() public virtual {
-    // deploy liquidity service
-    liquidityService = new LiquidityService(
-      address(configStorage),
-      address(vaultStorage)
-    );
+contract LiquidityService_AddLiquidity is LiquidityService_Base {
+  function setUp() public virtual override {
+    super.setUp();
   }
 
   function testCorrectness_WhenPLPAddLiquidity_WithDynamicFee() external {}
 
   function testCorrectness_WhenPLPAddLiquidity_WithoutDynamicFee() external {}
 
-  function testRevert_WhenPLPAddLiquidity_WithUnlistedToken() external {}
+  function testRevert_WhenPLPAddLiquidity_WithUnlistedToken() external {
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_InvalidToken()"));
+    // wbtc is not listed as plp token
+    liquidityService.addLiquidity(ALICE, address(wbtc), 10 ether, 0);
+  }
 
-  function testRevert_WhenPLPAddLiquidity_WithNotAcceptedToken() external {}
+  function testRevert_WhenPLPAddLiquidity_WithNotAcceptedToken() external {
+    // update weth to not accepted
+    IConfigStorage.PLPTokenConfig memory _plpTokenConfig = configStorage
+      .getPLPTokenConfig(address(weth));
+    _plpTokenConfig.accepted = false;
+    configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig);
 
-  function testRevert_WhenPLPAddLiquidity_WithZeroAmount() external {}
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_InvalidToken()"));
+    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
+  }
+
+  function testRevert_WhenPLPAddLiquidity_WithZeroAmount() external {
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
+    liquidityService.addLiquidity(ALICE, address(weth), 0, 0);
+  }
 
   function testRevert_WhenPLPAddLiquidity_AndSlippageCheckFail() external {}
 

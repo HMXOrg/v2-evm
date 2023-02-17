@@ -373,12 +373,9 @@ contract LiquidityService is ILiquidityService {
   }
 
   function _validatePLPHealthCheck(address _token) internal view {
-    uint256 _liquidityLeft = IVaultStorage(vaultStorage).plpLiquidity(_token) -
-      IVaultStorage(vaultStorage).plpReserved(_token);
-
     // liquidityLeft < bufferLiquidity
     if (
-      _liquidityLeft <
+      IVaultStorage(vaultStorage).plpLiquidity(_token) <
       IConfigStorage(configStorage).getPlpTokenConfigs(_token).bufferLiquidity
     ) {
       revert LiquidityService_InsufficientLiquidityBuffer();

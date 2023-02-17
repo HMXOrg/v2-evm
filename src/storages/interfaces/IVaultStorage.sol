@@ -27,8 +27,6 @@ interface IVaultStorage {
 
   function plpTotalLiquidityUSDE30() external returns (uint256);
 
-  function plpReserved(address _token) external view returns (uint256);
-
   function plpLiquidity(address _token) external view returns (uint256);
 
   // SETTER
@@ -52,8 +50,6 @@ interface IVaultStorage {
   function removePLPTotalLiquidityUSDE30(uint256 _liquidity) external;
 
   function removePLPLiquidity(address _token, uint256 _amount) external;
-
-  function removePLPReserved(address _token, uint256 _amount) external;
 
   function setTraderBalance(
     address _trader,

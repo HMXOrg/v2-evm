@@ -11,17 +11,10 @@ import { CrossMarginService_Base } from "./CrossMarginService_Base.t.sol";
 //   - Try deposit token collaeral with not accepted token (Ex. Fx, Equity)
 //   - Try deposit token collateral with incufficent allowance
 //   - Try deposit token collateral with exceed trader's balance
-//   - Try deposit token collateral with initial balance
 // - success
-
-// What is this test not covered
-//   - borrowing fee
-//   - funding fee
-//   - trading fee
-//   - settlement profit
-//   - settlement loss
-//   - protocol curcuit break
-//   - trading curcuit break
+//   - Try deposit token collateral with initial balance and test accounting balance
+//   - Try deposit token collateral with initial balance and test deposit token lists
+//   - Try deposit token collateral with existing balance and test deposit token lists + balance
 
 contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   function setUp() public virtual override {
@@ -79,7 +72,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   // | ------- Test Correctness ------------ |
   // =========================================
 
-  // Try deposit token collateral with initial balance
+  // Try deposit token collateral with initial balance and test accounting balance
   function testCorrectness_depositCollateral_newDepositingToken() external {
     // Before start depositing, ALICE must has 0 amount of WETH token
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 0);
@@ -93,7 +86,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     assertEq(weth.balanceOf(address(vaultStorage)), 10 ether);
   }
 
-  // Try deposit token collateral with initial balance
+  // Try deposit token collateral with initial balance and test deposit token lists
   function testCorrectness_depositCollateral_newDepositingToken_traderTokenList()
     external
   {
@@ -109,6 +102,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     assertEq(traderTokenAfter.length, 1);
   }
 
+  // Try deposit token collateral with existing balance and test deposit token lists + balance
   function testCorrectness_depositCollateral_oldDepositingToken_traderTokenList()
     external
   {

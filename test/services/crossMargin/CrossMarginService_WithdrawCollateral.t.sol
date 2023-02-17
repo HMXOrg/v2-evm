@@ -5,6 +5,17 @@ import { console } from "forge-std/console.sol";
 
 import { CrossMarginService_Base } from "./CrossMarginService_Base.t.sol";
 
+// What is this test DONE
+// - revert
+//   - Try withdraw token collateral with not in whitelist
+//   - Try withdraw token collaeral with not accepted token (Ex. Fx, Equity)
+//   - Try withdraw token collateral with incufficent allowance
+//   - Try withdraw token collateral with equity below IMR
+// - success
+//   - Try deposit and withdraw collateral with happy case
+//   - Try deposit and withdraw collateral with happy case and check on token list of sub account
+//   - Try deposit and withdraw multi tokens and checks on  token list of sub account
+
 contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -14,6 +25,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
   // | ------- Test Revert ----------------- |
   // =========================================
 
+  // Try withdraw token collateral with not in whitelist
   function testRevert_withdrawCollateral_onlyWhitelistedExecutor() external {
     vm.expectRevert(abi.encodeWithSignature("NotWhiteListed()"));
     crossMarginService.withdrawCollateral(
@@ -23,6 +35,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
     );
   }
 
+  // Try withdraw token collaeral with not accepted token (Ex. Fx, Equity)
   function testRevert_withdrawCollateral_onlyAcceptedToken() external {
     vm.prank(CROSS_MARGIN_HANDLER);
     vm.expectRevert(abi.encodeWithSignature("NotAcceptedCollateral()"));
@@ -33,6 +46,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
     );
   }
 
+  //  Try withdraw token collateral with incufficent allowance
   function testRevert_withdrawCollateral_InsufficientBalance() external {
     vm.prank(CROSS_MARGIN_HANDLER);
     vm.expectRevert(
@@ -45,6 +59,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
     );
   }
 
+  // Try withdraw token collateral with equity below IMR
   function testRevert_withdrawCollateral_WithdrawBalanceBelowIMR() external {
     weth.mint(ALICE, 10 ether);
     simulateAliceDepositToken(address(weth), (10 ether));
@@ -65,6 +80,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
   // | ------- Test Correctness ------------ |
   // =========================================
 
+  // Try deposit and withdraw collateral with happy case
   function testCorrectness_withdrawCollateral() external {
     // Before start depositing, ALICE must has 0 amount of WETH token
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 0);
@@ -87,6 +103,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
     assertEq(weth.balanceOf(ALICE), 3 ether);
   }
 
+  // Try deposit and withdraw collateral with happy case and check on token list of sub account
   function testCorrectness_withdrawCollateral_traderTokenList_singleToken()
     external
   {
@@ -115,6 +132,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
     assertEq(vaultStorage.getTraderTokens(ALICE).length, 0);
   }
 
+  // Try deposit and withdraw multi tokens and checks on  token list of sub account
   function testCorrectness_withdrawCollateral_traderTokenList_multiTokens()
     external
   {

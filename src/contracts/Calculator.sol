@@ -138,6 +138,8 @@ contract Calculator is Owned, ICalculator {
     return _equityValueE30;
   }
 
+  // @todo integrate realizedPnl Value
+
   /// @notice Calculate unrealized PnL from trader's sub account.
   /// @dev This unrealized pnl deducted by collateral factor.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.

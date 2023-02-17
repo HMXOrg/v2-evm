@@ -63,7 +63,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     assertEq(weth.balanceOf(address(vaultStorage)), 0);
 
     weth.mint(ALICE, 10 ether);
-    simulate_alice_deposit_token(address(weth), 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
 
     // After deposited, ALICE must has 10 WETH as collateral token
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 10 ether);
@@ -78,7 +78,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     assertEq(traderTokenBefore.length, 0);
 
     weth.mint(ALICE, 10 ether);
-    simulate_alice_deposit_token(address(weth), 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
 
     // After ALICE start depositing, token lists must contains 1 token
     address[] memory traderTokenAfter = vaultStorage.getTraderTokens(ALICE);
@@ -94,11 +94,11 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
 
     // ALICE deposits first time
     weth.mint(ALICE, 10 ether);
-    simulate_alice_deposit_token(address(weth), 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
 
     // ALICE deposits second time
     weth.mint(ALICE, 10 ether);
-    simulate_alice_deposit_token(address(weth), 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
 
     // After ALICE start depositing, token lists must contains 1 token
     address[] memory traderTokenAfter = vaultStorage.getTraderTokens(ALICE);

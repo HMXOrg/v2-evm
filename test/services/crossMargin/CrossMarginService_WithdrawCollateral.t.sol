@@ -47,7 +47,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
 
   function testRevert_withdrawCollateral_WithdrawBalanceBelowIMR() external {
     weth.mint(ALICE, 10 ether);
-    simulate_alice_deposit_token(address(weth), (10 ether));
+    simulateAliceDepositToken(address(weth), (10 ether));
 
     // Mock calculator return values
     mockCalculator.setEquity(10 ether);
@@ -72,14 +72,14 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
     assertEq(weth.balanceOf(ALICE), 0 ether);
 
     weth.mint(ALICE, 10 ether);
-    simulate_alice_deposit_token(address(weth), (10 ether));
+    simulateAliceDepositToken(address(weth), (10 ether));
 
     // After deposited, ALICE must has 10 WETH as collateral token
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 10 ether);
     assertEq(weth.balanceOf(address(vaultStorage)), 10 ether);
     assertEq(weth.balanceOf(ALICE), 0 ether);
 
-    simulate_alice_withdraw_token(address(weth), 3 ether);
+    simulateAliceWithdrawToken(address(weth), 3 ether);
 
     // After withdrawn, ALICE must has 7 WETH as collateral token
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 7 ether);
@@ -95,19 +95,19 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
 
     // ALICE deposits first time
     weth.mint(ALICE, 10 ether);
-    simulate_alice_deposit_token(address(weth), (10 ether));
+    simulateAliceDepositToken(address(weth), (10 ether));
 
     // After ALICE start depositing, token lists must contains 1 token
     assertEq(vaultStorage.getTraderTokens(ALICE).length, 1);
 
     // ALICE try withdrawing some of WETH from Vault
-    simulate_alice_withdraw_token(address(weth), 3 ether);
+    simulateAliceWithdrawToken(address(weth), 3 ether);
 
     // After ALICE withdrawn some of WETH, list of token must still contain WETH
     assertEq(vaultStorage.getTraderTokens(ALICE).length, 1);
 
     // ALICE try withdrawing all of WETH from Vault
-    simulate_alice_withdraw_token(address(weth), 7 ether);
+    simulateAliceWithdrawToken(address(weth), 7 ether);
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 0 ether);
     assertEq(weth.balanceOf(ALICE), 10 ether);
 
@@ -120,17 +120,17 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
   {
     // ALICE deposits WETH
     weth.mint(ALICE, 10 ether);
-    simulate_alice_deposit_token(address(weth), 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
 
     // ALICE deposits USDC
     usdc.mint(ALICE, 10_000 * 1e6);
-    simulate_alice_deposit_token(address(usdc), 10_000 * 1e6);
+    simulateAliceDepositToken(address(usdc), 10_000 * 1e6);
 
     // After ALICE start depositing, token lists must contains 2 tokens
     assertEq(vaultStorage.getTraderTokens(ALICE).length, 2);
 
     // ALICE try withdrawing all of WETH from Vault
-    simulate_alice_withdraw_token(address(weth), 10 ether);
+    simulateAliceWithdrawToken(address(weth), 10 ether);
 
     // After ALICE withdrawn all of WETH, list of token must still contain USDC
     assertEq(vaultStorage.getTraderTokens(ALICE).length, 1);

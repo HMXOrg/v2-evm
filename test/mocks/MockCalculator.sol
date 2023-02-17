@@ -54,11 +54,17 @@ contract MockCalculator is ICalculator {
   // | ---------- Calculator --------------- |
   // =========================================
 
-  function calIMR(uint256, uint256) external view returns (uint256) {
+  function calculatePositionIMR(
+    uint256,
+    uint256
+  ) external view returns (uint256) {
     return imr;
   }
 
-  function calMMR(uint256, uint256) external view returns (uint256) {
+  function calculatePositionMMR(
+    uint256,
+    uint256
+  ) external view returns (uint256) {
     return mmr;
   }
 }

@@ -10,7 +10,7 @@ interface ICalculator {
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return imrE30 The IMR amount required on position size, 30 decimals.
-  function calIMR(
+  function calculatePositionIMR(
     uint256 _positionSizeE30,
     uint256 _marketIndex
   ) external view returns (uint256 imrE30);
@@ -19,7 +19,7 @@ interface ICalculator {
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return mmrE30 The MMR amount required on position size, 30 decimals.
-  function calMMR(
+  function calculatePositionMMR(
     uint256 _positionSizeE30,
     uint256 _marketIndex
   ) external view returns (uint256 mmrE30);

@@ -114,7 +114,7 @@ contract Calculator is Owned, ICalculator {
     uint256 collateralValueE30 = getCollateralValue(_subAccount);
 
     // Calculate unrealized PnL on opening trader's position
-    int unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount);
+    int256 unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount);
 
     // Calculate Borrwing fee on opening trader's position
     // @todo - calculate borrowing fee
@@ -142,19 +142,15 @@ contract Calculator is Owned, ICalculator {
   /// @return unrealizedPnlE30 PnL value after deducted by collateral factor.
   function getUnrealizedPnl(
     address _subAccount
-  ) public view returns (int unrealizedPnlE30) {
+  ) public view returns (int256 unrealizedPnlE30) {
     // Get all trader's opening positions
     IPerpStorage.Position[] memory traderPositions = IPerpStorage(perpStorage)
       .getPositionBySubAccount(_subAccount);
-
-    console.log("traderPositions.length", traderPositions.length);
 
     // Loop through all trader's positions
     for (uint256 i; i < traderPositions.length; ) {
       IPerpStorage.Position memory position = traderPositions[i];
       bool isLong = position.positionSizeE30 > 0 ? true : false;
-
-      console.log("isLong", isLong);
 
       if (position.avgEntryPriceE30 == 0)
         revert ICalculator_InvalidAveragePrice();
@@ -184,18 +180,17 @@ contract Calculator is Owned, ICalculator {
           : priceE30 - position.avgEntryPriceE30;
       }
 
-      // @todo - Tuning this
-      int delta = (position.positionSizeE30 * int(priceDeltaE30)) /
+      int256 delta = (position.positionSizeE30 * int(priceDeltaE30)) /
         int(position.avgEntryPriceE30);
 
       if (isLong) {
         delta = priceE30 > position.avgEntryPriceE30 ? delta : -delta;
       } else {
-        delta = priceE30 < position.avgEntryPriceE30 ? delta : -delta;
+        delta = priceE30 < position.avgEntryPriceE30 ? -delta : delta;
       }
 
       // If profit then deduct PnL with colleral factor.
-      delta += delta > 0
+      delta = delta > 0
         ? (int(IConfigStorage(configStorage).pnlFactor()) * delta) / 1e18
         : delta;
 
@@ -206,6 +201,8 @@ contract Calculator is Owned, ICalculator {
         i++;
       }
     }
+
+    return unrealizedPnlE30;
   }
 
   /// @notice Calculate collateral tokens to value from trader's sub account.
@@ -219,38 +216,28 @@ contract Calculator is Owned, ICalculator {
       _subAccount
     );
 
-    console.log("traderTokens.length", traderTokens.length);
     // Loop through list of current depositing tokens
     for (uint256 i; i < traderTokens.length; ) {
-      console.log("================================================");
       address token = traderTokens[i];
 
       // Get token decimals from ConfigStorage
       uint256 decimals = ERC20(token).decimals();
-
-      console.log("decimals", decimals);
 
       // Get collateralFactor from ConfigStorage
       uint256 collateralFactor = IConfigStorage(configStorage)
         .getCollateralTokenConfigs(token)
         .collateralFactor;
 
-      console.log("collateralFactor", collateralFactor);
-
       // Get priceConfidentThreshold from ConfigStorage
       uint256 priceConfidenceThreshold = IConfigStorage(configStorage)
         .getMarketConfigByToken(token)
         .priceConfidentThreshold;
-
-      console.log("priceConfidenceThreshold", priceConfidenceThreshold);
 
       // Get current collateral token balance of trader's account
       uint256 amount = IVaultStorage(vaultStorage).traderBalances(
         _subAccount,
         token
       );
-
-      console.log("amount", amount);
 
       bool isMaxPrice = false; // @note Collateral value always use Min price
       // Get price from oracle
@@ -262,8 +249,6 @@ contract Calculator is Owned, ICalculator {
           priceConfidenceThreshold
         );
 
-      console.log("priceE30", priceE30);
-
       // Calculate accumulative value of collateral tokens
       // collateal value = (collateral amount * price) * collateralFactor
       // collateralFactor 1 ether = 100%
@@ -271,12 +256,12 @@ contract Calculator is Owned, ICalculator {
         (amount * priceE30 * collateralFactor) /
         (10 ** decimals * 1e18);
 
-      console.log("collateralValueE30", collateralValueE30);
-
       unchecked {
         i++;
       }
     }
+
+    return collateralValueE30;
   }
 
   /// @notice Calculate Intial Margin Requirement from trader's sub account.
@@ -301,12 +286,14 @@ contract Calculator is Owned, ICalculator {
       }
 
       // Calculate IMR on position
-      imrValueE30 += calIMR(size, position.marketIndex);
+      imrValueE30 += calculatePositionIMR(size, position.marketIndex);
 
       unchecked {
         i++;
       }
     }
+
+    return imrValueE30;
   }
 
   /// @notice Calculate Maintenance Margin Value from trader's sub account.
@@ -330,19 +317,21 @@ contract Calculator is Owned, ICalculator {
         size = uint(position.positionSizeE30);
       }
       // Calculate MMR on position
-      mmrValueE30 += calMMR(size, position.marketIndex);
+      mmrValueE30 += calculatePositionMMR(size, position.marketIndex);
 
       unchecked {
         i++;
       }
     }
+
+    return mmrValueE30;
   }
 
   /// @notice Calculate for Initial Margin Requirement from position size.
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return imrE30 The IMR amount required on position size, 30 decimals.
-  function calIMR(
+  function calculatePositionIMR(
     uint256 _positionSizeE30,
     uint256 _marketIndex
   ) public view returns (uint256 imrE30) {
@@ -352,13 +341,14 @@ contract Calculator is Owned, ICalculator {
     ).getMarketConfigByIndex(_marketIndex);
 
     imrE30 = (_positionSizeE30 * marketConfig.initialMarginFraction) / 1e18;
+    return imrE30;
   }
 
   /// @notice Calculate for Maintenance Margin Requirement from position size.
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return mmrE30 The MMR amount required on position size, 30 decimals.
-  function calMMR(
+  function calculatePositionMMR(
     uint256 _positionSizeE30,
     uint256 _marketIndex
   ) public view returns (uint256 mmrE30) {
@@ -368,5 +358,6 @@ contract Calculator is Owned, ICalculator {
     ).getMarketConfigByIndex(_marketIndex);
 
     mmrE30 = (_positionSizeE30 * marketConfig.maintenanceMarginFraction) / 1e18;
+    return mmrE30;
   }
 }

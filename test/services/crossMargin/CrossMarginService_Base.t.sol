@@ -60,7 +60,7 @@ contract CrossMarginService_Base is BaseTest {
   // | ------- common function ------------- |
   // =========================================
 
-  function simulate_alice_deposit_token(
+  function simulateAliceDepositToken(
     address _token,
     uint256 _depositAmount
   ) internal {
@@ -70,7 +70,7 @@ contract CrossMarginService_Base is BaseTest {
     vm.stopPrank();
   }
 
-  function simulate_alice_withdraw_token(
+  function simulateAliceWithdrawToken(
     address _token,
     uint256 _withdrawAmount
   ) internal {

@@ -137,17 +137,18 @@ contract Calculator is ICalculator {
       int256 _pnlShortE30 = 0;
 
       //TODO validate timestamp of these
-      (uint priceE30Long, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
+      (uint256 priceE30Long, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
         marketConfig.assetId,
         false,
         marketConfig.priceConfidentThreshold
       );
 
-      (uint priceE30Short, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        true,
-        marketConfig.priceConfidentThreshold
-      );
+      (uint256 priceE30Short, ) = IOracleMiddleware(oracle)
+        .unsafeGetLatestPrice(
+          marketConfig.assetId,
+          true,
+          marketConfig.priceConfidentThreshold
+        );
 
       //TODO validate price, revert when crypto price stale, stock use Lastprice
 
@@ -325,38 +326,37 @@ contract Calculator is ICalculator {
 
   function getCollateralValue(
     address _subAccount
-  ) public view returns (uint collateralValueE30) {
+  ) public view returns (uint256 collateralValueE30) {
     // Get list of current depositing tokens on trader's account
     address[] memory traderTokens = IVaultStorage(vaultStorage).getTraderTokens(
       _subAccount
     );
 
     // Loop through list of current depositing tokens
-    for (uint i; i < traderTokens.length; ) {
+    for (uint256 i; i < traderTokens.length; ) {
       address token = traderTokens[i];
 
       //Get token decimals from ConfigStorage
-      uint decimals = IConfigStorage(configStorage)
+      uint256 decimals = IConfigStorage(configStorage)
         .getCollateralTokenConfigs(token)
         .decimals;
 
       //Get priceConfidentThreshold from ConfigStorage
-      uint priceConfidenceThreshold = IConfigStorage(configStorage)
+      uint256 priceConfidenceThreshold = IConfigStorage(configStorage)
         .getMarketConfigByToken(token)
         .priceConfidentThreshold;
 
       // Get current collateral token balance of trader's account
-      uint amount = IVaultStorage(vaultStorage).traderBalances(
+      uint256 amount = IVaultStorage(vaultStorage).traderBalances(
         _subAccount,
         token
       );
 
-      bool isMaxPrice = false; // @note Collateral value always use Min price
       // Get price from oracle
       // @todo - validate price age
-      (uint priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
+      (uint256 priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
         token.toBytes32(),
-        isMaxPrice,
+        false, // @note Collateral value always use Min price
         priceConfidenceThreshold
       );
 

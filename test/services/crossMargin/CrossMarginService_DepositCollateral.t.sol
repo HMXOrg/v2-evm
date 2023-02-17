@@ -5,6 +5,24 @@ import { console } from "forge-std/console.sol";
 
 import { CrossMarginService_Base } from "./CrossMarginService_Base.t.sol";
 
+// What is this test DONE
+// - revert
+//   - Try deposit token collateral with not in whitelist
+//   - Try deposit token collaeral with not accepted token (Ex. Fx, Equity)
+//   - Try deposit token collateral with incufficent allowance
+//   - Try deposit token collateral with exceed trader's balance
+//   - Try deposit token collateral with initial balance
+// - success
+
+// What is this test not covered
+//   - borrowing fee
+//   - funding fee
+//   - trading fee
+//   - settlement profit
+//   - settlement loss
+//   - protocol curcuit break
+//   - trading curcuit break
+
 contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -14,6 +32,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   // | ------- Test Revert ----------------- |
   // =========================================
 
+  // Try deposit token collateral with not in whitelist
   function testRevert_depositCollateral_onlyWhitelistedExecutor() external {
     vm.expectRevert(abi.encodeWithSignature("NotWhiteListed()"));
     crossMarginService.depositCollateral(
@@ -23,12 +42,14 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     );
   }
 
+  // Try deposit token collaeral with not accepted token (Ex. Fx, Equity)
   function testRevert_depositCollateral_onlyAcceptedToken() external {
     vm.prank(CROSS_MARGIN_HANDLER);
     vm.expectRevert(abi.encodeWithSignature("NotAcceptedCollateral()"));
     crossMarginService.depositCollateral(address(this), address(dai), 10 ether);
   }
 
+  // Try deposit token collateral with incufficent allowance
   function testRevert_depositCollateral_InsufficientAllowance() external {
     vm.prank(CROSS_MARGIN_HANDLER);
     vm.expectRevert("ERC20: insufficient allowance");
@@ -39,6 +60,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     );
   }
 
+  // Try deposit token collateral with exceed trader's balance
   function testRevert_depositCollateral_TransferExceedBalance() external {
     uint256 depositAmount = 10 ether;
 
@@ -57,6 +79,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   // | ------- Test Correctness ------------ |
   // =========================================
 
+  // Try deposit token collateral with initial balance
   function testCorrectness_depositCollateral_newDepositingToken() external {
     // Before start depositing, ALICE must has 0 amount of WETH token
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 0);
@@ -70,6 +93,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     assertEq(weth.balanceOf(address(vaultStorage)), 10 ether);
   }
 
+  // Try deposit token collateral with initial balance
   function testCorrectness_depositCollateral_newDepositingToken_traderTokenList()
     external
   {

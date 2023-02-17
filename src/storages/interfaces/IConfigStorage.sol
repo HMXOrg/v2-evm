@@ -75,6 +75,8 @@ interface IConfigStorage {
   }
 
   // STATES
+  function treasury() external view returns (address);
+
   function pnlFactor() external view returns (uint256);
 
   function getMarketConfigByIndex(

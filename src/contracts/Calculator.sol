@@ -13,6 +13,8 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
+import { Math } from "../utils/Math.sol";
+
 import { console } from "forge-std/console.sol"; //@todo - remove
 
 contract Calculator is Owned, ICalculator {
@@ -125,15 +127,18 @@ contract Calculator is Owned, ICalculator {
 
     // Sum all asset's values
     equityValueE30 += collateralValueE30;
+
     if (unrealizedPnlValueE30 > 0) {
-      equityValueE30 += uint(unrealizedPnlValueE30);
+      equityValueE30 += Math.abs(unrealizedPnlValueE30);
     } else {
-      equityValueE30 -= uint(unrealizedPnlValueE30);
+      equityValueE30 -= Math.abs(unrealizedPnlValueE30);
     }
 
     // @todo - include borrowing and funding fee
     // equityValueE30 -= borrowingFeeE30;
     // equityValueE30 -= fundingFeeE30;
+
+    return equityValueE30;
   }
 
   /// @notice Calculate unrealized PnL from trader's sub account.

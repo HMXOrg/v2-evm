@@ -209,7 +209,7 @@ contract ConfigStorage is IConfigStorage, Ownable {
   /// any atetempt to remove token will be reverted.
   /// @param _tokens The token addresses to set.
   /// @param _configs The token configs to set.
-  function addorUpdateAcceptedToken(
+  function addOrUpdateAcceptedToken(
     address[] calldata _tokens,
     PLPTokenConfig[] calldata _configs
   ) external onlyOwner {

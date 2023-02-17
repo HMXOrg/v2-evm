@@ -5,6 +5,7 @@ interface IVaultStorage {
   // ERRORs
   error IVaultStorage_TraderTokenAlreadyExists();
   error IVaultStorage_TraderBalanceRemaining();
+  error IVaultStorage_ZeroAddress();
 
   function liquidityProviderBalances(
     address _liquidityProvider,
@@ -40,7 +41,11 @@ interface IVaultStorage {
 
   function addPLPLiquidity(address _token, uint256 _amount) external;
 
-  function removeFee(address _token, uint256 _amount) external;
+  function withdrawFee(
+    address _token,
+    uint256 _amount,
+    address _receiver
+  ) external;
 
   function removePLPLiquidityUSDE30(address _token, uint256 amount) external;
 

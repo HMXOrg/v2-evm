@@ -26,7 +26,8 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        openInterest: 0
       })
     );
 
@@ -59,7 +60,8 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        openInterest: 0
       })
     );
 
@@ -89,7 +91,8 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        openInterest: 0
       })
     );
 
@@ -119,7 +122,8 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        openInterest: 0
       })
     );
 
@@ -149,7 +153,8 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        openInterest: 0
       })
     );
 

@@ -174,7 +174,8 @@ contract Calculator is Owned, ICalculator {
         .getLatestPriceWithMarketStatus(
           marketConfig.assetId,
           isUseMaxPrice,
-          marketConfig.priceConfidentThreshold
+          marketConfig.priceConfidentThreshold,
+          0
         );
 
       // Calculate for priceDelta
@@ -251,7 +252,8 @@ contract Calculator is Owned, ICalculator {
         .getLatestPriceWithMarketStatus(
           token.toBytes32(),
           isMaxPrice,
-          priceConfidenceThreshold
+          priceConfidenceThreshold,
+          0
         );
 
       // Calculate accumulative value of collateral tokens

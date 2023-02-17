@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
@@ -15,12 +16,13 @@ contract PerpStorage is IPerpStorage {
   mapping(address => uint256[]) public subAccountPositionIndices;
 
   mapping(address => CollateralToken) public collateralTokens;
+  // market id => GlobalMarket
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
   constructor() {}
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
+  //////////////////////  GETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
   function getPositionBySubAccount(
@@ -47,6 +49,14 @@ contract PerpStorage is IPerpStorage {
     }
   }
 
+  // todo: add description
+  function getPositionById(
+    bytes32 _positionId
+  ) external view returns (Position memory) {
+    uint256 _index = positionIndices[_positionId];
+    return positions[_index];
+  }
+
   // todo: remove
   function addPosition(
     address _primaryAccount,
@@ -55,7 +65,8 @@ contract PerpStorage is IPerpStorage {
     bytes32 _positionId,
     int256 _newPositionSizeE30,
     uint256 _newReserveValueE30,
-    uint256 _newAvgPriceE30
+    uint256 _newAvgPriceE30,
+    uint256 _newOpenInterest
   ) external {
     positions.push(
       Position({
@@ -68,9 +79,72 @@ contract PerpStorage is IPerpStorage {
         entryFundingRate: 0,
         reserveValueE30: _newReserveValueE30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0
+        realizedPnl: 0,
+        openInterest: _newOpenInterest
       })
     );
     positionIndices[_positionId] = positions.length - 1;
+  }
+
+  function getGlobalMarketByIndex(
+    uint256 _marketIndex
+  ) external view returns (GlobalMarket memory) {
+    return globalMarkets[_marketIndex];
+  }
+
+  function getGlobalState() external view returns (GlobalState memory) {
+    return globalState;
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  SETTER
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  // todo: add description
+  // todo: support to update borrowing rate
+  // todo: support to update funding rate
+  function updatePositionById(
+    bytes32 _positionId,
+    int256 _newPositionSizeE30,
+    uint256 _newReserveValueE30,
+    uint256 _newAvgPriceE30,
+    uint256 _newOpenInterest
+  ) external returns (Position memory _position) {
+    uint256 _index = positionIndices[_positionId];
+    _position = positions[_index];
+    _position.positionSizeE30 = _newPositionSizeE30;
+    _position.reserveValueE30 = _newReserveValueE30;
+    _position.avgEntryPriceE30 = _newAvgPriceE30;
+    _position.openInterest = _newOpenInterest;
+    positions[_index] = _position;
+  }
+
+  // todo: update funding rate
+  function updateGlobalLongMarketById(
+    uint256 _marketIndex,
+    uint256 _newPositionSize,
+    uint256 _newAvgPrice,
+    uint256 _newOpenInterest
+  ) external {
+    globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
+    globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
+    globalMarkets[_marketIndex].longOpenInterest = _newOpenInterest;
+  }
+
+  // todo: update funding rate
+  function updateGlobalShortMarketById(
+    uint256 _marketIndex,
+    uint256 _newPositionSize,
+    uint256 _newAvgPrice,
+    uint256 _newOpenInterest
+  ) external {
+    globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
+    globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
+    globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
+  }
+
+  // todo: update sumBorrowingRate, lastBorrowingTime
+  function updateGlobalState(uint256 _newReserveValueE30) external {
+    globalState.reserveValueE30 = _newReserveValueE30;
   }
 }

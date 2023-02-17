@@ -26,14 +26,11 @@ contract VaultStorage is IVaultStorage {
   );
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  VALIDATION FUNCTION  ///////////////////////////////////////
+  //////////////////////  VALIDATION
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function validatAddTraderToken(
-    address _subAccount,
-    address _token
-  ) internal view {
-    address[] storage traderToken = traderTokens[_subAccount];
+  function validatAddTraderToken(address _trader, address _token) public view {
+    address[] storage traderToken = traderTokens[_trader];
 
     for (uint256 i; i < traderToken.length; ) {
       if (traderToken[i] == _token)
@@ -45,15 +42,15 @@ contract VaultStorage is IVaultStorage {
   }
 
   function validateRemoveTraderToken(
-    address _subAccount,
+    address _trader,
     address _token
-  ) internal view {
-    if (traderBalances[_subAccount][_token] != 0)
+  ) public view {
+    if (traderBalances[_trader][_token] != 0)
       revert IVaultStorage_TraderBalanceRemaining();
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
+  //////////////////////  GETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
   function getTraderTokens(
@@ -63,27 +60,27 @@ contract VaultStorage is IVaultStorage {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER FUNCTION  ///////////////////////////////////////////
+  //////////////////////  SETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
   function setTraderBalance(
-    address _subAccount,
+    address _trader,
     address _token,
     uint256 _balance
   ) external {
-    traderBalances[_subAccount][_token] = _balance;
-    emit LogSetTraderBalance(_subAccount, _token, _balance);
+    traderBalances[_trader][_token] = _balance;
+    emit LogSetTraderBalance(_trader, _token, _balance);
   }
 
-  function addTraderToken(address _subAccount, address _token) external {
-    validatAddTraderToken(_subAccount, _token);
-    traderTokens[_subAccount].push(_token);
+  function addTraderToken(address _trader, address _token) external {
+    validatAddTraderToken(_trader, _token);
+    traderTokens[_trader].push(_token);
   }
 
-  function removeTraderToken(address _subAccount, address _token) external {
-    validateRemoveTraderToken(_subAccount, _token);
+  function removeTraderToken(address _trader, address _token) external {
+    validateRemoveTraderToken(_trader, _token);
 
-    address[] storage traderToken = traderTokens[_subAccount];
+    address[] storage traderToken = traderTokens[_trader];
     uint256 tokenLen = traderToken.length;
     uint256 lastTokenIndex = tokenLen - 1;
 
@@ -105,7 +102,7 @@ contract VaultStorage is IVaultStorage {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////
+  ////////////////////// CALCULATION
   ////////////////////////////////////////////////////////////////////////////////////
   // @todo - add only whitelisted services
   function transferToken(

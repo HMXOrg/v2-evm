@@ -15,14 +15,18 @@ interface IPerpStorage {
     uint256 lastBorrowingTime;
   }
 
-  // mapping marketId => globalPosition;
+  // mapping _marketIndex => globalPosition;
   struct GlobalMarket {
-    uint256 globalLongSize; // (Long Open interest) in Amount
-    uint256 globalShortSize; // (Short Open interest) in Amount
-    uint256 globalLongAvgPrice;
-    uint256 globalShortAvgPrice;
-    uint256 globalLongFundingRate;
-    uint256 globalShortFundingRate;
+    // LONG position
+    uint256 longPositionSize;
+    uint256 longAvgPrice;
+    uint256 longOpenInterest;
+    // SHORT position
+    uint256 shortPositionSize;
+    uint256 shortAvgPrice;
+    uint256 shortOpenInterest;
+    // funding rate
+    uint256 fundingRate;
     uint256 lastFundingTime;
   }
 
@@ -38,9 +42,53 @@ interface IPerpStorage {
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     uint256 realizedPnl;
+    uint256 openInterest;
   }
+
+  // =========================================
+  // | ---------- Getter ------------------- |
+  // =========================================
 
   function getPositionBySubAccount(
     address _trader
   ) external view returns (Position[] memory traderPositions);
+
+  function getPositionById(
+    bytes32 _positionId
+  ) external view returns (Position memory);
+
+  function getGlobalMarketByIndex(
+    uint256 __marketIndex
+  ) external view returns (GlobalMarket memory);
+
+  function getGlobalState() external view returns (GlobalState memory);
+
+  // =========================================
+  // | ---------- Setter ------------------- |
+  // =========================================
+
+  function updatePositionById(
+    bytes32 _positionId,
+    int256 _newPositionSizeE30,
+    uint256 _newReserveValueE30,
+    uint256 _newAvgPriceE30,
+    uint256 _newOpenInterest
+  ) external returns (Position memory _position);
+
+  function updateGlobalLongMarketById(
+    uint256 __marketIndex,
+    uint256 _newPositionSize,
+    uint256 _newAvgPrice,
+    uint256 _newOpenInterest
+  ) external;
+
+  function updateGlobalShortMarketById(
+    uint256 __marketIndex,
+    uint256 _newPositionSize,
+    uint256 _newAvgPrice,
+    uint256 _newOpenInterest
+  ) external;
+
+  // todo: update sumBorrowingRate, lastBorrowingTime
+  function updateGlobalState(uint256 _newReserveValueE30) external;
 }

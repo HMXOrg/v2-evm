@@ -9,8 +9,6 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
-import { console } from "forge-std/console.sol"; //@todo - remove
-
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
 contract ConfigStorage is Ownable, IConfigStorage {
@@ -22,6 +20,7 @@ contract ConfigStorage is Ownable, IConfigStorage {
   SwapConfig public swapConfig;
   TradingConfig public tradingConfig;
   LiquidationConfig public liquidationConfig;
+
   MarketConfig[] public marketConfigs;
 
   // STATES
@@ -69,48 +68,18 @@ contract ConfigStorage is Ownable, IConfigStorage {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER
-  ////////////////////////////////////////////////////////////////////////////////////
-
-  // @todo - Add Description
-  function setServiceExecutor(
-    address _contractAddress,
-    address _executorAddress,
-    bool _isServiceExecutor
-  ) external onlyOwner {
-    serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
-
-    emit SetServiceExecutor(
-      _contractAddress,
-      _executorAddress,
-      _isServiceExecutor
-    );
-  }
-
-  function setPnlFactor(uint256 _pnlFactor) external onlyOwner {
-    pnlFactor = _pnlFactor;
-  }
-
-  ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  GETTER
   ////////////////////////////////////////////////////////////////////////////////////
+
+  function getMarketConfigById(
+    uint256 _marketIndex
+  ) external view returns (MarketConfig memory marketConfig) {
+    return marketConfigs[_marketIndex];
+  }
 
   function getMarketConfigByIndex(
     uint256 _index
   ) external view returns (MarketConfig memory marketConfig) {
-    return marketConfigs[_index];
-  }
-
-  function getMarketConfigs(
-    uint256 _marketId
-  ) external view returns (MarketConfig memory) {
-    return marketConfigs[_marketId];
-  }
-
-  function getMarketConfigById(
-    bytes32 _assetId
-  ) external view returns (MarketConfig memory) {
-    uint256 _index = marketConfigIndices[_assetId];
     return marketConfigs[_index];
   }
 
@@ -139,7 +108,29 @@ contract ConfigStorage is Ownable, IConfigStorage {
     return collateralTokenConfigs[_token];
   }
 
-  // setter functions
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  SETTER
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  // @todo - Add Description
+  function setServiceExecutor(
+    address _contractAddress,
+    address _executorAddress,
+    bool _isServiceExecutor
+  ) external onlyOwner {
+    serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
+
+    emit SetServiceExecutor(
+      _contractAddress,
+      _executorAddress,
+      _isServiceExecutor
+    );
+  }
+
+  function setPnlFactor(uint256 _pnlFactor) external onlyOwner {
+    pnlFactor = _pnlFactor;
+  }
+
   function setLiquidityConfig(LiquidityConfig memory _newConfig) external {
     liquidityConfig = _newConfig;
   }
@@ -166,12 +157,16 @@ contract ConfigStorage is Ownable, IConfigStorage {
     return _newMarketIndex;
   }
 
+  function delistMarket(uint256 _marketIndex) external {
+    delete marketConfigs[_marketIndex].active;
+  }
+
   function setMarketConfig(
-    uint256 _marketId,
+    uint256 _marketIndex,
     MarketConfig memory _newConfig
   ) external returns (MarketConfig memory) {
-    marketConfigs[_marketId] = _newConfig;
-    return marketConfigs[_marketId];
+    marketConfigs[_marketIndex] = _newConfig;
+    return marketConfigs[_marketIndex];
   }
 
   function setPlpTokenConfig(

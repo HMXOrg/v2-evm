@@ -9,14 +9,15 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 
 // LiquidityService_RemoveLiquidity - unit test for remove liquidity function
 // What is this test DONE
-// - correctness
 //   - remove liquidity with dynamic fee
 //   - remove liquidity without dynamic fee
 // - revert
-//   - remove liquidity of another PLP
 //   - remove with zero amount
 //   - fail on slippage
 // What is this test not covered
+// - correctness
+//   - remove liquidity of another PLP
+// - revert
 //   - PLP transfer in cooldown period
 contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
@@ -29,11 +30,20 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     external
   {}
 
-  function testRevert_WhenPLPRemoveLiquidityOfAnotherPLP() external {}
+  function testRevert_WhenPLPRemoveLiquidity_WithZeroAmount() external {
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
+    liquidityService.removeLiquidity(ALICE, address(weth), 0, 0);
+  }
 
-  function testRevert_WhenPLPRemoveLiquidity_WithZeroAmount() external {}
-
-  function testRevert_WhenPLPRemoveLiquidity_AndSlippageCheckFail() external {}
+  function testRevert_WhenPLPRemoveLiquidity_AndSlippageCheckFail() external {
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_Slippage()"));
+    liquidityService.removeLiquidity(
+      ALICE,
+      address(weth),
+      10 ether,
+      type(uint256).max
+    );
+  }
 
   // function testRevert_WhenPLPRemoveLiquidity_AfterAddLiquidity_InCoolDownPeriod()
   //   external

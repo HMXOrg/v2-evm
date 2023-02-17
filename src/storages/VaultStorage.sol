@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 // interfaces
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
@@ -28,12 +30,6 @@ contract VaultStorage is IVaultStorage {
   mapping(address => mapping(address => uint256)) public traderBalances;
   // mapping(address => address[]) public traderTokens;
   mapping(address => address[]) public traderTokens;
-
-  function getTraderTokens(
-    address _trader
-  ) external view returns (address[] memory) {
-    return traderTokens[_trader];
-  }
 
   // TODO modifier?
   function addFee(address _token, uint256 _amount) external {
@@ -93,7 +89,7 @@ contract VaultStorage is IVaultStorage {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  VALIDATION FUNCTION  ///////////////////////////////////////
+  //////////////////////  VALIDATION
   ////////////////////////////////////////////////////////////////////////////////////
 
   function validatAddTraderToken(address _trader, address _token) public view {
@@ -117,7 +113,17 @@ contract VaultStorage is IVaultStorage {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER FUNCTION  ///////////////////////////////////////////
+  //////////////////////  GETTER
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  function getTraderTokens(
+    address _subAccount
+  ) external view returns (address[] memory) {
+    return traderTokens[_subAccount];
+  }
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  SETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
   function setTraderBalance(

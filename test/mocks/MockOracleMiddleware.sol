@@ -14,13 +14,20 @@ contract MockOracleMiddleware is IOracleMiddleware {
     marketStatus = 2;
   }
 
+  // =========================================
+  // | ---------- Setter ------------------- |
+  // =========================================
+  function setPrice(uint256 _newPriceE30) external {
+    priceE30 = _newPriceE30;
+  }
+
   function setMarketStatus(uint8 _newStatus) external {
     marketStatus = _newStatus;
   }
 
-  function setPrice(uint256 _newPriceE30) external {
-    priceE30 = _newPriceE30;
-  }
+  // =========================================
+  // | ---------- Getter ------------------- |
+  // =========================================
 
   // todo: validate price stale here
   function getLatestPrice(

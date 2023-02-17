@@ -26,13 +26,13 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
   function testCorrectness_WhenGetLatestPrice() external {
     // Should get price via PythAdapter successfully.
     // For more edge cases see PythAdapter_GetPriceTest.t.sol
-    (uint maxPrice, uint lastUpdate) = oracleMiddleware.getLatestPrice(
+    (uint256 maxPrice, uint256 lastUpdate) = oracleMiddleware.getLatestPrice(
       address(wbtc).toBytes32(),
       true,
       1 ether,
       60 // trust price age 60 seconds
     );
-    (uint minPrice, ) = oracleMiddleware.getLatestPrice(
+    (uint256 minPrice, ) = oracleMiddleware.getLatestPrice(
       address(wbtc).toBytes32(),
       false,
       1 ether,

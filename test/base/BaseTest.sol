@@ -6,17 +6,31 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
-
-import { MockErc20 } from "../mocks/MockErc20.sol";
-import { MockCalculator } from "../mocks/MockCalculator.sol";
-import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
-
-import { Calculator } from "../../src/contracts/Calculator.sol";
-
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
+// Mocks
+import { MockErc20 } from "../mocks/MockErc20.sol";
+import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { MockErc20 } from "../mocks/MockErc20.sol";
+import { MockCalculator } from "../mocks/MockCalculator.sol";
+import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
+import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
+import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
+
+import { Deployment } from "../../script/Deployment.s.sol";
+import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
+// Interfaces
+import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
+
+// Calculator
+import { Calculator } from "../../src/contracts/Calculator.sol";
+
+// Services
+import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
+
+// Storages
 import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
 import { PerpStorage } from "../../src/storages/PerpStorage.sol";
 import { VaultStorage } from "../../src/storages/VaultStorage.sol";
@@ -49,6 +63,8 @@ abstract contract BaseTest is
   // mock
   MockPyth internal mockPyth;
   MockCalculator internal mockCalculator;
+  MockPerpStorage internal mockPerpStorage;
+  MockVaultStorage internal mockVaultStorage;
   MockOracleMiddleware internal mockOracle;
 
   MockErc20 internal weth;
@@ -99,6 +115,11 @@ abstract contract BaseTest is
     mockOracle = new MockOracleMiddleware();
     mockCalculator = new MockCalculator(address(mockOracle));
 
+    mockPerpStorage = new MockPerpStorage();
+    mockVaultStorage = new MockVaultStorage();
+    mockOracle = new MockOracleMiddleware();
+    configStorage = new ConfigStorage();
+
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();
@@ -128,6 +149,23 @@ abstract contract BaseTest is
       defaultOracleStaleTime: 300
     });
     return deploy(deployLocalVars);
+  }
+
+  function deployCrossMarginService(
+    address _configStorage,
+    address _vaultStorage,
+    address _calculator
+  ) internal returns (CrossMarginService) {
+    return new CrossMarginService(_configStorage, _vaultStorage, _calculator);
+  }
+
+  function deployCalculator(
+    address _oracle,
+    address _vaultStorage,
+    address _perpStorage,
+    address _configStorage
+  ) internal returns (Calculator) {
+    return new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
   }
 
   // --------- Test Helpers ---------
@@ -280,7 +318,7 @@ abstract contract BaseTest is
   /// @notice set up all collateral token configs in Perp
   function _setUpCollateralTokenConfigs() private {
     IConfigStorage.CollateralTokenConfig
-      memory _collatTokenConfig = IConfigStorage.CollateralTokenConfig({
+      memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
         decimals: weth.decimals(),
         collateralFactor: 0.8 * 1e18,
         isStableCoin: false,
@@ -288,6 +326,23 @@ abstract contract BaseTest is
         settleStrategy: address(0)
       });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfig);
+    configStorage.setCollateralTokenConfig(
+      address(weth),
+      _collatTokenConfigWeth
+    );
+
+    IConfigStorage.CollateralTokenConfig
+      memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
+        decimals: wbtc.decimals(),
+        collateralFactor: 0.9 * 1e18,
+        isStableCoin: false,
+        accepted: true,
+        settleStrategy: address(0)
+      });
+
+    configStorage.setCollateralTokenConfig(
+      address(wbtc),
+      _collatTokenConfigWbtc
+    );
   }
 }

@@ -23,6 +23,20 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
+
+    // mint 100 WETH for ALICE
+    weth.mint(address(this), 100 ether);
+
+    // approve 10 WETH for service
+    weth.approve(address(liquidityService), 10 ether);
+    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
+
+    // total supply = 10 ether after add liquidity for ALICE
+    // given tvl            - 10e30
+    //       unrealized PnL - 0
+    //       borrowing fee  - 0
+    // aum = tvl + unrealized pnl + borrowing fee = 10e30 + 0 + 0
+    mockCalculator.setAUM(10e30);
   }
 
   function testCorrectness_WhenPLPRemoveLiquidity_WithDynamicFee() external {}

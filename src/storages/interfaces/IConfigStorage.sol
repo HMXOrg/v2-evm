@@ -2,6 +2,10 @@
 pragma solidity 0.8.18;
 
 interface IConfigStorage {
+  error ConfigStorage_NotWhiteListed();
+  error ConfigStorage_ExceedLimitSetting();
+  error ConfigStorage_BadLen();
+  error ConfigStorage_BadArgs();
   // ERRORS
   error NotAcceptedCollateral();
   error NotWhiteListed();
@@ -12,7 +16,7 @@ interface IConfigStorage {
 
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
-    uint256 decimals;
+    uint256 decimals; //token decimals
     uint256 targetWeight; // pecentage of all accepted PLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
@@ -54,11 +58,13 @@ interface IConfigStorage {
   struct LiquidityConfig {
     uint256 depositFeeRate; // PLP deposit fee rate
     uint256 withdrawFeeRate; // PLP withdraw fee rate
-    uint256 maxPLPUtilization;
+    uint256 maxPLPUtilization; //% of max utilization
+    uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
     uint256 plpSafetyBufferThreshold;
     uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
     uint256 flashLoanFeeRate;
     bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
+    bool enabled; // Circuit breaker on Liquidity
   }
 
   // Swap
@@ -81,6 +87,9 @@ interface IConfigStorage {
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  STATE
   ////////////////////////////////////////////////////////////////////////////////////
+  function plp() external view returns (address);
+
+  function calculator() external view returns (address);
 
   function treasury() external view returns (address);
 
@@ -108,21 +117,55 @@ interface IConfigStorage {
     uint256 _index
   ) external view returns (MarketConfig memory _marketConfig);
 
-  function getMarketConfigByToken(
-    address _token
-  ) external view returns (MarketConfig memory _marketConfig);
-
   function getMarketConfigById(
     uint256 _marketIndex
   ) external view returns (MarketConfig memory _marketConfig);
+
+  function getPlpTokenConfigs(
+    address _token
+  ) external view returns (PLPTokenConfig memory);
 
   function getCollateralTokenConfigs(
     address _token
   ) external view returns (CollateralTokenConfig memory _collateralTokenConfig);
 
+  function getLiquidityConfig() external view returns (LiquidityConfig memory);
+
+  function getLiquidationConfig()
+    external
+    view
+    returns (LiquidationConfig memory);
+
+  function getPLPTokenConfig(
+    address _token
+  ) external view returns (PLPTokenConfig memory);
+
+  function getMarketConfigByToken(
+    address _token
+  ) external view returns (MarketConfig memory);
+
+  function getMarketConfigsLength() external view returns (uint256);
+
+  function getNextAcceptedToken(address token) external view returns (address);
+
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  SETTER
   ////////////////////////////////////////////////////////////////////////////////////
+
+  function ITERABLE_ADDRESS_LIST_START() external view returns (address);
+
+  function ITERABLE_ADDRESS_LIST_END() external view returns (address);
+
+  // SETTER
+  function setPLP(address _plp) external;
+
+  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;
+
+  function setServiceExecutor(
+    address _contractAddress,
+    address _executorAddress,
+    bool _isServiceExecutor
+  ) external;
 
   function addMarketConfig(
     MarketConfig calldata _newConfig
@@ -149,5 +192,5 @@ interface IConfigStorage {
   function setCollateralTokenConfig(
     address _token,
     CollateralTokenConfig memory _newConfig
-  ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
+  ) external returns (CollateralTokenConfig memory);
 }

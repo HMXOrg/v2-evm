@@ -8,14 +8,20 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
+import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IteratableAddressList } from "../libraries/IteratableAddressList.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
-contract ConfigStorage is Ownable, IConfigStorage {
-  // using libs for type
+contract ConfigStorage is IConfigStorage, Ownable {
   using AddressUtils for address;
+  using IteratableAddressList for IteratableAddressList.List;
 
-  // CONFIGS
+  address public constant ITERABLE_ADDRESS_LIST_START = address(1);
+  address public constant ITERABLE_ADDRESS_LIST_END = address(1);
+
+  // GLOBAL Configs
   LiquidityConfig public liquidityConfig;
   SwapConfig public swapConfig;
   TradingConfig public tradingConfig;
@@ -34,16 +40,31 @@ contract ConfigStorage is Ownable, IConfigStorage {
   address public calculator;
   address public plp;
   address public treasury;
-  uint256 public plpTotalTokenWeight;
 
-  // EVENTS
+  IteratableAddressList.List public plpAcceptedTokens;
+
+  //events
+
   event SetServiceExecutor(
-    address indexed contractAddress,
-    address _xecutorAddress,
-    bool isServiceExecutor
+    address indexed _contractAddress,
+    address _executorAddress,
+    bool _isServiceExecutor
   );
 
-  constructor() {}
+  event SetCalculator(address _calculator);
+  event SetPLP(address _plp);
+  event SetLiquidityConfig(LiquidityConfig _liquidityConfig);
+  event SetDynamicEnabled(bool enabled);
+  event AddOrUpdatePLPTokenConfigs(
+    address _token,
+    PLPTokenConfig _config,
+    PLPTokenConfig _newConfig
+  );
+  event RemoveUnderlying(address _token);
+
+  constructor() {
+    plpAcceptedTokens.init();
+  }
 
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  VALIDATION
@@ -83,19 +104,6 @@ contract ConfigStorage is Ownable, IConfigStorage {
     return marketConfigs[_index];
   }
 
-  function getMarketConfigByToken(
-    address _token
-  ) external view returns (MarketConfig memory _marketConfig) {
-    for (uint256 i; i < marketConfigs.length; ) {
-      if (marketConfigs[i].assetId == _token.toBytes32())
-        return marketConfigs[i];
-
-      unchecked {
-        i++;
-      }
-    }
-  }
-
   function getPlpTokenConfigs(
     address _token
   ) external view returns (PLPTokenConfig memory _plpTokenConfig) {
@@ -110,6 +118,75 @@ contract ConfigStorage is Ownable, IConfigStorage {
     returns (CollateralTokenConfig memory _collateralTokenConfig)
   {
     return collateralTokenConfigs[_token];
+  }
+
+  function getPLPTokenConfig(
+    address token
+  ) external view returns (PLPTokenConfig memory) {
+    return plpTokenConfigs[token];
+  }
+
+  function getLiquidityConfig() external view returns (LiquidityConfig memory) {
+    return liquidityConfig;
+  }
+
+  function getLiquidationConfig()
+    external
+    view
+    returns (LiquidationConfig memory)
+  {
+    return liquidationConfig;
+  }
+
+  function getMarketConfigsLength() external view returns (uint256) {
+    return marketConfigs.length;
+  }
+
+  function getMarketConfigByToken(
+    address _token
+  ) external view returns (MarketConfig memory marketConfig) {
+    for (uint i; i < marketConfigs.length; ) {
+      if (marketConfigs[i].assetId == _token.toBytes32())
+        return marketConfigs[i];
+
+      unchecked {
+        i++;
+      }
+    }
+  }
+
+  /// @notice Return the next underlying token address.
+  /// @dev This uses to traverse all underlying tokens.
+  /// @param token The token address to query the next token. Can also be START and END.
+  function getNextAcceptedToken(address token) external view returns (address) {
+    return plpAcceptedTokens.getNextOf(token);
+  }
+
+  function setCalculator(address _calculator) external {
+    calculator = _calculator;
+    emit SetCalculator(calculator);
+  }
+
+  function setPLP(address _plp) external {
+    plp = _plp;
+    emit SetPLP(calculator);
+  }
+
+  function setLiquidityConfig(
+    LiquidityConfig memory _liquidityConfig
+  ) external {
+    liquidityConfig = _liquidityConfig;
+    emit SetLiquidityConfig(liquidityConfig);
+  }
+
+  function setDynamicEnabled(bool enabled) external {
+    liquidityConfig.dynamicFeeEnabled = enabled;
+    emit SetDynamicEnabled(enabled);
+  }
+
+  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external {
+    if (_totalTokenWeight > 1e18) revert ConfigStorage_ExceedLimitSetting();
+    liquidityConfig.plpTotalTokenWeight = _totalTokenWeight;
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
@@ -133,10 +210,6 @@ contract ConfigStorage is Ownable, IConfigStorage {
 
   function setPnlFactor(uint256 _pnlFactor) external onlyOwner {
     pnlFactor = _pnlFactor;
-  }
-
-  function setLiquidityConfig(LiquidityConfig memory _newConfig) external {
-    liquidityConfig = _newConfig;
   }
 
   function setSwapConfig(SwapConfig memory _newConfig) external {
@@ -187,5 +260,68 @@ contract ConfigStorage is Ownable, IConfigStorage {
   ) external returns (CollateralTokenConfig memory _collateralTokenConfig) {
     collateralTokenConfigs[_token] = _newConfig;
     return collateralTokenConfigs[_token];
+  }
+
+  /// @notice add or update AcceptedToken
+  /// @dev This function only allows to add new token or update existing token,
+  /// any atetempt to remove token will be reverted.
+  /// @param _tokens The token addresses to set.
+  /// @param _configs The token configs to set.
+  function addOrUpdateAcceptedToken(
+    address[] calldata _tokens,
+    PLPTokenConfig[] calldata _configs
+  ) external onlyOwner {
+    if (_tokens.length != _configs.length) {
+      revert ConfigStorage_BadLen();
+    }
+
+    for (uint256 i = 0; i < _tokens.length; ) {
+      // Enforce that isAccept must be true to prevent
+      // removing underlying token through this function.
+      if (!_configs[i].accepted) revert ConfigStorage_BadArgs();
+
+      // If plpTokenConfigs.accepted is previously false,
+      // then it is a new token to be added.
+      if (!plpTokenConfigs[_tokens[i]].accepted) {
+        plpAcceptedTokens.add(_tokens[i]);
+      }
+
+      // Log
+      emit AddOrUpdatePLPTokenConfigs(
+        _tokens[i],
+        plpTokenConfigs[_tokens[i]],
+        _configs[i]
+      );
+
+      // Update totalWeight accordingly
+      liquidityConfig.plpTotalTokenWeight =
+        (liquidityConfig.plpTotalTokenWeight -
+          plpTokenConfigs[_tokens[i]].targetWeight) +
+        _configs[i].targetWeight;
+      plpTokenConfigs[_tokens[i]] = _configs[i];
+
+      if (liquidityConfig.plpTotalTokenWeight > 1e18) {
+        revert ConfigStorage_ExceedLimitSetting();
+      }
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  /// @notice Remove underlying token.
+  /// @param _token The token address to remove.
+  function removeAcceptedToken(address _token) external onlyOwner {
+    // Update totalTokenWeight
+    liquidityConfig.plpTotalTokenWeight -= plpTokenConfigs[_token].targetWeight;
+
+    // Delete token from plpAcceptedTokens list
+    plpAcceptedTokens.remove(_token, plpAcceptedTokens.getPreviousOf(_token));
+
+    // Delete plpTokenConfig
+    delete plpTokenConfigs[_token];
+
+    emit RemoveUnderlying(_token);
   }
 }

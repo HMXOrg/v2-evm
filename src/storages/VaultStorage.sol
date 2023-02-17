@@ -67,13 +67,23 @@ contract VaultStorage is IVaultStorage {
   }
 
   // TODO modifier?
-  function removePLPLiquidityUSDE30(address _token, uint256 amount) external {
-    plpLiquidityUSDE30[_token] -= amount;
+  function removePLPLiquidityUSDE30(address _token, uint256 _value) external {
+    // Underflow check
+    if (plpLiquidityUSDE30[_token] <= _value) {
+      plpLiquidityUSDE30[_token] = 0;
+      return;
+    }
+    plpLiquidityUSDE30[_token] -= _value;
   }
 
   // TODO modifier?
-  function removePLPTotalLiquidityUSDE30(uint256 _liquidity) external {
-    plpTotalLiquidityUSDE30 -= _liquidity;
+  function removePLPTotalLiquidityUSDE30(uint256 _value) external {
+    // Underflow check
+    if (plpTotalLiquidityUSDE30 <= _value) {
+      plpTotalLiquidityUSDE30 = 0;
+      return;
+    }
+    plpTotalLiquidityUSDE30 -= _value;
   }
 
   // TODO modifier?

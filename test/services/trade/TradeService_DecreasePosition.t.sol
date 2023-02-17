@@ -29,6 +29,8 @@ import { ITradeService } from "../../../src/services/interfaces/ITradeService.so
 //   - borrowing fee
 //   - funding fee
 //   - settlement profit and loss
+//   - protocol curcuit break
+//   - trading curcuit break
 // - post validation
 //   - sub account is unhealthy (equity < MMR) after decreased position
 

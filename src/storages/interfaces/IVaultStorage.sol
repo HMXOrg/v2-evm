@@ -6,17 +6,29 @@ interface IVaultStorage {
   error IVaultStorage_TraderTokenAlreadyExists();
   error IVaultStorage_TraderBalanceRemaining();
 
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  STATE
+  ////////////////////////////////////////////////////////////////////////////////////
+
   function liquidityProviderBalances(
     address _liquidityProvider,
     address _token
-  ) external view returns (uint _amount);
+  ) external view returns (uint256 _amount);
 
   function traderBalances(
     address _trader,
     address _token
-  ) external view returns (uint amount);
+  ) external view returns (uint256 amount);
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  GETTER
+  ////////////////////////////////////////////////////////////////////////////////////
 
   function getTraderTokens(address _trader) external returns (address[] memory);
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  SETTER
+  ////////////////////////////////////////////////////////////////////////////////////
 
   function setTraderBalance(
     address _trader,
@@ -27,4 +39,10 @@ interface IVaultStorage {
   function addTraderToken(address _trader, address _token) external;
 
   function removeTraderToken(address _trader, address _token) external;
+
+  function transferToken(
+    address _subAccount,
+    address _token,
+    uint256 _amount
+  ) external;
 }

@@ -8,7 +8,10 @@ interface IOracleMiddleware {
   error IOracleMiddleware_OnlyUpdater();
   error IOracleMiddleware_InvalidMarketStatus();
 
-  // functions
+  // =========================================
+  // | ---------- Getter ------------------- |
+  // =========================================
+
   function getLatestPrice(
     bytes32 _assetId,
     bool _isMax,
@@ -22,6 +25,10 @@ interface IOracleMiddleware {
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge
   ) external view returns (uint256 _price, uint256 _lastUpdated, uint8 _status);
+
+  // =========================================
+  // | ---------- Setter ------------------- |
+  // =========================================
 
   function unsafeGetLatestPrice(
     bytes32 _assetId,

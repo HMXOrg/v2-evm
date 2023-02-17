@@ -2,6 +2,14 @@
 pragma solidity 0.8.18;
 
 interface IConfigStorage {
+  // ERRORS
+  error NotAcceptedCollateral();
+  error NotWhiteListed();
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  STRUCT
+  ////////////////////////////////////////////////////////////////////////////////////
+
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
     uint256 decimals;
@@ -70,17 +78,51 @@ interface IConfigStorage {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
 
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  STATE
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  function treasury() external view returns (address);
+
+  function pnlFactor() external view returns (uint256);
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  VALIDATION
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  /// @notice Validate only whitelisted executor contracts to be able to call Service contracts.
+  /// @param _contractAddress Service contract address to be executed.
+  /// @param _executorAddress Executor contract address to call service contract.
+  function validateServiceExecutor(
+    address _contractAddress,
+    address _executorAddress
+  ) external view;
+
+  function validateAcceptedCollateral(address _token) external view;
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  GETTER
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  function getMarketConfigByIndex(
+    uint256 _index
+  ) external view returns (MarketConfig memory _marketConfig);
+
+  function getMarketConfigByToken(
+    address _token
+  ) external view returns (MarketConfig memory _marketConfig);
+
   function getMarketConfigById(
     uint256 _marketIndex
-  ) external view returns (MarketConfig memory);
-
-  function getPlpTokenConfigs(
-    address _token
-  ) external view returns (PLPTokenConfig memory);
+  ) external view returns (MarketConfig memory _marketConfig);
 
   function getCollateralTokenConfigs(
     address _token
-  ) external view returns (CollateralTokenConfig memory);
+  ) external view returns (CollateralTokenConfig memory _collateralTokenConfig);
+
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  SETTER
+  ////////////////////////////////////////////////////////////////////////////////////
 
   function addMarketConfig(
     MarketConfig calldata _newConfig
@@ -97,15 +139,15 @@ interface IConfigStorage {
   function setMarketConfig(
     uint256 _marketIndex,
     MarketConfig memory _newConfig
-  ) external returns (MarketConfig memory);
+  ) external returns (MarketConfig memory _marketConfig);
 
   function setPlpTokenConfig(
     address _token,
     PLPTokenConfig memory _newConfig
-  ) external returns (PLPTokenConfig memory);
+  ) external returns (PLPTokenConfig memory _plpTokenConfig);
 
   function setCollateralTokenConfig(
     address _token,
     CollateralTokenConfig memory _newConfig
-  ) external returns (CollateralTokenConfig memory);
+  ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 }

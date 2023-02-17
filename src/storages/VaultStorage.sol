@@ -62,8 +62,15 @@ contract VaultStorage is IVaultStorage {
   }
 
   // TODO modifier?
-  function removeFee(address _token, uint256 _amount) external {
+  function withdrawFee(
+    address _token,
+    uint256 _amount,
+    address _receiver
+  ) external {
+    if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
+    // @todo only governance
     fees[_token] -= _amount;
+    IERC20(_token).transfer(_receiver, _amount);
   }
 
   // TODO modifier?

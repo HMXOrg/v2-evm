@@ -16,7 +16,8 @@ abstract contract LiquidityService_Base is BaseTest {
     // deploy liquidity service
     liquidityService = new LiquidityService(
       address(configStorage),
-      address(vaultStorage)
+      address(vaultStorage),
+      address(perpStorage)
     );
 
     // set this Test to be service executor

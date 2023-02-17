@@ -25,4 +25,6 @@ interface ILiquidityService {
   error LiquidityService_Slippage();
 
   error LiquidityService_InsufficientLiquidityBuffer();
+  error LiquidityService_MaxPLPUtilizationExceeded();
+  error LiquidityService_InsufficientPLPReserved();
 }

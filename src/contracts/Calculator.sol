@@ -72,6 +72,10 @@ contract Calculator is ICalculator {
     return getAUME30(isMaxPrice) / 1e12;
   }
 
+  function getPLPValueE30(bool isMaxPrice) external view returns (uint256) {
+    return _getPLPValueE30(isMaxPrice);
+  }
+
   function _getPLPValueE30(bool isMaxPrice) internal view returns (uint256) {
     uint256 assetValue = 0;
     address _plpUnderlyingToken = IConfigStorage(configStorage)

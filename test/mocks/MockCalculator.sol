@@ -41,6 +41,12 @@ contract MockCalculator is ICalculator {
     return 0;
   }
 
+  function getPLPValueE30(
+    bool /* isMaxPrice */
+  ) external pure returns (uint256) {
+    return 0;
+  }
+
   function getPLPPrice(
     uint256 /* aum */,
     uint256 /* supply */

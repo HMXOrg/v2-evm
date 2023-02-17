@@ -28,6 +28,8 @@ interface ICalculator {
 
   function getAUME30(bool isMaxPrice) external returns (uint256);
 
+  function getPLPValueE30(bool isMaxPrice) external view returns (uint256);
+
   function getPLPPrice(uint256 aum, uint256 supply) external returns (uint256);
 
   function getMintAmount(

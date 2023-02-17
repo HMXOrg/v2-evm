@@ -12,6 +12,7 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - remove liquidity with dynamic fee
 //   - remove liquidity without dynamic fee
 // - revert
+//   - remove liquidity when circuit break
 //   - remove with zero amount
 //   - fail on slippage
 // What is this test not covered
@@ -29,6 +30,20 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function testCorrectness_WhenPLPRemoveLiquidity_WithoutDynamicFee()
     external
   {}
+
+  // add liquidity when circuit break
+  function testRevert_WhenCircuitBreak_PLPShouldNotRemoveLiquidity() external {
+    // disable liquidity config
+    IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage
+      .getLiquidityConfig();
+    _liquidityConfig.enabled = false;
+    configStorage.setLiquidityConfig(_liquidityConfig);
+
+    vm.expectRevert(
+      abi.encodeWithSignature("LiquidityService_CircuitBreaker()")
+    );
+    liquidityService.removeLiquidity(ALICE, address(wbtc), 10 ether, 0);
+  }
 
   function testRevert_WhenPLPRemoveLiquidity_WithZeroAmount() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));

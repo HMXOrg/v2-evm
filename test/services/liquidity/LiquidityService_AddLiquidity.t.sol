@@ -26,10 +26,15 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 contract LiquidityService_AddLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
+
+    // mint 100 WETH for ALICE
+    weth.mint(address(this), 100 ether);
   }
 
   // add liquidity with dynamic fee
   function testCorrectness_WhenPLPAddLiquidity_WithDynamicFee() external {
+    // Test execute add liquidity for ALICE
+    weth.approve(address(liquidityService), 10 ether);
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
   }
 

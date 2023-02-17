@@ -234,9 +234,14 @@ contract LiquidityService is ILiquidityService {
     );
 
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
-    IVaultStorage(_token).addPLPLiquidity(_token, amountAfterFee);
-    IVaultStorage(_token).addPLPLiquidityUSDE30(_token, tokenValueUSDAfterFee);
-    IVaultStorage(_token).addPLPTotalLiquidityUSDE30(tokenValueUSDAfterFee);
+    IVaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
+    IVaultStorage(vaultStorage).addPLPLiquidityUSDE30(
+      _token,
+      tokenValueUSDAfterFee
+    );
+    IVaultStorage(vaultStorage).addPLPTotalLiquidityUSDE30(
+      tokenValueUSDAfterFee
+    );
 
     _validatePLPHealthCheck(_token);
 

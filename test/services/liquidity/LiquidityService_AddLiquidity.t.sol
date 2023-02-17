@@ -15,6 +15,7 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - add liquidity with dynamic fee
 //   - add liquidity without dynamic fee
 // - revert
+//   - add liquidity when circuit break
 //   - add liquidity on unlisted token
 //   - add liquidity on not accepted token
 //   - add liquidity with zero amount
@@ -31,6 +32,20 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
 
   // add liquidity without dynamic fee
   function testCorrectness_WhenPLPAddLiquidity_WithoutDynamicFee() external {}
+
+  // add liquidity when circuit break
+  function testRevert_WhenCircuitBreak_PLPShouldNotAddLiquidity() external {
+    // disable liquidity config
+    IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage
+      .getLiquidityConfig();
+    _liquidityConfig.enabled = false;
+    configStorage.setLiquidityConfig(_liquidityConfig);
+
+    vm.expectRevert(
+      abi.encodeWithSignature("LiquidityService_CircuitBreaker()")
+    );
+    liquidityService.addLiquidity(ALICE, address(wbtc), 10 ether, 0);
+  }
 
   // add liquidity on unlisted token
   function testRevert_WhenPLPAddLiquidity_WithUnlistedToken() external {

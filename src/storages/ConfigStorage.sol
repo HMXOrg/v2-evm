@@ -6,7 +6,7 @@ import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
-abstract contract ConfigStorage is IConfigStorage {
+contract ConfigStorage is IConfigStorage {
   // GLOBAL Configs
   LiquidityConfig public liquidityConfig;
   SwapConfig public swapConfig;
@@ -31,10 +31,10 @@ abstract contract ConfigStorage is IConfigStorage {
   uint256 public plpTotalTokenWeight;
 
   // getter functions
-  function getMarketConfigs(
-    uint256 _marketId
+  function getMarketConfigById(
+    uint256 _marketIndex
   ) external view returns (MarketConfig memory) {
-    return marketConfigs[_marketId];
+    return marketConfigs[_marketIndex];
   }
 
   function getTradingConfig() external view returns (TradingConfig memory) {
@@ -58,23 +58,42 @@ abstract contract ConfigStorage is IConfigStorage {
   }
 
   // setter functions
+  function setLiquidityConfig(LiquidityConfig memory _newConfig) external {
+    liquidityConfig = _newConfig;
+  }
+
+  function setSwapConfig(SwapConfig memory _newConfig) external {
+    swapConfig = _newConfig;
+  }
+
+  function setTradingConfig(TradingConfig memory _newConfig) external {
+    tradingConfig = _newConfig;
+  }
+
+  function setLiquidationConfig(LiquidationConfig memory _newConfig) external {
+    liquidationConfig = _newConfig;
+  }
+
   function addMarketConfig(
     MarketConfig calldata _newConfig
-  ) external returns (MarketConfig memory) {
+  ) external returns (uint256 _index) {
+    uint256 _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
-    uint256 _newMarketId = marketConfigs.length;
-    // update marketConfigIndices with new market id
-    marketConfigIndices[_newConfig.assetId] = _newMarketId;
-    // index = id - 1;
-    return marketConfigs[_newMarketId - 1];
+    // update marketConfigIndices with new market index
+    marketConfigIndices[_newConfig.assetId] = _newMarketIndex;
+    return _newMarketIndex;
+  }
+
+  function delistMarket(uint256 _marketIndex) external {
+    delete marketConfigs[_marketIndex].active;
   }
 
   function setMarketConfig(
-    uint256 _marketId,
+    uint256 _marketIndex,
     MarketConfig memory _newConfig
   ) external returns (MarketConfig memory) {
-    marketConfigs[_marketId] = _newConfig;
-    return marketConfigs[_marketId];
+    marketConfigs[_marketIndex] = _newConfig;
+    return marketConfigs[_marketIndex];
   }
 
   function setPlpTokenConfig(

@@ -15,74 +15,81 @@ interface IPerpStorage {
     uint256 lastBorrowingTime;
   }
 
-  // mapping marketId => globalPosition;
+  // mapping _marketIndex => globalPosition;
   struct GlobalMarket {
     // LONG position
     uint256 longPositionSize;
     uint256 longAvgPrice;
-    uint256 longFundingRate;
     uint256 longOpenInterest;
     // SHORT position
     uint256 shortPositionSize;
     uint256 shortAvgPrice;
-    uint256 shortFundingRate;
     uint256 shortOpenInterest;
+    // funding rate
+    uint256 fundingRate;
     uint256 lastFundingTime;
   }
 
   // Trade position
   struct Position {
     address primaryAccount;
-    uint8 subAccount;
+    uint256 subAccountId;
     uint256 marketIndex;
-    int256 sizeE30; // LONG (+), SHORT(-) Position Size
-    uint256 avgPriceE30;
+    int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
+    uint256 avgEntryPriceE30;
     uint256 entryBorrowingRate;
     uint256 entryFundingRate;
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
-    uint256 openInterest;
     uint256 realizedPnl;
+    uint256 openInterest;
   }
 
+  // getter
   function getPositionById(
     bytes32 _positionId
   ) external view returns (Position memory);
 
-  function savePosition(
-    bytes32 _positionId,
-    Position calldata position
-  ) external;
-
-  function positionIndices(bytes32 key) external view returns (uint256);
-
-  function subAccountPositionIndices(
-    address _subAccount
-  ) external view returns (uint256[] memory);
+  function getGlobalMarketByIndex(
+    uint256 __marketIndex
+  ) external view returns (GlobalMarket memory);
 
   function getGlobalState() external view returns (GlobalState memory);
 
-  function updateReserveValue(uint256 newReserveValue) external;
+  function getNumberOfSubAccountPosition(
+    address _subAccount
+  ) external view returns (uint256);
+
+  // setter
+  function updatePositionById(
+    bytes32 _positionId,
+    int256 _newPositionSizeE30,
+    uint256 _newReserveValueE30,
+    uint256 _newAvgPriceE30,
+    uint256 _newOpenInterest
+  ) external returns (Position memory _position);
 
   function updateGlobalLongMarketById(
-    uint256 _marketId,
+    uint256 __marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
   ) external;
 
   function updateGlobalShortMarketById(
-    uint256 _marketId,
+    uint256 __marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
   ) external;
 
-  function getGlobalMarketById(
-    uint256 _marketId
-  ) external view returns (GlobalMarket memory);
+  // todo: update sumBorrowingRate, lastBorrowingTime
+  function updateGlobalState(uint256 _newReserveValueE30) external;
 
-  function getNumberOfSubAccountPosition(
-    address _subAccount
-  ) external view returns (uint256);
+  function savePosition(
+    bytes32 _positionId,
+    Position calldata position
+  ) external;
+
+  function updateReserveValue(uint256 newReserveValue) external;
 }

@@ -46,12 +46,12 @@ contract TradeService is ITradeService {
     // get the market configuration for the given market index
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
-    ).getMarketConfigs(_marketIndex);
+    ).getMarketConfigById(_marketIndex);
 
     // determine whether the new size delta is for a long position
     bool _isLong = _sizeDelta > 0;
 
-    bool _isNewPosition = _position.sizeE30 == 0;
+    bool _isNewPosition = _position.positionSizeE30 == 0;
 
     // Pre validation
     // Verify that the number of positions has exceeds
@@ -68,7 +68,7 @@ contract TradeService is ITradeService {
       ) revert ITradeService_BadNumberOfPosition();
     }
     // Verify that the current position has the same exposure direction
-    if (!_isNewPosition && ((_position.sizeE30 > 0) == _isLong))
+    if (!_isNewPosition && ((_position.positionSizeE30 > 0) == _isLong))
       revert ITradeService_BadExposure();
 
     // Get Price market.
@@ -99,18 +99,18 @@ contract TradeService is ITradeService {
     // TODO: Validate AllowIncreasePosition
 
     // if the position size is zero, set the average price to the current price (new position)
-    if (_position.sizeE30 == 0) {
-      _position.avgPriceE30 = _priceE30;
+    if (_position.positionSizeE30 == 0) {
+      _position.avgEntryPriceE30 = _priceE30;
     }
 
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
-    if (_position.sizeE30 != 0 && _sizeDelta != 0) {
-      _position.avgPriceE30 = getPositionNextAveragePrice(
+    if (_position.positionSizeE30 != 0 && _sizeDelta != 0) {
+      _position.avgEntryPriceE30 = getPositionNextAveragePrice(
         _marketIndex,
-        _position.sizeE30,
+        _position.positionSizeE30,
         _isLong,
         _sizeDelta,
-        _position.avgPriceE30,
+        _position.avgEntryPriceE30,
         _priceE30
       );
     }
@@ -118,10 +118,10 @@ contract TradeService is ITradeService {
     // TODO: Collect trading fee, borrowing fee, update borrowing rate, collect funding fee, and update funding rate.
 
     // update the position size by adding the new size delta
-    _position.sizeE30 += _sizeDelta;
+    _position.positionSizeE30 += _sizeDelta;
 
     // if the position size is zero after the update, revert the transaction with an error
-    if (_position.sizeE30 == 0) revert ITradeService_BadPositionSize();
+    if (_position.positionSizeE30 == 0) revert ITradeService_BadPositionSize();
 
     // get the absolute value of the new size delta
     uint256 _absSizeDelta = abs(_sizeDelta);
@@ -150,7 +150,7 @@ contract TradeService is ITradeService {
 
     // get the global market for the given market index
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
-      .getGlobalMarketById(_marketIndex);
+      .getGlobalMarketByIndex(_marketIndex);
 
     {
       // calculate the change in open interest for the new position
@@ -244,7 +244,7 @@ contract TradeService is ITradeService {
     // Get Price market.
     IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(
       configStorage
-    ).getMarketConfigs(_marketIndex);
+    ).getMarketConfigById(_marketIndex);
     (uint256 price, ) = IOracleMiddleware(oracle).getLatestPrice(
       marketConfig.assetId,
       _isLong,

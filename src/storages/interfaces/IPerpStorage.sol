@@ -45,7 +45,14 @@ interface IPerpStorage {
     uint256 openInterest;
   }
 
-  // getter
+  // =========================================
+  // | ---------- Getter ------------------- |
+  // =========================================
+
+  function getPositionBySubAccount(
+    address _trader
+  ) external view returns (Position[] memory traderPositions);
+
   function getPositionById(
     bytes32 _positionId
   ) external view returns (Position memory);
@@ -61,6 +68,10 @@ interface IPerpStorage {
   ) external view returns (uint256);
 
   // setter
+  // =========================================
+  // | ---------- Setter ------------------- |
+  // =========================================
+
   function updatePositionById(
     bytes32 _positionId,
     int256 _newPositionSizeE30,

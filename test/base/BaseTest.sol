@@ -6,20 +6,38 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { Deployment } from "../../script/Deployment.s.sol";
+import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
+// Mocks
+import { MockErc20 } from "../mocks/MockErc20.sol";
+import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
+import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
+import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
+// Interfaces
+import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
 
+// Calculator
+import { Calculator } from "../../src/contracts/Calculator.sol";
+
+// Services
+import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
+
+// Storages
 import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
 import { PerpStorage } from "../../src/storages/PerpStorage.sol";
 import { VaultStorage } from "../../src/storages/VaultStorage.sol";
 
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
+
+import { PLPv2 } from "../../src/contracts/PLPv2.sol";
 
 abstract contract BaseTest is
   TestBase,
@@ -39,14 +57,21 @@ abstract contract BaseTest is
   VaultStorage internal vaultStorage;
 
   // other contracts
+  PLPv2 internal plp;
+  Calculator internal calculator;
+
+  // mock
   MockPyth internal mockPyth;
   MockCalculator internal mockCalculator;
+  MockPerpStorage internal mockPerpStorage;
+  MockVaultStorage internal mockVaultStorage;
   MockOracleMiddleware internal mockOracle;
 
   MockErc20 internal weth;
   MockErc20 internal wbtc;
   MockErc20 internal dai;
   MockErc20 internal usdc;
+  MockErc20 internal usdt;
 
   MockErc20 internal bad;
 
@@ -62,6 +87,8 @@ abstract contract BaseTest is
     0x0000000000000000000000000000000000000000000000000000000000000003;
   bytes32 internal constant usdcPriceId =
     0x0000000000000000000000000000000000000000000000000000000000000004;
+  bytes32 internal constant usdtPriceId =
+    0x0000000000000000000000000000000000000000000000000000000000000005;
 
   constructor() {
     // Creating a mock Pyth instance with 60 seconds valid time period
@@ -77,21 +104,32 @@ abstract contract BaseTest is
     wbtc = deployMockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = deployMockErc20("DAI Stablecoin", "DAI", 18);
     usdc = deployMockErc20("USD Coin", "USDC", 6);
+    usdc = deployMockErc20("USD Tether", "USDT", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
+
+    plp = new PLPv2();
 
     configStorage = deployConfigStorage();
     perpStorage = deployPerpStorage();
     vaultStorage = deployVaultStorage();
 
-    mockCalculator = new MockCalculator();
     mockOracle = new MockOracleMiddleware();
+    mockCalculator = new MockCalculator(address(mockOracle));
 
-    setUpLiquidityConfig();
-    setUpSwapConfig();
-    setUpTradingConfig();
-    setUpMarketConfigs();
-    setUpPlpTokenConfigs();
-    setUpCollateralTokenConfigs();
+    mockPerpStorage = new MockPerpStorage();
+    mockVaultStorage = new MockVaultStorage();
+    mockOracle = new MockOracleMiddleware();
+    configStorage = new ConfigStorage();
+
+    _setUpLiquidityConfig();
+    _setUpSwapConfig();
+    _setUpTradingConfig();
+    _setUpMarketConfigs();
+    _setUpPlpTokenConfigs();
+    _setUpCollateralTokenConfigs();
+
+    // set general config
+    configStorage.setCalculator(address(mockCalculator));
   }
 
   // --------- Deploy Helpers ---------
@@ -114,7 +152,25 @@ abstract contract BaseTest is
     return deploy(deployLocalVars);
   }
 
+  function deployCrossMarginService(
+    address _configStorage,
+    address _vaultStorage,
+    address _calculator
+  ) internal returns (CrossMarginService) {
+    return new CrossMarginService(_configStorage, _vaultStorage, _calculator);
+  }
+
+  function deployCalculator(
+    address _oracle,
+    address _vaultStorage,
+    address _perpStorage,
+    address _configStorage
+  ) internal returns (Calculator) {
+    return new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
+  }
+
   // --------- Test Helpers ---------
+
   /// @notice Helper function to create a price feed update data.
   /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
   /// @param priceData The price data to create the update data.
@@ -143,7 +199,7 @@ abstract contract BaseTest is
   /// --------- Setup helper ------------
 
   /// @notice set up liquidity config
-  function setUpLiquidityConfig() internal {
+  function _setUpLiquidityConfig() private {
     configStorage.setLiquidityConfig(
       IConfigStorage.LiquidityConfig({
         depositFeeRate: 0,
@@ -152,20 +208,22 @@ abstract contract BaseTest is
         plpSafetyBufferThreshold: 0,
         taxFeeRate: 0,
         flashLoanFeeRate: 0,
-        dynamicFeeEnabled: false
+        dynamicFeeEnabled: false,
+        enabled: true,
+        plpTotalTokenWeight: 0
       })
     );
   }
 
   /// @notice set up swap config
-  function setUpSwapConfig() internal {
+  function _setUpSwapConfig() private {
     configStorage.setSwapConfig(
       IConfigStorage.SwapConfig({ stablecoinSwapFeeRate: 0, swapFeeRate: 0 })
     );
   }
 
   /// @notice set up trading config
-  function setUpTradingConfig() internal {
+  function _setUpTradingConfig() private {
     configStorage.setTradingConfig(
       IConfigStorage.TradingConfig({
         fundingInterval: 1,
@@ -177,7 +235,7 @@ abstract contract BaseTest is
   }
 
   /// @notice set up all market configs in Perp
-  function setUpMarketConfigs() internal {
+  function _setUpMarketConfigs() private {
     // add market config
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage
       .MarketConfig({
@@ -220,24 +278,70 @@ abstract contract BaseTest is
   }
 
   /// @notice set up all plp token configs in Perp
-  function setUpPlpTokenConfigs() internal {
-    IConfigStorage.PLPTokenConfig memory _plpTokenConfig = IConfigStorage
-      .PLPTokenConfig({
-        decimals: 18,
-        targetWeight: 0,
-        bufferLiquidity: 0,
-        maxWeightDiff: 0,
-        isStableCoin: false,
-        accepted: true
-      });
+  function _setUpPlpTokenConfigs() private {
+    // set PLP token
+    configStorage.setPLP(address(plp));
 
-    configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig);
+    // add Accepted Token for LP config
+    IConfigStorage.PLPTokenConfig[]
+      memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
+    // WETH
+    _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
+      decimals: 18,
+      targetWeight: 20e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: false,
+      accepted: true
+    });
+    // WBTC
+    _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
+      decimals: 8,
+      targetWeight: 20e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: false,
+      accepted: true
+    });
+    // DAI
+    _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
+      decimals: 18,
+      targetWeight: 10e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: true,
+      accepted: true
+    });
+    // USDC
+    _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
+      decimals: 6,
+      targetWeight: 30e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: true,
+      accepted: true
+    });
+    // USDT
+    _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
+      decimals: 6,
+      targetWeight: 20e18,
+      bufferLiquidity: 0,
+      maxWeightDiff: 0,
+      isStableCoin: true,
+      accepted: true
+    });
+
+    configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig[0]);
+    configStorage.setPlpTokenConfig(address(wbtc), _plpTokenConfig[1]);
+    configStorage.setPlpTokenConfig(address(dai), _plpTokenConfig[2]);
+    configStorage.setPlpTokenConfig(address(usdc), _plpTokenConfig[3]);
+    configStorage.setPlpTokenConfig(address(usdt), _plpTokenConfig[4]);
   }
 
   /// @notice set up all collateral token configs in Perp
-  function setUpCollateralTokenConfigs() internal {
+  function _setUpCollateralTokenConfigs() private {
     IConfigStorage.CollateralTokenConfig
-      memory _collatTokenConfig = IConfigStorage.CollateralTokenConfig({
+      memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
         decimals: weth.decimals(),
         collateralFactor: 0.8 * 1e18,
         isStableCoin: false,
@@ -245,7 +349,24 @@ abstract contract BaseTest is
         settleStrategy: address(0)
       });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfig);
+    configStorage.setCollateralTokenConfig(
+      address(weth),
+      _collatTokenConfigWeth
+    );
+
+    IConfigStorage.CollateralTokenConfig
+      memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
+        decimals: wbtc.decimals(),
+        collateralFactor: 0.9 * 1e18,
+        isStableCoin: false,
+        accepted: true,
+        settleStrategy: address(0)
+      });
+
+    configStorage.setCollateralTokenConfig(
+      address(wbtc),
+      _collatTokenConfigWbtc
+    );
   }
 
   function abs(int256 x) external pure returns (uint256) {

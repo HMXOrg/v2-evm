@@ -108,7 +108,8 @@ contract TradeService is ITradeService {
         .getLatestPriceWithMarketStatus(
           _marketConfig.assetId,
           _isLong, // if current position is SHORT position, then we use max price
-          _marketConfig.priceConfidentThreshold
+          _marketConfig.priceConfidentThreshold,
+          0
         );
 
       // Market active represent the market is still listed on our protocol
@@ -260,9 +261,10 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
+      // todo: update code to use normal get latest price, there is validate price
       (vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(
         oracle
-      ).getLatestPriceWithMarketStatus(
+      ).unsafeGetLatestPriceWithMarketStatus(
           _marketConfig.assetId,
           !vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold
@@ -456,7 +458,8 @@ contract TradeService is ITradeService {
     (uint256 price, ) = IOracleMiddleware(oracle).getLatestPrice(
       marketConfig.assetId,
       _isLong,
-      marketConfig.priceConfidentThreshold
+      marketConfig.priceConfidentThreshold,
+      0
     );
 
     // Calculate the difference between the average price and the fixed price.
@@ -486,7 +489,7 @@ contract TradeService is ITradeService {
   /// @param reservedValue The amount by which to increase the reserve value.
   function increaseReserved(uint256 reservedValue) internal {
     // Get the total TVL
-    uint256 tvl = ICalculator(calculator).getPlpValue();
+    uint256 tvl = ICalculator(calculator).getPLPValueE30(true);
 
     // Retrieve the global state
     IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage)

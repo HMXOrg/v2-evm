@@ -78,12 +78,12 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
   function testCorrectness_GetWhenNoConf() external {
     updateWbtcWithConf(0);
 
-    (uint maxPrice, uint lastUpdate) = pythAdapter.getLatestPrice(
+    (uint256 maxPrice, uint256 lastUpdate) = pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),
       true,
       1 ether
     );
-    (uint minPrice, ) = pythAdapter.getLatestPrice(
+    (uint256 minPrice, ) = pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),
       false,
       1 ether
@@ -115,12 +115,12 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     updateWbtcWithConf(1_000 * 1e8);
 
     // And get price with 6% conf threshold
-    (uint maxPrice, ) = pythAdapter.getLatestPrice(
+    (uint256 maxPrice, ) = pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),
       true,
       0.06 ether // 6% conf
     );
-    (uint minPrice, ) = pythAdapter.getLatestPrice(
+    (uint256 minPrice, ) = pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),
       false,
       0.051 ether // 5.1% conf

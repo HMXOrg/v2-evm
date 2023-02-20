@@ -41,6 +41,34 @@ contract PerpStorage is IPerpStorage {
   //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////
 
+  ////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////  GETTER
+  ////////////////////////////////////////////////////////////////////////////////////
+
+  function getPositionBySubAccount(
+    address _trader
+  ) external view returns (Position[] memory traderPositions) {
+    uint256[] memory _subAccountPositionIndices = subAccountPositionIndices[
+      _trader
+    ];
+    if (_subAccountPositionIndices.length > 0) {
+      Position[] memory _traderPositions = new Position[](
+        _subAccountPositionIndices.length
+      );
+
+      for (uint256 i; i < _subAccountPositionIndices.length; ) {
+        uint256 _subAccountPositionIndex = _subAccountPositionIndices[i];
+        _traderPositions[i] = (positions[_subAccountPositionIndex]);
+
+        unchecked {
+          i++;
+        }
+      }
+
+      return _traderPositions;
+    }
+  }
+
   // todo: add description
   function getPositionById(
     bytes32 _positionId

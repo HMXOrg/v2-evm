@@ -63,6 +63,11 @@ interface IPerpStorage {
 
   function getGlobalState() external view returns (GlobalState memory);
 
+  function getNumberOfSubAccountPosition(
+    address _subAccount
+  ) external view returns (uint256);
+
+  // setter
   // =========================================
   // | ---------- Setter ------------------- |
   // =========================================
@@ -89,6 +94,14 @@ interface IPerpStorage {
     uint256 _newOpenInterest
   ) external;
 
-  // todo: update sumBorrowingRate, lastBorrowingTime
+  // @todo - update sumBorrowingRate, lastBorrowingTime
   function updateGlobalState(uint256 _newReserveValueE30) external;
+
+  function savePosition(
+    address _subAccount,
+    bytes32 _positionId,
+    Position calldata position
+  ) external;
+
+  function updateReserveValue(uint256 newReserveValue) external;
 }

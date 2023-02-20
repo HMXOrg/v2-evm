@@ -7,9 +7,11 @@ import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
 
 contract MockCalculator is ICalculator {
   uint256 equity;
-  uint256 imr;
+  uint256 freeCollateral;
   uint256 mmr;
+  uint256 imr;
   uint256 aum;
+  uint256 plpValue;
 
   int256 unrealizedPnl;
 
@@ -37,6 +39,14 @@ contract MockCalculator is ICalculator {
 
   function setAUM(uint256 _aum) external {
     aum = _aum;
+  }
+
+  function setFreeCollateral(uint256 _mockFreeCollateral) external {
+    freeCollateral = _mockFreeCollateral;
+  }
+
+  function setPLPValue(uint256 _mockPLPValue) external {
+    plpValue = _mockPLPValue;
   }
 
   // =========================================
@@ -92,8 +102,8 @@ contract MockCalculator is ICalculator {
 
   function getPLPValueE30(
     bool /* isMaxPrice */
-  ) external pure returns (uint256) {
-    return 0;
+  ) external view returns (uint256) {
+    return plpValue;
   }
 
   function getPLPPrice(
@@ -136,5 +146,11 @@ contract MockCalculator is ICalculator {
     IVaultStorage /*_vaultStorage*/
   ) external pure returns (uint256) {
     return 1e18;
+  }
+
+  function getFreeCollateral(
+    address /*_subAccount*/
+  ) external view returns (uint256) {
+    return freeCollateral;
   }
 }

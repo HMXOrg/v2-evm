@@ -15,32 +15,32 @@ import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { console } from "forge-std/console.sol"; //@todo remove
 
 contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
-  // EVENTS
+  /**
+   * Events
+   */
   event LogSetConfigStorage(
     address indexed oldConfigStorage,
     address newConfigStorage
   );
-
   event LogSetVaultStorage(
     address indexed oldVaultStorage,
     address newVaultStorage
   );
-
   event LogSetCalculator(address indexed oldCalculator, address newCalculator);
-
   event LogIncreaseTokenLiquidity(
     address indexed trader,
     address token,
     uint256 amount
   );
-
   event LogDecreaseTokenLiquidity(
     address indexed trader,
     address token,
     uint256 amount
   );
 
-  // STATES
+  /**
+   * States
+   */
   address public configStorage;
   address public vaultStorage;
   address public calculator;
@@ -62,6 +62,9 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     calculator = _calculator;
   }
 
+  /**
+   * Modifiers
+   */
   // NOTE: Validate only whitelisted contract be able to call this function
   modifier onlyWhitelistedExecutor() {
     IConfigStorage(configStorage).validateServiceExecutor(
@@ -77,45 +80,9 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     _;
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER
-  ////////////////////////////////////////////////////////////////////////////////////
-
-  /// @notice Set new ConfigStorage contract address.
-  /// @param _configStorage New ConfigStorage contract address.
-  function setConfigStorage(address _configStorage) external onlyOwner {
-    // @todo - Sanity check
-    if (_configStorage == address(0))
-      revert ICrossMarginService_InvalidAddress();
-    emit LogSetConfigStorage(configStorage, _configStorage);
-    configStorage = _configStorage;
-  }
-
-  /// @notice Set new VaultStorage contract address.
-  /// @param _vaultStorage New VaultStorage contract address.
-  function setVaultStorage(address _vaultStorage) external onlyOwner {
-    // @todo - Sanity check
-    if (_vaultStorage == address(0))
-      revert ICrossMarginService_InvalidAddress();
-
-    emit LogSetVaultStorage(vaultStorage, _vaultStorage);
-    vaultStorage = _vaultStorage;
-  }
-
-  /// @notice Set new Calculator contract address.
-  /// @param _calculator New Calculator contract address.
-  function setCalculator(address _calculator) external onlyOwner {
-    // @todo - Sanity check
-    if (_calculator == address(0)) revert ICrossMarginService_InvalidAddress();
-
-    emit LogSetCalculator(calculator, _calculator);
-    calculator = _calculator;
-  }
-
-  ////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////// CALCULATION
-  ////////////////////////////////////////////////////////////////////////////////////
-
+  /**
+   * Core functions
+   */
   /// @notice Calculate new trader balance after deposit collateral token.
   /// @dev This uses to calculate new trader balance when they deposit token as collateral.
   /// @param _primaryAccount Trader's primary address from trader's wallet.
@@ -199,5 +166,39 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     IVaultStorage(vaultStorage).transferToken(_primaryAccount, _token, _amount);
 
     emit LogDecreaseTokenLiquidity(_subAccount, _token, _amount);
+  }
+
+  /**
+   * Setter
+   */
+  /// @notice Set new ConfigStorage contract address.
+  /// @param _configStorage New ConfigStorage contract address.
+  function setConfigStorage(address _configStorage) external onlyOwner {
+    // @todo - Sanity check
+    if (_configStorage == address(0))
+      revert ICrossMarginService_InvalidAddress();
+    emit LogSetConfigStorage(configStorage, _configStorage);
+    configStorage = _configStorage;
+  }
+
+  /// @notice Set new VaultStorage contract address.
+  /// @param _vaultStorage New VaultStorage contract address.
+  function setVaultStorage(address _vaultStorage) external onlyOwner {
+    // @todo - Sanity check
+    if (_vaultStorage == address(0))
+      revert ICrossMarginService_InvalidAddress();
+
+    emit LogSetVaultStorage(vaultStorage, _vaultStorage);
+    vaultStorage = _vaultStorage;
+  }
+
+  /// @notice Set new Calculator contract address.
+  /// @param _calculator New Calculator contract address.
+  function setCalculator(address _calculator) external onlyOwner {
+    // @todo - Sanity check
+    if (_calculator == address(0)) revert ICrossMarginService_InvalidAddress();
+
+    emit LogSetCalculator(calculator, _calculator);
+    calculator = _calculator;
   }
 }

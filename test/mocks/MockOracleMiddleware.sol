@@ -7,6 +7,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
   uint256 public priceE30;
   uint256 public lastUpdate;
   uint8 public marketStatus;
+  bool public isPriceStale;
 
   constructor() {
     priceE30 = 1e30;
@@ -25,6 +26,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
     marketStatus = _newStatus;
   }
 
+  function setPriceStale(bool _isPriceStale) external {
+    isPriceStale = _isPriceStale;
+  }
+
   // =========================================
   // | ---------- Getter ------------------- |
   // =========================================
@@ -36,6 +41,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     uint256 /* _confidentTreshold */,
     uint256 /* _trustPriceAge */
   ) external view returns (uint256, uint256) {
+    if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     return (priceE30, lastUpdate);
   }
 
@@ -46,6 +52,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     uint256 /* _confidenceThreshold */,
     uint256 /* _trustPriceAge */
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     return (priceE30, lastUpdate, marketStatus);
   }
 

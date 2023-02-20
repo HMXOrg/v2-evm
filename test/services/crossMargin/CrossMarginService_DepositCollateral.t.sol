@@ -26,59 +26,33 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   // =========================================
 
   // Try deposit token collateral with not in whitelist
-  function testRevert_service_depositCollateral_onlyWhitelistedExecutor()
-    external
-  {
-    vm.expectRevert(abi.encodeWithSignature("NotWhiteListed()"));
-    crossMarginService.depositCollateral(
-      CROSS_MARGIN_HANDLER,
-      address(this),
-      address(weth),
-      10 ether
-    );
+  function testRevert_service_depositCollateral_onlyWhitelistedExecutor() external {
+    vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotWhiteListed()"));
+    crossMarginService.depositCollateral(CROSS_MARGIN_HANDLER, address(this), address(weth), 10 ether);
   }
 
   // Try deposit token collaeral with not accepted token (Ex. Fx, Equity)
   function testRevert_service_depositCollateral_onlyAcceptedToken() external {
     vm.prank(CROSS_MARGIN_HANDLER);
-    vm.expectRevert(abi.encodeWithSignature("NotAcceptedCollateral()"));
-    crossMarginService.depositCollateral(
-      CROSS_MARGIN_HANDLER,
-      address(this),
-      address(dai),
-      10 ether
-    );
+    vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
+    crossMarginService.depositCollateral(CROSS_MARGIN_HANDLER, address(this), address(dai), 10 ether);
   }
 
   // Try deposit token collateral with incufficent allowance
-  function testRevert_service_depositCollateral_InsufficientAllowance()
-    external
-  {
+  function testRevert_service_depositCollateral_InsufficientAllowance() external {
     vm.prank(CROSS_MARGIN_HANDLER);
     vm.expectRevert("ERC20: insufficient allowance");
-    crossMarginService.depositCollateral(
-      CROSS_MARGIN_HANDLER,
-      address(this),
-      address(weth),
-      10 ether
-    );
+    crossMarginService.depositCollateral(CROSS_MARGIN_HANDLER, address(this), address(weth), 10 ether);
   }
 
   // Try deposit token collateral with exceed trader's balance
-  function testRevert_service_depositCollateral_TransferExceedBalance()
-    external
-  {
+  function testRevert_service_depositCollateral_TransferExceedBalance() external {
     uint256 depositAmount = 10 ether;
 
     vm.startPrank(CROSS_MARGIN_HANDLER);
     weth.approve(address(crossMarginService), depositAmount);
     vm.expectRevert("ERC20: transfer amount exceeds balance");
-    crossMarginService.depositCollateral(
-      CROSS_MARGIN_HANDLER,
-      address(this),
-      address(weth),
-      depositAmount
-    );
+    crossMarginService.depositCollateral(CROSS_MARGIN_HANDLER, address(this), address(weth), depositAmount);
     vm.stopPrank();
   }
 
@@ -87,9 +61,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   // =========================================
 
   // Try deposit token collateral with initial balance and test accounting balance
-  function testCorrectness_service_depositCollateral_newDepositingToken()
-    external
-  {
+  function testCorrectness_service_depositCollateral_newDepositingToken() external {
     // Before start depositing, ALICE must has 0 amount of WETH token
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 0);
     assertEq(weth.balanceOf(address(vaultStorage)), 0);
@@ -103,9 +75,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   }
 
   // Try deposit token collateral with initial balance and test deposit token lists
-  function testCorrectness_service_depositCollateral_newDepositingToken_traderTokenList()
-    external
-  {
+  function testCorrectness_service_depositCollateral_newDepositingToken_traderTokenList() external {
     // Before ALICE start depositing, token lists must contains no token
     address[] memory traderTokenBefore = vaultStorage.getTraderTokens(ALICE);
     assertEq(traderTokenBefore.length, 0);
@@ -119,9 +89,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   }
 
   // Try deposit token collateral with existing balance and test deposit token lists + balance
-  function testCorrectness_service_depositCollateral_oldDepositingToken_traderTokenList()
-    external
-  {
+  function testCorrectness_service_depositCollateral_oldDepositingToken_traderTokenList() external {
     // Before ALICE start depositing, token lists must contains no token
     address[] memory traderTokenBefore = vaultStorage.getTraderTokens(ALICE);
     assertEq(traderTokenBefore.length, 0);

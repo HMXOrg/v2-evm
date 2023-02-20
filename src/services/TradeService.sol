@@ -9,10 +9,15 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
+import { console } from "forge-std/console.sol";
+
+// @todo - refactor, deduplicate code
+
 contract TradeService is ITradeService {
   // struct
   struct DecreasePositionVars {
     uint256 absPositionSizeE30;
+    uint256 avgEntryPriceE30;
     uint256 priceE30;
     int256 currentPositionSizeE30;
     bool isLongPosition;
@@ -118,7 +123,7 @@ contract TradeService is ITradeService {
 
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
     if (!_isNewPosition) {
-      _position.avgEntryPriceE30 = getPositionNextAveragePrice(
+      _position.avgEntryPriceE30 = _getPositionNextAveragePrice(
         _marketIndex,
         abs(_position.positionSizeE30),
         _isLong,
@@ -128,7 +133,7 @@ contract TradeService is ITradeService {
       );
     }
 
-    // TODO: Collect trading fee, borrowing fee, update borrowing rate, collect funding fee, and update funding rate.
+    // @todo - Collect trading fee, borrowing fee, update borrowing rate, collect funding fee, and update funding rate.
 
     // update the position size by adding the new size delta
     _position.positionSizeE30 += _sizeDelta;
@@ -136,19 +141,17 @@ contract TradeService is ITradeService {
     // if the position size is zero after the update, revert the transaction with an error
     if (_position.positionSizeE30 == 0) revert ITradeService_BadPositionSize();
 
-    // calculate the initial margin required for the new position
-    uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / 1e18;
-
     {
+      // calculate the initial margin required for the new position
+      uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / 1e18;
+
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = ICalculator(IConfigStorage(configStorage).calculator()).getFreeCollateral(
         _subAccount
       );
       // if the free collateral is less than the initial margin required, revert the transaction with an error
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
-    }
 
-    {
       // calculate the maximum amount of reserve required for the new position
       uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / 1e18;
       // increase the reserved amount by the maximum reserve required for the new position
@@ -156,26 +159,28 @@ contract TradeService is ITradeService {
       _position.reserveValueE30 += _maxReserve;
     }
 
-    // get the global market for the given market index
-    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-
     {
+      // get the global market for the given market index
+      IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
       // calculate the change in open interest for the new position
-      uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _priceE30; // TODO: use decimal asset
+      uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _priceE30; // @todo - use decimal asset
       _position.openInterest += _changedOpenInterest;
       // update gobal market state
       if (_isLong) {
+        uint256 _price = _getNextLongAveragePrice(_globalMarket, _priceE30, _sizeDelta, 0);
         IPerpStorage(perpStorage).updateGlobalLongMarketById(
           _marketIndex,
           _globalMarket.longPositionSize + _absSizeDelta,
-          _globalMarket.longAvgPrice, // todo: recalculate arg price
+          _price,
           _globalMarket.longOpenInterest + _changedOpenInterest
         );
       } else {
+        uint256 _price = _getNextShortAveragePrice(_globalMarket, _priceE30, -_sizeDelta, 0);
         IPerpStorage(perpStorage).updateGlobalShortMarketById(
           _marketIndex,
           _globalMarket.shortPositionSize + _absSizeDelta,
-          _globalMarket.shortAvgPrice, // todo: recalculate arg price
+          _price,
           _globalMarket.shortOpenInterest + _changedOpenInterest
         );
       }
@@ -209,6 +214,7 @@ contract TradeService is ITradeService {
     // init vars
     DecreasePositionVars memory vars = DecreasePositionVars({
       absPositionSizeE30: 0,
+      avgEntryPriceE30: 0,
       priceE30: 0,
       currentPositionSizeE30: 0,
       isLongPosition: false
@@ -260,6 +266,7 @@ contract TradeService is ITradeService {
     // =========================================
     // | ------ update perp storage ---------- |
     // =========================================
+
     uint256 _newAbsPositionSizeE30 = vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
 
     // check position is too tiny
@@ -267,8 +274,33 @@ contract TradeService is ITradeService {
     //       due to we has problem stack too deep in MarketConfig now
     if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30) revert ITradeService_TooTinyPosition();
 
+    int256 _realizedPnl;
+
+    {
+      // =========================================
+      // | ------- settlement position --------- |
+      // =========================================
+      vars.avgEntryPriceE30 = _position.avgEntryPriceE30;
+      (bool isProfit, uint256 pnl) = getDelta(
+        _marketIndex,
+        vars.absPositionSizeE30,
+        vars.isLongPosition,
+        vars.avgEntryPriceE30
+      );
+      if (isProfit) {
+        _realizedPnl = int256((pnl * _positionSizeE30ToDecrease) / vars.absPositionSizeE30);
+      } else {
+        _realizedPnl = -int256((pnl * _positionSizeE30ToDecrease) / vars.absPositionSizeE30);
+      }
+
+      console.logInt(_realizedPnl);
+    }
+
     {
       uint256 _openInterestDelta = (_position.openInterest * _positionSizeE30ToDecrease) / vars.absPositionSizeE30;
+
+      // @todo - is close position then we should delete positions[x]
+      bool isClosePosition = _newAbsPositionSizeE30 == 0;
 
       // update position info
       IPerpStorage(perpStorage).updatePositionById(
@@ -276,24 +308,36 @@ contract TradeService is ITradeService {
         vars.isLongPosition ? int256(_newAbsPositionSizeE30) : -int256(_newAbsPositionSizeE30), // @todo - optimized
         // new position size * IMF * max profit rate
         (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) / 1e18,
-        _position.avgEntryPriceE30,
+        isClosePosition ? 0 : vars.avgEntryPriceE30,
         _position.openInterest - _openInterestDelta
       );
 
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
       if (vars.isLongPosition) {
+        uint256 _nextAvgPrice = _getNextLongAveragePrice(
+          _globalMarket,
+          vars.priceE30,
+          -int256(_positionSizeE30ToDecrease),
+          _realizedPnl
+        );
         IPerpStorage(perpStorage).updateGlobalLongMarketById(
           _marketIndex,
           _globalMarket.longPositionSize - _positionSizeE30ToDecrease,
-          _globalMarket.longAvgPrice, // @todo - recalculate arg price
+          _nextAvgPrice,
           _globalMarket.longOpenInterest - _openInterestDelta
         );
       } else {
+        uint256 _nextAvgPrice = _getNextShortAveragePrice(
+          _globalMarket,
+          vars.priceE30,
+          -int256(_positionSizeE30ToDecrease),
+          _realizedPnl
+        );
         IPerpStorage(perpStorage).updateGlobalShortMarketById(
           _marketIndex,
           _globalMarket.shortPositionSize - _positionSizeE30ToDecrease,
-          _globalMarket.shortAvgPrice, // @todo - recalculate arg price
+          _nextAvgPrice,
           _globalMarket.shortOpenInterest - _openInterestDelta
         );
       }
@@ -306,11 +350,6 @@ contract TradeService is ITradeService {
           ((_position.reserveValueE30 * _positionSizeE30ToDecrease) / vars.absPositionSizeE30)
       );
     }
-
-    // =========================================
-    // | ------- settlement position --------- |
-    // =========================================
-    // @todo - settle profit & loss
 
     // =========================================
     // | --------- post validation ----------- |
@@ -341,7 +380,7 @@ contract TradeService is ITradeService {
   /// @param averagePrice The current average price of the position.
   /// @param nextPrice The next price of the position.
   /// @return The next average price of the position.
-  function getPositionNextAveragePrice(
+  function _getPositionNextAveragePrice(
     uint256 marketIndex,
     uint256 size,
     bool isLong,
@@ -377,6 +416,7 @@ contract TradeService is ITradeService {
     bool _isLong,
     uint256 _averagePrice
   ) public view returns (bool, uint256) {
+    console.log("get delta ===================");
     // Check for invalid input: averagePrice cannot be zero.
     if (_averagePrice == 0) revert ITradeService_InvalidAveragePrice();
 
@@ -391,14 +431,19 @@ contract TradeService is ITradeService {
       0
     );
 
+    console.log("price", price);
+
     // Calculate the difference between the average price and the fixed price.
     uint256 priceDelta;
     unchecked {
       priceDelta = _averagePrice > price ? _averagePrice - price : price - _averagePrice;
     }
+    console.log("priceDelta", priceDelta);
 
     // Calculate the delta, adjusted for the size of the order.
     uint256 delta = (_size * priceDelta) / _averagePrice;
+
+    console.log("delta", delta);
 
     // Determine if the position is profitable or not based on the averagePrice and the mark price.
     bool isProfit;
@@ -407,6 +452,8 @@ contract TradeService is ITradeService {
     } else {
       isProfit = price < _averagePrice;
     }
+
+    console.log("isProfit", isProfit);
 
     // Return the values of isProfit and delta.
     return (isProfit, delta);
@@ -451,5 +498,141 @@ contract TradeService is ITradeService {
 
     // if sub account equity < MMR, then trader couln't decrease position
     if (_subAccountEquity < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
+  }
+
+  /// @notice get next long average price with realized PNL
+  /// @param _market - global market
+  /// @param _currentPrice - min / max price depends on position direction
+  /// @param _sizeDelta - position size after increase / decrease.
+  ///                           if positive is LONG position, else is SHORT
+  /// @param _positionRealizedPnl - position realized PnL if positive is profit, and negative is loss
+  /// @return _nextAveragePrice next average price
+  function _getNextLongAveragePrice(
+    IPerpStorage.GlobalMarket memory _market,
+    uint256 _currentPrice,
+    int256 _sizeDelta,
+    int256 _positionRealizedPnl
+  ) internal pure returns (uint256 _nextAveragePrice) {
+    uint256 longSize = _market.longPositionSize;
+    uint256 longAveragePrice = _market.longAvgPrice;
+
+    if (longAveragePrice == 0) return _currentPrice;
+    uint256 priceDelta = longAveragePrice > _currentPrice
+      ? longAveragePrice - _currentPrice
+      : _currentPrice - longAveragePrice;
+    uint256 delta = (longSize * priceDelta) / longAveragePrice;
+
+    (bool isProfit, uint256 nextDelta) = _getNextLongDelta(
+      delta,
+      longAveragePrice,
+      _currentPrice,
+      _positionRealizedPnl
+    );
+
+    uint256 nextSize = _sizeDelta > 0 ? longSize + uint256(_sizeDelta) : longSize - uint256(-_sizeDelta);
+
+    if (nextSize == 0) return 0;
+
+    uint256 divisor = isProfit ? nextSize + nextDelta : nextSize >= nextDelta ? nextSize - nextDelta : 0;
+
+    return divisor > 0 ? (_currentPrice * nextSize) / divisor : _currentPrice;
+  }
+
+  /// @notice get next short average price with realized PNL
+  /// @param _market - global market
+  /// @param _currentPrice - min / max price depends on position direction
+  /// @param _sizeDelta - position size after increase / decrease.
+  ///                           if positive is LONG position, else is SHORT
+  /// @param _positionRealizedPnl - position realized PnL if positive is profit, and negative is loss
+  /// @return _nextAveragePrice next average price
+  function _getNextShortAveragePrice(
+    IPerpStorage.GlobalMarket memory _market,
+    uint256 _currentPrice,
+    int256 _sizeDelta,
+    int256 _positionRealizedPnl
+  ) internal view returns (uint256 _nextAveragePrice) {
+    uint256 shortSize = _market.shortPositionSize;
+    uint256 shortAveragePrice = _market.shortAvgPrice;
+    if (shortAveragePrice == 0) return _currentPrice;
+    uint256 priceDelta = shortAveragePrice > _currentPrice
+      ? shortAveragePrice - _currentPrice
+      : _currentPrice - shortAveragePrice;
+    uint256 delta = (shortSize * priceDelta) / shortAveragePrice;
+
+    (bool isProfit, uint256 nextDelta) = _getNextShortDelta(
+      delta,
+      shortAveragePrice,
+      _currentPrice,
+      _positionRealizedPnl
+    );
+
+    uint256 nextSize = _sizeDelta > 0 ? shortSize + uint256(_sizeDelta) : shortSize - uint256(-_sizeDelta);
+
+    if (nextSize == 0) return 0;
+
+    uint256 divisor = isProfit ? nextSize >= nextDelta ? (nextSize - nextDelta) : 0 : nextSize + nextDelta;
+    return divisor > 0 ? (_currentPrice * nextSize) / divisor : _currentPrice;
+  }
+
+  /// @notice calculate profit & loss
+  function _getNextShortDelta(
+    uint256 _globalShortPnL,
+    uint256 _averagePrice,
+    uint256 _nextPrice,
+    int256 _realizedPnl
+  ) internal pure returns (bool, uint256) {
+    // _globalShortPnL = Global Short PnL in USD
+    // _realizedPnL = Realized PnL in USD of this transaction
+    // Calculate the PnL to be realized from this transaction in regards to the Global Short PnL of all traders' short positions.
+    // Realized PnL will be deducted from Global Short PnL. So, we will have the remaining unrealized PnL of all traders' short positions.
+    // Example scenarios:
+    // _globalShortPnL = 10000  | _realizedPnl = 1000   => return 10000 - 1000      = 9000
+    // _globalShortPnL = 10000  | _realizedPnl = -1000  => return 10000 - (-1000)   = 11000
+    // _globalShortPnL = -10000 | _realizedPnl = 1000   => return -10000 - 1000     = -11000
+    // _globalShortPnL = -10000 | _realizedPnl = -1000  => return -10000 - (-1000)  = -9000
+    // _globalShortPnL = 10000  | _realizedPnl = 11000  => return 10000 - 11000     = -1000
+    // _globalShortPnL = -10000 | _realizedPnl = -11000 => return -10000 - (-11000) = 1000
+
+    bool hasProfit = _averagePrice > _nextPrice;
+    if (hasProfit) {
+      // global shorts pnl is positive
+      if (_realizedPnl > 0) {
+        if (uint256(_realizedPnl) > _globalShortPnL) {
+          _globalShortPnL = uint256(_realizedPnl) - _globalShortPnL;
+          hasProfit = false;
+        } else {
+          _globalShortPnL = _globalShortPnL - uint256(_realizedPnl);
+        }
+      } else {
+        _globalShortPnL = _globalShortPnL + uint256(-_realizedPnl);
+      }
+
+      return (hasProfit, _globalShortPnL);
+    }
+
+    if (_realizedPnl > 0) {
+      _globalShortPnL = _globalShortPnL + uint256(_realizedPnl);
+    } else {
+      if (uint256(-_realizedPnl) > _globalShortPnL) {
+        _globalShortPnL = uint256(-_realizedPnl) - _globalShortPnL;
+        hasProfit = true;
+      } else {
+        _globalShortPnL = _globalShortPnL - uint256(-_realizedPnl);
+      }
+    }
+    return (hasProfit, _globalShortPnL);
+  }
+
+  function _getNextLongDelta(
+    uint256 _globalLongPnL,
+    uint256 _globalPrice,
+    uint256 _currentPrice,
+    int256 _realizedPnl
+  ) internal pure returns (bool _isProfit, uint256 _newGlobalPnl) {
+    int256 _globalPnl = _currentPrice > _globalPrice ? int256(_globalLongPnL) : -int256(_globalLongPnL);
+
+    int256 _newGlobalPnlInt = _globalPnl - _realizedPnl;
+    _isProfit = _newGlobalPnl > 0;
+    return (_isProfit, _isProfit ? uint256(_newGlobalPnlInt) : uint256(-_newGlobalPnlInt));
   }
 }

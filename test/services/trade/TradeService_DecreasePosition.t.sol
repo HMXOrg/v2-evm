@@ -100,11 +100,20 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // leverage       - 100x
     // price          - 1 USD
     // open interest  - 10,000 TOKENs
+    // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
+
+    // LONG position pnl calculation
+    // global pnl = position size * (current price - avg price) / avg price
+    //            = 1000000 * (0.95 - 1) / 1 = -50000 USD
+    // position realized pnl = decreased position size * (current price - avg price) / avg price
+    //                       = 500000 * (0.95 - 1) / 1 = -25000 USD
+    // new global pnl = global pnl - position relaized pnl
+    //                = -50000 - (-25000) = -25000 USD
 
     // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -115,11 +124,17 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // check position after decrease
     // open interest delta = open interest * position size to decrease / position size
     //                     = 10000 * 500000 / 1000000 = 5000
+    // new position size = 500000 USD
+    // new long average price (global) = current price * new position size / new position size + new global pnl
+    //                                 = 0.95 * 500000 / (500000 + (-25000)) = 1 USD
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 500_000 * 1e30,
-      avgPriceDelta: 0,
       reserveValueDelta: 45_000 * 1e30,
-      openInterestDelta: 5_000 * 1e18
+      openInterestDelta: 5_000 * 1e18,
+      // average prices
+      newPositionAveragePrice: 1 * 1e30,
+      newLongGlobalAveragePrice: 1 * 1e30,
+      newShortGlobalAveragePrice: 0
     });
     positionTester.assertDecreasePositionResult(_assertData);
   }
@@ -133,11 +148,20 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // leverage       - 100x
     // price          - 1 USD
     // open interest  - 10,000 TOKENs
+    // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
+
+    // SHORT position pnl calculation
+    // global pnl = position size * (avg price - current price) / avg price
+    //            = 1000000 * (1 - 0.95) / 1 = +50000 USD
+    // position realized pnl = decreased position size * (avg price - current price) / avg price
+    //                       = 500000 * (1 - 0.95) / 1 = +25000 USD
+    // new global pnl = global pnl - position relaized pnl
+    //                = +50000 - (+25000) = +25000 USD
 
     // cache position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -148,11 +172,16 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // check position after decrease
     // open interest delta = open interest * position size to decrease / position size
     //                     = 10000 * 500000 / 1000000 = 5000
+    // new short average price (global) = current price * new position size / new position size - new global pnl
+    //                                  = 0.95 * 500000 / 500000 - (+25000) = 1 USD
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 500_000 * 1e30,
-      avgPriceDelta: 0,
       reserveValueDelta: 45_000 * 1e30,
-      openInterestDelta: 5_000 * 1e18
+      openInterestDelta: 5_000 * 1e18,
+      // average prices
+      newPositionAveragePrice: 1 * 1e30,
+      newLongGlobalAveragePrice: 0,
+      newShortGlobalAveragePrice: 1 * 1e30
     });
     positionTester.assertDecreasePositionResult(_assertData);
   }
@@ -166,11 +195,20 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // leverage       - 100x
     // price          - 1 USD
     // open interest  - 10,000 TOKENs
+    // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
+
+    // LONG position pnl calculation
+    // global pnl = position size * (current price - avg price) / avg price
+    //            = 1000000 * (0.95 - 1) / 1 = -50000 USD
+    // position realized pnl = decreased position size * (current price - avg price) / avg price
+    //                       = 1000000 * (0.95 - 1) / 1 = -50000 USD
+    // new global pnl = global pnl - position relaized pnl
+    //                = -50000 - (-50000) = 0 USD
 
     // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -181,11 +219,16 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // check position after decrease
     // open interest delta = open interest * position size to decrease / position size
     //                     = 10000 * 1000000 / 1000000 = 10000
+    // new average price (global) = current price * new position size / new position size - new global pnl
+    //                            = 0.95 USD * 0 / 0 - 0 = 0
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 1_000_000 * 1e30,
-      avgPriceDelta: 0,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 10_000 * 1e18
+      openInterestDelta: 10_000 * 1e18,
+      // average prices
+      newPositionAveragePrice: 0,
+      newLongGlobalAveragePrice: 0,
+      newShortGlobalAveragePrice: 0
     });
     positionTester.assertDecreasePositionResult(_assertData);
   }
@@ -199,11 +242,20 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // leverage       - 100x
     // price          - 1 USD
     // open interest  - 10,000 TOKENs
+    // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
+
+    // SHORT position pnl calculation
+    // global pnl = position size * (avg price - current price) / avg price
+    //            = 1000000 * (1 - 0.95) / 1 = +50000 USD
+    // position realized pnl = decreased position size * (avg price - current price) / avg price
+    //                       = 500000 * (1 - 0.95) / 1 = +50000 USD
+    // new global pnl = global pnl - position relaized pnl
+    //                = +50000 - (+50000) = 0 USD
 
     // cache position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -214,11 +266,16 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // check position after decrease
     // open interest delta = open interest * position size to decrease / position size
     //                     = 10000 * 1000000 / 1000000 = 10000
+    // new average price (global) = current price * new position size / new position size - new global pnl
+    //                            = 1 USD * 0 / 0 - 0 = 0
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 1_000_000 * 1e30,
-      avgPriceDelta: 0,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 10_000 * 1e18
+      openInterestDelta: 10_000 * 1e18,
+      // average prices
+      newPositionAveragePrice: 0,
+      newLongGlobalAveragePrice: 0,
+      newShortGlobalAveragePrice: 0
     });
     positionTester.assertDecreasePositionResult(_assertData);
   }

@@ -33,7 +33,7 @@ abstract contract TradeService_Base is BaseTest {
     return keccak256(abi.encodePacked(_subAccount, _marketIndex));
   }
 
-  // todo: should integrate with increase position
+  // @todo - should integrate with increase position
   function openPosition(address _account, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeE30) internal {
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(_marketIndex);
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);

@@ -27,6 +27,9 @@ import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol
 // Calculator
 import { Calculator } from "../../src/contracts/Calculator.sol";
 
+// Handlers
+import { CrossMarginHandler } from "../../src/handlers/CrossMarginHandler.sol";
+
 // Services
 import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
 
@@ -151,6 +154,21 @@ abstract contract BaseTest is
     return deploy(deployLocalVars);
   }
 
+  /**
+   * HANDLER
+   */
+
+  function deployCrossMarginHandler(
+    address _crossMarginService,
+    address _configStorage
+  ) internal returns (CrossMarginHandler) {
+    return new CrossMarginHandler(_crossMarginService, _configStorage);
+  }
+
+  /**
+   * SERVICE
+   */
+
   function deployCrossMarginService(
     address _configStorage,
     address _vaultStorage,
@@ -158,6 +176,10 @@ abstract contract BaseTest is
   ) internal returns (CrossMarginService) {
     return new CrossMarginService(_configStorage, _vaultStorage, _calculator);
   }
+
+  /**
+   * CALCULATOR
+   */
 
   function deployCalculator(
     address _oracle,
@@ -168,7 +190,9 @@ abstract contract BaseTest is
     return new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
   }
 
-  // --------- Test Helpers ---------
+  /**
+   * TEST HELPERS
+   */
 
   /// @notice Helper function to create a price feed update data.
   /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.

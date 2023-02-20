@@ -12,6 +12,8 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 
+import { console } from "forge-std/console.sol"; //@todo remove
+
 contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   // EVENTS
   event LogSetConfigStorage(
@@ -116,10 +118,12 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
   /// @notice Calculate new trader balance after deposit collateral token.
   /// @dev This uses to calculate new trader balance when they deposit token as collateral.
+  /// @param _primaryAccount Trader's primary address from trader's wallet.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @param _token Token that's deposited as collateral.
   /// @param _amount Token depositing amount.
   function depositCollateral(
+    address _primaryAccount,
     address _subAccount,
     address _token,
     uint256 _amount
@@ -146,17 +150,19 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     }
 
     // Transfer depositing token from trader's wallet to VaultStorage
-    IERC20(_token).transferFrom(msg.sender, vaultStorage, _amount);
+    IERC20(_token).transferFrom(_primaryAccount, vaultStorage, _amount);
 
     emit LogIncreaseTokenLiquidity(_subAccount, _token, _amount);
   }
 
   /// @notice Calculate new trader balance after withdraw collateral token.
   /// @dev This uses to calculate new trader balance when they withdrawing token as collateral.
+  /// @param _primaryAccount Trader's primary address from trader's wallet.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
   function withdrawCollateral(
+    address _primaryAccount,
     address _subAccount,
     address _token,
     uint256 _amount
@@ -190,7 +196,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     }
 
     // Transfer withdrawing token from VaultStorage to trader's wallet
-    IVaultStorage(vaultStorage).transferToken(_subAccount, _token, _amount);
+    IVaultStorage(vaultStorage).transferToken(_primaryAccount, _token, _amount);
 
     emit LogDecreaseTokenLiquidity(_subAccount, _token, _amount);
   }

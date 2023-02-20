@@ -1,33 +1,34 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, CrossMarginService, IConfigStorage, MockErc20 } from "../../base/BaseTest.sol";
+import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, MockErc20 } from "../../base/BaseTest.sol";
 
-contract CrossMarginService_Base is BaseTest {
-  address internal CROSS_MARGIN_HANDLER;
+contract CrossMarginHandler_Base is BaseTest {
+  CrossMarginHandler internal crossMarginHandler;
+  CrossMarginService internal crossMarginService;
 
-  CrossMarginService crossMarginService;
+  uint256 internal SUB_ACCOUNT_NO = 1;
 
   function setUp() public virtual {
-    CROSS_MARGIN_HANDLER = makeAddr("CROSS_MARGIN_HANDLER");
-
     crossMarginService = deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
       address(mockCalculator)
     );
 
+    crossMarginHandler = deployCrossMarginHandler(
+      address(crossMarginService),
+      address(configStorage)
+    );
+
     // Set whitelist for service executor
     configStorage.setServiceExecutor(
       address(crossMarginService),
-      CROSS_MARGIN_HANDLER,
+      address(crossMarginHandler),
       true
     );
 
-    // @note - ALICE must act as CROSS_MARGIN_HANDLER here because CROSS_MARGIN_HANDLER doesn't included on this unit test yet
-    configStorage.setServiceExecutor(address(crossMarginService), ALICE, true);
-
-    // Set accepted token deposit/withdraw
+    // Set accepted token deposit/withdraw as WETH and USDC
     IConfigStorage.CollateralTokenConfig
       memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
         decimals: 18,
@@ -56,9 +57,17 @@ contract CrossMarginService_Base is BaseTest {
     );
   }
 
-  // =========================================
-  // | ------- common function ------------- |
-  // =========================================
+  /**
+   * COMMON FUNCTION
+   */
+
+  function getSubAccount(
+    address _primary,
+    uint256 _subAccountId
+  ) internal pure returns (address _subAccount) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
+  }
 
   function simulateAliceDepositToken(
     address _token,
@@ -66,7 +75,12 @@ contract CrossMarginService_Base is BaseTest {
   ) internal {
     vm.startPrank(ALICE);
     MockErc20(_token).approve(address(crossMarginService), _depositAmount);
-    crossMarginService.depositCollateral(ALICE, ALICE, _token, _depositAmount);
+    crossMarginHandler.depositCollateral(
+      ALICE,
+      SUB_ACCOUNT_NO,
+      _token,
+      _depositAmount
+    );
     vm.stopPrank();
   }
 
@@ -75,9 +89,9 @@ contract CrossMarginService_Base is BaseTest {
     uint256 _withdrawAmount
   ) internal {
     vm.startPrank(ALICE);
-    crossMarginService.withdrawCollateral(
+    crossMarginHandler.withdrawCollateral(
       ALICE,
-      ALICE,
+      SUB_ACCOUNT_NO,
       _token,
       _withdrawAmount
     );

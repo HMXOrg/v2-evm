@@ -6,6 +6,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 import { Owned } from "../base/Owned.sol";
 
 // Interfaces
+import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
@@ -13,23 +14,10 @@ import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
-contract LimitTradeHandler is Owned, ReentrancyGuard {
-  //ERRORS
-  error ILimitTradeHandler_InvalidAddress();
-  error ILimitTradeHandler_InsufficientExecutionFee();
-  error ILimitTradeHandler_IncorrectValueTransfer();
-  error ILimitTradeHandler_NotWhitelisted();
-  error ILimitTradeHandler_BadSubAccountId();
-  error ILimitTradeHandler_InvalidSender();
-  error ILimitTradeHandler_NonExistentOrder();
-  error ILimitTradeHandler_MarketIsClose();
-  error ILimitTradeHandler_InvalidPriceForExecution();
-  error ILimitTradeHandler_WrongSizeDelta();
-
+contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   // EVENTS
   event LogSetTradeService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
-
   event CreateIncreaseOrder(
     address indexed account,
     uint256 indexed subAccountId,
@@ -116,31 +104,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
   );
 
   // STATES
-  enum OrderType {
-    INCREASE,
-    DECREASE
-  }
-
-  struct IncreaseOrder {
-    address account;
-    uint256 subAccountId;
-    uint256 marketIndex;
-    int256 sizeDelta;
-    bool isLong;
-    uint256 triggerPrice;
-    bool triggerAboveThreshold;
-    uint256 executionFee;
-  }
-  struct DecreaseOrder {
-    address account;
-    uint256 subAccountId;
-    uint256 marketIndex;
-    uint256 sizeDelta;
-    bool isLong;
-    uint256 triggerPrice;
-    bool triggerAboveThreshold;
-    uint256 executionFee;
-  }
 
   mapping(address => mapping(uint256 => IncreaseOrder)) public increaseOrders;
   mapping(address => uint256) public increaseOrdersIndex;

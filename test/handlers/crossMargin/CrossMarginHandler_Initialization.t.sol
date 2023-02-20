@@ -10,34 +10,27 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
     super.setUp();
   }
 
-  // =========================================
-  // | ------- Test Revert ----------------- |
-  // =========================================
+  /**
+   * TEST REVERT
+   */
 
   function testRevert_setConfigStorage() external {
-    vm.expectRevert(
-      abi.encodeWithSignature("ICrossMarginHandler_InvalidAddress()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("ICrossMarginHandler_InvalidAddress()"));
     crossMarginHandler.setConfigStorage(address(0));
   }
 
   function testRevert_setCrossMarginService() external {
-    vm.expectRevert(
-      abi.encodeWithSignature("ICrossMarginHandler_InvalidAddress()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("ICrossMarginHandler_InvalidAddress()"));
     crossMarginHandler.setCrossMarginService(address(0));
   }
 
-  // =========================================
-  // | ------- Test Correctness ------------ |
-  // =========================================
+  /**
+   * TEST CORRECTNESS
+   */
 
   function testCorrectness_crossMarginHandler_initializdStates() external {
     assertEq(crossMarginHandler.configStorage(), address(configStorage));
-    assertEq(
-      crossMarginHandler.crossMarginService(),
-      address(crossMarginService)
-    );
+    assertEq(crossMarginHandler.crossMarginService(), address(crossMarginService));
   }
 
   function testCorrectness_crossMarginHandler_setConfigStorage() external {
@@ -47,10 +40,7 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
   }
 
   function testCorrectness_crossMarginHandler_setCrossMarginService() external {
-    assertEq(
-      crossMarginHandler.crossMarginService(),
-      address(crossMarginService)
-    );
+    assertEq(crossMarginHandler.crossMarginService(), address(crossMarginService));
     crossMarginHandler.setCrossMarginService(address(1));
     assertEq(crossMarginHandler.crossMarginService(), address(1));
   }

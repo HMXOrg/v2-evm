@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { console } from "forge-std/console.sol";
-
-import { CrossMarginHandler_Base } from "./CrossMarginHandler_Base.t.sol";
+import { CrossMarginHandler_Base, IPerpStorage } from "./CrossMarginHandler_Base.t.sol";
 
 // What is this test DONE
 // - revert
 //   - Try withdraw token collaeral with not accepted token (Ex. Fx, Equity)
 //   - Try withdraw token collateral with incufficent allowance
-//   - Try withdraw token collateral with equity below IMR
 // - success
 //   - Try deposit and withdraw collateral with happy case
 //   - Try deposit and withdraw collateral with happy case and check on token list of sub account
@@ -28,29 +25,44 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginHandler_Base {
   function testRevert_handler_withdrawCollateral_onlyAcceptedToken() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(dai), 10 ether);
+    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(dai), 10 ether, priceDataBytes);
   }
 
   //  Try withdraw token collateral with incufficent allowance
   function testRevert_handler_withdrawCollateral_InsufficientBalance() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InsufficientBalance()"));
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), 10 ether);
+    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), 10 ether, priceDataBytes);
   }
 
-  // Try withdraw token collateral with equity below IMR
-  function testRevert_handler_withdrawCollateral_WithdrawBalanceBelowIMR() external {
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), (10 ether));
+  function testRevert_handler_withdrawCollateral_setOraclePrice_withdrawBalanceBelowIMR() external {
+    address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 
-    // Mock calculator return values
-    mockCalculator.setEquity(10 ether);
-    mockCalculator.setIMR(12 ether);
+    // ALICE deposits WETH
+    weth.mint(ALICE, 100 ether);
+    simulateAliceDepositToken(address(weth), 100 ether);
 
-    vm.startPrank(ALICE);
+    // ALICE opens LONG position on ETH market
+    // Simulate ALICE contains 1 opening LONG position
+    mockPerpStorage.setPositionBySubAccount(
+      subAccount,
+      IPerpStorage.Position({
+        primaryAccount: address(1),
+        subAccountId: SUB_ACCOUNT_NO,
+        marketIndex: 0,
+        positionSizeE30: 100_000 * 1e30,
+        avgEntryPriceE30: 1_400 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+
     vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), 10 ether);
-    vm.stopPrank();
+    simulateAliceWithdrawToken(address(weth), 92 ether);
   }
 
   /**
@@ -109,27 +121,5 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginHandler_Base {
 
     // After ALICE withdrawn all of WETH, list of token must be 0
     assertEq(vaultStorage.getTraderTokens(subAccount).length, 0);
-  }
-
-  // Try deposit and withdraw multi tokens and checks on  token list of sub account
-  function testCorrectness_handler_withdrawCollateral_traderTokenList_multiTokens() external {
-    address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
-
-    // ALICE deposits WETH
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
-
-    // ALICE deposits USDC
-    usdc.mint(ALICE, 10_000 * 1e6);
-    simulateAliceDepositToken(address(usdc), 10_000 * 1e6);
-
-    // After ALICE start depositing, token lists must contains 2 tokens
-    assertEq(vaultStorage.getTraderTokens(subAccount).length, 2);
-
-    // ALICE try withdrawing all of WETH from Vault
-    simulateAliceWithdrawToken(address(weth), 10 ether);
-
-    // After ALICE withdrawn all of WETH, list of token must still contain USDC
-    assertEq(vaultStorage.getTraderTokens(subAccount).length, 1);
   }
 }

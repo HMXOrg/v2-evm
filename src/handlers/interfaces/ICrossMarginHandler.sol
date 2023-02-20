@@ -11,12 +11,7 @@ interface ICrossMarginHandler {
   /// @param _subAccountId Trader's sub account ID.
   /// @param _token Token that's deposited as collateral.
   /// @param _amount Token depositing amount.
-  function depositCollateral(
-    address _account,
-    uint256 _subAccountId,
-    address _token,
-    uint256 _amount
-  ) external;
+  function depositCollateral(address _account, uint256 _subAccountId, address _token, uint256 _amount) external;
 
   /// @notice Calculate new trader balance after withdraw collateral token.
   /// @dev This uses to call withdraw function on service and calculate new trader balance when they withdrawing token as collateral.
@@ -24,10 +19,12 @@ interface ICrossMarginHandler {
   /// @param _subAccountId Trader's sub account ID.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
+  /// @param _priceData Price update data
   function withdrawCollateral(
     address _account,
     uint256 _subAccountId,
     address _token,
-    uint256 _amount
+    uint256 _amount,
+    bytes[] memory _priceData
   ) external;
 }

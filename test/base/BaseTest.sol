@@ -141,9 +141,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   function deployCrossMarginHandler(
     address _crossMarginService,
-    address _configStorage
+    address _configStorage,
+    address _pythAdapter
   ) internal returns (CrossMarginHandler) {
-    return new CrossMarginHandler(_crossMarginService, _configStorage);
+    return new CrossMarginHandler(_crossMarginService, _configStorage, _pythAdapter);
   }
 
   /**

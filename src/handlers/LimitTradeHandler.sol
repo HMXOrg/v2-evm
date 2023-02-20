@@ -405,7 +405,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _marketConfig.priceConfidentThreshold,
       30 // @todo retrieve price age from config
     );
-    if (_marketStatus != 2) revert ILimitTradeHandler_MarketIsClose();
+    if (_marketStatus != 2) revert ILimitTradeHandler_MarketIsClosed();
     bool isPriceValid = _triggerAboveThreshold ? _currentPrice > _triggerPrice : _currentPrice < _triggerPrice;
     if (_revertOnError) {
       if (!isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();

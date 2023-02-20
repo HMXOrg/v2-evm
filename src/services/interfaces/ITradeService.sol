@@ -23,6 +23,13 @@ interface ITradeService {
 
   function perpStorage() external view returns (address);
 
+  function increasePosition(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    int256 _sizeDelta
+  ) external;
+
   function decreasePosition(
     address _account,
     uint256 _subAccountId,

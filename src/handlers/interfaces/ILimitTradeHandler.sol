@@ -12,7 +12,7 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_BadSubAccountId();
   error ILimitTradeHandler_InvalidSender();
   error ILimitTradeHandler_NonExistentOrder();
-  error ILimitTradeHandler_MarketIsClose();
+  error ILimitTradeHandler_MarketIsClosed();
   error ILimitTradeHandler_InvalidPriceForExecution();
   error ILimitTradeHandler_WrongSizeDelta();
 

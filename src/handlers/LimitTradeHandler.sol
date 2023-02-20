@@ -150,23 +150,15 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
   address public weth;
   ITradeService public tradeService;
   IPyth public pyth;
-  IOracleMiddleware public oracle;
   uint256 public minExecutionFee;
   mapping(address => bool) public orderExecutors;
   bool public isAllowAllExecutor;
 
-  constructor(
-    address _weth,
-    address _tradeService,
-    address _pyth,
-    address _oracle,
-    uint256 _minExecutionFee
-  ) {
+  constructor(address _weth, address _tradeService, address _pyth, uint256 _minExecutionFee) {
     // @todo - Sanity check
     weth = _weth;
     tradeService = ITradeService(_tradeService);
     pyth = IPyth(_pyth);
-    oracle = IOracleMiddleware(_oracle);
     minExecutionFee = _minExecutionFee;
   }
 
@@ -176,8 +168,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
 
   // Only whitelisted addresses can be able to execute limit orders
   modifier onlyOrderExecutor() {
-    if (!isAllowAllExecutor && !orderExecutors[msg.sender])
-      revert ILimitTradeHandler_NotWhitelisted();
+    if (!isAllowAllExecutor && !orderExecutors[msg.sender]) revert ILimitTradeHandler_NotWhitelisted();
     _;
   }
 
@@ -187,8 +178,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
 
   function setTradeService(address _newTradeService) external onlyOwner {
     // @todo - Sanity check
-    if (_newTradeService == address(0))
-      revert ILimitTradeHandler_InvalidAddress();
+    if (_newTradeService == address(0)) revert ILimitTradeHandler_InvalidAddress();
     emit LogSetTradeService(address(tradeService), _newTradeService);
     tradeService = ITradeService(_newTradeService);
   }
@@ -214,10 +204,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
     // Transfer in the native token to be used as execution fee
     _transferInETH();
 
-    if (_executionFee < minExecutionFee)
-      revert ILimitTradeHandler_InsufficientExecutionFee();
-    if (msg.value != _executionFee)
-      revert ILimitTradeHandler_IncorrectValueTransfer();
+    if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
+    if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
 
     address _subAccount = _getSubAccount(msg.sender, _subAccountId);
     if (_orderType == OrderType.INCREASE) {
@@ -253,12 +241,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
 
       bytes32 _positionId = _getPositionId(_subAccount, _marketIndex);
       if (_sizeDelta < 0) revert ILimitTradeHandler_WrongSizeDelta();
-      bool _isLong = IPerpStorage(tradeService.perpStorage())
-        .getPositionById(_positionId)
-        .positionSizeE30 > 0;
-      uint256 _absSizeDelta = _sizeDelta > 0
-        ? uint256(_sizeDelta)
-        : uint256(-_sizeDelta);
+      bool _isLong = IPerpStorage(tradeService.perpStorage()).getPositionById(_positionId).positionSizeE30 > 0;
+      uint256 _absSizeDelta = _sizeDelta > 0 ? uint256(_sizeDelta) : uint256(-_sizeDelta);
 
       DecreaseOrder memory _order = DecreaseOrder(
         msg.sender,
@@ -297,8 +281,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
   ) external nonReentrant onlyOrderExecutor {
     address _subAccount = _getSubAccount(_account, _subAccountId);
     IncreaseOrder memory order = increaseOrders[_subAccount][_orderIndex];
-    if (order.account == address(0))
-      revert ILimitTradeHandler_NonExistentOrder();
+    if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
     pyth.updatePriceFeeds{ value: pyth.getUpdateFee(_priceData) }(_priceData);
@@ -332,12 +315,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
     } else if (_orderType == OrderType.DECREASE) {
       delete decreaseOrders[_subAccount][_orderIndex];
 
-      tradeService.decreasePosition(
-        _account,
-        _subAccountId,
-        order.marketIndex,
-        uint256(order.sizeDelta)
-      );
+      tradeService.decreasePosition(_account, _subAccountId, order.marketIndex, uint256(order.sizeDelta));
 
       emit ExecuteDecreaseOrder(
         _account,
@@ -357,16 +335,11 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
     _transferOutETH(order.executionFee, _feeReceiver);
   }
 
-  function cancelOrder(
-    OrderType _orderType,
-    uint256 _subAccountId,
-    uint256 _orderIndex
-  ) external nonReentrant {
+  function cancelOrder(OrderType _orderType, uint256 _subAccountId, uint256 _orderIndex) external nonReentrant {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
     if (_orderType == OrderType.INCREASE) {
       IncreaseOrder memory order = increaseOrders[subAccount][_orderIndex];
-      if (order.account == address(0))
-        revert ILimitTradeHandler_NonExistentOrder();
+      if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
       delete increaseOrders[subAccount][_orderIndex];
 
@@ -385,8 +358,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
       );
     } else if (_orderType == OrderType.DECREASE) {
       DecreaseOrder memory order = decreaseOrders[subAccount][_orderIndex];
-      if (order.account == address(0))
-        revert ILimitTradeHandler_NonExistentOrder();
+      if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
       delete decreaseOrders[subAccount][_orderIndex];
 
@@ -417,8 +389,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
     if (_orderType == OrderType.INCREASE) {
       IncreaseOrder storage order = increaseOrders[subAccount][_orderIndex];
-      if (order.account == address(0))
-        revert ILimitTradeHandler_NonExistentOrder();
+      if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
       order.triggerPrice = _triggerPrice;
       order.triggerAboveThreshold = _triggerAboveThreshold;
@@ -434,13 +405,10 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
       );
     } else if (_orderType == OrderType.DECREASE) {
       DecreaseOrder storage order = decreaseOrders[subAccount][_orderIndex];
-      if (order.account == address(0))
-        revert ILimitTradeHandler_NonExistentOrder();
+      if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
       if (_sizeDelta < 0) revert ILimitTradeHandler_WrongSizeDelta();
-      uint256 _absSizeDelta = _sizeDelta > 0
-        ? uint256(_sizeDelta)
-        : uint256(-_sizeDelta);
+      uint256 _absSizeDelta = _sizeDelta > 0 ? uint256(_sizeDelta) : uint256(-_sizeDelta);
 
       order.triggerPrice = _triggerPrice;
       order.triggerAboveThreshold = _triggerAboveThreshold;
@@ -464,21 +432,18 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
     bool _maximizePrice,
     bool _revertOnError
   ) public view returns (uint256, bool) {
-    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
-      tradeService.configStorage()
-    ).getMarketConfigByIndex(_marketIndex);
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(tradeService.configStorage())
+      .getMarketConfigByIndex(_marketIndex);
 
-    (uint256 _currentPrice, , uint8 _marketStatus) = oracle
-      .getLatestPriceWithMarketStatus(
-        _marketConfig.assetId,
-        _maximizePrice,
-        _marketConfig.priceConfidentThreshold,
-        30 // @todo retrieve price age from config
-      );
+    IOracleMiddleware _oracle = IOracleMiddleware(IConfigStorage(tradeService.configStorage()).oracle());
+    (uint256 _currentPrice, , uint8 _marketStatus) = _oracle.getLatestPriceWithMarketStatus(
+      _marketConfig.assetId,
+      _maximizePrice,
+      _marketConfig.priceConfidentThreshold,
+      30 // @todo retrieve price age from config
+    );
     if (_marketStatus != 2) revert ILimitTradeHandler_MarketIsClose();
-    bool isPriceValid = _triggerAboveThreshold
-      ? _currentPrice > _triggerPrice
-      : _currentPrice < _triggerPrice;
+    bool isPriceValid = _triggerAboveThreshold ? _currentPrice > _triggerPrice : _currentPrice < _triggerPrice;
     if (_revertOnError) {
       if (!isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
     }
@@ -496,18 +461,12 @@ contract LimitTradeHandler is Owned, ReentrancyGuard {
     payable(_receiver).transfer(_amountOut);
   }
 
-  function _getSubAccount(
-    address primary,
-    uint256 subAccountId
-  ) internal pure returns (address) {
+  function _getSubAccount(address primary, uint256 subAccountId) internal pure returns (address) {
     if (subAccountId > 255) revert ILimitTradeHandler_BadSubAccountId();
     return address(uint160(primary) ^ uint160(subAccountId));
   }
 
-  function _getPositionId(
-    address _account,
-    uint256 _marketIndex
-  ) internal pure returns (bytes32) {
+  function _getPositionId(address _account, uint256 _marketIndex) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(_account, _marketIndex));
   }
 }

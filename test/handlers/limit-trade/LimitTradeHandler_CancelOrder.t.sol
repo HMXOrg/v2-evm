@@ -19,8 +19,9 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
   }
 
   function testCorrectness_cancelOrder() external {
-    uint256 balanceBefore = address(this).balance;
-
+    vm.deal(ALICE, 1 ether);
+    uint256 balanceBefore = ALICE.balance;
+    vm.startPrank(ALICE);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _orderType: ILimitTradeHandler.OrderType.INCREASE,
       _subAccountId: 0,
@@ -32,8 +33,8 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
     });
 
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (, limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
-    assertEq(limitOrder.account, address(this));
+    (, limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    assertEq(limitOrder.account, ALICE);
 
     limitTradeHandler.cancelOrder({
       _orderType: ILimitTradeHandler.OrderType.INCREASE,
@@ -41,7 +42,10 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
       _orderIndex: 0
     });
 
-    (, limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (, limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, address(0));
+
+    uint256 balanceDiff = ALICE.balance - balanceBefore;
+    assertEq(balanceDiff, 0 ether, "User should receive execution fee refund.");
   }
 }

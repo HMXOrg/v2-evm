@@ -15,10 +15,13 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 /// @title LiquidityService
 contract LiquidityService is ILiquidityService {
   using AddressUtils for address;
+  address configStorage;
+  address vaultStorage;
+  address perpStorage;
 
-  /**
-   * Events
-   */
+  uint256 internal constant PRICE_PRECISION = 10 ** 30;
+  uint256 internal constant USD_DECIMALS = 30;
+
   event AddLiquidity(
     address account,
     address token,
@@ -37,19 +40,10 @@ contract LiquidityService is ILiquidityService {
     uint256 usdDebt,
     uint256 amountOut
   );
+
   event CollectSwapFee(address user, address token, uint256 feeUsd, uint256 fee);
   event CollectAddLiquidityFee(address user, address token, uint256 feeUsd, uint256 fee);
   event CollectRemoveLiquidityFee(address user, address token, uint256 feeUsd, uint256 fee);
-
-  /**
-   * States
-   */
-  address configStorage;
-  address vaultStorage;
-  address perpStorage;
-
-  uint256 internal constant PRICE_PRECISION = 10 ** 30;
-  uint256 internal constant USD_DECIMALS = 30;
 
   constructor(address _configStorage, address _vaultStorage, address _perpStorage) {
     configStorage = _configStorage;
@@ -57,13 +51,12 @@ contract LiquidityService is ILiquidityService {
     perpStorage = _perpStorage;
   }
 
-  /**
-   * Core functions
-   */
-  // @todo - checklist
-  // @todo - add whitelisted
-  // @todo - emit event
-  // @todo - realizedPNL
+  /* TODO 
+  checklist
+  -add whitelisted
+  -emit event
+  -realizedPNL
+  */
   function addLiquidity(
     address _lpProvider,
     address _token,
@@ -79,14 +72,14 @@ contract LiquidityService is ILiquidityService {
       _token.toBytes32(),
       false,
       IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
-      30 // trust price age (seconds) @todo - from market config
+      30 // trust price age (seconds) todo: from market config
     );
 
     // 2. Calculate PLP amount to mint
     // if input incorrect or config accepted is false
 
     // 3. get aum and lpSupply before deduction fee
-    // @todo - realize farm pnl to get pendingBorrowingFee
+    // TODO realize farm pnl to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(true);
 
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
@@ -110,10 +103,13 @@ contract LiquidityService is ILiquidityService {
     return mintAmount;
   }
 
-  // @todo - checklist
-  // @todo - add whitelisted
-  // @todo - emit event
-  // @todo - realizedPNL
+  /* TODO 
+  checklist
+  -add whitelisted
+  -emit event
+  -realizedPNL
+  */
+
   function removeLiquidity(
     address _lpProvider,
     address _tokenOut,
@@ -125,7 +121,7 @@ contract LiquidityService is ILiquidityService {
 
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
-    // @todo - should realized to get pendingBorrowingFee
+    //TODO should realized to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(false);
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
 
@@ -142,9 +138,6 @@ contract LiquidityService is ILiquidityService {
     return _amountOut;
   }
 
-  /**
-   * Internal functions
-   */
   function _joinPool(
     address _token,
     uint256 _amount,
@@ -192,11 +185,11 @@ contract LiquidityService is ILiquidityService {
   ) internal returns (uint256) {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
-    (uint256 _maxPrice, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(
+    // TODO price stale
+    (uint256 _maxPrice, ) = IOracleMiddleware(_calculator.oracle()).unsafeGetLatestPrice(
       _tokenOut.toBytes32(),
       true,
-      IConfigStorage(configStorage).getMarketConfigByToken(_tokenOut).priceConfidentThreshold,
-      30 // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+      IConfigStorage(configStorage).getMarketConfigByToken(_tokenOut).priceConfidentThreshold
     );
 
     uint256 _amountOut = _calculator.convertTokenDecimals(

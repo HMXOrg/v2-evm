@@ -334,7 +334,7 @@ contract Calculator is Owned, ICalculator {
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
   /// @return _equityValueE30 Total equity of trader's account.
-  function getEquity(address _subAccount) external returns (uint256 _equityValueE30) {
+  function getEquity(address _subAccount) public view returns (uint256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount);
 
@@ -559,5 +559,16 @@ contract Calculator is Owned, ICalculator {
 
     _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) / 1e18;
     return _mmrE30;
+  }
+
+  /// @notice This function returns the amount of free collateral available to a given sub-account
+  /// @param _subAccount The address of the sub-account
+  /// @return _freeCollateral The amount of free collateral available to the sub-account
+  function getFreeCollateral(address _subAccount) public view returns (uint256 _freeCollateral) {
+    uint256 equity = getEquity(_subAccount);
+    uint256 imr = getIMR(_subAccount);
+
+    _freeCollateral = equity - imr;
+    return _freeCollateral;
   }
 }

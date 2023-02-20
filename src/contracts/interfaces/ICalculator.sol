@@ -27,6 +27,8 @@ interface ICalculator {
 
   function getPLPValueE30(bool isMaxPrice) external view returns (uint256);
 
+  function getFreeCollateral(address _subAccount) external returns (uint256);
+
   function getPLPPrice(uint256 aum, uint256 supply) external returns (uint256);
 
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _amount) external view returns (uint256);

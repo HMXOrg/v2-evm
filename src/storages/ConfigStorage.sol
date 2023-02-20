@@ -84,6 +84,15 @@ contract ConfigStorage is IConfigStorage, Ownable {
   /**
    * Getter
    */
+
+  function getMarketConfigById(uint256 _marketIndex) external view returns (MarketConfig memory _marketConfig) {
+    return marketConfigs[_marketIndex];
+  }
+
+  function getTradingConfig() external view returns (TradingConfig memory) {
+    return tradingConfig;
+  }
+
   function getMarketConfigByIndex(uint256 _index) external view returns (MarketConfig memory _marketConfig) {
     return marketConfigs[_index];
   }

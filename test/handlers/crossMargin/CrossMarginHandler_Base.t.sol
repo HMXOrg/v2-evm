@@ -26,11 +26,7 @@ contract CrossMarginHandler_Base is BaseTest {
 
     crossMarginService = deployCrossMarginService(address(configStorage), address(vaultStorage), address(calculator));
 
-    crossMarginHandler = deployCrossMarginHandler(
-      address(crossMarginService),
-      address(configStorage),
-      address(deployed.pythAdapter)
-    );
+    crossMarginHandler = deployCrossMarginHandler(address(crossMarginService), address(deployed.pythAdapter.pyth()));
 
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);

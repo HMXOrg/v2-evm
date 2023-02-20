@@ -8,7 +8,7 @@ import { Owned } from "../base/Owned.sol";
 import { ICrossMarginHandler } from "./interfaces/ICrossMarginHandler.sol";
 import { ICrossMarginService } from "../services/interfaces/ICrossMarginService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IPythAdapter } from "../oracle/interfaces/IPythAdapter.sol";
+import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   // EVENTS
@@ -18,14 +18,15 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
   // STATES
   address public crossMarginService;
-  address public configStorage;
-  address public pythAdapter;
+  address public pyth;
 
-  constructor(address _crossMarginService, address _configStorage, address _pythAdapter) {
+  // address public configStorage;
+  // address public oracle;
+
+  constructor(address _crossMarginService, address _pyth) {
     // @todo sanyty check
     crossMarginService = _crossMarginService;
-    configStorage = _configStorage;
-    pythAdapter = _pythAdapter;
+    pyth = _pyth;
   }
 
   /**
@@ -34,7 +35,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
   // NOTE: Validate only accepted collateral token to be deposited
   modifier onlyAcceptedToken(address _token) {
-    IConfigStorage(configStorage).validateAcceptedCollateral(_token);
+    IConfigStorage(ICrossMarginService(crossMarginService).configStorage()).validateAcceptedCollateral(_token);
     _;
   }
 
@@ -51,22 +52,13 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     crossMarginService = _crossMarginService;
   }
 
-  /// @notice Set new ConfigStorage contract address.
-  /// @param _configStorage New ConfigStorage contract address.
-  function setConfigStorage(address _configStorage) external onlyOwner {
-    // @todo - Sanity check
-    if (_configStorage == address(0)) revert ICrossMarginHandler_InvalidAddress();
-    emit LogSetConfigStorage(configStorage, _configStorage);
-    configStorage = _configStorage;
-  }
-
   /// @notice Set new PythAdapter contract address.
-  /// @param _pythAdapter New PythAdapter contract address.
-  function setPythAdapter(address _pythAdapter) external onlyOwner {
+  /// @param _pyth New PythAdapter contract address.
+  function setPyth(address _pyth) external onlyOwner {
     // @todo - Sanity check
-    if (_pythAdapter == address(0)) revert ICrossMarginHandler_InvalidAddress();
-    emit LogSetConfigStorage(pythAdapter, _pythAdapter);
-    pythAdapter = _pythAdapter;
+    if (_pyth == address(0)) revert ICrossMarginHandler_InvalidAddress();
+    emit LogSetConfigStorage(pyth, _pyth);
+    pyth = _pyth;
   }
 
   /**
@@ -110,7 +102,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     address _subAccount = _getSubAccount(_account, _subAccountId);
 
     // Call update oracle price
-    IPythAdapter(pythAdapter).updatePrices{ value: IPythAdapter(pythAdapter).getUpdateFee(_priceData) }(_priceData);
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // Call service to withdraw collateral
     ICrossMarginService(crossMarginService).withdrawCollateral(_account, _subAccount, _token, _amount);

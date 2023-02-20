@@ -7,6 +7,8 @@ interface ICrossMarginService {
   error ICrossMarginService_InsufficientBalance();
   error ICrossMarginService_WithdrawBalanceBelowIMR();
 
+  function configStorage() external returns (address _configStorage);
+
   /// @notice Set new ConfigStorage contract address.
   /// @dev This uses to retrive all config information on protocal.
   /// @param _configStorage New ConfigStorage contract address.
@@ -23,12 +25,7 @@ interface ICrossMarginService {
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @param _token Token that's deposited as collateral.
   /// @param _amount Token depositing amount.
-  function depositCollateral(
-    address _primaryAccount,
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external;
+  function depositCollateral(address _primaryAccount, address _subAccount, address _token, uint256 _amount) external;
 
   /// @notice Calculate new trader balance after withdraw collateral token.
   /// @dev This uses to calculate new trader balance when they withdrawing token as collateral.
@@ -36,10 +33,5 @@ interface ICrossMarginService {
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
-  function withdrawCollateral(
-    address _primaryAccount,
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external;
+  function withdrawCollateral(address _primaryAccount, address _subAccount, address _token, uint256 _amount) external;
 }

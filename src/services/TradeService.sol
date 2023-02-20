@@ -182,6 +182,7 @@ contract TradeService is ITradeService {
     return keccak256(abi.encodePacked(_account, _marketIndex));
   }
 
+  // @todo - add description
   function _subAccountHealthCheck(address _subAccount) internal {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
     // check sub account is healty

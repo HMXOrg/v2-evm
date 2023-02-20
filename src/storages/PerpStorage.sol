@@ -49,7 +49,7 @@ contract PerpStorage is IPerpStorage {
     }
   }
 
-  // todo: add description
+  // @todo - add description
   function getPositionById(
     bytes32 _positionId
   ) external view returns (Position memory) {
@@ -57,7 +57,7 @@ contract PerpStorage is IPerpStorage {
     return positions[_index];
   }
 
-  // todo: remove
+  // @todo - remove
   function addPosition(
     address _primaryAccount,
     uint256 _subAccountId,
@@ -100,9 +100,9 @@ contract PerpStorage is IPerpStorage {
   //////////////////////  SETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
-  // todo: add description
-  // todo: support to update borrowing rate
-  // todo: support to update funding rate
+  // @todo - add description
+  // @todo - support to update borrowing rate
+  // @todo - support to update funding rate
   function updatePositionById(
     bytes32 _positionId,
     int256 _newPositionSizeE30,
@@ -119,7 +119,7 @@ contract PerpStorage is IPerpStorage {
     positions[_index] = _position;
   }
 
-  // todo: update funding rate
+  // @todo - update funding rate
   function updateGlobalLongMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
@@ -131,7 +131,7 @@ contract PerpStorage is IPerpStorage {
     globalMarkets[_marketIndex].longOpenInterest = _newOpenInterest;
   }
 
-  // todo: update funding rate
+  // @todo - update funding rate
   function updateGlobalShortMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
@@ -143,7 +143,7 @@ contract PerpStorage is IPerpStorage {
     globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
   }
 
-  // todo: update sumBorrowingRate, lastBorrowingTime
+  // @todo - update sumBorrowingRate, lastBorrowingTime
   function updateGlobalState(uint256 _newReserveValueE30) external {
     globalState.reserveValueE30 = _newReserveValueE30;
   }

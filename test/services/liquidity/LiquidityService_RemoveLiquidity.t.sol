@@ -2,10 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LiquidityService_Base } from "./LiquidityService_Base.t.sol";
-
-import { LiquidityService } from "../../../src/services/LiquidityService.sol";
 import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
 
 // LiquidityService_RemoveLiquidity - unit test for remove liquidity function
 // What is this test DONE
@@ -46,14 +43,11 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   // remove liquidity when circuit break
   function testRevert_WhenCircuitBreak_PLPShouldNotRemoveLiquidity() external {
     // disable liquidity config
-    IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage
-      .getLiquidityConfig();
+    IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
     _liquidityConfig.enabled = false;
     configStorage.setLiquidityConfig(_liquidityConfig);
 
-    vm.expectRevert(
-      abi.encodeWithSignature("LiquidityService_CircuitBreaker()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
     liquidityService.removeLiquidity(ALICE, address(dai), 5 ether, 0);
   }
 
@@ -64,12 +58,7 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
 
   function testRevert_WhenPLPRemoveLiquidity_AndSlippageCheckFail() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_Slippage()"));
-    liquidityService.removeLiquidity(
-      ALICE,
-      address(dai),
-      5 ether,
-      type(uint256).max
-    );
+    liquidityService.removeLiquidity(ALICE, address(dai), 5 ether, type(uint256).max);
   }
 
   // function testRevert_WhenPLPRemoveLiquidity_AfterAddLiquidity_InCoolDownPeriod()

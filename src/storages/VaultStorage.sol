@@ -11,11 +11,7 @@ import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 /// @notice storage contract to do accounting for token, and also hold physical tokens
 contract VaultStorage is IVaultStorage {
   // EVENTs
-  event LogSetTraderBalance(
-    address indexed trader,
-    address token,
-    uint balance
-  );
+  event LogSetTraderBalance(address indexed trader, address token, uint balance);
 
   uint256 public plpTotalLiquidityUSDE30;
   mapping(address => uint256) public plpLiquidityUSDE30; //token => PLPValueInUSD
@@ -23,47 +19,42 @@ contract VaultStorage is IVaultStorage {
   mapping(address => uint256) public fees; // fee in token unit
 
   // liquidity provider address => token => amount
-  mapping(address => mapping(address => uint256))
-    public liquidityProviderBalances;
+  mapping(address => mapping(address => uint256)) public liquidityProviderBalances;
   mapping(address => address[]) public liquidityProviderTokens;
   // trader address (with sub-account) => token => amount
   mapping(address => mapping(address => uint256)) public traderBalances;
   // mapping(address => address[]) public traderTokens;
   mapping(address => address[]) public traderTokens;
 
-  // TODO modifier?
+  // @todo - modifier?
   function addFee(address _token, uint256 _amount) external {
     fees[_token] += _amount;
   }
 
-  // TODO modifier?
+  // @todo - modifier?
   function addPLPLiquidityUSDE30(address _token, uint256 amount) external {
     plpLiquidityUSDE30[_token] += amount;
   }
 
-  // TODO modifier?
+  // @todo - modifier?
   function addPLPTotalLiquidityUSDE30(uint256 _liquidity) external {
     plpTotalLiquidityUSDE30 += _liquidity;
   }
 
-  // TODO modifier?
+  // @todo - modifier?
   function addPLPLiquidity(address _token, uint256 _amount) external {
     plpLiquidity[_token] += _amount;
   }
 
-  // TODO modifier?
-  function withdrawFee(
-    address _token,
-    uint256 _amount,
-    address _receiver
-  ) external {
+  // @todo - modifier?
+  function withdrawFee(address _token, uint256 _amount, address _receiver) external {
     if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
     // @todo only governance
     fees[_token] -= _amount;
     IERC20(_token).transfer(_receiver, _amount);
   }
 
-  // TODO modifier?
+  // @todo - modifier?
   function removePLPLiquidityUSDE30(address _token, uint256 _value) external {
     // Underflow check
     if (plpLiquidityUSDE30[_token] <= _value) {
@@ -73,7 +64,7 @@ contract VaultStorage is IVaultStorage {
     plpLiquidityUSDE30[_token] -= _value;
   }
 
-  // TODO modifier?
+  // @todo - modifier?
   function removePLPTotalLiquidityUSDE30(uint256 _value) external {
     // Underflow check
     if (plpTotalLiquidityUSDE30 <= _value) {
@@ -83,7 +74,7 @@ contract VaultStorage is IVaultStorage {
     plpTotalLiquidityUSDE30 -= _value;
   }
 
-  // TODO modifier?
+  // @todo - modifier?
   function removePLPLiquidity(address _token, uint256 _amount) external {
     plpLiquidity[_token] -= _amount;
   }
@@ -96,29 +87,22 @@ contract VaultStorage is IVaultStorage {
     address[] storage traderToken = traderTokens[_trader];
 
     for (uint256 i; i < traderToken.length; ) {
-      if (traderToken[i] == _token)
-        revert IVaultStorage_TraderTokenAlreadyExists();
+      if (traderToken[i] == _token) revert IVaultStorage_TraderTokenAlreadyExists();
       unchecked {
         i++;
       }
     }
   }
 
-  function validateRemoveTraderToken(
-    address _trader,
-    address _token
-  ) public view {
-    if (traderBalances[_trader][_token] != 0)
-      revert IVaultStorage_TraderBalanceRemaining();
+  function validateRemoveTraderToken(address _trader, address _token) public view {
+    if (traderBalances[_trader][_token] != 0) revert IVaultStorage_TraderBalanceRemaining();
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  GETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function getTraderTokens(
-    address _subAccount
-  ) external view returns (address[] memory) {
+  function getTraderTokens(address _subAccount) external view returns (address[] memory) {
     return traderTokens[_subAccount];
   }
 
@@ -126,11 +110,7 @@ contract VaultStorage is IVaultStorage {
   //////////////////////  SETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function setTraderBalance(
-    address _trader,
-    address _token,
-    uint256 _balance
-  ) external {
+  function setTraderBalance(address _trader, address _token, uint256 _balance) external {
     traderBalances[_trader][_token] = _balance;
     emit LogSetTraderBalance(_trader, _token, _balance);
   }
@@ -168,11 +148,7 @@ contract VaultStorage is IVaultStorage {
   ////////////////////// CALCULATION
   ////////////////////////////////////////////////////////////////////////////////////
   // @todo - add only whitelisted services
-  function transferToken(
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external {
+  function transferToken(address _subAccount, address _token, uint256 _amount) external {
     IERC20(_token).transfer(_subAccount, _amount);
   }
 }

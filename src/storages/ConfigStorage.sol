@@ -18,33 +18,9 @@ contract ConfigStorage is IConfigStorage, Ownable {
   using AddressUtils for address;
   using IteratableAddressList for IteratableAddressList.List;
 
-  address public constant ITERABLE_ADDRESS_LIST_START = address(1);
-  address public constant ITERABLE_ADDRESS_LIST_END = address(1);
-
-  // GLOBAL Configs
-  LiquidityConfig public liquidityConfig;
-  SwapConfig public swapConfig;
-  TradingConfig public tradingConfig;
-  LiquidationConfig public liquidationConfig;
-
-  MarketConfig[] public marketConfigs;
-
-  // STATES
-  mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
-  mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
-  mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config
-  mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
-  mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer
-  uint256 public pnlFactor; // factor that calculate unrealized PnL after collateral factor
-
-  address public calculator;
-  address public plp;
-  address public treasury;
-
-  IteratableAddressList.List public plpAcceptedTokens;
-
-  //events
-
+  /**
+   * Events
+   */
   event SetServiceExecutor(
     address indexed _contractAddress,
     address _executorAddress,
@@ -62,13 +38,43 @@ contract ConfigStorage is IConfigStorage, Ownable {
   );
   event RemoveUnderlying(address _token);
 
+  /**
+   * Constants
+   */
+  address public constant ITERABLE_ADDRESS_LIST_START = address(1);
+  address public constant ITERABLE_ADDRESS_LIST_END = address(1);
+
+  /**
+   * States
+   */
+  LiquidityConfig public liquidityConfig;
+  SwapConfig public swapConfig;
+  TradingConfig public tradingConfig;
+  LiquidationConfig public liquidationConfig;
+
+  MarketConfig[] public marketConfigs;
+
+  IteratableAddressList.List public plpAcceptedTokens;
+
+  mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
+  mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
+  mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config
+  mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
+  mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer
+
+  address public calculator;
+  address public oracle;
+  address public plp;
+  address public treasury;
+  uint256 public pnlFactor; // factor that calculate unrealized PnL after collateral factor
+
   constructor() {
     plpAcceptedTokens.init();
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  VALIDATION
-  ////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * Validation
+   */
 
   /// @notice Validate only whitelisted executor contracts to be able to call Service contracts.
   /// @param _contractAddress Service contract address to be executed.
@@ -88,16 +94,9 @@ contract ConfigStorage is IConfigStorage, Ownable {
       revert NotAcceptedCollateral();
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  GETTER
-  ////////////////////////////////////////////////////////////////////////////////////
-
-  function getMarketConfigById(
-    uint256 _marketIndex
-  ) external view returns (MarketConfig memory _marketConfig) {
-    return marketConfigs[_marketIndex];
-  }
-
+  /**
+   * Getter
+   */
   function getMarketConfigByIndex(
     uint256 _index
   ) external view returns (MarketConfig memory _marketConfig) {
@@ -162,9 +161,17 @@ contract ConfigStorage is IConfigStorage, Ownable {
     return plpAcceptedTokens.getNextOf(token);
   }
 
+  /**
+   * Setter
+   */
   function setCalculator(address _calculator) external {
     calculator = _calculator;
     emit SetCalculator(calculator);
+  }
+
+  function setOracle(address _oracle) external {
+    // @todo - sanity check
+    oracle = _oracle;
   }
 
   function setPLP(address _plp) external {
@@ -188,10 +195,6 @@ contract ConfigStorage is IConfigStorage, Ownable {
     if (_totalTokenWeight > 1e18) revert ConfigStorage_ExceedLimitSetting();
     liquidityConfig.plpTotalTokenWeight = _totalTokenWeight;
   }
-
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER
-  ////////////////////////////////////////////////////////////////////////////////////
 
   // @todo - Add Description
   function setServiceExecutor(
@@ -222,20 +225,6 @@ contract ConfigStorage is IConfigStorage, Ownable {
 
   function setLiquidationConfig(LiquidationConfig memory _newConfig) external {
     liquidationConfig = _newConfig;
-  }
-
-  function addMarketConfig(
-    MarketConfig calldata _newConfig
-  ) external returns (uint256 _index) {
-    uint256 _newMarketIndex = marketConfigs.length;
-    marketConfigs.push(_newConfig);
-    // update marketConfigIndices with new market index
-    marketConfigIndices[_newConfig.assetId] = _newMarketIndex;
-    return _newMarketIndex;
-  }
-
-  function delistMarket(uint256 _marketIndex) external {
-    delete marketConfigs[_marketIndex].active;
   }
 
   function setMarketConfig(
@@ -308,6 +297,20 @@ contract ConfigStorage is IConfigStorage, Ownable {
         ++i;
       }
     }
+  }
+
+  function addMarketConfig(
+    MarketConfig calldata _newConfig
+  ) external returns (uint256 _index) {
+    uint256 _newMarketIndex = marketConfigs.length;
+    marketConfigs.push(_newConfig);
+    // update marketConfigIndices with new market index
+    marketConfigIndices[_newConfig.assetId] = _newMarketIndex;
+    return _newMarketIndex;
+  }
+
+  function delistMarket(uint256 _marketIndex) external {
+    delete marketConfigs[_marketIndex].active;
   }
 
   /// @notice Remove underlying token.

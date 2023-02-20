@@ -29,6 +29,7 @@ interface ILiquidityHandler {
     CANCELLED
   }
 
+  error ILiquidityHandler_InvalidSender();
   error ILiquidityHandler_InsufficientExecutionFee();
   error ILiquidityHandler_InCorrectValueTransfer();
   error ILiquidityHandler_InsufficientRefund();

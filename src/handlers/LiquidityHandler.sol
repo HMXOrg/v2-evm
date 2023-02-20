@@ -16,6 +16,21 @@ import { IWNative } from "./interfaces/IWNative.sol";
 
 /// @title LiquidityService
 contract LiquidityHandler is ILiquidityHandler {
+  /**
+   * Events
+   * createAddLiquidity
+   * createRemvoeLiquidity
+   * cancelOrder
+   * ExecuteOrder
+   */
+
+  /**
+   * Pyth (should call before execute Order??)
+   */
+
+  /*
+   * @todo create setLiquidityService (when Change)
+   */
   mapping(address => LiquidityOrder[]) public liquidityOrders; // user address => all liquidityOrder
   mapping(address => uint256) startOrderIndex; //user address => startOrderIndex when execute
 
@@ -25,6 +40,10 @@ contract LiquidityHandler is ILiquidityHandler {
   constructor(address _weth, address _liquidityService) {
     weth = _weth;
     liquidityService = _liquidityService;
+  }
+
+  receive() external payable {
+    if (msg.sender != weth) revert ILiquidityHandler_InvalidSender();
   }
 
   function createAddLiquidityOrder(

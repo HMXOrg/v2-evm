@@ -46,7 +46,7 @@ abstract contract TradeService_Base is BaseTest {
     int256 _sizeE30
   ) internal {
     IConfigStorage.MarketConfig memory _marketConfig = configStorage
-      .getMarketConfigById(_marketIndex);
+      .getMarketConfigByIndex(_marketIndex);
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     uint256 _absoluteSizeE30 = _sizeE30 > 0
       ? uint256(_sizeE30)

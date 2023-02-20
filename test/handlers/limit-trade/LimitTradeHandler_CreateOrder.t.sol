@@ -4,6 +4,15 @@ pragma solidity 0.8.18;
 import { LimitTradeHandler_Base, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
 import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
 
+// What is this test DONE
+// - revert
+//   - Try creating an order will too low execution fee
+//   - Try creating an order with incorrect `msg.value`
+//   - Try creating an order with sub-account id > 255
+//   - Try creating a DECREASE order with negative `_sizeDelta`
+// - success
+//   - Try creating INCREASE and DECREASE orders and check that the indices of the orders are correct and that all orders are created correctly.
+
 contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
   function setUp() public override {
     super.setUp();
@@ -353,19 +362,5 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     assertEq(limitOrder.triggerPrice, 3000 * 1e30);
     assertEq(limitOrder.triggerAboveThreshold, false);
     assertEq(limitOrder.executionFee, 0.1 ether);
-  }
-
-  function assertLimitOrder(
-    ILimitTradeHandler.LimitOrder memory actual,
-    ILimitTradeHandler.LimitOrder memory expect
-  ) internal {
-    assertEq(actual.account, expect.account);
-    assertEq(actual.subAccountId, expect.subAccountId);
-    assertEq(actual.marketIndex, expect.marketIndex);
-    assertEq(actual.sizeDelta, expect.sizeDelta);
-    assertEq(actual.isLong, expect.isLong);
-    assertEq(actual.triggerPrice, expect.triggerPrice);
-    assertEq(actual.triggerAboveThreshold, expect.triggerAboveThreshold);
-    assertEq(actual.executionFee, expect.executionFee);
   }
 }

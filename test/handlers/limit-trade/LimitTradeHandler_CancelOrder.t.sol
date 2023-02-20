@@ -4,6 +4,12 @@ pragma solidity 0.8.18;
 import { LimitTradeHandler_Base, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
 import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
 
+// What is this test DONE
+// - revert
+//   - Try canceling a non existent order
+// - success
+//   - Try cancel an order, check that the order is cancelled and check if user is refunnded with the execution fee
+
 contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
   function setUp() public override {
     super.setUp();

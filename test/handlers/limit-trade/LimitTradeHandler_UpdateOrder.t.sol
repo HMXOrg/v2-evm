@@ -4,6 +4,12 @@ pragma solidity 0.8.18;
 import { LimitTradeHandler_Base, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
 import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
 
+// What is this test DONE
+// - revert
+//   - Try updating a non existent order
+// - success
+//   - Try updating an order and check that it is updated correctly
+
 contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
   function setUp() public override {
     super.setUp();

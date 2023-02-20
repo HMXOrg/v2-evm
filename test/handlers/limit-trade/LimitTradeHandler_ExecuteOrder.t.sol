@@ -4,6 +4,15 @@ pragma solidity 0.8.18;
 import { LimitTradeHandler_Base, IConfigStorage, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
 import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
 
+// What is this test DONE
+// - revert
+//   - Try executing an order when not whitelisted
+//   - Try executing a non-existent order
+//   - Try executing an order on the market that is currently closed
+//   - Try executing an order when price has not reached the trigger price
+// - success
+//   - Try executing INCREASE and DECREASE order and check that the execution fee is received by the fee receiver
+
 contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   function setUp() public override {
     super.setUp();

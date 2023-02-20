@@ -2,18 +2,18 @@
 pragma solidity 0.8.18;
 
 interface IConfigStorage {
-  error ConfigStorage_NotWhiteListed();
-  error ConfigStorage_ExceedLimitSetting();
-  error ConfigStorage_BadLen();
-  error ConfigStorage_BadArgs();
-  // ERRORS
-  error NotAcceptedCollateral();
-  error NotWhiteListed();
+  /**
+   * Errors
+   */
+  error IConfigStorage_NotWhiteListed();
+  error IConfigStorage_ExceedLimitSetting();
+  error IConfigStorage_BadLen();
+  error IConfigStorage_BadArgs();
+  error IConfigStorage_NotAcceptedCollateral();
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  STRUCT
-  ////////////////////////////////////////////////////////////////////////////////////
-
+  /**
+   * Structs
+   */
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
     uint256 decimals; //token decimals
@@ -54,7 +54,6 @@ interface IConfigStorage {
     uint256 baseBorrowingRate;
   }
 
-  // Liquidity
   struct LiquidityConfig {
     uint256 depositFeeRate; // PLP deposit fee rate
     uint256 withdrawFeeRate; // PLP withdraw fee rate
@@ -67,13 +66,11 @@ interface IConfigStorage {
     bool enabled; // Circuit breaker on Liquidity
   }
 
-  // Swap
   struct SwapConfig {
     uint256 stablecoinSwapFeeRate;
     uint256 swapFeeRate;
   }
 
-  // Trading
   struct TradingConfig {
     uint256 fundingInterval; // funding interval unit in seconds
     uint256 borrowingDevFeeRate;
@@ -81,53 +78,46 @@ interface IConfigStorage {
     uint256 maxPosition;
   }
 
-  // Liquidation
   struct LiquidationConfig {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  STATE
-  ////////////////////////////////////////////////////////////////////////////////////
-  function plp() external view returns (address);
+  /**
+   * State Getter
+   */
 
   function calculator() external view returns (address);
+
+  function oracle() external view returns (address);
+
+  function plp() external view returns (address);
 
   function treasury() external view returns (address);
 
   function pnlFactor() external view returns (uint256);
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  VALIDATION
-  ////////////////////////////////////////////////////////////////////////////////////
-
+  /**
+   * Validation
+   */
   /// @notice Validate only whitelisted executor contracts to be able to call Service contracts.
   /// @param _contractAddress Service contract address to be executed.
   /// @param _executorAddress Executor contract address to call service contract.
-  function validateServiceExecutor(
-    address _contractAddress,
-    address _executorAddress
-  ) external view;
+  function validateServiceExecutor(address _contractAddress, address _executorAddress) external view;
 
   function validateAcceptedCollateral(address _token) external view;
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  GETTER
-  ////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * Getter
+   */
+  function ITERABLE_ADDRESS_LIST_START() external view returns (address);
 
-  function getMarketConfigByIndex(
-    uint256 _index
-  ) external view returns (MarketConfig memory _marketConfig);
+  function ITERABLE_ADDRESS_LIST_END() external view returns (address);
 
-  function getMarketConfigById(
-    uint256 _marketIndex
-  ) external view returns (MarketConfig memory _marketConfig);
+  function getMarketConfigByIndex(uint256 _index) external view returns (MarketConfig memory _marketConfig);
 
   function getTradingConfig() external view returns (TradingConfig memory);
 
-  function getPlpTokenConfigs(
-    address _token
-  ) external view returns (PLPTokenConfig memory);
+  function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory);
 
   function getCollateralTokenConfigs(
     address _token
@@ -135,45 +125,30 @@ interface IConfigStorage {
 
   function getLiquidityConfig() external view returns (LiquidityConfig memory);
 
-  function getLiquidationConfig()
-    external
-    view
-    returns (LiquidationConfig memory);
+  function getLiquidationConfig() external view returns (LiquidationConfig memory);
 
-  function getPLPTokenConfig(
-    address _token
-  ) external view returns (PLPTokenConfig memory);
+  function getPLPTokenConfig(address _token) external view returns (PLPTokenConfig memory);
 
-  function getMarketConfigByToken(
-    address _token
-  ) external view returns (MarketConfig memory);
+  function getMarketConfigByToken(address _token) external view returns (MarketConfig memory);
 
   function getMarketConfigsLength() external view returns (uint256);
 
   function getNextAcceptedToken(address token) external view returns (address);
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER
-  ////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * Setter
+   */
+  function setCalculator(address _calculator) external;
 
-  function ITERABLE_ADDRESS_LIST_START() external view returns (address);
+  function setOracle(address _oracle) external;
 
-  function ITERABLE_ADDRESS_LIST_END() external view returns (address);
-
-  // SETTER
   function setPLP(address _plp) external;
 
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;
 
-  function setServiceExecutor(
-    address _contractAddress,
-    address _executorAddress,
-    bool _isServiceExecutor
-  ) external;
+  function setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) external;
 
-  function addMarketConfig(
-    MarketConfig calldata _newConfig
-  ) external returns (uint256 _index);
+  function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
 
   function setLiquidityConfig(LiquidityConfig memory _newConfig) external;
 

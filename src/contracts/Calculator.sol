@@ -21,18 +21,9 @@ contract Calculator is Owned, ICalculator {
 
   // EVENTS
   event LogSetOracle(address indexed oldOracle, address indexed newOracle);
-  event LogSetVaultStorage(
-    address indexed oldVaultStorage,
-    address indexed vaultStorage
-  );
-  event LogSetConfigStorage(
-    address indexed oldConfigStorage,
-    address indexed configStorage
-  );
-  event LogSetPerpStorage(
-    address indexed oldPerpStorage,
-    address indexed perpStorage
-  );
+  event LogSetVaultStorage(address indexed oldVaultStorage, address indexed vaultStorage);
+  event LogSetConfigStorage(address indexed oldConfigStorage, address indexed configStorage);
+  event LogSetPerpStorage(address indexed oldPerpStorage, address indexed perpStorage);
 
   // STATES
   // @todo - move oracle config to storage
@@ -41,18 +32,10 @@ contract Calculator is Owned, ICalculator {
   address public configStorage;
   address public perpStorage;
 
-  constructor(
-    address _oracle,
-    address _vaultStorage,
-    address _perpStorage,
-    address _configStorage
-  ) {
+  constructor(address _oracle, address _vaultStorage, address _perpStorage, address _configStorage) {
     // @todo - Sanity check
     if (
-      _oracle == address(0) ||
-      _vaultStorage == address(0) ||
-      _perpStorage == address(0) ||
-      _configStorage == address(0)
+      _oracle == address(0) || _vaultStorage == address(0) || _perpStorage == address(0) || _configStorage == address(0)
     ) revert ICalculator_InvalidAddress();
     oracle = _oracle;
     vaultStorage = _vaultStorage;
@@ -62,7 +45,7 @@ contract Calculator is Owned, ICalculator {
 
   // return in
   function getAUME30(bool isMaxPrice) public view returns (uint256) {
-    // TODO  pendingBorrowingFeeE30
+    // @todo -  pendingBorrowingFeeE30
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = 0;
     int256 pnlE30 = _getGlobalPNLE30();
@@ -89,110 +72,87 @@ contract Calculator is Owned, ICalculator {
 
   function _getPLPValueE30(bool isMaxPrice) internal view returns (uint256) {
     uint256 assetValue = 0;
-    address _plpUnderlyingToken = IConfigStorage(configStorage)
-      .getNextAcceptedToken(
-        IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_START()
-      );
+    address _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(
+      IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_START()
+    );
 
     while (
       _plpUnderlyingToken !=
-      IConfigStorage(configStorage).getNextAcceptedToken(
-        IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END()
-      )
+      IConfigStorage(configStorage).getNextAcceptedToken(IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END())
     ) {
       (uint256 priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
         _plpUnderlyingToken.toBytes32(),
         isMaxPrice,
-        IConfigStorage(configStorage)
-          .getMarketConfigByToken(_plpUnderlyingToken)
-          .priceConfidentThreshold
+        IConfigStorage(configStorage).getMarketConfigByToken(_plpUnderlyingToken).priceConfidentThreshold
       );
 
-      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(
-        _plpUnderlyingToken
-      ) * priceE30) / (10 ** ERC20(_plpUnderlyingToken).decimals());
+      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_plpUnderlyingToken) * priceE30) /
+        (10 ** ERC20(_plpUnderlyingToken).decimals());
 
       unchecked {
         assetValue += value;
       }
-      _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(
-        _plpUnderlyingToken
-      );
+      _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(_plpUnderlyingToken);
     }
 
     return assetValue;
   }
 
-  function getPLPPrice(
-    uint256 aum,
-    uint256 plpSupply
-  ) public pure returns (uint256) {
+  function getPLPPrice(uint256 aum, uint256 plpSupply) public pure returns (uint256) {
     if (plpSupply == 0) return 0;
     return aum / plpSupply;
   }
 
   function _getGlobalPNLE30() internal view returns (int256) {
-    // TODO:: REFACTOR if someone dont want totalPnlLong and short.
+    // @todo - REFACTOR if someone dont want totalPnlLong and short.
     int256 totalPnlLong = 0;
     int256 totalPnlShort = 0;
 
-    for (
-      uint256 i = 0;
-      i < IConfigStorage(configStorage).getMarketConfigsLength();
+    for (uint256 i = 0; i < IConfigStorage(configStorage).getMarketConfigsLength(); ) {
+      IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(i);
 
-    ) {
-      IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(
-        configStorage
-      ).getMarketConfigById(i);
-
-      IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage)
-        .getGlobalMarketByIndex(i);
+      IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(i);
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
 
-      //TODO validate timestamp of these
+      //@todo - validate timestamp of these
       (uint256 priceE30Long, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
         marketConfig.assetId,
         false,
         marketConfig.priceConfidentThreshold
       );
 
-      (uint256 priceE30Short, ) = IOracleMiddleware(oracle)
-        .unsafeGetLatestPrice(
-          marketConfig.assetId,
-          true,
-          marketConfig.priceConfidentThreshold
-        );
+      (uint256 priceE30Short, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
+        marketConfig.assetId,
+        true,
+        marketConfig.priceConfidentThreshold
+      );
 
-      //TODO validate price, revert when crypto price stale, stock use Lastprice
+      //@todo - validate price, revert when crypto price stale, stock use Lastprice
 
-      if (
-        _globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0
-      ) {
+      if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
         if (priceE30Long < _globalMarket.longAvgPrice) {
-          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) *
-            _globalMarket.longPositionSize) / _globalMarket.longAvgPrice;
+          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) * _globalMarket.longPositionSize) /
+            _globalMarket.longAvgPrice;
           _pnlLongE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((priceE30Long - _globalMarket.longAvgPrice) *
-            _globalMarket.longPositionSize) / _globalMarket.longAvgPrice;
+          uint256 _absPNL = ((priceE30Long - _globalMarket.longAvgPrice) * _globalMarket.longPositionSize) /
+            _globalMarket.longAvgPrice;
           _pnlLongE30 = int256(_absPNL);
         }
       }
 
-      // TODO DOUBLE CHECK :: ask team globalMarket.shortPositionSize store in negative???
-      if (
-        _globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0
-      ) {
+      // @todo - DOUBLE CHECK :: ask team globalMarket.shortPositionSize store in negative???
+      if (_globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0) {
         if (_globalMarket.shortAvgPrice < priceE30Short) {
-          uint256 _absPNL = ((priceE30Short - _globalMarket.shortAvgPrice) *
-            _globalMarket.shortPositionSize) / _globalMarket.shortAvgPrice;
+          uint256 _absPNL = ((priceE30Short - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
+            _globalMarket.shortAvgPrice;
 
           _pnlShortE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30Short) *
-            _globalMarket.shortPositionSize) / _globalMarket.shortAvgPrice;
+          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30Short) * _globalMarket.shortPositionSize) /
+            _globalMarket.shortAvgPrice;
           _pnlShortE30 = int256(_absPNL);
         }
       }
@@ -211,11 +171,7 @@ contract Calculator is Owned, ICalculator {
 
   // @todo add more description
   // return in 1e18
-  function getMintAmount(
-    uint256 _aum,
-    uint256 _totalSupply,
-    uint256 _value
-  ) public pure returns (uint256) {
+  function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
     return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
   }
 
@@ -285,23 +241,14 @@ contract Calculator is Owned, ICalculator {
 
     uint256 startValue = _liquidityUSD;
     uint256 nextValue = startValue + _value;
-    if (direction == LiquidityDirection.REMOVE)
-      nextValue = _value > startValue ? 0 : startValue - _value;
+    if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
-    uint256 targetValue = _getTargetValue(
-      _totalLiquidityUSD,
-      _plpTokenConfig.targetWeight,
-      _totalTokenWeight
-    );
+    uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
     if (targetValue == 0) return _feeRate;
 
-    uint256 startTargetDiff = startValue > targetValue
-      ? startValue - targetValue
-      : targetValue - startValue;
+    uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
 
-    uint256 nextTargetDiff = nextValue > targetValue
-      ? nextValue - targetValue
-      : targetValue - nextValue;
+    uint256 nextTargetDiff = nextValue > targetValue ? nextValue - targetValue : targetValue - nextValue;
 
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
@@ -310,12 +257,10 @@ contract Calculator is Owned, ICalculator {
       return rebateRate > _feeRate ? 0 : _feeRate - rebateRate;
     }
 
-    // TODO move this to service
+    // @todo - move this to service
     uint256 _nextWeight = (nextValue * 1e18) / targetValue;
     // if weight exceed targetWeight(e18) + maxWeight(e18)
-    if (
-      _nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff
-    ) {
+    if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
     }
 
@@ -389,9 +334,7 @@ contract Calculator is Owned, ICalculator {
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
   /// @return _equityValueE30 Total equity of trader's account.
-  function getEquity(
-    address _subAccount
-  ) public view returns (uint256 _equityValueE30) {
+  function getEquity(address _subAccount) public view returns (uint256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount);
 
@@ -427,38 +370,33 @@ contract Calculator is Owned, ICalculator {
   /// @dev This unrealized pnl deducted by collateral factor.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _unrealizedPnlE30 PnL value after deducted by collateral factor.
-  function getUnrealizedPnl(
-    address _subAccount
-  ) public view returns (int256 _unrealizedPnlE30) {
+  function getUnrealizedPnl(address _subAccount) public view returns (int256 _unrealizedPnlE30) {
     // Get all trader's opening positions
-    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage)
-      .getPositionBySubAccount(_subAccount);
+    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
       IPerpStorage.Position memory _position = _traderPositions[i];
       bool _isLong = _position.positionSizeE30 > 0 ? true : false;
 
-      if (_position.avgEntryPriceE30 == 0)
-        revert ICalculator_InvalidAveragePrice();
+      if (_position.avgEntryPriceE30 == 0) revert ICalculator_InvalidAveragePrice();
 
       // Get market config according to opening position
-      IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
-        configStorage
-      ).getMarketConfigByIndex(_position.marketIndex);
+      IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
+        _position.marketIndex
+      );
 
       // Long position always use MinPrice. Short position always use MaxPrice
       bool _isUseMaxPrice = _isLong ? false : true;
 
       // Get price from oracle
       // @todo - validate price age
-      (uint256 _priceE30, , ) = IOracleMiddleware(oracle)
-        .getLatestPriceWithMarketStatus(
-          _marketConfig.assetId,
-          _isUseMaxPrice,
-          _marketConfig.priceConfidentThreshold,
-          0
-        );
+      (uint256 _priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+        _marketConfig.assetId,
+        _isUseMaxPrice,
+        _marketConfig.priceConfidentThreshold,
+        0
+      );
 
       // Calculate for priceDelta
       uint256 _priceDeltaE30;
@@ -468,8 +406,7 @@ contract Calculator is Owned, ICalculator {
           : _priceE30 - _position.avgEntryPriceE30;
       }
 
-      int256 _delta = (_position.positionSizeE30 * int(_priceDeltaE30)) /
-        int(_position.avgEntryPriceE30);
+      int256 _delta = (_position.positionSizeE30 * int(_priceDeltaE30)) / int(_position.avgEntryPriceE30);
 
       if (_isLong) {
         _delta = _priceE30 > _position.avgEntryPriceE30 ? _delta : -_delta;
@@ -478,9 +415,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // If profit then deduct PnL with colleral factor.
-      _delta = _delta > 0
-        ? (int(IConfigStorage(configStorage).pnlFactor()) * _delta) / 1e18
-        : _delta;
+      _delta = _delta > 0 ? (int(IConfigStorage(configStorage).pnlFactor()) * _delta) / 1e18 : _delta;
 
       // Accumulative current unrealized PnL
       _unrealizedPnlE30 += _delta;
@@ -496,12 +431,9 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate collateral tokens to value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _collateralValueE30
-  function getCollateralValue(
-    address _subAccount
-  ) public view returns (uint256 _collateralValueE30) {
+  function getCollateralValue(address _subAccount) public view returns (uint256 _collateralValueE30) {
     // Get list of current depositing tokens on trader's account
-    address[] memory _traderTokens = IVaultStorage(vaultStorage)
-      .getTraderTokens(_subAccount);
+    address[] memory _traderTokens = IVaultStorage(vaultStorage).getTraderTokens(_subAccount);
 
     // Loop through list of current depositing tokens
     for (uint256 i; i < _traderTokens.length; ) {
@@ -511,9 +443,7 @@ contract Calculator is Owned, ICalculator {
       uint256 _decimals = ERC20(_token).decimals();
 
       // Get collateralFactor from ConfigStorage
-      uint256 _collateralFactor = IConfigStorage(configStorage)
-        .getCollateralTokenConfigs(_token)
-        .collateralFactor;
+      uint256 _collateralFactor = IConfigStorage(configStorage).getCollateralTokenConfigs(_token).collateralFactor;
 
       // Get priceConfidentThreshold from ConfigStorage
       uint256 _priceConfidenceThreshold = IConfigStorage(configStorage)
@@ -521,28 +451,22 @@ contract Calculator is Owned, ICalculator {
         .priceConfidentThreshold;
 
       // Get current collateral token balance of trader's account
-      uint256 _amount = IVaultStorage(vaultStorage).traderBalances(
-        _subAccount,
-        _token
-      );
+      uint256 _amount = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
 
       bool _isMaxPrice = false; // @note Collateral value always use Min price
       // Get price from oracle
       // @todo - validate price age
-      (uint256 _priceE30, , ) = IOracleMiddleware(oracle)
-        .getLatestPriceWithMarketStatus(
-          _token.toBytes32(),
-          _isMaxPrice,
-          _priceConfidenceThreshold,
-          0
-        );
+      (uint256 _priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+        _token.toBytes32(),
+        _isMaxPrice,
+        _priceConfidenceThreshold,
+        0
+      );
 
       // Calculate accumulative value of collateral tokens
       // collateal value = (collateral amount * price) * collateralFactor
       // collateralFactor 1 ether = 100%
-      _collateralValueE30 +=
-        (_amount * _priceE30 * _collateralFactor) /
-        (10 ** _decimals * 1e18);
+      _collateralValueE30 += (_amount * _priceE30 * _collateralFactor) / (10 ** _decimals * 1e18);
 
       unchecked {
         i++;
@@ -555,12 +479,9 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate Intial Margin Requirement from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _imrValueE30 Total imr of trader's account.
-  function getIMR(
-    address _subAccount
-  ) public view returns (uint256 _imrValueE30) {
+  function getIMR(address _subAccount) public view returns (uint256 _imrValueE30) {
     // Get all trader's opening positions
-    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage)
-      .getPositionBySubAccount(_subAccount);
+    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
@@ -587,12 +508,9 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate Maintenance Margin Value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _mmrValueE30 Total mmr of trader's account
-  function getMMR(
-    address _subAccount
-  ) public view returns (uint256 _mmrValueE30) {
+  function getMMR(address _subAccount) public view returns (uint256 _mmrValueE30) {
     // Get all trader's opening positions
-    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage)
-      .getPositionBySubAccount(_subAccount);
+    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
@@ -619,14 +537,11 @@ contract Calculator is Owned, ICalculator {
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return _imrE30 The IMR amount required on position size, 30 decimals.
-  function calculatePositionIMR(
-    uint256 _positionSizeE30,
-    uint256 _marketIndex
-  ) public view returns (uint256 _imrE30) {
+  function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) public view returns (uint256 _imrE30) {
     // Get market config according to position
-    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
-      configStorage
-    ).getMarketConfigByIndex(_marketIndex);
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
+      _marketIndex
+    );
 
     _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFraction) / 1e18;
     return _imrE30;
@@ -636,27 +551,24 @@ contract Calculator is Owned, ICalculator {
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return _mmrE30 The MMR amount required on position size, 30 decimals.
-  function calculatePositionMMR(
-    uint256 _positionSizeE30,
-    uint256 _marketIndex
-  ) public view returns (uint256 _mmrE30) {
+  function calculatePositionMMR(uint256 _positionSizeE30, uint256 _marketIndex) public view returns (uint256 _mmrE30) {
     // Get market config according to position
-    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
-      configStorage
-    ).getMarketConfigByIndex(_marketIndex);
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
+      _marketIndex
+    );
 
-    _mmrE30 =
-      (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) /
-      1e18;
+    _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) / 1e18;
     return _mmrE30;
   }
 
-  function getFreeCollateral(
-    address _subAccount
-  ) public view returns (uint256 _freeCollateral) {
+  /// @notice This function returns the amount of free collateral available to a given sub-account
+  /// @param _subAccount The address of the sub-account
+  /// @return _freeCollateral The amount of free collateral available to the sub-account
+  function getFreeCollateral(address _subAccount) public view returns (uint256 _freeCollateral) {
     uint256 equity = getEquity(_subAccount);
     uint256 imr = getIMR(_subAccount);
 
     _freeCollateral = equity - imr;
+    return _freeCollateral;
   }
 }

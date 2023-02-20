@@ -94,7 +94,7 @@ interface IPerpStorage {
     uint256 _newOpenInterest
   ) external;
 
-  // todo: update sumBorrowingRate, lastBorrowingTime
+  // @todo - update sumBorrowingRate, lastBorrowingTime
   function updateGlobalState(uint256 _newReserveValueE30) external;
 
   function savePosition(

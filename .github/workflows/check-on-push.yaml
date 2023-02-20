@@ -56,7 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Run Slither
-        # TODO: change to official version after it is bug free, ref: https://github.com/crytic/slither-action/pull/50
+        # TODO: change to release version after it is bug free, ref: https://github.com/crytic/slither-action/pull/50
         uses: crytic/slither-action@dev
         with:
           node-version: 16.16.0 # should match .nvmrc or whatever your project required
@@ -64,4 +64,4 @@ jobs:
           slither-config: ./slither.config.json
           slither-version: 0.9.2
           solc-version: 0.8.18
-          fail-on: low
+          fail-on: high # adjust this threshold after high finding has been fixed

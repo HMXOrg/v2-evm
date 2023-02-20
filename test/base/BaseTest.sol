@@ -188,6 +188,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
         flashLoanFeeRate: 0,
         dynamicFeeEnabled: false,
         enabled: true,
+        executionFeeAmount: 0,
         plpTotalTokenWeight: 0
       })
     );

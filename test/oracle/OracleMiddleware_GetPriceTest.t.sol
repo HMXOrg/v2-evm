@@ -94,7 +94,7 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
     vm.expectRevert(
       abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()")
     );
-    (uint maxPrice, uint lastUpdate) = oracleMiddleware.getLatestPrice(
+    oracleMiddleware.getLatestPrice(
       address(wbtc).toBytes32(),
       true,
       1 ether,
@@ -129,7 +129,7 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
     vm.expectRevert(
       abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()")
     );
-    (, , uint8 marketStatus) = oracleMiddleware.getLatestPriceWithMarketStatus(
+    oracleMiddleware.getLatestPriceWithMarketStatus(
       address(wbtc).toBytes32(),
       true,
       1 ether,

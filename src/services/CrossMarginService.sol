@@ -12,8 +12,6 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 
-import { console } from "forge-std/console.sol"; //@todo remove
-
 contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /**
    * Events

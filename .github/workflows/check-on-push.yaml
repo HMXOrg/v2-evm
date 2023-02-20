@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run Slither
         # TODO: change to official version after it is bug free, ref: https://github.com/crytic/slither-action/issues/49
-        uses: crytic/slither-action@dev-git-safe-workspace
+        uses: crytic/slither-action@dev
         with:
           node-version: 16.16.0 # should match .nvmrc or whatever your project required
           target: "./"

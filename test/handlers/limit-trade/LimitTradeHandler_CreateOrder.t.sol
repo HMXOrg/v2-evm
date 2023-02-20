@@ -48,6 +48,19 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     });
   }
 
+  function testRevert_createOrder_WrongSizeDelta() external {
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_WrongSizeDelta()"));
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _subAccountId: 0,
+      _marketIndex: 0,
+      _sizeDelta: -100,
+      _triggerPrice: 1000,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether
+    });
+  }
+
   function testCorrectness_createOrder_IncreaseOrder() external {
     uint256 balanceBefore = address(this).balance;
 

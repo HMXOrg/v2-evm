@@ -158,18 +158,19 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
 
     // Retrieve Long Increase Order that was just created.
-    ILimitTradeHandler.IncreaseOrder memory increaseOrder;
+    ILimitTradeHandler.LimitOrder memory limitOrder;
     (
-      increaseOrder.account,
-      increaseOrder.subAccountId,
-      increaseOrder.marketIndex,
-      increaseOrder.sizeDelta,
-      increaseOrder.isLong,
-      increaseOrder.triggerPrice,
-      increaseOrder.triggerAboveThreshold,
-      increaseOrder.executionFee
-    ) = limitTradeHandler.increaseOrders(address(this), 0);
-    assertEq(increaseOrder.account, address(this), "Order should be created.");
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
     mockOracle.setPrice(1001 * 1e30);
@@ -186,16 +187,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _priceData: new bytes[](0)
     });
     (
-      increaseOrder.account,
-      increaseOrder.subAccountId,
-      increaseOrder.marketIndex,
-      increaseOrder.sizeDelta,
-      increaseOrder.isLong,
-      increaseOrder.triggerPrice,
-      increaseOrder.triggerAboveThreshold,
-      increaseOrder.executionFee
-    ) = limitTradeHandler.increaseOrders(address(this), 0);
-    assertEq(increaseOrder.account, address(0), "Order should be executed and removed from the order list.");
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
 
     assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
 
@@ -210,16 +212,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _executionFee: 0.1 ether
     });
     (
-      increaseOrder.account,
-      increaseOrder.subAccountId,
-      increaseOrder.marketIndex,
-      increaseOrder.sizeDelta,
-      increaseOrder.isLong,
-      increaseOrder.triggerPrice,
-      increaseOrder.triggerAboveThreshold,
-      increaseOrder.executionFee
-    ) = limitTradeHandler.increaseOrders(address(this), 1);
-    assertEq(increaseOrder.account, address(this), "Order should be created.");
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(address(this), 1);
+    assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Execute Short Increase Order
     limitTradeHandler.executeOrder({
@@ -231,16 +234,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _priceData: new bytes[](0)
     });
     (
-      increaseOrder.account,
-      increaseOrder.subAccountId,
-      increaseOrder.marketIndex,
-      increaseOrder.sizeDelta,
-      increaseOrder.isLong,
-      increaseOrder.triggerPrice,
-      increaseOrder.triggerAboveThreshold,
-      increaseOrder.executionFee
-    ) = limitTradeHandler.increaseOrders(address(this), 1);
-    assertEq(increaseOrder.account, address(0), "Order should be executed and removed from the order list.");
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(address(this), 1);
+    assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
 
     assertEq(ALICE.balance, 0.2 ether, "Alice should receive execution fee.");
   }
@@ -273,6 +277,21 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _executionFee: 0.1 ether
     });
 
+    // Retrieve Long Increase Order that was just created.
+    ILimitTradeHandler.LimitOrder memory limitOrder;
+    (
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(this), "Order should be created.");
+
     // Mock price to make the order executable
     mockOracle.setPrice(999 * 1e30);
     mockOracle.setMarketStatus(2);
@@ -287,20 +306,6 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _feeReceiver: payable(ALICE),
       _priceData: new bytes[](0)
     });
-
-    // Retrieve Long Increase Order that was just created.
-    ILimitTradeHandler.DecreaseOrder memory decreaseOrder;
-    (
-      decreaseOrder.account,
-      decreaseOrder.subAccountId,
-      decreaseOrder.marketIndex,
-      decreaseOrder.sizeDelta,
-      decreaseOrder.isLong,
-      decreaseOrder.triggerPrice,
-      decreaseOrder.triggerAboveThreshold,
-      decreaseOrder.executionFee
-    ) = limitTradeHandler.decreaseOrders(address(this), 0);
-    assertEq(decreaseOrder.account, address(this), "Order should be created.");
 
     assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
   }

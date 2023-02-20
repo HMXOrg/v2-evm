@@ -15,6 +15,7 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_MarketIsClosed();
   error ILimitTradeHandler_InvalidPriceForExecution();
   error ILimitTradeHandler_WrongSizeDelta();
+  error ILimitTradeHandler_UnknownOrderType();
 
   /**
    * Enumerators
@@ -27,21 +28,12 @@ interface ILimitTradeHandler {
   /**
    * Structs
    */
-  struct IncreaseOrder {
+  struct LimitOrder {
+    OrderType orderType;
     address account;
     uint256 subAccountId;
     uint256 marketIndex;
     int256 sizeDelta;
-    bool isLong;
-    uint256 triggerPrice;
-    bool triggerAboveThreshold;
-    uint256 executionFee;
-  }
-  struct DecreaseOrder {
-    address account;
-    uint256 subAccountId;
-    uint256 marketIndex;
-    uint256 sizeDelta;
     bool isLong;
     uint256 triggerPrice;
     bool triggerAboveThreshold;

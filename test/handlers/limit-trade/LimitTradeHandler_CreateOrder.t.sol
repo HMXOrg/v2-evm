@@ -63,27 +63,28 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
 
     uint256 balanceDiff = balanceBefore - address(this).balance;
     assertEq(balanceDiff, 0.1 ether, "Execution fee is correctly collected from user.");
-    assertEq(limitTradeHandler.increaseOrdersIndex(address(this)), 1, "increaseOrdersIndex should increase by one.");
+    assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 1, "limitOrdersIndex should increase by one.");
 
-    ILimitTradeHandler.IncreaseOrder memory increaseOrder;
+    ILimitTradeHandler.LimitOrder memory limitOrder;
     (
-      increaseOrder.account,
-      increaseOrder.subAccountId,
-      increaseOrder.marketIndex,
-      increaseOrder.sizeDelta,
-      increaseOrder.isLong,
-      increaseOrder.triggerPrice,
-      increaseOrder.triggerAboveThreshold,
-      increaseOrder.executionFee
-    ) = limitTradeHandler.increaseOrders(address(this), 0);
-    assertEq(increaseOrder.account, address(this));
-    assertEq(increaseOrder.subAccountId, 0);
-    assertEq(increaseOrder.marketIndex, 1);
-    assertEq(increaseOrder.sizeDelta, 1000 * 1e30);
-    assertEq(increaseOrder.isLong, true);
-    assertEq(increaseOrder.triggerPrice, 1000 * 1e30);
-    assertEq(increaseOrder.triggerAboveThreshold, true);
-    assertEq(increaseOrder.executionFee, 0.1 ether);
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(this));
+    assertEq(limitOrder.subAccountId, 0);
+    assertEq(limitOrder.marketIndex, 1);
+    assertEq(limitOrder.sizeDelta, 1000 * 1e30);
+    assertEq(limitOrder.isLong, true);
+    assertEq(limitOrder.triggerPrice, 1000 * 1e30);
+    assertEq(limitOrder.triggerAboveThreshold, true);
+    assertEq(limitOrder.executionFee, 0.1 ether);
 
     // Open another Long order with the same sub account
     limitTradeHandler.createOrder{ value: 0.2 ether }({
@@ -95,25 +96,26 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
       _triggerAboveThreshold: true,
       _executionFee: 0.2 ether
     });
-    assertEq(limitTradeHandler.increaseOrdersIndex(address(this)), 2, "increaseOrdersIndex should increase by one.");
+    assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 2, "limitOrdersIndex should increase by one.");
     (
-      increaseOrder.account,
-      increaseOrder.subAccountId,
-      increaseOrder.marketIndex,
-      increaseOrder.sizeDelta,
-      increaseOrder.isLong,
-      increaseOrder.triggerPrice,
-      increaseOrder.triggerAboveThreshold,
-      increaseOrder.executionFee
-    ) = limitTradeHandler.increaseOrders(address(this), 1);
-    assertEq(increaseOrder.account, address(this));
-    assertEq(increaseOrder.subAccountId, 0);
-    assertEq(increaseOrder.marketIndex, 2);
-    assertEq(increaseOrder.sizeDelta, 2000 * 1e30);
-    assertEq(increaseOrder.isLong, true);
-    assertEq(increaseOrder.triggerPrice, 2000 * 1e30);
-    assertEq(increaseOrder.triggerAboveThreshold, true);
-    assertEq(increaseOrder.executionFee, 0.2 ether);
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(address(this), 1);
+    assertEq(limitOrder.account, address(this));
+    assertEq(limitOrder.subAccountId, 0);
+    assertEq(limitOrder.marketIndex, 2);
+    assertEq(limitOrder.sizeDelta, 2000 * 1e30);
+    assertEq(limitOrder.isLong, true);
+    assertEq(limitOrder.triggerPrice, 2000 * 1e30);
+    assertEq(limitOrder.triggerAboveThreshold, true);
+    assertEq(limitOrder.executionFee, 0.2 ether);
 
     // Open another Long order with another sub account
     limitTradeHandler.createOrder{ value: 0.1 ether }({
@@ -126,28 +128,29 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
       _executionFee: 0.1 ether
     });
     assertEq(
-      limitTradeHandler.increaseOrdersIndex(_getSubAccount(address(this), 7)),
+      limitTradeHandler.limitOrdersIndex(_getSubAccount(address(this), 7)),
       1,
-      "increaseOrdersIndex should increase by one."
+      "limitOrdersIndex should increase by one."
     );
     (
-      increaseOrder.account,
-      increaseOrder.subAccountId,
-      increaseOrder.marketIndex,
-      increaseOrder.sizeDelta,
-      increaseOrder.isLong,
-      increaseOrder.triggerPrice,
-      increaseOrder.triggerAboveThreshold,
-      increaseOrder.executionFee
-    ) = limitTradeHandler.increaseOrders(_getSubAccount(address(this), 7), 0);
-    assertEq(increaseOrder.account, address(this));
-    assertEq(increaseOrder.subAccountId, 7);
-    assertEq(increaseOrder.marketIndex, 3);
-    assertEq(increaseOrder.sizeDelta, 3000 * 1e30);
-    assertEq(increaseOrder.isLong, true);
-    assertEq(increaseOrder.triggerPrice, 3000 * 1e30);
-    assertEq(increaseOrder.triggerAboveThreshold, false);
-    assertEq(increaseOrder.executionFee, 0.1 ether);
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(_getSubAccount(address(this), 7), 0);
+    assertEq(limitOrder.account, address(this));
+    assertEq(limitOrder.subAccountId, 7);
+    assertEq(limitOrder.marketIndex, 3);
+    assertEq(limitOrder.sizeDelta, 3000 * 1e30);
+    assertEq(limitOrder.isLong, true);
+    assertEq(limitOrder.triggerPrice, 3000 * 1e30);
+    assertEq(limitOrder.triggerAboveThreshold, false);
+    assertEq(limitOrder.executionFee, 0.1 ether);
 
     // Open another Short order with 7th sub account
     limitTradeHandler.createOrder{ value: 0.1 ether }({
@@ -160,28 +163,29 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
       _executionFee: 0.1 ether
     });
     assertEq(
-      limitTradeHandler.increaseOrdersIndex(_getSubAccount(address(this), 7)),
+      limitTradeHandler.limitOrdersIndex(_getSubAccount(address(this), 7)),
       2,
-      "increaseOrdersIndex should increase by one."
+      "limitOrdersIndex should increase by one."
     );
     (
-      increaseOrder.account,
-      increaseOrder.subAccountId,
-      increaseOrder.marketIndex,
-      increaseOrder.sizeDelta,
-      increaseOrder.isLong,
-      increaseOrder.triggerPrice,
-      increaseOrder.triggerAboveThreshold,
-      increaseOrder.executionFee
-    ) = limitTradeHandler.increaseOrders(_getSubAccount(address(this), 7), 1);
-    assertEq(increaseOrder.account, address(this));
-    assertEq(increaseOrder.subAccountId, 7);
-    assertEq(increaseOrder.marketIndex, 4);
-    assertEq(increaseOrder.sizeDelta, -4000 * 1e30);
-    assertEq(increaseOrder.isLong, false);
-    assertEq(increaseOrder.triggerPrice, 4000 * 1e30);
-    assertEq(increaseOrder.triggerAboveThreshold, false);
-    assertEq(increaseOrder.executionFee, 0.1 ether);
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(_getSubAccount(address(this), 7), 1);
+    assertEq(limitOrder.account, address(this));
+    assertEq(limitOrder.subAccountId, 7);
+    assertEq(limitOrder.marketIndex, 4);
+    assertEq(limitOrder.sizeDelta, -4000 * 1e30);
+    assertEq(limitOrder.isLong, false);
+    assertEq(limitOrder.triggerPrice, 4000 * 1e30);
+    assertEq(limitOrder.triggerAboveThreshold, false);
+    assertEq(limitOrder.executionFee, 0.1 ether);
   }
 
   function testCorrectness_createOrder_DecreaseOrder() external {
@@ -216,27 +220,28 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
 
     uint256 balanceDiff = balanceBefore - address(this).balance;
     assertEq(balanceDiff, 0.1 ether, "Execution fee is correctly collected from user.");
-    assertEq(limitTradeHandler.decreaseOrdersIndex(address(this)), 1, "decreaseOrdersIndex should increase by one.");
+    assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 1, "limitOrdersIndex should increase by one.");
 
-    ILimitTradeHandler.DecreaseOrder memory decreaseOrder;
+    ILimitTradeHandler.LimitOrder memory limitOrder;
     (
-      decreaseOrder.account,
-      decreaseOrder.subAccountId,
-      decreaseOrder.marketIndex,
-      decreaseOrder.sizeDelta,
-      decreaseOrder.isLong,
-      decreaseOrder.triggerPrice,
-      decreaseOrder.triggerAboveThreshold,
-      decreaseOrder.executionFee
-    ) = limitTradeHandler.decreaseOrders(address(this), 0);
-    assertEq(decreaseOrder.account, address(this));
-    assertEq(decreaseOrder.subAccountId, 0);
-    assertEq(decreaseOrder.marketIndex, 1);
-    assertEq(decreaseOrder.sizeDelta, 1000 * 1e30);
-    assertEq(decreaseOrder.isLong, true, "isLong");
-    assertEq(decreaseOrder.triggerPrice, 1000 * 1e30);
-    assertEq(decreaseOrder.triggerAboveThreshold, true);
-    assertEq(decreaseOrder.executionFee, 0.1 ether);
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(this));
+    assertEq(limitOrder.subAccountId, 0);
+    assertEq(limitOrder.marketIndex, 1);
+    assertEq(limitOrder.sizeDelta, 1000 * 1e30);
+    assertEq(limitOrder.isLong, true, "isLong");
+    assertEq(limitOrder.triggerPrice, 1000 * 1e30);
+    assertEq(limitOrder.triggerAboveThreshold, true);
+    assertEq(limitOrder.executionFee, 0.1 ether);
 
     // Open another Long order with the same sub account
     mockPerpStorage.setPositionBySubAccount(
@@ -264,25 +269,26 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
       _triggerAboveThreshold: true,
       _executionFee: 0.2 ether
     });
-    assertEq(limitTradeHandler.decreaseOrdersIndex(address(this)), 2, "decreaseOrdersIndex should increase by one.");
+    assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 2, "limitOrdersIndex should increase by one.");
     (
-      decreaseOrder.account,
-      decreaseOrder.subAccountId,
-      decreaseOrder.marketIndex,
-      decreaseOrder.sizeDelta,
-      decreaseOrder.isLong,
-      decreaseOrder.triggerPrice,
-      decreaseOrder.triggerAboveThreshold,
-      decreaseOrder.executionFee
-    ) = limitTradeHandler.decreaseOrders(address(this), 1);
-    assertEq(decreaseOrder.account, address(this));
-    assertEq(decreaseOrder.subAccountId, 0);
-    assertEq(decreaseOrder.marketIndex, 2);
-    assertEq(decreaseOrder.sizeDelta, 2000 * 1e30);
-    assertEq(decreaseOrder.isLong, true);
-    assertEq(decreaseOrder.triggerPrice, 2000 * 1e30);
-    assertEq(decreaseOrder.triggerAboveThreshold, true);
-    assertEq(decreaseOrder.executionFee, 0.2 ether);
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(address(this), 1);
+    assertEq(limitOrder.account, address(this));
+    assertEq(limitOrder.subAccountId, 0);
+    assertEq(limitOrder.marketIndex, 2);
+    assertEq(limitOrder.sizeDelta, 2000 * 1e30);
+    assertEq(limitOrder.isLong, true);
+    assertEq(limitOrder.triggerPrice, 2000 * 1e30);
+    assertEq(limitOrder.triggerAboveThreshold, true);
+    assertEq(limitOrder.executionFee, 0.2 ether);
 
     // Open another Short order with another sub account
     mockPerpStorage.setPositionBySubAccount(
@@ -311,27 +317,42 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
       _executionFee: 0.1 ether
     });
     assertEq(
-      limitTradeHandler.decreaseOrdersIndex(_getSubAccount(address(this), 7)),
+      limitTradeHandler.limitOrdersIndex(_getSubAccount(address(this), 7)),
       1,
-      "decreaseOrdersIndex should increase by one."
+      "limitOrdersIndex should increase by one."
     );
     (
-      decreaseOrder.account,
-      decreaseOrder.subAccountId,
-      decreaseOrder.marketIndex,
-      decreaseOrder.sizeDelta,
-      decreaseOrder.isLong,
-      decreaseOrder.triggerPrice,
-      decreaseOrder.triggerAboveThreshold,
-      decreaseOrder.executionFee
-    ) = limitTradeHandler.decreaseOrders(_getSubAccount(address(this), 7), 0);
-    assertEq(decreaseOrder.account, address(this));
-    assertEq(decreaseOrder.subAccountId, 7);
-    assertEq(decreaseOrder.marketIndex, 3);
-    assertEq(decreaseOrder.sizeDelta, 3000 * 1e30);
-    assertEq(decreaseOrder.isLong, false);
-    assertEq(decreaseOrder.triggerPrice, 3000 * 1e30);
-    assertEq(decreaseOrder.triggerAboveThreshold, false);
-    assertEq(decreaseOrder.executionFee, 0.1 ether);
+      ,
+      limitOrder.account,
+      limitOrder.subAccountId,
+      limitOrder.marketIndex,
+      limitOrder.sizeDelta,
+      limitOrder.isLong,
+      limitOrder.triggerPrice,
+      limitOrder.triggerAboveThreshold,
+      limitOrder.executionFee
+    ) = limitTradeHandler.limitOrders(_getSubAccount(address(this), 7), 0);
+    assertEq(limitOrder.account, address(this));
+    assertEq(limitOrder.subAccountId, 7);
+    assertEq(limitOrder.marketIndex, 3);
+    assertEq(limitOrder.sizeDelta, 3000 * 1e30);
+    assertEq(limitOrder.isLong, false);
+    assertEq(limitOrder.triggerPrice, 3000 * 1e30);
+    assertEq(limitOrder.triggerAboveThreshold, false);
+    assertEq(limitOrder.executionFee, 0.1 ether);
+  }
+
+  function assertLimitOrder(
+    ILimitTradeHandler.LimitOrder memory actual,
+    ILimitTradeHandler.LimitOrder memory expect
+  ) internal {
+    assertEq(actual.account, expect.account);
+    assertEq(actual.subAccountId, expect.subAccountId);
+    assertEq(actual.marketIndex, expect.marketIndex);
+    assertEq(actual.sizeDelta, expect.sizeDelta);
+    assertEq(actual.isLong, expect.isLong);
+    assertEq(actual.triggerPrice, expect.triggerPrice);
+    assertEq(actual.triggerAboveThreshold, expect.triggerAboveThreshold);
+    assertEq(actual.executionFee, expect.executionFee);
   }
 }

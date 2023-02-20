@@ -19,7 +19,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   event LogSetTradeService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
-  event CreateIncreaseOrder(
+  event CreateLimitOrder(
+    OrderType indexed orderType,
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -30,18 +31,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool triggerAboveThreshold,
     uint256 executionFee
   );
-  event CreateDecreaseOrder(
-    address indexed account,
-    uint256 indexed subAccountId,
-    uint256 orderIndex,
-    uint256 marketIndex,
-    int256 sizeDelta,
-    bool isLong,
-    uint256 triggerPrice,
-    bool triggerAboveThreshold,
-    uint256 executionFee
-  );
-  event ExecuteIncreaseOrder(
+  event ExecuteLimitOrder(
+    OrderType indexed orderType,
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -53,19 +44,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 executionFee,
     uint256 executionPrice
   );
-  event ExecuteDecreaseOrder(
-    address indexed account,
-    uint256 indexed subAccountId,
-    uint256 orderIndex,
-    uint256 marketIndex,
-    int256 sizeDelta,
-    bool isLong,
-    uint256 triggerPrice,
-    bool triggerAboveThreshold,
-    uint256 executionFee,
-    uint256 executionPrice
-  );
-  event UpdateIncreaseOrder(
+  event UpdateLimitOrder(
+    OrderType indexed orderType,
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -73,26 +53,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 triggerPrice,
     bool triggerAboveThreshold
   );
-  event UpdateDecreaseOrder(
-    address indexed account,
-    uint256 indexed subAccountId,
-    uint256 orderIndex,
-    int256 sizeDelta,
-    uint256 triggerPrice,
-    bool triggerAboveThreshold
-  );
-  event CancelIncreaseOrder(
-    address indexed account,
-    uint256 indexed subAccountId,
-    uint256 orderIndex,
-    uint256 marketIndex,
-    int256 sizeDelta,
-    bool isLong,
-    uint256 triggerPrice,
-    bool triggerAboveThreshold,
-    uint256 executionFee
-  );
-  event CancelDecreaseOrder(
+  event CancelLimitOrder(
+    OrderType indexed orderType,
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -106,10 +68,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
   // STATES
 
-  mapping(address => mapping(uint256 => IncreaseOrder)) public increaseOrders;
-  mapping(address => uint256) public increaseOrdersIndex;
-  mapping(address => mapping(uint256 => DecreaseOrder)) public decreaseOrders;
-  mapping(address => uint256) public decreaseOrdersIndex;
+  mapping(address => mapping(uint256 => LimitOrder)) public limitOrders;
+  mapping(address => uint256) public limitOrdersIndex;
 
   address public weth;
   ITradeService public tradeService;
@@ -177,27 +137,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
 
     address _subAccount = _getSubAccount(msg.sender, _subAccountId);
+    uint256 _orderIndex = limitOrdersIndex[_subAccount];
+    LimitOrder memory _order;
+    bool _isLong;
     if (_orderType == OrderType.INCREASE) {
-      uint256 _orderIndex = increaseOrdersIndex[_subAccount];
-      bool _isLong = _sizeDelta > 0;
+      _isLong = _sizeDelta > 0;
 
-      IncreaseOrder memory _order = IncreaseOrder(
+      _order = LimitOrder(
+        _orderType,
         msg.sender,
         _subAccountId,
-        _marketIndex,
-        _sizeDelta,
-        _isLong,
-        _triggerPrice,
-        _triggerAboveThreshold,
-        _executionFee
-      );
-      increaseOrdersIndex[_subAccount] = _orderIndex + 1;
-      increaseOrders[_subAccount][_orderIndex] = _order;
-
-      emit CreateIncreaseOrder(
-        msg.sender,
-        _subAccountId,
-        _orderIndex,
         _marketIndex,
         _sizeDelta,
         _isLong,
@@ -206,30 +155,14 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
         _executionFee
       );
     } else if (_orderType == OrderType.DECREASE) {
-      uint256 _orderIndex = decreaseOrdersIndex[_subAccount];
-
       bytes32 _positionId = _getPositionId(_subAccount, _marketIndex);
       if (_sizeDelta < 0) revert ILimitTradeHandler_WrongSizeDelta();
-      bool _isLong = IPerpStorage(tradeService.perpStorage()).getPositionById(_positionId).positionSizeE30 > 0;
-      uint256 _absSizeDelta = _sizeDelta > 0 ? uint256(_sizeDelta) : uint256(-_sizeDelta);
+      _isLong = IPerpStorage(tradeService.perpStorage()).getPositionById(_positionId).positionSizeE30 > 0;
 
-      DecreaseOrder memory _order = DecreaseOrder(
+      _order = LimitOrder(
+        _orderType,
         msg.sender,
         _subAccountId,
-        _marketIndex,
-        _absSizeDelta,
-        _isLong,
-        _triggerPrice,
-        _triggerAboveThreshold,
-        _executionFee
-      );
-      decreaseOrdersIndex[_subAccount] = _orderIndex + 1;
-      decreaseOrders[_subAccount][_orderIndex] = _order;
-
-      emit CreateDecreaseOrder(
-        msg.sender,
-        _subAccountId,
-        _orderIndex,
         _marketIndex,
         _sizeDelta,
         _isLong,
@@ -237,7 +170,25 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
         _triggerAboveThreshold,
         _executionFee
       );
+    } else {
+      revert ILimitTradeHandler_UnknownOrderType();
     }
+
+    limitOrdersIndex[_subAccount] = _orderIndex + 1;
+    limitOrders[_subAccount][_orderIndex] = _order;
+
+    emit CreateLimitOrder(
+      _orderType,
+      msg.sender,
+      _subAccountId,
+      _orderIndex,
+      _marketIndex,
+      _sizeDelta,
+      _isLong,
+      _triggerPrice,
+      _triggerAboveThreshold,
+      _executionFee
+    );
   }
 
   function executeOrder(
@@ -249,7 +200,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bytes[] memory _priceData
   ) external nonReentrant onlyOrderExecutor {
     address _subAccount = _getSubAccount(_account, _subAccountId);
-    IncreaseOrder memory order = increaseOrders[_subAccount][_orderIndex];
+    LimitOrder memory order = limitOrders[_subAccount][_orderIndex];
     if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
@@ -263,98 +214,63 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       true
     );
 
-    if (_orderType == OrderType.INCREASE) {
-      delete increaseOrders[_subAccount][_orderIndex];
+    delete limitOrders[_subAccount][_orderIndex];
 
-      // @todo waiting for increasePosition to finish
+    if (_orderType == OrderType.INCREASE) {
       tradeService.increasePosition({
         _primaryAccount: _account,
         _subAccountId: _subAccountId,
         _marketIndex: order.marketIndex,
         _sizeDelta: order.sizeDelta
       });
-
-      emit ExecuteIncreaseOrder(
-        _account,
-        _subAccountId,
-        _orderIndex,
-        order.marketIndex,
-        order.sizeDelta,
-        order.isLong,
-        order.triggerPrice,
-        order.triggerAboveThreshold,
-        order.executionFee,
-        _currentPrice
-      );
     } else if (_orderType == OrderType.DECREASE) {
-      delete decreaseOrders[_subAccount][_orderIndex];
-
       tradeService.decreasePosition({
         _account: _account,
         _subAccountId: _subAccountId,
         _marketIndex: order.marketIndex,
         _positionSizeE30ToDecrease: uint256(order.sizeDelta)
       });
-
-      emit ExecuteDecreaseOrder(
-        _account,
-        _subAccountId,
-        _orderIndex,
-        order.marketIndex,
-        order.sizeDelta,
-        order.isLong,
-        order.triggerPrice,
-        order.triggerAboveThreshold,
-        order.executionFee,
-        _currentPrice
-      );
+    } else {
+      revert ILimitTradeHandler_UnknownOrderType();
     }
 
     // pay executor
     _transferOutETH(order.executionFee, _feeReceiver);
+
+    emit ExecuteLimitOrder(
+      _orderType,
+      _account,
+      _subAccountId,
+      _orderIndex,
+      order.marketIndex,
+      order.sizeDelta,
+      order.isLong,
+      order.triggerPrice,
+      order.triggerAboveThreshold,
+      order.executionFee,
+      _currentPrice
+    );
   }
 
   function cancelOrder(OrderType _orderType, uint256 _subAccountId, uint256 _orderIndex) external nonReentrant {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
-    if (_orderType == OrderType.INCREASE) {
-      IncreaseOrder memory order = increaseOrders[subAccount][_orderIndex];
-      if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+    LimitOrder memory order = limitOrders[subAccount][_orderIndex];
+    if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
-      delete increaseOrders[subAccount][_orderIndex];
+    delete limitOrders[subAccount][_orderIndex];
 
-      _transferOutETH(order.executionFee, msg.sender);
-
-      emit CancelIncreaseOrder(
-        msg.sender,
-        _subAccountId,
-        _orderIndex,
-        order.marketIndex,
-        order.sizeDelta,
-        order.isLong,
-        order.triggerPrice,
-        order.triggerAboveThreshold,
-        order.executionFee
-      );
-    } else if (_orderType == OrderType.DECREASE) {
-      DecreaseOrder memory order = decreaseOrders[subAccount][_orderIndex];
-      if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
-
-      delete decreaseOrders[subAccount][_orderIndex];
-
-      _transferOutETH(order.executionFee, msg.sender);
-
-      emit CancelDecreaseOrder(
-        msg.sender,
-        _subAccountId,
-        _orderIndex,
-        order.marketIndex,
-        int256(order.sizeDelta),
-        order.isLong,
-        order.triggerPrice,
-        order.triggerAboveThreshold,
-        order.executionFee
-      );
-    }
+    emit CancelLimitOrder(
+      _orderType,
+      msg.sender,
+      _subAccountId,
+      _orderIndex,
+      order.marketIndex,
+      order.sizeDelta,
+      order.isLong,
+      order.triggerPrice,
+      order.triggerAboveThreshold,
+      order.executionFee
+    );
   }
 
   function updateOrder(
@@ -366,42 +282,32 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool _triggerAboveThreshold
   ) external nonReentrant {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
+    LimitOrder storage order = limitOrders[subAccount][_orderIndex];
+    if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+
     if (_orderType == OrderType.INCREASE) {
-      IncreaseOrder storage order = increaseOrders[subAccount][_orderIndex];
-      if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+      order.triggerPrice = _triggerPrice;
+      order.triggerAboveThreshold = _triggerAboveThreshold;
+      order.sizeDelta = _sizeDelta;
+    } else if (_orderType == OrderType.DECREASE) {
+      if (_sizeDelta < 0) revert ILimitTradeHandler_WrongSizeDelta();
 
       order.triggerPrice = _triggerPrice;
       order.triggerAboveThreshold = _triggerAboveThreshold;
       order.sizeDelta = _sizeDelta;
-
-      emit UpdateIncreaseOrder(
-        msg.sender,
-        _subAccountId,
-        _orderIndex,
-        order.sizeDelta,
-        order.triggerPrice,
-        order.triggerAboveThreshold
-      );
-    } else if (_orderType == OrderType.DECREASE) {
-      DecreaseOrder storage order = decreaseOrders[subAccount][_orderIndex];
-      if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
-
-      if (_sizeDelta < 0) revert ILimitTradeHandler_WrongSizeDelta();
-      uint256 _absSizeDelta = _sizeDelta > 0 ? uint256(_sizeDelta) : uint256(-_sizeDelta);
-
-      order.triggerPrice = _triggerPrice;
-      order.triggerAboveThreshold = _triggerAboveThreshold;
-      order.sizeDelta = _absSizeDelta;
-
-      emit UpdateDecreaseOrder(
-        msg.sender,
-        _subAccountId,
-        _orderIndex,
-        int256(order.sizeDelta),
-        order.triggerPrice,
-        order.triggerAboveThreshold
-      );
+    } else {
+      revert ILimitTradeHandler_UnknownOrderType();
     }
+
+    emit UpdateLimitOrder(
+      _orderType,
+      msg.sender,
+      _subAccountId,
+      _orderIndex,
+      order.sizeDelta,
+      order.triggerPrice,
+      order.triggerAboveThreshold
+    );
   }
 
   function validatePositionOrderPrice(

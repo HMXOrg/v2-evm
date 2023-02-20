@@ -74,6 +74,8 @@ interface IConfigStorage {
   struct TradingConfig {
     uint256 fundingInterval; // funding interval unit in seconds
     uint256 borrowingDevFeeRate;
+    uint256 minProfitDuration;
+    uint256 maxPosition;
   }
 
   struct LiquidationConfig {
@@ -112,6 +114,8 @@ interface IConfigStorage {
   function ITERABLE_ADDRESS_LIST_END() external view returns (address);
 
   function getMarketConfigByIndex(uint256 _index) external view returns (MarketConfig memory _marketConfig);
+
+  function getTradingConfig() external view returns (TradingConfig memory);
 
   function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory);
 

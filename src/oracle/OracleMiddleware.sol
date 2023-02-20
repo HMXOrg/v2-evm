@@ -5,6 +5,8 @@ import { Owned } from "../base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 
+import { console } from "forge-std/console.sol";
+
 contract OracleMiddleware is Owned, IOracleMiddleware {
   // configs
   IOracleAdapter public pythAdapter;
@@ -42,10 +44,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @notice Set market status for the given asset.
   /// @param _assetId The asset address to set.
   /// @param _status Status enum, see `marketStatus` comment section.
-  function setMarketStatus(
-    bytes32 _assetId,
-    uint8 _status
-  ) external onlyUpdater {
+  function setMarketStatus(bytes32 _assetId, uint8 _status) external onlyUpdater {
     if (_status > 2) revert IOracleMiddleware_InvalidMarketStatus();
 
     marketStatus[_assetId] = _status;
@@ -72,12 +71,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, _lastUpdate) = _getLatestPrice(
-      _assetId,
-      _isMax,
-      _confidenceThreshold,
-      _trustPriceAge
-    );
+    (_price, _lastUpdate) = _getLatestPrice(_assetId, _isMax, _confidenceThreshold, _trustPriceAge);
 
     return (_price, _lastUpdate);
   }
@@ -95,11 +89,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     uint256 _confidenceThreshold
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, _lastUpdate) = _unsafeGetLatestPrice(
-      _assetId,
-      _isMax,
-      _confidenceThreshold
-    );
+    (_price, _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax, _confidenceThreshold);
 
     return (_price, _lastUpdate);
   }
@@ -119,12 +109,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, _lastUpdate) = _getLatestPrice(
-      _assetId,
-      _isMax,
-      _confidenceThreshold,
-      _trustPriceAge
-    );
+    (_price, _lastUpdate) = _getLatestPrice(_assetId, _isMax, _confidenceThreshold, _trustPriceAge);
 
     return (_price, _lastUpdate, _status);
   }
@@ -142,11 +127,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, _lastUpdate) = _unsafeGetLatestPrice(
-      _assetId,
-      _isMax,
-      _confidenceThreshold
-    );
+    (_price, _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax, _confidenceThreshold);
 
     return (_price, _lastUpdate, _status);
   }
@@ -158,15 +139,13 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _trustPriceAge
   ) private view returns (uint256 _price, uint256 _lastUpdate) {
     // 1. get price from Pyth
-    (_price, _lastUpdate) = pythAdapter.getLatestPrice(
-      _assetId,
-      _isMax,
-      _confidenceThreshold
-    );
+    (_price, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _confidenceThreshold);
 
     // check price age
-    if (block.timestamp - _lastUpdate > _trustPriceAge)
-      revert IOracleMiddleware_PythPriceStale();
+    console.log("block.timestamp", block.timestamp);
+    console.log("_lastUpdate", _lastUpdate);
+    console.log("_trustPriceAge", _trustPriceAge);
+    if (block.timestamp - _lastUpdate > _trustPriceAge) revert IOracleMiddleware_PythPriceStale();
 
     // 2. Return the price and last update
     return (_price, _lastUpdate);
@@ -178,11 +157,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _confidenceThreshold
   ) private view returns (uint256 _price, uint256 _lastUpdate) {
     // 1. get price from Pyth
-    (_price, _lastUpdate) = pythAdapter.getLatestPrice(
-      _assetId,
-      _isMax,
-      _confidenceThreshold
-    );
+    (_price, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _confidenceThreshold);
 
     // 2. Return the price and last update
     return (_price, _lastUpdate);

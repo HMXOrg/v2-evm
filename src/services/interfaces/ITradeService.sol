@@ -10,4 +10,15 @@ interface ITradeService {
   error ITradeService_DecreaseTooHighPositionSize();
   error ITradeService_SubAccountEquityIsUnderMMR();
   error ITradeService_TooTinyPosition();
+
+  function configStorage() external view returns (address);
+
+  function perpStorage() external view returns (address);
+
+  function decreasePosition(
+    address _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _positionSizeE30ToDecrease
+  ) external;
 }

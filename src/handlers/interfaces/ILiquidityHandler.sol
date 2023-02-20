@@ -19,6 +19,13 @@ interface ILiquidityHandler {
     uint256 amount;
     uint256 minOut;
     bool isAdd;
+    LiquidityOrderStatus status;
+  }
+
+  enum LiquidityOrderStatus {
+    PROCESSING,
+    DONE,
+    CANCELLED
   }
 
   error ILiquidityHandler_InsufficientExecutionFee();

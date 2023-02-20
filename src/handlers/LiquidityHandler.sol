@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 // interfaces
 import { ILiquidityHandler } from "./interfaces/ILiquidityHandler.sol";
+import { ILiquidityService } from "../services/interfaces/ILiquidityService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
@@ -21,10 +22,12 @@ contract LiquidityHandler is ILiquidityHandler {
 
   address configStorage;
   address public weth;
+  address liquidityService;
 
-  constructor(address _configStorage, address _weth) {
+  constructor(address _configStorage, address _weth, address _liquidityService) {
     configStorage = _configStorage;
     weth = _weth;
+    liquidityService = _liquidityService;
   }
 
   function createAddLiquidityOrder(
@@ -50,7 +53,14 @@ contract LiquidityHandler is ILiquidityHandler {
 
     LiquidityOrder[] storage _orders = liquidityOrders[msg.sender];
     _orders.push(
-      LiquidityOrder({ account: msg.sender, token: _tokenBuy, amount: _amountIn, minOut: _minOut, isAdd: true })
+      LiquidityOrder({
+        account: msg.sender,
+        token: _tokenBuy,
+        amount: _amountIn,
+        minOut: _minOut,
+        isAdd: true,
+        status: LiquidityOrderStatus.PROCESSING
+      })
     );
   }
 
@@ -63,14 +73,59 @@ contract LiquidityHandler is ILiquidityHandler {
 
     LiquidityOrder[] storage _orders = liquidityOrders[msg.sender];
     _orders.push(
-      LiquidityOrder({ account: msg.sender, token: _tokenSell, amount: _amountIn, minOut: _minOut, isAdd: false })
+      LiquidityOrder({
+        account: msg.sender,
+        token: _tokenSell,
+        amount: _amountIn,
+        minOut: _minOut,
+        isAdd: false,
+        status: LiquidityOrderStatus.PROCESSING
+      })
     );
     // @todo events
   }
 
   function cancelLiquidityOrder() external {}
 
-  function _executeOrders(LiquidityOrder memory orders) external {}
+  function executeOrders(LiquidityOrder[] memory _orders) external {
+    for (uint256 i = 0; i < _orders.length; ) {
+      LiquidityOrder memory _order = _orders[i];
+      ERC20(_order.token).approve(liquidityService, type(uint256).max);
+      try this._executeLiquidity(_order) returns (uint256 _amount) {
+        liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.DONE;
+      } catch Error(string memory reason) {
+        liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.CANCELLED;
+        // refund to user
+        //@todo refund in what unit? and do we return executionFee to user?
+        if (_order.token == weth) {
+          _transferOutETH(
+            _order.amount + IConfigStorage(configStorage).getLiquidityConfig().executionFeeAmount,
+            _order.account
+          );
+        } else {
+          _transferOutETH(IConfigStorage(configStorage).getLiquidityConfig().executionFeeAmount, _order.account);
+          ERC20(_order.token).transfer(_order.account, _order.amount);
+        }
+      }
+      unchecked {
+        i++;
+        startOrderIndex[_order.account]++;
+      }
+    }
+  }
+
+  // @todo try can be used only external need whitelisted
+  function _executeLiquidity(LiquidityOrder memory _order) public returns (uint256) {
+    return
+      _order.isAdd
+        ? ILiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut)
+        : ILiquidityService(liquidityService).removeLiquidity(
+          _order.account,
+          _order.token,
+          _order.amount,
+          _order.minOut
+        );
+  }
 
   function _getOrder(address _lpProvider, uint256 _orderIndex) internal view returns (LiquidityOrder memory) {
     return liquidityOrders[_lpProvider][_orderIndex];

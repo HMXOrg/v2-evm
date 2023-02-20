@@ -64,7 +64,14 @@ contract TradeService is ITradeService {
     // get the market configuration for the given market index
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
-    ).getMarketConfigById(_marketIndex);
+    ).getMarketConfigByIndex(_marketIndex);
+
+    // check size delta
+    if (_sizeDelta == 0) revert ITradeService_BadSizeDelta();
+
+    // check allow increase position
+    if (!_marketConfig.allowIncreasePosition)
+      revert ITradeService_NotAllowIncrease();
 
     // determine whether the new size delta is for a long position
     bool _isLong = _sizeDelta > 0;
@@ -107,16 +114,14 @@ contract TradeService is ITradeService {
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
 
-      // if market status is 1, means that market is close
-      if (_marketStatus < 2) revert ITradeService_MarketIsClosed();
+      // if market status is not 2, means that the market is closed or market status has been defined yet
+      if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
 
       // check price stale for 30 seconds
       // todo: do it as config, and fix related testcase
       if (block.timestamp - _lastPriceUpdated > 30)
         revert ITradeService_PriceStale();
     }
-
-    // TODO: Validate AllowIncreasePosition
 
     // get the absolute value of the new size delta
     uint256 _absSizeDelta = abs(_sizeDelta);
@@ -130,7 +135,7 @@ contract TradeService is ITradeService {
     }
 
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
-    if (!_isNewPosition && _sizeDelta != 0) {
+    if (!_isNewPosition) {
       _position.avgEntryPriceE30 = getPositionNextAveragePrice(
         _marketIndex,
         abs(_position.positionSizeE30),
@@ -175,7 +180,7 @@ contract TradeService is ITradeService {
 
     {
       // calculate the change in open interest for the new position
-      uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _priceE30;
+      uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _priceE30; // TODO: use decimal asset
       _position.openInterest += _changedOpenInterest;
       // update gobal market state
       if (_isLong) {
@@ -214,7 +219,7 @@ contract TradeService is ITradeService {
     // prepare
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(
       configStorage
-    ).getMarketConfigById(_marketIndex);
+    ).getMarketConfigByIndex(_marketIndex);
 
     address _subAccount = _getSubAccount(_account, _subAccountId);
     bytes32 _positionId = _getPositionId(_subAccount, _marketIndex);
@@ -266,8 +271,8 @@ contract TradeService is ITradeService {
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
 
-      // if market status is 1, means that market is close
-      if (_marketStatus < 2) revert ITradeService_MarketIsClosed();
+      // if market status is not 2, means that the market is closed or market status has been defined yet
+      if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
 
       // check price stale for 30 seconds
       // todo: do it as config, and fix related testcase
@@ -447,7 +452,7 @@ contract TradeService is ITradeService {
     // Get Price market.
     IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(
       configStorage
-    ).getMarketConfigById(_marketIndex);
+    ).getMarketConfigByIndex(_marketIndex);
     (uint256 price, ) = IOracleMiddleware(oracle).getLatestPrice(
       marketConfig.assetId,
       _isLong,

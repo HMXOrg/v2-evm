@@ -27,7 +27,7 @@ contract MockCalculator is ICalculator {
     plpValue = _mockPlpValue;
   }
 
-  function setIMR(uint256 _mockImr) external returns (uint256) {
+  function setIMR(uint256 _mockImr) external {
     imr = _mockImr;
   }
 

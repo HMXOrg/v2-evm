@@ -72,7 +72,7 @@ interface IConfigStorage {
     uint256 liquidationFeeUSDE30; // liquidation fee in USD
   }
 
-  function getMarketConfigById(
+  function getMarketConfigByIndex(
     uint256 _marketIndex
   ) external view returns (MarketConfig memory);
 

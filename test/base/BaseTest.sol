@@ -247,4 +247,8 @@ abstract contract BaseTest is
 
     configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfig);
   }
+
+  function abs(int256 x) external pure returns (uint256) {
+    return uint256(x >= 0 ? x : -x);
+  }
 }

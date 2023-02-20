@@ -31,7 +31,7 @@ contract ConfigStorage is IConfigStorage {
   uint256 public plpTotalTokenWeight;
 
   // getter functions
-  function getMarketConfigById(
+  function getMarketConfigByIndex(
     uint256 _marketIndex
   ) external view returns (MarketConfig memory) {
     return marketConfigs[_marketIndex];

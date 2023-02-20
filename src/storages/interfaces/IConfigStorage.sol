@@ -5,12 +5,11 @@ interface IConfigStorage {
   /**
    * Errors
    */
-  error ConfigStorage_NotWhiteListed();
-  error ConfigStorage_ExceedLimitSetting();
-  error ConfigStorage_BadLen();
-  error ConfigStorage_BadArgs();
-  error NotAcceptedCollateral();
-  error NotWhiteListed();
+  error IConfigStorage_NotWhiteListed();
+  error IConfigStorage_ExceedLimitSetting();
+  error IConfigStorage_BadLen();
+  error IConfigStorage_BadArgs();
+  error IConfigStorage_NotAcceptedCollateral();
 
   /**
    * Structs

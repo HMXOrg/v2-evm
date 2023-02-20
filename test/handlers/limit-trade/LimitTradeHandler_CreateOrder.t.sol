@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { LimitTradeHandler_Base } from "./LimitTradeHandler_Base.t.sol";
+import { LimitTradeHandler_Base, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
 import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
 
 contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
@@ -182,5 +182,156 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     assertEq(increaseOrder.triggerPrice, 4000 * 1e30);
     assertEq(increaseOrder.triggerAboveThreshold, false);
     assertEq(increaseOrder.executionFee, 0.1 ether);
+  }
+
+  function testCorrectness_createOrder_DecreaseOrder() external {
+    uint256 balanceBefore = address(this).balance;
+
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 1,
+        positionSizeE30: 100_000 * 1e30,
+        avgEntryPriceE30: 20_000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether
+    });
+
+    uint256 balanceDiff = balanceBefore - address(this).balance;
+    assertEq(balanceDiff, 0.1 ether, "Execution fee is correctly collected from user.");
+    assertEq(limitTradeHandler.decreaseOrdersIndex(address(this)), 1, "decreaseOrdersIndex should increase by one.");
+
+    ILimitTradeHandler.DecreaseOrder memory decreaseOrder;
+    (
+      decreaseOrder.account,
+      decreaseOrder.subAccountId,
+      decreaseOrder.marketIndex,
+      decreaseOrder.sizeDelta,
+      decreaseOrder.isLong,
+      decreaseOrder.triggerPrice,
+      decreaseOrder.triggerAboveThreshold,
+      decreaseOrder.executionFee
+    ) = limitTradeHandler.decreaseOrders(address(this), 0);
+    assertEq(decreaseOrder.account, address(this));
+    assertEq(decreaseOrder.subAccountId, 0);
+    assertEq(decreaseOrder.marketIndex, 1);
+    assertEq(decreaseOrder.sizeDelta, 1000 * 1e30);
+    assertEq(decreaseOrder.isLong, true, "isLong");
+    assertEq(decreaseOrder.triggerPrice, 1000 * 1e30);
+    assertEq(decreaseOrder.triggerAboveThreshold, true);
+    assertEq(decreaseOrder.executionFee, 0.1 ether);
+
+    // Open another Long order with the same sub account
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 2,
+        positionSizeE30: 100_000 * 1e30,
+        avgEntryPriceE30: 20_000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+    limitTradeHandler.createOrder{ value: 0.2 ether }({
+      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _subAccountId: 0,
+      _marketIndex: 2,
+      _sizeDelta: 2000 * 1e30,
+      _triggerPrice: 2000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.2 ether
+    });
+    assertEq(limitTradeHandler.decreaseOrdersIndex(address(this)), 2, "decreaseOrdersIndex should increase by one.");
+    (
+      decreaseOrder.account,
+      decreaseOrder.subAccountId,
+      decreaseOrder.marketIndex,
+      decreaseOrder.sizeDelta,
+      decreaseOrder.isLong,
+      decreaseOrder.triggerPrice,
+      decreaseOrder.triggerAboveThreshold,
+      decreaseOrder.executionFee
+    ) = limitTradeHandler.decreaseOrders(address(this), 1);
+    assertEq(decreaseOrder.account, address(this));
+    assertEq(decreaseOrder.subAccountId, 0);
+    assertEq(decreaseOrder.marketIndex, 2);
+    assertEq(decreaseOrder.sizeDelta, 2000 * 1e30);
+    assertEq(decreaseOrder.isLong, true);
+    assertEq(decreaseOrder.triggerPrice, 2000 * 1e30);
+    assertEq(decreaseOrder.triggerAboveThreshold, true);
+    assertEq(decreaseOrder.executionFee, 0.2 ether);
+
+    // Open another Short order with another sub account
+    mockPerpStorage.setPositionBySubAccount(
+      _getSubAccount(address(this), 7),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 7,
+        marketIndex: 3,
+        positionSizeE30: -100_000 * 1e30,
+        avgEntryPriceE30: 20_000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _subAccountId: 7,
+      _marketIndex: 3,
+      _sizeDelta: 3000 * 1e30,
+      _triggerPrice: 3000 * 1e30,
+      _triggerAboveThreshold: false,
+      _executionFee: 0.1 ether
+    });
+    assertEq(
+      limitTradeHandler.decreaseOrdersIndex(_getSubAccount(address(this), 7)),
+      1,
+      "decreaseOrdersIndex should increase by one."
+    );
+    (
+      decreaseOrder.account,
+      decreaseOrder.subAccountId,
+      decreaseOrder.marketIndex,
+      decreaseOrder.sizeDelta,
+      decreaseOrder.isLong,
+      decreaseOrder.triggerPrice,
+      decreaseOrder.triggerAboveThreshold,
+      decreaseOrder.executionFee
+    ) = limitTradeHandler.decreaseOrders(_getSubAccount(address(this), 7), 0);
+    assertEq(decreaseOrder.account, address(this));
+    assertEq(decreaseOrder.subAccountId, 7);
+    assertEq(decreaseOrder.marketIndex, 3);
+    assertEq(decreaseOrder.sizeDelta, 3000 * 1e30);
+    assertEq(decreaseOrder.isLong, false);
+    assertEq(decreaseOrder.triggerPrice, 3000 * 1e30);
+    assertEq(decreaseOrder.triggerAboveThreshold, false);
+    assertEq(decreaseOrder.executionFee, 0.1 ether);
   }
 }

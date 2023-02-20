@@ -55,6 +55,8 @@ interface ILimitTradeHandler {
 
   function setMinExecutionFee(uint256 _newMinExecutionFee) external;
 
+  function setOrderExecutor(address _executor, bool _isAllow) external;
+
   /**
    * Functions
    */

@@ -18,6 +18,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   // EVENTS
   event LogSetTradeService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogSetOrderExecutor(address executor, bool isAllow);
   event CreateIncreaseOrder(
     address indexed account,
     uint256 indexed subAccountId,
@@ -151,6 +152,11 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     minExecutionFee = _newMinExecutionFee;
   }
 
+  function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
+    orderExecutors[_executor] = _isAllow;
+    emit LogSetOrderExecutor(_executor, _isAllow);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////
   ////////////////////// CALCULATION
   ////////////////////////////////////////////////////////////////////////////////////
@@ -261,7 +267,12 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       delete increaseOrders[_subAccount][_orderIndex];
 
       // @todo waiting for increasePosition to finish
-      // tradeService.increasePosition();
+      tradeService.increasePosition({
+        _primaryAccount: _account,
+        _subAccountId: _subAccountId,
+        _marketIndex: order.marketIndex,
+        _sizeDelta: order.sizeDelta
+      });
 
       emit ExecuteIncreaseOrder(
         _account,
@@ -278,7 +289,12 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     } else if (_orderType == OrderType.DECREASE) {
       delete decreaseOrders[_subAccount][_orderIndex];
 
-      tradeService.decreasePosition(_account, _subAccountId, order.marketIndex, uint256(order.sizeDelta));
+      tradeService.decreasePosition({
+        _account: _account,
+        _subAccountId: _subAccountId,
+        _marketIndex: order.marketIndex,
+        _positionSizeE30ToDecrease: uint256(order.sizeDelta)
+      });
 
       emit ExecuteDecreaseOrder(
         _account,

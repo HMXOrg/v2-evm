@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, LimitTradeHandler } from "../../base/BaseTest.sol";
+import { BaseTest, LimitTradeHandler, IPerpStorage, IConfigStorage } from "../../base/BaseTest.sol";
 
 contract LimitTradeHandler_Base is BaseTest {
   LimitTradeHandler limitTradeHandler;
@@ -10,7 +10,7 @@ contract LimitTradeHandler_Base is BaseTest {
     limitTradeHandler = deployLimitTradeHandler(address(weth), address(mockTradeService), address(mockPyth), 0.1 ether);
 
     mockTradeService.setConfigStorage(address(configStorage));
-    mockTradeService.setPerpStorage(address(perpStorage));
+    mockTradeService.setPerpStorage(address(mockPerpStorage));
   }
 
   // =========================================

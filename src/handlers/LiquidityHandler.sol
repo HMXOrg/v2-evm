@@ -16,16 +16,13 @@ import { IWNative } from "./interfaces/IWNative.sol";
 
 /// @title LiquidityService
 contract LiquidityHandler is ILiquidityHandler {
-  //@todo do we need to know how platform know all order pending
   mapping(address => LiquidityOrder[]) public liquidityOrders; // user address => all liquidityOrder
   mapping(address => uint256) startOrderIndex; //user address => startOrderIndex when execute
 
-  address configStorage;
   address public weth;
   address liquidityService;
 
-  constructor(address _configStorage, address _weth, address _liquidityService) {
-    configStorage = _configStorage;
+  constructor(address _weth, address _liquidityService) {
     weth = _weth;
     liquidityService = _liquidityService;
   }
@@ -41,12 +38,18 @@ contract LiquidityHandler is ILiquidityHandler {
 
     //@todo  if (_executionFee < minExecutionFee) revert InsufficientExecutionFee();  still need?
     if (_shouldWrap) {
-      if (msg.value != _amountIn + IConfigStorage(configStorage).getLiquidityConfig().executionFeeAmount) {
+      if (
+        msg.value !=
+        _amountIn +
+          IConfigStorage(ILiquidityService(liquidityService).configStorage()).getLiquidityConfig().executionFeeAmount
+      ) {
         revert ILiquidityHandler_InCorrectValueTransfer();
       }
     } else {
-      if (msg.value != IConfigStorage(configStorage).getLiquidityConfig().executionFeeAmount)
-        revert ILiquidityHandler_InCorrectValueTransfer();
+      if (
+        msg.value !=
+        IConfigStorage(ILiquidityService(liquidityService).configStorage()).getLiquidityConfig().executionFeeAmount
+      ) revert ILiquidityHandler_InCorrectValueTransfer();
 
       ERC20(_tokenBuy).transferFrom(msg.sender, address(this), _amountIn);
     }
@@ -54,7 +57,7 @@ contract LiquidityHandler is ILiquidityHandler {
     LiquidityOrder[] storage _orders = liquidityOrders[msg.sender];
     _orders.push(
       LiquidityOrder({
-        account: msg.sender,
+        account: payable(msg.sender),
         token: _tokenBuy,
         amount: _amountIn,
         minOut: _minOut,
@@ -62,19 +65,22 @@ contract LiquidityHandler is ILiquidityHandler {
         status: LiquidityOrderStatus.PROCESSING
       })
     );
+    // @todo event
   }
 
   function createRemoveLiquidityOrder(address _tokenSell, uint256 _amountIn, uint256 _minOut) external payable {
     //convert native to WNative (including executionFee)
     _transferInETH();
 
-    if (msg.value != IConfigStorage(configStorage).getLiquidityConfig().executionFeeAmount)
-      revert ILiquidityHandler_InCorrectValueTransfer();
+    if (
+      msg.value !=
+      IConfigStorage(ILiquidityService(liquidityService).configStorage()).getLiquidityConfig().executionFeeAmount
+    ) revert ILiquidityHandler_InCorrectValueTransfer();
 
     LiquidityOrder[] storage _orders = liquidityOrders[msg.sender];
     _orders.push(
       LiquidityOrder({
-        account: msg.sender,
+        account: payable(msg.sender),
         token: _tokenSell,
         amount: _amountIn,
         minOut: _minOut,
@@ -85,26 +91,48 @@ contract LiquidityHandler is ILiquidityHandler {
     // @todo events
   }
 
-  function cancelLiquidityOrder() external {}
+  function cancelLiquidityOrder(LiquidityOrder[] memory _orders) external {
+    for (uint256 i = 0; i < _orders.length; ) {
+      LiquidityOrder memory _order = _orders[i];
+
+      if (_order.status == LiquidityOrderStatus.PROCESSING) {
+        liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.CANCELLED;
+        userRefund(_order);
+      }
+      // @todo revert if _order status is not processing?
+      unchecked {
+        i++;
+        startOrderIndex[_order.account]++;
+      }
+    }
+  }
+
+  // @todo onlyRefunder
+  function userRefund(LiquidityOrder memory _order) internal {
+    try this.refund(_order) {} catch Error(string memory reason) {
+      revert ILiquidityHandler_InsufficientRefund();
+    }
+  }
+
+  // @todo onlyRefunder
+  function refund(LiquidityOrder memory _order) external {
+    if (_order.token == weth) {
+      _transferOutETHWithGasLimitIgnoreFail(_order.amount, _order.account);
+    } else {
+      ERC20(_order.token).transfer(_order.account, _order.amount);
+    }
+  }
 
   function executeOrders(LiquidityOrder[] memory _orders) external {
     for (uint256 i = 0; i < _orders.length; ) {
       LiquidityOrder memory _order = _orders[i];
-      ERC20(_order.token).approve(liquidityService, type(uint256).max);
-      try this._executeLiquidity(_order) returns (uint256 _amount) {
-        liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.DONE;
-      } catch Error(string memory reason) {
-        liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.CANCELLED;
-        // refund to user
-        //@todo refund in what unit? and do we return executionFee to user?
-        if (_order.token == weth) {
-          _transferOutETH(
-            _order.amount + IConfigStorage(configStorage).getLiquidityConfig().executionFeeAmount,
-            _order.account
-          );
-        } else {
-          _transferOutETH(IConfigStorage(configStorage).getLiquidityConfig().executionFeeAmount, _order.account);
-          ERC20(_order.token).transfer(_order.account, _order.amount);
+      if (_order.status == LiquidityOrderStatus.PROCESSING) {
+        ERC20(_order.token).approve(liquidityService, type(uint256).max);
+        try this._executeLiquidity(_order) {
+          liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.DONE;
+        } catch Error(string memory reason) {
+          liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.FAILED;
+          userRefund(_order);
         }
       }
       unchecked {
@@ -156,8 +184,12 @@ contract LiquidityHandler is ILiquidityHandler {
     }
   }
 
-  function _transferOutETH(uint256 _amountOut, address _receiver) private {
+  function _transferOutETHWithGasLimitIgnoreFail(uint256 _amountOut, address payable _receiver) internal {
     IWNative(weth).withdraw(_amountOut);
-    payable(_receiver).transfer(_amountOut);
+
+    // use `send` instead of `transfer` to not revert whole transaction in case ETH transfer was failed
+    // it has limit of 2300 gas
+    // this is to avoid front-running
+    _receiver.send(_amountOut);
   }
 }

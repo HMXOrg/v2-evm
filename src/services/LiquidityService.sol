@@ -15,9 +15,9 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 /// @title LiquidityService
 contract LiquidityService is ILiquidityService {
   using AddressUtils for address;
-  address configStorage;
-  address vaultStorage;
-  address perpStorage;
+  address public configStorage;
+  address public vaultStorage;
+  address public perpStorage;
 
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
   uint256 internal constant USD_DECIMALS = 30;

@@ -11,10 +11,10 @@ interface ILiquidityHandler {
 
   function createRemoveLiquidityOrder(address _tokenSell, uint256 _amountIn, uint256 _minOut) external payable;
 
-  function cancelLiquidityOrder() external;
+  function cancelLiquidityOrder(LiquidityOrder[] memory _orders) external;
 
   struct LiquidityOrder {
-    address account;
+    address payable account;
     address token;
     uint256 amount;
     uint256 minOut;
@@ -25,9 +25,11 @@ interface ILiquidityHandler {
   enum LiquidityOrderStatus {
     PROCESSING,
     DONE,
+    FAILED,
     CANCELLED
   }
 
   error ILiquidityHandler_InsufficientExecutionFee();
   error ILiquidityHandler_InCorrectValueTransfer();
+  error ILiquidityHandler_InsufficientRefund();
 }

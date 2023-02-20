@@ -39,13 +39,7 @@ import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol
 
 import { PLPv2 } from "../../src/contracts/PLPv2.sol";
 
-abstract contract BaseTest is
-  TestBase,
-  Deployment,
-  StorageDeployment,
-  StdAssertions,
-  StdCheatsSafe
-{
+abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -78,16 +72,11 @@ abstract contract BaseTest is
   // market indexes
   uint256 ethMarketIndex;
 
-  bytes32 internal constant wethPriceId =
-    0x0000000000000000000000000000000000000000000000000000000000000001;
-  bytes32 internal constant wbtcPriceId =
-    0x0000000000000000000000000000000000000000000000000000000000000002;
-  bytes32 internal constant daiPriceId =
-    0x0000000000000000000000000000000000000000000000000000000000000003;
-  bytes32 internal constant usdcPriceId =
-    0x0000000000000000000000000000000000000000000000000000000000000004;
-  bytes32 internal constant usdtPriceId =
-    0x0000000000000000000000000000000000000000000000000000000000000005;
+  bytes32 internal constant wethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000001;
+  bytes32 internal constant wbtcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000002;
+  bytes32 internal constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
+  bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000004;
+  bytes32 internal constant usdtPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
 
   constructor() {
     // Creating a mock Pyth instance with 60 seconds valid time period
@@ -129,25 +118,16 @@ abstract contract BaseTest is
 
     // set general config
     configStorage.setCalculator(address(mockCalculator));
+    configStorage.setOracle(address(mockOracle));
   }
 
   // --------- Deploy Helpers ---------
-  function deployMockErc20(
-    string memory name,
-    string memory symbol,
-    uint8 decimals
-  ) internal returns (MockErc20) {
+  function deployMockErc20(string memory name, string memory symbol, uint8 decimals) internal returns (MockErc20) {
     return new MockErc20(name, symbol, decimals);
   }
 
-  function deployPerp88v2()
-    internal
-    returns (Deployment.DeployReturnVars memory)
-  {
-    DeployLocalVars memory deployLocalVars = DeployLocalVars({
-      pyth: mockPyth,
-      defaultOracleStaleTime: 300
-    });
+  function deployPerp88v2() internal returns (Deployment.DeployReturnVars memory) {
+    DeployLocalVars memory deployLocalVars = DeployLocalVars({ pyth: mockPyth, defaultOracleStaleTime: 300 });
     return deploy(deployLocalVars);
   }
 
@@ -173,9 +153,7 @@ abstract contract BaseTest is
   /// @notice Helper function to create a price feed update data.
   /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
   /// @param priceData The price data to create the update data.
-  function buildPythUpdateData(
-    int64[] memory priceData
-  ) internal view returns (bytes[] memory) {
+  function buildPythUpdateData(int64[] memory priceData) internal view returns (bytes[] memory) {
     require(priceData.length == 4, "invalid price data length");
     bytes[] memory priceDataBytes = new bytes[](4);
     for (uint256 i = 1; i <= priceData.length; ) {
@@ -216,19 +194,12 @@ abstract contract BaseTest is
 
   /// @notice set up swap config
   function _setUpSwapConfig() private {
-    configStorage.setSwapConfig(
-      IConfigStorage.SwapConfig({ stablecoinSwapFeeRate: 0, swapFeeRate: 0 })
-    );
+    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRate: 0, swapFeeRate: 0 }));
   }
 
   /// @notice set up trading config
   function _setUpTradingConfig() private {
-    configStorage.setTradingConfig(
-      IConfigStorage.TradingConfig({
-        fundingInterval: 1,
-        borrowingDevFeeRate: 0
-      })
-    );
+    configStorage.setTradingConfig(IConfigStorage.TradingConfig({ fundingInterval: 1, borrowingDevFeeRate: 0 }));
   }
 
   /// @notice set up all market configs in Perp
@@ -260,8 +231,7 @@ abstract contract BaseTest is
     configStorage.setPLP(address(plp));
 
     // add Accepted Token for LP config
-    IConfigStorage.PLPTokenConfig[]
-      memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
+    IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
     // WETH
     _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
       decimals: 18,
@@ -317,32 +287,24 @@ abstract contract BaseTest is
 
   /// @notice set up all collateral token configs in Perp
   function _setUpCollateralTokenConfigs() private {
-    IConfigStorage.CollateralTokenConfig
-      memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
-        decimals: weth.decimals(),
-        collateralFactor: 0.8 * 1e18,
-        isStableCoin: false,
-        accepted: true,
-        settleStrategy: address(0)
-      });
+    IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
+      decimals: weth.decimals(),
+      collateralFactor: 0.8 * 1e18,
+      isStableCoin: false,
+      accepted: true,
+      settleStrategy: address(0)
+    });
 
-    configStorage.setCollateralTokenConfig(
-      address(weth),
-      _collatTokenConfigWeth
-    );
+    configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfigWeth);
 
-    IConfigStorage.CollateralTokenConfig
-      memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
-        decimals: wbtc.decimals(),
-        collateralFactor: 0.9 * 1e18,
-        isStableCoin: false,
-        accepted: true,
-        settleStrategy: address(0)
-      });
+    IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
+      decimals: wbtc.decimals(),
+      collateralFactor: 0.9 * 1e18,
+      isStableCoin: false,
+      accepted: true,
+      settleStrategy: address(0)
+    });
 
-    configStorage.setCollateralTokenConfig(
-      address(wbtc),
-      _collatTokenConfigWbtc
-    );
+    configStorage.setCollateralTokenConfig(address(wbtc), _collatTokenConfigWbtc);
   }
 }

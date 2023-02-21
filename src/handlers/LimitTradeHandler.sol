@@ -5,7 +5,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "../base/Owned.sol";
 
-// Interfaces
+/**
+ * Interfaces
+ */
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
@@ -15,12 +17,9 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
-  // CONSTANTS
-  uint8 internal constant BUY = 0;
-  uint8 internal constant SELL = 1;
-  uint256 internal MAX_EXECUTION_FEE = 5 ether;
-
-  // EVENTS
+  /**
+   * Events
+   */
   event LogSetTradeService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
@@ -69,7 +68,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool reduceOnly
   );
 
-  // STATES
+  /**
+   * Constants
+   */
+  uint8 internal constant BUY = 0;
+  uint8 internal constant SELL = 1;
+  uint256 internal MAX_EXECUTION_FEE = 5 ether;
+
+  /**
+   * States
+   */
   address public weth;
   address public tradeService;
   address public pyth;
@@ -79,6 +87,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
 
+  /**
+   * Constructor
+   */
   constructor(address _weth, address _tradeService, address _pyth, uint256 _minExecutionFee) {
     // @todo - Sanity check
     weth = _weth;
@@ -101,34 +112,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   modifier onlyOrderExecutor() {
     if (!isAllowAllExecutor && !orderExecutors[msg.sender]) revert ILimitTradeHandler_NotWhitelisted();
     _;
-  }
-
-  /**
-   * Setters
-   */
-  function setTradeService(address _newTradeService) external onlyOwner {
-    // @todo - Sanity check
-    if (_newTradeService == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    emit LogSetTradeService(address(tradeService), _newTradeService);
-    tradeService = _newTradeService;
-  }
-
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
-    if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
-    emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
-    minExecutionFee = _newMinExecutionFee;
-  }
-
-  function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
-    orderExecutors[_executor] = _isAllow;
-    emit LogSetOrderExecutor(_executor, _isAllow);
-  }
-
-  function setPyth(address _newPyth) external onlyOwner {
-    // @todo - Sanity check
-    if (_newPyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    emit LogSetPyth(address(tradeService), _newPyth);
-    pyth = _newPyth;
   }
 
   /**
@@ -421,6 +404,38 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
     return (_currentPrice, isPriceValid);
   }
+
+  /**
+   * Setters
+   */
+  function setTradeService(address _newTradeService) external onlyOwner {
+    // @todo - Sanity check
+    if (_newTradeService == address(0)) revert ILimitTradeHandler_InvalidAddress();
+    emit LogSetTradeService(address(tradeService), _newTradeService);
+    tradeService = _newTradeService;
+  }
+
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
+    if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
+    emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
+    minExecutionFee = _newMinExecutionFee;
+  }
+
+  function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
+    orderExecutors[_executor] = _isAllow;
+    emit LogSetOrderExecutor(_executor, _isAllow);
+  }
+
+  function setPyth(address _newPyth) external onlyOwner {
+    // @todo - Sanity check
+    if (_newPyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
+    emit LogSetPyth(address(tradeService), _newPyth);
+    pyth = _newPyth;
+  }
+
+  /**
+   * Internal Functions
+   */
 
   /// @notice Transfer in ETH from user to be used as execution fee
   /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.

@@ -6,9 +6,14 @@ import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTrade
 
 // What is this test DONE
 // - revert
-//   - Try canceling a non existent order
+//   - Try set tradeService with address zero
+//   - Try set min execution fee exceeding max execution fee
+//   - Try set Pyth address with address zero
 // - success
-//   - Try cancel an order, check that the order is cancelled and check if user is refunnded with the execution fee
+//   - Try set tradeService
+//   - Try set min execution
+//   - Try set Pyth address
+//   - Try set order executor
 
 contract LimitTradeHandler_Setter is LimitTradeHandler_Base {
   function setUp() public override {

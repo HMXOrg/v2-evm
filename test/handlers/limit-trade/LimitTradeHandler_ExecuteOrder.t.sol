@@ -1,321 +1,965 @@
-// // SPDX-License-Identifier: MIT
-// pragma solidity 0.8.18;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.18;
 
-// import { LimitTradeHandler_Base, IConfigStorage, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
-// import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
+import { LimitTradeHandler_Base, IConfigStorage, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
+import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
 
-// // What is this test DONE
-// // - revert
-// //   - Try executing an order when not whitelisted
-// //   - Try executing a non-existent order
-// //   - Try executing an order on the market that is currently closed
-// //   - Try executing an order when price has not reached the trigger price
-// // - success
-// //   - Try executing INCREASE and DECREASE order and check that the execution fee is received by the fee receiver
+// What is this test DONE
+// - revert
+//   - Try executing an order when not whitelisted
+//   - Try executing a non-existent order
+//   - Try executing an order on the market that is currently closed
+//   - Try executing an order when price has not reached the trigger price
+// - success
+//   - Try executing INCREASE and DECREASE order and check that the execution fee is received by the fee receiver
 
-// contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
-//   function setUp() public override {
-//     super.setUp();
+contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
+  function setUp() public override {
+    super.setUp();
 
-//     limitTradeHandler.setOrderExecutor(address(this), true);
+    limitTradeHandler.setOrderExecutor(address(this), true);
 
-//     configStorage.addMarketConfig(
-//       IConfigStorage.MarketConfig({
-//         assetId: "A",
-//         assetClass: 1,
-//         maxProfitRate: 9e18,
-//         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-//         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-//         minLeverage: 1,
-//         initialMarginFraction: 0.01 * 1e18,
-//         maintenanceMarginFraction: 0.005 * 1e18,
-//         increasePositionFeeRate: 0,
-//         decreasePositionFeeRate: 0,
-//         maxFundingRate: 0,
-//         priceConfidentThreshold: 0.01 * 1e18,
-//         allowIncreasePosition: false,
-//         active: true
-//       })
-//     );
+    configStorage.addMarketConfig(
+      IConfigStorage.MarketConfig({
+        assetId: "A",
+        assetClass: 1,
+        maxProfitRate: 9e18,
+        longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+        shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+        minLeverage: 1,
+        initialMarginFraction: 0.01 * 1e18,
+        maintenanceMarginFraction: 0.005 * 1e18,
+        increasePositionFeeRate: 0,
+        decreasePositionFeeRate: 0,
+        maxFundingRate: 0,
+        priceConfidentThreshold: 0.01 * 1e18,
+        allowIncreasePosition: false,
+        active: true
+      })
+    );
 
-//     configStorage.addMarketConfig(
-//       IConfigStorage.MarketConfig({
-//         assetId: "A",
-//         assetClass: 1,
-//         maxProfitRate: 9e18,
-//         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-//         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-//         minLeverage: 1,
-//         initialMarginFraction: 0.01 * 1e18,
-//         maintenanceMarginFraction: 0.005 * 1e18,
-//         increasePositionFeeRate: 0,
-//         decreasePositionFeeRate: 0,
-//         maxFundingRate: 0,
-//         priceConfidentThreshold: 0.01 * 1e18,
-//         allowIncreasePosition: false,
-//         active: true
-//       })
-//     );
+    configStorage.addMarketConfig(
+      IConfigStorage.MarketConfig({
+        assetId: "A",
+        assetClass: 1,
+        maxProfitRate: 9e18,
+        longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+        shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+        minLeverage: 1,
+        initialMarginFraction: 0.01 * 1e18,
+        maintenanceMarginFraction: 0.005 * 1e18,
+        increasePositionFeeRate: 0,
+        decreasePositionFeeRate: 0,
+        maxFundingRate: 0,
+        priceConfidentThreshold: 0.01 * 1e18,
+        allowIncreasePosition: false,
+        active: true
+      })
+    );
 
-//     configStorage.addMarketConfig(
-//       IConfigStorage.MarketConfig({
-//         assetId: "A",
-//         assetClass: 1,
-//         maxProfitRate: 9e18,
-//         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-//         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-//         minLeverage: 1,
-//         initialMarginFraction: 0.01 * 1e18,
-//         maintenanceMarginFraction: 0.005 * 1e18,
-//         increasePositionFeeRate: 0,
-//         decreasePositionFeeRate: 0,
-//         maxFundingRate: 0,
-//         priceConfidentThreshold: 0.01 * 1e18,
-//         allowIncreasePosition: false,
-//         active: true
-//       })
-//     );
-//   }
+    configStorage.addMarketConfig(
+      IConfigStorage.MarketConfig({
+        assetId: "A",
+        assetClass: 1,
+        maxProfitRate: 9e18,
+        longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+        shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+        minLeverage: 1,
+        initialMarginFraction: 0.01 * 1e18,
+        maintenanceMarginFraction: 0.005 * 1e18,
+        increasePositionFeeRate: 0,
+        decreasePositionFeeRate: 0,
+        maxFundingRate: 0,
+        priceConfidentThreshold: 0.01 * 1e18,
+        allowIncreasePosition: false,
+        active: true
+      })
+    );
+  }
 
-//   function testRevert_executeOrder_NotWhitelisted() external {
-//     vm.startPrank(ALICE);
-//     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NotWhitelisted()"));
-//     limitTradeHandler.executeOrder({
-//       _orderType: INCREASE,
-//       _account: address(this),
-//       _subAccountId: 0,
-//       _orderIndex: 0,
-//       _feeReceiver: payable(ALICE),
-//       _priceData: new bytes[](0)
-//     });
-//   }
+  function testRevert_executeOrder_NotWhitelisted() external {
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NotWhitelisted()"));
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+  }
 
-//   function testRevert_executeOrder_NonExistentOrder() external {
-//     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-//     limitTradeHandler.executeOrder({
-//       _orderType: INCREASE,
-//       _account: address(this),
-//       _subAccountId: 0,
-//       _orderIndex: 0,
-//       _feeReceiver: payable(ALICE),
-//       _priceData: new bytes[](0)
-//     });
-//   }
+  function testRevert_executeOrder_NonExistentOrder() external {
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+  }
 
-//   function testRevert_executeOrder_MarketIsClosed() external {
-//     limitTradeHandler.createOrder{ value: 0.1 ether }({
-//       _orderType: INCREASE,
-//       _subAccountId: 0,
-//       _marketIndex: 1,
-//       _sizeDelta: 1000 * 1e30,
-//       _triggerPrice: 1000 * 1e30,
-//       _triggerAboveThreshold: true,
-//       _executionFee: 0.1 ether
-//     });
+  function testRevert_executeOrder_MarketIsClosed() external {
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
 
-//     mockOracle.setPrice(1001 * 1e30);
-//     mockOracle.setMarketStatus(1);
-//     mockOracle.setPriceStale(false);
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(1);
+    mockOracle.setPriceStale(false);
 
-//     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MarketIsClosed()"));
-//     limitTradeHandler.executeOrder({
-//       _orderType: INCREASE,
-//       _account: address(this),
-//       _subAccountId: 0,
-//       _orderIndex: 0,
-//       _feeReceiver: payable(ALICE),
-//       _priceData: new bytes[](0)
-//     });
-//   }
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MarketIsClosed()"));
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+  }
 
-//   function testRevert_executeOrder_InvalidPriceForExecution() external {
-//     limitTradeHandler.createOrder{ value: 0.1 ether }({
-//       _orderType: INCREASE,
-//       _subAccountId: 0,
-//       _marketIndex: 1,
-//       _sizeDelta: 1000 * 1e30,
-//       _triggerPrice: 1000 * 1e30,
-//       _triggerAboveThreshold: true,
-//       _executionFee: 0.1 ether
-//     });
+  function testRevert_executeOrder_InvalidPriceForExecution() external {
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
 
-//     mockOracle.setPrice(999 * 1e30);
-//     mockOracle.setMarketStatus(2);
-//     mockOracle.setPriceStale(false);
+    mockOracle.setPrice(999 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
 
-//     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
-//     limitTradeHandler.executeOrder({
-//       _orderType: INCREASE,
-//       _account: address(this),
-//       _subAccountId: 0,
-//       _orderIndex: 0,
-//       _feeReceiver: payable(ALICE),
-//       _priceData: new bytes[](0)
-//     });
-//   }
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+  }
 
-//   function testCorrectness_executeOrder_IncreaseOrder() external {
-//     // Create Long Increase Order
-//     limitTradeHandler.createOrder{ value: 0.1 ether }({
-//       _orderType: INCREASE,
-//       _subAccountId: 0,
-//       _marketIndex: 1,
-//       _sizeDelta: 1000 * 1e30,
-//       _triggerPrice: 1000 * 1e30,
-//       _triggerAboveThreshold: true,
-//       _executionFee: 0.1 ether
-//     });
+  function testCorrectness_executeOrder_BuyOrder_NewLongPosition() external {
+    // Create Buy Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
 
-//     // Retrieve Long Increase Order that was just created.
-//     ILimitTradeHandler.LimitOrder memory limitOrder;
-//     (
-//       ,
-//       limitOrder.account,
-//       limitOrder.subAccountId,
-//       limitOrder.marketIndex,
-//       limitOrder.sizeDelta,
-//       limitOrder.isLong,
-//       limitOrder.triggerPrice,
-//       limitOrder.triggerAboveThreshold,
-//       limitOrder.executionFee
-//     ) = limitTradeHandler.limitOrders(address(this), 0);
-//     assertEq(limitOrder.account, address(this), "Order should be created.");
+    // Retrieve Buy Order that was just created.
+    ILimitTradeHandler.LimitOrder memory limitOrder;
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(this), "Order should be created.");
 
-//     // Mock price to make the order executable
-//     mockOracle.setPrice(1001 * 1e30);
-//     mockOracle.setMarketStatus(2);
-//     mockOracle.setPriceStale(false);
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
 
-//     // Execute Long Increase Order
-//     limitTradeHandler.executeOrder({
-//       _orderType: INCREASE,
-//       _account: address(this),
-//       _subAccountId: 0,
-//       _orderIndex: 0,
-//       _feeReceiver: payable(ALICE),
-//       _priceData: new bytes[](0)
-//     });
-//     (
-//       ,
-//       limitOrder.account,
-//       limitOrder.subAccountId,
-//       limitOrder.marketIndex,
-//       limitOrder.sizeDelta,
-//       limitOrder.isLong,
-//       limitOrder.triggerPrice,
-//       limitOrder.triggerAboveThreshold,
-//       limitOrder.executionFee
-//     ) = limitTradeHandler.limitOrders(address(this), 0);
-//     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
+    // Execute Long Increase Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
+    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
 
-//     assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, 1000 * 1e30);
+  }
 
-//     // Create Short Increase Order
-//     limitTradeHandler.createOrder{ value: 0.1 ether }({
-//       _orderType: INCREASE,
-//       _subAccountId: 0,
-//       _marketIndex: 2,
-//       _sizeDelta: -1000 * 1e30,
-//       _triggerPrice: 1000 * 1e30,
-//       _triggerAboveThreshold: true,
-//       _executionFee: 0.1 ether
-//     });
-//     (
-//       ,
-//       limitOrder.account,
-//       limitOrder.subAccountId,
-//       limitOrder.marketIndex,
-//       limitOrder.sizeDelta,
-//       limitOrder.isLong,
-//       limitOrder.triggerPrice,
-//       limitOrder.triggerAboveThreshold,
-//       limitOrder.executionFee
-//     ) = limitTradeHandler.limitOrders(address(this), 1);
-//     assertEq(limitOrder.account, address(this), "Order should be created.");
+  function testCorrectness_executeOrder_BuyOrder_IncreaseLongPosition() external {
+    // Create Buy Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
 
-//     // Execute Short Increase Order
-//     limitTradeHandler.executeOrder({
-//       _orderType: INCREASE,
-//       _account: address(this),
-//       _subAccountId: 0,
-//       _orderIndex: 1,
-//       _feeReceiver: payable(ALICE),
-//       _priceData: new bytes[](0)
-//     });
-//     (
-//       ,
-//       limitOrder.account,
-//       limitOrder.subAccountId,
-//       limitOrder.marketIndex,
-//       limitOrder.sizeDelta,
-//       limitOrder.isLong,
-//       limitOrder.triggerPrice,
-//       limitOrder.triggerAboveThreshold,
-//       limitOrder.executionFee
-//     ) = limitTradeHandler.limitOrders(address(this), 1);
-//     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
+    // Retrieve Buy Order that was just created.
+    ILimitTradeHandler.LimitOrder memory limitOrder;
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(this), "Order should be created.");
 
-//     assertEq(ALICE.balance, 0.2 ether, "Alice should receive execution fee.");
-//   }
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
 
-//   function testCorrectness_executeOrder_DecreaseOrder() external {
-//     mockPerpStorage.setPositionBySubAccount(
-//       address(this),
-//       IPerpStorage.Position({
-//         primaryAccount: address(this),
-//         subAccountId: 0,
-//         marketIndex: 1,
-//         positionSizeE30: 100_000 * 1e30,
-//         avgEntryPriceE30: 20_000 * 1e30,
-//         entryBorrowingRate: 0,
-//         entryFundingRate: 0,
-//         reserveValueE30: 9_000 * 1e30,
-//         lastIncreaseTimestamp: block.timestamp,
-//         realizedPnl: 0,
-//         openInterest: 0
-//       })
-//     );
+    // Execute Long Increase Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
+    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
 
-//     limitTradeHandler.createOrder{ value: 0.1 ether }({
-//       _orderType: DECREASE,
-//       _subAccountId: 0,
-//       _marketIndex: 1,
-//       _sizeDelta: 1000 * 1e30,
-//       _triggerPrice: 1000 * 1e30,
-//       _triggerAboveThreshold: false,
-//       _executionFee: 0.1 ether
-//     });
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
 
-//     // Retrieve Long Increase Order that was just created.
-//     ILimitTradeHandler.LimitOrder memory limitOrder;
-//     (
-//       ,
-//       limitOrder.account,
-//       limitOrder.subAccountId,
-//       limitOrder.marketIndex,
-//       limitOrder.sizeDelta,
-//       limitOrder.isLong,
-//       limitOrder.triggerPrice,
-//       limitOrder.triggerAboveThreshold,
-//       limitOrder.executionFee
-//     ) = limitTradeHandler.limitOrders(address(this), 0);
-//     assertEq(limitOrder.account, address(this), "Order should be created.");
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, 1000 * 1e30);
 
-//     // Mock price to make the order executable
-//     mockOracle.setPrice(999 * 1e30);
-//     mockOracle.setMarketStatus(2);
-//     mockOracle.setPriceStale(false);
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 1,
+        positionSizeE30: 1000 * 1e30,
+        avgEntryPriceE30: 1000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
 
-//     // Execute Long Decrease Order
-//     limitTradeHandler.executeOrder({
-//       _orderType: DECREASE,
-//       _account: address(this),
-//       _subAccountId: 0,
-//       _orderIndex: 0,
-//       _feeReceiver: payable(ALICE),
-//       _priceData: new bytes[](0)
-//     });
+    // Create Buy Order to increase the same position by 500
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 500 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
 
-//     assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
-//   }
-// }
+    // Execute Long Increase Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    assertEq(mockTradeService.increasePositionCallCount(), 2);
+
+    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta) = mockTradeService.increasePositionCalls(1);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, 500 * 1e30);
+  }
+
+  function testCorrectness_executeOrder_SellOrder_NewShortPosition() external {
+    // Create Sell Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: -1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Retrieve Sell Order that was just created.
+    ILimitTradeHandler.LimitOrder memory limitOrder;
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(this), "Order should be created.");
+
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
+
+    // Execute Short Increase Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
+    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, -1000 * 1e30);
+  }
+
+  function testCorrectness_executeOrder_SellOrder_IncreaseShortPosition() external {
+    // Create Sell Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: -1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Retrieve Sell Order that was just created.
+    ILimitTradeHandler.LimitOrder memory limitOrder;
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(this), "Order should be created.");
+
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
+
+    // Execute Short Increase Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
+    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, -1000 * 1e30);
+
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 1,
+        positionSizeE30: -1000 * 1e30,
+        avgEntryPriceE30: 1000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+
+    // Create Sell Order to increase the same position by 500
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: -500 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Execute Short Increase Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    assertEq(mockTradeService.increasePositionCallCount(), 2);
+    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta) = mockTradeService.increasePositionCalls(1);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, -500 * 1e30);
+  }
+
+  function testCorrectness_executeOrder_FlipLongToShort() external {
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
+
+    // Create Buy Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Execute Buy Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Long position should be created
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, 1000 * 1e30);
+
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 1,
+        positionSizeE30: 1000 * 1e30,
+        avgEntryPriceE30: 1000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+
+    // Create Sell Order to flip this position
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: -1500 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Execute Sell Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Long position should be fully closed and a new Short position should be opened
+    // Assert decrease position call
+    assertEq(mockTradeService.decreasePositionCallCount(), 1);
+    (
+      address _decreaseAccount,
+      uint256 _decreaseSubAccountId,
+      uint256 _decreaseMarketIndex,
+      uint256 _decreasePositionSizeE30ToDecrease
+    ) = mockTradeService.decreasePositionCalls(0);
+    assertEq(_decreaseAccount, address(this));
+    assertEq(_decreaseSubAccountId, 0);
+    assertEq(_decreaseMarketIndex, 1);
+    assertEq(_decreasePositionSizeE30ToDecrease, 1000 * 1e30);
+
+    // Assert increase position call
+    assertEq(mockTradeService.increasePositionCallCount(), 2);
+    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta) = mockTradeService.increasePositionCalls(1);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, -500 * 1e30);
+  }
+
+  function testCorrectness_executeOrder_FlipShortToLong() external {
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
+
+    // Create Sell Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: -1200 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Execute Sell Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Short position should be created
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, -1200 * 1e30);
+
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 1,
+        positionSizeE30: -1200 * 1e30,
+        avgEntryPriceE30: 1000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+
+    // Create Buy Order to flip this position
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 2000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Execute Buy Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Short position should be fully closed and a new Long position should be opened
+    // Assert decrease position call
+    assertEq(mockTradeService.decreasePositionCallCount(), 1);
+    (
+      address _decreaseAccount,
+      uint256 _decreaseSubAccountId,
+      uint256 _decreaseMarketIndex,
+      uint256 _decreasePositionSizeE30ToDecrease
+    ) = mockTradeService.decreasePositionCalls(0);
+    assertEq(_decreaseAccount, address(this));
+    assertEq(_decreaseSubAccountId, 0);
+    assertEq(_decreaseMarketIndex, 1);
+    assertEq(_decreasePositionSizeE30ToDecrease, 1200 * 1e30);
+
+    // Assert increase position call
+    assertEq(mockTradeService.increasePositionCallCount(), 2);
+    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta) = mockTradeService.increasePositionCalls(1);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, 800 * 1e30);
+  }
+
+  function testCorrectness_executeOrder_FlipLongToShort_ReduceOnly() external {
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
+
+    // Create Buy Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: true
+    });
+
+    // Execute Buy Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Long position should be created
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, 1000 * 1e30);
+
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 1,
+        positionSizeE30: 1000 * 1e30,
+        avgEntryPriceE30: 1000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+
+    // Create Sell Order to close this position, but don't flip it due to Reduce-Only
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: -1500 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: true
+    });
+
+    // Execute Sell Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Long position should be fully closed and a new Short position should not be opened
+    // Assert decrease position call
+    assertEq(mockTradeService.decreasePositionCallCount(), 1);
+    (
+      address _decreaseAccount,
+      uint256 _decreaseSubAccountId,
+      uint256 _decreaseMarketIndex,
+      uint256 _decreasePositionSizeE30ToDecrease
+    ) = mockTradeService.decreasePositionCalls(0);
+    assertEq(_decreaseAccount, address(this));
+    assertEq(_decreaseSubAccountId, 0);
+    assertEq(_decreaseMarketIndex, 1);
+    assertEq(_decreasePositionSizeE30ToDecrease, 1000 * 1e30);
+
+    // Assert increase position call
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+  }
+
+  function testCorrectness_executeOrder_FlipShortToLong_ReduceOnly() external {
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
+
+    // Create Sell Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: -1200 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: true
+    });
+
+    // Execute Sell Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Short position should be created
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, -1200 * 1e30);
+
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 1,
+        positionSizeE30: -1200 * 1e30,
+        avgEntryPriceE30: 1000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+
+    // Create Buy Order to close this position, but don't flip it due to Reduce-Only
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 2000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: true
+    });
+
+    // Execute Buy Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Short position should be fully closed and a new Long position should not be opened
+    // Assert decrease position call
+    assertEq(mockTradeService.decreasePositionCallCount(), 1);
+    (
+      address _decreaseAccount,
+      uint256 _decreaseSubAccountId,
+      uint256 _decreaseMarketIndex,
+      uint256 _decreasePositionSizeE30ToDecrease
+    ) = mockTradeService.decreasePositionCalls(0);
+    assertEq(_decreaseAccount, address(this));
+    assertEq(_decreaseSubAccountId, 0);
+    assertEq(_decreaseMarketIndex, 1);
+    assertEq(_decreasePositionSizeE30ToDecrease, 1200 * 1e30);
+
+    // Assert increase position call
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+  }
+
+  function testCorrectness_executeOrder_PartialCloseLongPosition() external {
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
+
+    // Create Buy Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 1000 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Execute Buy Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Long position should be created
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, 1000 * 1e30);
+
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 1,
+        positionSizeE30: 1000 * 1e30,
+        avgEntryPriceE30: 1000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+
+    // Create Sell Order to partial close this position
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: -700 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Execute Sell Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Long position should be partially closed
+    // Assert decrease position call
+    assertEq(mockTradeService.decreasePositionCallCount(), 1);
+    (
+      address _decreaseAccount,
+      uint256 _decreaseSubAccountId,
+      uint256 _decreaseMarketIndex,
+      uint256 _decreasePositionSizeE30ToDecrease
+    ) = mockTradeService.decreasePositionCalls(0);
+    assertEq(_decreaseAccount, address(this));
+    assertEq(_decreaseSubAccountId, 0);
+    assertEq(_decreaseMarketIndex, 1);
+    assertEq(_decreasePositionSizeE30ToDecrease, 700 * 1e30);
+
+    // Assert increase position call
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+  }
+
+  function testCorrectness_executeOrder_PartialCloseShortPosition() external {
+    // Mock price to make the order executable
+    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setMarketStatus(2);
+    mockOracle.setPriceStale(false);
+
+    // Create Sell Order
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: -1200 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Execute Sell Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Short position should be created
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta) = mockTradeService
+      .increasePositionCalls(0);
+    assertEq(_primaryAccount, address(this));
+    assertEq(_subAccountId, 0);
+    assertEq(_marketIndex, 1);
+    assertEq(_sizeDelta, -1200 * 1e30);
+
+    mockPerpStorage.setPositionBySubAccount(
+      address(this),
+      IPerpStorage.Position({
+        primaryAccount: address(this),
+        subAccountId: 0,
+        marketIndex: 1,
+        positionSizeE30: -1200 * 1e30,
+        avgEntryPriceE30: 1000 * 1e30,
+        entryBorrowingRate: 0,
+        entryFundingRate: 0,
+        reserveValueE30: 9_000 * 1e30,
+        lastIncreaseTimestamp: block.timestamp,
+        realizedPnl: 0,
+        openInterest: 0
+      })
+    );
+
+    // Create Buy Order to partial close this position
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 100 * 1e30,
+      _triggerPrice: 1000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
+    });
+
+    // Execute Buy Order
+    limitTradeHandler.executeOrder({
+      _account: address(this),
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(ALICE),
+      _priceData: new bytes[](0)
+    });
+
+    // Short position should be partially closed
+    // Assert decrease position call
+    assertEq(mockTradeService.decreasePositionCallCount(), 1);
+    (
+      address _decreaseAccount,
+      uint256 _decreaseSubAccountId,
+      uint256 _decreaseMarketIndex,
+      uint256 _decreasePositionSizeE30ToDecrease
+    ) = mockTradeService.decreasePositionCalls(0);
+    assertEq(_decreaseAccount, address(this));
+    assertEq(_decreaseSubAccountId, 0);
+    assertEq(_decreaseMarketIndex, 1);
+    assertEq(_decreasePositionSizeE30ToDecrease, 100 * 1e30);
+
+    // Assert increase position call
+    assertEq(mockTradeService.increasePositionCallCount(), 1);
+  }
+}

@@ -273,33 +273,33 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
           _marketIndex: _order.marketIndex,
           _sizeDelta: _order.sizeDelta
         });
-      }
-    } else if (_positionIsLong) {
-      bool _flipSide = !_order.reduceOnly && (-_order.sizeDelta) > _existingPosition.positionSizeE30;
-      if (_flipSide) {
-        // Flip the position
-        // Fully close Long position
-        ITradeService(tradeService).decreasePosition({
-          _account: _account,
-          _subAccountId: _subAccountId,
-          _marketIndex: _order.marketIndex,
-          _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30)
-        });
-        // Flip it to Short position
-        ITradeService(tradeService).increasePosition({
-          _primaryAccount: _account,
-          _subAccountId: _subAccountId,
-          _marketIndex: _order.marketIndex,
-          _sizeDelta: _order.sizeDelta + _existingPosition.positionSizeE30
-        });
-      } else {
-        // Not flip
-        ITradeService(tradeService).decreasePosition({
-          _account: _account,
-          _subAccountId: _subAccountId,
-          _marketIndex: _order.marketIndex,
-          _positionSizeE30ToDecrease: _min(uint256(-_order.sizeDelta), uint256(_existingPosition.positionSizeE30))
-        });
+      } else if (_positionIsLong) {
+        bool _flipSide = !_order.reduceOnly && (-_order.sizeDelta) > _existingPosition.positionSizeE30;
+        if (_flipSide) {
+          // Flip the position
+          // Fully close Long position
+          ITradeService(tradeService).decreasePosition({
+            _account: _account,
+            _subAccountId: _subAccountId,
+            _marketIndex: _order.marketIndex,
+            _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30)
+          });
+          // Flip it to Short position
+          ITradeService(tradeService).increasePosition({
+            _primaryAccount: _account,
+            _subAccountId: _subAccountId,
+            _marketIndex: _order.marketIndex,
+            _sizeDelta: _order.sizeDelta + _existingPosition.positionSizeE30
+          });
+        } else {
+          // Not flip
+          ITradeService(tradeService).decreasePosition({
+            _account: _account,
+            _subAccountId: _subAccountId,
+            _marketIndex: _order.marketIndex,
+            _positionSizeE30ToDecrease: _min(uint256(-_order.sizeDelta), uint256(_existingPosition.positionSizeE30))
+          });
+        }
       }
     }
 

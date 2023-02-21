@@ -42,7 +42,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         decreasePositionFeeRate: 0,
         maxFundingRate: 0,
         priceConfidentThreshold: 0.01 * 1e18,
-        allowIncreasePosition: false,
+        allowIncreasePosition: true,
         active: true
       })
     );
@@ -61,7 +61,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         decreasePositionFeeRate: 0,
         maxFundingRate: 0,
         priceConfidentThreshold: 0.01 * 1e18,
-        allowIncreasePosition: false,
+        allowIncreasePosition: true,
         active: true
       })
     );
@@ -80,7 +80,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         decreasePositionFeeRate: 0,
         maxFundingRate: 0,
         priceConfidentThreshold: 0.01 * 1e18,
-        allowIncreasePosition: false,
+        allowIncreasePosition: true,
         active: true
       })
     );

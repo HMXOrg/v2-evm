@@ -10,6 +10,7 @@ interface IConfigStorage {
   error IConfigStorage_BadLen();
   error IConfigStorage_BadArgs();
   error IConfigStorage_NotAcceptedCollateral();
+  error IConfigStorage_NotAcceptedLiquidity();
 
   /**
    * Structs
@@ -62,7 +63,6 @@ interface IConfigStorage {
     uint256 plpSafetyBufferThreshold;
     uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
     uint256 flashLoanFeeRate;
-    uint256 executionFeeAmount; //PLP executionFeeAmount in native unit
     bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
     bool enabled; // Circuit breaker on Liquidity
   }
@@ -106,6 +106,8 @@ interface IConfigStorage {
   function validateServiceExecutor(address _contractAddress, address _executorAddress) external view;
 
   function validateAcceptedCollateral(address _token) external view;
+
+  function validateAcceptedLiquidityToken(address _token) external view;
 
   /**
    * Getter

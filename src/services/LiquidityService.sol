@@ -66,6 +66,10 @@ contract LiquidityService is ILiquidityService {
     // 1. _validate
     _validatePreAddRemoveLiquidity(_token, _amount);
 
+    if (IVaultStorage(vaultStorage).pullPLPLiquidity(_token) != _amount) {
+      revert LiquidityService_InvalidInputAmount();
+    }
+
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
     (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(
@@ -95,7 +99,7 @@ contract LiquidityService is ILiquidityService {
     );
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
-    ERC20(_token).transferFrom(msg.sender, address(vaultStorage), _amount);
+
     PLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
     emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, tokenValueUSDAfterFee, mintAmount);

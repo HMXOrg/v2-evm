@@ -6,10 +6,18 @@ interface ILiquidityHandler {
     address _tokenBuy,
     uint256 _amountIn,
     uint256 _minOut,
+    uint256 _executionFee,
     bool _shouldUnwrap
   ) external payable;
 
-  function createRemoveLiquidityOrder(address _tokenSell, uint256 _amountIn, uint256 _minOut) external payable;
+  function createRemoveLiquidityOrder(
+    address _tokenSell,
+    uint256 _amountIn,
+    uint256 _minOut,
+    uint256 _executionFee
+  ) external payable;
+
+  function executeOrders(LiquidityOrder[] memory _orders, bytes[] memory _priceData) external;
 
   function cancelLiquidityOrder(LiquidityOrder[] memory _orders) external;
 
@@ -33,4 +41,6 @@ interface ILiquidityHandler {
   error ILiquidityHandler_InsufficientExecutionFee();
   error ILiquidityHandler_InCorrectValueTransfer();
   error ILiquidityHandler_InsufficientRefund();
+  error ILiquidityHandler_NotWhitelisted();
+  error ILiquidityHandler_InvalidAddress();
 }

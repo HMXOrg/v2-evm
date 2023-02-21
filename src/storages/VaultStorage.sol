@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 // interfaces
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
@@ -44,6 +42,11 @@ contract VaultStorage is IVaultStorage {
   // @todo - modifier?
   function addPLPLiquidity(address _token, uint256 _amount) external {
     plpLiquidity[_token] += _amount;
+  }
+
+  /// @notice Calculate token amount when handler transfer to vault, but not accounting
+  function pullPLPLiquidity(address _token) external view returns (uint256) {
+    return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
   }
 
   // @todo - modifier?

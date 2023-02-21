@@ -12,63 +12,144 @@ import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { PLPv2 } from "../contracts/PLPv2.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
-import { IWNative } from "./interfaces/IWNative.sol";
+import { IWNative } from "../interfaces/IWNative.sol";
+import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
+import { console } from "../../lib/forge-std/src/console.sol";
+
+import { Owned } from "../base/Owned.sol";
 
 /// @title LiquidityService
-contract LiquidityHandler is ILiquidityHandler {
-  /**
-   * Events
-   * createAddLiquidity
-   * createRemvoeLiquidity
-   * cancelOrder
-   * ExecuteOrder
-   */
+contract LiquidityHandler is Owned, ILiquidityHandler {
+  event LogSetLiquidityService(address oldValue, address newValue);
+  event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogSetOrderExecutor(address executor, bool isAllow);
+  event CreateAddLiquidityOrder(
+    address indexed account,
+    address token,
+    uint256 amountIn,
+    uint256 minOut,
+    uint256 executionFee
+  );
+  event CreateRemoveLiquidityOrder(
+    address indexed account,
+    address token,
+    uint256 amountIn,
+    uint256 minOut,
+    uint256 executionFee
+  );
+  event ExecuteLiquidityOrder(
+    address payable account,
+    address token,
+    uint256 amount,
+    uint256 minOut,
+    bool isAdd,
+    uint256 actualOut
+  );
+  event CancelOrder();
 
-  /**
-   * Pyth (should call before execute Order??)
-   */
-
-  /*
-   * @todo create setLiquidityService (when Change)
-   */
   mapping(address => LiquidityOrder[]) public liquidityOrders; // user address => all liquidityOrder
   mapping(address => uint256) startOrderIndex; //user address => startOrderIndex when execute
+  mapping(address => bool) public orderExecutors;
 
   address public weth;
   address liquidityService;
+  address pyth;
 
-  constructor(address _weth, address _liquidityService) {
+  uint256 public minExecutionFee;
+
+  constructor(address _weth, address _liquidityService, address _pyth, uint256 _minExecutionFee) {
     weth = _weth;
     liquidityService = _liquidityService;
+    pyth = _pyth;
+    minExecutionFee = _minExecutionFee;
   }
 
   receive() external payable {
     if (msg.sender != weth) revert ILiquidityHandler_InvalidSender();
   }
 
+  /**
+   * MODIFIER
+   */
+
+  modifier onlyAcceptedToken(address _token) {
+    IConfigStorage(ILiquidityService(liquidityService).configStorage()).validateAcceptedLiquidityToken(_token);
+    _;
+  }
+
+  // Only whitelisted addresses can be able to execute limit orders
+  modifier onlyOrderExecutor() {
+    if (!orderExecutors[msg.sender]) revert ILiquidityHandler_NotWhitelisted();
+    _;
+  }
+
+  /**
+   * GETTER
+   */
+  function _getOrder(address _lpProvider, uint256 _orderIndex) internal view returns (LiquidityOrder memory) {
+    return liquidityOrders[_lpProvider][_orderIndex];
+  }
+
+  function _getPendingOrders(address lpProvider) external view returns (LiquidityOrder[] memory) {
+    if (liquidityOrders[lpProvider].length == 0 || liquidityOrders[lpProvider].length == startOrderIndex[lpProvider]) {
+      return new LiquidityOrder[](0);
+    }
+
+    LiquidityOrder[] memory _orders = liquidityOrders[lpProvider];
+    LiquidityOrder[] memory pendingOrders = new LiquidityOrder[](
+      liquidityOrders[lpProvider].length - startOrderIndex[lpProvider]
+    );
+
+    for (uint256 i = startOrderIndex[lpProvider]; i < _orders.length; ) {
+      pendingOrders[i] = _orders[i];
+      unchecked {
+        i++;
+      }
+    }
+    return pendingOrders;
+  }
+
+  /**
+   * SETTER
+   */
+  function setLiquidityService(address _newLiquidityService) external onlyOwner {
+    if (_newLiquidityService == address(0)) revert ILiquidityHandler_InvalidAddress();
+    emit LogSetLiquidityService(liquidityService, _newLiquidityService);
+    liquidityService = _newLiquidityService;
+  }
+
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
+    emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
+    minExecutionFee = _newMinExecutionFee;
+  }
+
+  function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
+    orderExecutors[_executor] = _isAllow;
+    emit LogSetOrderExecutor(_executor, _isAllow);
+  }
+
+  /**
+   * Core Function
+   */
+
   function createAddLiquidityOrder(
     address _tokenBuy,
     uint256 _amountIn,
     uint256 _minOut,
+    uint256 _executionFee,
     bool _shouldWrap
-  ) external payable {
+  ) external payable onlyAcceptedToken(_tokenBuy) {
     //1. convert native to WNative (including executionFee)
     _transferInETH();
 
-    //@todo  if (_executionFee < minExecutionFee) revert InsufficientExecutionFee();  still need?
+    if (_executionFee < minExecutionFee) revert ILiquidityHandler_InsufficientExecutionFee();
+
     if (_shouldWrap) {
-      if (
-        msg.value !=
-        _amountIn +
-          IConfigStorage(ILiquidityService(liquidityService).configStorage()).getLiquidityConfig().executionFeeAmount
-      ) {
+      if (msg.value != _amountIn + minExecutionFee) {
         revert ILiquidityHandler_InCorrectValueTransfer();
       }
     } else {
-      if (
-        msg.value !=
-        IConfigStorage(ILiquidityService(liquidityService).configStorage()).getLiquidityConfig().executionFeeAmount
-      ) revert ILiquidityHandler_InCorrectValueTransfer();
+      if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
 
       ERC20(_tokenBuy).transferFrom(msg.sender, address(this), _amountIn);
     }
@@ -84,17 +165,22 @@ contract LiquidityHandler is ILiquidityHandler {
         status: LiquidityOrderStatus.PROCESSING
       })
     );
-    // @todo event
+
+    emit CreateAddLiquidityOrder(msg.sender, _tokenBuy, _amountIn, _minOut, _executionFee);
   }
 
-  function createRemoveLiquidityOrder(address _tokenSell, uint256 _amountIn, uint256 _minOut) external payable {
+  function createRemoveLiquidityOrder(
+    address _tokenSell,
+    uint256 _amountIn,
+    uint256 _minOut,
+    uint256 _executionFee
+  ) external payable onlyAcceptedToken(_tokenSell) {
     //convert native to WNative (including executionFee)
     _transferInETH();
 
-    if (
-      msg.value !=
-      IConfigStorage(ILiquidityService(liquidityService).configStorage()).getLiquidityConfig().executionFeeAmount
-    ) revert ILiquidityHandler_InCorrectValueTransfer();
+    if (_executionFee < minExecutionFee) revert ILiquidityHandler_InsufficientExecutionFee();
+
+    if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
 
     LiquidityOrder[] storage _orders = liquidityOrders[msg.sender];
     _orders.push(
@@ -107,7 +193,8 @@ contract LiquidityHandler is ILiquidityHandler {
         status: LiquidityOrderStatus.PROCESSING
       })
     );
-    // @todo events
+
+    emit CreateRemoveLiquidityOrder(msg.sender, _tokenSell, _amountIn, _minOut, _executionFee);
   }
 
   function cancelLiquidityOrder(LiquidityOrder[] memory _orders) external {
@@ -117,7 +204,11 @@ contract LiquidityHandler is ILiquidityHandler {
       if (_order.status == LiquidityOrderStatus.PROCESSING) {
         liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.CANCELLED;
         userRefund(_order);
+        // emit {
+
+        // }
       }
+
       // @todo revert if _order status is not processing?
       unchecked {
         i++;
@@ -142,18 +233,23 @@ contract LiquidityHandler is ILiquidityHandler {
     }
   }
 
-  function executeOrders(LiquidityOrder[] memory _orders) external {
+  function executeOrders(LiquidityOrder[] memory _orders, bytes[] memory _priceData) external onlyOrderExecutor {
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+
     for (uint256 i = 0; i < _orders.length; ) {
       LiquidityOrder memory _order = _orders[i];
       if (_order.status == LiquidityOrderStatus.PROCESSING) {
         ERC20(_order.token).approve(liquidityService, type(uint256).max);
-        try this._executeLiquidity(_order) {
+        try this.executeLiquidity(_order) returns (uint256 result) {
+          emit ExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
+
           liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.DONE;
         } catch Error(string memory reason) {
           liquidityOrders[_order.account][startOrderIndex[_order.account]].status = LiquidityOrderStatus.FAILED;
           userRefund(_order);
         }
       }
+
       unchecked {
         i++;
         startOrderIndex[_order.account]++;
@@ -162,7 +258,8 @@ contract LiquidityHandler is ILiquidityHandler {
   }
 
   // @todo try can be used only external need whitelisted
-  function _executeLiquidity(LiquidityOrder memory _order) public returns (uint256) {
+  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
+    console.log("msg.sender", msg.sender);
     return
       _order.isAdd
         ? ILiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut)
@@ -172,29 +269,6 @@ contract LiquidityHandler is ILiquidityHandler {
           _order.amount,
           _order.minOut
         );
-  }
-
-  function _getOrder(address _lpProvider, uint256 _orderIndex) internal view returns (LiquidityOrder memory) {
-    return liquidityOrders[_lpProvider][_orderIndex];
-  }
-
-  function _getPendingOrders(address lpProvider) external view returns (LiquidityOrder[] memory) {
-    if (liquidityOrders[lpProvider].length == 0 || liquidityOrders[lpProvider].length == startOrderIndex[lpProvider]) {
-      return new LiquidityOrder[](0);
-    }
-
-    LiquidityOrder[] memory _orders = liquidityOrders[lpProvider];
-    LiquidityOrder[] memory pendingOrders = new LiquidityOrder[](
-      liquidityOrders[lpProvider].length - startOrderIndex[lpProvider]
-    );
-
-    for (uint256 i = startOrderIndex[lpProvider]; i < _orders.length; ) {
-      pendingOrders[i] = _orders[i];
-      unchecked {
-        i++;
-      }
-    }
-    return pendingOrders;
   }
 
   function _transferInETH() private {

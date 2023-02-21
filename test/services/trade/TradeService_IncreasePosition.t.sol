@@ -10,6 +10,7 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
 
 // @todo - add test desciption + use position tester help to check
+// @todo - rename test case
 
 contract TradeService_IncreasePosition is TradeService_Base {
   function setUp() public virtual override {
@@ -26,8 +27,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
 
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
+
     vm.expectRevert(abi.encodeWithSignature("ITradeService_InvalidAveragePrice()"));
-    tradeService.getDelta(0, size, isLong, avgPriceE30);
+    tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
   }
 
   function testCorrectness_getDelta_WhenLongAndPriceUp() external {
@@ -35,10 +38,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 24_200 * 1e30;
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price up 10% -> profit 10% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(0, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
     assertEq(isProfit, true);
     assertEq(delta, 100 * 1e30);
   }
@@ -48,10 +52,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 18_700 * 1e30;
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price down 15% -> loss 15% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(0, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
     assertEq(isProfit, false);
     assertEq(delta, 150 * 1e30);
   }
@@ -61,10 +66,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 23_100 * 1e30;
     bool isLong = false;
     uint256 size = 1_000 * 1e30;
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price up 5% -> loss 5% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(0, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
     assertEq(isProfit, false);
     assertEq(delta, 50 * 1e30);
   }
@@ -74,10 +80,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 11_000 * 1e30;
     bool isLong = false;
     uint256 size = 1_000 * 1e30;
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price down 50% -> profit 50% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(0, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
     assertEq(isProfit, true);
     assertEq(delta, 500 * 1e30);
   }
@@ -186,7 +193,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     }
   }
 
-  // TODO: Test price revert
+  // @todo - Test price revert
 
   function testRevert_increasePosition_WhenInsufficientFreeCollateral_OnePosition() external {
     // TVL

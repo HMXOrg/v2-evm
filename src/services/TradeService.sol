@@ -9,8 +9,6 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
-import { console } from "forge-std/console.sol";
-
 // @todo - refactor, deduplicate code
 
 contract TradeService is ITradeService {
@@ -71,12 +69,10 @@ contract TradeService is ITradeService {
     // Pre validation
     // Verify that the number of positions has exceeds
     {
-      // get the trading configuration.
-      IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
-
       if (
         _isNewPosition &&
-        _tradingConfig.maxPosition < IPerpStorage(perpStorage).getNumberOfSubAccountPosition(_subAccount) + 1
+        IConfigStorage(configStorage).getTradingConfig().maxPosition <
+        IPerpStorage(perpStorage).getNumberOfSubAccountPosition(_subAccount) + 1
       ) revert ITradeService_BadNumberOfPosition();
     }
 
@@ -91,7 +87,6 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      // @todo - update code to use normal get latest price, there is validate price
       (_priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
         .getLatestPriceWithMarketStatus(
           _marketConfig.assetId,
@@ -124,7 +119,7 @@ contract TradeService is ITradeService {
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
     if (!_isNewPosition) {
       _position.avgEntryPriceE30 = _getPositionNextAveragePrice(
-        _marketIndex,
+        _marketConfig,
         abs(_position.positionSizeE30),
         _isLong,
         _absSizeDelta,
@@ -155,7 +150,7 @@ contract TradeService is ITradeService {
       // calculate the maximum amount of reserve required for the new position
       uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / 1e18;
       // increase the reserved amount by the maximum reserve required for the new position
-      increaseReserved(_maxReserve);
+      _increaseReserved(_maxReserve);
       _position.reserveValueE30 += _maxReserve;
     }
 
@@ -283,7 +278,7 @@ contract TradeService is ITradeService {
       // =========================================
       vars.avgEntryPriceE30 = _position.avgEntryPriceE30;
       (bool isProfit, uint256 pnl) = getDelta(
-        _marketIndex,
+        _marketConfig,
         vars.absPositionSizeE30,
         vars.isLongPosition,
         vars.avgEntryPriceE30
@@ -293,8 +288,6 @@ contract TradeService is ITradeService {
       } else {
         _realizedPnl = -int256((pnl * _positionSizeE30ToDecrease) / vars.absPositionSizeE30);
       }
-
-      console.logInt(_realizedPnl);
     }
 
     {
@@ -362,57 +355,18 @@ contract TradeService is ITradeService {
     emit LogDecreasePosition(_positionId, _positionSizeE30ToDecrease);
   }
 
-  // @todo - add description
-  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address) {
-    if (_subAccountId > 255) revert();
-    return address(uint160(_primary) ^ uint160(_subAccountId));
-  }
-
-  // @todo - add description
-  function _getPositionId(address _account, uint256 _marketIndex) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(_account, _marketIndex));
-  }
-
-  /// @notice Calculates the next average price of a position, given the current position details and the next price.
-  /// @param marketIndex The index of the market.
-  /// @param size The current size of the position.
-  /// @param isLong Whether the position is long or short.
-  /// @param sizeDelta The size difference between the current position and the next position.
-  /// @param averagePrice The current average price of the position.
-  /// @param nextPrice The next price of the position.
-  /// @return The next average price of the position.
-  function _getPositionNextAveragePrice(
-    uint256 marketIndex,
-    uint256 size,
-    bool isLong,
-    uint256 sizeDelta,
-    uint256 averagePrice,
-    uint256 nextPrice
-  ) internal view returns (uint256) {
-    // Get the delta and isProfit value from the getDelta function
-    (bool isProfit, uint256 delta) = getDelta(marketIndex, size, isLong, averagePrice);
-    // Calculate the next size and divisor
-    uint256 nextSize = size + sizeDelta;
-    uint256 divisor;
-    if (isLong) {
-      divisor = isProfit ? nextSize + delta : nextSize - delta;
-    } else {
-      divisor = isProfit ? nextSize - delta : nextSize + delta;
-    }
-
-    // Calculate the next average price of the position
-    return (nextPrice * nextSize) / divisor;
-  }
-
+  // @todo - remove usage from test
+  // @todo - move to calculator ??
+  // @todo - pass current price here
   /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
-  /// @param _marketIndex The
+  /// @param _marketConfig target market config
   /// @param _size The size of the position.
   /// @param _isLong The
   /// @param _averagePrice The average price of the position.
   /// @return isProfit A boolean value indicating whether the position is profitable or not.
   /// @return delta The Profit between the average price and the fixed price, adjusted for the size of the order.
   function getDelta(
-    uint256 _marketIndex,
+    IConfigStorage.MarketConfig memory _marketConfig,
     uint256 _size,
     bool _isLong,
     uint256 _averagePrice
@@ -420,14 +374,10 @@ contract TradeService is ITradeService {
     // Check for invalid input: averagePrice cannot be zero.
     if (_averagePrice == 0) revert ITradeService_InvalidAveragePrice();
 
-    // Get Price market.
-    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
-      _marketIndex
-    );
     (uint256 price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
-      marketConfig.assetId,
+      _marketConfig.assetId,
       _isLong,
-      marketConfig.priceConfidentThreshold,
+      _marketConfig.priceConfidentThreshold,
       0
     );
 
@@ -452,9 +402,55 @@ contract TradeService is ITradeService {
     return (isProfit, delta);
   }
 
+  /**
+   * Internal functions
+   */
+
+  // @todo - add description
+  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
+  }
+
+  // @todo - add description
+  function _getPositionId(address _account, uint256 _marketIndex) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(_account, _marketIndex));
+  }
+
+  /// @notice Calculates the next average price of a position, given the current position details and the next price.
+  /// @param _marketConfig market config.
+  /// @param _size The current size of the position.
+  /// @param _isLong Whether the position is long or short.
+  /// @param _sizeDelta The size difference between the current position and the next position.
+  /// @param _averagePrice The current average price of the position.
+  /// @param _currentPrice The next price of the position.
+  /// @return The next average price of the position.
+  function _getPositionNextAveragePrice(
+    IConfigStorage.MarketConfig memory _marketConfig,
+    uint256 _size,
+    bool _isLong,
+    uint256 _sizeDelta,
+    uint256 _averagePrice,
+    uint256 _currentPrice
+  ) internal view returns (uint256) {
+    // Get the delta and isProfit value from the getDelta function
+    (bool isProfit, uint256 delta) = getDelta(_marketConfig, _size, _isLong, _averagePrice);
+    // Calculate the next size and divisor
+    uint256 nextSize = _size + _sizeDelta;
+    uint256 divisor;
+    if (_isLong) {
+      divisor = isProfit ? nextSize + delta : nextSize - delta;
+    } else {
+      divisor = isProfit ? nextSize - delta : nextSize + delta;
+    }
+
+    // Calculate the next average price of the position
+    return (_currentPrice * nextSize) / divisor;
+  }
+
   /// @notice This function increases the reserve value
-  /// @param reservedValue The amount by which to increase the reserve value.
-  function increaseReserved(uint256 reservedValue) internal {
+  /// @param _reservedValue The amount by which to increase the reserve value.
+  function _increaseReserved(uint256 _reservedValue) internal {
     // Get the total TVL
     uint256 tvl = ICalculator(IConfigStorage(configStorage).calculator()).getPLPValueE30(true);
 
@@ -465,7 +461,7 @@ contract TradeService is ITradeService {
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // Increase the reserve value by adding the reservedValue
-    _globalState.reserveValueE30 += reservedValue;
+    _globalState.reserveValueE30 += _reservedValue;
 
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
     if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * 1e18) {
@@ -480,7 +476,8 @@ contract TradeService is ITradeService {
     return uint256(x >= 0 ? x : -x);
   }
 
-  // @todo - add description
+  /// @notice health check for sub account that equity > margin maintenance required
+  /// @param _subAccount target sub account for health check
   function _subAccountHealthCheck(address _subAccount) internal {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
     // check sub account is healty
@@ -569,30 +566,4 @@ contract TradeService is ITradeService {
 
     return _nextAveragePrice;
   }
-
-  // function _getNextShortDelta(
-  //   uint256 _globalShortPnL,
-  //   uint256 _globalPrice,
-  //   uint256 _currentPrice,
-  //   int256 _realizedPnl
-  // ) internal pure returns (bool _isProfit, uint256 _newGlobalPnl) {
-  //   int256 _globalPnl = _globalPrice > _currentPrice ? int256(_globalShortPnL) : -int256(_globalShortPnL);
-
-  //   int256 _newGlobalPnlInt = _globalPnl - _realizedPnl;
-  //   _isProfit = _newGlobalPnl > 0;
-  //   return (_isProfit, _isProfit ? uint256(_newGlobalPnlInt) : uint256(-_newGlobalPnlInt));
-  // }
-
-  // function _getNextLongDelta(
-  //   uint256 _globalLongPnL,
-  //   uint256 _globalPrice,
-  //   uint256 _currentPrice,
-  //   int256 _realizedPnl
-  // ) internal pure returns (bool _isProfit, uint256 _newGlobalPnl) {
-  //   int256 _globalPnl = _currentPrice > _globalPrice ? int256(_globalLongPnL) : -int256(_globalLongPnL);
-
-  //   int256 _newGlobalPnlInt = _globalPnl - _realizedPnl;
-  //   _isProfit = _newGlobalPnl > 0;
-  //   return (_isProfit, _isProfit ? uint256(_newGlobalPnlInt) : uint256(-_newGlobalPnlInt));
-  // }
 }

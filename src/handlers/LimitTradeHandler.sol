@@ -19,6 +19,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   event LogSetTradeService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
+  event LogSetPyth(address oldValue, address newValue);
   event CreateLimitOrder(
     OrderType indexed orderType,
     address indexed account,
@@ -68,8 +69,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
   // STATES
   address public weth;
-  ITradeService public tradeService;
-  IPyth public pyth;
+  address public tradeService;
+  address public pyth;
   uint256 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
@@ -79,8 +80,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   constructor(address _weth, address _tradeService, address _pyth, uint256 _minExecutionFee) {
     // @todo - Sanity check
     weth = _weth;
-    tradeService = ITradeService(_tradeService);
-    pyth = IPyth(_pyth);
+    tradeService = _tradeService;
+    pyth = _pyth;
     minExecutionFee = _minExecutionFee;
   }
 
@@ -105,7 +106,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     // @todo - Sanity check
     if (_newTradeService == address(0)) revert ILimitTradeHandler_InvalidAddress();
     emit LogSetTradeService(address(tradeService), _newTradeService);
-    tradeService = ITradeService(_newTradeService);
+    tradeService = _newTradeService;
   }
 
   function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
@@ -116,6 +117,13 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
     orderExecutors[_executor] = _isAllow;
     emit LogSetOrderExecutor(_executor, _isAllow);
+  }
+
+  function setPyth(address _newPyth) external onlyOwner {
+    // @todo - Sanity check
+    if (_newPyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
+    emit LogSetPyth(address(tradeService), _newPyth);
+    pyth = _newPyth;
   }
 
   /**
@@ -174,7 +182,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       // _sizeDelta cannot be < 0 for DECREASE
       if (_sizeDelta < 0) revert ILimitTradeHandler_WrongSizeDelta();
       // Check the size of the existing position to determine if it's a Long or Short position
-      _isLong = IPerpStorage(tradeService.perpStorage()).getPositionById(_positionId).positionSizeE30 > 0;
+      _isLong =
+        IPerpStorage(ITradeService(tradeService).perpStorage()).getPositionById(_positionId).positionSizeE30 > 0;
 
       // Create Limit Order
       _order = LimitOrder(
@@ -231,7 +240,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
-    pyth.updatePriceFeeds{ value: pyth.getUpdateFee(_priceData) }(_priceData);
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = validatePositionOrderPrice(
@@ -244,14 +253,14 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
     // Execute the order
     if (_orderType == OrderType.INCREASE) {
-      tradeService.increasePosition({
+      ITradeService(tradeService).increasePosition({
         _primaryAccount: _account,
         _subAccountId: _subAccountId,
         _marketIndex: order.marketIndex,
         _sizeDelta: order.sizeDelta
       });
     } else if (_orderType == OrderType.DECREASE) {
-      tradeService.decreasePosition({
+      ITradeService(tradeService).decreasePosition({
         _account: _account,
         _subAccountId: _subAccountId,
         _marketIndex: order.marketIndex,
@@ -367,9 +376,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool _revertOnError
   ) public view returns (uint256, bool) {
     // Get price from Pyth
-    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(tradeService.configStorage())
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(ITradeService(tradeService).configStorage())
       .getMarketConfigByIndex(_marketIndex);
-    IOracleMiddleware _oracle = IOracleMiddleware(IConfigStorage(tradeService.configStorage()).oracle());
+    IOracleMiddleware _oracle = IOracleMiddleware(IConfigStorage(ITradeService(tradeService).configStorage()).oracle());
     (uint256 _currentPrice, , uint8 _marketStatus) = _oracle.getLatestPriceWithMarketStatus(
       _marketConfig.assetId,
       _maximizePrice,

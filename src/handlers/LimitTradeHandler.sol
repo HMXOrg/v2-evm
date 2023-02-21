@@ -18,6 +18,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   // CONSTANTS
   uint8 internal constant BUY = 0;
   uint8 internal constant SELL = 1;
+  uint256 internal MAX_EXECUTION_FEE = 5 ether;
 
   // EVENTS
   event LogSetTradeService(address oldValue, address newValue);
@@ -83,6 +84,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     weth = _weth;
     tradeService = _tradeService;
     pyth = _pyth;
+
+    if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     minExecutionFee = _minExecutionFee;
   }
 
@@ -111,6 +114,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   }
 
   function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
+    if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;
   }

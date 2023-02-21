@@ -15,11 +15,13 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
     super.setUp();
   }
 
+  // Cancel a non existent order
   function testRevert_cancel_NonExistentOrder() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
     limitTradeHandler.cancelOrder({ _subAccountId: 0, _orderIndex: 0 });
   }
 
+  // Cancel an existing order
   function testCorrectness_cancelOrder() external {
     vm.deal(ALICE, 1 ether);
     uint256 balanceBefore = ALICE.balance;

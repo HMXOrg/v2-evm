@@ -9,15 +9,15 @@ import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTrade
 //   - Try creating an order will too low execution fee
 //   - Try creating an order with incorrect `msg.value`
 //   - Try creating an order with sub-account id > 255
-//   - Try creating a DECREASE order with negative `_sizeDelta`
 // - success
-//   - Try creating INCREASE and DECREASE orders and check that the indices of the orders are correct and that all orders are created correctly.
+//   - Try creating BUY and SELL orders and check that the indices of the orders are correct and that all orders are created correctly.
 
 contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
   function setUp() public override {
     super.setUp();
   }
 
+  // Create order without transferring the native token as execution fee and supply 0 execution fee
   function testRevert_createOrder_InsufficientExecutionFee() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InsufficientExecutionFee()"));
     limitTradeHandler.createOrder({
@@ -31,6 +31,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     });
   }
 
+  // Create order without transferring the native token as execution fee
   function testRevert_createOrder_IncorrectValueTransfer() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_IncorrectValueTransfer()"));
     limitTradeHandler.createOrder({
@@ -44,6 +45,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     });
   }
 
+  // Create order with sub-account id > 255
   function testRevert_createOrder_BadSubAccountId() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_BadSubAccountId()"));
     limitTradeHandler.createOrder{ value: 0.1 ether }({
@@ -57,6 +59,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     });
   }
 
+  // Create BUY orders and check their validity
   function testCorrectness_createOrder_BuyOrder() external {
     uint256 balanceBefore = address(this).balance;
 
@@ -193,6 +196,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     assertEq(limitOrder.reduceOnly, true);
   }
 
+  // Create SELL orders and check their validity
   function testCorrectness_createOrder_SellOrder() external {
     uint256 balanceBefore = address(this).balance;
 

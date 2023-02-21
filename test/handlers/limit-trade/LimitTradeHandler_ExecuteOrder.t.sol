@@ -11,7 +11,16 @@ import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTrade
 //   - Try executing an order on the market that is currently closed
 //   - Try executing an order when price has not reached the trigger price
 // - success
-//   - Try executing INCREASE and DECREASE order and check that the execution fee is received by the fee receiver
+//   - Try executing BUY order to create new Long position
+//   - Try executing BUY order to increase Long position
+//   - Try executing SELL order to create new Short position
+//   - Try executing SELL order to increase Short position
+//   - Try executing limit order to flip position from Long to Short
+//   - Try executing limit order to flip position from Short to Long
+//   - Try executing reduce-only limit order to not flip position from Long to Short
+//   - Try executing reduce-only limit order to not flip position from Short to Long
+//   - Try executing BUY order to partial close Short position
+//   - Try executing SELL order to partial close Long position
 
 contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   function setUp() public override {
@@ -77,6 +86,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     );
   }
 
+  // Execute an order but the caller is not whitelisted
   function testRevert_executeOrder_NotWhitelisted() external {
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NotWhitelisted()"));
@@ -89,6 +99,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
   }
 
+  // Execute a non-existent order
   function testRevert_executeOrder_NonExistentOrder() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
     limitTradeHandler.executeOrder({
@@ -100,6 +111,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
   }
 
+  // Execute an order on the market that is currently closed
   function testRevert_executeOrder_MarketIsClosed() external {
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
@@ -125,6 +137,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
   }
 
+  // Execute an order when the price has not reached the trigger price
   function testRevert_executeOrder_InvalidPriceForExecution() external {
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
@@ -150,6 +163,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
   }
 
+  // Execute a BUY order to create new Long position
   function testCorrectness_executeOrder_BuyOrder_NewLongPosition() external {
     // Create Buy Order
     limitTradeHandler.createOrder{ value: 0.1 ether }({
@@ -193,6 +207,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_sizeDelta, 1000 * 1e30);
   }
 
+  // Execute a BUY order to create new Long position and create another BUY order to increase it
   function testCorrectness_executeOrder_BuyOrder_IncreaseLongPosition() external {
     // Create Buy Order
     limitTradeHandler.createOrder{ value: 0.1 ether }({
@@ -282,6 +297,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_sizeDelta, 500 * 1e30);
   }
 
+  // Execute a SELL order to create new Short position
   function testCorrectness_executeOrder_SellOrder_NewShortPosition() external {
     // Create Sell Order
     limitTradeHandler.createOrder{ value: 0.1 ether }({
@@ -326,6 +342,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_sizeDelta, -1000 * 1e30);
   }
 
+  // Execute a SELL order to create new Short position and create another SELL order to increase it
   function testCorrectness_executeOrder_SellOrder_IncreaseShortPosition() external {
     // Create Sell Order
     limitTradeHandler.createOrder{ value: 0.1 ether }({
@@ -413,6 +430,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_sizeDelta, -500 * 1e30);
   }
 
+  // Create Long position and flip it with SELL order
   function testCorrectness_executeOrder_FlipLongToShort() external {
     // Mock price to make the order executable
     mockOracle.setPrice(1001 * 1e30);
@@ -508,6 +526,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_sizeDelta, -500 * 1e30);
   }
 
+  // Create Short position and flip it with BUY order
   function testCorrectness_executeOrder_FlipShortToLong() external {
     // Mock price to make the order executable
     mockOracle.setPrice(1001 * 1e30);
@@ -603,6 +622,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_sizeDelta, 800 * 1e30);
   }
 
+  // Create Long position and create a Reduce-Only with big sizeDelta to see that the position is not flipped
   function testCorrectness_executeOrder_FlipLongToShort_ReduceOnly() external {
     // Mock price to make the order executable
     mockOracle.setPrice(1001 * 1e30);
@@ -693,6 +713,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
   }
 
+  // Create Short position and create a Reduce-Only with big sizeDelta to see that the position is not flipped
   function testCorrectness_executeOrder_FlipShortToLong_ReduceOnly() external {
     // Mock price to make the order executable
     mockOracle.setPrice(1001 * 1e30);
@@ -783,6 +804,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
   }
 
+  // Execute a SELL order to partial close a Long position
   function testCorrectness_executeOrder_PartialCloseLongPosition() external {
     // Mock price to make the order executable
     mockOracle.setPrice(1001 * 1e30);
@@ -873,6 +895,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
   }
 
+  // Execute a BUY order to partial close a Short position
   function testCorrectness_executeOrder_PartialCloseShortPosition() external {
     // Mock price to make the order executable
     mockOracle.setPrice(1001 * 1e30);

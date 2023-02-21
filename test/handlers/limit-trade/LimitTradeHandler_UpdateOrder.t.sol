@@ -15,6 +15,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
     super.setUp();
   }
 
+  // Update a non-existent order
   function testRevert_update_NonExistentOrder() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
     limitTradeHandler.updateOrder({
@@ -27,6 +28,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
     });
   }
 
+  // Update an order
   function testCorrectness_updateOrder() external {
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,

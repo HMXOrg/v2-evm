@@ -320,13 +320,13 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Refund the execution fee to the creator of this order
-    _transferOutETH(_order.executionFee, msg.sender);
+    _transferOutETH(_order.executionFee, _order.account);
 
     // Delete this order from the list
     delete limitOrders[subAccount][_orderIndex];
 
     emit LogCancelLimitOrder(
-      msg.sender,
+      _order.account,
       _subAccountId,
       _orderIndex,
       _order.marketIndex,
@@ -354,24 +354,24 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool _reduceOnly
   ) external nonReentrant {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
-    LimitOrder storage order = limitOrders[subAccount][_orderIndex];
+    LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
-    if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+    if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update order
-    order.triggerPrice = _triggerPrice;
-    order.triggerAboveThreshold = _triggerAboveThreshold;
-    order.sizeDelta = _sizeDelta;
-    order.reduceOnly = _reduceOnly;
+    _order.triggerPrice = _triggerPrice;
+    _order.triggerAboveThreshold = _triggerAboveThreshold;
+    _order.sizeDelta = _sizeDelta;
+    _order.reduceOnly = _reduceOnly;
 
     emit LogUpdateLimitOrder(
-      msg.sender,
-      _subAccountId,
+      _order.account,
+      _order.subAccountId,
       _orderIndex,
-      order.sizeDelta,
-      order.triggerPrice,
-      order.triggerAboveThreshold,
-      order.reduceOnly
+      _order.sizeDelta,
+      _order.triggerPrice,
+      _order.triggerAboveThreshold,
+      _order.reduceOnly
     );
   }
 

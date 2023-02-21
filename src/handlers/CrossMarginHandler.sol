@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "../base/Owned.sol";
 
@@ -48,8 +49,8 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     crossMarginService = _crossMarginService;
   }
 
-  /// @notice Set new PythAdapter contract address.
-  /// @param _pyth New PythAdapter contract address.
+  /// @notice Set new Pyth contract address.
+  /// @param _pyth New Pyth contract address.
   function setPyth(address _pyth) external onlyOwner {
     // @todo - Sanity check
     if (_pyth == address(0)) revert ICrossMarginHandler_InvalidAddress();
@@ -75,6 +76,9 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   ) external nonReentrant onlyAcceptedToken(_token) {
     // Get trader's sub-account address
     address _subAccount = _getSubAccount(_account, _subAccountId);
+
+    // Transfer depositing token from trader's wallet to VaultStorage
+    IERC20(_token).transferFrom(msg.sender, ICrossMarginService(crossMarginService).vaultStorage(), _amount);
 
     // Call service to deposit collateral
     ICrossMarginService(crossMarginService).depositCollateral(_account, _subAccount, _token, _amount);

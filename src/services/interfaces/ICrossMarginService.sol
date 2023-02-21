@@ -9,6 +9,8 @@ interface ICrossMarginService {
 
   function configStorage() external returns (address _configStorage);
 
+  function vaultStorage() external returns (address _vaultStorage);
+
   /// @notice Set new ConfigStorage contract address.
   /// @dev This uses to retrive all config information on protocal.
   /// @param _configStorage New ConfigStorage contract address.

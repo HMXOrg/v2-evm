@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import { Owned } from "../base/Owned.sol";
@@ -19,8 +18,13 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
   event LogSetCalculator(address indexed oldCalculator, address newCalculator);
-  event LogIncreaseTokenLiquidity(address indexed trader, address token, uint256 amount);
-  event LogDecreaseTokenLiquidity(address indexed trader, address token, uint256 amount);
+  event LogDepositCollateral(address indexed primaryAccount, address indexed subAccount, address token, uint256 amount);
+  event LogWithdrawCollateral(
+    address indexed primaryAccount,
+    address indexed subAccount,
+    address token,
+    uint256 amount
+  );
 
   /**
    * States
@@ -83,10 +87,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
       IVaultStorage(vaultStorage).addTraderToken(_subAccount, _token);
     }
 
-    // Transfer depositing token from trader's wallet to VaultStorage
-    IERC20(_token).transferFrom(_primaryAccount, vaultStorage, _amount);
-
-    emit LogIncreaseTokenLiquidity(_subAccount, _token, _amount);
+    emit LogDepositCollateral(_primaryAccount, _subAccount, _token, _amount);
   }
 
   /// @notice Calculate new trader balance after withdraw collateral token.
@@ -123,7 +124,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     // Transfer withdrawing token from VaultStorage to trader's wallet
     IVaultStorage(vaultStorage).transferToken(_primaryAccount, _token, _amount);
 
-    emit LogDecreaseTokenLiquidity(_subAccount, _token, _amount);
+    emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount);
   }
 
   /**

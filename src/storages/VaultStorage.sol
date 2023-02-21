@@ -151,4 +151,8 @@ contract VaultStorage is IVaultStorage {
   function transferToken(address _subAccount, address _token, uint256 _amount) external {
     IERC20(_token).transfer(_subAccount, _amount);
   }
+
+  function pullPLPLiquidity(address _token) external view returns (uint256) {
+    return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
+  }
 }

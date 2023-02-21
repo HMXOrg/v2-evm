@@ -19,9 +19,6 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   address public crossMarginService;
   address public pyth;
 
-  // address public configStorage;
-  // address public oracle;
-
   constructor(address _crossMarginService, address _pyth) {
     // @todo sanyty check
     crossMarginService = _crossMarginService;

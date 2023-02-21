@@ -21,17 +21,14 @@ interface ILimitTradeHandler {
    * Structs
    */
   struct LimitOrder {
-    // 0 = Increase Order
-    // 1 = Decrease Order
-    uint8 orderType;
     address account;
     uint256 subAccountId;
     uint256 marketIndex;
     int256 sizeDelta;
-    bool isLong;
     uint256 triggerPrice;
     bool triggerAboveThreshold;
     uint256 executionFee;
+    bool reduceOnly;
   }
 
   /**
@@ -47,7 +44,6 @@ interface ILimitTradeHandler {
    * Functions
    */
   function createOrder(
-    uint8 _orderType,
     uint256 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,

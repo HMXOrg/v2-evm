@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 interface ICrossMarginService {
   // ERRORs
+  error ICrossMarginService_InvalidDepositBalance();
   error ICrossMarginService_InvalidAddress();
   error ICrossMarginService_InsufficientBalance();
   error ICrossMarginService_WithdrawBalanceBelowIMR();

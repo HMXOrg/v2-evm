@@ -43,7 +43,7 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
     uint256 depositAmount = 10 ether;
 
     vm.startPrank(ALICE);
-    weth.approve(address(crossMarginService), depositAmount);
+    weth.approve(address(crossMarginHandler), depositAmount);
     vm.expectRevert("ERC20: transfer amount exceeds balance");
     crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), depositAmount);
     vm.stopPrank();

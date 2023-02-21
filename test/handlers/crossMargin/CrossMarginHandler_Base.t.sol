@@ -25,7 +25,6 @@ contract CrossMarginHandler_Base is BaseTest {
     );
 
     crossMarginService = deployCrossMarginService(address(configStorage), address(vaultStorage), address(calculator));
-
     crossMarginHandler = deployCrossMarginHandler(address(crossMarginService), address(deployed.pythAdapter.pyth()));
 
     // Set whitelist for service executor
@@ -120,7 +119,7 @@ contract CrossMarginHandler_Base is BaseTest {
 
   function simulateAliceDepositToken(address _token, uint256 _depositAmount) internal {
     vm.startPrank(ALICE);
-    MockErc20(_token).approve(address(crossMarginService), _depositAmount);
+    MockErc20(_token).approve(address(crossMarginHandler), _depositAmount);
     crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, _token, _depositAmount);
     vm.stopPrank();
   }

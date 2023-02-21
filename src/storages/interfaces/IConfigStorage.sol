@@ -45,6 +45,7 @@ interface IConfigStorage {
     uint256 increasePositionFeeRate; // fee rate to increase position
     uint256 decreasePositionFeeRate; // fee rate to decrease position
     uint256 maxFundingRate; // maximum funding rate
+    uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
     uint256 priceConfidentThreshold; // pyth price confidential treshold
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted

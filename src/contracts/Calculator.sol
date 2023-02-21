@@ -571,4 +571,94 @@ contract Calculator is Owned, ICalculator {
     _freeCollateral = equity - imr;
     return _freeCollateral;
   }
+
+  /**
+   * Funding Rate
+   */
+  function getEntryFundingRate(uint256 _marketIndex, bool _isLong) public view returns (int256) {
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    return _isLong ? _globalMarket.accumFundingRateLong : _globalMarket.accumFundingRateShort;
+  }
+
+  function getFundingFee(
+    uint256 _marketIndex,
+    bool _isLong,
+    int256 _size,
+    int256 _entryFundingRate
+  ) public view returns (int256) {
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    if (_size == 0) return 0;
+
+    int256 _fundingRate = _isLong
+      ? _globalMarket.accumFundingRateLong - _entryFundingRate
+      : _globalMarket.accumFundingRateShort - _entryFundingRate;
+
+    return (_size * _fundingRate) / 1e18;
+  }
+
+  function getNextFundingRate(
+    uint256 _marketIndex
+  ) public view returns (int256 fundingRateLong, int256 fundingRateShort) {
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
+      _marketIndex
+    );
+
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    // Get funding inteval
+    uint256 _fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
+
+    // If block.timestamp not pass the next funding time, return 0.
+    if (_globalMarket.lastFundingTime + _fundingInterval > block.timestamp) return (0, 0);
+
+    // Calculate average price
+    //@todo - validate timestamp of these
+    (uint256 _priceE30Long, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
+      _marketConfig.assetId,
+      false,
+      _marketConfig.priceConfidentThreshold
+    );
+
+    (uint256 _priceE30Short, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
+      _marketConfig.assetId,
+      true,
+      _marketConfig.priceConfidentThreshold
+    );
+
+    uint256 _avgPriceE30 = (_priceE30Long + _priceE30Short) / 2; //@todo discuss this later
+
+    // Cast Long/Short OI to int for calculation
+    int256 _longOpenInterest = int(_globalMarket.longOpenInterest);
+    int256 _shortOpenInterest = int(_globalMarket.shortOpenInterest);
+
+    int256 _marketSkewUSD = ((_longOpenInterest - _shortOpenInterest) * int(_avgPriceE30)) / 1e30;
+
+    // The result of this Next Funding Rate Formula will be in the range of maxFundingRate
+    int256 _maxValue = _max(-1e18, (_marketSkewUSD * 1e18) / int(_marketConfig.maxSkewScaleUSD));
+    int256 _minValue = _min(_maxValue, 1e18);
+    int256 _nextFundingRate = (_minValue * int(_marketConfig.maxFundingRate)) / 1e18;
+
+    int256 _newLongFundingRate = _globalMarket.accumFundingRateLong + _nextFundingRate;
+    int256 _newShortFundingRate = _globalMarket.accumFundingRateShort + _nextFundingRate;
+
+    uint256 _intervals = (block.timestamp - _globalMarket.lastFundingTime) / _fundingInterval;
+
+    if (_longOpenInterest > 0) {
+      fundingRateLong = (_newLongFundingRate * int(_globalMarket.longPositionSize) * int(_intervals)) / 1e18;
+    }
+    if (_shortOpenInterest > 0) {
+      fundingRateShort = (_newShortFundingRate * int(_globalMarket.shortPositionSize) * int(_intervals)) / 1e18;
+    }
+
+    return (fundingRateLong, fundingRateShort);
+  }
+
+  function _max(int256 a, int256 b) internal pure returns (int256) {
+    return a > b ? a : b;
+  }
+
+  function _min(int256 a, int256 b) internal pure returns (int256) {
+    return a < b ? a : b;
+  }
 }

@@ -26,7 +26,8 @@ interface IPerpStorage {
     uint256 shortAvgPrice;
     uint256 shortOpenInterest;
     // funding rate
-    uint256 fundingRate;
+    int256 accumFundingRateLong; //1e18 = 100%
+    int256 accumFundingRateShort; //1e18 = 100%
     uint256 lastFundingTime;
   }
 
@@ -49,23 +50,15 @@ interface IPerpStorage {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getPositionBySubAccount(
-    address _trader
-  ) external view returns (Position[] memory traderPositions);
+  function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions);
 
-  function getPositionById(
-    bytes32 _positionId
-  ) external view returns (Position memory);
+  function getPositionById(bytes32 _positionId) external view returns (Position memory);
 
-  function getGlobalMarketByIndex(
-    uint256 __marketIndex
-  ) external view returns (GlobalMarket memory);
+  function getGlobalMarketByIndex(uint256 __marketIndex) external view returns (GlobalMarket memory);
 
   function getGlobalState() external view returns (GlobalState memory);
 
-  function getNumberOfSubAccountPosition(
-    address _subAccount
-  ) external view returns (uint256);
+  function getNumberOfSubAccountPosition(address _subAccount) external view returns (uint256);
 
   // setter
   // =========================================
@@ -97,11 +90,7 @@ interface IPerpStorage {
   // @todo - update sumBorrowingRate, lastBorrowingTime
   function updateGlobalState(uint256 _newReserveValueE30) external;
 
-  function savePosition(
-    address _subAccount,
-    bytes32 _positionId,
-    Position calldata position
-  ) external;
+  function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) external;
 
   function updateReserveValue(uint256 newReserveValue) external;
 }

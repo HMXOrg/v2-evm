@@ -19,6 +19,8 @@ contract PerpStorage is IPerpStorage {
 
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
+  mapping(uint256 => GlobalAssetClass) public globalAssetClass;
+
   constructor() {
     positions.push(
       Position({
@@ -77,10 +79,6 @@ contract PerpStorage is IPerpStorage {
   //////////////////////  SETTER FUNCTION  ///////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function updateReserveValue(uint256 newReserveValue) external {
-    globalState.reserveValueE30 = newReserveValue;
-  }
-
   function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) public {
     uint256 _index = positionIndices[_positionId];
     if (_index == 0) {
@@ -126,6 +124,10 @@ contract PerpStorage is IPerpStorage {
   // todo: support to update funding rate
   function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory) {
     return globalMarkets[_marketIndex];
+  }
+
+  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
+    return globalAssetClass[_assetClassIndex];
   }
 
   function getGlobalState() external view returns (GlobalState memory) {
@@ -179,8 +181,11 @@ contract PerpStorage is IPerpStorage {
     globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
   }
 
-  // @todo - update sumBorrowingRate, lastBorrowingTime
-  function updateGlobalState(uint256 _newReserveValueE30) external {
-    globalState.reserveValueE30 = _newReserveValueE30;
+  function updateGlobalState(GlobalState memory _newGlobalState) external {
+    globalState = _newGlobalState;
+  }
+
+  function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external {
+    globalAssetClass[_assetClassIndex] = _newAssetClass;
   }
 }

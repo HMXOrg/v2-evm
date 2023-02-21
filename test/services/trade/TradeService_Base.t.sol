@@ -72,7 +72,9 @@ abstract contract TradeService_Base is BaseTest {
       );
     }
 
-    perpStorage.updateGlobalState(_reserveValueE30);
+    IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
+    _globalState.reserveValueE30 = _reserveValueE30;
+    perpStorage.updateGlobalState(_globalState);
 
     // MMR = 0.5% of position size
     mockCalculator.setMMR((_absoluteSizeE30 * 5e15) / 1e18);

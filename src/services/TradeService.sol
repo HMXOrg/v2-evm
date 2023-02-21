@@ -79,6 +79,9 @@ contract TradeService is ITradeService {
     // Verify that the current position has the same exposure direction
     if (!_isNewPosition && _currentPositionIsLong != _isLong) revert ITradeService_BadExposure();
 
+    // Update borrowing rate
+    updateBorrowingRate(_marketConfig.assetClass);
+
     // Get Price market.
     uint256 _priceE30;
     // market validation
@@ -152,7 +155,7 @@ contract TradeService is ITradeService {
       // calculate the maximum amount of reserve required for the new position
       uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / 1e18;
       // increase the reserved amount by the maximum reserve required for the new position
-      increaseReserved(_maxReserve);
+      increaseReserved(_marketConfig.assetClass, _maxReserve);
       _position.reserveValueE30 += _maxReserve;
     }
 
@@ -301,10 +304,10 @@ contract TradeService is ITradeService {
 
       // update global storage
       // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
-      IPerpStorage(perpStorage).updateGlobalState(
-        _globalState.reserveValueE30 -
-          ((_position.reserveValueE30 * _positionSizeE30ToDecrease) / vars.absPositionSizeE30)
-      );
+      _globalState.reserveValueE30 -=
+        (_position.reserveValueE30 * _positionSizeE30ToDecrease) /
+        vars.absPositionSizeE30;
+      IPerpStorage(perpStorage).updateGlobalState(_globalState);
     }
 
     // =========================================
@@ -413,19 +416,26 @@ contract TradeService is ITradeService {
   }
 
   /// @notice This function increases the reserve value
-  /// @param reservedValue The amount by which to increase the reserve value.
-  function increaseReserved(uint256 reservedValue) internal {
+  /// @param _assetClassIndex The index of asset class.
+  /// @param _reservedValue The amount by which to increase the reserve value.
+  function increaseReserved(uint256 _assetClassIndex, uint256 _reservedValue) internal {
     // Get the total TVL
     uint256 tvl = ICalculator(IConfigStorage(configStorage).calculator()).getPLPValueE30(true);
 
     // Retrieve the global state
     IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage).getGlobalState();
 
+    // Retrieve the global asset class
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+
     // get the liquidity configuration
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // Increase the reserve value by adding the reservedValue
-    _globalState.reserveValueE30 += reservedValue;
+    _globalState.reserveValueE30 += _reservedValue;
+    _globalAssetClass.reserveValueE30 += _reservedValue;
 
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
     if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * 1e18) {
@@ -433,7 +443,9 @@ contract TradeService is ITradeService {
     }
 
     // Update the new reserve value in the IPerpStorage contract
-    IPerpStorage(perpStorage).updateReserveValue(_globalState.reserveValueE30);
+    // IPerpStorage(perpStorage).updateReserveValue(_globalState.reserveValueE30);
+    IPerpStorage(perpStorage).updateGlobalState(_globalState);
+    IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
   }
 
   function abs(int256 x) private pure returns (uint256) {
@@ -451,5 +463,64 @@ contract TradeService is ITradeService {
 
     // if sub account equity < MMR, then trader couln't decrease position
     if (_subAccountEquity < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
+  }
+
+  /// @notice This function updates the borrowing rate for the given asset class index.
+  /// @param _assetClassIndex The index of the asset class.
+  function updateBorrowingRate(uint256 _assetClassIndex) public {
+    // Get the trading config, asset class config, and global asset class for the given asset class index.
+    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+
+    // If last borrowing time is 0, set it to the nearest funding interval time and return.
+    if (_globalAssetClass.lastBorrowingTime == 0) {
+      _globalAssetClass.lastBorrowingTime =
+        (block.timestamp / _tradingConfig.fundingInterval) *
+        _tradingConfig.fundingInterval;
+      IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
+      return;
+    }
+
+    // If block.timestamp is not passed the next funding interval, skip updating
+    if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval <= block.timestamp) {
+      // update borrowing rate
+      uint256 borrowingRate = getNextBorrowingRate(_assetClassIndex);
+      _globalAssetClass.sumBorrowingRate += borrowingRate;
+      _globalAssetClass.lastBorrowingTime =
+        (block.timestamp / _tradingConfig.fundingInterval) *
+        _tradingConfig.fundingInterval;
+    }
+    IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
+  }
+
+  /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
+  /// @param _assetClassIndex The index of the asset class.
+  /// @return _nextBorrowingRate The next borrowing rate for the asset class.
+  function getNextBorrowingRate(uint256 _assetClassIndex) public view returns (uint256 _nextBorrowingRate) {
+    // Get the trading config, asset class config, and global asset class for the given asset class index.
+    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
+    IConfigStorage.AssetClassConfig memory _assetClassConfig = IConfigStorage(configStorage).getAssetClassConfigByIndex(
+      _assetClassIndex
+    );
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+    // Get the calculator.
+    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
+    // Get the PLP TVL.
+    uint256 plpTVL = _calculator.getPLPValueE30(false); // TODO: make sure to use price
+
+    // If block.timestamp not pass the next funding time, return 0.
+    if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
+    // If PLP TVL is 0, return 0.
+    if (plpTVL == 0) return 0;
+
+    // Calculate the number of funding intervals that have passed since the last borrowing time.
+    uint256 intervals = (block.timestamp - _globalAssetClass.lastBorrowingTime) / _tradingConfig.fundingInterval;
+
+    // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
+    return (_assetClassConfig.baseBorrowingRate * _globalAssetClass.reserveValueE30 * intervals) / plpTVL;
   }
 }

@@ -45,6 +45,7 @@ contract ConfigStorage is IConfigStorage, Ownable {
   LiquidationConfig public liquidationConfig;
 
   MarketConfig[] public marketConfigs;
+  AssetClassConfig[] public assetClassConfigs;
 
   IteratableAddressList.List public plpAcceptedTokens;
 
@@ -95,6 +96,12 @@ contract ConfigStorage is IConfigStorage, Ownable {
 
   function getMarketConfigByIndex(uint256 _index) external view returns (MarketConfig memory _marketConfig) {
     return marketConfigs[_index];
+  }
+
+  function getAssetClassConfigByIndex(
+    uint256 _index
+  ) external view returns (AssetClassConfig memory _assetClassConfig) {
+    return assetClassConfigs[_index];
   }
 
   function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory _plpTokenConfig) {
@@ -262,6 +269,12 @@ contract ConfigStorage is IConfigStorage, Ownable {
         ++i;
       }
     }
+  }
+
+  function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index) {
+    uint256 _newAssetClassIndex = assetClassConfigs.length;
+    assetClassConfigs.push(_newConfig);
+    return _newAssetClassIndex;
   }
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {

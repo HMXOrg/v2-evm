@@ -35,7 +35,7 @@ interface IConfigStorage {
 
   struct MarketConfig {
     bytes32 assetId; // pyth network asset id
-    uint256 assetClass; // Crypto = 1, Forex = 2, Stock = 3
+    uint256 assetClass; // Crypto = 0, Forex = 1, Stock = 2
     uint256 maxProfitRate; // maximum profit that trader could take per position
     uint256 longMaxOpenInterestUSDE30; // maximum to open long position
     uint256 shortMaxOpenInterestUSDE30; // maximum to open short position
@@ -115,6 +115,8 @@ interface IConfigStorage {
 
   function getMarketConfigByIndex(uint256 _index) external view returns (MarketConfig memory _marketConfig);
 
+  function getAssetClassConfigByIndex(uint256 _index) external view returns (AssetClassConfig memory _assetClassConfig);
+
   function getTradingConfig() external view returns (TradingConfig memory);
 
   function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory);
@@ -147,6 +149,8 @@ interface IConfigStorage {
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;
 
   function setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) external;
+
+  function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
 

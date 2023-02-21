@@ -113,6 +113,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();
+    _setUpAssetClassConfigs();
     _setUpMarketConfigs();
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
@@ -205,12 +206,24 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     );
   }
 
+  /// @notice set up all asset class configs in Perp
+  function _setUpAssetClassConfigs() private {
+    IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({
+      baseBorrowingRate: 0.0001 * 1e18
+    });
+    IConfigStorage.AssetClassConfig memory _forexConfig = IConfigStorage.AssetClassConfig({
+      baseBorrowingRate: 0.0002 * 1e18
+    });
+    configStorage.addAssetClassConfig(_cryptoConfig);
+    configStorage.addAssetClassConfig(_forexConfig);
+  }
+
   /// @notice set up all market configs in Perp
   function _setUpMarketConfigs() private {
     // add market config
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage.MarketConfig({
       assetId: "ETH",
-      assetClass: 1,
+      assetClass: 0,
       maxProfitRate: 9e18,
       longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
       shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
@@ -227,7 +240,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
       assetId: "BTC",
-      assetClass: 1,
+      assetClass: 0,
       maxProfitRate: 9e18,
       longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
       shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,

@@ -13,8 +13,7 @@ import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   // EVENTS
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
-  event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
-  event LogSetPythAdapter(address indexed oldPythAdapter, address newPythAdapter);
+  event LogSetPyth(address indexed oldPyth, address newPyth);
 
   // STATES
   address public crossMarginService;
@@ -57,7 +56,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   function setPyth(address _pyth) external onlyOwner {
     // @todo - Sanity check
     if (_pyth == address(0)) revert ICrossMarginHandler_InvalidAddress();
-    emit LogSetConfigStorage(pyth, _pyth);
+    emit LogSetPyth(pyth, _pyth);
     pyth = _pyth;
   }
 

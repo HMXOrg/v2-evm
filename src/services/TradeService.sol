@@ -164,27 +164,28 @@ contract TradeService is ITradeService {
       uint256 _changedOpenInterest = (_absSizeDelta * 1e18) / _priceE30; // @todo - use decimal asset
       _position.openInterest += _changedOpenInterest;
 
-      console.log("====== increase position");
-      console.log("_absSizeDelta", _absSizeDelta);
-      console.log("_priceE30", _priceE30);
-      console.log("_changedOpenInterest", _changedOpenInterest);
-
       // update gobal market state
       if (_isLong) {
-        uint256 _price = _calcualteLongAveragePrice(_globalMarket, _priceE30, uint256(_sizeDelta), 0);
+        uint256 _nextAvgPrice = _isNewPosition
+          ? _priceE30
+          : _calcualteLongAveragePrice(_globalMarket, _priceE30, _sizeDelta, 0);
+
         IPerpStorage(perpStorage).updateGlobalLongMarketById(
           _marketIndex,
           _globalMarket.longPositionSize + _absSizeDelta,
-          _price,
+          _nextAvgPrice,
           _globalMarket.longOpenInterest + _changedOpenInterest
         );
       } else {
         // to increase SHORT position sizeDelta should be negative
-        uint256 _price = _calculateShortAveragePrice(_globalMarket, _priceE30, uint256(-_sizeDelta), 0);
+        uint256 _nextAvgPrice = _isNewPosition
+          ? _priceE30
+          : _calculateShortAveragePrice(_globalMarket, _priceE30, _sizeDelta, 0);
+
         IPerpStorage(perpStorage).updateGlobalShortMarketById(
           _marketIndex,
           _globalMarket.shortPositionSize + _absSizeDelta,
-          _price,
+          _nextAvgPrice,
           _globalMarket.shortOpenInterest + _changedOpenInterest
         );
       }
@@ -320,7 +321,7 @@ contract TradeService is ITradeService {
         uint256 _nextAvgPrice = _calcualteLongAveragePrice(
           _globalMarket,
           vars.priceE30,
-          _positionSizeE30ToDecrease,
+          -int256(_positionSizeE30ToDecrease),
           _realizedPnl
         );
         IPerpStorage(perpStorage).updateGlobalLongMarketById(
@@ -333,7 +334,7 @@ contract TradeService is ITradeService {
         uint256 _nextAvgPrice = _calculateShortAveragePrice(
           _globalMarket,
           vars.priceE30,
-          _positionSizeE30ToDecrease,
+          int256(_positionSizeE30ToDecrease),
           _realizedPnl
         );
         IPerpStorage(perpStorage).updateGlobalShortMarketById(
@@ -471,9 +472,6 @@ contract TradeService is ITradeService {
     // Increase the reserve value by adding the reservedValue
     _globalState.reserveValueE30 += _reservedValue;
 
-    console.log("reserveValueE30", _globalState.reserveValueE30);
-    console.log("tvl", tvl);
-
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
     if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * 1e18) {
       revert ITradeService_InsufficientLiquidity();
@@ -511,9 +509,9 @@ contract TradeService is ITradeService {
   function _calculateShortAveragePrice(
     IPerpStorage.GlobalMarket memory _market,
     uint256 _currentPrice,
-    uint256 _positionSizeDelta,
+    int256 _positionSizeDelta,
     int256 _realizedPositionPnl
-  ) internal pure returns (uint256 _nextAveragePrice) {
+  ) internal view returns (uint256 _nextAveragePrice) {
     // global
     uint256 _globalPositionSize = _market.shortPositionSize;
     int256 _globalAveragePrice = int256(_market.shortAvgPrice);
@@ -525,7 +523,14 @@ contract TradeService is ITradeService {
       _globalAveragePrice;
     int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
 
-    uint256 _newGlobalPositionSize = _globalPositionSize - _positionSizeDelta;
+    uint256 _newGlobalPositionSize;
+    // position > 0 is means decrease short position
+    // else is increase short position
+    if (_positionSizeDelta > 0) {
+      _newGlobalPositionSize = _globalPositionSize - uint256(_positionSizeDelta);
+    } else {
+      _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
+    }
 
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
@@ -546,7 +551,7 @@ contract TradeService is ITradeService {
   function _calcualteLongAveragePrice(
     IPerpStorage.GlobalMarket memory _market,
     uint256 _currentPrice,
-    uint256 _positionSizeDelta,
+    int256 _positionSizeDelta,
     int256 _realizedPositionPnl
   ) internal pure returns (uint256 _nextAveragePrice) {
     // global
@@ -560,7 +565,14 @@ contract TradeService is ITradeService {
       _globalAveragePrice;
     int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
 
-    uint256 _newGlobalPositionSize = _globalPositionSize - _positionSizeDelta;
+    uint256 _newGlobalPositionSize;
+    // position > 0 is means increase short position
+    // else is decrease short position
+    if (_positionSizeDelta > 0) {
+      _newGlobalPositionSize = _globalPositionSize + uint256(_positionSizeDelta);
+    } else {
+      _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
+    }
 
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);

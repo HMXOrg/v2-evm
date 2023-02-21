@@ -5,10 +5,23 @@ import { IConfigStorage } from "../../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../../storages/interfaces/IVaultStorage.sol";
 
 interface ICalculator {
-  // ERRORs
+  // ERRORS
   error ICalculator_InvalidAddress();
   error ICalculator_InvalidAveragePrice();
   error ICalculator_PoolImbalance();
+
+  // STRUCTS
+  struct GetFundingRateVar {
+    uint256 fundingInterval;
+    uint256 marketPriceE30;
+    int256 marketSkewUSD;
+    int256 tempMaxValue;
+    int256 tempMinValue;
+    int256 nextFundingRate;
+    int256 newLongFundingRate;
+    int256 newShortFundingRate;
+    int256 intervals;
+  }
 
   //@todo - will be use in _getFeeRate
   enum LiquidityDirection {

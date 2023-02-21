@@ -81,7 +81,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NotWhitelisted()"));
     limitTradeHandler.executeOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
@@ -93,7 +93,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   function testRevert_executeOrder_NonExistentOrder() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
     limitTradeHandler.executeOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
@@ -104,7 +104,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
   function testRevert_executeOrder_MarketIsClosed() external {
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
@@ -119,7 +119,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MarketIsClosed()"));
     limitTradeHandler.executeOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
@@ -130,7 +130,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
   function testRevert_executeOrder_InvalidPriceForExecution() external {
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
@@ -145,7 +145,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
     limitTradeHandler.executeOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
@@ -157,7 +157,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   function testCorrectness_executeOrder_IncreaseOrder() external {
     // Create Long Increase Order
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
@@ -188,7 +188,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Execute Long Increase Order
     limitTradeHandler.executeOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
@@ -212,7 +212,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Create Short Increase Order
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _marketIndex: 2,
       _sizeDelta: -1000 * 1e30,
@@ -235,7 +235,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Execute Short Increase Order
     limitTradeHandler.executeOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 1,
@@ -277,7 +277,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     );
 
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _orderType: DECREASE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
@@ -308,7 +308,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Execute Long Decrease Order
     limitTradeHandler.executeOrder({
-      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _orderType: DECREASE,
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,

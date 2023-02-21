@@ -18,7 +18,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
   function testRevert_update_NonExistentOrder() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
     limitTradeHandler.updateOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _orderIndex: 0,
       _sizeDelta: 100,
@@ -29,7 +29,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
 
   function testCorrectness_updateOrder() external {
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 100,
@@ -60,7 +60,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
     assertEq(limitOrder.executionFee, 0.1 ether);
 
     limitTradeHandler.updateOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _orderIndex: 0,
       _sizeDelta: 200,

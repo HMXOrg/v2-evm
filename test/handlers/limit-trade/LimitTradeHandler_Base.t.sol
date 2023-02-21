@@ -4,6 +4,9 @@ pragma solidity 0.8.18;
 import { BaseTest, LimitTradeHandler, IPerpStorage, IConfigStorage } from "../../base/BaseTest.sol";
 
 contract LimitTradeHandler_Base is BaseTest {
+  uint8 internal constant INCREASE = 0;
+  uint8 internal constant DECREASE = 1;
+
   LimitTradeHandler limitTradeHandler;
 
   function setUp() public virtual {

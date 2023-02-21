@@ -18,18 +18,12 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_UnknownOrderType();
 
   /**
-   * Enumerators
-   */
-  enum OrderType {
-    INCREASE,
-    DECREASE
-  }
-
-  /**
    * Structs
    */
   struct LimitOrder {
-    OrderType orderType;
+    // 0 = Increase Order
+    // 1 = Decrease Order
+    uint8 orderType;
     address account;
     uint256 subAccountId;
     uint256 marketIndex;
@@ -53,7 +47,7 @@ interface ILimitTradeHandler {
    * Functions
    */
   function createOrder(
-    OrderType _orderType,
+    uint8 _orderType,
     uint256 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,
@@ -63,7 +57,7 @@ interface ILimitTradeHandler {
   ) external payable;
 
   function executeOrder(
-    OrderType _orderType,
+    uint8 _orderType,
     address _account,
     uint256 _subAccountId,
     uint256 _orderIndex,
@@ -71,10 +65,10 @@ interface ILimitTradeHandler {
     bytes[] memory _priceData
   ) external;
 
-  function cancelOrder(OrderType _orderType, uint256 _subAccountId, uint256 _orderIndex) external;
+  function cancelOrder(uint8 _orderType, uint256 _subAccountId, uint256 _orderIndex) external;
 
   function updateOrder(
-    OrderType _orderType,
+    uint8 _orderType,
     uint256 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,

@@ -21,7 +21,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
   function testRevert_createOrder_InsufficientExecutionFee() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InsufficientExecutionFee()"));
     limitTradeHandler.createOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _marketIndex: 0,
       _sizeDelta: 100,
@@ -34,7 +34,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
   function testRevert_createOrder_IncorrectValueTransfer() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_IncorrectValueTransfer()"));
     limitTradeHandler.createOrder({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 3,
       _marketIndex: 0,
       _sizeDelta: 100,
@@ -47,7 +47,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
   function testRevert_createOrder_BadSubAccountId() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_BadSubAccountId()"));
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 1000,
       _marketIndex: 0,
       _sizeDelta: 100,
@@ -60,7 +60,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
   function testRevert_createOrder_WrongSizeDelta() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_WrongSizeDelta()"));
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _orderType: DECREASE,
       _subAccountId: 0,
       _marketIndex: 0,
       _sizeDelta: -100,
@@ -74,7 +74,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     uint256 balanceBefore = address(this).balance;
 
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
@@ -110,7 +110,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
 
     // Open another Long order with the same sub account
     limitTradeHandler.createOrder{ value: 0.2 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 0,
       _marketIndex: 2,
       _sizeDelta: 2000 * 1e30,
@@ -141,7 +141,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
 
     // Open another Long order with another sub account
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 7,
       _marketIndex: 3,
       _sizeDelta: 3000 * 1e30,
@@ -176,7 +176,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
 
     // Open another Short order with 7th sub account
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.INCREASE,
+      _orderType: INCREASE,
       _subAccountId: 7,
       _marketIndex: 4,
       _sizeDelta: -4000 * 1e30,
@@ -231,7 +231,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     );
 
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _orderType: DECREASE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
@@ -283,7 +283,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
       })
     );
     limitTradeHandler.createOrder{ value: 0.2 ether }({
-      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _orderType: DECREASE,
       _subAccountId: 0,
       _marketIndex: 2,
       _sizeDelta: 2000 * 1e30,
@@ -330,7 +330,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
       })
     );
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: ILimitTradeHandler.OrderType.DECREASE,
+      _orderType: DECREASE,
       _subAccountId: 7,
       _marketIndex: 3,
       _sizeDelta: 3000 * 1e30,

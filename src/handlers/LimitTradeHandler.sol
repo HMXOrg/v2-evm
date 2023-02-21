@@ -15,13 +15,17 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
+  // CONSTANTS
+  uint8 internal constant INCREASE = 0;
+  uint8 internal constant DECREASE = 1;
+
   // EVENTS
   event LogSetTradeService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogSetPyth(address oldValue, address newValue);
   event CreateLimitOrder(
-    OrderType indexed orderType,
+    uint8 indexed orderType,
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -33,7 +37,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 executionFee
   );
   event ExecuteLimitOrder(
-    OrderType indexed orderType,
+    uint8 indexed orderType,
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -46,7 +50,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 executionPrice
   );
   event UpdateLimitOrder(
-    OrderType indexed orderType,
+    uint8 indexed orderType,
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -55,7 +59,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool triggerAboveThreshold
   );
   event CancelLimitOrder(
-    OrderType indexed orderType,
+    uint8 indexed orderType,
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -138,7 +142,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _triggerAboveThreshold The current price must go above/below the trigger price for the order to be executed
   /// @param _executionFee The execution fee of this limit order
   function createOrder(
-    OrderType _orderType,
+    uint8 _orderType,
     uint256 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,
@@ -159,7 +163,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     LimitOrder memory _order;
     bool _isLong;
 
-    if (_orderType == OrderType.INCREASE) {
+    if (_orderType == INCREASE) {
       // If _sizeDelta > 0, this INCREASE order is trying to increase a Long position
       // If _sizeDelta < 0, this INCREASE order is trying to increase a Short position
       _isLong = _sizeDelta > 0;
@@ -176,7 +180,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
         _triggerAboveThreshold,
         _executionFee
       );
-    } else if (_orderType == OrderType.DECREASE) {
+    } else if (_orderType == 1) {
+      // DECREASE
       // Retrieve the existing position
       bytes32 _positionId = _getPositionId(_subAccount, _marketIndex);
       // _sizeDelta cannot be < 0 for DECREASE
@@ -227,7 +232,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _feeReceiver Which address will receive the execution fee for this transaction
   /// @param _priceData Price data from Pyth to be used for updating the market prices
   function executeOrder(
-    OrderType _orderType,
+    uint8 _orderType,
     address _account,
     uint256 _subAccountId,
     uint256 _orderIndex,
@@ -252,14 +257,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     );
 
     // Execute the order
-    if (_orderType == OrderType.INCREASE) {
+    if (_orderType == INCREASE) {
+      // INCREASE
       ITradeService(tradeService).increasePosition({
         _primaryAccount: _account,
         _subAccountId: _subAccountId,
         _marketIndex: order.marketIndex,
         _sizeDelta: order.sizeDelta
       });
-    } else if (_orderType == OrderType.DECREASE) {
+    } else if (_orderType == DECREASE) {
+      // DECREASE
       ITradeService(tradeService).decreasePosition({
         _account: _account,
         _subAccountId: _subAccountId,
@@ -295,7 +302,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _orderType INCREASE or DECREASE position
   /// @param _subAccountId Sub-account Id
   /// @param _orderIndex Order Index which could be retrieved from the emitted event from `createOrder()`
-  function cancelOrder(OrderType _orderType, uint256 _subAccountId, uint256 _orderIndex) external nonReentrant {
+  function cancelOrder(uint8 _orderType, uint256 _subAccountId, uint256 _orderIndex) external nonReentrant {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
     LimitOrder memory order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
@@ -329,7 +336,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _triggerPrice The price that this limit order will be triggered
   /// @param _triggerAboveThreshold The current price must go above/below the trigger price for the order to be executed
   function updateOrder(
-    OrderType _orderType,
+    uint8 _orderType,
     uint256 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
@@ -342,11 +349,11 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     if (order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update order
-    if (_orderType == OrderType.INCREASE) {
+    if (_orderType == INCREASE) {
       order.triggerPrice = _triggerPrice;
       order.triggerAboveThreshold = _triggerAboveThreshold;
       order.sizeDelta = _sizeDelta;
-    } else if (_orderType == OrderType.DECREASE) {
+    } else if (_orderType == DECREASE) {
       // _sizeDelta cannot be < 0 for DECREASE
       if (_sizeDelta < 0) revert ILimitTradeHandler_WrongSizeDelta();
 

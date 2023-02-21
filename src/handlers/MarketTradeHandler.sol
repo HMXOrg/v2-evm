@@ -55,6 +55,8 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
    * SETTER
    */
 
+  /// @notice Set new trader service contract address.
+  /// @param _newTradeService New trader service contract address.
   function setTradeService(address _newTradeService) external onlyOwner {
     // @todo - Sanity check
     if (_newTradeService == address(0)) revert IMarketTradeHandler_InvalidAddress();
@@ -81,6 +83,13 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
    * CALCULATION
    */
 
+  /// @notice Perform buy, in which increasing position size towards long exposure.
+  /// @dev Flipping from short exposure to long exposure is possible here.
+  /// @param _account Trader's primary wallet account.
+  /// @param _subAccountId Trader's sub account id.
+  /// @param _marketIndex Market index.
+  /// @param _buySizeE30 Buying size in e30 format.
+  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
   function buy(
     address _account,
     uint256 _subAccountId,
@@ -148,6 +157,13 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     emit LogBuy(_account, _subAccountId, _marketIndex, _buySizeE30, _shortDecreasingSizeE30, _longIncreasingSizeE30);
   }
 
+  /// @notice Perform sell, in which increasing position size towards long exposure.
+  /// @dev Flipping from long exposure to short exposure is possible here.
+  /// @param _account Trader's primary wallet account.
+  /// @param _subAccountId Trader's sub account id.
+  /// @param _marketIndex Market index.
+  /// @param _sellSizeE30 Buying size in e30 format.
+  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
   function sell(
     address _account,
     uint256 _subAccountId,
@@ -225,12 +241,19 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 
-  // @todo - add description
-  function _getPositionId(address _account, uint256 _marketIndex) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(_account, _marketIndex));
+  /// @notice Derive positionId from sub-account and market index
+  /// @param _subAccount Trader's sub account (account + subAccountId).
+  /// @param _marketIndex Market index.
+  /// @return _positionId
+  function _getPositionId(address _subAccount, uint256 _marketIndex) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(_subAccount, _marketIndex));
   }
 
-  // @todo - add description
+  /// @notice Get position struct from account, subAccountId and market index
+  /// @param _account Trader's primary wallet account.
+  /// @param _subAccountId Trader's sub account id.
+  /// @param _marketIndex Market index.
+  /// @return _position Position struct
   function _getPosition(
     address _account,
     uint256 _subAccountId,

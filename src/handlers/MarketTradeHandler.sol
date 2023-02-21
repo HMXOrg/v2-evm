@@ -15,12 +15,30 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   // EVENTS
   event LogSetTradeService(address indexed oldMarketTradeService, address newMarketTradeService);
   event LogSetPyth(address indexed oldPyth, address newPyth);
+  event LogBuy(
+    address _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _buySizeE30,
+    uint256 _shortDecreasingSizeE30,
+    uint256 _longIncreasingSizeE30
+  );
+  event LogSell(
+    address _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sellSizeE30,
+    uint256 _longDecreasingSizeE30,
+    uint256 _shortIncreasingSizeE30
+  );
 
   // STATES
   address public tradeService;
   address public pyth;
 
   constructor(address _tradeService, address _pyth) {
+    if (_tradeService == address(0) || _pyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
+
     // @todo sanity check
     tradeService = _tradeService;
     pyth = _pyth;
@@ -41,10 +59,12 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     tradeService = _newTradeService;
   }
 
+  /// @notice Set new Pyth contract address.
+  /// @param _newPyth New Pyth contract address.
   function setPyth(address _newPyth) external onlyOwner {
     // @todo - Sanity check
     if (_newPyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
-    emit LogSetPyth(address(pyth), _newPyth);
+    emit LogSetPyth(pyth, _newPyth);
     pyth = _newPyth;
   }
 
@@ -58,16 +78,17 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint256 _marketIndex,
     uint256 _buySizeE30,
     bytes[] memory _priceData
-  ) external {
+  ) external nonReentrant {
     // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // 0. Get position
     IPerpStorage.Position memory _position = _getPosition(_account, _subAccountId, _marketIndex);
 
     // 1. Find the `_shortDecreasingSizeE30` and `_longIncreasingSizeE30`
-    uint256 _shortDecreasingSizeE30;
-    uint256 _longIncreasingSizeE30;
+    uint256 _shortDecreasingSizeE30 = 0;
+    uint256 _longIncreasingSizeE30 = 0;
     {
       if (_position.positionSizeE30 < 0) {
         // If short position exists, we need to close it first
@@ -110,6 +131,8 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
         int256(_longIncreasingSizeE30)
       );
     }
+
+    emit LogBuy(_account, _subAccountId, _marketIndex, _buySizeE30, _shortDecreasingSizeE30, _longIncreasingSizeE30);
   }
 
   function sell(
@@ -118,16 +141,17 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint256 _marketIndex,
     uint256 _sellSizeE30,
     bytes[] memory _priceData
-  ) external {
+  ) external nonReentrant {
     // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // 0. Get position
     IPerpStorage.Position memory _position = _getPosition(_account, _subAccountId, _marketIndex);
 
     // 1. Find the `_longDecreasingSizeE30` and `_shortIncreasingSizeE30`
-    uint256 _longDecreasingSizeE30;
-    uint256 _shortIncreasingSizeE30;
+    uint256 _longDecreasingSizeE30 = 0;
+    uint256 _shortIncreasingSizeE30 = 0;
     {
       if (_position.positionSizeE30 > 0) {
         // If long position exists, we need to close it first
@@ -170,6 +194,8 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
         -int256(_shortIncreasingSizeE30)
       );
     }
+
+    emit LogSell(_account, _subAccountId, _marketIndex, _sellSizeE30, _longDecreasingSizeE30, _shortIncreasingSizeE30);
   }
 
   /// @notice Calculate subAccount address on trader.

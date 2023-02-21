@@ -39,9 +39,12 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   constructor(address _tradeService, address _pyth) {
     if (_tradeService == address(0) || _pyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
 
-    // @todo sanity check
     tradeService = _tradeService;
     pyth = _pyth;
+
+    // Sanity check
+    ITradeService(_tradeService).perpStorage();
+    IPyth(_pyth).getValidTimePeriod();
   }
 
   /**
@@ -57,6 +60,9 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     if (_newTradeService == address(0)) revert IMarketTradeHandler_InvalidAddress();
     emit LogSetTradeService(address(tradeService), _newTradeService);
     tradeService = _newTradeService;
+
+    // Sanity check
+    ITradeService(_newTradeService).perpStorage();
   }
 
   /// @notice Set new Pyth contract address.
@@ -66,6 +72,9 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     if (_newPyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
     emit LogSetPyth(pyth, _newPyth);
     pyth = _newPyth;
+
+    // Sanity check
+    IPyth(_newPyth).getValidTimePeriod();
   }
 
   /**
@@ -79,6 +88,10 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint256 _buySizeE30,
     bytes[] memory _priceData
   ) external nonReentrant {
+    if (_buySizeE30 == 0) {
+      revert IMarketTradeHandler_ZeroSizeInput();
+    }
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -142,6 +155,10 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint256 _sellSizeE30,
     bytes[] memory _priceData
   ) external nonReentrant {
+    if (_sellSizeE30 == 0) {
+      revert IMarketTradeHandler_ZeroSizeInput();
+    }
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);

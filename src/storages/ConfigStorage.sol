@@ -252,9 +252,11 @@ contract ConfigStorage is IConfigStorage, Owned {
       emit AddOrUpdatePLPTokenConfigs(_tokens[i], plpTokenConfigs[_tokens[i]], _configs[i]);
 
       // Update totalWeight accordingly
-      liquidityConfig.plpTotalTokenWeight =
+
+      liquidityConfig.plpTotalTokenWeight == 0 ? _configs[i].targetWeight : liquidityConfig.plpTotalTokenWeight =
         (liquidityConfig.plpTotalTokenWeight - plpTokenConfigs[_tokens[i]].targetWeight) +
         _configs[i].targetWeight;
+
       plpTokenConfigs[_tokens[i]] = _configs[i];
 
       if (liquidityConfig.plpTotalTokenWeight > 1e18) {

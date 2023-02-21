@@ -6,6 +6,12 @@ contract MockLiquidityService {
   address public perpStorage;
   address public vaultStorage;
 
+  constructor(address _configStorage, address _perpStorage, address _vaultStorage) {
+    configStorage = _configStorage;
+    perpStorage = _perpStorage;
+    vaultStorage = _vaultStorage;
+  }
+
   function setConfigStorage(address _address) external {
     configStorage = _address;
   }

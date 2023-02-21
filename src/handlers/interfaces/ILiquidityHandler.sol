@@ -14,12 +14,15 @@ interface ILiquidityHandler {
     address _tokenSell,
     uint256 _amountIn,
     uint256 _minOut,
-    uint256 _executionFee
+    uint256 _executionFee,
+    bool _shouldUnwrap
   ) external payable;
 
   function executeOrders(LiquidityOrder[] memory _orders, bytes[] memory _priceData) external;
 
   function cancelLiquidityOrder(LiquidityOrder[] memory _orders) external;
+
+  function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory);
 
   struct LiquidityOrder {
     address payable account;
@@ -27,7 +30,7 @@ interface ILiquidityHandler {
     uint256 amount;
     uint256 minOut;
     bool isAdd;
-    LiquidityOrderStatus status;
+    bool shouldUnwrap; // unwrap nativetoken when removeLiquidity
   }
 
   enum LiquidityOrderStatus {

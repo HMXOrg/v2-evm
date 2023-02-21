@@ -115,7 +115,11 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     mockVaultStorage = new MockVaultStorage();
     mockOracle = new MockOracleMiddleware();
     configStorage = new ConfigStorage();
-    mockLiquidityService = new MockLiquidityService();
+    mockLiquidityService = new MockLiquidityService(
+      address(configStorage),
+      address(perpStorage),
+      address(vaultStorage)
+    );
 
     _setUpLiquidityConfig();
     _setUpSwapConfig();
@@ -262,6 +266,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // set PLP token
     configStorage.setPLP(address(plp));
 
+    configStorage.setPLPTotalTokenWeight(0);
+
     // add Accepted Token for LP config
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
     // WETH
@@ -310,11 +316,14 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       accepted: true
     });
 
-    configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig[0]);
-    configStorage.setPlpTokenConfig(address(wbtc), _plpTokenConfig[1]);
-    configStorage.setPlpTokenConfig(address(dai), _plpTokenConfig[2]);
-    configStorage.setPlpTokenConfig(address(usdc), _plpTokenConfig[3]);
-    configStorage.setPlpTokenConfig(address(usdt), _plpTokenConfig[4]);
+    address[] memory _tokens = new address[](5);
+    _tokens[0] = address(weth);
+    _tokens[1] = address(wbtc);
+    _tokens[2] = address(dai);
+    _tokens[3] = address(usdc);
+    _tokens[4] = address(usdt);
+
+    configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
   }
 
   /// @notice set up all collateral token configs in Perp

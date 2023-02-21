@@ -11,11 +11,6 @@ interface IVaultStorage {
   //////////////////////  STATE
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function liquidityProviderBalances(
-    address _liquidityProvider,
-    address _token
-  ) external view returns (uint256 _amount);
-
   function traderBalances(address _trader, address _token) external view returns (uint256 amount);
 
   ////////////////////////////////////////////////////////////////////////////////////
@@ -32,7 +27,7 @@ interface IVaultStorage {
 
   function plpLiquidity(address _token) external view returns (uint256);
 
-  function pullPLPLiquidity(address _token) external view returns (uint256);
+  function pullToken(address _token) external returns (uint256);
 
   // SETTER
 
@@ -51,6 +46,8 @@ interface IVaultStorage {
   function removePLPTotalLiquidityUSDE30(uint256 _liquidity) external;
 
   function removePLPLiquidity(address _token, uint256 _amount) external;
+
+  function pushToken(address _token, address _to, uint256 _amount) external;
 
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  SETTER

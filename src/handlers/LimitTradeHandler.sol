@@ -461,8 +461,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   }
 
   /// @notice Derive positionId from sub-account and market index
-  function _getPositionId(address _account, uint256 _marketIndex) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(_account, _marketIndex));
+  function _getPositionId(address _subAccount, uint256 _marketIndex) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(_subAccount, _marketIndex));
   }
 
   function _max(uint256 x, uint256 y) internal pure returns (uint256) {

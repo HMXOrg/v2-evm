@@ -13,8 +13,8 @@ import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   // EVENTS
-  event LogSetTradeService(address indexed oldMarketTradeService, address newMarketTradeService);
-  event LogSetPyth(address indexed oldPyth, address newPyth);
+  event LogSetTradeService(address oldMarketTradeService, address newMarketTradeService);
+  event LogSetPyth(address oldPyth, address newPyth);
   event LogBuy(
     address _account,
     uint256 _subAccountId,

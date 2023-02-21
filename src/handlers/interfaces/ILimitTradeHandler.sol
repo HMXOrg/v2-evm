@@ -49,11 +49,11 @@ interface ILimitTradeHandler {
     int256 _sizeDelta,
     uint256 _triggerPrice,
     bool _triggerAboveThreshold,
-    uint256 _executionFee
+    uint256 _executionFee,
+    bool _reduceOnly
   ) external payable;
 
   function executeOrder(
-    uint8 _orderType,
     address _account,
     uint256 _subAccountId,
     uint256 _orderIndex,
@@ -61,15 +61,15 @@ interface ILimitTradeHandler {
     bytes[] memory _priceData
   ) external;
 
-  function cancelOrder(uint8 _orderType, uint256 _subAccountId, uint256 _orderIndex) external;
+  function cancelOrder(uint256 _subAccountId, uint256 _orderIndex) external;
 
   function updateOrder(
-    uint8 _orderType,
     uint256 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
-    bool _triggerAboveThreshold
+    bool _triggerAboveThreshold,
+    bool _reduceOnly
   ) external;
 
   function validatePositionOrderPrice(

@@ -24,7 +24,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogSetPyth(address oldValue, address newValue);
-  event CreateLimitOrder(
+  event LogCreateLimitOrder(
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -35,7 +35,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 executionFee,
     bool reduceOnly
   );
-  event ExecuteLimitOrder(
+  event LogExecuteLimitOrder(
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -47,7 +47,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 executionPrice,
     bool reduceOnly
   );
-  event UpdateLimitOrder(
+  event LogUpdateLimitOrder(
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -56,7 +56,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool triggerAboveThreshold,
     bool reduceOnly
   );
-  event CancelLimitOrder(
+  event LogCancelLimitOrder(
     address indexed account,
     uint256 indexed subAccountId,
     uint256 orderIndex,
@@ -159,7 +159,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     limitOrdersIndex[_subAccount] = _orderIndex + 1;
     limitOrders[_subAccount][_orderIndex] = _order;
 
-    emit CreateLimitOrder(
+    emit LogCreateLimitOrder(
       msg.sender,
       _subAccountId,
       _orderIndex,
@@ -296,7 +296,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     // Pay the executor
     _transferOutETH(_order.executionFee, _feeReceiver);
 
-    emit ExecuteLimitOrder(
+    emit LogExecuteLimitOrder(
       _account,
       _subAccountId,
       _orderIndex,
@@ -325,7 +325,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     // Delete this order from the list
     delete limitOrders[subAccount][_orderIndex];
 
-    emit CancelLimitOrder(
+    emit LogCancelLimitOrder(
       msg.sender,
       _subAccountId,
       _orderIndex,
@@ -364,7 +364,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     order.sizeDelta = _sizeDelta;
     order.reduceOnly = _reduceOnly;
 
-    emit UpdateLimitOrder(
+    emit LogUpdateLimitOrder(
       msg.sender,
       _subAccountId,
       _orderIndex,

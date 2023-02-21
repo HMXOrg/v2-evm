@@ -9,6 +9,8 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
+import { console } from "forge-std/console.sol";
+
 // @todo - refactor, deduplicate code
 
 contract TradeService is ITradeService {
@@ -159,8 +161,14 @@ contract TradeService is ITradeService {
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
       // calculate the change in open interest for the new position
-      uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _priceE30; // @todo - use decimal asset
+      uint256 _changedOpenInterest = (_absSizeDelta * 1e18) / _priceE30; // @todo - use decimal asset
       _position.openInterest += _changedOpenInterest;
+
+      console.log("====== increase position");
+      console.log("_absSizeDelta", _absSizeDelta);
+      console.log("_priceE30", _priceE30);
+      console.log("_changedOpenInterest", _changedOpenInterest);
+
       // update gobal market state
       if (_isLong) {
         uint256 _price = _calcualteLongAveragePrice(_globalMarket, _priceE30, uint256(_sizeDelta), 0);
@@ -462,6 +470,9 @@ contract TradeService is ITradeService {
 
     // Increase the reserve value by adding the reservedValue
     _globalState.reserveValueE30 += _reservedValue;
+
+    console.log("reserveValueE30", _globalState.reserveValueE30);
+    console.log("tvl", tvl);
 
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
     if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * 1e18) {

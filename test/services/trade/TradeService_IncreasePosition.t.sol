@@ -341,7 +341,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     assertEq(_positionAfter.reserveValueE30, 9 * 10_000 * 1e30);
     assertEq(_positionAfter.lastIncreaseTimestamp, 0);
     assertEq(_positionAfter.realizedPnl, 0);
-    assertEq(_positionAfter.openInterest, 625 * 1e30);
+    assertEq(_positionAfter.openInterest, 625 * 1e18);
   }
 
   function testCorrectness_increasePosition_WhenShortMarket02() external {
@@ -374,7 +374,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     assertEq(_positionAfter.reserveValueE30, 9 * 8_000 * 1e30);
     assertEq(_positionAfter.lastIncreaseTimestamp, 0);
     assertEq(_positionAfter.realizedPnl, 0);
-    assertEq(_positionAfter.openInterest, 32 * 1e30);
+    assertEq(_positionAfter.openInterest, 32 * 1e18);
   }
 
   function testCorrectness_increasePosition_WhenIncreaseAndAdjustLongMarket01() external {
@@ -412,10 +412,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
       assertEq(_positionAfter.reserveValueE30, 9 * 5_000 * 1e30);
       assertEq(_positionAfter.lastIncreaseTimestamp, 0);
       assertEq(_positionAfter.realizedPnl, 0);
-      assertEq(_positionAfter.openInterest, 312.5 * 1e30);
+      assertEq(_positionAfter.openInterest, 312.5 * 1e18);
 
       assertEq(_globalMarketAfter.longPositionSize - _globalMarketBefore.longPositionSize, uint256(sizeDelta));
-      assertEq(_globalMarketAfter.longOpenInterest - _globalMarketBefore.longOpenInterest, uint256(312.5 * 1e30));
+      assertEq(_globalMarketAfter.longOpenInterest - _globalMarketBefore.longOpenInterest, uint256(312.5 * 1e18));
     }
 
     // ALICE Adjust position Long ETH size 500,000
@@ -441,10 +441,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
       assertEq(_positionAfter.reserveValueE30, 9 * 9_000 * 1e30);
       assertEq(_positionAfter.lastIncreaseTimestamp, 0);
       assertEq(_positionAfter.realizedPnl, 0);
-      assertEq(_positionAfter.openInterest, 562.5 * 1e30);
+      assertEq(_positionAfter.openInterest, 562.5 * 1e18);
 
       assertEq(_globalMarketAfter.longPositionSize - _globalMarketBefore.longPositionSize, uint256(sizeDelta));
-      assertEq(_globalMarketAfter.longOpenInterest - _globalMarketBefore.longOpenInterest, uint256(250 * 1e30));
+      assertEq(_globalMarketAfter.longOpenInterest - _globalMarketBefore.longOpenInterest, uint256(250 * 1e18));
     }
   }
 
@@ -483,10 +483,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
       assertEq(_positionAfter.reserveValueE30, 9 * 2_500 * 1e30);
       assertEq(_positionAfter.lastIncreaseTimestamp, 0);
       assertEq(_positionAfter.realizedPnl, 0);
-      assertEq(_positionAfter.openInterest, 100 * 1e30);
+      assertEq(_positionAfter.openInterest, 100 * 1e18);
 
       assertEq(_globalMarketAfter.shortPositionSize - _globalMarketBefore.shortPositionSize, uint256(-sizeDelta));
-      assertEq(_globalMarketAfter.shortOpenInterest - _globalMarketBefore.shortOpenInterest, 100 * 1e30);
+      assertEq(_globalMarketAfter.shortOpenInterest - _globalMarketBefore.shortOpenInterest, 100 * 1e18);
     }
 
     // BOB Adjust position Short BTC size 750,000
@@ -512,10 +512,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
       assertEq(_positionAfter.reserveValueE30, 9 * 10_000 * 1e30);
       assertEq(_positionAfter.lastIncreaseTimestamp, 0);
       assertEq(_positionAfter.realizedPnl, 0);
-      assertEq(_positionAfter.openInterest, 400 * 1e30);
+      assertEq(_positionAfter.openInterest, 400 * 1e18);
 
       assertEq(_globalMarketAfter.shortPositionSize - _globalMarketBefore.shortPositionSize, uint256(-sizeDelta));
-      assertEq(_globalMarketAfter.shortOpenInterest - _globalMarketBefore.shortOpenInterest, 300 * 1e30);
+      assertEq(_globalMarketAfter.shortOpenInterest - _globalMarketBefore.shortOpenInterest, 300 * 1e18);
     }
   }
 }

@@ -51,8 +51,8 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
     simulateAliceDepositToken(address(weth), (10 ether));
 
     // Mock calculator return values
-    mockCalculator.setEquity(10 ether);
-    mockCalculator.setIMR(12 ether);
+    mockCalculator.setEquity(ALICE, 10 ether);
+    mockCalculator.setIMR(ALICE, 12 ether);
 
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));

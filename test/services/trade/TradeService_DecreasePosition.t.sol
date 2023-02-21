@@ -30,6 +30,7 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - trading fee
 //   - settlement profit
 //   - settlement loss
+//   - settlement fee
 //   - protocol curcuit break
 //   - trading curcuit break
 // - post validation
@@ -41,8 +42,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
 
+    // TVL
+    // 1000000 USDT -> 1000000 USD
+    mockCalculator.setPLPValue(1_000_000 * 1e30);
+
     // assume ALICE has free collateral for 10,000 USD
-    mockCalculator.setEquity(10_000 * 1e30);
+    mockCalculator.setEquity(ALICE, 10_000 * 1e30);
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
   }
 
   // market delisted
@@ -87,7 +93,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     openPosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
     // mock MMR as very big number, to make this sub account unhealthy
-    mockCalculator.setMMR(type(uint256).max);
+    mockCalculator.setMMR(ALICE, type(uint256).max);
 
     vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderMMR()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30);
@@ -101,7 +107,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 10,000 TOKENs
+    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
@@ -125,14 +131,14 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // check position after decrease
     // open interest delta = open interest * position size to decrease / position size
-    //                     = 10000 * 500000 / 1000000 = 5000
+    //                     = 1000000 * 500000 / 1000000 = 500000
     // new position size = 500000 USD
     // new long average price (global) = current price * new position size / new position size + new global pnl
     //                                 = 0.95 * 500000 / (500000 + (-25000)) = 1 USD
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 500_000 * 1e30,
       reserveValueDelta: 45_000 * 1e30,
-      openInterestDelta: 5_000 * 1e18,
+      openInterestDelta: 500_000 * 1e18,
       // average prices
       newPositionAveragePrice: 1 * 1e30,
       newLongGlobalAveragePrice: 1 * 1e30,
@@ -149,7 +155,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 10,000 TOKENs
+    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
@@ -173,13 +179,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // check position after decrease
     // open interest delta = open interest * position size to decrease / position size
-    //                     = 10000 * 500000 / 1000000 = 5000
+    //                     = 1000000 * 500000 / 1000000 = 500000
     // new short average price (global) = current price * new position size / new position size - new global pnl
     //                                  = 0.95 * 500000 / 500000 - (+25000) = 1 USD
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 500_000 * 1e30,
       reserveValueDelta: 45_000 * 1e30,
-      openInterestDelta: 5_000 * 1e18,
+      openInterestDelta: 500_000 * 1e18,
       // average prices
       newPositionAveragePrice: 1 * 1e30,
       newLongGlobalAveragePrice: 0,
@@ -196,7 +202,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 10,000 TOKENs
+    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
@@ -220,13 +226,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // check position after decrease
     // open interest delta = open interest * position size to decrease / position size
-    //                     = 10000 * 1000000 / 1000000 = 10000
+    //                     = 1000000 * 1000000 / 1000000 = 1000000
     // new average price (global) = current price * new position size / new position size - new global pnl
     //                            = 0.95 USD * 0 / 0 - 0 = 0
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 10_000 * 1e18,
+      openInterestDelta: 1_000_000 * 1e18,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0,
@@ -243,7 +249,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 10,000 TOKENs
+    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
@@ -267,13 +273,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // check position after decrease
     // open interest delta = open interest * position size to decrease / position size
-    //                     = 10000 * 1000000 / 1000000 = 10000
+    //                     = 1000000 * 1000000 / 1000000 = 1000000
     // new average price (global) = current price * new position size / new position size - new global pnl
     //                            = 1 USD * 0 / 0 - 0 = 0
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 10_000 * 1e18,
+      openInterestDelta: 1_000_000 * 1e18,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0,

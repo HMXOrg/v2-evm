@@ -8,6 +8,8 @@ import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
+import { console } from "forge-std/console.sol";
+
 contract PositionTester is StdAssertions {
   struct DecreasePositionAssertionData {
     uint256 decreasedPositionSize;
@@ -67,6 +69,8 @@ contract PositionTester is StdAssertions {
       _data.reserveValueDelta,
       "position reserve value"
     );
+    console.log("cachePosition.openInterest", cachePosition.openInterest);
+    console.log("_currentPosition.openInterest", _currentPosition.openInterest);
     assertEq(
       cachePosition.openInterest - _currentPosition.openInterest,
       _data.openInterestDelta,
@@ -86,6 +90,9 @@ contract PositionTester is StdAssertions {
         "market long position size"
       );
       assertEq(_currentMarketGlobal.longAvgPrice, _data.newLongGlobalAveragePrice, "global long average price");
+
+      console.log("cacheMarketGlobal.longOpenInterest", cacheMarketGlobal.longOpenInterest);
+      console.log("_currentMarketGlobal.longOpenInterest", _currentMarketGlobal.longOpenInterest);
       assertEq(
         cacheMarketGlobal.longOpenInterest - _currentMarketGlobal.longOpenInterest,
         _data.openInterestDelta,

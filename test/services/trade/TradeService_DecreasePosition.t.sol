@@ -34,6 +34,8 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - trading curcuit break
 // - post validation
 //   - sub account is unhealthy (equity < MMR) after decreased position
+// - complex case
+//   - average price with multiple position in protocal
 
 contract TradeService_DecreasePosition is TradeService_Base {
   function setUp() public virtual override {

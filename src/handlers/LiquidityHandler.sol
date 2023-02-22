@@ -87,6 +87,12 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
    * Core Function
    */
 
+  /// @notice Create a new AddLiquidity order
+  /// @param _tokenIn address token in
+  /// @param _amountIn amount token in (based on decimals)
+  /// @param _minOut minPLP out
+  /// @param _executionFee The execution fee of order
+  /// @param _shouldWrap in case of sending native token
   function createAddLiquidityOrder(
     address _tokenIn,
     uint256 _amountIn,
@@ -127,7 +133,12 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     emit LogCreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee);
   }
 
-  /// @notice createOrder for removeLiquidity
+  /// @notice Create a new RemoveLiquidity order
+  /// @param _tokenOut address token in
+  /// @param _amountIn amount token in (based on decimals)
+  /// @param _minOut minAmoutOut
+  /// @param _executionFee The execution fee of order
+  /// @param _shouldUnwrap in case of user need native token
   function createRemoveLiquidityOrder(
     address _tokenOut,
     uint256 _amountIn,
@@ -165,11 +176,15 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     emit LogCreateRemoveLiquidityOrder(msg.sender, _tokenOut, _amountIn, _minOut, _executionFee, _shouldUnwrap);
   }
 
-  /// @notice if user deposit native and failed, it will return to wrappedToken
+  /// @notice Cancel order
+  /// @param _orderIndex orderIndex of user order
   function cancelLiquidityOrder(uint256 _orderIndex) external nonReentrant {
     _cancelLiquidityOrder(msg.sender, _orderIndex);
   }
 
+  /// @notice Cancel order
+  /// @param _account the primary account
+  /// @param _orderIndex Order Index which could be retrieved from lastOrderIndex(address) beware in case of index is 0`
   function _cancelLiquidityOrder(address _account, uint256 _orderIndex) internal {
     // check _orderIndex not more than lastOrderIndex and data is removed?
     if (
@@ -187,12 +202,17 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     }
   }
 
+  /// @notice Refund when cancel order, execution add failed
+  /// @param _order order to execute
   function _userRefund(LiquidityOrder memory _order) internal {
     try this.refund(_order) {} catch Error(string memory) {
       revert ILiquidityHandler_InsufficientRefund();
     }
   }
 
+  /// @notice refund order
+  /// @dev this method has not be called directly
+  /// @param _order order to execute
   function refund(LiquidityOrder memory _order) external {
     if (isRefund) {
       if (_order.token == IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()) {
@@ -205,6 +225,10 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     }
   }
 
+  /// @notice orderExecutor pending order
+  /// @param _account the primary account of user
+  /// @param _orderIndex Order Index which could be retrieved from lastOrderIndex(address) beware in case of index is 0`
+  /// @param _priceData Price data from Pyth to be used for updating the market prices
   function executeOrder(
     address _account,
     uint256 _orderIndex,
@@ -230,6 +254,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     }
   }
 
+  /// @notice execute either addLiquidity or removeLiquidity
+  /// @param _order order of executing
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
     if (isExecuting) {
       if (_order.isAdd) {
@@ -281,6 +307,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
    * GETTER
    */
 
+  /// @notice get liquidity order
+  /// @param _account the primary account of user
   function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory) {
     return liquidityOrders[_account];
   }
@@ -288,6 +316,9 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /**
    * SETTER
    */
+
+  /// @notice setLiquidityService
+  /// @param _newLiquidityService liquidityService address
   function setLiquidityService(address _newLiquidityService) external onlyOwner {
     if (_newLiquidityService == address(0)) revert ILiquidityHandler_InvalidAddress();
     emit LogSetLiquidityService(liquidityService, _newLiquidityService);
@@ -295,11 +326,16 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     ILiquidityService(_newLiquidityService).vaultStorage();
   }
 
+  /// @notice setMinExecutionFee
+  /// @param _newMinExecutionFee minExecutionFee in ethers
   function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;
   }
 
+  /// @notice setMinExecutionFee
+  /// @param _executor address who will be executor
+  /// @param _isAllow flag to allow to execute
   function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
     orderExecutors[_executor] = _isAllow;
     emit LogSetOrderExecutor(_executor, _isAllow);

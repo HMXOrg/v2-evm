@@ -32,7 +32,9 @@ interface IPerpStorage {
     uint256 shortAvgPrice;
     uint256 shortOpenInterest;
     // funding rate
-    uint256 fundingRate;
+    int256 accumFundingRateLong; //1e18 = 100%
+    int256 accumFundingRateShort; //1e18 = 100%
+    int256 currentFundingRate;
     uint256 lastFundingTime;
   }
 

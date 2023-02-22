@@ -240,36 +240,42 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // add market config
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage.MarketConfig({
       assetId: "ETH",
-      assetClass: 0,
+      assetClass: 1,
+      exponent: 18,
       maxProfitRate: 9e18,
-      longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-      shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-      minLeverage: 1 * 1e18,
+      minLeverage: 1,
       initialMarginFraction: 0.01 * 1e18,
       maintenanceMarginFraction: 0.005 * 1e18,
       increasePositionFeeRate: 0,
       decreasePositionFeeRate: 0,
-      maxFundingRate: 0,
       priceConfidentThreshold: 0.01 * 1e18,
       allowIncreasePosition: true,
-      active: true
+      active: true,
+      openInterest: IConfigStorage.OpenInterest({
+        longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+        shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
+      }),
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
       assetId: "BTC",
-      assetClass: 0,
+      assetClass: 1,
+      exponent: 8,
       maxProfitRate: 9e18,
-      longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-      shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-      minLeverage: 1 * 1e18,
+      minLeverage: 1,
       initialMarginFraction: 0.01 * 1e18,
       maintenanceMarginFraction: 0.005 * 1e18,
       increasePositionFeeRate: 0,
       decreasePositionFeeRate: 0,
-      maxFundingRate: 0,
       priceConfidentThreshold: 0.01 * 1e18,
       allowIncreasePosition: true,
-      active: true
+      active: true,
+      openInterest: IConfigStorage.OpenInterest({
+        longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+        shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
+      }),
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
     ethMarketIndex = configStorage.addMarketConfig(_ethConfig);

@@ -5,7 +5,7 @@ import { ICalculator } from "../../src/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
 
-contract MockCalculator is ICalculator {
+contract MockCalculator {
   uint256 equity;
   uint256 freeCollateral;
   uint256 mmr;

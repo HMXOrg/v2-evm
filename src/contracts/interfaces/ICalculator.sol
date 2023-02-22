@@ -5,10 +5,22 @@ import { IConfigStorage } from "../../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../../storages/interfaces/IVaultStorage.sol";
 
 interface ICalculator {
-  // ERRORs
+  // ERRORS
   error ICalculator_InvalidAddress();
   error ICalculator_InvalidAveragePrice();
   error ICalculator_PoolImbalance();
+
+  // STRUCTS
+  struct GetFundingRateVar {
+    uint256 fundingInterval;
+    uint256 marketPriceE30;
+    int256 marketSkewUSDE30;
+    int256 tempMaxValue;
+    int256 tempMinValue;
+    int256 nextFundingRate;
+    int256 newFundingRate;
+    int256 intervals;
+  }
 
   //@todo - will be use in _getFeeRate
   enum LiquidityDirection {
@@ -83,4 +95,13 @@ interface ICalculator {
   // @todo - Add Description
   /// @return _mmrValueE30 Total mmr of trader's account
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
+
+  /// @notice Calculate next funding rate using when increase/decrease position.
+  /// @param marketIndex Market Index.
+  /// @return fundingRate next funding rate using for both LONG & SHORT positions.
+  /// @return fundingRateLong next funding rate for LONG.
+  /// @return fundingRateShort next funding rate for SHORT.
+  function getNextFundingRate(
+    uint256 marketIndex
+  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort);
 }

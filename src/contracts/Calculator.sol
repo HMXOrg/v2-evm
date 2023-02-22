@@ -13,6 +13,8 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
+import { console } from "forge-std/console.sol";
+
 contract Calculator is Owned, ICalculator {
   uint256 internal constant MAX_RATE = 1e18;
 
@@ -570,5 +572,120 @@ contract Calculator is Owned, ICalculator {
 
     _freeCollateral = equity - imr;
     return _freeCollateral;
+  }
+
+  /**
+   * Funding Rate
+   */
+  function getEntryFundingRate(uint256 _marketIndex, bool _isLong) public view returns (int256) {
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    return _isLong ? _globalMarket.accumFundingRateLong : _globalMarket.accumFundingRateShort;
+  }
+
+  function getFundingFee(
+    uint256 _marketIndex,
+    bool _isLong,
+    int256 _size,
+    int256 _entryFundingRate
+  ) public view returns (int256) {
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    if (_size == 0) return 0;
+
+    int256 _fundingRate = _isLong
+      ? _globalMarket.accumFundingRateLong - _entryFundingRate
+      : _globalMarket.accumFundingRateShort - _entryFundingRate;
+
+    return (_size * _fundingRate) / 1e18;
+  }
+
+  /// @notice Calculate next funding rate using when increase/decrease position.
+  /// @param marketIndex Market Index.
+  /// @return fundingRate next funding rate using for both LONG & SHORT positions.
+  /// @return fundingRateLong next funding rate for LONG.
+  /// @return fundingRateShort next funding rate for SHORT.
+  function getNextFundingRate(
+    uint256 marketIndex
+  ) public view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+    console.log("=====================================================================================");
+    GetFundingRateVar memory vars;
+    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(marketIndex);
+    IPerpStorage.GlobalMarket memory globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(marketIndex);
+
+    // Get funding inteval
+    vars.fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
+
+    // If block.timestamp not pass the next funding time, return 0.
+    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
+
+    //@todo - validate timestamp of these
+    (vars.marketPriceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
+      marketConfig.assetId,
+      false,
+      marketConfig.priceConfidentThreshold
+    );
+
+    console.log("vars.marketPriceE30", vars.marketPriceE30);
+    console.log("marketConfig.exponent", marketConfig.exponent);
+
+    vars.marketSkewUSDE30 =
+      ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
+      int(10 ** marketConfig.exponent);
+
+    console.log("vars.marketSkewUSDE30");
+    console.logInt(vars.marketSkewUSDE30);
+    console.log("marketConfig.fundingRate.maxSkewScaleUSD", marketConfig.fundingRate.maxSkewScaleUSD);
+
+    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
+    vars.tempMaxValue = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
+    console.log("vars.tempMaxValue");
+    console.logInt(vars.tempMaxValue);
+
+    vars.tempMinValue = _min(vars.tempMaxValue, 1e18);
+    console.log("vars.tempMinValue");
+    console.logInt(vars.tempMinValue);
+
+    vars.nextFundingRate = (vars.tempMinValue * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
+    console.log("vars.nextFundingRate");
+    console.logInt(vars.nextFundingRate);
+
+    vars.newFundingRate = globalMarket.currentFundingRate + vars.nextFundingRate;
+
+    console.log("vars.newFundingRate");
+    console.logInt(vars.newFundingRate);
+
+    vars.intervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
+
+    console.log("vars.intervals");
+    console.logInt(vars.intervals);
+
+    if (globalMarket.longOpenInterest > 0) {
+      console.log("globalMarket.longPositionSize", globalMarket.longPositionSize);
+
+      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize) * vars.intervals) / 1e30;
+      console.log("fundingRateLong");
+      console.logInt(fundingRateLong);
+    }
+    if (globalMarket.shortOpenInterest > 0) {
+      console.log("globalMarket.shortPositionSize", globalMarket.shortPositionSize);
+
+      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize) * vars.intervals) / 1e30;
+      console.log("fundingRateShort");
+      console.logInt(fundingRateShort);
+    }
+
+    return (vars.newFundingRate, fundingRateLong, fundingRateShort);
+  }
+
+  /**
+   * Funding Rate
+   */
+
+  function _max(int256 a, int256 b) internal pure returns (int256) {
+    return a > b ? a : b;
+  }
+
+  function _min(int256 a, int256 b) internal pure returns (int256) {
+    return a < b ? a : b;
   }
 }

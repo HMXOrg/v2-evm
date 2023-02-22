@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Owned } from "../base/Owned.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // interfaces
 import { ILiquidityHandler } from "./interfaces/ILiquidityHandler.sol";
@@ -18,12 +19,13 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
 
-/// @title LiquidityService
-contract LiquidityHandler is Owned, ILiquidityHandler {
+/// @title LiquidityHandler
+contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   using SafeERC20 for IERC20;
 
   event LogSetLiquidityService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogSetPyth(address oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event CreateAddLiquidityOrder(
     address indexed account,
@@ -103,6 +105,7 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
     if (_newLiquidityService == address(0)) revert ILiquidityHandler_InvalidAddress();
     emit LogSetLiquidityService(liquidityService, _newLiquidityService);
     liquidityService = _newLiquidityService;
+    ILiquidityService(_newLiquidityService).vaultStorage();
   }
 
   function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
@@ -115,6 +118,17 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
     emit LogSetOrderExecutor(_executor, _isAllow);
   }
 
+  /// @notice Set new Pyth contract address.
+  /// @param _pyth New Pyth contract address.
+  function setPyth(address _pyth) external onlyOwner {
+    if (_pyth == address(0)) revert ILiquidityHandler_InvalidAddress();
+    emit LogSetPyth(pyth, _pyth);
+    pyth = _pyth;
+
+    // Sanity check
+    IPyth(_pyth).getValidTimePeriod();
+  }
+
   /**
    * Core Function
    */
@@ -125,7 +139,7 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldWrap
-  ) external payable onlyAcceptedToken(_tokenIn) {
+  ) external payable nonReentrant onlyAcceptedToken(_tokenIn) {
     //1. convert native to WNative (including executionFee)
     _transferInETH();
 
@@ -166,7 +180,7 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldUnwrap
-  ) external payable onlyAcceptedToken(_tokenOut) {
+  ) external payable nonReentrant onlyAcceptedToken(_tokenOut) {
     //convert native to WNative (including executionFee)
     _transferInETH();
 
@@ -198,7 +212,7 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
   }
 
   /// @notice if user deposit native and failed, it will return to wrappedToken
-  function cancelLiquidityOrder(uint256 _orderIndex) external {
+  function cancelLiquidityOrder(uint256 _orderIndex) external nonReentrant {
     _cancelLiquidityOrder(msg.sender, _orderIndex);
   }
 
@@ -237,7 +251,10 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
     }
   }
 
-  function executeOrders(LiquidityOrder[] memory _orders, bytes[] memory _priceData) external onlyOrderExecutor {
+  function executeOrders(
+    LiquidityOrder[] memory _orders,
+    bytes[] memory _priceData
+  ) external nonReentrant onlyOrderExecutor {
     // Update price to Pyth
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);

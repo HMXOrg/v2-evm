@@ -169,7 +169,7 @@ contract TradeService is ITradeService {
 
       // update gobal market state
       if (_isLong) {
-        uint256 _nextAvgPrice = _isNewPosition
+        uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
           ? _priceE30
           : _calcualteLongAveragePrice(_globalMarket, _priceE30, _sizeDelta, 0);
 
@@ -181,7 +181,7 @@ contract TradeService is ITradeService {
         );
       } else {
         // to increase SHORT position sizeDelta should be negative
-        uint256 _nextAvgPrice = _isNewPosition
+        uint256 _nextAvgPrice = _globalMarket.shortPositionSize == 0
           ? _priceE30
           : _calculateShortAveragePrice(_globalMarket, _priceE30, _sizeDelta, 0);
 

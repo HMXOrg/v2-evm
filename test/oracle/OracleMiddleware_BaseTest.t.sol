@@ -17,11 +17,7 @@ contract OracleMiddleware_BaseTest is BaseTest {
 
     // Feed wbtc
     {
-      deployed.pythAdapter.setUpdater(ALICE, true);
-      deployed.pythAdapter.setPythPriceId(
-        address(wbtc).toBytes32(),
-        wbtcPriceId
-      );
+      deployed.pythAdapter.setPythPriceId(address(wbtc).toBytes32(), wbtcPriceId);
 
       bytes[] memory priceDataBytes = new bytes[](1);
       priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
@@ -35,9 +31,7 @@ contract OracleMiddleware_BaseTest is BaseTest {
       );
 
       vm.startPrank(ALICE);
-      deployed.pythAdapter.updatePrices{
-        value: deployed.pythAdapter.getUpdateFee(priceDataBytes)
-      }(priceDataBytes);
+      mockPyth.updatePriceFeeds{ value: mockPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
       vm.stopPrank();
     }
   }

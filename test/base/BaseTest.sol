@@ -13,7 +13,6 @@ import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockWNative } from "../mocks/MockWNative.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
-import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
 import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
 import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
@@ -33,6 +32,7 @@ import { Calculator } from "../../src/contracts/Calculator.sol";
 
 // Handlers
 import { LiquidityHandler } from "../../src/handlers/LiquidityHandler.sol";
+import { CrossMarginHandler } from "../../src/handlers/CrossMarginHandler.sol";
 
 // Services
 import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
@@ -157,6 +157,18 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     return deploy(deployLocalVars);
   }
 
+  /**
+   * HANDLER
+   */
+
+  function deployCrossMarginHandler(address _crossMarginService, address _pyth) internal returns (CrossMarginHandler) {
+    return new CrossMarginHandler(_crossMarginService, _pyth);
+  }
+
+  /**
+   * SERVICE
+   */
+
   function deployCrossMarginService(
     address _configStorage,
     address _vaultStorage,
@@ -164,6 +176,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   ) internal returns (CrossMarginService) {
     return new CrossMarginService(_configStorage, _vaultStorage, _calculator);
   }
+
+  /**
+   * CALCULATOR
+   */
 
   function deployCalculator(
     address _oracle,
@@ -174,7 +190,9 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     return new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
   }
 
-  // --------- Test Helpers ---------
+  /**
+   * TEST HELPERS
+   */
 
   /// @notice Helper function to create a price feed update data.
   /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.

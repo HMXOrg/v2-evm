@@ -3,9 +3,14 @@ pragma solidity 0.8.18;
 
 interface ICrossMarginService {
   // ERRORs
+  error ICrossMarginService_InvalidDepositBalance();
   error ICrossMarginService_InvalidAddress();
   error ICrossMarginService_InsufficientBalance();
   error ICrossMarginService_WithdrawBalanceBelowIMR();
+
+  function configStorage() external returns (address _configStorage);
+
+  function vaultStorage() external returns (address _vaultStorage);
 
   /// @notice Set new ConfigStorage contract address.
   /// @dev This uses to retrive all config information on protocal.
@@ -19,23 +24,17 @@ interface ICrossMarginService {
 
   /// @notice Calculate new trader balance after deposit collateral token.
   /// @dev This uses to calculate new trader balance when they deposit token as collateral.
-  /// @param _subAccount Trader's address that combined between Primary account and Sub account.
+  /// @param _primaryAccount Trader's primary address from trader's wallet.
+  /// @param _subAccountId Trader's Sub-Account Id.
   /// @param _token Token that's deposited as collateral.
   /// @param _amount Token depositing amount.
-  function depositCollateral(
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external;
+  function depositCollateral(address _primaryAccount, uint256 _subAccountId, address _token, uint256 _amount) external;
 
   /// @notice Calculate new trader balance after withdraw collateral token.
   /// @dev This uses to calculate new trader balance when they withdrawing token as collateral.
-  /// @param _subAccount Trader's address that combined between Primary account and Sub account.
+  /// @param _primaryAccount Trader's primary address from trader's wallet.
+  /// @param _subAccountId Trader's Sub-Account Id.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
-  function withdrawCollateral(
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external;
+  function withdrawCollateral(address _primaryAccount, uint256 _subAccountId, address _token, uint256 _amount) external;
 }

@@ -93,9 +93,9 @@ contract VaultStorage is IVaultStorage {
     plpLiquidity[_token] -= _amount;
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  VALIDATION
-  ////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * VALIDATION
+   */
 
   function validatAddTraderToken(address _trader, address _token) public view {
     address[] storage traderToken = traderTokens[_trader];
@@ -112,17 +112,17 @@ contract VaultStorage is IVaultStorage {
     if (traderBalances[_trader][_token] != 0) revert IVaultStorage_TraderBalanceRemaining();
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  GETTER
-  ////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * GETTER
+   */
 
   function getTraderTokens(address _subAccount) external view returns (address[] memory) {
     return traderTokens[_subAccount];
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER
-  ////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * SETTER
+   */
 
   function setTraderBalance(address _trader, address _token, uint256 _balance) external {
     traderBalances[_trader][_token] = _balance;
@@ -158,11 +158,33 @@ contract VaultStorage is IVaultStorage {
     }
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////// CALCULATION
-  ////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * CALCULATION
+   */
   // @todo - add only whitelisted services
   function transferToken(address _subAccount, address _token, uint256 _amount) external {
     IERC20(_token).safeTransfer(_subAccount, _amount);
+  }
+
+  function pullPLPLiquidity(address _token) external view returns (uint256) {
+    return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
+  }
+
+  /**
+   * ERC20 interaction functions
+   */
+
+  function pullToken(address _token) external returns (uint256) {
+    uint256 prevBalance = totalAmount[_token];
+    uint256 nextBalance = IERC20(_token).balanceOf(address(this));
+
+    totalAmount[_token] = nextBalance;
+
+    return nextBalance - prevBalance;
+  }
+
+  function pushToken(address _token, address _to, uint256 _amount) external {
+    IERC20(_token).transfer(_to, _amount);
+    totalAmount[_token] = IERC20(_token).balanceOf(address(this));
   }
 }

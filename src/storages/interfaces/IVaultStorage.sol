@@ -16,20 +16,17 @@ interface IVaultStorage {
     address _token
   ) external view returns (uint256 _amount);
 
-  function traderBalances(
-    address _trader,
-    address _token
-  ) external view returns (uint256 amount);
+  function traderBalances(address _trader, address _token) external view returns (uint256 amount);
 
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  GETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function getTraderTokens(
-    address _trader
-  ) external view returns (address[] memory);
+  function getTraderTokens(address _trader) external view returns (address[] memory);
 
   function fees(address _token) external view returns (uint256);
+
+  function devFees(address _token) external view returns (uint256);
 
   function plpLiquidityUSDE30(address _token) external view returns (uint256);
 
@@ -41,17 +38,15 @@ interface IVaultStorage {
 
   function addFee(address _token, uint256 _amount) external;
 
+  function addDevFee(address _token, uint256 _amount) external;
+
   function addPLPLiquidityUSDE30(address _token, uint256 amount) external;
 
   function addPLPTotalLiquidityUSDE30(uint256 _liquidity) external;
 
   function addPLPLiquidity(address _token, uint256 _amount) external;
 
-  function withdrawFee(
-    address _token,
-    uint256 _amount,
-    address _receiver
-  ) external;
+  function withdrawFee(address _token, uint256 _amount, address _receiver) external;
 
   function removePLPLiquidityUSDE30(address _token, uint256 amount) external;
 
@@ -63,19 +58,11 @@ interface IVaultStorage {
   //////////////////////  SETTER
   ////////////////////////////////////////////////////////////////////////////////////
 
-  function setTraderBalance(
-    address _trader,
-    address _token,
-    uint256 _balance
-  ) external;
+  function setTraderBalance(address _trader, address _token, uint256 _balance) external;
 
   function addTraderToken(address _trader, address _token) external;
 
   function removeTraderToken(address _trader, address _token) external;
 
-  function transferToken(
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external;
+  function transferToken(address _subAccount, address _token, uint256 _amount) external;
 }

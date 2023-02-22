@@ -24,12 +24,16 @@ abstract contract TradeService_Base is BaseTest {
     tradeService = new TradeService(address(perpStorage), address(vaultStorage), address(configStorage));
   }
 
+  function getSubAccount(address _account, uint256 _subAccountId) internal pure returns (address) {
+    return address(uint160(_account) ^ uint160(_subAccountId));
+  }
+
   function getPositionId(
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex
   ) internal pure returns (bytes32) {
-    address _subAccount = address(uint160(_account) ^ uint160(_subAccountId));
+    address _subAccount = getSubAccount(_account, _subAccountId);
     return keccak256(abi.encodePacked(_subAccount, _marketIndex));
   }
 
@@ -72,7 +76,9 @@ abstract contract TradeService_Base is BaseTest {
       );
     }
 
-    perpStorage.updateGlobalState(_reserveValueE30);
+    IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
+    _globalState.reserveValueE30 = _reserveValueE30;
+    perpStorage.updateGlobalState(_globalState);
 
     // MMR = 0.5% of position size
     mockCalculator.setMMR((_absoluteSizeE30 * 5e15) / 1e18);

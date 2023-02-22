@@ -26,14 +26,14 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
-  event CreateAddLiquidityOrder(
+  event LogCreateAddLiquidityOrder(
     address indexed account,
     address token,
     uint256 amountIn,
     uint256 minOut,
     uint256 executionFee
   );
-  event CreateRemoveLiquidityOrder(
+  event LogCreateRemoveLiquidityOrder(
     address indexed account,
     address token,
     uint256 amountIn,
@@ -41,7 +41,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 executionFee,
     bool shouldUnwrap
   );
-  event ExecuteLiquidityOrder(
+  event LogExecuteLiquidityOrder(
     address payable account,
     address token,
     uint256 amount,
@@ -49,7 +49,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     bool isAdd,
     uint256 actualOut
   );
-  event CancelLiquidityOrder(address payable account, address token, uint256 amount, uint256 minOut, bool isAdd);
+  event LogCancelLiquidityOrder(address payable account, address token, uint256 amount, uint256 minOut, bool isAdd);
 
   mapping(address => LiquidityOrder[]) public liquidityOrders; // user address => all liquidityOrder
   mapping(address => uint256) public lastOrderIndex; // user address => lastOrderIndex of liquidityOrder
@@ -81,51 +81,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   modifier onlyAcceptedToken(address _token) {
     IConfigStorage(ILiquidityService(liquidityService).configStorage()).validateAcceptedLiquidityToken(_token);
     _;
-  }
-
-  // Only whitelisted addresses can be able to execute limit orders
-  modifier onlyOrderExecutor() {
-    if (!orderExecutors[msg.sender]) revert ILiquidityHandler_NotWhitelisted();
-    _;
-  }
-
-  /**
-   * GETTER
-   */
-
-  function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory) {
-    return liquidityOrders[_account];
-  }
-
-  /**
-   * SETTER
-   */
-  function setLiquidityService(address _newLiquidityService) external onlyOwner {
-    if (_newLiquidityService == address(0)) revert ILiquidityHandler_InvalidAddress();
-    emit LogSetLiquidityService(liquidityService, _newLiquidityService);
-    liquidityService = _newLiquidityService;
-    ILiquidityService(_newLiquidityService).vaultStorage();
-  }
-
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
-    emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
-    minExecutionFee = _newMinExecutionFee;
-  }
-
-  function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
-    orderExecutors[_executor] = _isAllow;
-    emit LogSetOrderExecutor(_executor, _isAllow);
-  }
-
-  /// @notice Set new Pyth contract address.
-  /// @param _pyth New Pyth contract address.
-  function setPyth(address _pyth) external onlyOwner {
-    if (_pyth == address(0)) revert ILiquidityHandler_InvalidAddress();
-    emit LogSetPyth(pyth, _pyth);
-    pyth = _pyth;
-
-    // Sanity check
-    IPyth(_pyth).getValidTimePeriod();
   }
 
   /**
@@ -169,7 +124,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       ++lastOrderIndex[msg.sender];
     }
 
-    emit CreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee);
+    emit LogCreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee);
   }
 
   /// @notice createOrder for removeLiquidity
@@ -207,7 +162,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     if (liquidityOrders[msg.sender].length > 1) {
       ++lastOrderIndex[msg.sender];
     }
-    emit CreateRemoveLiquidityOrder(msg.sender, _tokenOut, _amountIn, _minOut, _executionFee, _shouldUnwrap);
+    emit LogCreateRemoveLiquidityOrder(msg.sender, _tokenOut, _amountIn, _minOut, _executionFee, _shouldUnwrap);
   }
 
   /// @notice if user deposit native and failed, it will return to wrappedToken
@@ -225,7 +180,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       _userRefund(order);
       delete liquidityOrders[_account][_orderIndex];
 
-      emit CancelLiquidityOrder(payable(_account), order.token, order.amount, order.minOut, order.isAdd);
+      emit LogCancelLiquidityOrder(payable(_account), order.token, order.amount, order.minOut, order.isAdd);
       isRefund = false;
     } else {
       revert ILiquidityHandler_NoOrder();
@@ -263,7 +218,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     if (liquidityOrders[_account].length > 0) {
       LiquidityOrder memory _order = liquidityOrders[_account][_orderIndex];
       try this.executeLiquidity(_order) returns (uint256 result) {
-        emit ExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
+        emit LogExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
         delete liquidityOrders[_order.account][_orderIndex];
       } catch Error(string memory) {
         _userRefund(_order);
@@ -314,5 +269,50 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     IWNative(IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
     payable(_receiver).transfer(_amountOut);
+  }
+
+  // Only whitelisted addresses can be able to execute limit orders
+  modifier onlyOrderExecutor() {
+    if (!orderExecutors[msg.sender]) revert ILiquidityHandler_NotWhitelisted();
+    _;
+  }
+
+  /**
+   * GETTER
+   */
+
+  function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory) {
+    return liquidityOrders[_account];
+  }
+
+  /**
+   * SETTER
+   */
+  function setLiquidityService(address _newLiquidityService) external onlyOwner {
+    if (_newLiquidityService == address(0)) revert ILiquidityHandler_InvalidAddress();
+    emit LogSetLiquidityService(liquidityService, _newLiquidityService);
+    liquidityService = _newLiquidityService;
+    ILiquidityService(_newLiquidityService).vaultStorage();
+  }
+
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
+    emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
+    minExecutionFee = _newMinExecutionFee;
+  }
+
+  function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
+    orderExecutors[_executor] = _isAllow;
+    emit LogSetOrderExecutor(_executor, _isAllow);
+  }
+
+  /// @notice Set new Pyth contract address.
+  /// @param _pyth New Pyth contract address.
+  function setPyth(address _pyth) external onlyOwner {
+    if (_pyth == address(0)) revert ILiquidityHandler_InvalidAddress();
+    emit LogSetPyth(pyth, _pyth);
+    pyth = _pyth;
+
+    // Sanity check
+    IPyth(_pyth).getValidTimePeriod();
   }
 }

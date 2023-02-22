@@ -74,6 +74,7 @@ contract LiquidityService is ILiquidityService {
 
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
+    // 2. getMinPrice for using to join Pool
     (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(
       _token.toBytes32(),
       false,
@@ -307,7 +308,6 @@ contract LiquidityService is ILiquidityService {
   }
 
   function _validatePreAddRemoveLiquidity(address _token, uint256 _amount) internal view {
-    // 2. _validate
     IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
 
     if (!IConfigStorage(configStorage).getLiquidityConfig().enabled) {

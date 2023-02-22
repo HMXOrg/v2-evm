@@ -2,6 +2,25 @@
 pragma solidity 0.8.18;
 
 interface ILiquidityHandler {
+  error ILiquidityHandler_InvalidSender();
+  error ILiquidityHandler_InsufficientExecutionFee();
+  error ILiquidityHandler_InCorrectValueTransfer();
+  error ILiquidityHandler_InsufficientRefund();
+  error ILiquidityHandler_NotWhitelisted();
+  error ILiquidityHandler_InvalidAddress();
+  error ILiquidityHandler_NotRefundState();
+  error ILiquidityHandler_NotExecutionState();
+  error ILiquidityHandler_NoOrder();
+
+  struct LiquidityOrder {
+    address payable account;
+    address token;
+    uint256 amount;
+    uint256 minOut;
+    bool isAdd;
+    bool shouldUnwrap; // unwrap nativetoken when removeLiquidity
+  }
+
   function createAddLiquidityOrder(
     address _tokenBuy,
     uint256 _amountIn,
@@ -25,23 +44,4 @@ interface ILiquidityHandler {
   function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory);
 
   function lastOrderIndex(address _account) external view returns (uint256);
-
-  struct LiquidityOrder {
-    address payable account;
-    address token;
-    uint256 amount;
-    uint256 minOut;
-    bool isAdd;
-    bool shouldUnwrap; // unwrap nativetoken when removeLiquidity
-  }
-
-  error ILiquidityHandler_InvalidSender();
-  error ILiquidityHandler_InsufficientExecutionFee();
-  error ILiquidityHandler_InCorrectValueTransfer();
-  error ILiquidityHandler_InsufficientRefund();
-  error ILiquidityHandler_NotWhitelisted();
-  error ILiquidityHandler_InvalidAddress();
-  error ILiquidityHandler_NotRefundState();
-  error ILiquidityHandler_NotExecutionState();
-  error ILiquidityHandler_NoOrder();
 }

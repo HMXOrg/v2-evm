@@ -5,8 +5,6 @@ import { Owned } from "../base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 
-import { console } from "forge-std/console.sol";
-
 contract OracleMiddleware is Owned, IOracleMiddleware {
   // configs
   IOracleAdapter public pythAdapter;
@@ -142,9 +140,6 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     (_price, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _confidenceThreshold);
 
     // check price age
-    console.log("block.timestamp", block.timestamp);
-    console.log("_lastUpdate", _lastUpdate);
-    console.log("_trustPriceAge", _trustPriceAge);
     if (block.timestamp - _lastUpdate > _trustPriceAge) revert IOracleMiddleware_PythPriceStale();
 
     // 2. Return the price and last update

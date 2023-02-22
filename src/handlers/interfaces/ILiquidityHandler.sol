@@ -24,6 +24,8 @@ interface ILiquidityHandler {
 
   function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory);
 
+  function lastOrderIndex(address _account) external view returns (uint256);
+
   struct LiquidityOrder {
     address payable account;
     address token;

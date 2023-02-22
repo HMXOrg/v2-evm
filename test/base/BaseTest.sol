@@ -131,6 +131,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // set general config
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
+    configStorage.setWeth(address(weth));
   }
 
   // --------- Deploy Helpers ---------
@@ -354,11 +355,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   }
 
   function deployLiquidityHandler(
-    address _weth,
     address _liquidityService,
     address _pyth,
     uint256 _minExecutionFee
   ) internal returns (LiquidityHandler) {
-    return new LiquidityHandler(_weth, _liquidityService, _pyth, _minExecutionFee);
+    return new LiquidityHandler(_liquidityService, _pyth, _minExecutionFee);
   }
 }

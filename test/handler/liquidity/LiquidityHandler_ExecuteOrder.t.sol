@@ -12,23 +12,8 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     liquidityHandler.setOrderExecutor(address(this), true);
   }
 
-  /// @notice
-
-  // test_correctness_refund Order
-  // test_correctness_createRemoveLiquidity Order ()
-  // test_revert_createRemoveLiquidity Order
-  // test_revert_notOrderExecutor
-
-  function test_correctness_executeOrder_IncreaseOneOrder() external {
-    ILiquidityHandler.LiquidityOrder memory increaseOrder = ILiquidityHandler.LiquidityOrder({
-      account: payable(address(this)),
-      token: address(wbtc),
-      amount: 1 ether,
-      minOut: 1 ether,
-      isAdd: true,
-      shouldUnwrap: false
-    });
-
+  function _createIncreaseOrder() internal {
+    vm.deal(ALICE, 5 ether); //deal with out of gas
     weth.mint(ALICE, 10 ether);
     wbtc.mint(ALICE, 1 ether);
     console.log("alice", address(ALICE));
@@ -39,20 +24,67 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(address(wbtc), 1 ether, 1 ether, 5 ether, false);
 
+    // Assertion after createLiquidity
+    // alice should has 0 wbtc (open order),  (5 weth left)
+    // handler should has 1 order on alice
     assertEq(weth.balanceOf(address(liquidityHandler)), 5 ether, "Native Token Balance");
+    assertEq(wbtc.balanceOf(ALICE), 0, "User Liquidity Balance");
 
-    console.log(wbtc.balanceOf(address(liquidityHandler)));
-    assertEq(wbtc.balanceOf(address(liquidityHandler)), 0, "User Liquidity Balance");
-
-    ILiquidityHandler.LiquidityOrder[] memory _orderResults = liquidityHandler.getLiquidityOrders(
-      address(liquidityHandler)
+    ILiquidityHandler.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders(
+      address(ALICE)
     );
-    assertEq(_orderResults.length, 1, "Order Amount After Created Order");
     vm.stopPrank();
 
-    // ILiquidityHandler.LiquidityOrder[] memory orders = new ILiquidityHandler.LiquidityOrder[](1);
-    // orders[0] = increaseOrder;
+    assertEq(_beforeExecuteOrders.length, 1, "Order Amount After Created Order");
+    assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Created Order");
 
-    // liquidityHandler.executeOrders(orders, new bytes[](0));
+    assertEq(_beforeExecuteOrders[0].account, ALICE, "Alice Order.account");
+    assertEq(_beforeExecuteOrders[0].token, address(wbtc), "Alice Order.token");
+    assertEq(_beforeExecuteOrders[0].amount, 1 ether, "Alice Order.amount");
+    assertEq(_beforeExecuteOrders[0].minOut, 1 ether, "Alice Order.minOut");
+    assertEq(_beforeExecuteOrders[0].isAdd, true, "Alice Order.isAdd");
+    assertEq(_beforeExecuteOrders[0].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+  }
+
+  function test_correctness_executeOrder_IncreaseOneOrder() external {
+    _createIncreaseOrder();
+
+    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
+    // Handler executor
+    liquidityHandler.executeOrders(_aliceOrdersBefore, new bytes[](0));
+    // Assertion after ExecuteOrder
+
+    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
+    // array size should be the same but LastIndex should be 0
+    assertEq(_aliceOrdersAfter.length, 1, "Order Amount After Executed Order");
+    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
+  }
+
+  function test_correctness_executeOrder_refundOrder() external {
+    _createIncreaseOrder();
+    ILiquidityHandler.LiquidityOrder[] memory aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
+
+    liquidityHandler.cancelLiquidityOrder(aliceOrdersBefore);
+
+    ILiquidityHandler.LiquidityOrder[] memory aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
+    assertEq(aliceOrdersAfter.);
+  }
+
+  function test_correctness_executeOrder_createRemoveLiquidityOrder() external {}
+
+  function test_correctness_cancelOrder() external {}
+
+  function test_revert_createRemoveLiquidityOrder() external {}
+
+  function test_revert_cancelOrder_notOrderExecutor() external {}
+
+  function test_revert_executeOrder_notOrderExecutor() external {
+    _createIncreaseOrder();
+    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
+
+    // Handler executor
+    vm.prank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NotWhitelisted()"));
+    liquidityHandler.executeOrders(_aliceOrdersBefore, new bytes[](0));
   }
 }

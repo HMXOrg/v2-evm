@@ -58,6 +58,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   address public plp;
   address public treasury;
   uint256 public pnlFactor; // factor that calculate unrealized PnL after collateral factor
+  address public weth;
 
   constructor() {
     plpAcceptedTokens.init();
@@ -225,6 +226,10 @@ contract ConfigStorage is IConfigStorage, Owned {
   ) external returns (CollateralTokenConfig memory _collateralTokenConfig) {
     collateralTokenConfigs[_token] = _newConfig;
     return collateralTokenConfigs[_token];
+  }
+
+  function setWeth(address _weth) external {
+    weth = _weth;
   }
 
   /// @notice add or update AcceptedToken

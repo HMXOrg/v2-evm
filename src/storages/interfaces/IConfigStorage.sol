@@ -97,6 +97,8 @@ interface IConfigStorage {
 
   function pnlFactor() external view returns (uint256);
 
+  function weth() external view returns (address);
+
   /**
    * Validation
    */
@@ -175,4 +177,6 @@ interface IConfigStorage {
     address _token,
     CollateralTokenConfig memory _newConfig
   ) external returns (CollateralTokenConfig memory);
+
+  function setWeth(address _weth) external;
 }

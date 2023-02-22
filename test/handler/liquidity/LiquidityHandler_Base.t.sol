@@ -9,6 +9,6 @@ contract LiquidityHandler_Base is BaseTest {
   LiquidityHandler liquidityHandler;
 
   function setUp() public virtual {
-    liquidityHandler = deployLiquidityHandler(address(weth), address(mockLiquidityService), address(mockPyth), 5 ether);
+    liquidityHandler = deployLiquidityHandler(address(mockLiquidityService), address(mockPyth), 5 ether);
   }
 }

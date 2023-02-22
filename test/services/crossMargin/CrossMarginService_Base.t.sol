@@ -55,13 +55,18 @@ contract CrossMarginService_Base is BaseTest {
     // simulate transfer from Handler to VaultStorage
     IERC20(_token).transfer(address(vaultStorage), _depositAmount);
     MockErc20(_token).approve(address(crossMarginService), _depositAmount);
-    crossMarginService.depositCollateral(ALICE, ALICE, _token, _depositAmount);
+    crossMarginService.depositCollateral(ALICE, 1, _token, _depositAmount);
     vm.stopPrank();
   }
 
   function simulateAliceWithdrawToken(address _token, uint256 _withdrawAmount) internal {
     vm.startPrank(ALICE);
-    crossMarginService.withdrawCollateral(ALICE, ALICE, _token, _withdrawAmount);
+    crossMarginService.withdrawCollateral(ALICE, 1, _token, _withdrawAmount);
     vm.stopPrank();
+  }
+
+  function getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 }

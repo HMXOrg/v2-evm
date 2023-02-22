@@ -28,14 +28,14 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   // Try deposit token collateral with not in whitelist
   function testRevert_service_depositCollateral_onlyWhitelistedExecutor() external {
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotWhiteListed()"));
-    crossMarginService.depositCollateral(CROSS_MARGIN_HANDLER, address(this), address(weth), 10 ether);
+    crossMarginService.depositCollateral(CROSS_MARGIN_HANDLER, 1, address(weth), 10 ether);
   }
 
   // Try deposit token collateral with not accepted token (Ex. Fx, Equity)
   function testRevert_service_depositCollateral_onlyAcceptedToken() external {
     vm.prank(CROSS_MARGIN_HANDLER);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
-    crossMarginService.depositCollateral(CROSS_MARGIN_HANDLER, address(this), address(dai), 10 ether);
+    crossMarginService.depositCollateral(CROSS_MARGIN_HANDLER, 1, address(dai), 10 ether);
   }
 
   // Try deposit token collateral with transfer amount to VaultStorage less than state accounting
@@ -49,7 +49,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
 
     MockErc20(token).approve(address(crossMarginService), type(uint256).max);
     vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InvalidDepositBalance()"));
-    crossMarginService.depositCollateral(ALICE, ALICE, token, 1 ether);
+    crossMarginService.depositCollateral(ALICE, 1, token, 1 ether);
     vm.stopPrank();
   }
 
@@ -60,35 +60,35 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
   // Try deposit token collateral with initial balance and test accounting balance
   function testCorrectness_service_depositCollateral_newDepositingToken() external {
     // Before start depositing, ALICE must has 0 amount of WETH token
-    assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 0);
+    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(weth)), 0);
     assertEq(weth.balanceOf(address(vaultStorage)), 0);
 
     weth.mint(ALICE, 10 ether);
     simulateAliceDepositToken(address(weth), 10 ether);
 
     // After deposited, ALICE must has 10 WETH as collateral token
-    assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 10 ether);
+    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(weth)), 10 ether);
     assertEq(weth.balanceOf(address(vaultStorage)), 10 ether);
   }
 
   // Try deposit token collateral with initial balance and test deposit token lists
   function testCorrectness_service_depositCollateral_newDepositingToken_traderTokenList() external {
     // Before ALICE start depositing, token lists must contains no token
-    address[] memory traderTokenBefore = vaultStorage.getTraderTokens(ALICE);
+    address[] memory traderTokenBefore = vaultStorage.getTraderTokens(getSubAccount(ALICE, 1));
     assertEq(traderTokenBefore.length, 0);
 
     weth.mint(ALICE, 10 ether);
     simulateAliceDepositToken(address(weth), 10 ether);
 
     // After ALICE start depositing, token lists must contains 1 token
-    address[] memory traderTokenAfter = vaultStorage.getTraderTokens(ALICE);
+    address[] memory traderTokenAfter = vaultStorage.getTraderTokens(getSubAccount(ALICE, 1));
     assertEq(traderTokenAfter.length, 1);
   }
 
   // Try deposit token collateral with existing balance and test deposit token lists + balance
   function testCorrectness_service_depositCollateral_oldDepositingToken_traderTokenList() external {
     // Before ALICE start depositing, token lists must contains no token
-    address[] memory traderTokenBefore = vaultStorage.getTraderTokens(ALICE);
+    address[] memory traderTokenBefore = vaultStorage.getTraderTokens(getSubAccount(ALICE, 1));
     assertEq(traderTokenBefore.length, 0);
 
     // ALICE deposits first time
@@ -100,11 +100,11 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     simulateAliceDepositToken(address(weth), 10 ether);
 
     // After ALICE start depositing, token lists must contains 1 token
-    address[] memory traderTokenAfter = vaultStorage.getTraderTokens(ALICE);
+    address[] memory traderTokenAfter = vaultStorage.getTraderTokens(getSubAccount(ALICE, 1));
     assertEq(traderTokenAfter.length, 1);
 
     // After deposited, ALICE must has 20 WETH as collateral token
-    assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 20 ether);
+    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(weth)), 20 ether);
     assertEq(weth.balanceOf(address(vaultStorage)), 20 ether);
   }
 }

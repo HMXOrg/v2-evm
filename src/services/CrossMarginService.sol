@@ -68,16 +68,19 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /// @notice Calculate new trader balance after deposit collateral token.
   /// @dev This uses to calculate new trader balance when they deposit token as collateral.
   /// @param _primaryAccount Trader's primary address from trader's wallet.
-  /// @param _subAccount Trader's address that combined between Primary account and Sub account.
+  /// @param _subAccountId Trader's Sub-Account Id.
   /// @param _token Token that's deposited as collateral.
   /// @param _amount Token depositing amount.
   function depositCollateral(
     address _primaryAccount,
-    address _subAccount,
+    uint256 _subAccountId,
     address _token,
     uint256 _amount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     address _vaultStorage = vaultStorage;
+
+    // Get trader's sub-account address
+    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
 
     // Get current collateral token balance of trader's account
     // and sum with new token depositing amount
@@ -103,16 +106,19 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /// @notice Calculate new trader balance after withdraw collateral token.
   /// @dev This uses to calculate new trader balance when they withdrawing token as collateral.
   /// @param _primaryAccount Trader's primary address from trader's wallet.
-  /// @param _subAccount Trader's address that combined between Primary account and Sub account.
+  /// @param _subAccountId Trader's Sub-Account Id.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
   function withdrawCollateral(
     address _primaryAccount,
-    address _subAccount,
+    uint256 _subAccountId,
     address _token,
     uint256 _amount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     address _vaultStorage = vaultStorage;
+
+    // Get trader's sub-account address
+    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
 
     // Get current collateral token balance of trader's account
     // and deduct with new token withdrawing amount
@@ -175,5 +181,15 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
     // Sanity check
     ICalculator(_calculator).oracle();
+  }
+
+  /// @notice Calculate subAccount address on trader.
+  /// @dev This uses to create subAccount address combined between Primary account and SubAccount ID.
+  /// @param _primary Trader's primary wallet account.
+  /// @param _subAccountId Trader's sub account ID.
+  /// @return _subAccount Trader's sub account address used for trading.
+  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 }

@@ -20,6 +20,18 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
    */
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
   event LogSetPyth(address indexed oldPyth, address newPyth);
+  event LogDepositCollateral(
+    address indexed primaryAccount,
+    uint256 indexed subAccountId,
+    address token,
+    uint256 amount
+  );
+  event LogWithdrawCollateral(
+    address indexed primaryAccount,
+    uint256 indexed subAccountId,
+    address token,
+    uint256 amount
+  );
 
   /**
    * STATES
@@ -88,14 +100,13 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     address _token,
     uint256 _amount
   ) external nonReentrant onlyAcceptedToken(_token) {
-    // Get trader's sub-account address
-    address _subAccount = _getSubAccount(_account, _subAccountId);
-
     // Transfer depositing token from trader's wallet to VaultStorage
     ERC20(_token).safeTransferFrom(msg.sender, ICrossMarginService(crossMarginService).vaultStorage(), _amount);
 
     // Call service to deposit collateral
-    ICrossMarginService(crossMarginService).depositCollateral(_account, _subAccount, _token, _amount);
+    ICrossMarginService(crossMarginService).depositCollateral(_account, _subAccountId, _token, _amount);
+
+    emit LogDepositCollateral(_account, _subAccountId, _token, _amount);
   }
 
   /// @notice Calculate new trader balance after withdraw collateral token.
@@ -112,23 +123,12 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     uint256 _amount,
     bytes[] memory _priceData
   ) external nonReentrant onlyAcceptedToken(_token) {
-    // Get trader's sub-account address
-    address _subAccount = _getSubAccount(_account, _subAccountId);
-
     // Call update oracle price
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // Call service to withdraw collateral
-    ICrossMarginService(crossMarginService).withdrawCollateral(_account, _subAccount, _token, _amount);
-  }
+    ICrossMarginService(crossMarginService).withdrawCollateral(_account, _subAccountId, _token, _amount);
 
-  /// @notice Calculate subAccount address on trader.
-  /// @dev This uses to create subAccount address combined between Primary account and SubAccount ID.
-  /// @param _primary Trader's primary wallet account.
-  /// @param _subAccountId Trader's sub account ID.
-  /// @return _subAccount Trader's sub account address used for trading.
-  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
-    if (_subAccountId > 255) revert();
-    return address(uint160(_primary) ^ uint160(_subAccountId));
+    emit LogWithdrawCollateral(_account, _subAccountId, _token, _amount);
   }
 }

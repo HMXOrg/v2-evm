@@ -5,17 +5,17 @@ import { LiquidityHandler_Base, IConfigStorage, IPerpStorage } from "./Liquidity
 import { ILiquidityHandler } from "../../../src/handlers/interfaces/ILiquidityHandler.sol";
 import { console } from "../../../lib/forge-std/src/console.sol";
 
-// // - revert
-// //   - Try notAcceptedToken
-// //   - Try _executionFee < minExecutionFee
-// //   - Try shoulWrap Error
-// //   - Try msg.value != minExecutionFee
-// //   - Try cancelOrder not owner
-// //   - Try cancelOrder with uncreated order
+// - revert
+//   - Try notAcceptedToken
+//   - Try _executionFee < minExecutionFee
+//   - Try shoulWrap Error
+//   - Try msg.value != minExecutionFee
+//   - Try cancelOrder not owner
+//   - Try cancelOrder with uncreated order
 
-// // - success
-// //   - Try executeOrder_createRemoveLiquidityOrder
-// //   - Try executeOrder_createRemoveLiquidityOrder_multiple
+// - success
+//   - Try executeOrder_createRemoveLiquidityOrder
+//   - Try executeOrder_createRemoveLiquidityOrder_multiple
 
 contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
   function setUp() public override {

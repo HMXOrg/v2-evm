@@ -4,18 +4,18 @@ pragma solidity 0.8.18;
 import { LiquidityHandler_Base, IConfigStorage, IPerpStorage } from "./LiquidityHandler_Base.t.sol";
 import { ILiquidityHandler } from "../../../src/handlers/interfaces/ILiquidityHandler.sol";
 
-// // - revert
-// //   - Try directCall executeLiquidity
-// //   - Try directCall refund
-// //   - Try executeOrder not orderExecutor
-// //   - Try cancelOrder not owner
-// //   - Try cancelOrder with uncreated order
+// - revert
+//   - Try directCall executeLiquidity
+//   - Try directCall refund
+//   - Try executeOrder not orderExecutor
+//   - Try cancelOrder not owner
+//   - Try cancelOrder with uncreated order
 
-// // - success
-// //   - Try executeOrder_addLiquidityOrder
-// //   - Try executeOrder_removeLiquidityOrder
-// //   - Try executeOrder_cancelOrder
-// //   - Try executeOrder_refundOrder
+// - success
+//   - Try executeOrder_addLiquidityOrder
+//   - Try executeOrder_removeLiquidityOrder
+//   - Try executeOrder_cancelOrder
+//   - Try executeOrder_refundOrder
 
 contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
   function setUp() public override {

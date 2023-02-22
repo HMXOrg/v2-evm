@@ -16,21 +16,19 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_InvalidPriceForExecution();
   error ILimitTradeHandler_WrongSizeDelta();
   error ILimitTradeHandler_UnknownOrderType();
+  error ILimitTradeHandler_MaxExecutionFee();
 
   /**
    * Structs
    */
   struct LimitOrder {
-    // 0 = Increase Order
-    // 1 = Decrease Order
-    uint8 orderType;
     address account;
+    bool triggerAboveThreshold;
+    bool reduceOnly;
+    int256 sizeDelta;
     uint256 subAccountId;
     uint256 marketIndex;
-    int256 sizeDelta;
-    bool isLong;
     uint256 triggerPrice;
-    bool triggerAboveThreshold;
     uint256 executionFee;
   }
 
@@ -47,17 +45,16 @@ interface ILimitTradeHandler {
    * Functions
    */
   function createOrder(
-    uint8 _orderType,
     uint256 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
     bool _triggerAboveThreshold,
-    uint256 _executionFee
+    uint256 _executionFee,
+    bool _reduceOnly
   ) external payable;
 
   function executeOrder(
-    uint8 _orderType,
     address _account,
     uint256 _subAccountId,
     uint256 _orderIndex,
@@ -65,15 +62,15 @@ interface ILimitTradeHandler {
     bytes[] memory _priceData
   ) external;
 
-  function cancelOrder(uint8 _orderType, uint256 _subAccountId, uint256 _orderIndex) external;
+  function cancelOrder(uint256 _subAccountId, uint256 _orderIndex) external;
 
   function updateOrder(
-    uint8 _orderType,
     uint256 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
-    bool _triggerAboveThreshold
+    bool _triggerAboveThreshold,
+    bool _reduceOnly
   ) external;
 
   function validatePositionOrderPrice(

@@ -15,32 +15,34 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
     super.setUp();
   }
 
+  // Cancel a non existent order
   function testRevert_cancel_NonExistentOrder() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-    limitTradeHandler.cancelOrder({ _orderType: INCREASE, _subAccountId: 0, _orderIndex: 0 });
+    limitTradeHandler.cancelOrder({ _subAccountId: 0, _orderIndex: 0 });
   }
 
+  // Cancel an existing order
   function testCorrectness_cancelOrder() external {
     vm.deal(ALICE, 1 ether);
     uint256 balanceBefore = ALICE.balance;
     vm.startPrank(ALICE);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _orderType: INCREASE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
       _triggerAboveThreshold: true,
-      _executionFee: 0.1 ether
+      _executionFee: 0.1 ether,
+      _reduceOnly: false
     });
 
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (, limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, ALICE);
 
-    limitTradeHandler.cancelOrder({ _orderType: INCREASE, _subAccountId: 0, _orderIndex: 0 });
+    limitTradeHandler.cancelOrder({ _subAccountId: 0, _orderIndex: 0 });
 
-    (, limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, address(0));
 
     uint256 balanceDiff = ALICE.balance - balanceBefore;

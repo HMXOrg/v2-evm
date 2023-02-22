@@ -59,6 +59,7 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   /// @notice A function for updating prices based on price update data
   /// @param _priceData - price update data
   function updatePrices(bytes[] memory _priceData) external payable onlyUpdater {
+    // slither-disable-next-line arbitrary-send-eth
     pyth.updatePriceFeeds{ value: pyth.getUpdateFee(_priceData) }(_priceData);
   }
 

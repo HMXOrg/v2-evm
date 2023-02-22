@@ -99,7 +99,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     minExecutionFee = _minExecutionFee;
 
+    // slither-disable-next-line unused-return
     ITradeService(_tradeService).perpStorage();
+    // slither-disable-next-line unused-return
     IPyth(_pyth).getValidTimePeriod();
   }
 
@@ -189,6 +191,10 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   ) external nonReentrant onlyOrderExecutor {
     address _subAccount = _getSubAccount(_account, _subAccountId);
     LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
+
+    // Delete this executed order from the list
+    delete limitOrders[_subAccount][_orderIndex];
+
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
@@ -292,9 +298,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
         }
       }
     }
-
-    // Delete this executed order from the list
-    delete limitOrders[_subAccount][_orderIndex];
 
     // Pay the executor
     _transferOutETH(_order.executionFee, _feeReceiver);

@@ -26,6 +26,46 @@ interface IOracleMiddleware {
     uint256 _trustPriceAge
   ) external view returns (uint256 _price, uint256 _lastUpdated, uint8 _status);
 
+  function getLatestMarketPrice(
+    bytes32 _assetId,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate);
+
+  function unsafeGetLatestMarketPrice(
+    bytes32 _assetId,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate);
+
+  function getLatestMarketPriceWithMarketStatus(
+    bytes32 _assetId,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
+
+  function unsafeGetLatestMarketPriceWithMarketStatus(
+    bytes32 _assetId,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
+
   // =========================================
   // | ---------- Setter ------------------- |
   // =========================================

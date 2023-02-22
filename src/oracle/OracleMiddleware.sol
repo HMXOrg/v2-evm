@@ -163,8 +163,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
-    int256 _marketSkewUSD,
-    int256 _nextMarketSkewUSD,
+    int256 _marketSkew,
+    int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
     (_price, _lastUpdate) = _getLatestMarketPrice(
@@ -172,8 +172,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _isMax,
       _confidenceThreshold,
       _trustPriceAge,
-      _marketSkewUSD,
-      _nextMarketSkewUSD,
+      _marketSkew,
+      _sizeDelta,
       _maxSkewScaleUSD,
       true
     );
@@ -185,8 +185,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
-    int256 _marketSkewUSD,
-    int256 _nextMarketSkewUSD,
+    int256 _marketSkew,
+    int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
     (_price, _lastUpdate) = _getLatestMarketPrice(
@@ -194,8 +194,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _isMax,
       _confidenceThreshold,
       _trustPriceAge,
-      _marketSkewUSD,
-      _nextMarketSkewUSD,
+      _marketSkew,
+      _sizeDelta,
       _maxSkewScaleUSD,
       true
     );
@@ -207,8 +207,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
-    int256 _marketSkewUSD,
-    int256 _nextMarketSkewUSD,
+    int256 _marketSkew,
+    int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
@@ -219,8 +219,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _isMax,
       _confidenceThreshold,
       _trustPriceAge,
-      _marketSkewUSD,
-      _nextMarketSkewUSD,
+      _marketSkew,
+      _sizeDelta,
       _maxSkewScaleUSD,
       true
     );
@@ -232,8 +232,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
-    int256 _marketSkewUSD,
-    int256 _nextMarketSkewUSD,
+    int256 _marketSkew,
+    int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
@@ -244,8 +244,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _isMax,
       _confidenceThreshold,
       _trustPriceAge,
-      _marketSkewUSD,
-      _nextMarketSkewUSD,
+      _marketSkew,
+      _sizeDelta,
       _maxSkewScaleUSD,
       true
     );
@@ -257,8 +257,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
-    int256 _marketSkewUSD,
-    int256 _nextMarketSkewUSD,
+    int256 _marketSkew,
+    int256 _sizeDelta,
     uint256 _maxSkewScaleUSD,
     bool isSafe
   ) private view returns (uint256 _price, uint256 _lastUpdate) {
@@ -269,7 +269,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     if (isSafe && block.timestamp - _lastUpdate > _trustPriceAge) revert IOracleMiddleware_PythPriceStale();
 
     // Apply premium/discount
-    _price = _calculateAdaptivePrice(_price, _marketSkewUSD, _nextMarketSkewUSD, _maxSkewScaleUSD);
+    _price = _calculateAdaptivePrice(_price, _marketSkew, _sizeDelta, _maxSkewScaleUSD);
 
     // Return the price and last update
     return (_price, _lastUpdate);
@@ -277,13 +277,14 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   function _calculateAdaptivePrice(
     uint256 _price,
-    int256 _marketSkewUSD,
-    int256 _nextMarketSkewUSD,
+    int256 _marketSkew,
+    int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) internal pure returns (uint256) {
     int256 _priceInt = int256(_price);
+    int256 _marketSkewUSD = (_marketSkew * _priceInt) / 1e30;
     int256 _premiumDiscountBefore = (_marketSkewUSD * 1e30) / int256(_maxSkewScaleUSD);
-    int256 _premiumDiscountAfter = (_nextMarketSkewUSD * 1e30) / int256(_maxSkewScaleUSD);
+    int256 _premiumDiscountAfter = ((_marketSkewUSD + _sizeDelta) * 1e30) / int256(_maxSkewScaleUSD);
 
     int256 _priceBefore = _priceInt + ((_priceInt * _premiumDiscountBefore) / 1e30);
     int256 _priceAfter = _priceInt + ((_priceInt * _premiumDiscountAfter) / 1e30);

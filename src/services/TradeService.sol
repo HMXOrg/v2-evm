@@ -39,18 +39,27 @@ contract TradeService is ITradeService {
     configStorage = _configStorage;
   }
 
+  struct IncreasePositionLocalVars {
+    address subAccount;
+    bytes32 posId;
+    bool isLong;
+    bool isNewPosition;
+  }
+
   function increasePosition(
     address _primaryAccount,
     uint256 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta
   ) external {
+    IncreasePositionLocalVars memory vars;
+
     // get the sub-account from the primary account and sub-account ID
-    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    vars.subAccount = _getSubAccount(_primaryAccount, _subAccountId);
 
     // get the position for the given sub-account and market index
-    bytes32 _posId = _getPositionId(_subAccount, _marketIndex);
-    IPerpStorage.Position memory _position = IPerpStorage(perpStorage).getPositionById(_posId);
+    vars.posId = _getPositionId(vars.subAccount, _marketIndex);
+    IPerpStorage.Position memory _position = IPerpStorage(perpStorage).getPositionById(vars.posId);
 
     // get the market configuration for the given market index
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
@@ -64,9 +73,9 @@ contract TradeService is ITradeService {
     if (!_marketConfig.allowIncreasePosition) revert ITradeService_NotAllowIncrease();
 
     // determine whether the new size delta is for a long position
-    bool _isLong = _sizeDelta > 0;
+    vars.isLong = _sizeDelta > 0;
 
-    bool _isNewPosition = _position.positionSizeE30 == 0;
+    vars.isNewPosition = _position.positionSizeE30 == 0;
 
     // Pre validation
     // Verify that the number of positions has exceeds
@@ -75,14 +84,14 @@ contract TradeService is ITradeService {
       IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
 
       if (
-        _isNewPosition &&
-        _tradingConfig.maxPosition < IPerpStorage(perpStorage).getNumberOfSubAccountPosition(_subAccount) + 1
+        vars.isNewPosition &&
+        _tradingConfig.maxPosition < IPerpStorage(perpStorage).getNumberOfSubAccountPosition(vars.subAccount) + 1
       ) revert ITradeService_BadNumberOfPosition();
     }
 
     bool _currentPositionIsLong = _position.positionSizeE30 > 0;
     // Verify that the current position has the same exposure direction
-    if (!_isNewPosition && _currentPositionIsLong != _isLong) revert ITradeService_BadExposure();
+    if (!vars.isNewPosition && _currentPositionIsLong != vars.isLong) revert ITradeService_BadExposure();
 
     // Update borrowing rate
     updateBorrowingRate(_marketConfig.assetClass);
@@ -94,13 +103,17 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      // @todo - update code to use normal get latest price, there is validate price
+      IPerpStorage.GlobalMarket memory globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
       (_priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
-        .getLatestPriceWithMarketStatus(
+        .getLatestMarketPriceWithMarketStatus(
           _marketConfig.assetId,
-          _isLong, // if current position is SHORT position, then we use max price
+          vars.isLong, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
-          30 // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest),
+          _sizeDelta,
+          3_000_000 * 1e30 //@todo - move maxSkewScaleUSD to MarketConfig
         );
 
       // Market active represent the market is still listed on our protocol
@@ -110,14 +123,14 @@ contract TradeService is ITradeService {
       if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
 
       // check sub account equity is under MMR
-      _subAccountHealthCheck(_subAccount);
+      _subAccountHealthCheck(vars.subAccount);
     }
 
     // get the absolute value of the new size delta
     uint256 _absSizeDelta = abs(_sizeDelta);
 
     // if the position size is zero, set the average price to the current price (new position)
-    if (_isNewPosition) {
+    if (vars.isNewPosition) {
       _position.avgEntryPriceE30 = _priceE30;
       _position.primaryAccount = _primaryAccount;
       _position.subAccountId = _subAccountId;
@@ -125,11 +138,11 @@ contract TradeService is ITradeService {
     }
 
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
-    if (!_isNewPosition) {
+    if (!vars.isNewPosition) {
       _position.avgEntryPriceE30 = getPositionNextAveragePrice(
         _marketIndex,
         abs(_position.positionSizeE30),
-        _isLong,
+        vars.isLong,
         _absSizeDelta,
         _position.avgEntryPriceE30,
         _priceE30
@@ -138,8 +151,8 @@ contract TradeService is ITradeService {
 
     // TODO: Collect trading fee, borrowing fee, update borrowing rate, collect funding fee, and update funding rate.
     // Collect fee
-    collectFee(_subAccount, _marketConfig.assetClass, _position.reserveValueE30, _position.entryBorrowingRate);
-    settleFee(_subAccount);
+    collectFee(vars.subAccount, _marketConfig.assetClass, _position.reserveValueE30, _position.entryBorrowingRate);
+    settleFee(vars.subAccount);
 
     // update the position size by adding the new size delta
     _position.positionSizeE30 += _sizeDelta;
@@ -160,7 +173,7 @@ contract TradeService is ITradeService {
     {
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = ICalculator(IConfigStorage(configStorage).calculator()).getFreeCollateral(
-        _subAccount
+        vars.subAccount
       );
       // if the free collateral is less than the initial margin required, revert the transaction with an error
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
@@ -182,7 +195,7 @@ contract TradeService is ITradeService {
       uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _priceE30; // TODO: use decimal asset
       _position.openInterest += _changedOpenInterest;
       // update gobal market state
-      if (_isLong) {
+      if (vars.isLong) {
         IPerpStorage(perpStorage).updateGlobalLongMarketById(
           _marketIndex,
           _globalMarket.longPositionSize + _absSizeDelta,
@@ -200,7 +213,7 @@ contract TradeService is ITradeService {
     }
 
     // save the updated position to the storage
-    IPerpStorage(perpStorage).savePosition(_subAccount, _posId, _position);
+    IPerpStorage(perpStorage).savePosition(vars.subAccount, vars.posId, _position);
   }
 
   // @todo - rewrite description
@@ -255,13 +268,17 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      // @todo - update code to use normal get latest price, there is validate price
+      IPerpStorage.GlobalMarket memory globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
       (vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
-        .getLatestPriceWithMarketStatus(
+        .getLatestMarketPriceWithMarketStatus(
           _marketConfig.assetId,
-          !vars.isLongPosition, // if current position is SHORT position, then we use max price
+          vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
-          30 // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest),
+          vars.isLongPosition ? int256(_positionSizeE30ToDecrease) : -int256(_positionSizeE30ToDecrease),
+          3_000_000 * 1e30 //@todo - move maxSkewScaleUSD to MarketConfig
         );
 
       // Market active represent the market is still listed on our protocol

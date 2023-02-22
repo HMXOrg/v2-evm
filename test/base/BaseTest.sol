@@ -151,10 +151,6 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     return new MockErc20(name, symbol, decimals);
   }
 
-  function deployMockWNative() internal returns (MockWNative) {
-    return new MockWNative();
-  }
-
   function deployPerp88v2() internal returns (Deployment.DeployReturnVars memory) {
     DeployLocalVars memory deployLocalVars = DeployLocalVars({ pyth: mockPyth, defaultOracleStaleTime: 300 });
     return deploy(deployLocalVars);

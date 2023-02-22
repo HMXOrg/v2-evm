@@ -40,8 +40,6 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
 
   // add liquidity when circuit break
 
-  function testRevert_WhenUserInvalidAmount() external {}
-
   function testRevert_WhenCircuitBreak_PLPShouldNotAddLiquidity() external {
     // disable liquidity config
     IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();

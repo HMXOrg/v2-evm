@@ -49,6 +49,7 @@ contract ConfigStorage is IConfigStorage, Ownable {
 
   IteratableAddressList.List public plpAcceptedTokens;
 
+  address[] public plpTokens;
   mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
   mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config
@@ -140,6 +141,10 @@ contract ConfigStorage is IConfigStorage, Ownable {
     }
   }
 
+  function getPlpTokens() external view returns (address[] memory) {
+    return plpTokens;
+  }
+
   /// @notice Return the next underlying token address.
   /// @dev This uses to traverse all underlying tokens.
   /// @param token The token address to query the next token. Can also be START and END.
@@ -220,6 +225,7 @@ contract ConfigStorage is IConfigStorage, Ownable {
     PLPTokenConfig memory _newConfig
   ) external returns (PLPTokenConfig memory _plpTokenConfig) {
     plpTokenConfigs[_token] = _newConfig;
+    plpTokens.push(_token);
     return plpTokenConfigs[_token];
   }
 

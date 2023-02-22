@@ -73,7 +73,7 @@ interface IConfigStorage {
 
   struct TradingConfig {
     uint256 fundingInterval; // funding interval unit in seconds
-    uint256 borrowingDevFeeRate;
+    uint256 devFeeRate;
     uint256 minProfitDuration;
     uint256 maxPosition;
   }
@@ -136,6 +136,8 @@ interface IConfigStorage {
   function getMarketConfigsLength() external view returns (uint256);
 
   function getNextAcceptedToken(address token) external view returns (address);
+
+  function getPlpTokens() external view returns (address[] memory);
 
   /**
    * Setter

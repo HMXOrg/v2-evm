@@ -587,4 +587,65 @@ contract TradeService is ITradeService {
     // Update the sub-account's debt fee balance
     IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);
   }
+
+  function settleFee(address _subAccount) public {
+    // Retrieve the debt fee amount for the sub-account
+    uint256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
+    // If there's no fee to settle, return early
+    if (feeUsd == 0) return;
+
+    // Retrieve the trading configuration and list of plp tokens
+    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
+    address[] memory _plpTokens = IConfigStorage(configStorage).getPlpTokens();
+
+    // Loop through all the plp tokens for the sub-account
+    for (uint256 i = 0; i < _plpTokens.length; ) {
+      // Retrieve the balance of the plp token for the sub-account
+      uint256 balance = IVaultStorage(vaultStorage).traderBalances(_subAccount, _plpTokens[i]);
+
+      // If the sub-account has a balance of the plp token
+      if (balance != 0) {
+        // Retrieve the latest price and confident threshold of the plp token
+        (uint256 price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+          _plpTokens[i].toBytes32(),
+          false,
+          IConfigStorage(configStorage).getMarketConfigByToken(_plpTokens[i]).priceConfidentThreshold
+        );
+        // Calculate the fee amount in the plp token
+        uint256 _feeToken = (feeUsd * (10 ** ERC20(_plpTokens[i]).decimals())) / price;
+        // Calculate the balance value of the plp token in USD
+        uint256 _balanceValue = (balance * price) / (10 ** ERC20(_plpTokens[i]).decimals());
+        uint repayFeeToken = 0;
+
+        // Repay the fee amount and subtract it from the balance
+        if (balance > _feeToken) {
+          repayFeeToken = _feeToken;
+          balance -= _feeToken;
+          feeUsd = 0;
+        } else {
+          repayFeeToken = balance;
+          balance = 0;
+          feeUsd -= _balanceValue;
+        }
+
+        // Calculate the developer fee amount in the plp token
+        uint256 devFeeToken = (repayFeeToken * _tradingConfig.devFeeRate) / 1e18;
+        // Add the developer fee to the vault
+        IVaultStorage(vaultStorage).addDevFee(_plpTokens[i], devFeeToken);
+        // Add the remaining fee amount to the plp liquidity in the vault
+        IVaultStorage(vaultStorage).addPLPLiquidity(_plpTokens[i], repayFeeToken - devFeeToken);
+        // Update the sub-account balance for the plp token in the vault
+        IVaultStorage(vaultStorage).setTraderBalance(_subAccount, _plpTokens[i], balance);
+      }
+
+      {
+        unchecked {
+          ++i;
+        }
+      }
+    }
+
+    // Update the fee amount for the sub-account in the PerpStorage contract
+    IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);
+  }
 }

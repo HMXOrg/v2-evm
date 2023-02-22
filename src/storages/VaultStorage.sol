@@ -18,6 +18,8 @@ contract VaultStorage is IVaultStorage {
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
   mapping(address => uint256) public fees; // fee in token unit
 
+  mapping(address => uint256) public devFees;
+
   // liquidity provider address => token => amount
   mapping(address => mapping(address => uint256)) public liquidityProviderBalances;
   mapping(address => address[]) public liquidityProviderTokens;
@@ -29,6 +31,10 @@ contract VaultStorage is IVaultStorage {
   // @todo - modifier?
   function addFee(address _token, uint256 _amount) external {
     fees[_token] += _amount;
+  }
+
+  function addDevFee(address _token, uint256 _amount) external {
+    devFees[_token] += _amount;
   }
 
   // @todo - modifier?

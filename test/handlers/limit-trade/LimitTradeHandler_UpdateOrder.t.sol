@@ -43,12 +43,12 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
     ILimitTradeHandler.LimitOrder memory limitOrder;
     (
       limitOrder.account,
+      limitOrder.sizeDelta,
       limitOrder.subAccountId,
       limitOrder.marketIndex,
-      limitOrder.sizeDelta,
       limitOrder.triggerPrice,
-      limitOrder.triggerAboveThreshold,
       limitOrder.executionFee,
+      limitOrder.triggerAboveThreshold,
       limitOrder.reduceOnly
     ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this));
@@ -71,12 +71,12 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
 
     (
       limitOrder.account,
+      limitOrder.sizeDelta,
       limitOrder.subAccountId,
       limitOrder.marketIndex,
-      limitOrder.sizeDelta,
       limitOrder.triggerPrice,
-      limitOrder.triggerAboveThreshold,
       limitOrder.executionFee,
+      limitOrder.triggerAboveThreshold,
       limitOrder.reduceOnly
     ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this));

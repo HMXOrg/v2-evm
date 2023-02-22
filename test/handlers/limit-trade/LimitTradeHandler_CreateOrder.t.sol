@@ -80,12 +80,12 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     ILimitTradeHandler.LimitOrder memory limitOrder;
     (
       limitOrder.account,
+      limitOrder.sizeDelta,
       limitOrder.subAccountId,
       limitOrder.marketIndex,
-      limitOrder.sizeDelta,
       limitOrder.triggerPrice,
-      limitOrder.triggerAboveThreshold,
       limitOrder.executionFee,
+      limitOrder.triggerAboveThreshold,
       limitOrder.reduceOnly
     ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this));
@@ -110,12 +110,12 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 2, "limitOrdersIndex should increase by one.");
     (
       limitOrder.account,
+      limitOrder.sizeDelta,
       limitOrder.subAccountId,
       limitOrder.marketIndex,
-      limitOrder.sizeDelta,
       limitOrder.triggerPrice,
-      limitOrder.triggerAboveThreshold,
       limitOrder.executionFee,
+      limitOrder.triggerAboveThreshold,
       limitOrder.reduceOnly
     ) = limitTradeHandler.limitOrders(address(this), 1);
     assertEq(limitOrder.account, address(this));
@@ -144,12 +144,12 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     );
     (
       limitOrder.account,
+      limitOrder.sizeDelta,
       limitOrder.subAccountId,
       limitOrder.marketIndex,
-      limitOrder.sizeDelta,
       limitOrder.triggerPrice,
-      limitOrder.triggerAboveThreshold,
       limitOrder.executionFee,
+      limitOrder.triggerAboveThreshold,
       limitOrder.reduceOnly
     ) = limitTradeHandler.limitOrders(_getSubAccount(address(this), 7), 0);
     assertEq(limitOrder.account, address(this));
@@ -178,12 +178,12 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     );
     (
       limitOrder.account,
+      limitOrder.sizeDelta,
       limitOrder.subAccountId,
       limitOrder.marketIndex,
-      limitOrder.sizeDelta,
       limitOrder.triggerPrice,
-      limitOrder.triggerAboveThreshold,
       limitOrder.executionFee,
+      limitOrder.triggerAboveThreshold,
       limitOrder.reduceOnly
     ) = limitTradeHandler.limitOrders(_getSubAccount(address(this), 7), 1);
     assertEq(limitOrder.account, address(this));
@@ -217,12 +217,12 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     ILimitTradeHandler.LimitOrder memory limitOrder;
     (
       limitOrder.account,
+      limitOrder.sizeDelta,
       limitOrder.subAccountId,
       limitOrder.marketIndex,
-      limitOrder.sizeDelta,
       limitOrder.triggerPrice,
-      limitOrder.triggerAboveThreshold,
       limitOrder.executionFee,
+      limitOrder.triggerAboveThreshold,
       limitOrder.reduceOnly
     ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this));
@@ -246,12 +246,12 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 2, "limitOrdersIndex should increase by one.");
     (
       limitOrder.account,
+      limitOrder.sizeDelta,
       limitOrder.subAccountId,
       limitOrder.marketIndex,
-      limitOrder.sizeDelta,
       limitOrder.triggerPrice,
-      limitOrder.triggerAboveThreshold,
       limitOrder.executionFee,
+      limitOrder.triggerAboveThreshold,
       limitOrder.reduceOnly
     ) = limitTradeHandler.limitOrders(address(this), 1);
     assertEq(limitOrder.account, address(this));
@@ -279,12 +279,12 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     );
     (
       limitOrder.account,
+      limitOrder.sizeDelta,
       limitOrder.subAccountId,
       limitOrder.marketIndex,
-      limitOrder.sizeDelta,
       limitOrder.triggerPrice,
-      limitOrder.triggerAboveThreshold,
       limitOrder.executionFee,
+      limitOrder.triggerAboveThreshold,
       limitOrder.reduceOnly
     ) = limitTradeHandler.limitOrders(_getSubAccount(address(this), 7), 0);
     assertEq(limitOrder.account, address(this));

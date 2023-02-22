@@ -220,7 +220,7 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
   }
 
   function _userRefund(LiquidityOrder memory _order) internal {
-    try this.refund(_order) {} catch Error(string memory reason) {
+    try this.refund(_order) {} catch Error(string memory) {
       revert ILiquidityHandler_InsufficientRefund();
     }
   }
@@ -238,6 +238,8 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
   }
 
   function executeOrders(LiquidityOrder[] memory _orders, bytes[] memory _priceData) external onlyOrderExecutor {
+    // Update price to Pyth
+    // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     isExecuting = true;
@@ -246,7 +248,7 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
       if (liquidityOrders[_order.account].length > 0) {
         try this.executeLiquidity(_order) returns (uint256 result) {
           emit ExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
-        } catch Error(string memory reason) {
+        } catch Error(string memory) {
           _userRefund(_order);
         }
         delete liquidityOrders[_order.account][0];

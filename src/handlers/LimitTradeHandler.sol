@@ -192,6 +192,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
+    // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // Validate if the current price is valid for the execution of this order
@@ -453,6 +454,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _receiver The receiver of ETH in its native form. The receiver must be able to accept native token.
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
     IWNative(weth).withdraw(_amountOut);
+    // slither-disable-next-line arbitrary-send-eth
     payable(_receiver).transfer(_amountOut);
   }
 

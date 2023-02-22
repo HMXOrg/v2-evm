@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import { Owned } from "../base/Owned.sol";
@@ -13,6 +14,7 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 
 contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
+  using SafeERC20 for IERC20;
   /**
    * Events
    */
@@ -82,7 +84,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     }
 
     // Transfer depositing token from trader's wallet to VaultStorage
-    IERC20(_token).transferFrom(msg.sender, vaultStorage, _amount);
+    IERC20(_token).safeTransferFrom(msg.sender, vaultStorage, _amount);
 
     emit LogIncreaseTokenLiquidity(_subAccount, _token, _amount);
   }

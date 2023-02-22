@@ -9,6 +9,9 @@ import { ITradeService } from "../../../src/services/interfaces/ITradeService.so
 import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
 
+// @todo - add test desciption + use position tester help to check
+// @todo - rename test case
+
 contract TradeService_IncreasePosition is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -24,8 +27,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
 
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
+
     vm.expectRevert(abi.encodeWithSignature("ITradeService_InvalidAveragePrice()"));
-    tradeService.getDelta(0, size, isLong, avgPriceE30);
+    tradeService.getDelta(size, isLong, 1e30, avgPriceE30);
   }
 
   function testCorrectness_getDelta_WhenLongAndPriceUp() external {
@@ -33,10 +38,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 24_200 * 1e30;
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price up 10% -> profit 10% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(0, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
     assertEq(isProfit, true);
     assertEq(delta, 100 * 1e30);
   }
@@ -46,10 +52,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 18_700 * 1e30;
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price down 15% -> loss 15% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(0, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
     assertEq(isProfit, false);
     assertEq(delta, 150 * 1e30);
   }
@@ -59,10 +66,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 23_100 * 1e30;
     bool isLong = false;
     uint256 size = 1_000 * 1e30;
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price up 5% -> loss 5% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(0, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
     assertEq(isProfit, false);
     assertEq(delta, 50 * 1e30);
   }
@@ -72,10 +80,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 11_000 * 1e30;
     bool isLong = false;
     uint256 size = 1_000 * 1e30;
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price down 50% -> profit 50% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(0, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
     assertEq(isProfit, true);
     assertEq(delta, 500 * 1e30);
   }
@@ -101,7 +110,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
         assetClass: 1,
         exponent: 18,
         maxProfitRate: 9e18,
-        minLeverage: 1,
+        minLeverage: 1 * 1e18,
         initialMarginFraction: 0.01 * 1e18,
         maintenanceMarginFraction: 0.005 * 1e18,
         increasePositionFeeRate: 0,
@@ -187,7 +196,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     }
   }
 
-  // TODO: Test price revert
+  // @todo - Test price revert
 
   function testRevert_increasePosition_WhenInsufficientFreeCollateral_OnePosition() external {
     // TVL
@@ -335,7 +344,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     assertEq(_positionAfter.reserveValueE30, 9 * 10_000 * 1e30);
     assertEq(_positionAfter.lastIncreaseTimestamp, 0);
     assertEq(_positionAfter.realizedPnl, 0);
-    assertEq(_positionAfter.openInterest, 625 * 1e30);
+    assertEq(_positionAfter.openInterest, 625 * 1e18);
   }
 
   function testCorrectness_increasePosition_WhenShortMarket02() external {
@@ -368,7 +377,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     assertEq(_positionAfter.reserveValueE30, 9 * 8_000 * 1e30);
     assertEq(_positionAfter.lastIncreaseTimestamp, 0);
     assertEq(_positionAfter.realizedPnl, 0);
-    assertEq(_positionAfter.openInterest, 32 * 1e30);
+    assertEq(_positionAfter.openInterest, 32 * 1e18);
   }
 
   function testCorrectness_increasePosition_WhenIncreaseAndAdjustLongMarket01() external {
@@ -406,10 +415,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
       assertEq(_positionAfter.reserveValueE30, 9 * 5_000 * 1e30);
       assertEq(_positionAfter.lastIncreaseTimestamp, 0);
       assertEq(_positionAfter.realizedPnl, 0);
-      assertEq(_positionAfter.openInterest, 312.5 * 1e30);
+      assertEq(_positionAfter.openInterest, 312.5 * 1e18);
 
       assertEq(_globalMarketAfter.longPositionSize - _globalMarketBefore.longPositionSize, uint256(sizeDelta));
-      assertEq(_globalMarketAfter.longOpenInterest - _globalMarketBefore.longOpenInterest, uint256(312.5 * 1e30));
+      assertEq(_globalMarketAfter.longOpenInterest - _globalMarketBefore.longOpenInterest, uint256(312.5 * 1e18));
     }
 
     // ALICE Adjust position Long ETH size 500,000
@@ -435,10 +444,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
       assertEq(_positionAfter.reserveValueE30, 9 * 9_000 * 1e30);
       assertEq(_positionAfter.lastIncreaseTimestamp, 0);
       assertEq(_positionAfter.realizedPnl, 0);
-      assertEq(_positionAfter.openInterest, 562.5 * 1e30);
+      assertEq(_positionAfter.openInterest, 562.5 * 1e18);
 
       assertEq(_globalMarketAfter.longPositionSize - _globalMarketBefore.longPositionSize, uint256(sizeDelta));
-      assertEq(_globalMarketAfter.longOpenInterest - _globalMarketBefore.longOpenInterest, uint256(250 * 1e30));
+      assertEq(_globalMarketAfter.longOpenInterest - _globalMarketBefore.longOpenInterest, uint256(250 * 1e18));
     }
   }
 
@@ -477,10 +486,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
       assertEq(_positionAfter.reserveValueE30, 9 * 2_500 * 1e30);
       assertEq(_positionAfter.lastIncreaseTimestamp, 0);
       assertEq(_positionAfter.realizedPnl, 0);
-      assertEq(_positionAfter.openInterest, 100 * 1e30);
+      assertEq(_positionAfter.openInterest, 100 * 1e18);
 
       assertEq(_globalMarketAfter.shortPositionSize - _globalMarketBefore.shortPositionSize, uint256(-sizeDelta));
-      assertEq(_globalMarketAfter.shortOpenInterest - _globalMarketBefore.shortOpenInterest, 100 * 1e30);
+      assertEq(_globalMarketAfter.shortOpenInterest - _globalMarketBefore.shortOpenInterest, 100 * 1e18);
     }
 
     // BOB Adjust position Short BTC size 750,000
@@ -506,10 +515,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
       assertEq(_positionAfter.reserveValueE30, 9 * 10_000 * 1e30);
       assertEq(_positionAfter.lastIncreaseTimestamp, 0);
       assertEq(_positionAfter.realizedPnl, 0);
-      assertEq(_positionAfter.openInterest, 400 * 1e30);
+      assertEq(_positionAfter.openInterest, 400 * 1e18);
 
       assertEq(_globalMarketAfter.shortPositionSize - _globalMarketBefore.shortPositionSize, uint256(-sizeDelta));
-      assertEq(_globalMarketAfter.shortOpenInterest - _globalMarketBefore.shortOpenInterest, 300 * 1e30);
+      assertEq(_globalMarketAfter.shortOpenInterest - _globalMarketBefore.shortOpenInterest, 300 * 1e18);
     }
   }
 }

@@ -136,13 +136,12 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 _executionFee,
     bool _reduceOnly
   ) external payable nonReentrant {
-    // Transfer in the native token to be used as execution fee
-    _transferInETH();
-
     // Check if exectuion fee is lower than minExecutionFee, then it's too low. We won't allow it.
     if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
     // The attached native token must be equal to _executionFee
     if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
+    // Transfer in the native token to be used as execution fee
+    _transferInETH();
 
     address _subAccount = _getSubAccount(msg.sender, _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
@@ -442,9 +441,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @notice Transfer in ETH from user to be used as execution fee
   /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.
   function _transferInETH() private {
-    if (msg.value != 0) {
-      IWNative(weth).deposit{ value: msg.value }();
-    }
+    IWNative(weth).deposit{ value: msg.value }();
   }
 
   /// @notice Transfer out ETH to the receiver

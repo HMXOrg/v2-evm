@@ -11,9 +11,12 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 contract PositionTester is StdAssertions {
   struct DecreasePositionAssertionData {
     uint256 decreasedPositionSize;
-    uint256 avgPriceDelta;
     uint256 reserveValueDelta;
     uint256 openInterestDelta;
+    // average price
+    uint256 newPositionAveragePrice;
+    uint256 newLongGlobalAveragePrice;
+    uint256 newShortGlobalAveragePrice;
   }
 
   PerpStorage perpStorage;
@@ -30,12 +33,10 @@ contract PositionTester is StdAssertions {
   }
 
   function watch(bytes32 _positionId) external {
-    // todo: this can access state directly
+    // @todo - this can access state directly
     cachePositionId = _positionId;
     cachePosition = perpStorage.getPositionById(_positionId);
-    cacheMarketGlobal = perpStorage.getGlobalMarketByIndex(
-      cachePosition.marketIndex
-    );
+    cacheMarketGlobal = perpStorage.getGlobalMarketByIndex(cachePosition.marketIndex);
     cacheGlobalState = perpStorage.getGlobalState();
   }
 
@@ -49,31 +50,18 @@ contract PositionTester is StdAssertions {
   // - global market
   //    - long / short position size
   //    - long / short open interest
-  //    - [pending] long / short average price
+  //    - long / short average price
   //    - [pending] funding rate
   // - global state
   //    - reserve value delta
   //    - [pending] sum of borrowing fee
-  function assertDecreasePositionResult(
-    DecreasePositionAssertionData memory _data
-  ) external {
+  function assertDecreasePositionResult(DecreasePositionAssertionData memory _data) external {
     // assert position state
-    IPerpStorage.Position memory _currentPosition = perpStorage.getPositionById(
-      cachePositionId
-    );
-    int256 _sizeDelta = cachePosition.positionSizeE30 -
-      _currentPosition.positionSizeE30;
+    IPerpStorage.Position memory _currentPosition = perpStorage.getPositionById(cachePositionId);
+    int256 _sizeDelta = cachePosition.positionSizeE30 - _currentPosition.positionSizeE30;
 
-    assertEq(
-      uint256(_sizeDelta > 0 ? _sizeDelta : -_sizeDelta),
-      _data.decreasedPositionSize,
-      "position size"
-    );
-    assertEq(
-      cachePosition.avgEntryPriceE30 - _currentPosition.avgEntryPriceE30,
-      _data.avgPriceDelta,
-      "position avaerage price"
-    );
+    assertEq(uint256(_sizeDelta > 0 ? _sizeDelta : -_sizeDelta), _data.decreasedPositionSize, "position size");
+    assertEq(_currentPosition.avgEntryPriceE30, _data.newPositionAveragePrice, "position average price");
     assertEq(
       cachePosition.reserveValueE30 - _currentPosition.reserveValueE30,
       _data.reserveValueDelta,
@@ -86,38 +74,33 @@ contract PositionTester is StdAssertions {
     );
 
     // assert market global
-    IPerpStorage.GlobalMarket memory _currentMarketGlobal = perpStorage
-      .getGlobalMarketByIndex(_currentPosition.marketIndex);
+    IPerpStorage.GlobalMarket memory _currentMarketGlobal = perpStorage.getGlobalMarketByIndex(
+      _currentPosition.marketIndex
+    );
 
-    // long position
     if (cachePosition.positionSizeE30 > 0) {
-      // LONG position
+      // check global LONG position
       assertEq(
-        cacheMarketGlobal.longPositionSize -
-          _currentMarketGlobal.longPositionSize,
+        cacheMarketGlobal.longPositionSize - _currentMarketGlobal.longPositionSize,
         _data.decreasedPositionSize,
         "market long position size"
       );
-      // todo: support when has logic to recalculate average price
-      // assertEq(cacheMarketGlobal.longAvgPrice - _currentMarketGlobal.longAvgPrice, 0);
+      assertEq(_currentMarketGlobal.longAvgPrice, _data.newLongGlobalAveragePrice, "global long average price");
       assertEq(
-        cacheMarketGlobal.longOpenInterest -
-          _currentMarketGlobal.longOpenInterest,
+        cacheMarketGlobal.longOpenInterest - _currentMarketGlobal.longOpenInterest,
         _data.openInterestDelta,
         "market long open interest"
       );
     } else {
+      // check global SHORT position
       assertEq(
-        cacheMarketGlobal.shortPositionSize -
-          _currentMarketGlobal.shortPositionSize,
+        cacheMarketGlobal.shortPositionSize - _currentMarketGlobal.shortPositionSize,
         _data.decreasedPositionSize,
         "market short position size"
       );
-      // todo: support when has logic to recalculate average price
-      // assertEq(cacheMarketGlobal.shortAvgPrice - _currentMarketGlobal.shortAvgPrice, 0);
+      assertEq(_currentMarketGlobal.shortAvgPrice, _data.newShortGlobalAveragePrice, "global short average price");
       assertEq(
-        cacheMarketGlobal.shortOpenInterest -
-          _currentMarketGlobal.shortOpenInterest,
+        cacheMarketGlobal.shortOpenInterest - _currentMarketGlobal.shortOpenInterest,
         _data.openInterestDelta,
         "market short open interest"
       );

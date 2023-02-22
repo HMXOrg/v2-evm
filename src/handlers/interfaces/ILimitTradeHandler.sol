@@ -23,13 +23,13 @@ interface ILimitTradeHandler {
    */
   struct LimitOrder {
     address account;
+    bool triggerAboveThreshold;
+    bool reduceOnly;
     int256 sizeDelta;
     uint256 subAccountId;
     uint256 marketIndex;
     uint256 triggerPrice;
     uint256 executionFee;
-    bool triggerAboveThreshold;
-    bool reduceOnly;
   }
 
   /**

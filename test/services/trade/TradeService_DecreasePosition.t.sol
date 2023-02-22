@@ -39,8 +39,17 @@ contract TradeService_DecreasePosition is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
 
+    // TVL
+    // 1000000 USDT -> 1000000 USD
+    mockCalculator.setPLPValue(1_000_000 * 1e30);
+
     // assume ALICE has free collateral for 10,000 USD
     mockCalculator.setEquity(10_000 * 1e30);
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
+
+    // mock PLP token for profitable trader
+    // related with TVL 1,000,000 USD, let provide 1,000,000 WETH (price 1$)
+    vaultStorage.addPLPLiquidity(address(weth), 1_000_000 ether);
   }
 
   // market delisted
@@ -93,132 +102,300 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
   // partially decrease long position
   function testCorrectness_WhenTraderPartiallyDecreaseLongPositionSize() external {
+    // Prepare for this test
+
     // ALICE open LONG position
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 10,000 TOKENs
+    // open interest  - 1,000,000 TOKENs
+    // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
+    // BOB open LONG position
+    // sub account id - 0
+    // position size  - 500,000 USD
+    // IMR            - 5,000 USD (1% IMF)
+    // leverage       - 100x
+    // price          - 1 USD
+    // open interest  - 526,315.789473684210526315 TOKENs
+    // average price  - 0.95 USD
+    openPosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+
+    // recalculate new long average price after BOB open position
+    // global long pnl = global long size * (current price - global avg price) / global avg price
+    //                 = 1000000 * (0.95 - 1) / 1 = -50000 USD
+    // new global long size = 15000000 (global size + BOB position size)
+    // new average long price = new global size * current price / new global size with pnl
+    //                        = 1500000 * 0.95 / 1500000 + (-50000) = 0.982758620689655172413793103448 USD
+    // THEN MARKET state
+    // long position size - 1,500,000 USD
+    // open interest      - 1,526,315.789473684210526315 TOKENs
+    // average price      - 0.982758620689655172413793103448 USD
+
+    // Start test
+
     // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     positionTester.watch(_positionId);
 
+    // ALICE decrease position
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30);
 
-    // check position after decrease
-    // open interest delta = open interest * position size to decrease / position size
-    //                     = 10000 * 500000 / 1000000 = 5000
+    // recalculate long average price after ALICE decrease position
+    // global long pnl = global long size * (current price - global avg price) / global avg price
+    //                 = 1500000 * (0.95 - 0.982758620689655172413793103448) / 0.982758620689655172413793103448
+    //                 = -49999.999999999999999999999999592982 USD
+    // position realized pnl = decreased position size * (current price - position avg price) / position avg price
+    //                       = 500000 * (0.95 - 1) / 1 = -25000 USD
+    // new global long pnl = global long pnl - position relaized pnl
+    //                     = -49999.999999999999999999999999592982 - (-25000)
+    //                     = -24999.999999999999999999999999592982 USD
+    // open interest delta = position open interest * position size to decrease / position size
+    //                     = 1000000 * 500000 / 1000000 = 500000
+    // new global long size = 1000000 USD (global long size - decreased position size)
+    // new long average price (global) = current price * new global long size / new global long size + new global long pnl
+    //                                 = 0.95 * 1000000 / (1000000 + (-24999.999999999999999999999999592982))
+    //                                 = 0.974358974358974358974358974358 USD
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 500_000 * 1e30,
-      avgPriceDelta: 0,
       reserveValueDelta: 45_000 * 1e30,
-      openInterestDelta: 5_000 * 1e18
+      openInterestDelta: 500_000 * 1e18,
+      // average prices
+      newPositionAveragePrice: 1 * 1e30,
+      newLongGlobalAveragePrice: 0.974358974358974358974358974358 * 1e30,
+      newShortGlobalAveragePrice: 0
     });
     positionTester.assertDecreasePositionResult(_assertData);
   }
 
   // partially decrease short position
   function testCorrectness_WhenTraderPartiallyDecreaseShortPositionSize() external {
+    // Prepare for this test
+
     // ALICE open SHORT position
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 10,000 TOKENs
+    // open interest  - 1,000,000 TOKENs
+    // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
-    // cache position
+    // BOB open SHORT position
+    // sub account id - 0
+    // position size  - 500,000 USD
+    // IMR            - 5,000 USD (1% IMF)
+    // leverage       - 100x
+    // price          - 1 USD
+    // open interest  - 526,315.789473684210526315 TOKENs
+    // average price  - 0.95 USD
+    openPosition(BOB, 0, ethMarketIndex, -500_000 * 1e30);
+
+    // recalculate new short average price after BOB open position
+    // global short pnl = global short size * (current price - global avg price) / global avg price
+    //                 = 1000000 * (0.95 - 1) / 1 = -50000 USD
+    // new global short size = 15000000 (global size + BOB position size)
+    // new average short price = new global size * current price / new global size with pnl
+    //                        = 1500000 * 0.95 / 1500000 + (-50000) = 0.982758620689655172413793103448 USD
+    // THEN MARKET state
+    // short position size - 1,500,000 USD
+    // open interest       - 1,526,315.789473684210526315 TOKENs
+    // average price       - 0.982758620689655172413793103448 USD
+
+    // Start test
+
+    // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     positionTester.watch(_positionId);
 
+    // ALICE decrease position
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30);
 
-    // check position after decrease
-    // open interest delta = open interest * position size to decrease / position size
-    //                     = 10000 * 500000 / 1000000 = 5000
+    // recalculate short average price after ALICE decrease position
+    // global short pnl = global short size * (global avg price - current price) / global avg price
+    //                 = 1500000 * (0.982758620689655172413793103448 - 0.95) / 0.982758620689655172413793103448
+    //                 = +49999.999999999999999999999999592982 USD
+    // position realized pnl = decreased position size * (position avg price - current price) / position avg price
+    //                       = 500000 * (1 - 0.95) / 1 = +25000 USD
+    // new global short pnl = global short pnl - position relaized pnl
+    //                     = +49999.999999999999999999999999592982 - (+25000)
+    //                     = +24999.999999999999999999999999592982 USD
+    // open interest delta = position open interest * position size to decrease / position size
+    //                     = 1000000 * 500000 / 1000000 = 500000
+    // new global short size = 1000000 USD (global short size - decreased position size)
+    // new short average price (global) = current price * new global short size / new global short size - new global long pnl
+    //                                 = 0.95 * 1000000 / (1000000 - (+24999.999999999999999999999999592982))
+    //                                 = 0.974358974358974358974358974358 USD
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 500_000 * 1e30,
-      avgPriceDelta: 0,
       reserveValueDelta: 45_000 * 1e30,
-      openInterestDelta: 5_000 * 1e18
+      openInterestDelta: 500_000 * 1e18,
+      // average prices
+      newPositionAveragePrice: 1 * 1e30,
+      newLongGlobalAveragePrice: 0,
+      newShortGlobalAveragePrice: 0.974358974358974358974358974358 * 1e30
     });
     positionTester.assertDecreasePositionResult(_assertData);
   }
 
   // fully decrease long position
   function testCorrectness_WhenTraderFullyDecreaseLongPositionSize() external {
+    // Prepare for this test
+
     // ALICE open LONG position
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 10,000 TOKENs
+    // open interest  - 1,000,000 TOKENs
+    // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
+    // BOB open LONG position
+    // sub account id - 0
+    // position size  - 500,000 USD
+    // IMR            - 5,000 USD (1% IMF)
+    // leverage       - 100x
+    // price          - 1 USD
+    // open interest  - 526,315.789473684210526315 TOKENs
+    // average price  - 0.95 USD
+    openPosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+
+    // recalculate new long average price after BOB open position
+    // global long pnl = global long size * (current price - global avg price) / global avg price
+    //                 = 1000000 * (0.95 - 1) / 1 = -50000 USD
+    // new global long size = 15000000 (global size + BOB position size)
+    // new average long price = new global size * current price / new global size with pnl
+    //                        = 1500000 * 0.95 / 1500000 + (-50000) = 0.982758620689655172413793103448 USD
+    // THEN MARKET state
+    // long position size - 1,500,000 USD
+    // open interest       - 1,526,315.789473684210526315 TOKENs
+    // average price       - 0.982758620689655172413793103448 USD
+
+    // Start test
+
     // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     positionTester.watch(_positionId);
 
+    // ALICE decrease position
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
-    // check position after decrease
-    // open interest delta = open interest * position size to decrease / position size
-    //                     = 10000 * 1000000 / 1000000 = 10000
+    // recalculate long average price after ALICE decrease position
+    // global long pnl = global long size * (current price - global avg price) / global avg price
+    //                 = 1500000 * (0.95 - 0.982758620689655172413793103448) / 0.982758620689655172413793103448
+    //                 = -49999.999999999999999999999999592983 USD
+    // position realized pnl = decreased position size * (current price - position avg price) / position avg price
+    //                       = 1000000 * (0.95 - 1) / 1 = -50000 USD
+    // new global long pnl = global long pnl - position relaized pnl
+    //                     = -49999.999999999999999999999999592983 - (-50000)
+    //                     = +0.00000000000000000000000040701 USD
+    // open interest delta = position open interest * position size to decrease / position size
+    //                     = 1000000 * 1000000 / 1000000 = 1000000
+    // new global long size = 500000 USD (global long size - decreased position size)
+    // new long average price (global) = current price * new global long size / new global long size + new global long pnl
+    //                                 = 0.95 * 500000 / (500000 + (+0.000000000000000000000000407018))
+    //                                 = 0.949999999999999999999999999999 USD (precision loss)
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 1_000_000 * 1e30,
-      avgPriceDelta: 0,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 10_000 * 1e18
+      openInterestDelta: 1_000_000 * 1e18,
+      // average prices
+      newPositionAveragePrice: 1 * 1e30,
+      newLongGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30,
+      newShortGlobalAveragePrice: 0
     });
     positionTester.assertDecreasePositionResult(_assertData);
   }
 
   // fully decrease short position
   function testCorrectness_WhenTraderFullyDecreaseShortPositionSize() external {
+    // Prepare for this test
+
     // ALICE open SHORT position
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 10,000 TOKENs
+    // open interest  - 1,000,000 TOKENs
+    // average price  - 1 USD
     openPosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
-    // cache position
+    // BOB open SHORT position
+    // sub account id - 0
+    // position size  - 500,000 USD
+    // IMR            - 5,000 USD (1% IMF)
+    // leverage       - 100x
+    // price          - 1 USD
+    // open interest  - 526,315.789473684210526315 TOKENs
+    // average price  - 0.95 USD
+    openPosition(BOB, 0, ethMarketIndex, -500_000 * 1e30);
+
+    // recalculate new short average price after BOB open position
+    // global short pnl = global short size * (current price - global avg price) / global avg price
+    //                 = 1000000 * (0.95 - 1) / 1 = -50000 USD
+    // new global short size = 15000000 (global size + BOB position size)
+    // new average short price = new global size * current price / new global size with pnl
+    //                        = 1500000 * 0.95 / 1500000 + (-50000) = 0.982758620689655172413793103448 USD
+    // THEN MARKET state
+    // short position size - 1,500,000 USD
+    // open interest       - 1,526,315.789473684210526315 TOKENs
+    // average price       - 0.982758620689655172413793103448 USD
+
+    // Start test
+
+    // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     positionTester.watch(_positionId);
 
+    // ALICE decrease position
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
-    // check position after decrease
-    // open interest delta = open interest * position size to decrease / position size
-    //                     = 10000 * 1000000 / 1000000 = 10000
+    // recalculate short average price after ALICE decrease position
+    // global short pnl = global short size * (global avg price - current price) / global avg price
+    //                 = 1500000 * (0.982758620689655172413793103448 - 0.95) / 0.982758620689655172413793103448
+    //                 = +49999.999999999999999999999999592983 USD
+    // position realized pnl = decreased position size * (position avg price - current price) / position avg price
+    //                       = 1000000 * (1 - 0.95) / 1 = +50000 USD
+    // new global short pnl = global short pnl - position relaized pnl
+    //                     = +49999.999999999999999999999999592983 - (+50000)
+    //                     = -0.00000000000000000000000040701 USD
+    // open interest delta = position open interest * position size to decrease / position size
+    //                     = 1000000 * 1000000 / 1000000 = 1000000
+    // new global short size = 500000 USD (global short size - decreased position size)
+    // new short average price (global) = current price * new global short size / new global short size - new global long pnl
+    //                                 = 0.95 * 500000 / (500000 - (-0.000000000000000000000000407018))
+    //                                 = 0.949999999999999999999999999999 USD
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       decreasedPositionSize: 1_000_000 * 1e30,
-      avgPriceDelta: 0,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 10_000 * 1e18
+      openInterestDelta: 1_000_000 * 1e18,
+      // average prices
+      newPositionAveragePrice: 1 * 1e30,
+      newLongGlobalAveragePrice: 0,
+      newShortGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30
     });
     positionTester.assertDecreasePositionResult(_assertData);
   }

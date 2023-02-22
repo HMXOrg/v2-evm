@@ -58,7 +58,6 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @notice Set new trader service contract address.
   /// @param _newTradeService New trader service contract address.
   function setTradeService(address _newTradeService) external onlyOwner {
-    // @todo - Sanity check
     if (_newTradeService == address(0)) revert IMarketTradeHandler_InvalidAddress();
     emit LogSetTradeService(address(tradeService), _newTradeService);
     tradeService = _newTradeService;
@@ -70,7 +69,6 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @notice Set new Pyth contract address.
   /// @param _newPyth New Pyth contract address.
   function setPyth(address _newPyth) external onlyOwner {
-    // @todo - Sanity check
     if (_newPyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
     emit LogSetPyth(pyth, _newPyth);
     pyth = _newPyth;

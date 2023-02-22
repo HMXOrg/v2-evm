@@ -71,6 +71,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     liquidityService = _liquidityService;
     pyth = _pyth;
     minExecutionFee = _minExecutionFee;
+
+    // slither-disable-next-line unused-return
+    ILiquidityService(_liquidityService).perpStorage();
+    // slither-disable-next-line unused-return
+    IPyth(_pyth).getValidTimePeriod();
   }
 
   /**

@@ -15,18 +15,25 @@ import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   using SafeERC20 for ERC20;
 
-  // EVENTS
+  /**
+   * EVENTS
+   */
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
   event LogSetPyth(address indexed oldPyth, address newPyth);
 
-  // STATES
+  /**
+   * STATES
+   */
   address public crossMarginService;
   address public pyth;
 
   constructor(address _crossMarginService, address _pyth) {
-    // @todo sanyty check
     crossMarginService = _crossMarginService;
     pyth = _pyth;
+
+    // Sanity check
+    ICrossMarginService(_crossMarginService).vaultStorage();
+    IPyth(_pyth).getValidTimePeriod();
   }
 
   /**
@@ -46,19 +53,23 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   /// @notice Set new CrossMarginService contract address.
   /// @param _crossMarginService New CrossMarginService contract address.
   function setCrossMarginService(address _crossMarginService) external onlyOwner {
-    // @todo - Sanity check
     if (_crossMarginService == address(0)) revert ICrossMarginHandler_InvalidAddress();
     emit LogSetCrossMarginService(crossMarginService, _crossMarginService);
     crossMarginService = _crossMarginService;
+
+    // Sanity check
+    ICrossMarginService(_crossMarginService).vaultStorage();
   }
 
   /// @notice Set new Pyth contract address.
   /// @param _pyth New Pyth contract address.
   function setPyth(address _pyth) external onlyOwner {
-    // @todo - Sanity check
     if (_pyth == address(0)) revert ICrossMarginHandler_InvalidAddress();
     emit LogSetPyth(pyth, _pyth);
     pyth = _pyth;
+
+    // Sanity check
+    IPyth(_pyth).getValidTimePeriod();
   }
 
   /**

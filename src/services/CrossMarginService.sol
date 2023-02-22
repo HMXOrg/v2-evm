@@ -34,13 +34,17 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   address public calculator;
 
   constructor(address _configStorage, address _vaultStorage, address _calculator) {
-    // @todo - Sanity check
     if (_configStorage == address(0) || _vaultStorage == address(0) || _calculator == address(0))
       revert ICrossMarginService_InvalidAddress();
 
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
     calculator = _calculator;
+
+    // Sanity check
+    IConfigStorage(_configStorage).calculator();
+    IVaultStorage(_vaultStorage).plpTotalLiquidityUSDE30();
+    ICalculator(_calculator).oracle();
   }
 
   /**
@@ -141,29 +145,35 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /// @notice Set new ConfigStorage contract address.
   /// @param _configStorage New ConfigStorage contract address.
   function setConfigStorage(address _configStorage) external onlyOwner {
-    // @todo - Sanity check
     if (_configStorage == address(0)) revert ICrossMarginService_InvalidAddress();
     emit LogSetConfigStorage(configStorage, _configStorage);
     configStorage = _configStorage;
+
+    // Sanity check
+    IConfigStorage(_configStorage).calculator();
   }
 
   /// @notice Set new VaultStorage contract address.
   /// @param _vaultStorage New VaultStorage contract address.
   function setVaultStorage(address _vaultStorage) external onlyOwner {
-    // @todo - Sanity check
     if (_vaultStorage == address(0)) revert ICrossMarginService_InvalidAddress();
 
     emit LogSetVaultStorage(vaultStorage, _vaultStorage);
     vaultStorage = _vaultStorage;
+
+    // Sanity check
+    IVaultStorage(_vaultStorage).plpTotalLiquidityUSDE30();
   }
 
   /// @notice Set new Calculator contract address.
   /// @param _calculator New Calculator contract address.
   function setCalculator(address _calculator) external onlyOwner {
-    // @todo - Sanity check
     if (_calculator == address(0)) revert ICrossMarginService_InvalidAddress();
 
     emit LogSetCalculator(calculator, _calculator);
     calculator = _calculator;
+
+    // Sanity check
+    ICalculator(_calculator).oracle();
   }
 }

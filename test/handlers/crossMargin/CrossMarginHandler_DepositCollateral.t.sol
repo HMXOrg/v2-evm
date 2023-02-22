@@ -55,7 +55,7 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
    */
 
   // Try deposit token collateral with initial balance and test accounting balance
-  function testCorrectness_handler_handler_depositCollateral_newDepositingToken() external {
+  function testCorrectness_handler_depositCollateral_newDepositingToken() external {
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
 
     // Before start depositing, ALICE must has 0 amount of WETH token

@@ -12,6 +12,7 @@ on:
       - "chore/**"
       - "test/**"
       - "unit/**"
+      - "perf/**"
       - "main"
 env:
   FOUNDRY_PROFILE: ci
@@ -64,4 +65,5 @@ jobs:
           slither-config: ./slither.config.json
           slither-version: 0.9.2
           solc-version: 0.8.18
-          fail-on: high # adjust this threshold after high finding has been fixed
+          # https://github.com/crytic/slither/issues/1408
+          slither-args: --exclude-dependencies --exclude-optimization --exclude-informational --exclude-low --exclude-medium --no-fail-pedantic --fail-high

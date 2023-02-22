@@ -34,39 +34,12 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
     pyth.getValidTimePeriod();
   }
 
-  modifier onlyUpdater() {
-    if (!isUpdater[msg.sender]) {
-      revert PythAdapter_OnlyUpdater();
-    }
-    _;
-  }
-
   /// @notice Set the Pyth price id for the given asset.
   /// @param _assetId The asset address to set.
   /// @param _pythPriceId The Pyth price id to set.
   function setPythPriceId(bytes32 _assetId, bytes32 _pythPriceId) external onlyOwner {
     emit SetPythPriceId(_assetId, pythPriceIdOf[_assetId], _pythPriceId);
     pythPriceIdOf[_assetId] = _pythPriceId;
-  }
-
-  /// @notice A function for setting updater who is able to updatePrices based on price update data
-  function setUpdater(address _account, bool _isActive) external onlyOwner {
-    isUpdater[_account] = _isActive;
-
-    emit SetUpdater(_account, _isActive);
-  }
-
-  /// @notice A function for updating prices based on price update data
-  /// @param _priceData - price update data
-  function updatePrices(bytes[] memory _priceData) external payable onlyUpdater {
-    // slither-disable-next-line arbitrary-send-eth
-    pyth.updatePriceFeeds{ value: pyth.getUpdateFee(_priceData) }(_priceData);
-  }
-
-  /// @notice A function for getting update _fee based on price update data
-  /// @param _priceUpdateData - price update data
-  function getUpdateFee(bytes[] memory _priceUpdateData) external view returns (uint256) {
-    return pyth.getUpdateFee(_priceUpdateData);
   }
 
   /// @notice convert Pyth's price to uint256.

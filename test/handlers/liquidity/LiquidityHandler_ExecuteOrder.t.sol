@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 import { LiquidityHandler_Base, IConfigStorage, IPerpStorage } from "./LiquidityHandler_Base.t.sol";
 import { ILiquidityHandler } from "../../../src/handlers/interfaces/ILiquidityHandler.sol";
-import { console } from "../../../lib/forge-std/src/console.sol";
 
 // // - revert
 // //   - Try directCall executeLiquidity
@@ -85,12 +84,12 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
 
     assertEq(_aliceOrdersAfter.length, 1, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Executed Order");
+    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
   }
 
   /// @dev plp burn and receive tokenOut in service
   function test_correctness_executeOrder_createRemoveLiquidityOrder() external {
-    _createRemoveLiquidityOrder();
+    _createRemoveLiquidityOrder(0);
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
 
@@ -101,11 +100,29 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
 
     assertEq(_aliceOrdersAfter.length, 1, "Order Amount After Executed Order");
+    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
+    assertEq(wbtc.balanceOf(ALICE), 5 ether, "ALICE received balance");
+  }
+
+  function test_correctness_executeOrder_createRemoveLiquidityOrders() external {
+    _createRemoveLiquidityOrder(0);
+    _createRemoveLiquidityOrder(1);
+
+    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
+
+    // Handler executor
+    liquidityHandler.executeOrders(_aliceOrdersBefore, new bytes[](0));
+    // Assertion after ExecuteOrder
+
+    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
+
+    assertEq(_aliceOrdersAfter.length, 2, "Order Amount After Executed Order");
     assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Executed Order");
+    assertEq(wbtc.balanceOf(ALICE), 10 ether, "ALICE received balance");
   }
 
   /// @dev plp burn and receive tokenOut in service
-  function test_correctness_executeOrder_createRemoveLiquidityOrderNative() external {
+  function test_correctness_executeOrder_native_createRemoveLiquidityOrder() external {
     _createRemoveLiquidityNativeOrder();
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
@@ -117,7 +134,8 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
 
     assertEq(_aliceOrdersAfter.length, 1, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Executed Order");
+    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
+    assertEq(ALICE.balance, 5 ether, "ALICE received balance");
   }
 
   function test_correctness_executeOrder_refundOrder() external {
@@ -137,7 +155,6 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
   function _createAddLiquidityOrder() internal {
     vm.deal(ALICE, 5 ether); //deal with out of gas
     wbtc.mint(ALICE, 1 ether);
-    console.log("alice", address(ALICE));
 
     vm.startPrank(ALICE);
 
@@ -156,7 +173,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     vm.stopPrank();
 
     assertEq(_beforeExecuteOrders.length, 1, "Order Amount After Created Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Created Order");
+    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Created Order");
 
     assertEq(_beforeExecuteOrders[0].account, ALICE, "Alice Order.account");
     assertEq(_beforeExecuteOrders[0].token, address(wbtc), "Alice Order.token");
@@ -166,7 +183,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[0].shouldUnwrap, false, "Alice Order.shouldUnwrap");
   }
 
-  function _createRemoveLiquidityOrder() internal {
+  function _createRemoveLiquidityOrder(uint256 _index) internal {
     vm.deal(ALICE, 5 ether);
     plp.mint(ALICE, 5 ether);
 
@@ -181,12 +198,12 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders(address(ALICE));
 
-    assertEq(_orders[0].account, ALICE, "Alice Order.account");
-    assertEq(_orders[0].token, address(wbtc), "Alice Order.token");
-    assertEq(_orders[0].amount, 5 ether, "Alice PLP Order.amount");
-    assertEq(_orders[0].minOut, 0, "Alice WBTC Order.minOut");
-    assertEq(_orders[0].isAdd, false, "Alice Order.isAdd");
-    assertEq(_orders[0].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+    assertEq(_orders[_index].account, ALICE, "Alice Order.account");
+    assertEq(_orders[_index].token, address(wbtc), "Alice Order.token");
+    assertEq(_orders[_index].amount, 5 ether, "Alice PLP Order.amount");
+    assertEq(_orders[_index].minOut, 0, "Alice WBTC Order.minOut");
+    assertEq(_orders[_index].isAdd, false, "Alice Order.isAdd");
+    assertEq(_orders[_index].shouldUnwrap, false, "Alice Order.shouldUnwrap");
   }
 
   function _createRemoveLiquidityNativeOrder() internal {

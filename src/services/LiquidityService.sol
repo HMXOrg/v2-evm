@@ -16,6 +16,7 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 /// @title LiquidityService
 contract LiquidityService is ILiquidityService {
   using AddressUtils for address;
+
   address public configStorage;
   address public vaultStorage;
   address public perpStorage;

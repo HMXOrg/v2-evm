@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { MockErc20 } from "./MockErc20.sol";
+
 contract MockLiquidityService {
   address public configStorage;
   address public perpStorage;
@@ -36,5 +38,10 @@ contract MockLiquidityService {
     address _tokenOut,
     uint256 _amount,
     uint256 _minAmount
-  ) external returns (uint256) {}
+  ) external returns (uint256) {
+    // mock service transfer out to handler
+    MockErc20(_tokenOut).mint(msg.sender, _amount);
+
+    return _amount;
+  }
 }

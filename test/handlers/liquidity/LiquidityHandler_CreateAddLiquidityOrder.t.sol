@@ -15,6 +15,7 @@ import { console } from "../../../lib/forge-std/src/console.sol";
 
 // // - success
 // //   - Try executeOrder_createAddLiquidityOrder
+// //   - Try executeOrder_createAddLiquidityOrder_multiple
 
 contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
   function setUp() public override {
@@ -68,23 +69,30 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
    */
 
   function test_correctness_executeOrder_IncreaseOrder() external {
-    _createAddLiquidityOrder();
+    _createAddLiquidityOrder(0);
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
     // Handler executor
-    liquidityHandler.executeOrders(_aliceOrdersBefore, new bytes[](0));
+    liquidityHandler.executeOrders(liquidityHandler.getLiquidityOrders(address(ALICE)), new bytes[](0));
     // Assertion after ExecuteOrder
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
+    assertEq(liquidityHandler.getLiquidityOrders(address(ALICE)).length, 1, "Order Amount After Executed Order");
+    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
+  }
 
-    assertEq(_aliceOrdersAfter.length, 1, "Order Amount After Executed Order");
+  function test_correctness_executeOrder_IncreaseOrder_multiple() external {
+    _createAddLiquidityOrder(0);
+    _createAddLiquidityOrder(1);
+    // Handler executor
+    liquidityHandler.executeOrders(liquidityHandler.getLiquidityOrders(address(ALICE)), new bytes[](0));
+    // Assertion after ExecuteOrder
+
+    assertEq(liquidityHandler.getLiquidityOrders(address(ALICE)).length, 2, "Order Amount After Executed Order");
     assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Executed Order");
   }
 
-  function _createAddLiquidityOrder() internal {
+  function _createAddLiquidityOrder(uint256 _index) internal {
     vm.deal(ALICE, 5 ether); //deal with out of gas
     wbtc.mint(ALICE, 1 ether);
-    console.log("alice", address(ALICE));
 
     vm.startPrank(ALICE);
 
@@ -93,7 +101,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(address(wbtc), 1 ether, 1 ether, 5 ether, false);
 
     // Assertion after createLiquidity
-    // alice should has 0 wbtc (open order),  (5 weth left)
+    // alice should has 0 wbtc (open order)
     // handler should has 1 order on alice
     assertEq(wbtc.balanceOf(ALICE), 0, "User Liquidity Balance");
 
@@ -102,14 +110,14 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     );
     vm.stopPrank();
 
-    assertEq(_beforeExecuteOrders.length, 1, "Order Amount After Created Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Created Order");
+    assertEq(_beforeExecuteOrders.length, _index + 1, "Order Amount After Created Order");
+    assertEq(liquidityHandler.lastOrderIndex(ALICE), _index, "Order Index After Created Order");
 
-    assertEq(_beforeExecuteOrders[0].account, ALICE, "Alice Order.account");
-    assertEq(_beforeExecuteOrders[0].token, address(wbtc), "Alice Order.token");
-    assertEq(_beforeExecuteOrders[0].amount, 1 ether, "Alice Order.amount");
-    assertEq(_beforeExecuteOrders[0].minOut, 1 ether, "Alice Order.minOut");
-    assertEq(_beforeExecuteOrders[0].isAdd, true, "Alice Order.isAdd");
-    assertEq(_beforeExecuteOrders[0].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+    assertEq(_beforeExecuteOrders[_index].account, ALICE, "Alice Order.account");
+    assertEq(_beforeExecuteOrders[_index].token, address(wbtc), "Alice Order.token");
+    assertEq(_beforeExecuteOrders[_index].amount, 1 ether, "Alice Order.amount");
+    assertEq(_beforeExecuteOrders[_index].minOut, 1 ether, "Alice Order.minOut");
+    assertEq(_beforeExecuteOrders[_index].isAdd, true, "Alice Order.isAdd");
+    assertEq(_beforeExecuteOrders[_index].shouldUnwrap, false, "Alice Order.shouldUnwrap");
   }
 }

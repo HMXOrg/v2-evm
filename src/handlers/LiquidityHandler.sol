@@ -1,25 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Owned } from "../base/Owned.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 // interfaces
 import { ILiquidityHandler } from "./interfaces/ILiquidityHandler.sol";
 import { ILiquidityService } from "../services/interfaces/ILiquidityService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { PLPv2 } from "../contracts/PLPv2.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
-import { console } from "../../lib/forge-std/src/console.sol";
-
-import { Owned } from "../base/Owned.sol";
 
 /// @title LiquidityService
 contract LiquidityHandler is Owned, ILiquidityHandler {
+  using SafeERC20 for IERC20;
+
   event LogSetLiquidityService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
@@ -35,7 +37,8 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
     address token,
     uint256 amountIn,
     uint256 minOut,
-    uint256 executionFee
+    uint256 executionFee,
+    bool shouldUnwrap
   );
   event ExecuteLiquidityOrder(
     address payable account,
@@ -134,7 +137,7 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
       }
     } else {
       if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
-      ERC20(_tokenIn).transferFrom(msg.sender, address(this), _amountIn);
+      IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
     LiquidityOrder[] storage _orders = liquidityOrders[msg.sender];
@@ -149,7 +152,9 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
       })
     );
 
-    ++lastOrderIndex[msg.sender];
+    if (liquidityOrders[msg.sender].length > 1) {
+      ++lastOrderIndex[msg.sender];
+    }
 
     emit CreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee);
   }
@@ -169,7 +174,7 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
 
     if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
 
-    ERC20(IConfigStorage(ILiquidityService(liquidityService).configStorage()).plp()).transferFrom(
+    IERC20(IConfigStorage(ILiquidityService(liquidityService).configStorage()).plp()).safeTransferFrom(
       msg.sender,
       address(this),
       _amountIn
@@ -186,9 +191,10 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
         shouldUnwrap: _shouldUnwrap
       })
     );
-    ++lastOrderIndex[msg.sender];
-
-    emit CreateRemoveLiquidityOrder(msg.sender, _tokenOut, _amountIn, _minOut, _executionFee);
+    if (liquidityOrders[msg.sender].length > 1) {
+      ++lastOrderIndex[msg.sender];
+    }
+    emit CreateRemoveLiquidityOrder(msg.sender, _tokenOut, _amountIn, _minOut, _executionFee, _shouldUnwrap);
   }
 
   /// @notice if user deposit native and failed, it will return to wrappedToken
@@ -198,7 +204,9 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
 
   function _cancelLiquidityOrder(address _account, uint256 _orderIndex) internal {
     // check _orderIndex not more than lastOrderIndex and data is removed?
-    if (lastOrderIndex[_account] > _orderIndex && liquidityOrders[_account][_orderIndex].account != address(0)) {
+    if (
+      liquidityOrders[_account].length > _orderIndex && liquidityOrders[_account][_orderIndex].account != address(0)
+    ) {
       LiquidityOrder memory order = liquidityOrders[_account][_orderIndex];
       isRefund = true;
       _userRefund(order);
@@ -220,9 +228,9 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
   function refund(LiquidityOrder memory _order) external {
     if (isRefund) {
       if (_order.token == IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()) {
-        _transferOutETHWithGasLimitIgnoreFail(_order.amount, _order.account);
+        _transferOutETH(_order.amount, _order.account);
       } else {
-        ERC20(_order.token).transfer(_order.account, _order.amount);
+        IERC20(_order.token).safeTransfer(_order.account, _order.amount);
       }
     } else {
       revert ILiquidityHandler_NotRefundState();
@@ -254,7 +262,7 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
     if (isExecuting) {
       if (_order.isAdd) {
-        ERC20(_order.token).transfer(ILiquidityService(liquidityService).vaultStorage(), _order.amount);
+        IERC20(_order.token).safeTransfer(ILiquidityService(liquidityService).vaultStorage(), _order.amount);
         return
           ILiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut);
       } else {
@@ -265,28 +273,30 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
           _order.minOut
         );
         if (_order.shouldUnwrap) {
-          _transferOutETHWithGasLimitIgnoreFail(amountOut, payable(_order.account));
+          _transferOutETH(amountOut, payable(_order.account));
+        } else {
+          IERC20(_order.token).safeTransfer(_order.account, amountOut);
         }
+        return amountOut;
       }
     } else {
       revert ILiquidityHandler_NotExecutionState();
     }
   }
 
+  /// @notice Transfer in ETH from user to be used as execution fee
+  /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.
   function _transferInETH() private {
-    if (msg.value != 0) {
-      IWNative(IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()).deposit{
-        value: msg.value
-      }();
-    }
+    IWNative(IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()).deposit{ value: msg.value }();
   }
 
-  function _transferOutETHWithGasLimitIgnoreFail(uint256 _amountOut, address payable _receiver) internal {
+  /// @notice Transfer out ETH to the receiver
+  /// @dev The stored WETH will be unwrapped and transfer as native token
+  /// @param _amountOut Amount of ETH to be transferred
+  /// @param _receiver The receiver of ETH in its native form. The receiver must be able to accept native token.
+  function _transferOutETH(uint256 _amountOut, address _receiver) private {
     IWNative(IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()).withdraw(_amountOut);
-
-    // use `send` instead of `transfer` to not revert whole transaction in case ETH transfer was failed
-    // it has limit of 2300 gas
-    // this is to avoid front-running
-    _receiver.send(_amountOut);
+    // slither-disable-next-line arbitrary-send-eth
+    payable(_receiver).transfer(_amountOut);
   }
 }

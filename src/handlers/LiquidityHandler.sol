@@ -22,6 +22,9 @@ import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
 contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   using SafeERC20 for IERC20;
 
+  /**
+   * Events
+   */
   event LogSetLiquidityService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetPyth(address oldPyth, address newPyth);
@@ -51,17 +54,18 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   );
   event LogCancelLiquidityOrder(address payable account, address token, uint256 amount, uint256 minOut, bool isAdd);
 
+  /**
+   * States
+   */
+
+  address liquidityService; //liquidityService
+  address pyth; //pyth
+  uint256 public minExecutionFee; // minExecutionFee in tokenAmount unit
+  bool isRefund; // order is refund (prevent direct call refund()
+  bool isExecuting; // order is executing (prevent direct call executeLiquidity()
   mapping(address => LiquidityOrder[]) public liquidityOrders; // user address => all liquidityOrder
   mapping(address => uint256) public lastOrderIndex; // user address => lastOrderIndex of liquidityOrder
-
-  bool isRefund;
-  bool isExecuting;
-  mapping(address => bool) public orderExecutors; //address => isExecutor?
-
-  address liquidityService;
-  address pyth;
-
-  uint256 public minExecutionFee;
+  mapping(address => bool) public orderExecutors; //address -> flag to execute
 
   constructor(address _liquidityService, address _pyth, uint256 _minExecutionFee) {
     liquidityService = _liquidityService;

@@ -12,9 +12,6 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
   function setUp() public override {
     super.setUp();
 
-    // ALICE is updater
-    vm.deal(ALICE, 1 ether);
-    pythAdapter.setUpdater(ALICE, true);
     pythAdapter.setPythPriceId(address(weth).toBytes32(), wethPriceId);
     pythAdapter.setPythPriceId(address(wbtc).toBytes32(), wbtcPriceId);
   }
@@ -32,11 +29,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
       uint64(block.timestamp)
     );
 
-    vm.startPrank(ALICE);
-    pythAdapter.updatePrices{ value: pythAdapter.getUpdateFee(priceDataBytes) }(
-      priceDataBytes
-    );
-    vm.stopPrank();
+    mockPyth.updatePriceFeeds{ value: mockPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
   }
 
   function updateWbtcWithBadParam() private {
@@ -52,11 +45,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
       uint64(block.timestamp)
     );
 
-    vm.startPrank(ALICE);
-    pythAdapter.updatePrices{ value: pythAdapter.getUpdateFee(priceDataBytes) }(
-      priceDataBytes
-    );
-    vm.stopPrank();
+    mockPyth.updatePriceFeeds{ value: mockPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
   }
 
   function testRevert_GetWithUnregisteredAssetId() external {
@@ -78,16 +67,8 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
   function testCorrectness_GetWhenNoConf() external {
     updateWbtcWithConf(0);
 
-    (uint256 maxPrice, uint256 lastUpdate) = pythAdapter.getLatestPrice(
-      address(wbtc).toBytes32(),
-      true,
-      1 ether
-    );
-    (uint256 minPrice, ) = pythAdapter.getLatestPrice(
-      address(wbtc).toBytes32(),
-      false,
-      1 ether
-    );
+    (uint256 maxPrice, uint256 lastUpdate) = pythAdapter.getLatestPrice(address(wbtc).toBytes32(), true, 1 ether);
+    (uint256 minPrice, ) = pythAdapter.getLatestPrice(address(wbtc).toBytes32(), false, 1 ether);
     assertEq(maxPrice, 20_000 * 1e30);
     assertEq(minPrice, 20_000 * 1e30);
     assertEq(lastUpdate, uint64(block.timestamp));
@@ -98,9 +79,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     // Feed with +-5% conf
     updateWbtcWithConf(1_000 * 1e8);
 
-    vm.expectRevert(
-      abi.encodeWithSignature("PythAdapter_ConfidenceRatioTooHigh()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("PythAdapter_ConfidenceRatioTooHigh()"));
     // But get price with 4% conf threshold, should revert as the conf 5% is unacceptable
     pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),

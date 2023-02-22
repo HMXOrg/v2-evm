@@ -17,6 +17,9 @@ interface ILiquidityService {
     LiquidityAction _action;
   }
 
+  /**
+   * Errors
+   */
   error LiquidityService_CircuitBreaker();
   error LiquidityService_InvalidToken();
   error LiquidityService_InsufficientLiquidityMint();

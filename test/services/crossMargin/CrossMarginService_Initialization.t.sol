@@ -41,19 +41,19 @@ contract CrossMarginService_Initialization is CrossMarginService_Base {
 
   function testCorrectness_crossMarginService_setConfigStorage() external {
     assertEq(crossMarginService.configStorage(), address(configStorage));
-    crossMarginService.setConfigStorage(address(1));
-    assertEq(crossMarginService.configStorage(), address(1));
+    crossMarginService.setConfigStorage(address(configStorage));
+    assertEq(crossMarginService.configStorage(), address(configStorage));
   }
 
   function testCorrectness_crossMarginService_setVaultStorage() external {
     assertEq(crossMarginService.vaultStorage(), address(vaultStorage));
-    crossMarginService.setVaultStorage(address(1));
-    assertEq(crossMarginService.vaultStorage(), address(1));
+    crossMarginService.setVaultStorage(address(vaultStorage));
+    assertEq(crossMarginService.vaultStorage(), address(vaultStorage));
   }
 
   function testCorrectness_crossMarginService_setCalculator() external {
     assertEq(crossMarginService.calculator(), address(mockCalculator));
-    crossMarginService.setCalculator(address(1));
-    assertEq(crossMarginService.calculator(), address(1));
+    crossMarginService.setCalculator(address(mockCalculator));
+    assertEq(crossMarginService.calculator(), address(mockCalculator));
   }
 }

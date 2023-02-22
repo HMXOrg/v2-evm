@@ -94,6 +94,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     weth = _weth;
     tradeService = _tradeService;
     pyth = _pyth;
+    isAllowAllExecutor = false;
 
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     minExecutionFee = _minExecutionFee;
@@ -321,11 +322,11 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
-    // Refund the execution fee to the creator of this order
-    _transferOutETH(_order.executionFee, _order.account);
-
     // Delete this order from the list
     delete limitOrders[subAccount][_orderIndex];
+
+    // Refund the execution fee to the creator of this order
+    _transferOutETH(_order.executionFee, _order.account);
 
     emit LogCancelLimitOrder(
       _order.account,

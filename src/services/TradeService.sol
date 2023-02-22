@@ -119,12 +119,11 @@ contract TradeService is ITradeService {
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
     if (!_isNewPosition) {
       _position.avgEntryPriceE30 = _getPositionNextAveragePrice(
-        _marketConfig,
         abs(_position.positionSizeE30),
         _isLong,
         _absSizeDelta,
-        _position.avgEntryPriceE30,
-        _priceE30
+        _priceE30,
+        _position.avgEntryPriceE30
       );
     }
 
@@ -285,9 +284,9 @@ contract TradeService is ITradeService {
       // =========================================
       vars.avgEntryPriceE30 = _position.avgEntryPriceE30;
       (bool isProfit, uint256 pnl) = getDelta(
-        _marketConfig,
         vars.absPositionSizeE30,
         vars.isLongPosition,
+        vars.priceE30,
         vars.avgEntryPriceE30
       );
       if (isProfit) {
@@ -366,32 +365,25 @@ contract TradeService is ITradeService {
   // @todo - move to calculator ??
   // @todo - pass current price here
   /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
-  /// @param _marketConfig target market config
   /// @param _size The size of the position.
-  /// @param _isLong The
+  /// @param _isLong position direction
+  /// @param _markPrice current market price
   /// @param _averagePrice The average price of the position.
   /// @return isProfit A boolean value indicating whether the position is profitable or not.
   /// @return delta The Profit between the average price and the fixed price, adjusted for the size of the order.
   function getDelta(
-    IConfigStorage.MarketConfig memory _marketConfig,
     uint256 _size,
     bool _isLong,
+    uint256 _markPrice,
     uint256 _averagePrice
   ) public view returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
     if (_averagePrice == 0) revert ITradeService_InvalidAveragePrice();
 
-    (uint256 price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
-      _marketConfig.assetId,
-      _isLong,
-      _marketConfig.priceConfidentThreshold,
-      0
-    );
-
     // Calculate the difference between the average price and the fixed price.
     uint256 priceDelta;
     unchecked {
-      priceDelta = _averagePrice > price ? _averagePrice - price : price - _averagePrice;
+      priceDelta = _averagePrice > _markPrice ? _averagePrice - _markPrice : _markPrice - _averagePrice;
     }
 
     // Calculate the delta, adjusted for the size of the order.
@@ -400,9 +392,9 @@ contract TradeService is ITradeService {
     // Determine if the position is profitable or not based on the averagePrice and the mark price.
     bool isProfit;
     if (_isLong) {
-      isProfit = price > _averagePrice;
+      isProfit = _markPrice > _averagePrice;
     } else {
-      isProfit = price < _averagePrice;
+      isProfit = _markPrice < _averagePrice;
     }
 
     // Return the values of isProfit and delta.
@@ -425,23 +417,21 @@ contract TradeService is ITradeService {
   }
 
   /// @notice Calculates the next average price of a position, given the current position details and the next price.
-  /// @param _marketConfig market config.
   /// @param _size The current size of the position.
   /// @param _isLong Whether the position is long or short.
   /// @param _sizeDelta The size difference between the current position and the next position.
+  /// @param _markPrice current market price
   /// @param _averagePrice The current average price of the position.
-  /// @param _currentPrice The next price of the position.
   /// @return The next average price of the position.
   function _getPositionNextAveragePrice(
-    IConfigStorage.MarketConfig memory _marketConfig,
     uint256 _size,
     bool _isLong,
     uint256 _sizeDelta,
-    uint256 _averagePrice,
-    uint256 _currentPrice
+    uint256 _markPrice,
+    uint256 _averagePrice
   ) internal view returns (uint256) {
     // Get the delta and isProfit value from the getDelta function
-    (bool isProfit, uint256 delta) = getDelta(_marketConfig, _size, _isLong, _averagePrice);
+    (bool isProfit, uint256 delta) = getDelta(_size, _isLong, _markPrice, _averagePrice);
     // Calculate the next size and divisor
     uint256 nextSize = _size + _sizeDelta;
     uint256 divisor;
@@ -452,7 +442,7 @@ contract TradeService is ITradeService {
     }
 
     // Calculate the next average price of the position
-    return (_currentPrice * nextSize) / divisor;
+    return (_markPrice * nextSize) / divisor;
   }
 
   /// @notice This function increases the reserve value

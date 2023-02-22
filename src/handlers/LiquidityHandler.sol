@@ -13,7 +13,6 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
-import { PLPv2 } from "../contracts/PLPv2.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
@@ -251,34 +250,28 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     }
   }
 
-  function executeOrders(
-    LiquidityOrder[] memory _orders,
-    bytes[] memory _priceData
-  ) external nonReentrant onlyOrderExecutor {
+  function executeOrders(address _account, uint256 _orderIndex, bytes[] memory _priceData) external onlyOrderExecutor {
     // Update price to Pyth
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     isExecuting = true;
-    for (uint256 i = 0; i < _orders.length; ) {
-      LiquidityOrder memory _order = _orders[i];
-      if (liquidityOrders[_order.account].length > 0) {
-        try this.executeLiquidity(_order) returns (uint256 result) {
-          emit ExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
-        } catch Error(string memory) {
-          _userRefund(_order);
-        }
-        delete liquidityOrders[_order.account][0];
+    if (liquidityOrders[_account].length > 0) {
+      LiquidityOrder memory _order = liquidityOrders[_account][_orderIndex];
+      try this.executeLiquidity(_order) returns (uint256 result) {
+        emit ExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
+        delete liquidityOrders[_order.account][_orderIndex];
+        isExecuting = false;
+      } catch Error(string memory) {
+        _userRefund(_order);
       }
-
-      unchecked {
-        ++i;
-      }
+    } else {
+      isExecuting = false;
+      revert ILiquidityHandler_NoOrder();
     }
-    isExecuting = false;
   }
 
-  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
+  function executeLiquidity(LiquidityOrder memory _order) external nonReentrant returns (uint256) {
     if (isExecuting) {
       if (_order.isAdd) {
         IERC20(_order.token).safeTransfer(ILiquidityService(liquidityService).vaultStorage(), _order.amount);

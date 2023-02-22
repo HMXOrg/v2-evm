@@ -46,11 +46,10 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
   function test_revert_executeOrder_notOrderExecutor() external {
     _createAddLiquidityOrder();
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
 
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NotWhitelisted()"));
-    liquidityHandler.executeOrders(_aliceOrdersBefore, new bytes[](0));
+    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
   }
 
   function test_revert_cancelOrder_notOwner() external {
@@ -76,9 +75,8 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
   function test_correctness_executeOrder_IncreaseOneOrder() external {
     _createAddLiquidityOrder();
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
     // Handler executor
-    liquidityHandler.executeOrders(_aliceOrdersBefore, new bytes[](0));
+    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
     // Assertion after ExecuteOrder
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
@@ -91,12 +89,9 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
   function test_correctness_executeOrder_createRemoveLiquidityOrder() external {
     _createRemoveLiquidityOrder(0);
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
-
     // Handler executor
-    liquidityHandler.executeOrders(_aliceOrdersBefore, new bytes[](0));
+    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
     // Assertion after ExecuteOrder
-
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
 
     assertEq(_aliceOrdersAfter.length, 1, "Order Amount After Executed Order");
@@ -108,10 +103,9 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     _createRemoveLiquidityOrder(0);
     _createRemoveLiquidityOrder(1);
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
-
     // Handler executor
-    liquidityHandler.executeOrders(_aliceOrdersBefore, new bytes[](0));
+    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrders(ALICE, 1, new bytes[](0));
     // Assertion after ExecuteOrder
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
@@ -125,10 +119,8 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
   function test_correctness_executeOrder_native_createRemoveLiquidityOrder() external {
     _createRemoveLiquidityNativeOrder();
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersBefore = liquidityHandler.getLiquidityOrders(address(ALICE));
-
     // Handler executor
-    liquidityHandler.executeOrders(_aliceOrdersBefore, new bytes[](0));
+    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
     // Assertion after ExecuteOrder
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));

@@ -68,23 +68,16 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
    * CORRECTNESS
    */
 
-  function test_correctness_executeOrder_IncreaseOrder() external {
+  function test_correctness_addLiquidityOrder() external {
     _createAddLiquidityOrder(0);
-
-    // Handler executor
-    liquidityHandler.executeOrders(liquidityHandler.getLiquidityOrders(address(ALICE)), new bytes[](0));
-    // Assertion after ExecuteOrder
 
     assertEq(liquidityHandler.getLiquidityOrders(address(ALICE)).length, 1, "Order Amount After Executed Order");
     assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
   }
 
-  function test_correctness_executeOrder_IncreaseOrder_multiple() external {
+  function test_correctness_addLiquidityOrder_multiple() external {
     _createAddLiquidityOrder(0);
     _createAddLiquidityOrder(1);
-    // Handler executor
-    liquidityHandler.executeOrders(liquidityHandler.getLiquidityOrders(address(ALICE)), new bytes[](0));
-    // Assertion after ExecuteOrder
 
     assertEq(liquidityHandler.getLiquidityOrders(address(ALICE)).length, 2, "Order Amount After Executed Order");
     assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Executed Order");

@@ -20,7 +20,7 @@ interface ILiquidityHandler {
 
   function executeOrders(LiquidityOrder[] memory _orders, bytes[] memory _priceData) external;
 
-  function cancelLiquidityOrder(LiquidityOrder[] memory _orders) external;
+  function cancelLiquidityOrder(uint256 _orderIndex) external;
 
   function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory);
 
@@ -35,17 +35,13 @@ interface ILiquidityHandler {
     bool shouldUnwrap; // unwrap nativetoken when removeLiquidity
   }
 
-  enum LiquidityOrderStatus {
-    PROCESSING,
-    DONE,
-    FAILED,
-    CANCELLED
-  }
-
   error ILiquidityHandler_InvalidSender();
   error ILiquidityHandler_InsufficientExecutionFee();
   error ILiquidityHandler_InCorrectValueTransfer();
   error ILiquidityHandler_InsufficientRefund();
   error ILiquidityHandler_NotWhitelisted();
   error ILiquidityHandler_InvalidAddress();
+  error ILiquidityHandler_NotRefundState();
+  error ILiquidityHandler_NotExecutionState();
+  error ILiquidityHandler_NoOrder();
 }

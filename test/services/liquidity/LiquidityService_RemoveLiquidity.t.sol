@@ -16,13 +16,13 @@ import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.
 //   - remove liquidity of another PLP
 //   - remove liquidity with dynamic fee (will be test in Calculator and integration test)
 // - revert
-//   - PLP transfer in cooldown period
+//   - PLP transfer in cooldown periodPLiquidityService_RemoveLiquidity.t.sol
 contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
 
     dai.mint(address(this), 100 ether);
-    dai.approve(address(liquidityService), type(uint256).max);
+    dai.transfer(address(vaultStorage), 100 ether);
     liquidityService.addLiquidity(address(this), address(dai), 100 ether, 0);
 
     // total supply = 10 ether after add liquidity for ALICE

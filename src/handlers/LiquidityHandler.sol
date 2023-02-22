@@ -45,11 +45,14 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
     bool isAdd,
     uint256 actualOut
   );
-  event CancelOrder(address payable account, address token, uint256 amount, uint256 minOut, bool isAdd);
+  event CancelLiquidityOrder(address payable account, address token, uint256 amount, uint256 minOut, bool isAdd);
 
   mapping(address => LiquidityOrder[]) public liquidityOrders; // user address => all liquidityOrder
-  mapping(address => uint256) public lastOrderIndex;
-  mapping(address => bool) public orderExecutors;
+  mapping(address => uint256) public lastOrderIndex; // user address => lastOrderIndex of liquidityOrder
+
+  bool isRefund;
+  bool isExecuting;
+  mapping(address => bool) public orderExecutors; //address => isExecutor?
 
   address liquidityService;
   address pyth;
@@ -120,7 +123,6 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
     uint256 _executionFee,
     bool _shouldWrap
   ) external payable onlyAcceptedToken(_tokenIn) {
-    console.log("createAddLiquidityOrder_msgsender", msg.sender);
     //1. convert native to WNative (including executionFee)
     _transferInETH();
 
@@ -167,6 +169,12 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
 
     if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
 
+    ERC20(IConfigStorage(ILiquidityService(liquidityService).configStorage()).plp()).transferFrom(
+      msg.sender,
+      address(this),
+      _amountIn
+    );
+
     LiquidityOrder[] storage _orders = liquidityOrders[msg.sender];
     _orders.push(
       LiquidityOrder({
@@ -184,80 +192,84 @@ contract LiquidityHandler is Owned, ILiquidityHandler {
   }
 
   /// @notice if user deposit native and failed, it will return to wrappedToken
-  function cancelLiquidityOrder(LiquidityOrder[] memory _orders) external {
-    for (uint256 i = 0; i < _orders.length; ) {
-      LiquidityOrder memory _order = _orders[i];
+  function cancelLiquidityOrder(uint256 _orderIndex) external {
+    _cancelLiquidityOrder(msg.sender, _orderIndex);
+  }
 
-      if (liquidityOrders[_order.account].length > 0) {
-        userRefund(_order);
-        delete liquidityOrders[_order.account][0];
-        --lastOrderIndex[_order.account];
+  function _cancelLiquidityOrder(address _account, uint256 _orderIndex) internal {
+    // check _orderIndex not more than lastOrderIndex and data is removed?
+    if (lastOrderIndex[_account] > _orderIndex && liquidityOrders[_account][_orderIndex].account != address(0)) {
+      LiquidityOrder memory order = liquidityOrders[_account][_orderIndex];
+      isRefund = true;
+      _userRefund(order);
+      delete liquidityOrders[_account][_orderIndex];
 
-        emit CancelOrder(payable(_order.account), _order.token, _order.amount, _order.minOut, _order.isAdd);
-      }
-
-      unchecked {
-        ++i;
-      }
+      emit CancelLiquidityOrder(payable(_account), order.token, order.amount, order.minOut, order.isAdd);
+      isRefund = false;
+    } else {
+      revert ILiquidityHandler_NoOrder();
     }
   }
 
-  // @todo onlyRefunder
-  function userRefund(LiquidityOrder memory _order) internal {
-    console.log("userRefund_msg.sender", msg.sender);
+  function _userRefund(LiquidityOrder memory _order) internal {
     try this.refund(_order) {} catch Error(string memory reason) {
       revert ILiquidityHandler_InsufficientRefund();
     }
   }
 
-  // @todo onlyRefunder
   function refund(LiquidityOrder memory _order) external {
-    console.log("refund.sender", msg.sender);
-    if (_order.token == IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()) {
-      _transferOutETHWithGasLimitIgnoreFail(_order.amount, _order.account);
+    if (isRefund) {
+      if (_order.token == IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()) {
+        _transferOutETHWithGasLimitIgnoreFail(_order.amount, _order.account);
+      } else {
+        ERC20(_order.token).transfer(_order.account, _order.amount);
+      }
     } else {
-      ERC20(_order.token).transfer(_order.account, _order.amount);
+      revert ILiquidityHandler_NotRefundState();
     }
   }
 
   function executeOrders(LiquidityOrder[] memory _orders, bytes[] memory _priceData) external onlyOrderExecutor {
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
+    isExecuting = true;
     for (uint256 i = 0; i < _orders.length; ) {
       LiquidityOrder memory _order = _orders[i];
       if (liquidityOrders[_order.account].length > 0) {
         try this.executeLiquidity(_order) returns (uint256 result) {
           emit ExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
         } catch Error(string memory reason) {
-          userRefund(_order);
+          _userRefund(_order);
         }
         delete liquidityOrders[_order.account][0];
-        --lastOrderIndex[_order.account];
       }
 
       unchecked {
         ++i;
       }
     }
+    isExecuting = false;
   }
 
-  // @todo try can be used only external need whitelisted
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
-    console.log("executeLiquidity.sender", msg.sender);
-    if (_order.isAdd) {
-      ERC20(_order.token).transfer(ILiquidityService(liquidityService).vaultStorage(), _order.amount);
-      return
-        ILiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut);
-    } else {
-      uint256 amountOut = ILiquidityService(liquidityService).removeLiquidity(
-        _order.account,
-        _order.token,
-        _order.amount,
-        _order.minOut
-      );
-      if (_order.shouldUnwrap) {
-        _transferOutETHWithGasLimitIgnoreFail(amountOut, payable(_order.account));
+    if (isExecuting) {
+      if (_order.isAdd) {
+        ERC20(_order.token).transfer(ILiquidityService(liquidityService).vaultStorage(), _order.amount);
+        return
+          ILiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut);
+      } else {
+        uint256 amountOut = ILiquidityService(liquidityService).removeLiquidity(
+          _order.account,
+          _order.token,
+          _order.amount,
+          _order.minOut
+        );
+        if (_order.shouldUnwrap) {
+          _transferOutETHWithGasLimitIgnoreFail(amountOut, payable(_order.account));
+        }
       }
+    } else {
+      revert ILiquidityHandler_NotExecutionState();
     }
   }
 

@@ -2,7 +2,10 @@
 pragma solidity 0.8.18;
 
 import { PerpStorage } from "../../src/storages/PerpStorage.sol";
+import { VaultStorage } from "../../src/storages/VaultStorage.sol";
+
 import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
+import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
 
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 
@@ -12,6 +15,12 @@ import { console } from "forge-std/console.sol";
 
 contract PositionTester is StdAssertions {
   struct DecreasePositionAssertionData {
+    address primaryAccount;
+    uint256 subAccountId;
+    // profit
+    address tpToken;
+    uint256 profitAmount; // token amount
+    // position info
     uint256 decreasedPositionSize;
     uint256 reserveValueDelta;
     uint256 openInterestDelta;
@@ -22,42 +31,74 @@ contract PositionTester is StdAssertions {
   }
 
   PerpStorage perpStorage;
+  VaultStorage vaultStorage;
   MockOracleMiddleware oracle;
 
+  // cache position info
   bytes32 cachePositionId;
   IPerpStorage.Position cachePosition;
+  // cache perp storage
   IPerpStorage.GlobalMarket cacheMarketGlobal;
   IPerpStorage.GlobalState cacheGlobalState;
+  // cache vault storage
+  uint256 cachePlpTokenLiquidity;
+  uint256 cacheTraderBalance;
 
-  constructor(PerpStorage _perpStorage, MockOracleMiddleware _oracle) {
+  constructor(PerpStorage _perpStorage, VaultStorage _vaultStorage, MockOracleMiddleware _oracle) {
     perpStorage = _perpStorage;
+    vaultStorage = _vaultStorage;
     oracle = _oracle;
   }
 
-  function watch(bytes32 _positionId) external {
+  function watch(address _primaryAccount, uint256 _subAccountId, address _token, bytes32 _positionId) external {
+    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
     // @todo - this can access state directly
     cachePositionId = _positionId;
     cachePosition = perpStorage.getPositionById(_positionId);
     cacheMarketGlobal = perpStorage.getGlobalMarketByIndex(cachePosition.marketIndex);
     cacheGlobalState = perpStorage.getGlobalState();
+
+    cachePlpTokenLiquidity = vaultStorage.plpLiquidity(_token);
+    cacheTraderBalance = vaultStorage.traderBalances(_subAccount, _token);
   }
 
   // assert cache position with current position from storage
   // what this function check after decrease position
+  // - sub account
+  //   - free collateral
+  // - perp storage
+  //   - liquidity
   // - position
-  //    - size delta
-  //    - reserve delta
-  //    - average price
-  //    - open interest
+  //   - size delta
+  //   - reserve delta
+  //   - average price
+  //   - open interest
   // - global market
-  //    - long / short position size
-  //    - long / short open interest
-  //    - long / short average price
-  //    - [pending] funding rate
+  //   - long / short position size
+  //   - long / short open interest
+  //   - long / short average price
+  //   - [pending] funding rate
   // - global state
-  //    - reserve value delta
-  //    - [pending] sum of borrowing fee
+  //   - reserve value delta
+  //   - [pending] sum of borrowing fee
   function assertDecreasePositionResult(DecreasePositionAssertionData memory _data) external {
+    address _subAccount = _getSubAccount(_data.primaryAccount, _data.subAccountId);
+    // when user profit
+    if (_data.profitAmount != 0) {
+      // collateral
+      assertEq(
+        cacheTraderBalance + _data.profitAmount,
+        vaultStorage.traderBalances(_subAccount, _data.tpToken),
+        "trader collateral"
+      );
+      // plp token
+      assertEq(
+        cachePlpTokenLiquidity - _data.profitAmount,
+        vaultStorage.plpLiquidity(_data.tpToken),
+        "plp token liquidity"
+      );
+    }
+
     // assert position state
     IPerpStorage.Position memory _currentPosition = perpStorage.getPositionById(cachePositionId);
     int256 _sizeDelta = cachePosition.positionSizeE30 - _currentPosition.positionSizeE30;
@@ -133,5 +174,10 @@ contract PositionTester is StdAssertions {
     //   cacheGlobalState.lastBorrowingTime,
     //   block.timestamp
     // );
+  }
+
+  function _getSubAccount(address _primaryAccount, uint256 _subAccountId) internal pure returns (address) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primaryAccount) ^ uint160(_subAccountId));
   }
 }

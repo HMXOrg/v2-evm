@@ -8,12 +8,15 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
+import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 import { console } from "forge-std/console.sol";
 
 // @todo - refactor, deduplicate code
 
 contract TradeService is ITradeService {
+  using AddressUtils for address;
+
   // struct
   struct DecreasePositionVars {
     uint256 absPositionSizeE30;
@@ -201,11 +204,13 @@ contract TradeService is ITradeService {
   /// @param _subAccountId - address
   /// @param _marketIndex - market index
   /// @param _positionSizeE30ToDecrease - position size to decrease
+  /// @param _tpToken - take profit token
   function decreasePosition(
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex,
-    uint256 _positionSizeE30ToDecrease
+    uint256 _positionSizeE30ToDecrease,
+    address _tpToken
   ) external {
     // prepare
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
@@ -268,10 +273,6 @@ contract TradeService is ITradeService {
     // @todo - calculate trading, borrowing and funding fee
     // @todo - collect fee
 
-    // =========================================
-    // | ------ update perp storage ---------- |
-    // =========================================
-
     uint256 _newAbsPositionSizeE30 = vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
 
     // check position is too tiny
@@ -279,12 +280,11 @@ contract TradeService is ITradeService {
     //       due to we has problem stack too deep in MarketConfig now
     if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30) revert ITradeService_TooTinyPosition();
 
+    // ==================================================
+    // | ------ calculate relized profit & loss ------- |
+    // ==================================================
     int256 _realizedPnl;
-
     {
-      // =========================================
-      // | ------- settlement position --------- |
-      // =========================================
       vars.avgEntryPriceE30 = _position.avgEntryPriceE30;
       (bool isProfit, uint256 pnl) = getDelta(
         _marketConfig,
@@ -299,6 +299,9 @@ contract TradeService is ITradeService {
       }
     }
 
+    // =========================================
+    // | ------ update perp storage ---------- |
+    // =========================================
     {
       uint256 _openInterestDelta = (_position.openInterest * _positionSizeE30ToDecrease) / vars.absPositionSizeE30;
 
@@ -354,6 +357,20 @@ contract TradeService is ITradeService {
       );
     }
 
+    {
+      // =======================================
+      // | ------ settle profit & loss ------- |
+      // =======================================
+      if (_realizedPnl != 0) {
+        if (_realizedPnl > 0) {
+          // profit, trader should receive take profit token = Profit in USD
+          _settleProfit(_subAccount, _tpToken, uint256(_realizedPnl));
+        } else {
+          // loss
+        }
+      }
+    }
+
     // =========================================
     // | --------- post validation ----------- |
     // =========================================
@@ -362,6 +379,27 @@ contract TradeService is ITradeService {
     _subAccountHealthCheck(_subAccount);
 
     emit LogDecreasePosition(_positionId, _positionSizeE30ToDecrease);
+  }
+
+  /// @notice settle profit
+  /// @param _token - token that trader want to take profit as collateral
+  /// @param _realizedProfitE30 - trader profit in USD
+  function _settleProfit(address _subAccount, address _token, uint256 _realizedProfitE30) internal {
+    (uint256 _tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
+      _token.toBytes32(),
+      false,
+      IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
+      30 // trust price age (seconds) todo: from market config
+    );
+
+    // @todo - fee
+    // calculate token trader should received
+    uint256 _tpTokenOut = (_realizedProfitE30 * 1e18) / _tpTokenPrice; // @todo - token decimal
+
+    console.log("_realizedProfitE30", _realizedProfitE30);
+    console.log("_tpTokenPrice", _tpTokenPrice);
+
+    IVaultStorage(vaultStorage).settleProfit(_subAccount, _token, _tpTokenOut);
   }
 
   // @todo - remove usage from test

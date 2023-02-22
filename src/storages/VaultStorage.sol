@@ -151,4 +151,16 @@ contract VaultStorage is IVaultStorage {
   function transferToken(address _subAccount, address _token, uint256 _amount) external {
     IERC20(_token).transfer(_subAccount, _amount);
   }
+
+  /// @notice settle profit for sub account
+  /// @param _subAccount - sub account
+  /// @param _token - profit token
+  /// @param _amountE30 - trader profit
+  function settleProfit(address _subAccount, address _token, uint256 _amountE30) external {
+    // @todo - validation
+    plpLiquidity[_token] -= _amountE30;
+
+    // @todo - support settle fee
+    traderBalances[_subAccount][_token] += _amountE30;
+  }
 }

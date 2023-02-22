@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 interface IMarketTradeHandler {
   /**
-   * ERRORs
+   * Errors
    */
   error IMarketTradeHandler_InvalidAddress();
   error IMarketTradeHandler_PositionNotFullyClosed();

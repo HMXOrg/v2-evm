@@ -45,32 +45,23 @@ interface IPerpStorage {
     uint256 openInterest;
   }
 
-  // =========================================
-  // | ---------- Getter ------------------- |
-  // =========================================
+  /**
+   * Getter
+   */
 
-  function getPositionBySubAccount(
-    address _trader
-  ) external view returns (Position[] memory traderPositions);
+  function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions);
 
-  function getPositionById(
-    bytes32 _positionId
-  ) external view returns (Position memory);
+  function getPositionById(bytes32 _positionId) external view returns (Position memory);
 
-  function getGlobalMarketByIndex(
-    uint256 __marketIndex
-  ) external view returns (GlobalMarket memory);
+  function getGlobalMarketByIndex(uint256 __marketIndex) external view returns (GlobalMarket memory);
 
   function getGlobalState() external view returns (GlobalState memory);
 
-  function getNumberOfSubAccountPosition(
-    address _subAccount
-  ) external view returns (uint256);
+  function getNumberOfSubAccountPosition(address _subAccount) external view returns (uint256);
 
-  // setter
-  // =========================================
-  // | ---------- Setter ------------------- |
-  // =========================================
+  /**
+   * Setter
+   */
 
   function updatePositionById(
     bytes32 _positionId,
@@ -97,11 +88,7 @@ interface IPerpStorage {
   // @todo - update sumBorrowingRate, lastBorrowingTime
   function updateGlobalState(uint256 _newReserveValueE30) external;
 
-  function savePosition(
-    address _subAccount,
-    bytes32 _positionId,
-    Position calldata position
-  ) external;
+  function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) external;
 
   function updateReserveValue(uint256 newReserveValue) external;
 }

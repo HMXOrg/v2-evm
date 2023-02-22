@@ -2,6 +2,9 @@
 pragma solidity 0.8.18;
 
 interface ILiquidityService {
+  /**
+   * Errors
+   */
   error LiquidityService_CircuitBreaker();
   error LiquidityService_InvalidToken();
   error LiquidityService_InvalidInputAmount();
@@ -14,6 +17,9 @@ interface ILiquidityService {
   error LiquidityService_MaxPLPUtilizationExceeded();
   error LiquidityService_InsufficientPLPReserved();
 
+  /**
+   * Struct
+   */
   struct CollectFeeRequest {
     address _token;
     uint256 _tokenPriceUsd;
@@ -23,12 +29,18 @@ interface ILiquidityService {
     LiquidityAction _action;
   }
 
+  /**
+   * Enum
+   */
   enum LiquidityAction {
     SWAP,
     ADD_LIQUIDITY,
     REMOVE_LIQUIDITY
   }
 
+  /**
+   * Functions
+   */
   function addLiquidity(
     address _lpProvider,
     address _token,

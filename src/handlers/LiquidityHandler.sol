@@ -213,6 +213,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @notice refund order
   /// @dev this method has not be called directly
   /// @param _order order to execute
+  // slither-disable-next-line
   function refund(LiquidityOrder memory _order) external {
     if (isRefund) {
       if (_order.token == IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()) {
@@ -256,6 +257,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
   /// @notice execute either addLiquidity or removeLiquidity
   /// @param _order order of executing
+  // slither-disable-next-line
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
     if (isExecuting) {
       if (_order.isAdd) {

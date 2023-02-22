@@ -67,6 +67,8 @@ interface IPerpStorage {
 
   function getNumberOfSubAccountPosition(address _subAccount) external view returns (uint256);
 
+  function getSubAccountFee(address _subAccount) external view returns (uint256 fee);
+
   // setter
   // =========================================
   // | ---------- Setter ------------------- |
@@ -99,4 +101,6 @@ interface IPerpStorage {
   function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) external;
 
   function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
+
+  function updateSubAccountFee(address _subAccount, uint256 fee) external;
 }

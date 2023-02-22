@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { console } from "forge-std/console.sol";
+
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { AddressUtils } from "../libraries/AddressUtils.sol";
+
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
@@ -10,6 +15,8 @@ import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
 contract TradeService is ITradeService {
+  using AddressUtils for address;
+
   // struct
   struct DecreasePositionVars {
     uint256 absPositionSizeE30;
@@ -132,9 +139,19 @@ contract TradeService is ITradeService {
     }
 
     // TODO: Collect trading fee, borrowing fee, update borrowing rate, collect funding fee, and update funding rate.
+    // Collect fee
+    collectFee(_subAccount, _marketConfig.assetClass, _position.reserveValueE30, _position.entryBorrowingRate);
+    settleFee(_subAccount);
 
     // update the position size by adding the new size delta
     _position.positionSizeE30 += _sizeDelta;
+
+    {
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+        _marketConfig.assetClass
+      );
+      _position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
+    }
 
     // if the position size is zero after the update, revert the transaction with an error
     if (_position.positionSizeE30 == 0) revert ITradeService_BadPositionSize();
@@ -233,6 +250,9 @@ contract TradeService is ITradeService {
     // position size to decrease is greater then position size, should be revert
     if (_positionSizeE30ToDecrease > vars.absPositionSizeE30) revert ITradeService_DecreaseTooHighPositionSize();
 
+    // Update borrowing rate
+    updateBorrowingRate(_marketConfig.assetClass);
+
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
@@ -259,6 +279,8 @@ contract TradeService is ITradeService {
     // @todo - update funding & borrowing fee rate
     // @todo - calculate trading, borrowing and funding fee
     // @todo - collect fee
+    collectFee(_subAccount, _marketConfig.assetClass, _position.reserveValueE30, _position.entryBorrowingRate);
+    settleFee(_subAccount);
 
     // =========================================
     // | ------ update perp storage ---------- |
@@ -522,5 +544,47 @@ contract TradeService is ITradeService {
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
     return (_assetClassConfig.baseBorrowingRate * _globalAssetClass.reserveValueE30 * intervals) / plpTVL;
+  }
+
+  /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.
+  /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
+  /// @param _reservedValue The reserved value of the asset class.
+  /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
+  /// @return borrowingFee The calculated borrowing fee for the asset class.
+  function getBorrowingFee(
+    uint256 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) public view returns (uint256 borrowingFee) {
+    // Get the global asset class.
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+    // Calculate borrowing rate.
+    uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
+    // Calculate the borrowing fee based on reserved value, borrowing rate.
+    return (_reservedValue * _borrowingRate) / 1e18;
+  }
+
+  /// @notice This function collect fee is collect borrowing fee, funding fee
+  /// @param _subAccount The sub-account from which to collect the fee.
+  /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
+  /// @param _reservedValue The reserved value of the asset class.
+  /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
+  function collectFee(
+    address _subAccount,
+    uint256 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) public {
+    // Get the debt fee of the sub-account
+    uint256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
+    // Calculate the borrowing fee
+    uint256 borrowingFee = getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
+
+    // Accumulate fee
+    feeUsd += borrowingFee;
+    // Update the sub-account's debt fee balance
+    IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);
   }
 }

@@ -18,7 +18,7 @@ interface ILiquidityHandler {
     bool _shouldUnwrap
   ) external payable;
 
-  function executeOrders(address _account, uint256 _orderIndex, bytes[] memory _priceData) external;
+  function executeOrder(address _account, uint256 _orderIndex, bytes[] memory _priceData) external;
 
   function cancelLiquidityOrder(uint256 _orderIndex) external;
 

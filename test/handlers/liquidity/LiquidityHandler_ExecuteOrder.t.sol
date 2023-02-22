@@ -49,7 +49,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NotWhitelisted()"));
-    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
   }
 
   function test_revert_cancelOrder_notOwner() external {
@@ -76,7 +76,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     _createAddLiquidityOrder();
 
     // Handler executor
-    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
     // Assertion after ExecuteOrder
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
@@ -90,7 +90,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     _createRemoveLiquidityOrder(0);
 
     // Handler executor
-    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
     // Assertion after ExecuteOrder
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
 
@@ -104,8 +104,8 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     _createRemoveLiquidityOrder(1);
 
     // Handler executor
-    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
-    liquidityHandler.executeOrders(ALICE, 1, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 1, new bytes[](0));
     // Assertion after ExecuteOrder
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
@@ -120,7 +120,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     _createRemoveLiquidityNativeOrder();
 
     // Handler executor
-    liquidityHandler.executeOrders(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
     // Assertion after ExecuteOrder
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));

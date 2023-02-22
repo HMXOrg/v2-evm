@@ -111,7 +111,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
         maxProfitRate: 9e18,
         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-        minLeverage: 1,
+        minLeverage: 1 * 1e18,
         initialMarginFraction: 0.01 * 1e18,
         maintenanceMarginFraction: 0.005 * 1e18,
         increasePositionFeeRate: 0,

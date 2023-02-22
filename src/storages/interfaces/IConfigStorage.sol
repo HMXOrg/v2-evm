@@ -99,9 +99,6 @@ interface IConfigStorage {
   /**
    * Validation
    */
-  /// @notice Validate only whitelisted executor contracts to be able to call Service contracts.
-  /// @param _contractAddress Service contract address to be executed.
-  /// @param _executorAddress Executor contract address to call service contract.
   function validateServiceExecutor(address _contractAddress, address _executorAddress) external view;
 
   function validateAcceptedCollateral(address _token) external view;

@@ -395,7 +395,10 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     );
 
     // Validate market status
-    if (_marketStatus != 2) revert ILimitTradeHandler_MarketIsClosed();
+    if (_marketStatus != 2) {
+      if (_revertOnError) revert ILimitTradeHandler_MarketIsClosed();
+      else return (_currentPrice, false);
+    }
 
     // Validate price is executable
     bool isPriceValid = _triggerAboveThreshold ? _currentPrice > _triggerPrice : _currentPrice < _triggerPrice;

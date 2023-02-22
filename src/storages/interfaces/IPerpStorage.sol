@@ -28,6 +28,7 @@ interface IPerpStorage {
     // funding rate
     int256 accumFundingRateLong; //1e18 = 100%
     int256 accumFundingRateShort; //1e18 = 100%
+    int256 currentFundingRate;
     uint256 lastFundingTime;
   }
 

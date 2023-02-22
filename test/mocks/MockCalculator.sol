@@ -5,7 +5,7 @@ import { ICalculator } from "../../src/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
 
-contract MockCalculator is ICalculator {
+contract MockCalculator {
   uint256 equity;
   uint256 freeCollateral;
   uint256 mmr;
@@ -78,17 +78,11 @@ contract MockCalculator is ICalculator {
   // | ---------- Calculator --------------- |
   // =========================================
 
-  function calculatePositionIMR(
-    uint256,
-    uint256
-  ) external view returns (uint256) {
+  function calculatePositionIMR(uint256, uint256) external view returns (uint256) {
     return imr;
   }
 
-  function calculatePositionMMR(
-    uint256,
-    uint256
-  ) external view returns (uint256) {
+  function calculatePositionMMR(uint256, uint256) external view returns (uint256) {
     return mmr;
   }
 
@@ -100,25 +94,16 @@ contract MockCalculator is ICalculator {
     return aum;
   }
 
-  function getPLPValueE30(
-    bool /* isMaxPrice */
-  ) external view returns (uint256) {
+  function getPLPValueE30(bool /* isMaxPrice */) external view returns (uint256) {
     return plpValue;
   }
 
-  function getPLPPrice(
-    uint256 /* aum */,
-    uint256 /* supply */
-  ) external pure returns (uint256) {
+  function getPLPPrice(uint256 /* aum */, uint256 /* supply */) external pure returns (uint256) {
     // 1$
     return 1e30;
   }
 
-  function getMintAmount(
-    uint256 _aum,
-    uint256 _totalSupply,
-    uint256 _value
-  ) external pure returns (uint256) {
+  function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _value) external pure returns (uint256) {
     return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
   }
 
@@ -148,9 +133,7 @@ contract MockCalculator is ICalculator {
     return 1e18;
   }
 
-  function getFreeCollateral(
-    address /*_subAccount*/
-  ) external view returns (uint256) {
+  function getFreeCollateral(address /*_subAccount*/) external view returns (uint256) {
     return freeCollateral;
   }
 }

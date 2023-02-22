@@ -15,23 +15,17 @@ contract CrossMarginService_Initialization is CrossMarginService_Base {
   // =========================================
 
   function testRevert_setConfigStorage() external {
-    vm.expectRevert(
-      abi.encodeWithSignature("ICrossMarginService_InvalidAddress()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InvalidAddress()"));
     crossMarginService.setConfigStorage(address(0));
   }
 
   function testRevert_setVaultStorage() external {
-    vm.expectRevert(
-      abi.encodeWithSignature("ICrossMarginService_InvalidAddress()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InvalidAddress()"));
     crossMarginService.setVaultStorage(address(0));
   }
 
   function testRevert_setCalculator() external {
-    vm.expectRevert(
-      abi.encodeWithSignature("ICrossMarginService_InvalidAddress()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InvalidAddress()"));
     crossMarginService.setCalculator(address(0));
   }
 

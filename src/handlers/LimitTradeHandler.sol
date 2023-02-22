@@ -94,11 +94,14 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     weth = _weth;
     tradeService = _tradeService;
     pyth = _pyth;
+    isAllowAllExecutor = false;
 
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     minExecutionFee = _minExecutionFee;
 
+    // slither-disable-next-line unused-return
     ITradeService(_tradeService).perpStorage();
+    // slither-disable-next-line unused-return
     IPyth(_pyth).getValidTimePeriod();
   }
 
@@ -188,10 +191,15 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   ) external nonReentrant onlyOrderExecutor {
     address _subAccount = _getSubAccount(_account, _subAccountId);
     LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
+
+    // Delete this executed order from the list
+    delete limitOrders[_subAccount][_orderIndex];
+
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
+    // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // Validate if the current price is valid for the execution of this order
@@ -291,9 +299,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       }
     }
 
-    // Delete this executed order from the list
-    delete limitOrders[_subAccount][_orderIndex];
-
     // Pay the executor
     _transferOutETH(_order.executionFee, _feeReceiver);
 
@@ -320,11 +325,11 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
-    // Refund the execution fee to the creator of this order
-    _transferOutETH(_order.executionFee, _order.account);
-
     // Delete this order from the list
     delete limitOrders[subAccount][_orderIndex];
+
+    // Refund the execution fee to the creator of this order
+    _transferOutETH(_order.executionFee, _order.account);
 
     emit LogCancelLimitOrder(
       _order.account,
@@ -453,6 +458,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _receiver The receiver of ETH in its native form. The receiver must be able to accept native token.
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
     IWNative(weth).withdraw(_amountOut);
+    // slither-disable-next-line arbitrary-send-eth
     payable(_receiver).transfer(_amountOut);
   }
 

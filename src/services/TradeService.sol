@@ -417,7 +417,7 @@ contract TradeService is ITradeService {
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice
-  ) public view returns (bool, uint256) {
+  ) public pure returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
     if (_averagePrice == 0) revert ITradeService_InvalidAveragePrice();
 
@@ -470,7 +470,7 @@ contract TradeService is ITradeService {
     uint256 _sizeDelta,
     uint256 _markPrice,
     uint256 _averagePrice
-  ) internal view returns (uint256) {
+  ) internal pure returns (uint256) {
     // Get the delta and isProfit value from the getDelta function
     (bool isProfit, uint256 delta) = getDelta(_size, _isLong, _markPrice, _averagePrice);
     // Calculate the next size and divisor

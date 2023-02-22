@@ -27,8 +27,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
 
-    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
-
     vm.expectRevert(abi.encodeWithSignature("ITradeService_InvalidAveragePrice()"));
     tradeService.getDelta(size, isLong, 1e30, avgPriceE30);
   }
@@ -38,7 +36,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 24_200 * 1e30;
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
-    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price up 10% -> profit 10% of size
     mockOracle.setPrice(nextPrice);
@@ -53,7 +50,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 18_700 * 1e30;
     bool isLong = true;
     uint256 size = 1_000 * 1e30;
-    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price down 15% -> loss 15% of size
     mockOracle.setPrice(nextPrice);
@@ -68,7 +64,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 23_100 * 1e30;
     bool isLong = false;
     uint256 size = 1_000 * 1e30;
-    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price up 5% -> loss 5% of size
     mockOracle.setPrice(nextPrice);
@@ -83,7 +78,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
     uint256 nextPrice = 11_000 * 1e30;
     bool isLong = false;
     uint256 size = 1_000 * 1e30;
-    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     // price down 50% -> profit 50% of size
     mockOracle.setPrice(nextPrice);

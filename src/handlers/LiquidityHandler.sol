@@ -73,11 +73,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     minExecutionFee = _minExecutionFee;
   }
 
-  receive() external payable {
-    if (msg.sender != IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth())
-      revert ILiquidityHandler_InvalidSender();
-  }
-
   /**
    * MODIFIER
    */
@@ -85,6 +80,16 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   modifier onlyAcceptedToken(address _token) {
     IConfigStorage(ILiquidityService(liquidityService).configStorage()).validateAcceptedLiquidityToken(_token);
     _;
+  }
+
+  modifier onlyOrderExecutor() {
+    if (!orderExecutors[msg.sender]) revert ILiquidityHandler_NotWhitelisted();
+    _;
+  }
+
+  receive() external payable {
+    if (msg.sender != IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth())
+      revert ILiquidityHandler_InvalidSender();
   }
 
   /**
@@ -303,19 +308,13 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     payable(_receiver).transfer(_amountOut);
   }
 
-  // Only whitelisted addresses can be able to execute limit orders
-  modifier onlyOrderExecutor() {
-    if (!orderExecutors[msg.sender]) revert ILiquidityHandler_NotWhitelisted();
-    _;
-  }
-
   /**
    * GETTER
    */
 
   /// @notice get liquidity order
   /// @param _account the primary account of user
-  function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory) {
+  function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory _liquiditiyOrder) {
     return liquidityOrders[_account];
   }
 

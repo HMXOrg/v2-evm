@@ -2,6 +2,9 @@
 pragma solidity 0.8.18;
 
 interface ILiquidityHandler {
+  /**
+   * Errors
+   */
   error ILiquidityHandler_InvalidSender();
   error ILiquidityHandler_InsufficientExecutionFee();
   error ILiquidityHandler_InCorrectValueTransfer();
@@ -12,6 +15,9 @@ interface ILiquidityHandler {
   error ILiquidityHandler_NotExecutionState();
   error ILiquidityHandler_NoOrder();
 
+  /**
+   * Struct
+   */
   struct LiquidityOrder {
     address payable account;
     address token;
@@ -21,6 +27,9 @@ interface ILiquidityHandler {
     bool shouldUnwrap; // unwrap nativetoken when removeLiquidity
   }
 
+  /**
+   * Core functions
+   */
   function createAddLiquidityOrder(
     address _tokenBuy,
     uint256 _amountIn,

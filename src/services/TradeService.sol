@@ -311,18 +311,22 @@ contract TradeService is ITradeService {
         );
       }
       IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage).getGlobalState();
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+        _marketConfig.assetClass
+      );
 
       // update global storage
       // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
       _globalState.reserveValueE30 -=
         (_position.reserveValueE30 * _positionSizeE30ToDecrease) /
         vars.absPositionSizeE30;
+      _globalAssetClass.reserveValueE30 -=
+        (_position.reserveValueE30 * _positionSizeE30ToDecrease) /
+        vars.absPositionSizeE30;
       IPerpStorage(perpStorage).updateGlobalState(_globalState);
+      IPerpStorage(perpStorage).updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
 
       // update position info
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
-        _marketConfig.assetClass
-      );
       _position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
       _position.positionSizeE30 = vars.isLongPosition
         ? int256(_newAbsPositionSizeE30)
@@ -468,7 +472,6 @@ contract TradeService is ITradeService {
     }
 
     // Update the new reserve value in the IPerpStorage contract
-    // IPerpStorage(perpStorage).updateReserveValue(_globalState.reserveValueE30);
     IPerpStorage(perpStorage).updateGlobalState(_globalState);
     IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
   }

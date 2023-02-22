@@ -293,16 +293,6 @@ contract TradeService is ITradeService {
     {
       uint256 _openInterestDelta = (_position.openInterest * _positionSizeE30ToDecrease) / vars.absPositionSizeE30;
 
-      // update position info
-      IPerpStorage(perpStorage).updatePositionById(
-        _positionId,
-        vars.isLongPosition ? int256(_newAbsPositionSizeE30) : -int256(_newAbsPositionSizeE30), // @todo - optimized
-        // new position size * IMF * max profit rate
-        (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) / 1e18,
-        _position.avgEntryPriceE30,
-        _position.openInterest - _openInterestDelta
-      );
-
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
       if (vars.isLongPosition) {
@@ -328,6 +318,21 @@ contract TradeService is ITradeService {
         (_position.reserveValueE30 * _positionSizeE30ToDecrease) /
         vars.absPositionSizeE30;
       IPerpStorage(perpStorage).updateGlobalState(_globalState);
+
+      // update position info
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+        _marketConfig.assetClass
+      );
+      _position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
+      _position.positionSizeE30 = vars.isLongPosition
+        ? int256(_newAbsPositionSizeE30)
+        : -int256(_newAbsPositionSizeE30);
+      _position.reserveValueE30 =
+        (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) /
+        1e18;
+
+      _position.openInterest = _position.openInterest - _openInterestDelta;
+      IPerpStorage(perpStorage).savePosition(_subAccount, _positionId, _position);
     }
 
     // =========================================

@@ -60,8 +60,4 @@ interface IVaultStorage {
   function removeTraderToken(address _trader, address _token) external;
 
   function transferToken(address _subAccount, address _token, uint256 _amount) external;
-
-  function pullToken(address _token) external returns (uint256);
-
-  function pushToken(address _token, address _to, uint256 _amount) external;
 }

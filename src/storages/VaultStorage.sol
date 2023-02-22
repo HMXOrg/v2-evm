@@ -46,6 +46,9 @@ contract VaultStorage is IVaultStorage {
     plpLiquidity[_token] += _amount;
   }
 
+  /**
+   * ERC20 interaction functions
+   */
   function pullToken(address _token) external returns (uint256) {
     uint256 prevBalance = totalAmount[_token];
     uint256 nextBalance = IERC20(_token).balanceOf(address(this));
@@ -168,23 +171,5 @@ contract VaultStorage is IVaultStorage {
 
   function pullPLPLiquidity(address _token) external view returns (uint256) {
     return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
-  }
-
-  /**
-   * ERC20 interaction functions
-   */
-
-  function pullToken(address _token) external returns (uint256) {
-    uint256 prevBalance = totalAmount[_token];
-    uint256 nextBalance = IERC20(_token).balanceOf(address(this));
-
-    totalAmount[_token] = nextBalance;
-
-    return nextBalance - prevBalance;
-  }
-
-  function pushToken(address _token, address _to, uint256 _amount) external {
-    IERC20(_token).transfer(_to, _amount);
-    totalAmount[_token] = IERC20(_token).balanceOf(address(this));
   }
 }

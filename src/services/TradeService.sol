@@ -273,7 +273,7 @@ contract TradeService is ITradeService {
       (vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
         .getLatestMarketPriceWithMarketStatus(
           _marketConfig.assetId,
-          vars.isLongPosition, // if current position is SHORT position, then we use max price
+          !vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
           30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
           int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest),

@@ -94,7 +94,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {}
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
+    return (priceE30, lastUpdate);
+  }
 
   function unsafeGetLatestMarketPrice(
     bytes32 _assetId,
@@ -104,7 +107,11 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {}
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    Price memory p = price[_assetId];
+    if (p.priceE30 == 0) return (priceE30, lastUpdate);
+    return (p.priceE30, p.lastUpdate);
+  }
 
   function getLatestMarketPriceWithMarketStatus(
     bytes32 _assetId,
@@ -114,7 +121,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {}
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
+    return (priceE30, lastUpdate, marketStatus);
+  }
 
   function unsafeGetLatestMarketPriceWithMarketStatus(
     bytes32 _assetId,
@@ -124,5 +134,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {}
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    return (priceE30, lastUpdate, marketStatus);
+  }
 }

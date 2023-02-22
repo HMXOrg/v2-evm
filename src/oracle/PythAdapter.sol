@@ -24,11 +24,7 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   mapping(address => bool) public isUpdater;
 
   // events
-  event SetPythPriceId(
-    bytes32 indexed _assetId,
-    bytes32 _prevPythPriceId,
-    bytes32 _pythPriceId
-  );
+  event SetPythPriceId(bytes32 indexed _assetId, bytes32 _prevPythPriceId, bytes32 _pythPriceId);
   event SetUpdater(address indexed _account, bool _isActive);
 
   constructor(IPyth _pyth) {
@@ -38,45 +34,12 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
     pyth.getValidTimePeriod();
   }
 
-  modifier onlyUpdater() {
-    if (!isUpdater[msg.sender]) {
-      revert PythAdapter_OnlyUpdater();
-    }
-    _;
-  }
-
   /// @notice Set the Pyth price id for the given asset.
   /// @param _assetId The asset address to set.
   /// @param _pythPriceId The Pyth price id to set.
-  function setPythPriceId(
-    bytes32 _assetId,
-    bytes32 _pythPriceId
-  ) external onlyOwner {
+  function setPythPriceId(bytes32 _assetId, bytes32 _pythPriceId) external onlyOwner {
     emit SetPythPriceId(_assetId, pythPriceIdOf[_assetId], _pythPriceId);
     pythPriceIdOf[_assetId] = _pythPriceId;
-  }
-
-  /// @notice A function for setting updater who is able to updatePrices based on price update data
-  function setUpdater(address _account, bool _isActive) external onlyOwner {
-    isUpdater[_account] = _isActive;
-
-    emit SetUpdater(_account, _isActive);
-  }
-
-  /// @notice A function for updating prices based on price update data
-  /// @param _priceData - price update data
-  function updatePrices(
-    bytes[] memory _priceData
-  ) external payable onlyUpdater {
-    pyth.updatePriceFeeds{ value: pyth.getUpdateFee(_priceData) }(_priceData);
-  }
-
-  /// @notice A function for getting update _fee based on price update data
-  /// @param _priceUpdateData - price update data
-  function getUpdateFee(
-    bytes[] memory _priceUpdateData
-  ) external view returns (uint256) {
-    return pyth.getUpdateFee(_priceUpdateData);
   }
 
   /// @notice convert Pyth's price to uint256.
@@ -89,11 +52,7 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
     bool _isMax,
     uint8 _targetDecimals
   ) private pure returns (uint256) {
-    if (
-      _priceStruct.price <= 0 ||
-      _priceStruct.expo > 0 ||
-      _priceStruct.expo < -255
-    ) {
+    if (_priceStruct.price <= 0 || _priceStruct.expo > 0 || _priceStruct.expo < -255) {
       revert PythAdapter_BrokenPythPrice();
     }
 
@@ -113,19 +72,14 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   /// @dev To bypass the confidence check, the user can submit threshold = 1 ether
   /// @param _priceStruct The Pyth's price struct to convert.
   /// @param _confidenceThreshold The acceptable threshold confidence ratio. ex. _confidenceRatio = 0.01 ether means 1%
-  function _validateConfidence(
-    PythStructs.Price memory _priceStruct,
-    uint256 _confidenceThreshold
-  ) private pure {
+  function _validateConfidence(PythStructs.Price memory _priceStruct, uint256 _confidenceThreshold) private pure {
     if (_priceStruct.price < 0) revert PythAdapter_BrokenPythPrice();
 
     // Calculate _confidenceRatio in 1e18 base.
-    uint256 _confidenceRatio = (uint256(_priceStruct.conf) * 1e18) /
-      uint256(uint64(_priceStruct.price));
+    uint256 _confidenceRatio = (uint256(_priceStruct.conf) * 1e18) / uint256(uint64(_priceStruct.price));
 
     // Revert if confidence ratio is too high
-    if (_confidenceRatio > _confidenceThreshold)
-      revert PythAdapter_ConfidenceRatioTooHigh();
+    if (_confidenceRatio > _confidenceThreshold) revert PythAdapter_ConfidenceRatioTooHigh();
   }
 
   /// @notice Get the latest price of the given asset. Returned price is in 30 decimals.

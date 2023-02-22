@@ -18,4 +18,22 @@ interface ITradeService {
   error ITradeService_BadPositionSize();
   error ITradeService_InsufficientLiquidity();
   error ITradeService_InsufficientFreeCollateral();
+
+  function configStorage() external view returns (address);
+
+  function perpStorage() external view returns (address);
+
+  function increasePosition(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    int256 _sizeDelta
+  ) external;
+
+  function decreasePosition(
+    address _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _positionSizeE30ToDecrease
+  ) external;
 }

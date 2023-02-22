@@ -91,13 +91,15 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
    * Constructor
    */
   constructor(address _weth, address _tradeService, address _pyth, uint256 _minExecutionFee) {
-    // @todo - Sanity check
     weth = _weth;
     tradeService = _tradeService;
     pyth = _pyth;
 
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     minExecutionFee = _minExecutionFee;
+
+    ITradeService(_tradeService).perpStorage();
+    IPyth(_pyth).getValidTimePeriod();
   }
 
   receive() external payable {
@@ -409,8 +411,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
    * Setters
    */
   function setTradeService(address _newTradeService) external onlyOwner {
-    // @todo - Sanity check
     if (_newTradeService == address(0)) revert ILimitTradeHandler_InvalidAddress();
+    ITradeService(_newTradeService).perpStorage();
     emit LogSetTradeService(address(tradeService), _newTradeService);
     tradeService = _newTradeService;
   }
@@ -427,8 +429,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   }
 
   function setPyth(address _newPyth) external onlyOwner {
-    // @todo - Sanity check
     if (_newPyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
+    IPyth(_newPyth).getValidTimePeriod();
     emit LogSetPyth(address(tradeService), _newPyth);
     pyth = _newPyth;
   }

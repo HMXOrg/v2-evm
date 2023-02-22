@@ -28,6 +28,7 @@ contract OracleMiddleware_GetMarketPriceTest is OracleMiddleware_BaseTest {
     // For more edge cases see PythAdapter_GetPriceTest.t.sol
     (uint256 maxPrice, uint256 lastUpdate) = oracleMiddleware.getLatestMarketPrice(
       address(wbtc).toBytes32(),
+      8,
       true,
       1 ether,
       60, // trust price age 60 seconds
@@ -37,6 +38,7 @@ contract OracleMiddleware_GetMarketPriceTest is OracleMiddleware_BaseTest {
     );
     (uint256 minPrice, ) = oracleMiddleware.getLatestMarketPrice(
       address(wbtc).toBytes32(),
+      8,
       false,
       1 ether,
       60, // trust price age 60 seconds
@@ -51,7 +53,7 @@ contract OracleMiddleware_GetMarketPriceTest is OracleMiddleware_BaseTest {
 
     // Revert on unknown asset id
     vm.expectRevert();
-    oracleMiddleware.getLatestMarketPrice(address(168).toBytes32(), true, 1 ether, 60, 0, 0, 0);
+    oracleMiddleware.getLatestMarketPrice(address(168).toBytes32(), 8, true, 1 ether, 60, 0, 0, 0);
   }
 
   // get latest price with market status with trust price
@@ -64,6 +66,7 @@ contract OracleMiddleware_GetMarketPriceTest is OracleMiddleware_BaseTest {
     {
       (, , uint8 marketStatus) = oracleMiddleware.getLatestMarketPriceWithMarketStatus(
         address(wbtc).toBytes32(),
+        8,
         true,
         1 ether,
         60,
@@ -82,6 +85,7 @@ contract OracleMiddleware_GetMarketPriceTest is OracleMiddleware_BaseTest {
     {
       (, , uint8 marketStatus) = oracleMiddleware.getLatestMarketPriceWithMarketStatus(
         address(wbtc).toBytes32(),
+        8,
         true,
         1 ether,
         60,
@@ -97,14 +101,14 @@ contract OracleMiddleware_GetMarketPriceTest is OracleMiddleware_BaseTest {
   function testRevert_WhenGetLastestPriceButPriceIsStale() external {
     vm.warp(block.timestamp + 30);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
-    oracleMiddleware.getLatestMarketPrice(address(wbtc).toBytes32(), true, 1 ether, 0, 0, 0, 0);
+    oracleMiddleware.getLatestMarketPrice(address(wbtc).toBytes32(), 8, true, 1 ether, 0, 0, 0, 0);
   }
 
   // get latest price with market status market status is undefined
   function testRevert_WhenGetWithMarketStatusWhenMarketStatusUndefined() external {
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_MarketStatusUndefined()"));
     // Try get wbtc price which we never set its status before.
-    oracleMiddleware.getLatestMarketPriceWithMarketStatus(address(wbtc).toBytes32(), true, 1 ether, 60, 0, 0, 0);
+    oracleMiddleware.getLatestMarketPriceWithMarketStatus(address(wbtc).toBytes32(), 8, true, 1 ether, 60, 0, 0, 0);
   }
 
   // get latest price with market status and price is stale
@@ -116,13 +120,14 @@ contract OracleMiddleware_GetMarketPriceTest is OracleMiddleware_BaseTest {
 
     vm.warp(block.timestamp + 30);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
-    oracleMiddleware.getLatestMarketPriceWithMarketStatus(address(wbtc).toBytes32(), true, 1 ether, 0, 0, 0, 0);
+    oracleMiddleware.getLatestMarketPriceWithMarketStatus(address(wbtc).toBytes32(), 8, true, 1 ether, 0, 0, 0, 0);
   }
 
   function testCorrectness_getLatestPrice_premiumPrice() external {
     // maxPrice is 20_500
-    (uint256 maxPrice, uint256 lastUpdate) = oracleMiddleware.getLatestMarketPrice(
+    (uint256 maxPrice, ) = oracleMiddleware.getLatestMarketPrice(
       address(wbtc).toBytes32(),
+      8,
       true,
       1 ether,
       60, // trust price age 60 seconds
@@ -132,5 +137,49 @@ contract OracleMiddleware_GetMarketPriceTest is OracleMiddleware_BaseTest {
     );
 
     assertEq(maxPrice, 20925.375 * 1e30);
+
+    // minPrice is 19_500
+    (uint256 minPrice, ) = oracleMiddleware.getLatestMarketPrice(
+      address(wbtc).toBytes32(),
+      8,
+      false,
+      1 ether,
+      60, // trust price age 60 seconds
+      1 * 1e8, // 1 BTC Long skew
+      500 * 1e30, // 500 USD sizeDelta
+      1_000_000 * 1e30 // 1M Skew Scale
+    );
+
+    assertEq(minPrice, 19885.125 * 1e30);
+  }
+
+  function testCorrectness_getLatestPrice_discountPrice() external {
+    // maxPrice is 20_500
+    (uint256 maxPrice, ) = oracleMiddleware.getLatestMarketPrice(
+      address(wbtc).toBytes32(),
+      8,
+      true,
+      1 ether,
+      60, // trust price age 60 seconds
+      -5 * 1e8, // 5 BTC Short skew
+      7200 * 1e30, // 7200 USD sizeDelta
+      1_000_000 * 1e30 // 1M Skew Scale
+    );
+
+    assertEq(maxPrice, 18472.55 * 1e30);
+
+    // minPrice is 19_500
+    (uint256 minPrice, ) = oracleMiddleware.getLatestMarketPrice(
+      address(wbtc).toBytes32(),
+      8,
+      false,
+      1 ether,
+      60, // trust price age 60 seconds
+      -5 * 1e8, // 5 BTC Short skew
+      7200 * 1e30, // 7200 USD sizeDelta
+      1_000_000 * 1e30 // 1M Skew Scale
+    );
+
+    assertEq(minPrice, 17668.95 * 1e30);
   }
 }

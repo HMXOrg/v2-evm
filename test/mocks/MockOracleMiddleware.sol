@@ -88,6 +88,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function getLatestMarketPrice(
     bytes32 _assetId,
+    uint256 _exponent,
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
@@ -101,6 +102,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function unsafeGetLatestMarketPrice(
     bytes32 _assetId,
+    uint256 _exponent,
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
@@ -115,6 +117,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function getLatestMarketPriceWithMarketStatus(
     bytes32 _assetId,
+    uint256 _exponent,
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
@@ -128,6 +131,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function unsafeGetLatestMarketPriceWithMarketStatus(
     bytes32 _assetId,
+    uint256 _exponent,
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,

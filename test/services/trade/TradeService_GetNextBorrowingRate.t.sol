@@ -50,7 +50,7 @@ contract TradeService_GetNextBorrowingRate is TradeService_Base {
 
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 90000 / 1000000 = 0.000009
-      assertEq(_globalAssetClass.sumBorrowingRate, 0.000009 * 1e18);
+      assertEq(_globalAssetClass.sumBorrowingRate, 0.000009 * 1e18, "sumBorrowingRate");
       assertEq(_globalAssetClass.lastBorrowingTime, 101);
 
       // 0.000009 * 90000 = 0.81

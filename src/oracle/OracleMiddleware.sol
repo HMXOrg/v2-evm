@@ -161,6 +161,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   function getLatestMarketPrice(
     bytes32 _assetId,
+    uint256 _exponent,
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
@@ -170,6 +171,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
     (_price, _lastUpdate) = _getLatestMarketPrice(
       _assetId,
+      _exponent,
       _isMax,
       _confidenceThreshold,
       _trustPriceAge,
@@ -183,6 +185,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   function unsafeGetLatestMarketPrice(
     bytes32 _assetId,
+    uint256 _exponent,
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
@@ -192,6 +195,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
     (_price, _lastUpdate) = _getLatestMarketPrice(
       _assetId,
+      _exponent,
       _isMax,
       _confidenceThreshold,
       _trustPriceAge,
@@ -205,6 +209,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   function getLatestMarketPriceWithMarketStatus(
     bytes32 _assetId,
+    uint256 _exponent,
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
@@ -217,6 +222,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
     (_price, _lastUpdate) = _getLatestMarketPrice(
       _assetId,
+      _exponent,
       _isMax,
       _confidenceThreshold,
       _trustPriceAge,
@@ -230,6 +236,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   function unsafeGetLatestMarketPriceWithMarketStatus(
     bytes32 _assetId,
+    uint256 _exponent,
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
@@ -242,6 +249,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
     (_price, _lastUpdate) = _getLatestMarketPrice(
       _assetId,
+      _exponent,
       _isMax,
       _confidenceThreshold,
       _trustPriceAge,
@@ -255,6 +263,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   function _getLatestMarketPrice(
     bytes32 _assetId,
+    uint256 _exponent,
     bool _isMax,
     uint256 _confidenceThreshold,
     uint256 _trustPriceAge,
@@ -270,7 +279,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     if (isSafe && block.timestamp - _lastUpdate > _trustPriceAge) revert IOracleMiddleware_PythPriceStale();
 
     // Apply premium/discount
-    _price = _calculateAdaptivePrice(_price, _marketSkew, _sizeDelta, _maxSkewScaleUSD);
+    _price = _calculateAdaptivePrice(_price, _exponent, _marketSkew, _sizeDelta, _maxSkewScaleUSD);
 
     // Return the price and last update
     return (_price, _lastUpdate);
@@ -278,12 +287,13 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   function _calculateAdaptivePrice(
     uint256 _price,
+    uint256 _exponent,
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) internal view returns (uint256) {
     int256 _priceInt = int256(_price);
-    int256 _marketSkewUSD = (_marketSkew * _priceInt) / 1e30;
+    int256 _marketSkewUSD = (_marketSkew * _priceInt) / int256(10 ** _exponent);
     console2.log("_marketSkewUSD");
     console2.logInt(_marketSkewUSD);
     int256 _premiumDiscountBefore = _maxSkewScaleUSD > 0
@@ -291,7 +301,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       : int256(0);
     console2.log("_premiumDiscountBefore");
     console2.logInt(_premiumDiscountBefore);
-    int256 _premiumDiscountAfter = _marketSkewUSD > 0
+    int256 _premiumDiscountAfter = _maxSkewScaleUSD > 0
       ? ((_marketSkewUSD + _sizeDelta) * 1e30) / int256(_maxSkewScaleUSD)
       : int256(0);
     console2.log("_premiumDiscountAfter");

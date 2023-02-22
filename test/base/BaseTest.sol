@@ -240,7 +240,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // add market config
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage.MarketConfig({
       assetId: "ETH",
-      assetClass: 1,
+      assetClass: 0,
       exponent: 18,
       maxProfitRate: 9e18,
       minLeverage: 1,
@@ -260,7 +260,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
       assetId: "BTC",
-      assetClass: 1,
+      assetClass: 0,
       exponent: 8,
       maxProfitRate: 9e18,
       minLeverage: 1,

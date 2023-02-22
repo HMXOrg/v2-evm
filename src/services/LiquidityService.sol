@@ -7,6 +7,7 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { PLPv2 } from "../contracts/PLPv2.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";

@@ -38,23 +38,22 @@
 //     crossMarginService.depositCollateral(address(this), address(dai), 10 ether);
 //   }
 
-//   // Try deposit token collateral with incufficent allowance
-//   function testRevert_depositCollateral_InsufficientAllowance() external {
-//     vm.prank(CROSS_MARGIN_HANDLER);
-//     vm.expectRevert("ERC20: insufficient allowance");
-//     crossMarginService.depositCollateral(address(this), address(weth), 10 ether);
-//   }
+// Try deposit token collateral with incufficent allowance
+function testRevert_depositCollateral_InsufficientAllowance() external {
+  vm.prank(CROSS_MARGIN_HANDLER);
+  vm.expectRevert("ERC20: insufficient allowance");
+  crossMarginService.depositCollateral(address(this), address(wbtc), 10 ether);
 
-//   // Try deposit token collateral with exceed trader's balance
-//   function testRevert_depositCollateral_TransferExceedBalance() external {
-//     uint256 depositAmount = 10 ether;
+  //   // Try deposit token collateral with exceed trader's balance
+  //   function testRevert_depositCollateral_TransferExceedBalance() external {
+  //     uint256 depositAmount = 10 ether;
 
-//     vm.startPrank(CROSS_MARGIN_HANDLER);
-//     weth.approve(address(crossMarginService), depositAmount);
-//     vm.expectRevert("ERC20: transfer amount exceeds balance");
-//     crossMarginService.depositCollateral(address(this), address(weth), depositAmount);
-//     vm.stopPrank();
-//   }
+  vm.startPrank(CROSS_MARGIN_HANDLER);
+  wbtc.approve(address(crossMarginService), depositAmount);
+  vm.expectRevert("ERC20: transfer amount exceeds balance");
+  crossMarginService.depositCollateral(address(this), address(wbtc), depositAmount);
+  vm.stopPrank();
+}
 
 //   // =========================================
 //   // | ------- Test Correctness ------------ |

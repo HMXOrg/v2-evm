@@ -11,6 +11,7 @@ import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
 // Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
+import { MockWNative } from "../mocks/MockWNative.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
@@ -19,6 +20,7 @@ import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 import { MockWNative } from "../mocks/MockWNative.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
+import { MockTradeService } from "../mocks/MockTradeService.sol";
 
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
@@ -44,6 +46,9 @@ import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol
 
 import { PLPv2 } from "../../src/contracts/PLPv2.sol";
 
+// Handlers
+import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
+
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
   address internal ALICE;
   address internal BOB;
@@ -66,6 +71,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   MockVaultStorage internal mockVaultStorage;
   MockOracleMiddleware internal mockOracle;
   MockLiquidityService internal mockLiquidityService;
+  MockTradeService internal mockTradeService;
 
   MockWNative internal weth;
   MockErc20 internal wbtc;
@@ -114,6 +120,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     mockPerpStorage = new MockPerpStorage();
     mockVaultStorage = new MockVaultStorage();
     mockOracle = new MockOracleMiddleware();
+    mockTradeService = new MockTradeService();
+
     configStorage = new ConfigStorage();
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -141,6 +149,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   function deployMockErc20(string memory name, string memory symbol, uint8 decimals) internal returns (MockErc20) {
     return new MockErc20(name, symbol, decimals);
+  }
+
+  function deployMockWNative() internal returns (MockWNative) {
+    return new MockWNative();
   }
 
   function deployPerp88v2() internal returns (Deployment.DeployReturnVars memory) {
@@ -230,7 +242,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       maxProfitRate: 9e18,
       longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
       shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-      minLeverage: 1,
+      minLeverage: 1 * 1e18,
       initialMarginFraction: 0.01 * 1e18,
       maintenanceMarginFraction: 0.005 * 1e18,
       increasePositionFeeRate: 0,
@@ -247,7 +259,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       maxProfitRate: 9e18,
       longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
       shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-      minLeverage: 1,
+      minLeverage: 1 * 1e18,
       initialMarginFraction: 0.01 * 1e18,
       maintenanceMarginFraction: 0.005 * 1e18,
       increasePositionFeeRate: 0,
@@ -360,5 +372,14 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     uint256 _minExecutionFee
   ) internal returns (LiquidityHandler) {
     return new LiquidityHandler(_liquidityService, _pyth, _minExecutionFee);
+  }
+
+  function deployLimitTradeHandler(
+    address _weth,
+    address _tradeService,
+    address _pyth,
+    uint256 _minExecutionFee
+  ) internal returns (LimitTradeHandler) {
+    return new LimitTradeHandler(_weth, _tradeService, _pyth, _minExecutionFee);
   }
 }

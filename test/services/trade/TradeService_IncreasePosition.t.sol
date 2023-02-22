@@ -30,7 +30,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(0);
 
     vm.expectRevert(abi.encodeWithSignature("ITradeService_InvalidAveragePrice()"));
-    tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
+    tradeService.getDelta(size, isLong, 1e30, avgPriceE30);
   }
 
   function testCorrectness_getDelta_WhenLongAndPriceUp() external {
@@ -42,7 +42,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
 
     // price up 10% -> profit 10% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
     assertEq(isProfit, true);
     assertEq(delta, 100 * 1e30);
   }
@@ -56,7 +56,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
 
     // price down 15% -> loss 15% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
     assertEq(isProfit, false);
     assertEq(delta, 150 * 1e30);
   }
@@ -70,7 +70,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
 
     // price up 5% -> loss 5% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
     assertEq(isProfit, false);
     assertEq(delta, 50 * 1e30);
   }
@@ -84,7 +84,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
 
     // price down 50% -> profit 50% of size
     mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(_marketConfig, size, isLong, avgPriceE30);
+    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
     assertEq(isProfit, true);
     assertEq(delta, 500 * 1e30);
   }

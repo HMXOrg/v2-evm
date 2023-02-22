@@ -50,7 +50,7 @@ contract CrossMarginService_DepositCollateral is CrossMarginService_Base {
     uint256 depositAmount = 10 ether;
 
     vm.startPrank(CROSS_MARGIN_HANDLER);
-    weth.approve(address(crossMarginService), depositAmount);
+    wbtc.approve(address(crossMarginService), depositAmount);
     vm.expectRevert("ERC20: transfer amount exceeds balance");
     crossMarginService.depositCollateral(address(this), address(wbtc), depositAmount);
     vm.stopPrank();

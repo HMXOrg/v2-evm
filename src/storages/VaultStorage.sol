@@ -56,7 +56,7 @@ contract VaultStorage is IVaultStorage {
   }
 
   function pushToken(address _token, address _to, uint256 _amount) external {
-    IERC20(_token).transfer(_to, _amount);
+    IERC20(_token).safeTransfer(_to, _amount);
     totalAmount[_token] = IERC20(_token).balanceOf(address(this));
   }
 

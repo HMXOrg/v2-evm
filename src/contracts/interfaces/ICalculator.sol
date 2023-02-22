@@ -19,7 +19,7 @@ interface ICalculator {
     int256 tempMinValue;
     int256 nextFundingRate;
     int256 newFundingRate;
-    int256 intervals;
+    int256 elaspedIntervals;
   }
 
   //@todo - will be use in _getFeeRate

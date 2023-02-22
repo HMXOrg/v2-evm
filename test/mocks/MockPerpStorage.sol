@@ -12,8 +12,8 @@ contract MockPerpStorage {
   // =========================================
   function getGlobalMarketInfo(
     uint256 _marketIndex
-  ) external view returns (int256 accumFundingRateLong, int256 accumFundingRateShort) {
-    return (globalMarkets[_marketIndex].accumFundingRateLong, globalMarkets[_marketIndex].accumFundingRateShort);
+  ) external view returns (int256 accumFundingLong, int256 accumFundingShort) {
+    return (globalMarkets[_marketIndex].accumFundingLong, globalMarkets[_marketIndex].accumFundingShort);
   }
 
   function getPositionBySubAccount(
@@ -40,13 +40,13 @@ contract MockPerpStorage {
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest,
-    int256 _newAccumFundingRateLong,
+    int256 _newAccumFundingLong,
     int256 _currentFundingRate
   ) external {
     globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
     globalMarkets[_marketIndex].longOpenInterest = _newOpenInterest;
-    globalMarkets[_marketIndex].accumFundingRateLong = _newAccumFundingRateLong;
+    globalMarkets[_marketIndex].accumFundingLong = _newAccumFundingLong;
     globalMarkets[_marketIndex].currentFundingRate = _currentFundingRate;
   }
 
@@ -56,13 +56,13 @@ contract MockPerpStorage {
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest,
-    int256 _newAccumFundingRateShort,
+    int256 _newAccumFundingShort,
     int256 _currentFundingRate
   ) external {
     globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
     globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
-    globalMarkets[_marketIndex].accumFundingRateShort = _newAccumFundingRateShort;
+    globalMarkets[_marketIndex].accumFundingShort = _newAccumFundingShort;
     globalMarkets[_marketIndex].currentFundingRate = _currentFundingRate;
   }
 }

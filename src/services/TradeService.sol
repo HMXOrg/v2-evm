@@ -159,12 +159,12 @@ contract TradeService is ITradeService {
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
       // calculate the change in open interest for the new position
-      uint256 _changedOpenInterest = (_absSizeDelta * 1e30) / _priceE30; // @todo - use decimal asset
+      uint256 _changedOpenInterest = (_absSizeDelta * 1e18) / _priceE30; // @todo - use decimal asset
       _position.openInterest += _changedOpenInterest;
 
       // update gobal market state
       if (_isLong) {
-        uint256 _nextAvgPrice = _isNewPosition
+        uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
           ? _priceE30
           : _calcualteLongAveragePrice(_globalMarket, _priceE30, _sizeDelta, 0);
 
@@ -176,7 +176,7 @@ contract TradeService is ITradeService {
         );
       } else {
         // to increase SHORT position sizeDelta should be negative
-        uint256 _nextAvgPrice = _isNewPosition
+        uint256 _nextAvgPrice = _globalMarket.shortPositionSize == 0
           ? _priceE30
           : _calculateShortAveragePrice(_globalMarket, _priceE30, _sizeDelta, 0);
 

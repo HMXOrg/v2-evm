@@ -12,7 +12,9 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
-  // EVENTS
+  /**
+   * EVENT
+   */
   event LogSetTradeService(address oldMarketTradeService, address newMarketTradeService);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogBuy(
@@ -32,7 +34,9 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint256 _shortIncreasingSizeE30
   );
 
-  // STATES
+  /**
+   * STATES
+   */
   address public tradeService;
   address public pyth;
 
@@ -118,8 +122,10 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
         if (_buySizeE30 > _longPositionSizeE30) {
           // If buy size can cover the short position size,
           // long position size should be the remaining buy size
-          _shortDecreasingSizeE30 = _longPositionSizeE30;
-          _longIncreasingSizeE30 = _buySizeE30 - _longPositionSizeE30;
+          unchecked {
+            _shortDecreasingSizeE30 = _longPositionSizeE30;
+            _longIncreasingSizeE30 = _buySizeE30 - _longPositionSizeE30;
+          }
         } else {
           // If buy size cannot cover the short position size,
           // just simply decrease the position
@@ -192,8 +198,10 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
         if (_sellSizeE30 > _longPositionSizeE30) {
           // If sell size can cover the long position size,
           // short position size should be the remaining sell size
-          _longDecreasingSizeE30 = _longPositionSizeE30;
-          _shortIncreasingSizeE30 = _sellSizeE30 - _longPositionSizeE30;
+          unchecked {
+            _longDecreasingSizeE30 = _longPositionSizeE30;
+            _shortIncreasingSizeE30 = _sellSizeE30 - _longPositionSizeE30;
+          }
         } else {
           // If sell size cannot cover the short position size,
           // just simply decrease the position

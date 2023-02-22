@@ -16,6 +16,8 @@ contract MockTradeService is ITradeService {
     uint256 _subAccountId;
     uint256 _marketIndex;
     uint256 _positionSizeE30ToDecrease;
+    // @todo - support take profit token
+    // address _tpToken;
   }
 
   address public configStorage;
@@ -55,7 +57,8 @@ contract MockTradeService is ITradeService {
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex,
-    uint256 _positionSizeE30ToDecrease
+    uint256 _positionSizeE30ToDecrease,
+    address _tpToken
   ) external {
     decreasePositionCallCount++;
     decreasePositionCalls.push(

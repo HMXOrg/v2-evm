@@ -239,7 +239,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _account: _account,
             _subAccountId: _subAccountId,
             _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30)
+            _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
+            _tpToken: address(0)
           });
           // Flip it to Long position
           ITradeService(tradeService).increasePosition({
@@ -254,7 +255,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _account: _account,
             _subAccountId: _subAccountId,
             _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: _min(uint256(_order.sizeDelta), uint256(-_existingPosition.positionSizeE30))
+            _positionSizeE30ToDecrease: _min(uint256(_order.sizeDelta), uint256(-_existingPosition.positionSizeE30)),
+            _tpToken: address(0)
           });
         }
       }
@@ -278,7 +280,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _account: _account,
             _subAccountId: _subAccountId,
             _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30)
+            _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
+            _tpToken: address(0)
           });
           // Flip it to Short position
           ITradeService(tradeService).increasePosition({
@@ -293,7 +296,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _account: _account,
             _subAccountId: _subAccountId,
             _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: _min(uint256(-_order.sizeDelta), uint256(_existingPosition.positionSizeE30))
+            _positionSizeE30ToDecrease: _min(uint256(-_order.sizeDelta), uint256(_existingPosition.positionSizeE30)),
+            _tpToken: address(0)
           });
         }
       }

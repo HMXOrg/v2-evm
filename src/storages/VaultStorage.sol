@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 // interfaces
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
 contract VaultStorage is IVaultStorage {
+  using SafeERC20 for IERC20;
+
   // EVENTs
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
 
@@ -52,7 +53,7 @@ contract VaultStorage is IVaultStorage {
     if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
     // @todo only governance
     fees[_token] -= _amount;
-    IERC20(_token).transfer(_receiver, _amount);
+    IERC20(_token).safeTransfer(_receiver, _amount);
   }
 
   // @todo - modifier?
@@ -150,7 +151,7 @@ contract VaultStorage is IVaultStorage {
    */
   // @todo - add only whitelisted services
   function transferToken(address _subAccount, address _token, uint256 _amount) external {
-    IERC20(_token).transfer(_subAccount, _amount);
+    IERC20(_token).safeTransfer(_subAccount, _amount);
   }
 
   function pullPLPLiquidity(address _token) external view returns (uint256) {

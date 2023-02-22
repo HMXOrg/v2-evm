@@ -76,8 +76,6 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set Oracle data for Price feeding
     {
-      deployed.pythAdapter.setUpdater(address(crossMarginHandler), true);
-
       deployed.pythAdapter.setPythPriceId(address(wbtc).toBytes32(), wbtcPriceId);
       deployed.pythAdapter.setPythPriceId(address(weth).toBytes32(), wethPriceId);
 

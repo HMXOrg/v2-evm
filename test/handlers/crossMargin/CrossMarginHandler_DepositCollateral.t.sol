@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { console } from "forge-std/console.sol";
 
-import { CrossMarginHandler_Base } from "./CrossMarginHandler_Base.t.sol";
+import { CrossMarginHandler_Base, MockErc20 } from "./CrossMarginHandler_Base.t.sol";
 
 // What is this test DONE
 // - revert
@@ -33,9 +33,10 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
 
   // Try deposit token collateral with incufficent allowance
   function testRevert_handler_depositCollateral_InsufficientAllowance() external {
-    vm.prank(ALICE);
+    vm.startPrank(ALICE);
     vm.expectRevert("ERC20: insufficient allowance");
-    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), 10 ether);
+    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, address(wbtc), 10 ether);
+    vm.stopPrank();
   }
 
   // Try deposit token collateral with exceed trader's balance
@@ -43,9 +44,9 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
     uint256 depositAmount = 10 ether;
 
     vm.startPrank(ALICE);
-    weth.approve(address(crossMarginHandler), depositAmount);
+    wbtc.approve(address(crossMarginHandler), depositAmount);
     vm.expectRevert("ERC20: transfer amount exceeds balance");
-    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), depositAmount);
+    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, address(wbtc), depositAmount);
     vm.stopPrank();
   }
 

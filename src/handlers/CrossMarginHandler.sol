@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "../base/Owned.sol";
 
@@ -12,6 +13,8 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
+  using SafeERC20 for ERC20;
+
   // EVENTS
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
   event LogSetPyth(address indexed oldPyth, address newPyth);
@@ -78,7 +81,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     address _subAccount = _getSubAccount(_account, _subAccountId);
 
     // Transfer depositing token from trader's wallet to VaultStorage
-    IERC20(_token).transferFrom(msg.sender, ICrossMarginService(crossMarginService).vaultStorage(), _amount);
+    ERC20(_token).safeTransferFrom(msg.sender, ICrossMarginService(crossMarginService).vaultStorage(), _amount);
 
     // Call service to deposit collateral
     ICrossMarginService(crossMarginService).depositCollateral(_account, _subAccount, _token, _amount);

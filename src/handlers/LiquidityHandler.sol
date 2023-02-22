@@ -253,20 +253,17 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
+    if (liquidityOrders[_account].length == 0) revert ILiquidityHandler_NoOrder();
+
     isExecuting = true;
-    if (liquidityOrders[_account].length > 0) {
-      LiquidityOrder memory _order = liquidityOrders[_account][_orderIndex];
-      try this.executeLiquidity(_order) returns (uint256 result) {
-        emit LogExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
-        delete liquidityOrders[_order.account][_orderIndex];
-      } catch Error(string memory) {
-        _userRefund(_order);
-      }
-      isExecuting = false;
-    } else {
-      isExecuting = false;
-      revert ILiquidityHandler_NoOrder();
+    LiquidityOrder memory _order = liquidityOrders[_account][_orderIndex];
+    try this.executeLiquidity(_order) returns (uint256 result) {
+      emit LogExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
+      delete liquidityOrders[_order.account][_orderIndex];
+    } catch Error(string memory) {
+      _userRefund(_order);
     }
+    isExecuting = false;
   }
 
   /// @notice execute either addLiquidity or removeLiquidity

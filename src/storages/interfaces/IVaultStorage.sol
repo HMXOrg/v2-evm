@@ -2,20 +2,18 @@
 pragma solidity 0.8.18;
 
 interface IVaultStorage {
-  // Errors
+  /**
+   * Errors
+   */
   error IVaultStorage_TraderTokenAlreadyExists();
   error IVaultStorage_TraderBalanceRemaining();
   error IVaultStorage_ZeroAddress();
 
   /**
-   * State
+   * Functions
    */
 
   function traderBalances(address _trader, address _token) external view returns (uint256 amount);
-
-  /**
-   * Functions
-   */
 
   function getTraderTokens(address _trader) external view returns (address[] memory);
 

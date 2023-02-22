@@ -125,7 +125,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
   function testRevert_increasePosition_WhenBadNumberOfPosition() external {
     // Set max position 1
     configStorage.setTradingConfig(
-      IConfigStorage.TradingConfig({ fundingInterval: 1, borrowingDevFeeRate: 0, minProfitDuration: 0, maxPosition: 1 })
+      IConfigStorage.TradingConfig({ fundingInterval: 1, devFeeRate: 0, minProfitDuration: 0, maxPosition: 1 })
     );
     // TVL
     // 1000000 USDT -> 1000000 USD

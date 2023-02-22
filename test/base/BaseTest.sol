@@ -93,7 +93,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     wbtc = deployMockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = deployMockErc20("DAI Stablecoin", "DAI", 18);
     usdc = deployMockErc20("USD Coin", "USDC", 6);
-    usdc = deployMockErc20("USD Tether", "USDT", 6);
+    usdt = deployMockErc20("USD Tether", "USDT", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
 
     plp = new PLPv2();
@@ -202,7 +202,12 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   /// @notice set up trading config
   function _setUpTradingConfig() private {
     configStorage.setTradingConfig(
-      IConfigStorage.TradingConfig({ fundingInterval: 1, borrowingDevFeeRate: 0, minProfitDuration: 0, maxPosition: 5 })
+      IConfigStorage.TradingConfig({
+        fundingInterval: 1,
+        devFeeRate: 0.15 * 1e18,
+        minProfitDuration: 0,
+        maxPosition: 5
+      })
     );
   }
 

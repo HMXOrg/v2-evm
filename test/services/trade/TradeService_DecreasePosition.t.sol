@@ -352,7 +352,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
       reserveValueDelta: 90_000 * 1e30,
       openInterestDelta: 1_000_000 * 1e18,
       // average prices
-      newPositionAveragePrice: 0,
+      newPositionAveragePrice: 1 * 1e30,
       newLongGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30,
       newShortGlobalAveragePrice: 0
     });
@@ -438,7 +438,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
       reserveValueDelta: 90_000 * 1e30,
       openInterestDelta: 1_000_000 * 1e18,
       // average prices
-      newPositionAveragePrice: 0,
+      newPositionAveragePrice: 1 * 1e30,
       newLongGlobalAveragePrice: 0,
       newShortGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30
     });

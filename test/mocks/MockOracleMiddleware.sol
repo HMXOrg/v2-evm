@@ -9,6 +9,14 @@ contract MockOracleMiddleware is IOracleMiddleware {
   uint8 public marketStatus;
   bool public isPriceStale;
 
+  struct Price {
+    uint256 priceE30;
+    uint256 lastUpdate;
+    uint256 marketStatus;
+  }
+
+  mapping(bytes32 => Price) price;
+
   constructor() {
     priceE30 = 1e30;
     lastUpdate = block.timestamp;
@@ -18,6 +26,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
   // =========================================
   // | ---------- Setter ------------------- |
   // =========================================
+  function setPrice(bytes32 _assetId, uint256 _newPriceE30) external {
+    price[_assetId] = Price({ priceE30: _newPriceE30, lastUpdate: block.timestamp, marketStatus: 2 });
+  }
+
   function setPrice(uint256 _newPriceE30) external {
     priceE30 = _newPriceE30;
   }
@@ -57,11 +69,13 @@ contract MockOracleMiddleware is IOracleMiddleware {
   }
 
   function unsafeGetLatestPrice(
-    bytes32 /* _assetId */,
+    bytes32 _assetId,
     bool /* _isMax */,
     uint256 /* _confidentTreshold */
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    return (priceE30, lastUpdate);
+    Price memory p = price[_assetId];
+    if (p.priceE30 == 0) return (priceE30, lastUpdate);
+    return (p.priceE30, p.lastUpdate);
   }
 
   function unsafeGetLatestPriceWithMarketStatus(

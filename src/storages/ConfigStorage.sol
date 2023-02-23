@@ -45,9 +45,11 @@ contract ConfigStorage is IConfigStorage, Ownable {
   LiquidationConfig public liquidationConfig;
 
   MarketConfig[] public marketConfigs;
+  AssetClassConfig[] public assetClassConfigs;
 
   IteratableAddressList.List public plpAcceptedTokens;
 
+  address[] public plpTokens;
   mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
   mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config
@@ -97,6 +99,12 @@ contract ConfigStorage is IConfigStorage, Ownable {
     return marketConfigs[_index];
   }
 
+  function getAssetClassConfigByIndex(
+    uint256 _index
+  ) external view returns (AssetClassConfig memory _assetClassConfig) {
+    return assetClassConfigs[_index];
+  }
+
   function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory _plpTokenConfig) {
     return plpTokenConfigs[_token];
   }
@@ -131,6 +139,10 @@ contract ConfigStorage is IConfigStorage, Ownable {
         i++;
       }
     }
+  }
+
+  function getPlpTokens() external view returns (address[] memory) {
+    return plpTokens;
   }
 
   /// @notice Return the next underlying token address.
@@ -213,6 +225,7 @@ contract ConfigStorage is IConfigStorage, Ownable {
     PLPTokenConfig memory _newConfig
   ) external returns (PLPTokenConfig memory _plpTokenConfig) {
     plpTokenConfigs[_token] = _newConfig;
+    plpTokens.push(_token);
     return plpTokenConfigs[_token];
   }
 
@@ -262,6 +275,12 @@ contract ConfigStorage is IConfigStorage, Ownable {
         ++i;
       }
     }
+  }
+
+  function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index) {
+    uint256 _newAssetClassIndex = assetClassConfigs.length;
+    assetClassConfigs.push(_newConfig);
+    return _newAssetClassIndex;
   }
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {

@@ -14,6 +14,7 @@ contract MockCalculator is ICalculator {
 
   uint256 aum;
   uint256 plpValue;
+  uint256 nextBorrowingRate;
 
   address public oracle;
 
@@ -83,11 +84,11 @@ contract MockCalculator is ICalculator {
   // =========================================
 
   function calculatePositionIMR(uint256, uint256) external view returns (uint256) {
-    return 0;
+    return imr;
   }
 
   function calculatePositionMMR(uint256, uint256) external view returns (uint256) {
-    return 0;
+    return mmr;
   }
 
   function getAUM(bool /* isMaxPrice */) external view returns (uint256) {
@@ -139,5 +140,9 @@ contract MockCalculator is ICalculator {
 
   function getFreeCollateral(address /*_subAccount*/) external view returns (uint256) {
     return freeCollateral;
+  }
+
+  function getNextBorrowingRate(uint256 /*_assetClassIndex*/) external view returns (uint256) {
+    return nextBorrowingRate;
   }
 }

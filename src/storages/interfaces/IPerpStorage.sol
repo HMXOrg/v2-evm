@@ -15,6 +15,12 @@ interface IPerpStorage {
     uint256 lastBorrowingTime;
   }
 
+  struct GlobalAssetClass {
+    uint256 reserveValueE30; // accumulative of reserve value from all opening positions
+    uint256 sumBorrowingRate;
+    uint256 lastBorrowingTime;
+  }
+
   // mapping _marketIndex => globalPosition;
   struct GlobalMarket {
     // LONG position
@@ -49,23 +55,19 @@ interface IPerpStorage {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getPositionBySubAccount(
-    address _trader
-  ) external view returns (Position[] memory traderPositions);
+  function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions);
 
-  function getPositionById(
-    bytes32 _positionId
-  ) external view returns (Position memory);
+  function getPositionById(bytes32 _positionId) external view returns (Position memory);
 
-  function getGlobalMarketByIndex(
-    uint256 __marketIndex
-  ) external view returns (GlobalMarket memory);
+  function getGlobalMarketByIndex(uint256 __marketIndex) external view returns (GlobalMarket memory);
+
+  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory);
 
   function getGlobalState() external view returns (GlobalState memory);
 
-  function getNumberOfSubAccountPosition(
-    address _subAccount
-  ) external view returns (uint256);
+  function getNumberOfSubAccountPosition(address _subAccount) external view returns (uint256);
+
+  function getSubAccountFee(address _subAccount) external view returns (uint256 fee);
 
   // setter
   // =========================================
@@ -94,14 +96,11 @@ interface IPerpStorage {
     uint256 _newOpenInterest
   ) external;
 
-  // @todo - update sumBorrowingRate, lastBorrowingTime
-  function updateGlobalState(uint256 _newReserveValueE30) external;
+  function updateGlobalState(GlobalState memory _newGlobalState) external;
 
-  function savePosition(
-    address _subAccount,
-    bytes32 _positionId,
-    Position calldata position
-  ) external;
+  function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) external;
 
-  function updateReserveValue(uint256 newReserveValue) external;
+  function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
+
+  function updateSubAccountFee(address _subAccount, uint256 fee) external;
 }

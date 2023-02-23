@@ -13,11 +13,12 @@ import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockWNative } from "../mocks/MockWNative.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
-import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
 import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
 import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
+import { MockWNative } from "../mocks/MockWNative.sol";
+import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
 
 import { Deployment } from "../../script/Deployment.s.sol";
@@ -28,6 +29,10 @@ import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol
 
 // Calculator
 import { Calculator } from "../../src/contracts/Calculator.sol";
+
+// Handlers
+import { LiquidityHandler } from "../../src/handlers/LiquidityHandler.sol";
+import { CrossMarginHandler } from "../../src/handlers/CrossMarginHandler.sol";
 
 // Services
 import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
@@ -66,6 +71,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   MockPerpStorage internal mockPerpStorage;
   MockVaultStorage internal mockVaultStorage;
   MockOracleMiddleware internal mockOracle;
+  MockLiquidityService internal mockLiquidityService;
   MockTradeService internal mockTradeService;
 
   MockWNative internal weth;
@@ -117,6 +123,12 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     mockOracle = new MockOracleMiddleware();
     mockTradeService = new MockTradeService();
 
+    mockLiquidityService = new MockLiquidityService(
+      address(configStorage),
+      address(perpStorage),
+      address(vaultStorage)
+    );
+
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();
@@ -127,21 +139,34 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // set general config
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
+    configStorage.setWeth(address(weth));
   }
 
   // --------- Deploy Helpers ---------
-  function deployMockErc20(string memory name, string memory symbol, uint8 decimals) internal returns (MockErc20) {
-    return new MockErc20(name, symbol, decimals);
-  }
-
   function deployMockWNative() internal returns (MockWNative) {
     return new MockWNative();
+  }
+
+  function deployMockErc20(string memory name, string memory symbol, uint8 decimals) internal returns (MockErc20) {
+    return new MockErc20(name, symbol, decimals);
   }
 
   function deployPerp88v2() internal returns (Deployment.DeployReturnVars memory) {
     DeployLocalVars memory deployLocalVars = DeployLocalVars({ pyth: mockPyth, defaultOracleStaleTime: 300 });
     return deploy(deployLocalVars);
   }
+
+  /**
+   * HANDLER
+   */
+
+  function deployCrossMarginHandler(address _crossMarginService, address _pyth) internal returns (CrossMarginHandler) {
+    return new CrossMarginHandler(_crossMarginService, _pyth);
+  }
+
+  /**
+   * SERVICE
+   */
 
   function deployCrossMarginService(
     address _configStorage,
@@ -150,6 +175,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   ) internal returns (CrossMarginService) {
     return new CrossMarginService(_configStorage, _vaultStorage, _calculator);
   }
+
+  /**
+   * CALCULATOR
+   */
 
   function deployCalculator(
     address _oracle,
@@ -160,7 +189,9 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     return new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
   }
 
-  // --------- Test Helpers ---------
+  /**
+   * TEST HELPERS
+   */
 
   /// @notice Helper function to create a price feed update data.
   /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
@@ -268,6 +299,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // set PLP token
     configStorage.setPLP(address(plp));
 
+    configStorage.setPLPTotalTokenWeight(0);
+
     // add Accepted Token for LP config
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
     // WETH
@@ -316,11 +349,14 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       accepted: true
     });
 
-    configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig[0]);
-    configStorage.setPlpTokenConfig(address(wbtc), _plpTokenConfig[1]);
-    configStorage.setPlpTokenConfig(address(dai), _plpTokenConfig[2]);
-    configStorage.setPlpTokenConfig(address(usdc), _plpTokenConfig[3]);
-    configStorage.setPlpTokenConfig(address(usdt), _plpTokenConfig[4]);
+    address[] memory _tokens = new address[](5);
+    _tokens[0] = address(weth);
+    _tokens[1] = address(wbtc);
+    _tokens[2] = address(dai);
+    _tokens[3] = address(usdc);
+    _tokens[4] = address(usdt);
+
+    configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
   }
 
   /// @notice set up all collateral token configs in Perp
@@ -348,6 +384,14 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   function abs(int256 x) external pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
+  }
+
+  function deployLiquidityHandler(
+    address _liquidityService,
+    address _pyth,
+    uint256 _minExecutionFee
+  ) internal returns (LiquidityHandler) {
+    return new LiquidityHandler(_liquidityService, _pyth, _minExecutionFee);
   }
 
   function deployLimitTradeHandler(

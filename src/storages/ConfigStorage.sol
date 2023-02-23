@@ -2,19 +2,18 @@
 pragma solidity 0.8.18;
 
 // @todo - convert to upgradable
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { Owned } from "../base/Owned.sol";
 import { IteratableAddressList } from "../libraries/IteratableAddressList.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
-contract ConfigStorage is IConfigStorage, Ownable {
+contract ConfigStorage is IConfigStorage, Owned {
   using AddressUtils for address;
   using IteratableAddressList for IteratableAddressList.List;
 
@@ -59,6 +58,7 @@ contract ConfigStorage is IConfigStorage, Ownable {
   address public plp;
   address public treasury;
   uint256 public pnlFactor; // factor that calculate unrealized PnL after collateral factor
+  address public weth;
 
   constructor() {
     plpAcceptedTokens.init();
@@ -73,6 +73,10 @@ contract ConfigStorage is IConfigStorage, Ownable {
   /// @param _executorAddress Executor contract address to call service contract.
   function validateServiceExecutor(address _contractAddress, address _executorAddress) external view {
     if (!serviceExecutors[_contractAddress][_executorAddress]) revert IConfigStorage_NotWhiteListed();
+  }
+
+  function validateAcceptedLiquidityToken(address _token) external view {
+    if (!plpTokenConfigs[_token].accepted) revert IConfigStorage_NotAcceptedLiquidity();
   }
 
   /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
@@ -224,6 +228,10 @@ contract ConfigStorage is IConfigStorage, Ownable {
     return collateralTokenConfigs[_token];
   }
 
+  function setWeth(address _weth) external {
+    weth = _weth;
+  }
+
   /// @notice add or update AcceptedToken
   /// @dev This function only allows to add new token or update existing token,
   /// any atetempt to remove token will be reverted.
@@ -249,9 +257,11 @@ contract ConfigStorage is IConfigStorage, Ownable {
       emit AddOrUpdatePLPTokenConfigs(_tokens[i], plpTokenConfigs[_tokens[i]], _configs[i]);
 
       // Update totalWeight accordingly
-      liquidityConfig.plpTotalTokenWeight =
+
+      liquidityConfig.plpTotalTokenWeight == 0 ? _configs[i].targetWeight : liquidityConfig.plpTotalTokenWeight =
         (liquidityConfig.plpTotalTokenWeight - plpTokenConfigs[_tokens[i]].targetWeight) +
         _configs[i].targetWeight;
+
       plpTokenConfigs[_tokens[i]] = _configs[i];
 
       if (liquidityConfig.plpTotalTokenWeight > 1e18) {

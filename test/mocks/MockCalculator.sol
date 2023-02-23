@@ -145,4 +145,15 @@ contract MockCalculator is ICalculator {
   function getNextBorrowingRate(uint256 /*_assetClassIndex*/) external view returns (uint256) {
     return nextBorrowingRate;
   }
+
+  function getSettlementFeeRate(
+    uint256 /* _value */,
+    uint256 /* _liquidityUSD */, //e30
+    uint256 /* _totalLiquidityUSD */, //e30
+    IConfigStorage.LiquidityConfig memory /* _liquidityConfig */,
+    IConfigStorage.PLPTokenConfig memory /* _plpTokenConfig */
+  ) external pure returns (uint256) {
+    // 0.5%
+    return 5e15;
+  }
 }

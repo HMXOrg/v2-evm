@@ -417,7 +417,6 @@ contract TradeService is ITradeService {
   /// @param _token - token that trader want to take profit as collateral
   /// @param _realizedProfitE30 - trader profit in USD
   function _settleProfit(address _subAccount, address _token, uint256 _realizedProfitE30) internal {
-    uint256 _taxFeeRate = IConfigStorage(configStorage).getLiquidityConfig().taxFeeRate;
     (uint256 _tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
       _token.toBytes32(),
       false,
@@ -427,7 +426,16 @@ contract TradeService is ITradeService {
 
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * 1e18) / _tpTokenPrice; // @todo - token decimal
-    uint256 _settlementFee = (_tpTokenOut * _taxFeeRate) / 1e18;
+
+    // @todo - should it be
+    uint256 _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
+      0,
+      0,
+      0,
+      IConfigStorage(configStorage).getLiquidityConfig(),
+      IConfigStorage(configStorage).getPlpTokenConfigs(address(0))
+    );
+    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18; // @todo - token decimal
 
     IVaultStorage(vaultStorage).settlePosition(_subAccount, _token, int256(_tpTokenOut), _settlementFee);
   }
@@ -437,17 +445,22 @@ contract TradeService is ITradeService {
   /// @param _debtUsd - Loss in USD
   function _settleLoss(address _subAccount, uint256 _debtUsd) internal {
     address[] memory _plpTokens = IConfigStorage(configStorage).getPlpTokens();
-    uint256 _taxFeeRate = IConfigStorage(configStorage).getLiquidityConfig().taxFeeRate;
 
+    uint256 _len = _plpTokens.length;
     address _token;
     uint256 _collateral;
     uint256 _price;
     uint256 _collateralToRemove;
+    uint256 _collateralUsd;
+    uint256 _settlementFeeRate;
+    uint256 _settlementFee;
+
     // Loop through all the plp tokens for the sub-account
-    for (uint256 _i; _i < _plpTokens.length; ) {
+    for (uint256 _i; _i < _len; ) {
       _token = _plpTokens[_i];
       // Sub-account plp collateral
       _collateral = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
+      console.log("_collateral", _collateral);
 
       // continue settle when sub-account has collateral, else go to check next token
       if (_collateral != 0) {
@@ -459,17 +472,21 @@ contract TradeService is ITradeService {
           IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold
         );
 
-        uint256 _collateralUsd = (_collateral * _price) / 1e18; // @todo - token decimal
-        uint256 _settlementFee;
+        _collateralUsd = (_collateral * _price) / 1e18; // @todo - token decimal
+        _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
+          0,
+          0,
+          0,
+          IConfigStorage(configStorage).getLiquidityConfig(),
+          IConfigStorage(configStorage).getPlpTokenConfigs(address(0))
+        );
 
         if (_collateralUsd >= _debtUsd) {
-          uint256 _repayUsd;
-          unchecked {
-            _repayUsd = _collateralUsd - _debtUsd;
-          }
+          _collateralToRemove = (_debtUsd * 1e18) / _price; // @todo - token decimal
+          _settlementFee = (_collateralToRemove * _settlementFeeRate) / 1e18;
 
-          _collateralToRemove = (_repayUsd * 1e18) / _price; // @todo - token decimal
-          _settlementFee = (_collateralToRemove * _taxFeeRate) / 1e18;
+          console.log("_collateralToRemove", _collateralToRemove);
+          console.log("_settlementFee", _settlementFee);
 
           // settle position
           IVaultStorage(vaultStorage).settlePosition(_subAccount, _token, -int256(_collateralToRemove), _settlementFee);
@@ -477,7 +494,10 @@ contract TradeService is ITradeService {
         } else {
           // pay all collateral
           _collateralToRemove = (_collateralUsd * 1e30) / _price;
-          _settlementFee = (_collateralToRemove * _taxFeeRate) / 1e18;
+          _settlementFee = (_collateralToRemove * _settlementFeeRate) / 1e18;
+
+          console.log("_collateralToRemove", _collateralToRemove);
+          console.log("_settlementFee", _settlementFee);
 
           // settle position
           IVaultStorage(vaultStorage).settlePosition(_subAccount, _token, -int256(_collateralToRemove), _settlementFee);

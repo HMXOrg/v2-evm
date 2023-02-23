@@ -17,9 +17,6 @@ contract PositionTester is StdAssertions {
   struct DecreasePositionAssertionData {
     address primaryAccount;
     uint256 subAccountId;
-    // profit
-    address tpToken;
-    uint256 profitAmount; // token amount
     // position info
     uint256 decreasedPositionSize;
     uint256 reserveValueDelta;
@@ -85,23 +82,33 @@ contract PositionTester is StdAssertions {
   function assertDecreasePositionResult(
     DecreasePositionAssertionData memory _data,
     address[] calldata _plpTokens,
-    uint256[] calldata _expectedBalances
+    uint256[] calldata _expectedBalances,
+    uint256[] calldata _expectedPlpLiquidities,
+    uint256[] calldata _expectedFees
   ) external {
     address _subAccount = _getSubAccount(_data.primaryAccount, _data.subAccountId);
-    // when user profit
-    if (_data.profitAmount != 0) {
+
+    {
+      uint256 _len = _plpTokens.length;
       // collateral
-      assertEq(
-        cacheTraderBalance + _data.profitAmount,
-        vaultStorage.traderBalances(_subAccount, _data.tpToken),
-        "trader collateral"
-      );
-      // plp token
-      assertEq(
-        cachePlpTokenLiquidity - _data.profitAmount,
-        vaultStorage.plpLiquidity(_data.tpToken),
-        "plp token liquidity"
-      );
+      address _token;
+      uint256 _expectBalance;
+      uint256 _expectLiquidity;
+      uint256 _expectFee;
+      for (uint256 _i; _i < _len; ) {
+        _token = _plpTokens[_i];
+        _expectBalance = _expectedBalances[_i];
+        _expectLiquidity = _expectedPlpLiquidities[_i];
+        _expectFee = _expectedFees[_i];
+
+        assertEq(vaultStorage.traderBalances(_subAccount, _token), _expectBalance, "trader balance");
+        assertEq(vaultStorage.plpLiquidity(_token), _expectLiquidity, "liquidity");
+        assertEq(vaultStorage.fees(_token), _expectFee, "fee");
+
+        unchecked {
+          ++_i;
+        }
+      }
     }
 
     // assert position state
@@ -136,8 +143,6 @@ contract PositionTester is StdAssertions {
       );
       assertEq(_currentMarketGlobal.longAvgPrice, _data.newLongGlobalAveragePrice, "global long average price");
 
-      console.log("cacheMarketGlobal.longOpenInterest", cacheMarketGlobal.longOpenInterest);
-      console.log("_currentMarketGlobal.longOpenInterest", _currentMarketGlobal.longOpenInterest);
       assertEq(
         cacheMarketGlobal.longOpenInterest - _currentMarketGlobal.longOpenInterest,
         _data.openInterestDelta,

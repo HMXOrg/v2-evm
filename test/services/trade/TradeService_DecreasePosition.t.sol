@@ -173,21 +173,27 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                                 = 1.024390243902439024390243902438 USD
     // ALICE position has profit 25000 USD
     // ALICE sub account 0 has WETH as collateral = 100,000 ether
-    // loss in WETH = 25000 / 1.05 = 23809.523809523809523809 ether
-    // then ALICE sub account 0 collateral should be reduced by 23809.523809523809523809 ether
+    // profit in WETH = 25000 / 1.05 = 23809.523809523809523809 ether
+    // settlement fee rate 0.5% note: from mock
+    // settlement fee = 23809.523809523809523809 * 0.5 / 100 = 119.047619047619047619 ether
+    // then ALICE sub account 0 collateral should be increased by 23809.523809523809523809 ether
     //                             = 100000 + 23809.523809523809523809 = 123809.523809523809523809 ether
+    // and PLP WETH liquidity should reduced by 23809.523809523809523809 - 119.047619047619047619 = 23690.47619047619047619 ether
+    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 23690.47619047619047619 = 976309.52380952380952381 ether
+    // finally fee should increased by 119.047619047619047619 ether
     address[] memory _checkPlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
+    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedFees = new uint256[](1);
 
     _checkPlpTokens[0] = _tpToken;
     _expectedTraderBalances[0] = 123809.523809523809523809 ether;
+    _expectedPlpLiquidities[0] = 976309.52380952380952381 ether;
+    _expectedFees[0] = 119.047619047619047619 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       primaryAccount: ALICE,
       subAccountId: 0,
-      // profit
-      tpToken: _tpToken,
-      profitAmount: 23809.523809523809523809 ether,
       // position info
       decreasedPositionSize: 500_000 * 1e30,
       reserveValueDelta: 45_000 * 1e30,
@@ -199,7 +205,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
       newShortGlobalAveragePrice: 0
       // collateral
     });
-    positionTester.assertDecreasePositionResult(_assertData, _checkPlpTokens, _expectedTraderBalances);
+    positionTester.assertDecreasePositionResult(
+      _assertData,
+      _checkPlpTokens,
+      _expectedTraderBalances,
+      _expectedPlpLiquidities,
+      _expectedFees
+    );
   }
 
   // partially decrease short position
@@ -272,20 +284,26 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // ALICE position has loss 25000 USD
     // ALICE sub account 0 has WETH as collateral = 100,000 ether
     // loss in WETH = 25000 / 1.05 = 23809.523809523809523809 ether
+    // settlement fee rate 0.5% note: from mock
+    // settlement fee = 23809.523809523809523809 * 0.5 / 100 = 119.047619047619047619 ether
     // then ALICE sub account 0 collateral should be reduced by 23809.523809523809523809 ether
     //                             = 100000 - 23809.523809523809523809 = 76190.476190476190476191 ether
+    // and PLP WETH liquidity should increased by 23809.523809523809523809 - 119.047619047619047619 = 23690.47619047619047619 ether
+    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 + 23690.47619047619047619 = 1023690.47619047619047619 ether
+    // finally fee should increased by 119.047619047619047619 ether
     address[] memory _checkPlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
+    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedFees = new uint256[](1);
 
     _checkPlpTokens[0] = address(weth);
     _expectedTraderBalances[0] = 76190.476190476190476191 ether;
+    _expectedPlpLiquidities[0] = 1023690.47619047619047619 ether;
+    _expectedFees[0] = 119.047619047619047619 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       primaryAccount: ALICE,
       subAccountId: 0,
-      // profit
-      tpToken: _tpToken,
-      profitAmount: 0,
       // position info
       decreasedPositionSize: 500_000 * 1e30,
       reserveValueDelta: 45_000 * 1e30,
@@ -296,7 +314,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
       newLongGlobalAveragePrice: 0,
       newShortGlobalAveragePrice: 1.024390243902439024390243902438 * 1e30
     });
-    positionTester.assertDecreasePositionResult(_assertData, _checkPlpTokens, _expectedTraderBalances);
+    positionTester.assertDecreasePositionResult(
+      _assertData,
+      _checkPlpTokens,
+      _expectedTraderBalances,
+      _expectedPlpLiquidities,
+      _expectedFees
+    );
   }
 
   // fully decrease long position
@@ -366,23 +390,29 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new long average price (global) = current price * new global long size / new global long size + new global long pnl
     //                                 = 0.95 * 500000 / (500000 + (+0.000000000000000000000000407018))
     //                                 = 0.949999999999999999999999999999 USD (precision loss)
-    // ALICE position has loss 25000 USD
+    // ALICE position has loss 50000 USD
     // ALICE sub account 0 has WETH as collateral = 100,000 ether
-    // loss in WETH = 25000 / 1.05 = 23809.523809523809523809 ether
-    // then ALICE sub account 0 collateral should be reduced by 23809.523809523809523809 ether
-    //                             = 100000 - 23809.523809523809523809 = 76190.476190476190476191 ether
+    // loss in WETH = 50000 / 0.95 = 52631.578947368421052631 ether
+    // settlement fee rate 0.5% note: from mock
+    // settlement fee = 52631.578947368421052631 * 0.5 / 100 = 263.157894736842105263 ether
+    // then ALICE sub account 0 collateral should be reduced by 52631.578947368421052631 ether
+    //                             = 100000 - 52631.578947368421052631 = 47368.421052631578947369 ether
+    // and PLP WETH liquidity should increased by 52631.578947368421052631 - 263.157894736842105263 = 52368.421052631578947368 ether
+    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 + 52368.421052631578947368 = 1052368.421052631578947368 ether
+    // finally fee should increased by 263.157894736842105263 ether
     address[] memory _checkPlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
+    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedFees = new uint256[](1);
 
     _checkPlpTokens[0] = address(weth);
-    _expectedTraderBalances[0] = 76190.476190476190476191 ether;
+    _expectedTraderBalances[0] = 47368.421052631578947369 ether;
+    _expectedPlpLiquidities[0] = 1052368.421052631578947368 ether;
+    _expectedFees[0] = 263.157894736842105263 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       primaryAccount: ALICE,
       subAccountId: 0,
-      // profit
-      tpToken: _tpToken,
-      profitAmount: 0,
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
@@ -393,7 +423,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
       newLongGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30,
       newShortGlobalAveragePrice: 0
     });
-    positionTester.assertDecreasePositionResult(_assertData, _checkPlpTokens, _expectedTraderBalances);
+    positionTester.assertDecreasePositionResult(
+      _assertData,
+      _checkPlpTokens,
+      _expectedTraderBalances,
+      _expectedPlpLiquidities,
+      _expectedFees
+    );
   }
 
   // fully decrease short position
@@ -462,26 +498,29 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new short average price (global) = current price * new global short size / new global short size - new global long pnl
     //                                 = 0.95 * 500000 / (500000 - (-0.000000000000000000000000407018))
     //                                 = 0.949999999999999999999999999999 USD
-    // token profit amount = position realized pnl / price
-    //                     = +50000 / 0.95 = 52631.578947368421052631 ether
-
     // ALICE position has profit 50000 USD
     // ALICE sub account 0 has WETH as collateral = 100,000 ether
-    // loss in WETH = 50000 / 0.95 = 52631.578947368421052631 ether
+    // profit in WETH = 50000 / 0.95 = 52631.578947368421052631 ether
+    // settlement fee rate 0.5% note: from mock
+    // settlement fee = 52631.578947368421052631 * 0.5 / 100 = 263.157894736842105263 ether
     // then ALICE sub account 0 collateral should be increased by 52631.578947368421052631 ether
     //                             = 100000 + 52631.578947368421052631 = 152631.578947368421052631 ether
+    // and PLP WETH liquidity should reduced by 52631.578947368421052631 - 263.157894736842105263 = 52368.421052631578947368 ether
+    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 52368.421052631578947368 = 947631.578947368421052632 ether
+    // finally fee should increased by 263.157894736842105263 ether
     address[] memory _checkPlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
+    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedFees = new uint256[](1);
 
     _checkPlpTokens[0] = _tpToken;
     _expectedTraderBalances[0] = 152631.578947368421052631 ether;
+    _expectedPlpLiquidities[0] = 947631.578947368421052632 ether;
+    _expectedFees[0] = 263.157894736842105263 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       primaryAccount: ALICE,
       subAccountId: 0,
-      // profit
-      tpToken: _tpToken,
-      profitAmount: 52631.578947368421052631 ether,
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
@@ -492,7 +531,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
       newLongGlobalAveragePrice: 0,
       newShortGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30
     });
-    positionTester.assertDecreasePositionResult(_assertData, _checkPlpTokens, _expectedTraderBalances);
+    positionTester.assertDecreasePositionResult(
+      _assertData,
+      _checkPlpTokens,
+      _expectedTraderBalances,
+      _expectedPlpLiquidities,
+      _expectedFees
+    );
   }
 
   // try decrease long position which already closed

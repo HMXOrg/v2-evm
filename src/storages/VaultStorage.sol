@@ -188,17 +188,22 @@ contract VaultStorage is IVaultStorage {
   /// @notice settle sub-account's position profit and loss
   /// @param _subAccount - sub account
   /// @param _token - profit token
-  /// @param _pnl - profit and loss in token
+  /// @param _pnl - trader profit and loss in token
   /// @param _fee - settlement fee
   function settlePosition(address _subAccount, address _token, int256 _pnl, uint256 _fee) external {
     // if trader not has profit or loss then do nothing
+
+    console.log("_fee", _fee);
+    console.log("plpLiquidity[_token]", plpLiquidity[_token]);
+    console.log("traderBalances[_subAccount][_token]", traderBalances[_subAccount][_token]);
     if (_pnl != 0) {
       fees[_token] += _fee;
-      // profit
       if (_pnl > 0) {
+        // if trader profit then remove liquidity from PLP to trader
         plpLiquidity[_token] -= uint256(_pnl) - _fee;
         traderBalances[_subAccount][_token] += uint256(_pnl);
       } else {
+        // otherwise, if trader loss then remove trader balance to PLP
         plpLiquidity[_token] += uint256(-_pnl) - _fee;
         traderBalances[_subAccount][_token] -= uint256(-_pnl);
       }

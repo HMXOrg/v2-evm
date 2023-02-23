@@ -2,7 +2,9 @@
 pragma solidity 0.8.18;
 
 interface ITradeService {
-  // errors
+  /**
+   * Errors
+   */
   error ITradeService_MarketIsDelisted();
   error ITradeService_MarketIsClosed();
   error ITradeService_PositionAlreadyClosed();

@@ -22,7 +22,7 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     super.setUp();
 
     dai.mint(address(this), 100 ether);
-    dai.approve(address(liquidityService), type(uint256).max);
+    dai.transfer(address(vaultStorage), 100 ether);
     liquidityService.addLiquidity(address(this), address(dai), 100 ether, 0);
 
     // total supply = 10 ether after add liquidity for ALICE

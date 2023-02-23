@@ -13,8 +13,6 @@ import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
-import { console } from "forge-std/console.sol";
-
 // @todo - refactor, deduplicate code
 
 contract TradeService is ITradeService {
@@ -460,7 +458,6 @@ contract TradeService is ITradeService {
       _token = _plpTokens[_i];
       // Sub-account plp collateral
       _collateral = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
-      console.log("_collateral", _collateral);
 
       // continue settle when sub-account has collateral, else go to check next token
       if (_collateral != 0) {
@@ -485,19 +482,13 @@ contract TradeService is ITradeService {
           _collateralToRemove = (_debtUsd * 1e18) / _price; // @todo - token decimal
           _settlementFee = (_collateralToRemove * _settlementFeeRate) / 1e18;
 
-          console.log("_collateralToRemove", _collateralToRemove);
-          console.log("_settlementFee", _settlementFee);
-
           // settle position
           IVaultStorage(vaultStorage).settlePosition(_subAccount, _token, -int256(_collateralToRemove), _settlementFee);
           break;
         } else {
           // pay all collateral
-          _collateralToRemove = (_collateralUsd * 1e30) / _price;
+          _collateralToRemove = (_collateralUsd * 1e18) / _price; // @todo - token decimal
           _settlementFee = (_collateralToRemove * _settlementFeeRate) / 1e18;
-
-          console.log("_collateralToRemove", _collateralToRemove);
-          console.log("_settlementFee", _settlementFee);
 
           // settle position
           IVaultStorage(vaultStorage).settlePosition(_subAccount, _token, -int256(_collateralToRemove), _settlementFee);

@@ -3,8 +3,8 @@ pragma solidity 0.8.18;
 
 import { TradeService_Base } from "./TradeService_Base.t.sol";
 import { PositionTester } from "../../testers/PositionTester.sol";
-
 import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
+import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 
 // What is this test DONE
 // - pre validation
@@ -26,22 +26,24 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - position remain too tiny size after decrease short position
 // - misc
 //   - settle profit & loss with settlement fee
+//   - pull multiple tokens from user when loss
 // What is this test not covered
 //   - borrowing fee
 //   - funding fee
 //   - trading fee
 //   - protocol curcuit break
 //   - trading curcuit break
-//   - pull multiple tokens from user when loss
 // - post validation
 //   - sub account is unhealthy (equity < MMR) after decreased position
 
 contract TradeService_DecreasePosition is TradeService_Base {
+  using AddressUtils for address;
+
   function setUp() public virtual override {
     super.setUp();
 
     // TVL
-    // 1000000 USDT -> 1000000 USD
+    // 1000000 USDT -> 2000000 USD
     mockCalculator.setPLPValue(1_000_000 * 1e30);
 
     // assume ALICE has free collateral for 10,000 USD
@@ -49,8 +51,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // mock PLP token for profitable trader
-    // related with TVL 1,000,000 USD, let provide 1,000,000 WETH (price 1$)
+    // related with TVL 2,000,000 USD then provide liquidity, - 1,000,000 WETH (price 1$)
+    //                                                        - 10,000 WBTC (price 100$)
     vaultStorage.addPLPLiquidity(address(weth), 1_000_000 ether);
+    vaultStorage.addPLPLiquidity(address(wbtc), 10_000 ether);
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
@@ -168,7 +172,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
     );
   }
 
-  function testCorrectness_WhenTraderPartiallyDecreaseShortPositionSizeWithLoss() external {
+  function testCorrectness_WhenTraderPartiallyDecreaseShortPositionSizeWithLoss_AndPullMultipleTokensFromUser()
+    external
+  {
     // Prepare for this test
 
     // ALICE open SHORT position
@@ -215,6 +221,15 @@ contract TradeService_DecreasePosition is TradeService_Base {
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     positionTester.watch(ALICE, 0, _tpToken, _positionId);
 
+    // reset collateral for ALICE sub-account 0
+    // this sub-account has weth 10000 ether
+    //                      wbtc 10000 ether
+    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(weth), 10_000 ether);
+    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(wbtc), 10_000 ether);
+
+    // and wbtc price is 100 USD
+    mockOracle.setPrice(address(wbtc).toBytes32(), 100 * 1e30);
+
     // ALICE decrease position
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, _tpToken);
 
@@ -234,24 +249,38 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                                 = 1.05 * 1000000 / (1000000 - (-25000.000000000000000000000000787301))
     //                                 = 1.024390243902439024390243902438 USD
     // ALICE position has loss 25000 USD
-    // ALICE sub account 0 has WETH as collateral = 100,000 ether
-    // loss in WETH = 25000 / 1.05 = 23809.523809523809523809 ether
+    // ALICE sub account 0 has WETH as collateral = 10,000 ether
+    // WETH collateral value = 10000 * 1.05 = 10,500 USD
+    // ! WEH collateral is not enough then all WETH collateral must be removed all
+    // ! settlement fee rate 0.5%, then settlement fee for WETH = 10,000 * 0.5 / 100 = 50 ether
+    // the PLP WETH liquidity should increased by 10000 - 50 = 9950 ether
+    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 + 9950 = 1009950 ether
+    // SO, ALICE still loss = 25000 - 10500 = 14500 USD
+    // ALICE still has WBTC in this sub-account as 10,000 ether, value is 1,000,000 USD
     // settlement fee rate 0.5% note: from mock
-    // settlement fee = 23809.523809523809523809 * 0.5 / 100 = 119.047619047619047619 ether
-    // then ALICE sub account 0 collateral should be reduced by 23809.523809523809523809 ether
-    //                             = 100000 - 23809.523809523809523809 = 76190.476190476190476191 ether
-    // and PLP WETH liquidity should increased by 23809.523809523809523809 - 119.047619047619047619 = 23690.47619047619047619 ether
-    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 + 23690.47619047619047619 = 1023690.47619047619047619 ether
-    // finally fee should increased by 119.047619047619047619 ether
-    address[] memory _checkPlpTokens = new address[](1);
-    uint256[] memory _expectedTraderBalances = new uint256[](1);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
-    uint256[] memory _expectedFees = new uint256[](1);
+    // Alice loss in WBTC = 14500 / 100 = 145 ether
+    // settlement fee = 145 * 0.5 / 100 = 0.725 ether
+    // then ALICE sub-account wbtc collateral should be reduced by 145 ether
+    //                             = 10000 - 145 = 9855 ether
+    // and PLP WBTC liquidity should increased by 145 - 0.725 = 144.275 ether
+    //     PLP WBTC liquidity has 10,000 ether then liquidity remaining is 10000 + 144.275 = 10144.275 ether
+    // finally fee should increased by 0.725 ether
+    address[] memory _checkPlpTokens = new address[](2);
+    uint256[] memory _expectedTraderBalances = new uint256[](2);
+    uint256[] memory _expectedPlpLiquidities = new uint256[](2);
+    uint256[] memory _expectedFees = new uint256[](2);
 
+    // expected WETH balance
     _checkPlpTokens[0] = address(weth);
-    _expectedTraderBalances[0] = 76190.476190476190476191 ether;
-    _expectedPlpLiquidities[0] = 1023690.47619047619047619 ether;
-    _expectedFees[0] = 119.047619047619047619 ether;
+    _expectedTraderBalances[0] = 0 ether;
+    _expectedPlpLiquidities[0] = 1009950 ether;
+    _expectedFees[0] = 50 ether;
+
+    // expected WBTC balance
+    _checkPlpTokens[1] = address(wbtc);
+    _expectedTraderBalances[1] = 9855 ether;
+    _expectedPlpLiquidities[1] = 10144.275 ether;
+    _expectedFees[1] = 0.725 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       primaryAccount: ALICE,

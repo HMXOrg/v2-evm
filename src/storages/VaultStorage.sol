@@ -6,8 +6,6 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
-import { console } from "forge-std/console.sol";
-
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
 contract VaultStorage is IVaultStorage {
@@ -193,9 +191,6 @@ contract VaultStorage is IVaultStorage {
   function settlePosition(address _subAccount, address _token, int256 _pnl, uint256 _fee) external {
     // if trader not has profit or loss then do nothing
 
-    console.log("_fee", _fee);
-    console.log("plpLiquidity[_token]", plpLiquidity[_token]);
-    console.log("traderBalances[_subAccount][_token]", traderBalances[_subAccount][_token]);
     if (_pnl != 0) {
       fees[_token] += _fee;
       if (_pnl > 0) {

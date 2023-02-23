@@ -16,11 +16,10 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 /// @title LiquidityService
 contract LiquidityService is ILiquidityService {
   using AddressUtils for address;
-  using SafeERC20 for ERC20;
 
-  address configStorage;
-  address vaultStorage;
-  address perpStorage;
+  address public configStorage;
+  address public vaultStorage;
+  address public perpStorage;
 
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
   uint256 internal constant USD_DECIMALS = 30;
@@ -69,17 +68,19 @@ contract LiquidityService is ILiquidityService {
     // 1. _validate
     _validatePreAddRemoveLiquidity(_token, _amount);
 
+    if (IVaultStorage(vaultStorage).pullToken(_token) != _amount) {
+      revert LiquidityService_InvalidInputAmount();
+    }
+
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
+    // 2. getMinPrice for using to join Pool
     (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(
       _token.toBytes32(),
       false,
       IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
       30 // trust price age (seconds) todo: from market config
     );
-
-    // 2. Calculate PLP amount to mint
-    // if input incorrect or config accepted is false
 
     // 3. get aum and lpSupply before deduction fee
     // TODO realize farm pnl to get pendingBorrowingFee
@@ -98,7 +99,6 @@ contract LiquidityService is ILiquidityService {
     );
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
-    ERC20(_token).safeTransferFrom(msg.sender, address(vaultStorage), _amount);
     PLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
     emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, tokenValueUSDAfterFee, mintAmount);
@@ -134,7 +134,7 @@ contract LiquidityService is ILiquidityService {
 
     // handler receive PLP of user then burn it from handler
     PLPv2(IConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
-    IVaultStorage(vaultStorage).transferToken(_lpProvider, _tokenOut, _amountOut);
+    IVaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOut);
 
     emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValue, _amountOut);
 
@@ -164,7 +164,7 @@ contract LiquidityService is ILiquidityService {
     uint256 tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
       ERC20(_token).decimals(),
       USD_DECIMALS,
-      amountAfterFee
+      (amountAfterFee * _price) / PRICE_PRECISION
     );
 
     uint256 mintAmount = _calculator.getMintAmount(_aum, _lpSupply, tokenValueUSDAfterFee);
@@ -308,7 +308,6 @@ contract LiquidityService is ILiquidityService {
   }
 
   function _validatePreAddRemoveLiquidity(address _token, uint256 _amount) internal view {
-    // 1. _validate
     IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
 
     if (!IConfigStorage(configStorage).getLiquidityConfig().enabled) {

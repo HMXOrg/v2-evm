@@ -84,7 +84,7 @@ interface IConfigStorage {
 
   struct TradingConfig {
     uint256 fundingInterval; // funding interval unit in seconds
-    uint256 borrowingDevFeeRate;
+    uint256 devFeeRate;
     uint256 minProfitDuration;
     uint256 maxPosition;
   }
@@ -127,6 +127,8 @@ interface IConfigStorage {
 
   function getMarketConfigByIndex(uint256 _index) external view returns (MarketConfig memory _marketConfig);
 
+  function getAssetClassConfigByIndex(uint256 _index) external view returns (AssetClassConfig memory _assetClassConfig);
+
   function getTradingConfig() external view returns (TradingConfig memory);
 
   function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory);
@@ -147,6 +149,8 @@ interface IConfigStorage {
 
   function getNextAcceptedToken(address token) external view returns (address);
 
+  function getPlpTokens() external view returns (address[] memory);
+
   /**
    * Setter
    */
@@ -159,6 +163,8 @@ interface IConfigStorage {
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;
 
   function setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) external;
+
+  function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
 

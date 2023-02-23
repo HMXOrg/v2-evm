@@ -106,7 +106,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     wbtc = deployMockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = deployMockErc20("DAI Stablecoin", "DAI", 18);
     usdc = deployMockErc20("USD Coin", "USDC", 6);
-    usdc = deployMockErc20("USD Tether", "USDT", 6);
+    usdt = deployMockErc20("USD Tether", "USDT", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
 
     plp = new PLPv2();
@@ -132,6 +132,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();
+    _setUpAssetClassConfigs();
     _setUpMarketConfigs();
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
@@ -243,8 +244,25 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   /// @notice set up trading config
   function _setUpTradingConfig() private {
     configStorage.setTradingConfig(
-      IConfigStorage.TradingConfig({ fundingInterval: 1, borrowingDevFeeRate: 0, minProfitDuration: 0, maxPosition: 5 })
+      IConfigStorage.TradingConfig({
+        fundingInterval: 1,
+        devFeeRate: 0.15 * 1e18,
+        minProfitDuration: 0,
+        maxPosition: 5
+      })
     );
+  }
+
+  /// @notice set up all asset class configs in Perp
+  function _setUpAssetClassConfigs() private {
+    IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({
+      baseBorrowingRate: 0.0001 * 1e18
+    });
+    IConfigStorage.AssetClassConfig memory _forexConfig = IConfigStorage.AssetClassConfig({
+      baseBorrowingRate: 0.0002 * 1e18
+    });
+    configStorage.addAssetClassConfig(_cryptoConfig);
+    configStorage.addAssetClassConfig(_forexConfig);
   }
 
   /// @notice set up all market configs in Perp
@@ -252,7 +270,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // add market config
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage.MarketConfig({
       assetId: "ETH",
-      assetClass: 1,
+      assetClass: 0,
       exponent: 18,
       maxProfitRate: 9e18,
       minLeverage: 1 * 1e18,
@@ -272,7 +290,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
       assetId: "BTC",
-      assetClass: 1,
+      assetClass: 0,
       exponent: 8,
       maxProfitRate: 9e18,
       minLeverage: 1 * 1e18,

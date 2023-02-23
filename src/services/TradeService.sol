@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { AddressUtils } from "../libraries/AddressUtils.sol";
+
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
@@ -12,6 +15,8 @@ import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 // @todo - refactor, deduplicate code
 
 contract TradeService is ITradeService {
+  using AddressUtils for address;
+
   // struct
   struct DecreasePositionVars {
     uint256 absPositionSizeE30;
@@ -24,6 +29,8 @@ contract TradeService is ITradeService {
   // events
   // @todo - modify event parameters
   event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
+
+  event CollectBorrowingFee(address account, uint256 assetClass, uint256 feeUsd);
 
   // state
   address public perpStorage;
@@ -80,6 +87,9 @@ contract TradeService is ITradeService {
     // Verify that the current position has the same exposure direction
     if (!_isNewPosition && _currentPositionIsLong != _isLong) revert ITradeService_BadExposure();
 
+    // Update borrowing rate
+    updateBorrowingRate(_marketConfig.assetClass);
+
     // Get Price market.
     uint256 _priceE30;
     // market validation
@@ -128,9 +138,18 @@ contract TradeService is ITradeService {
     }
 
     // @todo - Collect trading fee, borrowing fee, update borrowing rate, collect funding fee, and update funding rate.
+    collectFee(_subAccount, _marketConfig.assetClass, _position.reserveValueE30, _position.entryBorrowingRate);
+    settleFee(_subAccount);
 
     // update the position size by adding the new size delta
     _position.positionSizeE30 += _sizeDelta;
+
+    {
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+        _marketConfig.assetClass
+      );
+      _position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
+    }
 
     // if the position size is zero after the update, revert the transaction with an error
     if (_position.positionSizeE30 == 0) revert ITradeService_BadPositionSize();
@@ -149,7 +168,7 @@ contract TradeService is ITradeService {
       // calculate the maximum amount of reserve required for the new position
       uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / 1e18;
       // increase the reserved amount by the maximum reserve required for the new position
-      _increaseReserved(_maxReserve);
+      increaseReserved(_marketConfig.assetClass, _maxReserve);
       _position.reserveValueE30 += _maxReserve;
     }
 
@@ -238,6 +257,9 @@ contract TradeService is ITradeService {
     // position size to decrease is greater then position size, should be revert
     if (_positionSizeE30ToDecrease > vars.absPositionSizeE30) revert ITradeService_DecreaseTooHighPositionSize();
 
+    // Update borrowing rate
+    updateBorrowingRate(_marketConfig.assetClass);
+
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
@@ -264,6 +286,8 @@ contract TradeService is ITradeService {
     // @todo - update funding & borrowing fee rate
     // @todo - calculate trading, borrowing and funding fee
     // @todo - collect fee
+    collectFee(_subAccount, _marketConfig.assetClass, _position.reserveValueE30, _position.entryBorrowingRate);
+    settleFee(_subAccount);
 
     // =========================================
     // | ------ update perp storage ---------- |
@@ -302,16 +326,6 @@ contract TradeService is ITradeService {
       // @todo - is close position then we should delete positions[x]
       bool isClosePosition = _newAbsPositionSizeE30 == 0;
 
-      // update position info
-      IPerpStorage(perpStorage).updatePositionById(
-        _positionId,
-        vars.isLongPosition ? int256(_newAbsPositionSizeE30) : -int256(_newAbsPositionSizeE30), // @todo - optimized
-        // new position size * IMF * max profit rate
-        (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) / 1e18,
-        isClosePosition ? 0 : vars.avgEntryPriceE30,
-        _position.openInterest - _openInterestDelta
-      );
-
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
       if (vars.isLongPosition) {
@@ -342,13 +356,32 @@ contract TradeService is ITradeService {
         );
       }
       IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage).getGlobalState();
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+        _marketConfig.assetClass
+      );
 
       // update global storage
       // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
-      IPerpStorage(perpStorage).updateGlobalState(
-        _globalState.reserveValueE30 -
-          ((_position.reserveValueE30 * _positionSizeE30ToDecrease) / vars.absPositionSizeE30)
-      );
+      _globalState.reserveValueE30 -=
+        (_position.reserveValueE30 * _positionSizeE30ToDecrease) /
+        vars.absPositionSizeE30;
+      _globalAssetClass.reserveValueE30 -=
+        (_position.reserveValueE30 * _positionSizeE30ToDecrease) /
+        vars.absPositionSizeE30;
+      IPerpStorage(perpStorage).updateGlobalState(_globalState);
+      IPerpStorage(perpStorage).updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
+
+      // update position info
+      _position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
+      _position.positionSizeE30 = vars.isLongPosition
+        ? int256(_newAbsPositionSizeE30)
+        : -int256(_newAbsPositionSizeE30);
+      _position.reserveValueE30 =
+        (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) /
+        1e18;
+      _position.avgEntryPriceE30 = isClosePosition ? 0 : vars.avgEntryPriceE30;
+      _position.openInterest = _position.openInterest - _openInterestDelta;
+      IPerpStorage(perpStorage).savePosition(_subAccount, _positionId, _position);
     }
 
     // =========================================
@@ -376,7 +409,7 @@ contract TradeService is ITradeService {
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice
-  ) public view returns (bool, uint256) {
+  ) public pure returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
     if (_averagePrice == 0) revert ITradeService_InvalidAveragePrice();
 
@@ -429,7 +462,7 @@ contract TradeService is ITradeService {
     uint256 _sizeDelta,
     uint256 _markPrice,
     uint256 _averagePrice
-  ) internal view returns (uint256) {
+  ) internal pure returns (uint256) {
     // Get the delta and isProfit value from the getDelta function
     (bool isProfit, uint256 delta) = getDelta(_size, _isLong, _markPrice, _averagePrice);
     // Calculate the next size and divisor
@@ -446,19 +479,26 @@ contract TradeService is ITradeService {
   }
 
   /// @notice This function increases the reserve value
+  /// @param _assetClassIndex The index of asset class.
   /// @param _reservedValue The amount by which to increase the reserve value.
-  function _increaseReserved(uint256 _reservedValue) internal {
+  function increaseReserved(uint256 _assetClassIndex, uint256 _reservedValue) internal {
     // Get the total TVL
     uint256 tvl = ICalculator(IConfigStorage(configStorage).calculator()).getPLPValueE30(true);
 
     // Retrieve the global state
     IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage).getGlobalState();
 
+    // Retrieve the global asset class
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+
     // get the liquidity configuration
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // Increase the reserve value by adding the reservedValue
     _globalState.reserveValueE30 += _reservedValue;
+    _globalAssetClass.reserveValueE30 += _reservedValue;
 
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
     if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * 1e18) {
@@ -466,7 +506,8 @@ contract TradeService is ITradeService {
     }
 
     // Update the new reserve value in the IPerpStorage contract
-    IPerpStorage(perpStorage).updateReserveValue(_globalState.reserveValueE30);
+    IPerpStorage(perpStorage).updateGlobalState(_globalState);
+    IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
   }
 
   function abs(int256 x) private pure returns (uint256) {
@@ -485,6 +526,182 @@ contract TradeService is ITradeService {
 
     // if sub account equity < MMR, then trader couln't decrease position
     if (_subAccountEquity < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
+  }
+
+  /// @notice This function updates the borrowing rate for the given asset class index.
+  /// @param _assetClassIndex The index of the asset class.
+  function updateBorrowingRate(uint256 _assetClassIndex) public {
+    // Get the funding interval, asset class config, and global asset class for the given asset class index.
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+    uint256 _fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
+    uint256 _lastBorrowingTime = _globalAssetClass.lastBorrowingTime;
+
+    // If last borrowing time is 0, set it to the nearest funding interval time and return.
+    if (_lastBorrowingTime == 0) {
+      _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
+      return;
+    }
+
+    // If block.timestamp is not passed the next funding interval, skip updating
+    if (_lastBorrowingTime + _fundingInterval <= block.timestamp) {
+      // update borrowing rate
+      uint256 borrowingRate = getNextBorrowingRate(_assetClassIndex);
+      _globalAssetClass.sumBorrowingRate += borrowingRate;
+      _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+    }
+    IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
+  }
+
+  /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
+  /// @param _assetClassIndex The index of the asset class.
+  /// @return _nextBorrowingRate The next borrowing rate for the asset class.
+  function getNextBorrowingRate(uint256 _assetClassIndex) public view returns (uint256 _nextBorrowingRate) {
+    // Get the trading config, asset class config, and global asset class for the given asset class index.
+    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
+    IConfigStorage.AssetClassConfig memory _assetClassConfig = IConfigStorage(configStorage).getAssetClassConfigByIndex(
+      _assetClassIndex
+    );
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+    // Get the calculator.
+    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
+    // Get the PLP TVL.
+    uint256 plpTVL = _calculator.getPLPValueE30(false); // TODO: make sure to use price
+
+    // If block.timestamp not pass the next funding time, return 0.
+    if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
+    // If PLP TVL is 0, return 0.
+    if (plpTVL == 0) return 0;
+
+    // Calculate the number of funding intervals that have passed since the last borrowing time.
+    uint256 intervals = (block.timestamp - _globalAssetClass.lastBorrowingTime) / _tradingConfig.fundingInterval;
+
+    // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
+    return (_assetClassConfig.baseBorrowingRate * _globalAssetClass.reserveValueE30 * intervals) / plpTVL;
+  }
+
+  /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.
+  /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
+  /// @param _reservedValue The reserved value of the asset class.
+  /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
+  /// @return borrowingFee The calculated borrowing fee for the asset class.
+  function getBorrowingFee(
+    uint256 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) public view returns (uint256 borrowingFee) {
+    // Get the global asset class.
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+    // Calculate borrowing rate.
+    uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
+    // Calculate the borrowing fee based on reserved value, borrowing rate.
+    return (_reservedValue * _borrowingRate) / 1e18;
+  }
+
+  /// @notice This function collect fee is collect borrowing fee, funding fee
+  /// @param _subAccount The sub-account from which to collect the fee.
+  /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
+  /// @param _reservedValue The reserved value of the asset class.
+  /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
+  function collectFee(
+    address _subAccount,
+    uint256 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) public {
+    // Get the debt fee of the sub-account
+    uint256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
+
+    // Calculate the borrowing fee
+    uint256 borrowingFee = getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
+    // Accumulate fee
+    feeUsd += borrowingFee;
+    emit CollectBorrowingFee(_subAccount, _assetClassIndex, _reservedValue);
+
+    // Update the sub-account's debt fee balance
+    IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);
+  }
+
+  /// @notice Settles the fees for a given sub-account.
+  /// @param _subAccount The address of the sub-account to settle fees for.
+  function settleFee(address _subAccount) public {
+    // Retrieve the debt fee amount for the sub-account
+    uint256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
+    // If there's no fee to settle, return early
+    if (feeUsd == 0) return;
+
+    // Retrieve the trading configuration and list of plp tokens
+    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
+    address[] memory _plpUnderlyingTokens = IConfigStorage(configStorage).getPlpTokens();
+
+    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(configStorage).oracle());
+    // Loop through all the plp tokens for the sub-account
+    for (uint256 i = 0; i < _plpUnderlyingTokens.length; ) {
+      address underlyingToken = _plpUnderlyingTokens[i];
+      uint256 underlyingTokenDecimal = ERC20(underlyingToken).decimals();
+      // Retrieve the balance of the plp token for the sub-account
+      uint256 balance = IVaultStorage(vaultStorage).traderBalances(_subAccount, underlyingToken);
+
+      // If the sub-account has a balance of the plp token
+      if (balance != 0) {
+        // Retrieve the latest price and confident threshold of the plp token
+        (uint256 price, ) = oracle.getLatestPrice(
+          underlyingToken.toBytes32(),
+          false,
+          IConfigStorage(configStorage).getMarketConfigByToken(underlyingToken).priceConfidentThreshold,
+          30
+        );
+
+        // Calculate the fee amount in the plp token
+        uint256 _feeToken = (feeUsd * (10 ** underlyingTokenDecimal)) / price;
+        // Calculate the balance value of the plp token in USD
+        uint256 _balanceValue = (balance * price) / (10 ** underlyingTokenDecimal);
+        uint256 repayFeeToken = 0;
+
+        // Repay the fee amount and subtract it from the balance
+        if (balance > _feeToken) {
+          unchecked {
+            repayFeeToken = _feeToken;
+            balance -= _feeToken;
+            feeUsd = 0;
+          }
+        } else {
+          unchecked {
+            repayFeeToken = balance;
+            balance = 0;
+            feeUsd -= _balanceValue;
+          }
+        }
+
+        // Calculate the developer fee amount in the plp token
+        uint256 devFeeToken = (repayFeeToken * _tradingConfig.devFeeRate) / 1e18;
+        // Add the developer fee to the vault
+        IVaultStorage(vaultStorage).addDevFee(underlyingToken, devFeeToken);
+        // Add the remaining fee amount to the plp liquidity in the vault
+        IVaultStorage(vaultStorage).addPLPLiquidity(underlyingToken, repayFeeToken - devFeeToken);
+        // Update the sub-account balance for the plp token in the vault
+        IVaultStorage(vaultStorage).setTraderBalance(_subAccount, underlyingToken, balance);
+      }
+
+      if (feeUsd == 0) {
+        break;
+      }
+
+      {
+        unchecked {
+          ++i;
+        }
+      }
+    }
+
+    // Update the fee amount for the sub-account in the PerpStorage contract
+    IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);
   }
 
   /// @notice get next short average price with realized PNL

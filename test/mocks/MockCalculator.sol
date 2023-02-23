@@ -12,6 +12,7 @@ contract MockCalculator {
   uint256 imr;
   uint256 aum;
   uint256 plpValue;
+  uint256 nextBorrowingRate;
 
   int256 unrealizedPnl;
 
@@ -135,5 +136,9 @@ contract MockCalculator {
 
   function getFreeCollateral(address /*_subAccount*/) external view returns (uint256) {
     return freeCollateral;
+  }
+
+  function getNextBorrowingRate(uint256 /*_assetClassIndex*/) external view returns (uint256) {
+    return nextBorrowingRate;
   }
 }

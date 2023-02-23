@@ -6,6 +6,9 @@ import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
 contract MockPerpStorage {
   mapping(address => IPerpStorage.Position[]) public positions;
   mapping(uint256 => IPerpStorage.GlobalMarket) public globalMarkets;
+
+  mapping(uint256 => IPerpStorage.GlobalAssetClass) public globalAssetClass;
+
   mapping(bytes32 => IPerpStorage.Position) public positionById;
 
   /**
@@ -22,6 +25,12 @@ contract MockPerpStorage {
     address _subAccount
   ) external view returns (IPerpStorage.Position[] memory traderPositions) {
     return positions[_subAccount];
+  }
+
+  function getGlobalAssetClassByIndex(
+    uint256 _assetClassIndex
+  ) external view returns (IPerpStorage.GlobalAssetClass memory) {
+    return globalAssetClass[_assetClassIndex];
   }
 
   function getPositionById(bytes32 _positionId) external view returns (IPerpStorage.Position memory) {
@@ -75,5 +84,12 @@ contract MockPerpStorage {
     globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
     globalMarkets[_marketIndex].accumFundingShort = _newAccumFundingShort;
     globalMarkets[_marketIndex].currentFundingRate = _currentFundingRate;
+  }
+
+  function updateGlobalAssetClass(
+    uint256 _assetClassIndex,
+    IPerpStorage.GlobalAssetClass memory _newAssetClass
+  ) external {
+    globalAssetClass[_assetClassIndex] = _newAssetClass;
   }
 }

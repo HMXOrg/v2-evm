@@ -44,8 +44,11 @@ contract ConfigStorage is IConfigStorage, Owned {
   LiquidationConfig public liquidationConfig;
 
   MarketConfig[] public marketConfigs;
+  AssetClassConfig[] public assetClassConfigs;
 
+  // @todo discuss List or Array
   IteratableAddressList.List public plpAcceptedTokens;
+  address[] public plpTokens;
 
   mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
@@ -101,6 +104,12 @@ contract ConfigStorage is IConfigStorage, Owned {
     return marketConfigs[_index];
   }
 
+  function getAssetClassConfigByIndex(
+    uint256 _index
+  ) external view returns (AssetClassConfig memory _assetClassConfig) {
+    return assetClassConfigs[_index];
+  }
+
   function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory _plpTokenConfig) {
     return plpTokenConfigs[_token];
   }
@@ -135,6 +144,10 @@ contract ConfigStorage is IConfigStorage, Owned {
         i++;
       }
     }
+  }
+
+  function getPlpTokens() external view returns (address[] memory) {
+    return plpTokens;
   }
 
   /// @notice Return the next underlying token address.
@@ -217,6 +230,7 @@ contract ConfigStorage is IConfigStorage, Owned {
     PLPTokenConfig memory _newConfig
   ) external returns (PLPTokenConfig memory _plpTokenConfig) {
     plpTokenConfigs[_token] = _newConfig;
+    plpTokens.push(_token);
     return plpTokenConfigs[_token];
   }
 
@@ -251,6 +265,7 @@ contract ConfigStorage is IConfigStorage, Owned {
       // then it is a new token to be added.
       if (!plpTokenConfigs[_tokens[i]].accepted) {
         plpAcceptedTokens.add(_tokens[i]);
+        plpTokens.push(_tokens[i]);
       }
 
       // Log
@@ -272,6 +287,12 @@ contract ConfigStorage is IConfigStorage, Owned {
         ++i;
       }
     }
+  }
+
+  function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index) {
+    uint256 _newAssetClassIndex = assetClassConfigs.length;
+    assetClassConfigs.push(_newConfig);
+    return _newAssetClassIndex;
   }
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {

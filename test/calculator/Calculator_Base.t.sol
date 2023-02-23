@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, Calculator, IPerpStorage, IConfigStorage } from "../base/BaseTest.sol";
+import { BaseTest, Calculator } from "../base/BaseTest.sol";
 
 contract Calculator_Base is BaseTest {
   function setUp() public virtual {

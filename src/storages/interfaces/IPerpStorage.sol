@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 interface IPerpStorage {
-  // Collateral
   struct CollateralToken {
     address token;
     bytes32 assetId; // The pyth's asset address to set.
@@ -47,9 +46,9 @@ interface IPerpStorage {
     uint256 openInterest;
   }
 
-  // =========================================
-  // | ---------- Getter ------------------- |
-  // =========================================
+  /**
+   * Getter
+   */
 
   function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions);
 
@@ -61,10 +60,9 @@ interface IPerpStorage {
 
   function getNumberOfSubAccountPosition(address _subAccount) external view returns (uint256);
 
-  // setter
-  // =========================================
-  // | ---------- Setter ------------------- |
-  // =========================================
+  /**
+   * Setter
+   */
 
   function updatePositionById(
     bytes32 _positionId,

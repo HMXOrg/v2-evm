@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Calculator_Base, IPerpStorage, IConfigStorage } from "./Calculator_Base.t.sol";
-
-import { console } from "forge-std/console.sol";
+import { Calculator_Base } from "./Calculator_Base.t.sol";
+import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
 
 contract Calculator_FundingRate is Calculator_Base {
   function setUp() public virtual override {

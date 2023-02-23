@@ -575,17 +575,27 @@ contract Calculator is Owned, ICalculator {
   /**
    * Funding Rate
    */
-  function getEntryFundingRate(uint256 _marketIndex, bool _isLong) public view returns (int256) {
+  /// @notice This function returns the accumulative of funding on selected exposured, LONG or SHORT
+  /// @param _marketIndex Index of market
+  /// @param _isLong Is long
+  /// @return accumFunding The accumulative of funding in value value
+  function getEntryFundingRate(uint256 _marketIndex, bool _isLong) public view returns (int256 accumFunding) {
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
     return _isLong ? _globalMarket.accumFundingLong : _globalMarket.accumFundingShort;
   }
 
+  /// @notice This function returns funding fee according to trader's position
+  /// @param _marketIndex Index of market
+  /// @param _isLong Is long or short exposure
+  /// @param _size Position size
+  /// @param _entryFundingRate Extry Funding rate of position
+  /// @return fundingFee Funding fee of position
   function getFundingFee(
     uint256 _marketIndex,
     bool _isLong,
     int256 _size,
     int256 _entryFundingRate
-  ) public view returns (int256) {
+  ) public view returns (int256 fundingFee) {
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
     if (_size == 0) return 0;

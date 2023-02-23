@@ -8,13 +8,14 @@ contract MockPerpStorage {
   mapping(uint256 => IPerpStorage.GlobalMarket) public globalMarkets;
   mapping(bytes32 => IPerpStorage.Position) public positionById;
 
-  // =========================================
-  // | ---------- Getter ------------------- |
-  // =========================================
+  /**
+   * Getter
+   */
   function getGlobalMarketInfo(
     uint256 _marketIndex
   ) external view returns (int256 accumFundingLong, int256 accumFundingShort) {
-    return (globalMarkets[_marketIndex].accumFundingLong, globalMarkets[_marketIndex].accumFundingShort);
+    IPerpStorage.GlobalMarket memory _globalMarket = globalMarkets[_marketIndex];
+    return (_globalMarket.accumFundingLong, _globalMarket.accumFundingShort);
   }
 
   function getPositionBySubAccount(
@@ -35,9 +36,9 @@ contract MockPerpStorage {
     return globalMarkets[_marketIndex];
   }
 
-  // =========================================
-  // | ---------- Setter ------------------- |
-  // =========================================
+  /**
+   * Setter
+   */
 
   function setPositionBySubAccount(address _subAccount, IPerpStorage.Position memory _position) external {
     positions[_subAccount].push(_position);

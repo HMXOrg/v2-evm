@@ -86,4 +86,11 @@ interface ICalculator {
   function getNextFundingRate(
     uint256 marketIndex
   ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort);
+
+  function getFundingFee(
+    uint256 _marketIndex,
+    bool _isLong,
+    int256 _size,
+    int256 _entryFundingRate
+  ) external view returns (int256 fundingFee);
 }

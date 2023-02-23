@@ -13,6 +13,10 @@ contract MockCalculator {
   uint256 aum;
   uint256 plpValue;
   uint256 nextBorrowingRate;
+  int256 fundingFee;
+  int256 fundingRate;
+  int256 fundingRateLong;
+  int256 fundingRateShort;
 
   int256 unrealizedPnl;
 
@@ -48,6 +52,22 @@ contract MockCalculator {
 
   function setPLPValue(uint256 _mockPLPValue) external {
     plpValue = _mockPLPValue;
+  }
+
+  function setFundingFee(int256 _fundingFee) external {
+    fundingFee = _fundingFee;
+  }
+
+  function setFundingRate(int256 _fundingRate) external {
+    fundingRate = _fundingRate;
+  }
+
+  function setFundingRateLong(int256 _fundingRateLong) external {
+    fundingRateLong = _fundingRateLong;
+  }
+
+  function setFundingRateShort(int256 _fundingRateShort) external {
+    fundingRateShort = _fundingRateShort;
   }
 
   // =========================================
@@ -140,5 +160,18 @@ contract MockCalculator {
 
   function getNextBorrowingRate(uint256 /*_assetClassIndex*/) external view returns (uint256) {
     return nextBorrowingRate;
+  }
+
+  function getFundingFee(
+    uint256 /*_marketIndex*/,
+    bool /*_isLong*/,
+    int256 /*_size*/,
+    int256 /*_entryFundingRate*/
+  ) public view returns (int256) {
+    return fundingFee;
+  }
+
+  function getNextFundingRate(uint256 /*marketIndex*/) external view returns (int256, int256, int256) {
+    return (fundingRate, fundingRateLong, fundingRateShort);
   }
 }

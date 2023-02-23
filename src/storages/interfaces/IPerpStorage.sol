@@ -45,7 +45,7 @@ interface IPerpStorage {
     int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
     uint256 avgEntryPriceE30;
     uint256 entryBorrowingRate;
-    uint256 entryFundingRate;
+    int256 entryFundingRate;
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     uint256 realizedPnl;
@@ -103,4 +103,6 @@ interface IPerpStorage {
   function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
 
   function updateSubAccountFee(address _subAccount, uint256 fee) external;
+
+  function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external;
 }

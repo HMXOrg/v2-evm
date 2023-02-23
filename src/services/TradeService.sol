@@ -12,6 +12,8 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
+import { console } from "forge-std/console.sol";
+
 // @todo - refactor, deduplicate code
 
 contract TradeService is ITradeService {
@@ -31,6 +33,15 @@ contract TradeService is ITradeService {
   event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
 
   event CollectBorrowingFee(address account, uint256 assetClass, uint256 feeUsd);
+
+  event CollectFundingFee(
+    address indexed account,
+    uint256 marketIndex,
+    bool isLong,
+    int256 size,
+    int256 entryFundingRate,
+    int256 fundingFee
+  );
 
   // state
   address public perpStorage;
@@ -90,6 +101,9 @@ contract TradeService is ITradeService {
     // Update borrowing rate
     updateBorrowingRate(_marketConfig.assetClass);
 
+    // Update funding rate
+    updateFundingRate(_marketIndex);
+
     // Get Price market.
     uint256 _priceE30;
     // market validation
@@ -138,7 +152,15 @@ contract TradeService is ITradeService {
     }
 
     // @todo - Collect trading fee, borrowing fee, update borrowing rate, collect funding fee, and update funding rate.
-    collectFee(_subAccount, _marketConfig.assetClass, _position.reserveValueE30, _position.entryBorrowingRate);
+    collectFee(
+      _subAccount,
+      _marketConfig.assetClass,
+      _position.reserveValueE30,
+      _position.entryBorrowingRate,
+      _position.marketIndex,
+      _position.positionSizeE30,
+      _position.entryFundingRate
+    );
     settleFee(_subAccount);
 
     // update the position size by adding the new size delta
@@ -260,6 +282,9 @@ contract TradeService is ITradeService {
     // Update borrowing rate
     updateBorrowingRate(_marketConfig.assetClass);
 
+    // Update funding rate
+    updateFundingRate(_marketIndex);
+
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
@@ -286,7 +311,15 @@ contract TradeService is ITradeService {
     // @todo - update funding & borrowing fee rate
     // @todo - calculate trading, borrowing and funding fee
     // @todo - collect fee
-    collectFee(_subAccount, _marketConfig.assetClass, _position.reserveValueE30, _position.entryBorrowingRate);
+    collectFee(
+      _subAccount,
+      _marketConfig.assetClass,
+      _position.reserveValueE30,
+      _position.entryBorrowingRate,
+      _position.marketIndex,
+      _position.positionSizeE30,
+      _position.entryFundingRate
+    );
     settleFee(_subAccount);
 
     // =========================================
@@ -555,6 +588,38 @@ contract TradeService is ITradeService {
     IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
   }
 
+  /// @notice This function updates the funding rate for the given market index.
+  /// @param _marketIndex The index of the market.
+  function updateFundingRate(uint256 _marketIndex) public {
+    // Get the funding interval, asset class config, and global asset class for the given asset class index.
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    uint256 _fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
+    uint256 _lastFundingTime = _globalMarket.lastFundingTime;
+
+    // If last funding time is 0, set it to the nearest funding interval time and return.
+    if (_lastFundingTime == 0) {
+      _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      IPerpStorage(perpStorage).updateGlobalMarket(_marketIndex, _globalMarket);
+      return;
+    }
+
+    // If block.timestamp is not passed the next funding interval, skip updating
+    if (_lastFundingTime + _fundingInterval <= block.timestamp) {
+      // update funding rate
+      (int256 newFundingRate, int256 nexFundingRateLong, int256 nextFundingRateShort) = ICalculator(
+        IConfigStorage(configStorage).calculator()
+      ).getNextFundingRate(_marketIndex);
+
+      _globalMarket.currentFundingRate = newFundingRate;
+      _globalMarket.accumFundingLong += nexFundingRateLong;
+      _globalMarket.accumFundingShort += nextFundingRateShort;
+      _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+
+      IPerpStorage(perpStorage).updateGlobalMarket(_marketIndex, _globalMarket);
+    }
+  }
+
   /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
   /// @param _assetClassIndex The index of the asset class.
   /// @return _nextBorrowingRate The next borrowing rate for the asset class.
@@ -613,7 +678,10 @@ contract TradeService is ITradeService {
     address _subAccount,
     uint256 _assetClassIndex,
     uint256 _reservedValue,
-    uint256 _entryBorrowingRate
+    uint256 _entryBorrowingRate,
+    uint256 _marketIndex,
+    int256 _positionSizeE30,
+    int256 _entryFundingRate
   ) public {
     // Get the debt fee of the sub-account
     uint256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
@@ -623,6 +691,25 @@ contract TradeService is ITradeService {
     // Accumulate fee
     feeUsd += borrowingFee;
     emit CollectBorrowingFee(_subAccount, _assetClassIndex, _reservedValue);
+
+    // Calculate the borrowing fee
+    bool isLong = _positionSizeE30 > 0;
+
+    int256 fundingFee = ICalculator(IConfigStorage(configStorage).calculator()).getFundingFee(
+      _marketIndex,
+      isLong,
+      _positionSizeE30,
+      _entryFundingRate
+    );
+
+    // Accumulate fee
+    if (fundingFee > 0) {
+      feeUsd += uint256(fundingFee);
+    } else {
+      feeUsd -= uint256(-fundingFee);
+    }
+
+    emit CollectFundingFee(_subAccount, _marketIndex, isLong, _positionSizeE30, _entryFundingRate, fundingFee);
 
     // Update the sub-account's debt fee balance
     IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);

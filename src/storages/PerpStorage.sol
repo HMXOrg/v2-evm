@@ -195,6 +195,10 @@ contract PerpStorage is IPerpStorage {
     globalAssetClass[_assetClassIndex] = _newAssetClass;
   }
 
+  function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external {
+    globalMarkets[_marketIndex] = _globalMarket;
+  }
+
   function updateSubAccountFee(address _subAccount, uint256 fee) external {
     subAccountFee[_subAccount] = fee;
   }

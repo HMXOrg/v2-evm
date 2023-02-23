@@ -48,13 +48,15 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   // todo: validate price stale here
   function getLatestPrice(
-    bytes32 /* _assetId */,
+    bytes32 _assetId,
     bool /* _isMax */,
     uint256 /* _confidentTreshold */,
     uint256 /* _trustPriceAge */
   ) external view returns (uint256, uint256) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
-    return (priceE30, lastUpdate);
+    Price memory p = price[_assetId];
+    if (p.priceE30 == 0) return (priceE30, lastUpdate);
+    return (p.priceE30, p.lastUpdate);
   }
 
   // todo: validate price stale here

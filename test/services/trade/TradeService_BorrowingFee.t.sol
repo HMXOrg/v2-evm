@@ -7,7 +7,11 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 
 import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 
-contract TradeService_GetNextBorrowingRate is TradeService_Base {
+// What is this test DONE
+// - success
+//   - collect fee from increase position
+//   - collect fee from decrease position
+contract TradeService_BorrowingFee is TradeService_Base {
   using AddressUtils for address;
 
   function setUp() public virtual override {

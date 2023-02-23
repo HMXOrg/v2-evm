@@ -33,6 +33,8 @@ contract TradeService is ITradeService {
   // @todo - modify event parameters
   event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
 
+  event CollectBorrowingFee(address account, uint256 assetClass, uint256 feeUsd);
+
   // state
   address public perpStorage;
   address public vaultStorage;
@@ -327,16 +329,6 @@ contract TradeService is ITradeService {
       // @todo - is close position then we should delete positions[x]
       bool isClosePosition = _newAbsPositionSizeE30 == 0;
 
-      // update position info
-      IPerpStorage(perpStorage).updatePositionById(
-        _positionId,
-        vars.isLongPosition ? int256(_newAbsPositionSizeE30) : -int256(_newAbsPositionSizeE30), // @todo - optimized
-        // new position size * IMF * max profit rate
-        (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) / 1e18,
-        isClosePosition ? 0 : vars.avgEntryPriceE30,
-        _position.openInterest - _openInterestDelta
-      );
-
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
       if (vars.isLongPosition) {
@@ -390,7 +382,7 @@ contract TradeService is ITradeService {
       _position.reserveValueE30 =
         (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) /
         1e18;
-
+      _position.avgEntryPriceE30 = isClosePosition ? 0 : vars.avgEntryPriceE30;
       _position.openInterest = _position.openInterest - _openInterestDelta;
       IPerpStorage(perpStorage).savePosition(_subAccount, _positionId, _position);
     }
@@ -577,29 +569,26 @@ contract TradeService is ITradeService {
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
   function updateBorrowingRate(uint256 _assetClassIndex) public {
-    // Get the trading config, asset class config, and global asset class for the given asset class index.
-    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
+    // Get the funding interval, asset class config, and global asset class for the given asset class index.
     IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
+    uint256 _fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
+    uint256 _lastBorrowingTime = _globalAssetClass.lastBorrowingTime;
 
     // If last borrowing time is 0, set it to the nearest funding interval time and return.
-    if (_globalAssetClass.lastBorrowingTime == 0) {
-      _globalAssetClass.lastBorrowingTime =
-        (block.timestamp / _tradingConfig.fundingInterval) *
-        _tradingConfig.fundingInterval;
+    if (_lastBorrowingTime == 0) {
+      _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
       IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
       return;
     }
 
     // If block.timestamp is not passed the next funding interval, skip updating
-    if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval <= block.timestamp) {
+    if (_lastBorrowingTime + _fundingInterval <= block.timestamp) {
       // update borrowing rate
       uint256 borrowingRate = getNextBorrowingRate(_assetClassIndex);
       _globalAssetClass.sumBorrowingRate += borrowingRate;
-      _globalAssetClass.lastBorrowingTime =
-        (block.timestamp / _tradingConfig.fundingInterval) *
-        _tradingConfig.fundingInterval;
+      _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
     }
     IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
   }
@@ -666,15 +655,19 @@ contract TradeService is ITradeService {
   ) public {
     // Get the debt fee of the sub-account
     uint256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
+
     // Calculate the borrowing fee
     uint256 borrowingFee = getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
-
     // Accumulate fee
     feeUsd += borrowingFee;
+    emit CollectBorrowingFee(_subAccount, _assetClassIndex, _reservedValue);
+
     // Update the sub-account's debt fee balance
     IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);
   }
 
+  /// @notice Settles the fees for a given sub-account.
+  /// @param _subAccount The address of the sub-account to settle fees for.
   function settleFee(address _subAccount) public {
     // Retrieve the debt fee amount for the sub-account
     uint256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
@@ -683,46 +676,59 @@ contract TradeService is ITradeService {
 
     // Retrieve the trading configuration and list of plp tokens
     IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
-    address[] memory _plpTokens = IConfigStorage(configStorage).getPlpTokens();
+    address[] memory _plpUnderlyingTokens = IConfigStorage(configStorage).getPlpTokens();
 
+    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(configStorage).oracle());
     // Loop through all the plp tokens for the sub-account
-    for (uint256 i = 0; i < _plpTokens.length; ) {
+    for (uint256 i = 0; i < _plpUnderlyingTokens.length; ) {
+      address underlyingToken = _plpUnderlyingTokens[i];
+      uint256 underlyingTokenDecimal = ERC20(underlyingToken).decimals();
       // Retrieve the balance of the plp token for the sub-account
-      uint256 balance = IVaultStorage(vaultStorage).traderBalances(_subAccount, _plpTokens[i]);
+      uint256 balance = IVaultStorage(vaultStorage).traderBalances(_subAccount, underlyingToken);
 
       // If the sub-account has a balance of the plp token
       if (balance != 0) {
         // Retrieve the latest price and confident threshold of the plp token
-        (uint256 price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
-          _plpTokens[i].toBytes32(),
+        (uint256 price, ) = oracle.getLatestPrice(
+          underlyingToken.toBytes32(),
           false,
-          IConfigStorage(configStorage).getMarketConfigByToken(_plpTokens[i]).priceConfidentThreshold
+          IConfigStorage(configStorage).getMarketConfigByToken(underlyingToken).priceConfidentThreshold,
+          30
         );
+
         // Calculate the fee amount in the plp token
-        uint256 _feeToken = (feeUsd * (10 ** ERC20(_plpTokens[i]).decimals())) / price;
+        uint256 _feeToken = (feeUsd * (10 ** underlyingTokenDecimal)) / price;
         // Calculate the balance value of the plp token in USD
-        uint256 _balanceValue = (balance * price) / (10 ** ERC20(_plpTokens[i]).decimals());
-        uint repayFeeToken = 0;
+        uint256 _balanceValue = (balance * price) / (10 ** underlyingTokenDecimal);
+        uint256 repayFeeToken = 0;
 
         // Repay the fee amount and subtract it from the balance
         if (balance > _feeToken) {
-          repayFeeToken = _feeToken;
-          balance -= _feeToken;
-          feeUsd = 0;
+          unchecked {
+            repayFeeToken = _feeToken;
+            balance -= _feeToken;
+            feeUsd = 0;
+          }
         } else {
-          repayFeeToken = balance;
-          balance = 0;
-          feeUsd -= _balanceValue;
+          unchecked {
+            repayFeeToken = balance;
+            balance = 0;
+            feeUsd -= _balanceValue;
+          }
         }
 
         // Calculate the developer fee amount in the plp token
         uint256 devFeeToken = (repayFeeToken * _tradingConfig.devFeeRate) / 1e18;
         // Add the developer fee to the vault
-        IVaultStorage(vaultStorage).addDevFee(_plpTokens[i], devFeeToken);
+        IVaultStorage(vaultStorage).addDevFee(underlyingToken, devFeeToken);
         // Add the remaining fee amount to the plp liquidity in the vault
-        IVaultStorage(vaultStorage).addPLPLiquidity(_plpTokens[i], repayFeeToken - devFeeToken);
+        IVaultStorage(vaultStorage).addPLPLiquidity(underlyingToken, repayFeeToken - devFeeToken);
         // Update the sub-account balance for the plp token in the vault
-        IVaultStorage(vaultStorage).setTraderBalance(_subAccount, _plpTokens[i], balance);
+        IVaultStorage(vaultStorage).setTraderBalance(_subAccount, underlyingToken, balance);
+      }
+
+      if (feeUsd == 0) {
+        break;
       }
 
       {

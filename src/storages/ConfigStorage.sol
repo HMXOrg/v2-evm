@@ -46,9 +46,10 @@ contract ConfigStorage is IConfigStorage, Owned {
   MarketConfig[] public marketConfigs;
   AssetClassConfig[] public assetClassConfigs;
 
+  // @todo discuss List or Array
   IteratableAddressList.List public plpAcceptedTokens;
-
   address[] public plpTokens;
+
   mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
   mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config

@@ -6,6 +6,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
+import { console } from "forge-std/console.sol";
+
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
 contract VaultStorage is IVaultStorage {
@@ -179,19 +181,27 @@ contract VaultStorage is IVaultStorage {
     IERC20(_token).safeTransfer(_subAccount, _amount);
   }
 
-  /// @notice settle profit for sub account
-  /// @param _subAccount - sub account
-  /// @param _token - profit token
-  /// @param _amountE30 - trader profit
-  function settleProfit(address _subAccount, address _token, uint256 _amountE30) external {
-    // @todo - validation
-    plpLiquidity[_token] -= _amountE30;
-
-    // @todo - support settle fee
-    traderBalances[_subAccount][_token] += _amountE30;
-  }
-
   function pullPLPLiquidity(address _token) external view returns (uint256) {
     return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
+  }
+
+  /// @notice settle sub-account's position profit and loss
+  /// @param _subAccount - sub account
+  /// @param _token - profit token
+  /// @param _pnl - profit and loss in token
+  /// @param _fee - settlement fee
+  function settlePosition(address _subAccount, address _token, int256 _pnl, uint256 _fee) external {
+    // if trader not has profit or loss then do nothing
+    if (_pnl != 0) {
+      fees[_token] += _fee;
+      // profit
+      if (_pnl > 0) {
+        plpLiquidity[_token] -= uint256(_pnl) - _fee;
+        traderBalances[_subAccount][_token] += uint256(_pnl);
+      } else {
+        plpLiquidity[_token] += uint256(-_pnl) - _fee;
+        traderBalances[_subAccount][_token] -= uint256(-_pnl);
+      }
+    }
   }
 }

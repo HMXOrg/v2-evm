@@ -84,11 +84,11 @@ contract MockCalculator is ICalculator {
   // =========================================
 
   function calculatePositionIMR(uint256, uint256) external view returns (uint256) {
-    return imr;
+    return 0;
   }
 
   function calculatePositionMMR(uint256, uint256) external view returns (uint256) {
-    return mmr;
+    return 0;
   }
 
   function getAUM(bool /* isMaxPrice */) external view returns (uint256) {

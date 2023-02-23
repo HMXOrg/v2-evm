@@ -57,5 +57,7 @@ interface IVaultStorage {
 
   function transferToken(address _subAccount, address _token, uint256 _amount) external;
 
-  function settleProfit(address _subAccount, address _token, uint256 _amount) external;
+  function settlePosition(address _subAccount, address _token, int256 _pnl, uint256 _fee) external;
+
+  function pullPLPLiquidity(address _token) external view returns (uint256);
 }

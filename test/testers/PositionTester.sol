@@ -24,6 +24,7 @@ contract PositionTester is StdAssertions {
     uint256 decreasedPositionSize;
     uint256 reserveValueDelta;
     uint256 openInterestDelta;
+    int256 realizedPnl;
     // average price
     uint256 newPositionAveragePrice;
     uint256 newLongGlobalAveragePrice;
@@ -81,7 +82,11 @@ contract PositionTester is StdAssertions {
   // - global state
   //   - reserve value delta
   //   - [pending] sum of borrowing fee
-  function assertDecreasePositionResult(DecreasePositionAssertionData memory _data) external {
+  function assertDecreasePositionResult(
+    DecreasePositionAssertionData memory _data,
+    address[] calldata _plpTokens,
+    uint256[] calldata _expectedBalances
+  ) external {
     address _subAccount = _getSubAccount(_data.primaryAccount, _data.subAccountId);
     // when user profit
     if (_data.profitAmount != 0) {
@@ -110,13 +115,12 @@ contract PositionTester is StdAssertions {
       _data.reserveValueDelta,
       "position reserve value"
     );
-    console.log("cachePosition.openInterest", cachePosition.openInterest);
-    console.log("_currentPosition.openInterest", _currentPosition.openInterest);
     assertEq(
       cachePosition.openInterest - _currentPosition.openInterest,
       _data.openInterestDelta,
       "position open interest"
     );
+    assertEq(_currentPosition.realizedPnl, _data.realizedPnl, "position realized pnl");
 
     // assert market global
     IPerpStorage.GlobalMarket memory _currentMarketGlobal = perpStorage.getGlobalMarketByIndex(

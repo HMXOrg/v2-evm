@@ -24,15 +24,15 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 //   - decrease too much short position
 //   - position remain too tiny size after decrease long position
 //   - position remain too tiny size after decrease short position
+// - misc
+//   - settle profit & loss with settlement fee
 // What is this test not covered
 //   - borrowing fee
 //   - funding fee
 //   - trading fee
-//   - settlement profit
-//   - settlement loss
-//   - settlement fee
 //   - protocol curcuit break
 //   - trading curcuit break
+//   - pull multiple tokens from user when loss
 // - post validation
 //   - sub account is unhealthy (equity < MMR) after decreased position
 
@@ -57,56 +57,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
   }
 
-  // market delisted
-  function testRevert_WhenMarketIsDelistedFromPerp() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+  /**
+   * Correctness
+   */
 
-    // someone delist market
-    configStorage.delistMarket(ethMarketIndex);
-
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
-  }
-
-  // market status from oracle is inactive (market close)
-  function testRevert_WhenOracleTellMarketIsClose() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-
-    // set market status from oracle is inactive
-    mockOracle.setMarketStatus(1);
-
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsClosed()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
-  }
-
-  // price stale
-  function testRevert_WhenPriceStale() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-
-    // make price stale in mock oracle middleware
-    mockOracle.setPriceStale(true);
-
-    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
-  }
-
-  // sub account is unhealthy (equity < MMR)
-  function testRevert_WhenSubAccountEquityIsLessThanMMR() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-
-    // mock MMR as very big number, to make this sub account unhealthy
-    mockCalculator.setMMR(ALICE, type(uint256).max);
-
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderMMR()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
-  }
-
-  // partially decrease long position
-  // settle profit on long position
   function testCorrectness_WhenTraderPartiallyDecreaseLongPositionSizeWithProfit() external {
     // Prepare for this test
 
@@ -214,8 +168,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     );
   }
 
-  // partially decrease short position
-  // settle loss on short position
   function testCorrectness_WhenTraderPartiallyDecreaseShortPositionSizeWithLoss() external {
     // Prepare for this test
 
@@ -323,8 +275,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     );
   }
 
-  // fully decrease long position
-  // settle loss on long position
   function testCorrectness_WhenTraderFullyDecreaseLongPositionSizeWithLoss() external {
     // Prepare for this test
 
@@ -432,8 +382,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     );
   }
 
-  // fully decrease short position
-  // settle profit on short position
   function testCorrectness_WhenTraderFullyDecreaseShortPositionSizeWithProfit() external {
     // Prepare for this test
 
@@ -540,7 +488,53 @@ contract TradeService_DecreasePosition is TradeService_Base {
     );
   }
 
-  // try decrease long position which already closed
+  /**
+   * Revert
+   */
+  function testRevert_WhenMarketIsDelistedFromPerp() external {
+    // ALICE open LONG position
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+
+    // someone delist market
+    configStorage.delistMarket(ethMarketIndex);
+
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+  }
+
+  function testRevert_WhenOracleTellMarketIsClose() external {
+    // ALICE open LONG position
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+
+    // set market status from oracle is inactive
+    mockOracle.setMarketStatus(1);
+
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsClosed()"));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+  }
+
+  function testRevert_WhenPriceStale() external {
+    // ALICE open LONG position
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+
+    // make price stale in mock oracle middleware
+    mockOracle.setPriceStale(true);
+
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+  }
+
+  function testRevert_WhenSubAccountEquityIsLessThanMMR() external {
+    // ALICE open LONG position
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+
+    // mock MMR as very big number, to make this sub account unhealthy
+    mockCalculator.setMMR(ALICE, type(uint256).max);
+
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderMMR()"));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+  }
+
   function testRevert_WhenTraderDecreaseLongPositionWhichAlreadyClosed() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
@@ -553,7 +547,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
   }
 
-  // try decrease short position which already closed
   function testRevert_WhenTraderDecreaseShortPositionWhichAlreadyClosed() external {
     // ALICE open SHORT position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
@@ -566,7 +559,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
   }
 
-  // decrease too much long position
   function testRevert_WhenTraderDecreaseTooMuchLongPositionSize() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
@@ -575,7 +567,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_001 * 1e30, address(weth));
   }
 
-  // decrease too much short position
   function testRevert_WhenTraderDecreaseTooMuchShortPositionSize() external {
     // ALICE open SHORT position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
@@ -584,7 +575,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_001 * 1e30, address(weth));
   }
 
-  // position remain too tiny size after decrease long position
   function testRevert_AfterDecreaseLongPositionAndRemainPositionSizeIsTooTiny() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
@@ -593,7 +583,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 9_999_999 * 1e29, address(weth));
   }
 
-  // position remain too tiny size after decrease short position
   function testRevert_AfterDecreaseShortPositioAndRemainPositionSizeIsTooTiny() external {
     // ALICE open SHORT position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);

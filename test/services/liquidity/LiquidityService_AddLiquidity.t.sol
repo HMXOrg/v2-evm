@@ -28,17 +28,18 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
 
   // add liquidity
   function testCorrectness_WhenPLPAddLiquidity() external {
-    dai.mint(address(this), 100 ether);
     dai.approve(address(liquidityService), type(uint256).max);
+
+    dai.mint(address(vaultStorage), 100 ether);
     liquidityService.addLiquidity(ALICE, address(dai), 100 ether, 0);
 
-    assertEq(dai.balanceOf(address(this)), 0, "DAI should be transferred from Handler.");
     assertEq(dai.balanceOf(address(vaultStorage)), 100 ether, "VaultStorage should receive DAI from Handler.");
     assertEq(plp.totalSupply(), 99.7 ether, "PLP Total Supply");
     assertEq(vaultStorage.plpTotalLiquidityUSDE30(), 99.7 * 10 ** 30);
   }
 
   // add liquidity when circuit break
+
   function testRevert_WhenCircuitBreak_PLPShouldNotAddLiquidity() external {
     // disable liquidity config
     IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
@@ -75,6 +76,7 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
 
   // slippage check fail
   function testRevert_WhenPLPAddLiquidity_AndSlippageCheckFail() external {
+    weth.mint(address(vaultStorage), 10 ether);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_InsufficientLiquidityMint()"));
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, type(uint256).max);
   }

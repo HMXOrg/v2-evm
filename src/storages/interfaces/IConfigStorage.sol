@@ -10,6 +10,7 @@ interface IConfigStorage {
   error IConfigStorage_BadLen();
   error IConfigStorage_BadArgs();
   error IConfigStorage_NotAcceptedCollateral();
+  error IConfigStorage_NotAcceptedLiquidity();
 
   /**
    * Structs
@@ -96,12 +97,16 @@ interface IConfigStorage {
 
   function pnlFactor() external view returns (uint256);
 
+  function weth() external view returns (address);
+
   /**
    * Validation
    */
   function validateServiceExecutor(address _contractAddress, address _executorAddress) external view;
 
   function validateAcceptedCollateral(address _token) external view;
+
+  function validateAcceptedLiquidityToken(address _token) external view;
 
   /**
    * Getter
@@ -169,4 +174,6 @@ interface IConfigStorage {
     address _token,
     CollateralTokenConfig memory _newConfig
   ) external returns (CollateralTokenConfig memory);
+
+  function setWeth(address _weth) external;
 }

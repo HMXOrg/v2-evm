@@ -264,6 +264,7 @@ contract ConfigStorage is IConfigStorage, Owned {
       // then it is a new token to be added.
       if (!plpTokenConfigs[_tokens[i]].accepted) {
         plpAcceptedTokens.add(_tokens[i]);
+        plpTokens.push(_tokens[i]);
       }
 
       // Log

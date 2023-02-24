@@ -94,11 +94,5 @@ interface ICalculator {
     int256 _entryFundingRate
   ) external view returns (int256 fundingFee);
 
-  function getSettlementFeeRate(
-    uint256 _value,
-    uint256 _liquidityUSD, //e30
-    uint256 _totalLiquidityUSD, //e30
-    IConfigStorage.LiquidityConfig memory _liquidityConfig,
-    IConfigStorage.PLPTokenConfig memory _plpTokenConfig
-  ) external returns (uint256);
+  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
 }

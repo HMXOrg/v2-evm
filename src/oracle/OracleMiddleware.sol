@@ -4,7 +4,6 @@ pragma solidity 0.8.18;
 import { Owned } from "../base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract OracleMiddleware is Owned, IOracleMiddleware {
   // configs
@@ -291,28 +290,18 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) internal view returns (uint256) {
+  ) internal pure returns (uint256) {
     int256 _priceInt = int256(_price);
     int256 _marketSkewUSD = (_marketSkew * _priceInt) / int256(10 ** _exponent);
-    console2.log("_marketSkewUSD");
-    console2.logInt(_marketSkewUSD);
     int256 _premiumDiscountBefore = _maxSkewScaleUSD > 0
       ? (_marketSkewUSD * 1e30) / int256(_maxSkewScaleUSD)
       : int256(0);
-    console2.log("_premiumDiscountBefore");
-    console2.logInt(_premiumDiscountBefore);
     int256 _premiumDiscountAfter = _maxSkewScaleUSD > 0
       ? ((_marketSkewUSD + _sizeDelta) * 1e30) / int256(_maxSkewScaleUSD)
       : int256(0);
-    console2.log("_premiumDiscountAfter");
-    console2.logInt(_premiumDiscountAfter);
 
     int256 _priceBefore = _priceInt + ((_priceInt * _premiumDiscountBefore) / 1e30);
-    console2.log("_priceBefore");
-    console2.logInt(_priceBefore);
     int256 _priceAfter = _priceInt + ((_priceInt * _premiumDiscountAfter) / 1e30);
-    console2.log("_priceAfter");
-    console2.logInt(_priceAfter);
     int256 _adaptivePrice = (_priceBefore + _priceAfter) / 2;
     return _adaptivePrice > 0 ? uint256(_adaptivePrice) : 0;
   }

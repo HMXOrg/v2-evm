@@ -24,16 +24,21 @@ interface ITradeService {
   /**
    * STRUCTS
    */
+
   struct SettleFeeVar {
+    bool isPayFee;
     int256 feeUsd;
     uint256 absFeeUsd;
+    uint256 plpLiquidityDebtUSDE30;
     address[] plpUnderlyingTokens;
     address underlyingToken;
     uint256 underlyingTokenDecimal;
     uint256 traderBalance;
     uint256 tradingFee;
+    uint256 tradingFeeValue;
     uint256 price;
     uint256 feeTokenAmount;
+    uint256 feeTokenValue;
     uint256 balanceValue;
     uint256 repayFeeTokenAmount;
     uint256 devFeeTokenAmount;

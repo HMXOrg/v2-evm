@@ -380,7 +380,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   /// @notice set up all collateral token configs in Perp
   function _setUpCollateralTokenConfigs() private {
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
-      decimals: weth.decimals(),
+      decimals: 18,
       collateralFactor: 0.8 * 1e18,
       isStableCoin: false,
       accepted: true,
@@ -390,7 +390,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfigWeth);
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
-      decimals: wbtc.decimals(),
+      decimals: 8,
       collateralFactor: 0.9 * 1e18,
       isStableCoin: false,
       accepted: true,

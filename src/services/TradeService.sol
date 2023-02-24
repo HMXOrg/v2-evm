@@ -502,11 +502,15 @@ contract TradeService is ITradeService {
     uint256 _price;
     uint256 _collateralToRemove;
     uint256 _collateralUsd;
+    uint256 _decimals;
     // Loop through all the plp tokens for the sub-account
     for (uint256 _i; _i < _len; ) {
       _token = _plpTokens[_i];
+      _decimals = IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals;
+
       // Sub-account plp collateral
       _collateral = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
+      console.log("_collateral", _collateral);
 
       // continue settle when sub-account has collateral, else go to check next token
       if (_collateral != 0) {
@@ -518,11 +522,13 @@ contract TradeService is ITradeService {
           30 // @todo - should from config
         );
 
-        _collateralUsd = (_collateral * _price) / 1e18; // @todo - token decimal
+        _collateralUsd = (_collateral * _price) / (10 ** _decimals);
+        console.log("_collateralUsd", _collateralUsd);
 
         if (_collateralUsd >= _debtUsd) {
           // When this collateral token can cover all the debt, use this token to pay it all
-          _collateralToRemove = (_debtUsd * 1e18) / _price; // @todo - token decimal
+          _collateralToRemove = (_debtUsd * (10 ** _decimals)) / _price;
+          console.log("_collateralToRemove1", _collateralToRemove);
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
@@ -531,7 +537,8 @@ contract TradeService is ITradeService {
           break;
         } else {
           // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
-          _collateralToRemove = (_collateralUsd * 1e18) / _price; // @todo - token decimal
+          _collateralToRemove = (_collateralUsd * (10 ** _decimals)) / _price; // @todo - token decimal
+          console.log("_collateralToRemove2", _collateralToRemove);
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);

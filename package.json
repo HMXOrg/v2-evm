@@ -7,7 +7,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "build": "yarn run build:cjs",
-    "build:cjs": "tsc -p tsconfig.cjs.json"
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "slither": "slither . --exclude-dependencies --exclude-optimization --exclude-informational --exclude-low --exclude-medium  --no-fail-pedantic --fail-high"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",

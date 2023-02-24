@@ -349,7 +349,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
       avgPrice: 1_600 * 1e30,
       reserveValue: 90_000 * 1e30,
       lastIncreaseTimestamp: 100,
-      realizedPnl: 0,
       openInterest: 625 * 1e18
     });
     positionTester02.assertPosition(_positionId, assetData);
@@ -394,7 +393,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
       avgPrice: 25_000 * 1e30,
       reserveValue: 72_000 * 1e30,
       lastIncreaseTimestamp: 100,
-      realizedPnl: 0,
       openInterest: 32 * 1e18
     });
     positionTester02.assertPosition(_positionId, assetData);
@@ -438,7 +436,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
         avgPrice: 1_600 * 1e30,
         reserveValue: 45_000 * 1e30,
         lastIncreaseTimestamp: 100,
-        realizedPnl: 0,
         openInterest: 312.5 * 1e18
       });
       positionTester02.assertPosition(_positionId, positionAssetData);
@@ -491,7 +488,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
         avgPrice: 1_600 * 1e30,
         reserveValue: 81_000 * 1e30,
         lastIncreaseTimestamp: 100,
-        realizedPnl: 0,
         openInterest: 562.5 * 1e18
       });
       positionTester02.assertPosition(_positionId, assetData);
@@ -558,7 +554,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
         avgPrice: 25_000 * 1e30,
         reserveValue: 22_500 * 1e30,
         lastIncreaseTimestamp: 100,
-        realizedPnl: 0,
         openInterest: 10 * 1e18
       });
       positionTester02.assertPosition(_positionId, positionAssetData);
@@ -611,7 +606,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
         avgPrice: 25_000 * 1e30,
         reserveValue: 90_000 * 1e30,
         lastIncreaseTimestamp: 100,
-        realizedPnl: 0,
         openInterest: 40 * 1e18
       });
       positionTester02.assertPosition(_positionId, positionAssetData);

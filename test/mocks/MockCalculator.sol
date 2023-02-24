@@ -6,15 +6,15 @@ import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol
 import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
 
 contract MockCalculator is ICalculator {
-  uint256 equity;
+  mapping(address => uint256) equitiesOf;
+  mapping(address => uint256) imrOf;
+  mapping(address => uint256) mmrOf;
+  mapping(address => int256) unrealizedPnlOf;
   uint256 freeCollateral;
-  uint256 mmr;
-  uint256 imr;
+
   uint256 aum;
   uint256 plpValue;
   uint256 nextBorrowingRate;
-
-  int256 unrealizedPnl;
 
   address public oracle;
 
@@ -26,16 +26,20 @@ contract MockCalculator is ICalculator {
   // | ---------- Setter ------------------- |
   // =========================================
 
-  function setEquity(uint256 _mockEquity) external {
-    equity = _mockEquity;
+  function setEquity(address _subAccount, uint256 _mockEquity) external {
+    equitiesOf[_subAccount] = _mockEquity;
   }
 
-  function setIMR(uint256 _mockImr) external {
-    imr = _mockImr;
+  function setIMR(address _subAccount, uint256 _mockImr) external {
+    imrOf[_subAccount] = _mockImr;
   }
 
-  function setMMR(uint256 _mockMmr) external {
-    mmr = _mockMmr;
+  function setMMR(address _subAccount, uint256 _mockMmr) external {
+    mmrOf[_subAccount] = _mockMmr;
+  }
+
+  function setUnrealizedPnl(address _subAccount, int256 _mockUnrealizedPnl) external {
+    unrealizedPnlOf[_subAccount] = _mockUnrealizedPnl;
   }
 
   function setAUM(uint256 _aum) external {
@@ -54,25 +58,25 @@ contract MockCalculator is ICalculator {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getEquity(address) external view returns (uint) {
-    return equity;
+  function getEquity(address _subAccount) external view returns (uint256) {
+    return equitiesOf[_subAccount];
   }
 
   // @todo - Add Description
-  function getUnrealizedPnl(address) external view returns (int) {
-    return unrealizedPnl;
+  function getUnrealizedPnl(address _subAccount) external view returns (int256) {
+    return unrealizedPnlOf[_subAccount];
   }
 
   // @todo - Add Description
   /// @return imrValueE30 Total imr of trader's account.
-  function getIMR(address) external view returns (uint) {
-    return imr;
+  function getIMR(address _subAccount) external view returns (uint256) {
+    return imrOf[_subAccount];
   }
 
   // @todo - Add Description
   /// @return mmrValueE30 Total mmr of trader's account
-  function getMMR(address) external view returns (uint) {
-    return mmr;
+  function getMMR(address _subAccount) external view returns (uint256) {
+    return mmrOf[_subAccount];
   }
 
   // =========================================
@@ -80,11 +84,11 @@ contract MockCalculator is ICalculator {
   // =========================================
 
   function calculatePositionIMR(uint256, uint256) external view returns (uint256) {
-    return imr;
+    return 0;
   }
 
   function calculatePositionMMR(uint256, uint256) external view returns (uint256) {
-    return mmr;
+    return 0;
   }
 
   function getAUM(bool /* isMaxPrice */) external view returns (uint256) {
@@ -140,5 +144,16 @@ contract MockCalculator is ICalculator {
 
   function getNextBorrowingRate(uint256 /*_assetClassIndex*/) external view returns (uint256) {
     return nextBorrowingRate;
+  }
+
+  function getSettlementFeeRate(
+    uint256 /* _value */,
+    uint256 /* _liquidityUSD */, //e30
+    uint256 /* _totalLiquidityUSD */, //e30
+    IConfigStorage.LiquidityConfig memory /* _liquidityConfig */,
+    IConfigStorage.PLPTokenConfig memory /* _plpTokenConfig */
+  ) external pure returns (uint256) {
+    // 0.5%
+    return 5e15;
   }
 }

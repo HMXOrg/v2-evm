@@ -36,6 +36,7 @@ interface ITradeService {
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex,
-    uint256 _positionSizeE30ToDecrease
+    uint256 _positionSizeE30ToDecrease,
+    address _tpToken
   ) external;
 }

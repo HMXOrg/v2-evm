@@ -13,7 +13,6 @@ contract PositionTester02 is StdAssertions {
     uint256 avgPrice;
     uint256 reserveValue;
     uint256 lastIncreaseTimestamp;
-    uint256 realizedPnl;
     uint256 openInterest;
   }
 
@@ -30,7 +29,6 @@ contract PositionTester02 is StdAssertions {
     assertEq(_position.avgEntryPriceE30, _data.avgPrice, "avg entry price ");
     assertEq(_position.reserveValueE30, _data.reserveValue, "reserve value");
     assertEq(_position.lastIncreaseTimestamp, _data.lastIncreaseTimestamp, "last increase timestamp");
-    assertEq(_position.realizedPnl, _data.realizedPnl, "realized pnl");
     assertEq(_position.openInterest, _data.openInterest, "open interest");
   }
 }

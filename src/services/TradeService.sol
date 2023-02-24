@@ -11,6 +11,7 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
+import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // @todo - refactor, deduplicate code
 
@@ -218,11 +219,13 @@ contract TradeService is ITradeService {
   /// @param _subAccountId - address
   /// @param _marketIndex - market index
   /// @param _positionSizeE30ToDecrease - position size to decrease
+  /// @param _tpToken - take profit token
   function decreasePosition(
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex,
-    uint256 _positionSizeE30ToDecrease
+    uint256 _positionSizeE30ToDecrease,
+    address _tpToken
   ) external {
     // prepare
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
@@ -290,10 +293,6 @@ contract TradeService is ITradeService {
     collectFee(_subAccount, _marketConfig.assetClass, _position.reserveValueE30, _position.entryBorrowingRate);
     settleFee(_subAccount);
 
-    // =========================================
-    // | ------ update perp storage ---------- |
-    // =========================================
-
     uint256 _newAbsPositionSizeE30 = vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
 
     // check position is too tiny
@@ -301,12 +300,11 @@ contract TradeService is ITradeService {
     //       due to we has problem stack too deep in MarketConfig now
     if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30) revert ITradeService_TooTinyPosition();
 
+    // ==================================================
+    // | ------ calculate relized profit & loss ------- |
+    // ==================================================
     int256 _realizedPnl;
-
     {
-      // =========================================
-      // | ------- settlement position --------- |
-      // =========================================
       vars.avgEntryPriceE30 = _position.avgEntryPriceE30;
       (bool isProfit, uint256 pnl) = getDelta(
         vars.absPositionSizeE30,
@@ -321,6 +319,9 @@ contract TradeService is ITradeService {
       }
     }
 
+    // =========================================
+    // | ------ update perp storage ---------- |
+    // =========================================
     {
       uint256 _openInterestDelta = (_position.openInterest * _positionSizeE30ToDecrease) / vars.absPositionSizeE30;
 
@@ -382,7 +383,23 @@ contract TradeService is ITradeService {
         1e18;
       _position.avgEntryPriceE30 = isClosePosition ? 0 : vars.avgEntryPriceE30;
       _position.openInterest = _position.openInterest - _openInterestDelta;
+      _position.realizedPnl += _realizedPnl;
       IPerpStorage(perpStorage).savePosition(_subAccount, _positionId, _position);
+    }
+
+    {
+      // =======================================
+      // | ------ settle profit & loss ------- |
+      // =======================================
+      if (_realizedPnl != 0) {
+        if (_realizedPnl > 0) {
+          // profit, trader should receive take profit token = Profit in USD
+          _settleProfit(_subAccount, _tpToken, uint256(_realizedPnl));
+        } else {
+          // loss
+          _settleLoss(_subAccount, uint256(-_realizedPnl));
+        }
+      }
     }
 
     // =========================================
@@ -393,6 +410,96 @@ contract TradeService is ITradeService {
     _subAccountHealthCheck(_subAccount);
 
     emit LogDecreasePosition(_positionId, _positionSizeE30ToDecrease);
+  }
+
+  /// @notice settle profit
+  /// @param _token - token that trader want to take profit as collateral
+  /// @param _realizedProfitE30 - trader profit in USD
+  function _settleProfit(address _subAccount, address _token, uint256 _realizedProfitE30) internal {
+    (uint256 _tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
+      _token.toBytes32(),
+      false,
+      IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
+      30 // trust price age (seconds) todo: from market config
+    );
+
+    // calculate token trader should received
+    uint256 _tpTokenOut = (_realizedProfitE30 * 1e18) / _tpTokenPrice; // @todo - token decimal
+
+    // @todo - should it be
+    uint256 _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
+      0,
+      0,
+      0,
+      IConfigStorage(configStorage).getLiquidityConfig(),
+      IConfigStorage(configStorage).getPlpTokenConfigs(address(0))
+    );
+    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18; // @todo - token decimal
+
+    IVaultStorage(vaultStorage).removePLPLiquidity(_token, _tpTokenOut);
+    IVaultStorage(vaultStorage).addFee(_token, _settlementFee);
+    IVaultStorage(vaultStorage).increaseTraderBalance(_subAccount, _token, _tpTokenOut - _settlementFee);
+
+    // @todo - emit LogSettleProfit(trader, collateralToken, addedAmount, settlementFee)
+  }
+
+  /// @notice settle loss
+  /// @param _subAccount - Sub-account of trader
+  /// @param _debtUsd - Loss in USD
+  function _settleLoss(address _subAccount, uint256 _debtUsd) internal {
+    address[] memory _plpTokens = IConfigStorage(configStorage).getPlpTokens();
+
+    uint256 _len = _plpTokens.length;
+    address _token;
+    uint256 _collateral;
+    uint256 _price;
+    uint256 _collateralToRemove;
+    uint256 _collateralUsd;
+    // Loop through all the plp tokens for the sub-account
+    for (uint256 _i; _i < _len; ) {
+      _token = _plpTokens[_i];
+      // Sub-account plp collateral
+      _collateral = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
+
+      // continue settle when sub-account has collateral, else go to check next token
+      if (_collateral != 0) {
+        // Retrieve the latest price and confident threshold of the plp token
+        (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
+          _token.toBytes32(),
+          false,
+          IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
+          30 // @todo - should from config
+        );
+
+        _collateralUsd = (_collateral * _price) / 1e18; // @todo - token decimal
+
+        if (_collateralUsd >= _debtUsd) {
+          // When this collateral token can cover all the debt, use this token to pay it all
+          _collateralToRemove = (_debtUsd * 1e18) / _price; // @todo - token decimal
+
+          IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
+          IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
+          // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
+          // In this case, all debt are paid. We can break the loop right away.
+          break;
+        } else {
+          // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
+          _collateralToRemove = (_collateralUsd * 1e18) / _price; // @todo - token decimal
+
+          IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
+          IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
+          // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
+          // update debtUsd
+          unchecked {
+            _debtUsd = _debtUsd - _collateralUsd;
+          }
+        }
+      }
+
+      unchecked {
+        ++_i;
+      }
+    }
   }
 
   // @todo - remove usage from test
@@ -656,7 +763,7 @@ contract TradeService is ITradeService {
           underlyingToken.toBytes32(),
           false,
           IConfigStorage(configStorage).getMarketConfigByToken(underlyingToken).priceConfidentThreshold,
-          30
+          30 // @todo - should from config
         );
 
         // Calculate the fee amount in the plp token
@@ -754,6 +861,13 @@ contract TradeService is ITradeService {
     return _nextAveragePrice;
   }
 
+  /// @notice get next long average price with realized PNL
+  /// @param _market - global market
+  /// @param _currentPrice - min / max price depends on position direction
+  /// @param _positionSizeDelta - position size after increase / decrease.
+  ///                           if positive is LONG position, else is SHORT
+  /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
+  /// @return _nextAveragePrice next average price
   function _calcualteLongAveragePrice(
     IPerpStorage.GlobalMarket memory _market,
     uint256 _currentPrice,

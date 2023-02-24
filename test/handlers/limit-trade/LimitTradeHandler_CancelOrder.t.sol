@@ -33,16 +33,17 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
       _triggerPrice: 1000 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
-      _reduceOnly: false
+      _reduceOnly: false,
+      _tpToken: address(weth)
     });
 
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, ALICE);
 
     limitTradeHandler.cancelOrder({ _subAccountId: 0, _orderIndex: 0 });
 
-    (limitOrder.account, , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, address(0));
 
     uint256 balanceDiff = ALICE.balance - balanceBefore;

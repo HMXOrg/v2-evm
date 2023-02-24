@@ -33,7 +33,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 triggerPrice,
     bool triggerAboveThreshold,
     uint256 executionFee,
-    bool reduceOnly
+    bool reduceOnly,
+    address tpToken
   );
   event LogExecuteLimitOrder(
     address indexed account,
@@ -45,7 +46,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool triggerAboveThreshold,
     uint256 executionFee,
     uint256 executionPrice,
-    bool reduceOnly
+    bool reduceOnly,
+    address tpToken
   );
   event LogUpdateLimitOrder(
     address indexed account,
@@ -54,7 +56,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     int256 sizeDelta,
     uint256 triggerPrice,
     bool triggerAboveThreshold,
-    bool reduceOnly
+    bool reduceOnly,
+    address tpToken
   );
   event LogCancelLimitOrder(
     address indexed account,
@@ -65,8 +68,21 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 triggerPrice,
     bool triggerAboveThreshold,
     uint256 executionFee,
-    bool reduceOnly
+    bool reduceOnly,
+    address tpToken
   );
+
+  /**
+   * Structs
+   */
+
+  struct ExecuteOrderVars {
+    LimitOrder order;
+    address subAccount;
+    bytes32 positionId;
+    bool positionIsLong;
+    bool isNewPosition;
+  }
 
   /**
    * Constants
@@ -130,6 +146,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _triggerAboveThreshold The current price must go above/below the trigger price for the order to be executed
   /// @param _executionFee The execution fee of this limit order
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
+  /// @param _tpToken Take profit token, when trader has profit
   function createOrder(
     uint256 _subAccountId,
     uint256 _marketIndex,
@@ -137,7 +154,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 _triggerPrice,
     bool _triggerAboveThreshold,
     uint256 _executionFee,
-    bool _reduceOnly
+    bool _reduceOnly,
+    address _tpToken
   ) external payable nonReentrant {
     // Check if exectuion fee is lower than minExecutionFee, then it's too low. We won't allow it.
     if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
@@ -156,7 +174,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       triggerPrice: _triggerPrice,
       triggerAboveThreshold: _triggerAboveThreshold,
       executionFee: _executionFee,
-      reduceOnly: _reduceOnly
+      reduceOnly: _reduceOnly,
+      tpToken: _tpToken
     });
 
     // Insert the limit order into the list
@@ -172,7 +191,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _triggerPrice,
       _triggerAboveThreshold,
       _executionFee,
-      _reduceOnly
+      _reduceOnly,
+      _tpToken
     );
   }
 
@@ -189,14 +209,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     address payable _feeReceiver,
     bytes[] memory _priceData
   ) external nonReentrant onlyOrderExecutor {
-    address _subAccount = _getSubAccount(_account, _subAccountId);
-    LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
+    ExecuteOrderVars memory vars;
+
+    vars.subAccount = _getSubAccount(_account, _subAccountId);
+    vars.order = limitOrders[vars.subAccount][_orderIndex];
 
     // Delete this executed order from the list
-    delete limitOrders[_subAccount][_orderIndex];
+    delete limitOrders[vars.subAccount][_orderIndex];
 
     // Check if this order still exists
-    if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+    if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
     // slither-disable-next-line arbitrary-send-eth
@@ -204,115 +226,126 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = validatePositionOrderPrice(
-      _order.triggerAboveThreshold,
-      _order.triggerPrice,
-      _order.marketIndex,
-      _order.sizeDelta > 0,
+      vars.order.triggerAboveThreshold,
+      vars.order.triggerPrice,
+      vars.order.marketIndex,
+      vars.order.sizeDelta > 0,
       true
     );
 
     // Retrieve existing position
-    bytes32 _positionId = _getPositionId(_subAccount, _order.marketIndex);
+    vars.positionId = _getPositionId(vars.subAccount, vars.order.marketIndex);
     IPerpStorage.Position memory _existingPosition = IPerpStorage(ITradeService(tradeService).perpStorage())
-      .getPositionById(_positionId);
-    bool _positionIsLong = _existingPosition.positionSizeE30 > 0;
-    bool _isNewPosition = _existingPosition.positionSizeE30 == 0;
+      .getPositionById(vars.positionId);
+    vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
+    vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
     // Execute the order
-    if (_order.sizeDelta > 0) {
+    if (vars.order.sizeDelta > 0) {
       // BUY
-      if (_isNewPosition || _positionIsLong) {
+      if (vars.isNewPosition || vars.positionIsLong) {
         // New position and Long position
         // just increase position when BUY
         ITradeService(tradeService).increasePosition({
           _primaryAccount: _account,
           _subAccountId: _subAccountId,
-          _marketIndex: _order.marketIndex,
-          _sizeDelta: _order.sizeDelta
+          _marketIndex: vars.order.marketIndex,
+          _sizeDelta: vars.order.sizeDelta
         });
-      } else if (!_positionIsLong) {
-        bool _flipSide = !_order.reduceOnly && _order.sizeDelta > (-_existingPosition.positionSizeE30);
+      } else if (!vars.positionIsLong) {
+        bool _flipSide = !vars.order.reduceOnly && vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
         if (_flipSide) {
           // Flip the position
           // Fully close Short position
           ITradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30)
+            _marketIndex: vars.order.marketIndex,
+            _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
+            _tpToken: vars.order.tpToken
           });
           // Flip it to Long position
           ITradeService(tradeService).increasePosition({
             _primaryAccount: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _sizeDelta: _order.sizeDelta + _existingPosition.positionSizeE30
+            _marketIndex: vars.order.marketIndex,
+            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30
           });
         } else {
           // Not flip
           ITradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: _min(uint256(_order.sizeDelta), uint256(-_existingPosition.positionSizeE30))
+            _marketIndex: vars.order.marketIndex,
+            _positionSizeE30ToDecrease: _min(
+              uint256(vars.order.sizeDelta),
+              uint256(-_existingPosition.positionSizeE30)
+            ),
+            _tpToken: vars.order.tpToken
           });
         }
       }
-    } else if (_order.sizeDelta < 0) {
+    } else if (vars.order.sizeDelta < 0) {
       // SELL
-      if (_isNewPosition || !_positionIsLong) {
+      if (vars.isNewPosition || !vars.positionIsLong) {
         // New position and Short position
         // just increase position when SELL
         ITradeService(tradeService).increasePosition({
           _primaryAccount: _account,
           _subAccountId: _subAccountId,
-          _marketIndex: _order.marketIndex,
-          _sizeDelta: _order.sizeDelta
+          _marketIndex: vars.order.marketIndex,
+          _sizeDelta: vars.order.sizeDelta
         });
-      } else if (_positionIsLong) {
-        bool _flipSide = !_order.reduceOnly && (-_order.sizeDelta) > _existingPosition.positionSizeE30;
+      } else if (vars.positionIsLong) {
+        bool _flipSide = !vars.order.reduceOnly && (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
         if (_flipSide) {
           // Flip the position
           // Fully close Long position
           ITradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30)
+            _marketIndex: vars.order.marketIndex,
+            _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
+            _tpToken: vars.order.tpToken
           });
           // Flip it to Short position
           ITradeService(tradeService).increasePosition({
             _primaryAccount: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _sizeDelta: _order.sizeDelta + _existingPosition.positionSizeE30
+            _marketIndex: vars.order.marketIndex,
+            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30
           });
         } else {
           // Not flip
           ITradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: _min(uint256(-_order.sizeDelta), uint256(_existingPosition.positionSizeE30))
+            _marketIndex: vars.order.marketIndex,
+            _positionSizeE30ToDecrease: _min(
+              uint256(-vars.order.sizeDelta),
+              uint256(_existingPosition.positionSizeE30)
+            ),
+            _tpToken: vars.order.tpToken
           });
         }
       }
     }
 
     // Pay the executor
-    _transferOutETH(_order.executionFee, _feeReceiver);
+    _transferOutETH(vars.order.executionFee, _feeReceiver);
 
     emit LogExecuteLimitOrder(
       _account,
       _subAccountId,
       _orderIndex,
-      _order.marketIndex,
-      _order.sizeDelta,
-      _order.triggerPrice,
-      _order.triggerAboveThreshold,
-      _order.executionFee,
+      vars.order.marketIndex,
+      vars.order.sizeDelta,
+      vars.order.triggerPrice,
+      vars.order.triggerAboveThreshold,
+      vars.order.executionFee,
       _currentPrice,
-      _order.reduceOnly
+      vars.order.reduceOnly,
+      vars.order.tpToken
     );
   }
 
@@ -340,7 +373,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _order.triggerPrice,
       _order.triggerAboveThreshold,
       _order.executionFee,
-      _order.reduceOnly
+      _order.reduceOnly,
+      _order.tpToken
     );
   }
 
@@ -351,13 +385,15 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _triggerPrice The price that this limit order will be triggered
   /// @param _triggerAboveThreshold The current price must go above/below the trigger price for the order to be executed
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
+  /// @param _tpToken Take profit token, when trader has profit
   function updateOrder(
     uint256 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
     bool _triggerAboveThreshold,
-    bool _reduceOnly
+    bool _reduceOnly,
+    address _tpToken
   ) external nonReentrant {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
     LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
@@ -369,6 +405,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     _order.triggerAboveThreshold = _triggerAboveThreshold;
     _order.sizeDelta = _sizeDelta;
     _order.reduceOnly = _reduceOnly;
+    _order.tpToken = _tpToken;
 
     emit LogUpdateLimitOrder(
       _order.account,
@@ -377,7 +414,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _order.sizeDelta,
       _order.triggerPrice,
       _order.triggerAboveThreshold,
-      _order.reduceOnly
+      _order.reduceOnly,
+      _order.tpToken
     );
   }
 

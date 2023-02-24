@@ -182,4 +182,20 @@ contract VaultStorage is IVaultStorage {
   function pullPLPLiquidity(address _token) external view returns (uint256) {
     return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
   }
+
+  /// @notice increase sub-account collateral
+  /// @param _subAccount - sub account
+  /// @param _token - collateral token to increase
+  /// @param _amount - amount to increase
+  function increaseTraderBalance(address _subAccount, address _token, uint256 _amount) external {
+    traderBalances[_subAccount][_token] += _amount;
+  }
+
+  /// @notice decrease sub-account collateral
+  /// @param _subAccount - sub account
+  /// @param _token - collateral token to increase
+  /// @param _amount - amount to increase
+  function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external {
+    traderBalances[_subAccount][_token] -= _amount;
+  }
 }

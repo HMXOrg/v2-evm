@@ -29,8 +29,7 @@ interface ITradeService {
     uint256 fundingInterval;
     uint256 marketPriceE30;
     int256 marketSkewUSDE30;
-    int256 tempMaxValue;
-    int256 tempMinValue;
+    int256 ratio;
     int256 nextFundingRate;
     int256 newFundingRate;
     int256 elaspedIntervals;

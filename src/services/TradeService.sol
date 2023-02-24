@@ -804,11 +804,9 @@ contract TradeService is ITradeService {
     if (_size == 0) return 0;
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
-    int256 _fundingRate;
-
-    _fundingRate = _globalMarket.currentFundingRate < 0
+    int256 _fundingRate = _globalMarket.currentFundingRate < 0
       ? (-_globalMarket.currentFundingRate) - _entryFundingRate // LONG Pay SHORT
-      : _globalMarket.currentFundingRate - _entryFundingRate; // SHORT Pay SHORT
+      : _globalMarket.currentFundingRate - _entryFundingRate; // SHORT Pay LONG
 
     return (_size * _fundingRate) / 1e18;
   }
@@ -845,10 +843,10 @@ contract TradeService is ITradeService {
       int(10 ** marketConfig.exponent);
 
     // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
-    vars.tempMaxValue = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
-    vars.tempMinValue = _min(vars.tempMaxValue, 1e18);
+    vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
+    vars.ratio = _min(vars.ratio, 1e18);
 
-    vars.nextFundingRate = (vars.tempMinValue * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
+    vars.nextFundingRate = (vars.ratio * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
     vars.newFundingRate = globalMarket.currentFundingRate + vars.nextFundingRate;
 
     vars.elaspedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);

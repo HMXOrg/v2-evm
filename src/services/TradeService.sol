@@ -438,6 +438,9 @@ contract TradeService is ITradeService {
     IVaultStorage(vaultStorage).removePLPLiquidity(_token, _tpTokenOut);
     IVaultStorage(vaultStorage).addFee(_token, _settlementFee);
     IVaultStorage(vaultStorage).increaseTraderBalance(_subAccount, _token, _tpTokenOut - _settlementFee);
+    
+// @todo - emit LogSettleProfit(trader, collateralToken, addedAmount, settlementFee)
+
   }
 
   /// @notice settle loss

@@ -207,6 +207,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _order.triggerAboveThreshold,
       _order.triggerPrice,
       _order.marketIndex,
+      _order.sizeDelta,
       _order.sizeDelta > 0,
       true
     );
@@ -385,22 +386,38 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     );
   }
 
+  struct ValidatePositionOrderPriceVars {
+    IConfigStorage.MarketConfig marketConfig;
+    IOracleMiddleware oracle;
+    IPerpStorage.GlobalMarket globalMarket;
+  }
+
   function validatePositionOrderPrice(
     bool _triggerAboveThreshold,
     uint256 _triggerPrice,
     uint256 _marketIndex,
+    int256 _sizeDelta,
     bool _maximizePrice,
     bool _revertOnError
   ) public view returns (uint256, bool) {
+    ValidatePositionOrderPriceVars memory vars;
+
     // Get price from Pyth
-    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(ITradeService(tradeService).configStorage())
-      .getMarketConfigByIndex(_marketIndex);
-    IOracleMiddleware _oracle = IOracleMiddleware(IConfigStorage(ITradeService(tradeService).configStorage()).oracle());
-    (uint256 _currentPrice, , uint8 _marketStatus) = _oracle.getLatestPriceWithMarketStatus(
-      _marketConfig.assetId,
+    vars.marketConfig = IConfigStorage(ITradeService(tradeService).configStorage()).getMarketConfigByIndex(
+      _marketIndex
+    );
+    vars.oracle = IOracleMiddleware(IConfigStorage(ITradeService(tradeService).configStorage()).oracle());
+    vars.globalMarket = IPerpStorage(ITradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
+
+    (uint256 _currentPrice, , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      vars.marketConfig.assetId,
+      vars.marketConfig.exponent,
       _maximizePrice,
-      _marketConfig.priceConfidentThreshold,
-      30 // @todo retrieve price age from config
+      vars.marketConfig.priceConfidentThreshold,
+      30, // @todo retrieve price age from config
+      (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
+      _sizeDelta,
+      vars.marketConfig.fundingRate.maxSkewScaleUSD
     );
 
     // Validate market status

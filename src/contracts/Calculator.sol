@@ -287,7 +287,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
-    uint256 nextValue = startValue + _value;
+    uint256 nextValue = startValue - _value;
     // if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);

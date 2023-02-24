@@ -30,7 +30,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
 
   function testRevert_WhenSellWithZeroSize() external {
     vm.expectRevert(abi.encodeWithSignature("IMarketTradeHandler_ZeroSizeInput()"));
-    marketTradeHandler.sell(ALICE, 0, 0, 0, prices);
+    marketTradeHandler.sell(ALICE, 0, 0, 0, address(weth), prices);
   }
 
   function testCorrectness_WhenSellWithNoExistingPosition() external {
@@ -39,7 +39,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogSell(ALICE, 0, 0, _sellSize, 0, _sellSize);
 
-    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, prices);
+    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, address(weth), prices);
   }
 
   function testCorrectness_WhenSellWithExistingShortPosition() external {
@@ -65,7 +65,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogSell(ALICE, 0, 0, _sellSize, 0, _sellSize);
 
-    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, prices);
+    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, address(weth), prices);
   }
 
   function testCorrectness_WhenSellWithExistingLongPosition_WithSmallSellSize() external {
@@ -91,7 +91,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogSell(ALICE, 0, 0, _sellSize, _sellSize, 0);
 
-    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, prices);
+    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, address(weth), prices);
   }
 
   function testCorrectness_WhenSellWithExistingLongPosition_WithLargeSellSize() external {
@@ -117,6 +117,6 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogSell(ALICE, 0, 0, _sellSize, 15_000 * 1e30, 5_000 * 1e30);
 
-    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, prices);
+    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, address(weth), prices);
   }
 }

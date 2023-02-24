@@ -226,12 +226,12 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
         depositFeeRate: 0,
         withdrawFeeRate: 0,
         maxPLPUtilization: (80 * 1e18) / 100,
+        plpTotalTokenWeight: 0,
         plpSafetyBufferThreshold: 0,
-        taxFeeRate: 0,
+        taxFeeRate: 5e15, // 0.5%
         flashLoanFeeRate: 0,
         dynamicFeeEnabled: false,
-        enabled: true,
-        plpTotalTokenWeight: 0
+        enabled: true
       })
     );
   }
@@ -317,14 +317,12 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // set PLP token
     configStorage.setPLP(address(plp));
 
-    configStorage.setPLPTotalTokenWeight(0);
-
     // add Accepted Token for LP config
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
     // WETH
     _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
       decimals: 18,
-      targetWeight: 20e18,
+      targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: false,
@@ -333,7 +331,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // WBTC
     _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
       decimals: 8,
-      targetWeight: 20e18,
+      targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: false,
@@ -342,7 +340,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // DAI
     _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
       decimals: 18,
-      targetWeight: 10e18,
+      targetWeight: 1e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: true,
@@ -351,7 +349,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // USDC
     _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
       decimals: 6,
-      targetWeight: 30e18,
+      targetWeight: 3e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: true,
@@ -360,7 +358,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // USDT
     _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
       decimals: 6,
-      targetWeight: 20e18,
+      targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: true,

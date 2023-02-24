@@ -25,6 +25,17 @@ interface ITradeService {
    * STRUCTS
    */
 
+  struct GetFundingRateVar {
+    uint256 fundingInterval;
+    uint256 marketPriceE30;
+    int256 marketSkewUSDE30;
+    int256 tempMaxValue;
+    int256 tempMinValue;
+    int256 nextFundingRate;
+    int256 newFundingRate;
+    int256 elaspedIntervals;
+  }
+
   struct SettleFeeVar {
     bool isPayFee;
     int256 feeUsd;
@@ -34,8 +45,8 @@ interface ITradeService {
     address underlyingToken;
     uint256 underlyingTokenDecimal;
     uint256 traderBalance;
-    uint256 tradingFee;
-    uint256 tradingFeeValue;
+    uint256 marginFee;
+    uint256 marginFeeValue;
     uint256 price;
     uint256 feeTokenAmount;
     uint256 feeTokenValue;

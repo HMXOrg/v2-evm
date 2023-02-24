@@ -13,7 +13,6 @@ import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol"
 
 abstract contract TradeService_Base is BaseTest {
   TradeService tradeService;
-
   PositionTester positionTester;
 
   function setUp() public virtual {

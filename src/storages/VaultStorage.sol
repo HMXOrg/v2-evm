@@ -23,7 +23,7 @@ contract VaultStorage is IVaultStorage {
 
   uint256 public plpLiquidityDebtUSDE30; // USD dept acccounting when tradingFee is not enough to repay to trader
   // token => tradingFee
-  mapping(address => uint256) public tradingFee; // sum of realized borrowing and funding fee when traders are settement their fees
+  mapping(address => uint256) public marginFee; // sum of realized borrowing and funding fee when traders are settement their fees
 
   mapping(address => uint256) public devFees;
 
@@ -50,12 +50,12 @@ contract VaultStorage is IVaultStorage {
     plpLiquidityUSDE30[_token] += _amount;
   }
 
-  function addTradingFee(address _token, uint256 _amount) external {
-    tradingFee[_token] += _amount;
+  function addMarginFee(address _token, uint256 _amount) external {
+    marginFee[_token] += _amount;
   }
 
-  function removeTradingFee(address _token, uint256 _amount) external {
-    tradingFee[_token] -= _amount;
+  function removeMarginFee(address _token, uint256 _amount) external {
+    marginFee[_token] -= _amount;
   }
 
   function addPlpLiquidityDebtUSDE30(uint256 _value) external {

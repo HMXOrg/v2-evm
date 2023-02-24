@@ -1,13 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Calculator_Base } from "./Calculator_Base.t.sol";
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
+import { TradeService } from "../../../src/services/TradeService.sol";
 
-contract Calculator_FundingRate is Calculator_Base {
+import { Calculator_Base } from "../../calculator/Calculator_Base.t.sol";
+import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+
+contract TradeService_FundingRate is Calculator_Base {
+  TradeService tradeService;
+
   function setUp() public virtual override {
     super.setUp();
+
+    // deploy services
+    tradeService = new TradeService(address(mockPerpStorage), address(mockVaultStorage), address(configStorage));
 
     // Set market config
     // maxFundingRate = 0.04%
@@ -138,7 +145,9 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (int256 newfundingRate, int256 nextfundingRateLong, int256 nextfundingRateShort) = calculator.getNextFundingRate(0);
+    (int256 newfundingRate, int256 nextfundingRateLong, int256 nextfundingRateShort) = tradeService.getNextFundingRate(
+      0
+    );
     currentFundingRate = newfundingRate; // -0.013333%
     assertEq(newfundingRate, -133333333333333); // -0.013333%
 
@@ -185,7 +194,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
     currentFundingRate = newfundingRate; // -0.026667%
     assertEq(newfundingRate, -266666666666666); // -0.026667%
 
@@ -232,7 +241,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
     currentFundingRate = newfundingRate; // -0.026667%
     assertEq(newfundingRate, -266666666666666); // -0.026667%
 
@@ -279,7 +288,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
     currentFundingRate = newfundingRate; // -0.026667%
     assertEq(newfundingRate, -266666666666666); // -0.026667%
 
@@ -326,7 +335,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
     currentFundingRate = newfundingRate; // 0%
     assertEq(newfundingRate, 0); // 0%
 
@@ -373,7 +382,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
     currentFundingRate = newfundingRate;
     assertEq(newfundingRate, 266666666666666); // 0.266667%
 
@@ -420,7 +429,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
     currentFundingRate = newfundingRate;
     assertEq(newfundingRate, 533333333333332); // 0.053333%
 

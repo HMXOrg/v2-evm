@@ -13,6 +13,8 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
+import { console } from "forge-std/console.sol"; // @todo - remove
+
 contract Calculator is Owned, ICalculator {
   uint256 internal constant MAX_RATE = 1e18;
 
@@ -616,100 +618,5 @@ contract Calculator is Owned, ICalculator {
 
     _freeCollateral = equity - imr;
     return _freeCollateral;
-  }
-
-  /**
-   * Funding Rate
-   */
-  /// @notice This function returns the accumulative of funding on selected exposured, LONG or SHORT
-  /// @param _marketIndex Index of market
-  /// @param _isLong Is long
-  /// @return accumFunding The accumulative of funding in value value
-  function getEntryFundingRate(uint256 _marketIndex, bool _isLong) public view returns (int256 accumFunding) {
-    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    return _isLong ? _globalMarket.accumFundingLong : _globalMarket.accumFundingShort;
-  }
-
-  /// @notice This function returns funding fee according to trader's position
-  /// @param _marketIndex Index of market
-  /// @param _isLong Is long or short exposure
-  /// @param _size Position size
-  /// @param _entryFundingRate Extry Funding rate of position
-  /// @return fundingFee Funding fee of position
-  function getFundingFee(
-    uint256 _marketIndex,
-    bool _isLong,
-    int256 _size,
-    int256 _entryFundingRate
-  ) public view returns (int256 fundingFee) {
-    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-
-    if (_size == 0) return 0;
-
-    int256 _fundingRate = _isLong
-      ? _globalMarket.accumFundingLong - _entryFundingRate
-      : _globalMarket.accumFundingShort - _entryFundingRate;
-
-    return (_size * _fundingRate) / 1e18;
-  }
-
-  /// @notice Calculate next funding rate using when increase/decrease position.
-  /// @param marketIndex Market Index.
-  /// @return fundingRate next funding rate using for both LONG & SHORT positions.
-  /// @return fundingRateLong next funding rate for LONG.
-  /// @return fundingRateShort next funding rate for SHORT.
-  function getNextFundingRate(
-    uint256 marketIndex
-  ) public view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
-    GetFundingRateVar memory vars;
-    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(marketIndex);
-    IPerpStorage.GlobalMarket memory globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(marketIndex);
-
-    // Get funding inteval
-    vars.fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
-
-    // If block.timestamp not pass the next funding time, return 0.
-    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
-
-    //@todo - validate timestamp of these
-    (vars.marketPriceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-      marketConfig.assetId,
-      false,
-      marketConfig.priceConfidentThreshold
-    );
-
-    vars.marketSkewUSDE30 =
-      ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
-      int(10 ** marketConfig.exponent);
-
-    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
-    vars.tempMaxValue = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
-    vars.tempMinValue = _min(vars.tempMaxValue, 1e18);
-
-    vars.nextFundingRate = (vars.tempMinValue * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
-    vars.newFundingRate = globalMarket.currentFundingRate + vars.nextFundingRate;
-
-    vars.elaspedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
-
-    if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize) * vars.elaspedIntervals) / 1e30;
-    }
-    if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize) * vars.elaspedIntervals) / 1e30;
-    }
-
-    return (vars.newFundingRate, fundingRateLong, fundingRateShort);
-  }
-
-  /**
-   * Funding Rate
-   */
-
-  function _max(int256 a, int256 b) internal pure returns (int256) {
-    return a > b ? a : b;
-  }
-
-  function _min(int256 a, int256 b) internal pure returns (int256) {
-    return a < b ? a : b;
   }
 }

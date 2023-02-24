@@ -13,8 +13,6 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
-import { console } from "forge-std/console.sol"; // @todo - remove
-
 contract Calculator is Owned, ICalculator {
   uint256 internal constant MAX_RATE = 1e18;
 

@@ -26,7 +26,7 @@ interface IOracleMiddleware {
     uint256 _trustPriceAge
   ) external view returns (uint256 _price, uint256 _lastUpdated, uint8 _status);
 
-  function getLatestMarketPrice(
+  function getLatestAdaptivePrice(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -37,7 +37,7 @@ interface IOracleMiddleware {
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate);
 
-  function unsafeGetLatestMarketPrice(
+  function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -48,7 +48,7 @@ interface IOracleMiddleware {
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate);
 
-  function getLatestMarketPriceWithMarketStatus(
+  function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -59,7 +59,7 @@ interface IOracleMiddleware {
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
 
-  function unsafeGetLatestMarketPriceWithMarketStatus(
+  function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,

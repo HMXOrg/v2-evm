@@ -88,7 +88,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     return (priceE30, lastUpdate, marketStatus);
   }
 
-  function getLatestMarketPrice(
+  function getLatestAdaptivePrice(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -102,7 +102,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     return (priceE30, lastUpdate);
   }
 
-  function unsafeGetLatestMarketPrice(
+  function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -117,7 +117,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     return (p.priceE30, p.lastUpdate);
   }
 
-  function getLatestMarketPriceWithMarketStatus(
+  function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -131,7 +131,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     return (priceE30, lastUpdate, marketStatus);
   }
 
-  function unsafeGetLatestMarketPriceWithMarketStatus(
+  function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,

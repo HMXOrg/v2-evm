@@ -159,7 +159,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate);
   }
 
-  function getLatestMarketPrice(
+  function getLatestAdaptivePrice(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -169,7 +169,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, _lastUpdate) = _getLatestMarketPrice(
+    (_price, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _exponent,
       _isMax,
@@ -183,7 +183,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate);
   }
 
-  function unsafeGetLatestMarketPrice(
+  function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -193,7 +193,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, _lastUpdate) = _getLatestMarketPrice(
+    (_price, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _exponent,
       _isMax,
@@ -207,7 +207,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate);
   }
 
-  function getLatestMarketPriceWithMarketStatus(
+  function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -220,7 +220,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, _lastUpdate) = _getLatestMarketPrice(
+    (_price, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _exponent,
       _isMax,
@@ -234,7 +234,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate, _status);
   }
 
-  function unsafeGetLatestMarketPriceWithMarketStatus(
+  function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,
@@ -247,7 +247,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, _lastUpdate) = _getLatestMarketPrice(
+    (_price, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _exponent,
       _isMax,
@@ -261,7 +261,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate, _status);
   }
 
-  function _getLatestMarketPrice(
+  function _getLatestAdaptivePrice(
     bytes32 _assetId,
     uint256 _exponent,
     bool _isMax,

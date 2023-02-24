@@ -18,6 +18,8 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 contract TradeService is ITradeService {
   using AddressUtils for address;
 
+  uint256 internal constant RATE_PRECISION = 1e18;
+
   // struct
   struct IncreasePositionVars {
     address subAccount;
@@ -197,7 +199,7 @@ contract TradeService is ITradeService {
 
     {
       // calculate the initial margin required for the new position
-      uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / 1e18;
+      uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / RATE_PRECISION;
 
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = ICalculator(IConfigStorage(configStorage).calculator()).getFreeCollateral(
@@ -207,7 +209,7 @@ contract TradeService is ITradeService {
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
 
       // calculate the maximum amount of reserve required for the new position
-      uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / 1e18;
+      uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / RATE_PRECISION;
       // increase the reserved amount by the maximum reserve required for the new position
       increaseReserved(_marketConfig.assetClass, _maxReserve);
       _position.reserveValueE30 += _maxReserve;
@@ -424,8 +426,9 @@ contract TradeService is ITradeService {
         ? int256(_newAbsPositionSizeE30)
         : -int256(_newAbsPositionSizeE30);
       _position.reserveValueE30 =
-        (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) /
-        1e18;
+        (_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction * _marketConfig.maxProfitRate) /
+        RATE_PRECISION /
+        RATE_PRECISION;
       _position.avgEntryPriceE30 = isClosePosition ? 0 : vars.avgEntryPriceE30;
       _position.openInterest = _position.openInterest - _openInterestDelta;
       _position.realizedPnl += _realizedPnl;
@@ -659,7 +662,7 @@ contract TradeService is ITradeService {
     _globalAssetClass.reserveValueE30 += _reservedValue;
 
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
-    if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * 1e18) {
+    if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * RATE_PRECISION) {
       revert ITradeService_InsufficientLiquidity();
     }
 
@@ -791,7 +794,7 @@ contract TradeService is ITradeService {
     // Calculate borrowing rate.
     uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
     // Calculate the borrowing fee based on reserved value, borrowing rate.
-    return (_reservedValue * _borrowingRate) / 1e18;
+    return (_reservedValue * _borrowingRate) / RATE_PRECISION;
   }
 
   /// @notice This function collect fee is collect borrowing fee, funding fee
@@ -892,7 +895,7 @@ contract TradeService is ITradeService {
         }
 
         // Calculate the developer fee amount in the plp token
-        uint256 devFeeToken = (repayFeeToken * _tradingConfig.devFeeRate) / 1e18;
+        uint256 devFeeToken = (repayFeeToken * _tradingConfig.devFeeRate) / RATE_PRECISION;
         // Add the developer fee to the vault
         IVaultStorage(vaultStorage).addDevFee(underlyingToken, devFeeToken);
         // Add the remaining fee amount to the plp liquidity in the vault

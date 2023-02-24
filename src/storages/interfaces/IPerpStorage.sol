@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 interface IPerpStorage {
-  // Collateral
   struct CollateralToken {
     address token;
     bytes32 assetId; // The pyth's asset address to set.
@@ -32,7 +31,9 @@ interface IPerpStorage {
     uint256 shortAvgPrice;
     uint256 shortOpenInterest;
     // funding rate
-    uint256 fundingRate;
+    int256 accumFundingLong;
+    int256 accumFundingShort;
+    int256 currentFundingRate;
     uint256 lastFundingTime;
   }
 
@@ -45,7 +46,7 @@ interface IPerpStorage {
     uint256 marketIndex;
     uint256 avgEntryPriceE30;
     uint256 entryBorrowingRate;
-    uint256 entryFundingRate;
+    int256 entryFundingRate;
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     uint256 openInterest;
@@ -102,4 +103,6 @@ interface IPerpStorage {
   function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
 
   function updateSubAccountFee(address _subAccount, uint256 fee) external;
+
+  function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external;
 }

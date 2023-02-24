@@ -202,7 +202,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _marketSkew,
       _sizeDelta,
       _maxSkewScaleUSD,
-      true
+      false
     );
     return (_price, _lastUpdate);
   }
@@ -256,7 +256,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _marketSkew,
       _sizeDelta,
       _maxSkewScaleUSD,
-      true
+      false
     );
     return (_price, _lastUpdate, _status);
   }

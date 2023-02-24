@@ -13,8 +13,6 @@ import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
-import { console } from "forge-std/console.sol";
-
 // @todo - refactor, deduplicate code
 
 contract TradeService is ITradeService {
@@ -470,8 +468,10 @@ contract TradeService is ITradeService {
       30 // trust price age (seconds) todo: from market config
     );
 
+    uint256 _decimals = IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals;
+
     // calculate token trader should received
-    uint256 _tpTokenOut = (_realizedProfitE30 * 1e18) / _tpTokenPrice; // @todo - token decimal
+    uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
 
     // @todo - should it be
     uint256 _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
@@ -481,7 +481,7 @@ contract TradeService is ITradeService {
       IConfigStorage(configStorage).getLiquidityConfig(),
       IConfigStorage(configStorage).getPlpTokenConfigs(address(0))
     );
-    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18; // @todo - token decimal
+    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / (10 ** _decimals);
 
     IVaultStorage(vaultStorage).removePLPLiquidity(_token, _tpTokenOut);
     IVaultStorage(vaultStorage).addFee(_token, _settlementFee);
@@ -510,7 +510,6 @@ contract TradeService is ITradeService {
 
       // Sub-account plp collateral
       _collateral = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
-      console.log("_collateral", _collateral);
 
       // continue settle when sub-account has collateral, else go to check next token
       if (_collateral != 0) {
@@ -523,12 +522,10 @@ contract TradeService is ITradeService {
         );
 
         _collateralUsd = (_collateral * _price) / (10 ** _decimals);
-        console.log("_collateralUsd", _collateralUsd);
 
         if (_collateralUsd >= _debtUsd) {
           // When this collateral token can cover all the debt, use this token to pay it all
           _collateralToRemove = (_debtUsd * (10 ** _decimals)) / _price;
-          console.log("_collateralToRemove1", _collateralToRemove);
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
@@ -537,8 +534,7 @@ contract TradeService is ITradeService {
           break;
         } else {
           // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
-          _collateralToRemove = (_collateralUsd * (10 ** _decimals)) / _price; // @todo - token decimal
-          console.log("_collateralToRemove2", _collateralToRemove);
+          _collateralToRemove = (_collateralUsd * (10 ** _decimals)) / _price;
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);

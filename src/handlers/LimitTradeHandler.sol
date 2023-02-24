@@ -73,6 +73,18 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   );
 
   /**
+   * Structs
+   */
+
+  struct ExecuteOrderVars {
+    LimitOrder order;
+    address subAccount;
+    bytes32 positionId;
+    bool positionIsLong;
+    bool isNewPosition;
+  }
+
+  /**
    * Constants
    */
   uint8 internal constant BUY = 0;
@@ -197,14 +209,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     address payable _feeReceiver,
     bytes[] memory _priceData
   ) external nonReentrant onlyOrderExecutor {
-    address _subAccount = _getSubAccount(_account, _subAccountId);
-    LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
+    ExecuteOrderVars memory vars;
+
+    vars.subAccount = _getSubAccount(_account, _subAccountId);
+    vars.order = limitOrders[vars.subAccount][_orderIndex];
 
     // Delete this executed order from the list
-    delete limitOrders[_subAccount][_orderIndex];
+    delete limitOrders[vars.subAccount][_orderIndex];
 
     // Check if this order still exists
-    if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+    if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
     // slither-disable-next-line arbitrary-send-eth
@@ -212,120 +226,126 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = validatePositionOrderPrice(
-      _order.triggerAboveThreshold,
-      _order.triggerPrice,
-      _order.marketIndex,
-      _order.sizeDelta > 0,
+      vars.order.triggerAboveThreshold,
+      vars.order.triggerPrice,
+      vars.order.marketIndex,
+      vars.order.sizeDelta > 0,
       true
     );
 
     // Retrieve existing position
-    bytes32 _positionId = _getPositionId(_subAccount, _order.marketIndex);
+    vars.positionId = _getPositionId(vars.subAccount, vars.order.marketIndex);
     IPerpStorage.Position memory _existingPosition = IPerpStorage(ITradeService(tradeService).perpStorage())
-      .getPositionById(_positionId);
-    bool _positionIsLong = _existingPosition.positionSizeE30 > 0;
-    bool _isNewPosition = _existingPosition.positionSizeE30 == 0;
+      .getPositionById(vars.positionId);
+    vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
+    vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
     // Execute the order
-    if (_order.sizeDelta > 0) {
+    if (vars.order.sizeDelta > 0) {
       // BUY
-      if (_isNewPosition || _positionIsLong) {
+      if (vars.isNewPosition || vars.positionIsLong) {
         // New position and Long position
         // just increase position when BUY
         ITradeService(tradeService).increasePosition({
           _primaryAccount: _account,
           _subAccountId: _subAccountId,
-          _marketIndex: _order.marketIndex,
-          _sizeDelta: _order.sizeDelta
+          _marketIndex: vars.order.marketIndex,
+          _sizeDelta: vars.order.sizeDelta
         });
-      } else if (!_positionIsLong) {
-        bool _flipSide = !_order.reduceOnly && _order.sizeDelta > (-_existingPosition.positionSizeE30);
+      } else if (!vars.positionIsLong) {
+        bool _flipSide = !vars.order.reduceOnly && vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
         if (_flipSide) {
           // Flip the position
           // Fully close Short position
           ITradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
+            _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
-            _tpToken: _order.tpToken
+            _tpToken: vars.order.tpToken
           });
           // Flip it to Long position
           ITradeService(tradeService).increasePosition({
             _primaryAccount: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _sizeDelta: _order.sizeDelta + _existingPosition.positionSizeE30
+            _marketIndex: vars.order.marketIndex,
+            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30
           });
         } else {
           // Not flip
           ITradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: _min(uint256(_order.sizeDelta), uint256(-_existingPosition.positionSizeE30)),
-            _tpToken: _order.tpToken
+            _marketIndex: vars.order.marketIndex,
+            _positionSizeE30ToDecrease: _min(
+              uint256(vars.order.sizeDelta),
+              uint256(-_existingPosition.positionSizeE30)
+            ),
+            _tpToken: vars.order.tpToken
           });
         }
       }
-    } else if (_order.sizeDelta < 0) {
+    } else if (vars.order.sizeDelta < 0) {
       // SELL
-      if (_isNewPosition || !_positionIsLong) {
+      if (vars.isNewPosition || !vars.positionIsLong) {
         // New position and Short position
         // just increase position when SELL
         ITradeService(tradeService).increasePosition({
           _primaryAccount: _account,
           _subAccountId: _subAccountId,
-          _marketIndex: _order.marketIndex,
-          _sizeDelta: _order.sizeDelta
+          _marketIndex: vars.order.marketIndex,
+          _sizeDelta: vars.order.sizeDelta
         });
-      } else if (_positionIsLong) {
-        bool _flipSide = !_order.reduceOnly && (-_order.sizeDelta) > _existingPosition.positionSizeE30;
+      } else if (vars.positionIsLong) {
+        bool _flipSide = !vars.order.reduceOnly && (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
         if (_flipSide) {
           // Flip the position
           // Fully close Long position
           ITradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
+            _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
-            _tpToken: _order.tpToken
+            _tpToken: vars.order.tpToken
           });
           // Flip it to Short position
           ITradeService(tradeService).increasePosition({
             _primaryAccount: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _sizeDelta: _order.sizeDelta + _existingPosition.positionSizeE30
+            _marketIndex: vars.order.marketIndex,
+            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30
           });
         } else {
           // Not flip
           ITradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
-            _marketIndex: _order.marketIndex,
-            _positionSizeE30ToDecrease: _min(uint256(-_order.sizeDelta), uint256(_existingPosition.positionSizeE30)),
-            _tpToken: _order.tpToken
+            _marketIndex: vars.order.marketIndex,
+            _positionSizeE30ToDecrease: _min(
+              uint256(-vars.order.sizeDelta),
+              uint256(_existingPosition.positionSizeE30)
+            ),
+            _tpToken: vars.order.tpToken
           });
         }
       }
     }
 
     // Pay the executor
-    _transferOutETH(_order.executionFee, _feeReceiver);
+    _transferOutETH(vars.order.executionFee, _feeReceiver);
 
     emit LogExecuteLimitOrder(
       _account,
       _subAccountId,
       _orderIndex,
-      _order.marketIndex,
-      _order.sizeDelta,
-      _order.triggerPrice,
-      _order.triggerAboveThreshold,
-      _order.executionFee,
+      vars.order.marketIndex,
+      vars.order.sizeDelta,
+      vars.order.triggerPrice,
+      vars.order.triggerAboveThreshold,
+      vars.order.executionFee,
       _currentPrice,
-      _order.reduceOnly,
-      _order.tpToken
+      vars.order.reduceOnly,
+      vars.order.tpToken
     );
   }
 

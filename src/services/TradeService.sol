@@ -485,7 +485,7 @@ contract TradeService is ITradeService {
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
-
+// @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
           // update debtUsd
           unchecked {
             _debtUsd = _debtUsd - _collateralUsd;

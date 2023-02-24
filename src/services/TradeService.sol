@@ -217,7 +217,7 @@ contract TradeService is ITradeService {
 
     {
       // calculate the change in open interest for the new position
-      uint256 _changedOpenInterest = (_absSizeDelta * (10 ** _marketConfig.exponent)) / vars.priceE30; // @todo - use decimal asset
+      uint256 _changedOpenInterest = (_absSizeDelta * (10 ** _marketConfig.exponent)) / vars.priceE30;
       _position.openInterest += _changedOpenInterest;
 
       // update gobal market state

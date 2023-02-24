@@ -272,10 +272,9 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool isSafe
   ) private view returns (uint256 _price, uint256 _lastUpdate) {
     // Get price from Pyth
-    (_price, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _confidenceThreshold);
-
-    // check price age
-    if (isSafe && block.timestamp - _lastUpdate > _trustPriceAge) revert IOracleMiddleware_PythPriceStale();
+    (_price, _lastUpdate) = isSafe
+      ? _getLatestPrice(_assetId, _isMax, _confidenceThreshold, _trustPriceAge)
+      : _unsafeGetLatestPrice(_assetId, _isMax, _confidenceThreshold);
 
     // Apply premium/discount
     _price = _calculateAdaptivePrice(_price, _exponent, _marketSkew, _sizeDelta, _maxSkewScaleUSD);

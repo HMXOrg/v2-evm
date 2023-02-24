@@ -33,6 +33,7 @@ contract TradingStaking is Owned, ReentrancyGuard {
   IERC20 public rewardToken;
   PoolInfo[] public poolInfo;
   uint256[] public marketIndices;
+  mapping(uint256 => uint256) public poolIdByMarketIndex;
   mapping(uint256 => uint256) public stakingSizeByMarketIndex;
   IRewarder[] public rewarder;
   mapping(uint256 => bool) public isAcceptedMarketIndex;
@@ -93,6 +94,7 @@ contract TradingStaking is Owned, ReentrancyGuard {
     marketIndices.push(_marketIndex);
     rewarder.push(_rewarder);
     isAcceptedMarketIndex[_marketIndex] = true;
+    poolIdByMarketIndex[marketIndices.length - 1] = _marketIndex;
 
     if (address(_rewarder) != address(0)) {
       // Sanity check that the rewarder is a valid IRewarder.

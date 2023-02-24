@@ -457,6 +457,8 @@ contract TradeService is ITradeService {
     // check sub account equity is under MMR
     _subAccountHealthCheck(vars.subAccount);
 
+    _decreasePositionHooks(_account, _subAccountId, _marketIndex, _positionSizeE30ToDecrease);
+
     emit LogDecreasePosition(vars.positionId, _positionSizeE30ToDecrease);
   }
 
@@ -1020,6 +1022,20 @@ contract TradeService is ITradeService {
   ) internal {
     for (uint256 i; i < hooks.length; ) {
       ITradeServiceHook(hooks[i]).onIncreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _decreasePositionHooks(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sizeDelta
+  ) internal {
+    for (uint256 i; i < hooks.length; ) {
+      ITradeServiceHook(hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
       unchecked {
         ++i;
       }

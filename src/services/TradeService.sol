@@ -460,8 +460,7 @@ contract TradeService is ITradeService {
 
       // continue settle when sub-account has collateral, else go to check next token
       if (_collateral != 0) {
-        // get latest price without price stale checking
-        // @todo - more information why we use unsafe
+        // Retrieve the latest price and confident threshold of the plp token
         (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
           _token.toBytes32(),
           false,

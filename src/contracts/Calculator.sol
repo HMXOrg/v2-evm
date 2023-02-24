@@ -276,14 +276,14 @@ contract Calculator is Owned, ICalculator {
   }
 
   /// @notice get settlement fee rate
-  /// @param _plpToken - token pool
+  /// @param _token - token
   /// @param _liquidityUsdDelta - withdrawal amount
   function getSettlementFeeRate(
-    address _plpToken,
+    address _token,
     uint256 _liquidityUsdDelta
   ) external returns (uint256 _settlementFeeRate) {
     // usd debt
-    uint256 _tokenLiquidityUsd = IVaultStorage(vaultStorage).plpLiquidityUSDE30(_plpToken);
+    uint256 _tokenLiquidityUsd = IVaultStorage(vaultStorage).plpLiquidityUSDE30(_token);
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
@@ -292,8 +292,8 @@ contract Calculator is Owned, ICalculator {
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
-    uint256 _targetUsd = (_totalLiquidityUsd *
-      IConfigStorage(configStorage).getPLPTokenConfig(_plpToken).targetWeight) / _liquidityConfig.plpTotalTokenWeight;
+    uint256 _targetUsd = (_totalLiquidityUsd * IConfigStorage(configStorage).getPLPTokenConfig(_token).targetWeight) /
+      _liquidityConfig.plpTotalTokenWeight;
 
     if (_targetUsd == 0) return 0;
 

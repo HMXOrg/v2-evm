@@ -84,5 +84,5 @@ interface ICalculator {
   /// @return _mmrValueE30 Total mmr of trader's account
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
 
-  function getSettlementFeeRate(address _plpToken, uint256 _liquidityUsdDelta) external returns (uint256);
+  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
 }

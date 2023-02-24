@@ -471,6 +471,7 @@ contract TradeService is ITradeService {
         _collateralUsd = (_collateral * _price) / 1e18; // @todo - token decimal
 
         if (_collateralUsd >= _debtUsd) {
+          // When this collateral token can cover all the debt, use this token to pay it all
           _collateralToRemove = (_debtUsd * 1e18) / _price; // @todo - token decimal
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);

@@ -11,7 +11,7 @@ import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
-import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { ITradeServiceHook } from "./interfaces/ITradeServiceHook.sol";
 
 // @todo - refactor, deduplicate code
 
@@ -37,6 +37,7 @@ contract TradeService is ITradeService {
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
+  address[] public hooks;
 
   constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
     // @todo - sanity check
@@ -210,6 +211,8 @@ contract TradeService is ITradeService {
 
     // save the updated position to the storage
     IPerpStorage(perpStorage).savePosition(_subAccount, _posId, _position);
+
+    _increasePositionHooks(_primaryAccount, _subAccountId, _marketIndex, _absSizeDelta);
   }
 
   // @todo - rewrite description
@@ -907,5 +910,19 @@ contract TradeService is ITradeService {
     _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
 
     return _nextAveragePrice;
+  }
+
+  function _increasePositionHooks(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sizeDelta
+  ) internal {
+    for (uint256 i; i < hooks.length; ) {
+      ITradeServiceHook(hooks[i]).onIncreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
+      unchecked {
+        ++i;
+      }
+    }
   }
 }

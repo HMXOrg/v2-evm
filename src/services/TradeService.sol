@@ -179,6 +179,7 @@ contract TradeService is ITradeService {
       // calculate the change in open interest for the new position
       uint256 _changedOpenInterest = (_absSizeDelta * 1e18) / _priceE30; // @todo - use decimal asset
       _position.openInterest += _changedOpenInterest;
+      _position.lastIncreaseTimestamp = block.timestamp;
 
       // update gobal market state
       if (_isLong) {

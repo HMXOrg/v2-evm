@@ -480,7 +480,7 @@ contract TradeService is ITradeService {
           // In this case, all debt are paid. We can break the loop right away.
           break;
         } else {
-          // pay all collateral
+          // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
           _collateralToRemove = (_collateralUsd * 1e18) / _price; // @todo - token decimal
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);

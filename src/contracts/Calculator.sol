@@ -275,6 +275,52 @@ contract Calculator is Owned, ICalculator {
     return _feeRate + _taxRate;
   }
 
+  // @todo - rewrite
+  function getSettlementFeeRate(
+    uint256 _value,
+    uint256 _liquidityUSD, //e30
+    uint256 _totalLiquidityUSD, //e30
+    IConfigStorage.LiquidityConfig memory _liquidityConfig,
+    IConfigStorage.PLPTokenConfig memory _plpTokenConfig
+  ) external pure returns (uint256) {
+    uint256 _taxRate = _liquidityConfig.taxFeeRate;
+    uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
+
+    uint256 startValue = _liquidityUSD;
+    uint256 nextValue = startValue - _value;
+    // if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
+
+    uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
+    if (targetValue == 0) return _taxRate;
+
+    uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
+
+    uint256 nextTargetDiff = nextValue > targetValue ? nextValue - targetValue : targetValue - nextValue;
+
+    // nextValue moves closer to the targetValue -> positive case;
+    // Should apply rebate.
+    if (nextTargetDiff < startTargetDiff) {
+      return 0;
+    }
+
+    // @todo - move this to service
+    uint256 _nextWeight = (nextValue * 1e18) / targetValue;
+    // if weight exceed targetWeight(e18) + maxWeight(e18)
+    if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
+      revert ICalculator_PoolImbalance();
+    }
+
+    // If not then -> negative impact to the pool.
+    // Should apply tax.
+    uint256 midDiff = (startTargetDiff + nextTargetDiff) / 2;
+    if (midDiff > targetValue) {
+      midDiff = targetValue;
+    }
+    _taxRate = (_taxRate * midDiff) / targetValue;
+
+    return _taxRate;
+  }
+
   // return in e18
   function _getTargetValue(
     uint256 totalLiquidityUSD, //e18

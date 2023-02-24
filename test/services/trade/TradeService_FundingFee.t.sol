@@ -284,8 +284,8 @@ contract TradeService_FudningFee is TradeService_Base {
 
     vm.warp(150);
     {
-      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 2_000_000 * 1e30);
-      tradeService.decreasePosition(BOB, 0, btcMarketIndex, 100_000 * 1e30);
+      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 2_000_000 * 1e30, address(0));
+      tradeService.decreasePosition(BOB, 0, btcMarketIndex, 100_000 * 1e30, address(0));
 
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 270000 / 1000000 * (150 - 110) = 0.00108 | 0.000135 + 0.00108 = 0.001215

@@ -128,6 +128,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _aum = _calculator.getAUM(false);
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
 
+    // lp value to remove
     uint256 _lpUsdValue = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
 
     uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _amount, _lpProvider, _minAmount);

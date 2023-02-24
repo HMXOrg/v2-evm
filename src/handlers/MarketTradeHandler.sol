@@ -91,12 +91,14 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @param _subAccountId Trader's sub account id.
   /// @param _marketIndex Market index.
   /// @param _buySizeE30 Buying size in e30 format.
+  /// @param _tpToken Take profit token
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
   function buy(
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
+    address _tpToken,
     bytes[] memory _priceData
   ) external nonReentrant {
     if (_buySizeE30 == 0) {
@@ -145,7 +147,13 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     // 2. Decrease the short position first
     if (_shortDecreasingSizeE30 > 0) {
-      ITradeService(tradeService).decreasePosition(_account, _subAccountId, _marketIndex, _shortDecreasingSizeE30);
+      ITradeService(tradeService).decreasePosition(
+        _account,
+        _subAccountId,
+        _marketIndex,
+        _shortDecreasingSizeE30,
+        _tpToken
+      );
     }
 
     // 3. Then, increase the long position
@@ -167,12 +175,14 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @param _subAccountId Trader's sub account id.
   /// @param _marketIndex Market index.
   /// @param _sellSizeE30 Buying size in e30 format.
+  /// @param _tpToken Take profit token
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
   function sell(
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex,
     uint256 _sellSizeE30,
+    address _tpToken,
     bytes[] memory _priceData
   ) external nonReentrant {
     if (_sellSizeE30 == 0) {
@@ -221,7 +231,13 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     // 2. Decrease the long position first
     if (_longDecreasingSizeE30 > 0) {
-      ITradeService(tradeService).decreasePosition(_account, _subAccountId, _marketIndex, _longDecreasingSizeE30);
+      ITradeService(tradeService).decreasePosition(
+        _account,
+        _subAccountId,
+        _marketIndex,
+        _longDecreasingSizeE30,
+        _tpToken
+      );
     }
 
     // 3. Then, increase the short position

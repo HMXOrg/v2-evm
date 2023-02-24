@@ -21,6 +21,24 @@ interface ITradeService {
   error ITradeService_InsufficientLiquidity();
   error ITradeService_InsufficientFreeCollateral();
 
+  /**
+   * STRUCTS
+   */
+  struct SettleFeeVar {
+    int256 feeUsd;
+    uint256 absFeeUsd;
+    address[] plpUnderlyingTokens;
+    address underlyingToken;
+    uint256 underlyingTokenDecimal;
+    uint256 traderBalance;
+    uint256 tradingFee;
+    uint256 price;
+    uint256 feeTokenAmount;
+    uint256 balanceValue;
+    uint256 repayFeeTokenAmount;
+    uint256 devFeeTokenAmount;
+  }
+
   function configStorage() external view returns (address);
 
   function perpStorage() external view returns (address);

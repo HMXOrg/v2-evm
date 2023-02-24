@@ -684,12 +684,12 @@ contract TradeService is ITradeService {
     int256 _entryFundingRate
   ) public {
     // Get the debt fee of the sub-account
-    uint256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
+    int256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
 
     // Calculate the borrowing fee
     uint256 borrowingFee = getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
     // Accumulate fee
-    feeUsd += borrowingFee;
+    feeUsd += int(borrowingFee);
     emit CollectBorrowingFee(_subAccount, _assetClassIndex, _reservedValue);
 
     // Calculate the borrowing fee
@@ -703,11 +703,7 @@ contract TradeService is ITradeService {
     );
 
     // Accumulate fee
-    if (fundingFee > 0) {
-      feeUsd += uint256(fundingFee);
-    } else {
-      feeUsd -= uint256(-fundingFee);
-    }
+    feeUsd += fundingFee;
 
     emit CollectFundingFee(_subAccount, _marketIndex, isLong, _positionSizeE30, _entryFundingRate, fundingFee);
 
@@ -718,65 +714,114 @@ contract TradeService is ITradeService {
   /// @notice Settles the fees for a given sub-account.
   /// @param _subAccount The address of the sub-account to settle fees for.
   function settleFee(address _subAccount) public {
+    SettleFeeVar memory vars;
+    address _vaultStorage = vaultStorage;
+    address _perpStorage = perpStorage;
+    address _configStorage = configStorage;
+
     // Retrieve the debt fee amount for the sub-account
-    uint256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
+    vars.feeUsd = IPerpStorage(_perpStorage).getSubAccountFee(_subAccount);
+
     // If there's no fee to settle, return early
-    if (feeUsd == 0) return;
+    if (vars.feeUsd == 0) return;
+
+    vars.absFeeUsd = vars.feeUsd > 0 ? uint256(vars.feeUsd) : uint256(-vars.feeUsd);
 
     // Retrieve the trading configuration and list of plp tokens
-    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
-    address[] memory _plpUnderlyingTokens = IConfigStorage(configStorage).getPlpTokens();
+    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(_configStorage).getTradingConfig();
+    vars.plpUnderlyingTokens = IConfigStorage(_configStorage).getPlpTokens();
 
-    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(configStorage).oracle());
+    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(_configStorage).oracle());
+
     // Loop through all the plp tokens for the sub-account
-    for (uint256 i = 0; i < _plpUnderlyingTokens.length; ) {
-      address underlyingToken = _plpUnderlyingTokens[i];
-      uint256 underlyingTokenDecimal = ERC20(underlyingToken).decimals();
+    for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
+      vars.underlyingToken = vars.plpUnderlyingTokens[i];
+      vars.underlyingTokenDecimal = ERC20(vars.underlyingToken).decimals();
+
       // Retrieve the balance of the plp token for the sub-account
-      uint256 balance = IVaultStorage(vaultStorage).traderBalances(_subAccount, underlyingToken);
+      vars.traderBalance = IVaultStorage(_vaultStorage).traderBalances(_subAccount, vars.underlyingToken);
+      vars.tradingFee = IVaultStorage(_vaultStorage).tradingFee(vars.underlyingToken);
 
-      // If the sub-account has a balance of the plp token
-      if (balance != 0) {
-        // Retrieve the latest price and confident threshold of the plp token
-        (uint256 price, ) = oracle.getLatestPrice(
-          underlyingToken.toBytes32(),
-          false,
-          IConfigStorage(configStorage).getMarketConfigByToken(underlyingToken).priceConfidentThreshold,
-          30
-        );
+      // Retrieve the latest price and confident threshold of the plp token
+      (vars.price, ) = oracle.getLatestPrice(
+        vars.underlyingToken.toBytes32(),
+        false,
+        IConfigStorage(_configStorage).getMarketConfigByToken(vars.underlyingToken).priceConfidentThreshold,
+        30
+      );
 
-        // Calculate the fee amount in the plp token
-        uint256 _feeToken = (feeUsd * (10 ** underlyingTokenDecimal)) / price;
-        // Calculate the balance value of the plp token in USD
-        uint256 _balanceValue = (balance * price) / (10 ** underlyingTokenDecimal);
-        uint256 repayFeeToken = 0;
+      // feeUSD > 0 means trader must pay fee to protocal
+      if (vars.feeUsd > 0) {
+        // If the sub-account has a balance of the plp token
+        if (vars.traderBalance != 0) {
+          // Calculate the fee amount in the plp token
+          vars.feeTokenAmount = (vars.absFeeUsd * (10 ** vars.underlyingTokenDecimal)) / vars.price;
+          // Calculate the balance value of the plp token in USD
+          vars.balanceValue = (vars.traderBalance * vars.price) / (10 ** vars.underlyingTokenDecimal);
+          vars.repayFeeTokenAmount = 0;
 
-        // Repay the fee amount and subtract it from the balance
-        if (balance > _feeToken) {
-          unchecked {
-            repayFeeToken = _feeToken;
-            balance -= _feeToken;
-            feeUsd = 0;
+          // Repay the fee amount and subtract it from the balance
+          if (vars.traderBalance > vars.feeTokenAmount) {
+            unchecked {
+              vars.repayFeeTokenAmount = vars.feeTokenAmount;
+              vars.traderBalance -= vars.feeTokenAmount;
+              vars.absFeeUsd = 0;
+            }
+          } else {
+            unchecked {
+              vars.repayFeeTokenAmount = vars.traderBalance;
+              vars.traderBalance = 0;
+              vars.absFeeUsd -= vars.balanceValue;
+            }
           }
-        } else {
-          unchecked {
-            repayFeeToken = balance;
-            balance = 0;
-            feeUsd -= _balanceValue;
-          }
+
+          // Calculate the developer fee amount in the plp token
+          vars.devFeeTokenAmount = (vars.repayFeeTokenAmount * _tradingConfig.devFeeRate) / 1e18;
+          // Add the developer fee to the vault
+          IVaultStorage(_vaultStorage).addDevFee(vars.underlyingToken, vars.devFeeTokenAmount);
+          // Add the remaining fee amount to the plp liquidity in the vault
+          IVaultStorage(_vaultStorage).addTradingFee(
+            vars.underlyingToken,
+            vars.repayFeeTokenAmount - vars.devFeeTokenAmount
+          );
+          // Update the sub-account balance for the plp token in the vault
+          IVaultStorage(_vaultStorage).setTraderBalance(_subAccount, vars.underlyingToken, vars.traderBalance);
         }
+      }
+      // feeUSD < 0 means protocal must pay fee to trader
+      else if (vars.feeUsd < 0) {
+        if (vars.tradingFee != 0) {
+          // Calculate the fee amount in the plp token
+          vars.feeTokenAmount = (vars.absFeeUsd * (10 ** vars.underlyingTokenDecimal)) / vars.price;
 
-        // Calculate the developer fee amount in the plp token
-        uint256 devFeeToken = (repayFeeToken * _tradingConfig.devFeeRate) / 1e18;
-        // Add the developer fee to the vault
-        IVaultStorage(vaultStorage).addDevFee(underlyingToken, devFeeToken);
-        // Add the remaining fee amount to the plp liquidity in the vault
-        IVaultStorage(vaultStorage).addPLPLiquidity(underlyingToken, repayFeeToken - devFeeToken);
-        // Update the sub-account balance for the plp token in the vault
-        IVaultStorage(vaultStorage).setTraderBalance(_subAccount, underlyingToken, balance);
+          if (vars.tradingFee > vars.feeTokenAmount) {
+            // trading fee token has enoung amount to repay fee to trader
+            unchecked {
+              vars.repayFeeTokenAmount = vars.feeTokenAmount;
+              vars.traderBalance += vars.feeTokenAmount;
+              vars.absFeeUsd = 0;
+            }
+          } else {
+            // trading fee token has not enoung amount to repay fee to trader
+            unchecked {
+              vars.repayFeeTokenAmount = vars.feeTokenAmount;
+              vars.traderBalance += vars.feeTokenAmount;
+              vars.absFeeUsd = 0;
+            }
+          }
+
+          // Calculate the developer fee amount in the plp token
+          vars.devFeeTokenAmount = (vars.repayFeeTokenAmount * _tradingConfig.devFeeRate) / 1e18;
+          // Add the developer fee to the vault
+          IVaultStorage(_vaultStorage).addDevFee(vars.underlyingToken, vars.devFeeTokenAmount);
+          // Remove fee amount to trading fee in the vault
+          IVaultStorage(_vaultStorage).removeTradingFee(vars.underlyingToken, vars.repayFeeTokenAmount);
+          // Update the sub-account balance for the plp token in the vault
+          IVaultStorage(_vaultStorage).setTraderBalance(_subAccount, vars.underlyingToken, vars.traderBalance);
+        }
       }
 
-      if (feeUsd == 0) {
+      if (vars.absFeeUsd == 0) {
         break;
       }
 
@@ -788,7 +833,7 @@ contract TradeService is ITradeService {
     }
 
     // Update the fee amount for the sub-account in the PerpStorage contract
-    IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);
+    IPerpStorage(_perpStorage).updateSubAccountFee(_subAccount, int(vars.absFeeUsd));
   }
 
   /// @notice get next short average price with realized PNL

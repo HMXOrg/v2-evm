@@ -23,6 +23,7 @@ interface ILimitTradeHandler {
    */
   struct LimitOrder {
     address account;
+    address tpToken;
     bool triggerAboveThreshold;
     bool reduceOnly;
     int256 sizeDelta;
@@ -51,7 +52,8 @@ interface ILimitTradeHandler {
     uint256 _triggerPrice,
     bool _triggerAboveThreshold,
     uint256 _executionFee,
-    bool _reduceOnly
+    bool _reduceOnly,
+    address _tpToken
   ) external payable;
 
   function executeOrder(
@@ -70,7 +72,8 @@ interface ILimitTradeHandler {
     int256 _sizeDelta,
     uint256 _triggerPrice,
     bool _triggerAboveThreshold,
-    bool _reduceOnly
+    bool _reduceOnly,
+    address _tpToken
   ) external;
 
   function validatePositionOrderPrice(

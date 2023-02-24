@@ -486,6 +486,8 @@ contract TradeService is ITradeService {
     IVaultStorage(vaultStorage).removePLPLiquidity(_token, _tpTokenOut);
     IVaultStorage(vaultStorage).addFee(_token, _settlementFee);
     IVaultStorage(vaultStorage).increaseTraderBalance(_subAccount, _token, _tpTokenOut - _settlementFee);
+
+    // @todo - emit LogSettleProfit(trader, collateralToken, addedAmount, settlementFee)
   }
 
   /// @notice settle loss
@@ -508,30 +510,32 @@ contract TradeService is ITradeService {
 
       // continue settle when sub-account has collateral, else go to check next token
       if (_collateral != 0) {
-        // get latest price without price stale checking
-        // @todo - more information why we use unsafe
-        (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+        // Retrieve the latest price and confident threshold of the plp token
+        (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
           _token.toBytes32(),
           false,
-          IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold
+          IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
+          30 // @todo - should from config
         );
 
         _collateralUsd = (_collateral * _price) / 1e18; // @todo - token decimal
 
         if (_collateralUsd >= _debtUsd) {
+          // When this collateral token can cover all the debt, use this token to pay it all
           _collateralToRemove = (_debtUsd * 1e18) / _price; // @todo - token decimal
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
-
+          // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
+          // In this case, all debt are paid. We can break the loop right away.
           break;
         } else {
-          // pay all collateral
+          // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
           _collateralToRemove = (_collateralUsd * 1e18) / _price; // @todo - token decimal
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
-
+          // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
           // update debtUsd
           unchecked {
             _debtUsd = _debtUsd - _collateralUsd;
@@ -860,7 +864,7 @@ contract TradeService is ITradeService {
           underlyingToken.toBytes32(),
           false,
           IConfigStorage(configStorage).getMarketConfigByToken(underlyingToken).priceConfidentThreshold,
-          30
+          30 // @todo - should from config
         );
 
         // Calculate the fee amount in the plp token

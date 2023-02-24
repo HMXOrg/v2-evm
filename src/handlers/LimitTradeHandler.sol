@@ -33,7 +33,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 triggerPrice,
     bool triggerAboveThreshold,
     uint256 executionFee,
-    bool reduceOnly
+    bool reduceOnly,
+    address tpToken
   );
   event LogExecuteLimitOrder(
     address indexed account,
@@ -45,7 +46,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool triggerAboveThreshold,
     uint256 executionFee,
     uint256 executionPrice,
-    bool reduceOnly
+    bool reduceOnly,
+    address tpToken
   );
   event LogUpdateLimitOrder(
     address indexed account,
@@ -54,7 +56,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     int256 sizeDelta,
     uint256 triggerPrice,
     bool triggerAboveThreshold,
-    bool reduceOnly
+    bool reduceOnly,
+    address tpToken
   );
   event LogCancelLimitOrder(
     address indexed account,
@@ -65,7 +68,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 triggerPrice,
     bool triggerAboveThreshold,
     uint256 executionFee,
-    bool reduceOnly
+    bool reduceOnly,
+    address tpToken
   );
 
   /**
@@ -130,6 +134,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _triggerAboveThreshold The current price must go above/below the trigger price for the order to be executed
   /// @param _executionFee The execution fee of this limit order
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
+  /// @param _tpToken Take profit token, when trader has profit
   function createOrder(
     uint256 _subAccountId,
     uint256 _marketIndex,
@@ -137,7 +142,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 _triggerPrice,
     bool _triggerAboveThreshold,
     uint256 _executionFee,
-    bool _reduceOnly
+    bool _reduceOnly,
+    address _tpToken
   ) external payable nonReentrant {
     // Check if exectuion fee is lower than minExecutionFee, then it's too low. We won't allow it.
     if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
@@ -156,7 +162,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       triggerPrice: _triggerPrice,
       triggerAboveThreshold: _triggerAboveThreshold,
       executionFee: _executionFee,
-      reduceOnly: _reduceOnly
+      reduceOnly: _reduceOnly,
+      tpToken: _tpToken
     });
 
     // Insert the limit order into the list
@@ -172,7 +179,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _triggerPrice,
       _triggerAboveThreshold,
       _executionFee,
-      _reduceOnly
+      _reduceOnly,
+      _tpToken
     );
   }
 
@@ -241,7 +249,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: _order.marketIndex,
             _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
-            _tpToken: address(0)
+            _tpToken: _order.tpToken
           });
           // Flip it to Long position
           ITradeService(tradeService).increasePosition({
@@ -257,7 +265,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: _order.marketIndex,
             _positionSizeE30ToDecrease: _min(uint256(_order.sizeDelta), uint256(-_existingPosition.positionSizeE30)),
-            _tpToken: address(0)
+            _tpToken: _order.tpToken
           });
         }
       }
@@ -282,7 +290,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: _order.marketIndex,
             _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
-            _tpToken: address(0)
+            _tpToken: _order.tpToken
           });
           // Flip it to Short position
           ITradeService(tradeService).increasePosition({
@@ -298,7 +306,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: _order.marketIndex,
             _positionSizeE30ToDecrease: _min(uint256(-_order.sizeDelta), uint256(_existingPosition.positionSizeE30)),
-            _tpToken: address(0)
+            _tpToken: _order.tpToken
           });
         }
       }
@@ -317,7 +325,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _order.triggerAboveThreshold,
       _order.executionFee,
       _currentPrice,
-      _order.reduceOnly
+      _order.reduceOnly,
+      _order.tpToken
     );
   }
 
@@ -345,7 +354,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _order.triggerPrice,
       _order.triggerAboveThreshold,
       _order.executionFee,
-      _order.reduceOnly
+      _order.reduceOnly,
+      _order.tpToken
     );
   }
 
@@ -356,13 +366,15 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _triggerPrice The price that this limit order will be triggered
   /// @param _triggerAboveThreshold The current price must go above/below the trigger price for the order to be executed
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
+  /// @param _tpToken Take profit token, when trader has profit
   function updateOrder(
     uint256 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
     bool _triggerAboveThreshold,
-    bool _reduceOnly
+    bool _reduceOnly,
+    address _tpToken
   ) external nonReentrant {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
     LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
@@ -374,6 +386,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     _order.triggerAboveThreshold = _triggerAboveThreshold;
     _order.sizeDelta = _sizeDelta;
     _order.reduceOnly = _reduceOnly;
+    _order.tpToken = _tpToken;
 
     emit LogUpdateLimitOrder(
       _order.account,
@@ -382,7 +395,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _order.sizeDelta,
       _order.triggerPrice,
       _order.triggerAboveThreshold,
-      _order.reduceOnly
+      _order.reduceOnly,
+      _order.tpToken
     );
   }
 

@@ -479,7 +479,7 @@ contract TradeService is ITradeService {
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
-
+// @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
           // In this case, all debt are paid. We can break the loop right away.
           break;
         } else {

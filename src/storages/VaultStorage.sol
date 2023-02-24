@@ -183,25 +183,19 @@ contract VaultStorage is IVaultStorage {
     return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
   }
 
-  /// @notice settle sub-account's position profit and loss
+  /// @notice increase sub-account collateral
   /// @param _subAccount - sub account
-  /// @param _token - profit token
-  /// @param _pnl - trader profit and loss in token
-  /// @param _fee - settlement fee
-  function settlePosition(address _subAccount, address _token, int256 _pnl, uint256 _fee) external {
-    // if trader not has profit or loss then do nothing
+  /// @param _token - collateral token to increase
+  /// @param _amount - amount to increase
+  function increaseTraderBalance(address _subAccount, address _token, uint256 _amount) external {
+    traderBalances[_subAccount][_token] += _amount;
+  }
 
-    if (_pnl != 0) {
-      fees[_token] += _fee;
-      if (_pnl > 0) {
-        // if trader profit then remove liquidity from PLP to trader
-        plpLiquidity[_token] -= uint256(_pnl) - _fee;
-        traderBalances[_subAccount][_token] += uint256(_pnl);
-      } else {
-        // otherwise, if trader loss then remove trader balance to PLP
-        plpLiquidity[_token] += uint256(-_pnl) - _fee;
-        traderBalances[_subAccount][_token] -= uint256(-_pnl);
-      }
-    }
+  /// @notice decrease sub-account collateral
+  /// @param _subAccount - sub account
+  /// @param _token - collateral token to increase
+  /// @param _amount - amount to increase
+  function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external {
+    traderBalances[_subAccount][_token] -= _amount;
   }
 }

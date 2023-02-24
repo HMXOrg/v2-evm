@@ -435,7 +435,9 @@ contract TradeService is ITradeService {
     );
     uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18; // @todo - token decimal
 
-    IVaultStorage(vaultStorage).settlePosition(_subAccount, _token, int256(_tpTokenOut), _settlementFee);
+    IVaultStorage(vaultStorage).removePLPLiquidity(_token, _tpTokenOut);
+    IVaultStorage(vaultStorage).addFee(_token, _settlementFee);
+    IVaultStorage(vaultStorage).increaseTraderBalance(_subAccount, _token, _tpTokenOut - _settlementFee);
   }
 
   /// @notice settle loss
@@ -450,9 +452,6 @@ contract TradeService is ITradeService {
     uint256 _price;
     uint256 _collateralToRemove;
     uint256 _collateralUsd;
-    uint256 _settlementFeeRate;
-    uint256 _settlementFee;
-
     // Loop through all the plp tokens for the sub-account
     for (uint256 _i; _i < _len; ) {
       _token = _plpTokens[_i];
@@ -470,28 +469,20 @@ contract TradeService is ITradeService {
         );
 
         _collateralUsd = (_collateral * _price) / 1e18; // @todo - token decimal
-        _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
-          0,
-          0,
-          0,
-          IConfigStorage(configStorage).getLiquidityConfig(),
-          IConfigStorage(configStorage).getPlpTokenConfigs(address(0))
-        );
 
         if (_collateralUsd >= _debtUsd) {
           _collateralToRemove = (_debtUsd * 1e18) / _price; // @todo - token decimal
-          _settlementFee = (_collateralToRemove * _settlementFeeRate) / 1e18;
 
-          // settle position
-          IVaultStorage(vaultStorage).settlePosition(_subAccount, _token, -int256(_collateralToRemove), _settlementFee);
+          IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
+          IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
+
           break;
         } else {
           // pay all collateral
           _collateralToRemove = (_collateralUsd * 1e18) / _price; // @todo - token decimal
-          _settlementFee = (_collateralToRemove * _settlementFeeRate) / 1e18;
 
-          // settle position
-          IVaultStorage(vaultStorage).settlePosition(_subAccount, _token, -int256(_collateralToRemove), _settlementFee);
+          IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
+          IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
 
           // update debtUsd
           unchecked {

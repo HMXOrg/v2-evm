@@ -158,6 +158,16 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate);
   }
 
+  /// @notice Return the latest adaptive rice of asset, last update of the given asset id
+  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _exponent The exponent from Pyth price feed of this market
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
+  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
+  /// @param _marketSkew market skew quoted in asset (NOT USD)
+  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
+  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
   function getLatestAdaptivePrice(
     bytes32 _assetId,
     uint256 _exponent,
@@ -182,6 +192,16 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate);
   }
 
+  /// @notice Return the unsafe latest adaptive rice of asset, last update of the given asset id
+  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _exponent The exponent from Pyth price feed of this market
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
+  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
+  /// @param _marketSkew market skew quoted in asset (NOT USD)
+  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
+  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
   function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
     uint256 _exponent,
@@ -206,6 +226,16 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate);
   }
 
+  /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
+  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _exponent The exponent from Pyth price feed of this market
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
+  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
+  /// @param _marketSkew market skew quoted in asset (NOT USD)
+  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
+  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
   function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     uint256 _exponent,
@@ -233,6 +263,16 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_price, _lastUpdate, _status);
   }
 
+  /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
+  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _exponent The exponent from Pyth price feed of this market
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
+  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
+  /// @param _marketSkew market skew quoted in asset (NOT USD)
+  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
+  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     uint256 _exponent,
@@ -290,6 +330,41 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) internal pure returns (uint256) {
+    // Formula
+    // marketSkew = longOpenInterest - shortOpenInterest
+    // marketSkewUSD = marketSkew * price
+    // premiumDiscountBefore = marketSkewUSD / maxSkewScaleUSD
+    // premiumDiscountAfter = (marketSkewUSD + sizeDelta) / maxSkewScaleUSD
+    // priceBefore = price + (price * premiumDiscountBefore)
+    // priceAfter = price + (price * premiumDiscountAfter)
+    // adaptivePrice = (priceBefore + priceAfter) / 2
+    //
+    // Example
+    // price            = $1200 USD (oracle)
+    // size             = 100
+    // markerSkew       = 0
+    // maxSkewScaleUSD  = $1,000,000
+    //
+    // Then,
+    //
+    // premiumDiscountBefore = 0 / 1,000,000
+    //           = 0
+    // premiumDiscountAfter  = (0 + 100) / 1,000,000
+    //           = 100 / 1,000,000
+    //           = 0.0001
+    //
+    // priceBefore = 1200 * (1 + premiumDiscountBefore)
+    //              = 1200 * (1 + 0)
+    //              = 1200
+    // priceAfter  = 1200 * (1 + premiumDiscountAfter)
+    //              = 1200 * (1 + 0.0001)
+    //              = 1200 * (1.0001)
+    //              = 1200.12
+    // Finally,
+    //
+    // adaptivePrice = (priceBefore + priceAfter) / 2
+    //            = (1200 + 1200.12) / 2
+    //            = 1200.06
     int256 _priceInt = int256(_price);
     int256 _marketSkewUSD = (_marketSkew * _priceInt) / int256(10 ** _exponent);
     int256 _premiumDiscountBefore = _maxSkewScaleUSD > 0

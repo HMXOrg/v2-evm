@@ -12,7 +12,6 @@ contract MockCalculator is ICalculator {
   mapping(address => int256) unrealizedPnlOf;
 
   uint256 freeCollateral;
-
   uint256 aum;
   uint256 plpValue;
   uint256 nextBorrowingRate;

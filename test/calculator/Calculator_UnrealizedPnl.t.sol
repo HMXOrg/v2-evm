@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Calculator_Base, IPerpStorage } from "./Calculator_Base.t.sol";
+import { Calculator_Base } from "./Calculator_Base.t.sol";
+import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
 
 // What is this test DONE
 // - success
@@ -41,9 +42,7 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
       })
     );
 
-    vm.expectRevert(
-      abi.encodeWithSignature("ICalculator_InvalidAveragePrice()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("ICalculator_InvalidAveragePrice()"));
     calculator.getUnrealizedPnl(ALICE);
   }
 

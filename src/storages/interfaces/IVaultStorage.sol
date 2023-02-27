@@ -13,11 +13,15 @@ interface IVaultStorage {
    * Functions
    */
 
+  function plpLiquidityDebtUSDE30() external view returns (uint256);
+
   function traderBalances(address _trader, address _token) external view returns (uint256 amount);
 
   function getTraderTokens(address _trader) external view returns (address[] memory);
 
   function fees(address _token) external view returns (uint256);
+
+  function marginFee(address _token) external view returns (uint256);
 
   function devFees(address _token) external view returns (uint256);
 
@@ -56,6 +60,14 @@ interface IVaultStorage {
   function removeTraderToken(address _trader, address _token) external;
 
   function transferToken(address _subAccount, address _token, uint256 _amount) external;
+
+  function addMarginFee(address _token, uint256 _amount) external;
+
+  function removeMarginFee(address _token, uint256 _amount) external;
+
+  function addPlpLiquidityDebtUSDE30(uint256 _value) external;
+
+  function removePlpLiquidityDebtUSDE30(uint256 _value) external;
 
   function pullPLPLiquidity(address _token) external view returns (uint256);
 

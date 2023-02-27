@@ -224,7 +224,7 @@ contract TradeService is ITradeService {
       _position.openInterest += _changedOpenInterest;
       _position.lastIncreaseTimestamp = block.timestamp;
 
-      // update gobal market state
+      // update global market state
       if (vars.isLong) {
         uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
           ? vars.priceE30

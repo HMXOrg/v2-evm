@@ -47,7 +47,7 @@ contract TradeService_FudningFee is TradeService_Base {
 
     vm.warp(100);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
@@ -68,7 +68,7 @@ contract TradeService_FudningFee is TradeService_Base {
 
     vm.warp(block.timestamp + 1);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
       {
         IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);

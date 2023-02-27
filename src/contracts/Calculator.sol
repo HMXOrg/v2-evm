@@ -87,7 +87,7 @@ contract Calculator is Owned, ICalculator {
       );
 
       uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_plpUnderlyingToken) * priceE30) /
-        (10 ** ERC20(_plpUnderlyingToken).decimals());
+        (10 ** IConfigStorage(configStorage).getPlpTokenConfigs(_plpUnderlyingToken).decimals);
 
       unchecked {
         assetValue += value;
@@ -480,12 +480,14 @@ contract Calculator is Owned, ICalculator {
     // Loop through list of current depositing tokens
     for (uint256 i; i < _traderTokens.length; ) {
       address _token = _traderTokens[i];
+      IConfigStorage.CollateralTokenConfig memory _collateralTokenConfig = IConfigStorage(configStorage)
+        .getCollateralTokenConfigs(_token);
 
       // Get token decimals from ConfigStorage
-      uint256 _decimals = ERC20(_token).decimals();
+      uint256 _decimals = _collateralTokenConfig.decimals;
 
       // Get collateralFactor from ConfigStorage
-      uint256 _collateralFactor = IConfigStorage(configStorage).getCollateralTokenConfigs(_token).collateralFactor;
+      uint256 _collateralFactor = _collateralTokenConfig.collateralFactor;
 
       // Get priceConfidentThreshold from ConfigStorage
       uint256 _priceConfidenceThreshold = IConfigStorage(configStorage)

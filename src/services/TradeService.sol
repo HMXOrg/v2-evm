@@ -856,7 +856,7 @@ contract TradeService is ITradeService {
     // Loop through all the plp tokens for the sub-account
     for (uint256 i = 0; i < _plpUnderlyingTokens.length; ) {
       address underlyingToken = _plpUnderlyingTokens[i];
-      uint256 underlyingTokenDecimal = ERC20(underlyingToken).decimals();
+      uint256 underlyingTokenDecimal = IConfigStorage(configStorage).getPlpTokenConfigs(underlyingToken).decimals;
       // Retrieve the balance of the plp token for the sub-account
       uint256 balance = IVaultStorage(vaultStorage).traderBalances(_subAccount, underlyingToken);
 

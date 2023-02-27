@@ -312,6 +312,10 @@ contract TradeService is ITradeService {
         vars.priceE30,
         vars.avgEntryPriceE30
       );
+      // if trader has profit more than our reserved value then trader's profit maximum is reserved value
+      if (pnl > _position.reserveValueE30) {
+        pnl = _position.reserveValueE30;
+      }
       if (isProfit) {
         _realizedPnl = int256((pnl * _positionSizeE30ToDecrease) / vars.absPositionSizeE30);
       } else {

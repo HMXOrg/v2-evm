@@ -330,6 +330,15 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) internal pure returns (uint256) {
+    // Formula
+    // marketSkew = longOpenInterest - shortOpenInterest
+    // marketSkewUSD = marketSkew * price
+    // premiumDiscountBefore = marketSkewUSD / maxSkewScaleUSD
+    // premiumDiscountAfter = (marketSkewUSD + sizeDelta) / maxSkewScaleUSD
+    // priceBefore = price + (price * premiumDiscountBefore)
+    // priceAfter = price + (price * premiumDiscountAfter)
+    // adaptivePrice = (priceBefore + priceAfter) / 2
+    //
     // Example
     // price            = $1200 USD (oracle)
     // size             = 100

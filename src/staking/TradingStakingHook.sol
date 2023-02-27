@@ -33,11 +33,13 @@ contract TradingStaking is ITradeServiceHook, Owned {
     uint256 _marketIndex,
     uint256 _sizeDelta
   ) external onlyTradeService {
-    ITradingStaking(tradingStaking).deposit(
-      _primaryAccount,
-      ITradingStaking(tradingStaking).poolIdByMarketIndex(_marketIndex),
-      _sizeDelta
-    );
+    if (ITradingStaking(tradingStaking).isAcceptedMarketIndex(_marketIndex)) {
+      ITradingStaking(tradingStaking).deposit(
+        _primaryAccount,
+        ITradingStaking(tradingStaking).poolIdByMarketIndex(_marketIndex),
+        _sizeDelta
+      );
+    }
   }
 
   function onDecreasePosition(
@@ -46,10 +48,12 @@ contract TradingStaking is ITradeServiceHook, Owned {
     uint256 _marketIndex,
     uint256 _sizeDelta
   ) external onlyTradeService {
-    ITradingStaking(tradingStaking).withdraw(
-      _primaryAccount,
-      ITradingStaking(tradingStaking).poolIdByMarketIndex(_marketIndex),
-      _sizeDelta
-    );
+    if (ITradingStaking(tradingStaking).isAcceptedMarketIndex(_marketIndex)) {
+      ITradingStaking(tradingStaking).withdraw(
+        _primaryAccount,
+        ITradingStaking(tradingStaking).poolIdByMarketIndex(_marketIndex),
+        _sizeDelta
+      );
+    }
   }
 }

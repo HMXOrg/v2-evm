@@ -15,7 +15,7 @@ contract PerpStorage is IPerpStorage {
 
   mapping(address => uint256[]) public subAccountPositionIndices; // sub account => position indices
 
-  mapping(address => uint256) public subAccountFee;
+  mapping(address => int256) public subAccountFee;
 
   mapping(address => CollateralToken) public collateralTokens;
 
@@ -136,7 +136,7 @@ contract PerpStorage is IPerpStorage {
     return globalState;
   }
 
-  function getSubAccountFee(address subAccount) external view returns (uint256 fee) {
+  function getSubAccountFee(address subAccount) external view returns (int256 fee) {
     return subAccountFee[subAccount];
   }
 
@@ -195,7 +195,11 @@ contract PerpStorage is IPerpStorage {
     globalAssetClass[_assetClassIndex] = _newAssetClass;
   }
 
-  function updateSubAccountFee(address _subAccount, uint256 fee) external {
+  function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external {
+    globalMarkets[_marketIndex] = _globalMarket;
+  }
+
+  function updateSubAccountFee(address _subAccount, int256 fee) external {
     subAccountFee[_subAccount] = fee;
   }
 }

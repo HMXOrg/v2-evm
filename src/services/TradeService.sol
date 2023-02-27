@@ -940,7 +940,7 @@ contract TradeService is ITradeService {
     // Loop through all the plp underlying tokens for the sub-account to receive or pay margin fees
     for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
       vars.underlyingToken = vars.plpUnderlyingTokens[i];
-      vars.underlyingTokenDecimal = ERC20(vars.underlyingToken).decimals();
+      vars.underlyingTokenDecimal = IConfigStorage(configStorage).getPlpTokenConfigs(vars.underlyingToken).decimals;
 
       // Retrieve the balance of each plp underlying token for the sub-account (token collateral amount)
       vars.traderBalance = IVaultStorage(_vaultStorage).traderBalances(_subAccount, vars.underlyingToken);
@@ -1161,7 +1161,7 @@ contract TradeService is ITradeService {
     // Loop through all the plp underlying tokens for the sub-account
     for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
       vars.underlyingToken = vars.plpUnderlyingTokens[i];
-      vars.underlyingTokenDecimal = ERC20(vars.underlyingToken).decimals();
+      vars.underlyingTokenDecimal = IConfigStorage(configStorage).getPlpTokenConfigs(vars.underlyingToken).decimals;
       uint256 plpLiquidityAmount = IVaultStorage(_vaultStorage).plpLiquidity(vars.underlyingToken);
 
       // Retrieve the latest price and confident threshold of the plp underlying token

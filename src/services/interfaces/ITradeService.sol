@@ -32,7 +32,7 @@ interface ITradeService {
     int256 ratio;
     int256 nextFundingRate;
     int256 newFundingRate;
-    int256 elaspedIntervals;
+    int256 elapsedIntervals;
   }
 
   struct SettleFeeVar {

@@ -115,7 +115,7 @@ contract TradeService is ITradeService {
           _marketConfig.assetId,
           _isLong, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
-          30 // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          30 // @todo - move trust price age to config, the problem now is stack too deep at MarketConfig struct
         );
 
       // Market active represent the market is still listed on our protocol
@@ -207,11 +207,11 @@ contract TradeService is ITradeService {
       _position.openInterest += _changedOpenInterest;
       _position.lastIncreaseTimestamp = block.timestamp;
 
-      // update gobal market state
+      // update global market state
       if (_isLong) {
         uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
           ? _priceE30
-          : _calcualteLongAveragePrice(_globalMarket, _priceE30, _sizeDelta, 0);
+          : _calculateLongAveragePrice(_globalMarket, _priceE30, _sizeDelta, 0);
 
         IPerpStorage(perpStorage).updateGlobalLongMarketById(
           _marketIndex,
@@ -302,7 +302,7 @@ contract TradeService is ITradeService {
           _marketConfig.assetId,
           !vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
-          30 // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          30 // @todo - move trust price age to config, the problem now is stack too deep at MarketConfig struct
         );
 
       // Market active represent the market is still listed on our protocol
@@ -336,9 +336,9 @@ contract TradeService is ITradeService {
     //       due to we has problem stack too deep in MarketConfig now
     if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30) revert ITradeService_TooTinyPosition();
 
-    // ==================================================
-    // | ------ calculate relized profit & loss ------- |
-    // ==================================================
+    /**
+     * calculate realized profit & loss
+     */
     int256 _realizedPnl;
     {
       vars.avgEntryPriceE30 = _position.avgEntryPriceE30;
@@ -355,9 +355,9 @@ contract TradeService is ITradeService {
       }
     }
 
-    // =========================================
-    // | ------ update perp storage ---------- |
-    // =========================================
+    /**
+     *  update perp storage
+     */
     {
       uint256 _openInterestDelta = (_position.openInterest * _positionSizeE30ToDecrease) / vars.absPositionSizeE30;
 
@@ -367,7 +367,7 @@ contract TradeService is ITradeService {
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
       if (vars.isLongPosition) {
-        uint256 _nextAvgPrice = _calcualteLongAveragePrice(
+        uint256 _nextAvgPrice = _calculateLongAveragePrice(
           _globalMarket,
           vars.priceE30,
           -int256(_positionSizeE30ToDecrease),
@@ -660,13 +660,13 @@ contract TradeService is ITradeService {
   /// @param _subAccount target sub account for health check
   function _subAccountHealthCheck(address _subAccount) internal {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
-    // check sub account is healty
+    // check sub account is healthy
     uint256 _subAccountEquity = _calculator.getEquity(_subAccount);
     // maintenance margin requirement (MMR) = position size * maintenance margin fraction
     // note: maintenanceMarginFraction is 1e18
     uint256 _mmr = _calculator.getMMR(_subAccount);
 
-    // if sub account equity < MMR, then trader couln't decrease position
+    // if sub account equity < MMR, then trader couldn't decrease position
     if (_subAccountEquity < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
   }
 
@@ -785,7 +785,7 @@ contract TradeService is ITradeService {
   /// @param _marketIndex Index of market
   /// @param _isLong Is long or short exposure
   /// @param _size Position size
-  /// @param _entryFundingRate Extry Funding rate of position
+  /// @param _entryFundingRate Entry Funding rate of position
   /// @return fundingFee Funding fee of position
   function getFundingFee(
     uint256 _marketIndex,
@@ -816,7 +816,7 @@ contract TradeService is ITradeService {
 
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
 
-    // Get funding inteval
+    // Get funding interval
     vars.fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
 
     // If block.timestamp not pass the next funding time, return 0.
@@ -840,13 +840,13 @@ contract TradeService is ITradeService {
     vars.nextFundingRate = (vars.ratio * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
     vars.newFundingRate = globalMarket.currentFundingRate + vars.nextFundingRate;
 
-    vars.elaspedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
+    vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
 
     if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize) * vars.elaspedIntervals) / 1e30;
+      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize) * vars.elapsedIntervals) / 1e30;
     }
     if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize) * vars.elaspedIntervals) / 1e30;
+      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize) * vars.elapsedIntervals) / 1e30;
     }
 
     return (vars.newFundingRate, fundingRateLong, fundingRateShort);
@@ -1024,7 +1024,7 @@ contract TradeService is ITradeService {
   ///                           if positive is LONG position, else is SHORT
   /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
   /// @return _nextAveragePrice next average price
-  function _calcualteLongAveragePrice(
+  function _calculateLongAveragePrice(
     IPerpStorage.GlobalMarket memory _market,
     uint256 _currentPrice,
     int256 _positionSizeDelta,

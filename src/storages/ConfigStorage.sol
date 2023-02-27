@@ -256,7 +256,7 @@ contract ConfigStorage is IConfigStorage, Owned {
       revert IConfigStorage_BadLen();
     }
 
-    for (uint256 i = 0; i < _tokens.length; ) {
+    for (uint256 i; i < _tokens.length; ) {
       // Enforce that isAccept must be true to prevent
       // removing underlying token through this function.
       if (!_configs[i].accepted) revert IConfigStorage_BadArgs();

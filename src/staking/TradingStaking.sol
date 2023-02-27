@@ -269,6 +269,10 @@ contract TradingStaking is Owned, ReentrancyGuard, ITradingStaking {
   /// @notice Harvest rewardToken rewards
   /// @param _pid The index of the pool. See `poolInfo`.
   function harvest(uint256 _pid) external nonReentrant {
+    _harvest(_pid);
+  }
+
+  function _harvest(uint256 _pid) internal {
     PoolInfo memory pool = _updatePool(_pid);
     UserInfo storage user = userInfo[_pid][msg.sender];
 
@@ -290,6 +294,16 @@ contract TradingStaking is Owned, ReentrancyGuard, ITradingStaking {
     }
 
     emit LogHarvest(msg.sender, _pid, _pendingrewardToken);
+  }
+
+  function bulkHarvest(uint256[] calldata _pids) external nonReentrant {
+    for (uint256 i; i < _pids.length; ) {
+      _harvest(_pids[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @notice Set max reward per second

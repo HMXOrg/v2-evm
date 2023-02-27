@@ -643,4 +643,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
       globalMarketTester.assertGlobalMarket(1, globalMarketAssertData);
     }
   }
+
+  // @todo write code here
+  function testCorrectness_increasePosition_WhenUsingLimitPrice() external {}
 }

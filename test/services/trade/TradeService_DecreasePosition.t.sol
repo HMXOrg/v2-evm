@@ -15,8 +15,11 @@ import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 // - success
 //   - partially decrease long position
 //   - partially decrease short position
+//   - partially decrease by using limitPrice
 //   - fully decrease long position
 //   - fully decrease short position
+//   - fully decrease by using limitPrice (profit)
+//   - fully decrease by using limitPrice (loss)
 // - revert
 //   - try execute decrease from others
 //   - try decrease long position which already closed
@@ -299,6 +302,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
     );
   }
 
+  // @todo write code here
+  function testCorrectness_WhenTraderPartiallyDecreaseLongPositionWithLimitPrice() external {}
+
   function testCorrectness_WhenTraderFullyDecreaseLongPositionSizeWithLoss() external {
     // Prepare for this test
 
@@ -508,6 +514,12 @@ contract TradeService_DecreasePosition is TradeService_Base {
       _expectedFees
     );
   }
+
+  //@todo write code here
+  function testCorrectness_WhenTraderFullyDecreaseProfitWithLimitPrice() external {}
+
+  //@todo write code here
+  function testCorrectness_WhenTraderFullyDecreaseLossWithLimitPrice() external {}
 
   /**
    * Revert

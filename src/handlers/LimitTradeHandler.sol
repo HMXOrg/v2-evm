@@ -252,7 +252,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
           _subAccountId: _subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-           _limitPriceE30: _currentPrice
+          _limitPriceE30: _currentPrice
         });
       } else if (!vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
@@ -265,7 +265,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-             _limitPriceE30: _currentPrice
+            _limitPriceE30: _currentPrice
           });
           // Flip it to Long position
           ITradeService(tradeService).increasePosition({
@@ -273,7 +273,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-             _limitPriceE30: _currentPrice
+            _limitPriceE30: _currentPrice
           });
         } else {
           // Not flip
@@ -286,7 +286,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
               uint256(-_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
-             _limitPriceE30: _currentPrice
+            _limitPriceE30: _currentPrice
           });
         }
       }
@@ -300,7 +300,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
           _subAccountId: _subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-           _limitPriceE30: _currentPrice
+          _limitPriceE30: _currentPrice
         });
       } else if (vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
@@ -313,7 +313,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-             _limitPriceE30: _currentPrice
+            _limitPriceE30: _currentPrice
           });
           // Flip it to Short position
           ITradeService(tradeService).increasePosition({
@@ -321,7 +321,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-             _limitPriceE30: _currentPrice
+            _limitPriceE30: _currentPrice
           });
         } else {
           // Not flip

@@ -117,9 +117,6 @@ contract TradeService is ITradeService {
     // Update funding rate
     updateFundingRate(_marketIndex);
 
-    // Get Price market.
-    vars.priceE30;
-
     // get the global market for the given market index
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
@@ -128,6 +125,7 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
+      // Get Price market.
       (vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
@@ -226,7 +224,7 @@ contract TradeService is ITradeService {
       _position.openInterest += _changedOpenInterest;
       _position.lastIncreaseTimestamp = block.timestamp;
 
-      // update gobal market state
+      // update global market state
       if (vars.isLong) {
         uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
           ? vars.priceE30

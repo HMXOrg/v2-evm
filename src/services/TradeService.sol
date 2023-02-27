@@ -47,7 +47,7 @@ contract TradeService is ITradeService {
 
   /// @notice Create increasePosition
   /// @param _primaryAccount Primary account of user
-  /// @param _subAccountId  SubAccountId 
+  /// @param _subAccountId  SubAccountId
   /// @param _marketIndex  market index
   /// @param _sizeDelta sizeDelta in USD
   /// @param _limitPriceE30  price from LimitTrade in e30 unit
@@ -60,7 +60,7 @@ contract TradeService is ITradeService {
   ) external {
     // validate service should be called from handler ONLY
     IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
-    
+
     // get the sub-account from the primary account and sub-account ID
     address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
 
@@ -94,16 +94,18 @@ contract TradeService is ITradeService {
       ) revert ITradeService_BadNumberOfPosition();
     }
 
-    bool _currentPositionIsLong = _position.positionSizeE30 > 0;
-    // Verify that the current position has the same exposure direction
-    if (!_isNewPosition && _currentPositionIsLong != _isLong) revert ITradeService_BadExposure();
+    {
+      bool _currentPositionIsLong = _position.positionSizeE30 > 0;
+      // Verify that the current position has the same exposure direction
+      if (!_isNewPosition && _currentPositionIsLong != _isLong) revert ITradeService_BadExposure();
+    }
 
     // Update borrowing rate
     updateBorrowingRate(_marketConfig.assetClass);
 
     // Get Price market.
-    uint256 _priceE30 ;
-    
+    uint256 _priceE30;
+
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
@@ -126,9 +128,7 @@ contract TradeService is ITradeService {
       _subAccountHealthCheck(_subAccount);
 
       //override Price when using Limit Price
-      if(_limitPriceE30 != 0)
-      _priceE30 = _limitPriceE30;
-
+      if (_limitPriceE30 != 0) _priceE30 = _limitPriceE30;
     }
 
     // get the absolute value of the new size delta
@@ -136,7 +136,7 @@ contract TradeService is ITradeService {
 
     // if the position size is zero, set the average price to the current price (new position)
     if (_isNewPosition) {
-      _position.avgEntryPriceE30 =  _priceE30;
+      _position.avgEntryPriceE30 = _priceE30;
       _position.primaryAccount = _primaryAccount;
       _position.subAccountId = _subAccountId;
       _position.marketIndex = _marketIndex;
@@ -236,7 +236,6 @@ contract TradeService is ITradeService {
   /// @param _positionSizeE30ToDecrease - position size to decrease
   /// @param _tpToken - take profit token
   /// @param _limitPriceE30  price from LimitTrade in e30 unit
-  
 
   function decreasePosition(
     address _account,
@@ -245,15 +244,9 @@ contract TradeService is ITradeService {
     uint256 _positionSizeE30ToDecrease,
     address _tpToken,
     uint256 _limitPriceE30
-    
   ) external {
     // validate service should be called from handler ONLY
     IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
-
-    // prepare
-    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
-      _marketIndex
-    );
 
     address _subAccount = _getSubAccount(_account, _subAccountId);
     bytes32 _positionId = _getPositionId(_subAccount, _marketIndex);
@@ -285,6 +278,9 @@ contract TradeService is ITradeService {
     if (_positionSizeE30ToDecrease > vars.absPositionSizeE30) revert ITradeService_DecreaseTooHighPositionSize();
 
     // Update borrowing rate
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
+      _marketIndex
+    );
     updateBorrowingRate(_marketConfig.assetClass);
 
     // ==================================================
@@ -313,7 +309,7 @@ contract TradeService is ITradeService {
       // check sub account equity is under MMR
       _subAccountHealthCheck(_subAccount);
 
-      if(_limitPriceE30 != 0){
+      if (_limitPriceE30 != 0) {
         vars.priceE30 = _limitPriceE30;
       }
     }
@@ -356,9 +352,6 @@ contract TradeService is ITradeService {
     {
       uint256 _openInterestDelta = (_position.openInterest * _positionSizeE30ToDecrease) / vars.absPositionSizeE30;
 
-      // @todo - is close position then we should delete positions[x]
-      bool isClosePosition = _newAbsPositionSizeE30 == 0;
-
       IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
       if (vars.isLongPosition) {
@@ -393,6 +386,9 @@ contract TradeService is ITradeService {
         _marketConfig.assetClass
       );
 
+      // @todo - is close position then we should delete positions[x]
+      bool isClosePosition = _newAbsPositionSizeE30 == 0;
+
       // update global storage
       // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
       _globalState.reserveValueE30 -=
@@ -418,9 +414,9 @@ contract TradeService is ITradeService {
       IPerpStorage(perpStorage).savePosition(_subAccount, _positionId, _position);
     }
 
-      // =======================================
-      // | ------ settle profit & loss ------- |
-      // =======================================
+    // =======================================
+    // | ------ settle profit & loss ------- |
+    // =======================================
     {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
@@ -442,7 +438,6 @@ contract TradeService is ITradeService {
 
     emit LogDecreasePosition(_positionId, _positionSizeE30ToDecrease);
   }
-
 
   /// @notice settle profit
   /// @param _token - token that trader want to take profit as collateral

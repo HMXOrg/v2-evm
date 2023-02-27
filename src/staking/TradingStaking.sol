@@ -9,8 +9,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IRewarder } from "./interfaces/IRewarder.sol";
+import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
 
-contract TradingStaking is Owned, ReentrancyGuard {
+contract TradingStaking is Owned, ReentrancyGuard, ITradingStaking {
   using SafeCast for int256;
   using SafeCast for uint256;
   using SafeERC20 for IERC20;
@@ -28,13 +29,13 @@ contract TradingStaking is Owned, ReentrancyGuard {
     uint128 accRewardTokenPerShare;
     uint64 lastRewardTime;
     uint64 allocPoint;
+    uint32 marketIndex;
   }
 
   IERC20 public rewardToken;
   PoolInfo[] public poolInfo;
-  uint256[] public marketIndices;
   mapping(uint256 => uint256) public poolIdByMarketIndex;
-  mapping(uint256 => uint256) public stakingSizeByMarketIndex;
+  mapping(uint256 => uint256) public totalStakingSizeByPoolId;
   IRewarder[] public rewarder;
   mapping(uint256 => bool) public isAcceptedMarketIndex;
   mapping(uint256 => mapping(address => UserInfo)) public userInfo;
@@ -86,15 +87,14 @@ contract TradingStaking is Owned, ReentrancyGuard {
     IRewarder _rewarder,
     bool _withUpdate
   ) external onlyOwner {
+    uint256 _newPoolId = poolInfo.length;
     if (isAcceptedMarketIndex[_marketIndex]) revert TradingStaking_DuplicatePool();
-
     if (_withUpdate) massUpdatePools();
 
     totalAllocPoint = totalAllocPoint + _allocPoint;
-    marketIndices.push(_marketIndex);
     rewarder.push(_rewarder);
     isAcceptedMarketIndex[_marketIndex] = true;
-    poolIdByMarketIndex[marketIndices.length - 1] = _marketIndex;
+    poolIdByMarketIndex[_newPoolId] = _marketIndex;
 
     if (address(_rewarder) != address(0)) {
       // Sanity check that the rewarder is a valid IRewarder.
@@ -105,10 +105,11 @@ contract TradingStaking is Owned, ReentrancyGuard {
       PoolInfo({
         allocPoint: _allocPoint.toUint64(),
         lastRewardTime: block.timestamp.toUint64(),
-        accRewardTokenPerShare: 0
+        accRewardTokenPerShare: 0,
+        marketIndex: uint32(_marketIndex)
       })
     );
-    emit LogAddPool(marketIndices.length - 1, _allocPoint, _marketIndex, _rewarder);
+    emit LogAddPool(_newPoolId, _allocPoint, _marketIndex, _rewarder);
   }
 
   /// @notice Update the given pool's rewardToken allocation point and `IRewarder` contract.
@@ -140,7 +141,7 @@ contract TradingStaking is Owned, ReentrancyGuard {
   /// @notice Sets the rewardToken per second to be distributed. Can only be called by the owner.
   /// @param _rewardTokenPerSecond The amount of rewardToken to be distributed per second.
   /// @param _withUpdate If true, do mass update pools
-  function setrewardTokenPerSecond(uint256 _rewardTokenPerSecond, bool _withUpdate) external onlyOwner {
+  function setRewardTokenPerSecond(uint256 _rewardTokenPerSecond, bool _withUpdate) external onlyOwner {
     if (_rewardTokenPerSecond > maxRewardTokenPerSecond) revert TradingStaking_InvalidArguments();
 
     if (_withUpdate) massUpdatePools();
@@ -156,7 +157,7 @@ contract TradingStaking is Owned, ReentrancyGuard {
     PoolInfo memory pool = poolInfo[_pid];
     UserInfo memory user = userInfo[_pid][_user];
     uint256 accRewardTokenPerShare = pool.accRewardTokenPerShare;
-    uint256 stakedBalance = stakingSizeByMarketIndex[marketIndices[_pid]];
+    uint256 stakedBalance = totalStakingSizeByPoolId[_pid];
     if (block.timestamp > pool.lastRewardTime && stakedBalance != 0) {
       uint256 timePast = block.timestamp - pool.lastRewardTime;
       uint256 rewardTokenReward = (timePast * rewardTokenPerSecond * pool.allocPoint) / totalAllocPoint;
@@ -175,7 +176,7 @@ contract TradingStaking is Owned, ReentrancyGuard {
   function _updatePool(uint256 pid) internal returns (PoolInfo memory) {
     PoolInfo memory pool = poolInfo[pid];
     if (block.timestamp > pool.lastRewardTime) {
-      uint256 stakedBalance = stakingSizeByMarketIndex[marketIndices[pid]];
+      uint256 stakedBalance = totalStakingSizeByPoolId[pid];
       if (stakedBalance > 0) {
         uint256 timePast = block.timestamp - pool.lastRewardTime;
         uint256 rewardTokenReward = (timePast * rewardTokenPerSecond * pool.allocPoint) / totalAllocPoint;
@@ -228,7 +229,7 @@ contract TradingStaking is Owned, ReentrancyGuard {
       ((_amount * pool.accRewardTokenPerShare) / ACC_REWARD_TOKEN_PRECISION).toInt256();
 
     // Update total staked position size of that market index
-    stakingSizeByMarketIndex[marketIndices[_pid]] += _amount;
+    totalStakingSizeByPoolId[_pid] += _amount;
 
     // Interactions
     IRewarder _rewarder = rewarder[_pid];
@@ -254,7 +255,7 @@ contract TradingStaking is Owned, ReentrancyGuard {
     user.amount = user.amount - _amount;
 
     // Update total staked position size of that market index
-    stakingSizeByMarketIndex[marketIndices[_pid]] -= _amount;
+    totalStakingSizeByPoolId[_pid] -= _amount;
 
     // Interactions
     IRewarder _rewarder = rewarder[_pid];
@@ -289,26 +290,6 @@ contract TradingStaking is Owned, ReentrancyGuard {
     }
 
     emit LogHarvest(msg.sender, _pid, _pendingrewardToken);
-  }
-
-  /// @notice Withdraw without caring about rewards. EMERGENCY ONLY.
-  /// @param _pid The index of the pool. See `poolInfo`.
-  function emergencyWithdraw(uint256 _pid, address _for) external onlyWhitelistedCaller nonReentrant {
-    PoolInfo storage _pool = poolInfo[_pid];
-    UserInfo storage _user = userInfo[_pid][_for];
-
-    uint256 _amount = _user.amount;
-    _user.amount = 0;
-    _user.rewardDebt = 0;
-
-    stakingSizeByMarketIndex[marketIndices[_pid]] -= _amount;
-
-    IRewarder _rewarder = rewarder[_pid];
-    if (address(_rewarder) != address(0)) {
-      _rewarder.onWithdraw(_pid, _for, 0, 0);
-    }
-
-    emit LogEmergencyWithdraw(_for, _pid, _amount);
   }
 
   /// @notice Set max reward per second

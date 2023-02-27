@@ -196,14 +196,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     );
   }
 
-  struct ExecuteOrderVars {
-    LimitOrder order;
-    address subAccount;
-    bytes32 positionId;
-    bool positionIsLong;
-    bool isNewPosition;
-  }
-
   /// @notice Execute a limit order
   /// @param _account the primary account of the order
   /// @param _subAccountId Sub-account Id

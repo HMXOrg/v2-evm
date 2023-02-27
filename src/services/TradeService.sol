@@ -265,10 +265,11 @@ contract TradeService is ITradeService {
     uint256 _positionSizeE30ToDecrease,
     address _tpToken
   ) external {
+    if (_account != msg.sender) revert ITradeService_NotPositionOwner();
+
     // init vars
     DecreasePositionVars memory _vars;
 
-    // prepare
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
       _marketIndex
     );
@@ -277,10 +278,7 @@ contract TradeService is ITradeService {
     _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
     IPerpStorage.Position memory _position = IPerpStorage(perpStorage).getPositionById(_vars.positionId);
 
-    // =========================================
-    // | ---------- pre validation ----------- |
-    // =========================================
-
+    // Pre validation
     // if position size is 0 means this position is already closed
     _vars.currentPositionSizeE30 = _position.positionSizeE30;
     if (_vars.currentPositionSizeE30 == 0) revert ITradeService_PositionAlreadyClosed();
@@ -324,18 +322,23 @@ contract TradeService is ITradeService {
       _subAccountHealthCheck(_vars.subAccount);
     }
 
+    // update position, market, and global market state
     _decreasePosition(_marketConfig, _marketIndex, _position, _vars, _positionSizeE30ToDecrease, _tpToken);
 
-    // =========================================
-    // | --------- post validation ----------- |
-    // =========================================
-
+    // Post validation
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount);
 
     emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }
 
+  /// @notice decrease trader position
+  /// @param _marketConfig - target market config
+  /// @param _globalMarketIndex - global market index
+  /// @param _position - position info
+  /// @param _vars - decrease criteria
+  /// @param _positionSizeE30ToDecrease - position size to decrease
+  /// @param _tpToken - take profit token
   function _decreasePosition(
     IConfigStorage.MarketConfig memory _marketConfig,
     uint256 _globalMarketIndex,

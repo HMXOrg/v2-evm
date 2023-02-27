@@ -21,6 +21,39 @@ interface ITradeService {
   error ITradeService_InsufficientLiquidity();
   error ITradeService_InsufficientFreeCollateral();
 
+  /**
+   * STRUCTS
+   */
+
+  struct GetFundingRateVar {
+    uint256 fundingInterval;
+    uint256 marketPriceE30;
+    int256 marketSkewUSDE30;
+    int256 ratio;
+    int256 nextFundingRate;
+    int256 newFundingRate;
+    int256 elapsedIntervals;
+  }
+
+  struct SettleFeeVar {
+    bool isPayFee;
+    int256 feeUsd;
+    uint256 absFeeUsd;
+    uint256 plpLiquidityDebtUSDE30;
+    address[] plpUnderlyingTokens;
+    address underlyingToken;
+    uint256 underlyingTokenDecimal;
+    uint256 traderBalance;
+    uint256 traderBalanceValue;
+    uint256 marginFee;
+    uint256 marginFeeValue;
+    uint256 price;
+    uint256 feeTokenAmount;
+    uint256 feeTokenValue;
+    uint256 repayFeeTokenAmount;
+    uint256 devFeeTokenAmount;
+  }
+
   function configStorage() external view returns (address);
 
   function perpStorage() external view returns (address);

@@ -56,18 +56,21 @@ contract CrossMarginHandler_Base is BaseTest {
       IConfigStorage.MarketConfig({
         assetId: address(weth).toBytes32(),
         assetClass: 1,
+        exponent: 8,
         maxProfitRate: 9e18,
-        longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-        shortMaxOpenInterestUSDE30: 1_000_000 * 1e30,
         minLeverage: 1,
         initialMarginFraction: 0.1 * 1e18,
         maintenanceMarginFraction: 0.005 * 1e18,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
-        maxFundingRate: 0,
         priceConfidentThreshold: 1e18,
         allowIncreasePosition: false,
-        active: true
+        active: true,
+        openInterest: IConfigStorage.OpenInterest({
+          longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
+          shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
+        }),
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 4 * 1e14, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );
 

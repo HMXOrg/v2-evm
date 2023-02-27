@@ -51,8 +51,18 @@ contract TradeService is ITradeService {
     int256 entryFundingRate,
     int256 fundingFee
   );
+  event LogCloseAndTakeProfit(
+    address indexed _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    uint256 _closedPositionSize,
+    uint256 _realizedProfit
+  );
 
-  // state
+  /**
+   * States
+   */
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
@@ -299,7 +309,6 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      // @todo - update code to use normal get latest price, there is validate price
       (_vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
@@ -330,6 +339,91 @@ contract TradeService is ITradeService {
     _subAccountHealthCheck(_vars.subAccount);
 
     emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
+  }
+
+  /// @notice To Take profit with maximum profit could take
+  /// @param _account position owner
+  /// @param _subAccountId sub-account id
+  /// @param _marketIndex position market index
+  /// @param _tpToken take profit token
+  function closePositionAndTakeProfit(
+    address _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  ) external {
+    // init vars
+    DecreasePositionVars memory _vars;
+
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
+      _marketIndex
+    );
+
+    _vars.subAccount = _getSubAccount(_account, _subAccountId);
+    _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
+    IPerpStorage.Position memory _position = IPerpStorage(perpStorage).getPositionById(_vars.positionId);
+
+    // Pre validation
+    // if position size is 0 means this position is already closed
+    _vars.currentPositionSizeE30 = _position.positionSizeE30;
+    if (_vars.currentPositionSizeE30 == 0) revert ITradeService_PositionAlreadyClosed();
+
+    _vars.isLongPosition = _vars.currentPositionSizeE30 > 0;
+
+    // convert position size to be uint256
+    _vars.absPositionSizeE30 = uint256(
+      _vars.isLongPosition ? _vars.currentPositionSizeE30 : -_vars.currentPositionSizeE30
+    );
+
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    {
+      uint8 _marketStatus;
+
+      (_vars.priceE30, , _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
+        .getLatestAdaptivePriceWithMarketStatus(
+          _marketConfig.assetId,
+          _marketConfig.exponent,
+          !_vars.isLongPosition, // if current position is SHORT position, then we use max price
+          _marketConfig.priceConfidentThreshold,
+          30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          -_vars.currentPositionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD
+        );
+
+      // Market active represent the market is still listed on our protocol
+      if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
+
+      // if market status is not 2, means that the market is closed or market status has been defined yet
+      if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
+
+      // check sub account equity is under MMR
+      _subAccountHealthCheck(_vars.subAccount);
+    }
+
+    // get pnl to check this position is reach to condition to auto take profit or not
+    (bool isProfit, uint256 pnl) = getDelta(
+      _vars.absPositionSizeE30,
+      _vars.isLongPosition,
+      _vars.priceE30,
+      _position.avgEntryPriceE30
+    );
+
+    // When this position has profit and realized profit has >= reserved amount, then we force to close position
+    if (!isProfit || pnl < _position.reserveValueE30) revert ITradeService_ReservedValueStillEnough();
+
+    // update position, market, and global market state
+    _decreasePosition(_marketConfig, _marketIndex, _position, _vars, _vars.absPositionSizeE30, _tpToken);
+
+    emit LogCloseAndTakeProfit(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _tpToken,
+      _vars.absPositionSizeE30,
+      pnl > _position.reserveValueE30 ? _position.reserveValueE30 : pnl
+    );
   }
 
   /// @notice decrease trader position

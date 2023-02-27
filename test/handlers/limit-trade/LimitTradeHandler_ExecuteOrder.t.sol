@@ -202,12 +202,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta,uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
   }
 
   // Execute a BUY order to create new Long position and create another BUY order to increase it
@@ -248,12 +254,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta,uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -295,11 +307,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     assertEq(mockTradeService.increasePositionCallCount(), 2);
 
-    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta,_limitPriceE30) = mockTradeService.increasePositionCalls(1);
+    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, _limitPriceE30) = mockTradeService.increasePositionCalls(
+      1
+    );
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 500 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
   }
 
   // Execute a SELL order to create new Short position
@@ -340,12 +355,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta,uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1000 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
   }
 
   // Execute a SELL order to create new Short position and create another SELL order to increase it
@@ -385,12 +406,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta,uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1000 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -431,17 +458,21 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
 
     assertEq(mockTradeService.increasePositionCallCount(), 2);
-    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, _limitPriceE30) = mockTradeService.increasePositionCalls(1);
+    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, _limitPriceE30) = mockTradeService.increasePositionCalls(
+      1
+    );
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -500 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
   }
 
   // Create Long position and flip it with SELL order
   function testCorrectness_executeOrder_FlipLongToShort() external {
     // Mock price to make the order executable
-    mockOracle.setPrice(1001 * 1e30);
+    uint256 _price = 1001 * 1e30;
+    mockOracle.setPrice(_price);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -468,14 +499,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Long position should be created
     assertEq(mockTradeService.increasePositionCallCount(), 1);
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta,uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
-    assertEq(_limitPriceE30,1e30);
-
+    assertEq(_limitPriceE30, 1001 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -529,23 +564,25 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 1000 * 1e30);
-    assertEq(_decreaseLimitPriceE30,1e30);
+    assertEq(_decreaseLimitPriceE30, _price);
 
     // Assert increase position call
     assertEq(mockTradeService.increasePositionCallCount(), 2);
-    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, _limitPriceE30) = mockTradeService.increasePositionCalls(1);
+    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, _limitPriceE30) = mockTradeService.increasePositionCalls(
+      1
+    );
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -500 * 1e30);
-    assertEq(_limitPriceE30,1e30);
-
+    assertEq(_limitPriceE30, _price);
   }
 
   // Create Short position and flip it with BUY order
   function testCorrectness_executeOrder_FlipShortToLong() external {
+    uint256 _price = 1001 * 1e30;
     // Mock price to make the order executable
-    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setPrice(_price);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -572,12 +609,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Short position should be created
     assertEq(mockTradeService.increasePositionCallCount(), 1);
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta,uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1200 * 1e30);
+    assertEq(_limitPriceE30, _price);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -634,11 +677,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Assert increase position call
     assertEq(mockTradeService.increasePositionCallCount(), 2);
-    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, _limitPriceE30) = mockTradeService.increasePositionCalls(1);
+    (_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, _limitPriceE30) = mockTradeService.increasePositionCalls(
+      1
+    );
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 800 * 1e30);
+    assertEq(_limitPriceE30, _price);
   }
 
   // Create Long position and create a Reduce-Only with big sizeDelta to see that the position is not flipped
@@ -671,12 +717,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Long position should be created
     assertEq(mockTradeService.increasePositionCallCount(), 1);
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta,uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -730,6 +782,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 1000 * 1e30);
+    assertEq(_decreaseLimitPriceE30, 1001 * 1e30);
     //@todo assertion?
 
     // Assert increase position call
@@ -766,12 +819,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Short position should be created
     assertEq(mockTradeService.increasePositionCallCount(), 1);
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta,uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1200 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -825,6 +884,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 1200 * 1e30);
+    assertEq(_decreaseLimitPriceE30, 1001 * 1e30);
     // @todo validate limitprice ?
 
     // Assert increase position call
@@ -861,12 +921,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Long position should be created
     assertEq(mockTradeService.increasePositionCallCount(), 1);
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta,uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -920,6 +986,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 700 * 1e30);
+    assertEq(_decreaseLimitPriceE30, 1001 * 1e30);
     //@todo validate _decreaseLimitPriceE30??
 
     // Assert increase position call
@@ -956,12 +1023,18 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Short position should be created
     assertEq(mockTradeService.increasePositionCallCount(), 1);
-    (address _primaryAccount, uint256 _subAccountId, uint256 _marketIndex, int256 _sizeDelta, uint256 _limitPriceE30) = mockTradeService
-      .increasePositionCalls(0);
+    (
+      address _primaryAccount,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      int256 _sizeDelta,
+      uint256 _limitPriceE30
+    ) = mockTradeService.increasePositionCalls(0);
     assertEq(_primaryAccount, address(this));
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1200 * 1e30);
+    assertEq(_limitPriceE30, 1001 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -1015,8 +1088,9 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 100 * 1e30);
+    assertEq(_decreaseLimitPriceE30, 1001 * 1e30);
     //@todo _decreaseLimitPriceE30
-    
+
     // Assert increase position call
     assertEq(mockTradeService.increasePositionCallCount(), 1);
   }

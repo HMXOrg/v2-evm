@@ -7,5 +7,7 @@ interface ITradingStaking {
 
   function withdraw(address _for, uint256 _pid, uint256 _amount) external;
 
-  function poolIdByMarketIndex(uint256 _markerIndex) external returns (uint256 _pid);
+  function poolIdByMarketIndex(uint256 _marketIndex) external returns (uint256 _pid);
+
+  function isAcceptedMarketIndex(uint256 _marketIndex) external returns (bool);
 }

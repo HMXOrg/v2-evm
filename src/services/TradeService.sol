@@ -882,6 +882,7 @@ contract TradeService is ITradeService {
 
     int256 fundingFee = getFundingFee(_marketIndex, isLong, _positionSizeE30, _entryFundingRate);
 
+    // @todo - To prevent the deduction of the development fee from the funding fee, it would be beneficial to separate the two fees and treat them independently.
     // Accumulate fee
     feeUsd += fundingFee;
 
@@ -1077,24 +1078,21 @@ contract TradeService is ITradeService {
     vars.repayFeeTokenAmount = 0;
 
     if (vars.traderBalance > vars.feeTokenAmount) {
-      unchecked {
-        vars.repayFeeTokenAmount = vars.feeTokenAmount;
-        vars.traderBalance -= vars.feeTokenAmount;
-        vars.absFeeUsd = 0;
-      }
+      vars.repayFeeTokenAmount = vars.feeTokenAmount;
+      vars.traderBalance -= vars.feeTokenAmount;
+      vars.absFeeUsd = 0;
     } else {
       // Calculate the balance value of the plp underlying token in USD
       vars.traderBalanceValue = (vars.traderBalance * vars.price) / (10 ** vars.underlyingTokenDecimal);
-
-      unchecked {
-        vars.repayFeeTokenAmount = vars.traderBalance;
-        vars.traderBalance = 0;
-        vars.absFeeUsd -= vars.traderBalanceValue;
-      }
+      vars.repayFeeTokenAmount = vars.traderBalance;
+      vars.traderBalance = 0;
+      vars.absFeeUsd -= vars.traderBalanceValue;
     }
 
     // Calculate the developer fee amount in the plp underlying token
     vars.devFeeTokenAmount = (vars.repayFeeTokenAmount * devFeeRate) / 1e18;
+
+    // @todo - create new function on VaultStorage to add/remove token amounts from this logic
     // Add the developer fee to the vault
     IVaultStorage(_vaultStorage).addDevFee(vars.underlyingToken, vars.devFeeTokenAmount);
     // Add the remaining fee amount to the plp liquidity in the vault
@@ -1113,22 +1111,21 @@ contract TradeService is ITradeService {
 
     if (vars.marginFee > vars.feeTokenAmount) {
       // trading fee token has enough amount to repay fee to trader
-      unchecked {
-        vars.repayFeeTokenAmount = vars.feeTokenAmount;
-        vars.traderBalance += vars.feeTokenAmount;
-        vars.absFeeUsd = 0;
-      }
+
+      vars.repayFeeTokenAmount = vars.feeTokenAmount;
+      vars.traderBalance += vars.feeTokenAmount;
+      vars.absFeeUsd = 0;
     } else {
       // trading fee token has not enough amount to repay fee to trader
-      unchecked {
-        vars.repayFeeTokenAmount = vars.feeTokenAmount;
-        vars.traderBalance += vars.feeTokenAmount;
-        vars.absFeeUsd -= vars.marginFeeValue;
-      }
+      vars.repayFeeTokenAmount = vars.feeTokenAmount;
+      vars.traderBalance += vars.feeTokenAmount;
+      vars.absFeeUsd -= vars.marginFeeValue;
     }
 
     // Calculate the developer fee amount in the plp underlying token
     vars.devFeeTokenAmount = (vars.repayFeeTokenAmount * devFeeRate) / 1e18;
+
+    // @todo - create new function on VaultStorage to add/remove token amounts from this logic
     // Add the developer fee to the vault
     IVaultStorage(_vaultStorage).addDevFee(vars.underlyingToken, vars.devFeeTokenAmount);
     // Remove fee amount to trading fee in the vault
@@ -1158,23 +1155,21 @@ contract TradeService is ITradeService {
 
       if (plpLiquidityAmount > vars.feeTokenAmount) {
         // plp underlying token has enough amount to repay fee to trader
-        unchecked {
-          vars.repayFeeTokenAmount = vars.feeTokenAmount;
-          vars.traderBalance += vars.feeTokenAmount;
-          vars.absFeeUsd = 0;
-        }
+
+        vars.repayFeeTokenAmount = vars.feeTokenAmount;
+        vars.traderBalance += vars.feeTokenAmount;
+        vars.absFeeUsd = 0;
       } else {
         // plp underlying token has not enough amount to repay fee to trader
         // Calculate the plpLiquidityAmount value of the plp underlying token in USD
         uint256 plpLiquidityValue = (plpLiquidityAmount * vars.price) / (10 ** vars.underlyingTokenDecimal);
 
-        unchecked {
-          vars.repayFeeTokenAmount = plpLiquidityAmount;
-          vars.traderBalance += plpLiquidityAmount;
-          vars.absFeeUsd -= plpLiquidityValue;
-        }
+        vars.repayFeeTokenAmount = plpLiquidityAmount;
+        vars.traderBalance += plpLiquidityAmount;
+        vars.absFeeUsd -= plpLiquidityValue;
       }
 
+      // @todo - create new function on VaultStorage to add/remove token amounts from this logic
       // Add debt value on PLP
       IVaultStorage(_vaultStorage).addPlpLiquidityDebtUSDE30(vars.absFeeUsd);
       IVaultStorage(_vaultStorage).removePLPLiquidity(vars.underlyingToken, vars.repayFeeTokenAmount);
@@ -1204,49 +1199,41 @@ contract TradeService is ITradeService {
 
     // Calculate the debt in USD to plp underlying token amounts
     uint256 plpLiquidityDebtAmount = (vars.plpLiquidityDebtUSDE30 * (10 ** vars.underlyingTokenDecimal)) / vars.price;
-
-    // If trader not has enough token amounts to repay fee to PLP
     uint256 traderBalanceValueE30 = (vars.traderBalance * vars.price) / (10 ** vars.underlyingTokenDecimal);
 
     if (vars.feeTokenAmount >= plpLiquidityDebtAmount) {
       // If margin fee to repay is grater than debt on PLP (Rare case)
       if (vars.traderBalance > vars.feeTokenAmount) {
         // If trader has enough token amounts to repay fee to PLP
-        unchecked {
-          vars.repayFeeTokenAmount = vars.feeTokenAmount; // Amount of feeTokenAmount that PLP will receive
-          vars.traderBalance -= vars.feeTokenAmount; // Deducts all feeTokenAmount to repay to PLP
-          vars.feeTokenValue = vars.plpLiquidityDebtUSDE30; // USD value of feeTokenAmount that PLP will receive
-          vars.absFeeUsd -= vars.plpLiquidityDebtUSDE30; // Deducts margin fee on trader's sub-account
-        }
+        vars.repayFeeTokenAmount = vars.feeTokenAmount; // Amount of feeTokenAmount that PLP will receive
+        vars.traderBalance -= vars.feeTokenAmount; // Deducts all feeTokenAmount to repay to PLP
+        vars.feeTokenValue = vars.plpLiquidityDebtUSDE30; // USD value of feeTokenAmount that PLP will receive
+        vars.absFeeUsd -= vars.plpLiquidityDebtUSDE30; // Deducts margin fee on trader's sub-account
       } else {
-        unchecked {
-          vars.repayFeeTokenAmount = vars.traderBalance; // Amount of feeTokenAmount that PLP will receive
-          vars.traderBalance = 0; // Deducts all feeTokenAmount to repay to PLP
-          vars.feeTokenValue = vars.plpLiquidityDebtUSDE30; // USD value of feeTokenAmount that PLP will receive
-          vars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
-        }
+        vars.repayFeeTokenAmount = vars.traderBalance; // Amount of feeTokenAmount that PLP will receive
+        vars.traderBalance = 0; // Deducts all feeTokenAmount to repay to PLP
+        vars.feeTokenValue = vars.plpLiquidityDebtUSDE30; // USD value of feeTokenAmount that PLP will receive
+        vars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
       }
     } else if (vars.feeTokenAmount < plpLiquidityDebtAmount) {
       if (vars.traderBalance >= vars.feeTokenAmount) {
         traderBalanceValueE30 =
           ((vars.traderBalance - vars.feeTokenAmount) * vars.price) /
           (10 ** vars.underlyingTokenDecimal);
-        unchecked {
-          vars.repayFeeTokenAmount = vars.feeTokenAmount; // Trader will repay fee with this token amounts they have
-          vars.traderBalance -= vars.feeTokenAmount; // Deducts repay token amounts from trader account
-          vars.feeTokenValue = traderBalanceValueE30; // USD value of token amounts that PLP will receive
-          vars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
-        }
+
+        vars.repayFeeTokenAmount = vars.feeTokenAmount; // Trader will repay fee with this token amounts they have
+        vars.traderBalance -= vars.feeTokenAmount; // Deducts repay token amounts from trader account
+        vars.feeTokenValue = traderBalanceValueE30; // USD value of token amounts that PLP will receive
+        vars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
       } else {
-        unchecked {
-          vars.repayFeeTokenAmount = vars.traderBalance; // Trader will repay fee with this token amounts they have
-          vars.traderBalance = 0; // Deducts repay token amounts from trader account
-          vars.feeTokenValue = traderBalanceValueE30; // USD value of token amounts that PLP will receive
-          vars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
-        }
+        vars.repayFeeTokenAmount = vars.traderBalance; // Trader will repay fee with this token amounts they have
+        vars.traderBalance = 0; // Deducts repay token amounts from trader account
+        vars.feeTokenValue = traderBalanceValueE30; // USD value of token amounts that PLP will receive
+        vars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
       }
     }
 
+    // @todo - create new function on VaultStorage to add/remove token amounts from this logic
     IVaultStorage(_vaultStorage).removePlpLiquidityDebtUSDE30(vars.feeTokenValue); // Remove debt value on PLP as received
     IVaultStorage(_vaultStorage).addPLPLiquidity(vars.underlyingToken, vars.repayFeeTokenAmount); // Add token amounts that PLP received
     IVaultStorage(_vaultStorage).setTraderBalance(subAccount, vars.underlyingToken, vars.traderBalance); // Update the sub-account's token balance

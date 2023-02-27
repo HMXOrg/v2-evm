@@ -219,6 +219,7 @@ contract TradeService is ITradeService {
       // calculate the change in open interest for the new position
       uint256 _changedOpenInterest = (_absSizeDelta * (10 ** _marketConfig.exponent)) / vars.priceE30;
       _position.openInterest += _changedOpenInterest;
+      _position.lastIncreaseTimestamp = block.timestamp;
 
       // update gobal market state
       if (vars.isLong) {
@@ -476,13 +477,9 @@ contract TradeService is ITradeService {
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
 
-    // @todo - should it be
     uint256 _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
-      0,
-      0,
-      0,
-      IConfigStorage(configStorage).getLiquidityConfig(),
-      IConfigStorage(configStorage).getPlpTokenConfigs(address(0))
+      _token,
+      _realizedProfitE30
     );
     uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / (10 ** _decimals);
 

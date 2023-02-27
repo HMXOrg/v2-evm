@@ -179,11 +179,8 @@ contract MockCalculator is ICalculator {
   }
 
   function getSettlementFeeRate(
-    uint256 /* _value */,
-    uint256 /* _liquidityUSD */, //e30
-    uint256 /* _totalLiquidityUSD */, //e30
-    IConfigStorage.LiquidityConfig memory /* _liquidityConfig */,
-    IConfigStorage.PLPTokenConfig memory /* _plpTokenConfig */
+    address /* _token */,
+    uint256 /* _liquidityUSDDelta */
   ) external pure returns (uint256) {
     // 0.5%
     return 5e15;

@@ -29,7 +29,8 @@ interface ITradeService {
     address _primaryAccount,
     uint256 _subAccountId,
     uint256 _marketIndex,
-    int256 _sizeDelta
+    int256 _sizeDelta,
+    uint256 _limitPriceE30
   ) external;
 
   function decreasePosition(
@@ -37,6 +38,7 @@ interface ITradeService {
     uint256 _subAccountId,
     uint256 _marketIndex,
     uint256 _positionSizeE30ToDecrease,
-    address _tpToken
+    address _tpToken,
+    uint256 _limitPriceE30
   ) external;
 }

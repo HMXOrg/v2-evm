@@ -45,12 +45,22 @@ contract TradeService is ITradeService {
     configStorage = _configStorage;
   }
 
+  /// @notice Create increasePosition
+  /// @param _primaryAccount Primary account of user
+  /// @param _subAccountId  SubAccountId 
+  /// @param _marketIndex  market index
+  /// @param _sizeDelta sizeDelta in USD
+  /// @param _limitPriceE30  price from LimitTrade in e30 unit
   function increasePosition(
     address _primaryAccount,
     uint256 _subAccountId,
     uint256 _marketIndex,
-    int256 _sizeDelta
+    int256 _sizeDelta,
+    uint256 _limitPriceE30
   ) external {
+    // validate service should be called from handler ONLY
+    IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    
     // get the sub-account from the primary account and sub-account ID
     address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
 
@@ -92,8 +102,8 @@ contract TradeService is ITradeService {
     updateBorrowingRate(_marketConfig.assetClass);
 
     // Get Price market.
-    uint256 _priceE30;
-    // market validation
+    uint256 _priceE30 ;
+    
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
@@ -114,6 +124,11 @@ contract TradeService is ITradeService {
 
       // check sub account equity is under MMR
       _subAccountHealthCheck(_subAccount);
+
+      //override Price when using Limit Price
+      if(_limitPriceE30 != 0)
+      _priceE30 = _limitPriceE30;
+
     }
 
     // get the absolute value of the new size delta
@@ -121,7 +136,7 @@ contract TradeService is ITradeService {
 
     // if the position size is zero, set the average price to the current price (new position)
     if (_isNewPosition) {
-      _position.avgEntryPriceE30 = _priceE30;
+      _position.avgEntryPriceE30 =  _priceE30;
       _position.primaryAccount = _primaryAccount;
       _position.subAccountId = _subAccountId;
       _position.marketIndex = _marketIndex;
@@ -220,13 +235,21 @@ contract TradeService is ITradeService {
   /// @param _marketIndex - market index
   /// @param _positionSizeE30ToDecrease - position size to decrease
   /// @param _tpToken - take profit token
+  /// @param _limitPriceE30  price from LimitTrade in e30 unit
+  
+
   function decreasePosition(
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex,
     uint256 _positionSizeE30ToDecrease,
-    address _tpToken
+    address _tpToken,
+    uint256 _limitPriceE30
+    
   ) external {
+    // validate service should be called from handler ONLY
+    IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+
     // prepare
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
       _marketIndex
@@ -264,6 +287,10 @@ contract TradeService is ITradeService {
     // Update borrowing rate
     updateBorrowingRate(_marketConfig.assetClass);
 
+    // ==================================================
+    // | ------ Validate Market & Update Price  ------- |
+    // ==================================================
+
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
@@ -285,6 +312,10 @@ contract TradeService is ITradeService {
 
       // check sub account equity is under MMR
       _subAccountHealthCheck(_subAccount);
+
+      if(_limitPriceE30 != 0){
+        vars.priceE30 = _limitPriceE30;
+      }
     }
 
     // @todo - update funding & borrowing fee rate
@@ -387,10 +418,10 @@ contract TradeService is ITradeService {
       IPerpStorage(perpStorage).savePosition(_subAccount, _positionId, _position);
     }
 
-    {
       // =======================================
       // | ------ settle profit & loss ------- |
       // =======================================
+    {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
@@ -411,6 +442,7 @@ contract TradeService is ITradeService {
 
     emit LogDecreasePosition(_positionId, _positionSizeE30ToDecrease);
   }
+
 
   /// @notice settle profit
   /// @param _token - token that trader want to take profit as collateral

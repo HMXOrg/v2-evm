@@ -37,7 +37,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(100);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       assertEq(_globalAssetClass.sumBorrowingRate, 0);
       assertEq(_globalAssetClass.lastBorrowingTime, 100);
@@ -51,7 +51,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(101);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 90000 / 1000000 = 0.000009
       assertEq(_globalAssetClass.sumBorrowingRate, 0.000009 * 1e18);
@@ -71,7 +71,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(120);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 180000 / 1000000 * (120 - 101) = 0.000342 | 0.000009 + 0.000342 = 0.000351
       assertEq(_globalAssetClass.sumBorrowingRate, 0.000351 * 1e18);
@@ -91,7 +91,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(130);
     {
-      tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+      tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30,0);
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 270000 / 1000000 * (130 - 120) = 0.00027 | 0.000351 + 0.00027 = 0.000621
       assertEq(_globalAssetClass.sumBorrowingRate, 0.000621 * 1e18);
@@ -110,7 +110,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(135);
     {
-      tradeService.increasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30);
+      tradeService.increasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30,0);
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 315000 / 1000000 * (135 - 130) = 0.0001575 | 0.000621 + 0.0001575 = 0.0007785
       assertEq(_globalAssetClass.sumBorrowingRate, 0.0007785 * 1e18);
@@ -148,8 +148,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(100);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-      tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
+      tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30,0);
 
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
 
@@ -166,7 +166,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(110);
     {
-      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0));
+      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0),0);
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 135000 / 1000000 * (110 - 100) = 0.000135
       assertEq(_globalAssetClass.sumBorrowingRate, 0.000135 * 1e18);
@@ -188,7 +188,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(120);
     {
-      tradeService.decreasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, address(0));
+      tradeService.decreasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, address(0),0);
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 90000 / 1000000 * (120 - 110) = 0.00009 | 0.000135 + 0.00009 = 0.000225
       assertEq(_globalAssetClass.sumBorrowingRate, 0.000225 * 1e18);
@@ -234,8 +234,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(100);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-      tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
+      tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30,0);
 
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
 
@@ -255,8 +255,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(110);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-      tradeService.increasePosition(BOB, 0, btcMarketIndex, 500_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
+      tradeService.increasePosition(BOB, 0, btcMarketIndex, 500_000 * 1e30,0);
 
       {
         IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
@@ -284,8 +284,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(150);
     {
-      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 2_000_000 * 1e30, address(0));
-      tradeService.decreasePosition(BOB, 0, btcMarketIndex, 100_000 * 1e30, address(0));
+      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 2_000_000 * 1e30, address(0),0);
+      tradeService.decreasePosition(BOB, 0, btcMarketIndex, 100_000 * 1e30, address(0),0);
 
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 270000 / 1000000 * (150 - 110) = 0.00108 | 0.000135 + 0.00108 = 0.001215

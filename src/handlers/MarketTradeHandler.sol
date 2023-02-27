@@ -152,7 +152,8 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
         _subAccountId,
         _marketIndex,
         _shortDecreasingSizeE30,
-        _tpToken
+        _tpToken,
+        0
       );
     }
 
@@ -162,7 +163,8 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
         _account,
         _subAccountId,
         _marketIndex,
-        int256(_longIncreasingSizeE30)
+        int256(_longIncreasingSizeE30),
+        0
       );
     }
 
@@ -236,7 +238,8 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
         _subAccountId,
         _marketIndex,
         _longDecreasingSizeE30,
-        _tpToken
+        _tpToken,
+        0
       );
     }
 
@@ -246,7 +249,8 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
         _account,
         _subAccountId,
         _marketIndex,
-        -int256(_shortIncreasingSizeE30)
+        -int256(_shortIncreasingSizeE30),
+        0
       );
     }
 

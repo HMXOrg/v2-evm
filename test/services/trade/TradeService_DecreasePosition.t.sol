@@ -76,7 +76,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
 
     // price change to 1.05 USD
     // to check open interest should calculate correctly
@@ -90,7 +90,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 476,190.476190476190476190 TOKENs
     // average price  - 1.05 USD
-    tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+    tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30,0);
 
     // recalculate new long average price after BOB open position
     // global long pnl = global long size * (current price - global avg price) / global avg price
@@ -112,7 +112,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     positionTester.watch(ALICE, 0, _tpToken, _positionId);
 
     // ALICE decrease position
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, _tpToken);
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, _tpToken,0);
 
     // recalculate long average price after ALICE decrease position
     // global long pnl = global long size * (current price - global long avg price) / global avg price
@@ -185,7 +185,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30,0);
 
     // price change to 1.05 USD
     // to check open interest should calculate correctly
@@ -199,7 +199,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 476,190.476190476190476190 TOKENs
     // average price  - 1.05 USD
-    tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30);
+    tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30,0);
 
     // recalculate new short average price after BOB open position
     // global short pnl = global short size * (global short avg price - current price) / global short avg price
@@ -231,7 +231,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     mockOracle.setPrice(address(wbtc).toBytes32(), 100 * 1e30);
 
     // ALICE decrease position
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, _tpToken);
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, _tpToken,0);
 
     // recalculate short average price after ALICE decrease position
     // global short pnl = global short size * (global short avg price - current price) / global avg price
@@ -309,7 +309,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
@@ -323,7 +323,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 526,315.789473684210526315 TOKENs
     // average price  - 0.95 USD
-    tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+    tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30,0);
 
     // recalculate new long average price after BOB open position
     // global long pnl = global long size * (current price - global avg price) / global avg price
@@ -346,7 +346,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     positionTester.watch(ALICE, 0, _tpToken, _positionId);
 
     // ALICE decrease position
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken);
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken,0);
 
     // recalculate long average price after ALICE decrease position
     // global long pnl = global long size * (current price - global avg price) / global avg price
@@ -413,7 +413,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30,0);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
@@ -427,7 +427,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 526,315.789473684210526315 TOKENs
     // average price  - 0.95 USD
-    tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30);
+    tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30,0);
 
     // recalculate new short average price after BOB open position
     // global short pnl = global short size * (current price - global avg price) / global avg price
@@ -449,7 +449,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     positionTester.watch(ALICE, 0, _tpToken, _positionId);
 
     // ALICE decrease position
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken);
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken,0);
 
     // recalculate short average price after ALICE decrease position
     // global short pnl = global short size * (global avg price - current price) / global avg price
@@ -513,102 +513,102 @@ contract TradeService_DecreasePosition is TradeService_Base {
    */
   function testRevert_WhenMarketIsDelistedFromPerp() external {
     // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
 
     // someone delist market
     configStorage.delistMarket(ethMarketIndex);
 
     vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth),0);
   }
 
   function testRevert_WhenOracleTellMarketIsClose() external {
     // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
 
     // set market status from oracle is inactive
     mockOracle.setMarketStatus(1);
 
     vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsClosed()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth),0);
   }
 
   function testRevert_WhenPriceStale() external {
     // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
 
     // make price stale in mock oracle middleware
     mockOracle.setPriceStale(true);
 
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth),0);
   }
 
   function testRevert_WhenSubAccountEquityIsLessThanMMR() external {
     // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
 
     // mock MMR as very big number, to make this sub account unhealthy
     mockCalculator.setMMR(ALICE, type(uint256).max);
 
     vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderMMR()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth),0);
   }
 
   function testRevert_WhenTraderDecreaseLongPositionWhichAlreadyClosed() external {
     // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
 
     // ALICE close all position
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth),0);
 
     // ALICE try to decrease again
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionAlreadyClosed()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth),0);
   }
 
   function testRevert_WhenTraderDecreaseShortPositionWhichAlreadyClosed() external {
     // ALICE open SHORT position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30,0);
 
     // ALICE close all position
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth),0);
 
     // ALICE try to decrease again
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionAlreadyClosed()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth),0);
   }
 
   function testRevert_WhenTraderDecreaseTooMuchLongPositionSize() external {
     // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
 
     vm.expectRevert(abi.encodeWithSignature("ITradeService_DecreaseTooHighPositionSize()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_001 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_001 * 1e30, address(weth),0);
   }
 
   function testRevert_WhenTraderDecreaseTooMuchShortPositionSize() external {
     // ALICE open SHORT position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30,0);
 
     vm.expectRevert(abi.encodeWithSignature("ITradeService_DecreaseTooHighPositionSize()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_001 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_001 * 1e30, address(weth),0);
   }
 
   function testRevert_AfterDecreaseLongPositionAndRemainPositionSizeIsTooTiny() external {
     // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30,0);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_TooTinyPosition()"));
     // decrease position for 999,999.9
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 9_999_999 * 1e29, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 9_999_999 * 1e29, address(weth),0);
   }
 
   function testRevert_AfterDecreaseShortPositioAndRemainPositionSizeIsTooTiny() external {
     // ALICE open SHORT position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30,0);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_TooTinyPosition()"));
     // decrease position for 999,999.9
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 9_999_999 * 1e29, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 9_999_999 * 1e29, address(weth),0);
   }
 
   // note: this case need to open many position and then decrease 1 with a lot of loss size

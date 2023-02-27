@@ -26,6 +26,50 @@ interface IOracleMiddleware {
     uint256 _trustPriceAge
   ) external view returns (uint256 _price, uint256 _lastUpdated, uint8 _status);
 
+  function getLatestAdaptivePrice(
+    bytes32 _assetId,
+    uint256 _exponent,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate);
+
+  function unsafeGetLatestAdaptivePrice(
+    bytes32 _assetId,
+    uint256 _exponent,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate);
+
+  function getLatestAdaptivePriceWithMarketStatus(
+    bytes32 _assetId,
+    uint256 _exponent,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
+
+  function unsafeGetLatestAdaptivePriceWithMarketStatus(
+    bytes32 _assetId,
+    uint256 _exponent,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
+
   // =========================================
   // | ---------- Setter ------------------- |
   // =========================================

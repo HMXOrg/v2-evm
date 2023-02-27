@@ -73,6 +73,18 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   );
 
   /**
+   * Structs
+   */
+
+  struct ExecuteOrderVars {
+    LimitOrder order;
+    address subAccount;
+    bytes32 positionId;
+    bool positionIsLong;
+    bool isNewPosition;
+  }
+
+  /**
    * Constants
    */
   uint8 internal constant BUY = 0;

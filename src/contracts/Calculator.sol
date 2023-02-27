@@ -275,50 +275,46 @@ contract Calculator is Owned, ICalculator {
     return _feeRate + _taxRate;
   }
 
-  // @todo - rewrite
+  /// @notice get settlement fee rate
+  /// @param _token - token
+  /// @param _liquidityUsdDelta - withdrawal amount
   function getSettlementFeeRate(
-    uint256 _value,
-    uint256 _liquidityUSD, //e30
-    uint256 _totalLiquidityUSD, //e30
-    IConfigStorage.LiquidityConfig memory _liquidityConfig,
-    IConfigStorage.PLPTokenConfig memory _plpTokenConfig
-  ) external pure returns (uint256) {
-    uint256 _taxRate = _liquidityConfig.taxFeeRate;
-    uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
+    address _token,
+    uint256 _liquidityUsdDelta
+  ) external returns (uint256 _settlementFeeRate) {
+    // usd debt
+    uint256 _tokenLiquidityUsd = IVaultStorage(vaultStorage).plpLiquidityUSDE30(_token);
+    if (_tokenLiquidityUsd == 0) return 0;
 
-    uint256 startValue = _liquidityUSD;
-    uint256 nextValue = startValue - _value;
-    // if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
+    // total usd debt
+    uint256 _totalLiquidityUsd = IVaultStorage(vaultStorage).plpTotalLiquidityUSDE30();
 
-    uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
-    if (targetValue == 0) return _taxRate;
+    IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
-    uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
+    // target value = total usd debt * target weight ratio (targe weigh / total weight);
+    uint256 _targetUsd = (_totalLiquidityUsd * IConfigStorage(configStorage).getPLPTokenConfig(_token).targetWeight) /
+      _liquidityConfig.plpTotalTokenWeight;
 
-    uint256 nextTargetDiff = nextValue > targetValue ? nextValue - targetValue : targetValue - nextValue;
+    if (_targetUsd == 0) return 0;
 
-    // nextValue moves closer to the targetValue -> positive case;
-    // Should apply rebate.
-    if (nextTargetDiff < startTargetDiff) {
-      return 0;
+    // next value
+    uint256 _nextUsd = _tokenLiquidityUsd - _liquidityUsdDelta;
+
+    // current target diff
+    uint256 _currentTargetDiff;
+    uint256 _nextTargetDiff;
+    unchecked {
+      _currentTargetDiff = _tokenLiquidityUsd > _targetUsd
+        ? _tokenLiquidityUsd - _targetUsd
+        : _targetUsd - _tokenLiquidityUsd;
+      // next target diff
+      _nextTargetDiff = _nextUsd > _targetUsd ? _nextUsd - _targetUsd : _targetUsd - _nextUsd;
     }
 
-    // @todo - move this to service
-    uint256 _nextWeight = (nextValue * 1e18) / targetValue;
-    // if weight exceed targetWeight(e18) + maxWeight(e18)
-    if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
-      revert ICalculator_PoolImbalance();
-    }
+    if (_nextTargetDiff < _currentTargetDiff) return 0;
 
-    // If not then -> negative impact to the pool.
-    // Should apply tax.
-    uint256 midDiff = (startTargetDiff + nextTargetDiff) / 2;
-    if (midDiff > targetValue) {
-      midDiff = targetValue;
-    }
-    _taxRate = (_taxRate * midDiff) / targetValue;
-
-    return _taxRate;
+    // settlement fee rate = (next target diff + current target diff / 2) * base tax fee / target usd
+    return (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRate) / _targetUsd;
   }
 
   // return in e18

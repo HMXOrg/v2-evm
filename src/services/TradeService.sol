@@ -716,12 +716,12 @@ contract TradeService is ITradeService {
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
-      (int256 newFundingRate, int256 nexFundingRateLong, int256 nextFundingRateShort) = getNextFundingRate(
+      (int256 newFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = getNextFundingRate(
         _marketIndex
       );
 
       _globalMarket.currentFundingRate = newFundingRate;
-      _globalMarket.accumFundingLong += nexFundingRateLong;
+      _globalMarket.accumFundingLong += nextFundingRateLong;
       _globalMarket.accumFundingShort += nextFundingRateShort;
       _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
 

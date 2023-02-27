@@ -44,12 +44,12 @@ interface ITradeService {
     address underlyingToken;
     uint256 underlyingTokenDecimal;
     uint256 traderBalance;
+    uint256 traderBalanceValue;
     uint256 marginFee;
     uint256 marginFeeValue;
     uint256 price;
     uint256 feeTokenAmount;
     uint256 feeTokenValue;
-    uint256 balanceValue;
     uint256 repayFeeTokenAmount;
     uint256 devFeeTokenAmount;
   }

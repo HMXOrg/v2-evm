@@ -58,7 +58,7 @@ contract BotHandler is IBotHandler, Owned {
 
   /// @notice Reset trade service
   /// @param _newTradeService new trade service address
-  function setTradeService(address _newTradeService) external {
+  function setTradeService(address _newTradeService) external onlyOwner {
     emit LogSetTradeService(tradeService, _newTradeService);
 
     tradeService = _newTradeService;

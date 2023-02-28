@@ -100,4 +100,11 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
 
     return (_convertToUint256(_price, _isMax, 30), _price.publishTime);
   }
+
+  /// @notice isSameAsset to check between two params has the same byte
+  /// @param _assetId1 byte asset 1
+  /// @param _assetId2 byte asset 2
+  function isSameAsset(bytes32 _assetId1, bytes32 _assetId2) external view returns (bool) {
+    return pythPriceIdOf[_assetId1] == pythPriceIdOf[_assetId2];
+  }
 }

@@ -124,13 +124,10 @@ contract TradeService is ITradeService {
     // Update borrowing rate
     updateBorrowingRate(_marketConfig.assetClass);
 
-    // Update funding rate
-    updateFundingRate(_marketIndex);
-
     // get the global market for the given market index
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    bool _isOverridePrice = _limitPriceE30 != 0;
 
-    // market validation
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
@@ -148,18 +145,23 @@ contract TradeService is ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
+      if (_isOverridePrice) {
+        vars.priceE30 = _limitPriceE30;
+      }
+
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
 
       // if market status is not 2, means that the market is closed or market status has been defined yet
       if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
-
-      // check sub account equity is under MMR
-      _subAccountHealthCheck(vars.subAccount);
-
-      //override Price when using Limit Price
-      if (_limitPriceE30 != 0) vars.priceE30 = _limitPriceE30;
     }
+
+    // Update funding rate
+    updateFundingRate(_marketIndex, _limitPriceE30);
+
+    // market validation
+    // check sub account equity is under MMR
+    _subAccountHealthCheck(vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     // get the absolute value of the new size delta
     uint256 _absSizeDelta = abs(_sizeDelta);
@@ -193,7 +195,8 @@ contract TradeService is ITradeService {
       vars.position.positionSizeE30,
       vars.position.entryFundingRate
     );
-    settleFee(vars.subAccount);
+
+    settleFee(vars.subAccount, _limitPriceE30);
 
     // update the position size by adding the new size delta
     vars.position.positionSizeE30 += _sizeDelta;
@@ -201,9 +204,6 @@ contract TradeService is ITradeService {
     {
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
         _marketConfig.assetClass
-      );
-      IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(
-        vars.position.marketIndex
       );
 
       vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
@@ -219,7 +219,9 @@ contract TradeService is ITradeService {
 
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = ICalculator(IConfigStorage(configStorage).calculator()).getFreeCollateral(
-        vars.subAccount
+        vars.subAccount,
+        vars.priceE30,
+        _marketConfig.assetId
       );
       // if the free collateral is less than the initial margin required, revert the transaction with an error
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
@@ -317,9 +319,10 @@ contract TradeService is ITradeService {
     updateBorrowingRate(_marketConfig.assetClass);
 
     // Update funding rate
-    updateFundingRate(_marketIndex);
+    updateFundingRate(_marketIndex, _limitPriceE30);
 
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    bool _isOverridePrice = _limitPriceE30 != 0;
 
     {
       uint256 _lastPriceUpdated;
@@ -338,6 +341,10 @@ contract TradeService is ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
+      if (_isOverridePrice) {
+        vars.priceE30 = _limitPriceE30;
+      }
+
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
 
@@ -345,11 +352,7 @@ contract TradeService is ITradeService {
       if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
 
       // check sub account equity is under MMR
-      _subAccountHealthCheck(vars.subAccount);
-
-      if (_limitPriceE30 != 0) {
-        vars.priceE30 = _limitPriceE30;
-      }
+      _subAccountHealthCheck(vars.subAccount, vars.priceE30, _marketConfig.assetId);
     }
 
     // @todo - update funding & borrowing fee rate
@@ -364,7 +367,7 @@ contract TradeService is ITradeService {
       vars.position.positionSizeE30,
       vars.position.entryFundingRate
     );
-    settleFee(vars.subAccount);
+    settleFee(vars.subAccount, _limitPriceE30);
 
     uint256 _newAbsPositionSizeE30 = vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
 
@@ -479,7 +482,7 @@ contract TradeService is ITradeService {
     // =========================================
 
     // check sub account equity is under MMR
-    _subAccountHealthCheck(vars.subAccount);
+    _subAccountHealthCheck(vars.subAccount, vars.priceE30, _marketConfig.assetId);
 
     emit LogDecreasePosition(vars.positionId, _positionSizeE30ToDecrease);
   }
@@ -693,10 +696,12 @@ contract TradeService is ITradeService {
 
   /// @notice health check for sub account that equity > margin maintenance required
   /// @param _subAccount target sub account for health check
-  function _subAccountHealthCheck(address _subAccount) internal {
+  /// @param _price Price from limitOrder or Pyth
+  /// @param _assetId AssetId of Market
+  function _subAccountHealthCheck(address _subAccount, uint256 _price, bytes32 _assetId) internal view {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
     // check sub account is healthy
-    uint256 _subAccountEquity = _calculator.getEquity(_subAccount);
+    uint256 _subAccountEquity = _calculator.getEquity(_subAccount, _price, _assetId);
     // maintenance margin requirement (MMR) = position size * maintenance margin fraction
     // note: maintenanceMarginFraction is 1e18
     uint256 _mmr = _calculator.getMMR(_subAccount);
@@ -734,7 +739,8 @@ contract TradeService is ITradeService {
 
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
-  function updateFundingRate(uint256 _marketIndex) public {
+  /// @param _price Price from limitOrder, zeros means no marketOrderPrice
+  function updateFundingRate(uint256 _marketIndex, uint256 _price) public {
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
@@ -752,7 +758,8 @@ contract TradeService is ITradeService {
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
       (int256 newFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = getNextFundingRate(
-        _marketIndex
+        _marketIndex,
+        _price
       );
 
       _globalMarket.currentFundingRate = newFundingRate;
@@ -839,16 +846,20 @@ contract TradeService is ITradeService {
   }
 
   /// @notice Calculate next funding rate using when increase/decrease position.
-  /// @param marketIndex Market Index.
+  /// @param _marketIndex Market Index.
+  /// @param _price Price from either limitOrder or Pyth
   /// @return fundingRate next funding rate using for both LONG & SHORT positions.
   /// @return fundingRateLong next funding rate for LONG.
   /// @return fundingRateShort next funding rate for SHORT.
   function getNextFundingRate(
-    uint256 marketIndex
+    uint256 _marketIndex,
+    uint256 _price
   ) public view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
     GetFundingRateVar memory vars;
-    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(marketIndex);
-    IPerpStorage.GlobalMarket memory globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(marketIndex);
+    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
+      _marketIndex
+    );
+    IPerpStorage.GlobalMarket memory globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
 
@@ -858,12 +869,16 @@ contract TradeService is ITradeService {
     // If block.timestamp not pass the next funding time, return 0.
     if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
 
-    //@todo - validate timestamp of these
-    (vars.marketPriceE30, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
-      marketConfig.assetId,
-      false,
-      marketConfig.priceConfidentThreshold
-    );
+    if (_price != 0) {
+      vars.marketPriceE30 = _price;
+    } else {
+      //@todo - validate timestamp of these
+      (vars.marketPriceE30, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+        marketConfig.assetId,
+        false,
+        marketConfig.priceConfidentThreshold
+      );
+    }
 
     vars.marketSkewUSDE30 =
       ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
@@ -929,7 +944,8 @@ contract TradeService is ITradeService {
 
   /// @notice Settles the fees for a given sub-account.
   /// @param _subAccount The address of the sub-account to settle fees for.
-  function settleFee(address _subAccount) public {
+  /// @param _price Price from limitOrder
+  function settleFee(address _subAccount, uint256 _price) public {
     SettleFeeVar memory vars;
     address _vaultStorage = vaultStorage;
     address _perpStorage = perpStorage;
@@ -960,12 +976,16 @@ contract TradeService is ITradeService {
       vars.marginFee = IVaultStorage(_vaultStorage).marginFee(vars.underlyingToken); // Global token amount of margin fee collected from traders
 
       // Retrieve the latest price and confident threshold of the plp underlying token
-      (vars.price, ) = oracle.getLatestPrice(
-        vars.underlyingToken.toBytes32(),
-        false,
-        IConfigStorage(_configStorage).getMarketConfigByToken(vars.underlyingToken).priceConfidentThreshold,
-        30
-      );
+      if (_price != 0) {
+        vars.price = _price;
+      } else {
+        (vars.price, ) = oracle.getLatestPrice(
+          vars.underlyingToken.toBytes32(),
+          false,
+          IConfigStorage(_configStorage).getMarketConfigByToken(vars.underlyingToken).priceConfidentThreshold,
+          30
+        );
+      }
 
       // feeUSD > 0 or isPayFee == true, means trader pay fee
       if (vars.isPayFee) {

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { IOracleAdapter } from "./IOracleAdapter.sol";
+
 interface IOracleMiddleware {
   // errors
   error IOracleMiddleware_PythPriceStale();
@@ -69,6 +71,8 @@ interface IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
+
+  function pythAdapter() external view returns (IOracleAdapter);
 
   // =========================================
   // | ---------- Setter ------------------- |

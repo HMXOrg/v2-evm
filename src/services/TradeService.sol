@@ -341,12 +341,13 @@ contract TradeService is ITradeService {
     emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }
 
-  /// @notice To Take profit with maximum profit could take
+  // @todo - access control
+  /// @notice force close trader position with maximum profit could take
   /// @param _account position owner
   /// @param _subAccountId sub-account id
   /// @param _marketIndex position market index
   /// @param _tpToken take profit token
-  function closePositionAndTakeProfit(
+  function forceClosePosition(
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex,

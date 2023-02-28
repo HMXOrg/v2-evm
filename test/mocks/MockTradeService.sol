@@ -71,7 +71,7 @@ contract MockTradeService is ITradeService {
     );
   }
 
-  function closePositionAndTakeProfit(
+  function forceClosePosition(
     address _account,
     uint256 _subAccountId,
     uint256 _marketIndex,

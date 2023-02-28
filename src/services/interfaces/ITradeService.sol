@@ -75,10 +75,5 @@ interface ITradeService {
     address _tpToken
   ) external;
 
-  function closePositionAndTakeProfit(
-    address _account,
-    uint256 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken
-  ) external;
+  function forceClosePosition(address _account, uint256 _subAccountId, uint256 _marketIndex, address _tpToken) external;
 }

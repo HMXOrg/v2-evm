@@ -832,22 +832,27 @@ contract TradeService is ITradeService {
   /// @param _marketIndex Index of market
   /// @param _isLong Is long or short exposure
   /// @param _size Position size
-  /// @param _entryFundingRate Entry Funding rate of position
   /// @return fundingFee Funding fee of position
   function getFundingFee(
     uint256 _marketIndex,
     bool _isLong,
     int256 _size,
-    int256 _entryFundingRate
+    int256 /*_entryFundingRate*/ // @todo - consider this parameter later
   ) public view returns (int256 fundingFee) {
     if (_size == 0) return 0;
-    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
 
-    int256 _fundingRate = _globalMarket.currentFundingRate - _entryFundingRate;
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    int256 _fundingRate = _globalMarket.currentFundingRate;
+
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
-    fundingFee = (_size * _fundingRate) / 1e18;
-    return _isLong ? -fundingFee : fundingFee;
+    fundingFee = (int(absSize) * _fundingRate) / 1e18;
+    if (_isLong) {
+      return _fundingRate < 0 ? -fundingFee : fundingFee;
+    } else {
+      _fundingRate < 0 ? fundingFee : -fundingFee;
+    }
   }
 
   /// @notice Calculate next funding rate using when increase/decrease position.
@@ -886,6 +891,7 @@ contract TradeService is ITradeService {
     vars.ratio = _min(vars.ratio, 1e18);
 
     vars.nextFundingRate = (vars.ratio * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
+
     vars.newFundingRate = globalMarket.currentFundingRate + vars.nextFundingRate;
 
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
@@ -957,6 +963,7 @@ contract TradeService is ITradeService {
 
     int256 fundingFee = getFundingFee(_marketIndex, isLong, _positionSizeE30, _entryFundingRate);
     feeUsd += fundingFee;
+
     emit LogCollectFundingFee(_subAccount, _assetClassIndex, fundingFee);
 
     // Update the sub-account's debt fee balance
@@ -1293,27 +1300,27 @@ contract TradeService is ITradeService {
       // Calculate the fee amount in the plp underlying token
       vars.feeTokenAmount = (vars.absFeeUsd * (10 ** vars.underlyingTokenDecimal)) / vars.price;
 
+      uint256 borrowPlpLiquidityValue;
       if (plpLiquidityAmount > vars.feeTokenAmount) {
         // plp underlying token has enough amount to repay fee to trader
-
+        borrowPlpLiquidityValue = vars.absFeeUsd;
         vars.repayFeeTokenAmount = vars.feeTokenAmount;
         vars.traderBalance += vars.feeTokenAmount;
         vars.absFeeUsd = 0;
       } else {
         // plp underlying token has not enough amount to repay fee to trader
         // Calculate the plpLiquidityAmount value of the plp underlying token in USD
-        uint256 plpLiquidityValue = (plpLiquidityAmount * vars.price) / (10 ** vars.underlyingTokenDecimal);
-
+        borrowPlpLiquidityValue = (plpLiquidityAmount * vars.price) / (10 ** vars.underlyingTokenDecimal);
         vars.repayFeeTokenAmount = plpLiquidityAmount;
         vars.traderBalance += plpLiquidityAmount;
-        vars.absFeeUsd -= plpLiquidityValue;
+        vars.absFeeUsd -= borrowPlpLiquidityValue;
       }
 
       IVaultStorage(_vaultStorage).borrowFundingFeeFromPLP(
         subAccount,
         vars.underlyingToken,
         vars.repayFeeTokenAmount,
-        vars.absFeeUsd,
+        borrowPlpLiquidityValue,
         vars.traderBalance
       );
 

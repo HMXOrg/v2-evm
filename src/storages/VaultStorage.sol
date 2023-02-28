@@ -58,11 +58,11 @@ contract VaultStorage is IVaultStorage {
   }
 
   function addPlpLiquidityDebtUSDE30(uint256 _value) public {
-    plpTotalLiquidityUSDE30 += _value;
+    plpLiquidityDebtUSDE30 += _value;
   }
 
   function removePlpLiquidityDebtUSDE30(uint256 _value) public {
-    plpTotalLiquidityUSDE30 -= _value;
+    plpLiquidityDebtUSDE30 -= _value;
   }
 
   // @todo - modifier?

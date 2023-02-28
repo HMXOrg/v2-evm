@@ -32,6 +32,7 @@ interface IConfigStorage {
     bool isStableCoin; // token is stablecoin
     bool accepted; // accepted to deposit as collateral
     address settleStrategy; // determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+    uint256 priceConfidentThreshold; // pyth price confidential treshold
   }
 
   struct OpenInterest {
@@ -150,6 +151,8 @@ interface IConfigStorage {
   function getNextAcceptedToken(address token) external view returns (address);
 
   function getPlpTokens() external view returns (address[] memory);
+
+  function getCollateralTokens() external view returns (address[] memory);
 
   /**
    * Setter

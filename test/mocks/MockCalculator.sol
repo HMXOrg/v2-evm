@@ -11,6 +11,7 @@ contract MockCalculator is ICalculator {
   mapping(address => uint256) mmrOf;
   mapping(address => int256) unrealizedPnlOf;
 
+  uint256 collateralValue;
   uint256 freeCollateral;
   uint256 aum;
   uint256 plpValue;
@@ -185,5 +186,9 @@ contract MockCalculator is ICalculator {
   ) external pure returns (uint256) {
     // 0.5%
     return 5e15;
+  }
+
+  function getCollateralValue(address /*_subAccount*/) external view returns (uint256) {
+    return collateralValue;
   }
 }

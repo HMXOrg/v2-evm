@@ -92,6 +92,12 @@ contract PerpStorage is IPerpStorage {
     }
   }
 
+  function resetPosition(bytes32 _positionId) public {
+    uint256 _index = positionIndices[_positionId];
+    if (_index == 0) revert();
+    positions[_index] = positions[0];
+  }
+
   // @todo - remove
   function addPosition(
     address _primaryAccount,

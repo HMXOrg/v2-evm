@@ -9,8 +9,7 @@ import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.
 
 import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 
-// @todo - Test Description
-contract TradeService_FudningFee is TradeService_Base {
+contract TradeService_FundingFee is TradeService_Base {
   using AddressUtils for address;
 
   function setUp() public virtual override {
@@ -19,8 +18,17 @@ contract TradeService_FudningFee is TradeService_Base {
     // Set PLPLiquidity
     vaultStorage.addPLPLiquidity(configStorage.plpTokens(0), 1000 * 1e18);
 
-    // Set MarginFee to have enough token amounts to repay funding fee
-    vaultStorage.addMarginFee(configStorage.plpTokens(0), 10 * 1e18);
+    // Set fundingFee to have enough token amounts to repay funding fee
+    vaultStorage.addFundingFee(configStorage.plpTokens(0), 10 * 1e18);
+
+    // Ignore Borrowing fee on this test
+    IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
+    configStorage.setAssetClassConfigByIndex(0, _cryptoConfig);
+
+    // Ignore Developer fee on this test
+    configStorage.setTradingConfig(
+      IConfigStorage.TradingConfig({ fundingInterval: 1, devFeeRate: 0, minProfitDuration: 0, maxPosition: 5 })
+    );
 
     // Set funding rate config
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(ethMarketIndex);
@@ -63,7 +71,7 @@ contract TradeService_FudningFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 1_000 * 1e6);
 
       assertEq(vaultStorage.devFees(address(weth)), 0);
-      assertEq(vaultStorage.marginFee(address(weth)), 10 * 1e18); // Initial margin fee WETH = 10 WETH
+      assertEq(vaultStorage.fundingFee(address(weth)), 10 * 1e18); // Initial margin fee WETH = 10 WETH
     }
 
     vm.warp(block.timestamp + 1);
@@ -79,18 +87,18 @@ contract TradeService_FudningFee is TradeService_Base {
         assertEq(_globalMarket.accumFundingShort, 0); //
 
         // Repay WETH Amount = 133.33/1600 = 0.08383958333333312 WETH
-        // Dev fee = 0.08383958333333312  * 0.15 = 0.012575937499999967 WETH
-        assertEq(vaultStorage.devFees(address(weth)), 12575937499999968);
+        // Dev fee = 0.08383958333333312  * 0 = 0 WETH
+        assertEq(vaultStorage.devFees(address(weth)), 0);
 
         // After Alice pay fee, Alice's WETH amount will be decreased
-        // Alice's WETH remaining = 1 - 0.08383958333333312 = 0.916160416666666875 WETH
-        assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 0.916160416666666875 * 1e18);
+        // Alice's WETH remaining = 1 - 0.08383958333333312 = 0.916666666666666875 WETH
+        assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 916666666666666875);
 
-        // Alive already paid all fees
+        // Alice already paid all fees
         assertEq(perpStorage.getSubAccountFee(aliceAddress), 0);
 
-        // new marginFee = old marginFee + (fee collect from ALICE - dev Fee) = 10 + ( 0.08383958333333312 - 0.012575937499999967) = 10071263645833333157 WETH
-        assertEq(vaultStorage.marginFee(address(weth)), 10071263645833333157);
+        // new fundingFee = old fundingFee + (fee collect from ALICE - dev Fee) = 10 + ( 0.08383958333333312 - 0) = 10083333333333333125 WETH
+        assertEq(vaultStorage.fundingFee(address(weth)), 10083333333333333125);
       }
     }
   }

@@ -21,7 +21,7 @@ interface IVaultStorage {
 
   function fees(address _token) external view returns (uint256);
 
-  function marginFee(address _token) external view returns (uint256);
+  function fundingFee(address _token) external view returns (uint256);
 
   function devFees(address _token) external view returns (uint256);
 
@@ -61,9 +61,9 @@ interface IVaultStorage {
 
   function transferToken(address _subAccount, address _token, uint256 _amount) external;
 
-  function addMarginFee(address _token, uint256 _amount) external;
+  function addFundingFee(address _token, uint256 _amount) external;
 
-  function removeMarginFee(address _token, uint256 _amount) external;
+  function removeFundingFee(address _token, uint256 _amount) external;
 
   function addPlpLiquidityDebtUSDE30(uint256 _value) external;
 
@@ -75,11 +75,41 @@ interface IVaultStorage {
 
   function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
 
-  function collectTradingFee(
+  function collectMarginFee(
     address _subAccount,
     address _token,
     uint256 feeTokenAmount,
     uint256 devFeeTokenAmount,
+    uint256 traderBalance
+  ) external;
+
+  function collectFundingFee(
+    address subAccount,
+    address underlyingToken,
+    uint256 collectFeeTokenAmount,
+    uint256 traderBalance
+  ) external;
+
+  function repayFundingFee(
+    address subAccount,
+    address underlyingToken,
+    uint256 repayFeeTokenAmount,
+    uint256 traderBalance
+  ) external;
+
+  function borrowFundingFeeFromPLP(
+    address subAccount,
+    address underlyingToken,
+    uint256 borrowFeeTokenAmount,
+    uint256 borrowFeeTokenValue,
+    uint256 traderBalance
+  ) external;
+
+  function repayFundingFeeToPLP(
+    address subAccount,
+    address underlyingToken,
+    uint256 repayFeeTokenAmount,
+    uint256 repayFeeTokenValue,
     uint256 traderBalance
   ) external;
 }

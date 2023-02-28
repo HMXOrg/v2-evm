@@ -35,14 +35,22 @@ interface ITradeService {
     int256 elapsedIntervals;
   }
 
-  struct SettleTradingFeeVar {
+  struct SettleMarginFeeVar {
+    int256 feeUsd;
+    uint256 absFeeUsd;
     address[] plpUnderlyingTokens;
     address underlyingToken;
     uint256 underlyingTokenDecimal;
-    uint256 tradingFeeUsd;
+    uint256 traderBalance;
+    uint256 traderBalanceValue;
+    uint256 marginFee;
+    uint256 price;
+    uint256 feeTokenAmount;
+    uint256 repayFeeTokenAmount;
+    uint256 devFeeTokenAmount;
   }
 
-  struct SettleMarginFeeVar {
+  struct SettleFundingFeeVar {
     bool isPayFee;
     int256 feeUsd;
     uint256 absFeeUsd;
@@ -52,13 +60,12 @@ interface ITradeService {
     uint256 underlyingTokenDecimal;
     uint256 traderBalance;
     uint256 traderBalanceValue;
-    uint256 marginFee;
-    uint256 marginFeeValue;
+    uint256 fundingFee;
+    uint256 fundingFeeValue;
     uint256 price;
     uint256 feeTokenAmount;
     uint256 feeTokenValue;
     uint256 repayFeeTokenAmount;
-    uint256 devFeeTokenAmount;
   }
 
   function configStorage() external view returns (address);

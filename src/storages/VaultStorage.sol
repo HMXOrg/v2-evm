@@ -22,9 +22,8 @@ contract VaultStorage is IVaultStorage {
   mapping(address => uint256) public fees; // fee in token unit
 
   uint256 public plpLiquidityDebtUSDE30; // USD dept accounting when tradingFee is not enough to repay to trader
-  // token => tradingFee
-  mapping(address => uint256) public marginFee; // sum of realized borrowing and funding fee when traders are settlement their fees
 
+  mapping(address => uint256) public fundingFee; // sum of realized funding fee when traders are settlement their fees
   mapping(address => uint256) public devFees;
 
   // liquidity provider address => token => amount
@@ -50,19 +49,19 @@ contract VaultStorage is IVaultStorage {
     plpLiquidityUSDE30[_token] += _amount;
   }
 
-  function addMarginFee(address _token, uint256 _amount) external {
-    marginFee[_token] += _amount;
+  function addFundingFee(address _token, uint256 _amount) public {
+    fundingFee[_token] += _amount;
   }
 
-  function removeMarginFee(address _token, uint256 _amount) external {
-    marginFee[_token] -= _amount;
+  function removeFundingFee(address _token, uint256 _amount) public {
+    fundingFee[_token] -= _amount;
   }
 
-  function addPlpLiquidityDebtUSDE30(uint256 _value) external {
+  function addPlpLiquidityDebtUSDE30(uint256 _value) public {
     plpTotalLiquidityUSDE30 += _value;
   }
 
-  function removePlpLiquidityDebtUSDE30(uint256 _value) external {
+  function removePlpLiquidityDebtUSDE30(uint256 _value) public {
     plpTotalLiquidityUSDE30 -= _value;
   }
 
@@ -72,7 +71,7 @@ contract VaultStorage is IVaultStorage {
   }
 
   // @todo - modifier?
-  function addPLPLiquidity(address _token, uint256 _amount) external {
+  function addPLPLiquidity(address _token, uint256 _amount) public {
     plpLiquidity[_token] += _amount;
   }
 
@@ -122,7 +121,7 @@ contract VaultStorage is IVaultStorage {
   }
 
   // @todo - modifier?
-  function removePLPLiquidity(address _token, uint256 _amount) external {
+  function removePLPLiquidity(address _token, uint256 _amount) public {
     plpLiquidity[_token] -= _amount;
   }
 
@@ -229,7 +228,7 @@ contract VaultStorage is IVaultStorage {
   /// @param tradingFeeAmount The amount of trading fee to be collected, after deducting dev fee.
   /// @param devFeeTokenAmount The amount of dev fee deducted from the trading fee.
   /// @param traderBalance The updated balance of the trader's underlying token.
-  function collectTradingFee(
+  function collectMarginFee(
     address subAccount,
     address underlyingToken,
     uint256 tradingFeeAmount,
@@ -238,11 +237,81 @@ contract VaultStorage is IVaultStorage {
   ) external {
     // Deduct dev fee from the trading fee and add it to the dev fee pool.
     addDevFee(underlyingToken, devFeeTokenAmount);
-
     // Add the remaining trading fee to the protocol's fee pool.
     addFee(underlyingToken, tradingFeeAmount);
-
     // Update the trader's balance of the underlying token.
     setTraderBalance(subAccount, underlyingToken, traderBalance);
+  }
+
+  /// @notice This function adds funding fees collected from a sub-account to the PLP liquidity in the vault.
+  /// @param subAccount The sub-account from which to collect the fee.
+  /// @param underlyingToken The underlying token for which the fee is collected.
+  /// @param collectFeeTokenAmount The amount of funding fee to be collected.
+  /// @param traderBalance The updated balance of the trader's underlying token.
+  function collectFundingFee(
+    address subAccount,
+    address underlyingToken,
+    uint256 collectFeeTokenAmount,
+    uint256 traderBalance
+  ) external {
+    // Add the remaining fee amount to the plp liquidity in the vault
+    addFundingFee(underlyingToken, collectFeeTokenAmount);
+    // Update the sub-account balance for the plp underlying token in the vault
+    setTraderBalance(subAccount, underlyingToken, traderBalance);
+  }
+
+  /// @notice This function repays funding fees to the sub-account from the PLP liquidity in the vault.
+  /// @param subAccount The sub-account to which to repay the fee.
+  /// @param underlyingToken The underlying token for which the fee is repaid.
+  /// @param repayFeeTokenAmount The amount of funding fee to be repaid.
+  /// @param traderBalance The updated balance of the trader's underlying token.
+  function repayFundingFee(
+    address subAccount,
+    address underlyingToken,
+    uint256 repayFeeTokenAmount,
+    uint256 traderBalance
+  ) external {
+    // Remove fee amount to trading fee in the vault
+    removeFundingFee(underlyingToken, repayFeeTokenAmount);
+    // Update the sub-account balance for the plp underlying token in the vault
+    setTraderBalance(subAccount, underlyingToken, traderBalance);
+  }
+
+  /// @notice This function borrows funding fees from the PLP liquidity in the vault and adds it to the sub-account's balance.
+  /// @param subAccount The sub-account to which to add the borrowed fee.
+  /// @param underlyingToken The underlying token for which the fee is borrowed.
+  /// @param borrowFeeTokenAmount The amount of funding fee to be borrowed.
+  /// @param borrowFeeTokenValue The value of the borrowed funding fee in USD.
+  /// @param traderBalance The updated balance of the trader's underlying token.
+  function borrowFundingFeeFromPLP(
+    address subAccount,
+    address underlyingToken,
+    uint256 borrowFeeTokenAmount,
+    uint256 borrowFeeTokenValue,
+    uint256 traderBalance
+  ) external {
+    // Add debt value on PLP
+    addPlpLiquidityDebtUSDE30(borrowFeeTokenValue);
+    removePLPLiquidity(underlyingToken, borrowFeeTokenAmount);
+    // Update the sub-account balance for the plp underlying token in the vault
+    setTraderBalance(subAccount, underlyingToken, traderBalance);
+  }
+
+  /// @notice This function repays funding fees borrowed from the PLP liquidity in the vault.
+  /// @param subAccount The sub-account from which to repay the borrowed fee.
+  /// @param underlyingToken The underlying token for which the fee is repaid.
+  /// @param repayFeeTokenAmount The amount of funding fee to be repaid.
+  /// @param repayFeeTokenValue The value of the repaid funding fee in USD.
+  /// @param traderBalance The updated balance of the trader's underlying token.
+  function repayFundingFeeToPLP(
+    address subAccount,
+    address underlyingToken,
+    uint256 repayFeeTokenAmount,
+    uint256 repayFeeTokenValue,
+    uint256 traderBalance
+  ) external {
+    removePlpLiquidityDebtUSDE30(repayFeeTokenValue); // Remove debt value on PLP as received
+    addPLPLiquidity(underlyingToken, repayFeeTokenAmount); // Add token amounts that PLP received
+    setTraderBalance(subAccount, underlyingToken, traderBalance); // Update the sub-account's token balance
   }
 }

@@ -54,45 +54,18 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
    * Copied test from TradeService_ForceClosePosition
    */
 
+  // ref: testCorrectness_WhenExecutorCloseShortPositionForAlice_AndProfitIsGreaterThenReserved
   function testCorrectness_WhenBotHandlerForceTakeMaxProfit_AndProfitIsGreaterThenReserved() external {
     // Prepare for this test
 
     // ALICE open SHORT position
-    // sub account id - 0
-    // position size  - 1,000,000 USD
-    // IMR            - 10,000 USD (1% IMF)
-    // leverage       - 100x
-    // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
-    // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
     // price change to 0.95 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
     // BOB open SHORT position
-    // sub account id - 0
-    // position size  - 500,000 USD
-    // IMR            - 5,000 USD (1% IMF)
-    // leverage       - 100x
-    // price          - 1 USD
-    // open interest  - 526,315.789473684210526315 TOKENs
-    // average price  - 0.95 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30);
-
-    // recalculate new short average price after BOB open position
-    // global short pnl = global short size * (current price - global avg price) / global avg price
-    //                 = 1000000 * (0.95 - 1) / 1 = -50000 USD
-    // new global short size = 15000000 (global size + BOB position size)
-    // new average short price = new global size * current price / new global size with pnl
-    //                        = 1500000 * 0.95 / 1500000 + (-50000) = 0.982758620689655172413793103448 USD
-    // THEN MARKET state
-    // short position size - 1,500,000 USD
-    // open interest       - 1,526,315.789473684210526315 TOKENs
-    // average price       - 0.982758620689655172413793103448 USD
-
-    // Start test
 
     address _tpToken = address(weth); // take profit token
 
@@ -103,35 +76,10 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     // price changed to 0.9 USD
     mockOracle.setPrice(0.9 * 1e30);
 
-    // Tester close ALICE position
+    // Bot force take max profit ALICE position
     botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, _tpToken);
 
-    // recalculate short average price after ALICE decrease position
-    // global short pnl = global short size * (global avg price - current price) / global avg price
-    //                 = 1500000 * (0.982758620689655172413793103448 - 0.9) / 0.982758620689655172413793103448
-    //                 = +126315.789473684210526315789473298614 USD
-    // position realized pnl = decreased position size * (position avg price - current price) / position avg price
-    //                       = 1000000 * (1 - 0.9) / 1 = +100000 USD (reserved value is 90000)
-    // then actual realized profit = +90000
-    // new global short pnl = global short pnl - position relaized pnl
-    //                     = +126315.789473684210526315789473298614 - (+90000)
-    //                     = +36315.789473684210526315789473298614 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 1000000 / 1000000 = 1000000
-    // new global short size = 500000 USD (global short size - decreased position size)
-    // new short average price (global) = current price * new global short size / new global short size - new global long pnl
-    //                                 = 0.9 * 500000 / (500000 - (+36315.789473684210526315789473298614))
-    //                                 = 0.970488081725312145289443813847 USD
-    // ALICE position has profit 90000 USD
-    // ALICE sub account 0 has WETH as collateral = 100,000 ether
-    // profit in WETH = 90000 / 0.9 = 100000 ether
-    // settlement fee rate 0.5% note: from mock
-    // settlement fee = 100000 * 0.5 / 100 = 500 ether
-    // then ALICE sub account 0 collateral should be increased by 100000 - 500 = 99500 ether
-    //                             = 100000 + 99500 = 199500 ether
-    // and PLP WETH liquidity should reduced by 100000 ether
-    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 100000 = 900000 ether
-    // finally fee should increased by 500 ether
+    // all calculation is same with testCorrectness_WhenExecutorCloseShortPositionForAlice_AndProfitIsGreaterThenReserved
     address[] memory _checkPlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
     uint256[] memory _expectedPlpLiquidities = new uint256[](1);
@@ -164,46 +112,16 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     );
   }
 
+  // ref: testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved
   function testCorrectness_WhenBotHandlerForceTakeMaxProfit_AndProfitIsEqualsToReserved() external {
-    // Prepare for this test
-
     // ALICE open LONG position
-    // sub account id - 0
-    // position size  - 1,000,000 USD
-    // IMR            - 10,000 USD (1% IMF)
-    // Reserved       - 90,000 USD
-    // leverage       - 100x
-    // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
-    // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
     // price change to 1.05 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(1.05 * 1e30);
 
     // BOB open LONG position
-    // sub account id - 0
-    // position size  - 500,000 USD
-    // IMR            - 5,000 USD (1% IMF)
-    // leverage       - 100x
-    // price          - 1 USD
-    // open interest  - 476,190.476190476190476190 TOKENs
-    // average price  - 1.05 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
-
-    // recalculate new long average price after BOB open position
-    // global long pnl = global long size * (current price - global avg price) / global avg price
-    //                 = 1000000 * (1.05 - 1) / 1 = +50000 USD
-    // new global long size = 15000000 (global long size + BOB long position size)
-    // new average long price = new global size * current price / new global size with pnl
-    //                        = 1500000 * 1.05 / 1500000 + (+50000) = 1.016129032258064516129032258064 USD
-    // THEN MARKET state
-    // long position size - 1,500,000 USD
-    // open interest      - 1,476,190.476190476190476190 TOKENs
-    // average price      - 1.016129032258064516129032258064 USD
-
-    // Start test
 
     address _tpToken = address(weth); // take profit token
 
@@ -217,31 +135,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     // Tester close ALICE position
     botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, _tpToken);
 
-    // recalculate long average price after ALICE decrease position
-    // global long pnl = global long size * (current price - global avg price) / global avg price
-    //                 = 1500000 * (1.09 - 1.016129032258064516129032258064) / 1.016129032258064516129032258064
-    //                 = +109047.619047619047619047619048436341 USD
-    // position realized pnl = decreased position size * (current price - position avg price) / position avg price
-    //                       = 1000000 * (1.09 - 1) / 1 = +90000 USD (but reserved value for this position is 90000)
-    // new global long pnl = global long pnl - position relaized pnl
-    //                     = +109047.619047619047619047619048436341 - (+90000)
-    //                     = +19047.619047619047619047619048436341 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 1000000 / 1000000 = 1000000
-    // new global long size = 500000 USD (global long size - decreased position size)
-    // new long average price (global) = current price * new global long size / new global long size + new global long pnl
-    //                                 = 1.09 * 500000 / (500000 + (+19047.619047619047619047619048436341))
-    //                                 = 1.049999999999999999999999999999 USD
-    // ALICE position has profit 90000 USD
-    // ALICE sub account 0 has WETH as collateral = 100,000 ether
-    // profit in WETH = 90000 / 1.09 = 82568.807339449541284403 ether
-    // settlement fee rate 0.5% note: from mock
-    // settlement fee = 82568.807339449541284403 * 0.5 / 100 = 412.844036697247706422 ether
-    // then ALICE sub account 0 collateral should be increased by 82568.807339449541284403 - 412.844036697247706422 = 82155.963302752293577981 ether
-    //                             = 100000 + 82155.963302752293577981 = 182155.963302752293577981 ether
-    // and PLP WETH liquidity should reduced by 82568.807339449541284403 ether
-    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 82568.807339449541284403 = 917431.192660550458715597 ether
-    // finally fee should increased by 412.844036697247706422 ether
+    // all calculation is same with testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved
     address[] memory _checkPlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
     uint256[] memory _expectedPlpLiquidities = new uint256[](1);
@@ -274,6 +168,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     );
   }
 
+  // ref: testRevert_WhenExecutorTryClosePositionButPriceStale
   function testRevert_WhenBotHandlerForceTakeMaxProfitButPriceStale() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
@@ -285,6 +180,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0));
   }
 
+  // ref: testRevert_WhenExecutorTryCloseLongPositionButPositionIsAlreadyClosed
   function testRevert_WhenBotHandlerForceTakeMaxProfitButPositionIsAlreadyClosed() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);

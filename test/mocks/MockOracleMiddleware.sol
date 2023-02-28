@@ -87,4 +87,60 @@ contract MockOracleMiddleware is IOracleMiddleware {
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     return (priceE30, lastUpdate, marketStatus);
   }
+
+  function getLatestAdaptivePrice(
+    bytes32 _assetId,
+    uint256 _exponent,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
+    return (priceE30, lastUpdate);
+  }
+
+  function unsafeGetLatestAdaptivePrice(
+    bytes32 _assetId,
+    uint256 _exponent,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    Price memory p = price[_assetId];
+    if (p.priceE30 == 0) return (priceE30, lastUpdate);
+    return (p.priceE30, p.lastUpdate);
+  }
+
+  function getLatestAdaptivePriceWithMarketStatus(
+    bytes32 _assetId,
+    uint256 _exponent,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
+    return (priceE30, lastUpdate, marketStatus);
+  }
+
+  function unsafeGetLatestAdaptivePriceWithMarketStatus(
+    bytes32 _assetId,
+    uint256 _exponent,
+    bool _isMax,
+    uint256 _confidenceThreshold,
+    uint256 _trustPriceAge,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    return (priceE30, lastUpdate, marketStatus);
+  }
 }

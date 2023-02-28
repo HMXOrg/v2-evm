@@ -20,6 +20,8 @@ interface ITradeService {
   error ITradeService_BadPositionSize();
   error ITradeService_InsufficientLiquidity();
   error ITradeService_InsufficientFreeCollateral();
+  error ITradeService_NotPositionOwner();
+  error ITradeService_AccountHealthy();
 
   /**
    * STRUCTS

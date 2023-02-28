@@ -11,17 +11,17 @@ contract BotHandler is IBotHandler, Owned {
   /**
    * Events
    */
-
   event LogTakeMaxProfit(address indexed _account, uint256 _subAccountId, uint256 _marketIndex, address _tpToken);
-
+  event LogSetTradeService(address _oldTradeService, address _newTradeService);
+  event LogSetPositionManager(address _address, bool _allowed);
   /**
    * States
    */
 
   // contract who can close position in protocol.
   // contract => allowed
-  mapping(address => bool) positionManagers;
-  address tradeService;
+  mapping(address => bool) public positionManagers;
+  address public tradeService;
 
   /**
    * Modifiers
@@ -56,13 +56,29 @@ contract BotHandler is IBotHandler, Owned {
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
+  /// @notice Reset trade service
+  /// @param _newTradeService new trade service address
+  function setTradeService(address _newTradeService) external {
+    emit LogSetTradeService(tradeService, _newTradeService);
+
+    tradeService = _newTradeService;
+
+    // Sanity check
+    ITradeService(_newTradeService).configStorage();
+  }
+
   /// @notice This function use to set address who can close position when emergency happen
   /// @param _addresses list of address that we allow
   /// @param _isAllowed flag to allow / disallow list of address to close position
   function setPositionManagers(address[] calldata _addresses, bool _isAllowed) external onlyOwner {
     uint256 _len = _addresses.length;
+    address _address;
     for (uint256 _i; _i < _len; ) {
-      positionManagers[_addresses[_i]] = _isAllowed;
+      _address = _addresses[_i];
+      positionManagers[_address] = _isAllowed;
+
+      emit LogSetPositionManager(_address, _isAllowed);
+
       unchecked {
         ++_i;
       }

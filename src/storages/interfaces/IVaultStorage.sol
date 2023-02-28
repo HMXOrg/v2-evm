@@ -74,4 +74,12 @@ interface IVaultStorage {
   function increaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
 
   function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
+
+  function collectTradingFee(
+    address _subAccount,
+    address _token,
+    uint256 feeTokenAmount,
+    uint256 devFeeTokenAmount,
+    uint256 traderBalance
+  ) external;
 }

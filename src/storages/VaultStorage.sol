@@ -21,9 +21,9 @@ contract VaultStorage is IVaultStorage {
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
   mapping(address => uint256) public fees; // fee in token unit
 
-  uint256 public plpLiquidityDebtUSDE30; // USD dept acccounting when tradingFee is not enough to repay to trader
+  uint256 public plpLiquidityDebtUSDE30; // USD dept accounting when tradingFee is not enough to repay to trader
   // token => tradingFee
-  mapping(address => uint256) public marginFee; // sum of realized borrowing and funding fee when traders are settement their fees
+  mapping(address => uint256) public marginFee; // sum of realized borrowing and funding fee when traders are settlement their fees
 
   mapping(address => uint256) public devFees;
 
@@ -37,11 +37,11 @@ contract VaultStorage is IVaultStorage {
   mapping(address => address[]) public traderTokens;
 
   // @todo - modifier?
-  function addFee(address _token, uint256 _amount) external {
+  function addFee(address _token, uint256 _amount) public {
     fees[_token] += _amount;
   }
 
-  function addDevFee(address _token, uint256 _amount) external {
+  function addDevFee(address _token, uint256 _amount) public {
     devFees[_token] += _amount;
   }
 
@@ -130,7 +130,7 @@ contract VaultStorage is IVaultStorage {
    * VALIDATION
    */
 
-  function validatAddTraderToken(address _trader, address _token) public view {
+  function validateAddTraderToken(address _trader, address _token) public view {
     address[] storage traderToken = traderTokens[_trader];
 
     for (uint256 i; i < traderToken.length; ) {
@@ -157,13 +157,13 @@ contract VaultStorage is IVaultStorage {
    * SETTER
    */
 
-  function setTraderBalance(address _trader, address _token, uint256 _balance) external {
+  function setTraderBalance(address _trader, address _token, uint256 _balance) public {
     traderBalances[_trader][_token] = _balance;
     emit LogSetTraderBalance(_trader, _token, _balance);
   }
 
   function addTraderToken(address _trader, address _token) external {
-    validatAddTraderToken(_trader, _token);
+    validateAddTraderToken(_trader, _token);
     traderTokens[_trader].push(_token);
   }
 
@@ -217,5 +217,32 @@ contract VaultStorage is IVaultStorage {
   /// @param _amount - amount to increase
   function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external {
     traderBalances[_subAccount][_token] -= _amount;
+  }
+
+  /**
+   * ACCOUNTING
+   */
+
+  /// @notice This function does accounting when collecting trading fee from trader's sub-account.
+  /// @param subAccount The sub-account from which to collect the fee.
+  /// @param underlyingToken The underlying token for which the fee is collected.
+  /// @param tradingFeeAmount The amount of trading fee to be collected, after deducting dev fee.
+  /// @param devFeeTokenAmount The amount of dev fee deducted from the trading fee.
+  /// @param traderBalance The updated balance of the trader's underlying token.
+  function collectTradingFee(
+    address subAccount,
+    address underlyingToken,
+    uint256 tradingFeeAmount,
+    uint256 devFeeTokenAmount,
+    uint256 traderBalance
+  ) external {
+    // Deduct dev fee from the trading fee and add it to the dev fee pool.
+    addDevFee(underlyingToken, devFeeTokenAmount);
+
+    // Add the remaining trading fee to the protocol's fee pool.
+    addFee(underlyingToken, tradingFeeAmount);
+
+    // Update the trader's balance of the underlying token.
+    setTraderBalance(subAccount, underlyingToken, traderBalance);
   }
 }

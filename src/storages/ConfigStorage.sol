@@ -295,6 +295,10 @@ contract ConfigStorage is IConfigStorage, Owned {
     return _newAssetClassIndex;
   }
 
+  function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external {
+    assetClassConfigs[_index] = _newConfig;
+  }
+
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {
     uint256 _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);

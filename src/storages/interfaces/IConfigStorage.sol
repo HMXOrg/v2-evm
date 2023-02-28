@@ -192,4 +192,6 @@ interface IConfigStorage {
   ) external returns (CollateralTokenConfig memory);
 
   function setWeth(address _weth) external;
+
+  function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external;
 }

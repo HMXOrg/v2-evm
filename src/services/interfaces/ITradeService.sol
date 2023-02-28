@@ -35,7 +35,14 @@ interface ITradeService {
     int256 elapsedIntervals;
   }
 
-  struct SettleFeeVar {
+  struct SettleTradingFeeVar {
+    address[] plpUnderlyingTokens;
+    address underlyingToken;
+    uint256 underlyingTokenDecimal;
+    uint256 tradingFeeUsd;
+  }
+
+  struct SettleMarginFeeVar {
     bool isPayFee;
     int256 feeUsd;
     uint256 absFeeUsd;

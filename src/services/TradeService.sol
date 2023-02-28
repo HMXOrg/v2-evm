@@ -14,7 +14,6 @@ import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // @todo - refactor, deduplicate code
-
 contract TradeService is ITradeService {
   using AddressUtils for address;
 
@@ -32,6 +31,8 @@ contract TradeService is ITradeService {
   event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
 
   event LogCollectBorrowingFee(address account, uint256 assetClass, uint256 feeUsd);
+
+  event LogCollectFundingFee(address account, uint256 assetClass, int256 feeUsd);
 
   event LogCollectFundingFee(
     address indexed account,
@@ -150,8 +151,9 @@ contract TradeService is ITradeService {
       );
     }
 
-    // @todo - Collect trading fee, borrowing fee, update borrowing rate, collect funding fee, and update funding rate.
-    collectFee(
+    collectAndSettleTradingFee(_subAccount, _marketIndex, _absSizeDelta, true);
+
+    collectMarginFee(
       _subAccount,
       _marketConfig.assetClass,
       _position.reserveValueE30,
@@ -160,7 +162,7 @@ contract TradeService is ITradeService {
       _position.positionSizeE30,
       _position.entryFundingRate
     );
-    settleFee(_subAccount);
+    settleMarginFee(_subAccount);
 
     // update the position size by adding the new size delta
     _position.positionSizeE30 += _sizeDelta;
@@ -318,7 +320,9 @@ contract TradeService is ITradeService {
     // @todo - update funding & borrowing fee rate
     // @todo - calculate trading, borrowing and funding fee
     // @todo - collect fee
-    collectFee(
+    collectAndSettleTradingFee(_subAccount, _marketIndex, _positionSizeE30ToDecrease, false);
+
+    collectMarginFee(
       _subAccount,
       _marketConfig.assetClass,
       _position.reserveValueE30,
@@ -327,7 +331,8 @@ contract TradeService is ITradeService {
       _position.positionSizeE30,
       _position.entryFundingRate
     );
-    settleFee(_subAccount);
+
+    settleMarginFee(_subAccount);
 
     uint256 _newAbsPositionSizeE30 = vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
 
@@ -425,9 +430,9 @@ contract TradeService is ITradeService {
     }
 
     {
-      // =======================================
-      // | ------ settle profit & loss ------- |
-      // =======================================
+      /**
+       * settle profit & loss
+       */
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
@@ -439,9 +444,9 @@ contract TradeService is ITradeService {
       }
     }
 
-    // =========================================
-    // | --------- post validation ----------- |
-    // =========================================
+    /**
+     * settle profit & loss
+     */
 
     // check sub account equity is under MMR
     _subAccountHealthCheck(_subAccount);
@@ -778,6 +783,27 @@ contract TradeService is ITradeService {
     return (_reservedValue * _borrowingRate) / 1e18;
   }
 
+  /// @notice Calculates the trading fee for a given position
+  /// @param marketIndex Index of market
+  /// @param absSizeDelta Position size
+  /// @param isIncreasePosition If increase position
+  /// @return tradingFee The calculated trading fee for the position.
+  function getTradingFee(
+    uint256 marketIndex,
+    uint256 absSizeDelta,
+    bool isIncreasePosition
+  ) public view returns (uint256 tradingFee) {
+    if (absSizeDelta == 0) return 0;
+
+    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(marketIndex);
+
+    uint256 afterFeeUsd = isIncreasePosition
+      ? (absSizeDelta * (1e18 - marketConfig.increasePositionFeeRate)) / 1e18
+      : (absSizeDelta * (1e18 - marketConfig.decreasePositionFeeRate)) / 1e18;
+
+    return absSizeDelta - afterFeeUsd;
+  }
+
   /**
    * Funding Rate
    */
@@ -853,12 +879,30 @@ contract TradeService is ITradeService {
     return (vars.newFundingRate, fundingRateLong, fundingRateShort);
   }
 
+  /// @notice This function collects and settles trading fee from position
+  /// @param _subAccount The sub-account from which to collect the fee.
+  /// @param _marketIndex Index of market
+  /// @param _absSizeDelta Position size to be increased or decreased in absolute value
+  /// @param isIncreasePosition Defines type of position, Increase or Decrease
+  function collectAndSettleTradingFee(
+    address _subAccount,
+    uint256 _marketIndex,
+    uint256 _absSizeDelta,
+    bool isIncreasePosition
+  ) public {
+    // Calculate trading Fee USD
+    uint256 tradingFeeUsd = getTradingFee(_marketIndex, _absSizeDelta, isIncreasePosition);
+
+    // Settlement on trading fee
+    settleTradingFee(_subAccount, tradingFeeUsd);
+  }
+
   /// @notice This function collect fee is collect borrowing fee, funding fee
   /// @param _subAccount The sub-account from which to collect the fee.
   /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
   /// @param _reservedValue The reserved value of the asset class.
   /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
-  function collectFee(
+  function collectMarginFee(
     address _subAccount,
     uint256 _assetClassIndex,
     uint256 _reservedValue,
@@ -875,7 +919,7 @@ contract TradeService is ITradeService {
 
     // Accumulate fee
     feeUsd += int(borrowingFee);
-    emit LogCollectBorrowingFee(_subAccount, _assetClassIndex, _reservedValue);
+    emit LogCollectBorrowingFee(_subAccount, _assetClassIndex, borrowingFee);
 
     // Calculate the borrowing fee
     bool isLong = _positionSizeE30 > 0;
@@ -885,6 +929,7 @@ contract TradeService is ITradeService {
     // @todo - To prevent the deduction of the development fee from the funding fee, it would be beneficial to separate the two fees and treat them independently.
     // Accumulate fee
     feeUsd += fundingFee;
+    emit LogCollectFundingFee(_subAccount, _assetClassIndex, fundingFee);
 
     // emit LogCollectFundingFee(_subAccount, _marketIndex, isLong, _positionSizeE30, _entryFundingRate, fundingFee);
 
@@ -892,10 +937,84 @@ contract TradeService is ITradeService {
     IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);
   }
 
+  /// @notice This function settle trading fee that collected from trader
+  /// @param _subAccount The sub-account from which to collect the fee.
+  /// @param _tradingFeeUsd Trading fee to be settled on trader's sub-account
+  function settleTradingFee(address _subAccount, uint256 _tradingFeeUsd) public {
+    SettleTradingFeeVar memory vars;
+    address _vaultStorage = vaultStorage;
+    address _configStorage = configStorage;
+
+    // If there's no fee to settle, return early
+    if (_tradingFeeUsd == 0) return;
+
+    vars.tradingFeeUsd = _tradingFeeUsd;
+
+    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(_configStorage).getTradingConfig();
+    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(configStorage).oracle());
+    vars.plpUnderlyingTokens = IConfigStorage(configStorage).getPlpTokens();
+
+    // Loop through all the plp underlying tokens for the sub-account to pay trading fees
+    for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
+      vars.underlyingToken = vars.plpUnderlyingTokens[i];
+      vars.underlyingTokenDecimal = ERC20(vars.underlyingToken).decimals();
+      uint256 traderBalance = IVaultStorage(_vaultStorage).traderBalances(_subAccount, vars.underlyingToken);
+
+      // If the sub-account has a balance of this underlying token (collateral token amount)
+      if (traderBalance > 0) {
+        // Retrieve the latest price and confident threshold of the plp underlying token
+        (uint256 price, ) = oracle.getLatestPrice(
+          vars.underlyingToken.toBytes32(),
+          false,
+          IConfigStorage(_configStorage).getMarketConfigByToken(vars.underlyingToken).priceConfidentThreshold,
+          30
+        );
+
+        uint256 tradingFeeAmountLeft = (vars.tradingFeeUsd * (10 ** vars.underlyingTokenDecimal)) / price;
+        uint256 repayFeeTokenAmount;
+
+        if (traderBalance > tradingFeeAmountLeft) {
+          repayFeeTokenAmount = tradingFeeAmountLeft;
+          traderBalance -= tradingFeeAmountLeft;
+          vars.tradingFeeUsd = 0;
+        } else {
+          uint256 traderBalanceValue = (traderBalance * price) / (10 ** vars.underlyingTokenDecimal);
+          repayFeeTokenAmount = traderBalance;
+          traderBalance = 0;
+          vars.tradingFeeUsd -= traderBalanceValue;
+        }
+
+        // @todo - create new function on VaultStorage to add/remove token amounts from this logic
+        // Calculate the developer fee amount in the plp underlying token
+        uint256 devFeeTokenAmount = (repayFeeTokenAmount * _tradingConfig.devFeeRate) / 1e18;
+        // Deducts for dev fee
+        repayFeeTokenAmount -= devFeeTokenAmount;
+
+        IVaultStorage(_vaultStorage).collectTradingFee(
+          _subAccount,
+          vars.underlyingToken,
+          repayFeeTokenAmount,
+          devFeeTokenAmount,
+          traderBalance
+        );
+      }
+
+      // If no remaining trading fee to pay then stop looping
+      if (vars.tradingFeeUsd == 0) break;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    // If trader has not enough collateral to pay trading fee then revert
+    if (vars.tradingFeeUsd > 0) revert ITradeService_InsufficientFreeCollateral();
+  }
+
   /// @notice Settles the fees for a given sub-account.
   /// @param _subAccount The address of the sub-account to settle fees for.
-  function settleFee(address _subAccount) public {
-    SettleFeeVar memory vars;
+  function settleMarginFee(address _subAccount) public {
+    SettleMarginFeeVar memory vars;
     address _vaultStorage = vaultStorage;
     address _perpStorage = perpStorage;
     address _configStorage = configStorage;
@@ -967,6 +1086,7 @@ contract TradeService is ITradeService {
     }
 
     // Update the fee amount for the sub-account in the PerpStorage contract
+
     IPerpStorage(_perpStorage).updateSubAccountFee(_subAccount, int(vars.absFeeUsd));
   }
 
@@ -1068,7 +1188,7 @@ contract TradeService is ITradeService {
     return _nextAveragePrice;
   }
 
-  function _payFundingAndBorrowingFee(address subAccount, SettleFeeVar memory vars, uint256 devFeeRate) internal {
+  function _payFundingAndBorrowingFee(address subAccount, SettleMarginFeeVar memory vars, uint256 devFeeRate) internal {
     address _vaultStorage = vaultStorage;
 
     // Calculate the fee amount in the plp underlying token
@@ -1084,6 +1204,7 @@ contract TradeService is ITradeService {
     } else {
       // Calculate the balance value of the plp underlying token in USD
       vars.traderBalanceValue = (vars.traderBalance * vars.price) / (10 ** vars.underlyingTokenDecimal);
+
       vars.repayFeeTokenAmount = vars.traderBalance;
       vars.traderBalance = 0;
       vars.absFeeUsd -= vars.traderBalanceValue;
@@ -1101,7 +1222,7 @@ contract TradeService is ITradeService {
     IVaultStorage(_vaultStorage).setTraderBalance(subAccount, vars.underlyingToken, vars.traderBalance);
   }
 
-  function _receiveFundingFee(address subAccount, SettleFeeVar memory vars, uint256 devFeeRate) internal {
+  function _receiveFundingFee(address subAccount, SettleMarginFeeVar memory vars, uint256 devFeeRate) internal {
     address _vaultStorage = vaultStorage;
 
     // Calculate the fee amount in the plp underlying token
@@ -1134,7 +1255,11 @@ contract TradeService is ITradeService {
     IVaultStorage(_vaultStorage).setTraderBalance(subAccount, vars.underlyingToken, vars.traderBalance);
   }
 
-  function _borrowFundingFeeFromPLP(address subAccount, IOracleMiddleware oracle, SettleFeeVar memory vars) internal {
+  function _borrowFundingFeeFromPLP(
+    address subAccount,
+    IOracleMiddleware oracle,
+    SettleMarginFeeVar memory vars
+  ) internal {
     address _vaultStorage = vaultStorage;
     // Loop through all the plp underlying tokens for the sub-account
     for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
@@ -1191,7 +1316,7 @@ contract TradeService is ITradeService {
   /// @notice Repay funding fee to PLP
   /// @param subAccount - Trader's sub-account to repay fee
   /// @param vars - Struct of SettleFeeVar
-  function _repayFundingFeeDebtToPLP(address subAccount, SettleFeeVar memory vars) internal {
+  function _repayFundingFeeDebtToPLP(address subAccount, SettleMarginFeeVar memory vars) internal {
     address _vaultStorage = vaultStorage;
 
     // Calculate the sub-account's fee debt to token amounts

@@ -176,12 +176,11 @@ contract TradeService is ITradeService {
     // MarginFee = Trading Fee + Borrowing Fee
     collectMarginFee(
       vars.subAccount,
-      _marketIndex,
       _absSizeDelta,
-      true,
       _marketConfig.assetClass,
       _position.reserveValueE30,
-      _position.entryBorrowingRate
+      _position.entryBorrowingRate,
+      _marketConfig.increasePositionFeeRate
     );
 
     settleMarginFee(vars.subAccount);
@@ -388,7 +387,7 @@ contract TradeService is ITradeService {
           _marketConfig.exponent,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
-          30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          30, // @todo - move trust price age to config, the problem now is stack too deep at MarketConfig struct
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
           -_vars.currentPositionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
@@ -454,12 +453,11 @@ contract TradeService is ITradeService {
     // @todo - collect fee
     collectMarginFee(
       _vars.subAccount,
-      _globalMarketIndex,
       _positionSizeE30ToDecrease,
-      false,
       _marketConfig.assetClass,
       _position.reserveValueE30,
-      _position.entryBorrowingRate
+      _position.entryBorrowingRate,
+      _marketConfig.decreasePositionFeeRate
     );
 
     settleMarginFee(_vars.subAccount);
@@ -931,24 +929,12 @@ contract TradeService is ITradeService {
   }
 
   /// @notice Calculates the trading fee for a given position
-  /// @param marketIndex Index of market
   /// @param absSizeDelta Position size
-  /// @param isIncreasePosition If increase position
+  /// @param positionFeeRate Position Fee
   /// @return tradingFee The calculated trading fee for the position.
-  function getTradingFee(
-    uint256 marketIndex,
-    uint256 absSizeDelta,
-    bool isIncreasePosition
-  ) public view returns (uint256 tradingFee) {
+  function getTradingFee(uint256 absSizeDelta, uint256 positionFeeRate) public pure returns (uint256 tradingFee) {
     if (absSizeDelta == 0) return 0;
-
-    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(marketIndex);
-
-    uint256 afterFeeUsd = isIncreasePosition
-      ? (absSizeDelta * (1e18 - marketConfig.increasePositionFeeRate)) / 1e18
-      : (absSizeDelta * (1e18 - marketConfig.decreasePositionFeeRate)) / 1e18;
-
-    return absSizeDelta - afterFeeUsd;
+    return (absSizeDelta * positionFeeRate) / 1e18;
   }
 
   /**
@@ -970,14 +956,15 @@ contract TradeService is ITradeService {
 
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
-    int256 _fundingRate = _getDifference(_globalMarket.currentFundingRate, _entryFundingRate);
+    int256 _fundingRate = _globalMarket.currentFundingRate - _entryFundingRate;
+
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int(absSize) * _fundingRate) / 1e18;
     if (_isLong) {
       return _fundingRate < 0 ? -fundingFee : fundingFee;
     } else {
-      _fundingRate < 0 ? fundingFee : -fundingFee;
+      return _fundingRate < 0 ? fundingFee : -fundingFee;
     }
   }
 
@@ -1034,26 +1021,23 @@ contract TradeService is ITradeService {
 
   /// @notice This function collects margin fee from position
   /// @param _subAccount The sub-account from which to collect the fee.
-  /// @param _marketIndex Index of market
   /// @param _absSizeDelta Position size to be increased or decreased in absolute value
-  /// @param isIncreasePosition Defines type of position, Increase or Decrease
   /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
   /// @param _reservedValue The reserved value of the asset class.
   /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
   function collectMarginFee(
     address _subAccount,
-    uint256 _marketIndex,
     uint256 _absSizeDelta,
-    bool isIncreasePosition,
     uint256 _assetClassIndex,
     uint256 _reservedValue,
-    uint256 _entryBorrowingRate
+    uint256 _entryBorrowingRate,
+    uint256 _positionFee
   ) public {
     // Get the debt fee of the sub-account
     int256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
 
     // Calculate trading Fee USD
-    uint256 tradingFeeUsd = getTradingFee(_marketIndex, _absSizeDelta, isIncreasePosition);
+    uint256 tradingFeeUsd = getTradingFee(_absSizeDelta, _positionFee);
     feeUsd += int(tradingFeeUsd);
 
     emit LogCollectTradingFee(_subAccount, _assetClassIndex, tradingFeeUsd);
@@ -1514,19 +1498,6 @@ contract TradeService is ITradeService {
       vars.feeTokenValue,
       vars.traderBalance
     );
-  }
-
-  function _getDifference(int256 num1, int256 num2) internal pure returns (int256) {
-    // Calculate the absolute value of the difference
-    int256 diff = num1 - num2;
-    diff = diff < 0 ? -diff : diff;
-
-    // Multiply by the sign of the difference to get the desired result
-    int256 sign = num1 < num2 ? int(-1) : int(1);
-    diff = diff * sign;
-
-    // Return the result
-    return diff;
   }
 
   function _max(int256 a, int256 b) internal pure returns (int256) {

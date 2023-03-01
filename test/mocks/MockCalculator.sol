@@ -6,7 +6,7 @@ import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol
 import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
 
 contract MockCalculator is ICalculator {
-  mapping(address => uint256) equitiesOf;
+  mapping(address => int256) equitiesOf;
   mapping(address => uint256) imrOf;
   mapping(address => uint256) mmrOf;
   mapping(address => int256) unrealizedPnlOf;
@@ -31,7 +31,7 @@ contract MockCalculator is ICalculator {
   // | ---------- Setter ------------------- |
   // =========================================
 
-  function setEquity(address _subAccount, uint256 _mockEquity) external {
+  function setEquity(address _subAccount, int256 _mockEquity) external {
     equitiesOf[_subAccount] = _mockEquity;
   }
 
@@ -79,7 +79,7 @@ contract MockCalculator is ICalculator {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getEquity(address _subAccount) external view returns (uint256) {
+  function getEquity(address _subAccount) external view returns (int256) {
     return equitiesOf[_subAccount];
   }
 

@@ -10,6 +10,7 @@ import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "../contracts/interfaces/IFeeCalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
@@ -19,7 +20,9 @@ contract TradeService is ITradeService {
 
   uint256 internal constant RATE_PRECISION = 1e18;
 
-  // struct
+  /**
+   * Structs
+   */
   struct IncreasePositionVars {
     address subAccount;
     bytes32 positionId;
@@ -38,7 +41,9 @@ contract TradeService is ITradeService {
     bool isLongPosition;
   }
 
-  // events
+  /**
+   * EVENTS
+   */
   // @todo - modify event parameters
   event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
 
@@ -58,7 +63,7 @@ contract TradeService is ITradeService {
   );
 
   /**
-   * States
+   * STATES
    */
   address public perpStorage;
   address public vaultStorage;
@@ -890,16 +895,16 @@ contract TradeService is ITradeService {
   /// @param _assetClassIndex The index of the asset class.
   /// @return _nextBorrowingRate The next borrowing rate for the asset class.
   function getNextBorrowingRate(uint256 _assetClassIndex) public view returns (uint256 _nextBorrowingRate) {
+    address _configStorage = configStorage;
     // Get the trading config, asset class config, and global asset class for the given asset class index.
-    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
-    IConfigStorage.AssetClassConfig memory _assetClassConfig = IConfigStorage(configStorage).getAssetClassConfigByIndex(
-      _assetClassIndex
-    );
+    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(_configStorage).getTradingConfig();
+    IConfigStorage.AssetClassConfig memory _assetClassConfig = IConfigStorage(_configStorage)
+      .getAssetClassConfigByIndex(_assetClassIndex);
     IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
     // Get the calculator.
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
+    ICalculator _calculator = ICalculator(IConfigStorage(_configStorage).calculator());
     // Get the PLP TVL.
     uint256 plpTVL = _calculator.getPLPValueE30(false); // TODO: make sure to use price
 
@@ -983,20 +988,23 @@ contract TradeService is ITradeService {
   function getNextFundingRate(
     uint256 marketIndex
   ) public view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+    address _configStorage = configStorage;
     GetFundingRateVar memory vars;
-    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(marketIndex);
+    IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(_configStorage).getMarketConfigByIndex(
+      marketIndex
+    );
     IPerpStorage.GlobalMarket memory globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(marketIndex);
 
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
 
     // Get funding interval
-    vars.fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
+    vars.fundingInterval = IConfigStorage(_configStorage).getTradingConfig().fundingInterval;
 
     // If block.timestamp not pass the next funding time, return 0.
     if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
 
     //@todo - validate timestamp of these
-    (vars.marketPriceE30, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+    (vars.marketPriceE30, ) = IOracleMiddleware(IConfigStorage(_configStorage).oracle()).unsafeGetLatestPrice(
       marketConfig.assetId,
       false,
       marketConfig.priceConfidentThreshold
@@ -1090,7 +1098,7 @@ contract TradeService is ITradeService {
   /// @notice This function settle margin fee from trader's sub-account
   /// @param _subAccount The sub-account from which to collect the fee.
   function settleMarginFee(address _subAccount) public {
-    SettleMarginFeeVar memory acmVars;
+    IFeeCalculator.SettleMarginFeeVar memory acmVars;
     address _vaultStorage = vaultStorage;
     address _perpStorage = perpStorage;
     address _configStorage = configStorage;
@@ -1103,14 +1111,17 @@ contract TradeService is ITradeService {
     acmVars.absFeeUsd = acmVars.feeUsd > 0 ? uint256(acmVars.feeUsd) : uint256(-acmVars.feeUsd);
 
     IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(_configStorage).getTradingConfig();
-    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(configStorage).oracle());
-    acmVars.plpUnderlyingTokens = IConfigStorage(configStorage).getPlpTokens();
+    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(_configStorage).oracle());
+    acmVars.plpUnderlyingTokens = IConfigStorage(_configStorage).getPlpTokens();
 
     // Loop through all the plp underlying tokens for the sub-account to pay trading fees
     for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
-      SettleMarginFeeLoopVar memory tmpVars; // This will be re-assigned every times when start looping
+      IFeeCalculator.SettleMarginFeeLoopVar memory tmpVars; // This will be re-assigned every times when start looping
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
-      tmpVars.underlyingTokenDecimal = ERC20(tmpVars.underlyingToken).decimals();
+      tmpVars.underlyingTokenDecimal = IConfigStorage(_configStorage)
+        .getPlpTokenConfigs(tmpVars.underlyingToken)
+        .decimals;
+
       tmpVars.traderBalance = IVaultStorage(_vaultStorage).traderBalances(_subAccount, tmpVars.underlyingToken);
 
       // If the sub-account has a balance of this underlying token (collateral token amount)
@@ -1164,7 +1175,7 @@ contract TradeService is ITradeService {
   /// @notice Settles the fees for a given sub-account.
   /// @param _subAccount The address of the sub-account to settle fees for.
   function settleFundingFee(address _subAccount) public {
-    SettleFundingFeeVar memory acmVars;
+    IFeeCalculator.SettleFundingFeeVar memory acmVars;
     address _vaultStorage = vaultStorage;
     address _perpStorage = perpStorage;
     address _configStorage = configStorage;
@@ -1184,9 +1195,10 @@ contract TradeService is ITradeService {
 
     // Loop through all the plp underlying tokens for the sub-account to receive or pay margin fees
     for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
-      SettleFundingFeeLoopVar memory tmpVars;
+      IFeeCalculator.SettleFundingFeeLoopVar memory tmpVars;
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
-      tmpVars.underlyingTokenDecimal = IConfigStorage(configStorage)
+
+      tmpVars.underlyingTokenDecimal = IConfigStorage(_configStorage)
         .getPlpTokenConfigs(tmpVars.underlyingToken)
         .decimals;
 
@@ -1207,15 +1219,30 @@ contract TradeService is ITradeService {
         // If the sub-account has a balance of this underlying token (collateral token amount)
         if (tmpVars.traderBalance != 0) {
           // If this plp underlying token contains borrowing debt from PLP then trader must repays debt to PLP first
-          if (acmVars.plpLiquidityDebtUSDE30 > 0) _repayFundingFeeDebtToPLP(_subAccount, acmVars, tmpVars);
+          if (acmVars.plpLiquidityDebtUSDE30 > 0)
+            acmVars.absFeeUsd = IFeeCalculator(IConfigStorage(_configStorage).feeCalculator()).repayFundingFeeDebtToPLP(
+              _subAccount,
+              acmVars.absFeeUsd,
+              acmVars.plpLiquidityDebtUSDE30,
+              tmpVars
+            );
           // If there are any remaining absFeeUsd, the trader must continue repaying the debt until the full amount is paid off
-          if (tmpVars.traderBalance != 0 && acmVars.absFeeUsd > 0) _payFundingFee(_subAccount, acmVars, tmpVars);
+          if (tmpVars.traderBalance != 0 && acmVars.absFeeUsd > 0)
+            acmVars.absFeeUsd = IFeeCalculator(IConfigStorage(_configStorage).feeCalculator()).payFundingFee(
+              _subAccount,
+              acmVars.absFeeUsd,
+              tmpVars
+            );
         }
       }
       // feeUSD < 0 or isPayFee == false, means trader receive fee
       else {
         if (tmpVars.fundingFee != 0) {
-          _receiveFundingFee(_subAccount, acmVars, tmpVars);
+          acmVars.absFeeUsd = IFeeCalculator(IConfigStorage(_configStorage).feeCalculator()).receiveFundingFee(
+            _subAccount,
+            acmVars.absFeeUsd,
+            tmpVars
+          );
         }
       }
 
@@ -1232,11 +1259,15 @@ contract TradeService is ITradeService {
     // If a trader is supposed to receive a fee but the amount of tokens received from funding fees is not sufficient to cover the fee,
     // then the protocol must provide the option to borrow in USD and record the resulting debt on the plpLiquidityDebtUSDE30 log
     if (!isPayFee && acmVars.absFeeUsd > 0) {
-      _borrowFundingFeeFromPLP(_subAccount, oracle, acmVars);
+      acmVars.absFeeUsd = IFeeCalculator(IConfigStorage(_configStorage).feeCalculator()).borrowFundingFeeFromPLP(
+        _subAccount,
+        address(oracle),
+        acmVars.plpUnderlyingTokens,
+        acmVars.absFeeUsd
+      );
     }
 
     // Update the fee amount for the sub-account in the PerpStorage contract
-
     IPerpStorage(_perpStorage).updateSubAccountFee(_subAccount, int(acmVars.absFeeUsd));
   }
 
@@ -1336,196 +1367,6 @@ contract TradeService is ITradeService {
     _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
 
     return _nextAveragePrice;
-  }
-
-  function _payFundingFee(
-    address subAccount,
-    SettleFundingFeeVar memory acmVars,
-    SettleFundingFeeLoopVar memory tmpVars
-  ) internal {
-    address _vaultStorage = vaultStorage;
-
-    // Calculate the fee amount in the plp underlying token
-    tmpVars.feeTokenAmount = (acmVars.absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
-
-    // Repay the fee amount and subtract it from the balance
-    tmpVars.repayFeeTokenAmount = 0;
-
-    if (tmpVars.traderBalance > tmpVars.feeTokenAmount) {
-      tmpVars.repayFeeTokenAmount = tmpVars.feeTokenAmount;
-      tmpVars.traderBalance -= tmpVars.feeTokenAmount;
-      acmVars.absFeeUsd = 0;
-    } else {
-      // Calculate the balance value of the plp underlying token in USD
-      tmpVars.traderBalanceValue = (tmpVars.traderBalance * tmpVars.price) / (10 ** tmpVars.underlyingTokenDecimal);
-
-      tmpVars.repayFeeTokenAmount = tmpVars.traderBalance;
-      tmpVars.traderBalance = 0;
-      acmVars.absFeeUsd -= tmpVars.traderBalanceValue;
-    }
-
-    IVaultStorage(_vaultStorage).collectFundingFee(
-      subAccount,
-      tmpVars.underlyingToken,
-      tmpVars.repayFeeTokenAmount,
-      tmpVars.traderBalance
-    );
-  }
-
-  function _receiveFundingFee(
-    address subAccount,
-    SettleFundingFeeVar memory acmVars,
-    SettleFundingFeeLoopVar memory tmpVars
-  ) internal {
-    address _vaultStorage = vaultStorage;
-
-    // Calculate the fee amount in the plp underlying token
-    tmpVars.feeTokenAmount = (acmVars.absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
-
-    if (tmpVars.fundingFee > tmpVars.feeTokenAmount) {
-      // funding fee token has enough amount to repay fee to trader
-      tmpVars.repayFeeTokenAmount = tmpVars.feeTokenAmount;
-      tmpVars.traderBalance += tmpVars.feeTokenAmount;
-      acmVars.absFeeUsd = 0;
-    } else {
-      // funding fee token has not enough amount to repay fee to trader
-      // Calculate the funding Fee value of the plp underlying token in USD
-      tmpVars.fundingFeeValue = (tmpVars.fundingFee * tmpVars.price) / (10 ** tmpVars.underlyingTokenDecimal);
-
-      tmpVars.repayFeeTokenAmount = tmpVars.feeTokenAmount;
-      tmpVars.traderBalance += tmpVars.feeTokenAmount;
-      acmVars.absFeeUsd -= tmpVars.fundingFeeValue;
-    }
-
-    IVaultStorage(_vaultStorage).repayFundingFee(
-      subAccount,
-      tmpVars.underlyingToken,
-      tmpVars.repayFeeTokenAmount,
-      tmpVars.traderBalance
-    );
-  }
-
-  function _borrowFundingFeeFromPLP(
-    address subAccount,
-    IOracleMiddleware oracle,
-    SettleFundingFeeVar memory acmVars
-  ) internal {
-    address _vaultStorage = vaultStorage;
-    // Loop through all the plp underlying tokens for the sub-account
-    for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
-      SettleFundingFeeLoopVar memory tmpVars;
-      tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
-      tmpVars.underlyingTokenDecimal = IConfigStorage(configStorage)
-        .getPlpTokenConfigs(tmpVars.underlyingToken)
-        .decimals;
-      uint256 plpLiquidityAmount = IVaultStorage(_vaultStorage).plpLiquidity(tmpVars.underlyingToken);
-
-      // Retrieve the latest price and confident threshold of the plp underlying token
-      (tmpVars.price, ) = oracle.getLatestPrice(
-        tmpVars.underlyingToken.toBytes32(),
-        false,
-        IConfigStorage(configStorage).getMarketConfigByToken(tmpVars.underlyingToken).priceConfidentThreshold,
-        30
-      );
-
-      // Calculate the fee amount in the plp underlying token
-      tmpVars.feeTokenAmount = (acmVars.absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
-
-      uint256 borrowPlpLiquidityValue;
-      if (plpLiquidityAmount > tmpVars.feeTokenAmount) {
-        // plp underlying token has enough amount to repay fee to trader
-        borrowPlpLiquidityValue = acmVars.absFeeUsd;
-        tmpVars.repayFeeTokenAmount = tmpVars.feeTokenAmount;
-        tmpVars.traderBalance += tmpVars.feeTokenAmount;
-
-        acmVars.absFeeUsd = 0;
-      } else {
-        // plp underlying token has not enough amount to repay fee to trader
-        // Calculate the plpLiquidityAmount value of the plp underlying token in USD
-        borrowPlpLiquidityValue = (plpLiquidityAmount * tmpVars.price) / (10 ** tmpVars.underlyingTokenDecimal);
-        tmpVars.repayFeeTokenAmount = plpLiquidityAmount;
-        tmpVars.traderBalance += plpLiquidityAmount;
-        acmVars.absFeeUsd -= borrowPlpLiquidityValue;
-      }
-
-      IVaultStorage(_vaultStorage).borrowFundingFeeFromPLP(
-        subAccount,
-        tmpVars.underlyingToken,
-        tmpVars.repayFeeTokenAmount,
-        borrowPlpLiquidityValue,
-        tmpVars.traderBalance
-      );
-
-      if (acmVars.absFeeUsd == 0) {
-        break;
-      }
-
-      {
-        unchecked {
-          ++i;
-        }
-      }
-    }
-  }
-
-  /// @notice Repay funding fee to PLP
-  /// @param subAccount - Trader's sub-account to repay fee
-  /// @param acmVars - Accumulative struct variable
-  /// @param tmpVars - Temporary struct variable
-  function _repayFundingFeeDebtToPLP(
-    address subAccount,
-    SettleFundingFeeVar memory acmVars,
-    SettleFundingFeeLoopVar memory tmpVars
-  ) internal {
-    address _vaultStorage = vaultStorage;
-
-    // Calculate the sub-account's fee debt to token amounts
-    tmpVars.feeTokenAmount = (acmVars.absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
-
-    // Calculate the debt in USD to plp underlying token amounts
-    uint256 plpLiquidityDebtAmount = (acmVars.plpLiquidityDebtUSDE30 * (10 ** tmpVars.underlyingTokenDecimal)) /
-      tmpVars.price;
-    uint256 traderBalanceValueE30 = (tmpVars.traderBalance * tmpVars.price) / (10 ** tmpVars.underlyingTokenDecimal);
-
-    if (tmpVars.feeTokenAmount >= plpLiquidityDebtAmount) {
-      // If margin fee to repay is grater than debt on PLP (Rare case)
-      if (tmpVars.traderBalance > tmpVars.feeTokenAmount) {
-        // If trader has enough token amounts to repay fee to PLP
-        tmpVars.repayFeeTokenAmount = tmpVars.feeTokenAmount; // Amount of feeTokenAmount that PLP will receive
-        tmpVars.traderBalance -= tmpVars.feeTokenAmount; // Deducts all feeTokenAmount to repay to PLP
-        tmpVars.feeTokenValue = acmVars.plpLiquidityDebtUSDE30; // USD value of feeTokenAmount that PLP will receive
-        acmVars.absFeeUsd -= acmVars.plpLiquidityDebtUSDE30; // Deducts margin fee on trader's sub-account
-      } else {
-        tmpVars.repayFeeTokenAmount = tmpVars.traderBalance; // Amount of feeTokenAmount that PLP will receive
-        tmpVars.traderBalance = 0; // Deducts all feeTokenAmount to repay to PLP
-        tmpVars.feeTokenValue = acmVars.plpLiquidityDebtUSDE30; // USD value of feeTokenAmount that PLP will receive
-        acmVars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
-      }
-    } else if (tmpVars.feeTokenAmount < plpLiquidityDebtAmount) {
-      if (tmpVars.traderBalance >= tmpVars.feeTokenAmount) {
-        traderBalanceValueE30 =
-          ((tmpVars.traderBalance - tmpVars.feeTokenAmount) * tmpVars.price) /
-          (10 ** tmpVars.underlyingTokenDecimal);
-
-        tmpVars.repayFeeTokenAmount = tmpVars.feeTokenAmount; // Trader will repay fee with this token amounts they have
-        tmpVars.traderBalance -= tmpVars.feeTokenAmount; // Deducts repay token amounts from trader account
-        tmpVars.feeTokenValue = traderBalanceValueE30; // USD value of token amounts that PLP will receive
-        acmVars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
-      } else {
-        tmpVars.repayFeeTokenAmount = tmpVars.traderBalance; // Trader will repay fee with this token amounts they have
-        tmpVars.traderBalance = 0; // Deducts repay token amounts from trader account
-        tmpVars.feeTokenValue = traderBalanceValueE30; // USD value of token amounts that PLP will receive
-        acmVars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
-      }
-    }
-
-    IVaultStorage(_vaultStorage).repayFundingFeeToPLP(
-      subAccount,
-      tmpVars.underlyingToken,
-      tmpVars.repayFeeTokenAmount,
-      tmpVars.feeTokenValue,
-      tmpVars.traderBalance
-    );
   }
 
   function _max(int256 a, int256 b) internal pure returns (int256) {

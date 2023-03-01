@@ -23,6 +23,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   event SetServiceExecutor(address indexed _contractAddress, address _executorAddress, bool _isServiceExecutor);
 
   event SetCalculator(address _calculator);
+  event SetFeeCalculator(address _feeCalculator);
   event SetPLP(address _plp);
   event SetLiquidityConfig(LiquidityConfig _liquidityConfig);
   event SetDynamicEnabled(bool enabled);
@@ -56,6 +57,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
   mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer
 
+  address public feeCalculator;
   address public calculator;
   address public oracle;
   address public plp;
@@ -165,6 +167,11 @@ contract ConfigStorage is IConfigStorage, Owned {
     emit SetCalculator(calculator);
   }
 
+  function setFeeCalculator(address _feeCalculator) external {
+    feeCalculator = _feeCalculator;
+    emit SetFeeCalculator(_feeCalculator);
+  }
+
   function setOracle(address _oracle) external {
     // @todo - sanity check
     oracle = _oracle;
@@ -172,7 +179,7 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function setPLP(address _plp) external {
     plp = _plp;
-    emit SetPLP(calculator);
+    emit SetPLP(plp);
   }
 
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external {

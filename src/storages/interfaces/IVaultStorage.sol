@@ -5,6 +5,8 @@ interface IVaultStorage {
   /**
    * Errors
    */
+  error IVaultStorage_Forbidden();
+  error IVaultStorage_TargetNotContract();
   error IVaultStorage_TraderTokenAlreadyExists();
   error IVaultStorage_TraderBalanceRemaining();
   error IVaultStorage_ZeroAddress();
@@ -74,4 +76,6 @@ interface IVaultStorage {
   function increaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
 
   function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
+
+  function cook(address _target, address _token, bytes calldata _callData) external returns (bytes memory);
 }

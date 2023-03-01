@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.17;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeERC20} from
-  "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AddressUtils} from "../libraries/AddressUtils.sol";
-import {DecimalsUtils} from "../libraries/DecimalsUtils.sol";
-import {TransferEthUtils} from "../libraries/TransferEthUtils.sol";
-import {IPyth} from "pyth-sdk-solidity/IPyth.sol";
-import {PythStructs} from "pyth-sdk-solidity/PythStructs.sol";
-import {PLPv2} from "./PLPv2.sol";
-import {PoolConfig} from "./PoolConfig.sol";
-import {OracleMiddleware} from "../oracle/OracleMiddleware.sol";
-import {Constants} from "../base/Constants.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { DecimalsUtils } from "../libraries/DecimalsUtils.sol";
+import { TransferEthUtils } from "../libraries/TransferEthUtils.sol";
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { PythStructs } from "pyth-sdk-solidity/PythStructs.sol";
+import { PLPv2 } from "./PLPv2.sol";
+import { PoolConfig } from "./PoolConfig.sol";
+import { OracleMiddleware } from "../oracles/OracleMiddleware.sol";
+import { Constants } from "../base/Constants.sol";
 
 contract Pool is Constants {
   // using libs for type
@@ -38,12 +37,7 @@ contract Pool is Constants {
   mapping(address => uint256) public totalOf;
   mapping(address => uint256) public liquidityOf;
 
-  constructor(
-    IPyth _pyth,
-    OracleMiddleware _oracleMiddleware,
-    PLPv2 _plpv2,
-    PoolConfig _poolConfig
-  ) {
+  constructor(IPyth _pyth, OracleMiddleware _oracleMiddleware, PLPv2 _plpv2, PoolConfig _poolConfig) {
     pyth = _pyth;
     oracleMiddleware = _oracleMiddleware;
     plpv2 = _plpv2;
@@ -55,21 +49,14 @@ contract Pool is Constants {
   /// @param isUseMaxPrice Whether to use the max price of the price feed.
   /// @param isStrict Whether to revert if the price is stale.
   /// @return The total AUM of the pool in USD, 30 decimals.
-  function getAumE30(bool isUseMaxPrice, bool isStrict)
-    public
-    view
-    returns (uint256)
-  {
-    address whichUnderlying =
-      poolConfig.getNextUnderlyingOf(ITERABLE_ADDRESS_LIST_START);
+  function getAumE30(bool isUseMaxPrice, bool isStrict) public view returns (uint256) {
+    address whichUnderlying = poolConfig.getNextUnderlyingOf(ITERABLE_ADDRESS_LIST_START);
     uint256 aum = 0;
 
     // Find out underlying value in USD.
     while (whichUnderlying != ITERABLE_ADDRESS_LIST_END) {
       // Get price and last update time.
-      (uint256 price,) = oracleMiddleware.getLatestPrice(
-        whichUnderlying.toBytes32(), isUseMaxPrice, isStrict
-      );
+      (uint256 price, ) = oracleMiddleware.getLatestPrice(whichUnderlying.toBytes32(), isUseMaxPrice, isStrict);
 
       // Get underlying's liquidity.
       uint256 underlyingBalance = liquidityOf[whichUnderlying];
@@ -93,12 +80,8 @@ contract Pool is Constants {
   /// @param isUseMaxPrice Whether to use the max price of the price feed.
   /// @param isStrict Whether to revert if the price is stale.
   /// @return The total AUM of the pool in USD, 18 decimals.
-  function getAumE18(bool isUseMaxPrice, bool isStrict)
-    public
-    view
-    returns (uint256)
-  {
-    return getAumE30(isUseMaxPrice, isStrict) * 1e18 / 1e30;
+  function getAumE18(bool isUseMaxPrice, bool isStrict) public view returns (uint256) {
+    return (getAumE30(isUseMaxPrice, isStrict) * 1e18) / 1e30;
   }
 
   // function _calcFee(
@@ -114,15 +97,10 @@ contract Pool is Constants {
   /// @notice Calculate the amount of liquidity to mint for the given token and amountIn.
   /// @param token The token to add liquidity.
   /// @param amountIn The amount of token to add liquidity.
-  function _calcAddLiquidity(address token, uint256 amountIn)
-    internal
-    view
-    returns (uint256 liquidity)
-  {
-    (uint256 price,) =
-      oracleMiddleware.getLatestPrice(token.toBytes32(), false, true);
+  function _calcAddLiquidity(address token, uint256 amountIn) internal view returns (uint256 liquidity) {
+    (uint256 price, ) = oracleMiddleware.getLatestPrice(token.toBytes32(), false, true);
     // uint8 decimals = poolConfig.getDecimalsOf(token);
-    uint256 amountInUSD = amountIn * price / ORACLE_PRICE_PRECISION;
+    uint256 amountInUSD = (amountIn * price) / ORACLE_PRICE_PRECISION;
     // amountInUSD = amountInUSD.convertDecimals(decimals, ORACLE_PRICE_DECIMALS);
     if (amountInUSD == 0) revert Pool_InsufficientAmountIn();
 
@@ -138,10 +116,7 @@ contract Pool is Constants {
   /// @notice Add liquidity to the pool.
   /// @param token The token to add liquidity.
   /// @param to The address to mint liquidity to.
-  function addLiquidity(ERC20 token, address to)
-    external
-    returns (uint256 liquidity)
-  {
+  function addLiquidity(ERC20 token, address to) external returns (uint256 liquidity) {
     // check if token is acceptable
     if (!poolConfig.isAcceptUnderlying(address(token))) revert Pool_BadArgs();
 

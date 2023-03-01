@@ -26,6 +26,8 @@ contract ConfigStorage is IConfigStorage, Owned {
   event SetPLP(address _plp);
   event SetLiquidityConfig(LiquidityConfig _liquidityConfig);
   event SetDynamicEnabled(bool enabled);
+  event SetGmxRewardRouter(address _prevGmxRewardRouter, address _gmxRewardRouter);
+  event SetGlp(address _prevGlp, address _glp);
   event AddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
   event RemoveUnderlying(address _token);
 

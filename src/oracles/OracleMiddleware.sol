@@ -6,13 +6,11 @@ import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 
 contract OracleMiddleware is Owned, IOracleMiddleware {
-  // configs
-  IOracleAdapter public pythAdapter;
-
   // whitelist mapping of market status updater
   mapping(address => bool) public isUpdater;
 
   // events
+  event SetOracleAdapter(bytes32 indexed _assetId, IOracleAdapter _adapter);
   event SetMarketStatus(bytes32 indexed _assetId, uint8 _status);
   event SetUpdater(address indexed _account, bool _isActive);
 
@@ -27,16 +25,28 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   // 2 = Active, equivalent to `trading` from Pyth
   // assetId => marketStatus
   mapping(bytes32 => uint8) public marketStatus;
-
-  constructor(IOracleAdapter _pythAdapter) {
-    pythAdapter = _pythAdapter;
-  }
+  // assetId => oracleAdapter
+  mapping(bytes32 => IOracleAdapter) public oracleAdapterOf;
 
   modifier onlyUpdater() {
     if (!isUpdater[msg.sender]) {
       revert IOracleMiddleware_OnlyUpdater();
     }
     _;
+  }
+
+  function setOracleAdapters(bytes32[] memory _assetId, IOracleAdapter[] memory _adapter) external onlyOwner {
+    // Check
+    if(_assetId.length != _adapter.length) revert IOracleMiddleware_BadLength();
+
+    // Effect
+    for(uint i = 0; i < _assetId.length; ) {
+      oracleAdapterOf[_assetId[i]] = _adapter[i];
+      emit SetOracleAdapter(_assetId[i], _adapter[i]);
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @notice Set market status for the given asset.
@@ -137,7 +147,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _trustPriceAge
   ) private view returns (uint256 _price, uint256 _lastUpdate) {
     // 1. get price from Pyth
-    (_price, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _confidenceThreshold);
+    (_price, _lastUpdate) = oracleAdapterOf[_assetId].getLatestPrice(_assetId, _isMax, _confidenceThreshold);
 
     // check price age
     if (block.timestamp - _lastUpdate > _trustPriceAge) revert IOracleMiddleware_PythPriceStale();
@@ -152,7 +162,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _confidenceThreshold
   ) private view returns (uint256 _price, uint256 _lastUpdate) {
     // 1. get price from Pyth
-    (_price, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _confidenceThreshold);
+    (_price, _lastUpdate) = oracleAdapterOf[_assetId].getLatestPrice(_assetId, _isMax, _confidenceThreshold);
 
     // 2. Return the price and last update
     return (_price, _lastUpdate);

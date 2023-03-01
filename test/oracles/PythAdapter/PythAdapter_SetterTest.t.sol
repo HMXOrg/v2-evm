@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 import { PythAdapter_BaseTest } from "./PythAdapter_BaseTest.t.sol";
-import { PythAdapter } from "../../src/oracle/PythAdapter.sol";
-import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
+import { PythAdapter } from "../../../src/oracles/PythAdapter.sol";
+import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 
 contract PythAdapter_SetterTest is PythAdapter_BaseTest {
   using AddressUtils for address;

@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 interface IOracleMiddleware {
   // errors
+  error IOracleMiddleware_BadLength();
   error IOracleMiddleware_PythPriceStale();
   error IOracleMiddleware_MarketStatusUndefined();
   error IOracleMiddleware_OnlyUpdater();

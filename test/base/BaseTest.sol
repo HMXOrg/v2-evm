@@ -20,35 +20,38 @@ import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 import { MockWNative } from "../mocks/MockWNative.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
+import { MockGlpManager } from "../mocks/MockGlpManager.sol";
 
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
-// Interfaces
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
 
 // Calculator
-import { Calculator } from "../../src/contracts/Calculator.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
 
 // Handlers
-import { LiquidityHandler } from "../../src/handlers/LiquidityHandler.sol";
-import { CrossMarginHandler } from "../../src/handlers/CrossMarginHandler.sol";
+import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
+import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
 
 // Services
-import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
+import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 
 // Storages
-import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
-import { PerpStorage } from "../../src/storages/PerpStorage.sol";
-import { VaultStorage } from "../../src/storages/VaultStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
+// Oracles
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 
-import { PLPv2 } from "../../src/contracts/PLPv2.sol";
+import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 
 // Handlers
-import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
-import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
+import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
+import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
   address internal ALICE;
@@ -73,6 +76,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   MockOracleMiddleware internal mockOracle;
   MockLiquidityService internal mockLiquidityService;
   MockTradeService internal mockTradeService;
+  MockGlpManager internal mockGlpManager;
 
   MockWNative internal weth;
   MockErc20 internal wbtc;
@@ -81,6 +85,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   MockErc20 internal usdt;
 
   MockErc20 internal bad;
+
+  MockErc20 internal stkGlp;
 
   // market indexes
   uint256 ethMarketIndex;
@@ -108,6 +114,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     usdc = deployMockErc20("USD Coin", "USDC", 6);
     usdt = deployMockErc20("USD Tether", "USDT", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
+    stkGlp = deployMockErc20("Glp Coin", "GLP", 18);
 
     plp = new PLPv2();
 
@@ -122,6 +129,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     mockVaultStorage = new MockVaultStorage();
     mockOracle = new MockOracleMiddleware();
     mockTradeService = new MockTradeService();
+
+    mockGlpManager = new MockGlpManager();
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -153,7 +162,14 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   }
 
   function deployPerp88v2() internal returns (Deployment.DeployReturnVars memory) {
-    DeployLocalVars memory deployLocalVars = DeployLocalVars({ pyth: mockPyth, defaultOracleStaleTime: 300 });
+    DeployLocalVars memory deployLocalVars = DeployLocalVars({
+      pyth: mockPyth,
+      defaultOracleStaleTime: 300,
+      minExecutionFee: 0,
+      stkGlp: address(stkGlp),
+      glpManager: address(mockGlpManager),
+      weth: address(weth)
+    });
     return deploy(deployLocalVars);
   }
 
@@ -403,7 +419,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   }
 
   function deployLiquidityHandler(
-    address _liquidityService,
+    ILiquidityService _liquidityService,
     address _pyth,
     uint256 _minExecutionFee
   ) internal returns (LiquidityHandler) {

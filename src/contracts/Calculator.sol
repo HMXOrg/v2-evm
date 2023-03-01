@@ -8,7 +8,7 @@ import { Owned } from "../base/Owned.sol";
 
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
-import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";

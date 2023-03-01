@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20 } from "../../base/BaseTest.sol";
+import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20, IOracleAdapter } from "../../base/BaseTest.sol";
 import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 
 contract CrossMarginHandler_Base is BaseTest {
@@ -107,6 +107,17 @@ contract CrossMarginHandler_Base is BaseTest {
     deployed.oracleMiddleware.setUpdater(address(this), true);
     deployed.oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), uint8(2)); // active
     deployed.oracleMiddleware.setMarketStatus(address(weth).toBytes32(), uint8(2)); // active
+
+    bytes32[] memory marketIds = new bytes32[](2);
+    marketIds[0] = address(wbtc).toBytes32();
+    marketIds[1] = address(weth).toBytes32();
+
+    IOracleAdapter[] memory adapters = new IOracleAdapter[](2);
+    adapters[0] = deployed.pythAdapter;
+    adapters[1] = deployed.pythAdapter;
+
+    deployed.oracleMiddleware.setOracleAdapters(marketIds, adapters);
+    deployed.oracleMiddleware.setOracleAdapters(marketIds, adapters);
   }
 
   /**

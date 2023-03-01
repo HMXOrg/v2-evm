@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest } from "../base/BaseTest.sol";
-import { OracleMiddleware } from "../../src/oracle/OracleMiddleware.sol";
-import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
+import { BaseTest, IOracleAdapter } from "../../base/BaseTest.sol";
+import { OracleMiddleware } from "../../../src/oracles/OracleMiddleware.sol";
+import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 
 contract OracleMiddleware_BaseTest is BaseTest {
   using AddressUtils for address;
@@ -34,5 +34,17 @@ contract OracleMiddleware_BaseTest is BaseTest {
       mockPyth.updatePriceFeeds{ value: mockPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
       vm.stopPrank();
     }
+
+    // Link oracle middleware to wbtc and weth oracle adapter
+    bytes32[] memory marketIds = new bytes32[](2);
+    marketIds[0] = address(wbtc).toBytes32();
+    marketIds[1] = address(weth).toBytes32();
+
+    IOracleAdapter[] memory adapters = new IOracleAdapter[](2);
+    adapters[0] = deployed.pythAdapter;
+    adapters[1] = deployed.pythAdapter;
+
+    deployed.oracleMiddleware.setOracleAdapters(marketIds, adapters);
+    deployed.oracleMiddleware.setOracleAdapters(marketIds, adapters);
   }
 }

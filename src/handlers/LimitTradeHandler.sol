@@ -11,7 +11,7 @@ import { Owned } from "../base/Owned.sol";
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
 import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";

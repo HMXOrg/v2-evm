@@ -2,8 +2,8 @@
 pragma solidity 0.8.17;
 
 import { BaseTest } from "../../base/BaseTest.sol";
-import { PythAdapter } from "../../../oldSrc/oracle/PythAdapter.sol";
-import { OracleMiddleware } from "../../../oldSrc/oracle/OracleMiddleware.sol";
+import { PythAdapter } from "../../../oldSrc/oracles/PythAdapter.sol";
+import { OracleMiddleware } from "../../../oldSrc/oracles/OracleMiddleware.sol";
 import { PoolConfig } from "../../../oldSrc/core/PoolConfig.sol";
 import { Pool } from "../../../oldSrc/core/Pool.sol";
 import { PLPv2 } from "../../../oldSrc/core/PLPv2.sol";
@@ -26,10 +26,7 @@ abstract contract Pool_BaseTest is BaseTest {
     plpv2 = deployed.plpv2;
 
     // Setup default underlyings
-    (
-      address[] memory underlyings,
-      PoolConfig.UnderlyingConfig[] memory configs
-    ) = setupDefaultUnderlying();
+    (address[] memory underlyings, PoolConfig.UnderlyingConfig[] memory configs) = setupDefaultUnderlying();
     poolConfig.addOrUpdateUnderlying(underlyings, configs);
 
     // Setup pyth adapter

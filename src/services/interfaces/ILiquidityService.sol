@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+
 interface ILiquidityService {
   /**
    * Errors
@@ -55,9 +59,9 @@ interface ILiquidityService {
     uint256 _minAmount
   ) external returns (uint256);
 
-  function configStorage() external returns (address);
+  function configStorage() external returns (IConfigStorage);
 
-  function vaultStorage() external returns (address);
+  function vaultStorage() external returns (IVaultStorage);
 
-  function perpStorage() external returns (address);
+  function perpStorage() external returns (IPerpStorage);
 }

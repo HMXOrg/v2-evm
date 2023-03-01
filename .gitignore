@@ -1,6 +1,9 @@
+artifacts/
 cache/
+cache_hardhat/
 out/
 .vscode
 node_modules
+typechain
 
 .env

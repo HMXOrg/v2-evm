@@ -10,7 +10,7 @@ import { Owned } from "../base/Owned.sol";
 import { ICrossMarginHandler } from "./interfaces/ICrossMarginHandler.sol";
 import { ICrossMarginService } from "../services/interfaces/ICrossMarginService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   using SafeERC20 for ERC20;

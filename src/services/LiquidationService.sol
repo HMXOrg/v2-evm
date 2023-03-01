@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
@@ -11,7 +12,7 @@ import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
-contract LiquidationService {
+contract LiquidationService is ILiquidationService {
   using AddressUtils for address;
 
   address public perpStorage;
@@ -25,8 +26,6 @@ contract LiquidationService {
     configStorage = _configStorage;
   }
 
-  error ITradeService_AccountHealthy();
-
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage
   /// @param subAccount The sub-account to be liquidated
   function liquidate(address subAccount) external {
@@ -35,7 +34,7 @@ contract LiquidationService {
 
     int256 equity = _calculator.getEquity(subAccount);
     // If the equity is greater than or equal to the MMR, the account is healthy and cannot be liquidated
-    if (equity >= 0 || uint256(equity) >= _calculator.getMMR(subAccount)) revert ITradeService_AccountHealthy();
+    if (equity >= 0 && uint256(equity) >= _calculator.getMMR(subAccount)) revert ILiquidationService_AccountHealthy();
 
     // Get the list of positions associated with the sub-account
     IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(subAccount);

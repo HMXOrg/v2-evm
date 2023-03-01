@@ -18,6 +18,8 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 contract TradeService is ITradeService {
   using AddressUtils for address;
 
+  uint256 internal constant RATE_PRECISION = 1e18;
+
   // struct
   struct IncreasePositionVars {
     address subAccount;
@@ -51,8 +53,18 @@ contract TradeService is ITradeService {
     int256 entryFundingRate,
     int256 fundingFee
   );
+  event LogForceClosePosition(
+    address indexed _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    uint256 _closedPositionSize,
+    uint256 _realizedProfit
+  );
 
-  // state
+  /**
+   * States
+   */
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
@@ -187,9 +199,7 @@ contract TradeService is ITradeService {
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
         _marketConfig.assetClass
       );
-      IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(
-        _position.marketIndex
-      );
+      _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_position.marketIndex);
 
       _position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
       _position.entryFundingRate = _globalMarket.currentFundingRate;
@@ -200,7 +210,7 @@ contract TradeService is ITradeService {
 
     {
       // calculate the initial margin required for the new position
-      uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / 1e18;
+      uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / RATE_PRECISION;
 
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = ICalculator(IConfigStorage(configStorage).calculator()).getFreeCollateral(
@@ -210,7 +220,7 @@ contract TradeService is ITradeService {
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
 
       // calculate the maximum amount of reserve required for the new position
-      uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / 1e18;
+      uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / RATE_PRECISION;
       // increase the reserved amount by the maximum reserve required for the new position
       increaseReserved(_marketConfig.assetClass, _maxReserve);
       _position.reserveValueE30 += _maxReserve;
@@ -218,7 +228,7 @@ contract TradeService is ITradeService {
 
     {
       // calculate the change in open interest for the new position
-      uint256 _changedOpenInterest = (_absSizeDelta * 1e18) / vars.priceE30; // @todo - use decimal asset
+      uint256 _changedOpenInterest = (_absSizeDelta * (10 ** _marketConfig.exponent)) / vars.priceE30;
       _position.openInterest += _changedOpenInterest;
       _position.lastIncreaseTimestamp = block.timestamp;
 
@@ -267,8 +277,6 @@ contract TradeService is ITradeService {
     uint256 _positionSizeE30ToDecrease,
     address _tpToken
   ) external {
-    if (_account != msg.sender) revert ITradeService_NotPositionOwner();
-
     // init vars
     DecreasePositionVars memory _vars;
 
@@ -301,7 +309,6 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      // @todo - update code to use normal get latest price, there is validate price
       (_vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
@@ -332,6 +339,92 @@ contract TradeService is ITradeService {
     _subAccountHealthCheck(_vars.subAccount);
 
     emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
+  }
+
+  // @todo - access control
+  /// @notice force close trader position with maximum profit could take
+  /// @param _account position owner
+  /// @param _subAccountId sub-account id
+  /// @param _marketIndex position market index
+  /// @param _tpToken take profit token
+  function forceClosePosition(
+    address _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  ) external {
+    // init vars
+    DecreasePositionVars memory _vars;
+
+    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
+      _marketIndex
+    );
+
+    _vars.subAccount = _getSubAccount(_account, _subAccountId);
+    _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
+    IPerpStorage.Position memory _position = IPerpStorage(perpStorage).getPositionById(_vars.positionId);
+
+    // Pre validation
+    // if position size is 0 means this position is already closed
+    _vars.currentPositionSizeE30 = _position.positionSizeE30;
+    if (_vars.currentPositionSizeE30 == 0) revert ITradeService_PositionAlreadyClosed();
+
+    _vars.isLongPosition = _vars.currentPositionSizeE30 > 0;
+
+    // convert position size to be uint256
+    _vars.absPositionSizeE30 = uint256(
+      _vars.isLongPosition ? _vars.currentPositionSizeE30 : -_vars.currentPositionSizeE30
+    );
+
+    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    {
+      uint8 _marketStatus;
+
+      (_vars.priceE30, , _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
+        .getLatestAdaptivePriceWithMarketStatus(
+          _marketConfig.assetId,
+          _marketConfig.exponent,
+          !_vars.isLongPosition, // if current position is SHORT position, then we use max price
+          _marketConfig.priceConfidentThreshold,
+          30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          -_vars.currentPositionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD
+        );
+
+      // Market active represent the market is still listed on our protocol
+      if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
+
+      // if market status is not 2, means that the market is closed or market status has been defined yet
+      if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
+
+      // check sub account equity is under MMR
+      _subAccountHealthCheck(_vars.subAccount);
+    }
+
+    // get pnl to check this position is reach to condition to auto take profit or not
+    (bool isProfit, uint256 pnl) = getDelta(
+      _vars.absPositionSizeE30,
+      _vars.isLongPosition,
+      _vars.priceE30,
+      _position.avgEntryPriceE30
+    );
+
+    // When this position has profit and realized profit has >= reserved amount, then we force to close position
+    if (!isProfit || pnl < _position.reserveValueE30) revert ITradeService_ReservedValueStillEnough();
+
+    // update position, market, and global market state
+    _decreasePosition(_marketConfig, _marketIndex, _position, _vars, _vars.absPositionSizeE30, _tpToken);
+
+    emit LogForceClosePosition(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _tpToken,
+      _vars.absPositionSizeE30,
+      pnl > _position.reserveValueE30 ? _position.reserveValueE30 : pnl
+    );
   }
 
   /// @notice decrease trader position
@@ -462,8 +555,9 @@ contract TradeService is ITradeService {
         ? int256(_newAbsPositionSizeE30)
         : -int256(_newAbsPositionSizeE30);
       _position.reserveValueE30 =
-        (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) /
-        1e18;
+        (_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction * _marketConfig.maxProfitRate) /
+        RATE_PRECISION /
+        RATE_PRECISION;
       _position.avgEntryPriceE30 = isClosePosition ? 0 : _vars.avgEntryPriceE30;
       _position.openInterest = _position.openInterest - _openInterestDelta;
       _position.realizedPnl += _realizedPnl;
@@ -497,15 +591,16 @@ contract TradeService is ITradeService {
       30 // trust price age (seconds) todo: from market config
     );
 
+    uint256 _decimals = IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals;
+
     // calculate token trader should received
-    uint256 _tpTokenOut = (_realizedProfitE30 * 1e18) / _tpTokenPrice; // @todo - token decimal
+    uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
 
     uint256 _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
       _token,
       _realizedProfitE30
     );
-
-    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18; // @todo - token decimal
+    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / (10 ** _decimals);
 
     IVaultStorage(vaultStorage).removePLPLiquidity(_token, _tpTokenOut);
     IVaultStorage(vaultStorage).addFee(_token, _settlementFee);
@@ -526,9 +621,12 @@ contract TradeService is ITradeService {
     uint256 _price;
     uint256 _collateralToRemove;
     uint256 _collateralUsd;
-    // Loop through all the plp underlying tokens for the sub-account
+    uint256 _decimals;
+    // Loop through all the plp tokens for the sub-account
     for (uint256 _i; _i < _len; ) {
       _token = _plpTokens[_i];
+      _decimals = IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals;
+
       // Sub-account plp collateral
       _collateral = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
 
@@ -542,11 +640,11 @@ contract TradeService is ITradeService {
           30 // @todo - should from config
         );
 
-        _collateralUsd = (_collateral * _price) / 1e18; // @todo - token decimal
+        _collateralUsd = (_collateral * _price) / (10 ** _decimals);
 
         if (_collateralUsd >= _debtUsd) {
           // When this collateral token can cover all the debt, use this token to pay it all
-          _collateralToRemove = (_debtUsd * 1e18) / _price; // @todo - token decimal
+          _collateralToRemove = (_debtUsd * (10 ** _decimals)) / _price;
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
@@ -555,7 +653,7 @@ contract TradeService is ITradeService {
           break;
         } else {
           // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
-          _collateralToRemove = (_collateralUsd * 1e18) / _price; // @todo - token decimal
+          _collateralToRemove = (_collateralUsd * (10 ** _decimals)) / _price;
 
           IVaultStorage(vaultStorage).addPLPLiquidity(_token, _collateralToRemove);
           IVaultStorage(vaultStorage).decreaseTraderBalance(_subAccount, _token, _collateralToRemove);
@@ -680,7 +778,7 @@ contract TradeService is ITradeService {
     _globalAssetClass.reserveValueE30 += _reservedValue;
 
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
-    if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * 1e18) {
+    if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * RATE_PRECISION) {
       revert ITradeService_InsufficientLiquidity();
     }
 
@@ -955,7 +1053,7 @@ contract TradeService is ITradeService {
     // Loop through all the plp underlying tokens for the sub-account to receive or pay margin fees
     for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
       vars.underlyingToken = vars.plpUnderlyingTokens[i];
-      vars.underlyingTokenDecimal = ERC20(vars.underlyingToken).decimals();
+      vars.underlyingTokenDecimal = IConfigStorage(configStorage).getPlpTokenConfigs(vars.underlyingToken).decimals;
 
       // Retrieve the balance of each plp underlying token for the sub-account (token collateral amount)
       vars.traderBalance = IVaultStorage(_vaultStorage).traderBalances(_subAccount, vars.underlyingToken);
@@ -1176,7 +1274,7 @@ contract TradeService is ITradeService {
     // Loop through all the plp underlying tokens for the sub-account
     for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
       vars.underlyingToken = vars.plpUnderlyingTokens[i];
-      vars.underlyingTokenDecimal = ERC20(vars.underlyingToken).decimals();
+      vars.underlyingTokenDecimal = IConfigStorage(configStorage).getPlpTokenConfigs(vars.underlyingToken).decimals;
       uint256 plpLiquidityAmount = IVaultStorage(_vaultStorage).plpLiquidity(vars.underlyingToken);
 
       // Retrieve the latest price and confident threshold of the plp underlying token

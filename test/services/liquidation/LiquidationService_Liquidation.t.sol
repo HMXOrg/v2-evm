@@ -55,7 +55,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     mockCalculator.setMMR(aliceAddress, 7_500 * 1e30);
     mockCalculator.setUnrealizedPnl(aliceAddress, 0);
 
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_AccountHealthy()"));
+    vm.expectRevert(abi.encodeWithSignature("ILiquidationService_AccountHealthy()"));
     liquidationService.liquidate(aliceAddress);
   }
 

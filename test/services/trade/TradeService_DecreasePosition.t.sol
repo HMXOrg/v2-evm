@@ -25,7 +25,6 @@ import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 //   - decrease too much short position
 //   - position remain too tiny size after decrease long position
 //   - position remain too tiny size after decrease short position
-//   - not position owner
 // - misc
 //   - settle profit & loss with settlement fee
 //   - pull multiple tokens from user when loss
@@ -56,7 +55,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // related with TVL 2,000,000 USD then provide liquidity, - 1,000,000 WETH (price 1$)
     //                                                        - 10,000 WBTC (price 100$)
     vaultStorage.addPLPLiquidity(address(weth), 1_000_000 ether);
-    vaultStorage.addPLPLiquidity(address(wbtc), 10_000 ether);
+    vaultStorage.addPLPLiquidity(address(wbtc), 10_000 * 1e8);
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
@@ -226,9 +225,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // reset collateral for ALICE sub-account 0
     // this sub-account has weth 10000 ether
-    //                      wbtc 10000 ether
+    //                      wbtc 10000 WBTC
     vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(weth), 10_000 ether);
-    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(wbtc), 10_000 ether);
+    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(wbtc), 10_000 * 1e8);
 
     // and wbtc price is 100 USD
     mockOracle.setPrice(address(wbtc).toBytes32(), 100 * 1e30);
@@ -259,10 +258,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 + 10000 = 1010000 ether
     // SO, ALICE still loss = 25000 - 10500 = 14500 USD
     // ALICE still has WBTC in this sub-account as 10,000 ether, value is 1,000,000 USD
-    // Alice loss in WBTC = 14500 / 100 = 145 ether
-    // then ALICE sub-account wbtc collateral should be reduced by 145 ether
-    // and PLP WBTC liquidity should increased by 145 ether
-    //     PLP WBTC liquidity has 10,000 ether then liquidity remaining is 10000 + 145 = 10145 ether
+    // Alice loss in WBTC = 14500 / 100 = 145 WBTC
+    // then ALICE sub-account wbtc collateral should be reduced by 145 WBTC
+    // and PLP WBTC liquidity should increased by 145 WBTC
+    //     PLP WBTC liquidity has 10,000 WBTC then liquidity remaining is 10000 + 145 = 10145 WBTC
     address[] memory _checkPlpTokens = new address[](2);
     uint256[] memory _expectedTraderBalances = new uint256[](2);
     uint256[] memory _expectedPlpLiquidities = new uint256[](2);
@@ -276,8 +275,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // expected WBTC balance
     _checkPlpTokens[1] = address(wbtc);
-    _expectedTraderBalances[1] = 9_855 ether;
-    _expectedPlpLiquidities[1] = 10_145 ether;
+    _expectedTraderBalances[1] = 9_855 * 1e8;
+    _expectedPlpLiquidities[1] = 10_145 * 1e8;
     _expectedFees[1] = 0; // when trader loss, should not has fee
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -629,16 +628,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
   /**
    * Revert
    */
-
-  function testRevert_WhenSomeoneTryDecreaseOthersPosition() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-
-    // BOB try decrease ALICE position
-    vm.prank(BOB);
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_NotPositionOwner()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
-  }
 
   function testRevert_WhenMarketIsDelistedFromPerp() external {
     // ALICE open LONG position

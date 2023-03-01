@@ -42,7 +42,7 @@ contract TradeService is ITradeService {
   }
 
   /**
-   * EVENTS
+   * Events
    */
   // @todo - modify event parameters
   event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
@@ -63,7 +63,7 @@ contract TradeService is ITradeService {
   );
 
   /**
-   * STATES
+   * States
    */
   address public perpStorage;
   address public vaultStorage;

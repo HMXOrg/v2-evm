@@ -167,6 +167,9 @@ contract ConfigStorage is IConfigStorage, Owned {
     emit SetCalculator(calculator);
   }
 
+  /// @notice Updates the fee calculator contract address.
+  /// @dev This function can be used to set the address of the fee calculator contract.
+  /// @param _feeCalculator The address of the new fee calculator contract.
   function setFeeCalculator(address _feeCalculator) external {
     feeCalculator = _feeCalculator;
     emit SetFeeCalculator(_feeCalculator);

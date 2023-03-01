@@ -379,4 +379,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _adaptivePrice = (_priceBefore + _priceAfter) / 2;
     return _adaptivePrice > 0 ? uint256(_adaptivePrice) : 0;
   }
+
+  function isSameAssetIdOnPyth(bytes32 _assetId1, bytes32 _assetId2) external view returns (bool) {
+    return pythAdapter.isSameAsset(_assetId1, _assetId2);
+  }
 }

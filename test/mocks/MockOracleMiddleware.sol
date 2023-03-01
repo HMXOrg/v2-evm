@@ -17,6 +17,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   mapping(bytes32 => Price) price;
 
+  mapping(bytes32 => bytes32) pythAssetId;
+
   constructor() {
     priceE30 = 1e30;
     lastUpdate = block.timestamp;
@@ -40,6 +42,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function setPriceStale(bool _isPriceStale) external {
     isPriceStale = _isPriceStale;
+  }
+
+  function setPythAssetId(bytes32 _pythAsset, bytes32 _pythId) external {
+    pythAssetId[_pythAsset] = _pythId;
   }
 
   // =========================================
@@ -142,5 +148,9 @@ contract MockOracleMiddleware is IOracleMiddleware {
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     return (priceE30, lastUpdate, marketStatus);
+  }
+
+  function isSameAssetIdOnPyth(bytes32 _assetId1, bytes32 _assetId2) external view returns (bool) {
+    return pythAssetId[_assetId1] == pythAssetId[_assetId2];
   }
 }

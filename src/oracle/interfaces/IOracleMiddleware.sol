@@ -72,7 +72,7 @@ interface IOracleMiddleware {
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
 
-  function pythAdapter() external view returns (IOracleAdapter);
+  function isSameAssetIdOnPyth(bytes32 _assetId1, bytes32 _assetId2) external view returns (bool);
 
   // =========================================
   // | ---------- Setter ------------------- |

@@ -520,7 +520,7 @@ contract Calculator is Owned, ICalculator {
       // Get price from oracle
       uint256 _priceE30;
 
-      if (_price != 0 && IOracleMiddleware(oracle).pythAdapter().isSameAsset(_token.toBytes32(), _assetId)) {
+      if (_price != 0 && IOracleMiddleware(oracle).isSameAssetIdOnPyth(_token.toBytes32(), _assetId)) {
         _priceE30 = _price;
       } else {
         // @todo - validate price age

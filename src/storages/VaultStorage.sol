@@ -218,4 +218,9 @@ contract VaultStorage is IVaultStorage {
   function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external {
     traderBalances[_subAccount][_token] -= _amount;
   }
+
+  function payPlp(address _trader, address _token, uint256 _amount) external {
+    plpLiquidity[_token] += _amount;
+    traderBalances[_trader][_token] -= _amount;
+  }
 }

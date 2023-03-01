@@ -17,6 +17,8 @@ contract PerpStorage is IPerpStorage {
 
   mapping(address => int256) public subAccountFee;
 
+  mapping(address => uint256) public badDebt;
+
   mapping(address => CollateralToken) public collateralTokens;
 
   mapping(uint256 => GlobalMarket) public globalMarkets;
@@ -146,6 +148,10 @@ contract PerpStorage is IPerpStorage {
     return subAccountFee[subAccount];
   }
 
+  function getBadDebt(address subAccount) external view returns (uint256 _badDebt) {
+    return badDebt[subAccount];
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////
   //////////////////////  SETTER
   ////////////////////////////////////////////////////////////////////////////////////
@@ -207,5 +213,9 @@ contract PerpStorage is IPerpStorage {
 
   function updateSubAccountFee(address _subAccount, int256 fee) external {
     subAccountFee[_subAccount] = fee;
+  }
+
+  function addBadDebt(address _subAccount, uint256 _badDebt) external {
+    badDebt[_subAccount] += _badDebt;
   }
 }

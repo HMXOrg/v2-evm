@@ -1390,7 +1390,7 @@ contract TradeService is ITradeService {
     );
   }
 
-  function _getDifference(int256 num1, int256 num2) public pure returns (int256) {
+  function _getDifference(int256 num1, int256 num2) internal pure returns (int256) {
     // Calculate the absolute value of the difference
     int256 diff = num1 - num2;
     diff = diff < 0 ? -diff : diff;

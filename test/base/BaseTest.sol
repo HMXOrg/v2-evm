@@ -33,6 +33,7 @@ import { Calculator } from "../../src/contracts/Calculator.sol";
 // Handlers
 import { LiquidityHandler } from "../../src/handlers/LiquidityHandler.sol";
 import { CrossMarginHandler } from "../../src/handlers/CrossMarginHandler.sol";
+import { BotHandler } from "../../src/handlers/BotHandler.sol";
 
 // Services
 import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
@@ -421,5 +422,9 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   function deployMarketTradeHandler(address _tradeService, address _pyth) internal returns (MarketTradeHandler) {
     return new MarketTradeHandler(_tradeService, _pyth);
+  }
+
+  function deployBotHandler(address _tradeService) internal returns (BotHandler) {
+    return new BotHandler(_tradeService);
   }
 }

@@ -35,7 +35,7 @@ contract TradeService_FundingFee is TradeService_Base {
     configStorage.setMarketConfig(ethMarketIndex, _marketConfig);
   }
 
-  function testCorrectness_fundingFee() external {
+  function testCorrectness_fundingFee_x() external {
     // Set fundingFee to have enough token amounts to repay funding fee
     vaultStorage.addFundingFee(configStorage.plpTokens(0), 10 * 1e18);
 
@@ -162,7 +162,7 @@ contract TradeService_FundingFee is TradeService_Base {
       // After BOB close short position, BOB must get funding fee
       assertEq(vaultStorage.fundingFee(address(usdt)), 0);
       assertEq(vaultStorage.plpLiquidityDebtUSDE30(), 8000000000000000000000000000000); // 8$
-      assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 5333333833333333); // 0.005333333833333333 ETH
+      assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 5333333333333333); // 0.005333333333333333 ETH
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 500 * 1e6);
     }
   }

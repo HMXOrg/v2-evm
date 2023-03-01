@@ -41,11 +41,13 @@ interface ITradeService {
     int256 feeUsd;
     uint256 absFeeUsd;
     address[] plpUnderlyingTokens;
+  }
+
+  struct SettleMarginFeeLoopVar {
     address underlyingToken;
     uint256 underlyingTokenDecimal;
     uint256 traderBalance;
     uint256 traderBalanceValue;
-    uint256 marginFee;
     uint256 price;
     uint256 feeTokenAmount;
     uint256 repayFeeTokenAmount;
@@ -53,11 +55,13 @@ interface ITradeService {
   }
 
   struct SettleFundingFeeVar {
-    bool isPayFee;
     int256 feeUsd;
     uint256 absFeeUsd;
     uint256 plpLiquidityDebtUSDE30;
     address[] plpUnderlyingTokens;
+  }
+
+  struct SettleFundingFeeLoopVar {
     address underlyingToken;
     uint256 underlyingTokenDecimal;
     uint256 traderBalance;

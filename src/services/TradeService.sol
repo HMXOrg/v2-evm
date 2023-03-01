@@ -299,48 +299,50 @@ contract TradeService is ITradeService {
     uint256 _limitPriceE30
   ) external {
     // init vars
-    DecreasePositionVars memory vars;
+    DecreasePositionVars memory _vars;
 
     // prepare
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
       _marketIndex
     );
 
-    vars.subAccount = _getSubAccount(_account, _subAccountId);
-    vars.positionId = _getPositionId(vars.subAccount, _marketIndex);
-    vars.position = IPerpStorage(perpStorage).getPositionById(vars.positionId);
+    _vars.subAccount = _getSubAccount(_account, _subAccountId);
+    _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
+    _vars.position = IPerpStorage(perpStorage).getPositionById(_vars.positionId);
 
     // Pre validation
     // if position size is 0 means this position is already closed
-    vars.currentPositionSizeE30 = vars.position.positionSizeE30;
-    if (vars.currentPositionSizeE30 == 0) revert ITradeService_PositionAlreadyClosed();
+    _vars.currentPositionSizeE30 = _vars.position.positionSizeE30;
+    if (_vars.currentPositionSizeE30 == 0) revert ITradeService_PositionAlreadyClosed();
 
-    vars.isLongPosition = vars.currentPositionSizeE30 > 0;
+    _vars.isLongPosition = _vars.currentPositionSizeE30 > 0;
 
     // convert position size to be uint256
-    vars.absPositionSizeE30 = uint256(vars.isLongPosition ? vars.currentPositionSizeE30 : -vars.currentPositionSizeE30);
+    _vars.absPositionSizeE30 = uint256(
+      _vars.isLongPosition ? _vars.currentPositionSizeE30 : -_vars.currentPositionSizeE30
+    );
 
     // position size to decrease is greater then position size, should be revert
-    if (_positionSizeE30ToDecrease > vars.absPositionSizeE30) revert ITradeService_DecreaseTooHighPositionSize();
+    if (_positionSizeE30ToDecrease > _vars.absPositionSizeE30) revert ITradeService_DecreaseTooHighPositionSize();
 
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
+      (_vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _marketConfig.exponent,
-          !vars.isLongPosition, // if current position is SHORT position, then we use max price
+          !_vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
           30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
-          vars.isLongPosition ? -int(_positionSizeE30ToDecrease) : int(_positionSizeE30ToDecrease),
+          _vars.isLongPosition ? -int(_positionSizeE30ToDecrease) : int(_positionSizeE30ToDecrease),
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      vars.priceE30 = _overwritePrice(vars.priceE30, _limitPriceE30);
+      _vars.priceE30 = _overwritePrice(_vars.priceE30, _limitPriceE30);
 
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
@@ -349,15 +351,15 @@ contract TradeService is ITradeService {
       if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
 
       // check sub account equity is under MMR
-      _subAccountHealthCheck(vars.subAccount, _limitPriceE30, _marketConfig.assetId);
+      _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
     }
 
     // update position, market, and global market state
     _decreasePosition(
       _marketConfig,
       _marketIndex,
-      vars,
-      vars.absPositionSizeE30,
+      _vars,
+      _vars.absPositionSizeE30,
       _tpToken,
       _limitPriceE30,
       _marketConfig.assetId
@@ -365,9 +367,9 @@ contract TradeService is ITradeService {
 
     // Post validation
     // check sub account equity is under MMR
-    _subAccountHealthCheck(vars.subAccount, _limitPriceE30, _marketConfig.assetId);
+    _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
-    emit LogDecreasePosition(vars.positionId, _positionSizeE30ToDecrease);
+    emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }
 
   // @todo - access control

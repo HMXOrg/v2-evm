@@ -1,7 +1,0 @@
-{
-    "projectName": "V2Evm",
-    "namespace": "V2Evm.Contracts",
-    "lang": 0,
-    "autoCodeGen": true,
-    "projectPath": "../"
-}

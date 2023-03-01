@@ -88,7 +88,7 @@ contract LiquidityService is ILiquidityService {
 
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
 
-    (uint256 tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
+    (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
       _token,
       _amount,
       _price,
@@ -101,7 +101,7 @@ contract LiquidityService is ILiquidityService {
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
     PLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
-    emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, tokenValueUSDAfterFee, mintAmount);
+    emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
 
     return mintAmount;
   }
@@ -150,7 +150,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _minAmount,
     uint256 _aum,
     uint256 _lpSupply
-  ) internal returns (uint256 tokenValueUSDAfterFee, uint256 mintAmount) {
+  ) internal returns (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
     uint256 amountAfterFee = _collectFee(
       CollectFeeRequest(
@@ -167,22 +167,22 @@ contract LiquidityService is ILiquidityService {
     if (amountAfterFee < _minAmount) revert LiquidityService_InsufficientLiquidityMint();
 
     // 5. Calculate mintAmount
-    tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
+    _tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
       IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals,
       USD_DECIMALS,
       (amountAfterFee * _price) / PRICE_PRECISION
     );
 
-    mintAmount = _calculator.getMintAmount(_aum, _lpSupply, tokenValueUSDAfterFee);
+    mintAmount = _calculator.getMintAmount(_aum, _lpSupply, _tokenValueUSDAfterFee);
 
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
     IVaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
-    IVaultStorage(vaultStorage).addPLPLiquidityUSDE30(_token, tokenValueUSDAfterFee);
-    IVaultStorage(vaultStorage).addPLPTotalLiquidityUSDE30(tokenValueUSDAfterFee);
+    IVaultStorage(vaultStorage).addPLPLiquidityUSDE30(_token, _tokenValueUSDAfterFee);
+    IVaultStorage(vaultStorage).addPLPTotalLiquidityUSDE30(_tokenValueUSDAfterFee);
 
     _validatePLPHealthCheck(_token);
 
-    return (tokenValueUSDAfterFee, mintAmount);
+    return (_tokenValueUSDAfterFee, mintAmount);
   }
 
   function _exitPool(
@@ -258,22 +258,22 @@ contract LiquidityService is ILiquidityService {
     uint256 fee = _request._amount - amountAfterFee;
 
     IVaultStorage(vaultStorage).addFee(_request._token, fee);
-    uint256 decimals = IConfigStorage(configStorage).getPlpTokenConfigs(_request._token).decimals;
+    uint256 _decimals = IConfigStorage(configStorage).getPlpTokenConfigs(_request._token).decimals;
 
     if (_request._action == LiquidityAction.SWAP) {
-      emit CollectSwapFee(_request._account, _request._token, (fee * _request._tokenPriceUsd) / 10 ** decimals, fee);
+      emit CollectSwapFee(_request._account, _request._token, (fee * _request._tokenPriceUsd) / 10 ** _decimals, fee);
     } else if (_request._action == LiquidityAction.ADD_LIQUIDITY) {
       emit CollectAddLiquidityFee(
         _request._account,
         _request._token,
-        (fee * _request._tokenPriceUsd) / 10 ** decimals,
+        (fee * _request._tokenPriceUsd) / 10 ** _decimals,
         fee
       );
     } else if (_request._action == LiquidityAction.REMOVE_LIQUIDITY) {
       emit CollectRemoveLiquidityFee(
         _request._account,
         _request._token,
-        (fee * _request._tokenPriceUsd) / 10 ** decimals,
+        (fee * _request._tokenPriceUsd) / 10 ** _decimals,
         fee
       );
     }

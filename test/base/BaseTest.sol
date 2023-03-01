@@ -17,7 +17,6 @@ import { MockCalculator } from "../mocks/MockCalculator.sol";
 import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
 import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
-import { MockWNative } from "../mocks/MockWNative.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
 
@@ -130,6 +129,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       address(vaultStorage)
     );
 
+    // configStorage setup
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();

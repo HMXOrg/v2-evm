@@ -53,7 +53,7 @@ contract TradeService is ITradeService {
     int256 entryFundingRate,
     int256 fundingFee
   );
-  event ForceClosePosition(
+  event LogForceClosePosition(
     address indexed _account,
     uint256 _subAccountId,
     uint256 _marketIndex,
@@ -277,8 +277,6 @@ contract TradeService is ITradeService {
     uint256 _positionSizeE30ToDecrease,
     address _tpToken
   ) external {
-    if (_account != msg.sender) revert ITradeService_NotPositionOwner();
-
     // init vars
     DecreasePositionVars memory _vars;
 
@@ -419,7 +417,7 @@ contract TradeService is ITradeService {
     // update position, market, and global market state
     _decreasePosition(_marketConfig, _marketIndex, _position, _vars, _vars.absPositionSizeE30, _tpToken);
 
-    emit ForceClosePosition(
+    emit LogForceClosePosition(
       _account,
       _subAccountId,
       _marketIndex,

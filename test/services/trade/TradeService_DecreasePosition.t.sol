@@ -25,7 +25,6 @@ import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 //   - decrease too much short position
 //   - position remain too tiny size after decrease long position
 //   - position remain too tiny size after decrease short position
-//   - not position owner
 // - misc
 //   - settle profit & loss with settlement fee
 //   - pull multiple tokens from user when loss

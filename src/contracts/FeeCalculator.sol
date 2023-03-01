@@ -21,18 +21,26 @@ contract FeeCalculator is Owned, IFeeCalculator {
   address public configStorage;
 
   constructor(address _vaultStorage, address _configStorage) {
-    // @todo - Sanity check
+    if (_vaultStorage == address(0) || _configStorage == address(0)) revert IFeeCalculator_InvalidAddress();
+
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
+
+    // Sanity check
+    IVaultStorage(vaultStorage).plpLiquidityDebtUSDE30();
+    IConfigStorage(configStorage).calculator();
   }
 
+  /// @notice Trader pay funding fee to Vault.
+  /// @param subAccount Address of the trader's sub-account to repay the fee.
+  /// @param absFeeUsd Value of the fee in USD for the trader's sub-account.
+  /// @param tmpVars Temporary struct variable used for calculation.
+  /// @return newAbsFeeUsd Value of the remaining fee in USD for the trader's sub-account after repayment.
   function payFundingFee(
     address subAccount,
     uint256 absFeeUsd,
     SettleFundingFeeLoopVar memory tmpVars
   ) external returns (uint256 newAbsFeeUsd) {
-    address _vaultStorage = vaultStorage;
-
     // Calculate the fee amount in the plp underlying token
     tmpVars.feeTokenAmount = (absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
 
@@ -52,7 +60,7 @@ contract FeeCalculator is Owned, IFeeCalculator {
       absFeeUsd -= tmpVars.traderBalanceValue;
     }
 
-    IVaultStorage(_vaultStorage).collectFundingFee(
+    IVaultStorage(vaultStorage).collectFundingFee(
       subAccount,
       tmpVars.underlyingToken,
       tmpVars.repayFeeTokenAmount,
@@ -62,13 +70,16 @@ contract FeeCalculator is Owned, IFeeCalculator {
     return absFeeUsd;
   }
 
+  /// @notice Trader receive funding fee from Vault.
+  /// @param subAccount Address of the trader's sub-account to repay the fee.
+  /// @param absFeeUsd Value of the fee in USD for the trader's sub-account.
+  /// @param tmpVars Temporary struct variable used for calculation.
+  /// @return newAbsFeeUsd Value of the remaining fee in USD for the trader's sub-account after repayment.
   function receiveFundingFee(
     address subAccount,
     uint256 absFeeUsd,
     SettleFundingFeeLoopVar memory tmpVars
   ) external returns (uint256 newAbsFeeUsd) {
-    address _vaultStorage = vaultStorage;
-
     // Calculate the fee amount in the plp underlying token
     tmpVars.feeTokenAmount = (absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
 
@@ -87,7 +98,7 @@ contract FeeCalculator is Owned, IFeeCalculator {
       absFeeUsd -= tmpVars.fundingFeeValue;
     }
 
-    IVaultStorage(_vaultStorage).repayFundingFee(
+    IVaultStorage(vaultStorage).repayFundingFee(
       subAccount,
       tmpVars.underlyingToken,
       tmpVars.repayFeeTokenAmount,
@@ -97,29 +108,33 @@ contract FeeCalculator is Owned, IFeeCalculator {
     return absFeeUsd;
   }
 
+  /// @notice Allows a trader to borrow the funding fee from the Perpetual Liquidity Provider (PLP) and pay it to the vault.
+  /// @param subAccount Address of the trader's sub-account to repay the fee.
+  /// @param oracle Address of the oracle contract used for price feed.
+  /// @param plpUnderlyingTokens Array of addresses of the PLP's underlying tokens.
+  /// @param absFeeUsd Value of the fee in USD for the trader's sub-account.
+  /// @return newAbsFeeUsd Value of the remaining fee in USD for the trader's sub-account after repayment.
   function borrowFundingFeeFromPLP(
     address subAccount,
-    address _oracle,
+    address oracle,
     address[] memory plpUnderlyingTokens,
     uint256 absFeeUsd
   ) external returns (uint256 newAbsFeeUsd) {
-    address _vaultStorage = vaultStorage;
-    address _configStorage = configStorage;
+    IVaultStorage _vaultStorage = IVaultStorage(vaultStorage);
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
 
     // Loop through all the plp underlying tokens for the sub-account
     for (uint256 i = 0; i < plpUnderlyingTokens.length; ) {
       SettleFundingFeeLoopVar memory tmpVars;
       tmpVars.underlyingToken = plpUnderlyingTokens[i];
-      tmpVars.underlyingTokenDecimal = IConfigStorage(_configStorage)
-        .getPlpTokenConfigs(tmpVars.underlyingToken)
-        .decimals;
-      uint256 plpLiquidityAmount = IVaultStorage(_vaultStorage).plpLiquidity(tmpVars.underlyingToken);
+      tmpVars.underlyingTokenDecimal = _configStorage.getPlpTokenConfigs(tmpVars.underlyingToken).decimals;
+      uint256 plpLiquidityAmount = _vaultStorage.plpLiquidity(tmpVars.underlyingToken);
 
       // Retrieve the latest price and confident threshold of the plp underlying token
-      (tmpVars.price, ) = IOracleMiddleware(_oracle).getLatestPrice(
+      (tmpVars.price, ) = IOracleMiddleware(oracle).getLatestPrice(
         tmpVars.underlyingToken.toBytes32(),
         false,
-        IConfigStorage(_configStorage).getMarketConfigByToken(tmpVars.underlyingToken).priceConfidentThreshold,
+        _configStorage.getMarketConfigByToken(tmpVars.underlyingToken).priceConfidentThreshold,
         30
       );
 
@@ -143,7 +158,7 @@ contract FeeCalculator is Owned, IFeeCalculator {
         absFeeUsd -= borrowPlpLiquidityValue;
       }
 
-      IVaultStorage(_vaultStorage).borrowFundingFeeFromPLP(
+      _vaultStorage.borrowFundingFeeFromPLP(
         subAccount,
         tmpVars.underlyingToken,
         tmpVars.repayFeeTokenAmount,
@@ -176,8 +191,6 @@ contract FeeCalculator is Owned, IFeeCalculator {
     uint256 plpLiquidityDebtUSDE30,
     SettleFundingFeeLoopVar memory tmpVars
   ) external returns (uint256 newAbsFeeUsd) {
-    address _vaultStorage = vaultStorage;
-
     // Calculate the sub-account's fee debt to token amounts
     tmpVars.feeTokenAmount = (absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
 
@@ -219,7 +232,7 @@ contract FeeCalculator is Owned, IFeeCalculator {
       return absFeeUsd;
     }
 
-    IVaultStorage(_vaultStorage).repayFundingFeeToPLP(
+    IVaultStorage(vaultStorage).repayFundingFeeToPLP(
       subAccount,
       tmpVars.underlyingToken,
       tmpVars.repayFeeTokenAmount,

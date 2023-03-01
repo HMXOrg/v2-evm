@@ -3,7 +3,12 @@ pragma solidity 0.8.18;
 
 interface IFeeCalculator {
   /**
-   * STRUCTS
+   * Errors
+   */
+  error IFeeCalculator_InvalidAddress();
+
+  /**
+   * Structs
    */
 
   struct SettleMarginFeeVar {
@@ -44,7 +49,7 @@ interface IFeeCalculator {
   }
 
   /**
-   * FUNCTIONS
+   * Functions
    */
 
   function payFundingFee(

@@ -630,16 +630,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
    * Revert
    */
 
-  function testRevert_WhenSomeoneTryDecreaseOthersPosition() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-
-    // BOB try decrease ALICE position
-    vm.prank(BOB);
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_NotPositionOwner()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
-  }
-
   function testRevert_WhenMarketIsDelistedFromPerp() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);

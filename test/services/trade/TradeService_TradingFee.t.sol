@@ -173,6 +173,7 @@ contract TradeService_TradingFee is TradeService_Base {
 
     vm.warp(110);
     {
+      vm.prank(ALICE);
       tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0));
 
       // trading Fee = size * decrease position fee = 500_000 * 0.0001 = 50 USDC
@@ -188,6 +189,7 @@ contract TradeService_TradingFee is TradeService_Base {
     vm.warp(120);
     {
       // Close position
+      vm.prank(ALICE);
       tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0));
 
       // trading Fee = size * decrease position fee = 500_000 * 0.0001 = 50 USDC

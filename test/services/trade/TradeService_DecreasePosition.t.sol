@@ -13,10 +13,11 @@ import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 //   - price stale
 //   - sub account is unhealthy (equity < MMR)
 // - success
-//   - partially decrease long position
-//   - partially decrease short position
-//   - fully decrease long position
-//   - fully decrease short position
+//   - partially decrease long position with profit
+//   - partially decrease short position with loss
+//   - fully decrease long position with loss
+//   - fully decrease short position with profit
+//   - fully decrease long position with maximum profit
 // - revert
 //   - try decrease long position which already closed
 //   - try decrease short position which already closed
@@ -24,6 +25,7 @@ import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 //   - decrease too much short position
 //   - position remain too tiny size after decrease long position
 //   - position remain too tiny size after decrease short position
+//   - not position owner
 // - misc
 //   - settle profit & loss with settlement fee
 //   - pull multiple tokens from user when loss
@@ -112,6 +114,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     positionTester.watch(ALICE, 0, _tpToken, _positionId);
 
     // ALICE decrease position
+    vm.prank(ALICE);
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, _tpToken);
 
     // recalculate long average price after ALICE decrease position
@@ -231,6 +234,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     mockOracle.setPrice(address(wbtc).toBytes32(), 100 * 1e30);
 
     // ALICE decrease position
+    vm.prank(ALICE);
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, _tpToken);
 
     // recalculate short average price after ALICE decrease position
@@ -346,6 +350,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     positionTester.watch(ALICE, 0, _tpToken, _positionId);
 
     // ALICE decrease position
+    vm.prank(ALICE);
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken);
 
     // recalculate long average price after ALICE decrease position
@@ -449,6 +454,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     positionTester.watch(ALICE, 0, _tpToken, _positionId);
 
     // ALICE decrease position
+    vm.prank(ALICE);
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken);
 
     // recalculate short average price after ALICE decrease position
@@ -508,9 +514,132 @@ contract TradeService_DecreasePosition is TradeService_Base {
     );
   }
 
+  function testCorrectness_WhenTraderFullyDecreaseLongPositionSizeWithMaximumProfit() external {
+    // Prepare for this test
+
+    // ALICE open LONG position
+    // sub account id - 0
+    // position size  - 1,000,000 USD
+    // IMR            - 10,000 USD (1% IMF)
+    // Reserved       - 90,000 USD
+    // leverage       - 100x
+    // price          - 1 USD
+    // open interest  - 1,000,000 TOKENs
+    // average price  - 1 USD
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+
+    // price change to 1.05 USD
+    // to check open interest should calculate correctly
+    mockOracle.setPrice(1.05 * 1e30);
+
+    // BOB open LONG position
+    // sub account id - 0
+    // position size  - 500,000 USD
+    // IMR            - 5,000 USD (1% IMF)
+    // leverage       - 100x
+    // price          - 1 USD
+    // open interest  - 476,190.476190476190476190 TOKENs
+    // average price  - 1.05 USD
+    tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+
+    // recalculate new long average price after BOB open position
+    // global long pnl = global long size * (current price - global avg price) / global avg price
+    //                 = 1000000 * (1.05 - 1) / 1 = +50000 USD
+    // new global long size = 15000000 (global long size + BOB long position size)
+    // new average long price = new global size * current price / new global size with pnl
+    //                        = 1500000 * 1.05 / 1500000 + (+50000) = 1.016129032258064516129032258064 USD
+    // THEN MARKET state
+    // long position size - 1,500,000 USD
+    // open interest      - 1,476,190.476190476190476190 TOKENs
+    // average price      - 1.016129032258064516129032258064 USD
+
+    // Start test
+
+    address _tpToken = address(weth); // take profit token
+
+    // let position tester watch this position
+    bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
+    positionTester.watch(ALICE, 0, _tpToken, _positionId);
+
+    // price change to 1.1 USD
+    mockOracle.setPrice(1.1 * 1e30);
+
+    // ALICE decrease all position
+    vm.prank(ALICE);
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken);
+
+    // recalculate long average price after ALICE decrease position
+    // global long pnl = global long size * (current price - global avg price) / global avg price
+    //                 = 1500000 * (1.1 - 1.016129032258064516129032258064) / 1.016129032258064516129032258064
+    //                 = +123809.523809523809523809523810348601 USD
+    // position realized pnl = decreased position size * (current price - position avg price) / position avg price
+    //                       = 1000000 * (1.1 - 1) / 1 = +100000 USD (but reserved value for this position is 90000)
+    // then actual pnl = +90000
+    // new global long pnl = global long pnl - position relaized pnl
+    //                     = +123809.523809523809523809523810348601 - (+90000)
+    //                     = +33809.523809523809523809523810348601 USD
+    // open interest delta = position open interest * position size to decrease / position size
+    //                     = 1000000 * 1000000 / 1000000 = 1000000
+    // new global long size = 500000 USD (global long size - decreased position size)
+    // new long average price (global) = current price * new global long size / new global long size + new global long pnl
+    //                                 = 1.1 * 500000 / (500000 - (+33809.523809523809523809523810348601))
+    //                                 = 1.030330062444246208742194469222 USD
+    // ALICE position has profit 90000 USD
+    // ALICE sub account 0 has WETH as collateral = 100,000 ether
+    // profit in WETH = 90000 / 1.1 = 81818.181818181818181818 ether
+    // settlement fee rate 0.5% note: from mock
+    // settlement fee = 81818.181818181818181818 * 0.5 / 100 = 409.090909090909090909 ether
+    // then ALICE sub account 0 collateral should be increased by 81818.181818181818181818 - 409.090909090909090909 = 81409.090909090909090909 ether
+    //                             = 100000 + 81409.090909090909090909 = 181409.090909090909090909 ether
+    // and PLP WETH liquidity should reduced by 81818.181818181818181818 ether
+    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 81818.181818181818181818 = 918181.818181818181818182 ether
+    // finally fee should increased by 409.090909090909090909 ether
+    address[] memory _checkPlpTokens = new address[](1);
+    uint256[] memory _expectedTraderBalances = new uint256[](1);
+    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedFees = new uint256[](1);
+
+    _checkPlpTokens[0] = _tpToken;
+    _expectedTraderBalances[0] = 181_409.090909090909090909 ether;
+    _expectedPlpLiquidities[0] = 918_181.818181818181818182 ether;
+    _expectedFees[0] = 409.090909090909090909 ether;
+
+    PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
+      primaryAccount: ALICE,
+      subAccountId: 0,
+      // position info
+      decreasedPositionSize: 1_000_000 * 1e30,
+      reserveValueDelta: 90_000 * 1e30,
+      openInterestDelta: 1_000_000 * 1e18,
+      realizedPnl: 90_000 * 1e30,
+      // average prices
+      newPositionAveragePrice: 0,
+      newLongGlobalAveragePrice: 1.030330062444246208742194469222 * 1e30,
+      newShortGlobalAveragePrice: 0
+    });
+    positionTester.assertDecreasePositionResult(
+      _assertData,
+      _checkPlpTokens,
+      _expectedTraderBalances,
+      _expectedPlpLiquidities,
+      _expectedFees
+    );
+  }
+
   /**
    * Revert
    */
+
+  function testRevert_WhenSomeoneTryDecreaseOthersPosition() external {
+    // ALICE open LONG position
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+
+    // BOB try decrease ALICE position
+    vm.prank(BOB);
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_NotPositionOwner()"));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+  }
+
   function testRevert_WhenMarketIsDelistedFromPerp() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
@@ -518,6 +647,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // someone delist market
     configStorage.delistMarket(ethMarketIndex);
 
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
   }
@@ -529,6 +659,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // set market status from oracle is inactive
     mockOracle.setMarketStatus(1);
 
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsClosed()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
   }
@@ -540,6 +671,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // make price stale in mock oracle middleware
     mockOracle.setPriceStale(true);
 
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
   }
@@ -551,6 +683,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // mock MMR as very big number, to make this sub account unhealthy
     mockCalculator.setMMR(ALICE, type(uint256).max);
 
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderMMR()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
   }
@@ -560,9 +693,12 @@ contract TradeService_DecreasePosition is TradeService_Base {
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
     // ALICE close all position
+    vm.prank(ALICE);
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
 
     // ALICE try to decrease again
+
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionAlreadyClosed()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
   }
@@ -572,9 +708,13 @@ contract TradeService_DecreasePosition is TradeService_Base {
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
     // ALICE close all position
+
+    vm.prank(ALICE);
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
 
     // ALICE try to decrease again
+
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionAlreadyClosed()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth));
   }
@@ -583,6 +723,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
 
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_DecreaseTooHighPositionSize()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_001 * 1e30, address(weth));
   }
@@ -591,6 +732,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // ALICE open SHORT position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
 
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_DecreaseTooHighPositionSize()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_001 * 1e30, address(weth));
   }
@@ -598,6 +740,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
   function testRevert_AfterDecreaseLongPositionAndRemainPositionSizeIsTooTiny() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_TooTinyPosition()"));
     // decrease position for 999,999.9
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 9_999_999 * 1e29, address(weth));
@@ -606,6 +750,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
   function testRevert_AfterDecreaseShortPositioAndRemainPositionSizeIsTooTiny() external {
     // ALICE open SHORT position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
+
+    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_TooTinyPosition()"));
     // decrease position for 999,999.9
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 9_999_999 * 1e29, address(weth));

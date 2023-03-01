@@ -151,6 +151,7 @@ contract TradeService_FundingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 0);
       assertEq(vaultStorage.plpLiquidityDebtUSDE30(), 0);
 
+      vm.prank(BOB);
       tradeService.decreasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30, address(0));
       IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
       assertEq(_globalMarket.currentFundingRate, -106666666666666); // LONG PAY SHORT

@@ -41,6 +41,7 @@ contract BotHandler_Base is BaseTest {
 
     // set Tester as position manangers
     botHandler.setPositionManagers(_positionManagers, true);
+    configStorage.setServiceExecutor(address(tradeService), address(this), true);
   }
 
   function _getSubAccount(address primary, uint256 subAccountId) internal pure returns (address) {

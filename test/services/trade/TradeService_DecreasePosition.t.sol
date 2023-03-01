@@ -525,7 +525,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price change to 1.05 USD
     // to check open interest should calculate correctly
@@ -539,7 +539,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 476,190.476190476190476190 TOKENs
     // average price  - 1.05 USD
-    tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+    tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
     // recalculate new long average price after BOB open position
     // global long pnl = global long size * (current price - global avg price) / global avg price
@@ -565,7 +565,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // ALICE decrease all position
     vm.prank(ALICE);
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken);
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken, 0);
 
     // recalculate long average price after ALICE decrease position
     // global long pnl = global long size * (current price - global avg price) / global avg price
@@ -637,12 +637,12 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
   function testRevert_WhenSomeoneTryDecreaseOthersPosition() external {
     // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // BOB try decrease ALICE position
     vm.prank(BOB);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_NotPositionOwner()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth));
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth), 0);
   }
 
   function testRevert_WhenMarketIsDelistedFromPerp() external {

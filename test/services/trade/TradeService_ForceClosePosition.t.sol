@@ -170,7 +170,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   function testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved() external {
     // Prepare for this test
 
-    // open LONG position for ALICE
+    // ALICE open Long position
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
@@ -282,7 +282,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
    */
 
   function testRevert_WhenAlicePositionLossingAndExecutorTryToCloseIt() external {
-    // open LONG position for ALICE at price 1 USD
+    // ALICE open Long position at price 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price has changed make ALICE position lossing
@@ -306,7 +306,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   }
 
   function testRevert_WhenExecutorTryClosePositionButMarketIsDelistedFromPerp() external {
-    // open LONG position for ALICE
+    // ALICE open Long position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // someone delist market

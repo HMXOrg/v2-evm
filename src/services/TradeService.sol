@@ -698,13 +698,13 @@ contract TradeService is ITradeService {
   function _subAccountHealthCheck(address _subAccount) internal {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
     // check sub account is healthy
-    uint256 _subAccountEquity = _calculator.getEquity(_subAccount);
+    int256 _subAccountEquity = _calculator.getEquity(_subAccount);
     // maintenance margin requirement (MMR) = position size * maintenance margin fraction
     // note: maintenanceMarginFraction is 1e18
     uint256 _mmr = _calculator.getMMR(_subAccount);
 
     // if sub account equity < MMR, then trader couldn't decrease position
-    if (_subAccountEquity < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
+    if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
   }
 
   /// @notice This function updates the borrowing rate for the given asset class index.
@@ -1281,82 +1281,6 @@ contract TradeService is ITradeService {
   }
 
   function _min(int256 a, int256 b) internal pure returns (int256) {
-    return a < b ? a : b;
-  }
-
-  function liquidate(address _subAccount) external {
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
-    // check sub account is healty
-    uint256 _equity = _calculator.getEquity(_subAccount);
-    // maintenance margin requirement (MMR) = position size * maintenance margin fraction
-    // note: maintenanceMarginFraction is 1e18
-    uint256 _mmr = _calculator.getMMR(_subAccount);
-
-    // if sub account equity < MMR, then trader couln't decrease position
-    if (_equity >= _mmr) revert ITradeService_AccountHealthy();
-
-    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
-    _liquidatePosition(_traderPositions);
-    _settle(_subAccount);
-  }
-
-  function _liquidatePosition(IPerpStorage.Position[] memory _positions) internal {
-    // Loop through all trader's positions
-    for (uint256 i; i < _positions.length; ) {
-      IPerpStorage.Position memory _position = _positions[i];
-      IPerpStorage(perpStorage).resetPosition(
-        _getPositionId(_getSubAccount(_position.primaryAccount, _position.subAccountId), _position.marketIndex)
-      );
-      unchecked {
-        ++i;
-      }
-    }
-  }
-
-  /// @notice Settles the fees for a given sub-account.
-  /// @param _subAccount The address of the sub-account to settle fees for.
-  function _settle(address _subAccount) internal {
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
-    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(configStorage).oracle());
-    address[] memory collateralTokens = IConfigStorage(configStorage).getCollateralTokens();
-
-    // @todo - include pending borrowing and funding fee
-    int256 debt = _calculator.getUnrealizedPnl(_subAccount);
-    uint256 absDebt = debt > 0 ? uint256(debt) : uint256(-debt);
-
-    absDebt += IConfigStorage(configStorage).getLiquidationConfig().liquidationFeeUSDE30;
-
-    for (uint256 i = 0; i < collateralTokens.length; ) {
-      address collateralToken = collateralTokens[i];
-      uint256 traderBalance = IVaultStorage(vaultStorage).traderBalances(_subAccount, collateralToken);
-
-      {
-        uint256 collateralTokenDecimal = ERC20(collateralToken).decimals();
-
-        (uint256 price, ) = oracle.getLatestPrice(
-          collateralToken.toBytes32(),
-          false,
-          IConfigStorage(configStorage).getCollateralTokenConfigs(collateralToken).priceConfidentThreshold,
-          30
-        );
-        uint256 debtTokenAmount = (absDebt * (10 ** collateralTokenDecimal)) / price;
-        uint256 repayAmount = _min(debtTokenAmount, traderBalance);
-        traderBalance -= repayAmount;
-        absDebt -= (repayAmount * price) / (10 ** collateralTokenDecimal);
-
-        IVaultStorage(vaultStorage).addPLPLiquidity(collateralToken, repayAmount);
-        IVaultStorage(vaultStorage).setTraderBalance(_subAccount, collateralToken, traderBalance);
-      }
-
-      if (absDebt == 0) break;
-
-      unchecked {
-        ++i;
-      }
-    }
-  }
-
-  function _min(uint256 a, uint256 b) internal pure returns (uint256) {
     return a < b ? a : b;
   }
 }

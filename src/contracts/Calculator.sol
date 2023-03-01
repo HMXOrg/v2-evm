@@ -376,7 +376,7 @@ contract Calculator is Owned, ICalculator {
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
   /// @return _equityValueE30 Total equity of trader's account.
-  function getEquity(address _subAccount) public view returns (uint256 _equityValueE30) {
+  function getEquity(address _subAccount) public view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount);
 
@@ -391,13 +391,8 @@ contract Calculator is Owned, ICalculator {
     // uint256 fundingFeeE30 = getFundingFee(_subAccount);
 
     // Sum all asset's values
-    _equityValueE30 += _collateralValueE30;
-
-    if (_unrealizedPnlValueE30 > 0) {
-      _equityValueE30 += uint256(_unrealizedPnlValueE30);
-    } else {
-      _equityValueE30 -= uint256(-_unrealizedPnlValueE30);
-    }
+    _equityValueE30 += int256(_collateralValueE30);
+    _equityValueE30 += _unrealizedPnlValueE30;
 
     // @todo - include borrowing and funding fee
     // _equityValueE30 -= borrowingFeeE30;
@@ -607,10 +602,11 @@ contract Calculator is Owned, ICalculator {
   /// @param _subAccount The address of the sub-account
   /// @return _freeCollateral The amount of free collateral available to the sub-account
   function getFreeCollateral(address _subAccount) public view returns (uint256 _freeCollateral) {
-    uint256 equity = getEquity(_subAccount);
+    int256 equity = getEquity(_subAccount);
     uint256 imr = getIMR(_subAccount);
 
-    _freeCollateral = equity - imr;
+    if (equity < 0) return 0;
+    _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
   }
 }

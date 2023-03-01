@@ -131,7 +131,8 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     IVaultStorage(_vaultStorage).setTraderBalance(_subAccount, _token, _newBalance);
 
     // Calculate validation for if new Equity is below IMR or not
-    if (ICalculator(calculator).getEquity(_subAccount) < ICalculator(calculator).getIMR(_subAccount))
+    int256 equity = ICalculator(calculator).getEquity(_subAccount);
+    if (equity < 0 || uint256(equity) < ICalculator(calculator).getIMR(_subAccount))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
     // If trader withdraws all token out, then remove token on traderTokens list

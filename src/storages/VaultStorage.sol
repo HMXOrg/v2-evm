@@ -219,8 +219,14 @@ contract VaultStorage is IVaultStorage {
     traderBalances[_subAccount][_token] -= _amount;
   }
 
+  /// @notice Pays the PLP for providing liquidity with the specified token and amount.
+  /// @param _trader The address of the trader paying the PLP.
+  /// @param _token The address of the token being used to pay the PLP.
+  /// @param _amount The amount of the token being used to pay the PLP.
   function payPlp(address _trader, address _token, uint256 _amount) external {
+    // Increase the PLP's liquidity for the specified token
     plpLiquidity[_token] += _amount;
+    // Decrease the trader's balance for the specified token
     traderBalances[_trader][_token] -= _amount;
   }
 }

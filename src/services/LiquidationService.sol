@@ -27,32 +27,35 @@ contract LiquidationService is ILiquidationService {
   }
 
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage
-  /// @param subAccount The sub-account to be liquidated
-  function liquidate(address subAccount) external {
+  /// @param _subAccount The sub-account to be liquidated
+  function liquidate(address _subAccount) external {
     // Get the calculator contract from storage
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
-    int256 equity = _calculator.getEquity(subAccount);
+    int256 _equity = _calculator.getEquity(_subAccount);
     // If the equity is greater than or equal to the MMR, the account is healthy and cannot be liquidated
-    if (equity >= 0 && uint256(equity) >= _calculator.getMMR(subAccount)) revert ILiquidationService_AccountHealthy();
+    if (_equity >= 0 && uint256(_equity) >= _calculator.getMMR(_subAccount))
+      revert ILiquidationService_AccountHealthy();
 
     // Get the list of positions associated with the sub-account
-    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(subAccount);
+    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+
+    // Settles the sub-account by paying off its debt with its collateral
+    _settle(_subAccount);
 
     // Liquidate the positions by resetting their value in storage
     _liquidatePosition(_traderPositions);
-
-    // Settles the sub-account by paying off its debt with its collateral
-    _settle(subAccount);
   }
 
   /// @notice Liquidates a list of positions by resetting their value in storage
-  /// @param positions The list of positions to be liquidated
-  function _liquidatePosition(IPerpStorage.Position[] memory positions) internal {
+  /// @param _positions The list of positions to be liquidated
+  function _liquidatePosition(IPerpStorage.Position[] memory _positions) internal {
     // Loop through each position in the list
-    for (uint256 i; i < positions.length; ) {
+    IPerpStorage.Position memory _position;
+    uint256 _len = _positions.length;
+    for (uint256 i; i < _len; ) {
       // Get the current position from the list
-      IPerpStorage.Position memory _position = positions[i];
+      _position = _positions[i];
 
       // Reset the position's value in storage
       IPerpStorage(perpStorage).resetPosition(
@@ -66,49 +69,51 @@ contract LiquidationService is ILiquidationService {
   }
 
   /// @notice Settles the sub-account by paying off its debt with its collateral
-  /// @param subAccount The sub-account to be settled
-  function _settle(address subAccount) internal {
+  /// @param _subAccount The sub-account to be settled
+  function _settle(address _subAccount) internal {
     // Get contract addresses from storage
     address _configStorage = configStorage;
     address _vaultStorage = vaultStorage;
 
-    // Get instances of the calculator and oracle contracts from storage
-    ICalculator calculator = ICalculator(IConfigStorage(_configStorage).calculator());
-    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(_configStorage).oracle());
+    // Get instances of the oracle contracts from storage
+    IOracleMiddleware _oracle = IOracleMiddleware(IConfigStorage(_configStorage).oracle());
 
     // Get the list of collateral tokens from storage
-    address[] memory collateralTokens = IConfigStorage(_configStorage).getCollateralTokens();
+    address[] memory _collateralTokens = IConfigStorage(_configStorage).getCollateralTokens();
 
     // Get the sub-account's unrealized profit/loss and add the liquidation fee
-    uint256 absDebt = abs(calculator.getUnrealizedPnl(subAccount));
-    absDebt += IConfigStorage(_configStorage).getLiquidationConfig().liquidationFeeUSDE30;
+    uint256 _absDebt = abs(ICalculator(IConfigStorage(_configStorage).calculator()).getUnrealizedPnl(_subAccount));
+    _absDebt += IConfigStorage(_configStorage).getLiquidationConfig().liquidationFeeUSDE30;
 
+    uint256 _len = _collateralTokens.length;
     // Iterate over each collateral token in the list and pay off debt with its balance
-    for (uint256 i = 0; i < collateralTokens.length; ) {
-      {
-        address collateralToken = collateralTokens[i];
+    for (uint256 i = 0; i < _len; ) {
+      address _collateralToken = _collateralTokens[i];
 
-        // Get the sub-account's balance of the collateral token from the vault storage
-        uint256 traderBalance = IVaultStorage(_vaultStorage).traderBalances(subAccount, collateralToken);
+      // Calculate the amount of debt tokens to repay using the collateral token's price
+      uint256 _collateralTokenDecimal = ERC20(_collateralToken).decimals();
+      (uint256 _price, ) = _oracle.getLatestPrice(
+        _collateralToken.toBytes32(),
+        false,
+        IConfigStorage(_configStorage).getCollateralTokenConfigs(_collateralToken).priceConfidentThreshold,
+        30
+      );
 
-        // Calculate the amount of debt tokens to repay using the collateral token's price
-        uint256 collateralTokenDecimal = ERC20(collateralToken).decimals();
-        (uint256 price, ) = oracle.getLatestPrice(
-          collateralToken.toBytes32(),
-          false,
-          IConfigStorage(_configStorage).getCollateralTokenConfigs(collateralToken).priceConfidentThreshold,
-          30
-        );
-        uint256 debtTokenAmount = (absDebt * (10 ** collateralTokenDecimal)) / price;
+      // Get the sub-account's balance of the collateral token from the vault storage and calculate value
+      uint256 _traderBalanceValue = (IVaultStorage(_vaultStorage).traderBalances(_subAccount, _collateralToken) *
+        _price) / (10 ** _collateralTokenDecimal);
 
-        // Repay the minimum of the debt token amount and the trader's balance of the collateral token
-        uint256 repayAmount = _min(debtTokenAmount, traderBalance);
-        absDebt -= (repayAmount * price) / (10 ** collateralTokenDecimal);
-        IVaultStorage(_vaultStorage).payPlp(subAccount, collateralToken, repayAmount);
-      }
+      // Repay the minimum of the debt token amount and the trader's balance of the collateral token
+      uint256 _repayValue = _min(_absDebt, _traderBalanceValue);
+      _absDebt -= _repayValue;
+      IVaultStorage(_vaultStorage).payPlp(
+        _subAccount,
+        _collateralToken,
+        (_repayValue * (10 ** _collateralTokenDecimal)) / _price
+      );
 
       // Exit the loop if the debt has been fully paid off
-      if (absDebt == 0) break;
+      if (_absDebt == 0) break;
 
       unchecked {
         ++i;
@@ -116,7 +121,7 @@ contract LiquidationService is ILiquidationService {
     }
 
     // If the debt has not been fully paid off, add it to the sub-account's bad debt balance in storage
-    if (absDebt != 0) IPerpStorage(perpStorage).addBadDebt(subAccount, absDebt);
+    if (_absDebt != 0) IPerpStorage(perpStorage).addBadDebt(_subAccount, _absDebt);
   }
 
   function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address) {

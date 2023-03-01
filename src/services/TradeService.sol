@@ -837,14 +837,14 @@ contract TradeService is ITradeService {
     uint256 _marketIndex,
     bool _isLong,
     int256 _size,
-    int256 /*_entryFundingRate*/ // @todo - consider this parameter later
+    int256 _entryFundingRate
   ) public view returns (int256 fundingFee) {
     if (_size == 0) return 0;
     uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
 
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    int256 _fundingRate = _globalMarket.currentFundingRate;
 
+    int256 _fundingRate = _getDifference(_globalMarket.currentFundingRate, _entryFundingRate);
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int(absSize) * _fundingRate) / 1e18;
@@ -1388,6 +1388,19 @@ contract TradeService is ITradeService {
       vars.feeTokenValue,
       vars.traderBalance
     );
+  }
+
+  function _getDifference(int256 num1, int256 num2) public pure returns (int256) {
+    // Calculate the absolute value of the difference
+    int256 diff = num1 - num2;
+    diff = diff < 0 ? -diff : diff;
+
+    // Multiply by the sign of the difference to get the desired result
+    int256 sign = num1 < num2 ? int(-1) : int(1);
+    diff = diff * sign;
+
+    // Return the result
+    return diff;
   }
 
   function _max(int256 a, int256 b) internal pure returns (int256) {

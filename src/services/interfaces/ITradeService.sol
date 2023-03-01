@@ -20,6 +20,8 @@ interface ITradeService {
   error ITradeService_BadPositionSize();
   error ITradeService_InsufficientLiquidity();
   error ITradeService_InsufficientFreeCollateral();
+  error ITradeService_NotPositionOwner();
+  error ITradeService_ReservedValueStillEnough();
 
   /**
    * STRUCTS
@@ -74,4 +76,6 @@ interface ITradeService {
     address _tpToken,
     uint256 _limitPriceE30
   ) external;
+
+  function forceClosePosition(address _account, uint256 _subAccountId, uint256 _marketIndex, address _tpToken) external;
 }

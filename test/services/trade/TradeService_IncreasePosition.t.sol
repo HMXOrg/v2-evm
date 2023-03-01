@@ -403,7 +403,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
       avgPrice: 25_000 * 1e30,
       reserveValue: 72_000 * 1e30,
       lastIncreaseTimestamp: 100,
-      openInterest: 32 * 1e18
+      openInterest: 32 * 1e8
     });
     positionTester02.assertPosition(_positionId, assetData);
   }
@@ -564,7 +564,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
         avgPrice: 25_000 * 1e30,
         reserveValue: 22_500 * 1e30,
         lastIncreaseTimestamp: 100,
-        openInterest: 10 * 1e18
+        openInterest: 10 * 1e8
       });
       positionTester02.assertPosition(_positionId, positionAssetData);
 
@@ -584,7 +584,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
         longOpenInterest: 0,
         shortPositionSize: 250_000 * 1e30,
         shortAvgPrice: 25_000 * 1e30,
-        shortOpenInterest: 10 * 1e18
+        shortOpenInterest: 10 * 1e8
       });
       globalMarketTester.assertGlobalMarket(1, globalMarketAssertData);
     }
@@ -616,7 +616,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
         avgPrice: 25_000 * 1e30,
         reserveValue: 90_000 * 1e30,
         lastIncreaseTimestamp: 100,
-        openInterest: 40 * 1e18
+        openInterest: 40 * 1e8
       });
       positionTester02.assertPosition(_positionId, positionAssetData);
 
@@ -638,7 +638,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
         longOpenInterest: 0,
         shortPositionSize: 1_000_000 * 1e30,
         shortAvgPrice: 25_000 * 1e30,
-        shortOpenInterest: 40 * 1e18
+        shortOpenInterest: 40 * 1e8
       });
       globalMarketTester.assertGlobalMarket(1, globalMarketAssertData);
     }

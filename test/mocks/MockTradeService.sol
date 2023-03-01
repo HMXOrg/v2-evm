@@ -78,4 +78,13 @@ contract MockTradeService is ITradeService {
       })
     );
   }
+
+  function forceClosePosition(
+    address _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  ) external {
+    decreasePositionCallCount++;
+  }
 }

@@ -53,7 +53,7 @@ contract TradeService is ITradeService {
 
   event LogCollectFundingFee(address account, uint256 assetClass, int256 feeUsd);
 
-  event ForceClosePosition(
+  event LogForceClosePosition(
     address indexed _account,
     uint256 _subAccountId,
     uint256 _marketIndex,
@@ -429,7 +429,7 @@ contract TradeService is ITradeService {
     // update position, market, and global market state
     _decreasePosition(_marketConfig, _marketIndex, _position, _vars, _vars.absPositionSizeE30, _tpToken);
 
-    emit ForceClosePosition(
+    emit LogForceClosePosition(
       _account,
       _subAccountId,
       _marketIndex,

@@ -246,7 +246,7 @@ contract TradeService is ITradeService {
 
     {
       // calculate the change in open interest for the new position
-      uint256 _changedOpenInterest = (_absSizeDelta * 1e18) / vars.priceE30; // @todo - use decimal asset
+      uint256 _changedOpenInterest = (_absSizeDelta * (10 ** _marketConfig.exponent)) / vars.priceE30;
       vars.position.openInterest += _changedOpenInterest;
       vars.position.lastIncreaseTimestamp = block.timestamp;
 
@@ -298,6 +298,9 @@ contract TradeService is ITradeService {
     address _tpToken,
     uint256 _limitPriceE30
   ) external {
+    // validate service should be called from handler ONLY
+    IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+
     // init vars
     DecreasePositionVars memory _vars;
 
@@ -359,7 +362,7 @@ contract TradeService is ITradeService {
       _marketConfig,
       _marketIndex,
       _vars,
-      _vars.absPositionSizeE30,
+      _positionSizeE30ToDecrease,
       _tpToken,
       _limitPriceE30,
       _marketConfig.assetId

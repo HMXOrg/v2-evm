@@ -73,7 +73,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
   function testCorrectness_WhenTraderPartiallyDecreaseLongPositionSizeWithProfit() external {
     // Prepare for this test
 
-    // ALICE open LONG position
+    // open LONG position for ALICE
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
@@ -307,7 +307,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
   function testCorrectness_WhenTraderFullyDecreaseLongPositionSizeWithLoss() external {
     // Prepare for this test
 
-    // ALICE open LONG position
+    // open LONG position for ALICE
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
@@ -515,7 +515,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
   function testCorrectness_WhenTraderFullyDecreaseLongPositionSizeWithMaximumProfit() external {
     // Prepare for this test
 
-    // ALICE open LONG position
+    // open LONG position for ALICE
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
@@ -562,8 +562,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // price change to 1.1 USD
     mockOracle.setPrice(1.1 * 1e30);
 
-    // ALICE decrease all position
-    vm.prank(ALICE);
+    // decrease all position
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, _tpToken, 0);
 
     // recalculate long average price after ALICE decrease position
@@ -635,55 +634,51 @@ contract TradeService_DecreasePosition is TradeService_Base {
    */
 
   function testRevert_WhenMarketIsDelistedFromPerp() external {
-    // ALICE open LONG position
+    // open LONG position for ALICE
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // someone delist market
     configStorage.delistMarket(ethMarketIndex);
 
-    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth), 0);
   }
 
   function testRevert_WhenOracleTellMarketIsClose() external {
-    // ALICE open LONG position
+    // open LONG position FOR ALICE
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // set market status from oracle is inactive
     mockOracle.setMarketStatus(1);
 
-    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsClosed()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth), 0);
   }
 
   function testRevert_WhenPriceStale() external {
-    // ALICE open LONG position
+    // open LONG position for ALICE
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // make price stale in mock oracle middleware
     mockOracle.setPriceStale(true);
 
-    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth), 0);
   }
 
   function testRevert_WhenSubAccountEquityIsLessThanMMR() external {
-    // ALICE open LONG position
+    // open LONG position for ALICE
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // mock MMR as very big number, to make this sub account unhealthy
     mockCalculator.setMMR(ALICE, type(uint256).max);
 
-    vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderMMR()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth), 0);
   }
 
   function testRevert_WhenTraderDecreaseLongPositionWhichAlreadyClosed() external {
-    // ALICE open LONG position
+    // open LONG position for ALICE
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(weth), 0);

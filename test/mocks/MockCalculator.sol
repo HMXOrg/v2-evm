@@ -111,15 +111,15 @@ contract MockCalculator is ICalculator {
     return 0;
   }
 
-  function getAUM(bool /* isMaxPrice */) external view returns (uint256) {
+  function getAUM(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
     return aum;
   }
 
-  function getAUME30(bool /* isMaxPrice */) external view returns (uint256) {
+  function getAUME30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
     return aum;
   }
 
-  function getPLPValueE30(bool /* isMaxPrice */) external view returns (uint256) {
+  function getPLPValueE30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
     return plpValue;
   }
 

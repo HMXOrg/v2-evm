@@ -44,13 +44,13 @@ contract Calculator is Owned, ICalculator {
   }
 
   // return in
-  function getAUME30(bool isMaxPrice) public view returns (uint256) {
+  function getAUME30(bool isMaxPrice, uint256 _price, bytes32 _assetId) public view returns (uint256) {
     // @todo -  pendingBorrowingFeeE30
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = 0;
     int256 pnlE30 = _getGlobalPNLE30();
 
-    uint256 aum = _getPLPValueE30(isMaxPrice) + pendingBorrowingFeeE30;
+    uint256 aum = _getPLPValueE30(isMaxPrice, _price, _assetId) + pendingBorrowingFeeE30;
     if (pnlE30 < 0) {
       uint256 _pnl = uint256(-pnlE30);
       if (aum < _pnl) return 0;
@@ -62,15 +62,16 @@ contract Calculator is Owned, ICalculator {
     return aum;
   }
 
-  function getAUM(bool isMaxPrice) public view returns (uint256) {
-    return getAUME30(isMaxPrice) / 1e12;
+  function getAUM(bool isMaxPrice, uint256 _price, bytes32 _assetId) public view returns (uint256) {
+    
+    return getAUME30(isMaxPrice,_price,_assetId) / 1e12;
   }
 
-  function getPLPValueE30(bool isMaxPrice) external view returns (uint256) {
-    return _getPLPValueE30(isMaxPrice);
+  function getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external view returns (uint256) {
+    return _getPLPValueE30(isMaxPrice, _price, _assetId);
   }
 
-  function _getPLPValueE30(bool isMaxPrice) internal view returns (uint256) {
+  function _getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) internal view returns (uint256) {
     uint256 assetValue = 0;
     address _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(
       IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_START()
@@ -80,12 +81,22 @@ contract Calculator is Owned, ICalculator {
       _plpUnderlyingToken !=
       IConfigStorage(configStorage).getNextAcceptedToken(IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END())
     ) {
-      (uint256 priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-        _plpUnderlyingToken.toBytes32(),
-        isMaxPrice,
-        IConfigStorage(configStorage).getMarketConfigByToken(_plpUnderlyingToken).priceConfidentThreshold
-      );
-
+      uint256 priceE30;
+      if (
+        _price != 0 &&
+        IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(
+          _plpUnderlyingToken.toBytes32(),
+          _assetId
+        )
+      ) {
+        priceE30 = _price;
+      } else {
+        (priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
+          _plpUnderlyingToken.toBytes32(),
+          isMaxPrice,
+          IConfigStorage(configStorage).getMarketConfigByToken(_plpUnderlyingToken).priceConfidentThreshold
+        );
+      }
       uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_plpUnderlyingToken) * priceE30) /
         (10 ** ERC20(_plpUnderlyingToken).decimals());
 

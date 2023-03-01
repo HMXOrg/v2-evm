@@ -122,7 +122,7 @@ contract TradeService is ITradeService {
     if (!vars.isNewPosition && vars.currentPositionIsLong != vars.isLong) revert ITradeService_BadExposure();
 
     // Update borrowing rate
-    updateBorrowingRate(_marketConfig.assetClass);
+    updateBorrowingRate(_marketConfig.assetClass, _limitPriceE30, _marketConfig.assetId);
 
     // get the global market for the given market index
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
@@ -145,9 +145,7 @@ contract TradeService is ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      if (_isOverridePrice) {
-        vars.priceE30 = _limitPriceE30;
-      }
+      vars.priceE30 = _overwritePrice(vars.priceE30, _limitPriceE30);
 
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
@@ -196,7 +194,7 @@ contract TradeService is ITradeService {
       vars.position.entryFundingRate
     );
 
-    settleFee(vars.subAccount, _limitPriceE30);
+    settleFee(vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     // update the position size by adding the new size delta
     vars.position.positionSizeE30 += _sizeDelta;
@@ -229,7 +227,7 @@ contract TradeService is ITradeService {
       // calculate the maximum amount of reserve required for the new position
       uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / 1e18;
       // increase the reserved amount by the maximum reserve required for the new position
-      increaseReserved(_marketConfig.assetClass, _maxReserve);
+      increaseReserved(_marketConfig.assetClass, _maxReserve, _limitPriceE30, _marketConfig.assetId);
       vars.position.reserveValueE30 += _maxReserve;
     }
 
@@ -316,13 +314,12 @@ contract TradeService is ITradeService {
     IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
       _marketIndex
     );
-    updateBorrowingRate(_marketConfig.assetClass);
+    updateBorrowingRate(_marketConfig.assetClass, _limitPriceE30, _marketConfig.assetId);
 
     // Update funding rate
     updateFundingRate(_marketIndex, _limitPriceE30);
 
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    bool _isOverridePrice = _limitPriceE30 != 0;
 
     {
       uint256 _lastPriceUpdated;
@@ -341,9 +338,7 @@ contract TradeService is ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      if (_isOverridePrice) {
-        vars.priceE30 = _limitPriceE30;
-      }
+      vars.priceE30 = _overwritePrice(vars.priceE30, _limitPriceE30);
 
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
@@ -367,7 +362,7 @@ contract TradeService is ITradeService {
       vars.position.positionSizeE30,
       vars.position.entryFundingRate
     );
-    settleFee(vars.subAccount, _limitPriceE30);
+    settleFee(vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     uint256 _newAbsPositionSizeE30 = vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
 
@@ -469,10 +464,10 @@ contract TradeService is ITradeService {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
-          _settleProfit(vars.subAccount, _tpToken, uint256(_realizedPnl));
+          _settleProfit(vars.subAccount, _tpToken, uint256(_realizedPnl), _limitPriceE30, _marketConfig.assetId);
         } else {
           // loss
-          _settleLoss(vars.subAccount, uint256(-_realizedPnl));
+          _settleLoss(vars.subAccount, uint256(-_realizedPnl), _limitPriceE30, _marketConfig.assetId);
         }
       }
     }
@@ -490,13 +485,28 @@ contract TradeService is ITradeService {
   /// @notice settle profit
   /// @param _token - token that trader want to take profit as collateral
   /// @param _realizedProfitE30 - trader profit in USD
-  function _settleProfit(address _subAccount, address _token, uint256 _realizedProfitE30) internal {
-    (uint256 _tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
-      _token.toBytes32(),
-      false,
-      IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
-      30 // trust price age (seconds) todo: from market config
-    );
+  function _settleProfit(
+    address _subAccount,
+    address _token,
+    uint256 _realizedProfitE30,
+    uint256 _price,
+    bytes32 _assetId
+  ) internal {
+    uint256 _tpTokenPrice;
+
+    if (
+      _price != 0 &&
+      IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(_token.toBytes32(), _assetId)
+    ) {
+      _tpTokenPrice = _price;
+    } else {
+      (_tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
+        _token.toBytes32(),
+        false,
+        IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
+        30 // trust price age (seconds) todo: from market config
+      );
+    }
 
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * 1e18) / _tpTokenPrice; // @todo - token decimal
@@ -518,7 +528,7 @@ contract TradeService is ITradeService {
   /// @notice settle loss
   /// @param _subAccount - Sub-account of trader
   /// @param _debtUsd - Loss in USD
-  function _settleLoss(address _subAccount, uint256 _debtUsd) internal {
+  function _settleLoss(address _subAccount, uint256 _debtUsd, uint256 _limitPrice, bytes32 _assetId) internal {
     address[] memory _plpTokens = IConfigStorage(configStorage).getPlpTokens();
 
     uint256 _len = _plpTokens.length;
@@ -536,12 +546,19 @@ contract TradeService is ITradeService {
       // continue settle when sub-account has collateral, else go to check next token
       if (_collateral != 0) {
         // Retrieve the latest price and confident threshold of the plp underlying token
-        (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
-          _token.toBytes32(),
-          false,
-          IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
-          30 // @todo - should from config
-        );
+        if (
+          _limitPrice != 0 &&
+          IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(_token.toBytes32(), _assetId)
+        ) {
+          _price = _limitPrice;
+        } else {
+          (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
+            _token.toBytes32(),
+            false,
+            IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
+            30 // @todo - should from config
+          );
+        }
 
         _collateralUsd = (_collateral * _price) / 1e18; // @todo - token decimal
 
@@ -661,9 +678,18 @@ contract TradeService is ITradeService {
   /// @notice This function increases the reserve value
   /// @param _assetClassIndex The index of asset class.
   /// @param _reservedValue The amount by which to increase the reserve value.
-  function increaseReserved(uint256 _assetClassIndex, uint256 _reservedValue) internal {
+  function increaseReserved(
+    uint256 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _limitPriceE30,
+    bytes32 _assetId
+  ) internal {
     // Get the total TVL
-    uint256 tvl = ICalculator(IConfigStorage(configStorage).calculator()).getPLPValueE30(true);
+    uint256 tvl = ICalculator(IConfigStorage(configStorage).calculator()).getPLPValueE30(
+      true,
+      _limitPriceE30,
+      _assetId
+    );
 
     // Retrieve the global state
     IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage).getGlobalState();
@@ -712,7 +738,7 @@ contract TradeService is ITradeService {
 
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
-  function updateBorrowingRate(uint256 _assetClassIndex) public {
+  function updateBorrowingRate(uint256 _assetClassIndex, uint256 _price, bytes32 _assetId) public {
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
     IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
@@ -730,7 +756,7 @@ contract TradeService is ITradeService {
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastBorrowingTime + _fundingInterval <= block.timestamp) {
       // update borrowing rate
-      uint256 borrowingRate = getNextBorrowingRate(_assetClassIndex);
+      uint256 borrowingRate = getNextBorrowingRate(_assetClassIndex, _price, _assetId);
       _globalAssetClass.sumBorrowingRate += borrowingRate;
       _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
     }
@@ -774,7 +800,11 @@ contract TradeService is ITradeService {
   /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
   /// @param _assetClassIndex The index of the asset class.
   /// @return _nextBorrowingRate The next borrowing rate for the asset class.
-  function getNextBorrowingRate(uint256 _assetClassIndex) public view returns (uint256 _nextBorrowingRate) {
+  function getNextBorrowingRate(
+    uint256 _assetClassIndex,
+    uint256 _price,
+    bytes32 _assetId
+  ) public view returns (uint256 _nextBorrowingRate) {
     // Get the trading config, asset class config, and global asset class for the given asset class index.
     IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
     IConfigStorage.AssetClassConfig memory _assetClassConfig = IConfigStorage(configStorage).getAssetClassConfigByIndex(
@@ -786,7 +816,7 @@ contract TradeService is ITradeService {
     // Get the calculator.
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
     // Get the PLP TVL.
-    uint256 plpTVL = _calculator.getPLPValueE30(false); // TODO: make sure to use price
+    uint256 plpTVL = _calculator.getPLPValueE30(false, _price, _assetId); // TODO: make sure to use price
 
     // If block.timestamp not pass the next funding time, return 0.
     if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
@@ -945,7 +975,7 @@ contract TradeService is ITradeService {
   /// @notice Settles the fees for a given sub-account.
   /// @param _subAccount The address of the sub-account to settle fees for.
   /// @param _price Price from limitOrder
-  function settleFee(address _subAccount, uint256 _price) public {
+  function settleFee(address _subAccount, uint256 _price, bytes32 _assetId) public {
     SettleFeeVar memory vars;
     address _vaultStorage = vaultStorage;
     address _perpStorage = perpStorage;
@@ -976,7 +1006,14 @@ contract TradeService is ITradeService {
       vars.marginFee = IVaultStorage(_vaultStorage).marginFee(vars.underlyingToken); // Global token amount of margin fee collected from traders
 
       // Retrieve the latest price and confident threshold of the plp underlying token
-      if (_price != 0) {
+      // @todo refactor this?
+      if (
+        _price != 0 &&
+        IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(
+          vars.underlyingToken.toBytes32(),
+          _assetId
+        )
+      ) {
         vars.price = _price;
       } else {
         (vars.price, ) = oracle.getLatestPrice(
@@ -1017,8 +1054,9 @@ contract TradeService is ITradeService {
 
     // If a trader is supposed to receive a fee but the amount of tokens received from funding fees is not sufficient to cover the fee,
     // then the protocol must provide the option to borrow in USD and record the resulting debt on the plpLiquidityDebtUSDE30 log
+    // @dev cannot use price from var because of it was replaced by loop
     if (!vars.isPayFee && vars.absFeeUsd > 0) {
-      _borrowFundingFeeFromPLP(_subAccount, oracle, vars);
+      _borrowFundingFeeFromPLP(_subAccount, oracle, vars, _price, _assetId);
     }
 
     // Update the fee amount for the sub-account in the PerpStorage contract
@@ -1189,7 +1227,13 @@ contract TradeService is ITradeService {
     IVaultStorage(_vaultStorage).setTraderBalance(subAccount, vars.underlyingToken, vars.traderBalance);
   }
 
-  function _borrowFundingFeeFromPLP(address subAccount, IOracleMiddleware oracle, SettleFeeVar memory vars) internal {
+  function _borrowFundingFeeFromPLP(
+    address subAccount,
+    IOracleMiddleware oracle,
+    SettleFeeVar memory vars,
+    uint256 _price,
+    bytes32 _assetId
+  ) internal {
     address _vaultStorage = vaultStorage;
     // Loop through all the plp underlying tokens for the sub-account
     for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
@@ -1198,12 +1242,23 @@ contract TradeService is ITradeService {
       uint256 plpLiquidityAmount = IVaultStorage(_vaultStorage).plpLiquidity(vars.underlyingToken);
 
       // Retrieve the latest price and confident threshold of the plp underlying token
-      (vars.price, ) = oracle.getLatestPrice(
-        vars.underlyingToken.toBytes32(),
-        false,
-        IConfigStorage(configStorage).getMarketConfigByToken(vars.underlyingToken).priceConfidentThreshold,
-        30
-      );
+
+      if (
+        _price != 0 &&
+        IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(
+          vars.underlyingToken.toBytes32(),
+          _assetId
+        )
+      ) {
+        vars.price = _price;
+      } else {
+        (vars.price, ) = oracle.getLatestPrice(
+          vars.underlyingToken.toBytes32(),
+          false,
+          IConfigStorage(configStorage).getMarketConfigByToken(vars.underlyingToken).priceConfidentThreshold,
+          30
+        );
+      }
 
       // Calculate the fee amount in the plp underlying token
       vars.feeTokenAmount = (vars.absFeeUsd * (10 ** vars.underlyingTokenDecimal)) / vars.price;
@@ -1300,5 +1355,9 @@ contract TradeService is ITradeService {
 
   function _min(int256 a, int256 b) internal pure returns (int256) {
     return a < b ? a : b;
+  }
+
+  function _overwritePrice(uint256 _price, uint256 _priceOverwrite) internal pure returns (uint256) {
+    return _priceOverwrite != 0 ? _priceOverwrite : _price;
   }
 }

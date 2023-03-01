@@ -84,7 +84,7 @@ contract LiquidityService is ILiquidityService {
 
     // 3. get aum and lpSupply before deduction fee
     // TODO realize farm pnl to get pendingBorrowingFee
-    uint256 _aum = _calculator.getAUM(true);
+    uint256 _aum = _calculator.getAUM(true, 0, 0);
 
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
 
@@ -125,7 +125,7 @@ contract LiquidityService is ILiquidityService {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
     //TODO should realized to get pendingBorrowingFee
-    uint256 _aum = _calculator.getAUM(false);
+    uint256 _aum = _calculator.getAUM(false, 0, 0);
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
@@ -297,7 +297,7 @@ contract LiquidityService is ILiquidityService {
     // reserveValue / PLPTVL > maxPLPUtilization
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
-    uint256 plpTVL = _calculator.getPLPValueE30(false);
+    uint256 plpTVL = _calculator.getPLPValueE30(false, 0, 0);
     if (_globalState.reserveValueE30 > _liquidityConfig.maxPLPUtilization * plpTVL) {
       revert LiquidityService_MaxPLPUtilizationExceeded();
     }

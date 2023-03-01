@@ -55,7 +55,6 @@ contract TradeService is ITradeService {
     int256 entryFundingRate,
     int256 fundingFee
   );
-
   event LogForceClosePosition(
     address indexed _account,
     uint256 _subAccountId,

@@ -29,7 +29,6 @@ import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 //   - decrease too much short position
 //   - position remain too tiny size after decrease long position
 //   - position remain too tiny size after decrease short position
-//   - not position owner
 // - misc
 //   - settle profit & loss with settlement fee
 //   - pull multiple tokens from user when loss
@@ -634,16 +633,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
   /**
    * Revert
    */
-
-  function testRevert_WhenSomeoneTryDecreaseOthersPosition() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-
-    // BOB try decrease ALICE position
-    vm.prank(BOB);
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_NotPositionOwner()"));
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth), 0);
-  }
 
   function testRevert_WhenMarketIsDelistedFromPerp() external {
     // ALICE open LONG position

@@ -2,11 +2,9 @@
 pragma solidity 0.8.18;
 
 import { Owned } from "../base/Owned.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { PythStructs } from "pyth-sdk-solidity/PythStructs.sol";
+import { IPyth, PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   // errors
@@ -94,7 +92,6 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
     // SLOAD
     bytes32 _pythPriceId = pythPriceIdOf[_assetId];
     if (_pythPriceId == bytes32(0)) revert PythAdapter_UnknownAssetId();
-
     PythStructs.Price memory _price = pyth.getPriceUnsafe(_pythPriceId);
     _validateConfidence(_price, _confidenceThreshold);
 

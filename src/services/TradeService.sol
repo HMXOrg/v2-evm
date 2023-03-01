@@ -340,12 +340,6 @@ contract TradeService is ITradeService {
 
     // update position, market, and global market state
     _decreasePosition(_marketConfig, _marketIndex, _position, _vars, _positionSizeE30ToDecrease, _tpToken);
-
-    // Post validation
-    // check sub account equity is under MMR
-    _subAccountHealthCheck(_vars.subAccount);
-
-    emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }
 
   // @todo - access control

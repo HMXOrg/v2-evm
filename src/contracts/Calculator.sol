@@ -63,8 +63,7 @@ contract Calculator is Owned, ICalculator {
   }
 
   function getAUM(bool isMaxPrice, uint256 _price, bytes32 _assetId) public view returns (uint256) {
-    
-    return getAUME30(isMaxPrice,_price,_assetId) / 1e12;
+    return getAUME30(isMaxPrice, _price, _assetId) / 1e12;
   }
 
   function getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external view returns (uint256) {
@@ -82,13 +81,7 @@ contract Calculator is Owned, ICalculator {
       IConfigStorage(configStorage).getNextAcceptedToken(IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END())
     ) {
       uint256 priceE30;
-      if (
-        _price != 0 &&
-        IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(
-          _plpUnderlyingToken.toBytes32(),
-          _assetId
-        )
-      ) {
+      if (_shouldOverwritePrice(_price, _plpUnderlyingToken, _assetId)) {
         priceE30 = _price;
       } else {
         (priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
@@ -531,7 +524,7 @@ contract Calculator is Owned, ICalculator {
       // Get price from oracle
       uint256 _priceE30;
 
-      if (_price != 0 && IOracleMiddleware(oracle).isSameAssetIdOnPyth(_token.toBytes32(), _assetId)) {
+      if (_shouldOverwritePrice(_price, _token, _assetId)) {
         _priceE30 = _price;
       } else {
         // @todo - validate price age
@@ -655,5 +648,10 @@ contract Calculator is Owned, ICalculator {
 
     _freeCollateral = equity - imr;
     return _freeCollateral;
+  }
+
+  function _shouldOverwritePrice(uint256 _price, address _token, bytes32 _assetId) internal view returns (bool) {
+    return (_price != 0 &&
+      IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(_token.toBytes32(), _assetId));
   }
 }

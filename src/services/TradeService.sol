@@ -126,8 +126,6 @@ contract TradeService is ITradeService {
 
     // get the global market for the given market index
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    bool _isOverridePrice = _limitPriceE30 != 0;
-
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;

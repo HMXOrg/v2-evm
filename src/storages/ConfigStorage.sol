@@ -170,6 +170,10 @@ contract ConfigStorage is IConfigStorage, Owned {
     return plpTokens;
   }
 
+  function getAssetConfigByToken(address _token) external view returns (AssetConfig memory) {
+    return assetConfigs[tokenAssetIds[_token]];
+  }
+
   function getCollateralTokens() external view returns (address[] memory) {
     address[] memory tokenAddresses = new address[](collateralAssetIds.length);
 

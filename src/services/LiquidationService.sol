@@ -97,7 +97,7 @@ contract LiquidationService is ILiquidationService {
       (uint256 _price, ) = _oracle.getLatestPrice(
         _collateralToken.toBytes32(),
         false,
-        IConfigStorage(_configStorage).getCollateralTokenConfigs(_collateralToken).priceConfidentThreshold,
+        IConfigStorage(_configStorage).getAssetConfigByToken(_collateralToken).priceConfidentThreshold,
         30
       );
 

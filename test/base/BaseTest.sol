@@ -393,36 +393,27 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   /// @notice set up all collateral token configs in Perp
   function _setUpCollateralTokenConfigs() private {
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
-      decimals: 18,
       collateralFactor: 0.8 * 1e18,
-      isStableCoin: false,
       accepted: true,
-      settleStrategy: address(0),
-      priceConfidentThreshold: 0.01 * 1e18
+      settleStrategy: address(0)
     });
 
     configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collatTokenConfigWeth);
     configStorage.addTokenAssetId(address(weth), address(weth).toBytes32());
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
-      decimals: 8,
       collateralFactor: 0.9 * 1e18,
-      isStableCoin: false,
       accepted: true,
-      settleStrategy: address(0),
-      priceConfidentThreshold: 0.01 * 1e18
+      settleStrategy: address(0)
     });
 
     configStorage.setCollateralTokenConfig(address(wbtc).toBytes32(), _collatTokenConfigWbtc);
     configStorage.addTokenAssetId(address(wbtc), address(wbtc).toBytes32());
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigUsdt = IConfigStorage.CollateralTokenConfig({
-      decimals: usdt.decimals(),
       collateralFactor: 1 * 1e18,
-      isStableCoin: true,
       accepted: true,
-      settleStrategy: address(0),
-      priceConfidentThreshold: 0.01 * 1e18
+      settleStrategy: address(0)
     });
 
     configStorage.setCollateralTokenConfig(address(usdt).toBytes32(), _collatTokenConfigUsdt);

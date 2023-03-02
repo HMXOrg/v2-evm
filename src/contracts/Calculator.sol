@@ -531,7 +531,7 @@ contract Calculator is Owned, ICalculator {
         .getCollateralTokenConfigs(_token);
 
       // Get token decimals from ConfigStorage
-      uint256 _decimals = _collateralTokenConfig.decimals;
+      uint256 _decimals = IConfigStorage(configStorage).getAssetConfigByToken(_token).decimals;
 
       // Get collateralFactor from ConfigStorage
       uint256 _collateralFactor = _collateralTokenConfig.collateralFactor;

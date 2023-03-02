@@ -18,7 +18,7 @@ interface IConfigStorage {
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
     uint256 decimals; //token decimals
-    uint256 targetWeight; // pecentage of all accepted PLP tokens
+    uint256 targetWeight; // percentage of all accepted PLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
     bool isStableCoin; // token is stablecoin
@@ -54,7 +54,7 @@ interface IConfigStorage {
     uint256 maintenanceMarginFraction; // MMF
     uint256 increasePositionFeeRate; // fee rate to increase position
     uint256 decreasePositionFeeRate; // fee rate to decrease position
-    uint256 priceConfidentThreshold; // pyth price confidential treshold
+    uint256 priceConfidentThreshold; // pyth price confidential threshold
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
     OpenInterest openInterest;
@@ -98,6 +98,8 @@ interface IConfigStorage {
    */
 
   function calculator() external view returns (address);
+
+  function feeCalculator() external view returns (address);
 
   function oracle() external view returns (address);
 
@@ -192,4 +194,6 @@ interface IConfigStorage {
   ) external returns (CollateralTokenConfig memory);
 
   function setWeth(address _weth) external;
+
+  function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external;
 }

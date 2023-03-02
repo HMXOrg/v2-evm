@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 import { Owned } from "../base/Owned.sol";
@@ -108,7 +107,7 @@ contract Calculator is Owned, ICalculator {
   }
 
   function _getGlobalPNLE30() internal view returns (int256) {
-    // @todo - REFACTOR if someone dont want totalPnlLong and short.
+    // @todo - REFACTOR if someone don't want totalPnlLong and short.
     int256 totalPnlLong = 0;
     int256 totalPnlShort = 0;
 
@@ -393,7 +392,7 @@ contract Calculator is Owned, ICalculator {
     // Calculate unrealized PnL on opening trader's position(s)
     int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount, _price, _assetId);
 
-    // Calculate Borrwing fee on opening trader's position(s)
+    // Calculate Borrowing fee on opening trader's position(s)
     // @todo - calculate borrowing fee
     // uint256 borrowingFeeE30 = getBorrowingFee(_subAccount);
 
@@ -476,7 +475,7 @@ contract Calculator is Owned, ICalculator {
         _delta = _priceE30 < _position.avgEntryPriceE30 ? -_delta : _delta;
       }
 
-      // If profit then deduct PnL with colleral factor.
+      // If profit then deduct PnL with collateral factor.
       _delta = _delta > 0 ? (int(IConfigStorage(configStorage).pnlFactor()) * _delta) / 1e18 : _delta;
 
       // Accumulative current unrealized PnL
@@ -538,7 +537,7 @@ contract Calculator is Owned, ICalculator {
         );
       }
       // Calculate accumulative value of collateral tokens
-      // collateal value = (collateral amount * price) * collateralFactor
+      // collateral value = (collateral amount * price) * collateralFactor
       // collateralFactor 1 ether = 100%
       _collateralValueE30 += (_amount * _priceE30 * _collateralFactor) / (10 ** _decimals * 1e18);
 
@@ -550,7 +549,7 @@ contract Calculator is Owned, ICalculator {
     return _collateralValueE30;
   }
 
-  /// @notice Calculate Intial Margin Requirement from trader's sub account.
+  /// @notice Calculate Initial Margin Requirement from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _imrValueE30 Total imr of trader's account.
   function getIMR(address _subAccount) public view returns (uint256 _imrValueE30) {

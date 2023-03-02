@@ -10,17 +10,19 @@ import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "../contracts/interfaces/IFeeCalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // @todo - refactor, deduplicate code
-
 contract TradeService is ITradeService {
   using AddressUtils for address;
 
   uint256 internal constant RATE_PRECISION = 1e18;
 
-  // struct
+  /**
+   * Structs
+   */
   struct IncreasePositionVars {
     IPerpStorage.Position position;
     address subAccount;
@@ -41,20 +43,18 @@ contract TradeService is ITradeService {
     bool isLongPosition;
   }
 
-  // events
+  /**
+   * Events
+   */
   // @todo - modify event parameters
   event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
 
+  event LogCollectTradingFee(address account, uint256 assetClass, uint256 feeUsd);
+
   event LogCollectBorrowingFee(address account, uint256 assetClass, uint256 feeUsd);
 
-  event LogCollectFundingFee(
-    address indexed account,
-    uint256 marketIndex,
-    bool isLong,
-    int256 size,
-    int256 entryFundingRate,
-    int256 fundingFee
-  );
+  event LogCollectFundingFee(address account, uint256 assetClass, int256 feeUsd);
+
   event LogForceClosePosition(
     address indexed _account,
     uint256 _subAccountId,
@@ -78,12 +78,14 @@ contract TradeService is ITradeService {
     configStorage = _configStorage;
   }
 
-  /// @notice Create increasePosition
-  /// @param _primaryAccount Primary account of user
-  /// @param _subAccountId  SubAccountId
-  /// @param _marketIndex  market index
-  /// @param _sizeDelta sizeDelta in USD
-  /// @param _limitPriceE30  price from LimitTrade in e30 unit
+  /// @notice This function increases a trader's position for a specific market by a given size delta.
+  ///         The primary account and sub-account IDs are used to identify the trader's account.
+  ///         The market index is used to identify the specific market.
+  /// @param _primaryAccount The address of the primary account associated with the trader.
+  /// @param _subAccountId The ID of the sub-account associated with the trader.
+  /// @param _marketIndex The index of the market for which the position is being increased.
+  /// @param _sizeDelta The change in size of the position. Positive values meaning LONG position, while negative values mean SHORT position.
+  /// @param _limitPriceE30 limit price for execute order
   function increasePosition(
     address _primaryAccount,
     uint256 _subAccountId,
@@ -152,7 +154,7 @@ contract TradeService is ITradeService {
           _marketConfig.exponent,
           _vars.isLong, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
-          30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          30, // @todo - move trust price age to config, the problem now is stack too deep at MarketConfig struct
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
           _sizeDelta,
           _marketConfig.fundingRate.maxSkewScaleUSD
@@ -193,18 +195,28 @@ contract TradeService is ITradeService {
       );
     }
 
-    // @todo - Collect trading fee, borrowing fee, update borrowing rate, collect funding fee, and update funding rate.
-    collectFee(
+    // MarginFee = Trading Fee + Borrowing Fee
+    collectMarginFee(
       _vars.subAccount,
+      _absSizeDelta,
       _marketConfig.assetClass,
-      _vars.position.reserveValueE30,
-      _vars.position.entryBorrowingRate,
-      _vars.position.marketIndex,
-      _vars.position.positionSizeE30,
-      _vars.position.entryFundingRate
+      _vars.reserveValueE30,
+      _vars.entryBorrowingRate,
+      _marketConfig.increasePositionFeeRate
     );
 
-    settleFee(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
+    settleMarginFee(_vars.subAccount);
+
+    // Collect funding fee
+    collectFundingFee(
+      _vars.subAccount,
+      _marketConfig.assetClass,
+      _marketIndex,
+      _vars.positionSizeE30,
+      _vars.entryFundingRate
+    );
+
+    settleFundingFee(_vars.subAccount);
 
     // update the position size by adding the new size delta
     _vars.position.positionSizeE30 += _sizeDelta;
@@ -339,7 +351,7 @@ contract TradeService is ITradeService {
           _marketConfig.exponent,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
-          30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          30, // @todo - move trust price age to config, the problem now is stack too deep at MarketConfig struct
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
           _vars.isLongPosition ? -int(_positionSizeE30ToDecrease) : int(_positionSizeE30ToDecrease),
           _marketConfig.fundingRate.maxSkewScaleUSD
@@ -358,15 +370,7 @@ contract TradeService is ITradeService {
     }
 
     // update position, market, and global market state
-    _decreasePosition(
-      _marketConfig,
-      _marketIndex,
-      _vars,
-      _positionSizeE30ToDecrease,
-      _tpToken,
-      _limitPriceE30,
-      _marketConfig.assetId
-    );
+    _decreasePosition(_marketConfig, _marketIndex, _vars, _positionSizeE30ToDecrease, _tpToken);
 
     // Post validation
     // check sub account equity is under MMR
@@ -421,7 +425,7 @@ contract TradeService is ITradeService {
           _marketConfig.exponent,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
           _marketConfig.priceConfidentThreshold,
-          30, // @todo - move trust price age to config, the probleam now is stack too deep at MarketConfig struct
+          30, // @todo - move trust price age to config, the problem now is stack too deep at MarketConfig struct
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
           -_vars.currentPositionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
@@ -466,13 +470,13 @@ contract TradeService is ITradeService {
   /// @notice decrease trader position
   /// @param _marketConfig - target market config
   /// @param _globalMarketIndex - global market index
-  /// @param vars - decrease criteria
+  /// @param _vars - decrease criteria
   /// @param _positionSizeE30ToDecrease - position size to decrease
   /// @param _tpToken - take profit token
   function _decreasePosition(
     IConfigStorage.MarketConfig memory _marketConfig,
     uint256 _globalMarketIndex,
-    DecreasePositionVars memory vars,
+    DecreasePositionVars memory _vars,
     uint256 _positionSizeE30ToDecrease,
     address _tpToken,
     uint256 _price,
@@ -484,21 +488,29 @@ contract TradeService is ITradeService {
     // Update funding rate
     updateFundingRate(_globalMarketIndex, _price);
 
-    // @todo - update funding & borrowing fee rate
-    // @todo - calculate trading, borrowing and funding fee
-    // @todo - collect fee
-    collectFee(
-      vars.subAccount,
+    collectMarginFee(
+      _vars.subAccount,
+      _positionSizeE30ToDecrease,
       _marketConfig.assetClass,
-      vars.position.reserveValueE30,
-      vars.position.entryBorrowingRate,
-      vars.position.marketIndex,
-      vars.position.positionSizeE30,
-      vars.position.entryFundingRate
+      _vars.position.reserveValueE30,
+      _vars.position.entryBorrowingRate,
+      _marketConfig.decreasePositionFeeRate
     );
-    settleFee(vars.subAccount, _price, _assetId);
 
-    uint256 _newAbsPositionSizeE30 = vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
+    settleMarginFee(_vars.subAccount);
+
+    // Collect funding fee
+    collectFundingFee(
+      _vars.subAccount,
+      _marketConfig.assetClass,
+      _globalMarketIndex,
+      _vars.position.positionSizeE30,
+      _vars._position.entryFundingRate
+    );
+
+    settleFundingFee(_vars.subAccount, _price, _assetId);
+
+    uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
 
     // check position is too tiny
     // @todo - now validate this at 1 USD, design where to keep this config
@@ -510,21 +522,21 @@ contract TradeService is ITradeService {
      */
     int256 _realizedPnl;
     {
-      vars.avgEntryPriceE30 = vars.position.avgEntryPriceE30;
+      _vars.avgEntryPriceE30 = _vars.position.avgEntryPriceE30;
       (bool isProfit, uint256 pnl) = getDelta(
-        vars.absPositionSizeE30,
-        vars.isLongPosition,
-        vars.priceE30,
-        vars.avgEntryPriceE30
+        _vars.absPositionSizeE30,
+        _vars.isLongPosition,
+        _vars.priceE30,
+        _vars.avgEntryPriceE30
       );
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value
-      if (pnl > vars.position.reserveValueE30) {
-        pnl = vars.position.reserveValueE30;
+      if (pnl > _vars.position.reserveValueE30) {
+        pnl = _vars.position.reserveValueE30;
       }
       if (isProfit) {
-        _realizedPnl = int256((pnl * _positionSizeE30ToDecrease) / vars.absPositionSizeE30);
+        _realizedPnl = int256((pnl * _positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
       } else {
-        _realizedPnl = -int256((pnl * _positionSizeE30ToDecrease) / vars.absPositionSizeE30);
+        _realizedPnl = -int256((pnl * _positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
       }
     }
 
@@ -532,17 +544,18 @@ contract TradeService is ITradeService {
      *  update perp storage
      */
     {
-      uint256 _openInterestDelta = (vars.position.openInterest * _positionSizeE30ToDecrease) / vars.absPositionSizeE30;
+      uint256 _openInterestDelta = (_vars.position.openInterest * _positionSizeE30ToDecrease) /
+        _vars.absPositionSizeE30;
 
       {
         IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(
           _globalMarketIndex
         );
 
-        if (vars.isLongPosition) {
+        if (_vars.isLongPosition) {
           uint256 _nextAvgPrice = _calculateLongAveragePrice(
             _globalMarket,
-            vars.priceE30,
+            _vars.priceE30,
             -int256(_positionSizeE30ToDecrease),
             _realizedPnl
           );
@@ -555,7 +568,7 @@ contract TradeService is ITradeService {
         } else {
           uint256 _nextAvgPrice = _calculateShortAveragePrice(
             _globalMarket,
-            vars.priceE30,
+            _vars.priceE30,
             int256(_positionSizeE30ToDecrease),
             _realizedPnl
           );
@@ -575,32 +588,32 @@ contract TradeService is ITradeService {
         // update global storage
         // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
         _globalState.reserveValueE30 -=
-          (vars.position.reserveValueE30 * _positionSizeE30ToDecrease) /
-          vars.absPositionSizeE30;
+          (_vars.position.reserveValueE30 * _positionSizeE30ToDecrease) /
+          _vars.absPositionSizeE30;
         _globalAssetClass.reserveValueE30 -=
-          (vars.position.reserveValueE30 * _positionSizeE30ToDecrease) /
-          vars.absPositionSizeE30;
+          (_vars.position.reserveValueE30 * _positionSizeE30ToDecrease) /
+          _vars.absPositionSizeE30;
         IPerpStorage(perpStorage).updateGlobalState(_globalState);
         IPerpStorage(perpStorage).updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
 
         // update position info
-        vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
-        vars.position.entryFundingRate = _globalMarket.currentFundingRate;
-        vars.position.positionSizeE30 = vars.isLongPosition
+        _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
+        _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
+        _vars.position.positionSizeE30 = _vars.isLongPosition
           ? int256(_newAbsPositionSizeE30)
           : -int256(_newAbsPositionSizeE30);
-        vars.position.reserveValueE30 =
+        _vars.position.reserveValueE30 =
           (((_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction) / 1e18) * _marketConfig.maxProfitRate) /
           1e18;
         {
           // @todo - is close position then we should delete positions[x]
           bool isClosePosition = _newAbsPositionSizeE30 == 0;
-          vars.position.avgEntryPriceE30 = isClosePosition ? 0 : vars.avgEntryPriceE30;
+          _vars.position.avgEntryPriceE30 = isClosePosition ? 0 : _vars.avgEntryPriceE30;
         }
 
-        vars.position.openInterest = vars.position.openInterest - _openInterestDelta;
-        vars.position.realizedPnl += _realizedPnl;
-        IPerpStorage(perpStorage).savePosition(vars.subAccount, vars.positionId, vars.position);
+        _vars.position.openInterest = _vars.position.openInterest - _openInterestDelta;
+        _vars.position.realizedPnl += _realizedPnl;
+        IPerpStorage(perpStorage).savePosition(_vars.subAccount, _vars.positionId, _vars.position);
       }
     }
     // =======================================
@@ -610,10 +623,10 @@ contract TradeService is ITradeService {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
-          _settleProfit(vars.subAccount, _tpToken, uint256(_realizedPnl), _price, _marketConfig.assetId);
+          _settleProfit(_vars.subAccount, _tpToken, uint256(_realizedPnl), _price, _marketConfig.assetId);
         } else {
           // loss
-          _settleLoss(vars.subAccount, uint256(-_realizedPnl), _price, _marketConfig.assetId);
+          _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _price, _marketConfig.assetId);
         }
       }
     }
@@ -623,9 +636,9 @@ contract TradeService is ITradeService {
     // =========================================
 
     // check sub account equity is under MMR
-    _subAccountHealthCheck(vars.subAccount, _price, _assetId);
+    _subAccountHealthCheck(_vars.subAccount, _price, _assetId);
 
-    emit LogDecreasePosition(vars.positionId, _positionSizeE30ToDecrease);
+    emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }
 
   /// @notice settle profit
@@ -821,6 +834,8 @@ contract TradeService is ITradeService {
   /// @notice This function increases the reserve value
   /// @param _assetClassIndex The index of asset class.
   /// @param _reservedValue The amount by which to increase the reserve value.
+  /// @param _limitPriceE30 Limit price to increase Reserved
+  /// @param _assetId Market assetId
   function increaseReserved(
     uint256 _assetClassIndex,
     uint256 _reservedValue,
@@ -859,10 +874,6 @@ contract TradeService is ITradeService {
     IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
   }
 
-  function abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
-  }
-
   /// @notice health check for sub account that equity > margin maintenance required
   /// @param _subAccount target sub account for health check
   /// @param _price Price from limitOrder or Pyth
@@ -882,17 +893,18 @@ contract TradeService is ITradeService {
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
   function updateBorrowingRate(uint256 _assetClassIndex, uint256 _price, bytes32 _assetId) public {
+    IPerpStorage _perpStorage = IPerpStorage(perpStorage);
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
+
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
-    IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
-      _assetClassIndex
-    );
-    uint256 _fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = _perpStorage.getGlobalAssetClassByIndex(_assetClassIndex);
+    uint256 _fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     uint256 _lastBorrowingTime = _globalAssetClass.lastBorrowingTime;
 
     // If last borrowing time is 0, set it to the nearest funding interval time and return.
     if (_lastBorrowingTime == 0) {
       _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-      IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
+      _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
       return;
     }
 
@@ -903,23 +915,26 @@ contract TradeService is ITradeService {
       _globalAssetClass.sumBorrowingRate += borrowingRate;
       _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
     }
-    IPerpStorage(perpStorage).updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
+    _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
   }
 
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
   /// @param _price Price from limitOrder, zeros means no marketOrderPrice
   function updateFundingRate(uint256 _marketIndex, uint256 _price) public {
-    // Get the funding interval, asset class config, and global asset class for the given asset class index.
-    IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    IPerpStorage _perpStorage = IPerpStorage(perpStorage);
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
 
-    uint256 _fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
+    // Get the funding interval, asset class config, and global asset class for the given asset class index.
+    IPerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+
+    uint256 _fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     uint256 _lastFundingTime = _globalMarket.lastFundingTime;
 
     // If last funding time is 0, set it to the nearest funding interval time and return.
     if (_lastFundingTime == 0) {
       _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-      IPerpStorage(perpStorage).updateGlobalMarket(_marketIndex, _globalMarket);
+      _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
       return;
     }
 
@@ -936,7 +951,7 @@ contract TradeService is ITradeService {
       _globalMarket.accumFundingShort += nextFundingRateShort;
       _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
 
-      IPerpStorage(perpStorage).updateGlobalMarket(_marketIndex, _globalMarket);
+      _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
     }
   }
 
@@ -948,16 +963,17 @@ contract TradeService is ITradeService {
     uint256 _price,
     bytes32 _assetId
   ) public view returns (uint256 _nextBorrowingRate) {
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
+    ICalculator _calculator = ICalculator(_configStorage.calculator());
+
     // Get the trading config, asset class config, and global asset class for the given asset class index.
-    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(configStorage).getTradingConfig();
-    IConfigStorage.AssetClassConfig memory _assetClassConfig = IConfigStorage(configStorage).getAssetClassConfigByIndex(
+    IConfigStorage.TradingConfig memory _tradingConfig = _configStorage.getTradingConfig();
+    IConfigStorage.AssetClassConfig memory _assetClassConfig = _configStorage.getAssetClassConfigByIndex(
       _assetClassIndex
     );
     IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
-    // Get the calculator.
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
     // Get the PLP TVL.
     uint256 plpTVL = _calculator.getPLPValueE30(false, _price, _assetId); // TODO: make sure to use price
 
@@ -993,6 +1009,15 @@ contract TradeService is ITradeService {
     return (_reservedValue * _borrowingRate) / 1e18;
   }
 
+  /// @notice Calculates the trading fee for a given position
+  /// @param absSizeDelta Position size
+  /// @param positionFeeRate Position Fee
+  /// @return tradingFee The calculated trading fee for the position.
+  function getTradingFee(uint256 absSizeDelta, uint256 positionFeeRate) public pure returns (uint256 tradingFee) {
+    if (absSizeDelta == 0) return 0;
+    return (absSizeDelta * positionFeeRate) / 1e18;
+  }
+
   /**
    * Funding Rate
    */
@@ -1000,7 +1025,6 @@ contract TradeService is ITradeService {
   /// @param _marketIndex Index of market
   /// @param _isLong Is long or short exposure
   /// @param _size Position size
-  /// @param _entryFundingRate Entry Funding rate of position
   /// @return fundingFee Funding fee of position
   function getFundingFee(
     uint256 _marketIndex,
@@ -1009,13 +1033,20 @@ contract TradeService is ITradeService {
     int256 _entryFundingRate
   ) public view returns (int256 fundingFee) {
     if (_size == 0) return 0;
+    uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
+
     IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
     int256 _fundingRate = _globalMarket.currentFundingRate - _entryFundingRate;
+
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
-    fundingFee = (_size * _fundingRate) / 1e18;
-    return _isLong ? -fundingFee : fundingFee;
+    fundingFee = (int(absSize) * _fundingRate) / 1e18;
+    if (_isLong) {
+      return _fundingRate < 0 ? -fundingFee : fundingFee;
+    } else {
+      return _fundingRate < 0 ? fundingFee : -fundingFee;
+    }
   }
 
   /// @notice Calculate next funding rate using when increase/decrease position.
@@ -1028,6 +1059,7 @@ contract TradeService is ITradeService {
     uint256 _marketIndex,
     uint256 _price
   ) public view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
       _marketIndex
@@ -1037,7 +1069,7 @@ contract TradeService is ITradeService {
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
 
     // Get funding interval
-    vars.fundingInterval = IConfigStorage(configStorage).getTradingConfig().fundingInterval;
+    vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
 
     // If block.timestamp not pass the next funding time, return 0.
     if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
@@ -1062,6 +1094,7 @@ contract TradeService is ITradeService {
     vars.ratio = _min(vars.ratio, 1e18);
 
     vars.nextFundingRate = (vars.ratio * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
+
     vars.newFundingRate = globalMarket.currentFundingRate + vars.nextFundingRate;
 
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
@@ -1076,117 +1109,226 @@ contract TradeService is ITradeService {
     return (vars.newFundingRate, fundingRateLong, fundingRateShort);
   }
 
-  /// @notice This function collect fee is collect borrowing fee, funding fee
+  /// @notice This function collects margin fee from position
   /// @param _subAccount The sub-account from which to collect the fee.
+  /// @param _absSizeDelta Position size to be increased or decreased in absolute value
   /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
   /// @param _reservedValue The reserved value of the asset class.
   /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
-  function collectFee(
+  function collectMarginFee(
     address _subAccount,
+    uint256 _absSizeDelta,
     uint256 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _entryBorrowingRate,
+    uint256 _positionFee
+  ) public {
+    IPerpStorage _perpStorage = IPerpStorage(perpStorage);
+
+    // Get the debt fee of the sub-account
+    int256 feeUsd = _perpStorage.getSubAccountFee(_subAccount);
+
+    // Calculate trading Fee USD
+    uint256 tradingFeeUsd = getTradingFee(_absSizeDelta, _positionFee);
+    feeUsd += int(tradingFeeUsd);
+
+    emit LogCollectTradingFee(_subAccount, _assetClassIndex, tradingFeeUsd);
+
+    // Calculate the borrowing fee
+    uint256 borrowingFee = getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
+    feeUsd += int(borrowingFee);
+
+    emit LogCollectBorrowingFee(_subAccount, _assetClassIndex, borrowingFee);
+
+    // Update the sub-account's debt fee balance
+    _perpStorage.updateSubAccountFee(_subAccount, feeUsd);
+  }
+
+  /// @notice This function collects funding fee from position.
+  /// @param _subAccount The sub-account from which to collect the fee.
+  /// @param _assetClassIndex Index of the asset class associated with the market.
+  /// @param _marketIndex Index of the market to collect funding fee from.
+  /// @param _positionSizeE30 Size of position in units of 10^-30 of the underlying asset.
+  /// @param _entryFundingRate The borrowing rate at the time the position was opened.
+  function collectFundingFee(
+    address _subAccount,
+    uint256 _assetClassIndex,
     uint256 _marketIndex,
     int256 _positionSizeE30,
     int256 _entryFundingRate
   ) public {
+    IPerpStorage _perpStorage = IPerpStorage(perpStorage);
+
     // Get the debt fee of the sub-account
-    int256 feeUsd = IPerpStorage(perpStorage).getSubAccountFee(_subAccount);
-
-    // Calculate the borrowing fee
-    uint256 borrowingFee = getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
-
-    // Accumulate fee
-    feeUsd += int(borrowingFee);
-    emit LogCollectBorrowingFee(_subAccount, _assetClassIndex, _reservedValue);
+    int256 feeUsd = _perpStorage.getSubAccountFee(_subAccount);
 
     // Calculate the borrowing fee
     bool isLong = _positionSizeE30 > 0;
 
     int256 fundingFee = getFundingFee(_marketIndex, isLong, _positionSizeE30, _entryFundingRate);
-
-    // @todo - To prevent the deduction of the development fee from the funding fee, it would be beneficial to separate the two fees and treat them independently.
-    // Accumulate fee
     feeUsd += fundingFee;
 
-    // emit LogCollectFundingFee(_subAccount, _marketIndex, isLong, _positionSizeE30, _entryFundingRate, fundingFee);
+    emit LogCollectFundingFee(_subAccount, _assetClassIndex, fundingFee);
 
     // Update the sub-account's debt fee balance
-    IPerpStorage(perpStorage).updateSubAccountFee(_subAccount, feeUsd);
+    _perpStorage.updateSubAccountFee(_subAccount, feeUsd);
+  }
+
+  /// @notice This function settle margin fee from trader's sub-account
+  /// @param _subAccount The sub-account from which to collect the fee.
+  function settleMarginFee(address _subAccount) public {
+    IFeeCalculator.SettleMarginFeeVar memory acmVars;
+    IVaultStorage _vaultStorage = IVaultStorage(vaultStorage);
+    IPerpStorage _perpStorage = IPerpStorage(perpStorage);
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
+    IOracleMiddleware _oracle = IOracleMiddleware(_configStorage.oracle());
+
+    // Retrieve the debt fee amount for the sub-account
+    acmVars.feeUsd = _perpStorage.getSubAccountFee(_subAccount);
+
+    // If there's no fee that trader need to pay more, return early
+    if (acmVars.feeUsd <= 0) return;
+    acmVars.absFeeUsd = acmVars.feeUsd > 0 ? uint256(acmVars.feeUsd) : uint256(-acmVars.feeUsd);
+
+    IConfigStorage.TradingConfig memory _tradingConfig = _configStorage.getTradingConfig();
+    acmVars.plpUnderlyingTokens = _configStorage.getPlpTokens();
+
+    // Loop through all the plp underlying tokens for the sub-account to pay trading fees
+    for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
+      IFeeCalculator.SettleMarginFeeLoopVar memory tmpVars; // This will be re-assigned every times when start looping
+      tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
+      tmpVars.underlyingTokenDecimal = _configStorage.getPlpTokenConfigs(tmpVars.underlyingToken).decimals;
+
+      tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);
+
+      // If the sub-account has a balance of this underlying token (collateral token amount)
+      if (tmpVars.traderBalance > 0) {
+        // Retrieve the latest price and confident threshold of the plp underlying token
+        (tmpVars.price, ) = _oracle.getLatestPrice(
+          tmpVars.underlyingToken.toBytes32(),
+          false,
+          _configStorage.getMarketConfigByToken(tmpVars.underlyingToken).priceConfidentThreshold,
+          30
+        );
+
+        tmpVars.feeTokenAmount = (acmVars.absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
+
+        if (tmpVars.traderBalance > tmpVars.feeTokenAmount) {
+          tmpVars.repayFeeTokenAmount = tmpVars.feeTokenAmount;
+          tmpVars.traderBalance -= tmpVars.feeTokenAmount;
+          acmVars.absFeeUsd = 0;
+        } else {
+          tmpVars.traderBalanceValue = (tmpVars.traderBalance * tmpVars.price) / (10 ** tmpVars.underlyingTokenDecimal);
+          tmpVars.repayFeeTokenAmount = tmpVars.traderBalance;
+          tmpVars.traderBalance = 0;
+          acmVars.absFeeUsd -= tmpVars.traderBalanceValue;
+        }
+
+        // Calculate the developer fee amount in the plp underlying token
+        tmpVars.devFeeTokenAmount = (tmpVars.repayFeeTokenAmount * _tradingConfig.devFeeRate) / 1e18;
+        // Deducts for dev fee
+        tmpVars.repayFeeTokenAmount -= tmpVars.devFeeTokenAmount;
+
+        _vaultStorage.collectMarginFee(
+          _subAccount,
+          tmpVars.underlyingToken,
+          tmpVars.repayFeeTokenAmount,
+          tmpVars.devFeeTokenAmount,
+          tmpVars.traderBalance
+        );
+      }
+
+      // If no remaining trading fee to pay then stop looping
+      if (acmVars.absFeeUsd == 0) break;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    IPerpStorage(_perpStorage).updateSubAccountFee(_subAccount, int(acmVars.absFeeUsd));
   }
 
   /// @notice Settles the fees for a given sub-account.
   /// @param _subAccount The address of the sub-account to settle fees for.
-  /// @param _price Price from limitOrder
-  function settleFee(address _subAccount, uint256 _price, bytes32 _assetId) public {
-    SettleFeeVar memory vars;
-    address _vaultStorage = vaultStorage;
-    address _perpStorage = perpStorage;
-    address _configStorage = configStorage;
+  /// @param _price Limit price
+  /// @param _assetId market assetId
+  function settleFundingFee(address _subAccount, uint256 _price, bytes32 _assetId) public {
+    IFeeCalculator.SettleFundingFeeVar memory acmVars;
+    IVaultStorage _vaultStorage = IVaultStorage(vaultStorage);
+    IPerpStorage _perpStorage = IPerpStorage(perpStorage);
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
+    IFeeCalculator _feeCalculator = IFeeCalculator(_configStorage.feeCalculator());
 
     // Retrieve the debt fee amount for the sub-account
-    vars.feeUsd = IPerpStorage(_perpStorage).getSubAccountFee(_subAccount);
+    acmVars.feeUsd = _perpStorage.getSubAccountFee(_subAccount);
 
     // If there's no fee to settle, return early
-    if (vars.feeUsd == 0) return;
+    if (acmVars.feeUsd == 0) return;
 
-    vars.isPayFee = vars.feeUsd > 0; // feeUSD > 0 means trader pays fee, feeUSD < 0 means trader gets fee
-    vars.absFeeUsd = vars.feeUsd > 0 ? uint256(vars.feeUsd) : uint256(-vars.feeUsd);
+    bool isPayFee = acmVars.feeUsd > 0; // feeUSD > 0 means trader pays fee, feeUSD < 0 means trader gets fee
+    acmVars.absFeeUsd = acmVars.feeUsd > 0 ? uint256(acmVars.feeUsd) : uint256(-acmVars.feeUsd);
 
-    // Retrieve the trading configuration and list of plp underlying tokens
-    IConfigStorage.TradingConfig memory _tradingConfig = IConfigStorage(_configStorage).getTradingConfig();
-    IOracleMiddleware oracle = IOracleMiddleware(IConfigStorage(_configStorage).oracle());
-    vars.plpUnderlyingTokens = IConfigStorage(_configStorage).getPlpTokens();
-    vars.plpLiquidityDebtUSDE30 = IVaultStorage(_vaultStorage).plpLiquidityDebtUSDE30(); // Global margin debts that borrowing from PLP
+    IOracleMiddleware oracle = IOracleMiddleware(_configStorage.oracle());
+    acmVars.plpUnderlyingTokens = _configStorage.getPlpTokens();
+    acmVars.plpLiquidityDebtUSDE30 = _vaultStorage.plpLiquidityDebtUSDE30(); // Global funding debts that borrowing from PLP
 
     // Loop through all the plp underlying tokens for the sub-account to receive or pay margin fees
-    for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
-      vars.underlyingToken = vars.plpUnderlyingTokens[i];
-      vars.underlyingTokenDecimal = IConfigStorage(configStorage).getPlpTokenConfigs(vars.underlyingToken).decimals;
+    for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
+      IFeeCalculator.SettleFundingFeeLoopVar memory tmpVars;
+      tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
+
+      tmpVars.underlyingTokenDecimal = _configStorage.getPlpTokenConfigs(tmpVars.underlyingToken).decimals;
 
       // Retrieve the balance of each plp underlying token for the sub-account (token collateral amount)
-      vars.traderBalance = IVaultStorage(_vaultStorage).traderBalances(_subAccount, vars.underlyingToken);
-      vars.marginFee = IVaultStorage(_vaultStorage).marginFee(vars.underlyingToken); // Global token amount of margin fee collected from traders
+      tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);
+      tmpVars.fundingFee = _vaultStorage.fundingFee(tmpVars.underlyingToken); // Global token amount of funding fee collected from traders
 
       // Retrieve the latest price and confident threshold of the plp underlying token
       // @todo refactor this?
       if (
         _price != 0 &&
         IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(
-          vars.underlyingToken.toBytes32(),
+          tmpVars.underlyingToken.toBytes32(),
           _assetId
         )
       ) {
-        vars.price = _price;
+        tmpVars.price = _price;
       } else {
-        (vars.price, ) = oracle.getLatestPrice(
-          vars.underlyingToken.toBytes32(),
+        (tmpVars.price, ) = oracle.getLatestPrice(
+          tmpVars.underlyingToken.toBytes32(),
           false,
-          IConfigStorage(_configStorage).getMarketConfigByToken(vars.underlyingToken).priceConfidentThreshold,
+          IConfigStorage(_configStorage).getMarketConfigByToken(tmpVars.underlyingToken).priceConfidentThreshold,
           30
         );
       }
 
       // feeUSD > 0 or isPayFee == true, means trader pay fee
-      if (vars.isPayFee) {
+      if (isPayFee) {
         // If the sub-account has a balance of this underlying token (collateral token amount)
-        if (vars.traderBalance != 0) {
+        if (tmpVars.traderBalance != 0) {
           // If this plp underlying token contains borrowing debt from PLP then trader must repays debt to PLP first
-          if (vars.plpLiquidityDebtUSDE30 > 0) _repayFundingFeeDebtToPLP(_subAccount, vars);
+          if (acmVars.plpLiquidityDebtUSDE30 > 0)
+            acmVars.absFeeUsd = _feeCalculator.repayFundingFeeDebtToPLP(
+              _subAccount,
+              acmVars.absFeeUsd,
+              acmVars.plpLiquidityDebtUSDE30,
+              tmpVars
+            );
           // If there are any remaining absFeeUsd, the trader must continue repaying the debt until the full amount is paid off
-          if (vars.traderBalance != 0 && vars.absFeeUsd > 0)
-            _payFundingAndBorrowingFee(_subAccount, vars, _tradingConfig.devFeeRate);
+          if (tmpVars.traderBalance != 0 && acmVars.absFeeUsd > 0)
+            acmVars.absFeeUsd = _feeCalculator.payFundingFee(_subAccount, acmVars.absFeeUsd, tmpVars);
         }
       }
       // feeUSD < 0 or isPayFee == false, means trader receive fee
       else {
-        if (vars.marginFee != 0) {
-          _receiveFundingFee(_subAccount, vars, _tradingConfig.devFeeRate);
+        if (tmpVars.fundingFee != 0) {
+          acmVars.absFeeUsd = _feeCalculator.receiveFundingFee(_subAccount, acmVars.absFeeUsd, tmpVars);
         }
       }
 
       // If no remaining margin fee to receive or repay then stop looping
-      if (vars.absFeeUsd == 0) break;
+      if (acmVars.absFeeUsd == 0) break;
 
       {
         unchecked {
@@ -1197,13 +1339,17 @@ contract TradeService is ITradeService {
 
     // If a trader is supposed to receive a fee but the amount of tokens received from funding fees is not sufficient to cover the fee,
     // then the protocol must provide the option to borrow in USD and record the resulting debt on the plpLiquidityDebtUSDE30 log
-    // @dev cannot use price from var because of it was replaced by loop
-    if (!vars.isPayFee && vars.absFeeUsd > 0) {
-      _borrowFundingFeeFromPLP(_subAccount, oracle, vars, _price, _assetId);
+    if (!isPayFee && acmVars.absFeeUsd > 0) {
+      acmVars.absFeeUsd = IFeeCalculator(IConfigStorage(_configStorage).feeCalculator()).borrowFundingFeeFromPLP(
+        _subAccount,
+        address(oracle),
+        acmVars.plpUnderlyingTokens,
+        acmVars.absFeeUsd
+      );
     }
 
     // Update the fee amount for the sub-account in the PerpStorage contract
-    IPerpStorage(_perpStorage).updateSubAccountFee(_subAccount, int(vars.absFeeUsd));
+    IPerpStorage(_perpStorage).updateSubAccountFee(_subAccount, int(acmVars.absFeeUsd));
   }
 
   /// @notice get next short average price with realized PNL
@@ -1304,192 +1450,11 @@ contract TradeService is ITradeService {
     return _nextAveragePrice;
   }
 
-  function _payFundingAndBorrowingFee(address subAccount, SettleFeeVar memory vars, uint256 devFeeRate) internal {
-    address _vaultStorage = vaultStorage;
-
-    // Calculate the fee amount in the plp underlying token
-    vars.feeTokenAmount = (vars.absFeeUsd * (10 ** vars.underlyingTokenDecimal)) / vars.price;
-
-    // Repay the fee amount and subtract it from the balance
-    vars.repayFeeTokenAmount = 0;
-
-    if (vars.traderBalance > vars.feeTokenAmount) {
-      vars.repayFeeTokenAmount = vars.feeTokenAmount;
-      vars.traderBalance -= vars.feeTokenAmount;
-      vars.absFeeUsd = 0;
-    } else {
-      // Calculate the balance value of the plp underlying token in USD
-      vars.traderBalanceValue = (vars.traderBalance * vars.price) / (10 ** vars.underlyingTokenDecimal);
-      vars.repayFeeTokenAmount = vars.traderBalance;
-      vars.traderBalance = 0;
-      vars.absFeeUsd -= vars.traderBalanceValue;
-    }
-
-    // Calculate the developer fee amount in the plp underlying token
-    vars.devFeeTokenAmount = (vars.repayFeeTokenAmount * devFeeRate) / 1e18;
-
-    // @todo - create new function on VaultStorage to add/remove token amounts from this logic
-    // Add the developer fee to the vault
-    IVaultStorage(_vaultStorage).addDevFee(vars.underlyingToken, vars.devFeeTokenAmount);
-    // Add the remaining fee amount to the plp liquidity in the vault
-    IVaultStorage(_vaultStorage).addMarginFee(vars.underlyingToken, vars.repayFeeTokenAmount - vars.devFeeTokenAmount);
-    // Update the sub-account balance for the plp underlying token in the vault
-    IVaultStorage(_vaultStorage).setTraderBalance(subAccount, vars.underlyingToken, vars.traderBalance);
-  }
-
-  function _receiveFundingFee(address subAccount, SettleFeeVar memory vars, uint256 devFeeRate) internal {
-    address _vaultStorage = vaultStorage;
-
-    // Calculate the fee amount in the plp underlying token
-    vars.feeTokenAmount = (vars.absFeeUsd * (10 ** vars.underlyingTokenDecimal)) / vars.price;
-    // Calculate the trading Fee value of the plp underlying token in USD
-    vars.marginFeeValue = (vars.marginFee * vars.price) / (10 ** vars.underlyingTokenDecimal);
-
-    if (vars.marginFee > vars.feeTokenAmount) {
-      // trading fee token has enough amount to repay fee to trader
-
-      vars.repayFeeTokenAmount = vars.feeTokenAmount;
-      vars.traderBalance += vars.feeTokenAmount;
-      vars.absFeeUsd = 0;
-    } else {
-      // trading fee token has not enough amount to repay fee to trader
-      vars.repayFeeTokenAmount = vars.feeTokenAmount;
-      vars.traderBalance += vars.feeTokenAmount;
-      vars.absFeeUsd -= vars.marginFeeValue;
-    }
-
-    // Calculate the developer fee amount in the plp underlying token
-    vars.devFeeTokenAmount = (vars.repayFeeTokenAmount * devFeeRate) / 1e18;
-
-    // @todo - create new function on VaultStorage to add/remove token amounts from this logic
-    // Add the developer fee to the vault
-    IVaultStorage(_vaultStorage).addDevFee(vars.underlyingToken, vars.devFeeTokenAmount);
-    // Remove fee amount to trading fee in the vault
-    IVaultStorage(_vaultStorage).removeMarginFee(vars.underlyingToken, vars.repayFeeTokenAmount);
-    // Update the sub-account balance for the plp underlying token in the vault
-    IVaultStorage(_vaultStorage).setTraderBalance(subAccount, vars.underlyingToken, vars.traderBalance);
-  }
-
-  function _borrowFundingFeeFromPLP(
-    address subAccount,
-    IOracleMiddleware oracle,
-    SettleFeeVar memory vars,
-    uint256 _price,
-    bytes32 _assetId
-  ) internal {
-    address _vaultStorage = vaultStorage;
-    // Loop through all the plp underlying tokens for the sub-account
-    for (uint256 i = 0; i < vars.plpUnderlyingTokens.length; ) {
-      vars.underlyingToken = vars.plpUnderlyingTokens[i];
-      vars.underlyingTokenDecimal = IConfigStorage(configStorage).getPlpTokenConfigs(vars.underlyingToken).decimals;
-      uint256 plpLiquidityAmount = IVaultStorage(_vaultStorage).plpLiquidity(vars.underlyingToken);
-
-      // Retrieve the latest price and confident threshold of the plp underlying token
-
-      if (
-        _price != 0 &&
-        IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(
-          vars.underlyingToken.toBytes32(),
-          _assetId
-        )
-      ) {
-        vars.price = _price;
-      } else {
-        (vars.price, ) = oracle.getLatestPrice(
-          vars.underlyingToken.toBytes32(),
-          false,
-          IConfigStorage(configStorage).getMarketConfigByToken(vars.underlyingToken).priceConfidentThreshold,
-          30
-        );
-      }
-
-      // Calculate the fee amount in the plp underlying token
-      vars.feeTokenAmount = (vars.absFeeUsd * (10 ** vars.underlyingTokenDecimal)) / vars.price;
-
-      if (plpLiquidityAmount > vars.feeTokenAmount) {
-        // plp underlying token has enough amount to repay fee to trader
-
-        vars.repayFeeTokenAmount = vars.feeTokenAmount;
-        vars.traderBalance += vars.feeTokenAmount;
-        vars.absFeeUsd = 0;
-      } else {
-        // plp underlying token has not enough amount to repay fee to trader
-        // Calculate the plpLiquidityAmount value of the plp underlying token in USD
-        uint256 plpLiquidityValue = (plpLiquidityAmount * vars.price) / (10 ** vars.underlyingTokenDecimal);
-
-        vars.repayFeeTokenAmount = plpLiquidityAmount;
-        vars.traderBalance += plpLiquidityAmount;
-        vars.absFeeUsd -= plpLiquidityValue;
-      }
-
-      // @todo - create new function on VaultStorage to add/remove token amounts from this logic
-      // Add debt value on PLP
-      IVaultStorage(_vaultStorage).addPlpLiquidityDebtUSDE30(vars.absFeeUsd);
-      IVaultStorage(_vaultStorage).removePLPLiquidity(vars.underlyingToken, vars.repayFeeTokenAmount);
-      // Update the sub-account balance for the plp underlying token in the vault
-      IVaultStorage(_vaultStorage).setTraderBalance(subAccount, vars.underlyingToken, vars.traderBalance);
-
-      if (vars.absFeeUsd == 0) {
-        break;
-      }
-
-      {
-        unchecked {
-          ++i;
-        }
-      }
-    }
-  }
-
-  /// @notice Repay funding fee to PLP
-  /// @param subAccount - Trader's sub-account to repay fee
-  /// @param vars - Struct of SettleFeeVar
-  function _repayFundingFeeDebtToPLP(address subAccount, SettleFeeVar memory vars) internal {
-    address _vaultStorage = vaultStorage;
-
-    // Calculate the sub-account's fee debt to token amounts
-    vars.feeTokenAmount = (vars.absFeeUsd * (10 ** vars.underlyingTokenDecimal)) / vars.price;
-
-    // Calculate the debt in USD to plp underlying token amounts
-    uint256 plpLiquidityDebtAmount = (vars.plpLiquidityDebtUSDE30 * (10 ** vars.underlyingTokenDecimal)) / vars.price;
-    uint256 traderBalanceValueE30 = (vars.traderBalance * vars.price) / (10 ** vars.underlyingTokenDecimal);
-
-    if (vars.feeTokenAmount >= plpLiquidityDebtAmount) {
-      // If margin fee to repay is grater than debt on PLP (Rare case)
-      if (vars.traderBalance > vars.feeTokenAmount) {
-        // If trader has enough token amounts to repay fee to PLP
-        vars.repayFeeTokenAmount = vars.feeTokenAmount; // Amount of feeTokenAmount that PLP will receive
-        vars.traderBalance -= vars.feeTokenAmount; // Deducts all feeTokenAmount to repay to PLP
-        vars.feeTokenValue = vars.plpLiquidityDebtUSDE30; // USD value of feeTokenAmount that PLP will receive
-        vars.absFeeUsd -= vars.plpLiquidityDebtUSDE30; // Deducts margin fee on trader's sub-account
-      } else {
-        vars.repayFeeTokenAmount = vars.traderBalance; // Amount of feeTokenAmount that PLP will receive
-        vars.traderBalance = 0; // Deducts all feeTokenAmount to repay to PLP
-        vars.feeTokenValue = vars.plpLiquidityDebtUSDE30; // USD value of feeTokenAmount that PLP will receive
-        vars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
-      }
-    } else if (vars.feeTokenAmount < plpLiquidityDebtAmount) {
-      if (vars.traderBalance >= vars.feeTokenAmount) {
-        traderBalanceValueE30 =
-          ((vars.traderBalance - vars.feeTokenAmount) * vars.price) /
-          (10 ** vars.underlyingTokenDecimal);
-
-        vars.repayFeeTokenAmount = vars.feeTokenAmount; // Trader will repay fee with this token amounts they have
-        vars.traderBalance -= vars.feeTokenAmount; // Deducts repay token amounts from trader account
-        vars.feeTokenValue = traderBalanceValueE30; // USD value of token amounts that PLP will receive
-        vars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
-      } else {
-        vars.repayFeeTokenAmount = vars.traderBalance; // Trader will repay fee with this token amounts they have
-        vars.traderBalance = 0; // Deducts repay token amounts from trader account
-        vars.feeTokenValue = traderBalanceValueE30; // USD value of token amounts that PLP will receive
-        vars.absFeeUsd -= traderBalanceValueE30; // Deducts margin fee on trader's sub-account
-      }
-    }
-
-    // @todo - create new function on VaultStorage to add/remove token amounts from this logic
-    IVaultStorage(_vaultStorage).removePlpLiquidityDebtUSDE30(vars.feeTokenValue); // Remove debt value on PLP as received
-    IVaultStorage(_vaultStorage).addPLPLiquidity(vars.underlyingToken, vars.repayFeeTokenAmount); // Add token amounts that PLP received
-    IVaultStorage(_vaultStorage).setTraderBalance(subAccount, vars.underlyingToken, vars.traderBalance); // Update the sub-account's token balance
+  /**
+   * Maths
+   */
+  function abs(int256 x) private pure returns (uint256) {
+    return uint256(x >= 0 ? x : -x);
   }
 
   function _max(int256 a, int256 b) internal pure returns (int256) {

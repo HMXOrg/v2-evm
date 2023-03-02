@@ -294,7 +294,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   }
 
   function testRevert_WhenAlicePositionHasProfitButStillLessThanReservedValueAndExecutorTryToCloseIt() external {
-    // open Short position for ALICE at price 1 USD
+    // ALICE open Short position  price 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price has changed make ALICE position profit for ~899.9999999999%
@@ -317,7 +317,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   }
 
   function testRevert_WhenExecutorTryClosePositionButOracleTellMarketIsClose() external {
-    // open LONG position
+    // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // set market status from oracle is inactive

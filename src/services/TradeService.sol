@@ -472,20 +472,22 @@ contract TradeService is ITradeService {
   /// @param _vars - decrease criteria
   /// @param _positionSizeE30ToDecrease - position size to decrease
   /// @param _tpToken - take profit token
+  /// @param _limitPrice Price from limitOrder
+  /// @param _assetId Market AssetId
   function _decreasePosition(
     IConfigStorage.MarketConfig memory _marketConfig,
     uint256 _globalMarketIndex,
     DecreasePositionVars memory _vars,
     uint256 _positionSizeE30ToDecrease,
     address _tpToken,
-    uint256 _price,
+    uint256 _limitPrice,
     bytes32 _assetId
   ) internal {
     // Update borrowing rate
-    updateBorrowingRate(_marketConfig.assetClass, _price, _assetId);
+    updateBorrowingRate(_marketConfig.assetClass, _limitPrice, _assetId);
 
     // Update funding rate
-    updateFundingRate(_globalMarketIndex, _price);
+    updateFundingRate(_globalMarketIndex, _limitPrice);
 
     collectMarginFee(
       _vars.subAccount,
@@ -507,7 +509,7 @@ contract TradeService is ITradeService {
       _vars.position.entryFundingRate
     );
 
-    settleFundingFee(_vars.subAccount, _price, _assetId);
+    settleFundingFee(_vars.subAccount, _limitPrice, _assetId);
 
     uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
 
@@ -622,10 +624,10 @@ contract TradeService is ITradeService {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
-          _settleProfit(_vars.subAccount, _tpToken, uint256(_realizedPnl), _price, _marketConfig.assetId);
+          _settleProfit(_vars.subAccount, _tpToken, uint256(_realizedPnl), _limitPrice, _marketConfig.assetId);
         } else {
           // loss
-          _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _price, _marketConfig.assetId);
+          _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _limitPrice, _marketConfig.assetId);
         }
       }
     }
@@ -635,24 +637,27 @@ contract TradeService is ITradeService {
     // =========================================
 
     // check sub account equity is under MMR
-    _subAccountHealthCheck(_vars.subAccount, _price, _assetId);
+    _subAccountHealthCheck(_vars.subAccount, _limitPrice, _assetId);
 
     emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }
 
   /// @notice settle profit
+  /// @param _subAccount - Sub-account of trader
   /// @param _token - token that trader want to take profit as collateral
   /// @param _realizedProfitE30 - trader profit in USD
+  /// @param _limitPrice - Limit Price
+  /// @param _assetId  - Market Asset Id
   function _settleProfit(
     address _subAccount,
     address _token,
     uint256 _realizedProfitE30,
-    uint256 _price,
+    uint256 _limitPrice,
     bytes32 _assetId
   ) internal {
     uint256 _tpTokenPrice;
-    if (_shouldOverwritePrice(_price, _token, _assetId)) {
-      _tpTokenPrice = _price;
+    if (_shouldOverwritePrice(_limitPrice, _token, _assetId)) {
+      _tpTokenPrice = _limitPrice;
     } else {
       (_tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
         _token.toBytes32(),
@@ -683,6 +688,8 @@ contract TradeService is ITradeService {
   /// @notice settle loss
   /// @param _subAccount - Sub-account of trader
   /// @param _debtUsd - Loss in USD
+  /// @param _limitPrice - Limit Price
+  /// @param _assetId  - Market Asset Id
   function _settleLoss(address _subAccount, uint256 _debtUsd, uint256 _limitPrice, bytes32 _assetId) internal {
     address[] memory _plpTokens = IConfigStorage(configStorage).getPlpTokens();
 

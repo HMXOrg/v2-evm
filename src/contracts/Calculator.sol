@@ -61,15 +61,15 @@ contract Calculator is Owned, ICalculator {
     return aum;
   }
 
-  function getAUM(bool isMaxPrice, uint256 _price, bytes32 _assetId) public view returns (uint256) {
-    return getAUME30(isMaxPrice, _price, _assetId) / 1e12;
+  function getAUM(bool isMaxPrice, uint256 _limitPrice, bytes32 _assetId) public view returns (uint256) {
+    return getAUME30(isMaxPrice, _limitPrice, _assetId) / 1e12;
   }
 
-  function getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external view returns (uint256) {
-    return _getPLPValueE30(isMaxPrice, _price, _assetId);
+  function getPLPValueE30(bool isMaxPrice, uint256 _limitPrice, bytes32 _assetId) external view returns (uint256) {
+    return _getPLPValueE30(isMaxPrice, _limitPrice, _assetId);
   }
 
-  function _getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) internal view returns (uint256) {
+  function _getPLPValueE30(bool isMaxPrice, uint256 _limitPrice, bytes32 _assetId) internal view returns (uint256) {
     uint256 assetValue = 0;
     address _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(
       IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_START()
@@ -80,8 +80,8 @@ contract Calculator is Owned, ICalculator {
       IConfigStorage(configStorage).getNextAcceptedToken(IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END())
     ) {
       uint256 priceE30;
-      if (_shouldOverwritePrice(_price, _plpUnderlyingToken, _assetId)) {
-        priceE30 = _price;
+      if (_shouldOverwritePrice(_limitPrice, _plpUnderlyingToken, _assetId)) {
+        priceE30 = _limitPrice;
       } else {
         (priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
           _plpUnderlyingToken.toBytes32(),
@@ -133,7 +133,6 @@ contract Calculator is Owned, ICalculator {
       );
 
       //@todo - validate price, revert when crypto price stale, stock use Lastprice
-
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
         if (priceE30Long < _globalMarket.longAvgPrice) {
           uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) * _globalMarket.longPositionSize) /
@@ -146,7 +145,6 @@ contract Calculator is Owned, ICalculator {
         }
       }
 
-      // @todo - DOUBLE CHECK :: ask team globalMarket.shortPositionSize store in negative???
       if (_globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0) {
         if (_globalMarket.shortAvgPrice < priceE30Short) {
           uint256 _absPNL = ((priceE30Short - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
@@ -378,19 +376,19 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate for value on trader's account including Equity, IMR and MMR.
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
-  /// @param _price Price from either limitOrder or Pyth
+  /// @param _limitPrice Price from limitOrder
   /// @return _equityValueE30 Total equity of trader's account.
   function getEquity(
     address _subAccount,
-    uint256 _price,
+    uint256 _limitPrice,
     bytes32 _assetId
   ) public view returns (uint256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
     //@todo guarantee limit order, getCollateralValue:: we do not know which price should be overriden, skip this part
-    uint256 _collateralValueE30 = getCollateralValue(_subAccount, _price, _assetId);
+    uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPrice, _assetId);
 
     // Calculate unrealized PnL on opening trader's position(s)
-    int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount, _price, _assetId);
+    int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount, _limitPrice, _assetId);
 
     // Calculate Borrowing fee on opening trader's position(s)
     // @todo - calculate borrowing fee
@@ -420,12 +418,12 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate unrealized PnL from trader's sub account.
   /// @dev This unrealized pnl deducted by collateral factor.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @param _price Override price
+  /// @param _limitPrice Price from limitOrder
   /// @param _assetId assetId indicates price should derived
   /// @return _unrealizedPnlE30 PnL value after deducted by collateral factor.
   function getUnrealizedPnl(
     address _subAccount,
-    uint256 _price,
+    uint256 _limitPrice,
     bytes32 _assetId
   ) public view returns (int256 _unrealizedPnlE30) {
     // Get all trader's opening positions
@@ -447,8 +445,8 @@ contract Calculator is Owned, ICalculator {
       bool _isUseMaxPrice = _isLong ? false : true;
 
       uint256 _priceE30;
-      if (_assetId == _marketConfig.assetId && _price != 0) {
-        _priceE30 = _price;
+      if (_assetId == _marketConfig.assetId && _limitPrice != 0) {
+        _priceE30 = _limitPrice;
       } else {
         // Get price from oracle
         // @todo - validate price age
@@ -491,12 +489,12 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice Calculate collateral tokens to value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @param _price Price from limitOrder, zeros means no marketOrderPrice,
+  /// @param _limitPrice Price from limitOrder
   /// @param _assetId assetId to find token
   /// @return _collateralValueE30
   function getCollateralValue(
     address _subAccount,
-    uint256 _price,
+    uint256 _limitPrice,
     bytes32 _assetId
   ) public view returns (uint256 _collateralValueE30) {
     // Get list of current depositing tokens on trader's account
@@ -525,8 +523,8 @@ contract Calculator is Owned, ICalculator {
       // Get price from oracle
       uint256 _priceE30;
 
-      if (_shouldOverwritePrice(_price, _token, _assetId)) {
-        _priceE30 = _price;
+      if (_shouldOverwritePrice(_limitPrice, _token, _assetId)) {
+        _priceE30 = _limitPrice;
       } else {
         // @todo - validate price age
         (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
@@ -636,15 +634,15 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice This function returns the amount of free collateral available to a given sub-account
   /// @param _subAccount The address of the sub-account
-  /// @param _price Price from limitOrder or Pyth
+  /// @param _limitPrice Price from limitOrder
   /// @param _assetId AssetId of Market
   /// @return _freeCollateral The amount of free collateral available to the sub-account
   function getFreeCollateral(
     address _subAccount,
-    uint256 _price,
+    uint256 _limitPrice,
     bytes32 _assetId
   ) public view returns (uint256 _freeCollateral) {
-    uint256 equity = getEquity(_subAccount, _price, _assetId);
+    uint256 equity = getEquity(_subAccount, _limitPrice, _assetId);
     uint256 imr = getIMR(_subAccount);
 
     _freeCollateral = equity - imr;

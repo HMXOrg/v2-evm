@@ -163,10 +163,7 @@ contract LiquidityService is ILiquidityService {
       )
     );
 
-    // 4. Check slippage: revert on error
-    if (amountAfterFee < _minAmount) revert LiquidityService_InsufficientLiquidityMint();
-
-    // 5. Calculate mintAmount
+    // 4. Calculate mintAmount
     _tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
       IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals,
       USD_DECIMALS,
@@ -174,6 +171,9 @@ contract LiquidityService is ILiquidityService {
     );
 
     mintAmount = _calculator.getMintAmount(_aum, _lpSupply, _tokenValueUSDAfterFee);
+
+    // 5. Check slippage: revert on error
+    if (mintAmount < _minAmount) revert LiquidityService_InsufficientLiquidityMint();
 
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
     IVaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);

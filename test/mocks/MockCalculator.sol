@@ -79,12 +79,12 @@ contract MockCalculator is ICalculator {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getEquity(address _subAccount) external view returns (int256) {
+  function getEquity(address _subAccount, uint256 _price, bytes32 _assetId) external view returns (int256) {
     return equitiesOf[_subAccount];
   }
 
   // @todo - Add Description
-  function getUnrealizedPnl(address _subAccount) external view returns (int256) {
+  function getUnrealizedPnl(address _subAccount, uint256 _price, bytes32 _assetId) external view returns (int256) {
     return unrealizedPnlOf[_subAccount];
   }
 
@@ -112,15 +112,15 @@ contract MockCalculator is ICalculator {
     return 0;
   }
 
-  function getAUM(bool /* isMaxPrice */) external view returns (uint256) {
+  function getAUM(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
     return aum;
   }
 
-  function getAUME30(bool /* isMaxPrice */) external view returns (uint256) {
+  function getAUME30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
     return aum;
   }
 
-  function getPLPValueE30(bool /* isMaxPrice */) external view returns (uint256) {
+  function getPLPValueE30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
     return plpValue;
   }
 
@@ -159,7 +159,11 @@ contract MockCalculator is ICalculator {
     return 1e18;
   }
 
-  function getFreeCollateral(address /*_subAccount*/) external view returns (uint256) {
+  function getFreeCollateral(
+    address /*_subAccount*/,
+    uint256 _price,
+    bytes32 _assetId
+  ) external view returns (uint256) {
     return freeCollateral;
   }
 
@@ -188,7 +192,11 @@ contract MockCalculator is ICalculator {
     return 5e15;
   }
 
-  function getCollateralValue(address /*_subAccount*/) external view returns (uint256) {
+  function getCollateralValue(
+    address /*_subAccount*/,
+    uint256 /*_limitPrice*/,
+    bytes32 /*_assetId*/
+  ) external view returns (uint256) {
     return collateralValue;
   }
 }

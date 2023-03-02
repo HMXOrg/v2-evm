@@ -45,8 +45,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
     vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
 
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-    tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+    tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
 
     // BTC price 24600 USD
     mockOracle.setPrice(address(wbtc).toBytes32(), 24_500 * 1e30);
@@ -84,8 +84,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     bytes32 _wethPositionId = getPositionId(ALICE, 0, ethMarketIndex);
     bytes32 _wbtcPositionId = getPositionId(ALICE, 0, ethMarketIndex);
 
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-    tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+    tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
 
     // BTC price 24000 USD
     mockOracle.setPrice(address(wbtc).toBytes32(), 24_000 * 1e30);
@@ -144,8 +144,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     bytes32 _wethPositionId = getPositionId(ALICE, 0, ethMarketIndex);
     bytes32 _wbtcPositionId = getPositionId(ALICE, 0, ethMarketIndex);
 
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
-    tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+    tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
 
     // BTC price 24500 USD
     mockOracle.setPrice(address(wbtc).toBytes32(), 24_500 * 1e30);

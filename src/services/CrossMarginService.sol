@@ -131,7 +131,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     IVaultStorage(_vaultStorage).setTraderBalance(_subAccount, _token, _newBalance);
 
     // Calculate validation for if new Equity is below IMR or not
-    int256 equity = ICalculator(calculator).getEquity(_subAccount);
+    int256 equity = ICalculator(calculator).getEquity(_subAccount, 0, 0);
     if (equity < 0 || uint256(equity) < ICalculator(calculator).getIMR(_subAccount))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();
 

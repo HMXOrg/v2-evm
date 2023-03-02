@@ -92,12 +92,19 @@ contract TradeService_IncreasePosition is TradeService_Base {
   /////////////////////  increasePosition FUNCTION  //////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////
 
+  function testRevert_increasePosition_WhenNotHandlerCall() external {
+    int256 sizeDelta = 1_000_000 * 1e30;
+    vm.prank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotWhiteListed()"));
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
+  }
+
   function testRevert_increasePosition_WhenBadSizeDelta() external {
     // Increase Long ETH size 0
     {
       int256 sizeDelta = 0;
       vm.expectRevert(abi.encodeWithSignature("ITradeService_BadSizeDelta()"));
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
   }
 
@@ -129,7 +136,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     {
       int256 sizeDelta = 1_000_000 * 1e30;
       vm.expectRevert(abi.encodeWithSignature("ITradeService_NotAllowIncrease()"));
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
   }
 
@@ -160,13 +167,13 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // Increase Long ETH size 1,000,000
     {
       int256 sizeDelta = 1_000_000 * 1e30;
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
     // Increase Long BTC size 1,000,000
     {
       int256 sizeDelta = 1_000_000 * 1e30;
       vm.expectRevert(abi.encodeWithSignature("ITradeService_BadNumberOfPosition()"));
-      tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta, 0);
     }
   }
 
@@ -185,13 +192,13 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // Increase Long ETH size 1,000,000
     {
       int256 sizeDelta = 1_000_000 * 1e30;
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
     // Increase Short ETH size 500,000
     {
       int256 sizeDelta = -500_000 * 1e30;
       vm.expectRevert(abi.encodeWithSignature("ITradeService_BadExposure()"));
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
   }
 
@@ -213,7 +220,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     {
       int256 sizeDelta = 1_000_000 * 1e30;
       vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
   }
 
@@ -240,7 +247,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // Increase Long ETH size 800,000
     {
       int256 sizeDelta = 800_000 * 1e30;
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
 
     // Fee collateral decrease 8000 -> 2000 USD
@@ -250,7 +257,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     {
       int256 sizeDelta = 500_000 * 1e30;
       vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
-      tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta, 0);
     }
   }
 
@@ -270,7 +277,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     {
       int256 sizeDelta = 2_000_000 * 1e30;
       vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientLiquidity()"));
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
   }
 
@@ -298,7 +305,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // Reserve value 10,000 * 9 = 90,000
     {
       int256 sizeDelta = 1_000_000 * 1e30;
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     }
 
     // // Fee collateral decrease 8000 -> 2000 USD
@@ -309,7 +316,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     {
       int256 sizeDelta = 888_000 * 1e30;
       vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientLiquidity()"));
-      tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta, 0);
     }
   }
 
@@ -331,7 +338,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
 
     vm.warp(100);
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
 
     // Calculate assert data
     // size: 1,000,000
@@ -375,7 +382,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     bytes32 _positionId = getPositionId(ALICE, 0, btcMarketIndex);
 
     vm.warp(100);
-    tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta);
+    tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta, 0);
 
     // Calculate assert data
     // size: -800,000
@@ -418,7 +425,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     {
       int256 sizeDelta = 500_000 * 1e30;
       bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
 
       // Calculate assert data
       // size: 500,000
@@ -468,7 +475,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     {
       int256 sizeDelta = 400_000 * 1e30;
       bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
 
       // Calculate assert data
       // size: 900,000
@@ -536,7 +543,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     {
       int256 sizeDelta = -250_000 * 1e30;
       bytes32 _positionId = getPositionId(BOB, 0, btcMarketIndex);
-      tradeService.increasePosition(BOB, 0, btcMarketIndex, sizeDelta);
+      tradeService.increasePosition(BOB, 0, btcMarketIndex, sizeDelta, 0);
 
       // Calculate assert data
       // size: -250,000
@@ -586,7 +593,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     {
       int256 sizeDelta = -750_000 * 1e30;
       bytes32 _positionId = getPositionId(BOB, 0, btcMarketIndex);
-      tradeService.increasePosition(BOB, 0, btcMarketIndex, sizeDelta);
+      tradeService.increasePosition(BOB, 0, btcMarketIndex, sizeDelta, 0);
 
       // Calculate assert data
       // size: -1,000,000
@@ -635,5 +642,53 @@ contract TradeService_IncreasePosition is TradeService_Base {
       });
       globalMarketTester.assertGlobalMarket(1, globalMarketAssertData);
     }
+  }
+
+  function testCorrectness_increasePosition_WhenUsingLimitPrice() external {
+    // setup
+    // TVL
+    // 1000000 USDT -> 1000000 USD
+    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    // ALICE add collateral
+    // 10000 USDT -> free collateral -> 10000 USD
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
+
+    // ETH price 1600 USD
+    uint256 price = 1_600 * 1e30;
+    mockOracle.setPrice(price);
+
+    // input
+    int256 sizeDelta = 1_000_000 * 1e30;
+    bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
+
+    vm.warp(100);
+    // derivedPrice to 1000
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 1_000 * 1e30);
+
+    // Calculate assert data
+    // size: 1,000,000
+    //   | increase position Long 1,000,000
+    // avgPrice: 1,000 (limitPrice 1000, currentPrice 1600)
+    //   | price ETH 1,000
+    // reserveValue: 90,000
+    //   | imr = 1,000,000 * 0.01 = 10,000
+    //   | reserve 900% = 10,000 * 900% = 90,000
+    // lastIncreaseTimestamp: 100
+    //   | increase time 100
+    // realizedPnl: 0
+    //   | new position
+    // openInterest: 1000 (derived interest)
+    //   | 1,000,000 / 1,000 = 1000 ETH
+    PositionTester02.PositionAssertionData memory assetData = PositionTester02.PositionAssertionData({
+      size: 1_000_000 * 1e30,
+      avgPrice: 1_000 * 1e30,
+      reserveValue: 90_000 * 1e30,
+      lastIncreaseTimestamp: 100,
+      openInterest: 1_000 * 1e18
+    });
+    positionTester02.assertPosition(_positionId, assetData);
+
+    (uint256 _price, uint256 _lastUpdate, uint8 _status) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false, 0);
+    assertEq(_price, 1600 * 1e30);
   }
 }

@@ -32,7 +32,7 @@ contract LiquidationService is ILiquidationService {
     // Get the calculator contract from storage
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
-    int256 _equity = _calculator.getEquity(_subAccount);
+    int256 _equity = _calculator.getEquity(_subAccount, 0, 0);
     // If the equity is greater than or equal to the MMR, the account is healthy and cannot be liquidated
     if (_equity >= 0 && uint256(_equity) >= _calculator.getMMR(_subAccount))
       revert ILiquidationService_AccountHealthy();
@@ -82,7 +82,9 @@ contract LiquidationService is ILiquidationService {
     address[] memory _collateralTokens = IConfigStorage(_configStorage).getCollateralTokens();
 
     // Get the sub-account's unrealized profit/loss and add the liquidation fee
-    uint256 _absDebt = abs(ICalculator(IConfigStorage(_configStorage).calculator()).getUnrealizedPnl(_subAccount));
+    uint256 _absDebt = abs(
+      ICalculator(IConfigStorage(_configStorage).calculator()).getUnrealizedPnl(_subAccount, 0, 0)
+    );
     _absDebt += IConfigStorage(_configStorage).getLiquidationConfig().liquidationFeeUSDE30;
 
     uint256 _len = _collateralTokens.length;

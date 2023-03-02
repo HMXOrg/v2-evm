@@ -55,7 +55,7 @@ contract TradeService_FundingFee is TradeService_Base {
 
     vm.warp(100);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
       IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
@@ -76,7 +76,7 @@ contract TradeService_FundingFee is TradeService_Base {
 
     vm.warp(block.timestamp + 1);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
       {
         IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
@@ -122,7 +122,7 @@ contract TradeService_FundingFee is TradeService_Base {
 
     vm.warp(100);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
       IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
       assertEq(_globalMarket.currentFundingRate, 0);
@@ -135,7 +135,7 @@ contract TradeService_FundingFee is TradeService_Base {
 
     vm.warp(block.timestamp + 1);
     {
-      tradeService.increasePosition(BOB, 0, ethMarketIndex, -200_000 * 1e30);
+      tradeService.increasePosition(BOB, 0, ethMarketIndex, -200_000 * 1e30, 0);
       IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
       assertEq(_globalMarket.currentFundingRate, -66666666666666); // LONG PAY SHORT
       // Alice increase long position size * funding Rate = 500_000 * -0.000066666666666666 = -33.333333333333 $
@@ -151,8 +151,7 @@ contract TradeService_FundingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 0);
       assertEq(vaultStorage.plpLiquidityDebtUSDE30(), 0);
 
-      vm.prank(BOB);
-      tradeService.decreasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30, address(0));
+      tradeService.decreasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30, address(0), 0);
       IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
       assertEq(_globalMarket.currentFundingRate, -106666666666666); // LONG PAY SHORT
       // Alice increase long position size * funding Rate * elapsedInterval = (500_000 * -0.000106666666666666) + last accumFundingLong = -53.333333333333 + -33.333333333333 = -86.666666666666$

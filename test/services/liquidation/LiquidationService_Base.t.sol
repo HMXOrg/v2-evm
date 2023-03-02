@@ -29,6 +29,7 @@ abstract contract LiquidationService_Base is BaseTest {
 
     // deploy services
     tradeService = new TradeService(address(perpStorage), address(vaultStorage), address(configStorage));
+    configStorage.setServiceExecutor(address(tradeService), address(this), true);
     liquidationService = new LiquidationService(address(perpStorage), address(vaultStorage), address(configStorage));
   }
 

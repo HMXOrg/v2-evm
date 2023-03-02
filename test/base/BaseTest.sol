@@ -19,6 +19,7 @@ import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
+import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
@@ -50,6 +51,7 @@ import { PLPv2 } from "../../src/contracts/PLPv2.sol";
 // Handlers
 import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
 import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
+import { LiquidationHandler } from "../../src/handlers/LiquidationHandler.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
   address internal ALICE;
@@ -75,6 +77,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   MockOracleMiddleware internal mockOracle;
   MockLiquidityService internal mockLiquidityService;
   MockTradeService internal mockTradeService;
+  MockLiquidationService internal mockLiquidationService;
 
   MockWNative internal weth;
   MockErc20 internal wbtc;
@@ -124,6 +127,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     mockVaultStorage = new MockVaultStorage();
     mockOracle = new MockOracleMiddleware();
     mockTradeService = new MockTradeService();
+    mockLiquidationService = new MockLiquidationService();
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -451,7 +455,15 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     return new MarketTradeHandler(_tradeService, _pyth);
   }
 
-  function deployBotHandler(address _tradeService) internal returns (BotHandler) {
-    return new BotHandler(_tradeService);
+  function deployLiquidationHandler(address _liquidationService, address _pyth) internal returns (LiquidationHandler) {
+    return new LiquidationHandler(_liquidationService, _pyth);
+  }
+
+  function deployBotHandler(
+    address _tradeService,
+    address _liquidationService,
+    address _pyth
+  ) internal returns (BotHandler) {
+    return new BotHandler(_tradeService, _liquidationService, _pyth);
   }
 }

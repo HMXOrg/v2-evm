@@ -25,6 +25,7 @@ contract BotHandler_Base is BaseTest {
 
   function setUp() public virtual {
     // setup for trade service
+    prices = new bytes[](0);
 
     configStorage.setCalculator(address(mockCalculator));
     positionTester = new PositionTester(perpStorage, vaultStorage, mockOracle);
@@ -34,7 +35,7 @@ contract BotHandler_Base is BaseTest {
     // deploy services
     tradeService = new TradeService(address(perpStorage), address(vaultStorage), address(configStorage));
 
-    botHandler = deployBotHandler(address(tradeService));
+    botHandler = deployBotHandler(address(tradeService), address(mockLiquidationService), address(mockPyth));
 
     address[] memory _positionManagers = new address[](1);
     _positionManagers[0] = address(this);

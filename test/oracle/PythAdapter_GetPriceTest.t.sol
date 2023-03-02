@@ -84,7 +84,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),
       true,
-      0.04 ether // accept up to 4% conf
+      0.04 * 1e4 // accept up to 4% conf
     );
   }
 

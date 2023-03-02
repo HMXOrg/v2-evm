@@ -25,8 +25,8 @@ contract TradeService_TradingFee is TradeService_Base {
 
     // Set increase/decrease position fee rate to 0.0001%
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(ethMarketIndex);
-    _marketConfig.increasePositionFeeRate = 0.0001 * 1e18;
-    _marketConfig.decreasePositionFeeRate = 0.0001 * 1e18;
+    _marketConfig.increasePositionFeeRate = 0.0001 * 1e4;
+    _marketConfig.decreasePositionFeeRate = 0.0001 * 1e4;
     configStorage.setMarketConfig(ethMarketIndex, _marketConfig);
   }
 

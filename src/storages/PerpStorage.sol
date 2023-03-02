@@ -17,8 +17,6 @@ contract PerpStorage is IPerpStorage {
 
   mapping(address => int256) public subAccountFee;
 
-  mapping(address => CollateralToken) public collateralTokens;
-
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
   mapping(uint256 => GlobalAssetClass) public globalAssetClass;
@@ -95,7 +93,7 @@ contract PerpStorage is IPerpStorage {
   // @todo - remove
   function addPosition(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     bytes32 _positionId,
     int256 _newPositionSizeE30,

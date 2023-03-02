@@ -26,7 +26,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   event LogSetPyth(address oldValue, address newValue);
   event LogCreateLimitOrder(
     address indexed account,
-    uint256 indexed subAccountId,
+    uint8 indexed subAccountId,
     uint256 orderIndex,
     uint256 marketIndex,
     int256 sizeDelta,
@@ -38,7 +38,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   );
   event LogExecuteLimitOrder(
     address indexed account,
-    uint256 indexed subAccountId,
+    uint8 indexed subAccountId,
     uint256 orderIndex,
     uint256 marketIndex,
     int256 sizeDelta,
@@ -51,7 +51,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   );
   event LogUpdateLimitOrder(
     address indexed account,
-    uint256 indexed subAccountId,
+    uint8 indexed subAccountId,
     uint256 orderIndex,
     int256 sizeDelta,
     uint256 triggerPrice,
@@ -61,7 +61,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   );
   event LogCancelLimitOrder(
     address indexed account,
-    uint256 indexed subAccountId,
+    uint8 indexed subAccountId,
     uint256 orderIndex,
     uint256 marketIndex,
     int256 sizeDelta,
@@ -148,7 +148,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
   /// @param _tpToken Take profit token, when trader has profit
   function createOrder(
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
@@ -204,7 +204,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _priceData Price data from Pyth to be used for updating the market prices
   function executeOrder(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _orderIndex,
     address payable _feeReceiver,
     bytes[] memory _priceData
@@ -353,7 +353,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @notice Cancel a limit order
   /// @param _subAccountId Sub-account Id
   /// @param _orderIndex Order Index which could be retrieved from the emitted event from `createOrder()`
-  function cancelOrder(uint256 _subAccountId, uint256 _orderIndex) external nonReentrant {
+  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
     LimitOrder memory _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
@@ -388,7 +388,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
   /// @param _tpToken Take profit token, when trader has profit
   function updateOrder(
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,

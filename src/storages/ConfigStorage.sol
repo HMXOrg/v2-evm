@@ -195,7 +195,7 @@ contract ConfigStorage is IConfigStorage, Owned {
     emit SetDynamicEnabled(enabled);
   }
 
-  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external {
+  function setPLPTotalTokenWeight(uint32 _totalTokenWeight) external {
     if (_totalTokenWeight > 1e18) revert IConfigStorage_ExceedLimitSetting();
     liquidityConfig.plpTotalTokenWeight = _totalTokenWeight;
   }
@@ -258,7 +258,7 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   /// @notice add or update AcceptedToken
   /// @dev This function only allows to add new token or update existing token,
-  /// any atetempt to remove token will be reverted.
+  /// any attempt to remove token will be reverted.
   /// @param _tokens The token addresses to set.
   /// @param _configs The token configs to set.
   function addOrUpdateAcceptedToken(address[] calldata _tokens, PLPTokenConfig[] calldata _configs) external onlyOwner {
@@ -283,9 +283,13 @@ contract ConfigStorage is IConfigStorage, Owned {
 
       // Update totalWeight accordingly
 
-      liquidityConfig.plpTotalTokenWeight == 0 ? _configs[i].targetWeight : liquidityConfig.plpTotalTokenWeight =
-        (liquidityConfig.plpTotalTokenWeight - plpTokenConfigs[_tokens[i]].targetWeight) +
-        _configs[i].targetWeight;
+      if (liquidityConfig.plpTotalTokenWeight == 0) {
+        liquidityConfig.plpTotalTokenWeight = _configs[i].targetWeight;
+      } else {
+        liquidityConfig.plpTotalTokenWeight =
+          (liquidityConfig.plpTotalTokenWeight - plpTokenConfigs[_tokens[i]].targetWeight) +
+          _configs[i].targetWeight;
+      }
 
       plpTokenConfigs[_tokens[i]] = _configs[i];
 

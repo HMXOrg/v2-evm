@@ -7,7 +7,7 @@ import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 contract CrossMarginHandler_Base is BaseTest {
   using AddressUtils for address;
 
-  uint256 internal SUB_ACCOUNT_NO = 1;
+  uint8 internal SUB_ACCOUNT_NO = 1;
 
   CrossMarginHandler internal crossMarginHandler;
   CrossMarginService internal crossMarginService;
@@ -33,7 +33,7 @@ contract CrossMarginHandler_Base is BaseTest {
     // Set accepted token deposit/withdraw as WETH and USDC
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
       decimals: 18,
-      collateralFactor: 0.8 ether,
+      collateralFactor: 0.8 * 1e4,
       isStableCoin: false,
       accepted: true,
       settleStrategy: address(0)
@@ -41,7 +41,7 @@ contract CrossMarginHandler_Base is BaseTest {
 
     IConfigStorage.CollateralTokenConfig memory _collateralConfigUSDC = IConfigStorage.CollateralTokenConfig({
       decimals: 6,
-      collateralFactor: 0.8 ether,
+      collateralFactor: 0.8 * 1e4,
       isStableCoin: true,
       accepted: true,
       settleStrategy: address(0)
@@ -57,13 +57,13 @@ contract CrossMarginHandler_Base is BaseTest {
         assetId: address(weth).toBytes32(),
         assetClass: 1,
         exponent: 8,
-        maxProfitRate: 9e18,
-        minLeverage: 1,
-        initialMarginFraction: 0.1 * 1e18,
-        maintenanceMarginFraction: 0.005 * 1e18,
+        maxProfitRate: 9 * 1e4,
+        minLeverage: 1 * 1e4,
+        initialMarginFraction: 0.1 * 1e4,
+        maintenanceMarginFraction: 0.005 * 1e4,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
-        priceConfidentThreshold: 1e18,
+        priceConfidentThreshold: 1e4,
         allowIncreasePosition: false,
         active: true,
         openInterest: IConfigStorage.OpenInterest({

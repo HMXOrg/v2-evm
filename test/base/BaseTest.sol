@@ -52,6 +52,8 @@ import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
 import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
+  uint256 internal constant BPS = 1e4;
+
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -231,10 +233,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       IConfigStorage.LiquidityConfig({
         depositFeeRate: 0,
         withdrawFeeRate: 0,
-        maxPLPUtilization: (80 * 1e18) / 100,
+        maxPLPUtilization: 0.8 * 1e4,
         plpTotalTokenWeight: 0,
         plpSafetyBufferThreshold: 0,
-        taxFeeRate: 5e15, // 0.5%
+        taxFeeRate: 50, // 0.5% in BPS
         flashLoanFeeRate: 0,
         dynamicFeeEnabled: false,
         enabled: true
@@ -250,12 +252,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   /// @notice set up trading config
   function _setUpTradingConfig() private {
     configStorage.setTradingConfig(
-      IConfigStorage.TradingConfig({
-        fundingInterval: 1,
-        devFeeRate: 0.15 * 1e18,
-        minProfitDuration: 0,
-        maxPosition: 5
-      })
+      IConfigStorage.TradingConfig({ fundingInterval: 1, devFeeRate: 0.15 * 1e4, minProfitDuration: 0, maxPosition: 5 })
     );
   }
 
@@ -278,13 +275,13 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       assetId: "ETH",
       assetClass: 0,
       exponent: 18,
-      maxProfitRate: 9e18,
-      minLeverage: 1 * 1e18,
-      initialMarginFraction: 0.01 * 1e18,
-      maintenanceMarginFraction: 0.005 * 1e18,
+      maxProfitRate: 9 * 1e4,
+      minLeverage: 1 * 1e4,
+      initialMarginFraction: 0.01 * 1e4,
+      maintenanceMarginFraction: 0.005 * 1e4,
       increasePositionFeeRate: 0,
       decreasePositionFeeRate: 0,
-      priceConfidentThreshold: 0.01 * 1e18,
+      priceConfidentThreshold: 0.01 * 1e4,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({
@@ -298,13 +295,13 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       assetId: "BTC",
       assetClass: 0,
       exponent: 8,
-      maxProfitRate: 9e18,
-      minLeverage: 1 * 1e18,
-      initialMarginFraction: 0.01 * 1e18,
-      maintenanceMarginFraction: 0.005 * 1e18,
+      maxProfitRate: 9 * 1e4,
+      minLeverage: 1 * 1e4,
+      initialMarginFraction: 0.01 * 1e4,
+      maintenanceMarginFraction: 0.005 * 1e4,
       increasePositionFeeRate: 0,
       decreasePositionFeeRate: 0,
-      priceConfidentThreshold: 0.01 * 1e18,
+      priceConfidentThreshold: 0.01 * 1e4,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({
@@ -328,7 +325,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // WETH
     _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
       decimals: 18,
-      targetWeight: 2e17,
+      targetWeight: 0.02 * 1e5,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: false,
@@ -337,7 +334,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // WBTC
     _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
       decimals: 8,
-      targetWeight: 2e17,
+      targetWeight: 0.02 * 1e5,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: false,
@@ -346,7 +343,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // DAI
     _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
       decimals: 18,
-      targetWeight: 1e17,
+      targetWeight: 0.01 * 1e5,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: true,
@@ -355,7 +352,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // USDC
     _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
       decimals: 6,
-      targetWeight: 3e17,
+      targetWeight: 0.03 * 1e5,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: true,
@@ -364,7 +361,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     // USDT
     _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
       decimals: 6,
-      targetWeight: 2e17,
+      targetWeight: 0.02 * 1e5,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
       isStableCoin: true,
@@ -385,7 +382,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   function _setUpCollateralTokenConfigs() private {
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
       decimals: 18,
-      collateralFactor: 0.8 * 1e18,
+      collateralFactor: 0.8 * 1e4,
       isStableCoin: false,
       accepted: true,
       settleStrategy: address(0)
@@ -395,7 +392,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
       decimals: 8,
-      collateralFactor: 0.9 * 1e18,
+      collateralFactor: 0.9 * 1e4,
       isStableCoin: false,
       accepted: true,
       settleStrategy: address(0)

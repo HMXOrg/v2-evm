@@ -13,7 +13,7 @@ contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
   function setUp() public virtual override {
     super.setUp();
 
-    configStorage.setPLPTotalTokenWeight(1e18);
+    configStorage.setPLPTotalTokenWeight(1e4);
   }
 
   function testCorrectness_WhenGetSettlementFeeRateWithZeroDelta() external {

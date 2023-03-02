@@ -17,21 +17,21 @@ interface IConfigStorage {
    */
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
-    uint256 decimals; //token decimals
-    uint256 targetWeight; // percentage of all accepted PLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
+    uint32 targetWeight; // percentage of all accepted PLP tokens
+    uint8 decimals; //token decimals
     bool isStableCoin; // token is stablecoin
     bool accepted; // accepted to provide liquidity
   }
 
   /// @notice collateral token config
   struct CollateralTokenConfig {
-    uint256 decimals;
-    uint256 collateralFactor; // token reliability factor to calculate buying power, 1e18 = 100%
+    uint32 collateralFactor; // token reliability factor to calculate buying power, 1e4 = 100%
+    address settleStrategy; // determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+    uint8 decimals;
     bool isStableCoin; // token is stablecoin
     bool accepted; // accepted to deposit as collateral
-    address settleStrategy; // determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
   }
 
   struct OpenInterest {
@@ -46,15 +46,15 @@ interface IConfigStorage {
 
   struct MarketConfig {
     bytes32 assetId; // pyth network asset id
-    uint256 assetClass; // Crypto = 1, Forex = 2, Stock = 3
-    uint256 exponent;
-    uint256 maxProfitRate; // maximum profit that trader could take per position
-    uint256 minLeverage; // minimum leverage that trader could open position
-    uint256 initialMarginFraction; // IMF
-    uint256 maintenanceMarginFraction; // MMF
-    uint256 increasePositionFeeRate; // fee rate to increase position
-    uint256 decreasePositionFeeRate; // fee rate to decrease position
-    uint256 priceConfidentThreshold; // pyth price confidential threshold
+    uint32 maxProfitRate; // maximum profit that trader could take per position
+    uint32 minLeverage; // minimum leverage that trader could open position
+    uint32 initialMarginFraction; // IMF
+    uint32 maintenanceMarginFraction; // MMF
+    uint32 increasePositionFeeRate; // fee rate to increase position
+    uint32 decreasePositionFeeRate; // fee rate to decrease position
+    uint32 priceConfidentThreshold; // pyth price confidential threshold
+    uint8 assetClass; // Crypto = 1, Forex = 2, Stock = 3
+    uint8 exponent;
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
     OpenInterest openInterest;
@@ -66,27 +66,27 @@ interface IConfigStorage {
   }
 
   struct LiquidityConfig {
-    uint256 depositFeeRate; // PLP deposit fee rate
-    uint256 withdrawFeeRate; // PLP withdraw fee rate
-    uint256 maxPLPUtilization; //% of max utilization
-    uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
-    uint256 plpSafetyBufferThreshold;
-    uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
-    uint256 flashLoanFeeRate;
+    uint32 depositFeeRate; // PLP deposit fee rate
+    uint32 withdrawFeeRate; // PLP withdraw fee rate
+    uint32 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
+    uint32 maxPLPUtilization; //% of max utilization
+    uint32 plpTotalTokenWeight; // % of token Weight (must be 1e18)
+    uint32 plpSafetyBufferThreshold;
+    uint32 flashLoanFeeRate;
     bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
     bool enabled; // Circuit breaker on Liquidity
   }
 
   struct SwapConfig {
-    uint256 stablecoinSwapFeeRate;
-    uint256 swapFeeRate;
+    uint32 stablecoinSwapFeeRate;
+    uint32 swapFeeRate;
   }
 
   struct TradingConfig {
     uint256 fundingInterval; // funding interval unit in seconds
-    uint256 devFeeRate;
     uint256 minProfitDuration;
-    uint256 maxPosition;
+    uint32 devFeeRate;
+    uint32 maxPosition;
   }
 
   struct LiquidationConfig {
@@ -162,7 +162,7 @@ interface IConfigStorage {
 
   function setPLP(address _plp) external;
 
-  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;
+  function setPLPTotalTokenWeight(uint32 _totalTokenWeight) external;
 
   function setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) external;
 

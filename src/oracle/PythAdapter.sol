@@ -73,8 +73,8 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   function _validateConfidence(PythStructs.Price memory _priceStruct, uint256 _confidenceThreshold) private pure {
     if (_priceStruct.price < 0) revert PythAdapter_BrokenPythPrice();
 
-    // Calculate _confidenceRatio in 1e18 base.
-    uint256 _confidenceRatio = (uint256(_priceStruct.conf) * 1e18) / uint256(uint64(_priceStruct.price));
+    // Calculate _confidenceRatio in 1e4 base.
+    uint256 _confidenceRatio = (uint256(_priceStruct.conf) * 1e4) / uint256(uint64(_priceStruct.price));
 
     // Revert if confidence ratio is too high
     if (_confidenceRatio > _confidenceThreshold) revert PythAdapter_ConfidenceRatioTooHigh();

@@ -18,7 +18,7 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 contract TradeService is ITradeService {
   using AddressUtils for address;
 
-  uint256 internal constant RATE_PRECISION = 1e18;
+  uint256 internal constant BPS = 1e4;
 
   /**
    * Structs
@@ -47,15 +47,15 @@ contract TradeService is ITradeService {
   // @todo - modify event parameters
   event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
 
-  event LogCollectTradingFee(address account, uint256 assetClass, uint256 feeUsd);
+  event LogCollectTradingFee(address account, uint8 assetClass, uint256 feeUsd);
 
-  event LogCollectBorrowingFee(address account, uint256 assetClass, uint256 feeUsd);
+  event LogCollectBorrowingFee(address account, uint8 assetClass, uint256 feeUsd);
 
-  event LogCollectFundingFee(address account, uint256 assetClass, int256 feeUsd);
+  event LogCollectFundingFee(address account, uint8 assetClass, int256 feeUsd);
 
   event LogForceClosePosition(
     address indexed _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
     uint256 _closedPositionSize,
@@ -85,7 +85,7 @@ contract TradeService is ITradeService {
   /// @param _sizeDelta The change in size of the position. Positive values meaning LONG position, while negative values mean SHORT position.
   function increasePosition(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta
   ) external {
@@ -228,7 +228,7 @@ contract TradeService is ITradeService {
 
     {
       // calculate the initial margin required for the new position
-      uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / RATE_PRECISION;
+      uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFraction) / BPS;
 
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = ICalculator(IConfigStorage(configStorage).calculator()).getFreeCollateral(
@@ -238,7 +238,7 @@ contract TradeService is ITradeService {
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
 
       // calculate the maximum amount of reserve required for the new position
-      uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / RATE_PRECISION;
+      uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / BPS;
       // increase the reserved amount by the maximum reserve required for the new position
       _increaseReserved(_marketConfig.assetClass, _maxReserve);
       _position.reserveValueE30 += _maxReserve;
@@ -290,7 +290,7 @@ contract TradeService is ITradeService {
   /// @param _tpToken - take profit token
   function decreasePosition(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _positionSizeE30ToDecrease,
     address _tpToken
@@ -359,12 +359,7 @@ contract TradeService is ITradeService {
   /// @param _subAccountId sub-account id
   /// @param _marketIndex position market index
   /// @param _tpToken take profit token
-  function forceClosePosition(
-    address _account,
-    uint256 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken
-  ) external {
+  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
     // init vars
     DecreasePositionVars memory _vars;
 
@@ -576,8 +571,8 @@ contract TradeService is ITradeService {
         : -int256(_newAbsPositionSizeE30);
       _position.reserveValueE30 =
         (_newAbsPositionSizeE30 * _marketConfig.initialMarginFraction * _marketConfig.maxProfitRate) /
-        RATE_PRECISION /
-        RATE_PRECISION;
+        BPS /
+        BPS;
       _position.avgEntryPriceE30 = isClosePosition ? 0 : _vars.avgEntryPriceE30;
       _position.openInterest = _position.openInterest - _openInterestDelta;
       _position.realizedPnl += _realizedPnl;
@@ -745,7 +740,7 @@ contract TradeService is ITradeService {
    */
 
   // @todo - add description
-  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address) {
+  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
@@ -787,7 +782,7 @@ contract TradeService is ITradeService {
   /// @notice This function increases the reserve value
   /// @param _assetClassIndex The index of asset class.
   /// @param _reservedValue The amount by which to increase the reserve value.
-  function _increaseReserved(uint256 _assetClassIndex, uint256 _reservedValue) internal {
+  function _increaseReserved(uint8 _assetClassIndex, uint256 _reservedValue) internal {
     // Get the total TVL
     uint256 tvl = ICalculator(IConfigStorage(configStorage).calculator()).getPLPValueE30(true);
 
@@ -807,7 +802,7 @@ contract TradeService is ITradeService {
     _globalAssetClass.reserveValueE30 += _reservedValue;
 
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
-    if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * RATE_PRECISION) {
+    if ((tvl * _liquidityConfig.maxPLPUtilization) < _globalState.reserveValueE30 * BPS) {
       revert ITradeService_InsufficientLiquidity();
     }
 
@@ -823,7 +818,7 @@ contract TradeService is ITradeService {
     // check sub account is healthy
     uint256 _subAccountEquity = _calculator.getEquity(_subAccount);
     // maintenance margin requirement (MMR) = position size * maintenance margin fraction
-    // note: maintenanceMarginFraction is 1e18
+    // note: maintenanceMarginFraction is 1e4
     uint256 _mmr = _calculator.getMMR(_subAccount);
 
     // if sub account equity < MMR, then trader couldn't decrease position
@@ -832,7 +827,7 @@ contract TradeService is ITradeService {
 
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
-  function updateBorrowingRate(uint256 _assetClassIndex) public {
+  function updateBorrowingRate(uint8 _assetClassIndex) public {
     IPerpStorage _perpStorage = IPerpStorage(perpStorage);
     IConfigStorage _configStorage = IConfigStorage(configStorage);
 
@@ -896,7 +891,7 @@ contract TradeService is ITradeService {
   /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
   /// @param _assetClassIndex The index of the asset class.
   /// @return _nextBorrowingRate The next borrowing rate for the asset class.
-  function getNextBorrowingRate(uint256 _assetClassIndex) public view returns (uint256 _nextBorrowingRate) {
+  function getNextBorrowingRate(uint8 _assetClassIndex) public view returns (uint256 _nextBorrowingRate) {
     IConfigStorage _configStorage = IConfigStorage(configStorage);
     ICalculator _calculator = ICalculator(_configStorage.calculator());
 
@@ -929,7 +924,7 @@ contract TradeService is ITradeService {
   /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
   /// @return borrowingFee The calculated borrowing fee for the asset class.
   function getBorrowingFee(
-    uint256 _assetClassIndex,
+    uint8 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _entryBorrowingRate
   ) public view returns (uint256 borrowingFee) {
@@ -949,7 +944,7 @@ contract TradeService is ITradeService {
   /// @return tradingFee The calculated trading fee for the position.
   function getTradingFee(uint256 absSizeDelta, uint256 positionFeeRate) public pure returns (uint256 tradingFee) {
     if (absSizeDelta == 0) return 0;
-    return (absSizeDelta * positionFeeRate) / 1e18;
+    return (absSizeDelta * positionFeeRate) / BPS;
   }
 
   /**
@@ -1045,7 +1040,7 @@ contract TradeService is ITradeService {
   function collectMarginFee(
     address _subAccount,
     uint256 _absSizeDelta,
-    uint256 _assetClassIndex,
+    uint8 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _entryBorrowingRate,
     uint256 _positionFee
@@ -1079,7 +1074,7 @@ contract TradeService is ITradeService {
   /// @param _entryFundingRate The borrowing rate at the time the position was opened.
   function collectFundingFee(
     address _subAccount,
-    uint256 _assetClassIndex,
+    uint8 _assetClassIndex,
     uint256 _marketIndex,
     int256 _positionSizeE30,
     int256 _entryFundingRate
@@ -1152,7 +1147,7 @@ contract TradeService is ITradeService {
         }
 
         // Calculate the developer fee amount in the plp underlying token
-        tmpVars.devFeeTokenAmount = (tmpVars.repayFeeTokenAmount * _tradingConfig.devFeeRate) / 1e18;
+        tmpVars.devFeeTokenAmount = (tmpVars.repayFeeTokenAmount * _tradingConfig.devFeeRate) / BPS;
         // Deducts for dev fee
         tmpVars.repayFeeTokenAmount -= tmpVars.devFeeTokenAmount;
 

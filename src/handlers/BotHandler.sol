@@ -11,7 +11,7 @@ contract BotHandler is IBotHandler, Owned {
   /**
    * Events
    */
-  event LogTakeMaxProfit(address indexed _account, uint256 _subAccountId, uint256 _marketIndex, address _tpToken);
+  event LogTakeMaxProfit(address indexed _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken);
   event LogSetTradeService(address _oldTradeService, address _newTradeService);
   event LogSetPositionManager(address _address, bool _allowed);
   /**
@@ -47,7 +47,7 @@ contract BotHandler is IBotHandler, Owned {
   /// @param _tpToken token that trader receive as profit
   function forceTakeMaxProfit(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken
   ) external onlyPositionManager {

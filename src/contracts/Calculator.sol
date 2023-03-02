@@ -14,6 +14,7 @@ import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract Calculator is Owned, ICalculator {
   uint256 internal constant MAX_RATE = 1e18;
+  uint256 internal constant BPS = 1e4;
 
   // using libs for type
   using AddressUtils for address;
@@ -231,12 +232,12 @@ contract Calculator is Owned, ICalculator {
     IConfigStorage.LiquidityConfig memory _liquidityConfig,
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal pure returns (uint256) {
-    uint256 _feeRate = direction == LiquidityDirection.ADD
+  ) internal pure returns (uint32) {
+    uint32 _feeRate = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRate
       : _liquidityConfig.withdrawFeeRate;
-    uint256 _taxRate = _liquidityConfig.taxFeeRate;
-    uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
+    uint32 _taxRate = _liquidityConfig.taxFeeRate;
+    uint32 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
     uint256 nextValue = startValue + _value;
@@ -252,7 +253,7 @@ contract Calculator is Owned, ICalculator {
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
-      uint256 rebateRate = (_taxRate * startTargetDiff) / targetValue;
+      uint32 rebateRate = uint32((_taxRate * startTargetDiff * 1e18) / targetValue / BPS);
       return rebateRate > _feeRate ? 0 : _feeRate - rebateRate;
     }
 
@@ -269,7 +270,7 @@ contract Calculator is Owned, ICalculator {
     if (midDiff > targetValue) {
       midDiff = targetValue;
     }
-    _taxRate = (_taxRate * midDiff) / targetValue;
+    _taxRate = uint32((_taxRate * midDiff * 1e18) / targetValue / BPS);
 
     return _feeRate + _taxRate;
   }
@@ -313,7 +314,7 @@ contract Calculator is Owned, ICalculator {
     if (_nextTargetDiff < _currentTargetDiff) return 0;
 
     // settlement fee rate = (next target diff + current target diff / 2) * base tax fee / target usd
-    return (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRate) / _targetUsd;
+    return (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRate * 1e18) / _targetUsd / BPS;
   }
 
   // return in e18
@@ -509,7 +510,7 @@ contract Calculator is Owned, ICalculator {
       // Calculate accumulative value of collateral tokens
       // collateral value = (collateral amount * price) * collateralFactor
       // collateralFactor 1 ether = 100%
-      _collateralValueE30 += (_amount * _priceE30 * _collateralFactor) / (10 ** _decimals * 1e18);
+      _collateralValueE30 += (_amount * _priceE30 * _collateralFactor) / (10 ** _decimals * BPS);
 
       unchecked {
         i++;
@@ -586,7 +587,7 @@ contract Calculator is Owned, ICalculator {
       _marketIndex
     );
 
-    _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFraction) / 1e18;
+    _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFraction) / 1e4;
     return _imrE30;
   }
 
@@ -600,7 +601,7 @@ contract Calculator is Owned, ICalculator {
       _marketIndex
     );
 
-    _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) / 1e18;
+    _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) / 1e4;
     return _mmrE30;
   }
 

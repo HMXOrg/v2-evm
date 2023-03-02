@@ -11,7 +11,7 @@ contract PythAdapter_BaseTest is BaseTest {
   PythAdapter pythAdapter;
 
   function setUp() public virtual {
-    DeployReturnVars memory deployed = deployPerp88v2();
+    DeployCoreReturnVars memory deployed = deployPerp88v2();
     pythAdapter = deployed.pythAdapter;
   }
 }

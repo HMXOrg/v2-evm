@@ -10,7 +10,7 @@ contract OracleMiddleware_BaseTest is BaseTest {
   OracleMiddleware oracleMiddleware;
 
   function setUp() public virtual {
-    DeployReturnVars memory deployed = deployPerp88v2();
+    DeployCoreReturnVars memory deployed = deployPerp88v2();
     oracleMiddleware = deployed.oracleMiddleware;
 
     vm.deal(ALICE, 1 ether);

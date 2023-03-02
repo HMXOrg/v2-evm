@@ -161,16 +161,16 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     return new MockErc20(name, symbol, decimals);
   }
 
-  function deployPerp88v2() internal returns (Deployment.DeployReturnVars memory) {
-    DeployLocalVars memory deployLocalVars = DeployLocalVars({
-      pyth: mockPyth,
+  function deployPerp88v2() internal returns (Deployment.DeployCoreReturnVars memory) {
+    DeployCoreLocalVars memory deployCoreLocalVars = DeployCoreLocalVars({
+      pyth: address(mockPyth),
       defaultOracleStaleTime: 300,
       minExecutionFee: 0,
       stkGlp: address(stkGlp),
       glpManager: address(mockGlpManager),
       weth: address(weth)
     });
-    return deploy(deployLocalVars);
+    return deployCore(deployCoreLocalVars);
   }
 
   /**

@@ -8,7 +8,7 @@ contract GlpOracleAdapter_BaseTest is BaseTest {
   GlpOracleAdapter glpOracleAdapter;
 
   function setUp() public virtual {
-    DeployReturnVars memory deployed = deployPerp88v2();
+    DeployCoreReturnVars memory deployed = deployPerp88v2();
     glpOracleAdapter = deployed.glpOracleAdapter;
   }
 }

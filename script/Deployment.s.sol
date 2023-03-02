@@ -21,20 +21,26 @@ import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
 import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 // Contracts
 import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 // Strategies
 import { GlpStrategy } from "@hmx/strategies/GlpStrategy.sol";
 // Interfaces
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { IGmxGlpManager } from "@hmx/vendors/gmx/IGmxGlpManager.sol";
+import { IGmxRewardRouterV2 } from "@hmx/vendors/gmx/IGmxRewardRouterV2.sol";
+import { IGmxRewardTracker } from "@hmx/vendors/gmx/IGmxRewardTracker.sol";
 
 abstract contract Deployment {
-  struct DeployReturnVars {
+  struct DeployCoreReturnVars {
     GlpOracleAdapter glpOracleAdapter;
     PythAdapter pythAdapter;
     OracleMiddleware oracleMiddleware;
     ConfigStorage configStorage;
     PerpStorage perpStorage;
     VaultStorage vaultStorage;
+    PLPv2 plp;
     Calculator calculator;
     LiquidityService liquidityService;
     CrossMarginService crossMarginService;
@@ -43,22 +49,24 @@ abstract contract Deployment {
     LimitTradeHandler limitTradeHandler;
     LiquidityHandler liquidityHandler;
     MarketTradeHandler marketTradeHandler;
-    GlpStrategy glpStrategy;
   }
 
-  struct DeployLocalVars {
+  struct DeployCoreLocalVars {
     address stkGlp;
     address glpManager;
     address weth;
     uint256 minExecutionFee;
-    IPyth pyth;
+    address pyth;
     uint64 defaultOracleStaleTime;
   }
 
-  function deploy(DeployLocalVars memory localVars) internal returns (DeployReturnVars memory) {
-    DeployReturnVars memory vars;
+  /// @notice Deploy core contracts.
+  /// @param localVars All required parameters to deploy core contracts.
+  /// @return Deployed contracts.
+  function deployCore(DeployCoreLocalVars memory localVars) internal returns (DeployCoreReturnVars memory) {
+    DeployCoreReturnVars memory vars;
 
-    vars.pythAdapter = new PythAdapter(localVars.pyth);
+    vars.pythAdapter = new PythAdapter(IPyth(localVars.pyth));
     vars.glpOracleAdapter = new GlpOracleAdapter(IERC20(localVars.stkGlp), IGmxGlpManager(localVars.glpManager));
     vars.oracleMiddleware = new OracleMiddleware();
 
@@ -66,6 +74,7 @@ abstract contract Deployment {
     vars.perpStorage = new PerpStorage();
     vars.vaultStorage = new VaultStorage();
 
+    vars.plp = new PLPv2();
     vars.calculator = new Calculator(
       address(vars.oracleMiddleware),
       address(vars.vaultStorage),
@@ -99,8 +108,42 @@ abstract contract Deployment {
     );
     vars.marketTradeHandler = new MarketTradeHandler(address(vars.tradeService), address(localVars.pyth));
 
-    // TODO: Configure permissions between these contracts.
+    vars.configStorage.setCalculator(address(vars.calculator));
+    vars.configStorage.setOracle(address(vars.oracleMiddleware));
+    vars.configStorage.setPLP(address(vars.plp));
+    vars.configStorage.setWeth(localVars.weth);
 
     return vars;
+  }
+
+  struct DeployGlpStrategyLocalVars {
+    address stkGlp;
+    address gmxRewardRouter;
+    address glpFeeTracker;
+    address oracleMiddleware;
+    address vaultStorage;
+    address keeper;
+    address treasury;
+    uint16 strategyBps;
+  }
+
+  /// @notice Deploy GlpStrategy.
+  /// @param localVars All required parameters to deploy GlpStrategy.
+  /// @return Deployed contracts.
+  function deployGlpStrategy(DeployGlpStrategyLocalVars memory localVars) internal returns (GlpStrategy) {
+    VaultStorage vaultStorage = VaultStorage(localVars.vaultStorage);
+    GlpStrategy glpStrategy = new GlpStrategy(
+      ERC20(localVars.stkGlp),
+      IGmxRewardRouterV2(localVars.gmxRewardRouter),
+      IGmxRewardTracker(localVars.glpFeeTracker),
+      OracleMiddleware(localVars.oracleMiddleware),
+      vaultStorage,
+      localVars.keeper,
+      localVars.treasury,
+      localVars.strategyBps
+    );
+
+    // Set strategy on vault storage to allow the strategy to cook.
+    vaultStorage.setStrategyOf(address(localVars.stkGlp), address(glpStrategy));
   }
 }

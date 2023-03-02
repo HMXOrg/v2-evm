@@ -8,4 +8,6 @@ interface IGmxRewardRouterV2 {
     uint256 _minUsdg,
     uint256 _minGlp
   ) external returns (uint256);
+
+  function mintAndStakeGlpETH(uint256 _minUsdg, uint256 _minGlp) external payable returns (uint256);
 }

@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 // interfaces
+import { Owned } from "@hmx/base/Owned.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
@@ -9,12 +10,13 @@ import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
-contract VaultStorage is IVaultStorage {
+contract VaultStorage is Owned, IVaultStorage {
   using Address for address;
   using SafeERC20 for IERC20;
 
   // EVENTs
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
+  event SetStrategyOf(address indexed token, address prevStrategy, address newStrategy);
 
   uint256 public plpTotalLiquidityUSDE30;
 
@@ -193,6 +195,14 @@ contract VaultStorage is IVaultStorage {
         i++;
       }
     }
+  }
+
+  /// @notice Set the strategy for a token
+  /// @param _token The token to set the strategy for
+  /// @param _strategy The strategy to set
+  function setStrategyOf(address _token, address _strategy) external onlyOwner {
+    emit SetStrategyOf(_token, strategyOf[_token], _strategy);
+    strategyOf[_token] = _strategy;
   }
 
   /**

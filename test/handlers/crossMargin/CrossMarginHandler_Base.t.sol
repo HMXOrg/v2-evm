@@ -15,7 +15,7 @@ contract CrossMarginHandler_Base is BaseTest {
   bytes[] internal priceDataBytes;
 
   function setUp() public virtual {
-    DeployReturnVars memory deployed = deployPerp88v2();
+    DeployCoreReturnVars memory deployed = deployPerp88v2();
 
     calculator = deployCalculator(
       address(deployed.oracleMiddleware),

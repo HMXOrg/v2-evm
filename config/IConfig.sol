@@ -9,4 +9,10 @@ interface IConfig {
   function stkGlpAddress() external view returns (address);
 
   function gmxRewardRouterV2Address() external view returns (address);
+
+  function glpFeeTrackerAddress() external view returns (address);
+
+  function pythAddress() external view returns (address);
+
+  function wethAddress() external view returns (address);
 }

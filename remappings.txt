@@ -5,3 +5,4 @@ pyth-sdk-solidity=lib/pyth-sdk-solidity/
 @config/=config/default/
 @hmx/=src/
 @hmx-test/=test/
+@hmx-script=script/

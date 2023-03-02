@@ -60,7 +60,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   function testCorrectness_WhenExecutorCloseShortPositionForAlice_AndProfitIsGreaterThenReserved() external {
     // Prepare for this test
 
-    // ALICE open SHORT position
+    // open SHORT position for ALICE
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
@@ -68,13 +68,13 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30, 0);
 
     // price change to 0.95 USD
     // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
-    // BOB open SHORT position
+    // open SHORT position for BOB
     // sub account id - 0
     // position size  - 500,000 USD
     // IMR            - 5,000 USD (1% IMF)
@@ -82,7 +82,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 526,315.789473684210526315 TOKENs
     // average price  - 0.95 USD
-    tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30);
+    tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30, 0);
 
     // recalculate new short average price after BOB open position
     // global short pnl = global short size * (current price - global avg price) / global avg price
@@ -170,7 +170,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   function testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved() external {
     // Prepare for this test
 
-    // ALICE open LONG position
+    // ALICE open Long position
     // sub account id - 0
     // position size  - 1,000,000 USD
     // IMR            - 10,000 USD (1% IMF)
@@ -179,7 +179,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price change to 1.05 USD
     // to check open interest should calculate correctly
@@ -193,7 +193,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     // price          - 1 USD
     // open interest  - 476,190.476190476190476190 TOKENs
     // average price  - 1.05 USD
-    tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30);
+    tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
     // recalculate new long average price after BOB open position
     // global long pnl = global long size * (current price - global avg price) / global avg price
@@ -282,8 +282,8 @@ contract TradeService_ForceClosePosition is TradeService_Base {
    */
 
   function testRevert_WhenAlicePositionLossingAndExecutorTryToCloseIt() external {
-    // ALICE open LONG position at price 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    // ALICE open Long position at price 1 USD
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price has changed make ALICE position lossing
     mockOracle.setPrice(0.95 * 1e30);
@@ -294,8 +294,8 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   }
 
   function testRevert_WhenAlicePositionHasProfitButStillLessThanReservedValueAndExecutorTryToCloseIt() external {
-    // ALICE open Short position at price 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    // ALICE open Short position  price 1 USD
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price has changed make ALICE position profit for ~899.9999999999%
     mockOracle.setPrice(0.900000000001 * 1e30);
@@ -306,8 +306,8 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   }
 
   function testRevert_WhenExecutorTryClosePositionButMarketIsDelistedFromPerp() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    // ALICE open Long position
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // someone delist market
     configStorage.delistMarket(ethMarketIndex);
@@ -318,7 +318,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
 
   function testRevert_WhenExecutorTryClosePositionButOracleTellMarketIsClose() external {
     // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // set market status from oracle is inactive
     mockOracle.setMarketStatus(1);
@@ -328,8 +328,8 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   }
 
   function testRevert_WhenExecutorTryClosePositionButPriceStale() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    // open LONG position
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // make price stale in mock oracle middleware
     mockOracle.setPriceStale(true);
@@ -339,29 +339,26 @@ contract TradeService_ForceClosePosition is TradeService_Base {
   }
 
   function testRevert_WhenExecutorTryCloseLongPositionButPositionIsAlreadyClosed() external {
-    // ALICE open LONG position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+    // open LONG position
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
-    // ALICE fully close position
-    vm.prank(ALICE);
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(0));
+    // fully close position
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(0), 0);
 
-    // Somehow Tester close ALICE position again
+    // Somehow Tester close position again
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionAlreadyClosed()"));
     tradeService.forceClosePosition(ALICE, 0, ethMarketIndex, address(0));
   }
 
   function testRevert_WhenExecutorTryShortClosePositionButPositionIsAlreadyClosed() external {
-    // ALICE open SHORT position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30);
+    // open SHORT position
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30, 0);
 
-    // ALICE fully close position
-    vm.prank(ALICE);
-    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(0));
+    // fully close position
 
-    // Somehow Tester close ALICE position again
-    vm.prank(ALICE);
+    tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(0), 0);
 
+    // Somehow Tester close position again
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionAlreadyClosed()"));
     tradeService.forceClosePosition(ALICE, 0, ethMarketIndex, address(0));
   }

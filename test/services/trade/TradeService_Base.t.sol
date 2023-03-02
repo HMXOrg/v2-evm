@@ -27,6 +27,7 @@ abstract contract TradeService_Base is BaseTest {
 
     // deploy services
     tradeService = new TradeService(address(perpStorage), address(vaultStorage), address(configStorage));
+    configStorage.setServiceExecutor(address(tradeService), address(this), true);
   }
 
   function getSubAccount(address _account, uint256 _subAccountId) internal pure returns (address) {

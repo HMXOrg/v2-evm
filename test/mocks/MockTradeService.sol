@@ -9,15 +9,19 @@ contract MockTradeService is ITradeService {
     uint256 _subAccountId;
     uint256 _marketIndex;
     int256 _sizeDelta;
+    uint256 _limitPriceE30;
   }
+
 
   struct DecreasePositionInputs {
     address _account;
     uint256 _subAccountId;
     uint256 _marketIndex;
     uint256 _positionSizeE30ToDecrease;
+
     // @todo - support take profit token
     // address _tpToken;
+    uint256 _limitPriceE30;
   }
 
   address public configStorage;
@@ -40,7 +44,8 @@ contract MockTradeService is ITradeService {
     address _primaryAccount,
     uint256 _subAccountId,
     uint256 _marketIndex,
-    int256 _sizeDelta
+    int256 _sizeDelta,
+    uint256 _limitPriceE30
   ) external {
     increasePositionCallCount++;
     increasePositionCalls.push(
@@ -48,7 +53,8 @@ contract MockTradeService is ITradeService {
         _primaryAccount: _primaryAccount,
         _subAccountId: _subAccountId,
         _marketIndex: _marketIndex,
-        _sizeDelta: _sizeDelta
+        _sizeDelta: _sizeDelta,
+        _limitPriceE30: _limitPriceE30
       })
     );
   }
@@ -58,7 +64,8 @@ contract MockTradeService is ITradeService {
     uint256 _subAccountId,
     uint256 _marketIndex,
     uint256 _positionSizeE30ToDecrease,
-    address _tpToken
+    address _tpToken,
+    uint256 _limitPriceE30
   ) external {
     decreasePositionCallCount++;
     decreasePositionCalls.push(
@@ -66,7 +73,8 @@ contract MockTradeService is ITradeService {
         _account: _account,
         _subAccountId: _subAccountId,
         _marketIndex: _marketIndex,
-        _positionSizeE30ToDecrease: _positionSizeE30ToDecrease
+        _positionSizeE30ToDecrease: _positionSizeE30ToDecrease,
+         _limitPriceE30: _limitPriceE30
       })
     );
   }

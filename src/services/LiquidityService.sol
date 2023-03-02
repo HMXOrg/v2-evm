@@ -84,7 +84,7 @@ contract LiquidityService is ILiquidityService {
 
     // 3. get aum and lpSupply before deduction fee
     // TODO realize farm pnl to get pendingBorrowingFee
-    uint256 _aum = _calculator.getAUM(true);
+    uint256 _aum = _calculator.getAUM(true, 0, 0);
 
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
 
@@ -125,7 +125,7 @@ contract LiquidityService is ILiquidityService {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
     //TODO should realized to get pendingBorrowingFee
-    uint256 _aum = _calculator.getAUM(false);
+    uint256 _aum = _calculator.getAUM(false, 0, 0);
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
@@ -163,10 +163,7 @@ contract LiquidityService is ILiquidityService {
       )
     );
 
-    // 4. Check slippage: revert on error
-    if (amountAfterFee < _minAmount) revert LiquidityService_InsufficientLiquidityMint();
-
-    // 5. Calculate mintAmount
+    // 4. Calculate mintAmount
     _tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
       IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals,
       USD_DECIMALS,
@@ -174,6 +171,9 @@ contract LiquidityService is ILiquidityService {
     );
 
     mintAmount = _calculator.getMintAmount(_aum, _lpSupply, _tokenValueUSDAfterFee);
+
+    // 5. Check slippage: revert on error
+    if (mintAmount < _minAmount) revert LiquidityService_InsufficientLiquidityMint();
 
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
     IVaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
@@ -298,7 +298,7 @@ contract LiquidityService is ILiquidityService {
     // reserveValue / PLPTVL > maxPLPUtilization
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
-    uint256 plpTVL = _calculator.getPLPValueE30(false);
+    uint256 plpTVL = _calculator.getPLPValueE30(false, 0, 0);
     if (_globalState.reserveValueE30 > _liquidityConfig.maxPLPUtilization * plpTVL) {
       revert LiquidityService_MaxPLPUtilizationExceeded();
     }

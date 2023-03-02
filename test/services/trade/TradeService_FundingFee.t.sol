@@ -16,7 +16,7 @@ contract TradeService_FundingFee is TradeService_Base {
     super.setUp();
 
     // Set PLPLiquidity
-    vaultStorage.addPLPLiquidity(configStorage.plpTokens(0), 1000 * 1e18);
+    vaultStorage.addPLPLiquidity(configStorage.plpAssetIds[0], 1000 * 1e18);
 
     // Ignore Borrowing fee on this test
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });

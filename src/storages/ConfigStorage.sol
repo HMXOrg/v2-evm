@@ -44,12 +44,8 @@ contract ConfigStorage is IConfigStorage, Owned {
   TradingConfig public tradingConfig;
   LiquidationConfig public liquidationConfig;
 
-  // @todo discuss List or Array
-  IteratableAddressList.List public plpAcceptedTokens; // @todo - [liquidity] remove
-  address[] public plpTokens; // @todo - [liquidity] remove
   address[] public collateralTokens; // @todo - [cross margin] remove
 
-  mapping(address => PLPTokenConfig) public plpTokenConfigs; // @todo - [liquidity] remove
   mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // @todo - [cross margin] remove
 
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
@@ -68,22 +64,20 @@ contract ConfigStorage is IConfigStorage, Owned {
    */
 
   // Token's address => Asset ID
-  mapping(address => bytes32) tokenAssetIds;
+  mapping(address => bytes32) public tokenAssetIds;
   // Pyth Asset ID => Configs
-  mapping(bytes32 => AssetConfig) assetConfigs;
+  mapping(bytes32 => AssetConfig) public assetConfigs;
   // PLP stuff
-  bytes32[] plpAssetIds;
-  mapping(bytes32 => PLPTokenConfig) assetPlpTokenConfigs;
+  bytes32[] public plpAssetIds;
+  mapping(bytes32 => PLPTokenConfig) public assetPlpTokenConfigs;
   // Cross margin
-  bytes32[] collateralAssetIds;
-  mapping(bytes32 => CollateralTokenConfig) assetCollateralTokenConfigs;
+  bytes32[] public collateralAssetIds;
+  mapping(bytes32 => CollateralTokenConfig) public assetCollateralTokenConfigs;
   // Trade
-  MarketConfig[] marketConfigs;
+  MarketConfig[] public marketConfigs;
   AssetClassConfig[] public assetClassConfigs;
 
-  constructor() {
-    plpAcceptedTokens.init();
-  }
+  constructor() {}
 
   /**
    * Validation
@@ -97,7 +91,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function validateAcceptedLiquidityToken(address _token) external view {
-    if (!plpTokenConfigs[_token].accepted) revert IConfigStorage_NotAcceptedLiquidity();
+    if (!assetPlpTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedLiquidity();
   }
 
   /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
@@ -128,18 +122,14 @@ contract ConfigStorage is IConfigStorage, Owned {
     return assetClassConfigs[_index];
   }
 
-  function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory _plpTokenConfig) {
-    return plpTokenConfigs[_token];
-  }
-
   function getCollateralTokenConfigs(
     address _token
   ) external view returns (CollateralTokenConfig memory _collateralTokenConfig) {
     return collateralTokenConfigs[_token];
   }
 
-  function getPLPTokenConfig(address token) external view returns (PLPTokenConfig memory) {
-    return plpTokenConfigs[token];
+  function getPLPTokenConfig(address _token) external view returns (PLPTokenConfig memory) {
+    return assetPlpTokenConfigs[tokenAssetIds[_token]];
   }
 
   function getLiquidityConfig() external view returns (LiquidityConfig memory) {
@@ -165,18 +155,32 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function getPlpTokens() external view returns (address[] memory) {
-    return plpTokens;
+    address[] memory _result = new address[](plpAssetIds.length);
+
+    for (uint256 i = 0; i < plpAssetIds.length; ) {
+      _result[i] = assetConfigs[plpAssetIds[i]].tokenAddress;
+      unchecked {
+        ++i;
+      }
+    }
+
+    return _result;
   }
 
   function getCollateralTokens() external view returns (address[] memory) {
     return collateralTokens;
   }
 
-  /// @notice Return the next underlying token address.
-  /// @dev This uses to traverse all underlying tokens.
-  /// @param token The token address to query the next token. Can also be START and END.
-  function getNextAcceptedToken(address token) external view returns (address) {
-    return plpAcceptedTokens.getNextOf(token);
+  function getAssetConfigs(bytes32 _assetId) external view returns (AssetConfig memory) {
+    return assetConfigs[_assetId];
+  }
+
+  function getAssetPlpTokenConfigs(bytes32 _assetId) external view returns (PLPTokenConfig memory) {
+    return assetPlpTokenConfigs[_assetId];
+  }
+
+  function getPlpAssetIds() external view returns (bytes32[] memory) {
+    return plpAssetIds;
   }
 
   /**
@@ -259,9 +263,9 @@ contract ConfigStorage is IConfigStorage, Owned {
     address _token,
     PLPTokenConfig memory _newConfig
   ) external returns (PLPTokenConfig memory _plpTokenConfig) {
-    plpTokenConfigs[_token] = _newConfig;
-    plpTokens.push(_token);
-    return plpTokenConfigs[_token];
+    assetPlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
+
+    return _newConfig;
   }
 
   function setCollateralTokenConfig(
@@ -288,27 +292,29 @@ contract ConfigStorage is IConfigStorage, Owned {
     }
 
     for (uint256 i; i < _tokens.length; ) {
+      ////assetId
+      bytes32 _assetId = tokenAssetIds[_tokens[i]];
+
       // Enforce that isAccept must be true to prevent
       // removing underlying token through this function.
       if (!_configs[i].accepted) revert IConfigStorage_BadArgs();
 
       // If plpTokenConfigs.accepted is previously false,
       // then it is a new token to be added.
-      if (!plpTokenConfigs[_tokens[i]].accepted) {
-        plpAcceptedTokens.add(_tokens[i]);
-        plpTokens.push(_tokens[i]);
+      if (!assetPlpTokenConfigs[_assetId].accepted) {
+        plpAssetIds.push(_assetId);
       }
 
       // Log
-      emit AddOrUpdatePLPTokenConfigs(_tokens[i], plpTokenConfigs[_tokens[i]], _configs[i]);
+      emit AddOrUpdatePLPTokenConfigs(_tokens[i], assetPlpTokenConfigs[_assetId], _configs[i]);
 
       // Update totalWeight accordingly
 
       liquidityConfig.plpTotalTokenWeight == 0 ? _configs[i].targetWeight : liquidityConfig.plpTotalTokenWeight =
-        (liquidityConfig.plpTotalTokenWeight - plpTokenConfigs[_tokens[i]].targetWeight) +
+        (liquidityConfig.plpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
         _configs[i].targetWeight;
 
-      plpTokenConfigs[_tokens[i]] = _configs[i];
+      assetPlpTokenConfigs[_assetId] = _configs[i];
 
       if (liquidityConfig.plpTotalTokenWeight > 1e18) {
         revert IConfigStorage_ExceedLimitSetting();
@@ -343,14 +349,13 @@ contract ConfigStorage is IConfigStorage, Owned {
   /// @notice Remove underlying token.
   /// @param _token The token address to remove.
   function removeAcceptedToken(address _token) external onlyOwner {
-    // Update totalTokenWeight
-    liquidityConfig.plpTotalTokenWeight -= plpTokenConfigs[_token].targetWeight;
+    bytes32 _assetId = tokenAssetIds[_token];
 
-    // Delete token from plpAcceptedTokens list
-    plpAcceptedTokens.remove(_token, plpAcceptedTokens.getPreviousOf(_token));
+    // Update totalTokenWeight
+    liquidityConfig.plpTotalTokenWeight -= assetPlpTokenConfigs[_assetId].targetWeight;
 
     // Delete plpTokenConfig
-    delete plpTokenConfigs[_token];
+    delete assetPlpTokenConfigs[_assetId];
 
     emit RemoveUnderlying(_token);
   }

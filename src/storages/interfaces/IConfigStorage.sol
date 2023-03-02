@@ -145,8 +145,6 @@ interface IConfigStorage {
 
   function getTradingConfig() external view returns (TradingConfig memory);
 
-  function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory);
-
   function getCollateralTokenConfigs(
     address _token
   ) external view returns (CollateralTokenConfig memory _collateralTokenConfig);
@@ -161,11 +159,17 @@ interface IConfigStorage {
 
   function getMarketConfigsLength() external view returns (uint256);
 
-  function getNextAcceptedToken(address token) external view returns (address);
-
   function getPlpTokens() external view returns (address[] memory);
 
   function getCollateralTokens() external view returns (address[] memory);
+
+  function getPlpAssetIds() external view returns (bytes32[] memory);
+
+  function getAssetConfigs(bytes32 _assetId) external view returns (AssetConfig memory);
+
+  function getAssetPlpTokenConfigs(bytes32 _assetId) external view returns (PLPTokenConfig memory);
+
+  function tokenAssetIds(address _token) external view returns (bytes32);
 
   /**
    * Setter

@@ -90,31 +90,30 @@ contract Calculator is Owned, ICalculator {
   /// @return PLP Value
   function _getPLPValueE30(bool _isMaxPrice, uint256 _limitPrice, bytes32 _assetId) internal view returns (uint256) {
     uint256 assetValue = 0;
-    address _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(
-      IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_START()
-    );
 
-    while (
-      _plpUnderlyingToken !=
-      IConfigStorage(configStorage).getNextAcceptedToken(IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END())
-    ) {
+    bytes32[] memory _plpAssetIds = IConfigStorage(configStorage).plpAssetIds();
+
+    for (uint256 i = 0; i < _plpAssetIds.length; ) {
       uint256 priceE30;
-      if (_shouldOverwritePrice(_limitPrice, _plpUnderlyingToken, _assetId)) {
+
+      IConfigStorage.AssetConfig memory _assetConfig = IConfigStorage(configStorage).assetConfigs(_plpAssetIds[i]);
+
+      if (_limitPrice > 0 && _assetId == _plpAssetIds[i]) {
         priceE30 = _limitPrice;
       } else {
         (priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-          _plpUnderlyingToken.toBytes32(),
+          _plpAssetIds[i],
           _isMaxPrice,
-          IConfigStorage(configStorage).getMarketConfigByToken(_plpUnderlyingToken).priceConfidentThreshold
+          0 // @todo::REFACTOR use threshold from oracleMiddleward
         );
       }
-      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_plpUnderlyingToken) * priceE30) /
-        (10 ** IConfigStorage(configStorage).getPlpTokenConfigs(_plpUnderlyingToken).decimals);
+      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * priceE30) /
+        (10 ** IConfigStorage(configStorage).assetPlpTokenConfigs(_plpAssetIds[i]).decimals);
 
       unchecked {
         assetValue += value;
+        ++i;
       }
-      _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(_plpUnderlyingToken);
     }
 
     return assetValue;

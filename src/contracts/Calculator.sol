@@ -98,14 +98,12 @@ contract Calculator is Owned, ICalculator {
       uint256 priceE30;
       if (_shouldOverwritePrice(_limitPrice, _plpUnderlyingToken, _assetId)) {
         priceE30 = _limitPrice;
-        console.log(1);
       } else {
         (priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
           _plpUnderlyingToken.toBytes32(),
           _isMaxPrice,
           IConfigStorage(configStorage).getMarketConfigByToken(_plpUnderlyingToken).priceConfidentThreshold
         );
-        console.log(2);
       }
       uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_plpUnderlyingToken) * priceE30) /
         (10 ** IConfigStorage(configStorage).getPlpTokenConfigs(_plpUnderlyingToken).decimals);

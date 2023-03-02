@@ -82,8 +82,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
    * MODIFIER
    */
 
-  modifier onlyAcceptedToken(address _token) {
-    IConfigStorage(ILiquidityService(liquidityService).configStorage()).validateAcceptedLiquidityToken(_token);
+  modifier onlyAcceptedAsset(bytes32 _asset) {
+    IConfigStorage(ILiquidityService(liquidityService).configStorage()).validateAcceptedLiquidityAsset(_asset);
     _;
   }
 
@@ -102,22 +102,28 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
    */
 
   /// @notice Create a new AddLiquidity order
-  /// @param _tokenIn address token in
+  /// @param _assetIn address token in
   /// @param _amountIn amount token in (based on decimals)
   /// @param _minOut minPLP out
   /// @param _executionFee The execution fee of order
   /// @param _shouldWrap in case of sending native token
   function createAddLiquidityOrder(
-    address _tokenIn,
+    bytes32 _assetIn,
     uint256 _amountIn,
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldWrap
-  ) external payable nonReentrant onlyAcceptedToken(_tokenIn) {
+  ) external payable nonReentrant onlyAcceptedAsset(_assetIn) {
     //1. convert native to WNative (including executionFee)
     _transferInETH();
 
     if (_executionFee < minExecutionFee) revert ILiquidityHandler_InsufficientExecutionFee();
+
+    address _tokenIn = IConfigStorage(ILiquidityService(liquidityService).configStorage())
+      .getAssetConfig(_assetIn)
+      .tokenAddress;
+
+    if (_tokenIn == address(0)) revert ILiquidityHandler_InvalidAddress();
 
     if (_shouldWrap) {
       if (msg.value != _amountIn + minExecutionFee) {
@@ -148,18 +154,24 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   }
 
   /// @notice Create a new RemoveLiquidity order
-  /// @param _tokenOut address token in
+  /// @param _assetOut address token in
   /// @param _amountIn amount token in (based on decimals)
   /// @param _minOut minAmoutOut
   /// @param _executionFee The execution fee of order
   /// @param _shouldUnwrap in case of user need native token
   function createRemoveLiquidityOrder(
-    address _tokenOut,
+    bytes32 _assetOut,
     uint256 _amountIn,
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldUnwrap
-  ) external payable nonReentrant onlyAcceptedToken(_tokenOut) {
+  ) external payable nonReentrant onlyAcceptedAsset(_assetOut) {
+    address _tokenOut = IConfigStorage(ILiquidityService(liquidityService).configStorage())
+      .getAssetConfig(_assetOut)
+      .tokenAddress;
+
+    if (_tokenOut == address(0)) revert ILiquidityHandler_InvalidAddress();
+
     //convert native to WNative (including executionFee)
     _transferInETH();
 

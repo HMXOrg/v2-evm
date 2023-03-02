@@ -66,6 +66,14 @@ contract ConfigStorage is IConfigStorage, Owned {
   uint256 public pnlFactor; // factor that calculate unrealized PnL after collateral factor
   address public weth;
 
+  /**
+   * New states
+   */
+
+  // all configs of asset
+  mapping(bytes32 => AssetConfig) public assetConfigs;
+  mapping(bytes32 => PLPTokenConfig) public assetPlpTokenConfigs;
+
   constructor() {
     plpAcceptedTokens.init();
   }
@@ -81,8 +89,8 @@ contract ConfigStorage is IConfigStorage, Owned {
     if (!serviceExecutors[_contractAddress][_executorAddress]) revert IConfigStorage_NotWhiteListed();
   }
 
-  function validateAcceptedLiquidityToken(address _token) external view {
-    if (!plpTokenConfigs[_token].accepted) revert IConfigStorage_NotAcceptedLiquidity();
+  function validateAcceptedLiquidityAsset(bytes32 _asset) external view {
+    if (!assetPlpTokenConfigs[_asset].accepted) revert IConfigStorage_NotAcceptedLiquidity();
   }
 
   /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
@@ -111,6 +119,10 @@ contract ConfigStorage is IConfigStorage, Owned {
     uint256 _index
   ) external view returns (AssetClassConfig memory _assetClassConfig) {
     return assetClassConfigs[_index];
+  }
+
+  function getAssetConfig(bytes32 _asset) external view returns (AssetConfig memory _assetConfig) {
+    return assetConfigs[_asset];
   }
 
   function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory _plpTokenConfig) {

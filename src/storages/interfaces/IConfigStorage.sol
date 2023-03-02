@@ -15,6 +15,13 @@ interface IConfigStorage {
   /**
    * Structs
    */
+
+  /// @notice asset's config
+  struct AssetConfig {
+    address tokenAddress;
+    bytes32 assetId;
+  }
+
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
     uint256 decimals; //token decimals
@@ -48,7 +55,6 @@ interface IConfigStorage {
   struct MarketConfig {
     bytes32 assetId; // pyth network asset id
     uint256 assetClass; // Crypto = 1, Forex = 2, Stock = 3
-    uint256 exponent;
     uint256 maxProfitRate; // maximum profit that trader could take per position
     uint256 minLeverage; // minimum leverage that trader could open position
     uint256 initialMarginFraction; // IMF
@@ -119,7 +125,7 @@ interface IConfigStorage {
 
   function validateAcceptedCollateral(address _token) external view;
 
-  function validateAcceptedLiquidityToken(address _token) external view;
+  function validateAcceptedLiquidityAsset(bytes32 _asset) external view;
 
   /**
    * Getter
@@ -135,6 +141,8 @@ interface IConfigStorage {
   function getTradingConfig() external view returns (TradingConfig memory);
 
   function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory);
+
+  function getAssetConfig(bytes32 _asset) external view returns (AssetConfig memory);
 
   function getCollateralTokenConfigs(
     address _token

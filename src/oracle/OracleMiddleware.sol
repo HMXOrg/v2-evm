@@ -245,7 +245,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) public view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
@@ -282,7 +282,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) public view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 

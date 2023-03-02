@@ -42,14 +42,18 @@ contract Calculator is Owned, ICalculator {
     perpStorage = _perpStorage;
   }
 
-  // return in
-  function getAUME30(bool isMaxPrice, uint256 _price, bytes32 _assetId) public view returns (uint256) {
+  /// @notice getAUM in E30
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPrice Limit price
+  /// @param _assetId Market Assetid
+  /// @return PLP Value in E18 format
+  function getAUME30(bool _isMaxPrice, uint256 _limitPrice, bytes32 _assetId) public view returns (uint256) {
     // @todo -  pendingBorrowingFeeE30
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = 0;
     int256 pnlE30 = _getGlobalPNLE30();
 
-    uint256 aum = _getPLPValueE30(isMaxPrice, _price, _assetId) + pendingBorrowingFeeE30;
+    uint256 aum = _getPLPValueE30(_isMaxPrice, _limitPrice, _assetId) + pendingBorrowingFeeE30;
     if (pnlE30 < 0) {
       uint256 _pnl = uint256(-pnlE30);
       if (aum < _pnl) return 0;
@@ -61,15 +65,30 @@ contract Calculator is Owned, ICalculator {
     return aum;
   }
 
-  function getAUM(bool isMaxPrice, uint256 _limitPrice, bytes32 _assetId) public view returns (uint256) {
-    return getAUME30(isMaxPrice, _limitPrice, _assetId) / 1e12;
+  /// @notice getAUM
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPrice Limit price
+  /// @param _assetId Market Assetid
+  /// @return PLP Value in E18 format
+  function getAUM(bool _isMaxPrice, uint256 _limitPrice, bytes32 _assetId) public view returns (uint256) {
+    return getAUME30(_isMaxPrice, _limitPrice, _assetId) / 1e12;
   }
 
-  function getPLPValueE30(bool isMaxPrice, uint256 _limitPrice, bytes32 _assetId) external view returns (uint256) {
-    return _getPLPValueE30(isMaxPrice, _limitPrice, _assetId);
+  /// @notice GetPLPValue in E30
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPrice Limit price
+  /// @param _assetId Market Assetid
+  /// @return PLP Value
+  function getPLPValueE30(bool _isMaxPrice, uint256 _limitPrice, bytes32 _assetId) external view returns (uint256) {
+    return _getPLPValueE30(_isMaxPrice, _limitPrice, _assetId);
   }
 
-  function _getPLPValueE30(bool isMaxPrice, uint256 _limitPrice, bytes32 _assetId) internal view returns (uint256) {
+  /// @notice GetPLPValue in E30
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPrice Limit price
+  /// @param _assetId Market Assetid
+  /// @return PLP Value
+  function _getPLPValueE30(bool _isMaxPrice, uint256 _limitPrice, bytes32 _assetId) internal view returns (uint256) {
     uint256 assetValue = 0;
     address _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(
       IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_START()
@@ -85,7 +104,7 @@ contract Calculator is Owned, ICalculator {
       } else {
         (priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
           _plpUnderlyingToken.toBytes32(),
-          isMaxPrice,
+          _isMaxPrice,
           IConfigStorage(configStorage).getMarketConfigByToken(_plpUnderlyingToken).priceConfidentThreshold
         );
       }
@@ -101,11 +120,17 @@ contract Calculator is Owned, ICalculator {
     return assetValue;
   }
 
-  function getPLPPrice(uint256 aum, uint256 plpSupply) public pure returns (uint256) {
-    if (plpSupply == 0) return 0;
-    return aum / plpSupply;
+  /// @notice getPLPPrice in e18 format
+  /// @param _aum aum in PLP
+  /// @param _plpSupply Total Supply of PLP token
+  /// @return PLP Price in e18
+  function getPLPPrice(uint256 _aum, uint256 _plpSupply) public pure returns (uint256) {
+    if (_plpSupply == 0) return 0;
+    return _aum / _plpSupply;
   }
 
+  /// @notice get all PNL in e30 format
+  /// @return pnl value
   function _getGlobalPNLE30() internal view returns (int256) {
     // @todo - REFACTOR if someone don't want totalPnlLong and short.
     int256 totalPnlLong = 0;
@@ -170,8 +195,11 @@ contract Calculator is Owned, ICalculator {
     return totalPnlLong + totalPnlShort;
   }
 
-  // @todo add more description
-  // return in 1e18
+  ///@notice getMintAmount in e18 format
+  /// @param _aum aum in PLP
+  /// @param _totalSupply PLP total supply
+  /// @param _value value in USD e30
+  /// @return mintAmount in e18 format
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
     return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
   }
@@ -377,6 +405,7 @@ contract Calculator is Owned, ICalculator {
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
   /// @param _limitPrice Price from limitOrder
+  /// @param _assetId Market Assetid
   /// @return _equityValueE30 Total equity of trader's account.
   function getEquity(
     address _subAccount,
@@ -384,7 +413,6 @@ contract Calculator is Owned, ICalculator {
     bytes32 _assetId
   ) public view returns (uint256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
-    //@todo guarantee limit order, getCollateralValue:: we do not know which price should be overriden, skip this part
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPrice, _assetId);
 
     // Calculate unrealized PnL on opening trader's position(s)
@@ -444,6 +472,7 @@ contract Calculator is Owned, ICalculator {
       // Long position always use MinPrice. Short position always use MaxPrice
       bool _isUseMaxPrice = _isLong ? false : true;
 
+      // Check to overwrite price
       uint256 _priceE30;
       if (_assetId == _marketConfig.assetId && _limitPrice != 0) {
         _priceE30 = _limitPrice;
@@ -649,8 +678,17 @@ contract Calculator is Owned, ICalculator {
     return _freeCollateral;
   }
 
-  function _shouldOverwritePrice(uint256 _price, address _token, bytes32 _assetId) internal view returns (bool) {
-    return (_price != 0 &&
+  /// @notice To check Price should be overwrite
+  /// @param _limitPrice LimitPrice
+  /// @param _token Token addresss
+  /// @param _assetId Market assetId
+  /// @return _shouldOverwrite should overwrite to LimitPrice
+  function _shouldOverwritePrice(
+    uint256 _limitPrice,
+    address _token,
+    bytes32 _assetId
+  ) internal view returns (bool _shouldOverwrite) {
+    return (_limitPrice != 0 &&
       IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(_token.toBytes32(), _assetId));
   }
 }

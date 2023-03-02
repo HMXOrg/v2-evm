@@ -187,7 +187,7 @@ contract ConfigStorage is IConfigStorage, Owned {
    * Setter
    */
 
-  function addTokenAssetIds(address _token, bytes32 _assetId) external {
+  function addTokenAssetId(address _token, bytes32 _assetId) external {
     tokenAssetIds[_token] = _assetId;
   }
 
@@ -342,6 +342,10 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external {
     assetClassConfigs[_index] = _newConfig;
+  }
+
+  function setAssetConfig(bytes32 _assetId, AssetConfig memory _config) external {
+    assetConfigs[_assetId] = _config;
   }
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {

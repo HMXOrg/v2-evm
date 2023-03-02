@@ -52,6 +52,36 @@ contract BotHandler is IBotHandler, Owned {
     pyth = _pyth;
   }
 
+  /// @notice force to close position and take profit, depend on reserve value on this position
+  /// @param _account position's owner
+  /// @param _subAccountId sub-account that owned position
+  /// @param _marketIndex market index of position
+  /// @param _tpToken token that trader receive as profit
+  function forceTakeMaxProfit(
+    address _account,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  ) external onlyPositionManager {
+    ITradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+
+    emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
+  }
+
+  /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.
+  /// @param _subAccount The sub-account to be liquidated.
+  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
+  function liquidate(address _subAccount, bytes[] memory _priceData) external onlyPositionManager {
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+
+    // liquidate
+    LiquidationService(liquidationService).liquidate(_subAccount);
+
+    emit LogLiquidate(_subAccount);
+  }
+
   /// @notice Reset trade service
   /// @param _newTradeService new trade service address
   function setTradeService(address _newTradeService) external onlyOwner {
@@ -103,35 +133,5 @@ contract BotHandler is IBotHandler, Owned {
     pyth = _newPyth;
 
     emit LogSetPyth(pyth, _newPyth);
-  }
-
-  /// @notice force to close position and take profit, depend on reserve value on this position
-  /// @param _account position's owner
-  /// @param _subAccountId sub-account that owned position
-  /// @param _marketIndex market index of position
-  /// @param _tpToken token that trader receive as profit
-  function forceTakeMaxProfit(
-    address _account,
-    uint256 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken
-  ) external onlyPositionManager {
-    ITradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
-
-    emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
-  }
-
-  /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.
-  /// @param _subAccount The sub-account to be liquidated.
-  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function liquidate(address _subAccount, bytes[] memory _priceData) external onlyPositionManager {
-    // Feed Price
-    // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
-
-    // liquidate
-    LiquidationService(liquidationService).liquidate(_subAccount);
-
-    emit LogLiquidate(_subAccount);
   }
 }

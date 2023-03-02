@@ -91,12 +91,12 @@ contract Calculator is Owned, ICalculator {
   function _getPLPValueE30(bool _isMaxPrice, uint256 _limitPrice, bytes32 _assetId) internal view returns (uint256) {
     uint256 assetValue = 0;
 
-    bytes32[] memory _plpAssetIds = IConfigStorage(configStorage).plpAssetIds();
+    bytes32[] memory _plpAssetIds = IConfigStorage(configStorage).getPlpAssetIds();
 
     for (uint256 i = 0; i < _plpAssetIds.length; ) {
       uint256 priceE30;
 
-      IConfigStorage.AssetConfig memory _assetConfig = IConfigStorage(configStorage).assetConfigs(_plpAssetIds[i]);
+      IConfigStorage.AssetConfig memory _assetConfig = IConfigStorage(configStorage).getAssetConfigs(_plpAssetIds[i]);
 
       if (_limitPrice > 0 && _assetId == _plpAssetIds[i]) {
         priceE30 = _limitPrice;
@@ -108,7 +108,7 @@ contract Calculator is Owned, ICalculator {
         );
       }
       uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * priceE30) /
-        (10 ** IConfigStorage(configStorage).assetPlpTokenConfigs(_plpAssetIds[i]).decimals);
+        (10 ** IConfigStorage(configStorage).getAssetPlpTokenConfigs(_plpAssetIds[i]).decimals);
 
       unchecked {
         assetValue += value;

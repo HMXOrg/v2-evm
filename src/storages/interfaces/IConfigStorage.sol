@@ -174,6 +174,8 @@ interface IConfigStorage {
   /**
    * Setter
    */
+  function addTokenAssetId(address _token, bytes32 _assetId) external;
+
   function setCalculator(address _calculator) external;
 
   function setOracle(address _oracle) external;

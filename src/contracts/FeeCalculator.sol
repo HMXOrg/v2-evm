@@ -128,7 +128,7 @@ contract FeeCalculator is IFeeCalculator {
 
       //find decimals
       bytes32 _assetId = _configStorage.tokenAssetIds(_tmpVars.underlyingToken);
-      _tmpVars.underlyingTokenDecimal = _configStorage.assetPlpTokenConfigs(_assetId).decimals;
+      _tmpVars.underlyingTokenDecimal = _configStorage.getAssetPlpTokenConfigs(_assetId).decimals;
       uint256 plpLiquidityAmount = _vaultStorage.plpLiquidity(_tmpVars.underlyingToken);
 
       // Retrieve the latest price and confident threshold of the plp underlying token

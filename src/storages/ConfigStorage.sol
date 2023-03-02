@@ -186,6 +186,15 @@ contract ConfigStorage is IConfigStorage, Owned {
   /**
    * Setter
    */
+
+  function addTokenAssetIds(address _token, bytes32 _assetId) external {
+    tokenAssetIds[_token] = _assetId;
+  }
+
+  function setPlpAssetId(bytes32[] memory _plpAssetIds) external {
+    plpAssetIds = _plpAssetIds;
+  }
+
   function setCalculator(address _calculator) external {
     calculator = _calculator;
     emit SetCalculator(calculator);
@@ -304,7 +313,6 @@ contract ConfigStorage is IConfigStorage, Owned {
       if (!assetPlpTokenConfigs[_assetId].accepted) {
         plpAssetIds.push(_assetId);
       }
-
       // Log
       emit AddOrUpdatePLPTokenConfigs(_tokens[i], assetPlpTokenConfigs[_assetId], _configs[i]);
 

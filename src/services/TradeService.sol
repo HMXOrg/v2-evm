@@ -376,12 +376,6 @@ contract TradeService is ITradeService {
       _limitPriceE30,
       _marketConfig.assetId
     );
-
-    // Post validation
-    // check sub account equity is under MMR
-    _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
-
-    emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }
 
   // @todo - access control

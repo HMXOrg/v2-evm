@@ -203,9 +203,9 @@ interface IConfigStorage {
   ) external returns (PLPTokenConfig memory _plpTokenConfig);
 
   function setCollateralTokenConfig(
-    address _token,
+    bytes32 collateralAssetId,
     CollateralTokenConfig memory _newConfig
-  ) external returns (CollateralTokenConfig memory);
+  ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 
   function setWeth(address _weth) external;
 

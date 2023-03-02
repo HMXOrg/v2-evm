@@ -3,9 +3,11 @@ pragma solidity 0.8.18;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { BaseTest, CrossMarginService, IConfigStorage, MockErc20 } from "../../base/BaseTest.sol";
+import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 import { console } from "forge-std/console.sol";
 
 contract CrossMarginService_Base is BaseTest {
+  using AddressUtils for address;
   address internal CROSS_MARGIN_HANDLER;
 
   CrossMarginService crossMarginService;
@@ -44,8 +46,9 @@ contract CrossMarginService_Base is BaseTest {
       priceConfidentThreshold: 0.01 * 1e18
     });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collateralConfigWETH);
-    configStorage.setCollateralTokenConfig(address(usdc), _collateralConfigUSDC);
+    configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collateralConfigWETH);
+    configStorage.setCollateralTokenConfig(address(usdc).toBytes32(), _collateralConfigUSDC);
+    configStorage.addTokenAssetId(address(usdc), address(usdc).toBytes32());
   }
 
   // =========================================

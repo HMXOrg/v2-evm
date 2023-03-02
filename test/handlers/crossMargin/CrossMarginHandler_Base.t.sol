@@ -49,8 +49,8 @@ contract CrossMarginHandler_Base is BaseTest {
       priceConfidentThreshold: 0.01 * 1e18
     });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collateralConfigWETH);
-    configStorage.setCollateralTokenConfig(address(usdc), _collateralConfigUSDC);
+    configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collateralConfigWETH);
+    configStorage.setCollateralTokenConfig(address(usdc).toBytes32(), _collateralConfigUSDC);
 
     // Set market config
     configStorage.setMarketConfig(

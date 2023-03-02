@@ -6,6 +6,8 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
+import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
+
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
@@ -53,6 +55,8 @@ import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
 import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
+  using AddressUtils for address;
+
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -143,6 +147,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
+    _setUpAssetConfigs();
 
     feeCalculator = new FeeCalculator(address(vaultStorage), address(configStorage));
 
@@ -396,7 +401,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       priceConfidentThreshold: 0.01 * 1e18
     });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfigWeth);
+    configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collatTokenConfigWeth);
+    configStorage.addTokenAssetId(address(weth), address(weth).toBytes32());
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
       decimals: 8,
@@ -407,7 +413,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       priceConfidentThreshold: 0.01 * 1e18
     });
 
-    configStorage.setCollateralTokenConfig(address(wbtc), _collatTokenConfigWbtc);
+    configStorage.setCollateralTokenConfig(address(wbtc).toBytes32(), _collatTokenConfigWbtc);
+    configStorage.addTokenAssetId(address(wbtc), address(wbtc).toBytes32());
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigUsdt = IConfigStorage.CollateralTokenConfig({
       decimals: usdt.decimals(),
@@ -418,7 +425,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       priceConfidentThreshold: 0.01 * 1e18
     });
 
-    configStorage.setCollateralTokenConfig(address(usdt), _collatTokenConfigUsdt);
+    configStorage.setCollateralTokenConfig(address(usdt).toBytes32(), _collatTokenConfigUsdt);
+    configStorage.addTokenAssetId(address(usdt), address(usdt).toBytes32());
   }
 
   function _setUpLiquidationConfig() private {
@@ -427,6 +435,41 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     });
 
     configStorage.setLiquidationConfig(_liquidationConfig);
+  }
+
+  function _setUpAssetConfigs() private {
+    IConfigStorage.AssetConfig memory _assetConfigWeth = IConfigStorage.AssetConfig({
+      tokenAddress: address(weth),
+      assetId: address(weth).toBytes32(),
+      priceConfidentThreshold: 0.01 * 1e18,
+      pythExponent: 18,
+      trustPriceAge: 0,
+      decimals: 18,
+      isStableCoin: false
+    });
+    configStorage.setAssetConfig(address(weth).toBytes32(), _assetConfigWeth);
+
+    IConfigStorage.AssetConfig memory _assetConfigWbtc = IConfigStorage.AssetConfig({
+      tokenAddress: address(wbtc),
+      assetId: address(wbtc).toBytes32(),
+      priceConfidentThreshold: 0.01 * 1e18,
+      pythExponent: 8,
+      trustPriceAge: 0,
+      decimals: 8,
+      isStableCoin: false
+    });
+    configStorage.setAssetConfig(address(wbtc).toBytes32(), _assetConfigWbtc);
+
+    IConfigStorage.AssetConfig memory _assetConfigUsdt = IConfigStorage.AssetConfig({
+      tokenAddress: address(usdt),
+      assetId: address(usdt).toBytes32(),
+      priceConfidentThreshold: 0.01 * 1e18,
+      pythExponent: 6,
+      trustPriceAge: 0,
+      decimals: 6,
+      isStableCoin: false
+    });
+    configStorage.setAssetConfig(address(usdt).toBytes32(), _assetConfigUsdt);
   }
 
   function abs(int256 x) external pure returns (uint256) {

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { console } from "forge-std/console.sol";
+
 // @todo - convert to upgradable
 
 import { AddressUtils } from "../libraries/AddressUtils.sol";
@@ -47,10 +49,10 @@ contract ConfigStorage is IConfigStorage, Owned {
   // @todo discuss List or Array
   IteratableAddressList.List public plpAcceptedTokens; // @todo - [liquidity] remove
   address[] public plpTokens; // @todo - [liquidity] remove
-  address[] public collateralTokens; // @todo - [cross margin] remove
+  // address[] public collateralTokens; // @todo - [cross margin] remove
 
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // @todo - [liquidity] remove
-  mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // @todo - [cross margin] remove
+  // mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // @todo - [cross margin] remove
 
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
   mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer
@@ -68,17 +70,17 @@ contract ConfigStorage is IConfigStorage, Owned {
    */
 
   // Token's address => Asset ID
-  mapping(address => bytes32) tokenAssetIds;
+  mapping(address => bytes32) public tokenAssetIds;
   // Pyth Asset ID => Configs
-  mapping(bytes32 => AssetConfig) assetConfigs;
+  mapping(bytes32 => AssetConfig) public assetConfigs;
   // PLP stuff
-  bytes32[] plpAssetIds;
-  mapping(bytes32 => PLPTokenConfig) assetPlpTokenConfigs;
+  bytes32[] public plpAssetIds;
+  mapping(bytes32 => PLPTokenConfig) public assetPlpTokenConfigs;
   // Cross margin
-  bytes32[] collateralAssetIds;
-  mapping(bytes32 => CollateralTokenConfig) assetCollateralTokenConfigs;
+  bytes32[] public collateralAssetIds;
+  mapping(bytes32 => CollateralTokenConfig) public assetCollateralTokenConfigs;
   // Trade
-  MarketConfig[] marketConfigs;
+  MarketConfig[] public marketConfigs;
   AssetClassConfig[] public assetClassConfigs;
 
   constructor() {
@@ -103,7 +105,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
   /// @param _token Token address to be deposit/withdraw.
   function validateAcceptedCollateral(address _token) external view {
-    if (!collateralTokenConfigs[_token].accepted) revert IConfigStorage_NotAcceptedCollateral();
+    if (!assetCollateralTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedCollateral();
   }
 
   /**
@@ -135,7 +137,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   function getCollateralTokenConfigs(
     address _token
   ) external view returns (CollateralTokenConfig memory _collateralTokenConfig) {
-    return collateralTokenConfigs[_token];
+    return assetCollateralTokenConfigs[tokenAssetIds[_token]];
   }
 
   function getPLPTokenConfig(address token) external view returns (PLPTokenConfig memory) {
@@ -169,7 +171,16 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function getCollateralTokens() external view returns (address[] memory) {
-    return collateralTokens;
+    address[] memory tokenAddresses = new address[](collateralAssetIds.length);
+
+    for (uint i; i < collateralAssetIds.length; ) {
+      tokenAddresses[i] = assetConfigs[collateralAssetIds[i]].tokenAddress;
+
+      unchecked {
+        i++;
+      }
+    }
+    return tokenAddresses;
   }
 
   /// @notice Return the next underlying token address.
@@ -265,12 +276,20 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function setCollateralTokenConfig(
-    address _token,
+    bytes32 collateralAssetId,
     CollateralTokenConfig memory _newConfig
   ) external returns (CollateralTokenConfig memory _collateralTokenConfig) {
-    collateralTokenConfigs[_token] = _newConfig;
-    collateralTokens.push(_token);
-    return collateralTokenConfigs[_token];
+    assetCollateralTokenConfigs[collateralAssetId] = _newConfig;
+    collateralAssetIds.push(collateralAssetId);
+    return assetCollateralTokenConfigs[collateralAssetId];
+  }
+
+  function setAssetConfig(
+    bytes32 assetId,
+    AssetConfig memory _newConfig
+  ) external returns (AssetConfig memory _assetConfig) {
+    assetConfigs[assetId] = _newConfig;
+    return assetConfigs[assetId];
   }
 
   function setWeth(address _weth) external {
@@ -279,7 +298,7 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   /// @notice add or update AcceptedToken
   /// @dev This function only allows to add new token or update existing token,
-  /// any atetempt to remove token will be reverted.
+  /// any attempt to remove token will be reverted.
   /// @param _tokens The token addresses to set.
   /// @param _configs The token configs to set.
   function addOrUpdateAcceptedToken(address[] calldata _tokens, PLPTokenConfig[] calldata _configs) external onlyOwner {
@@ -353,5 +372,9 @@ contract ConfigStorage is IConfigStorage, Owned {
     delete plpTokenConfigs[_token];
 
     emit RemoveUnderlying(_token);
+  }
+
+  function addTokenAssetId(address _token, bytes32 _assetId) external {
+    tokenAssetIds[_token] = _assetId;
   }
 }

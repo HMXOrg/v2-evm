@@ -14,8 +14,6 @@ contract VaultStorage is IVaultStorage {
   // EVENTs
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
 
-  uint256 public plpTotalLiquidityUSDE30;
-
   mapping(address => uint256) public totalAmount; //token => tokenAmount
   mapping(address => uint256) public plpLiquidityUSDE30; //token => PLPValueInUSD
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
@@ -66,11 +64,6 @@ contract VaultStorage is IVaultStorage {
   }
 
   // @todo - modifier?
-  function addPLPTotalLiquidityUSDE30(uint256 _liquidity) external {
-    plpTotalLiquidityUSDE30 += _liquidity;
-  }
-
-  // @todo - modifier?
   function addPLPLiquidity(address _token, uint256 _amount) public {
     plpLiquidity[_token] += _amount;
   }
@@ -108,16 +101,6 @@ contract VaultStorage is IVaultStorage {
       return;
     }
     plpLiquidityUSDE30[_token] -= _value;
-  }
-
-  // @todo - modifier?
-  function removePLPTotalLiquidityUSDE30(uint256 _value) external {
-    // Underflow check
-    if (plpTotalLiquidityUSDE30 <= _value) {
-      plpTotalLiquidityUSDE30 = 0;
-      return;
-    }
-    plpTotalLiquidityUSDE30 -= _value;
   }
 
   // @todo - modifier?

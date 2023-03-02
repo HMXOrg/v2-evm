@@ -85,7 +85,12 @@ interface ICalculator {
 
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
 
-  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
+  function getSettlementFeeRate(
+    address _token,
+    uint256 _liquidityUsdDelta,
+    uint256 _limitPrice,
+    bytes32 _assetId
+  ) external returns (uint256);
 
   function getCollateralValue(
     address _subAccount,

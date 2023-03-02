@@ -51,7 +51,6 @@ import { PLPv2 } from "../../src/contracts/PLPv2.sol";
 // Handlers
 import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
 import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
-import { LiquidationHandler } from "../../src/handlers/LiquidationHandler.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
   address internal ALICE;
@@ -453,10 +452,6 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   function deployMarketTradeHandler(address _tradeService, address _pyth) internal returns (MarketTradeHandler) {
     return new MarketTradeHandler(_tradeService, _pyth);
-  }
-
-  function deployLiquidationHandler(address _liquidationService, address _pyth) internal returns (LiquidationHandler) {
-    return new LiquidationHandler(_liquidationService, _pyth);
   }
 
   function deployBotHandler(

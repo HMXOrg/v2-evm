@@ -36,25 +36,6 @@ interface ITradeService {
     int256 elapsedIntervals;
   }
 
-  struct SettleFeeVar {
-    bool isPayFee;
-    int256 feeUsd;
-    uint256 absFeeUsd;
-    uint256 plpLiquidityDebtUSDE30;
-    address[] plpUnderlyingTokens;
-    address underlyingToken;
-    uint256 underlyingTokenDecimal;
-    uint256 traderBalance;
-    uint256 traderBalanceValue;
-    uint256 marginFee;
-    uint256 marginFeeValue;
-    uint256 price;
-    uint256 feeTokenAmount;
-    uint256 feeTokenValue;
-    uint256 repayFeeTokenAmount;
-    uint256 devFeeTokenAmount;
-  }
-
   function configStorage() external view returns (address);
 
   function perpStorage() external view returns (address);

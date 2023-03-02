@@ -17,7 +17,6 @@ import { MockCalculator } from "../mocks/MockCalculator.sol";
 import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
 import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
-import { MockWNative } from "../mocks/MockWNative.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
 
@@ -29,6 +28,7 @@ import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol
 
 // Calculator
 import { Calculator } from "../../src/contracts/Calculator.sol";
+import { FeeCalculator } from "../../src/contracts/FeeCalculator.sol";
 
 // Handlers
 import { LiquidityHandler } from "../../src/handlers/LiquidityHandler.sol";
@@ -65,6 +65,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   // other contracts
   PLPv2 internal plp;
   Calculator internal calculator;
+  FeeCalculator internal feeCalculator;
 
   // mock
   MockPyth internal mockPyth;
@@ -130,6 +131,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       address(vaultStorage)
     );
 
+    // configStorage setup
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();
@@ -139,7 +141,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
 
+    feeCalculator = new FeeCalculator(address(vaultStorage), address(configStorage));
+
     // set general config
+    configStorage.setFeeCalculator(address(feeCalculator));
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
     configStorage.setWeth(address(weth));

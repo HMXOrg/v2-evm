@@ -6,6 +6,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Owned } from "../base/Owned.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // contracts
 import { LiquidityService } from "@services/LiquidityService.sol";
@@ -14,9 +15,6 @@ import { VaultStorage } from "@storages/VaultStorage.sol";
 import { PerpStorage } from "@storages/PerpStorage.sol";
 import { Calculator } from "@commons/Calculator.sol";
 import { OracleMiddleware } from "@oracles/OracleMiddleware.sol";
-
-// library
-import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // interfaces
 import { ILiquidityHandler } from "@handlers/interfaces/ILiquidityHandler.sol";

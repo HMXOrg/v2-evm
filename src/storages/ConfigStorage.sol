@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-// @todo - convert to upgradable
-
-import { AddressUtils } from "../libraries/AddressUtils.sol";
-
-// interfaces
-import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
+//base
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 import { Owned } from "../base/Owned.sol";
 import { IteratableAddressList } from "../libraries/IteratableAddressList.sol";
+
+// interfaces
+import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs

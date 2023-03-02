@@ -43,8 +43,6 @@ import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
 import { PerpStorage } from "../../src/storages/PerpStorage.sol";
 import { VaultStorage } from "../../src/storages/VaultStorage.sol";
 
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
-
 import { PLPv2 } from "../../src/contracts/PLPv2.sol";
 
 // Handlers

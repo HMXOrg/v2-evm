@@ -6,7 +6,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "../base/Owned.sol";
 
-// Interfaces
+// interfaces
 import { ICrossMarginHandler } from "@handlers/interfaces/ICrossMarginHandler.sol";
 import { CrossMarginService } from "@services/CrossMarginService.sol";
 import { ConfigStorage } from "@storages/ConfigStorage.sol";

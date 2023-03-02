@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { BaseTest } from "../../base/BaseTest.sol";
 
-import { LiquidityService } from "../../../src/services/LiquidityService.sol";
+import { LiquidityService } from "@services/LiquidityService.sol";
 
 abstract contract LiquidityService_Base is BaseTest {
   LiquidityService liquidityService;

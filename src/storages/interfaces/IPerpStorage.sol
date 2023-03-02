@@ -70,6 +70,8 @@ interface IPerpStorage {
 
   function getSubAccountFee(address _subAccount) external view returns (int256 fee);
 
+  function getBadDebt(address _subAccount) external view returns (uint256 badDebt);
+
   /**
    * Setter
    */
@@ -100,9 +102,13 @@ interface IPerpStorage {
 
   function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) external;
 
+  function resetPosition(bytes32 _positionId) external;
+
   function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
 
   function updateSubAccountFee(address _subAccount, int256 fee) external;
+
+  function addBadDebt(address _subAccount, uint256 _badDebt) external;
 
   function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external;
 }

@@ -17,6 +17,8 @@ contract PerpStorage is IPerpStorage {
 
   mapping(address => int256) public subAccountFee;
 
+  mapping(address => uint256) public badDebt;
+
   mapping(address => CollateralToken) public collateralTokens;
 
   mapping(uint256 => GlobalMarket) public globalMarkets;
@@ -92,6 +94,14 @@ contract PerpStorage is IPerpStorage {
     }
   }
 
+  /// @notice Resets the position associated with the given position ID.
+  /// @param _positionId The ID of the position to be reset.
+  function resetPosition(bytes32 _positionId) public {
+    uint256 _index = positionIndices[_positionId];
+    // Delete the position at the specified index
+    delete positions[_index];
+  }
+
   // @todo - remove
   function addPosition(
     address _primaryAccount,
@@ -138,6 +148,13 @@ contract PerpStorage is IPerpStorage {
 
   function getSubAccountFee(address subAccount) external view returns (int256 fee) {
     return subAccountFee[subAccount];
+  }
+
+  /// @notice Gets the bad debt associated with the given sub-account.
+  /// @param subAccount The address of the sub-account to get the bad debt for.
+  /// @return _badDebt The bad debt associated with the given sub-account.
+  function getBadDebt(address subAccount) external view returns (uint256 _badDebt) {
+    return badDebt[subAccount];
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
@@ -201,5 +218,13 @@ contract PerpStorage is IPerpStorage {
 
   function updateSubAccountFee(address _subAccount, int256 fee) external {
     subAccountFee[_subAccount] = fee;
+  }
+
+  /// @notice Adds bad debt to the specified sub-account.
+  /// @param _subAccount The address of the sub-account to add bad debt to.
+  /// @param _badDebt The amount of bad debt to add to the sub-account.
+  function addBadDebt(address _subAccount, uint256 _badDebt) external {
+    // Add the bad debt to the sub-account
+    badDebt[_subAccount] += _badDebt;
   }
 }

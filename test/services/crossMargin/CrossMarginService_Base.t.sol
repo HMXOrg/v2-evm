@@ -31,7 +31,8 @@ contract CrossMarginService_Base is BaseTest {
       collateralFactor: 0.8 ether,
       isStableCoin: false,
       accepted: true,
-      settleStrategy: address(0)
+      settleStrategy: address(0),
+      priceConfidentThreshold: 0.01 * 1e18
     });
 
     IConfigStorage.CollateralTokenConfig memory _collateralConfigUSDC = IConfigStorage.CollateralTokenConfig({
@@ -39,7 +40,8 @@ contract CrossMarginService_Base is BaseTest {
       collateralFactor: 0.8 ether,
       isStableCoin: true,
       accepted: true,
-      settleStrategy: address(0)
+      settleStrategy: address(0),
+      priceConfidentThreshold: 0.01 * 1e18
     });
 
     configStorage.setCollateralTokenConfig(address(weth), _collateralConfigWETH);

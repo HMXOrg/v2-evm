@@ -75,6 +75,8 @@ interface IVaultStorage {
 
   function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
 
+  function payPlp(address _trader, address _token, uint256 _amount) external;
+
   function collectMarginFee(
     address _subAccount,
     address _token,

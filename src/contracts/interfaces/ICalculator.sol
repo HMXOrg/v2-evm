@@ -73,7 +73,7 @@ interface ICalculator {
     address _subAccount,
     uint256 _price,
     bytes32 _assetId
-  ) external view returns (uint256 _equityValueE30);
+  ) external view returns (int256 _equityValueE30);
 
   function getUnrealizedPnl(
     address _subAccount,
@@ -86,4 +86,10 @@ interface ICalculator {
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
 
   function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
+
+  function getCollateralValue(
+    address _subAccount,
+    uint256 _limitPrice,
+    bytes32 _assetId
+  ) external view returns (uint256 _collateralValueE30);
 }

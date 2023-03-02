@@ -887,13 +887,13 @@ contract TradeService is ITradeService {
   function _subAccountHealthCheck(address _subAccount, uint256 _price, bytes32 _assetId) internal view {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
     // check sub account is healthy
-    uint256 _subAccountEquity = _calculator.getEquity(_subAccount, _price, _assetId);
+    int256 _subAccountEquity = _calculator.getEquity(_subAccount, _price, _assetId);
     // maintenance margin requirement (MMR) = position size * maintenance margin fraction
     // note: maintenanceMarginFraction is 1e18
     uint256 _mmr = _calculator.getMMR(_subAccount);
 
     // if sub account equity < MMR, then trader couldn't decrease position
-    if (_subAccountEquity < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
+    if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
   }
 
   /// @notice This function updates the borrowing rate for the given asset class index.

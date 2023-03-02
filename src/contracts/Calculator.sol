@@ -411,7 +411,7 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPrice,
     bytes32 _assetId
-  ) public view returns (uint256 _equityValueE30) {
+  ) public view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPrice, _assetId);
 
@@ -426,13 +426,8 @@ contract Calculator is Owned, ICalculator {
     // uint256 fundingFeeE30 = getFundingFee(_subAccount);
 
     // Sum all asset's values
-    _equityValueE30 += _collateralValueE30;
-
-    if (_unrealizedPnlValueE30 > 0) {
-      _equityValueE30 += uint256(_unrealizedPnlValueE30);
-    } else {
-      _equityValueE30 -= uint256(-_unrealizedPnlValueE30);
-    }
+    _equityValueE30 += int256(_collateralValueE30);
+    _equityValueE30 += _unrealizedPnlValueE30;
 
     // @todo - include borrowing and funding fee
     // _equityValueE30 -= borrowingFeeE30;
@@ -671,10 +666,11 @@ contract Calculator is Owned, ICalculator {
     uint256 _limitPrice,
     bytes32 _assetId
   ) public view returns (uint256 _freeCollateral) {
-    uint256 equity = getEquity(_subAccount, _limitPrice, _assetId);
+    int256 equity = getEquity(_subAccount, _limitPrice, _assetId);
     uint256 imr = getIMR(_subAccount);
 
-    _freeCollateral = equity - imr;
+    if (equity < 0) return 0;
+    _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
   }
 

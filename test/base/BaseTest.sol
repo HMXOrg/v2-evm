@@ -139,6 +139,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     _setUpMarketConfigs();
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
+    _setUpLiquidationConfig();
 
     feeCalculator = new FeeCalculator(address(vaultStorage), address(configStorage));
 
@@ -388,7 +389,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       collateralFactor: 0.8 * 1e18,
       isStableCoin: false,
       accepted: true,
-      settleStrategy: address(0)
+      settleStrategy: address(0),
+      priceConfidentThreshold: 0.01 * 1e18
     });
 
     configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfigWeth);
@@ -398,10 +400,30 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       collateralFactor: 0.9 * 1e18,
       isStableCoin: false,
       accepted: true,
-      settleStrategy: address(0)
+      settleStrategy: address(0),
+      priceConfidentThreshold: 0.01 * 1e18
     });
 
     configStorage.setCollateralTokenConfig(address(wbtc), _collatTokenConfigWbtc);
+
+    IConfigStorage.CollateralTokenConfig memory _collatTokenConfigUsdt = IConfigStorage.CollateralTokenConfig({
+      decimals: usdt.decimals(),
+      collateralFactor: 1 * 1e18,
+      isStableCoin: true,
+      accepted: true,
+      settleStrategy: address(0),
+      priceConfidentThreshold: 0.01 * 1e18
+    });
+
+    configStorage.setCollateralTokenConfig(address(usdt), _collatTokenConfigUsdt);
+  }
+
+  function _setUpLiquidationConfig() private {
+    IConfigStorage.LiquidationConfig memory _liquidationConfig = IConfigStorage.LiquidationConfig({
+      liquidationFeeUSDE30: 5 * 1e30
+    });
+
+    configStorage.setLiquidationConfig(_liquidationConfig);
   }
 
   function abs(int256 x) external pure returns (uint256) {

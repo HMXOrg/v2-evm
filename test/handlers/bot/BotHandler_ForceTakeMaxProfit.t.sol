@@ -170,7 +170,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
 
   // ref: testRevert_WhenExecutorTryClosePositionButPriceStale
   function testRevert_WhenBotHandlerForceTakeMaxProfitButPriceStale() external {
-    // open LONG position
+    // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // make price stale in mock oracle middleware
@@ -182,10 +182,10 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
 
   // ref: testRevert_WhenExecutorTryCloseLongPositionButPositionIsAlreadyClosed
   function testRevert_WhenBotHandlerForceTakeMaxProfitButPositionIsAlreadyClosed() external {
-    //  open LONG position
+    // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
-    //  fully close position
+    // ALICE fully close position
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, address(0), 0);
 
     // Somehow Tester close ALICE position again

@@ -15,24 +15,35 @@ interface IConfigStorage {
   /**
    * Structs
    */
+  /// @notice Asset's config
+  struct AssetConfig {
+    address tokenAddress;
+    bytes32 assetId;
+    uint256 priceConfidentThreshold;
+    int32 pythExponent;
+    uint8 trustPriceAge;
+    uint8 decimals;
+    bool isStableCoin; // token is stablecoin
+  }
+
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
-    uint256 decimals; //token decimals
+    uint256 decimals; // @todo - [liquidity] remove
     uint256 targetWeight; // percentage of all accepted PLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
-    bool isStableCoin; // token is stablecoin
+    bool isStableCoin; // @todo - [liquidity] remove
     bool accepted; // accepted to provide liquidity
   }
 
   /// @notice collateral token config
   struct CollateralTokenConfig {
-    uint256 decimals;
+    uint256 decimals; // @todo - [cross margin] remove
     uint256 collateralFactor; // token reliability factor to calculate buying power, 1e18 = 100%
-    bool isStableCoin; // token is stablecoin
+    bool isStableCoin; // @todo - [cross margin] remove
     bool accepted; // accepted to deposit as collateral
     address settleStrategy; // determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
-    uint256 priceConfidentThreshold; // pyth price confidential treshold
+    uint256 priceConfidentThreshold; // @todo - [cross margin] remove
   }
 
   struct OpenInterest {
@@ -48,14 +59,14 @@ interface IConfigStorage {
   struct MarketConfig {
     bytes32 assetId; // pyth network asset id
     uint256 assetClass; // Crypto = 1, Forex = 2, Stock = 3
-    uint256 exponent;
+    uint256 exponent; // @todo - [trade] remove
     uint256 maxProfitRate; // maximum profit that trader could take per position
     uint256 minLeverage; // minimum leverage that trader could open position
     uint256 initialMarginFraction; // IMF
     uint256 maintenanceMarginFraction; // MMF
     uint256 increasePositionFeeRate; // fee rate to increase position
     uint256 decreasePositionFeeRate; // fee rate to decrease position
-    uint256 priceConfidentThreshold; // pyth price confidential threshold
+    uint256 priceConfidentThreshold; // @todo - [trade] remove
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
     OpenInterest openInterest;

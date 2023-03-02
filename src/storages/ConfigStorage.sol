@@ -44,17 +44,14 @@ contract ConfigStorage is IConfigStorage, Owned {
   TradingConfig public tradingConfig;
   LiquidationConfig public liquidationConfig;
 
-  MarketConfig[] public marketConfigs;
-  AssetClassConfig[] public assetClassConfigs;
-
   // @todo discuss List or Array
-  IteratableAddressList.List public plpAcceptedTokens;
-  address[] public plpTokens;
-  address[] public collateralTokens;
+  IteratableAddressList.List public plpAcceptedTokens; // @todo - [liquidity] remove
+  address[] public plpTokens; // @todo - [liquidity] remove
+  address[] public collateralTokens; // @todo - [cross margin] remove
 
-  mapping(bytes32 => uint256) public marketConfigIndices; // assetId => index
-  mapping(address => PLPTokenConfig) public plpTokenConfigs; // token => config
-  mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // token => config
+  mapping(address => PLPTokenConfig) public plpTokenConfigs; // @todo - [liquidity] remove
+  mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // @todo - [cross margin] remove
+
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
   mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer
 
@@ -65,6 +62,24 @@ contract ConfigStorage is IConfigStorage, Owned {
   address public treasury;
   uint256 public pnlFactor; // factor that calculate unrealized PnL after collateral factor
   address public weth;
+
+  /**
+   * New States
+   */
+
+  // Token's address => Asset ID
+  mapping(address => bytes32) tokenAssetIds;
+  // Pyth Asset ID => Configs
+  mapping(bytes32 => AssetConfig) assetConfigs;
+  // PLP stuff
+  bytes32[] plpAssetIds;
+  mapping(bytes32 => PLPTokenConfig) assetPlpTokenConfigs;
+  // Cross margin
+  bytes32[] collateralAssetIds;
+  mapping(bytes32 => CollateralTokenConfig) assetCollateralTokenConfigs;
+  // Trade
+  MarketConfig[] marketConfigs;
+  AssetClassConfig[] public assetClassConfigs;
 
   constructor() {
     plpAcceptedTokens.init();
@@ -318,8 +333,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {
     uint256 _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
-    // update marketConfigIndices with new market index
-    marketConfigIndices[_newConfig.assetId] = _newMarketIndex;
     return _newMarketIndex;
   }
 

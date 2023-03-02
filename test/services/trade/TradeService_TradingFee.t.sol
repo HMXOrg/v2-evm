@@ -56,7 +56,7 @@ contract TradeService_TradingFee is TradeService_Base {
         assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
       }
 
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
       // After ALICE increased LONG position
       {
@@ -75,7 +75,7 @@ contract TradeService_TradingFee is TradeService_Base {
 
     vm.warp(110);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 600_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 600_000 * 1e30, 0);
 
       // After ALICE increased LONG position
       {
@@ -122,7 +122,7 @@ contract TradeService_TradingFee is TradeService_Base {
         assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100_000 * 1e6);
       }
 
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 600_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 600_000 * 1e30, 0);
 
       // After ALICE increased LONG position
       {
@@ -160,7 +160,7 @@ contract TradeService_TradingFee is TradeService_Base {
 
     vm.warp(100);
     {
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30);
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
       // trading Fee = size * increase position fee = 1_000_000 * 0.0001 = 100 USDC
       // Alice USDT's balance after pay trading fee = 100_000 - 100 = 99_900  USDC;
@@ -173,8 +173,7 @@ contract TradeService_TradingFee is TradeService_Base {
 
     vm.warp(110);
     {
-      vm.prank(ALICE);
-      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0));
+      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0), 0);
 
       // trading Fee = size * decrease position fee = 500_000 * 0.0001 = 50 USDC
       // Alice USDT's balance after pay trading fee = 99_900 - 50 = 99850  USDC;
@@ -189,8 +188,7 @@ contract TradeService_TradingFee is TradeService_Base {
     vm.warp(120);
     {
       // Close position
-      vm.prank(ALICE);
-      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0));
+      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0), 0);
 
       // trading Fee = size * decrease position fee = 500_000 * 0.0001 = 50 USDC
       // Alice USDT's balance after pay trading fee = 99850 - 50 = 99800  USDC;

@@ -200,8 +200,8 @@ contract TradeService is ITradeService {
       _vars.subAccount,
       _absSizeDelta,
       _marketConfig.assetClass,
-      _vars.reserveValueE30,
-      _vars.entryBorrowingRate,
+      _vars.position.reserveValueE30,
+      _vars.position.entryBorrowingRate,
       _marketConfig.increasePositionFeeRate
     );
 
@@ -212,11 +212,11 @@ contract TradeService is ITradeService {
       _vars.subAccount,
       _marketConfig.assetClass,
       _marketIndex,
-      _vars.positionSizeE30,
-      _vars.entryFundingRate
+      _vars.position.positionSizeE30,
+      _vars.position.entryFundingRate
     );
 
-    settleFundingFee(_vars.subAccount);
+    settleFundingFee(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     // update the position size by adding the new size delta
     _vars.position.positionSizeE30 += _sizeDelta;
@@ -224,9 +224,6 @@ contract TradeService is ITradeService {
     {
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = IPerpStorage(perpStorage).getGlobalAssetClassByIndex(
         _marketConfig.assetClass
-      );
-      IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(
-        _vars.position.marketIndex
       );
 
       _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
@@ -370,7 +367,15 @@ contract TradeService is ITradeService {
     }
 
     // update position, market, and global market state
-    _decreasePosition(_marketConfig, _marketIndex, _vars, _positionSizeE30ToDecrease, _tpToken);
+    _decreasePosition(
+      _marketConfig,
+      _marketIndex,
+      _vars,
+      _positionSizeE30ToDecrease,
+      _tpToken,
+      _limitPriceE30,
+      _marketConfig.assetId
+    );
 
     // Post validation
     // check sub account equity is under MMR
@@ -505,7 +510,7 @@ contract TradeService is ITradeService {
       _marketConfig.assetClass,
       _globalMarketIndex,
       _vars.position.positionSizeE30,
-      _vars._position.entryFundingRate
+      _vars.position.entryFundingRate
     );
 
     settleFundingFee(_vars.subAccount, _price, _assetId);

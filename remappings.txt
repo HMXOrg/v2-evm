@@ -2,3 +2,9 @@ forge-std/=lib/forge-std/src/
 @openzeppelin/=lib/openzeppelin-contracts/
 pyth-sdk-solidity=lib/pyth-sdk-solidity/
 @chainlink/=lib/chainlink/
+
+@handlers=src/handlers/
+@services=src/services/
+@storages=src/storages/
+@oracles=src/oracle/
+@commons=src/contracts/

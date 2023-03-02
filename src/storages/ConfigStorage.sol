@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { console } from "forge-std/console.sol";
-
 // @todo - convert to upgradable
 
 import { AddressUtils } from "../libraries/AddressUtils.sol";
@@ -49,10 +47,8 @@ contract ConfigStorage is IConfigStorage, Owned {
   // @todo discuss List or Array
   IteratableAddressList.List public plpAcceptedTokens; // @todo - [liquidity] remove
   address[] public plpTokens; // @todo - [liquidity] remove
-  // address[] public collateralTokens; // @todo - [cross margin] remove
 
   mapping(address => PLPTokenConfig) public plpTokenConfigs; // @todo - [liquidity] remove
-  // mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // @todo - [cross margin] remove
 
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
   mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer

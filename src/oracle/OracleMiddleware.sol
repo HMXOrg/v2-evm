@@ -344,7 +344,11 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @param _assetId Asset's to set price config
   /// @param _confidenceThreshold New price confidence threshold
   /// @param _trustPriceAge valid price age
-  function setAssetPriceConfig(bytes32 _assetId, uint256 _confidenceThreshold, uint8 _trustPriceAge) external {
+  function setAssetPriceConfig(
+    bytes32 _assetId,
+    uint256 _confidenceThreshold,
+    uint8 _trustPriceAge
+  ) external onlyOwner {
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
 
     emit LogSetAssetPriceConfig(

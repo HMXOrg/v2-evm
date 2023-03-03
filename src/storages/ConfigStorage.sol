@@ -301,7 +301,6 @@ contract ConfigStorage is IConfigStorage, Owned {
     }
 
     for (uint256 i; i < _tokens.length; ) {
-      ////assetId
       bytes32 _assetId = tokenAssetIds[_tokens[i]];
 
       // Enforce that isAccept must be true to prevent
@@ -366,6 +365,17 @@ contract ConfigStorage is IConfigStorage, Owned {
     // Update totalTokenWeight
     liquidityConfig.plpTotalTokenWeight -= assetPlpTokenConfigs[_assetId].targetWeight;
 
+    // delete from plpAssetIds
+    for (uint256 i = 0; i < plpAssetIds.length; ) {
+      if (_assetId == plpAssetIds[i]) {
+        delete plpAssetIds[i];
+        break;
+      }
+
+      unchecked {
+        ++i;
+      }
+    }
     // Delete plpTokenConfig
     delete assetPlpTokenConfigs[_assetId];
 

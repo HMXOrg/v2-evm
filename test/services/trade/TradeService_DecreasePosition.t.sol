@@ -5,6 +5,7 @@ import { TradeService_Base } from "./TradeService_Base.t.sol";
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
 import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
+import { console } from "forge-std/console.sol";
 
 // What is this test DONE
 // - pre validation
@@ -342,6 +343,11 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // Start test
 
     address _tpToken = address(weth); // take profit token
+    console.logBytes32(wethAssetId);
+    console.logBytes32(wbtcAssetId);
+    console.logBytes32(usdcAssetId);
+    console.logBytes32(usdtAssetId);
+    console.logBytes32(daiAssetId);
 
     // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);

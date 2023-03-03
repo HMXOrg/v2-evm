@@ -609,6 +609,8 @@ contract TradeService is ITradeService {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
+          console.logBytes32(_marketConfig.assetId);
+          console.logBytes32(IConfigStorage(configStorage).tokenAssetIds(_tpToken));
           _settleProfit(_vars.subAccount, _tpToken, uint256(_realizedPnl), _limitPriceE30, _marketConfig.assetId);
         } else {
           // loss
@@ -642,7 +644,7 @@ contract TradeService is ITradeService {
   ) internal {
     uint256 _tpTokenPrice;
     bytes32 _tpAssetId = IConfigStorage(configStorage).tokenAssetIds(_tpToken);
-    if (_tpAssetId == _limitAssetId) {
+    if (_tpAssetId == _limitAssetId && _limitPriceE30 != 0) {
       _tpTokenPrice = _limitPriceE30;
     } else {
       (_tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(_tpAssetId, false);
@@ -697,7 +699,7 @@ contract TradeService is ITradeService {
         bytes32 _tokenAssetId = IConfigStorage(configStorage).tokenAssetIds(_token);
 
         // Retrieve the latest price and confident threshold of the plp underlying token
-        if (_tokenAssetId == _limitAssetId) {
+        if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
           _price = _limitPriceE30;
         } else {
           (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
@@ -1274,6 +1276,7 @@ contract TradeService is ITradeService {
       // Retrieve the latest price and confident threshold of the plp underlying token
       // @todo refactor this?
       bytes32 _underlyingAssetId = IConfigStorage(configStorage).tokenAssetIds(tmpVars.underlyingToken);
+      console.logBytes32(_underlyingAssetId);
       if (_limitPriceE30 != 0 && _underlyingAssetId == _limitAssetId) {
         tmpVars.price = _limitPriceE30;
       } else {

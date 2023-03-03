@@ -47,7 +47,7 @@ contract TradeService_FundingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1600 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1600 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
     vaultStorage.setTraderBalance(aliceAddress, address(weth), 1 * 1e18);
@@ -88,17 +88,17 @@ contract TradeService_FundingFee is TradeService_Base {
 
         // Repay WETH Amount = 133.33/1600 = 0.08383958333333312 WETH
         // Dev fee = 0.08383958333333312  * 0 = 0 WETH
-        assertEq(vaultStorage.devFees(address(weth)), 0);
+        assertEq(vaultStorage.devFees(address(weth)), 0, "Dev fee");
 
         // After Alice pay fee, Alice's WETH amount will be decreased
         // Alice's WETH remaining = 1 - 0.08383958333333312 = 0.916666666666666875 WETH
-        assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 916666666666666875);
+        assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 916666666666666875, "Weth balance");
 
         // Alice already paid all fees
-        assertEq(perpStorage.getSubAccountFee(aliceAddress), 0);
+        assertEq(perpStorage.getSubAccountFee(aliceAddress), 0, "Subaccount fee");
 
         // new fundingFee = old fundingFee + (fee collect from ALICE - dev Fee) = 10 + ( 0.08383958333333312 - 0) = 10083333333333333125 WETH
-        assertEq(vaultStorage.fundingFee(address(weth)), 10083333333333333125);
+        assertEq(vaultStorage.fundingFee(address(weth)), 10083333333333333125, "Funding fee");
       }
     }
   }

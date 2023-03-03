@@ -18,10 +18,8 @@ contract CrossMarginHandler_Base is BaseTest {
   function setUp() public virtual {
     DeployReturnVars memory deployed = deployPerp88v2();
 
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("ETH", 1e6, 60);
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("BTC", 1e6, 60);
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(address(wbtc).toBytes32(), 1e6, 60);
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(address(weth).toBytes32(), 1e6, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(wethAssetId, 1e6, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(wbtcAssetId, 1e6, 60);
 
     calculator = deployCalculator(
       address(deployed.oracleMiddleware),
@@ -49,14 +47,14 @@ contract CrossMarginHandler_Base is BaseTest {
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collateralConfigWETH);
-    configStorage.setCollateralTokenConfig(address(usdc).toBytes32(), _collateralConfigUSDC);
+    configStorage.setCollateralTokenConfig(wethAssetId, _collateralConfigWETH);
+    configStorage.setCollateralTokenConfig(usdcAssetId, _collateralConfigUSDC);
 
     // Set market config
     configStorage.setMarketConfig(
       0,
       IConfigStorage.MarketConfig({
-        assetId: address(weth).toBytes32(),
+        assetId: wethAssetId,
         assetClass: 1,
         maxProfitRate: 9e18,
         minLeverage: 1,
@@ -79,8 +77,8 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set Oracle data for Price feeding
     {
-      deployed.pythAdapter.setPythPriceId(address(wbtc).toBytes32(), wbtcPriceId);
-      deployed.pythAdapter.setPythPriceId(address(weth).toBytes32(), wethPriceId);
+      deployed.pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
+      deployed.pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
 
       priceDataBytes = new bytes[](2);
       priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
@@ -105,8 +103,8 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set market status
     deployed.oracleMiddleware.setUpdater(address(this), true);
-    deployed.oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), uint8(2)); // active
-    deployed.oracleMiddleware.setMarketStatus(address(weth).toBytes32(), uint8(2)); // active
+    deployed.oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // active
+    deployed.oracleMiddleware.setMarketStatus(wethAssetId, uint8(2)); // active
   }
 
   /**

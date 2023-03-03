@@ -540,13 +540,13 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice Calculate collateral tokens to value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @param _limitPrice Price from limitOrder
-  /// @param _assetId assetId to find token
+  /// @param _limitPriceE30 Price from limitOrder
+  /// @param _limitAssetId assetId to find token
   /// @return _collateralValueE30
   function getCollateralValue(
     address _subAccount,
-    uint256 _limitPrice,
-    bytes32 _assetId
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
   ) public view returns (uint256 _collateralValueE30) {
     // Get list of current depositing tokens on trader's account
     address[] memory _traderTokens = IVaultStorage(vaultStorage).getTraderTokens(_subAccount);
@@ -571,8 +571,8 @@ contract Calculator is Owned, ICalculator {
 
       // Get token asset id from ConfigStorage
       bytes32 _tokenAssetId = IConfigStorage(configStorage).tokenAssetIds(_token);
-      if (_tokenAssetId == _assetId) {
-        _priceE30 = _limitPrice;
+      if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
+        _priceE30 = _limitPriceE30;
       } else {
         // @todo - validate price age
         (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(

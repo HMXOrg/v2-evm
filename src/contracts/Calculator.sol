@@ -13,8 +13,8 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract Calculator is Owned, ICalculator {
-  uint256 internal constant BPS = 1e4;
-  uint256 internal constant ETH_PRECISION = 1e18;
+  uint32 internal constant BPS = 1e4;
+  uint64 internal constant ETH_PRECISION = 1e18;
 
   // using libs for type
   using AddressUtils for address;
@@ -528,7 +528,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // If profit then deduct PnL with collateral factor.
-      _delta = _delta > 0 ? (int32(IConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int(BPS) : _delta;
+      _delta = _delta > 0 ? (int32(IConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int32(BPS) : _delta;
 
       // Accumulative current unrealized PnL
       _unrealizedPnlE30 += _delta;

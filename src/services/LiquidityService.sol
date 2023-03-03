@@ -22,8 +22,8 @@ contract LiquidityService is ILiquidityService {
   address public perpStorage;
 
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
-  uint256 internal constant BPS = 1e4;
-  uint256 internal constant USD_DECIMALS = 30;
+  uint32 internal constant BPS = 1e4;
+  uint8 internal constant USD_DECIMALS = 30;
   uint64 internal constant RATE_PRECISION = 1e18;
 
   event AddLiquidity(

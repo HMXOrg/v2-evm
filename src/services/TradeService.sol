@@ -19,7 +19,7 @@ import { console } from "forge-std/console.sol";
 contract TradeService is ITradeService {
   using AddressUtils for address;
 
-  uint256 internal constant BPS = 1e4;
+  uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
 
   /**

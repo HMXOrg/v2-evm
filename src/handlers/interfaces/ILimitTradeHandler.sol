@@ -37,6 +37,16 @@ interface ILimitTradeHandler {
    * States
    */
 
+  function pyth() external returns (address);
+
+  function tradeService() external returns (address);
+
+  function minExecutionFee() external returns (uint256);
+
+  function orderExecutors(address _address) external returns (bool);
+
+  function limitOrdersIndex(address _address) external returns (uint256);
+
   function limitOrders(
     address _subAccount,
     uint256 _index
@@ -105,4 +115,6 @@ interface ILimitTradeHandler {
     bool _maximizePrice,
     bool _revertOnError
   ) external view returns (uint256, bool);
+
+  function setPyth(address _pyth) external;
 }

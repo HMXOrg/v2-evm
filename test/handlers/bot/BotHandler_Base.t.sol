@@ -3,12 +3,12 @@ pragma solidity 0.8.18;
 
 import { BaseTest } from "../../base/BaseTest.sol";
 
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { TradeService } from "../../../src/services/TradeService.sol";
+import { TradeService } from "@hmx/services/TradeService.sol";
 
-import { BotHandler } from "../../../src/handlers/BotHandler.sol";
+import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
@@ -20,7 +20,7 @@ contract BotHandler_Base is BaseTest {
   PositionTester02 positionTester02;
   GlobalMarketTester globalMarketTester;
 
-  BotHandler botHandler;
+  IBotHandler botHandler;
   bytes[] prices;
 
   function setUp() public virtual {

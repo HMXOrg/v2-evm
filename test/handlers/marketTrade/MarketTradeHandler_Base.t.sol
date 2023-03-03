@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, MarketTradeHandler, IPerpStorage, IConfigStorage } from "../../base/BaseTest.sol";
+import { BaseTest, IPerpStorage, IConfigStorage } from "../../base/BaseTest.sol";
+
+import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
 contract MarketTradeHandler_Base is BaseTest {
-  MarketTradeHandler marketTradeHandler;
+  IMarketTradeHandler marketTradeHandler;
   bytes[] prices;
 
   function setUp() public virtual {

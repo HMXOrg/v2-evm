@@ -12,7 +12,7 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 
 import { Deployer } from "./Deployer.sol";
 
-import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 import { Deployment } from "../../script/Deployment.s.sol";
 
@@ -29,25 +29,22 @@ import { MockTradeService } from "../mocks/MockTradeService.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 
 // Interfaces
-import { IPLPv2 } from "../../src/contracts/interfaces/IPLPv2.sol";
-import { ICalculator } from "../../src/contracts/interfaces/ICalculator.sol";
-import { IFeeCalculator } from "../../src/contracts/interfaces/IFeeCalculator.sol";
+import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
-// Handlers
-import { LiquidityHandler } from "../../src/handlers/LiquidityHandler.sol";
-import { CrossMarginHandler } from "../../src/handlers/CrossMarginHandler.sol";
-import { BotHandler } from "../../src/handlers/BotHandler.sol";
+import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
+import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
+import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 
 // Services
-import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
-
-// Handlers
-import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
-import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe {
   using AddressUtils for address;
@@ -174,8 +171,53 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
    * HANDLER
    */
 
-  function deployCrossMarginHandler(address _crossMarginService, address _pyth) internal returns (CrossMarginHandler) {
-    return new CrossMarginHandler(_crossMarginService, _pyth);
+  function deployCrossMarginHandler(address _crossMarginService, address _pyth) internal returns (ICrossMarginHandler) {
+    return
+      ICrossMarginHandler(
+        Deployer.deployContractWithArguments("CrossMarginHandler", abi.encode(_crossMarginService, _pyth))
+      );
+  }
+
+  function deployLiquidityHandler(
+    address _liquidityService,
+    address _pyth,
+    uint256 _minExecutionFee
+  ) internal returns (ILiquidityHandler) {
+    return
+      ILiquidityHandler(
+        Deployer.deployContractWithArguments("LiquidityHandler", abi.encode(_liquidityService, _pyth, _minExecutionFee))
+      );
+  }
+
+  function deployLimitTradeHandler(
+    address _weth,
+    address _tradeService,
+    address _pyth,
+    uint256 _minExecutionFee
+  ) internal returns (ILimitTradeHandler) {
+    return
+      ILimitTradeHandler(
+        Deployer.deployContractWithArguments(
+          "LimitTradeHandler",
+          abi.encode(_weth, _tradeService, _pyth, _minExecutionFee)
+        )
+      );
+  }
+
+  function deployMarketTradeHandler(address _tradeService, address _pyth) internal returns (IMarketTradeHandler) {
+    return
+      IMarketTradeHandler(Deployer.deployContractWithArguments("MarketTradeHandler", abi.encode(_tradeService, _pyth)));
+  }
+
+  function deployBotHandler(
+    address _tradeService,
+    address _liquidationService,
+    address _pyth
+  ) internal returns (IBotHandler) {
+    return
+      IBotHandler(
+        Deployer.deployContractWithArguments("BotHandler", abi.encode(_tradeService, _liquidationService, _pyth))
+      );
   }
 
   /**
@@ -454,34 +496,5 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
 
   function abs(int256 x) external pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
-  }
-
-  function deployLiquidityHandler(
-    address _liquidityService,
-    address _pyth,
-    uint256 _minExecutionFee
-  ) internal returns (LiquidityHandler) {
-    return new LiquidityHandler(_liquidityService, _pyth, _minExecutionFee);
-  }
-
-  function deployLimitTradeHandler(
-    address _weth,
-    address _tradeService,
-    address _pyth,
-    uint256 _minExecutionFee
-  ) internal returns (LimitTradeHandler) {
-    return new LimitTradeHandler(_weth, _tradeService, _pyth, _minExecutionFee);
-  }
-
-  function deployMarketTradeHandler(address _tradeService, address _pyth) internal returns (MarketTradeHandler) {
-    return new MarketTradeHandler(_tradeService, _pyth);
-  }
-
-  function deployBotHandler(
-    address _tradeService,
-    address _liquidationService,
-    address _pyth
-  ) internal returns (BotHandler) {
-    return new BotHandler(_tradeService, _liquidationService, _pyth);
   }
 }

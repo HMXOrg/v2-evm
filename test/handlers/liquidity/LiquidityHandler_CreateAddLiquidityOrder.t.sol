@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 import { LiquidityHandler_Base, IConfigStorage, IPerpStorage } from "./LiquidityHandler_Base.t.sol";
-import { ILiquidityHandler } from "../../../src/handlers/interfaces/ILiquidityHandler.sol";
-import { console } from "../../../lib/forge-std/src/console.sol";
+import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { console } from "forge-std/console.sol";
 
 // - revert
 //   - Try notAcceptedToken

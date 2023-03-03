@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20 } from "../../base/BaseTest.sol";
-import { OracleMiddleware } from "../../../src/oracle/OracleMiddleware.sol";
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
+import { BaseTest, IConfigStorage, IPerpStorage, MockErc20 } from "../../base/BaseTest.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
+import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 
 contract CrossMarginHandler_Base is BaseTest {
   using AddressUtils for address;
 
   uint256 internal SUB_ACCOUNT_NO = 1;
 
-  CrossMarginHandler internal crossMarginHandler;
+  ICrossMarginHandler internal crossMarginHandler;
   CrossMarginService internal crossMarginService;
 
   bytes[] internal priceDataBytes;

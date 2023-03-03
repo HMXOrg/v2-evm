@@ -16,4 +16,12 @@ interface ICrossMarginHandler {
     uint256 _amount,
     bytes[] memory _priceData
   ) external;
+
+  function crossMarginService() external returns (address);
+
+  function pyth() external returns (address);
+
+  function setCrossMarginService(address _address) external;
+
+  function setPyth(address _address) external;
 }

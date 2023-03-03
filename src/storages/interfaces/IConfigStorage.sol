@@ -109,7 +109,7 @@ interface IConfigStorage {
 
   function treasury() external view returns (address);
 
-  function pnlFactor() external view returns (uint256);
+  function pnlFactorBPS() external view returns (uint32);
 
   function weth() external view returns (address);
 

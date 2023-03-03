@@ -29,13 +29,13 @@ contract CrossMarginService_Base is BaseTest {
 
     // Set accepted token deposit/withdraw
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.8 ether,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
     IConfigStorage.CollateralTokenConfig memory _collateralConfigUSDC = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.8 ether,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });

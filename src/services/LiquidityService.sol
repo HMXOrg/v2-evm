@@ -22,6 +22,7 @@ contract LiquidityService is ILiquidityService {
   address public perpStorage;
 
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
+  uint256 internal constant BPS = 1e4;
   uint256 internal constant USD_DECIMALS = 30;
 
   event AddLiquidity(
@@ -244,7 +245,6 @@ contract LiquidityService is ILiquidityService {
   function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
     uint256 amountAfterFee = (_request._amount * (1e18 - _request._feeRate)) / 1e18;
     uint256 fee = _request._amount - amountAfterFee;
-    bytes32 _assetId = IConfigStorage(configStorage).tokenAssetIds(_request._token);
 
     IVaultStorage(vaultStorage).addFee(_request._token, fee);
     uint256 _decimals = IConfigStorage(configStorage).getAssetTokenDecimal(_request._token);
@@ -288,7 +288,7 @@ contract LiquidityService is ILiquidityService {
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
     uint256 plpTVL = _calculator.getPLPValueE30(false, 0, 0);
-    if (_globalState.reserveValueE30 > _liquidityConfig.maxPLPUtilization * plpTVL) {
+    if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxPLPUtilizationBPS * plpTVL) {
       revert LiquidityService_MaxPLPUtilizationExceeded();
     }
 

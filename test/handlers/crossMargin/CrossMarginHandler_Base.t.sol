@@ -38,13 +38,13 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set accepted token deposit/withdraw as WETH and USDC
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.8 ether,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
     IConfigStorage.CollateralTokenConfig memory _collateralConfigUSDC = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.8 ether,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
@@ -58,10 +58,10 @@ contract CrossMarginHandler_Base is BaseTest {
       IConfigStorage.MarketConfig({
         assetId: address(weth).toBytes32(),
         assetClass: 1,
-        maxProfitRate: 9e18,
-        minLeverage: 1,
-        initialMarginFraction: 0.1 * 1e18,
-        maintenanceMarginFraction: 0.005 * 1e18,
+        maxProfitRateBPS: 9 * 1e4,
+        minLeverageBPS: 1 * 1e4,
+        initialMarginFractionBPS: 0.1 * 1e4,
+        maintenanceMarginFractionBPS: 0.005 * 1e4,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
         allowIncreasePosition: false,
@@ -70,7 +70,7 @@ contract CrossMarginHandler_Base is BaseTest {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 4 * 1e14, maxSkewScaleUSD: 3_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );
 

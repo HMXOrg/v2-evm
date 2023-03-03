@@ -33,9 +33,9 @@ interface IConfigStorage {
 
   /// @notice collateral token config
   struct CollateralTokenConfig {
-    uint256 collateralFactor; // token reliability factor to calculate buying power, 1e18 = 100%
-    bool accepted; // accepted to deposit as collateral
     address settleStrategy; // determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+    uint32 collateralFactorBPS; // token reliability factor to calculate buying power, 1e4 = 100%
+    bool accepted; // accepted to deposit as collateral
   }
 
   struct OpenInterest {
@@ -44,19 +44,19 @@ interface IConfigStorage {
   }
 
   struct FundingRate {
-    uint256 maxFundingRate; // maximum funding rate
-    uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
+    uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRateBPS
+    uint32 maxFundingRateBPS; // maximum funding rate
   }
 
   struct MarketConfig {
     bytes32 assetId; // pyth network asset id
-    uint256 assetClass; // Crypto = 1, Forex = 2, Stock = 3
-    uint256 maxProfitRate; // maximum profit that trader could take per position
-    uint256 minLeverage; // minimum leverage that trader could open position
-    uint256 initialMarginFraction; // IMF
-    uint256 maintenanceMarginFraction; // MMF
-    uint256 increasePositionFeeRate; // fee rate to increase position
-    uint256 decreasePositionFeeRate; // fee rate to decrease position
+    uint32 increasePositionFeeRate; // fee rate to increase position
+    uint32 decreasePositionFeeRate; // fee rate to decrease position
+    uint32 initialMarginFractionBPS; // IMF
+    uint32 maintenanceMarginFractionBPS; // MMF
+    uint32 maxProfitRateBPS; // maximum profit that trader could take per position
+    uint32 minLeverageBPS; // minimum leverage that trader could open position
+    uint8 assetClass; // Crypto = 1, Forex = 2, Stock = 3
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
     OpenInterest openInterest;
@@ -64,17 +64,17 @@ interface IConfigStorage {
   }
 
   struct AssetClassConfig {
-    uint256 baseBorrowingRate;
+    uint32 baseBorrowingRateBPS;
   }
 
   struct LiquidityConfig {
-    uint256 depositFeeRate; // PLP deposit fee rate
-    uint256 withdrawFeeRate; // PLP withdraw fee rate
-    uint256 maxPLPUtilization; //% of max utilization
     uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
     uint256 plpSafetyBufferThreshold;
     uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
     uint256 flashLoanFeeRate;
+    uint32 maxPLPUtilizationBPS; //% of max utilization
+    uint32 depositFeeRateBPS; // PLP deposit fee rate
+    uint32 withdrawFeeRateBPS; // PLP withdraw fee rate
     bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
     bool enabled; // Circuit breaker on Liquidity
   }

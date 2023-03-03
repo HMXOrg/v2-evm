@@ -13,7 +13,7 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract Calculator is Owned, ICalculator {
-  uint256 internal constant MAX_RATE = 1e18;
+  uint256 internal constant BPS = 1e4;
 
   // using libs for type
   using AddressUtils for address;
@@ -206,9 +206,9 @@ contract Calculator is Owned, ICalculator {
     uint256 _tokenValueE30,
     IConfigStorage _configStorage,
     IVaultStorage _vaultStorage
-  ) external returns (uint256) {
+  ) external view returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
-      return _configStorage.getLiquidityConfig().depositFeeRate;
+      return _configStorage.getLiquidityConfig().depositFeeRateBPS;
     }
 
     return
@@ -227,9 +227,9 @@ contract Calculator is Owned, ICalculator {
     uint256 _tokenValueE30,
     IConfigStorage _configStorage,
     IVaultStorage _vaultStorage
-  ) external returns (uint256) {
+  ) external view returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
-      return _configStorage.getLiquidityConfig().withdrawFeeRate;
+      return _configStorage.getLiquidityConfig().withdrawFeeRateBPS;
     }
 
     return
@@ -252,8 +252,8 @@ contract Calculator is Owned, ICalculator {
     LiquidityDirection direction
   ) internal pure returns (uint256) {
     uint256 _feeRate = direction == LiquidityDirection.ADD
-      ? _liquidityConfig.depositFeeRate
-      : _liquidityConfig.withdrawFeeRate;
+      ? _liquidityConfig.depositFeeRateBPS
+      : _liquidityConfig.withdrawFeeRateBPS;
     uint256 _taxRate = _liquidityConfig.taxFeeRate;
     uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
@@ -301,7 +301,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _liquidityUsdDelta,
     uint256 _limitPrice,
     bytes32 _assetId
-  ) external returns (uint256 _settlementFeeRate) {
+  ) external view returns (uint256 _settlementFeeRate) {
     // usd debt
     uint256 _tokenLiquidityUsd = IVaultStorage(vaultStorage).plpLiquidityUSDE30(_token);
     if (_tokenLiquidityUsd == 0) return 0;
@@ -525,7 +525,7 @@ contract Calculator is Owned, ICalculator {
       uint256 _decimals = IConfigStorage(configStorage).getAssetConfigByToken(_token).decimals;
 
       // Get collateralFactor from ConfigStorage
-      uint256 _collateralFactor = _collateralTokenConfig.collateralFactor;
+      uint32 collateralFactorBPS = _collateralTokenConfig.collateralFactorBPS;
 
       // Get current collateral token balance of trader's account
       uint256 _amount = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
@@ -543,9 +543,10 @@ contract Calculator is Owned, ICalculator {
         );
       }
       // Calculate accumulative value of collateral tokens
-      // collateral value = (collateral amount * price) * collateralFactor
-      // collateralFactor 1 ether = 100%
-      _collateralValueE30 += (_amount * _priceE30 * _collateralFactor) / (10 ** _decimals * 1e18);
+      // collateral value = (collateral amount * price) * collateralFactorBPS
+      // collateralFactor 1e4 = 100%
+
+      _collateralValueE30 += (_amount * _priceE30 * collateralFactorBPS) / ((10 ** _decimals) * BPS);
 
       unchecked {
         i++;
@@ -622,7 +623,7 @@ contract Calculator is Owned, ICalculator {
       _marketIndex
     );
 
-    _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFraction) / 1e18;
+    _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFractionBPS) / BPS;
     return _imrE30;
   }
 
@@ -636,7 +637,7 @@ contract Calculator is Owned, ICalculator {
       _marketIndex
     );
 
-    _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) / 1e18;
+    _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFractionBPS) / BPS;
     return _mmrE30;
   }
 

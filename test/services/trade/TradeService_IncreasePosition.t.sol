@@ -114,10 +114,10 @@ contract TradeService_IncreasePosition is TradeService_Base {
       IConfigStorage.MarketConfig({
         assetId: "ETH",
         assetClass: 0,
-        maxProfitRate: 9e18,
-        minLeverage: 1 * 1e18,
-        initialMarginFraction: 0.01 * 1e18,
-        maintenanceMarginFraction: 0.005 * 1e18,
+        maxProfitRateBPS: 9 * 1e4,
+        minLeverageBPS: 1 * 1e4,
+        initialMarginFractionBPS: 0.01 * 1e4,
+        maintenanceMarginFractionBPS: 0.005 * 1e4,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
         allowIncreasePosition: false,
@@ -126,7 +126,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
       })
     );
 

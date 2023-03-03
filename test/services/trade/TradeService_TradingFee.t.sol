@@ -39,9 +39,9 @@ contract TradeService_TradingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1500 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1500 * 1e30);
     // USDT price 1 USD
-    mockOracle.setPrice(address(usdt).toBytes32(), 1 * 1e30);
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
     vaultStorage.setTraderBalance(aliceAddress, address(weth), 10 * 1e18);
@@ -105,9 +105,9 @@ contract TradeService_TradingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1500 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1500 * 1e30);
     // USDT price 1 USD
-    mockOracle.setPrice(address(usdt).toBytes32(), 1 * 1e30);
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
     vaultStorage.setTraderBalance(aliceAddress, address(weth), 0.01 * 1e18);
@@ -150,9 +150,9 @@ contract TradeService_TradingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1600 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1600 * 1e30);
     // USDT price 1 USD
-    mockOracle.setPrice(address(usdt).toBytes32(), 1 * 1e30);
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
 

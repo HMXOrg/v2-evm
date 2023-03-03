@@ -702,10 +702,7 @@ contract TradeService is ITradeService {
         if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
           _price = _limitPriceE30;
         } else {
-          (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
-            _token.toBytes32(),
-            false
-          );
+          (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(_tokenAssetId, false);
         }
 
         _collateralUsd = (_collateral * _price) / (10 ** _decimals);
@@ -1198,7 +1195,7 @@ contract TradeService is ITradeService {
       // If the sub-account has a balance of this underlying token (collateral token amount)
       if (tmpVars.traderBalance > 0) {
         // Retrieve the latest price and confident threshold of the plp underlying token
-        (tmpVars.price, ) = _oracle.getLatestPrice(tmpVars.underlyingToken.toBytes32(), false);
+        (tmpVars.price, ) = _oracle.getLatestPrice(_configStorage.tokenAssetIds(tmpVars.underlyingToken), false);
 
         tmpVars.feeTokenAmount = (acmVars.absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
 
@@ -1276,7 +1273,6 @@ contract TradeService is ITradeService {
       // Retrieve the latest price and confident threshold of the plp underlying token
       // @todo refactor this?
       bytes32 _underlyingAssetId = IConfigStorage(configStorage).tokenAssetIds(tmpVars.underlyingToken);
-      console.logBytes32(_underlyingAssetId);
       if (_limitPriceE30 != 0 && _underlyingAssetId == _limitAssetId) {
         tmpVars.price = _limitPriceE30;
       } else {

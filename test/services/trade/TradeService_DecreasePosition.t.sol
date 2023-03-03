@@ -233,7 +233,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(wbtc), 10_000 * 1e8);
 
     // and wbtc price is 100 USD
-    mockOracle.setPrice(address(wbtc).toBytes32(), 100 * 1e30);
+    mockOracle.setPrice(wbtcAssetId, 100 * 1e30);
 
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, _tpToken, 0);
 

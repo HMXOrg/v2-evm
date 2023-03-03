@@ -112,7 +112,7 @@ contract TradeService_FundingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1500 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1500 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1500 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
     address bobAddress = getSubAccount(BOB, 0);

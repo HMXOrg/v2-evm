@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Deployer } from "../../base/Deployer.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { Calculator_Base } from "../../calculator/Calculator_Base.t.sol";
 

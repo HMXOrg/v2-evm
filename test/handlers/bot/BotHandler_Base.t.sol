@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { BaseTest } from "../../base/BaseTest.sol";
-import { Deployer } from "../../base/Deployer.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";

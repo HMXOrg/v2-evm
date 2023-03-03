@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { BaseTest } from "../../base/BaseTest.sol";
-import { Deployer } from "../../base/Deployer.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 

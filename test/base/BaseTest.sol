@@ -10,7 +10,7 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
  * Libraries
  */
 
-import { Deployer } from "./Deployer.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 

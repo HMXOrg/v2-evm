@@ -70,14 +70,12 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   /// @dev To bypass the confidence check, the user can submit threshold = 1 ether
   /// @param _priceStruct The Pyth's price struct to convert.
   /// @param _confidenceThreshold The acceptable threshold confidence ratio. ex. _confidenceRatio = 0.01 ether means 1%
-  function _validateConfidence(PythStructs.Price memory _priceStruct, uint256 _confidenceThreshold) private pure {
+  function _validateConfidence(PythStructs.Price memory _priceStruct, uint32 _confidenceThreshold) private pure {
     if (_priceStruct.price < 0) revert PythAdapter_BrokenPythPrice();
 
-    // Calculate _confidenceRatio in 1e18 base.
-    uint256 _confidenceRatio = (uint256(_priceStruct.conf) * 1e18) / uint256(uint64(_priceStruct.price));
-
     // Revert if confidence ratio is too high
-    if (_confidenceRatio > _confidenceThreshold) revert PythAdapter_ConfidenceRatioTooHigh();
+    if (_priceStruct.conf * 1e6 > _confidenceThreshold * uint64(_priceStruct.price))
+      revert PythAdapter_ConfidenceRatioTooHigh();
   }
 
   /// @notice Get the latest price of the given asset. Returned price is in 30 decimals.
@@ -87,15 +85,15 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
   function getLatestPrice(
     bytes32 _assetId,
     bool _isMax,
-    uint256 _confidenceThreshold
-  ) external view returns (uint256, uint256) {
+    uint32 _confidenceThreshold
+  ) external view returns (uint256, int32, uint256) {
     // SLOAD
     bytes32 _pythPriceId = pythPriceIdOf[_assetId];
     if (_pythPriceId == bytes32(0)) revert PythAdapter_UnknownAssetId();
     PythStructs.Price memory _price = pyth.getPriceUnsafe(_pythPriceId);
     _validateConfidence(_price, _confidenceThreshold);
 
-    return (_convertToUint256(_price, _isMax, 30), _price.publishTime);
+    return (_convertToUint256(_price, _isMax, 30), _price.expo, _price.publishTime);
   }
 
   /// @notice isSameAsset to check between two params has the same byte

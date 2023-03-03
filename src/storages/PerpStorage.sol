@@ -18,8 +18,6 @@ contract PerpStorage is IPerpStorage {
 
   mapping(address => uint256) public badDebt;
 
-  mapping(address => CollateralToken) public collateralTokens;
-
   mapping(uint256 => GlobalMarket) public globalMarkets;
 
   mapping(uint256 => GlobalAssetClass) public globalAssetClass;

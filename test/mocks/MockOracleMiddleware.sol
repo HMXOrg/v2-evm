@@ -8,6 +8,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
   uint256 public lastUpdate;
   uint8 public marketStatus;
   bool public isPriceStale;
+  int32 public exponent;
 
   struct Price {
     uint256 priceE30;
@@ -23,6 +24,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
     priceE30 = 1e30;
     lastUpdate = block.timestamp;
     marketStatus = 2;
+    exponent = -18;
   }
 
   // =========================================
@@ -48,17 +50,16 @@ contract MockOracleMiddleware is IOracleMiddleware {
     pythAssetId[_pythAsset] = _pythId;
   }
 
+  function setExponent(int32 _exponent) external {
+    exponent = _exponent;
+  }
+
   // =========================================
   // | ---------- Getter ------------------- |
   // =========================================
 
   // todo: validate price stale here
-  function getLatestPrice(
-    bytes32 _assetId,
-    bool /* _isMax */,
-    uint256 /* _confidentTreshold */,
-    uint256 /* _trustPriceAge */
-  ) external view returns (uint256, uint256) {
+  function getLatestPrice(bytes32 _assetId, bool /* _isMax */) external view returns (uint256, uint256) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     Price memory p = price[_assetId];
     if (p.priceE30 == 0) return (priceE30, lastUpdate);
@@ -68,9 +69,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
   // todo: validate price stale here
   function getLatestPriceWithMarketStatus(
     bytes32 /* _assetId */,
-    bool /* _isMax */,
-    uint256 /* _confidenceThreshold */,
-    uint256 /* _trustPriceAge */
+    bool /* _isMax */
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     return (priceE30, lastUpdate, marketStatus);
@@ -78,28 +77,23 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function unsafeGetLatestPrice(
     bytes32 _assetId,
-    bool /* _isMax */,
-    uint256 /* _confidentTreshold */
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    bool /* _isMax */
+  ) external view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate) {
     Price memory p = price[_assetId];
-    if (p.priceE30 == 0) return (priceE30, lastUpdate);
-    return (p.priceE30, p.lastUpdate);
+    if (p.priceE30 == 0) return (priceE30, exponent, lastUpdate);
+    return (p.priceE30, exponent, p.lastUpdate);
   }
 
   function unsafeGetLatestPriceWithMarketStatus(
     bytes32 /* _assetId */,
-    bool /* _isMax */,
-    uint256 /* _confidenceThreshold */
+    bool /* _isMax */
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     return (priceE30, lastUpdate, marketStatus);
   }
 
   function getLatestAdaptivePrice(
     bytes32 _assetId,
-    uint256 _exponent,
     bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge,
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
@@ -110,10 +104,7 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
-    uint256 _exponent,
     bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge,
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
@@ -125,24 +116,18 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
-    uint256 _exponent,
     bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge,
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+  ) external view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
-    return (priceE30, lastUpdate, marketStatus);
+    return (priceE30, exponent, lastUpdate, marketStatus);
   }
 
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
-    uint256 _exponent,
     bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge,
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD

@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20 } from "../../base/BaseTest.sol";
+import { OracleMiddleware } from "../../../src/oracle/OracleMiddleware.sol";
 import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 
 contract CrossMarginHandler_Base is BaseTest {
@@ -16,6 +17,11 @@ contract CrossMarginHandler_Base is BaseTest {
 
   function setUp() public virtual {
     DeployReturnVars memory deployed = deployPerp88v2();
+
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("ETH", 1e6, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("BTC", 1e6, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(address(wbtc).toBytes32(), 1e6, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(address(weth).toBytes32(), 1e6, 60);
 
     calculator = deployCalculator(
       address(deployed.oracleMiddleware),
@@ -32,25 +38,19 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set accepted token deposit/withdraw as WETH and USDC
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
-      decimals: 18,
       collateralFactor: 0.8 ether,
-      isStableCoin: false,
       accepted: true,
-      settleStrategy: address(0),
-      priceConfidentThreshold: 0.01 * 1e18
+      settleStrategy: address(0)
     });
 
     IConfigStorage.CollateralTokenConfig memory _collateralConfigUSDC = IConfigStorage.CollateralTokenConfig({
-      decimals: 6,
       collateralFactor: 0.8 ether,
-      isStableCoin: true,
       accepted: true,
-      settleStrategy: address(0),
-      priceConfidentThreshold: 0.01 * 1e18
+      settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collateralConfigWETH);
-    configStorage.setCollateralTokenConfig(address(usdc), _collateralConfigUSDC);
+    configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collateralConfigWETH);
+    configStorage.setCollateralTokenConfig(address(usdc).toBytes32(), _collateralConfigUSDC);
 
     // Set market config
     configStorage.setMarketConfig(
@@ -58,14 +58,12 @@ contract CrossMarginHandler_Base is BaseTest {
       IConfigStorage.MarketConfig({
         assetId: address(weth).toBytes32(),
         assetClass: 1,
-        exponent: 8,
         maxProfitRate: 9e18,
         minLeverage: 1,
         initialMarginFraction: 0.1 * 1e18,
         maintenanceMarginFraction: 0.005 * 1e18,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
-        priceConfidentThreshold: 1e18,
         allowIncreasePosition: false,
         active: true,
         openInterest: IConfigStorage.OpenInterest({

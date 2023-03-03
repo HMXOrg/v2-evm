@@ -495,7 +495,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // If profit then deduct PnL with collateral factor.
-      _delta = _delta > 0 ? (int(IConfigStorage(configStorage).pnlFactor()) * _delta) / 1e18 : _delta;
+      _delta = _delta > 0 ? (int32(IConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int(BPS) : _delta;
 
       // Accumulative current unrealized PnL
       _unrealizedPnlE30 += _delta;

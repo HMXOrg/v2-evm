@@ -165,7 +165,7 @@ contract LiquidityService is ILiquidityService {
 
     // 4. Calculate mintAmount
     _tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
-      IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals,
+      IConfigStorage(configStorage).getAssetTokenDecimal(_token),
       USD_DECIMALS,
       (amountAfterFee * _price) / PRICE_PRECISION
     );
@@ -202,7 +202,7 @@ contract LiquidityService is ILiquidityService {
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
       30,
-      IConfigStorage(configStorage).getPlpTokenConfigs(_tokenOut).decimals,
+      IConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
       (_lpUsdValue * PRICE_PRECISION) / _maxPrice
     );
 
@@ -231,7 +231,7 @@ contract LiquidityService is ILiquidityService {
 
   function _getFeeRate(address _token, uint256 _amount, uint256 _price) internal returns (uint256) {
     uint256 tokenUSDValueE30 = ICalculator(IConfigStorage(configStorage).calculator()).convertTokenDecimals(
-      IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals,
+      IConfigStorage(configStorage).getAssetTokenDecimal(_token),
       USD_DECIMALS,
       (_amount * _price) / PRICE_PRECISION // tokenValueInDecimal = amount * priceE30 / 1e30
     );
@@ -254,9 +254,10 @@ contract LiquidityService is ILiquidityService {
   function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
     uint256 amountAfterFee = (_request._amount * (1e18 - _request._feeRate)) / 1e18;
     uint256 fee = _request._amount - amountAfterFee;
+    bytes32 _assetId = IConfigStorage(configStorage).tokenAssetIds(_request._token);
 
     IVaultStorage(vaultStorage).addFee(_request._token, fee);
-    uint256 _decimals = IConfigStorage(configStorage).getPlpTokenConfigs(_request._token).decimals;
+    uint256 _decimals = IConfigStorage(configStorage).getAssetTokenDecimal(_request._token);
 
     if (_request._action == LiquidityAction.SWAP) {
       emit CollectSwapFee(_request._account, _request._token, (fee * _request._tokenPriceUsd) / 10 ** _decimals, fee);
@@ -282,7 +283,7 @@ contract LiquidityService is ILiquidityService {
     // liquidityLeft < bufferLiquidity
     if (
       IVaultStorage(vaultStorage).plpLiquidity(_token) <
-      IConfigStorage(configStorage).getPlpTokenConfigs(_token).bufferLiquidity
+      IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).bufferLiquidity
     ) {
       revert LiquidityService_InsufficientLiquidityBuffer();
     }
@@ -314,7 +315,7 @@ contract LiquidityService is ILiquidityService {
       revert LiquidityService_CircuitBreaker();
     }
 
-    if (!IConfigStorage(configStorage).getPLPTokenConfig(_token).accepted) {
+    if (!IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).accepted) {
       revert LiquidityService_InvalidToken();
     }
 

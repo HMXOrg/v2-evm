@@ -139,6 +139,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     );
 
     // configStorage setup
+    _setUpAssetConfigs();
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();
@@ -336,47 +337,37 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
     // WETH
     _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
-      decimals: 18,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: false,
       accepted: true
     });
     // WBTC
     _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
-      decimals: 8,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: false,
       accepted: true
     });
     // DAI
     _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
-      decimals: 18,
       targetWeight: 1e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
     // USDC
     _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
-      decimals: 6,
       targetWeight: 3e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
     // USDT
     _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
-      decimals: 6,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
 
@@ -429,9 +420,6 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.AssetConfig memory _assetConfigWeth = IConfigStorage.AssetConfig({
       tokenAddress: address(weth),
       assetId: address(weth).toBytes32(),
-      priceConfidentThreshold: 0.01 * 1e18,
-      pythExponent: 18,
-      trustPriceAge: 0,
       decimals: 18,
       isStableCoin: false
     });
@@ -440,13 +428,11 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.AssetConfig memory _assetConfigWbtc = IConfigStorage.AssetConfig({
       tokenAddress: address(wbtc),
       assetId: address(wbtc).toBytes32(),
-      priceConfidentThreshold: 0.01 * 1e18,
-      pythExponent: 8,
-      trustPriceAge: 0,
       decimals: 8,
       isStableCoin: false
     });
     configStorage.setAssetConfig(address(wbtc).toBytes32(), _assetConfigWbtc);
+
 
     IConfigStorage.AssetConfig memory _assetConfigUsdt = IConfigStorage.AssetConfig({
       tokenAddress: address(usdt),
@@ -469,6 +455,14 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       isStableCoin: false
     });
     configStorage.setAssetConfig(address(usdc).toBytes32(), _assetConfigUsdc);
+
+    IConfigStorage.AssetConfig memory _assetConfigDai = IConfigStorage.AssetConfig({
+      tokenAddress: address(dai),
+      assetId: address(dai).toBytes32(),
+      decimals: 18,
+      isStableCoin: true
+    });
+    configStorage.setAssetConfig(address(dai).toBytes32(), _assetConfigDai);
   }
 
   function abs(int256 x) external pure returns (uint256) {

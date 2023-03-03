@@ -125,7 +125,9 @@ contract FeeCalculator is IFeeCalculator {
     for (uint256 i = 0; i < _plpUnderlyingTokens.length; ) {
       SettleFundingFeeLoopVar memory _tmpVars;
       _tmpVars.underlyingToken = _plpUnderlyingTokens[i];
-      _tmpVars.underlyingTokenDecimal = _configStorage.getPlpTokenConfigs(_tmpVars.underlyingToken).decimals;
+
+      _tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(_tmpVars.underlyingToken);
+
       uint256 plpLiquidityAmount = _vaultStorage.plpLiquidity(_tmpVars.underlyingToken);
 
       // Retrieve the latest price and confident threshold of the plp underlying token

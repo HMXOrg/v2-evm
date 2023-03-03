@@ -10,7 +10,6 @@ import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 contract PerpStorage is IPerpStorage {
   GlobalState public globalState; // global state that accumulative value from all markets
 
-  bytes32[] public positionIds;
   mapping(bytes32 => Position) public positions;
   mapping(address => bytes32[]) public subAccountPositionIds;
 
@@ -42,6 +41,12 @@ contract PerpStorage is IPerpStorage {
     }
   }
 
+  function getSubAccountPositionIds(
+    address _subAccount
+  ) external view returns (bytes32[] memory _subAccountPositionIds) {
+    return subAccountPositionIds[_subAccount];
+  }
+
   // @todo - add description
   function getPositionById(bytes32 _positionId) external view returns (Position memory) {
     return positions[_positionId];
@@ -54,20 +59,21 @@ contract PerpStorage is IPerpStorage {
   function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) public {
     IPerpStorage.Position memory _position = positions[_positionId];
     if (_position.positionSizeE30 == 0) {
-      positionIds.push(_positionId);
       subAccountPositionIds[_subAccount].push(_positionId);
     }
     positions[_positionId] = position;
   }
 
   /// @notice Resets the position associated with the given position ID.
+  /// @param _subAccount The sub account of the position.
   /// @param _positionId The ID of the position to be reset.
-  function resetPosition(bytes32 _positionId) public {
-    uint256 _len = positionIds.length;
+  function removePosition(address _subAccount, bytes32 _positionId) public {
+    bytes32[] storage _subAccountPositionIds = subAccountPositionIds[_subAccount];
+    uint256 _len = _subAccountPositionIds.length;
     for (uint256 i; i < _len; ) {
-      if (positionIds[i] == _positionId) {
-        positionIds[i] = positionIds[_len - 1];
-        positionIds.pop();
+      if (_subAccountPositionIds[i] == _positionId) {
+        _subAccountPositionIds[i] = _subAccountPositionIds[_len - 1];
+        _subAccountPositionIds.pop();
         delete positions[_positionId];
 
         break;

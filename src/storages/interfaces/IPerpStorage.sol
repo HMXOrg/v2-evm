@@ -90,7 +90,7 @@ interface IPerpStorage {
 
   function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) external;
 
-  function resetPosition(bytes32 _positionId) external;
+  function removePosition(address _subAccount, bytes32 _positionId) external;
 
   function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
 
@@ -99,4 +99,6 @@ interface IPerpStorage {
   function addBadDebt(address _subAccount, uint256 _badDebt) external;
 
   function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external;
+
+  function getSubAccountPositionIds(address _subAccount) external returns (bytes32[] memory _subAccountPositionIds);
 }

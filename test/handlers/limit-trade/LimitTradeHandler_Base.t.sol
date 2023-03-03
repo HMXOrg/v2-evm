@@ -25,7 +25,7 @@ contract LimitTradeHandler_Base is BaseTest {
   // | ------- common function ------------- |
   // =========================================
 
-  function _getSubAccount(address primary, uint256 subAccountId) internal pure returns (address) {
+  function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {
     return address(uint160(primary) ^ uint160(subAccountId));
   }
 }

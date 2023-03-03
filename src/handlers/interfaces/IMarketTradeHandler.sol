@@ -15,7 +15,7 @@ interface IMarketTradeHandler {
 
   function buy(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
     address _tpToken,
@@ -24,7 +24,7 @@ interface IMarketTradeHandler {
 
   function sell(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _sellSizeE30,
     address _tpToken,

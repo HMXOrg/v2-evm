@@ -25,7 +25,9 @@ contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
 
   function testCorrectness_WhenGetSettlementFeeRateAndMakePoolBetterThenNoFee() external {
     // usd debt
-    vaultStorage.addPLPLiquidityUSDE30(address(weth), 3000 * 1e30);
+    // vaultStorage.addPLPLiquidityUSDE30(address(weth), 3000 * 1e30);
+    vaultStorage.addPLPLiquidity(address(weth), 3000 ether);
+    vaultStorage.addPLPLiquidity(address(dai), 7000 ether);
 
     // liquidity config
     // tax fee rate = 0.5%
@@ -46,8 +48,8 @@ contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
 
   function testCorrectness_WhenGetSettlementFeeRateAndMakePoolWorst() external {
     // usd debt
-    vaultStorage.addPLPLiquidityUSDE30(address(dai), 1000 * 1e30);
-    vaultStorage.addPLPLiquidity(address(dai), 10_000 ether);
+    vaultStorage.addPLPLiquidity(address(dai), 1_000 ether);
+    vaultStorage.addPLPLiquidity(address(weth), 9_000 ether);
 
     // liquidity config
     // tax fee rate = 0.5%

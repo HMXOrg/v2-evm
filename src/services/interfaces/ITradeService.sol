@@ -42,7 +42,7 @@ interface ITradeService {
 
   function increasePosition(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _limitPriceE30
@@ -50,14 +50,12 @@ interface ITradeService {
 
   function decreasePosition(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _positionSizeE30ToDecrease,
     address _tpToken,
     uint256 _limitPriceE30
   ) external;
-
-  function forceClosePosition(address _account, uint256 _subAccountId, uint256 _marketIndex, address _tpToken) external;
 
   function getNextFundingRate(
     uint256 _marketIndex,
@@ -70,4 +68,6 @@ interface ITradeService {
     uint256 _markPrice,
     uint256 _averagePrice
   ) external pure returns (bool, uint256);
+
+  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external;
 }

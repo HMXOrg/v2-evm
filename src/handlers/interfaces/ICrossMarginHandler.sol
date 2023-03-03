@@ -7,11 +7,11 @@ interface ICrossMarginHandler {
    */
   error ICrossMarginHandler_InvalidAddress();
 
-  function depositCollateral(address _account, uint256 _subAccountId, address _token, uint256 _amount) external;
+  function depositCollateral(address _account, uint8 _subAccountId, address _token, uint256 _amount) external;
 
   function withdrawCollateral(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     address _token,
     uint256 _amount,
     bytes[] memory _priceData

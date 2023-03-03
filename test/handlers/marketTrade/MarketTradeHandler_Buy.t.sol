@@ -17,7 +17,7 @@ import { IMarketTradeHandler } from "../../../src/handlers/interfaces/IMarketTra
 contract MarketTradeHandler_Buy is MarketTradeHandler_Base {
   event LogBuy(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
     uint256 _shortDecreasingSizeE30,

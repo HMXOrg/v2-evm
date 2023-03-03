@@ -27,7 +27,7 @@ interface ILimitTradeHandler {
     bool triggerAboveThreshold;
     bool reduceOnly;
     int256 sizeDelta;
-    uint256 subAccountId;
+    uint8 subAccountId;
     uint256 marketIndex;
     uint256 triggerPrice;
     uint256 executionFee;
@@ -53,15 +53,15 @@ interface ILimitTradeHandler {
   )
     external
     returns (
-      address _account,
-      address _tpToken,
-      bool _triggerAboveThreshold,
-      bool _reduceOnly,
-      int256 _sizeDelta,
-      uint256 _subAccountId,
-      uint256 _marketIndex,
-      uint256 _triggerPrice,
-      uint256 _executionFee
+      address account,
+      address tpToken,
+      bool triggerAboveThreshold,
+      bool reduceOnly,
+      int256 sizeDelta,
+      uint8 subAccountId,
+      uint256 marketIndex,
+      uint256 triggerPrice,
+      uint256 executionFee
     );
 
   /**
@@ -77,7 +77,7 @@ interface ILimitTradeHandler {
    * Functions
    */
   function createOrder(
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
@@ -89,16 +89,16 @@ interface ILimitTradeHandler {
 
   function executeOrder(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _orderIndex,
     address payable _feeReceiver,
     bytes[] memory _priceData
   ) external;
 
-  function cancelOrder(uint256 _subAccountId, uint256 _orderIndex) external;
+  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external;
 
   function updateOrder(
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,

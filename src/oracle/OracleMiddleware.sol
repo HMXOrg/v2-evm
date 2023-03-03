@@ -4,7 +4,6 @@ pragma solidity 0.8.18;
 import { Owned } from "../base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
-import { console } from "forge-std/console.sol";
 
 contract OracleMiddleware is Owned, IOracleMiddleware {
   /**
@@ -272,8 +271,6 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       ? _getLatestPrice(_assetId, _isMax)
       : _unsafeGetLatestPrice(_assetId, _isMax);
 
-    console.logInt(_exponent);
-
     // Apply premium/discount
     _price = _calculateAdaptivePrice(_price, _exponent, _marketSkew, _sizeDelta, _maxSkewScaleUSD);
 
@@ -287,7 +284,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) internal view returns (uint256) {
+  ) internal pure returns (uint256) {
     // Formula
     // marketSkew = longOpenInterest - shortOpenInterest
     // marketSkewUSD = marketSkew * price
@@ -325,8 +322,6 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     //            = 1200.06
     int256 _priceInt = int256(_price);
     int256 _marketSkewUSD = (_marketSkew * _priceInt) / int256(10 ** uint32(-_exponent));
-
-    console.logInt(_marketSkewUSD);
 
     int256 _premiumDiscountBefore = _maxSkewScaleUSD > 0
       ? (_marketSkewUSD * 1e30) / int256(_maxSkewScaleUSD)

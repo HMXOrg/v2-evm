@@ -151,9 +151,6 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
     configStorage.setWeth(address(weth));
-
-    // setup oracle asset price configs
-    _setAssetPriceConfigs();
   }
 
   // --------- Deploy Helpers ---------
@@ -231,11 +228,6 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   }
 
   /// --------- Setup helper ------------
-
-  function _setAssetPriceConfigs() private {
-    // OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("ETH", 1e18, 60);
-    // OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("BTC", 1e18, 60);
-  }
 
   /// @notice set up liquidity config
   function _setUpLiquidityConfig() private {

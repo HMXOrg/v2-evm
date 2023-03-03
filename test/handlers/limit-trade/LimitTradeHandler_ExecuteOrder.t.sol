@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LimitTradeHandler_Base, IConfigStorage, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
-import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 
 // What is this test DONE
 // - revert

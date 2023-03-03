@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { ITradeService } from "../../src/services/interfaces/ITradeService.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
 contract MockTradeService is ITradeService {
   struct IncreasePositionInputs {
@@ -12,13 +12,11 @@ contract MockTradeService is ITradeService {
     uint256 _limitPriceE30;
   }
 
-
   struct DecreasePositionInputs {
     address _account;
     uint256 _subAccountId;
     uint256 _marketIndex;
     uint256 _positionSizeE30ToDecrease;
-
     // @todo - support take profit token
     // address _tpToken;
     uint256 _limitPriceE30;
@@ -74,7 +72,7 @@ contract MockTradeService is ITradeService {
         _subAccountId: _subAccountId,
         _marketIndex: _marketIndex,
         _positionSizeE30ToDecrease: _positionSizeE30ToDecrease,
-         _limitPriceE30: _limitPriceE30
+        _limitPriceE30: _limitPriceE30
       })
     );
   }

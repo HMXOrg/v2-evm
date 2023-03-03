@@ -7,12 +7,12 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // contracts
-import { ConfigStorage } from "@storages/ConfigStorage.sol";
-import { VaultStorage } from "@storages/VaultStorage.sol";
-import { PerpStorage } from "@storages/PerpStorage.sol";
-import { Calculator } from "@commons/Calculator.sol";
-import { PLPv2 } from "@commons/PLPv2.sol";
-import { OracleMiddleware } from "@oracles/OracleMiddleware.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
@@ -179,8 +179,8 @@ contract LiquidityService is ILiquidityService {
     if (mintAmount < _minAmount) revert LiquidityService_InsufficientLiquidityMint();
 
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
-    IVaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
-    IVaultStorage(vaultStorage).addPLPLiquidityUSDE30(_token, _tokenValueUSDAfterFee);
+    VaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
+    VaultStorage(vaultStorage).addPLPLiquidityUSDE30(_token, _tokenValueUSDAfterFee);
 
     _validatePLPHealthCheck(_token);
 
@@ -211,8 +211,8 @@ contract LiquidityService is ILiquidityService {
 
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
-    IVaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
-    IVaultStorage(vaultStorage).removePLPLiquidityUSDE30(_tokenOut, _lpUsdValue);
+    VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
+    VaultStorage(vaultStorage).removePLPLiquidityUSDE30(_tokenOut, _lpUsdValue);
 
     uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeRate(
       _tokenOut,

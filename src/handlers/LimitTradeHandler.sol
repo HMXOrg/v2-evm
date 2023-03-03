@@ -7,10 +7,10 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 import { Owned } from "../base/Owned.sol";
 
 // contracts
-import { OracleMiddleware } from "@oracles/OracleMiddleware.sol";
-import { TradeService } from "@services/TradeService.sol";
-import { ConfigStorage } from "@storages/ConfigStorage.sol";
-import { PerpStorage } from "@storages/PerpStorage.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { TradeService } from "@hmx/services/TradeService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 // interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";

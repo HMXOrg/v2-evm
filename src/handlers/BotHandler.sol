@@ -7,9 +7,9 @@ import { LiquidationService } from "../services/LiquidationService.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { Owned } from "../base/Owned.sol";
 // contracts
-import { TradeService } from "@services/TradeService.sol";
+import { TradeService } from "@hmx/services/TradeService.sol";
 // interfaces
-import { IBotHandler } from "@handlers/interfaces/IBotHandler.sol";
+import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
 // @todo - integrate with BotHandler in another PRs
 contract BotHandler is IBotHandler, Owned {

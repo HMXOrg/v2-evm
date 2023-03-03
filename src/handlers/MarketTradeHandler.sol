@@ -7,12 +7,12 @@ import { Owned } from "../base/Owned.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 // contracts
-import { TradeService } from "@services/TradeService.sol";
-import { ConfigStorage } from "@storages/ConfigStorage.sol";
-import { PerpStorage } from "@storages/PerpStorage.sol";
+import { TradeService } from "@hmx/services/TradeService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 // interfaces
-import { IMarketTradeHandler } from "@handlers/interfaces/IMarketTradeHandler.sol";
+import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
 contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /**

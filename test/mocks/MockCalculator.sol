@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { ICalculator } from "@commons/interfaces/ICalculator.sol";
-import { IConfigStorage } from "@storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "@storages/interfaces/IVaultStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 contract MockCalculator is ICalculator {
   mapping(address => int256) equitiesOf;

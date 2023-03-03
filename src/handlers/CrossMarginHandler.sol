@@ -7,9 +7,9 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 import { Owned } from "../base/Owned.sol";
 
 // interfaces
-import { ICrossMarginHandler } from "@handlers/interfaces/ICrossMarginHandler.sol";
-import { CrossMarginService } from "@services/CrossMarginService.sol";
-import { ConfigStorage } from "@storages/ConfigStorage.sol";
+import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {

@@ -9,10 +9,10 @@ import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
-import { TradeService } from "@services/TradeService.sol";
-import { LiquidationService } from "@services/LiquidationService.sol";
-import { ConfigStorage } from "@storages/ConfigStorage.sol";
-import { PerpStorage } from "@storages/PerpStorage.sol";
+import { TradeService } from "@hmx/services/TradeService.sol";
+import { LiquidationService } from "@hmx/services/LiquidationService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 abstract contract LiquidationService_Base is BaseTest {
   TradeService tradeService;

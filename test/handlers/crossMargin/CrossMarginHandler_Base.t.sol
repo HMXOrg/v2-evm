@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20 } from "../../base/BaseTest.sol";
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 contract CrossMarginHandler_Base is BaseTest {
   using AddressUtils for address;

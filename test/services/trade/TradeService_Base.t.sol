@@ -9,9 +9,9 @@ import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
-import { TradeService } from "@services/TradeService.sol";
-import { IConfigStorage } from "@storages/interfaces/IConfigStorage.sol";
-import { IPerpStorage } from "@storages/interfaces/IPerpStorage.sol";
+import { TradeService } from "@hmx/services/TradeService.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 abstract contract TradeService_Base is BaseTest {
   TradeService tradeService;

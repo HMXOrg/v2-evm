@@ -9,15 +9,15 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // contracts
-import { LiquidityService } from "@services/LiquidityService.sol";
-import { ConfigStorage } from "@storages/ConfigStorage.sol";
-import { VaultStorage } from "@storages/VaultStorage.sol";
-import { PerpStorage } from "@storages/PerpStorage.sol";
-import { Calculator } from "@commons/Calculator.sol";
-import { OracleMiddleware } from "@oracles/OracleMiddleware.sol";
+import { LiquidityService } from "@hmx/services/LiquidityService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 // interfaces
-import { ILiquidityHandler } from "@handlers/interfaces/ILiquidityHandler.sol";
+import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 

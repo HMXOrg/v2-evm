@@ -6,12 +6,12 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // contracts
-import { PerpStorage } from "@storages/PerpStorage.sol";
-import { ConfigStorage } from "@storages/ConfigStorage.sol";
-import { VaultStorage } from "@storages/VaultStorage.sol";
-import { Calculator } from "@commons/Calculator.sol";
-import { FeeCalculator } from "@commons/FeeCalculator.sol";
-import { OracleMiddleware } from "@oracles/OracleMiddleware.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";

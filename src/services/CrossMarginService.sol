@@ -6,9 +6,9 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 import { Owned } from "../base/Owned.sol";
 
 // contracts
-import { ConfigStorage } from "@storages/ConfigStorage.sol";
-import { VaultStorage } from "@storages/VaultStorage.sol";
-import { Calculator } from "@commons/Calculator.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
 
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
@@ -44,9 +44,9 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     calculator = _calculator;
 
     // Sanity check
-    IConfigStorage(_configStorage).calculator();
-    IVaultStorage(_vaultStorage).devFees(address(0));
-    ICalculator(_calculator).oracle();
+    ConfigStorage(_configStorage).calculator();
+    VaultStorage(_vaultStorage).devFees(address(0));
+    Calculator(_calculator).oracle();
   }
 
   /**
@@ -171,7 +171,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     vaultStorage = _vaultStorage;
 
     // Sanity check
-    IVaultStorage(_vaultStorage).devFees(address(0));
+    VaultStorage(_vaultStorage).devFees(address(0));
   }
 
   /// @notice Set new Calculator contract address.

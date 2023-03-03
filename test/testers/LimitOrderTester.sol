@@ -3,8 +3,8 @@ pragma solidity 0.8.18;
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { LimitTradeHandler } from "@handlers/LimitTradeHandler.sol";
-import { ILimitTradeHandler } from "@handlers/interfaces/ILimitTradeHandler.sol";
+import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 
 contract LimitOrderTester is StdAssertions {
   struct LimitOrderAssertData {

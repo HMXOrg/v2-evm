@@ -135,10 +135,6 @@ contract ConfigStorage is IConfigStorage, Owned {
     return assetConfigs[tokenAssetIds[_token]].decimals;
   }
 
-  function getPLPTokenConfig(address _token) external view returns (PLPTokenConfig memory) {
-    return assetPlpTokenConfigs[tokenAssetIds[_token]];
-  }
-
   function getLiquidityConfig() external view returns (LiquidityConfig memory) {
     return liquidityConfig;
   }
@@ -164,10 +160,10 @@ contract ConfigStorage is IConfigStorage, Owned {
   function getPlpTokens() external view returns (address[] memory) {
     address[] memory _result = new address[](plpAssetIds.length);
 
-    for (uint256 i = 0; i < plpAssetIds.length; ) {
-      _result[i] = assetConfigs[plpAssetIds[i]].tokenAddress;
+    for (uint256 _i = 0; _i < plpAssetIds.length; ) {
+      _result[_i] = assetConfigs[plpAssetIds[_i]].tokenAddress;
       unchecked {
-        ++i;
+        ++_i;
       }
     }
 
@@ -178,7 +174,7 @@ contract ConfigStorage is IConfigStorage, Owned {
     return collateralTokens;
   }
 
-  function getAssetConfigs(bytes32 _assetId) external view returns (AssetConfig memory) {
+  function getAssetConfig(bytes32 _assetId) external view returns (AssetConfig memory) {
     return assetConfigs[_assetId];
   }
 
@@ -307,12 +303,13 @@ contract ConfigStorage is IConfigStorage, Owned {
       revert IConfigStorage_BadLen();
     }
 
-    for (uint256 i; i < _tokens.length; ) {
-      bytes32 _assetId = tokenAssetIds[_tokens[i]];
+    uint256 _len = _tokens.length;
+    for (uint256 _i; _i < _len; ) {
+      bytes32 _assetId = tokenAssetIds[_tokens[_i]];
 
       // Enforce that isAccept must be true to prevent
       // removing underlying token through this function.
-      if (!_configs[i].accepted) revert IConfigStorage_BadArgs();
+      if (!_configs[_i].accepted) revert IConfigStorage_BadArgs();
 
       // If plpTokenConfigs.accepted is previously false,
       // then it is a new token to be added.
@@ -320,22 +317,22 @@ contract ConfigStorage is IConfigStorage, Owned {
         plpAssetIds.push(_assetId);
       }
       // Log
-      emit AddOrUpdatePLPTokenConfigs(_tokens[i], assetPlpTokenConfigs[_assetId], _configs[i]);
+      emit AddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 
       // Update totalWeight accordingly
 
-      liquidityConfig.plpTotalTokenWeight == 0 ? _configs[i].targetWeight : liquidityConfig.plpTotalTokenWeight =
+      liquidityConfig.plpTotalTokenWeight == 0 ? _configs[_i].targetWeight : liquidityConfig.plpTotalTokenWeight =
         (liquidityConfig.plpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
-        _configs[i].targetWeight;
+        _configs[_i].targetWeight;
 
-      assetPlpTokenConfigs[_assetId] = _configs[i];
+      assetPlpTokenConfigs[_assetId] = _configs[_i];
 
       if (liquidityConfig.plpTotalTokenWeight > 1e18) {
         revert IConfigStorage_ExceedLimitSetting();
       }
 
       unchecked {
-        ++i;
+        ++_i;
       }
     }
   }
@@ -382,14 +379,14 @@ contract ConfigStorage is IConfigStorage, Owned {
 
     // delete from plpAssetIds
     uint256 _len = plpAssetIds.length;
-    for (uint256 i = 0; i < _len; ) {
-      if (_assetId == plpAssetIds[i]) {
-        delete plpAssetIds[i];
+    for (uint256 _i = 0; _i < _len; ) {
+      if (_assetId == plpAssetIds[_i]) {
+        delete plpAssetIds[_i];
         break;
       }
 
       unchecked {
-        ++i;
+        ++_i;
       }
     }
     // Delete plpTokenConfig

@@ -148,8 +148,6 @@ interface IConfigStorage {
 
   function getLiquidationConfig() external view returns (LiquidationConfig memory);
 
-  function getPLPTokenConfig(address _token) external view returns (PLPTokenConfig memory);
-
   function getMarketConfigByToken(address _token) external view returns (MarketConfig memory);
 
   function getMarketConfigsLength() external view returns (uint256);
@@ -160,7 +158,7 @@ interface IConfigStorage {
 
   function getPlpAssetIds() external view returns (bytes32[] memory);
 
-  function getAssetConfigs(bytes32 _assetId) external view returns (AssetConfig memory);
+  function getAssetConfig(bytes32 _assetId) external view returns (AssetConfig memory);
 
   function getAssetPlpTokenConfig(bytes32 _assetId) external view returns (PLPTokenConfig memory);
 

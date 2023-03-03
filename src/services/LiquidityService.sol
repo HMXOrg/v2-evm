@@ -315,7 +315,7 @@ contract LiquidityService is ILiquidityService {
       revert LiquidityService_CircuitBreaker();
     }
 
-    if (!IConfigStorage(configStorage).getPLPTokenConfig(_token).accepted) {
+    if (!IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).accepted) {
       revert LiquidityService_InvalidToken();
     }
 

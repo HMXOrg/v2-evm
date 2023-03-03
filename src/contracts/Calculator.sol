@@ -98,7 +98,7 @@ contract Calculator is Owned, ICalculator {
     for (uint256 i = 0; i < _len; ) {
       uint256 _priceE30;
 
-      IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfigs(_plpAssetIds[i]);
+      IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_plpAssetIds[i]);
 
       if (_limitPrice > 0 && _assetId == _plpAssetIds[i]) {
         _priceE30 = _limitPrice;
@@ -110,7 +110,7 @@ contract Calculator is Owned, ICalculator {
         );
       }
       uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
-        (10 ** _configStorage.getAssetConfigs(_plpAssetIds[i]).decimals);
+        (10 ** _configStorage.getAssetConfig(_plpAssetIds[i]).decimals);
 
       unchecked {
         assetValue += value;
@@ -229,7 +229,7 @@ contract Calculator is Owned, ICalculator {
         _vaultStorage.plpLiquidityUSDE30(_token),
         _getPLPValueE30(false, 0, 0),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getPLPTokenConfig(_token),
+        _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.ADD
       );
   }
@@ -250,7 +250,7 @@ contract Calculator is Owned, ICalculator {
         _vaultStorage.plpLiquidityUSDE30(_token),
         _getPLPValueE30(true, 0, 0),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getPLPTokenConfig(_token),
+        _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
       );
   }
@@ -325,7 +325,8 @@ contract Calculator is Owned, ICalculator {
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
-    uint256 _targetUsd = (_totalLiquidityUsd * IConfigStorage(configStorage).getPLPTokenConfig(_token).targetWeight) /
+    uint256 _targetUsd = (_totalLiquidityUsd *
+      IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight) /
       _liquidityConfig.plpTotalTokenWeight;
 
     if (_targetUsd == 0) return 0;

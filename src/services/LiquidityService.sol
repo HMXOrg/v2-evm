@@ -174,7 +174,6 @@ contract LiquidityService is ILiquidityService {
 
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
     IVaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
-    IVaultStorage(vaultStorage).addPLPLiquidityUSDE30(_token, _tokenValueUSDAfterFee);
 
     _validatePLPHealthCheck(_token);
 
@@ -201,7 +200,6 @@ contract LiquidityService is ILiquidityService {
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
     IVaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
-    IVaultStorage(vaultStorage).removePLPLiquidityUSDE30(_tokenOut, _lpUsdValue);
 
     uint256 _feeRate = ICalculator(IConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeRate(
       _tokenOut,

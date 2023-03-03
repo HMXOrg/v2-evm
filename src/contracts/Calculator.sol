@@ -14,6 +14,7 @@ import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract Calculator is Owned, ICalculator {
   uint256 internal constant BPS = 1e4;
+  uint256 internal constant ETH_PRECISION = 1e18;
 
   // using libs for type
   using AddressUtils for address;
@@ -271,12 +272,12 @@ contract Calculator is Owned, ICalculator {
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
-      uint32 rebateRateBPS = uint32((_taxRateBPS * startTargetDiff * 1e18) / targetValue / 1e18);
+      uint32 rebateRateBPS = uint32((_taxRateBPS * startTargetDiff) / targetValue);
       return rebateRateBPS > _feeRateBPS ? 0 : _feeRateBPS - rebateRateBPS;
     }
 
-    // @todo - move this to service
-    uint256 _nextWeight = (nextValue * 1e18) / targetValue;
+    // _nextWeight represented 18 precision
+    uint256 _nextWeight = (nextValue * ETH_PRECISION) / targetValue;
     // if weight exceed targetWeight(e18) + maxWeight(e18)
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
@@ -294,8 +295,10 @@ contract Calculator is Owned, ICalculator {
   }
 
   /// @notice get settlement fee rate
-  /// @param _token - token
-  /// @param _liquidityUsdDelta - withdrawal amount
+  /// @param _token token's address
+  /// @param _liquidityUsdDelta liquidity USD delta
+  /// @param _limitPrice limit price
+  /// @param _assetId asset's id
   function getSettlementFeeRate(
     address _token,
     uint256 _liquidityUsdDelta,
@@ -336,7 +339,10 @@ contract Calculator is Owned, ICalculator {
     if (_nextTargetDiff < _currentTargetDiff) return 0;
 
     // settlement fee rate = (next target diff + current target diff / 2) * base tax fee / target usd
-    return (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRateBPS * 1e18) / _targetUsd / BPS;
+    return
+      (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRateBPS * ETH_PRECISION) /
+      _targetUsd /
+      BPS;
   }
 
   // return in e18

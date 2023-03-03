@@ -20,6 +20,7 @@ contract TradeService is ITradeService {
   using AddressUtils for address;
 
   uint256 internal constant BPS = 1e4;
+  uint64 internal constant RATE_PRECISION = 1e18;
 
   /**
    * Structs
@@ -980,7 +981,9 @@ contract TradeService is ITradeService {
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
     return
-      (_assetClassConfig.baseBorrowingRateBPS * _globalAssetClass.reserveValueE30 * intervals * 1e18) / plpTVL / BPS;
+      (_assetClassConfig.baseBorrowingRateBPS * _globalAssetClass.reserveValueE30 * intervals * RATE_PRECISION) /
+      plpTVL /
+      BPS;
   }
 
   /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.
@@ -1000,7 +1003,7 @@ contract TradeService is ITradeService {
     // Calculate borrowing rate.
     uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
     // Calculate the borrowing fee based on reserved value, borrowing rate.
-    return (_reservedValue * _borrowingRate) / 1e18;
+    return (_reservedValue * _borrowingRate) / RATE_PRECISION;
   }
 
   /// @notice Calculates the trading fee for a given position
@@ -1035,7 +1038,7 @@ contract TradeService is ITradeService {
 
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
-    fundingFee = (int(absSize) * _fundingRate) / 1e18;
+    fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
     if (_isLong) {
       return _fundingRate < 0 ? -fundingFee : fundingFee;
     } else {

@@ -5,4 +5,6 @@ interface ILiquidationService {
   error ILiquidationService_AccountHealthy();
 
   function liquidate(address subAccount) external;
+
+  function perpStorage() external view returns (address);
 }

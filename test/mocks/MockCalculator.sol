@@ -186,7 +186,9 @@ contract MockCalculator is ICalculator {
 
   function getSettlementFeeRate(
     address /* _token */,
-    uint256 /* _liquidityUSDDelta */
+    uint256 /* _liquidityUSDDelta */,
+    uint256,
+    bytes32
   ) external pure returns (uint256) {
     // 0.5%
     return 5e15;

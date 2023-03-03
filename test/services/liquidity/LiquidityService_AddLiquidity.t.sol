@@ -35,7 +35,6 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
 
     assertEq(dai.balanceOf(address(vaultStorage)), 100 ether, "VaultStorage should receive DAI from Handler.");
     assertEq(plp.totalSupply(), 99.7 ether, "PLP Total Supply");
-    assertEq(vaultStorage.plpTotalLiquidityUSDE30(), 99.7 * 10 ** 30);
   }
 
   // add liquidity when circuit break

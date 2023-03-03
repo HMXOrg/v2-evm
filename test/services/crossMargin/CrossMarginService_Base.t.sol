@@ -40,8 +40,8 @@ contract CrossMarginService_Base is BaseTest {
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collateralConfigWETH);
-    configStorage.setCollateralTokenConfig(address(usdc).toBytes32(), _collateralConfigUSDC);
+    configStorage.setCollateralTokenConfig(wethAssetId, _collateralConfigWETH);
+    configStorage.setCollateralTokenConfig(usdcAssetId, _collateralConfigUSDC);
   }
 
   // =========================================

@@ -27,9 +27,9 @@ contract TradeService_BorrowingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1600 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1600 * 1e30);
     // USDT price 1 USD
-    mockOracle.setPrice(address(usdt).toBytes32(), 1 * 1e30);
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
     address bobAddress = getSubAccount(BOB, 0);
@@ -137,9 +137,9 @@ contract TradeService_BorrowingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1600 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1600 * 1e30);
     // USDT price 1 USD
-    mockOracle.setPrice(address(usdt).toBytes32(), 1 * 1e30);
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
     address bobAddress = getSubAccount(BOB, 0);
@@ -218,11 +218,11 @@ contract TradeService_BorrowingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1600 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1600 * 1e30);
     // BTC price 24000 USD
-    mockOracle.setPrice(address(wbtc).toBytes32(), 24000 * 1e30);
+    mockOracle.setPrice(wbtcAssetId, 24000 * 1e30);
     // USDT price 1 USD
-    mockOracle.setPrice(address(usdt).toBytes32(), 1 * 1e30);
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
     vaultStorage.setTraderBalance(aliceAddress, address(weth), 0.01 * 1e18);

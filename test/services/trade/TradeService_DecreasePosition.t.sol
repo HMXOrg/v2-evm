@@ -5,6 +5,7 @@ import { TradeService_Base } from "./TradeService_Base.t.sol";
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
 import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
+import { console } from "forge-std/console.sol";
 
 // What is this test DONE
 // - pre validation
@@ -232,7 +233,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(wbtc), 10_000 * 1e8);
 
     // and wbtc price is 100 USD
-    mockOracle.setPrice(address(wbtc).toBytes32(), 100 * 1e30);
+    mockOracle.setPrice(wbtcAssetId, 100 * 1e30);
 
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, _tpToken, 0);
 

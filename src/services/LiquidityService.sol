@@ -152,10 +152,10 @@ contract LiquidityService is ILiquidityService {
     uint256 amountAfterFee = _collectFee(
       CollectFeeRequest(
         _token,
+        _lpProvider,
         _price,
         _amount,
         _getFeeRate(_token, _amount, _price),
-        _lpProvider,
         LiquidityAction.ADD_LIQUIDITY
       )
     );
@@ -211,7 +211,7 @@ contract LiquidityService is ILiquidityService {
     );
 
     _amountOut = _collectFee(
-      CollectFeeRequest(_tokenOut, _maxPrice, _amount, _feeRate, _lpProvider, LiquidityAction.REMOVE_LIQUIDITY)
+      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amount, _feeRate, LiquidityAction.REMOVE_LIQUIDITY)
     );
 
     if (_minAmount > _amountOut) {

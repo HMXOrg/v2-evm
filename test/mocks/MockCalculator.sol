@@ -11,6 +11,10 @@ contract MockCalculator is ICalculator {
   mapping(address => uint256) mmrOf;
   mapping(address => int256) unrealizedPnlOf;
 
+  address public configStorage;
+  address public perpStorage;
+  address public vaultStorage;
+
   uint256 collateralValue;
   uint256 freeCollateral;
   uint256 aum;
@@ -201,4 +205,12 @@ contract MockCalculator is ICalculator {
   ) external view returns (uint256) {
     return collateralValue;
   }
+
+  function setOracle(address /*_oracle*/) external {}
+
+  function setVaultStorage(address /*_address*/) external {}
+
+  function setConfigStorage(address /*_address*/) external {}
+
+  function setPerpStorage(address /*_address*/) external {}
 }

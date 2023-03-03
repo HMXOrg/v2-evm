@@ -18,4 +18,20 @@ library Deployer {
       }
     }
   }
+
+  function deployContractWithArguments(
+    string memory _name,
+    bytes memory _args
+  ) internal returns (address _deployedAddress) {
+    string memory _jsonFile = string.concat("./out/", _name, ".sol/", _name, ".json");
+
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode(_jsonFile), _args);
+
+    assembly {
+      _deployedAddress := create(0, add(_logicBytecode, 0x20), mload(_logicBytecode))
+      if iszero(extcodesize(_deployedAddress)) {
+        revert(0, 0)
+      }
+    }
+  }
 }

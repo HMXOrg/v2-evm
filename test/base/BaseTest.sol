@@ -30,14 +30,12 @@ import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 
 // Interfaces
 import { IPLPv2 } from "../../src/contracts/interfaces/IPLPv2.sol";
+import { ICalculator } from "../../src/contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "../../src/contracts/interfaces/IFeeCalculator.sol";
 
 import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
-
-// Calculator
-import { Calculator } from "../../src/contracts/Calculator.sol";
-import { FeeCalculator } from "../../src/contracts/FeeCalculator.sol";
 
 // Handlers
 import { LiquidityHandler } from "../../src/handlers/LiquidityHandler.sol";
@@ -66,8 +64,8 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
 
   // other contracts
   IPLPv2 internal plp;
-  Calculator internal calculator;
-  FeeCalculator internal feeCalculator;
+  ICalculator internal calculator;
+  IFeeCalculator internal feeCalculator;
 
   // mock
   MockPyth internal mockPyth;
@@ -147,7 +145,9 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
     _setUpLiquidationConfig();
     _setUpAssetConfigs();
 
-    feeCalculator = new FeeCalculator(address(vaultStorage), address(configStorage));
+    bytes memory _args = abi.encode(address(vaultStorage), address(configStorage));
+
+    feeCalculator = IFeeCalculator(Deployer.deployContractWithArguments("FeeCalculator", _args));
 
     // set general config
     configStorage.setFeeCalculator(address(feeCalculator));
@@ -199,8 +199,9 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
     address _vaultStorage,
     address _perpStorage,
     address _configStorage
-  ) internal returns (Calculator) {
-    return new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
+  ) internal returns (ICalculator) {
+    bytes memory _args = abi.encode(_oracle, _vaultStorage, _perpStorage, _configStorage);
+    return ICalculator(Deployer.deployContractWithArguments("Calculator", _args));
   }
 
   /**

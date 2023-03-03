@@ -225,7 +225,7 @@ contract Calculator is Owned, ICalculator {
       _getFeeRate(
         _tokenValueE30,
         _vaultStorage.plpLiquidityUSDE30(_token),
-        _vaultStorage.plpTotalLiquidityUSDE30(),
+        _getPLPValueE30(false, 0, 0),
         _configStorage.getLiquidityConfig(),
         _configStorage.getPLPTokenConfig(_token),
         LiquidityDirection.ADD
@@ -246,7 +246,7 @@ contract Calculator is Owned, ICalculator {
       _getFeeRate(
         _tokenValueE30,
         _vaultStorage.plpLiquidityUSDE30(_token),
-        _vaultStorage.plpTotalLiquidityUSDE30(),
+        _getPLPValueE30(true, 0, 0),
         _configStorage.getLiquidityConfig(),
         _configStorage.getPLPTokenConfig(_token),
         LiquidityDirection.REMOVE
@@ -308,14 +308,16 @@ contract Calculator is Owned, ICalculator {
   /// @param _liquidityUsdDelta - withdrawal amount
   function getSettlementFeeRate(
     address _token,
-    uint256 _liquidityUsdDelta
+    uint256 _liquidityUsdDelta,
+    uint256 _limitPrice,
+    bytes32 _assetId
   ) external returns (uint256 _settlementFeeRate) {
     // usd debt
     uint256 _tokenLiquidityUsd = IVaultStorage(vaultStorage).plpLiquidityUSDE30(_token);
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
-    uint256 _totalLiquidityUsd = IVaultStorage(vaultStorage).plpTotalLiquidityUSDE30();
+    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPrice, _assetId);
 
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 

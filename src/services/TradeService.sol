@@ -676,7 +676,9 @@ contract TradeService is ITradeService {
 
     uint256 _settlementFeeRate = ICalculator(_configStorage.calculator()).getSettlementFeeRate(
       _token,
-      _realizedProfitE30
+      _realizedProfitE30,
+      _limitPrice,
+      _assetId
     );
     uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / (10 ** _decimals);
 

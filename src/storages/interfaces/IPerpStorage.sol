@@ -100,5 +100,5 @@ interface IPerpStorage {
 
   function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external;
 
-  function getSubAccountPositionIds(address _subAccount) external returns (bytes32[] memory _subAccountPositionIds);
+  function getPositionIds(address _subAccount) external returns (bytes32[] memory _positionIds);
 }

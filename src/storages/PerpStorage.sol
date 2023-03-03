@@ -11,7 +11,7 @@ contract PerpStorage is IPerpStorage {
   GlobalState public globalState; // global state that accumulative value from all markets
 
   mapping(bytes32 => Position) public positions;
-  mapping(address => bytes32[]) public subAccountPositionIds;
+  mapping(address => bytes32[]) public positionIds;
 
   mapping(address => int256) public subAccountFee;
 
@@ -25,12 +25,12 @@ contract PerpStorage is IPerpStorage {
   /// @param _trader The address of the trader whose positions to retrieve
   /// @return traderPositions An array of Position objects representing the trader's positions
   function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions) {
-    bytes32[] memory _subAccountPositionIds = subAccountPositionIds[_trader];
-    if (_subAccountPositionIds.length > 0) {
-      Position[] memory _traderPositions = new Position[](_subAccountPositionIds.length);
-      uint256 _len = _subAccountPositionIds.length;
+    bytes32[] memory _positionIds = positionIds[_trader];
+    if (_positionIds.length > 0) {
+      Position[] memory _traderPositions = new Position[](_positionIds.length);
+      uint256 _len = _positionIds.length;
       for (uint256 i; i < _len; ) {
-        _traderPositions[i] = (positions[_subAccountPositionIds[i]]);
+        _traderPositions[i] = (positions[_positionIds[i]]);
 
         unchecked {
           i++;
@@ -41,10 +41,8 @@ contract PerpStorage is IPerpStorage {
     }
   }
 
-  function getSubAccountPositionIds(
-    address _subAccount
-  ) external view returns (bytes32[] memory _subAccountPositionIds) {
-    return subAccountPositionIds[_subAccount];
+  function getPositionIds(address _subAccount) external view returns (bytes32[] memory _positionIds) {
+    return positionIds[_subAccount];
   }
 
   // @todo - add description
@@ -53,13 +51,13 @@ contract PerpStorage is IPerpStorage {
   }
 
   function getNumberOfSubAccountPosition(address _subAccount) external view returns (uint256) {
-    return subAccountPositionIds[_subAccount].length;
+    return positionIds[_subAccount].length;
   }
 
   function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) public {
     IPerpStorage.Position memory _position = positions[_positionId];
     if (_position.positionSizeE30 == 0) {
-      subAccountPositionIds[_subAccount].push(_positionId);
+      positionIds[_subAccount].push(_positionId);
     }
     positions[_positionId] = position;
   }
@@ -68,12 +66,12 @@ contract PerpStorage is IPerpStorage {
   /// @param _subAccount The sub account of the position.
   /// @param _positionId The ID of the position to be reset.
   function removePosition(address _subAccount, bytes32 _positionId) public {
-    bytes32[] storage _subAccountPositionIds = subAccountPositionIds[_subAccount];
-    uint256 _len = _subAccountPositionIds.length;
+    bytes32[] storage _positionIds = positionIds[_subAccount];
+    uint256 _len = _positionIds.length;
     for (uint256 i; i < _len; ) {
-      if (_subAccountPositionIds[i] == _positionId) {
-        _subAccountPositionIds[i] = _subAccountPositionIds[_len - 1];
-        _subAccountPositionIds.pop();
+      if (_positionIds[i] == _positionId) {
+        _positionIds[i] = _positionIds[_len - 1];
+        _positionIds.pop();
         delete positions[_positionId];
 
         break;

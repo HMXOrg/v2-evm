@@ -38,7 +38,7 @@ contract LiquidationService is ILiquidationService {
       revert ILiquidationService_AccountHealthy();
 
     // Get the list of position ids associated with the sub-account
-    bytes32[] memory _positionIds = IPerpStorage(perpStorage).getSubAccountPositionIds(_subAccount);
+    bytes32[] memory _positionIds = IPerpStorage(perpStorage).getPositionIds(_subAccount);
 
     // Settles the sub-account by paying off its debt with its collateral
     _settle(_subAccount);

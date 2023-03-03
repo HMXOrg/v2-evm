@@ -120,7 +120,7 @@ contract LiquidationService is ILiquidationService {
     if (_absDebt != 0) IPerpStorage(perpStorage).addBadDebt(_subAccount, _absDebt);
   }
 
-  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address) {
+  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }

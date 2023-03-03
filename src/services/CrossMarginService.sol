@@ -73,7 +73,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /// @param _amount Token depositing amount.
   function depositCollateral(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     address _token,
     uint256 _amount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
@@ -111,7 +111,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /// @param _amount Token withdrawing amount.
   function withdrawCollateral(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     address _token,
     uint256 _amount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
@@ -189,7 +189,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /// @param _primary Trader's primary wallet account.
   /// @param _subAccountId Trader's sub account ID.
   /// @return _subAccount Trader's sub account address used for trading.
-  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }

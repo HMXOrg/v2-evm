@@ -78,7 +78,7 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
 
     // Mock WETH Price to 2,000
     mockOracle.setPrice(2_000 * 1e30);
-    configStorage.setPnlFactor(0.8 * 1e18);
+    configStorage.setPnlFactor(0.8 * 1e4);
 
     // Calculate unrealized pnl from ALICE's position
     // UnrealizedPnl = ABS(positionSize - priceDelta)/avgEntryPrice
@@ -110,7 +110,7 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
 
     // Mock WETH Price to 1,400
     mockOracle.setPrice(1_400 * 1e30);
-    configStorage.setPnlFactor(0.8 * 1e18);
+    configStorage.setPnlFactor(0.8 * 1e4);
 
     // Calculate unrealized pnl from ALICE's position
     // UnrealizedPnl = ABS(positionSize - priceDelta)/avgEntryPrice
@@ -142,7 +142,7 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
 
     // Mock WETH Price to 1,400
     mockOracle.setPrice(1_400 * 1e30);
-    configStorage.setPnlFactor(0.8 * 1e18);
+    configStorage.setPnlFactor(0.8 * 1e4);
 
     // Calculate unrealized pnl from ALICE's position
     // UnrealizedPnl = ABS(positionSize - priceDelta)/avgEntryPrice
@@ -174,7 +174,7 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
 
     // Mock WETH Price to 1,800
     mockOracle.setPrice(1_800 * 1e30);
-    configStorage.setPnlFactor(0.8 * 1e18);
+    configStorage.setPnlFactor(0.8 * 1e4);
 
     // Calculate unrealized pnl from ALICE's position
     // UnrealizedPnl = ABS(positionSize - priceDelta)/avgEntryPrice

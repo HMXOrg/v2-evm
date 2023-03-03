@@ -8,7 +8,7 @@ import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 contract CrossMarginHandler_Base is BaseTest {
   using AddressUtils for address;
 
-  uint256 internal SUB_ACCOUNT_NO = 1;
+  uint8 internal SUB_ACCOUNT_NO = 1;
 
   CrossMarginHandler internal crossMarginHandler;
   CrossMarginService internal crossMarginService;
@@ -38,13 +38,13 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set accepted token deposit/withdraw as WETH and USDC
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.8 ether,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
     IConfigStorage.CollateralTokenConfig memory _collateralConfigUSDC = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.8 ether,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
@@ -58,19 +58,19 @@ contract CrossMarginHandler_Base is BaseTest {
       IConfigStorage.MarketConfig({
         assetId: address(weth).toBytes32(),
         assetClass: 1,
-        maxProfitRate: 9e18,
-        minLeverage: 1,
-        initialMarginFraction: 0.1 * 1e18,
-        maintenanceMarginFraction: 0.005 * 1e18,
-        increasePositionFeeRate: 0,
-        decreasePositionFeeRate: 0,
+        maxProfitRateBPS: 9 * 1e4,
+        minLeverageBPS: 1 * 1e4,
+        initialMarginFractionBPS: 0.1 * 1e4,
+        maintenanceMarginFractionBPS: 0.005 * 1e4,
+        increasePositionFeeRateBPS: 0,
+        decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
         openInterest: IConfigStorage.OpenInterest({
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 4 * 1e14, maxSkewScaleUSD: 3_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );
 
@@ -113,7 +113,7 @@ contract CrossMarginHandler_Base is BaseTest {
    * COMMON FUNCTION
    */
 
-  function getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+  function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }

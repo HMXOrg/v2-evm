@@ -148,8 +148,7 @@ contract MockCalculator is ICalculator {
   function getAddLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValue*/,
-    IConfigStorage /*_configStorage*/,
-    IVaultStorage /*_vaultStorage*/
+    IConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
     return 0.003 ether;
   }
@@ -157,16 +156,15 @@ contract MockCalculator is ICalculator {
   function getRemoveLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValueE30*/,
-    IConfigStorage /*_configStorage*/,
-    IVaultStorage /*_vaultStorage*/
+    IConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
     return 1e18;
   }
 
   function getFreeCollateral(
     address /*_subAccount*/,
-    uint256 _price,
-    bytes32 _assetId
+    uint256 /*_price*/,
+    bytes32 /*_assetId*/
   ) external view returns (uint256) {
     return freeCollateral;
   }

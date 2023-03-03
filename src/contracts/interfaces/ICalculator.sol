@@ -52,15 +52,13 @@ interface ICalculator {
   function getAddLiquidityFeeRate(
     address _token,
     uint256 _tokenValue,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    IConfigStorage _configStorage
   ) external returns (uint256);
 
   function getRemoveLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    IConfigStorage _configStorage
   ) external returns (uint256);
 
   function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _imrE30);

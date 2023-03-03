@@ -91,6 +91,12 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
   bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000004;
   bytes32 internal constant usdtPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
 
+  bytes32 internal constant wethAssetId = "WETH";
+  bytes32 internal constant wbtcAssetId = "WBTC";
+  bytes32 internal constant daiAssetId = "DAI";
+  bytes32 internal constant usdcAssetId = "USDC";
+  bytes32 internal constant usdtAssetId = "USDT";
+
   constructor() {
     // Creating a mock Pyth instance with 60 seconds valid time period
     // and 1 wei for updating price.
@@ -330,7 +336,7 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
   function _setUpMarketConfigs() private {
     // add market config
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage.MarketConfig({
-      assetId: "ETH",
+      assetId: wethAssetId,
       assetClass: 0,
       maxProfitRateBPS: 9 * 1e4,
       minLeverageBPS: 1 * 1e4,
@@ -348,7 +354,7 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
     });
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
-      assetId: "BTC",
+      assetId: wbtcAssetId,
       assetClass: 0,
       maxProfitRateBPS: 9 * 1e4,
       minLeverageBPS: 1 * 1e4,
@@ -430,7 +436,7 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collatTokenConfigWeth);
+    configStorage.setCollateralTokenConfig(wethAssetId, _collatTokenConfigWeth);
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
       collateralFactorBPS: 0.9 * 1e4,
@@ -438,7 +444,7 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(wbtc).toBytes32(), _collatTokenConfigWbtc);
+    configStorage.setCollateralTokenConfig(wbtcAssetId, _collatTokenConfigWbtc);
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigUsdt = IConfigStorage.CollateralTokenConfig({
       collateralFactorBPS: 1 * 1e4,
@@ -446,7 +452,15 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(usdt).toBytes32(), _collatTokenConfigUsdt);
+    configStorage.setCollateralTokenConfig(usdtAssetId, _collatTokenConfigUsdt);
+
+    IConfigStorage.CollateralTokenConfig memory _collatTokenConfigUsdc = IConfigStorage.CollateralTokenConfig({
+      collateralFactorBPS: 1 * 1e4,
+      accepted: true,
+      settleStrategy: address(0)
+    });
+
+    configStorage.setCollateralTokenConfig(usdcAssetId, _collatTokenConfigUsdc);
   }
 
   function _setUpLiquidationConfig() private {
@@ -460,43 +474,43 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
   function _setUpAssetConfigs() private {
     IConfigStorage.AssetConfig memory _assetConfigWeth = IConfigStorage.AssetConfig({
       tokenAddress: address(weth),
-      assetId: address(weth).toBytes32(),
+      assetId: wethAssetId,
       decimals: 18,
       isStableCoin: false
     });
-    configStorage.setAssetConfig(address(weth).toBytes32(), _assetConfigWeth);
+    configStorage.setAssetConfig(wethAssetId, _assetConfigWeth);
 
     IConfigStorage.AssetConfig memory _assetConfigWbtc = IConfigStorage.AssetConfig({
       tokenAddress: address(wbtc),
-      assetId: address(wbtc).toBytes32(),
+      assetId: wbtcAssetId,
       decimals: 8,
       isStableCoin: false
     });
-    configStorage.setAssetConfig(address(wbtc).toBytes32(), _assetConfigWbtc);
+    configStorage.setAssetConfig(wbtcAssetId, _assetConfigWbtc);
 
     IConfigStorage.AssetConfig memory _assetConfigUsdt = IConfigStorage.AssetConfig({
       tokenAddress: address(usdt),
-      assetId: address(usdt).toBytes32(),
+      assetId: usdtAssetId,
       decimals: 6,
       isStableCoin: true
     });
-    configStorage.setAssetConfig(address(usdt).toBytes32(), _assetConfigUsdt);
+    configStorage.setAssetConfig(usdtAssetId, _assetConfigUsdt);
 
     IConfigStorage.AssetConfig memory _assetConfigUsdc = IConfigStorage.AssetConfig({
       tokenAddress: address(usdc),
-      assetId: address(usdc).toBytes32(),
+      assetId: usdcAssetId,
       decimals: 6,
       isStableCoin: true
     });
-    configStorage.setAssetConfig(address(usdc).toBytes32(), _assetConfigUsdc);
+    configStorage.setAssetConfig(usdcAssetId, _assetConfigUsdc);
 
     IConfigStorage.AssetConfig memory _assetConfigDai = IConfigStorage.AssetConfig({
       tokenAddress: address(dai),
-      assetId: address(dai).toBytes32(),
+      assetId: daiAssetId,
       decimals: 18,
       isStableCoin: true
     });
-    configStorage.setAssetConfig(address(dai).toBytes32(), _assetConfigDai);
+    configStorage.setAssetConfig(daiAssetId, _assetConfigDai);
   }
 
   function abs(int256 x) external pure returns (uint256) {

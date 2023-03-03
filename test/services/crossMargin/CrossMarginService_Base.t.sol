@@ -42,7 +42,6 @@ contract CrossMarginService_Base is BaseTest {
 
     configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collateralConfigWETH);
     configStorage.setCollateralTokenConfig(address(usdc).toBytes32(), _collateralConfigUSDC);
-    configStorage.addTokenAssetId(address(usdc), address(usdc).toBytes32());
   }
 
   // =========================================

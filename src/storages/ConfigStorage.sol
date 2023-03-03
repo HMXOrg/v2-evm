@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 // @todo - convert to upgradable
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
@@ -153,11 +154,11 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function getMarketConfigByToken(address _token) external view returns (MarketConfig memory marketConfig) {
-    for (uint i; i < marketConfigs.length; ) {
+    for (uint256 i; i < marketConfigs.length; ) {
       if (marketConfigs[i].assetId == _token.toBytes32()) return marketConfigs[i];
 
       unchecked {
-        i++;
+        ++i;
       }
     }
   }
@@ -171,13 +172,16 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function getCollateralTokens() external view returns (address[] memory) {
-    address[] memory tokenAddresses = new address[](collateralAssetIds.length);
+    bytes32[] memory _collateralAssetIds = collateralAssetIds;
 
-    for (uint i; i < collateralAssetIds.length; ) {
-      tokenAddresses[i] = assetConfigs[collateralAssetIds[i]].tokenAddress;
+    uint256 _len = _collateralAssetIds.length;
+    address[] memory tokenAddresses = new address[](_len);
+
+    for (uint256 i; i < _len; ) {
+      tokenAddresses[i] = assetConfigs[_collateralAssetIds[i]].tokenAddress;
 
       unchecked {
-        i++;
+        ++i;
       }
     }
     return tokenAddresses;
@@ -276,12 +280,12 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function setCollateralTokenConfig(
-    bytes32 collateralAssetId,
+    bytes32 _assetId,
     CollateralTokenConfig memory _newConfig
   ) external returns (CollateralTokenConfig memory _collateralTokenConfig) {
-    assetCollateralTokenConfigs[collateralAssetId] = _newConfig;
-    collateralAssetIds.push(collateralAssetId);
-    return assetCollateralTokenConfigs[collateralAssetId];
+    assetCollateralTokenConfigs[_assetId] = _newConfig;
+    collateralAssetIds.push(_assetId);
+    return assetCollateralTokenConfigs[_assetId];
   }
 
   function setAssetConfig(
@@ -289,6 +293,15 @@ contract ConfigStorage is IConfigStorage, Owned {
     AssetConfig memory _newConfig
   ) external returns (AssetConfig memory _assetConfig) {
     assetConfigs[assetId] = _newConfig;
+    address _token = _newConfig.tokenAddress;
+
+    if (_token != address(0)) {
+      tokenAssetIds[_token] = assetId;
+
+      // sanity check
+      ERC20(_token).decimals();
+    }
+
     return assetConfigs[assetId];
   }
 
@@ -372,9 +385,5 @@ contract ConfigStorage is IConfigStorage, Owned {
     delete plpTokenConfigs[_token];
 
     emit RemoveUnderlying(_token);
-  }
-
-  function addTokenAssetId(address _token, bytes32 _assetId) external {
-    tokenAssetIds[_token] = _assetId;
   }
 }

@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 // @todo - convert to upgradable
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
@@ -46,10 +47,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   SwapConfig public swapConfig;
   TradingConfig public tradingConfig;
   LiquidationConfig public liquidationConfig;
-
-  address[] public collateralTokens; // @todo - [cross margin] remove
-
-  mapping(address => CollateralTokenConfig) public collateralTokenConfigs; // @todo - [cross margin] remove
 
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
   mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer
@@ -100,7 +97,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
   /// @param _token Token address to be deposit/withdraw.
   function validateAcceptedCollateral(address _token) external view {
-    if (!collateralTokenConfigs[_token].accepted) revert IConfigStorage_NotAcceptedCollateral();
+    if (!assetCollateralTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedCollateral();
   }
 
   /**
@@ -128,7 +125,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   function getCollateralTokenConfigs(
     address _token
   ) external view returns (CollateralTokenConfig memory _collateralTokenConfig) {
-    return collateralTokenConfigs[_token];
+    return assetCollateralTokenConfigs[tokenAssetIds[_token]];
   }
 
   function getAssetTokenDecimal(address _token) external view returns (uint8) {
@@ -148,11 +145,13 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function getMarketConfigByToken(address _token) external view returns (MarketConfig memory marketConfig) {
-    for (uint i; i < marketConfigs.length; ) {
-      if (marketConfigs[i].assetId == _token.toBytes32()) return marketConfigs[i];
+    MarketConfig[] memory _marketConfigs = marketConfigs;
+
+    for (uint256 _i; _i < _marketConfigs.length; ) {
+      if (_marketConfigs[_i].assetId == _token.toBytes32()) return _marketConfigs[_i];
 
       unchecked {
-        i++;
+        ++_i;
       }
     }
   }
@@ -170,8 +169,25 @@ contract ConfigStorage is IConfigStorage, Owned {
     return _result;
   }
 
+  function getAssetConfigByToken(address _token) external view returns (AssetConfig memory) {
+    return assetConfigs[tokenAssetIds[_token]];
+  }
+
   function getCollateralTokens() external view returns (address[] memory) {
-    return collateralTokens;
+    bytes32[] memory _collateralAssetIds = collateralAssetIds;
+    mapping(bytes32 => AssetConfig) storage _assetConfigs = assetConfigs;
+
+    uint256 _len = _collateralAssetIds.length;
+    address[] memory tokenAddresses = new address[](_len);
+
+    for (uint256 _i; _i < _len; ) {
+      tokenAddresses[_i] = _assetConfigs[_collateralAssetIds[_i]].tokenAddress;
+
+      unchecked {
+        ++_i;
+      }
+    }
+    return tokenAddresses;
   }
 
   function getAssetConfig(bytes32 _assetId) external view returns (AssetConfig memory) {
@@ -281,12 +297,29 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function setCollateralTokenConfig(
-    address _token,
+    bytes32 _assetId,
     CollateralTokenConfig memory _newConfig
   ) external returns (CollateralTokenConfig memory _collateralTokenConfig) {
-    collateralTokenConfigs[_token] = _newConfig;
-    collateralTokens.push(_token);
-    return collateralTokenConfigs[_token];
+    assetCollateralTokenConfigs[_assetId] = _newConfig;
+    collateralAssetIds.push(_assetId);
+    return assetCollateralTokenConfigs[_assetId];
+  }
+
+  function setAssetConfig(
+    bytes32 assetId,
+    AssetConfig memory _newConfig
+  ) external returns (AssetConfig memory _assetConfig) {
+    assetConfigs[assetId] = _newConfig;
+    address _token = _newConfig.tokenAddress;
+
+    if (_token != address(0)) {
+      tokenAssetIds[_token] = assetId;
+
+      // sanity check
+      ERC20(_token).decimals();
+    }
+
+    return assetConfigs[assetId];
   }
 
   function setWeth(address _weth) external {
@@ -295,7 +328,7 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   /// @notice add or update AcceptedToken
   /// @dev This function only allows to add new token or update existing token,
-  /// any atetempt to remove token will be reverted.
+  /// any attempt to remove token will be reverted.
   /// @param _tokens The token addresses to set.
   /// @param _configs The token configs to set.
   function addOrUpdateAcceptedToken(address[] calldata _tokens, PLPTokenConfig[] calldata _configs) external onlyOwner {
@@ -317,6 +350,7 @@ contract ConfigStorage is IConfigStorage, Owned {
         plpAssetIds.push(_assetId);
       }
       // Log
+
       emit AddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 
       // Update totalWeight accordingly
@@ -345,18 +379,6 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external {
     assetClassConfigs[_index] = _newConfig;
-  }
-
-  function setAssetConfig(bytes32 _assetId, AssetConfig memory _config) external {
-    assetConfigs[_assetId] = _config;
-
-    address _token = _config.tokenAddress;
-    if (_token != address(0)) {
-      tokenAssetIds[_token] = _assetId;
-
-      // sanity check
-      ERC20(_token).decimals();
-    }
   }
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {

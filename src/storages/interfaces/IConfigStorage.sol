@@ -33,12 +33,9 @@ interface IConfigStorage {
 
   /// @notice collateral token config
   struct CollateralTokenConfig {
-    uint256 decimals; // @todo - [cross margin] remove
     uint256 collateralFactor; // token reliability factor to calculate buying power, 1e18 = 100%
-    bool isStableCoin; // @todo - [cross margin] remove
     bool accepted; // accepted to deposit as collateral
     address settleStrategy; // determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
-    uint256 priceConfidentThreshold; // @todo - [cross margin] remove
   }
 
   struct OpenInterest {
@@ -156,6 +153,8 @@ interface IConfigStorage {
 
   function getCollateralTokens() external view returns (address[] memory);
 
+  function getAssetConfigByToken(address _token) external view returns (AssetConfig memory);
+
   function getPlpAssetIds() external view returns (bytes32[] memory);
 
   function getAssetConfig(bytes32 _assetId) external view returns (AssetConfig memory);
@@ -205,9 +204,9 @@ interface IConfigStorage {
   ) external returns (PLPTokenConfig memory _plpTokenConfig);
 
   function setCollateralTokenConfig(
-    address _token,
+    bytes32 collateralAssetId,
     CollateralTokenConfig memory _newConfig
-  ) external returns (CollateralTokenConfig memory);
+  ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 
   function setWeth(address _weth) external;
 

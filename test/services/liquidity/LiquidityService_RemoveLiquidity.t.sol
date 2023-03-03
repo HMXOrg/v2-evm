@@ -37,7 +37,6 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     liquidityService.removeLiquidity(address(this), address(dai), 50 ether, 0);
 
     assertEq(plp.totalSupply(), 49.7 ether, "PLP Total Supply");
-    assertEq(vaultStorage.plpTotalLiquidityUSDE30(), 49.7 * 10 ** 30);
   }
 
   // remove liquidity when circuit break

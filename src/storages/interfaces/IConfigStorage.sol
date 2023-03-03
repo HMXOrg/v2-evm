@@ -70,8 +70,8 @@ interface IConfigStorage {
   struct LiquidityConfig {
     uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
     uint256 plpSafetyBufferThreshold;
-    uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
-    uint256 flashLoanFeeRate;
+    uint32 taxFeeRateBPS; // PLP deposit, withdraw, settle collect when pool weight is imbalances
+    uint32 flashLoanFeeRateBPS;
     uint32 maxPLPUtilizationBPS; //% of max utilization
     uint32 depositFeeRateBPS; // PLP deposit fee rate
     uint32 withdrawFeeRateBPS; // PLP withdraw fee rate
@@ -80,15 +80,15 @@ interface IConfigStorage {
   }
 
   struct SwapConfig {
-    uint256 stablecoinSwapFeeRate;
-    uint256 swapFeeRate;
+    uint32 stablecoinSwapFeeRateBPS;
+    uint32 swapFeeRateBPS;
   }
 
   struct TradingConfig {
     uint256 fundingInterval; // funding interval unit in seconds
-    uint256 devFeeRate;
     uint256 minProfitDuration;
-    uint256 maxPosition;
+    uint32 devFeeRateBPS;
+    uint8 maxPosition;
   }
 
   struct LiquidationConfig {

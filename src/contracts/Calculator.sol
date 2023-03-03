@@ -251,10 +251,10 @@ contract Calculator is Owned, ICalculator {
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
   ) internal pure returns (uint256) {
-    uint256 _feeRate = direction == LiquidityDirection.ADD
+    uint256 _feeRateBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
-    uint256 _taxRate = _liquidityConfig.taxFeeRate;
+    uint256 _taxRateBPS = _liquidityConfig.taxFeeRateBPS;
     uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
@@ -262,7 +262,7 @@ contract Calculator is Owned, ICalculator {
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
-    if (targetValue == 0) return _feeRate;
+    if (targetValue == 0) return _feeRateBPS;
 
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
 
@@ -271,8 +271,8 @@ contract Calculator is Owned, ICalculator {
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
-      uint256 rebateRate = (_taxRate * startTargetDiff) / targetValue;
-      return rebateRate > _feeRate ? 0 : _feeRate - rebateRate;
+      uint256 rebateRate = (_taxRateBPS * startTargetDiff * 1e18) / targetValue / BPS;
+      return rebateRate > _feeRateBPS ? 0 : _feeRateBPS - rebateRate;
     }
 
     // @todo - move this to service
@@ -288,9 +288,9 @@ contract Calculator is Owned, ICalculator {
     if (midDiff > targetValue) {
       midDiff = targetValue;
     }
-    _taxRate = (_taxRate * midDiff) / targetValue;
+    _taxRateBPS = (_taxRateBPS * midDiff) / targetValue;
 
-    return _feeRate + _taxRate;
+    return _feeRateBPS + _taxRateBPS;
   }
 
   /// @notice get settlement fee rate
@@ -336,7 +336,7 @@ contract Calculator is Owned, ICalculator {
     if (_nextTargetDiff < _currentTargetDiff) return 0;
 
     // settlement fee rate = (next target diff + current target diff / 2) * base tax fee / target usd
-    return (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRate) / _targetUsd;
+    return (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRateBPS * 1e18) / _targetUsd / BPS;
   }
 
   // return in e18

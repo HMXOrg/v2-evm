@@ -59,7 +59,7 @@ contract TradeService is ITradeService {
 
   event LogForceClosePosition(
     address indexed _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
     uint256 _closedPositionSize,
@@ -90,7 +90,7 @@ contract TradeService is ITradeService {
   /// @param _limitPriceE30 limit price for execute order
   function increasePosition(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _limitPriceE30
@@ -302,7 +302,7 @@ contract TradeService is ITradeService {
 
   function decreasePosition(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _positionSizeE30ToDecrease,
     address _tpToken,
@@ -382,12 +382,7 @@ contract TradeService is ITradeService {
   /// @param _subAccountId sub-account id
   /// @param _marketIndex position market index
   /// @param _tpToken take profit token
-  function forceClosePosition(
-    address _account,
-    uint256 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken
-  ) external {
+  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
     // init vars
     DecreasePositionVars memory _vars;
 
@@ -790,7 +785,7 @@ contract TradeService is ITradeService {
    */
 
   // @todo - add description
-  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address) {
+  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
@@ -1217,7 +1212,7 @@ contract TradeService is ITradeService {
         }
 
         // Calculate the developer fee amount in the plp underlying token
-        tmpVars.devFeeTokenAmount = (tmpVars.repayFeeTokenAmount * _tradingConfig.devFeeRate) / 1e18;
+        tmpVars.devFeeTokenAmount = (tmpVars.repayFeeTokenAmount * _tradingConfig.devFeeRateBPS) / BPS;
         // Deducts for dev fee
         tmpVars.repayFeeTokenAmount -= tmpVars.devFeeTokenAmount;
 

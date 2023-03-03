@@ -8,7 +8,7 @@ import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 contract CrossMarginHandler_Base is BaseTest {
   using AddressUtils for address;
 
-  uint256 internal SUB_ACCOUNT_NO = 1;
+  uint8 internal SUB_ACCOUNT_NO = 1;
 
   CrossMarginHandler internal crossMarginHandler;
   CrossMarginService internal crossMarginService;
@@ -113,7 +113,7 @@ contract CrossMarginHandler_Base is BaseTest {
    * COMMON FUNCTION
    */
 
-  function getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+  function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }

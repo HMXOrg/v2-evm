@@ -103,7 +103,7 @@ contract PerpStorage is IPerpStorage {
   // @todo - remove
   function addPosition(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     bytes32 _positionId,
     int256 _newPositionSizeE30,

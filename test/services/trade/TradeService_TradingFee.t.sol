@@ -20,7 +20,7 @@ contract TradeService_TradingFee is TradeService_Base {
 
     // Ignore Developer fee on this test
     configStorage.setTradingConfig(
-      IConfigStorage.TradingConfig({ fundingInterval: 1, devFeeRate: 0, minProfitDuration: 0, maxPosition: 5 })
+      IConfigStorage.TradingConfig({ fundingInterval: 1, devFeeRateBPS: 0, minProfitDuration: 0, maxPosition: 5 })
     );
 
     // Set increase/decrease position fee rate to 0.0001%

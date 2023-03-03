@@ -207,7 +207,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30
@@ -259,7 +259,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30
@@ -360,7 +360,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30
@@ -411,7 +411,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30
@@ -504,7 +504,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30
@@ -614,7 +614,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30
@@ -722,7 +722,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30
@@ -824,7 +824,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30
@@ -926,7 +926,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30
@@ -1028,7 +1028,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
       address _primaryAccount,
-      uint256 _subAccountId,
+      uint8 _subAccountId,
       uint256 _marketIndex,
       int256 _sizeDelta,
       uint256 _limitPriceE30

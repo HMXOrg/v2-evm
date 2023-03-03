@@ -244,8 +244,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
         maxPLPUtilizationBPS: 0.8 * 1e4,
         plpTotalTokenWeight: 0,
         plpSafetyBufferThreshold: 0,
-        taxFeeRate: 5e15, // 0.5%
-        flashLoanFeeRate: 0,
+        taxFeeRateBPS: 0.005 * 1e4, // 0.5%
+        flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: false,
         enabled: true
       })
@@ -254,7 +254,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   /// @notice set up swap config
   function _setUpSwapConfig() private {
-    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRate: 0, swapFeeRate: 0 }));
+    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
   }
 
   /// @notice set up trading config
@@ -262,7 +262,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     configStorage.setTradingConfig(
       IConfigStorage.TradingConfig({
         fundingInterval: 1,
-        devFeeRate: 0.15 * 1e18,
+        devFeeRateBPS: 0.15 * 1e4,
         minProfitDuration: 0,
         maxPosition: 5
       })

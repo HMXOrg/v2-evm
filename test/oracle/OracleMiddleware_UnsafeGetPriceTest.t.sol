@@ -22,7 +22,7 @@ contract OracleMiddleware_UnsafeGetPriceTest is OracleMiddleware_BaseTest {
     oracleMiddleware.setUpdater(ALICE, true);
 
     // set confident as 1e18 and trust price age 20 seconds
-    OracleMiddleware(oracleMiddleware).setAssetPriceConfig(address(wbtc).toBytes32(), 1e18, 20);
+    OracleMiddleware(oracleMiddleware).setAssetPriceConfig(address(wbtc).toBytes32(), 1e6, 20);
   }
 
   // unsafe get latest price

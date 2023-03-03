@@ -18,10 +18,10 @@ contract CrossMarginHandler_Base is BaseTest {
   function setUp() public virtual {
     DeployReturnVars memory deployed = deployPerp88v2();
 
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("ETH", 1e18, 60);
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("BTC", 1e18, 60);
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(address(wbtc).toBytes32(), 1e18, 60);
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(address(weth).toBytes32(), 1e18, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("ETH", 1e6, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig("BTC", 1e6, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(address(wbtc).toBytes32(), 1e6, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(address(weth).toBytes32(), 1e6, 60);
 
     calculator = deployCalculator(
       address(deployed.oracleMiddleware),

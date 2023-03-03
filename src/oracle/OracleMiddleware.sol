@@ -10,7 +10,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
    * Structs
    */
   struct AssetPriceConfig {
-    uint256 confidenceThreshold;
+    uint32 confidenceThresholdE6;
     uint8 trustPriceAge;
   }
 
@@ -21,8 +21,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   event LogSetUpdater(address indexed _account, bool _isActive);
   event LogSetAssetPriceConfig(
     bytes32 indexed _assetId,
-    uint256 _oldConfidenceThreshold,
-    uint256 _newConfidenceThreshold,
+    uint32 _oldConfidenceThresholdE6,
+    uint32 _newConfidenceThresholdE6,
     uint8 _oldTrustPriceAge,
     uint8 _newTrustPriceAge
   );
@@ -236,7 +236,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     AssetPriceConfig memory _assetConfig = assetPriceConfigs[_assetId];
 
     // 1. get price from Pyth
-    (_price, _exponent, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _assetConfig.confidenceThreshold);
+    (_price, _exponent, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _assetConfig.confidenceThresholdE6);
 
     // check price age
     if (block.timestamp - _lastUpdate > _assetConfig.trustPriceAge) revert IOracleMiddleware_PythPriceStale();
@@ -252,7 +252,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     AssetPriceConfig memory _assetConfig = assetPriceConfigs[_assetId];
 
     // 1. get price from Pyth
-    (_price, _exponent, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _assetConfig.confidenceThreshold);
+    (_price, _exponent, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _assetConfig.confidenceThresholdE6);
 
     // 2. Return the price and last update
     return (_price, _exponent, _lastUpdate);
@@ -342,23 +342,23 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   /// @notice Set asset price configs
   /// @param _assetId Asset's to set price config
-  /// @param _confidenceThreshold New price confidence threshold
+  /// @param _confidenceThresholdE6 New price confidence threshold
   /// @param _trustPriceAge valid price age
   function setAssetPriceConfig(
     bytes32 _assetId,
-    uint256 _confidenceThreshold,
+    uint32 _confidenceThresholdE6,
     uint8 _trustPriceAge
   ) external onlyOwner {
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
 
     emit LogSetAssetPriceConfig(
       _assetId,
-      _config.confidenceThreshold,
-      _confidenceThreshold,
+      _config.confidenceThresholdE6,
+      _confidenceThresholdE6,
       _config.trustPriceAge,
       _trustPriceAge
     );
-    _config.confidenceThreshold = _confidenceThreshold;
+    _config.confidenceThresholdE6 = _confidenceThresholdE6;
     _config.trustPriceAge = _trustPriceAge;
 
     assetPriceConfigs[_assetId] = _config;

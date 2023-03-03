@@ -433,26 +433,19 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     });
     configStorage.setAssetConfig(address(wbtc).toBytes32(), _assetConfigWbtc);
 
-
     IConfigStorage.AssetConfig memory _assetConfigUsdt = IConfigStorage.AssetConfig({
       tokenAddress: address(usdt),
       assetId: address(usdt).toBytes32(),
-      priceConfidentThreshold: 0.01 * 1e18,
-      pythExponent: 6,
-      trustPriceAge: 0,
       decimals: 6,
-      isStableCoin: false
+      isStableCoin: true
     });
     configStorage.setAssetConfig(address(usdt).toBytes32(), _assetConfigUsdt);
 
     IConfigStorage.AssetConfig memory _assetConfigUsdc = IConfigStorage.AssetConfig({
       tokenAddress: address(usdc),
       assetId: address(usdc).toBytes32(),
-      priceConfidentThreshold: 0.01 * 1e18,
-      pythExponent: 6,
-      trustPriceAge: 0,
       decimals: 6,
-      isStableCoin: false
+      isStableCoin: true
     });
     configStorage.setAssetConfig(address(usdc).toBytes32(), _assetConfigUsdc);
 

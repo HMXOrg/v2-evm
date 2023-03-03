@@ -336,7 +336,6 @@ contract ConfigStorage is IConfigStorage, Owned {
       revert IConfigStorage_BadLen();
     }
 
-
     uint256 _len = _tokens.length;
     for (uint256 _i; _i < _len; ) {
       bytes32 _assetId = tokenAssetIds[_tokens[_i]];
@@ -380,18 +379,6 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external {
     assetClassConfigs[_index] = _newConfig;
-  }
-
-  function setAssetConfig(bytes32 _assetId, AssetConfig memory _config) external {
-    assetConfigs[_assetId] = _config;
-
-    address _token = _config.tokenAddress;
-    if (_token != address(0)) {
-      tokenAssetIds[_token] = _assetId;
-
-      // sanity check
-      ERC20(_token).decimals();
-    }
   }
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {

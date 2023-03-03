@@ -11,6 +11,7 @@ import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
+import { console } from "forge-std/console.sol";
 
 contract Calculator is Owned, ICalculator {
   uint256 internal constant MAX_RATE = 1e18;
@@ -86,27 +87,26 @@ contract Calculator is Owned, ICalculator {
   /// @notice GetPLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
   /// @param _limitPrice Limit price
-  /// @param _assetId Market Assetid
+  /// @param _limitAssetId Market Assetid of the limit price
   /// @return PLP Value
-  function _getPLPValueE30(bool _isMaxPrice, uint256 _limitPrice, bytes32 _assetId) internal view returns (uint256) {
+  function _getPLPValueE30(
+    bool _isMaxPrice,
+    uint256 _limitPrice,
+    bytes32 _limitAssetId
+  ) internal view returns (uint256) {
     IConfigStorage _configStorage = IConfigStorage(configStorage);
-
-    uint256 assetValue = 0;
-
     bytes32[] memory _plpAssetIds = _configStorage.getPlpAssetIds();
+    uint256 assetValue = 0;
     uint256 _len = _plpAssetIds.length;
+
     for (uint256 i = 0; i < _len; ) {
-      uint256 _priceE30;
-
-      IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_plpAssetIds[i]);
-
-      if (_limitPrice > 0 && _assetId == _plpAssetIds[i]) {
-        _priceE30 = _limitPrice;
-      } else {
-        (_priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_plpAssetIds[i], _isMaxPrice);
-      }
-      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
-        (10 ** _configStorage.getAssetConfig(_plpAssetIds[i]).decimals);
+      uint256 value = _getPLPUndelyingAssetValueE30(
+        _plpAssetIds[i],
+        _configStorage,
+        _isMaxPrice,
+        _limitPrice,
+        _limitAssetId
+      );
 
       unchecked {
         assetValue += value;
@@ -115,6 +115,34 @@ contract Calculator is Owned, ICalculator {
     }
 
     return assetValue;
+  }
+
+  /// @notice Get PLP underlying asset value in E30
+  /// @param _undelyingAssetId the underlying asset id, the one we want to find the value
+  /// @param _configStorage config storage
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPrice Limit price
+  /// @param _limitAssetId AssetId to be overwritten by _limitPrice
+  /// @return PLP Value
+  function _getPLPUndelyingAssetValueE30(
+    bytes32 _undelyingAssetId,
+    IConfigStorage _configStorage,
+    bool _isMaxPrice,
+    uint256 _limitPrice,
+    bytes32 _limitAssetId
+  ) internal view returns (uint256) {
+    IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_undelyingAssetId);
+
+    uint256 _priceE30;
+    if (_limitPrice > 0 && _limitAssetId == _undelyingAssetId) {
+      _priceE30 = _limitPrice;
+    } else {
+      (_priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_undelyingAssetId, _isMaxPrice);
+    }
+    uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
+      (10 ** _assetConfig.decimals);
+
+    return value;
   }
 
   /// @notice getPLPPrice in e18 format
@@ -214,7 +242,7 @@ contract Calculator is Owned, ICalculator {
     return
       _getFeeRate(
         _tokenValueE30,
-        _vaultStorage.plpLiquidityUSDE30(_token),
+        _getPLPUndelyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false, 0, 0),
         _getPLPValueE30(false, 0, 0),
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
@@ -235,7 +263,7 @@ contract Calculator is Owned, ICalculator {
     return
       _getFeeRate(
         _tokenValueE30,
-        _vaultStorage.plpLiquidityUSDE30(_token),
+        _getPLPUndelyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true, 0, 0),
         _getPLPValueE30(true, 0, 0),
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
@@ -296,20 +324,28 @@ contract Calculator is Owned, ICalculator {
   /// @notice get settlement fee rate
   /// @param _token - token
   /// @param _liquidityUsdDelta - withdrawal amount
+  /// @param _limitPrice Limit price to be overwritten
+  /// @param _limitAssetId AssetId to be overwritten by _limitPrice
+  /// @return _settlementFeeRate in e18 format
   function getSettlementFeeRate(
     address _token,
     uint256 _liquidityUsdDelta,
     uint256 _limitPrice,
-    bytes32 _assetId
-  ) external returns (uint256 _settlementFeeRate) {
+    bytes32 _limitAssetId
+  ) external view returns (uint256 _settlementFeeRate) {
     // usd debt
-    uint256 _tokenLiquidityUsd = IVaultStorage(vaultStorage).plpLiquidityUSDE30(_token);
+    uint256 _tokenLiquidityUsd = _getPLPUndelyingAssetValueE30(
+      IConfigStorage(configStorage).tokenAssetIds(_token),
+      IConfigStorage(configStorage),
+      false,
+      _limitPrice,
+      _limitAssetId
+    );
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
 
-    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPrice, _assetId);
-
+    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPrice, _limitAssetId);
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);

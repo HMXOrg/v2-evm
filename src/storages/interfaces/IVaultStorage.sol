@@ -25,8 +25,6 @@ interface IVaultStorage {
 
   function devFees(address _token) external view returns (uint256);
 
-  function plpLiquidityUSDE30(address _token) external view returns (uint256);
-
   function plpLiquidity(address _token) external view returns (uint256);
 
   function pullToken(address _token) external returns (uint256);
@@ -35,13 +33,9 @@ interface IVaultStorage {
 
   function addDevFee(address _token, uint256 _amount) external;
 
-  function addPLPLiquidityUSDE30(address _token, uint256 amount) external;
-
   function addPLPLiquidity(address _token, uint256 _amount) external;
 
   function withdrawFee(address _token, uint256 _amount, address _receiver) external;
-
-  function removePLPLiquidityUSDE30(address _token, uint256 amount) external;
 
   function removePLPLiquidity(address _token, uint256 _amount) external;
 

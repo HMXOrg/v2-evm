@@ -6,6 +6,8 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
+import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
+
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
@@ -51,6 +53,8 @@ import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
 import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
+  using AddressUtils for address;
+
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -133,6 +137,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     );
 
     // configStorage setup
+    _setUpAssetConfigs();
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();
@@ -141,6 +146,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
+    _setUpAssetConfigs();
 
     feeCalculator = new FeeCalculator(address(vaultStorage), address(configStorage));
 
@@ -279,14 +285,12 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage.MarketConfig({
       assetId: "ETH",
       assetClass: 0,
-      exponent: 18,
       maxProfitRate: 9e18,
       minLeverage: 1 * 1e18,
       initialMarginFraction: 0.01 * 1e18,
       maintenanceMarginFraction: 0.005 * 1e18,
       increasePositionFeeRate: 0,
       decreasePositionFeeRate: 0,
-      priceConfidentThreshold: 0.01 * 1e18,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({
@@ -299,14 +303,12 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
       assetId: "BTC",
       assetClass: 0,
-      exponent: 8,
       maxProfitRate: 9e18,
       minLeverage: 1 * 1e18,
       initialMarginFraction: 0.01 * 1e18,
       maintenanceMarginFraction: 0.005 * 1e18,
       increasePositionFeeRate: 0,
       decreasePositionFeeRate: 0,
-      priceConfidentThreshold: 0.01 * 1e18,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({
@@ -329,47 +331,37 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
     // WETH
     _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
-      decimals: 18,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: false,
       accepted: true
     });
     // WBTC
     _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
-      decimals: 8,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: false,
       accepted: true
     });
     // DAI
     _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
-      decimals: 18,
       targetWeight: 1e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
     // USDC
     _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
-      decimals: 6,
       targetWeight: 3e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
     // USDT
     _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
-      decimals: 6,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
 
@@ -386,37 +378,28 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   /// @notice set up all collateral token configs in Perp
   function _setUpCollateralTokenConfigs() private {
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
-      decimals: 18,
       collateralFactor: 0.8 * 1e18,
-      isStableCoin: false,
       accepted: true,
-      settleStrategy: address(0),
-      priceConfidentThreshold: 0.01 * 1e18
+      settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfigWeth);
+    configStorage.setCollateralTokenConfig(address(weth).toBytes32(), _collatTokenConfigWeth);
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
-      decimals: 8,
       collateralFactor: 0.9 * 1e18,
-      isStableCoin: false,
       accepted: true,
-      settleStrategy: address(0),
-      priceConfidentThreshold: 0.01 * 1e18
+      settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(wbtc), _collatTokenConfigWbtc);
+    configStorage.setCollateralTokenConfig(address(wbtc).toBytes32(), _collatTokenConfigWbtc);
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigUsdt = IConfigStorage.CollateralTokenConfig({
-      decimals: usdt.decimals(),
       collateralFactor: 1 * 1e18,
-      isStableCoin: true,
       accepted: true,
-      settleStrategy: address(0),
-      priceConfidentThreshold: 0.01 * 1e18
+      settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(usdt), _collatTokenConfigUsdt);
+    configStorage.setCollateralTokenConfig(address(usdt).toBytes32(), _collatTokenConfigUsdt);
   }
 
   function _setUpLiquidationConfig() private {
@@ -425,6 +408,48 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     });
 
     configStorage.setLiquidationConfig(_liquidationConfig);
+  }
+
+  function _setUpAssetConfigs() private {
+    IConfigStorage.AssetConfig memory _assetConfigWeth = IConfigStorage.AssetConfig({
+      tokenAddress: address(weth),
+      assetId: address(weth).toBytes32(),
+      decimals: 18,
+      isStableCoin: false
+    });
+    configStorage.setAssetConfig(address(weth).toBytes32(), _assetConfigWeth);
+
+    IConfigStorage.AssetConfig memory _assetConfigWbtc = IConfigStorage.AssetConfig({
+      tokenAddress: address(wbtc),
+      assetId: address(wbtc).toBytes32(),
+      decimals: 8,
+      isStableCoin: false
+    });
+    configStorage.setAssetConfig(address(wbtc).toBytes32(), _assetConfigWbtc);
+
+    IConfigStorage.AssetConfig memory _assetConfigUsdt = IConfigStorage.AssetConfig({
+      tokenAddress: address(usdt),
+      assetId: address(usdt).toBytes32(),
+      decimals: 6,
+      isStableCoin: true
+    });
+    configStorage.setAssetConfig(address(usdt).toBytes32(), _assetConfigUsdt);
+
+    IConfigStorage.AssetConfig memory _assetConfigUsdc = IConfigStorage.AssetConfig({
+      tokenAddress: address(usdc),
+      assetId: address(usdc).toBytes32(),
+      decimals: 6,
+      isStableCoin: true
+    });
+    configStorage.setAssetConfig(address(usdc).toBytes32(), _assetConfigUsdc);
+
+    IConfigStorage.AssetConfig memory _assetConfigDai = IConfigStorage.AssetConfig({
+      tokenAddress: address(dai),
+      assetId: address(dai).toBytes32(),
+      decimals: 18,
+      isStableCoin: true
+    });
+    configStorage.setAssetConfig(address(dai).toBytes32(), _assetConfigDai);
   }
 
   function abs(int256 x) external pure returns (uint256) {

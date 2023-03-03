@@ -16,6 +16,8 @@ contract TradeService_FundingRate is Calculator_Base {
     // deploy services
     tradeService = new TradeService(address(mockPerpStorage), address(mockVaultStorage), address(configStorage));
 
+    mockOracle.setExponent(-8);
+
     // Set market config
     // maxFundingRate = 0.04%
     // maxSkewScaleUSD = 3m USD
@@ -24,14 +26,12 @@ contract TradeService_FundingRate is Calculator_Base {
       IConfigStorage.MarketConfig({
         assetId: "BTC",
         assetClass: 1,
-        exponent: 8,
         maxProfitRate: 9e18,
         minLeverage: 1,
         initialMarginFraction: 0.01 * 1e18,
         maintenanceMarginFraction: 0.005 * 1e18,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
-        priceConfidentThreshold: 0.01 * 1e18,
         allowIncreasePosition: false,
         active: true,
         openInterest: IConfigStorage.OpenInterest({

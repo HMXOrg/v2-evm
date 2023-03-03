@@ -450,12 +450,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
     vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
 
-    (uint256 _currentPrice, , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (uint256 _currentPrice, , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
-      vars.marketConfig.exponent,
       _maximizePrice,
-      vars.marketConfig.priceConfidentThreshold,
-      30, // @todo retrieve price age from config
       (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
       _sizeDelta,
       vars.marketConfig.fundingRate.maxSkewScaleUSD

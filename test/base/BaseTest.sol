@@ -287,14 +287,12 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage.MarketConfig({
       assetId: "ETH",
       assetClass: 0,
-      exponent: 18,
       maxProfitRate: 9e18,
       minLeverage: 1 * 1e18,
       initialMarginFraction: 0.01 * 1e18,
       maintenanceMarginFraction: 0.005 * 1e18,
       increasePositionFeeRate: 0,
       decreasePositionFeeRate: 0,
-      priceConfidentThreshold: 0.01 * 1e18,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({
@@ -307,14 +305,12 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
       assetId: "BTC",
       assetClass: 0,
-      exponent: 8,
       maxProfitRate: 9e18,
       minLeverage: 1 * 1e18,
       initialMarginFraction: 0.01 * 1e18,
       maintenanceMarginFraction: 0.005 * 1e18,
       increasePositionFeeRate: 0,
       decreasePositionFeeRate: 0,
-      priceConfidentThreshold: 0.01 * 1e18,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({

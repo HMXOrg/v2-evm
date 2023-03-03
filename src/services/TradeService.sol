@@ -13,6 +13,7 @@ import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IFeeCalculator } from "../contracts/interfaces/IFeeCalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { console } from "forge-std/console.sol";
 
 // @todo - refactor, deduplicate code
 contract TradeService is ITradeService {
@@ -31,6 +32,7 @@ contract TradeService is ITradeService {
     bool isNewPosition;
     bool currentPositionIsLong;
     uint256 priceE30;
+    int32 exponent;
   }
   struct DecreasePositionVars {
     IPerpStorage.Position position;
@@ -148,13 +150,11 @@ contract TradeService is ITradeService {
       uint8 _marketStatus;
 
       // Get Price market.
-      (_vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
-        .getLatestAdaptivePriceWithMarketStatus(
+      (_vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(
+        IConfigStorage(configStorage).oracle()
+      ).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
-          _marketConfig.exponent,
           _vars.isLong, // if current position is SHORT position, then we use max price
-          _marketConfig.priceConfidentThreshold,
-          30, // @todo - move trust price age to config, the problem now is stack too deep at MarketConfig struct
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
           _sizeDelta,
           _marketConfig.fundingRate.maxSkewScaleUSD
@@ -255,7 +255,8 @@ contract TradeService is ITradeService {
 
     {
       // calculate the change in open interest for the new position
-      uint256 _changedOpenInterest = (_absSizeDelta * (10 ** _marketConfig.exponent)) / _vars.priceE30;
+      uint256 _changedOpenInterest = (_absSizeDelta * (10 ** uint32(-_vars.exponent))) / _vars.priceE30;
+
       _vars.position.openInterest += _changedOpenInterest;
       _vars.position.lastIncreaseTimestamp = block.timestamp;
 
@@ -342,13 +343,10 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_vars.priceE30, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
+      (_vars.priceE30, , _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
-          _marketConfig.exponent,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          _marketConfig.priceConfidentThreshold,
-          30, // @todo - move trust price age to config, the problem now is stack too deep at MarketConfig struct
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
           _vars.isLongPosition ? -int(_positionSizeE30ToDecrease) : int(_positionSizeE30ToDecrease),
           _marketConfig.fundingRate.maxSkewScaleUSD
@@ -418,13 +416,10 @@ contract TradeService is ITradeService {
     {
       uint8 _marketStatus;
 
-      (_vars.priceE30, , _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
+      (_vars.priceE30, , , _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
-          _marketConfig.exponent,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          _marketConfig.priceConfidentThreshold,
-          30, // @todo - move trust price age to config, the problem now is stack too deep at MarketConfig struct
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
           -_vars.currentPositionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
@@ -660,12 +655,7 @@ contract TradeService is ITradeService {
     if (_shouldOverwritePrice(_limitPrice, _token, _assetId)) {
       _tpTokenPrice = _limitPrice;
     } else {
-      (_tpTokenPrice, ) = IOracleMiddleware(_configStorage.oracle()).getLatestPrice(
-        _token.toBytes32(),
-        false,
-        _configStorage.getMarketConfigByToken(_token).priceConfidentThreshold,
-        30 // trust price age (seconds) todo: from market config
-      );
+      (_tpTokenPrice, ) = IOracleMiddleware(_configStorage.oracle()).getLatestPrice(_token.toBytes32(), false);
     }
     // @todo refactor to use _assetid from params instead
     uint256 _decimals = _configStorage.getAssetTokenDecimal(_token);
@@ -720,9 +710,7 @@ contract TradeService is ITradeService {
         } else {
           (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
             _token.toBytes32(),
-            false,
-            IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
-            30 // @todo - should from config
+            false
           );
         }
 
@@ -1084,21 +1072,18 @@ contract TradeService is ITradeService {
     // If block.timestamp not pass the next funding time, return 0.
     if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
 
+    int32 _exponent;
     if (_price != 0) {
       vars.marketPriceE30 = _price;
     } else {
       //@todo - validate timestamp of these
-      (vars.marketPriceE30, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        false,
-        marketConfig.priceConfidentThreshold
-      );
+      (vars.marketPriceE30, _exponent, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
+        .unsafeGetLatestPrice(marketConfig.assetId, false);
     }
 
     vars.marketSkewUSDE30 =
       ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
-      int(10 ** marketConfig.exponent);
-
+      int(10 ** uint32(-_exponent));
     // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
@@ -1215,12 +1200,7 @@ contract TradeService is ITradeService {
       // If the sub-account has a balance of this underlying token (collateral token amount)
       if (tmpVars.traderBalance > 0) {
         // Retrieve the latest price and confident threshold of the plp underlying token
-        (tmpVars.price, ) = _oracle.getLatestPrice(
-          tmpVars.underlyingToken.toBytes32(),
-          false,
-          _configStorage.getMarketConfigByToken(tmpVars.underlyingToken).priceConfidentThreshold,
-          30
-        );
+        (tmpVars.price, ) = _oracle.getLatestPrice(tmpVars.underlyingToken.toBytes32(), false);
 
         tmpVars.feeTokenAmount = (acmVars.absFeeUsd * (10 ** tmpVars.underlyingTokenDecimal)) / tmpVars.price;
 
@@ -1306,12 +1286,7 @@ contract TradeService is ITradeService {
       ) {
         tmpVars.price = _price;
       } else {
-        (tmpVars.price, ) = oracle.getLatestPrice(
-          tmpVars.underlyingToken.toBytes32(),
-          false,
-          IConfigStorage(_configStorage).getMarketConfigByToken(tmpVars.underlyingToken).priceConfidentThreshold,
-          30
-        );
+        (tmpVars.price, ) = oracle.getLatestPrice(tmpVars.underlyingToken.toBytes32(), false);
       }
 
       // feeUSD > 0 or isPayFee == true, means trader pay fee

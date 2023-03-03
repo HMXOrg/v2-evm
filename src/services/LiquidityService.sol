@@ -75,12 +75,7 @@ contract LiquidityService is ILiquidityService {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
     // 2. getMinPrice for using to join Pool
-    (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(
-      _token.toBytes32(),
-      false,
-      IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
-      30 // trust price age (seconds) todo: from market config
-    );
+    (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(_token.toBytes32(), false);
 
     // 3. get aum and lpSupply before deduction fee
     // TODO realize farm pnl to get pendingBorrowingFee
@@ -193,12 +188,7 @@ contract LiquidityService is ILiquidityService {
   ) internal returns (uint256) {
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
-    // TODO price stale
-    (uint256 _maxPrice, ) = IOracleMiddleware(_calculator.oracle()).unsafeGetLatestPrice(
-      _tokenOut.toBytes32(),
-      true,
-      IConfigStorage(configStorage).getMarketConfigByToken(_tokenOut).priceConfidentThreshold
-    );
+    (uint256 _maxPrice, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(_tokenOut.toBytes32(), true);
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
       30,

@@ -131,12 +131,7 @@ contract FeeCalculator is IFeeCalculator {
       uint256 plpLiquidityAmount = _vaultStorage.plpLiquidity(_tmpVars.underlyingToken);
 
       // Retrieve the latest price and confident threshold of the plp underlying token
-      (_tmpVars.price, ) = IOracleMiddleware(_oracle).getLatestPrice(
-        _tmpVars.underlyingToken.toBytes32(),
-        false,
-        _configStorage.getMarketConfigByToken(_tmpVars.underlyingToken).priceConfidentThreshold,
-        30
-      );
+      (_tmpVars.price, ) = IOracleMiddleware(_oracle).getLatestPrice(_tmpVars.underlyingToken.toBytes32(), false);
 
       // Calculate the fee amount in the plp underlying token
       _tmpVars.feeTokenAmount = (_absFeeUsd * (10 ** _tmpVars.underlyingTokenDecimal)) / _tmpVars.price;

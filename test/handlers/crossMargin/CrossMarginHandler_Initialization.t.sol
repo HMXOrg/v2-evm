@@ -3,7 +3,9 @@ pragma solidity 0.8.18;
 
 import { console } from "forge-std/console.sol";
 
-import { CrossMarginHandler_Base, CrossMarginService } from "./CrossMarginHandler_Base.t.sol";
+import { CrossMarginHandler_Base } from "./CrossMarginHandler_Base.t.sol";
+
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
   function setUp() public virtual override {
@@ -29,7 +31,7 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
    */
 
   function testCorrectness_crossMarginHandler_setCrossMarginService() external {
-    CrossMarginService newCrossMarginService = deployCrossMarginService(
+    ICrossMarginService newCrossMarginService = deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
       address(calculator)

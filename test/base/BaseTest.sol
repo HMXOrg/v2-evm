@@ -43,8 +43,7 @@ import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandle
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 
-// Services
-import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe {
   using AddressUtils for address;
@@ -228,8 +227,14 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
     address _configStorage,
     address _vaultStorage,
     address _calculator
-  ) internal returns (CrossMarginService) {
-    return new CrossMarginService(_configStorage, _vaultStorage, _calculator);
+  ) internal returns (ICrossMarginService) {
+    return
+      ICrossMarginService(
+        Deployer.deployContractWithArguments(
+          "CrossMarginService",
+          abi.encode(_configStorage, _vaultStorage, _calculator)
+        )
+      );
   }
 
   /**

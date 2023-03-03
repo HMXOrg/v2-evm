@@ -5,15 +5,15 @@ import { BaseTest, IConfigStorage, IPerpStorage, MockErc20 } from "../../base/Ba
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
-import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 contract CrossMarginHandler_Base is BaseTest {
   using AddressUtils for address;
 
-  uint256 internal SUB_ACCOUNT_NO = 1;
-
   ICrossMarginHandler internal crossMarginHandler;
-  CrossMarginService internal crossMarginService;
+  ICrossMarginService internal crossMarginService;
+
+  uint256 internal SUB_ACCOUNT_NO = 1;
 
   bytes[] internal priceDataBytes;
 

@@ -410,7 +410,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     configStorage.setCollateralTokenConfig(usdtAssetId, _collatTokenConfigUsdt);
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigUsdc = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 1 * 1e18,
+      collateralFactorBPS: 1 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });

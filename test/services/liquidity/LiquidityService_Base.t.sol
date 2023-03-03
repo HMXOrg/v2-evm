@@ -2,15 +2,21 @@
 pragma solidity 0.8.18;
 
 import { BaseTest } from "../../base/BaseTest.sol";
+import { Deployer } from "../../base/Deployer.sol";
 
-import { LiquidityService } from "../../../src/services/LiquidityService.sol";
+import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 
 abstract contract LiquidityService_Base is BaseTest {
-  LiquidityService liquidityService;
+  ILiquidityService liquidityService;
 
   function setUp() public virtual {
     // deploy liquidity service
-    liquidityService = new LiquidityService(address(configStorage), address(vaultStorage), address(perpStorage));
+    liquidityService = ILiquidityService(
+      Deployer.deployContractWithArguments(
+        "LiquidityService",
+        abi.encode(address(configStorage), address(vaultStorage), address(perpStorage))
+      )
+    );
 
     // set this Test to be service executor
     configStorage.setServiceExecutor(address(liquidityService), address(this), true);

@@ -12,13 +12,11 @@ contract MockTradeService is ITradeService {
     uint256 _limitPriceE30;
   }
 
-
   struct DecreasePositionInputs {
     address _account;
     uint256 _subAccountId;
     uint256 _marketIndex;
     uint256 _positionSizeE30ToDecrease;
-
     // @todo - support take profit token
     // address _tpToken;
     uint256 _limitPriceE30;
@@ -74,7 +72,7 @@ contract MockTradeService is ITradeService {
         _subAccountId: _subAccountId,
         _marketIndex: _marketIndex,
         _positionSizeE30ToDecrease: _positionSizeE30ToDecrease,
-         _limitPriceE30: _limitPriceE30
+        _limitPriceE30: _limitPriceE30
       })
     );
   }
@@ -86,5 +84,21 @@ contract MockTradeService is ITradeService {
     address _tpToken
   ) external {
     decreasePositionCallCount++;
+  }
+
+  function getNextFundingRate(
+    uint256 _marketIndex,
+    uint256 _price
+  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+    return (0, 0, 0);
+  }
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) external pure returns (bool, uint256) {
+    return (false, 0);
   }
 }

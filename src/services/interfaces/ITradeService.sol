@@ -58,4 +58,16 @@ interface ITradeService {
   ) external;
 
   function forceClosePosition(address _account, uint256 _subAccountId, uint256 _marketIndex, address _tpToken) external;
+
+  function getNextFundingRate(
+    uint256 _marketIndex,
+    uint256 _price
+  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort);
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) external pure returns (bool, uint256);
 }

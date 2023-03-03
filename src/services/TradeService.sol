@@ -656,22 +656,25 @@ contract TradeService is ITradeService {
     bytes32 _assetId
   ) internal {
     uint256 _tpTokenPrice;
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
     if (_shouldOverwritePrice(_limitPrice, _token, _assetId)) {
       _tpTokenPrice = _limitPrice;
     } else {
-      (_tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
+      (_tpTokenPrice, ) = IOracleMiddleware(_configStorage.oracle()).getLatestPrice(
         _token.toBytes32(),
         false,
-        IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
+        _configStorage.getMarketConfigByToken(_token).priceConfidentThreshold,
         30 // trust price age (seconds) todo: from market config
       );
     }
-    uint256 _decimals = IConfigStorage(configStorage).getAssetPlpTokenConfigs(_assetId).decimals;
+    // @todo refactor to use _assetid from params instead
+    bytes32 _tokenAssetId = _configStorage.tokenAssetIds(_token);
+    uint256 _decimals = _configStorage.getAssetPlpTokenConfigs(_tokenAssetId).decimals;
 
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
 
-    uint256 _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
+    uint256 _settlementFeeRate = ICalculator(_configStorage.calculator()).getSettlementFeeRate(
       _token,
       _realizedProfitE30
     );

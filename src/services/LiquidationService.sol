@@ -40,30 +40,29 @@ contract LiquidationService is ILiquidationService {
     if (_equity >= 0 && uint256(_equity) >= _calculator.getMMR(_subAccount))
       revert ILiquidationService_AccountHealthy();
 
-    // Get the list of positions associated with the sub-account
-    PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    // Get the list of position ids associated with the sub-account
+    bytes32[] memory _positionIds = PerpStorage(perpStorage).getPositionIds(_subAccount);
 
     // Settles the sub-account by paying off its debt with its collateral
     _settle(_subAccount);
 
     // Liquidate the positions by resetting their value in storage
-    _liquidatePosition(_traderPositions);
+    _liquidatePosition(_subAccount, _positionIds);
   }
 
   /// @notice Liquidates a list of positions by resetting their value in storage
-  /// @param _positions The list of positions to be liquidated
-  function _liquidatePosition(PerpStorage.Position[] memory _positions) internal {
+  /// @param _subAccount The sub account of positions
+  /// @param _positionIds The list of positions to be liquidated
+  function _liquidatePosition(address _subAccount, bytes32[] memory _positionIds) internal {
     // Loop through each position in the list
-    PerpStorage.Position memory _position;
-    uint256 _len = _positions.length;
+    bytes32 _positionId;
+    uint256 _len = _positionIds.length;
     for (uint256 i; i < _len; ) {
-      // Get the current position from the list
-      _position = _positions[i];
+      // Get the current position id from the list
+      _positionId = _positionIds[i];
 
       // Reset the position's value in storage
-      PerpStorage(perpStorage).resetPosition(
-        _getPositionId(_getSubAccount(_position.primaryAccount, _position.subAccountId), _position.marketIndex)
-      );
+      PerpStorage(perpStorage).removePositionFromSubAccount(_subAccount, _positionId);
 
       unchecked {
         ++i;

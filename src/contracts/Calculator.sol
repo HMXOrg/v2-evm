@@ -103,7 +103,7 @@ contract Calculator is Owned, ICalculator {
       if (_limitPrice > 0 && _assetId == _plpAssetIds[i]) {
         _priceE30 = _limitPrice;
       } else {
-        (priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_plpUnderlyingToken.toBytes32(), _isMaxPrice);
+        (_priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_plpAssetIds[i], _isMaxPrice);
       }
       uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
         (10 ** _configStorage.getAssetConfig(_plpAssetIds[i]).decimals);

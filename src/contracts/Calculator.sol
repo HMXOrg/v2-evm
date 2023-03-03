@@ -15,7 +15,8 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ICalculator } from "./interfaces/ICalculator.sol";
 
 contract Calculator is Owned, ICalculator {
-  uint256 internal constant MAX_RATE = 1e18;
+  uint32 internal constant BPS = 1e4;
+  uint64 internal constant ETH_PRECISION = 1e18;
 
   // using libs for type
   using AddressUtils for address;
@@ -236,9 +237,9 @@ contract Calculator is Owned, ICalculator {
     uint256 _tokenValueE30,
     ConfigStorage _configStorage,
     VaultStorage _vaultStorage
-  ) external returns (uint256) {
+  ) external view returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
-      return _configStorage.getLiquidityConfig().depositFeeRate;
+      return _configStorage.getLiquidityConfig().depositFeeRateBPS;
     }
 
     return
@@ -257,9 +258,9 @@ contract Calculator is Owned, ICalculator {
     uint256 _tokenValueE30,
     ConfigStorage _configStorage,
     VaultStorage _vaultStorage
-  ) external returns (uint256) {
+  ) external view returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
-      return _configStorage.getLiquidityConfig().withdrawFeeRate;
+      return _configStorage.getLiquidityConfig().withdrawFeeRateBPS;
     }
 
     return
@@ -280,11 +281,11 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
     ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal pure returns (uint256) {
-    uint256 _feeRate = direction == LiquidityDirection.ADD
-      ? _liquidityConfig.depositFeeRate
-      : _liquidityConfig.withdrawFeeRate;
-    uint256 _taxRate = _liquidityConfig.taxFeeRate;
+  ) internal pure returns (uint32) {
+    uint32 _feeRateBPS = direction == LiquidityDirection.ADD
+      ? _liquidityConfig.depositFeeRateBPS
+      : _liquidityConfig.withdrawFeeRateBPS;
+    uint32 _taxRateBPS = _liquidityConfig.taxFeeRateBPS;
     uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
@@ -292,7 +293,7 @@ contract Calculator is Owned, ICalculator {
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
-    if (targetValue == 0) return _feeRate;
+    if (targetValue == 0) return _feeRateBPS;
 
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
 
@@ -301,12 +302,12 @@ contract Calculator is Owned, ICalculator {
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
-      uint256 rebateRate = (_taxRate * startTargetDiff) / targetValue;
-      return rebateRate > _feeRate ? 0 : _feeRate - rebateRate;
+      uint32 rebateRateBPS = uint32((_taxRateBPS * startTargetDiff) / targetValue);
+      return rebateRateBPS > _feeRateBPS ? 0 : _feeRateBPS - rebateRateBPS;
     }
 
-    // @todo - move this to service
-    uint256 _nextWeight = (nextValue * 1e18) / targetValue;
+    // _nextWeight represented 18 precision
+    uint256 _nextWeight = (nextValue * ETH_PRECISION) / targetValue;
     // if weight exceed targetWeight(e18) + maxWeight(e18)
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
@@ -318,9 +319,9 @@ contract Calculator is Owned, ICalculator {
     if (midDiff > targetValue) {
       midDiff = targetValue;
     }
-    _taxRate = (_taxRate * midDiff) / targetValue;
+    _taxRateBPS = uint32((_taxRateBPS * midDiff) / targetValue);
 
-    return _feeRate + _taxRate;
+    return _feeRateBPS + _taxRateBPS;
   }
 
   /// @notice get settlement fee rate
@@ -375,7 +376,10 @@ contract Calculator is Owned, ICalculator {
     if (_nextTargetDiff < _currentTargetDiff) return 0;
 
     // settlement fee rate = (next target diff + current target diff / 2) * base tax fee / target usd
-    return (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRate) / _targetUsd;
+    return
+      (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRateBPS * ETH_PRECISION) /
+      _targetUsd /
+      BPS;
   }
 
   // return in e18
@@ -528,7 +532,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // If profit then deduct PnL with collateral factor.
-      _delta = _delta > 0 ? (int(ConfigStorage(configStorage).pnlFactor()) * _delta) / 1e18 : _delta;
+      _delta = _delta > 0 ? (int32(ConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int32(BPS) : _delta;
 
       // Accumulative current unrealized PnL
       _unrealizedPnlE30 += _delta;
@@ -564,7 +568,7 @@ contract Calculator is Owned, ICalculator {
       uint256 _decimals = ConfigStorage(configStorage).getAssetConfigByToken(_token).decimals;
 
       // Get collateralFactor from ConfigStorage
-      uint256 _collateralFactor = _collateralTokenConfig.collateralFactor;
+      uint32 collateralFactorBPS = _collateralTokenConfig.collateralFactorBPS;
 
       // Get current collateral token balance of trader's account
       uint256 _amount = VaultStorage(vaultStorage).traderBalances(_subAccount, _token);
@@ -582,9 +586,10 @@ contract Calculator is Owned, ICalculator {
         );
       }
       // Calculate accumulative value of collateral tokens
-      // collateral value = (collateral amount * price) * collateralFactor
-      // collateralFactor 1 ether = 100%
-      _collateralValueE30 += (_amount * _priceE30 * _collateralFactor) / (10 ** _decimals * 1e18);
+      // collateral value = (collateral amount * price) * collateralFactorBPS
+      // collateralFactor 1e4 = 100%
+
+      _collateralValueE30 += (_amount * _priceE30 * collateralFactorBPS) / ((10 ** _decimals) * BPS);
 
       unchecked {
         i++;
@@ -659,7 +664,7 @@ contract Calculator is Owned, ICalculator {
     // Get market config according to position
     ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
 
-    _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFraction) / 1e18;
+    _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFractionBPS) / BPS;
     return _imrE30;
   }
 
@@ -671,7 +676,7 @@ contract Calculator is Owned, ICalculator {
     // Get market config according to position
     ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
 
-    _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) / 1e18;
+    _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFractionBPS) / BPS;
     return _mmrE30;
   }
 
@@ -695,7 +700,7 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice To check Price should be overwrite
   /// @param _limitPrice LimitPrice
-  /// @param _token Token addresss
+  /// @param _token Token addresses
   /// @param _assetId Market assetId
   /// @return _shouldOverwrite should overwrite to LimitPrice
   function _shouldOverwritePrice(

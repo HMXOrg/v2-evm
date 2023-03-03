@@ -114,19 +114,19 @@ contract TradeService_IncreasePosition is TradeService_Base {
       IConfigStorage.MarketConfig({
         assetId: "ETH",
         assetClass: 0,
-        maxProfitRate: 9e18,
-        minLeverage: 1 * 1e18,
-        initialMarginFraction: 0.01 * 1e18,
-        maintenanceMarginFraction: 0.005 * 1e18,
-        increasePositionFeeRate: 0,
-        decreasePositionFeeRate: 0,
+        maxProfitRateBPS: 9 * 1e4,
+        minLeverageBPS: 1 * 1e4,
+        initialMarginFractionBPS: 0.01 * 1e4,
+        maintenanceMarginFractionBPS: 0.005 * 1e4,
+        increasePositionFeeRateBPS: 0,
+        decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
         openInterest: IConfigStorage.OpenInterest({
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
       })
     );
 
@@ -141,7 +141,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
   function testRevert_increasePosition_WhenBadNumberOfPosition() external {
     // Set max position 1
     configStorage.setTradingConfig(
-      IConfigStorage.TradingConfig({ fundingInterval: 1, devFeeRate: 0, minProfitDuration: 0, maxPosition: 1 })
+      IConfigStorage.TradingConfig({ fundingInterval: 1, devFeeRateBPS: 0, minProfitDuration: 0, maxPosition: 1 })
     );
     // TVL
     // 1000000 USDT -> 1000000 USD

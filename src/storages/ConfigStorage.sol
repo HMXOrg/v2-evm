@@ -52,7 +52,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   address public oracle;
   address public plp;
   address public treasury;
-  uint256 public pnlFactor; // factor that calculate unrealized PnL after collateral factor
+  uint32 public pnlFactorBPS; // factor that calculate unrealized PnL after collateral factor
   address public weth;
 
   /**
@@ -259,8 +259,8 @@ contract ConfigStorage is IConfigStorage, Owned {
     emit SetServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
   }
 
-  function setPnlFactor(uint256 _pnlFactor) external onlyOwner {
-    pnlFactor = _pnlFactor;
+  function setPnlFactor(uint32 _pnlFactor) external onlyOwner {
+    pnlFactorBPS = _pnlFactor;
   }
 
   function setSwapConfig(SwapConfig memory _newConfig) external {

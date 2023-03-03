@@ -22,7 +22,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   event LogSetPyth(address oldPyth, address newPyth);
   event LogBuy(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
     uint256 _shortDecreasingSizeE30,
@@ -30,7 +30,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   );
   event LogSell(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _sellSizeE30,
     uint256 _longDecreasingSizeE30,
@@ -98,7 +98,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
   function buy(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
     address _tpToken,
@@ -184,7 +184,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
   function sell(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _sellSizeE30,
     address _tpToken,
@@ -265,7 +265,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @param _primary Trader's primary wallet account.
   /// @param _subAccountId Trader's sub account ID.
   /// @return _subAccount Trader's sub account address used for trading.
-  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
@@ -285,7 +285,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @return _position Position struct
   function _getPosition(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex
   ) internal view returns (PerpStorage.Position memory) {
     address _perpStorage = TradeService(tradeService).perpStorage();

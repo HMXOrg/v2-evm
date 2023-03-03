@@ -102,7 +102,7 @@ contract PerpStorage is IPerpStorage {
   // @todo - remove
   function addPosition(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     bytes32 _positionId,
     int256 _newPositionSizeE30,
@@ -135,7 +135,7 @@ contract PerpStorage is IPerpStorage {
     return globalMarkets[_marketIndex];
   }
 
-  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
+  function getGlobalAssetClassByIndex(uint8 _assetClassIndex) external view returns (GlobalAssetClass memory) {
     return globalAssetClass[_assetClassIndex];
   }
 
@@ -205,7 +205,7 @@ contract PerpStorage is IPerpStorage {
     globalState = _newGlobalState;
   }
 
-  function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external {
+  function updateGlobalAssetClass(uint8 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external {
     globalAssetClass[_assetClassIndex] = _newAssetClass;
   }
 

@@ -13,7 +13,7 @@ contract LimitOrderTester is StdAssertions {
     bool triggerAboveThreshold;
     bool reduceOnly;
     int256 sizeDelta;
-    uint256 subAccountId;
+    uint8 subAccountId;
     uint256 marketIndex;
     uint256 triggerPrice;
     uint256 executionFee;

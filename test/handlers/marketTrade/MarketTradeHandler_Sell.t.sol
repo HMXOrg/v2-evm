@@ -17,7 +17,7 @@ import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandle
 contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
   event LogSell(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _sellSizeE30,
     uint256 _longDecreasingSizeE30,

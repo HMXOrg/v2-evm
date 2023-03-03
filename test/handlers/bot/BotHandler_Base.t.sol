@@ -45,15 +45,11 @@ contract BotHandler_Base is BaseTest {
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
   }
 
-  function _getSubAccount(address primary, uint256 subAccountId) internal pure returns (address) {
+  function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {
     return address(uint160(primary) ^ uint160(subAccountId));
   }
 
-  function _getPositionId(
-    address _account,
-    uint256 _subAccountId,
-    uint256 _marketIndex
-  ) internal pure returns (bytes32) {
+  function _getPositionId(address _account, uint8 _subAccountId, uint256 _marketIndex) internal pure returns (bytes32) {
     address _subAccount = _getSubAccount(_account, _subAccountId);
     return keccak256(abi.encodePacked(_subAccount, _marketIndex));
   }

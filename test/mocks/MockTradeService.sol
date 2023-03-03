@@ -6,7 +6,7 @@ import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 contract MockTradeService is ITradeService {
   struct IncreasePositionInputs {
     address _primaryAccount;
-    uint256 _subAccountId;
+    uint8 _subAccountId;
     uint256 _marketIndex;
     int256 _sizeDelta;
     uint256 _limitPriceE30;
@@ -14,7 +14,7 @@ contract MockTradeService is ITradeService {
 
   struct DecreasePositionInputs {
     address _account;
-    uint256 _subAccountId;
+    uint8 _subAccountId;
     uint256 _marketIndex;
     uint256 _positionSizeE30ToDecrease;
     // @todo - support take profit token
@@ -40,7 +40,7 @@ contract MockTradeService is ITradeService {
 
   function increasePosition(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _limitPriceE30
@@ -59,7 +59,7 @@ contract MockTradeService is ITradeService {
 
   function decreasePosition(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _positionSizeE30ToDecrease,
     address _tpToken,
@@ -77,12 +77,7 @@ contract MockTradeService is ITradeService {
     );
   }
 
-  function forceClosePosition(
-    address _account,
-    uint256 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken
-  ) external {
+  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
     decreasePositionCallCount++;
   }
 }

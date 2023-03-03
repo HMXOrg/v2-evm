@@ -569,12 +569,14 @@ contract Calculator is Owned, ICalculator {
       // Get price from oracle
       uint256 _priceE30;
 
-      if (_shouldOverwritePrice(_limitPrice, _token, _assetId)) {
+      // Get token asset id from ConfigStorage
+      bytes32 _tokenAssetId = IConfigStorage(configStorage).tokenAssetIds(_token);
+      if (_tokenAssetId == _assetId) {
         _priceE30 = _limitPrice;
       } else {
         // @todo - validate price age
         (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
-          _token.toBytes32(),
+          _tokenAssetId,
           false // @note Collateral value always use Min price
         );
       }
@@ -692,19 +694,5 @@ contract Calculator is Owned, ICalculator {
     if (equity < 0) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
-  }
-
-  /// @notice To check Price should be overwrite
-  /// @param _limitPrice LimitPrice
-  /// @param _token Token addresss
-  /// @param _assetId Market assetId
-  /// @return _shouldOverwrite should overwrite to LimitPrice
-  function _shouldOverwritePrice(
-    uint256 _limitPrice,
-    address _token,
-    bytes32 _assetId
-  ) internal view returns (bool _shouldOverwrite) {
-    return (_limitPrice != 0 &&
-      IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(_token.toBytes32(), _assetId));
   }
 }

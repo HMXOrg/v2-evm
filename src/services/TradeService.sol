@@ -249,7 +249,7 @@ contract TradeService is ITradeService {
       // calculate the maximum amount of reserve required for the new position
       uint256 _maxReserve = (_imr * _marketConfig.maxProfitRate) / RATE_PRECISION;
       // increase the reserved amount by the maximum reserve required for the new position
-      increaseReserved(_marketConfig.assetClass, _maxReserve, _limitPriceE30, _marketConfig.assetId);
+      _increaseReserved(_marketConfig.assetClass, _maxReserve, _limitPriceE30, _marketConfig.assetId);
       _vars.position.reserveValueE30 += _maxReserve;
     }
 
@@ -365,15 +365,7 @@ contract TradeService is ITradeService {
     }
 
     // update position, market, and global market state
-    _decreasePosition(
-      _marketConfig,
-      _marketIndex,
-      _vars,
-      _positionSizeE30ToDecrease,
-      _tpToken,
-      _limitPriceE30,
-      _marketConfig.assetId
-    );
+    _decreasePosition(_marketConfig, _marketIndex, _vars, _positionSizeE30ToDecrease, _tpToken, _limitPriceE30);
   }
 
   // @todo - access control
@@ -449,7 +441,7 @@ contract TradeService is ITradeService {
 
     // update position, market, and global market state
     /// @dev no need to derived price on this
-    _decreasePosition(_marketConfig, _marketIndex, _vars, _vars.absPositionSizeE30, _tpToken, 0, 0);
+    _decreasePosition(_marketConfig, _marketIndex, _vars, _vars.absPositionSizeE30, _tpToken, 0);
 
     emit LogForceClosePosition(
       _account,
@@ -467,19 +459,17 @@ contract TradeService is ITradeService {
   /// @param _vars - decrease criteria
   /// @param _positionSizeE30ToDecrease - position size to decrease
   /// @param _tpToken - take profit token
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @param _limitPriceE30 - Price to be overwritten to a specified asset
   function _decreasePosition(
     IConfigStorage.MarketConfig memory _marketConfig,
     uint256 _globalMarketIndex,
     DecreasePositionVars memory _vars,
     uint256 _positionSizeE30ToDecrease,
     address _tpToken,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    uint256 _limitPriceE30
   ) internal {
     // Update borrowing rate
-    updateBorrowingRate(_marketConfig.assetClass, _limitPriceE30, _limitAssetId);
+    updateBorrowingRate(_marketConfig.assetClass, _limitPriceE30, _marketConfig.assetId);
 
     // Update funding rate
     updateFundingRate(_globalMarketIndex, _limitPriceE30);
@@ -504,7 +494,7 @@ contract TradeService is ITradeService {
       _vars.position.entryFundingRate
     );
 
-    settleFundingFee(_vars.subAccount, _limitPriceE30, _limitAssetId);
+    settleFundingFee(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
 
@@ -632,48 +622,48 @@ contract TradeService is ITradeService {
     // =========================================
 
     // check sub account equity is under MMR
-    _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _limitAssetId);
+    _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }
 
   /// @notice settle profit
   /// @param _subAccount - Sub-account of trader
-  /// @param _token - token that trader want to take profit as collateral
+  /// @param _tpToken - token that trader want to take profit as collateral
   /// @param _realizedProfitE30 - trader profit in USD
-  /// @param _limitPriceE30 - Limit Price
-  /// @param _assetId  - Market Asset Id
+  /// @param _limitPriceE30 - Price to be overwritten to a specified asset
+  /// @param _limitAssetId - Asset to be overwritten by _limitPriceE30
   function _settleProfit(
     address _subAccount,
-    address _token,
+    address _tpToken,
     uint256 _realizedProfitE30,
     uint256 _limitPriceE30,
-    bytes32 _assetId
+    bytes32 _limitAssetId
   ) internal {
     uint256 _tpTokenPrice;
-    IConfigStorage _configStorage = IConfigStorage(configStorage);
-    if (_shouldOverwritePrice(_limitPriceE30, _token, _assetId)) {
+    bytes32 _tpAssetId = IConfigStorage(configStorage).tokenAssetIds(_tpToken);
+    if (_tpAssetId == _limitAssetId) {
       _tpTokenPrice = _limitPriceE30;
     } else {
-      (_tpTokenPrice, ) = IOracleMiddleware(_configStorage.oracle()).getLatestPrice(_token.toBytes32(), false);
+      (_tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(_tpAssetId, false);
     }
-    // @todo refactor to use _assetid from params instead
-    uint256 _decimals = _configStorage.getAssetTokenDecimal(_token);
+
+    uint256 _decimals = IConfigStorage(configStorage).getAssetTokenDecimal(_tpToken);
 
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
 
-    uint256 _settlementFeeRate = ICalculator(_configStorage.calculator()).getSettlementFeeRate(
-      _token,
+    uint256 _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
+      _tpToken,
       _realizedProfitE30,
       _limitPriceE30,
-      _assetId
+      _limitAssetId
     );
     uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / (10 ** _decimals);
 
-    IVaultStorage(vaultStorage).removePLPLiquidity(_token, _tpTokenOut);
-    IVaultStorage(vaultStorage).addFee(_token, _settlementFee);
-    IVaultStorage(vaultStorage).increaseTraderBalance(_subAccount, _token, _tpTokenOut - _settlementFee);
+    IVaultStorage(vaultStorage).removePLPLiquidity(_tpToken, _tpTokenOut);
+    IVaultStorage(vaultStorage).addFee(_tpToken, _settlementFee);
+    IVaultStorage(vaultStorage).increaseTraderBalance(_subAccount, _tpToken, _tpTokenOut - _settlementFee);
 
     // @todo - emit LogSettleProfit(trader, collateralToken, addedAmount, settlementFee)
   }
@@ -681,9 +671,9 @@ contract TradeService is ITradeService {
   /// @notice settle loss
   /// @param _subAccount - Sub-account of trader
   /// @param _debtUsd - Loss in USD
-  /// @param _limitPriceE30 - Limit Price
-  /// @param _assetId  - Market Asset Id
-  function _settleLoss(address _subAccount, uint256 _debtUsd, uint256 _limitPriceE30, bytes32 _assetId) internal {
+  /// @param _limitPriceE30 - Price to be overwritten to a specified asset
+  /// @param _limitAssetId - Asset to be overwritten by _limitPriceE30
+  function _settleLoss(address _subAccount, uint256 _debtUsd, uint256 _limitPriceE30, bytes32 _limitAssetId) internal {
     address[] memory _plpTokens = IConfigStorage(configStorage).getPlpTokens();
 
     uint256 _len = _plpTokens.length;
@@ -704,8 +694,10 @@ contract TradeService is ITradeService {
 
       // continue settle when sub-account has collateral, else go to check next token
       if (_collateral != 0) {
+        bytes32 _tokenAssetId = IConfigStorage(configStorage).tokenAssetIds(_token);
+
         // Retrieve the latest price and confident threshold of the plp underlying token
-        if (_shouldOverwritePrice(_limitPriceE30, _token, _assetId)) {
+        if (_tokenAssetId == _limitAssetId) {
           _price = _limitPriceE30;
         } else {
           (_price, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
@@ -834,7 +826,7 @@ contract TradeService is ITradeService {
   /// @param _reservedValue The amount by which to increase the reserve value.
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function increaseReserved(
+  function _increaseReserved(
     uint256 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _limitPriceE30,
@@ -957,11 +949,13 @@ contract TradeService is ITradeService {
 
   /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
   /// @param _assetClassIndex The index of the asset class.
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _nextBorrowingRate The next borrowing rate for the asset class.
   function getNextBorrowingRate(
     uint256 _assetClassIndex,
-    uint256 _price,
-    bytes32 _assetId
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
   ) public view returns (uint256 _nextBorrowingRate) {
     IConfigStorage _configStorage = IConfigStorage(configStorage);
     ICalculator _calculator = ICalculator(_configStorage.calculator());
@@ -975,7 +969,7 @@ contract TradeService is ITradeService {
       _assetClassIndex
     );
     // Get the PLP TVL.
-    uint256 plpTVL = _calculator.getPLPValueE30(false, _price, _assetId); // TODO: make sure to use price
+    uint256 plpTVL = _calculator.getPLPValueE30(false, _limitPriceE30, _limitAssetId);
 
     // If block.timestamp not pass the next funding time, return 0.
     if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
@@ -1279,16 +1273,11 @@ contract TradeService is ITradeService {
 
       // Retrieve the latest price and confident threshold of the plp underlying token
       // @todo refactor this?
-      if (
-        _limitPriceE30 != 0 &&
-        IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(
-          tmpVars.underlyingToken.toBytes32(),
-          _limitAssetId
-        )
-      ) {
+      bytes32 _underlyingAssetId = IConfigStorage(configStorage).tokenAssetIds(tmpVars.underlyingToken);
+      if (_limitPriceE30 != 0 && _underlyingAssetId == _limitAssetId) {
         tmpVars.price = _limitPriceE30;
       } else {
-        (tmpVars.price, ) = oracle.getLatestPrice(tmpVars.underlyingToken.toBytes32(), false);
+        (tmpVars.price, ) = oracle.getLatestPrice(_underlyingAssetId, false);
       }
 
       // feeUSD > 0 or isPayFee == true, means trader pay fee
@@ -1455,11 +1444,6 @@ contract TradeService is ITradeService {
 
   function _overwritePrice(uint256 _price, uint256 _priceOverwrite) internal pure returns (uint256) {
     return _priceOverwrite != 0 ? _priceOverwrite : _price;
-  }
-
-  function _shouldOverwritePrice(uint256 _price, address _token, bytes32 _assetId) internal view returns (bool) {
-    return (_price != 0 &&
-      IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(_token.toBytes32(), _assetId));
   }
 
   function _updateDecreasePositionInfo() internal {}

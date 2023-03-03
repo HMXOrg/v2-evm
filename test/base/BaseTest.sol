@@ -15,7 +15,6 @@ import { Deployer } from "./Deployer.sol";
 import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
 
 import { Deployment } from "../../script/Deployment.s.sol";
-import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
 // Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
@@ -29,11 +28,12 @@ import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 
-import { Deployment } from "../../script/Deployment.s.sol";
-import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 // Interfaces
+import { IPLPv2 } from "../../src/contracts/interfaces/IPLPv2.sol";
+
 import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
+import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
 
 // Calculator
 import { Calculator } from "../../src/contracts/Calculator.sol";
@@ -47,18 +47,11 @@ import { BotHandler } from "../../src/handlers/BotHandler.sol";
 // Services
 import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
 
-// Storages
-import { VaultStorage } from "../../src/storages/VaultStorage.sol";
-
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
-
-import { PLPv2 } from "../../src/contracts/PLPv2.sol";
-
 // Handlers
 import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
 import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
 
-abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
+abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe {
   using AddressUtils for address;
 
   address internal ALICE;
@@ -69,10 +62,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   // storages
   IConfigStorage internal configStorage;
   IPerpStorage internal perpStorage;
-  VaultStorage internal vaultStorage;
+  IVaultStorage internal vaultStorage;
 
   // other contracts
-  PLPv2 internal plp;
+  IPLPv2 internal plp;
   Calculator internal calculator;
   FeeCalculator internal feeCalculator;
 
@@ -121,11 +114,11 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     usdt = deployMockErc20("USD Tether", "USDT", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
 
-    plp = new PLPv2();
+    plp = IPLPv2(Deployer.deployContract("PLPv2"));
 
     configStorage = IConfigStorage(Deployer.deployContract("ConfigStorage"));
     perpStorage = IPerpStorage(Deployer.deployContract("PerpStorage"));
-    vaultStorage = deployVaultStorage();
+    vaultStorage = IVaultStorage(Deployer.deployContract("VaultStorage"));
 
     mockOracle = new MockOracleMiddleware();
     mockCalculator = new MockCalculator(address(mockOracle));

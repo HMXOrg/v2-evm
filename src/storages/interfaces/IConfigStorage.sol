@@ -25,22 +25,17 @@ interface IConfigStorage {
 
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
-    uint256 decimals; // @todo - [liquidity] remove
     uint256 targetWeight; // percentage of all accepted PLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
-    bool isStableCoin; // @todo - [liquidity] remove
     bool accepted; // accepted to provide liquidity
   }
 
   /// @notice collateral token config
   struct CollateralTokenConfig {
-    uint256 decimals; // @todo - [cross margin] remove
     uint256 collateralFactor; // token reliability factor to calculate buying power, 1e18 = 100%
-    bool isStableCoin; // @todo - [cross margin] remove
     bool accepted; // accepted to deposit as collateral
     address settleStrategy; // determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
-    uint256 priceConfidentThreshold; // @todo - [cross margin] remove
   }
 
   struct OpenInterest {
@@ -140,8 +135,6 @@ interface IConfigStorage {
 
   function getTradingConfig() external view returns (TradingConfig memory);
 
-  function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory);
-
   function getCollateralTokenConfigs(
     address _token
   ) external view returns (CollateralTokenConfig memory _collateralTokenConfig);
@@ -150,21 +143,32 @@ interface IConfigStorage {
 
   function getLiquidationConfig() external view returns (LiquidationConfig memory);
 
-  function getPLPTokenConfig(address _token) external view returns (PLPTokenConfig memory);
-
   function getMarketConfigByToken(address _token) external view returns (MarketConfig memory);
 
   function getMarketConfigsLength() external view returns (uint256);
-
-  function getNextAcceptedToken(address token) external view returns (address);
 
   function getPlpTokens() external view returns (address[] memory);
 
   function getCollateralTokens() external view returns (address[] memory);
 
+  function getAssetConfigByToken(address _token) external view returns (AssetConfig memory);
+
+  function getPlpAssetIds() external view returns (bytes32[] memory);
+
+  function getAssetConfig(bytes32 _assetId) external view returns (AssetConfig memory);
+
+  function getAssetPlpTokenConfig(bytes32 _assetId) external view returns (PLPTokenConfig memory);
+
+  function getAssetPlpTokenConfigByToken(address _token) external view returns (PLPTokenConfig memory);
+
+  function tokenAssetIds(address _token) external view returns (bytes32);
+
+  function getAssetTokenDecimal(address _token) external view returns (uint8);
+
   /**
    * Setter
    */
+
   function setCalculator(address _calculator) external;
 
   function setOracle(address _oracle) external;
@@ -198,9 +202,9 @@ interface IConfigStorage {
   ) external returns (PLPTokenConfig memory _plpTokenConfig);
 
   function setCollateralTokenConfig(
-    address _token,
+    bytes32 collateralAssetId,
     CollateralTokenConfig memory _newConfig
-  ) external returns (CollateralTokenConfig memory);
+  ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 
   function setWeth(address _weth) external;
 

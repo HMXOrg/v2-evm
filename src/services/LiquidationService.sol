@@ -59,7 +59,7 @@ contract LiquidationService is ILiquidationService {
       _positionId = _positionIds[i];
 
       // Reset the position's value in storage
-      IPerpStorage(perpStorage).removePosition(_subAccount, _positionId);
+      IPerpStorage(perpStorage).removePositionFromSubAccount(_subAccount, _positionId);
 
       unchecked {
         ++i;

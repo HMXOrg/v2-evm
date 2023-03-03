@@ -90,7 +90,7 @@ interface IPerpStorage {
 
   function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) external;
 
-  function removePosition(address _subAccount, bytes32 _positionId) external;
+  function removePositionFromSubAccount(address _subAccount, bytes32 _positionId) external;
 
   function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
 

@@ -11,12 +11,15 @@ import { AddressUtils } from "../libraries/AddressUtils.sol";
 import { Owned } from "../base/Owned.sol";
 import { IteratableAddressList } from "../libraries/IteratableAddressList.sol";
 
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
 contract ConfigStorage is IConfigStorage, Owned {
   using AddressUtils for address;
   using IteratableAddressList for IteratableAddressList.List;
-
+  using SafeERC20 for ERC20;
   /**
    * Events
    */
@@ -345,6 +348,14 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function setAssetConfig(bytes32 _assetId, AssetConfig memory _config) external {
     assetConfigs[_assetId] = _config;
+
+    address _token = _config.tokenAddress;
+    if (_token != address(0)) {
+      tokenAssetIds[_token] = _assetId;
+
+      // sanity check
+      ERC20(_token).decimals();
+    }
   }
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {

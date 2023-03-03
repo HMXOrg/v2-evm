@@ -6,6 +6,12 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
+/**
+ * Libraries
+ */
+
+import { Deployer } from "./Deployer.sol";
+
 import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
 
 import { Deployment } from "../../script/Deployment.s.sol";
@@ -43,7 +49,6 @@ import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
 
 // Storages
 import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
-import { PerpStorage } from "../../src/storages/PerpStorage.sol";
 import { VaultStorage } from "../../src/storages/VaultStorage.sol";
 
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
@@ -64,7 +69,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   // storages
   ConfigStorage internal configStorage;
-  PerpStorage internal perpStorage;
+  IPerpStorage internal perpStorage;
   VaultStorage internal vaultStorage;
 
   // other contracts
@@ -120,7 +125,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     plp = new PLPv2();
 
     configStorage = deployConfigStorage();
-    perpStorage = deployPerpStorage();
+    perpStorage = IPerpStorage(Deployer.deployPerbStorage());
     vaultStorage = deployVaultStorage();
 
     mockOracle = new MockOracleMiddleware();

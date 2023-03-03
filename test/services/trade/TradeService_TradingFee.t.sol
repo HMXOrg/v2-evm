@@ -15,18 +15,18 @@ contract TradeService_TradingFee is TradeService_Base {
     super.setUp();
 
     // Ignore Borrowing fee on this test
-    IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
+    IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRateBPS: 0 });
     configStorage.setAssetClassConfigByIndex(0, _cryptoConfig);
 
     // Ignore Developer fee on this test
     configStorage.setTradingConfig(
-      IConfigStorage.TradingConfig({ fundingInterval: 1, devFeeRate: 0, minProfitDuration: 0, maxPosition: 5 })
+      IConfigStorage.TradingConfig({ fundingInterval: 1, devFeeRateBPS: 0, minProfitDuration: 0, maxPosition: 5 })
     );
 
     // Set increase/decrease position fee rate to 0.0001%
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(ethMarketIndex);
-    _marketConfig.increasePositionFeeRate = 0.0001 * 1e18;
-    _marketConfig.decreasePositionFeeRate = 0.0001 * 1e18;
+    _marketConfig.increasePositionFeeRateBPS = 0.0001 * 1e4;
+    _marketConfig.decreasePositionFeeRateBPS = 0.0001 * 1e4;
     configStorage.setMarketConfig(ethMarketIndex, _marketConfig);
   }
 

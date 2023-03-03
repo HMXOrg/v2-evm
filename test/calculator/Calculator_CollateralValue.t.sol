@@ -37,7 +37,7 @@ contract Calculator_IMR is Calculator_Base {
     // WETH CollateralValue = 10 ether * 1E30 * 0.8 = 8 ether
     assertEq(calculator.getCollateralValue(ALICE, 0, 0), 8 * 1e30);
 
-    // Senond, Assume ALICE deposit more new collateral, WBTC
+    // Second, Assume ALICE deposit more new collateral, WBTC
     mockVaultStorage.setTraderTokens(ALICE, address(wbtc));
     mockVaultStorage.setTraderBalance(ALICE, address(wbtc), 10 * 1e8);
 

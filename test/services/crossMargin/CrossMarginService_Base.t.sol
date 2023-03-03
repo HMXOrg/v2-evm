@@ -29,13 +29,13 @@ contract CrossMarginService_Base is BaseTest {
 
     // Set accepted token deposit/withdraw
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.8 ether,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
     IConfigStorage.CollateralTokenConfig memory _collateralConfigUSDC = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.8 ether,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
@@ -63,7 +63,7 @@ contract CrossMarginService_Base is BaseTest {
     vm.stopPrank();
   }
 
-  function getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+  function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }

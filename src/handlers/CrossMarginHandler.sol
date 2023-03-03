@@ -96,7 +96,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   /// @param _amount Token depositing amount.
   function depositCollateral(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     address _token,
     uint256 _amount
   ) external nonReentrant onlyAcceptedToken(_token) {
@@ -118,7 +118,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   /// @param _priceData Price update data
   function withdrawCollateral(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     address _token,
     uint256 _amount,
     bytes[] memory _priceData

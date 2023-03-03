@@ -245,13 +245,13 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   function _setUpLiquidityConfig() private {
     configStorage.setLiquidityConfig(
       IConfigStorage.LiquidityConfig({
-        depositFeeRate: 0,
-        withdrawFeeRate: 0,
-        maxPLPUtilization: (80 * 1e18) / 100,
+        depositFeeRateBPS: 0,
+        withdrawFeeRateBPS: 0,
+        maxPLPUtilizationBPS: 0.8 * 1e4,
         plpTotalTokenWeight: 0,
         plpSafetyBufferThreshold: 0,
-        taxFeeRate: 5e15, // 0.5%
-        flashLoanFeeRate: 0,
+        taxFeeRateBPS: 0.005 * 1e4, // 0.5%
+        flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: false,
         enabled: true
       })
@@ -260,7 +260,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   /// @notice set up swap config
   function _setUpSwapConfig() private {
-    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRate: 0, swapFeeRate: 0 }));
+    configStorage.setSwapConfig(IConfigStorage.SwapConfig({ stablecoinSwapFeeRateBPS: 0, swapFeeRateBPS: 0 }));
   }
 
   /// @notice set up trading config
@@ -268,7 +268,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     configStorage.setTradingConfig(
       IConfigStorage.TradingConfig({
         fundingInterval: 1,
-        devFeeRate: 0.15 * 1e18,
+        devFeeRateBPS: 0.15 * 1e4,
         minProfitDuration: 0,
         maxPosition: 5
       })
@@ -278,10 +278,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   /// @notice set up all asset class configs in Perp
   function _setUpAssetClassConfigs() private {
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRate: 0.0001 * 1e18
+      baseBorrowingRateBPS: 0.0001 * 1e4
     });
     IConfigStorage.AssetClassConfig memory _forexConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRate: 0.0002 * 1e18
+      baseBorrowingRateBPS: 0.0002 * 1e4
     });
     configStorage.addAssetClassConfig(_cryptoConfig);
     configStorage.addAssetClassConfig(_forexConfig);
@@ -293,37 +293,37 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage.MarketConfig({
       assetId: wethAssetId,
       assetClass: 0,
-      maxProfitRate: 9e18,
-      minLeverage: 1 * 1e18,
-      initialMarginFraction: 0.01 * 1e18,
-      maintenanceMarginFraction: 0.005 * 1e18,
-      increasePositionFeeRate: 0,
-      decreasePositionFeeRate: 0,
+      maxProfitRateBPS: 9 * 1e4,
+      minLeverageBPS: 1 * 1e4,
+      initialMarginFractionBPS: 0.01 * 1e4,
+      maintenanceMarginFractionBPS: 0.005 * 1e4,
+      increasePositionFeeRateBPS: 0,
+      decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({
         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
       }),
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
     });
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
       assetId: wbtcAssetId,
       assetClass: 0,
-      maxProfitRate: 9e18,
-      minLeverage: 1 * 1e18,
-      initialMarginFraction: 0.01 * 1e18,
-      maintenanceMarginFraction: 0.005 * 1e18,
-      increasePositionFeeRate: 0,
-      decreasePositionFeeRate: 0,
+      maxProfitRateBPS: 9 * 1e4,
+      minLeverageBPS: 1 * 1e4,
+      initialMarginFractionBPS: 0.01 * 1e4,
+      maintenanceMarginFractionBPS: 0.005 * 1e4,
+      increasePositionFeeRateBPS: 0,
+      decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({
         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
       }),
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
     });
 
     ethMarketIndex = configStorage.addMarketConfig(_ethConfig);
@@ -386,7 +386,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   /// @notice set up all collateral token configs in Perp
   function _setUpCollateralTokenConfigs() private {
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWeth = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.8 * 1e18,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
@@ -394,7 +394,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     configStorage.setCollateralTokenConfig(wethAssetId, _collatTokenConfigWeth);
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 0.9 * 1e18,
+      collateralFactorBPS: 0.9 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
@@ -402,7 +402,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     configStorage.setCollateralTokenConfig(wbtcAssetId, _collatTokenConfigWbtc);
 
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigUsdt = IConfigStorage.CollateralTokenConfig({
-      collateralFactor: 1 * 1e18,
+      collateralFactorBPS: 1 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });

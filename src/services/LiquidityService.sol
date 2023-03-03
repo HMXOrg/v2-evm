@@ -22,7 +22,9 @@ contract LiquidityService is ILiquidityService {
   address public perpStorage;
 
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
-  uint256 internal constant USD_DECIMALS = 30;
+  uint32 internal constant BPS = 1e4;
+  uint8 internal constant USD_DECIMALS = 30;
+  uint64 internal constant RATE_PRECISION = 1e18;
 
   event AddLiquidity(
     address account,
@@ -150,10 +152,10 @@ contract LiquidityService is ILiquidityService {
     uint256 amountAfterFee = _collectFee(
       CollectFeeRequest(
         _token,
+        _lpProvider,
         _price,
         _amount,
         _getFeeRate(_token, _amount, _price),
-        _lpProvider,
         LiquidityAction.ADD_LIQUIDITY
       )
     );
@@ -206,7 +208,7 @@ contract LiquidityService is ILiquidityService {
     );
 
     _amountOut = _collectFee(
-      CollectFeeRequest(_tokenOut, _maxPrice, _amount, _feeRate, _lpProvider, LiquidityAction.REMOVE_LIQUIDITY)
+      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amount, _feeRate, LiquidityAction.REMOVE_LIQUIDITY)
     );
 
     if (_minAmount > _amountOut) {
@@ -238,31 +240,29 @@ contract LiquidityService is ILiquidityService {
 
   // calculate fee and accounting fee
   function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
-    uint256 amountAfterFee = (_request._amount * (1e18 - _request._feeRate)) / 1e18;
-    uint256 fee = _request._amount - amountAfterFee;
-    bytes32 _assetId = IConfigStorage(configStorage).tokenAssetIds(_request._token);
+    uint256 _fee = (_request._amount * _request._feeRate) / RATE_PRECISION;
 
-    IVaultStorage(vaultStorage).addFee(_request._token, fee);
+    IVaultStorage(vaultStorage).addFee(_request._token, _fee);
     uint256 _decimals = IConfigStorage(configStorage).getAssetTokenDecimal(_request._token);
 
     if (_request._action == LiquidityAction.SWAP) {
-      emit CollectSwapFee(_request._account, _request._token, (fee * _request._tokenPriceUsd) / 10 ** _decimals, fee);
+      emit CollectSwapFee(_request._account, _request._token, (_fee * _request._tokenPriceUsd) / 10 ** _decimals, _fee);
     } else if (_request._action == LiquidityAction.ADD_LIQUIDITY) {
       emit CollectAddLiquidityFee(
         _request._account,
         _request._token,
-        (fee * _request._tokenPriceUsd) / 10 ** _decimals,
-        fee
+        (_fee * _request._tokenPriceUsd) / 10 ** _decimals,
+        _fee
       );
     } else if (_request._action == LiquidityAction.REMOVE_LIQUIDITY) {
       emit CollectRemoveLiquidityFee(
         _request._account,
         _request._token,
-        (fee * _request._tokenPriceUsd) / 10 ** _decimals,
-        fee
+        (_fee * _request._tokenPriceUsd) / 10 ** _decimals,
+        _fee
       );
     }
-    return amountAfterFee;
+    return _request._amount - _fee;
   }
 
   function _validatePLPHealthCheck(address _token) internal view {
@@ -284,7 +284,7 @@ contract LiquidityService is ILiquidityService {
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
     uint256 plpTVL = _calculator.getPLPValueE30(false, 0, 0);
-    if (_globalState.reserveValueE30 > _liquidityConfig.maxPLPUtilization * plpTVL) {
+    if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxPLPUtilizationBPS * plpTVL) {
       revert LiquidityService_MaxPLPUtilizationExceeded();
     }
 

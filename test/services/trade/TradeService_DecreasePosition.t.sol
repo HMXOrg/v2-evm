@@ -343,11 +343,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // Start test
 
     address _tpToken = address(weth); // take profit token
-    console.logBytes32(wethAssetId);
-    console.logBytes32(wbtcAssetId);
-    console.logBytes32(usdcAssetId);
-    console.logBytes32(usdtAssetId);
-    console.logBytes32(daiAssetId);
 
     // let position tester watch this position
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);

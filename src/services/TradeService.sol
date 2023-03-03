@@ -609,8 +609,6 @@ contract TradeService is ITradeService {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
-          console.logBytes32(_marketConfig.assetId);
-          console.logBytes32(IConfigStorage(configStorage).tokenAssetIds(_tpToken));
           _settleProfit(_vars.subAccount, _tpToken, uint256(_realizedPnl), _limitPriceE30, _marketConfig.assetId);
         } else {
           // loss

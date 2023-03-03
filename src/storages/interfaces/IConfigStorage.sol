@@ -149,8 +149,6 @@ interface IConfigStorage {
 
   function getMarketConfigsLength() external view returns (uint256);
 
-  function getMarketConfigByToken(address _token) external view returns (MarketConfig memory marketConfig);
-
   function getPlpTokens() external view returns (address[] memory);
 
   function getAssetConfigByToken(address _token) external view returns (AssetConfig memory);

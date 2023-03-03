@@ -72,18 +72,6 @@ interface IPerpStorage {
 
   function getBadDebt(address _subAccount) external view returns (uint256 badDebt);
 
-  /**
-   * Setter
-   */
-
-  function updatePositionById(
-    bytes32 _positionId,
-    int256 _newPositionSizeE30,
-    uint256 _newReserveValueE30,
-    uint256 _newAvgPriceE30,
-    uint256 _newOpenInterest
-  ) external returns (Position memory _position);
-
   function updateGlobalLongMarketById(
     uint256 __marketIndex,
     uint256 _newPositionSize,

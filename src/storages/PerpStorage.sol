@@ -10,10 +10,9 @@ import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 contract PerpStorage is IPerpStorage {
   GlobalState public globalState; // global state that accumulative value from all markets
 
-  Position[] public positions;
-  mapping(bytes32 => uint256) public positionIndices; // bytes32 = primaryAccount + subAccount + marketIndex
-
-  mapping(address => uint256[]) public subAccountPositionIndices; // sub account => position indices
+  bytes32[] public positionIds;
+  mapping(bytes32 => Position) public positions;
+  mapping(address => bytes32[]) public subAccountPositionIds;
 
   mapping(address => int256) public subAccountFee;
 
@@ -25,40 +24,16 @@ contract PerpStorage is IPerpStorage {
 
   mapping(uint256 => GlobalAssetClass) public globalAssetClass;
 
-  constructor() {
-    positions.push(
-      Position({
-        primaryAccount: address(0),
-        subAccountId: 0,
-        marketIndex: 0,
-        positionSizeE30: 0,
-        avgEntryPriceE30: 0,
-        entryBorrowingRate: 0,
-        entryFundingRate: 0,
-        reserveValueE30: 0,
-        lastIncreaseTimestamp: 0,
-        realizedPnl: 0,
-        openInterest: 0
-      })
-    );
-  }
-
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  GETTER FUNCTION  ///////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////
-
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  GETTER
-  ////////////////////////////////////////////////////////////////////////////////////
-
+  /// @notice Get all positions with a specific trader's sub-account
+  /// @param _trader The address of the trader whose positions to retrieve
+  /// @return traderPositions An array of Position objects representing the trader's positions
   function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions) {
-    uint256[] memory _subAccountPositionIndices = subAccountPositionIndices[_trader];
-    if (_subAccountPositionIndices.length > 0) {
-      Position[] memory _traderPositions = new Position[](_subAccountPositionIndices.length);
-
-      for (uint256 i; i < _subAccountPositionIndices.length; ) {
-        uint256 _subAccountPositionIndex = _subAccountPositionIndices[i];
-        _traderPositions[i] = (positions[_subAccountPositionIndex]);
+    bytes32[] memory _subAccountPositionIds = subAccountPositionIds[_trader];
+    if (_subAccountPositionIds.length > 0) {
+      Position[] memory _traderPositions = new Position[](_subAccountPositionIds.length);
+      uint256 _len = _subAccountPositionIds.length;
+      for (uint256 i; i < _len; ) {
+        _traderPositions[i] = (positions[_subAccountPositionIds[i]]);
 
         unchecked {
           i++;
@@ -71,64 +46,39 @@ contract PerpStorage is IPerpStorage {
 
   // @todo - add description
   function getPositionById(bytes32 _positionId) external view returns (Position memory) {
-    uint256 _index = positionIndices[_positionId];
-    return positions[_index];
+    return positions[_positionId];
   }
 
   function getNumberOfSubAccountPosition(address _subAccount) external view returns (uint256) {
-    return subAccountPositionIndices[_subAccount].length;
+    return subAccountPositionIds[_subAccount].length;
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER FUNCTION  ///////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////
-
   function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) public {
-    uint256 _index = positionIndices[_positionId];
-    if (_index == 0) {
-      positionIndices[_positionId] = positions.length;
-      subAccountPositionIndices[_subAccount].push(positions.length);
-      positions.push(position);
-    } else {
-      positions[_index] = position;
+    IPerpStorage.Position memory _position = positions[_positionId];
+    if (_position.positionSizeE30 == 0) {
+      positionIds.push(_positionId);
+      subAccountPositionIds[_subAccount].push(_positionId);
     }
+    positions[_positionId] = position;
   }
 
   /// @notice Resets the position associated with the given position ID.
   /// @param _positionId The ID of the position to be reset.
   function resetPosition(bytes32 _positionId) public {
-    uint256 _index = positionIndices[_positionId];
-    // Delete the position at the specified index
-    delete positions[_index];
-  }
+    uint256 _len = positionIds.length;
+    for (uint256 i; i < _len; ) {
+      if (positionIds[i] == _positionId) {
+        positionIds[i] = positionIds[_len - 1];
+        positionIds.pop();
+        delete positions[_positionId];
 
-  // @todo - remove
-  function addPosition(
-    address _primaryAccount,
-    uint256 _subAccountId,
-    uint256 _marketIndex,
-    bytes32 _positionId,
-    int256 _newPositionSizeE30,
-    uint256 _newReserveValueE30,
-    uint256 _newAvgPriceE30,
-    uint256 _newOpenInterest
-  ) external {
-    positions.push(
-      Position({
-        primaryAccount: _primaryAccount,
-        subAccountId: _subAccountId,
-        marketIndex: _marketIndex,
-        positionSizeE30: _newPositionSizeE30,
-        avgEntryPriceE30: _newAvgPriceE30,
-        entryBorrowingRate: 0,
-        entryFundingRate: 0,
-        reserveValueE30: _newReserveValueE30,
-        lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: _newOpenInterest
-      })
-    );
-    positionIndices[_positionId] = positions.length - 1;
+        break;
+      }
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   // todo: add description
@@ -155,29 +105,6 @@ contract PerpStorage is IPerpStorage {
   /// @return _badDebt The bad debt associated with the given sub-account.
   function getBadDebt(address subAccount) external view returns (uint256 _badDebt) {
     return badDebt[subAccount];
-  }
-
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTER
-  ////////////////////////////////////////////////////////////////////////////////////
-
-  // @todo - add description
-  // @todo - support to update borrowing rate
-  // @todo - support to update funding rate
-  function updatePositionById(
-    bytes32 _positionId,
-    int256 _newPositionSizeE30,
-    uint256 _newReserveValueE30,
-    uint256 _newAvgPriceE30,
-    uint256 _newOpenInterest
-  ) external returns (Position memory _position) {
-    uint256 _index = positionIndices[_positionId];
-    _position = positions[_index];
-    _position.positionSizeE30 = _newPositionSizeE30;
-    _position.reserveValueE30 = _newReserveValueE30;
-    _position.avgEntryPriceE30 = _newAvgPriceE30;
-    _position.openInterest = _newOpenInterest;
-    positions[_index] = _position;
   }
 
   // @todo - update funding rate

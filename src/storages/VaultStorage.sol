@@ -15,7 +15,6 @@ contract VaultStorage is IVaultStorage {
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
 
   mapping(address => uint256) public totalAmount; //token => tokenAmount
-  mapping(address => uint256) public plpLiquidityUSDE30; //token => PLPValueInUSD
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
   mapping(address => uint256) public fees; // fee in token unit
 
@@ -40,11 +39,6 @@ contract VaultStorage is IVaultStorage {
 
   function addDevFee(address _token, uint256 _amount) public {
     devFees[_token] += _amount;
-  }
-
-  // @todo - modifier?
-  function addPLPLiquidityUSDE30(address _token, uint256 _amount) external {
-    plpLiquidityUSDE30[_token] += _amount;
   }
 
   function addFundingFee(address _token, uint256 _amount) public {
@@ -91,16 +85,6 @@ contract VaultStorage is IVaultStorage {
     // @todo only governance
     fees[_token] -= _amount;
     IERC20(_token).safeTransfer(_receiver, _amount);
-  }
-
-  // @todo - modifier?
-  function removePLPLiquidityUSDE30(address _token, uint256 _value) external {
-    // Underflow check
-    if (plpLiquidityUSDE30[_token] <= _value) {
-      plpLiquidityUSDE30[_token] = 0;
-      return;
-    }
-    plpLiquidityUSDE30[_token] -= _value;
   }
 
   // @todo - modifier?

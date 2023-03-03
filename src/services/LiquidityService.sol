@@ -175,7 +175,6 @@ contract LiquidityService is ILiquidityService {
 
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
     VaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
-    VaultStorage(vaultStorage).addPLPLiquidityUSDE30(_token, _tokenValueUSDAfterFee);
 
     _validatePLPHealthCheck(_token);
 
@@ -202,7 +201,6 @@ contract LiquidityService is ILiquidityService {
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
     VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
-    VaultStorage(vaultStorage).removePLPLiquidityUSDE30(_tokenOut, _lpUsdValue);
 
     uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeRate(
       _tokenOut,

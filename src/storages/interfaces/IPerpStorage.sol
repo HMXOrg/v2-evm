@@ -34,6 +34,7 @@ interface IPerpStorage {
   // Trade position
   struct Position {
     address primaryAccount;
+    uint256 marketIndex;
     int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
     int256 realizedPnl;
     uint256 avgEntryPriceE30;
@@ -42,7 +43,6 @@ interface IPerpStorage {
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     uint256 openInterest;
-    uint256 marketIndex;
     uint8 subAccountId;
   }
 
@@ -54,7 +54,7 @@ interface IPerpStorage {
 
   function getPositionById(bytes32 _positionId) external view returns (Position memory);
 
-  function getGlobalMarketByIndex(uint256 __marketIndex) external view returns (GlobalMarket memory);
+  function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory);
 
   function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory);
 
@@ -79,14 +79,14 @@ interface IPerpStorage {
   ) external returns (Position memory _position);
 
   function updateGlobalLongMarketById(
-    uint256 __marketIndex,
+    uint256 _marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
   ) external;
 
   function updateGlobalShortMarketById(
-    uint256 __marketIndex,
+    uint256 _marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest

@@ -656,23 +656,24 @@ contract TradeService is ITradeService {
     bytes32 _assetId
   ) internal {
     uint256 _tpTokenPrice;
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
     if (_shouldOverwritePrice(_limitPrice, _token, _assetId)) {
       _tpTokenPrice = _limitPrice;
     } else {
-      (_tpTokenPrice, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle()).getLatestPrice(
+      (_tpTokenPrice, ) = IOracleMiddleware(_configStorage.oracle()).getLatestPrice(
         _token.toBytes32(),
         false,
-        IConfigStorage(configStorage).getMarketConfigByToken(_token).priceConfidentThreshold,
+        _configStorage.getMarketConfigByToken(_token).priceConfidentThreshold,
         30 // trust price age (seconds) todo: from market config
       );
     }
-
-    uint256 _decimals = IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals;
+    // @todo refactor to use _assetid from params instead
+    uint256 _decimals = _configStorage.getAssetTokenDecimal(_token);
 
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
 
-    uint256 _settlementFeeRate = ICalculator(IConfigStorage(configStorage).calculator()).getSettlementFeeRate(
+    uint256 _settlementFeeRate = ICalculator(_configStorage.calculator()).getSettlementFeeRate(
       _token,
       _realizedProfitE30,
       _limitPrice,
@@ -705,7 +706,8 @@ contract TradeService is ITradeService {
     // Loop through all the plp tokens for the sub-account
     for (uint256 _i; _i < _len; ) {
       _token = _plpTokens[_i];
-      _decimals = IConfigStorage(configStorage).getPlpTokenConfigs(_token).decimals;
+
+      _decimals = IConfigStorage(configStorage).getAssetTokenDecimal(_token);
 
       // Sub-account plp collateral
       _collateral = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
@@ -1205,7 +1207,8 @@ contract TradeService is ITradeService {
     for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
       IFeeCalculator.SettleMarginFeeLoopVar memory tmpVars; // This will be re-assigned every times when start looping
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
-      tmpVars.underlyingTokenDecimal = _configStorage.getPlpTokenConfigs(tmpVars.underlyingToken).decimals;
+
+      tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(tmpVars.underlyingToken);
 
       tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);
 
@@ -1286,7 +1289,7 @@ contract TradeService is ITradeService {
       IFeeCalculator.SettleFundingFeeLoopVar memory tmpVars;
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
 
-      tmpVars.underlyingTokenDecimal = _configStorage.getPlpTokenConfigs(tmpVars.underlyingToken).decimals;
+      tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(tmpVars.underlyingToken);
 
       // Retrieve the balance of each plp underlying token for the sub-account (token collateral amount)
       tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);

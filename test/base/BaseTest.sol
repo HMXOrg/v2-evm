@@ -6,6 +6,8 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
+import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
+
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 
@@ -53,6 +55,8 @@ import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
 import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
+  using AddressUtils for address;
+
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -135,6 +139,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     );
 
     // configStorage setup
+    _setUpAssetConfigs();
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();
@@ -331,47 +336,37 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
     // WETH
     _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
-      decimals: 18,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: false,
       accepted: true
     });
     // WBTC
     _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
-      decimals: 8,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: false,
       accepted: true
     });
     // DAI
     _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
-      decimals: 18,
       targetWeight: 1e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
     // USDC
     _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
-      decimals: 6,
       targetWeight: 3e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
     // USDT
     _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
-      decimals: 6,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
 
@@ -397,7 +392,6 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     });
 
     configStorage.setCollateralTokenConfig(address(weth), _collatTokenConfigWeth);
-
     IConfigStorage.CollateralTokenConfig memory _collatTokenConfigWbtc = IConfigStorage.CollateralTokenConfig({
       decimals: 8,
       collateralFactor: 0.9 * 1e18,
@@ -427,6 +421,48 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     });
 
     configStorage.setLiquidationConfig(_liquidationConfig);
+  }
+
+  function _setUpAssetConfigs() private {
+    IConfigStorage.AssetConfig memory _assetConfigWeth = IConfigStorage.AssetConfig({
+      tokenAddress: address(weth),
+      assetId: address(weth).toBytes32(),
+      decimals: 18,
+      isStableCoin: false
+    });
+    configStorage.setAssetConfig(address(weth).toBytes32(), _assetConfigWeth);
+
+    IConfigStorage.AssetConfig memory _assetConfigWbtc = IConfigStorage.AssetConfig({
+      tokenAddress: address(wbtc),
+      assetId: address(wbtc).toBytes32(),
+      decimals: 8,
+      isStableCoin: false
+    });
+    configStorage.setAssetConfig(address(wbtc).toBytes32(), _assetConfigWbtc);
+
+    IConfigStorage.AssetConfig memory _assetConfigDai = IConfigStorage.AssetConfig({
+      tokenAddress: address(dai),
+      assetId: address(dai).toBytes32(),
+      decimals: 18,
+      isStableCoin: true
+    });
+    configStorage.setAssetConfig(address(dai).toBytes32(), _assetConfigDai);
+
+    IConfigStorage.AssetConfig memory _assetConfigUSDC = IConfigStorage.AssetConfig({
+      tokenAddress: address(usdc),
+      assetId: address(usdc).toBytes32(),
+      decimals: 6,
+      isStableCoin: true
+    });
+    configStorage.setAssetConfig(address(usdc).toBytes32(), _assetConfigUSDC);
+
+    IConfigStorage.AssetConfig memory _assetConfigUsdt = IConfigStorage.AssetConfig({
+      tokenAddress: address(usdt),
+      assetId: address(usdt).toBytes32(),
+      decimals: 6,
+      isStableCoin: false
+    });
+    configStorage.setAssetConfig(address(usdt).toBytes32(), _assetConfigUsdt);
   }
 
   function abs(int256 x) external pure returns (uint256) {

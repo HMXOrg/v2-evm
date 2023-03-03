@@ -16,7 +16,7 @@ contract TradeService_FundingFee is TradeService_Base {
     super.setUp();
 
     // Set PLPLiquidity
-    vaultStorage.addPLPLiquidity(configStorage.plpTokens(0), 1000 * 1e18);
+    vaultStorage.addPLPLiquidity(configStorage.getPlpTokens()[0], 1000 * 1e18);
 
     // Ignore Borrowing fee on this test
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
@@ -37,7 +37,7 @@ contract TradeService_FundingFee is TradeService_Base {
 
   function testCorrectness_fundingFee_x() external {
     // Set fundingFee to have enough token amounts to repay funding fee
-    vaultStorage.addFundingFee(configStorage.plpTokens(0), 10 * 1e18);
+    vaultStorage.addFundingFee(configStorage.getPlpTokens()[0], 10 * 1e18);
 
     // TVL
     // 1000000 USDT -> 1000000 USD

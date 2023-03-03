@@ -90,8 +90,8 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice GetPLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Limit price
-  /// @param _limitAssetId Market Assetid of the limit price
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
   function _getPLPValueE30(
     bool _isMaxPrice,

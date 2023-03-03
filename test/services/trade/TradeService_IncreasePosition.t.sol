@@ -112,7 +112,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     configStorage.setMarketConfig(
       0,
       IConfigStorage.MarketConfig({
-        assetId: "ETH",
+        assetId: wethAssetId,
         assetClass: 0,
         maxProfitRate: 9e18,
         minLeverage: 1 * 1e18,

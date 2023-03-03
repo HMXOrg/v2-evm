@@ -336,47 +336,37 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
     // WETH
     _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
-      decimals: 18,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: false,
       accepted: true
     });
     // WBTC
     _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
-      decimals: 8,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: false,
       accepted: true
     });
     // DAI
     _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
-      decimals: 18,
       targetWeight: 1e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
     // USDC
     _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
-      decimals: 6,
       targetWeight: 3e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
     // USDT
     _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
-      decimals: 6,
       targetWeight: 2e17,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: true,
       accepted: true
     });
 

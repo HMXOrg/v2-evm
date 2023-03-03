@@ -131,6 +131,10 @@ contract ConfigStorage is IConfigStorage, Owned {
     return collateralTokenConfigs[_token];
   }
 
+  function getAssetTokenDecimal(address _token) external view returns (uint8) {
+    return assetConfigs[tokenAssetIds[_token]].decimals;
+  }
+
   function getPLPTokenConfig(address _token) external view returns (PLPTokenConfig memory) {
     return assetPlpTokenConfigs[tokenAssetIds[_token]];
   }
@@ -178,8 +182,12 @@ contract ConfigStorage is IConfigStorage, Owned {
     return assetConfigs[_assetId];
   }
 
-  function getAssetPlpTokenConfigs(bytes32 _assetId) external view returns (PLPTokenConfig memory) {
+  function getAssetPlpTokenConfig(bytes32 _assetId) external view returns (PLPTokenConfig memory) {
     return assetPlpTokenConfigs[_assetId];
+  }
+
+  function getAssetPlpTokenConfigByToken(address _token) external view returns (PLPTokenConfig memory) {
+    return assetPlpTokenConfigs[tokenAssetIds[_token]];
   }
 
   function getPlpAssetIds() external view returns (bytes32[] memory) {

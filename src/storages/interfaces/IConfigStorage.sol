@@ -25,11 +25,9 @@ interface IConfigStorage {
 
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
-    uint256 decimals; // @todo - [liquidity] remove
     uint256 targetWeight; // percentage of all accepted PLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
-    bool isStableCoin; // @todo - [liquidity] remove
     bool accepted; // accepted to provide liquidity
   }
 
@@ -164,9 +162,13 @@ interface IConfigStorage {
 
   function getAssetConfigs(bytes32 _assetId) external view returns (AssetConfig memory);
 
-  function getAssetPlpTokenConfigs(bytes32 _assetId) external view returns (PLPTokenConfig memory);
+  function getAssetPlpTokenConfig(bytes32 _assetId) external view returns (PLPTokenConfig memory);
+
+  function getAssetPlpTokenConfigByToken(address _token) external view returns (PLPTokenConfig memory);
 
   function tokenAssetIds(address _token) external view returns (bytes32);
+
+  function getAssetTokenDecimal(address _token) external view returns (uint8);
 
   /**
    * Setter

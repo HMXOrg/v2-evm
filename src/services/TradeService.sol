@@ -668,8 +668,7 @@ contract TradeService is ITradeService {
       );
     }
     // @todo refactor to use _assetid from params instead
-    bytes32 _tokenAssetId = _configStorage.tokenAssetIds(_token);
-    uint256 _decimals = _configStorage.getAssetPlpTokenConfigs(_tokenAssetId).decimals;
+    uint256 _decimals = _configStorage.getAssetTokenDecimal(_token);
 
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
@@ -707,9 +706,8 @@ contract TradeService is ITradeService {
     // Loop through all the plp tokens for the sub-account
     for (uint256 _i; _i < _len; ) {
       _token = _plpTokens[_i];
-      bytes32 _tokenAssetId = IConfigStorage(configStorage).tokenAssetIds(_token);
 
-      _decimals = IConfigStorage(configStorage).getAssetPlpTokenConfigs(_tokenAssetId).decimals;
+      _decimals = IConfigStorage(configStorage).getAssetTokenDecimal(_token);
 
       // Sub-account plp collateral
       _collateral = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
@@ -1210,9 +1208,7 @@ contract TradeService is ITradeService {
       IFeeCalculator.SettleMarginFeeLoopVar memory tmpVars; // This will be re-assigned every times when start looping
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
 
-      bytes32 _assetId = _configStorage.tokenAssetIds(tmpVars.underlyingToken);
-
-      tmpVars.underlyingTokenDecimal = _configStorage.getAssetPlpTokenConfigs(_assetId).decimals;
+      tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(tmpVars.underlyingToken);
 
       tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);
 
@@ -1293,9 +1289,7 @@ contract TradeService is ITradeService {
       IFeeCalculator.SettleFundingFeeLoopVar memory tmpVars;
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
 
-      bytes32 _tokenAssetId = _configStorage.tokenAssetIds(tmpVars.underlyingToken);
-
-      tmpVars.underlyingTokenDecimal = _configStorage.getAssetPlpTokenConfigs(_tokenAssetId).decimals;
+      tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(tmpVars.underlyingToken);
 
       // Retrieve the balance of each plp underlying token for the sub-account (token collateral amount)
       tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);

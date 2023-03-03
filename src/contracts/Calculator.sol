@@ -45,16 +45,16 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice getAUM in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPrice Limit price
-  /// @param _limitAssetId Market Assetid
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value in E18 format
-  function getAUME30(bool _isMaxPrice, uint256 _limitPrice, bytes32 _limitAssetId) public view returns (uint256) {
+  function getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) public view returns (uint256) {
     // @todo -  pendingBorrowingFeeE30
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = 0;
     int256 pnlE30 = _getGlobalPNLE30();
 
-    uint256 aum = _getPLPValueE30(_isMaxPrice, _limitPrice, _limitAssetId) + pendingBorrowingFeeE30;
+    uint256 aum = _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId) + pendingBorrowingFeeE30;
     if (pnlE30 < 0) {
       uint256 _pnl = uint256(-pnlE30);
       if (aum < _pnl) return 0;
@@ -68,34 +68,34 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice getAUM
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPrice Limit price
-  /// @param _limitAssetId Market Assetid
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value in E18 format
-  function getAUM(bool _isMaxPrice, uint256 _limitPrice, bytes32 _limitAssetId) public view returns (uint256) {
-    return getAUME30(_isMaxPrice, _limitPrice, _limitAssetId) / 1e12;
+  function getAUM(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) public view returns (uint256) {
+    return getAUME30(_isMaxPrice, _limitPriceE30, _limitAssetId) / 1e12;
   }
 
   /// @notice GetPLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPrice Limit price
-  /// @param _limitAssetId Market Assetid
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
   function getPLPValueE30(
     bool _isMaxPrice,
-    uint256 _limitPrice,
+    uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) external view returns (uint256) {
-    return _getPLPValueE30(_isMaxPrice, _limitPrice, _limitAssetId);
+    return _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
   }
 
   /// @notice GetPLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPrice Limit price
+  /// @param _limitPriceE30 Limit price
   /// @param _limitAssetId Market Assetid of the limit price
   /// @return PLP Value
   function _getPLPValueE30(
     bool _isMaxPrice,
-    uint256 _limitPrice,
+    uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) internal view returns (uint256) {
     IConfigStorage _configStorage = IConfigStorage(configStorage);
@@ -108,7 +108,7 @@ contract Calculator is Owned, ICalculator {
         _plpAssetIds[i],
         _configStorage,
         _isMaxPrice,
-        _limitPrice,
+        _limitPriceE30,
         _limitAssetId
       );
 
@@ -125,21 +125,21 @@ contract Calculator is Owned, ICalculator {
   /// @param _undelyingAssetId the underlying asset id, the one we want to find the value
   /// @param _configStorage config storage
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPrice Limit price
-  /// @param _limitAssetId AssetId to be overwritten by _limitPrice
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
   function _getPLPUndelyingAssetValueE30(
     bytes32 _undelyingAssetId,
     IConfigStorage _configStorage,
     bool _isMaxPrice,
-    uint256 _limitPrice,
+    uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) internal view returns (uint256) {
     IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_undelyingAssetId);
 
     uint256 _priceE30;
-    if (_limitPrice > 0 && _limitAssetId == _undelyingAssetId) {
-      _priceE30 = _limitPrice;
+    if (_limitPriceE30 > 0 && _limitAssetId == _undelyingAssetId) {
+      _priceE30 = _limitPriceE30;
     } else {
       (_priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_undelyingAssetId, _isMaxPrice);
     }
@@ -216,7 +216,7 @@ contract Calculator is Owned, ICalculator {
     return totalPnlLong + totalPnlShort;
   }
 
-  ///@notice getMintAmount in e18 format
+  /// @notice getMintAmount in e18 format
   /// @param _aum aum in PLP
   /// @param _totalSupply PLP total supply
   /// @param _value value in USD e30
@@ -236,8 +236,7 @@ contract Calculator is Owned, ICalculator {
   function getAddLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    IConfigStorage _configStorage
   ) external returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
       return _configStorage.getLiquidityConfig().depositFeeRate;
@@ -257,8 +256,7 @@ contract Calculator is Owned, ICalculator {
   function getRemoveLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    IConfigStorage _configStorage
   ) external returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
       return _configStorage.getLiquidityConfig().withdrawFeeRate;
@@ -328,13 +326,13 @@ contract Calculator is Owned, ICalculator {
   /// @notice get settlement fee rate
   /// @param _token - token
   /// @param _liquidityUsdDelta - withdrawal amount
-  /// @param _limitPrice Limit price to be overwritten
-  /// @param _limitAssetId AssetId to be overwritten by _limitPrice
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _settlementFeeRate in e18 format
   function getSettlementFeeRate(
     address _token,
     uint256 _liquidityUsdDelta,
-    uint256 _limitPrice,
+    uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) external view returns (uint256 _settlementFeeRate) {
     // usd debt
@@ -342,14 +340,14 @@ contract Calculator is Owned, ICalculator {
       IConfigStorage(configStorage).tokenAssetIds(_token),
       IConfigStorage(configStorage),
       false,
-      _limitPrice,
+      _limitPriceE30,
       _limitAssetId
     );
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
 
-    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPrice, _limitAssetId);
+    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
@@ -437,19 +435,19 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate for value on trader's account including Equity, IMR and MMR.
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
-  /// @param _limitPrice Price from limitOrder
-  /// @param _limitAssetId Market Assetid
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _equityValueE30 Total equity of trader's account.
   function getEquity(
     address _subAccount,
-    uint256 _limitPrice,
+    uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) public view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
-    uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPrice, _limitAssetId);
+    uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
 
     // Calculate unrealized PnL on opening trader's position(s)
-    int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount, _limitPrice, _limitAssetId);
+    int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount, _limitPriceE30, _limitAssetId);
 
     // Calculate Borrowing fee on opening trader's position(s)
     // @todo - calculate borrowing fee
@@ -474,12 +472,12 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate unrealized PnL from trader's sub account.
   /// @dev This unrealized pnl deducted by collateral factor.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @param _limitPrice Price from limitOrder
-  /// @param _limitAssetId assetId indicates price should derived
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _unrealizedPnlE30 PnL value after deducted by collateral factor.
   function getUnrealizedPnl(
     address _subAccount,
-    uint256 _limitPrice,
+    uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) public view returns (int256 _unrealizedPnlE30) {
     // Get all trader's opening positions
@@ -502,8 +500,8 @@ contract Calculator is Owned, ICalculator {
 
       // Check to overwrite price
       uint256 _priceE30;
-      if (_limitAssetId == _marketConfig.assetId && _limitPrice != 0) {
-        _priceE30 = _limitPrice;
+      if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
+        _priceE30 = _limitPriceE30;
       } else {
         // Get price from oracle
         // @todo - validate price age
@@ -544,8 +542,8 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice Calculate collateral tokens to value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
-  /// @param _limitPriceE30 Price from limitOrder
-  /// @param _limitAssetId assetId to find token
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _collateralValueE30
   function getCollateralValue(
     address _subAccount,
@@ -684,15 +682,15 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice This function returns the amount of free collateral available to a given sub-account
   /// @param _subAccount The address of the sub-account
-  /// @param _limitPrice Price from limitOrder
-  /// @param _limitAssetId AssetId of Market
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _freeCollateral The amount of free collateral available to the sub-account
   function getFreeCollateral(
     address _subAccount,
-    uint256 _limitPrice,
+    uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) public view returns (uint256 _freeCollateral) {
-    int256 equity = getEquity(_subAccount, _limitPrice, _limitAssetId);
+    int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = getIMR(_subAccount);
 
     if (equity < 0) return 0;

@@ -62,8 +62,8 @@ contract CrossMarginHandler_Base is BaseTest {
         minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.1 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
-        increasePositionFeeRate: 0,
-        decreasePositionFeeRate: 0,
+        increasePositionFeeRateBPS: 0,
+        decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
         openInterest: IConfigStorage.OpenInterest({

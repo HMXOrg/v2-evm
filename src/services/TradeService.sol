@@ -202,7 +202,7 @@ contract TradeService is ITradeService {
       _marketConfig.assetClass,
       _vars.position.reserveValueE30,
       _vars.position.entryBorrowingRate,
-      _marketConfig.increasePositionFeeRate
+      _marketConfig.increasePositionFeeRateBPS
     );
 
     settleMarginFee(_vars.subAccount);
@@ -485,7 +485,7 @@ contract TradeService is ITradeService {
       _marketConfig.assetClass,
       _vars.position.reserveValueE30,
       _vars.position.entryBorrowingRate,
-      _marketConfig.decreasePositionFeeRate
+      _marketConfig.decreasePositionFeeRateBPS
     );
 
     settleMarginFee(_vars.subAccount);
@@ -1004,12 +1004,12 @@ contract TradeService is ITradeService {
   }
 
   /// @notice Calculates the trading fee for a given position
-  /// @param absSizeDelta Position size
-  /// @param positionFeeRate Position Fee
+  /// @param _absSizeDelta Position size
+  /// @param _positionFeeRateBPS Position Fee
   /// @return tradingFee The calculated trading fee for the position.
-  function getTradingFee(uint256 absSizeDelta, uint256 positionFeeRate) public pure returns (uint256 tradingFee) {
-    if (absSizeDelta == 0) return 0;
-    return (absSizeDelta * positionFeeRate) / BPS;
+  function getTradingFee(uint256 _absSizeDelta, uint256 _positionFeeRateBPS) public pure returns (uint256 tradingFee) {
+    if (_absSizeDelta == 0) return 0;
+    return (_absSizeDelta * _positionFeeRateBPS) / BPS;
   }
 
   /**
@@ -1112,7 +1112,7 @@ contract TradeService is ITradeService {
     uint8 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _entryBorrowingRate,
-    uint256 _positionFee
+    uint32 _positionFeeBPS
   ) public {
     IPerpStorage _perpStorage = IPerpStorage(perpStorage);
 
@@ -1120,7 +1120,7 @@ contract TradeService is ITradeService {
     int256 feeUsd = _perpStorage.getSubAccountFee(_subAccount);
 
     // Calculate trading Fee USD
-    uint256 tradingFeeUsd = getTradingFee(_absSizeDelta, _positionFee);
+    uint256 tradingFeeUsd = getTradingFee(_absSizeDelta, _positionFeeBPS);
     feeUsd += int(tradingFeeUsd);
 
     emit LogCollectTradingFee(_subAccount, _assetClassIndex, tradingFeeUsd);

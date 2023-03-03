@@ -291,8 +291,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       minLeverageBPS: 1 * 1e4,
       initialMarginFractionBPS: 0.01 * 1e4,
       maintenanceMarginFractionBPS: 0.005 * 1e4,
-      increasePositionFeeRate: 0,
-      decreasePositionFeeRate: 0,
+      increasePositionFeeRateBPS: 0,
+      decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({
@@ -309,8 +309,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       minLeverageBPS: 1 * 1e4,
       initialMarginFractionBPS: 0.01 * 1e4,
       maintenanceMarginFractionBPS: 0.005 * 1e4,
-      increasePositionFeeRate: 0,
-      decreasePositionFeeRate: 0,
+      increasePositionFeeRateBPS: 0,
+      decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
       openInterest: IConfigStorage.OpenInterest({

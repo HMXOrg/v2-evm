@@ -48,21 +48,6 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     });
   }
 
-  // // Create order with sub-account id > 255
-  // function testRevert_createOrder_BadSubAccountId() external {
-  //   vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_BadSubAccountId()"));
-  //   limitTradeHandler.createOrder{ value: 0.1 ether }({
-  //     _subAccountId: 1000,
-  //     _marketIndex: 0,
-  //     _sizeDelta: 100,
-  //     _triggerPrice: 1000,
-  //     _triggerAboveThreshold: true,
-  //     _executionFee: 0.1 ether,
-  //     _reduceOnly: false,
-  //     _tpToken: address(weth)
-  //   });
-  // }
-
   // Create BUY orders and check their validity
   function testCorrectness_createOrder_BuyOrder() external {
     uint256 balanceBefore = address(this).balance;

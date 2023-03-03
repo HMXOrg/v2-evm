@@ -250,11 +250,11 @@ contract Calculator is Owned, ICalculator {
     IConfigStorage.LiquidityConfig memory _liquidityConfig,
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal pure returns (uint256) {
-    uint256 _feeRateBPS = direction == LiquidityDirection.ADD
+  ) internal pure returns (uint32) {
+    uint32 _feeRateBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
-    uint256 _taxRateBPS = _liquidityConfig.taxFeeRateBPS;
+    uint32 _taxRateBPS = _liquidityConfig.taxFeeRateBPS;
     uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
@@ -271,8 +271,8 @@ contract Calculator is Owned, ICalculator {
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
-      uint256 rebateRate = (_taxRateBPS * startTargetDiff * 1e18) / targetValue / BPS;
-      return rebateRate > _feeRateBPS ? 0 : _feeRateBPS - rebateRate;
+      uint32 rebateRateBPS = uint32((_taxRateBPS * startTargetDiff * 1e18) / targetValue / 1e18);
+      return rebateRateBPS > _feeRateBPS ? 0 : _feeRateBPS - rebateRateBPS;
     }
 
     // @todo - move this to service
@@ -288,7 +288,7 @@ contract Calculator is Owned, ICalculator {
     if (midDiff > targetValue) {
       midDiff = targetValue;
     }
-    _taxRateBPS = (_taxRateBPS * midDiff) / targetValue;
+    _taxRateBPS = uint32((_taxRateBPS * midDiff) / targetValue);
 
     return _feeRateBPS + _taxRateBPS;
   }
@@ -661,7 +661,7 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice To check Price should be overwrite
   /// @param _limitPrice LimitPrice
-  /// @param _token Token addresss
+  /// @param _token Token addresses
   /// @param _assetId Market assetId
   /// @return _shouldOverwrite should overwrite to LimitPrice
   function _shouldOverwritePrice(

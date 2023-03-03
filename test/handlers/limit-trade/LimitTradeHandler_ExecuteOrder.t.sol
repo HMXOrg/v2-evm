@@ -36,8 +36,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.01 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
-        increasePositionFeeRate: 0,
-        decreasePositionFeeRate: 0,
+        increasePositionFeeRateBPS: 0,
+        decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
         openInterest: IConfigStorage.OpenInterest({
@@ -56,8 +56,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.01 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
-        increasePositionFeeRate: 0,
-        decreasePositionFeeRate: 0,
+        increasePositionFeeRateBPS: 0,
+        decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
         openInterest: IConfigStorage.OpenInterest({
@@ -76,8 +76,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.01 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
-        increasePositionFeeRate: 0,
-        decreasePositionFeeRate: 0,
+        increasePositionFeeRateBPS: 0,
+        decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
         openInterest: IConfigStorage.OpenInterest({

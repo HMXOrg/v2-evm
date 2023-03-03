@@ -50,8 +50,8 @@ interface IConfigStorage {
 
   struct MarketConfig {
     bytes32 assetId; // pyth network asset id
-    uint32 increasePositionFeeRate; // fee rate to increase position
-    uint32 decreasePositionFeeRate; // fee rate to decrease position
+    uint32 increasePositionFeeRateBPS; // fee rate to increase position
+    uint32 decreasePositionFeeRateBPS; // fee rate to decrease position
     uint32 initialMarginFractionBPS; // IMF
     uint32 maintenanceMarginFractionBPS; // MMF
     uint32 maxProfitRateBPS; // maximum profit that trader could take per position

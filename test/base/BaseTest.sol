@@ -139,6 +139,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     );
 
     // configStorage setup
+    _setUpAssetConfigs();
     _setUpLiquidityConfig();
     _setUpSwapConfig();
     _setUpTradingConfig();
@@ -147,7 +148,6 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
-    _setUpAssetConfigs();
 
     feeCalculator = new FeeCalculator(address(vaultStorage), address(configStorage));
 
@@ -387,12 +387,6 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     _tokens[3] = address(usdc);
     _tokens[4] = address(usdt);
 
-    configStorage.addTokenAssetId(address(weth), address(weth).toBytes32());
-    configStorage.addTokenAssetId(address(wbtc), address(wbtc).toBytes32());
-    configStorage.addTokenAssetId(address(dai), address(dai).toBytes32());
-    configStorage.addTokenAssetId(address(usdc), address(usdc).toBytes32());
-    configStorage.addTokenAssetId(address(usdt), address(usdt).toBytes32());
-
     configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
   }
 
@@ -443,9 +437,6 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.AssetConfig memory _assetConfigWeth = IConfigStorage.AssetConfig({
       tokenAddress: address(weth),
       assetId: address(weth).toBytes32(),
-      priceConfidentThreshold: 0.01 * 1e18,
-      pythExponent: 18,
-      trustPriceAge: 0,
       decimals: 18,
       isStableCoin: false
     });
@@ -454,20 +445,30 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     IConfigStorage.AssetConfig memory _assetConfigWbtc = IConfigStorage.AssetConfig({
       tokenAddress: address(wbtc),
       assetId: address(wbtc).toBytes32(),
-      priceConfidentThreshold: 0.01 * 1e18,
-      pythExponent: 8,
-      trustPriceAge: 0,
       decimals: 8,
       isStableCoin: false
     });
     configStorage.setAssetConfig(address(wbtc).toBytes32(), _assetConfigWbtc);
 
+    IConfigStorage.AssetConfig memory _assetConfigDai = IConfigStorage.AssetConfig({
+      tokenAddress: address(dai),
+      assetId: address(dai).toBytes32(),
+      decimals: 18,
+      isStableCoin: true
+    });
+    configStorage.setAssetConfig(address(dai).toBytes32(), _assetConfigDai);
+
+    IConfigStorage.AssetConfig memory _assetConfigUSDC = IConfigStorage.AssetConfig({
+      tokenAddress: address(usdc),
+      assetId: address(usdc).toBytes32(),
+      decimals: 6,
+      isStableCoin: true
+    });
+    configStorage.setAssetConfig(address(usdc).toBytes32(), _assetConfigUSDC);
+
     IConfigStorage.AssetConfig memory _assetConfigUsdt = IConfigStorage.AssetConfig({
       tokenAddress: address(usdt),
       assetId: address(usdt).toBytes32(),
-      priceConfidentThreshold: 0.01 * 1e18,
-      pythExponent: 6,
-      trustPriceAge: 0,
       decimals: 6,
       isStableCoin: false
     });

@@ -92,22 +92,22 @@ contract Calculator is Owned, ICalculator {
     uint256 assetValue = 0;
 
     bytes32[] memory _plpAssetIds = IConfigStorage(configStorage).getPlpAssetIds();
-
-    for (uint256 i = 0; i < _plpAssetIds.length; ) {
-      uint256 priceE30;
+    uint256 _len = _plpAssetIds.length;
+    for (uint256 i = 0; i < _len; ) {
+      uint256 _priceE30;
 
       IConfigStorage.AssetConfig memory _assetConfig = IConfigStorage(configStorage).getAssetConfigs(_plpAssetIds[i]);
 
       if (_limitPrice > 0 && _assetId == _plpAssetIds[i]) {
-        priceE30 = _limitPrice;
+        _priceE30 = _limitPrice;
       } else {
-        (priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
+        (_priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
           _plpAssetIds[i],
           _isMaxPrice,
           0 // @todo::REFACTOR use threshold from oracleMiddleward
         );
       }
-      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * priceE30) /
+      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
         (10 ** IConfigStorage(configStorage).getAssetPlpTokenConfigs(_plpAssetIds[i]).decimals);
 
       unchecked {
@@ -314,17 +314,20 @@ contract Calculator is Owned, ICalculator {
   ) external returns (uint256 _settlementFeeRate) {
     // usd debt
     uint256 _tokenLiquidityUsd = IVaultStorage(vaultStorage).plpLiquidityUSDE30(_token);
+    console.log("_tokenLiquidityUsd", _tokenLiquidityUsd);
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
-    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPrice, _assetId);
 
+    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPrice, _assetId);
+    console.log("_totalLiquidityUsd", _totalLiquidityUsd);
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
     uint256 _targetUsd = (_totalLiquidityUsd * IConfigStorage(configStorage).getPLPTokenConfig(_token).targetWeight) /
       _liquidityConfig.plpTotalTokenWeight;
 
+    console.log("_targetUsd", _targetUsd);
     if (_targetUsd == 0) return 0;
 
     // next value
@@ -341,6 +344,8 @@ contract Calculator is Owned, ICalculator {
       _nextTargetDiff = _nextUsd > _targetUsd ? _nextUsd - _targetUsd : _targetUsd - _nextUsd;
     }
 
+    console.log("_nextTargetDiff", _nextTargetDiff);
+    console.log("_currentTargetDiff", _currentTargetDiff);
     if (_nextTargetDiff < _currentTargetDiff) return 0;
 
     // settlement fee rate = (next target diff + current target diff / 2) * base tax fee / target usd

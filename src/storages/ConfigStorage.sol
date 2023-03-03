@@ -190,10 +190,6 @@ contract ConfigStorage is IConfigStorage, Owned {
    * Setter
    */
 
-  function addTokenAssetId(address _token, bytes32 _assetId) external {
-    tokenAssetIds[_token] = _assetId;
-  }
-
   function setPlpAssetId(bytes32[] memory _plpAssetIds) external {
     plpAssetIds = _plpAssetIds;
   }
@@ -377,7 +373,8 @@ contract ConfigStorage is IConfigStorage, Owned {
     liquidityConfig.plpTotalTokenWeight -= assetPlpTokenConfigs[_assetId].targetWeight;
 
     // delete from plpAssetIds
-    for (uint256 i = 0; i < plpAssetIds.length; ) {
+    uint256 _len = plpAssetIds.length;
+    for (uint256 i = 0; i < _len; ) {
       if (_assetId == plpAssetIds[i]) {
         delete plpAssetIds[i];
         break;

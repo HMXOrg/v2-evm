@@ -19,9 +19,6 @@ interface IConfigStorage {
   struct AssetConfig {
     address tokenAddress;
     bytes32 assetId;
-    uint256 priceConfidentThreshold;
-    int32 pythExponent;
-    uint8 trustPriceAge;
     uint8 decimals;
     bool isStableCoin; // token is stablecoin
   }

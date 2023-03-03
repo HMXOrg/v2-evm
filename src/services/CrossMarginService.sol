@@ -43,7 +43,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
     // Sanity check
     IConfigStorage(_configStorage).calculator();
-    IVaultStorage(_vaultStorage).plpTotalLiquidityUSDE30();
+    IVaultStorage(_vaultStorage).devFees(address(0));
     ICalculator(_calculator).oracle();
   }
 
@@ -169,7 +169,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     vaultStorage = _vaultStorage;
 
     // Sanity check
-    IVaultStorage(_vaultStorage).plpTotalLiquidityUSDE30();
+    IVaultStorage(_vaultStorage).devFees(address(0));
   }
 
   /// @notice Set new Calculator contract address.

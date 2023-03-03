@@ -34,6 +34,27 @@ interface ILimitTradeHandler {
   }
 
   /**
+   * States
+   */
+
+  function limitOrders(
+    address _subAccount,
+    uint256 _index
+  )
+    external
+    returns (
+      address _account,
+      address _tpToken,
+      bool _triggerAboveThreshold,
+      bool _reduceOnly,
+      int256 _sizeDelta,
+      uint256 _subAccountId,
+      uint256 _marketIndex,
+      uint256 _triggerPrice,
+      uint256 _executionFee
+    );
+
+  /**
    * Setters
    */
   function setTradeService(address _newTradeService) external;

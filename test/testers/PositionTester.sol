@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { VaultStorage } from "../../src/storages/VaultStorage.sol";
-
 import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
 
@@ -28,7 +26,7 @@ contract PositionTester is StdAssertions {
   }
 
   IPerpStorage perpStorage;
-  VaultStorage vaultStorage;
+  IVaultStorage vaultStorage;
   MockOracleMiddleware oracle;
 
   // cache position info
@@ -41,7 +39,7 @@ contract PositionTester is StdAssertions {
   uint256 cachePlpTokenLiquidity;
   uint256 cacheTraderBalance;
 
-  constructor(IPerpStorage _perpStorage, VaultStorage _vaultStorage, MockOracleMiddleware _oracle) {
+  constructor(IPerpStorage _perpStorage, IVaultStorage _vaultStorage, MockOracleMiddleware _oracle) {
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     oracle = _oracle;

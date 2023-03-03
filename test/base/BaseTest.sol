@@ -48,7 +48,6 @@ import { BotHandler } from "../../src/handlers/BotHandler.sol";
 import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
 
 // Storages
-import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
 import { VaultStorage } from "../../src/storages/VaultStorage.sol";
 
 import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
@@ -68,7 +67,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   address internal DAVE;
 
   // storages
-  ConfigStorage internal configStorage;
+  IConfigStorage internal configStorage;
   IPerpStorage internal perpStorage;
   VaultStorage internal vaultStorage;
 
@@ -124,8 +123,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
     plp = new PLPv2();
 
-    configStorage = deployConfigStorage();
-    perpStorage = IPerpStorage(Deployer.deployPerbStorage());
+    configStorage = IConfigStorage(Deployer.deployContract("ConfigStorage"));
+    perpStorage = IPerpStorage(Deployer.deployContract("PerpStorage"));
     vaultStorage = deployVaultStorage();
 
     mockOracle = new MockOracleMiddleware();

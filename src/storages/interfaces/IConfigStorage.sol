@@ -56,14 +56,12 @@ interface IConfigStorage {
   struct MarketConfig {
     bytes32 assetId; // pyth network asset id
     uint256 assetClass; // Crypto = 1, Forex = 2, Stock = 3
-    uint256 exponent; // @todo - [trade] remove
     uint256 maxProfitRate; // maximum profit that trader could take per position
     uint256 minLeverage; // minimum leverage that trader could open position
     uint256 initialMarginFraction; // IMF
     uint256 maintenanceMarginFraction; // MMF
     uint256 increasePositionFeeRate; // fee rate to increase position
     uint256 decreasePositionFeeRate; // fee rate to decrease position
-    uint256 priceConfidentThreshold; // @todo - [trade] remove
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
     OpenInterest openInterest;

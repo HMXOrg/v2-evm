@@ -102,11 +102,7 @@ contract Calculator is Owned, ICalculator {
       if (_shouldOverwritePrice(_limitPrice, _plpUnderlyingToken, _assetId)) {
         priceE30 = _limitPrice;
       } else {
-        (priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-          _plpUnderlyingToken.toBytes32(),
-          _isMaxPrice,
-          IConfigStorage(configStorage).getMarketConfigByToken(_plpUnderlyingToken).priceConfidentThreshold
-        );
+        (priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_plpUnderlyingToken.toBytes32(), _isMaxPrice);
       }
       uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_plpUnderlyingToken) * priceE30) /
         (10 ** IConfigStorage(configStorage).getPlpTokenConfigs(_plpUnderlyingToken).decimals);
@@ -145,17 +141,9 @@ contract Calculator is Owned, ICalculator {
       int256 _pnlShortE30 = 0;
 
       //@todo - validate timestamp of these
-      (uint256 priceE30Long, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        false,
-        marketConfig.priceConfidentThreshold
-      );
+      (uint256 priceE30Long, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, false);
 
-      (uint256 priceE30Short, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        true,
-        marketConfig.priceConfidentThreshold
-      );
+      (uint256 priceE30Short, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, true);
 
       //@todo - validate price, revert when crypto price stale, stock use Lastprice
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
@@ -476,9 +464,7 @@ contract Calculator is Owned, ICalculator {
         // @todo - validate price age
         (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
           _marketConfig.assetId,
-          _isUseMaxPrice,
-          _marketConfig.priceConfidentThreshold,
-          0
+          _isUseMaxPrice
         );
       }
       // Calculate for priceDelta
@@ -536,11 +522,6 @@ contract Calculator is Owned, ICalculator {
       // Get collateralFactor from ConfigStorage
       uint256 _collateralFactor = _collateralTokenConfig.collateralFactor;
 
-      // Get priceConfidentThreshold from ConfigStorage
-      uint256 _priceConfidenceThreshold = IConfigStorage(configStorage)
-        .getMarketConfigByToken(_token)
-        .priceConfidentThreshold;
-
       // Get current collateral token balance of trader's account
       uint256 _amount = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
 
@@ -553,9 +534,7 @@ contract Calculator is Owned, ICalculator {
         // @todo - validate price age
         (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
           _token.toBytes32(),
-          false, // @note Collateral value always use Min price
-          _priceConfidenceThreshold,
-          0
+          false // @note Collateral value always use Min price
         );
       }
       // Calculate accumulative value of collateral tokens

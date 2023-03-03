@@ -32,14 +32,12 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       IConfigStorage.MarketConfig({
         assetId: "A",
         assetClass: 1,
-        exponent: 18,
         maxProfitRate: 9e18,
         minLeverage: 1 * 1e18,
         initialMarginFraction: 0.01 * 1e18,
         maintenanceMarginFraction: 0.005 * 1e18,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
-        priceConfidentThreshold: 0.01 * 1e18,
         allowIncreasePosition: true,
         active: true,
         openInterest: IConfigStorage.OpenInterest({
@@ -54,14 +52,12 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       IConfigStorage.MarketConfig({
         assetId: "A",
         assetClass: 1,
-        exponent: 18,
         maxProfitRate: 9e18,
         minLeverage: 1 * 1e18,
         initialMarginFraction: 0.01 * 1e18,
         maintenanceMarginFraction: 0.005 * 1e18,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
-        priceConfidentThreshold: 0.01 * 1e18,
         allowIncreasePosition: true,
         active: true,
         openInterest: IConfigStorage.OpenInterest({
@@ -76,14 +72,12 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       IConfigStorage.MarketConfig({
         assetId: "A",
         assetClass: 1,
-        exponent: 18,
         maxProfitRate: 9e18,
         minLeverage: 1 * 1e18,
         initialMarginFraction: 0.01 * 1e18,
         maintenanceMarginFraction: 0.005 * 1e18,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
-        priceConfidentThreshold: 0.01 * 1e18,
         allowIncreasePosition: true,
         active: true,
         openInterest: IConfigStorage.OpenInterest({

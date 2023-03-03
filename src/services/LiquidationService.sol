@@ -94,12 +94,7 @@ contract LiquidationService is ILiquidationService {
 
       // Calculate the amount of debt tokens to repay using the collateral token's price
       uint256 _collateralTokenDecimal = ERC20(_collateralToken).decimals();
-      (uint256 _price, ) = _oracle.getLatestPrice(
-        _collateralToken.toBytes32(),
-        false,
-        IConfigStorage(_configStorage).getCollateralTokenConfigs(_collateralToken).priceConfidentThreshold,
-        30
-      );
+      (uint256 _price, ) = _oracle.getLatestPrice(_collateralToken.toBytes32(), false);
 
       // Get the sub-account's balance of the collateral token from the vault storage and calculate value
       uint256 _traderBalanceValue = (IVaultStorage(_vaultStorage).traderBalances(_subAccount, _collateralToken) *

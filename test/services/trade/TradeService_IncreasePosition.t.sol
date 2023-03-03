@@ -114,14 +114,12 @@ contract TradeService_IncreasePosition is TradeService_Base {
       IConfigStorage.MarketConfig({
         assetId: "ETH",
         assetClass: 0,
-        exponent: 18,
         maxProfitRate: 9e18,
         minLeverage: 1 * 1e18,
         initialMarginFraction: 0.01 * 1e18,
         maintenanceMarginFraction: 0.005 * 1e18,
         increasePositionFeeRate: 0,
         decreasePositionFeeRate: 0,
-        priceConfidentThreshold: 0.01 * 1e18,
         allowIncreasePosition: false,
         active: true,
         openInterest: IConfigStorage.OpenInterest({
@@ -376,6 +374,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // BTC price 25000 USD
     uint256 price = 25_000 * 1e30;
     mockOracle.setPrice(price);
+    mockOracle.setExponent(-8);
 
     // input
     int256 sizeDelta = -800_000 * 1e30;
@@ -537,6 +536,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // BTC price 25,000 USD
     uint256 price = 25_000 * 1e30;
     mockOracle.setPrice(price);
+    mockOracle.setExponent(-8);
 
     vm.warp(100);
     // BOB Increase position Short BTC size 250,000
@@ -688,7 +688,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     });
     positionTester02.assertPosition(_positionId, assetData);
 
-    (uint256 _price, uint256 _lastUpdate, uint8 _status) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false, 0);
+    (uint256 _price, uint256 _lastUpdate, uint8 _status) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false);
     assertEq(_price, 1600 * 1e30);
   }
 }

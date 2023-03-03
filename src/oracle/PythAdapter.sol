@@ -88,14 +88,14 @@ contract PythAdapter is Owned, IOracleAdapter, IPythAdapter {
     bytes32 _assetId,
     bool _isMax,
     uint256 _confidenceThreshold
-  ) external view returns (uint256, uint256) {
+  ) external view returns (uint256, int32, uint256) {
     // SLOAD
     bytes32 _pythPriceId = pythPriceIdOf[_assetId];
     if (_pythPriceId == bytes32(0)) revert PythAdapter_UnknownAssetId();
     PythStructs.Price memory _price = pyth.getPriceUnsafe(_pythPriceId);
     _validateConfidence(_price, _confidenceThreshold);
 
-    return (_convertToUint256(_price, _isMax, 30), _price.publishTime);
+    return (_convertToUint256(_price, _isMax, 30), _price.expo, _price.publishTime);
   }
 
   /// @notice isSameAsset to check between two params has the same byte

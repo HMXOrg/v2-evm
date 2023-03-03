@@ -59,7 +59,7 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
   // add liquidity on not accepted token
   function testRevert_WhenPLPAddLiquidity_WithNotAcceptedToken() external {
     // update weth to not accepted
-    IConfigStorage.PLPTokenConfig memory _plpTokenConfig = configStorage.getPLPTokenConfig(address(weth));
+    IConfigStorage.PLPTokenConfig memory _plpTokenConfig = configStorage.getAssetPlpTokenConfigByToken(address(weth));
     _plpTokenConfig.accepted = false;
     configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig);
 

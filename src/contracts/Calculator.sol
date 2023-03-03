@@ -89,29 +89,29 @@ contract Calculator is Owned, ICalculator {
   /// @param _assetId Market Assetid
   /// @return PLP Value
   function _getPLPValueE30(bool _isMaxPrice, uint256 _limitPrice, bytes32 _assetId) internal view returns (uint256) {
-    uint256 assetValue = 0;
-    address _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(
-      IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_START()
-    );
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
 
-    while (_plpUnderlyingToken != IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END()) {
-      uint256 priceE30;
-      if (_shouldOverwritePrice(_limitPrice, _plpUnderlyingToken, _assetId)) {
-        priceE30 = _limitPrice;
+    uint256 assetValue = 0;
+
+    bytes32[] memory _plpAssetIds = _configStorage.getPlpAssetIds();
+    uint256 _len = _plpAssetIds.length;
+    for (uint256 i = 0; i < _len; ) {
+      uint256 _priceE30;
+
+      IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_plpAssetIds[i]);
+
+      if (_limitPrice > 0 && _assetId == _plpAssetIds[i]) {
+        _priceE30 = _limitPrice;
       } else {
-        (priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-          _plpUnderlyingToken.toBytes32(),
-          _isMaxPrice,
-          IConfigStorage(configStorage).getMarketConfigByToken(_plpUnderlyingToken).priceConfidentThreshold
-        );
+        (_priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_plpAssetIds[i], _isMaxPrice);
       }
-      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_plpUnderlyingToken) * priceE30) /
-        (10 ** IConfigStorage(configStorage).getPlpTokenConfigs(_plpUnderlyingToken).decimals);
+      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
+        (10 ** _configStorage.getAssetConfig(_plpAssetIds[i]).decimals);
 
       unchecked {
         assetValue += value;
+        ++i;
       }
-      _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(_plpUnderlyingToken);
     }
 
     return assetValue;
@@ -142,17 +142,9 @@ contract Calculator is Owned, ICalculator {
       int256 _pnlShortE30 = 0;
 
       //@todo - validate timestamp of these
-      (uint256 priceE30Long, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        false,
-        marketConfig.priceConfidentThreshold
-      );
+      (uint256 priceE30Long, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, false);
 
-      (uint256 priceE30Short, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        true,
-        marketConfig.priceConfidentThreshold
-      );
+      (uint256 priceE30Short, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, true);
 
       //@todo - validate price, revert when crypto price stale, stock use Lastprice
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
@@ -225,7 +217,7 @@ contract Calculator is Owned, ICalculator {
         _vaultStorage.plpLiquidityUSDE30(_token),
         _getPLPValueE30(false, 0, 0),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getPLPTokenConfig(_token),
+        _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.ADD
       );
   }
@@ -246,7 +238,7 @@ contract Calculator is Owned, ICalculator {
         _vaultStorage.plpLiquidityUSDE30(_token),
         _getPLPValueE30(true, 0, 0),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getPLPTokenConfig(_token),
+        _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
       );
   }
@@ -315,12 +307,14 @@ contract Calculator is Owned, ICalculator {
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
+
     uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPrice, _assetId);
 
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
-    uint256 _targetUsd = (_totalLiquidityUsd * IConfigStorage(configStorage).getPLPTokenConfig(_token).targetWeight) /
+    uint256 _targetUsd = (_totalLiquidityUsd *
+      IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight) /
       _liquidityConfig.plpTotalTokenWeight;
 
     if (_targetUsd == 0) return 0;
@@ -475,9 +469,7 @@ contract Calculator is Owned, ICalculator {
         // @todo - validate price age
         (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
           _marketConfig.assetId,
-          _isUseMaxPrice,
-          _marketConfig.priceConfidentThreshold,
-          0
+          _isUseMaxPrice
         );
       }
       // Calculate for priceDelta
@@ -530,15 +522,10 @@ contract Calculator is Owned, ICalculator {
         .getCollateralTokenConfigs(_token);
 
       // Get token decimals from ConfigStorage
-      uint256 _decimals = _collateralTokenConfig.decimals;
+      uint256 _decimals = IConfigStorage(configStorage).getAssetConfigByToken(_token).decimals;
 
       // Get collateralFactor from ConfigStorage
       uint256 _collateralFactor = _collateralTokenConfig.collateralFactor;
-
-      // Get priceConfidentThreshold from ConfigStorage
-      uint256 _priceConfidenceThreshold = IConfigStorage(configStorage)
-        .getMarketConfigByToken(_token)
-        .priceConfidentThreshold;
 
       // Get current collateral token balance of trader's account
       uint256 _amount = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
@@ -552,9 +539,7 @@ contract Calculator is Owned, ICalculator {
         // @todo - validate price age
         (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
           _token.toBytes32(),
-          false, // @note Collateral value always use Min price
-          _priceConfidenceThreshold,
-          0
+          false // @note Collateral value always use Min price
         );
       }
       // Calculate accumulative value of collateral tokens

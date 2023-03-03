@@ -50,25 +50,25 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
 
   function testRevert_GetWithUnregisteredAssetId() external {
     vm.expectRevert(abi.encodeWithSignature("PythAdapter_UnknownAssetId()"));
-    pythAdapter.getLatestPrice(bytes32(uint256(168)), true, 1 ether);
+    pythAdapter.getLatestPrice(bytes32(uint256(168)), true, 1e6);
   }
 
   function testRevert_GetBeforeUpdate() external {
     vm.expectRevert(abi.encodeWithSignature("PriceFeedNotFound()"));
-    pythAdapter.getLatestPrice(address(weth).toBytes32(), true, 1 ether);
+    pythAdapter.getLatestPrice(address(weth).toBytes32(), true, 1e6);
   }
 
   function testRevert_GetWhenPriceIsBad() external {
     updateWbtcWithBadParam();
     vm.expectRevert(abi.encodeWithSignature("PythAdapter_BrokenPythPrice()"));
-    pythAdapter.getLatestPrice(address(wbtc).toBytes32(), true, 1 ether);
+    pythAdapter.getLatestPrice(address(wbtc).toBytes32(), true, 1e6);
   }
 
   function testCorrectness_GetWhenNoConf() external {
     updateWbtcWithConf(0);
 
-    (uint256 maxPrice, uint256 lastUpdate) = pythAdapter.getLatestPrice(address(wbtc).toBytes32(), true, 1 ether);
-    (uint256 minPrice, ) = pythAdapter.getLatestPrice(address(wbtc).toBytes32(), false, 1 ether);
+    (uint256 maxPrice, , uint256 lastUpdate) = pythAdapter.getLatestPrice(address(wbtc).toBytes32(), true, 1e6);
+    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(address(wbtc).toBytes32(), false, 1e6);
     assertEq(maxPrice, 20_000 * 1e30);
     assertEq(minPrice, 20_000 * 1e30);
     assertEq(lastUpdate, uint64(block.timestamp));
@@ -84,7 +84,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),
       true,
-      0.04 ether // accept up to 4% conf
+      0.04 * 1e6 // accept up to 4% conf
     );
   }
 
@@ -94,15 +94,15 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     updateWbtcWithConf(1_000 * 1e8);
 
     // And get price with 6% conf threshold
-    (uint256 maxPrice, ) = pythAdapter.getLatestPrice(
+    (uint256 maxPrice, , ) = pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),
       true,
-      0.06 ether // 6% conf
+      0.06 * 1e6 // 6% conf
     );
-    (uint256 minPrice, ) = pythAdapter.getLatestPrice(
+    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(
       address(wbtc).toBytes32(),
       false,
-      0.051 ether // 5.1% conf
+      0.051 * 1e6 // 5.1% conf
     );
 
     // Should get price successfully

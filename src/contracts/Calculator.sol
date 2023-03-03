@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { AddressUtils } from "../libraries/AddressUtils.sol";
+// base
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
-import { Owned } from "../base/Owned.sol";
+//contracts
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
-import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
-import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract Calculator is Owned, ICalculator {
   uint256 internal constant MAX_RATE = 1e18;
@@ -89,7 +91,7 @@ contract Calculator is Owned, ICalculator {
   /// @param _assetId Market Assetid
   /// @return PLP Value
   function _getPLPValueE30(bool _isMaxPrice, uint256 _limitPrice, bytes32 _assetId) internal view returns (uint256) {
-    IConfigStorage _configStorage = IConfigStorage(configStorage);
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     uint256 assetValue = 0;
 
@@ -98,14 +100,14 @@ contract Calculator is Owned, ICalculator {
     for (uint256 i = 0; i < _len; ) {
       uint256 _priceE30;
 
-      IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_plpAssetIds[i]);
+      ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_plpAssetIds[i]);
 
       if (_limitPrice > 0 && _assetId == _plpAssetIds[i]) {
         _priceE30 = _limitPrice;
       } else {
-        (_priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_plpAssetIds[i], _isMaxPrice);
+        (_priceE30, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_plpAssetIds[i], _isMaxPrice);
       }
-      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
+      uint256 value = (VaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
         (10 ** _configStorage.getAssetConfig(_plpAssetIds[i]).decimals);
 
       unchecked {
@@ -133,18 +135,18 @@ contract Calculator is Owned, ICalculator {
     int256 totalPnlLong = 0;
     int256 totalPnlShort = 0;
 
-    for (uint256 i = 0; i < IConfigStorage(configStorage).getMarketConfigsLength(); ) {
-      IConfigStorage.MarketConfig memory marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(i);
+    for (uint256 i = 0; i < ConfigStorage(configStorage).getMarketConfigsLength(); ) {
+      ConfigStorage.MarketConfig memory marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(i);
 
-      IPerpStorage.GlobalMarket memory _globalMarket = IPerpStorage(perpStorage).getGlobalMarketByIndex(i);
+      PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(i);
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
 
       //@todo - validate timestamp of these
-      (uint256 priceE30Long, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, false);
+      (uint256 priceE30Long, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, false);
 
-      (uint256 priceE30Short, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, true);
+      (uint256 priceE30Short, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, true);
 
       //@todo - validate price, revert when crypto price stale, stock use Lastprice
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
@@ -204,8 +206,8 @@ contract Calculator is Owned, ICalculator {
   function getAddLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    ConfigStorage _configStorage,
+    VaultStorage _vaultStorage
   ) external returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
       return _configStorage.getLiquidityConfig().depositFeeRate;
@@ -225,8 +227,8 @@ contract Calculator is Owned, ICalculator {
   function getRemoveLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    ConfigStorage _configStorage,
+    VaultStorage _vaultStorage
   ) external returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
       return _configStorage.getLiquidityConfig().withdrawFeeRate;
@@ -247,8 +249,8 @@ contract Calculator is Owned, ICalculator {
     uint256 _value,
     uint256 _liquidityUSD, //e30
     uint256 _totalLiquidityUSD, //e30
-    IConfigStorage.LiquidityConfig memory _liquidityConfig,
-    IConfigStorage.PLPTokenConfig memory _plpTokenConfig,
+    ConfigStorage.LiquidityConfig memory _liquidityConfig,
+    ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
   ) internal pure returns (uint256) {
     uint256 _feeRate = direction == LiquidityDirection.ADD
@@ -303,18 +305,18 @@ contract Calculator is Owned, ICalculator {
     bytes32 _assetId
   ) external returns (uint256 _settlementFeeRate) {
     // usd debt
-    uint256 _tokenLiquidityUsd = IVaultStorage(vaultStorage).plpLiquidityUSDE30(_token);
+    uint256 _tokenLiquidityUsd = VaultStorage(vaultStorage).plpLiquidityUSDE30(_token);
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
 
     uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPrice, _assetId);
 
-    IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
+    ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
     uint256 _targetUsd = (_totalLiquidityUsd *
-      IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight) /
+      ConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight) /
       _liquidityConfig.plpTotalTokenWeight;
 
     if (_targetUsd == 0) return 0;
@@ -443,17 +445,17 @@ contract Calculator is Owned, ICalculator {
     bytes32 _assetId
   ) public view returns (int256 _unrealizedPnlE30) {
     // Get all trader's opening positions
-    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
-      IPerpStorage.Position memory _position = _traderPositions[i];
+      PerpStorage.Position memory _position = _traderPositions[i];
       bool _isLong = _position.positionSizeE30 > 0 ? true : false;
 
       if (_position.avgEntryPriceE30 == 0) revert ICalculator_InvalidAveragePrice();
 
       // Get market config according to opening position
-      IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
+      ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(
         _position.marketIndex
       );
 
@@ -467,7 +469,7 @@ contract Calculator is Owned, ICalculator {
       } else {
         // Get price from oracle
         // @todo - validate price age
-        (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+        (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
           _marketConfig.assetId,
           _isUseMaxPrice
         );
@@ -489,7 +491,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // If profit then deduct PnL with collateral factor.
-      _delta = _delta > 0 ? (int(IConfigStorage(configStorage).pnlFactor()) * _delta) / 1e18 : _delta;
+      _delta = _delta > 0 ? (int(ConfigStorage(configStorage).pnlFactor()) * _delta) / 1e18 : _delta;
 
       // Accumulative current unrealized PnL
       _unrealizedPnlE30 += _delta;
@@ -513,22 +515,22 @@ contract Calculator is Owned, ICalculator {
     bytes32 _assetId
   ) public view returns (uint256 _collateralValueE30) {
     // Get list of current depositing tokens on trader's account
-    address[] memory _traderTokens = IVaultStorage(vaultStorage).getTraderTokens(_subAccount);
+    address[] memory _traderTokens = VaultStorage(vaultStorage).getTraderTokens(_subAccount);
 
     // Loop through list of current depositing tokens
     for (uint256 i; i < _traderTokens.length; ) {
       address _token = _traderTokens[i];
-      IConfigStorage.CollateralTokenConfig memory _collateralTokenConfig = IConfigStorage(configStorage)
+      ConfigStorage.CollateralTokenConfig memory _collateralTokenConfig = ConfigStorage(configStorage)
         .getCollateralTokenConfigs(_token);
 
       // Get token decimals from ConfigStorage
-      uint256 _decimals = IConfigStorage(configStorage).getAssetConfigByToken(_token).decimals;
+      uint256 _decimals = ConfigStorage(configStorage).getAssetConfigByToken(_token).decimals;
 
       // Get collateralFactor from ConfigStorage
       uint256 _collateralFactor = _collateralTokenConfig.collateralFactor;
 
       // Get current collateral token balance of trader's account
-      uint256 _amount = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
+      uint256 _amount = VaultStorage(vaultStorage).traderBalances(_subAccount, _token);
 
       // Get price from oracle
       uint256 _priceE30;
@@ -537,7 +539,7 @@ contract Calculator is Owned, ICalculator {
         _priceE30 = _limitPrice;
       } else {
         // @todo - validate price age
-        (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+        (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
           _token.toBytes32(),
           false // @note Collateral value always use Min price
         );
@@ -560,11 +562,11 @@ contract Calculator is Owned, ICalculator {
   /// @return _imrValueE30 Total imr of trader's account.
   function getIMR(address _subAccount) public view returns (uint256 _imrValueE30) {
     // Get all trader's opening positions
-    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
-      IPerpStorage.Position memory _position = _traderPositions[i];
+      PerpStorage.Position memory _position = _traderPositions[i];
 
       uint256 _size;
       if (_position.positionSizeE30 < 0) {
@@ -589,11 +591,11 @@ contract Calculator is Owned, ICalculator {
   /// @return _mmrValueE30 Total mmr of trader's account
   function getMMR(address _subAccount) public view returns (uint256 _mmrValueE30) {
     // Get all trader's opening positions
-    IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
-      IPerpStorage.Position memory _position = _traderPositions[i];
+      PerpStorage.Position memory _position = _traderPositions[i];
 
       uint256 _size;
       if (_position.positionSizeE30 < 0) {
@@ -618,9 +620,7 @@ contract Calculator is Owned, ICalculator {
   /// @return _imrE30 The IMR amount required on position size, 30 decimals.
   function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) public view returns (uint256 _imrE30) {
     // Get market config according to position
-    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
-      _marketIndex
-    );
+    ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
 
     _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFraction) / 1e18;
     return _imrE30;
@@ -632,9 +632,7 @@ contract Calculator is Owned, ICalculator {
   /// @return _mmrE30 The MMR amount required on position size, 30 decimals.
   function calculatePositionMMR(uint256 _positionSizeE30, uint256 _marketIndex) public view returns (uint256 _mmrE30) {
     // Get market config according to position
-    IConfigStorage.MarketConfig memory _marketConfig = IConfigStorage(configStorage).getMarketConfigByIndex(
-      _marketIndex
-    );
+    ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
 
     _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) / 1e18;
     return _mmrE30;
@@ -669,6 +667,6 @@ contract Calculator is Owned, ICalculator {
     bytes32 _assetId
   ) internal view returns (bool _shouldOverwrite) {
     return (_limitPrice != 0 &&
-      IOracleMiddleware(IConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(_token.toBytes32(), _assetId));
+      OracleMiddleware(ConfigStorage(configStorage).oracle()).isSameAssetIdOnPyth(_token.toBytes32(), _assetId));
   }
 }

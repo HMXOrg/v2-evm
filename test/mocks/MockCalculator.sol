@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 contract MockCalculator is ICalculator {
   mapping(address => int256) equitiesOf;
@@ -144,8 +144,8 @@ contract MockCalculator is ICalculator {
   function getAddLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValue*/,
-    IConfigStorage /*_configStorage*/,
-    IVaultStorage /*_vaultStorage*/
+    ConfigStorage /*_configStorage*/,
+    VaultStorage /*_vaultStorage*/
   ) external pure returns (uint256) {
     return 0.003 ether;
   }
@@ -153,8 +153,8 @@ contract MockCalculator is ICalculator {
   function getRemoveLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValueE30*/,
-    IConfigStorage /*_configStorage*/,
-    IVaultStorage /*_vaultStorage*/
+    ConfigStorage /*_configStorage*/,
+    VaultStorage /*_vaultStorage*/
   ) external pure returns (uint256) {
     return 1e18;
   }

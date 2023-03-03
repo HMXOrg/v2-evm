@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 // base
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
 // contracts
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";

@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 // base
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 // contracts

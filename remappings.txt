@@ -3,4 +3,7 @@ forge-std/=lib/forge-std/src/
 pyth-sdk-solidity=lib/pyth-sdk-solidity/
 @chainlink/=lib/chainlink/
 
-@hmx=src
+@config/=config/default/
+@hmx/=src/
+@hmx-test/=test
+@hmx-script/=script/

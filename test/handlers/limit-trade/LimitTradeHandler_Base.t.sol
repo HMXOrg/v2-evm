@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, LimitTradeHandler, IPerpStorage, IConfigStorage } from "../../base/BaseTest.sol";
-import { LimitOrderTester } from "../../testers/LimitOrderTester.sol";
+import { BaseTest, LimitTradeHandler, IPerpStorage, IConfigStorage } from "@hmx-test/base/BaseTest.sol";
+import { LimitOrderTester } from "@hmx-test/testers/LimitOrderTester.sol";
 
 contract LimitTradeHandler_Base is BaseTest {
   uint8 internal constant INCREASE = 0;

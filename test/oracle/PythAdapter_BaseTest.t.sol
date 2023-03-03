@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest } from "../base/BaseTest.sol";
+import { BaseTest } from "@hmx-test/base/BaseTest.sol";
 import { PythAdapter } from "@hmx/oracle/PythAdapter.sol";
 import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 

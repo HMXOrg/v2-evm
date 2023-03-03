@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20 } from "../@hmx/base/BaseTest.sol";
+import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20 } from "@hmx-test/base/BaseTest.sol";
 import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 

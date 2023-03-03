@@ -5,7 +5,7 @@ import { IBotHandler } from "./interfaces/IBotHandler.sol";
 import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { LiquidationService } from "../services/LiquidationService.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 // contracts
 import { TradeService } from "@hmx/services/TradeService.sol";
 // interfaces

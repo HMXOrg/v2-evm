@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 import { IFeeCalculator } from "./interfaces/IFeeCalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";

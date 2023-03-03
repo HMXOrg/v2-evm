@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 // base
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -149,8 +149,8 @@ contract TradeService is ITradeService {
       uint8 _marketStatus;
 
       // Get Price market.
-      (_vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = IOracleMiddleware(
-        IConfigStorage(configStorage).oracle()
+      (_vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(
+        ConfigStorage(configStorage).oracle()
       ).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _vars.isLong, // if current position is SHORT position, then we use max price
@@ -340,7 +340,7 @@ contract TradeService is ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_vars.priceE30, , _lastPriceUpdated, _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
+      (_vars.priceE30, , _lastPriceUpdated, _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
@@ -411,7 +411,7 @@ contract TradeService is ITradeService {
     {
       uint8 _marketStatus;
 
-      (_vars.priceE30, , , _marketStatus) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
+      (_vars.priceE30, , , _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
@@ -646,11 +646,11 @@ contract TradeService is ITradeService {
     bytes32 _assetId
   ) internal {
     uint256 _tpTokenPrice;
-    IConfigStorage _configStorage = IConfigStorage(configStorage);
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
     if (_shouldOverwritePrice(_limitPrice, _token, _assetId)) {
       _tpTokenPrice = _limitPrice;
     } else {
-      (_tpTokenPrice, ) = IOracleMiddleware(_configStorage.oracle()).getLatestPrice(_token.toBytes32(), false);
+      (_tpTokenPrice, ) = OracleMiddleware(_configStorage.oracle()).getLatestPrice(_token.toBytes32(), false);
     }
     // @todo refactor to use _assetid from params instead
     uint256 _decimals = _configStorage.getAssetTokenDecimal(_token);
@@ -658,7 +658,7 @@ contract TradeService is ITradeService {
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
 
-    uint256 _settlementFeeRate = ICalculator(_configStorage.calculator()).getSettlementFeeRate(
+    uint256 _settlementFeeRate = Calculator(_configStorage.calculator()).getSettlementFeeRate(
       _token,
       _realizedProfitE30,
       _limitPrice,
@@ -692,7 +692,7 @@ contract TradeService is ITradeService {
     for (uint256 _i; _i < _len; ) {
       _token = _plpTokens[_i];
 
-      _decimals = IConfigStorage(configStorage).getAssetTokenDecimal(_token);
+      _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_token);
 
       // Sub-account plp collateral
       _collateral = VaultStorage(vaultStorage).traderBalances(_subAccount, _token);
@@ -1066,8 +1066,10 @@ contract TradeService is ITradeService {
       vars.marketPriceE30 = _price;
     } else {
       //@todo - validate timestamp of these
-      (vars.marketPriceE30, _exponent, ) = IOracleMiddleware(IConfigStorage(configStorage).oracle())
-        .unsafeGetLatestPrice(marketConfig.assetId, false);
+      (vars.marketPriceE30, _exponent, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+        marketConfig.assetId,
+        false
+      );
     }
 
     vars.marketSkewUSDE30 =

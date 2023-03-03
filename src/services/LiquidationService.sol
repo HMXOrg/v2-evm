@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 // base
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";

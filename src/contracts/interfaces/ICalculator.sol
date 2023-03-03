@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IConfigStorage } from "../../storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../../storages/interfaces/IVaultStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 interface ICalculator {
   /**
@@ -52,15 +52,15 @@ interface ICalculator {
   function getAddLiquidityFeeRate(
     address _token,
     uint256 _tokenValue,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    ConfigStorage _configStorage,
+    VaultStorage _vaultStorage
   ) external returns (uint256);
 
   function getRemoveLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    ConfigStorage _configStorage,
+    VaultStorage _vaultStorage
   ) external returns (uint256);
 
   function oracle() external returns (address);

@@ -10,7 +10,7 @@ import { Owned } from "../base/Owned.sol";
 import { ICrossMarginHandler } from "./interfaces/ICrossMarginHandler.sol";
 import { ICrossMarginService } from "../services/interfaces/ICrossMarginService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   using SafeERC20 for ERC20;
@@ -96,7 +96,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   /// @param _amount Token depositing amount.
   function depositCollateral(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     address _token,
     uint256 _amount
   ) external nonReentrant onlyAcceptedToken(_token) {
@@ -118,7 +118,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   /// @param _priceData Price update data
   function withdrawCollateral(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     address _token,
     uint256 _amount,
     bytes[] memory _priceData

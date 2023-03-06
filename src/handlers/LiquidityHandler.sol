@@ -16,7 +16,7 @@ import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IPyth } from "../../lib/pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 /// @title LiquidityHandler
 contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {

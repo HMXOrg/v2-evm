@@ -16,29 +16,29 @@ contract TradeService_FundingRate is Calculator_Base {
     // deploy services
     tradeService = new TradeService(address(mockPerpStorage), address(mockVaultStorage), address(configStorage));
 
+    mockOracle.setExponent(-8);
+
     // Set market config
-    // maxFundingRate = 0.04%
+    // maxFundingRateBPS = 0.04%
     // maxSkewScaleUSD = 3m USD
     configStorage.setMarketConfig(
       0,
       IConfigStorage.MarketConfig({
-        assetId: "BTC",
+        assetId: wbtcAssetId,
         assetClass: 1,
-        exponent: 8,
-        maxProfitRate: 9e18,
-        minLeverage: 1,
-        initialMarginFraction: 0.01 * 1e18,
-        maintenanceMarginFraction: 0.005 * 1e18,
-        increasePositionFeeRate: 0,
-        decreasePositionFeeRate: 0,
-        priceConfidentThreshold: 0.01 * 1e18,
+        maxProfitRateBPS: 9 * 1e4,
+        minLeverageBPS: 1 * 1e4,
+        initialMarginFractionBPS: 0.01 * 1e4,
+        maintenanceMarginFractionBPS: 0.005 * 1e4,
+        increasePositionFeeRateBPS: 0,
+        decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
         openInterest: IConfigStorage.OpenInterest({
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 4 * 1e14, maxSkewScaleUSD: 3_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );
 
@@ -116,12 +116,12 @@ contract TradeService_FundingRate is Calculator_Base {
 
     uint256 longPositionSize = 2_000_000 * 1e30;
     uint256 longAvgPrice = 20_000 * 1e30;
-    uint256 longOpenInterest = 100 * 10 ** 8;
+    uint256 longOpenInterest = 100 * 1e18;
     int256 accumFundingRateLong = 0;
 
     uint256 shortPositionSize = 1_000_000 * 1e30;
     uint256 shortAvgPrice = 20_000 * 1e30;
-    uint256 shortOpenInterest = 50 * 10 ** 8;
+    uint256 shortOpenInterest = 50 * 1e18;
     int256 accumFundingRateShort = 0;
 
     int256 currentFundingRate = 0;
@@ -147,6 +147,7 @@ contract TradeService_FundingRate is Calculator_Base {
     );
 
     (int256 newfundingRate, int256 nextfundingRateLong, int256 nextfundingRateShort) = tradeService.getNextFundingRate(
+      0,
       0
     );
     currentFundingRate = newfundingRate; // -0.013333%
@@ -168,12 +169,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 2_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 100 * 10 ** 8;
+    longOpenInterest = 100 * 1e18;
     accumFundingRateLong += nextfundingRateLong; //start accured funding rate
 
     shortPositionSize = 1_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 50 * 10 ** 8;
+    shortOpenInterest = 50 * 1e18;
     accumFundingRateShort += nextfundingRateShort; //start accured funding rate
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -193,7 +194,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // -0.026667%
     assertEq(newfundingRate, -266666666666666); // -0.026667%
 
@@ -213,12 +214,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 50 * 10 ** 8;
+    longOpenInterest = 50 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 1_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 50 * 10 ** 8;
+    shortOpenInterest = 50 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -238,7 +239,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // -0.026667%
     assertEq(newfundingRate, -266666666666666); // -0.026667%
 
@@ -258,12 +259,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 50 * 10 ** 8;
+    longOpenInterest = 50 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 1_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 50 * 10 ** 8;
+    shortOpenInterest = 50 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -283,7 +284,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // -0.026667%
     assertEq(newfundingRate, -266666666666666); // -0.026667%
 
@@ -303,12 +304,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 50 * 10 ** 8;
+    longOpenInterest = 50 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 150 * 10 ** 8;
+    shortOpenInterest = 150 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -328,7 +329,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // 0%
     assertEq(newfundingRate, 0); // 0%
 
@@ -348,12 +349,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 50 * 10 ** 8;
+    longOpenInterest = 50 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 150 * 10 ** 8;
+    shortOpenInterest = 150 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -373,7 +374,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // 0.026667%
     assertEq(newfundingRate, 266666666666666); // 0.026667%
 
@@ -393,12 +394,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 50 * 10 ** 8;
+    longOpenInterest = 50 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 150 * 10 ** 8;
+    shortOpenInterest = 150 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -418,7 +419,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // 0.053333%
     assertEq(newfundingRate, 533333333333332); // 0.053333%
 
@@ -438,12 +439,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 2_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 100 * 10 ** 8;
+    longOpenInterest = 100 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 150 * 10 ** 8;
+    shortOpenInterest = 150 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -463,7 +464,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // 0.066667%
     assertEq(newfundingRate, 666666666666665); // 0.066667%
 
@@ -483,12 +484,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 2_500_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 125 * 10 ** 8;
+    longOpenInterest = 125 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 150 * 10 ** 8;
+    shortOpenInterest = 150 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -508,7 +509,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // 0.073333%
     assertEq(newfundingRate, 733333333333331); // 0.073333%
 
@@ -528,12 +529,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 2_500_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 125 * 10 ** 8;
+    longOpenInterest = 125 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 150 * 10 ** 8;
+    shortOpenInterest = 150 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -553,7 +554,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // 0.080000%
     assertEq(newfundingRate, 799999999999997); // 0.080000%
 
@@ -573,12 +574,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 6_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 300 * 10 ** 8;
+    longOpenInterest = 300 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 150 * 10 ** 8;
+    shortOpenInterest = 150 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -598,7 +599,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // 0.040000%
     assertEq(newfundingRate, 399999999999997); // 0.040000%
 
@@ -618,12 +619,12 @@ contract TradeService_FundingRate is Calculator_Base {
     // Mock global market config as table above
     longPositionSize = 6_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
-    longOpenInterest = 300 * 10 ** 8;
+    longOpenInterest = 300 * 1e18;
     accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
-    shortOpenInterest = 150 * 10 ** 8;
+    shortOpenInterest = 150 * 1e18;
     accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
@@ -643,7 +644,7 @@ contract TradeService_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0);
+    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = tradeService.getNextFundingRate(0, 0);
     currentFundingRate = newfundingRate; // 0.000000%
     assertEq(newfundingRate, -3); // 0.000000%
 

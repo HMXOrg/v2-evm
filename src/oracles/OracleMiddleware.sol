@@ -6,15 +6,35 @@ import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 
 contract OracleMiddleware is Owned, IOracleMiddleware {
+  /**
+   * Structs
+   */
+  struct AssetPriceConfig {
+    uint32 confidenceThresholdE6;
+    uint8 trustPriceAge;
+  }
+
+  /**
+   * Events
+   */
+  event LogSetMarketStatus(bytes32 indexed _assetId, uint8 _status);
+  event LogSetOracleAdapter(bytes32 indexed _assetId, IOracleAdapter _adapter);
+  event LogSetUpdater(address indexed _account, bool _isActive);
+  event LogSetAssetPriceConfig(
+    bytes32 indexed _assetId,
+    uint32 _oldConfidenceThresholdE6,
+    uint32 _newConfidenceThresholdE6,
+    uint8 _oldTrustPriceAge,
+    uint8 _newTrustPriceAge
+  );
+
+  /**
+   * States
+   */
   // whitelist mapping of market status updater
   mapping(address => bool) public isUpdater;
+  mapping(bytes32 => AssetPriceConfig) public assetPriceConfigs;
 
-  // events
-  event SetOracleAdapter(bytes32 indexed _assetId, IOracleAdapter _adapter);
-  event SetMarketStatus(bytes32 indexed _assetId, uint8 _status);
-  event SetUpdater(address indexed _account, bool _isActive);
-
-  // states
   // MarketStatus
   // Note from Pyth doc: Only prices with a value of status=trading should be used. If the status is not trading but is
   // Unknown, Halted or Auction the Pyth price can be an arbitrary value.
@@ -28,6 +48,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   // assetId => oracleAdapter
   mapping(bytes32 => IOracleAdapter) public oracleAdapterOf;
 
+  /**
+   * Modifiers
+   */
+
   modifier onlyUpdater() {
     if (!isUpdater[msg.sender]) {
       revert IOracleMiddleware_OnlyUpdater();
@@ -37,12 +61,12 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   function setOracleAdapters(bytes32[] memory _assetId, IOracleAdapter[] memory _adapter) external onlyOwner {
     // Check
-    if(_assetId.length != _adapter.length) revert IOracleMiddleware_BadLength();
+    if (_assetId.length != _adapter.length) revert IOracleMiddleware_BadLength();
 
     // Effect
-    for(uint i = 0; i < _assetId.length; ) {
+    for (uint i = 0; i < _assetId.length; ) {
       oracleAdapterOf[_assetId[i]] = _adapter[i];
-      emit SetOracleAdapter(_assetId[i], _adapter[i]);
+      emit LogSetOracleAdapter(_assetId[i], _adapter[i]);
       unchecked {
         ++i;
       }
@@ -56,13 +80,13 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     if (_status > 2) revert IOracleMiddleware_InvalidMarketStatus();
 
     marketStatus[_assetId] = _status;
-    emit SetMarketStatus(_assetId, _status);
+    emit LogSetMarketStatus(_assetId, _status);
   }
 
   /// @notice A function for setting updater who is able to setMarketStatus
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     isUpdater[_account] = _isActive;
-    emit SetUpdater(_account, _isActive);
+    emit LogSetUpdater(_account, _isActive);
   }
 
   /// @notice Return the latest price and last update of the given asset id.
@@ -71,15 +95,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   ///      In that case, we can define two different asset ids as BTC/USD, BTC/EUR.
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
-  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
-  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
-  function getLatestPrice(
-    bytes32 _assetId,
-    bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, _lastUpdate) = _getLatestPrice(_assetId, _isMax, _confidenceThreshold, _trustPriceAge);
+  function getLatestPrice(bytes32 _assetId, bool _isMax) external view returns (uint256 _price, uint256 _lastUpdate) {
+    (_price, _lastUpdate) = _getLatestPrice(_assetId, _isMax);
 
     return (_price, _lastUpdate);
   }
@@ -91,13 +108,11 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   ///      In that case, we can define two different asset ids as BTC/USD, BTC/EUR.
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
-  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
   function unsafeGetLatestPrice(
     bytes32 _assetId,
-    bool _isMax,
-    uint256 _confidenceThreshold
+    bool _isMax
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax, _confidenceThreshold);
+    (_price, _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax);
 
     return (_price, _lastUpdate);
   }
@@ -106,18 +121,14 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @dev Same as getLatestPrice(), but with market status. Revert if status is 0 (Undefined) which means we never utilize this assetId.
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
-  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
-  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
   function getLatestPriceWithMarketStatus(
     bytes32 _assetId,
-    bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge
+    bool _isMax
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, _lastUpdate) = _getLatestPrice(_assetId, _isMax, _confidenceThreshold, _trustPriceAge);
+    (_price, _lastUpdate) = _getLatestPrice(_assetId, _isMax);
 
     return (_price, _lastUpdate, _status);
   }
@@ -126,31 +137,108 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @dev Same as unsafeGetLatestPrice(), but with market status. Revert if status is 0 (Undefined) which means we never utilize this assetId.
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
-  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
   function unsafeGetLatestPriceWithMarketStatus(
     bytes32 _assetId,
-    bool _isMax,
-    uint256 _confidenceThreshold
+    bool _isMax
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax, _confidenceThreshold);
+    (_price, _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax);
 
     return (_price, _lastUpdate, _status);
   }
 
-  function _getLatestPrice(
+  /// @notice Return the latest adaptive rice of asset, last update of the given asset id
+  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _marketSkew market skew quoted in asset (NOT USD)
+  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
+  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  function getLatestAdaptivePrice(
     bytes32 _assetId,
     bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge
-  ) private view returns (uint256 _price, uint256 _lastUpdate) {
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    (_price, _lastUpdate) = _getLatestAdaptivePrice(_assetId, _isMax, _marketSkew, _sizeDelta, _maxSkewScaleUSD, true);
+    return (_price, _lastUpdate);
+  }
+
+  /// @notice Return the unsafe latest adaptive rice of asset, last update of the given asset id
+  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _marketSkew market skew quoted in asset (NOT USD)
+  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
+  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  function unsafeGetLatestAdaptivePrice(
+    bytes32 _assetId,
+    bool _isMax,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    (_price, _lastUpdate) = _getLatestAdaptivePrice(_assetId, _isMax, _marketSkew, _sizeDelta, _maxSkewScaleUSD, false);
+    return (_price, _lastUpdate);
+  }
+
+  /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
+  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _marketSkew market skew quoted in asset (NOT USD)
+  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
+  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  function getLatestAdaptivePriceWithMarketStatus(
+    bytes32 _assetId,
+    bool _isMax,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    _status = marketStatus[_assetId];
+    if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
+
+    (_price, _lastUpdate) = _getLatestAdaptivePrice(_assetId, _isMax, _marketSkew, _sizeDelta, _maxSkewScaleUSD, true);
+    return (_price, _lastUpdate, _status);
+  }
+
+  /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
+  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
+  /// @param _assetId The asset id to get the price. This can be address or generic id.
+  /// @param _isMax Whether to get the max price or min price.
+  /// @param _marketSkew market skew quoted in asset (NOT USD)
+  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
+  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  function unsafeGetLatestAdaptivePriceWithMarketStatus(
+    bytes32 _assetId,
+    bool _isMax,
+    int256 _marketSkew,
+    int256 _sizeDelta,
+    uint256 _maxSkewScaleUSD
+  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+    _status = marketStatus[_assetId];
+    if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
+
+    (_price, _lastUpdate) = _getLatestAdaptivePrice(_assetId, _isMax, _marketSkew, _sizeDelta, _maxSkewScaleUSD, false);
+    return (_price, _lastUpdate, _status);
+  }
+
+  function _getLatestPrice(bytes32 _assetId, bool _isMax) private view returns (uint256 _price, uint256 _lastUpdate) {
+    AssetPriceConfig memory _assetConfig = assetPriceConfigs[_assetId];
+
     // 1. get price from Pyth
-    (_price, _lastUpdate) = oracleAdapterOf[_assetId].getLatestPrice(_assetId, _isMax, _confidenceThreshold);
+    (_price, _lastUpdate) = oracleAdapterOf[_assetId].getLatestPrice(
+      _assetId,
+      _isMax,
+      _assetConfig.confidenceThresholdE6
+    );
 
     // check price age
-    if (block.timestamp - _lastUpdate > _trustPriceAge) revert IOracleMiddleware_PythPriceStale();
+    if (block.timestamp - _lastUpdate > _assetConfig.trustPriceAge) revert IOracleMiddleware_PriceStale();
 
     // 2. Return the price and last update
     return (_price, _lastUpdate);
@@ -158,184 +246,46 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
 
   function _unsafeGetLatestPrice(
     bytes32 _assetId,
-    bool _isMax,
-    uint256 _confidenceThreshold
+    bool _isMax
   ) private view returns (uint256 _price, uint256 _lastUpdate) {
+    AssetPriceConfig memory _assetConfig = assetPriceConfigs[_assetId];
+
     // 1. get price from Pyth
-    (_price, _lastUpdate) = oracleAdapterOf[_assetId].getLatestPrice(_assetId, _isMax, _confidenceThreshold);
+    (_price, _lastUpdate) = oracleAdapterOf[_assetId].getLatestPrice(
+      _assetId,
+      _isMax,
+      _assetConfig.confidenceThresholdE6
+    );
 
     // 2. Return the price and last update
     return (_price, _lastUpdate);
   }
 
-  /// @notice Return the latest adaptive rice of asset, last update of the given asset id
-  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
-  /// @param _assetId The asset id to get the price. This can be address or generic id.
-  /// @param _exponent The exponent from Pyth price feed of this market
-  /// @param _isMax Whether to get the max price or min price.
-  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
-  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
-  /// @param _marketSkew market skew quoted in asset (NOT USD)
-  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
-  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
-  function getLatestAdaptivePrice(
-    bytes32 _assetId,
-    uint256 _exponent,
-    bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge,
-    int256 _marketSkew,
-    int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, _lastUpdate) = _getLatestAdaptivePrice(
-      _assetId,
-      _exponent,
-      _isMax,
-      _confidenceThreshold,
-      _trustPriceAge,
-      _marketSkew,
-      _sizeDelta,
-      _maxSkewScaleUSD,
-      true
-    );
-    return (_price, _lastUpdate);
-  }
-
-  /// @notice Return the unsafe latest adaptive rice of asset, last update of the given asset id
-  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
-  /// @param _assetId The asset id to get the price. This can be address or generic id.
-  /// @param _exponent The exponent from Pyth price feed of this market
-  /// @param _isMax Whether to get the max price or min price.
-  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
-  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
-  /// @param _marketSkew market skew quoted in asset (NOT USD)
-  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
-  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
-  function unsafeGetLatestAdaptivePrice(
-    bytes32 _assetId,
-    uint256 _exponent,
-    bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge,
-    int256 _marketSkew,
-    int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, _lastUpdate) = _getLatestAdaptivePrice(
-      _assetId,
-      _exponent,
-      _isMax,
-      _confidenceThreshold,
-      _trustPriceAge,
-      _marketSkew,
-      _sizeDelta,
-      _maxSkewScaleUSD,
-      false
-    );
-    return (_price, _lastUpdate);
-  }
-
-  /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
-  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
-  /// @param _assetId The asset id to get the price. This can be address or generic id.
-  /// @param _exponent The exponent from Pyth price feed of this market
-  /// @param _isMax Whether to get the max price or min price.
-  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
-  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
-  /// @param _marketSkew market skew quoted in asset (NOT USD)
-  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
-  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
-  function getLatestAdaptivePriceWithMarketStatus(
-    bytes32 _assetId,
-    uint256 _exponent,
-    bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge,
-    int256 _marketSkew,
-    int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
-    _status = marketStatus[_assetId];
-    if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
-
-    (_price, _lastUpdate) = _getLatestAdaptivePrice(
-      _assetId,
-      _exponent,
-      _isMax,
-      _confidenceThreshold,
-      _trustPriceAge,
-      _marketSkew,
-      _sizeDelta,
-      _maxSkewScaleUSD,
-      true
-    );
-    return (_price, _lastUpdate, _status);
-  }
-
-  /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
-  /// @dev Adaptive price is the price that is applied with premium or discount based on the market skew.
-  /// @param _assetId The asset id to get the price. This can be address or generic id.
-  /// @param _exponent The exponent from Pyth price feed of this market
-  /// @param _isMax Whether to get the max price or min price.
-  /// @param _confidenceThreshold The threshold in which use to validate the price confidence. Input 1 ether to ignore the check.
-  /// @param _trustPriceAge price age in seconds, if the latest price age exceeds this value, revert
-  /// @param _marketSkew market skew quoted in asset (NOT USD)
-  /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
-  /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
-  function unsafeGetLatestAdaptivePriceWithMarketStatus(
-    bytes32 _assetId,
-    uint256 _exponent,
-    bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge,
-    int256 _marketSkew,
-    int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
-    _status = marketStatus[_assetId];
-    if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
-
-    (_price, _lastUpdate) = _getLatestAdaptivePrice(
-      _assetId,
-      _exponent,
-      _isMax,
-      _confidenceThreshold,
-      _trustPriceAge,
-      _marketSkew,
-      _sizeDelta,
-      _maxSkewScaleUSD,
-      false
-    );
-    return (_price, _lastUpdate, _status);
-  }
-
   function _getLatestAdaptivePrice(
     bytes32 _assetId,
-    uint256 _exponent,
     bool _isMax,
-    uint256 _confidenceThreshold,
-    uint256 _trustPriceAge,
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD,
     bool isSafe
   ) private view returns (uint256 _price, uint256 _lastUpdate) {
     // Get price from Pyth
-    (_price, _lastUpdate) = isSafe
-      ? _getLatestPrice(_assetId, _isMax, _confidenceThreshold, _trustPriceAge)
-      : _unsafeGetLatestPrice(_assetId, _isMax, _confidenceThreshold);
+    (_price, _lastUpdate) = isSafe ? _getLatestPrice(_assetId, _isMax) : _unsafeGetLatestPrice(_assetId, _isMax);
 
     // Apply premium/discount
-    _price = _calculateAdaptivePrice(_price, _exponent, _marketSkew, _sizeDelta, _maxSkewScaleUSD);
+    _price = _calculateAdaptivePrice(_price, _marketSkew, _sizeDelta, _maxSkewScaleUSD);
 
     // Return the price and last update
     return (_price, _lastUpdate);
   }
 
+  /// @notice Calculate the adaptive price based on the market skew.
+  /// @param _price The price from IOracleAdapter.
+  /// @param _marketSkew market skew quoted in asset (NOT USD) in e18
+  /// @param _sizeDelta The size delta of this operation in USD (e30). It will determine the new market skew to be used for calculation.
+  /// @param _maxSkewScaleUSD The maxium acceptable market skew in USD. The higher == the less impact the market skew and size delta will have on the adaptive price.
   function _calculateAdaptivePrice(
     uint256 _price,
-    uint256 _exponent,
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
@@ -376,7 +326,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     //            = (1200 + 1200.12) / 2
     //            = 1200.06
     int256 _priceInt = int256(_price);
-    int256 _marketSkewUSD = (_marketSkew * _priceInt) / int256(10 ** _exponent);
+    // Calculate market skew in USD:
+    // _marketSkew is in 1e18, _priceInt is 1e30, so divide by 1e18 to get 1e30.
+    int256 _marketSkewUSD = (_marketSkew * _priceInt) / 1e18;
+
     int256 _premiumDiscountBefore = _maxSkewScaleUSD > 0
       ? (_marketSkewUSD * 1e30) / int256(_maxSkewScaleUSD)
       : int256(0);
@@ -388,5 +341,29 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _priceAfter = _priceInt + ((_priceInt * _premiumDiscountAfter) / 1e30);
     int256 _adaptivePrice = (_priceBefore + _priceAfter) / 2;
     return _adaptivePrice > 0 ? uint256(_adaptivePrice) : 0;
+  }
+
+  /// @notice Set asset price configs
+  /// @param _assetId Asset's to set price config
+  /// @param _confidenceThresholdE6 New price confidence threshold
+  /// @param _trustPriceAge valid price age
+  function setAssetPriceConfig(
+    bytes32 _assetId,
+    uint32 _confidenceThresholdE6,
+    uint8 _trustPriceAge
+  ) external onlyOwner {
+    AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
+
+    emit LogSetAssetPriceConfig(
+      _assetId,
+      _config.confidenceThresholdE6,
+      _confidenceThresholdE6,
+      _config.trustPriceAge,
+      _trustPriceAge
+    );
+    _config.confidenceThresholdE6 = _confidenceThresholdE6;
+    _config.trustPriceAge = _trustPriceAge;
+
+    assetPriceConfigs[_assetId] = _config;
   }
 }

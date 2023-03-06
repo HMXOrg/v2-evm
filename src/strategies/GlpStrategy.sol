@@ -100,12 +100,7 @@ contract GlpStrategy is Owned, IStrategy {
     weth.transfer(treasury, strategyFee);
 
     // 7. Update accounting.
-    (uint256 glpPrice, ) = oracleMiddleware.getLatestPrice(address(stkGlp).toBytes32(), false, 1e18, 0);
-    uint256 glpUsdE30 = (stkGlpBalance * glpPrice) / 1e18;
-
     vaultStorage.pullToken(address(stkGlp));
     vaultStorage.addPLPLiquidity(address(stkGlp), stkGlpBalance);
-    vaultStorage.addPLPLiquidityUSDE30(address(stkGlp), glpUsdE30);
-    vaultStorage.addPLPTotalLiquidityUSDE30(glpUsdE30);
   }
 }

@@ -26,10 +26,10 @@ interface ILiquidityService {
    */
   struct CollectFeeRequest {
     address _token;
+    address _account;
     uint256 _tokenPriceUsd;
     uint256 _amount;
     uint256 _feeRate;
-    address _account;
     LiquidityAction _action;
   }
 

@@ -8,4 +8,4 @@ test-fork:
 
 test-unit:
 	@echo Run all unit tests
-	@forge test -vvv --no-match-contract \ForkTest\
+	@forge test -vvv --watch --no-match-contract \ForkTest\

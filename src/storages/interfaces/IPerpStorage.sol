@@ -2,12 +2,6 @@
 pragma solidity 0.8.18;
 
 interface IPerpStorage {
-  struct CollateralToken {
-    address token;
-    bytes32 assetId; // The pyth's asset address to set.
-    uint256 collateralFactor; // Loan-To-Value
-  }
-
   struct GlobalState {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
     uint256 sumBorrowingRate;
@@ -40,16 +34,16 @@ interface IPerpStorage {
   // Trade position
   struct Position {
     address primaryAccount;
+    uint256 marketIndex;
     int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
     int256 realizedPnl;
-    uint256 subAccountId;
-    uint256 marketIndex;
     uint256 avgEntryPriceE30;
     uint256 entryBorrowingRate;
     int256 entryFundingRate;
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     uint256 openInterest;
+    uint8 subAccountId;
   }
 
   /**
@@ -60,7 +54,7 @@ interface IPerpStorage {
 
   function getPositionById(bytes32 _positionId) external view returns (Position memory);
 
-  function getGlobalMarketByIndex(uint256 __marketIndex) external view returns (GlobalMarket memory);
+  function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory);
 
   function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory);
 
@@ -70,27 +64,17 @@ interface IPerpStorage {
 
   function getSubAccountFee(address _subAccount) external view returns (int256 fee);
 
-  /**
-   * Setter
-   */
-
-  function updatePositionById(
-    bytes32 _positionId,
-    int256 _newPositionSizeE30,
-    uint256 _newReserveValueE30,
-    uint256 _newAvgPriceE30,
-    uint256 _newOpenInterest
-  ) external returns (Position memory _position);
+  function getBadDebt(address _subAccount) external view returns (uint256 badDebt);
 
   function updateGlobalLongMarketById(
-    uint256 __marketIndex,
+    uint256 _marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
   ) external;
 
   function updateGlobalShortMarketById(
-    uint256 __marketIndex,
+    uint256 _marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
@@ -100,9 +84,15 @@ interface IPerpStorage {
 
   function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) external;
 
+  function removePositionFromSubAccount(address _subAccount, bytes32 _positionId) external;
+
   function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
 
   function updateSubAccountFee(address _subAccount, int256 fee) external;
 
+  function addBadDebt(address _subAccount, uint256 _badDebt) external;
+
   function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external;
+
+  function getPositionIds(address _subAccount) external returns (bytes32[] memory _positionIds);
 }

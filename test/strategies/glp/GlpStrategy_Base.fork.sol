@@ -49,13 +49,13 @@ abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdA
     // Assuming no deposit and withdraw fee.
     deployedCore.configStorage.setLiquidityConfig(
       IConfigStorage.LiquidityConfig({
-        depositFeeRate: 0,
-        withdrawFeeRate: 0,
-        maxPLPUtilization: (80 * 1e18) / 100,
         plpTotalTokenWeight: 0,
-        plpSafetyBufferThreshold: 0,
-        taxFeeRate: 5e15, // 0.5%
-        flashLoanFeeRate: 0,
+        plpSafetyBufferThreshold: 0.8 ether,
+        taxFeeRateBPS: 0,
+        flashLoanFeeRateBPS: 0,
+        maxPLPUtilizationBPS: 10000,
+        depositFeeRateBPS: 300,
+        withdrawFeeRateBPS: 300,
         dynamicFeeEnabled: false,
         enabled: true
       })
@@ -83,11 +83,9 @@ abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdA
     _tokens[0] = stkGlpAddress;
     IConfigStorage.PLPTokenConfig[] memory _configs = new IConfigStorage.PLPTokenConfig[](1);
     _configs[0] = IConfigStorage.PLPTokenConfig({
-      decimals: 18,
       targetWeight: 10000,
       bufferLiquidity: 0,
       maxWeightDiff: 0,
-      isStableCoin: false,
       accepted: true
     });
     deployedCore.configStorage.addOrUpdateAcceptedToken(_tokens, _configs);

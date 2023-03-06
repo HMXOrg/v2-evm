@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 import { Owned } from "../base/Owned.sol";
@@ -14,7 +13,8 @@ import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract Calculator is Owned, ICalculator {
-  uint256 internal constant MAX_RATE = 1e18;
+  uint32 internal constant BPS = 1e4;
+  uint64 internal constant ETH_PRECISION = 1e18;
 
   // using libs for type
   using AddressUtils for address;
@@ -43,14 +43,18 @@ contract Calculator is Owned, ICalculator {
     perpStorage = _perpStorage;
   }
 
-  // return in
-  function getAUME30(bool isMaxPrice) public view returns (uint256) {
+  /// @notice getAUM in E30
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @return PLP Value in E18 format
+  function getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) public view returns (uint256) {
     // @todo -  pendingBorrowingFeeE30
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = 0;
     int256 pnlE30 = _getGlobalPNLE30();
 
-    uint256 aum = _getPLPValueE30(isMaxPrice) + pendingBorrowingFeeE30;
+    uint256 aum = _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId) + pendingBorrowingFeeE30;
     if (pnlE30 < 0) {
       uint256 _pnl = uint256(-pnlE30);
       if (aum < _pnl) return 0;
@@ -62,49 +66,102 @@ contract Calculator is Owned, ICalculator {
     return aum;
   }
 
-  function getAUM(bool isMaxPrice) public view returns (uint256) {
-    return getAUME30(isMaxPrice) / 1e12;
+  /// @notice getAUM
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @return PLP Value in E18 format
+  function getAUM(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) public view returns (uint256) {
+    return getAUME30(_isMaxPrice, _limitPriceE30, _limitAssetId) / 1e12;
   }
 
-  function getPLPValueE30(bool isMaxPrice) external view returns (uint256) {
-    return _getPLPValueE30(isMaxPrice);
+  /// @notice GetPLPValue in E30
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @return PLP Value
+  function getPLPValueE30(
+    bool _isMaxPrice,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) external view returns (uint256) {
+    return _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
   }
 
-  function _getPLPValueE30(bool isMaxPrice) internal view returns (uint256) {
+  /// @notice GetPLPValue in E30
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @return PLP Value
+  function _getPLPValueE30(
+    bool _isMaxPrice,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (uint256) {
+    IConfigStorage _configStorage = IConfigStorage(configStorage);
+    bytes32[] memory _plpAssetIds = _configStorage.getPlpAssetIds();
     uint256 assetValue = 0;
-    address _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(
-      IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_START()
-    );
+    uint256 _len = _plpAssetIds.length;
 
-    while (
-      _plpUnderlyingToken !=
-      IConfigStorage(configStorage).getNextAcceptedToken(IConfigStorage(configStorage).ITERABLE_ADDRESS_LIST_END())
-    ) {
-      (uint256 priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-        _plpUnderlyingToken.toBytes32(),
-        isMaxPrice,
-        IConfigStorage(configStorage).getMarketConfigByToken(_plpUnderlyingToken).priceConfidentThreshold
+    for (uint256 i = 0; i < _len; ) {
+      uint256 value = _getPLPUnderlyingAssetValueE30(
+        _plpAssetIds[i],
+        _configStorage,
+        _isMaxPrice,
+        _limitPriceE30,
+        _limitAssetId
       );
-
-      uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_plpUnderlyingToken) * priceE30) /
-        (10 ** ERC20(_plpUnderlyingToken).decimals());
 
       unchecked {
         assetValue += value;
+        ++i;
       }
-      _plpUnderlyingToken = IConfigStorage(configStorage).getNextAcceptedToken(_plpUnderlyingToken);
     }
 
     return assetValue;
   }
 
-  function getPLPPrice(uint256 aum, uint256 plpSupply) public pure returns (uint256) {
-    if (plpSupply == 0) return 0;
-    return aum / plpSupply;
+  /// @notice Get PLP underlying asset value in E30
+  /// @param _undelyingAssetId the underlying asset id, the one we want to find the value
+  /// @param _configStorage config storage
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @return PLP Value
+  function _getPLPUnderlyingAssetValueE30(
+    bytes32 _undelyingAssetId,
+    IConfigStorage _configStorage,
+    bool _isMaxPrice,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (uint256) {
+    IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_undelyingAssetId);
+
+    uint256 _priceE30;
+    if (_limitPriceE30 > 0 && _limitAssetId == _undelyingAssetId) {
+      _priceE30 = _limitPriceE30;
+    } else {
+      (_priceE30, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_undelyingAssetId, _isMaxPrice);
+    }
+    uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
+      (10 ** _assetConfig.decimals);
+
+    return value;
   }
 
+  /// @notice getPLPPrice in e18 format
+  /// @param _aum aum in PLP
+  /// @param _plpSupply Total Supply of PLP token
+  /// @return PLP Price in e18
+  function getPLPPrice(uint256 _aum, uint256 _plpSupply) public pure returns (uint256) {
+    if (_plpSupply == 0) return 0;
+    return _aum / _plpSupply;
+  }
+
+  /// @notice get all PNL in e30 format
+  /// @return pnl value
   function _getGlobalPNLE30() internal view returns (int256) {
-    // @todo - REFACTOR if someone dont want totalPnlLong and short.
+    // @todo - REFACTOR if someone don't want totalPnlLong and short.
     int256 totalPnlLong = 0;
     int256 totalPnlShort = 0;
 
@@ -117,20 +174,11 @@ contract Calculator is Owned, ICalculator {
       int256 _pnlShortE30 = 0;
 
       //@todo - validate timestamp of these
-      (uint256 priceE30Long, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        false,
-        marketConfig.priceConfidentThreshold
-      );
+      (uint256 priceE30Long, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, false);
 
-      (uint256 priceE30Short, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        true,
-        marketConfig.priceConfidentThreshold
-      );
+      (uint256 priceE30Short, ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, true);
 
       //@todo - validate price, revert when crypto price stale, stock use Lastprice
-
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
         if (priceE30Long < _globalMarket.longAvgPrice) {
           uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) * _globalMarket.longPositionSize) /
@@ -143,7 +191,6 @@ contract Calculator is Owned, ICalculator {
         }
       }
 
-      // @todo - DOUBLE CHECK :: ask team globalMarket.shortPositionSize store in negative???
       if (_globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0) {
         if (_globalMarket.shortAvgPrice < priceE30Short) {
           uint256 _absPNL = ((priceE30Short - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
@@ -169,8 +216,11 @@ contract Calculator is Owned, ICalculator {
     return totalPnlLong + totalPnlShort;
   }
 
-  // @todo add more description
-  // return in 1e18
+  /// @notice getMintAmount in e18 format
+  /// @param _aum aum in PLP
+  /// @param _totalSupply PLP total supply
+  /// @param _value value in USD e30
+  /// @return mintAmount in e18 format
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
     return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
   }
@@ -186,20 +236,19 @@ contract Calculator is Owned, ICalculator {
   function getAddLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
-  ) external returns (uint256) {
+    IConfigStorage _configStorage
+  ) external view returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
-      return _configStorage.getLiquidityConfig().depositFeeRate;
+      return _configStorage.getLiquidityConfig().depositFeeRateBPS;
     }
 
     return
       _getFeeRate(
         _tokenValueE30,
-        _vaultStorage.plpLiquidityUSDE30(_token),
-        _vaultStorage.plpTotalLiquidityUSDE30(),
+        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false, 0, 0),
+        _getPLPValueE30(false, 0, 0),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getPLPTokenConfig(_token),
+        _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.ADD
       );
   }
@@ -207,20 +256,19 @@ contract Calculator is Owned, ICalculator {
   function getRemoveLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
-  ) external returns (uint256) {
+    IConfigStorage _configStorage
+  ) external view returns (uint256) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
-      return _configStorage.getLiquidityConfig().withdrawFeeRate;
+      return _configStorage.getLiquidityConfig().withdrawFeeRateBPS;
     }
 
     return
       _getFeeRate(
         _tokenValueE30,
-        _vaultStorage.plpLiquidityUSDE30(_token),
-        _vaultStorage.plpTotalLiquidityUSDE30(),
+        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true, 0, 0),
+        _getPLPValueE30(true, 0, 0),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getPLPTokenConfig(_token),
+        _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
       );
   }
@@ -232,11 +280,11 @@ contract Calculator is Owned, ICalculator {
     IConfigStorage.LiquidityConfig memory _liquidityConfig,
     IConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal pure returns (uint256) {
-    uint256 _feeRate = direction == LiquidityDirection.ADD
-      ? _liquidityConfig.depositFeeRate
-      : _liquidityConfig.withdrawFeeRate;
-    uint256 _taxRate = _liquidityConfig.taxFeeRate;
+  ) internal pure returns (uint32) {
+    uint32 _feeRateBPS = direction == LiquidityDirection.ADD
+      ? _liquidityConfig.depositFeeRateBPS
+      : _liquidityConfig.withdrawFeeRateBPS;
+    uint32 _taxRateBPS = _liquidityConfig.taxFeeRateBPS;
     uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
@@ -244,7 +292,7 @@ contract Calculator is Owned, ICalculator {
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
-    if (targetValue == 0) return _feeRate;
+    if (targetValue == 0) return _feeRateBPS;
 
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
 
@@ -253,12 +301,12 @@ contract Calculator is Owned, ICalculator {
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
-      uint256 rebateRate = (_taxRate * startTargetDiff) / targetValue;
-      return rebateRate > _feeRate ? 0 : _feeRate - rebateRate;
+      uint32 rebateRateBPS = uint32((_taxRateBPS * startTargetDiff) / targetValue);
+      return rebateRateBPS > _feeRateBPS ? 0 : _feeRateBPS - rebateRateBPS;
     }
 
-    // @todo - move this to service
-    uint256 _nextWeight = (nextValue * 1e18) / targetValue;
+    // _nextWeight represented 18 precision
+    uint256 _nextWeight = (nextValue * ETH_PRECISION) / targetValue;
     // if weight exceed targetWeight(e18) + maxWeight(e18)
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
@@ -270,29 +318,41 @@ contract Calculator is Owned, ICalculator {
     if (midDiff > targetValue) {
       midDiff = targetValue;
     }
-    _taxRate = (_taxRate * midDiff) / targetValue;
+    _taxRateBPS = uint32((_taxRateBPS * midDiff) / targetValue);
 
-    return _feeRate + _taxRate;
+    return _feeRateBPS + _taxRateBPS;
   }
 
   /// @notice get settlement fee rate
   /// @param _token - token
   /// @param _liquidityUsdDelta - withdrawal amount
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @return _settlementFeeRate in e18 format
   function getSettlementFeeRate(
     address _token,
-    uint256 _liquidityUsdDelta
-  ) external returns (uint256 _settlementFeeRate) {
+    uint256 _liquidityUsdDelta,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) external view returns (uint256 _settlementFeeRate) {
     // usd debt
-    uint256 _tokenLiquidityUsd = IVaultStorage(vaultStorage).plpLiquidityUSDE30(_token);
+    uint256 _tokenLiquidityUsd = _getPLPUnderlyingAssetValueE30(
+      IConfigStorage(configStorage).tokenAssetIds(_token),
+      IConfigStorage(configStorage),
+      false,
+      _limitPriceE30,
+      _limitAssetId
+    );
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
-    uint256 _totalLiquidityUsd = IVaultStorage(vaultStorage).plpTotalLiquidityUSDE30();
 
+    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
     IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
-    uint256 _targetUsd = (_totalLiquidityUsd * IConfigStorage(configStorage).getPLPTokenConfig(_token).targetWeight) /
+    uint256 _targetUsd = (_totalLiquidityUsd *
+      IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight) /
       _liquidityConfig.plpTotalTokenWeight;
 
     if (_targetUsd == 0) return 0;
@@ -314,7 +374,10 @@ contract Calculator is Owned, ICalculator {
     if (_nextTargetDiff < _currentTargetDiff) return 0;
 
     // settlement fee rate = (next target diff + current target diff / 2) * base tax fee / target usd
-    return (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRate) / _targetUsd;
+    return
+      (((_nextTargetDiff + _currentTargetDiff) / 2) * _liquidityConfig.taxFeeRateBPS * ETH_PRECISION) /
+      _targetUsd /
+      BPS;
   }
 
   // return in e18
@@ -375,15 +438,21 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate for value on trader's account including Equity, IMR and MMR.
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _equityValueE30 Total equity of trader's account.
-  function getEquity(address _subAccount) public view returns (uint256 _equityValueE30) {
+  function getEquity(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) public view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
-    uint256 _collateralValueE30 = getCollateralValue(_subAccount);
+    uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
 
     // Calculate unrealized PnL on opening trader's position(s)
-    int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount);
+    int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount, _limitPriceE30, _limitAssetId);
 
-    // Calculate Borrwing fee on opening trader's position(s)
+    // Calculate Borrowing fee on opening trader's position(s)
     // @todo - calculate borrowing fee
     // uint256 borrowingFeeE30 = getBorrowingFee(_subAccount);
 
@@ -391,13 +460,8 @@ contract Calculator is Owned, ICalculator {
     // uint256 fundingFeeE30 = getFundingFee(_subAccount);
 
     // Sum all asset's values
-    _equityValueE30 += _collateralValueE30;
-
-    if (_unrealizedPnlValueE30 > 0) {
-      _equityValueE30 += uint256(_unrealizedPnlValueE30);
-    } else {
-      _equityValueE30 -= uint256(-_unrealizedPnlValueE30);
-    }
+    _equityValueE30 += int256(_collateralValueE30);
+    _equityValueE30 += _unrealizedPnlValueE30;
 
     // @todo - include borrowing and funding fee
     // _equityValueE30 -= borrowingFeeE30;
@@ -411,8 +475,14 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate unrealized PnL from trader's sub account.
   /// @dev This unrealized pnl deducted by collateral factor.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _unrealizedPnlE30 PnL value after deducted by collateral factor.
-  function getUnrealizedPnl(address _subAccount) public view returns (int256 _unrealizedPnlE30) {
+  function getUnrealizedPnl(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) public view returns (int256 _unrealizedPnlE30) {
     // Get all trader's opening positions
     IPerpStorage.Position[] memory _traderPositions = IPerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -431,15 +501,18 @@ contract Calculator is Owned, ICalculator {
       // Long position always use MinPrice. Short position always use MaxPrice
       bool _isUseMaxPrice = _isLong ? false : true;
 
-      // Get price from oracle
-      // @todo - validate price age
-      (uint256 _priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
-        _marketConfig.assetId,
-        _isUseMaxPrice,
-        _marketConfig.priceConfidentThreshold,
-        0
-      );
-
+      // Check to overwrite price
+      uint256 _priceE30;
+      if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
+        _priceE30 = _limitPriceE30;
+      } else {
+        // Get price from oracle
+        // @todo - validate price age
+        (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+          _marketConfig.assetId,
+          _isUseMaxPrice
+        );
+      }
       // Calculate for priceDelta
       uint256 _priceDeltaE30;
       unchecked {
@@ -456,8 +529,8 @@ contract Calculator is Owned, ICalculator {
         _delta = _priceE30 < _position.avgEntryPriceE30 ? -_delta : _delta;
       }
 
-      // If profit then deduct PnL with colleral factor.
-      _delta = _delta > 0 ? (int(IConfigStorage(configStorage).pnlFactor()) * _delta) / 1e18 : _delta;
+      // If profit then deduct PnL with collateral factor.
+      _delta = _delta > 0 ? (int32(IConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int32(BPS) : _delta;
 
       // Accumulative current unrealized PnL
       _unrealizedPnlE30 += _delta;
@@ -472,43 +545,51 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice Calculate collateral tokens to value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _collateralValueE30
-  function getCollateralValue(address _subAccount) public view returns (uint256 _collateralValueE30) {
+  function getCollateralValue(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) public view returns (uint256 _collateralValueE30) {
     // Get list of current depositing tokens on trader's account
     address[] memory _traderTokens = IVaultStorage(vaultStorage).getTraderTokens(_subAccount);
 
     // Loop through list of current depositing tokens
     for (uint256 i; i < _traderTokens.length; ) {
       address _token = _traderTokens[i];
+      IConfigStorage.CollateralTokenConfig memory _collateralTokenConfig = IConfigStorage(configStorage)
+        .getCollateralTokenConfigs(_token);
 
       // Get token decimals from ConfigStorage
-      uint256 _decimals = ERC20(_token).decimals();
+      uint256 _decimals = IConfigStorage(configStorage).getAssetConfigByToken(_token).decimals;
 
       // Get collateralFactor from ConfigStorage
-      uint256 _collateralFactor = IConfigStorage(configStorage).getCollateralTokenConfigs(_token).collateralFactor;
-
-      // Get priceConfidentThreshold from ConfigStorage
-      uint256 _priceConfidenceThreshold = IConfigStorage(configStorage)
-        .getMarketConfigByToken(_token)
-        .priceConfidentThreshold;
+      uint32 collateralFactorBPS = _collateralTokenConfig.collateralFactorBPS;
 
       // Get current collateral token balance of trader's account
       uint256 _amount = IVaultStorage(vaultStorage).traderBalances(_subAccount, _token);
 
-      bool _isMaxPrice = false; // @note Collateral value always use Min price
       // Get price from oracle
-      // @todo - validate price age
-      (uint256 _priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
-        _token.toBytes32(),
-        _isMaxPrice,
-        _priceConfidenceThreshold,
-        0
-      );
+      uint256 _priceE30;
 
+      // Get token asset id from ConfigStorage
+      bytes32 _tokenAssetId = IConfigStorage(configStorage).tokenAssetIds(_token);
+      if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
+        _priceE30 = _limitPriceE30;
+      } else {
+        // @todo - validate price age
+        (_priceE30, , ) = IOracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+          _tokenAssetId,
+          false // @note Collateral value always use Min price
+        );
+      }
       // Calculate accumulative value of collateral tokens
-      // collateal value = (collateral amount * price) * collateralFactor
-      // collateralFactor 1 ether = 100%
-      _collateralValueE30 += (_amount * _priceE30 * _collateralFactor) / (10 ** _decimals * 1e18);
+      // collateral value = (collateral amount * price) * collateralFactorBPS
+      // collateralFactor 1e4 = 100%
+
+      _collateralValueE30 += (_amount * _priceE30 * collateralFactorBPS) / ((10 ** _decimals) * BPS);
 
       unchecked {
         i++;
@@ -518,7 +599,7 @@ contract Calculator is Owned, ICalculator {
     return _collateralValueE30;
   }
 
-  /// @notice Calculate Intial Margin Requirement from trader's sub account.
+  /// @notice Calculate Initial Margin Requirement from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _imrValueE30 Total imr of trader's account.
   function getIMR(address _subAccount) public view returns (uint256 _imrValueE30) {
@@ -585,7 +666,7 @@ contract Calculator is Owned, ICalculator {
       _marketIndex
     );
 
-    _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFraction) / 1e18;
+    _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFractionBPS) / BPS;
     return _imrE30;
   }
 
@@ -599,18 +680,25 @@ contract Calculator is Owned, ICalculator {
       _marketIndex
     );
 
-    _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFraction) / 1e18;
+    _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFractionBPS) / BPS;
     return _mmrE30;
   }
 
   /// @notice This function returns the amount of free collateral available to a given sub-account
   /// @param _subAccount The address of the sub-account
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _freeCollateral The amount of free collateral available to the sub-account
-  function getFreeCollateral(address _subAccount) public view returns (uint256 _freeCollateral) {
-    uint256 equity = getEquity(_subAccount);
+  function getFreeCollateral(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) public view returns (uint256 _freeCollateral) {
+    int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = getIMR(_subAccount);
 
-    _freeCollateral = equity - imr;
+    if (equity < 0) return 0;
+    _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
   }
 }

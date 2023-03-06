@@ -21,6 +21,7 @@ interface IConfigStorage {
     uint256 targetWeight; // pecentage of all accepted PLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
+    uint256 priceConfidentThreshold; // pyth price confidential threshold
     bool isStableCoin; // token is stablecoin
     bool accepted; // accepted to provide liquidity
   }

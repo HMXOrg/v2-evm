@@ -26,5 +26,9 @@ contract GlpStrategy_ExecuteForkTest is GlpStrategy_BaseForkTest {
       minExecutionFee,
       false
     );
+
+    // Execute the add liquidity order
+    vm.prank(keeper);
+    liquidityHandler.executeOrder(address(this), 0, new bytes[](0));
   }
 }

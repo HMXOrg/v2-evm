@@ -7,6 +7,7 @@ import { GlpOracleAdapter } from "@hmx/oracles/GlpOracleAdapter.sol";
 import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 // Storages
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
@@ -108,6 +109,10 @@ abstract contract Deployment {
     );
     vars.marketTradeHandler = new MarketTradeHandler(address(vars.tradeService), address(localVars.pyth));
 
+    vars.configStorage.setServiceExecutor(address(vars.liquidityService), address(vars.liquidityHandler), true);
+    vars.configStorage.setServiceExecutor(address(vars.crossMarginService), address(vars.crossMarginHandler), true);
+    vars.configStorage.setServiceExecutor(address(vars.tradeService), address(vars.limitTradeHandler), true);
+    vars.configStorage.setServiceExecutor(address(vars.tradeService), address(vars.marketTradeHandler), true);
     vars.configStorage.setCalculator(address(vars.calculator));
     vars.configStorage.setOracle(address(vars.oracleMiddleware));
     vars.configStorage.setPLP(address(vars.plp));

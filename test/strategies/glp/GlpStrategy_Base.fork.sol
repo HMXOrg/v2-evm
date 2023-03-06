@@ -26,12 +26,13 @@ abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdA
   address keeper;
   address treasury;
 
+  ERC20 plp;
   LiquidityHandler liquidityHandler;
 
   function setUp() public virtual {
-    // Assigned dependency contracts
-    gmxRewardRouterV2 = IGmxRewardRouterV2(gmxRewardRouterV2Address);
-    stkGlp = ERC20(stkGlpAddress);
+    // Assigned addresses
+    keeper = makeAddr("GlpStrategyKeeper");
+    treasury = makeAddr("GlpStrategyTreasury");
 
     // Deploy core contracts
     DeployCoreLocalVars memory deployCoreLocalVars = DeployCoreLocalVars({
@@ -44,10 +45,24 @@ abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdA
     });
     DeployCoreReturnVars memory deployedCore = deployCore(deployCoreLocalVars);
 
-    liquidityHandler = deployedCore.liquidityHandler;
+    // Setup Liquidity Config
+    // Assuming no deposit and withdraw fee.
+    deployedCore.configStorage.setLiquidityConfig(
+      IConfigStorage.LiquidityConfig({
+        depositFeeRate: 0,
+        withdrawFeeRate: 0,
+        maxPLPUtilization: (80 * 1e18) / 100,
+        plpTotalTokenWeight: 0,
+        plpSafetyBufferThreshold: 0,
+        taxFeeRate: 5e15, // 0.5%
+        flashLoanFeeRate: 0,
+        dynamicFeeEnabled: false,
+        enabled: true
+      })
+    );
 
-    keeper = makeAddr("GlpStrategyKeeper");
-    treasury = makeAddr("GlpStrategyTreasury");
+    // Setup Liquidity Handler
+    deployedCore.liquidityHandler.setOrderExecutor(keeper, true);
 
     // Deploy GlpStrategy
     DeployGlpStrategyLocalVars memory deployGlpStrategyLocalVars = DeployGlpStrategyLocalVars({
@@ -58,7 +73,7 @@ abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdA
       vaultStorage: address(deployedCore.vaultStorage),
       keeper: keeper,
       treasury: treasury,
-      // Charging 10% for the fee
+      // Assuming charging 10% for the fee
       strategyBps: 1000
     });
     glpStrategy = deployGlpStrategy(deployGlpStrategyLocalVars);
@@ -66,7 +81,6 @@ abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdA
     // Add stkGLP as a liquidity token
     address[] memory _tokens = new address[](1);
     _tokens[0] = stkGlpAddress;
-
     IConfigStorage.PLPTokenConfig[] memory _configs = new IConfigStorage.PLPTokenConfig[](1);
     _configs[0] = IConfigStorage.PLPTokenConfig({
       decimals: 18,
@@ -76,7 +90,13 @@ abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdA
       isStableCoin: false,
       accepted: true
     });
-
     deployedCore.configStorage.addOrUpdateAcceptedToken(_tokens, _configs);
+
+    // Assign states
+    gmxRewardRouterV2 = IGmxRewardRouterV2(gmxRewardRouterV2Address);
+    stkGlp = ERC20(stkGlpAddress);
+
+    plp = ERC20(deployedCore.plp);
+    liquidityHandler = deployedCore.liquidityHandler;
   }
 }

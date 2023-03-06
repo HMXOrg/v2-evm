@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 // Oracles
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { GlpOracleAdapter } from "@hmx/oracles/GlpOracleAdapter.sol";
+import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
 import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 // Storages
@@ -24,7 +24,7 @@ import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 // Strategies
-import { GlpStrategy } from "@hmx/strategies/GlpStrategy.sol";
+import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
 // Interfaces
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -35,7 +35,7 @@ import { IGmxRewardTracker } from "@hmx/vendors/gmx/IGmxRewardTracker.sol";
 
 abstract contract Deployment {
   struct DeployCoreReturnVars {
-    GlpOracleAdapter glpOracleAdapter;
+    StakedGlpOracleAdapter stakedGlpOracleAdapter;
     PythAdapter pythAdapter;
     OracleMiddleware oracleMiddleware;
     ConfigStorage configStorage;
@@ -53,7 +53,8 @@ abstract contract Deployment {
   }
 
   struct DeployCoreLocalVars {
-    address stkGlp;
+    address sGlp;
+    bytes32 sGlpAssetId;
     address glpManager;
     address weth;
     uint256 minExecutionFee;
@@ -68,7 +69,11 @@ abstract contract Deployment {
     DeployCoreReturnVars memory vars;
 
     vars.pythAdapter = new PythAdapter(IPyth(localVars.pyth));
-    vars.glpOracleAdapter = new GlpOracleAdapter(IERC20(localVars.stkGlp), IGmxGlpManager(localVars.glpManager));
+    vars.stakedGlpOracleAdapter = new StakedGlpOracleAdapter(
+      IERC20(localVars.sGlp),
+      IGmxGlpManager(localVars.glpManager),
+      localVars.sGlpAssetId
+    );
     vars.oracleMiddleware = new OracleMiddleware();
 
     vars.configStorage = new ConfigStorage();
@@ -122,7 +127,7 @@ abstract contract Deployment {
   }
 
   struct DeployGlpStrategyLocalVars {
-    address stkGlp;
+    address sGlp;
     address gmxRewardRouter;
     address glpFeeTracker;
     address oracleMiddleware;
@@ -132,13 +137,13 @@ abstract contract Deployment {
     uint16 strategyBps;
   }
 
-  /// @notice Deploy GlpStrategy.
+  /// @notice Deploy StakedGlpStrategy.
   /// @param localVars All required parameters to deploy GlpStrategy.
   /// @return Deployed contracts.
-  function deployGlpStrategy(DeployGlpStrategyLocalVars memory localVars) internal returns (GlpStrategy) {
+  function deployStakedGlpStrategy(DeployGlpStrategyLocalVars memory localVars) internal returns (StakedGlpStrategy) {
     VaultStorage vaultStorage = VaultStorage(localVars.vaultStorage);
-    GlpStrategy glpStrategy = new GlpStrategy(
-      ERC20(localVars.stkGlp),
+    StakedGlpStrategy stakedGlpStrategy = new StakedGlpStrategy(
+      ERC20(localVars.sGlp),
       IGmxRewardRouterV2(localVars.gmxRewardRouter),
       IGmxRewardTracker(localVars.glpFeeTracker),
       OracleMiddleware(localVars.oracleMiddleware),
@@ -149,6 +154,6 @@ abstract contract Deployment {
     );
 
     // Set strategy on vault storage to allow the strategy to cook.
-    vaultStorage.setStrategyOf(address(localVars.stkGlp), address(glpStrategy));
+    vaultStorage.setStrategyOf(address(localVars.sGlp), address(stakedGlpStrategy));
   }
 }

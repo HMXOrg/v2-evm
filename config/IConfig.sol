@@ -6,7 +6,7 @@ interface IConfig {
 
   function glpManagerAddress() external view returns (address);
 
-  function stkGlpAddress() external view returns (address);
+  function sGlpAddress() external view returns (address);
 
   function gmxRewardRouterV2Address() external view returns (address);
 

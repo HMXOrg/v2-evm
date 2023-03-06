@@ -10,12 +10,12 @@ import { IGmxRewardRouterV2 } from "@hmx/vendors/gmx/IGmxRewardRouterV2.sol";
 import { IGmxRewardTracker } from "@hmx/vendors/gmx/IGmxRewardTracker.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract GlpStrategy is Owned, IStrategy {
+contract StakedGlpStrategy is Owned, IStrategy {
   using AddressUtils for address;
 
-  error GlpStrategy_OnlyKeeper();
+  error StakedGlpStrategy_OnlyKeeper();
 
-  ERC20 public stkGlp;
+  ERC20 public sGlp;
   ERC20 public weth;
   IGmxRewardRouterV2 public gmxRewardRouter;
   IGmxRewardTracker public glpFeeTracker;
@@ -33,7 +33,7 @@ contract GlpStrategy is Owned, IStrategy {
   event SetTreasury(address _oldTreasury, address _newTreasury);
 
   constructor(
-    ERC20 _stkGlp,
+    ERC20 _sGlp,
     IGmxRewardRouterV2 _gmxRewardRouter,
     IGmxRewardTracker _glpFeeTracker,
     IOracleMiddleware _oracleMiddleware,
@@ -42,7 +42,7 @@ contract GlpStrategy is Owned, IStrategy {
     address _treasury,
     uint16 _strategyBps
   ) {
-    stkGlp = _stkGlp;
+    sGlp = _sGlp;
     gmxRewardRouter = _gmxRewardRouter;
     glpFeeTracker = _glpFeeTracker;
     weth = ERC20(_glpFeeTracker.rewardToken());
@@ -75,7 +75,7 @@ contract GlpStrategy is Owned, IStrategy {
     // Check.
     // 1. Only keeper can call this function.
     if (msg.sender != keeper) {
-      revert GlpStrategy_OnlyKeeper();
+      revert StakedGlpStrategy_OnlyKeeper();
     }
 
     // 2. Build calldata.
@@ -83,24 +83,23 @@ contract GlpStrategy is Owned, IStrategy {
 
     // 3. Cook
     uint256 wethBefore = weth.balanceOf(address(this));
-    vaultStorage.cook(address(stkGlp), address(glpFeeTracker), _callData);
+    vaultStorage.cook(address(sGlp), address(glpFeeTracker), _callData);
     uint256 yields = weth.balanceOf(address(this)) - wethBefore;
 
     // 4. Deduct strategy fee.
     uint256 strategyFee = (yields * strategyBps) / 10000;
 
     // 5. Reinvest what left to GLP.
-    // Load GLP price
     gmxRewardRouter.mintAndStakeGlp(address(weth), weth.balanceOf(address(this)), 0, 0);
 
     // 6. Settle
     // SLOAD
-    uint256 stkGlpBalance = stkGlp.balanceOf(address(this));
-    stkGlp.transfer(address(vaultStorage), stkGlp.balanceOf(address(this)));
+    uint256 sGlpBalance = sGlp.balanceOf(address(this));
+    sGlp.transfer(address(vaultStorage), sGlp.balanceOf(address(this)));
     weth.transfer(treasury, strategyFee);
 
     // 7. Update accounting.
-    vaultStorage.pullToken(address(stkGlp));
-    vaultStorage.addPLPLiquidity(address(stkGlp), stkGlpBalance);
+    vaultStorage.pullToken(address(sGlp));
+    vaultStorage.addPLPLiquidity(address(sGlp), sGlpBalance);
   }
 }

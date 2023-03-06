@@ -76,7 +76,10 @@ contract LiquidityService is ILiquidityService {
     ICalculator _calculator = ICalculator(configStorage.calculator());
 
     // 2. Query token min price to be used for joining pool
-    (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(_token.toBytes32(), false);
+    (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(
+      configStorage.tokenAssetIds(_token),
+      false
+    );
 
     // 3. Calculate aum and load lpSupply before minting
     // TODO realize farm pnl to get pendingBorrowingFee

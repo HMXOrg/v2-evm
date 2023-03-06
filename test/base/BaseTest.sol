@@ -94,7 +94,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   MockErc20 internal bad;
 
-  MockErc20 internal stkGlp;
+  MockErc20 internal sGlp;
 
   // market indexes
   uint256 ethMarketIndex;
@@ -111,6 +111,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   bytes32 internal constant daiAssetId = "DAI";
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
+  bytes32 internal constant glpAssetId = "GLP";
 
   constructor() {
     // Creating a mock Pyth instance with 60 seconds valid time period
@@ -128,7 +129,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     usdc = deployMockErc20("USD Coin", "USDC", 6);
     usdt = deployMockErc20("USD Tether", "USDT", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
-    stkGlp = deployMockErc20("Glp Coin", "GLP", 18);
+    sGlp = deployMockErc20("Staked Glp Coin", "sGLP", 18);
 
     plp = new PLPv2();
 
@@ -188,7 +189,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
       pyth: address(mockPyth),
       defaultOracleStaleTime: 300,
       minExecutionFee: 0,
-      stkGlp: address(stkGlp),
+      sGlp: address(sGlp),
+      sGlpAssetId: "sGLP",
       glpManager: address(mockGlpManager),
       weth: address(weth)
     });

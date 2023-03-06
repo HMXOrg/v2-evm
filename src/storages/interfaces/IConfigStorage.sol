@@ -5,6 +5,7 @@ interface IConfigStorage {
   /**
    * Errors
    */
+  error IConfigStorage_AssetIdNotSet();
   error IConfigStorage_NotWhiteListed();
   error IConfigStorage_ExceedLimitSetting();
   error IConfigStorage_BadLen();

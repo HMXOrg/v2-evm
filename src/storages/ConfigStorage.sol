@@ -281,7 +281,12 @@ contract ConfigStorage is IConfigStorage, Owned {
     address _token,
     PLPTokenConfig memory _newConfig
   ) external returns (PLPTokenConfig memory _plpTokenConfig) {
-    assetPlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
+    // Check
+    // SLOAD
+    bytes32 _assetId = tokenAssetIds[_token];
+    if (_assetId == bytes32(0)) revert IConfigStorage_AssetIdNotSet();
+
+    assetPlpTokenConfigs[_assetId] = _newConfig;
 
     return _newConfig;
   }
@@ -329,6 +334,9 @@ contract ConfigStorage is IConfigStorage, Owned {
     uint256 _len = _tokens.length;
     for (uint256 _i; _i < _len; ) {
       bytes32 _assetId = tokenAssetIds[_tokens[_i]];
+
+      // Enforce that assetId must be set to prevent
+      if (_assetId == bytes32(0)) revert IConfigStorage_BadArgs();
 
       // Enforce that isAccept must be true to prevent
       // removing underlying token through this function.

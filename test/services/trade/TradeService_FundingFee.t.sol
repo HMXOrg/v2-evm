@@ -7,18 +7,24 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { MockCalculatorWithRealGetNextFundingRate } from "../../mocks/MockCalculatorWithRealGetNextFundingRate.sol";
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
 
 contract TradeService_FundingFee is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
-    mockCalculator = new MockCalculatorWithRealGetNextFundingRate(
-      address(mockOracle),
-      address(vaultStorage),
-      address(perpStorage),
-      address(configStorage)
-    );
-    configStorage.setCalculator(address(mockCalculator));
+
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getNextFundingRate");
+      // mockCalculator = m;
+      configStorage.setCalculator(address(mockCalculator));
+    }
 
     // Set PLPLiquidity
     vaultStorage.addPLPLiquidity(configStorage.getPlpTokens()[0], 1000 * 1e18);

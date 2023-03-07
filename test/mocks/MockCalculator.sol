@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 contract MockCalculator is ICalculator {
   mapping(address => int256) equitiesOf;
@@ -185,7 +186,7 @@ contract MockCalculator is ICalculator {
   function getNextFundingRate(
     uint256 /*marketIndex*/,
     uint256 /*limitPrice*/
-  ) external view virtual returns (int256, int256, int256) {
+  ) public view virtual returns (int256, int256, int256) {
     return (fundingRate, fundingRateLong, fundingRateShort);
   }
 
@@ -214,4 +215,18 @@ contract MockCalculator is ICalculator {
   function setConfigStorage(address /*_address*/) external {}
 
   function setPerpStorage(address /*_address*/) external {}
+
+  function calculateShortAveragePrice(
+    PerpStorage.GlobalMarket memory /*_market*/,
+    uint256 /*_currentPrice*/,
+    int256 /*_positionSizeDelta*/,
+    int256 /*_realizedPositionPnl*/l
+  ) external pure returns (uint256 _nextAveragePrice) {}
+
+  function calculateLongAveragePrice(
+    PerpStorage.GlobalMarket memory /*_market*/,
+    uint256 /*_currentPrice*/,
+    int256 /*_positionSizeDelta*/,
+    int256 /*_realizedPositionPnl*/l
+  ) external pure returns (uint256 _nextAveragePrice) {}
 }

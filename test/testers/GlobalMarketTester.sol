@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { PerpStorage } from "../../src/storages/PerpStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 

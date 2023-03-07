@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest } from "../../base/BaseTest.sol";
+import { BaseTest } from "@hmx-test/base/BaseTest.sol";
 
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { TradeService } from "../../../src/services/TradeService.sol";
+import { TradeService } from "@hmx/services/TradeService.sol";
 
-import { BotHandler } from "../../../src/handlers/BotHandler.sol";
+import { BotHandler } from "@hmx/handlers/BotHandler.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";

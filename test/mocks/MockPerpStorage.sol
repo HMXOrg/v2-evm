@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 contract MockPerpStorage {
   mapping(address => IPerpStorage.Position[]) public positions;

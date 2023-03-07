@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { MarketTradeHandler } from "../../../src/handlers/MarketTradeHandler.sol";
+import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 import { MarketTradeHandler_Base, IPerpStorage } from "./MarketTradeHandler_Base.t.sol";
-import { IMarketTradeHandler } from "../../../src/handlers/interfaces/IMarketTradeHandler.sol";
+import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
 // What is this test DONE
 // - revert

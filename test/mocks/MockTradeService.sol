@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { ITradeService } from "../../src/services/interfaces/ITradeService.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
 contract MockTradeService is ITradeService {
   struct IncreasePositionInputs {

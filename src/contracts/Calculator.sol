@@ -697,103 +697,103 @@ contract Calculator is Owned, ICalculator {
     return _freeCollateral;
   }
 
-  // /// @notice get next short average price with realized PNL
-  // /// @param _market - global market
-  // /// @param _currentPrice - min / max price depends on position direction
-  // /// @param _positionSizeDelta - position size after increase / decrease.
-  // ///                           if positive is LONG position, else is SHORT
-  // /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
-  // /// @return _nextAveragePrice next average price
-  // function calculateShortAveragePrice(
-  //   PerpStorage.GlobalMarket memory _market,
-  //   uint256 _currentPrice,
-  //   int256 _positionSizeDelta,
-  //   int256 _realizedPositionPnl
-  // ) external pure returns (uint256 _nextAveragePrice) {
-  //   // global
-  //   uint256 _globalPositionSize = _market.shortPositionSize;
-  //   int256 _globalAveragePrice = int256(_market.shortAvgPrice);
+  /// @notice get next short average price with realized PNL
+  /// @param _market - global market
+  /// @param _currentPrice - min / max price depends on position direction
+  /// @param _positionSizeDelta - position size after increase / decrease.
+  ///                           if positive is LONG position, else is SHORT
+  /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
+  /// @return _nextAveragePrice next average price
+  function calculateShortAveragePrice(
+    PerpStorage.GlobalMarket memory _market,
+    uint256 _currentPrice,
+    int256 _positionSizeDelta,
+    int256 _realizedPositionPnl
+  ) external pure returns (uint256 _nextAveragePrice) {
+    // global
+    uint256 _globalPositionSize = _market.shortPositionSize;
+    int256 _globalAveragePrice = int256(_market.shortAvgPrice);
 
-  //   if (_globalAveragePrice == 0) return 0;
+    if (_globalAveragePrice == 0) return 0;
 
-  //   // if positive means, has profit
-  //   int256 _globalPnl = (int256(_globalPositionSize) * (_globalAveragePrice - int256(_currentPrice))) /
-  //     _globalAveragePrice;
-  //   int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
+    // if positive means, has profit
+    int256 _globalPnl = (int256(_globalPositionSize) * (_globalAveragePrice - int256(_currentPrice))) /
+      _globalAveragePrice;
+    int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
 
-  //   uint256 _newGlobalPositionSize;
-  //   // position > 0 is means decrease short position
-  //   // else is increase short position
-  //   if (_positionSizeDelta > 0) {
-  //     _newGlobalPositionSize = _globalPositionSize - uint256(_positionSizeDelta);
-  //   } else {
-  //     _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
-  //   }
+    uint256 _newGlobalPositionSize;
+    // position > 0 is means decrease short position
+    // else is increase short position
+    if (_positionSizeDelta > 0) {
+      _newGlobalPositionSize = _globalPositionSize - uint256(_positionSizeDelta);
+    } else {
+      _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
+    }
 
-  //   bool _isGlobalProfit = _newGlobalPnl > 0;
-  //   uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
+    bool _isGlobalProfit = _newGlobalPnl > 0;
+    uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
 
-  //   // divisor = latest global position size - pnl
-  //   uint256 divisor = _isGlobalProfit
-  //     ? (_newGlobalPositionSize - _absoluteGlobalPnl)
-  //     : (_newGlobalPositionSize + _absoluteGlobalPnl);
+    // divisor = latest global position size - pnl
+    uint256 divisor = _isGlobalProfit
+      ? (_newGlobalPositionSize - _absoluteGlobalPnl)
+      : (_newGlobalPositionSize + _absoluteGlobalPnl);
 
-  //   if (divisor == 0) return 0;
+    if (divisor == 0) return 0;
 
-  //   // next short average price = current price * latest global position size / latest global position size - pnl
-  //   _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
+    // next short average price = current price * latest global position size / latest global position size - pnl
+    _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
 
-  //   return _nextAveragePrice;
-  // }
+    return _nextAveragePrice;
+  }
 
-  // /// @notice get next long average price with realized PNL
-  // /// @param _market - global market
-  // /// @param _currentPrice - min / max price depends on position direction
-  // /// @param _positionSizeDelta - position size after increase / decrease.
-  // ///                           if positive is LONG position, else is SHORT
-  // /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
-  // /// @return _nextAveragePrice next average price
-  // function calculateLongAveragePrice(
-  //   PerpStorage.GlobalMarket memory _market,
-  //   uint256 _currentPrice,
-  //   int256 _positionSizeDelta,
-  //   int256 _realizedPositionPnl
-  // ) external pure returns (uint256 _nextAveragePrice) {
-  //   // global
-  //   uint256 _globalPositionSize = _market.longPositionSize;
-  //   int256 _globalAveragePrice = int256(_market.longAvgPrice);
+  /// @notice get next long average price with realized PNL
+  /// @param _market - global market
+  /// @param _currentPrice - min / max price depends on position direction
+  /// @param _positionSizeDelta - position size after increase / decrease.
+  ///                           if positive is LONG position, else is SHORT
+  /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
+  /// @return _nextAveragePrice next average price
+  function calculateLongAveragePrice(
+    PerpStorage.GlobalMarket memory _market,
+    uint256 _currentPrice,
+    int256 _positionSizeDelta,
+    int256 _realizedPositionPnl
+  ) external pure returns (uint256 _nextAveragePrice) {
+    // global
+    uint256 _globalPositionSize = _market.longPositionSize;
+    int256 _globalAveragePrice = int256(_market.longAvgPrice);
 
-  //   if (_globalAveragePrice == 0) return 0;
+    if (_globalAveragePrice == 0) return 0;
 
-  //   // if positive means, has profit
-  //   int256 _globalPnl = (int256(_globalPositionSize) * (int256(_currentPrice) - _globalAveragePrice)) /
-  //     _globalAveragePrice;
-  //   int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
+    // if positive means, has profit
+    int256 _globalPnl = (int256(_globalPositionSize) * (int256(_currentPrice) - _globalAveragePrice)) /
+      _globalAveragePrice;
+    int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
 
-  //   uint256 _newGlobalPositionSize;
-  //   // position > 0 is means increase short position
-  //   // else is decrease short position
-  //   if (_positionSizeDelta > 0) {
-  //     _newGlobalPositionSize = _globalPositionSize + uint256(_positionSizeDelta);
-  //   } else {
-  //     _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
-  //   }
+    uint256 _newGlobalPositionSize;
+    // position > 0 is means increase short position
+    // else is decrease short position
+    if (_positionSizeDelta > 0) {
+      _newGlobalPositionSize = _globalPositionSize + uint256(_positionSizeDelta);
+    } else {
+      _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
+    }
 
-  //   bool _isGlobalProfit = _newGlobalPnl > 0;
-  //   uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
+    bool _isGlobalProfit = _newGlobalPnl > 0;
+    uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
 
-  //   // divisor = latest global position size + pnl
-  //   uint256 divisor = _isGlobalProfit
-  //     ? (_newGlobalPositionSize + _absoluteGlobalPnl)
-  //     : (_newGlobalPositionSize - _absoluteGlobalPnl);
+    // divisor = latest global position size + pnl
+    uint256 divisor = _isGlobalProfit
+      ? (_newGlobalPositionSize + _absoluteGlobalPnl)
+      : (_newGlobalPositionSize - _absoluteGlobalPnl);
 
-  //   if (divisor == 0) return 0;
+    if (divisor == 0) return 0;
 
-  //   // next long average price = current price * latest global position size / latest global position size + pnl
-  //   _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
+    // next long average price = current price * latest global position size / latest global position size + pnl
+    _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
 
-  //   return _nextAveragePrice;
-  // }
+    return _nextAveragePrice;
+  }
 
   /// @notice Calculate next funding rate using when increase/decrease position.
   /// @param _marketIndex Market Index.

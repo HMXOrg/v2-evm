@@ -220,13 +220,13 @@ contract MockCalculator is ICalculator {
     PerpStorage.GlobalMarket memory /*_market*/,
     uint256 /*_currentPrice*/,
     int256 /*_positionSizeDelta*/,
-    int256 /*_realizedPositionPnl*/l
-  ) external pure returns (uint256 _nextAveragePrice) {}
+    int256 /*_realizedPositionPnl*/
+  ) public view virtual returns (uint256 _nextAveragePrice) {}
 
   function calculateLongAveragePrice(
     PerpStorage.GlobalMarket memory /*_market*/,
     uint256 /*_currentPrice*/,
     int256 /*_positionSizeDelta*/,
-    int256 /*_realizedPositionPnl*/l
-  ) external pure returns (uint256 _nextAveragePrice) {}
+    int256 /*_realizedPositionPnl*/
+  ) public view virtual returns (uint256 _nextAveragePrice) {}
 }

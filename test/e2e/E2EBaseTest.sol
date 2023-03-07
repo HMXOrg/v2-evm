@@ -6,13 +6,12 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-// import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
-// import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
-
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+
+import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
@@ -20,6 +19,7 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
@@ -38,7 +38,7 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal CAROL;
   address internal DAVE;
 
-  address internal PYTH_ADDRESS = address(0);
+  address internal constant PYTH_ADDRESS = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -58,7 +58,7 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
   ICrossMarginService crossMarginService;
   ILiquidityService liquidityService;
   ILiquidationService liquidationService;
-  ITradeService tradService;
+  ITradeService tradeService;
 
   /* TOKENS */
 
@@ -67,7 +67,7 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
   IPLPv2 plpV2;
 
   // UNDERLYING ARBRITRUM GLP => ETH WBTC LINK UNI USDC USDT DAI FRAX
-  ERC20 weth; //for native
+  address internal constant weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1; //for native
   ERC20 wbtc; // decimals 8
   ERC20 usdc; // decimals 6
   ERC20 usdt; // decimals 6
@@ -142,17 +142,15 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
     tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
 
     botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), PYTH_ADDRESS);
-    ICrossMarginHandler crossMarginHandler;
-    ILimitTradeHandler limitTradeHandler;
-    ILiquidityHandler liquidityHandler;
-    IMarketTradeHandler marketTradeHandler;
-    /* 
-    import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
-import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
-import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
-import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+    crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), PYTH_ADDRESS);
 
-     */
+    // TODO put last params
+    limitTradeHandler = Deployer.deployLimitTradeHandler(weth, address(tradeService), PYTH_ADDRESS, 0);
+
+    // TODO put last params
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), PYTH_ADDRESS, 0);
+    marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), PYTH_ADDRESS);
+
     /* configStorage */
     // serviceExecutor
     // calculator

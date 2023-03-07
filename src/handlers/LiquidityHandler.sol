@@ -268,7 +268,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @notice execute either addLiquidity or removeLiquidity
   /// @param _order order of executing
   // slither-disable-next-line
-  function executeLiquidity(LiquidityOrder memory _order) external nonReentrant returns (uint256) {
+  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
     if (isExecuting) {
       if (_order.isAdd) {
         IERC20(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);

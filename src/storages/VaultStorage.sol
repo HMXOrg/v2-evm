@@ -32,7 +32,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   /**
    * States
    */
-  uint256 public plpLiquidityDebtUSDE30; // USD dept accounting when tradingFee is not enough to repay to trader
+  uint256 public plpLiquidityDebtUSDE30; // USD dept accounting when fundingFee is not enough to repay to trader
 
   mapping(address => uint256) public totalAmount; //token => tokenAmount
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount

@@ -19,39 +19,30 @@ contract ConfigStorage is IConfigStorage, Owned {
   /**
    * Events
    */
-  event SetServiceExecutor(address indexed contractAddress, address executorAddress, bool isServiceExecutor);
-  event SetCalculator(address indexed oldCalculator, address newCalculator);
-  event SetFeeCalculator(address indexed oldFeeCalculator, address newFeeCalculator);
-  event SetOracle(address indexed oldOracle, address newOracle);
-  event SetPLP(address indexed oldPlp, address newPlp);
-  event SetLiquidityConfig(LiquidityConfig indexed oldLiquidityConfig, LiquidityConfig newLiquidityConfig);
-  event SetDynamicEnabled(bool enabled);
-  event SetPLPTotalTokenWeight(uint256 oldTotalTokenWeight, uint256 newTotalTokenWeight);
-  event SetPnlFactor(uint32 oldPnlFactorBPS, uint32 newPnlFactorBPS);
-  event SetSwapConfig(SwapConfig indexed oldConfig, SwapConfig newConfig);
-  event SetTradingConfig(TradingConfig indexed oldConfig, TradingConfig newConfig);
-  event SetLiquidationConfig(LiquidationConfig indexed oldConfig, LiquidationConfig newConfig);
-  event SetMarketConfig(uint256 marketIndex, MarketConfig oldConfig, MarketConfig newConfig);
-  event SetPlpTokenConfig(address token, PLPTokenConfig oldConfig, PLPTokenConfig newConfig);
-  event SetCollateralTokenConfig(bytes32 assetId, CollateralTokenConfig oldConfig, CollateralTokenConfig newConfig);
-  event SetAssetConfig(bytes32 assetId, AssetConfig oldConfig, AssetConfig newConfig);
-  event SetWeth(address indexed oldWeth, address newWeth);
-  event SetAssetClassConfigByIndex(uint256 index, AssetClassConfig oldConfig, AssetClassConfig newConfig);
-
-  event AddOrUpdatePLPTokenConfigs(address token, PLPTokenConfig oldConfig, PLPTokenConfig newConfig);
-  event AddAssetClassConfig(uint256 index, AssetClassConfig newConfig);
-  event AddMarketConfig(uint256 index, MarketConfig newConfig);
-  event RemoveUnderlying(address token);
-  event DelistMarket(uint256 marketIndex);
-  event LogSetServiceExecutor(address indexed _contractAddress, address _executorAddress, bool _isServiceExecutor);
-  event LogSetCalculator(address _calculator);
-  event LogSetFeeCalculator(address _feeCalculator);
-  event LogSetPLP(address _plp);
-  event LogSetLiquidityConfig(LiquidityConfig _liquidityConfig);
-  event LogSetDynamicEnabled(bool _enabled);
+  event LogSetServiceExecutor(address indexed contractAddress, address executorAddress, bool isServiceExecutor);
+  event LogSetCalculator(address indexed oldCalculator, address newCalculator);
+  event LogSetFeeCalculator(address indexed oldFeeCalculator, address newFeeCalculator);
+  event LogSetOracle(address indexed oldOracle, address newOracle);
+  event LogSetPLP(address indexed oldPlp, address newPlp);
+  event LogSetLiquidityConfig(LiquidityConfig indexed oldLiquidityConfig, LiquidityConfig newLiquidityConfig);
+  event LogSetDynamicEnabled(bool enabled);
+  event LogSetPLPTotalTokenWeight(uint256 oldTotalTokenWeight, uint256 newTotalTokenWeight);
+  event LogSetPnlFactor(uint32 oldPnlFactorBPS, uint32 newPnlFactorBPS);
+  event LogSetSwapConfig(SwapConfig indexed oldConfig, SwapConfig newConfig);
+  event LogSetTradingConfig(TradingConfig indexed oldConfig, TradingConfig newConfig);
+  event LogSetLiquidationConfig(LiquidationConfig indexed oldConfig, LiquidationConfig newConfig);
+  event LogSetMarketConfig(uint256 marketIndex, MarketConfig oldConfig, MarketConfig newConfig);
+  event LogSetPlpTokenConfig(address token, PLPTokenConfig oldConfig, PLPTokenConfig newConfig);
+  event LogSetCollateralTokenConfig(bytes32 assetId, CollateralTokenConfig oldConfig, CollateralTokenConfig newConfig);
+  event LogSetAssetConfig(bytes32 assetId, AssetConfig oldConfig, AssetConfig newConfig);
+  event LogSetWeth(address indexed oldWeth, address newWeth);
+  event LogSetAssetClassConfigByIndex(uint256 index, AssetClassConfig oldConfig, AssetClassConfig newConfig);
+  event LogAddAssetClassConfig(uint256 index, AssetClassConfig newConfig);
+  event LogAddMarketConfig(uint256 index, MarketConfig newConfig);
+  event LogRemoveUnderlying(address token);
+  event LogDelistMarket(uint256 marketIndex);
   event LogSetLiquidityEnabled(bool _enabled);
   event LogAddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
-  event LogRemoveUnderlying(address _token);
 
   /**
    * Constants
@@ -218,7 +209,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function setCalculator(address _calculator) external onlyOwner {
-    emit SetCalculator(calculator, _calculator);
+    emit LogSetCalculator(calculator, _calculator);
     // @todo - add sanity check
     calculator = _calculator;
   }
@@ -227,28 +218,27 @@ contract ConfigStorage is IConfigStorage, Owned {
   /// @dev This function can be used to set the address of the fee calculator contract.
   /// @param _feeCalculator The address of the new fee calculator contract.
   function setFeeCalculator(address _feeCalculator) external onlyOwner {
-    emit SetFeeCalculator(feeCalculator, _feeCalculator);
+    emit LogSetFeeCalculator(feeCalculator, _feeCalculator);
     // @todo - add sanity check
     feeCalculator = _feeCalculator;
   }
 
   function setOracle(address _oracle) external onlyOwner {
-    emit SetOracle(oracle, _oracle);
+    emit LogSetOracle(oracle, _oracle);
     // @todo - sanity check
     oracle = _oracle;
   }
 
   function setPLP(address _plp) external onlyOwner {
-    emit SetPLP(plp, _plp);
+    emit LogSetPLP(plp, _plp);
     // @todo - sanity check
     plp = _plp;
   }
 
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external onlyOwner {
-    emit SetLiquidityConfig(liquidityConfig, _liquidityConfig);
+    emit LogSetLiquidityConfig(liquidityConfig, _liquidityConfig);
     // @todo - sanity check
     liquidityConfig = _liquidityConfig;
-    emit LogSetLiquidityConfig(liquidityConfig);
   }
 
   function setLiquidityEnabled(bool _enabled) external {
@@ -263,7 +253,7 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external onlyOwner {
     if (_totalTokenWeight > 1e18) revert IConfigStorage_ExceedLimitSetting();
-    emit SetPLPTotalTokenWeight(liquidityConfig.plpTotalTokenWeight, _totalTokenWeight);
+    emit LogSetPLPTotalTokenWeight(liquidityConfig.plpTotalTokenWeight, _totalTokenWeight);
     liquidityConfig.plpTotalTokenWeight = _totalTokenWeight;
   }
 
@@ -279,22 +269,22 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function setPnlFactor(uint32 _pnlFactorBPS) external onlyOwner {
-    emit SetPnlFactor(pnlFactorBPS, _pnlFactorBPS);
+    emit LogSetPnlFactor(pnlFactorBPS, _pnlFactorBPS);
     pnlFactorBPS = _pnlFactorBPS;
   }
 
   function setSwapConfig(SwapConfig memory _newConfig) external onlyOwner {
-    emit SetSwapConfig(swapConfig, _newConfig);
+    emit LogSetSwapConfig(swapConfig, _newConfig);
     swapConfig = _newConfig;
   }
 
   function setTradingConfig(TradingConfig memory _newConfig) external onlyOwner {
-    emit SetTradingConfig(tradingConfig, _newConfig);
+    emit LogSetTradingConfig(tradingConfig, _newConfig);
     tradingConfig = _newConfig;
   }
 
   function setLiquidationConfig(LiquidationConfig memory _newConfig) external onlyOwner {
-    emit SetLiquidationConfig(liquidationConfig, _newConfig);
+    emit LogSetLiquidationConfig(liquidationConfig, _newConfig);
     liquidationConfig = _newConfig;
   }
 
@@ -302,7 +292,7 @@ contract ConfigStorage is IConfigStorage, Owned {
     uint256 _marketIndex,
     MarketConfig memory _newConfig
   ) external onlyOwner returns (MarketConfig memory _marketConfig) {
-    emit SetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
+    emit LogSetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
     return marketConfigs[_marketIndex];
   }
@@ -311,7 +301,7 @@ contract ConfigStorage is IConfigStorage, Owned {
     address _token,
     PLPTokenConfig memory _newConfig
   ) external onlyOwner returns (PLPTokenConfig memory _plpTokenConfig) {
-    emit SetPlpTokenConfig(_token, assetPlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
+    emit LogSetPlpTokenConfig(_token, assetPlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
     assetPlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
     return _newConfig;
   }
@@ -320,7 +310,7 @@ contract ConfigStorage is IConfigStorage, Owned {
     bytes32 _assetId,
     CollateralTokenConfig memory _newConfig
   ) external onlyOwner returns (CollateralTokenConfig memory _collateralTokenConfig) {
-    emit SetCollateralTokenConfig(_assetId, assetCollateralTokenConfigs[_assetId], _newConfig);
+    emit LogSetCollateralTokenConfig(_assetId, assetCollateralTokenConfigs[_assetId], _newConfig);
     assetCollateralTokenConfigs[_assetId] = _newConfig;
     collateralAssetIds.push(_assetId);
     return assetCollateralTokenConfigs[_assetId];
@@ -330,7 +320,7 @@ contract ConfigStorage is IConfigStorage, Owned {
     bytes32 _assetId,
     AssetConfig memory _newConfig
   ) external onlyOwner returns (AssetConfig memory _assetConfig) {
-    emit SetAssetConfig(_assetId, assetConfigs[_assetId], _newConfig);
+    emit LogSetAssetConfig(_assetId, assetConfigs[_assetId], _newConfig);
     assetConfigs[_assetId] = _newConfig;
     address _token = _newConfig.tokenAddress;
 
@@ -345,7 +335,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function setWeth(address _weth) external onlyOwner {
-    emit SetWeth(weth, _weth);
+    emit LogSetWeth(weth, _weth);
     weth = _weth;
   }
 
@@ -397,24 +387,24 @@ contract ConfigStorage is IConfigStorage, Owned {
   function addAssetClassConfig(AssetClassConfig calldata _newConfig) external onlyOwner returns (uint256 _index) {
     uint256 _newAssetClassIndex = assetClassConfigs.length;
     assetClassConfigs.push(_newConfig);
-    emit AddAssetClassConfig(_newAssetClassIndex, _newConfig);
+    emit LogAddAssetClassConfig(_newAssetClassIndex, _newConfig);
     return _newAssetClassIndex;
   }
 
   function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external onlyOwner {
-    emit SetAssetClassConfigByIndex(_index, assetClassConfigs[_index], _newConfig);
+    emit LogSetAssetClassConfigByIndex(_index, assetClassConfigs[_index], _newConfig);
     assetClassConfigs[_index] = _newConfig;
   }
 
   function addMarketConfig(MarketConfig calldata _newConfig) external onlyOwner returns (uint256 _index) {
     uint256 _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
-    emit AddMarketConfig(_newMarketIndex, _newConfig);
+    emit LogAddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;
   }
 
   function delistMarket(uint256 _marketIndex) external onlyOwner {
-    emit DelistMarket(_marketIndex);
+    emit LogDelistMarket(_marketIndex);
     delete marketConfigs[_marketIndex].active;
   }
 

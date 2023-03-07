@@ -4,8 +4,6 @@ pragma solidity 0.8.18;
 import { TradeService_Base } from "./TradeService_Base.t.sol";
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
-import { console } from "forge-std/console.sol";
 
 // What is this test DONE
 // - pre validation
@@ -43,8 +41,6 @@ import { console } from "forge-std/console.sol";
 //   - sub account is unhealthy (equity < MMR) after decreased position
 
 contract TradeService_DecreasePosition is TradeService_Base {
-  using AddressUtils for address;
-
   function setUp() public virtual override {
     super.setUp();
 

@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 // base
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -18,8 +17,6 @@ import { ITradeService } from "./interfaces/ITradeService.sol";
 
 // @todo - refactor, deduplicate code
 contract TradeService is ITradeService {
-  using AddressUtils for address;
-
   uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
 

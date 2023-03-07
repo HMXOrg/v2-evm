@@ -4,19 +4,21 @@ pragma solidity 0.8.18;
 import { console } from "forge-std/console.sol";
 
 import { BaseTest } from "@hmx-test/base/BaseTest.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
-import { TradeService } from "@hmx/services/TradeService.sol";
-import { LiquidationService } from "@hmx/services/LiquidationService.sol";
-import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
+
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 abstract contract LiquidationService_Base is BaseTest {
-  TradeService tradeService;
-  LiquidationService liquidationService;
+  ITradeService tradeService;
+  ILiquidationService liquidationService;
   PositionTester positionTester;
   PositionTester02 positionTester02;
   GlobalMarketTester globalMarketTester;
@@ -28,9 +30,14 @@ abstract contract LiquidationService_Base is BaseTest {
     globalMarketTester = new GlobalMarketTester(perpStorage);
 
     // deploy services
-    tradeService = new TradeService(address(perpStorage), address(vaultStorage), address(configStorage));
+    tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
+
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
-    liquidationService = new LiquidationService(address(perpStorage), address(vaultStorage), address(configStorage));
+    liquidationService = Deployer.deployLiquidationService(
+      address(perpStorage),
+      address(vaultStorage),
+      address(configStorage)
+    );
   }
 
   function getSubAccount(address _account, uint8 _subAccountId) internal pure returns (address) {

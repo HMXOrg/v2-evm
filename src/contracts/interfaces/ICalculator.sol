@@ -52,15 +52,13 @@ interface ICalculator {
   function getAddLiquidityFeeRate(
     address _token,
     uint256 _tokenValue,
-    ConfigStorage _configStorage,
-    VaultStorage _vaultStorage
+    ConfigStorage _configStorage
   ) external returns (uint256);
 
   function getRemoveLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    ConfigStorage _configStorage,
-    VaultStorage _vaultStorage
+    ConfigStorage _configStorage
   ) external returns (uint256);
 
   function oracle() external returns (address);

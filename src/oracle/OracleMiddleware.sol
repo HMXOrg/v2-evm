@@ -336,10 +336,6 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return _adaptivePrice > 0 ? uint256(_adaptivePrice) : 0;
   }
 
-  function isSameAssetIdOnPyth(bytes32 _assetId1, bytes32 _assetId2) external view returns (bool) {
-    return pythAdapter.isSameAsset(_assetId1, _assetId2);
-  }
-
   /// @notice Set asset price configs
   /// @param _assetId Asset's to set price config
   /// @param _confidenceThresholdE6 New price confidence threshold

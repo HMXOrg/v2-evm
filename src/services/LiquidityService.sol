@@ -207,8 +207,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeRate(
       _tokenOut,
       _lpUsdValue,
-      ConfigStorage(configStorage),
-      VaultStorage(vaultStorage)
+      ConfigStorage(configStorage)
     );
 
     _amountOut = _collectFee(
@@ -236,8 +235,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getAddLiquidityFeeRate(
       _token,
       tokenUSDValueE30,
-      ConfigStorage(configStorage),
-      VaultStorage(vaultStorage)
+      ConfigStorage(configStorage)
     );
 
     return _feeRate;

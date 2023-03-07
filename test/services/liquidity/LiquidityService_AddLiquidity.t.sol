@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LiquidityService_Base } from "./LiquidityService_Base.t.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 // LiquidityService_AddLiquidity - unit test for add liquidity function
 // What is this test DONE

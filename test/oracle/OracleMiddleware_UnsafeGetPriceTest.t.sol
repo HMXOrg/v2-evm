@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 import { OracleMiddleware_BaseTest } from "./OracleMiddleware_BaseTest.t.sol";
-import { OracleMiddleware } from "../../src/oracle/OracleMiddleware.sol";
-import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 // OracleMiddleware_UnsafeGetPriceTest - test get price without validate price stale
 // What is this test done

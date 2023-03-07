@@ -3,9 +3,9 @@ pragma solidity 0.8.18;
 
 import { LiquidationService_Base } from "./LiquidationService_Base.t.sol";
 
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 

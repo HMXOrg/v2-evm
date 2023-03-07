@@ -26,33 +26,31 @@ import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 import { Deployment } from "../../script/Deployment.s.sol";
 import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
 // Interfaces
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 // Calculator
-import { Calculator } from "../../src/contracts/Calculator.sol";
-import { FeeCalculator } from "../../src/contracts/FeeCalculator.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 
 // Handlers
-import { LiquidityHandler } from "../../src/handlers/LiquidityHandler.sol";
-import { CrossMarginHandler } from "../../src/handlers/CrossMarginHandler.sol";
-import { BotHandler } from "../../src/handlers/BotHandler.sol";
+import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
+import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
+import { BotHandler } from "@hmx/handlers/BotHandler.sol";
 
 // Services
-import { CrossMarginService } from "../../src/services/CrossMarginService.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 
 // Storages
-import { ConfigStorage } from "../../src/storages/ConfigStorage.sol";
-import { PerpStorage } from "../../src/storages/PerpStorage.sol";
-import { VaultStorage } from "../../src/storages/VaultStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
-
-import { PLPv2 } from "../../src/contracts/PLPv2.sol";
+import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 
 // Handlers
-import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
-import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
+import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
+import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
   using AddressUtils for address;

@@ -49,7 +49,7 @@ contract TradingStaking is Owned, ReentrancyGuard, ITradingStaking {
   event LogWithdraw(address indexed caller, address indexed user, uint256 indexed pid, uint256 amount);
   event LogEmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
   event LogHarvest(address indexed user, uint256 indexed pid, uint256 amount);
-  event LogAddPool(uint256 indexed pid, uint256 allocPoint, uint256 indexed marketIndex, IRewarder indexed rewarder);
+  event LogAddPool(uint256 indexed pid, uint256 allocPoint, uint256 indexed marketIndex, address indexed rewarder);
   event LogSetPool(uint256 indexed pid, uint256 allocPoint, IRewarder indexed rewarder, bool overwrite);
   event LogUpdatePool(
     uint256 indexed pid,
@@ -59,6 +59,7 @@ contract TradingStaking is Owned, ReentrancyGuard, ITradingStaking {
   );
   event LogRewardTokenPerSecond(uint256 rewardTokenPerSecond);
   event LogSetMaxRewardTokenPerSecond(uint256 maxRewardTokenPerSecond);
+  event LogSetWhitelistedCaller(address oldAddress, address newAddress);
 
   /// @param _rewardToken The rewardToken token contract address.
   constructor(address _rewardToken, uint256 _maxRewardTokenPerSecond) {
@@ -81,24 +82,19 @@ contract TradingStaking is Owned, ReentrancyGuard, ITradingStaking {
   /// @param _marketIndex Address of the staking token.
   /// @param _rewarder Address of the rewarder delegate.
   /// @param _withUpdate If true, do mass update pools.
-  function addPool(
-    uint256 _allocPoint,
-    uint256 _marketIndex,
-    IRewarder _rewarder,
-    bool _withUpdate
-  ) external onlyOwner {
+  function addPool(uint256 _allocPoint, uint256 _marketIndex, address _rewarder, bool _withUpdate) external onlyOwner {
     uint256 _newPoolId = poolInfo.length;
     if (isAcceptedMarketIndex[_marketIndex]) revert TradingStaking_DuplicatePool();
     if (_withUpdate) massUpdatePools();
 
     totalAllocPoint = totalAllocPoint + _allocPoint;
-    rewarder.push(_rewarder);
+    rewarder.push(IRewarder(_rewarder));
     isAcceptedMarketIndex[_marketIndex] = true;
     poolIdByMarketIndex[_newPoolId] = _marketIndex;
 
     if (address(_rewarder) != address(0)) {
       // Sanity check that the rewarder is a valid IRewarder.
-      _rewarder.name();
+      IRewarder(_rewarder).name();
     }
 
     poolInfo.push(
@@ -147,6 +143,11 @@ contract TradingStaking is Owned, ReentrancyGuard, ITradingStaking {
     if (_withUpdate) massUpdatePools();
     rewardTokenPerSecond = _rewardTokenPerSecond;
     emit LogRewardTokenPerSecond(_rewardTokenPerSecond);
+  }
+
+  function setWhitelistedCaller(address _whitelistedCaller) external onlyOwner {
+    emit LogSetWhitelistedCaller(whitelistedCaller, _whitelistedCaller);
+    whitelistedCaller = _whitelistedCaller;
   }
 
   /// @notice View function to see pending rewardToken on frontend.

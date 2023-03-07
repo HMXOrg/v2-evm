@@ -54,6 +54,12 @@ import { PLPv2 } from "../../src/contracts/PLPv2.sol";
 import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
 import { MarketTradeHandler } from "../../src/handlers/MarketTradeHandler.sol";
 
+// Hooks
+import { TradingStakingHook } from "../../src/staking/TradingStakingHook.sol";
+
+// Staking
+import { TradingStaking } from "../../src/staking/TradingStaking.sol";
+
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
   using AddressUtils for address;
 
@@ -499,5 +505,19 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     address _pyth
   ) internal returns (BotHandler) {
     return new BotHandler(_tradeService, _liquidationService, _pyth);
+  }
+
+  function deployTradingStaking(
+    address _rewardToken,
+    uint256 _maxRewardTokenPerSecond
+  ) internal returns (TradingStaking) {
+    return new TradingStaking(_rewardToken, _maxRewardTokenPerSecond);
+  }
+
+  function deployTradingStakingHook(
+    address _tradingStaking,
+    address _tradeService
+  ) internal returns (TradingStakingHook) {
+    return new TradingStakingHook(_tradingStaking, _tradeService);
   }
 }

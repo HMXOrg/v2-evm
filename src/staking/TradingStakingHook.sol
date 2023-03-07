@@ -7,8 +7,9 @@ import { ITradeServiceHook } from "../services/interfaces/ITradeServiceHook.sol"
 import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
 
-contract TradingStaking is ITradeServiceHook, Owned {
+contract TradingStakingHook is ITradeServiceHook, Owned {
   error ITradingStaking_Forbidden();
+  error ITradingStaking_WrongPool();
 
   address public tradingStaking;
   address public tradeService;
@@ -39,6 +40,8 @@ contract TradingStaking is ITradeServiceHook, Owned {
         ITradingStaking(tradingStaking).poolIdByMarketIndex(_marketIndex),
         _sizeDelta
       );
+    } else {
+      revert ITradingStaking_WrongPool();
     }
   }
 
@@ -54,6 +57,8 @@ contract TradingStaking is ITradeServiceHook, Owned {
         ITradingStaking(tradingStaking).poolIdByMarketIndex(_marketIndex),
         _sizeDelta
       );
+    } else {
+      revert ITradingStaking_WrongPool();
     }
   }
 }

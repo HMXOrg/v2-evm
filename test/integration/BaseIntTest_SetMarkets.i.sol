@@ -19,6 +19,7 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest {
   // forex
   bytes32 internal constant jpyAssetId = "jpy";
 
+  // @todo - setting discuss
   constructor() {
     // IMF = 1%, Max leverage = 100, MMF = 0.5%
     _addMarketConfig(wethAssetId, 1, 100, 50);

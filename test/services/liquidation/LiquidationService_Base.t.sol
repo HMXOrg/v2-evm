@@ -3,16 +3,16 @@ pragma solidity 0.8.18;
 
 import { console } from "forge-std/console.sol";
 
-import { BaseTest } from "../../base/BaseTest.sol";
+import { BaseTest } from "@hmx-test/base/BaseTest.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
-import { TradeService } from "../../../src/services/TradeService.sol";
-import { LiquidationService } from "../../../src/services/LiquidationService.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
+import { TradeService } from "@hmx/services/TradeService.sol";
+import { LiquidationService } from "@hmx/services/LiquidationService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 abstract contract LiquidationService_Base is BaseTest {
   TradeService tradeService;

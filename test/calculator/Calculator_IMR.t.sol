@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { Calculator_Base } from "./Calculator_Base.t.sol";
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 // What is this test DONE
 // - success

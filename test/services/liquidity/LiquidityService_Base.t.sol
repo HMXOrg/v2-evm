@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { BaseTest } from "../../base/BaseTest.sol";
+import { BaseTest } from "@hmx-test/base/BaseTest.sol";
 
-import { LiquidityService } from "../../../src/services/LiquidityService.sol";
+import { LiquidityService } from "@hmx/services/LiquidityService.sol";
 
 abstract contract LiquidityService_Base is BaseTest {
   LiquidityService liquidityService;

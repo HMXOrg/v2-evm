@@ -56,7 +56,7 @@ interface IPerpStorage {
 
   function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory);
 
-  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory);
+  function getGlobalAssetClassByIndex(uint8 _assetClassIndex) external view returns (GlobalAssetClass memory);
 
   function getGlobalState() external view returns (GlobalState memory);
 
@@ -86,7 +86,7 @@ interface IPerpStorage {
 
   function removePositionFromSubAccount(address _subAccount, bytes32 _positionId) external;
 
-  function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
+  function updateGlobalAssetClass(uint8 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
 
   function updateSubAccountFee(address _subAccount, int256 fee) external;
 

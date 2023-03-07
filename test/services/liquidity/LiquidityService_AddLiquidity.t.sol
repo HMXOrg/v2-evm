@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LiquidityService_Base } from "./LiquidityService_Base.t.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 // LiquidityService_AddLiquidity - unit test for add liquidity function
 // What is this test DONE
@@ -10,6 +10,7 @@ import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.
 //   - add liquidity
 // - revert
 //   - add liquidity when circuit break
+//   - remove liquidity when circuit break
 //   - add liquidity on unlisted token
 //   - add liquidity on not accepted token
 //   - add liquidity with zero amount
@@ -46,12 +47,16 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
   // add liquidity when circuit break
   function testRevert_WhenCircuitBreak_PLPShouldNotAddLiquidity() external {
     // disable liquidity config
-    IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
-    _liquidityConfig.enabled = false;
-    configStorage.setLiquidityConfig(_liquidityConfig);
-
+    configStorage.setLiquidityEnabled(false);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
+  }
+
+  // remove liquidity when circuit break
+  function testRevert_WhenCircuitBreak_PLPShouldNotRemoveLiquidity() external {
+    configStorage.setLiquidityEnabled(false);
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
+    liquidityService.removeLiquidity(ALICE, address(weth), 10 ether, 0);
   }
 
   // add liquidity on unlisted token

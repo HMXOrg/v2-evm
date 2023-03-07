@@ -1,24 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-// @todo - convert to upgradable
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+//base
+import { Owned } from "@hmx/base/Owned.sol";
+import { IteratableAddressList } from "@hmx/libraries/IteratableAddressList.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { AddressUtils } from "../libraries/AddressUtils.sol";
-
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
-import { AddressUtils } from "../libraries/AddressUtils.sol";
-import { IteratableAddressList } from "../libraries/IteratableAddressList.sol";
-
-import { Owned } from "../base/Owned.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
-contract ConfigStorage is ReentrancyGuard, IConfigStorage, Owned {
-  using AddressUtils for address;
+contract ConfigStorage is IConfigStorage, Owned {
   using IteratableAddressList for IteratableAddressList.List;
   using SafeERC20 for ERC20;
 
@@ -49,6 +43,15 @@ contract ConfigStorage is ReentrancyGuard, IConfigStorage, Owned {
   event AddMarketConfig(uint256 index, MarketConfig newConfig);
   event RemoveUnderlying(address token);
   event DelistMarket(uint256 marketIndex);
+  event LogSetServiceExecutor(address indexed _contractAddress, address _executorAddress, bool _isServiceExecutor);
+  event LogSetCalculator(address _calculator);
+  event LogSetFeeCalculator(address _feeCalculator);
+  event LogSetPLP(address _plp);
+  event LogSetLiquidityConfig(LiquidityConfig _liquidityConfig);
+  event LogSetDynamicEnabled(bool _enabled);
+  event LogSetLiquidityEnabled(bool _enabled);
+  event LogAddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
+  event LogRemoveUnderlying(address _token);
 
   /**
    * Constants
@@ -245,11 +248,17 @@ contract ConfigStorage is ReentrancyGuard, IConfigStorage, Owned {
     emit SetLiquidityConfig(liquidityConfig, _liquidityConfig);
     // @todo - sanity check
     liquidityConfig = _liquidityConfig;
+    emit LogSetLiquidityConfig(liquidityConfig);
   }
 
-  function setDynamicEnabled(bool enabled) external onlyOwner {
-    liquidityConfig.dynamicFeeEnabled = enabled;
-    emit SetDynamicEnabled(enabled);
+  function setLiquidityEnabled(bool _enabled) external {
+    liquidityConfig.enabled = _enabled;
+    emit LogSetLiquidityEnabled(_enabled);
+  }
+
+  function setDynamicEnabled(bool _enabled) external {
+    liquidityConfig.dynamicFeeEnabled = _enabled;
+    emit LogSetDynamicEnabled(_enabled);
   }
 
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external onlyOwner {
@@ -265,7 +274,8 @@ contract ConfigStorage is ReentrancyGuard, IConfigStorage, Owned {
     bool _isServiceExecutor
   ) external onlyOwner {
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
-    emit SetServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
+
+    emit LogSetServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
   }
 
   function setPnlFactor(uint32 _pnlFactorBPS) external onlyOwner {
@@ -363,7 +373,8 @@ contract ConfigStorage is ReentrancyGuard, IConfigStorage, Owned {
         plpAssetIds.push(_assetId);
       }
       // Log
-      emit AddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
+
+      emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 
       // Update totalWeight accordingly
 
@@ -430,6 +441,6 @@ contract ConfigStorage is ReentrancyGuard, IConfigStorage, Owned {
     // Delete plpTokenConfig
     delete assetPlpTokenConfigs[_assetId];
 
-    emit RemoveUnderlying(_token);
+    emit LogRemoveUnderlying(_token);
   }
 }

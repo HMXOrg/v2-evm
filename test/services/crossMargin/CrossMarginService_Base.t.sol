@@ -2,20 +2,20 @@
 pragma solidity 0.8.18;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { BaseTest, CrossMarginService, IConfigStorage, MockErc20 } from "../../base/BaseTest.sol";
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
-import { console } from "forge-std/console.sol";
+import { BaseTest, IConfigStorage, MockErc20 } from "@hmx-test/base/BaseTest.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 contract CrossMarginService_Base is BaseTest {
-  using AddressUtils for address;
   address internal CROSS_MARGIN_HANDLER;
 
-  CrossMarginService crossMarginService;
+  ICrossMarginService crossMarginService;
 
   function setUp() public virtual {
     CROSS_MARGIN_HANDLER = makeAddr("CROSS_MARGIN_HANDLER");
 
-    crossMarginService = deployCrossMarginService(
+    crossMarginService = Deployer.deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
       address(mockCalculator)

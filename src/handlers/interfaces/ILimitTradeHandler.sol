@@ -34,6 +34,37 @@ interface ILimitTradeHandler {
   }
 
   /**
+   * States
+   */
+
+  function pyth() external returns (address);
+
+  function tradeService() external returns (address);
+
+  function minExecutionFee() external returns (uint256);
+
+  function orderExecutors(address _address) external returns (bool);
+
+  function limitOrdersIndex(address _address) external returns (uint256);
+
+  function limitOrders(
+    address _subAccount,
+    uint256 _index
+  )
+    external
+    returns (
+      address account,
+      address tpToken,
+      bool triggerAboveThreshold,
+      bool reduceOnly,
+      int256 sizeDelta,
+      uint8 subAccountId,
+      uint256 marketIndex,
+      uint256 triggerPrice,
+      uint256 executionFee
+    );
+
+  /**
    * Setters
    */
   function setTradeService(address _newTradeService) external;
@@ -75,4 +106,6 @@ interface ILimitTradeHandler {
     bool _reduceOnly,
     address _tpToken
   ) external;
+
+  function setPyth(address _pyth) external;
 }

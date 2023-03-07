@@ -3,18 +3,20 @@ pragma solidity 0.8.18;
 
 import { console } from "forge-std/console.sol";
 
-import { BaseTest } from "../../base/BaseTest.sol";
+import { BaseTest } from "@hmx-test/base/BaseTest.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-import { PositionTester } from "../../testers/PositionTester.sol";
-import { PositionTester02 } from "../../testers/PositionTester02.sol";
-import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
+import { PositionTester } from "@hmx-test/testers/PositionTester.sol";
+import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
+import { GlobalMarketTester } from "@hmx-test/testers/GlobalMarketTester.sol";
 
-import { TradeService } from "../../../src/services/TradeService.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 abstract contract TradeService_Base is BaseTest {
-  TradeService tradeService;
+  ITradeService tradeService;
+
   PositionTester positionTester;
   PositionTester02 positionTester02;
   GlobalMarketTester globalMarketTester;
@@ -26,11 +28,12 @@ abstract contract TradeService_Base is BaseTest {
     globalMarketTester = new GlobalMarketTester(perpStorage);
 
     // deploy services
-    tradeService = new TradeService(address(perpStorage), address(vaultStorage), address(configStorage));
+    tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
     perpStorage.setServiceExecutors(address(tradeService), true);
 
     vaultStorage.setServiceExecutors(address(tradeService), true);
+    vaultStorage.setServiceExecutors(address(feeCalculator), true);
     vaultStorage.setServiceExecutors(address(this), true);
   }
 

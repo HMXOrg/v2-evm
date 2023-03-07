@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { AddressUtils } from "../libraries/AddressUtils.sol";
-
 import { IFeeCalculator } from "./interfaces/IFeeCalculator.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 
 contract FeeCalculator is IFeeCalculator {
-  // using libs for type
-  using AddressUtils for address;
-
   /**
    * States
    */

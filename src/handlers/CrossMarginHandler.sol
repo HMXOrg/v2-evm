@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-
+// base
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
-// Interfaces
-import { ICrossMarginHandler } from "./interfaces/ICrossMarginHandler.sol";
-import { ICrossMarginService } from "../services/interfaces/ICrossMarginService.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
+// interfaces
+import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
@@ -44,7 +44,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     pyth = _pyth;
 
     // Sanity check
-    ICrossMarginService(_crossMarginService).vaultStorage();
+    CrossMarginService(_crossMarginService).vaultStorage();
     IPyth(_pyth).getValidTimePeriod();
   }
 
@@ -54,7 +54,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
   // NOTE: Validate only accepted collateral token to be deposited
   modifier onlyAcceptedToken(address _token) {
-    IConfigStorage(ICrossMarginService(crossMarginService).configStorage()).validateAcceptedCollateral(_token);
+    ConfigStorage(CrossMarginService(crossMarginService).configStorage()).validateAcceptedCollateral(_token);
     _;
   }
 
@@ -70,7 +70,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     crossMarginService = _crossMarginService;
 
     // Sanity check
-    ICrossMarginService(_crossMarginService).vaultStorage();
+    CrossMarginService(_crossMarginService).vaultStorage();
   }
 
   /// @notice Set new Pyth contract address.
@@ -101,10 +101,10 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     uint256 _amount
   ) external nonReentrant onlyAcceptedToken(_token) {
     // Transfer depositing token from trader's wallet to VaultStorage
-    ERC20(_token).safeTransferFrom(msg.sender, ICrossMarginService(crossMarginService).vaultStorage(), _amount);
+    ERC20(_token).safeTransferFrom(msg.sender, CrossMarginService(crossMarginService).vaultStorage(), _amount);
 
     // Call service to deposit collateral
-    ICrossMarginService(crossMarginService).depositCollateral(_account, _subAccountId, _token, _amount);
+    CrossMarginService(crossMarginService).depositCollateral(_account, _subAccountId, _token, _amount);
 
     emit LogDepositCollateral(_account, _subAccountId, _token, _amount);
   }
@@ -127,7 +127,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // Call service to withdraw collateral
-    ICrossMarginService(crossMarginService).withdrawCollateral(_account, _subAccountId, _token, _amount);
+    CrossMarginService(crossMarginService).withdrawCollateral(_account, _subAccountId, _token, _amount);
 
     emit LogWithdrawCollateral(_account, _subAccountId, _token, _amount);
   }

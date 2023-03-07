@@ -7,7 +7,11 @@ import { IBotHandler } from "./interfaces/IBotHandler.sol";
 import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { LiquidationService } from "../services/LiquidationService.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
+// contracts
+import { TradeService } from "@hmx/services/TradeService.sol";
+// interfaces
+import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
 // @todo - integrate with BotHandler in another PRs
 contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
@@ -64,8 +68,8 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken
-  ) external nonReentrant onlyPositionManager {
-    ITradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+  ) external onlyPositionManager {
+    TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
 
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }
@@ -92,7 +96,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     tradeService = _newTradeService;
 
     // Sanity check
-    ITradeService(_newTradeService).configStorage();
+    TradeService(_newTradeService).configStorage();
   }
 
   /// @notice This function use to set address who can close position when emergency happen

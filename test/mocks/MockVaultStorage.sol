@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 contract MockVaultStorage {
   mapping(address => mapping(address => uint256)) public traderBalances;

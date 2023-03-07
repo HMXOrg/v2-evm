@@ -1,26 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest } from "../../base/BaseTest.sol";
+import { BaseTest } from "@hmx-test/base/BaseTest.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { TradeService } from "../../../src/services/TradeService.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
-import { BotHandler } from "../../../src/handlers/BotHandler.sol";
+import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
 contract BotHandler_Base is BaseTest {
-  TradeService tradeService;
+  ITradeService tradeService;
+
   PositionTester positionTester;
   PositionTester02 positionTester02;
   GlobalMarketTester globalMarketTester;
 
-  BotHandler botHandler;
+  IBotHandler botHandler;
   bytes[] prices;
 
   function setUp() public virtual {
@@ -33,9 +35,9 @@ contract BotHandler_Base is BaseTest {
     globalMarketTester = new GlobalMarketTester(perpStorage);
 
     // deploy services
-    tradeService = new TradeService(address(perpStorage), address(vaultStorage), address(configStorage));
+    tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
 
-    botHandler = deployBotHandler(address(tradeService), address(mockLiquidationService), address(mockPyth));
+    botHandler = Deployer.deployBotHandler(address(tradeService), address(mockLiquidationService), address(mockPyth));
 
     address[] memory _positionManagers = new address[](1);
     _positionManagers[0] = address(this);

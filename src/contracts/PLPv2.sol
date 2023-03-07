@@ -8,7 +8,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // Interfaces
 import { IPLPv2 } from "./interfaces/IPLPv2.sol";
 
-contract PLPv2 is ReentrancyGuard, Ownable, IPLPv2, ERC20("PLPv2", "Perp88 LP v2") {
+contract PLPv2 is ReentrancyGuard, Ownable, ERC20("PLPv2", "Perp88 LP v2") {
   mapping(address => bool) public minters;
 
   event SetMinter(address indexed minter, bool isMinter);
@@ -19,7 +19,7 @@ contract PLPv2 is ReentrancyGuard, Ownable, IPLPv2, ERC20("PLPv2", "Perp88 LP v2
 
   modifier onlyMinter() {
     if (!minters[msg.sender]) {
-      revert IPLPv2_onlyMinter();
+      revert IPLPv2.IPLPv2_onlyMinter();
     }
     _;
   }

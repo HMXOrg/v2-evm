@@ -5,7 +5,6 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
 import { Owned } from "../base/Owned.sol";
 
@@ -82,7 +81,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     return globalMarkets[_marketIndex];
   }
 
-  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
+  function getGlobalAssetClassByIndex(uint8 _assetClassIndex) external view returns (GlobalAssetClass memory) {
     return globalAssetClass[_assetClassIndex];
   }
 
@@ -173,7 +172,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   }
 
   function updateGlobalAssetClass(
-    uint256 _assetClassIndex,
+    uint8 _assetClassIndex,
     GlobalAssetClass memory _newAssetClass
   ) external onlyWhitelistedExecutor {
     globalAssetClass[_assetClassIndex] = _newAssetClass;

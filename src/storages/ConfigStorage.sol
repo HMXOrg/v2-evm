@@ -234,9 +234,9 @@ contract ConfigStorage is IConfigStorage, Owned {
     liquidityConfig.enabled = _enabled;
   }
 
-  function setDynamicEnabled(bool enabled) external {
-    liquidityConfig.dynamicFeeEnabled = enabled;
-    emit SetDynamicEnabled(enabled);
+  function setDynamicEnabled(bool _enabled) external {
+    liquidityConfig.dynamicFeeEnabled = _enabled;
+    emit SetDynamicEnabled(_enabled);
   }
 
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external {

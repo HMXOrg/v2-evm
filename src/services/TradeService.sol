@@ -973,26 +973,6 @@ contract TradeService is ITradeService {
       BPS;
   }
 
-  /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.
-  /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
-  /// @param _reservedValue The reserved value of the asset class.
-  /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
-  /// @return borrowingFee The calculated borrowing fee for the asset class.
-  function getBorrowingFee(
-    uint8 _assetClassIndex,
-    uint256 _reservedValue,
-    uint256 _entryBorrowingRate
-  ) public view returns (uint256 borrowingFee) {
-    // Get the global asset class.
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
-      _assetClassIndex
-    );
-    // Calculate borrowing rate.
-    uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
-    // Calculate the borrowing fee based on reserved value, borrowing rate.
-    return (_reservedValue * _borrowingRate) / RATE_PRECISION;
-  }
-
   /// @notice This function collects margin fee from position
   /// @param _subAccount The sub-account from which to collect the fee.
   /// @param _absSizeDelta Position size to be increased or decreased in absolute value
@@ -1008,6 +988,7 @@ contract TradeService is ITradeService {
     uint32 _positionFeeBPS
   ) public {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     // Get the debt fee of the sub-account
     int256 feeUsd = _perpStorage.getSubAccountFee(_subAccount);
@@ -1019,7 +1000,7 @@ contract TradeService is ITradeService {
     emit LogCollectTradingFee(_subAccount, _assetClassIndex, tradingFeeUsd);
 
     // Calculate the borrowing fee
-    uint256 borrowingFee = getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
+    uint256 borrowingFee = _calculator.getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
     feeUsd += int(borrowingFee);
 
     emit LogCollectBorrowingFee(_subAccount, _assetClassIndex, borrowingFee);

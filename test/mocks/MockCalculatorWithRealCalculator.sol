@@ -35,6 +35,18 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
+  function getBorrowingFee(
+    uint8 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) public view override returns (uint256 borrowingFee) {
+    if (actualFunction[keccak256("getBorrowingFee")]) {
+      return c.getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
+    } else {
+      return super.getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
+    }
+  }
+
   function getNextFundingRate(
     uint256 _marketIndex,
     uint256 _limitPriceE30

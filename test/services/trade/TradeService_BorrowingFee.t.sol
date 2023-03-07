@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { TradeService_Base } from "./TradeService_Base.t.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
 
 // What is this test DONE
 // - success
@@ -12,6 +13,17 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 contract TradeService_BorrowingFee is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getBorrowingFee");
+      configStorage.setCalculator(address(mockCalculator));
+    }
   }
 
   function testCorrectness_borrowingFee_WhenIncreasePosition() external {

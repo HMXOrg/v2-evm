@@ -183,6 +183,14 @@ contract MockCalculator is ICalculator {
     return fundingFee;
   }
 
+  function getBorrowingFee(
+    uint8 /*_assetClassIndex*/,
+    uint256 /*_reservedValue*/,
+    uint256 /*_entryBorrowingRate*/
+  ) public view virtual returns (uint256 borrowingFee) {
+    return borrowingFee;
+  }
+
   function getNextFundingRate(
     uint256 /*marketIndex*/,
     uint256 /*limitPrice*/

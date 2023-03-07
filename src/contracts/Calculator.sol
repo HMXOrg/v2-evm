@@ -875,6 +875,26 @@ contract Calculator is Owned, ICalculator {
     }
   }
 
+  /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.
+  /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
+  /// @param _reservedValue The reserved value of the asset class.
+  /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
+  /// @return borrowingFee The calculated borrowing fee for the asset class.
+  function getBorrowingFee(
+    uint8 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) external view returns (uint256 borrowingFee) {
+    // Get the global asset class.
+    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+    // Calculate borrowing rate.
+    uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
+    // Calculate the borrowing fee based on reserved value, borrowing rate.
+    return (_reservedValue * _borrowingRate) / RATE_PRECISION;
+  }
+
   function _max(int256 a, int256 b) internal pure returns (int256) {
     return a > b ? a : b;
   }

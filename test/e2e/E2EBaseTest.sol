@@ -33,7 +33,7 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
   ERC20 usdt; // decimals 6
   ERC20 dai; // decimals 18
 
-  ERC20 uni; //decimals 18
+  ERC20 gmx; //decimals 18
 
   address jpy = address(0);
 
@@ -43,7 +43,7 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant wethAssetId = "weth";
   bytes32 internal constant wbtcAssetId = "wbtc";
 
-  bytes32 internal constant uniAssetId = "uni";
+  bytes32 internal constant gmxAssetId = "gmx";
 
   bytes32 internal constant jpyAssetId = "jpy";
 

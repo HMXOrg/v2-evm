@@ -8,7 +8,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetMarkets {
    * Liquidity
    */
 
-  /// @notice Helper function to create liquidity and execute order
+  /// @notice Helper function to create liquidity and execute order via handler
   /// @param _liquidityProvider liquidity provider address
   /// @param _tokenIn liquidity token to add
   /// @param _amountIn amount of token to provide
@@ -29,7 +29,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetMarkets {
     liquidityHandler.executeOrder(_liquidityProvider, 0, _priceData);
   }
 
-  /// @notice Helper function to remove liquidity and execute order
+  /// @notice Helper function to remove liquidity and execute order via handler
   /// @param _liquidityProvider liquidity provider address
   /// @param _tokenOut liquidity token to remove
   /// @param _amountIn PLP amount to remove
@@ -49,4 +49,45 @@ contract BaseIntTest_WithActions is BaseIntTest_SetMarkets {
 
     liquidityHandler.executeOrder(_liquidityProvider, 0, _priceData);
   }
+
+  /**
+   * Cross Margin
+   */
+  /// @notice Helper function to deposit collateral via handler
+  /// @param _account Trader's address
+  /// @param _subAccountId Trader's sub-account ID
+  /// @param _collateralToken Collateral token address
+  /// @param _depositAmount amount to deposit
+  function depositCollateral(
+    address _account,
+    uint8 _subAccountId,
+    address _collateralToken,
+    uint256 _depositAmount
+  ) internal {
+    // @todo - approve token
+    vm.prank(_account);
+    crossMarginHandler.depositCollateral(_account, _subAccountId, _collateralToken, _depositAmount);
+  }
+
+  /// @notice Helper function to withdraw collateral via handler
+  /// @param _account Trader's address
+  /// @param _subAccountId Trader's sub-account ID
+  /// @param _collateralToken Collateral token address
+  /// @param _depositAmount amount to deposit
+  /// @param _priceData Pyth's price data
+  function withdrawCollateral(
+    address _account,
+    uint8 _subAccountId,
+    address _collateralToken,
+    uint256 _withdrawAmount,
+    bytes[] calldata _priceData
+  ) internal {
+    // @todo - approve
+    vm.prank(_account);
+    crossMarginHandler.withdrawCollateral(_account, _subAccountId, _collateralToken, _depositAmount, _priceData);
+  }
+
+  /**
+   * Trade
+   */
 }

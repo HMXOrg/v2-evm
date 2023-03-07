@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { console } from "forge-std/console.sol";
 
-import { BaseTest } from "../../base/BaseTest.sol";
+import { BaseTest } from "@hmx-test/base/BaseTest.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";

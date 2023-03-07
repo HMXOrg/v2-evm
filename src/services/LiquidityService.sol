@@ -1,19 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-// interfaces
-import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
-import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
+// base
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
-import { PLPv2 } from "../contracts/PLPv2.sol";
-import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
-import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
-/// @title LiquidityService
+// contracts
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+
+// interfaces
+import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
+
 contract LiquidityService is ILiquidityService {
   using AddressUtils for address;
 
@@ -70,20 +73,20 @@ contract LiquidityService is ILiquidityService {
     // 1. _validate
     _validatePreAddRemoveLiquidity(_token, _amount);
 
-    if (IVaultStorage(vaultStorage).pullToken(_token) != _amount) {
+    if (VaultStorage(vaultStorage).pullToken(_token) != _amount) {
       revert LiquidityService_InvalidInputAmount();
     }
 
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     // 2. getMinPrice for using to join Pool
-    (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(_token.toBytes32(), false);
+    (uint256 _price, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(_token.toBytes32(), false);
 
     // 3. get aum and lpSupply before deduction fee
     // TODO realize farm pnl to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(true, 0, 0);
 
-    uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
+    uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
       _token,
@@ -96,7 +99,7 @@ contract LiquidityService is ILiquidityService {
     );
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
-    PLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
+    PLPv2(ConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
     emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
 
@@ -119,11 +122,11 @@ contract LiquidityService is ILiquidityService {
     // 1. _validate
     _validatePreAddRemoveLiquidity(_tokenOut, _amount);
 
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     //TODO should realized to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(false, 0, 0);
-    uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
+    uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
     uint256 _lpUsdValue = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
@@ -131,8 +134,8 @@ contract LiquidityService is ILiquidityService {
     uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _amount, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
-    PLPv2(IConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
-    IVaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOut);
+    PLPv2(ConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
+    VaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOut);
 
     emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValue, _amountOut);
 
@@ -148,7 +151,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _aum,
     uint256 _lpSupply
   ) internal returns (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) {
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
     uint256 amountAfterFee = _collectFee(
       CollectFeeRequest(
         _token,
@@ -162,7 +165,7 @@ contract LiquidityService is ILiquidityService {
 
     // 4. Calculate mintAmount
     _tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
-      IConfigStorage(configStorage).getAssetTokenDecimal(_token),
+      ConfigStorage(configStorage).getAssetTokenDecimal(_token),
       USD_DECIMALS,
       (amountAfterFee * _price) / PRICE_PRECISION
     );
@@ -173,7 +176,7 @@ contract LiquidityService is ILiquidityService {
     if (mintAmount < _minAmount) revert LiquidityService_InsufficientLiquidityMint();
 
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
-    IVaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
+    VaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
 
     _validatePLPHealthCheck(_token);
 
@@ -187,24 +190,24 @@ contract LiquidityService is ILiquidityService {
     address _lpProvider,
     uint256 _minAmount
   ) internal returns (uint256) {
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
-    (uint256 _maxPrice, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(_tokenOut.toBytes32(), true);
+    (uint256 _maxPrice, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(_tokenOut.toBytes32(), true);
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
       30,
-      IConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
+      ConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
       (_lpUsdValue * PRICE_PRECISION) / _maxPrice
     );
 
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
-    IVaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
+    VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
 
-    uint256 _feeRate = ICalculator(IConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeRate(
+    uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeRate(
       _tokenOut,
       _lpUsdValue,
-      IConfigStorage(configStorage)
+      ConfigStorage(configStorage)
     );
 
     _amountOut = _collectFee(
@@ -218,9 +221,9 @@ contract LiquidityService is ILiquidityService {
     return _amountOut;
   }
 
-  function _getFeeRate(address _token, uint256 _amount, uint256 _price) internal returns (uint256) {
-    uint256 tokenUSDValueE30 = ICalculator(IConfigStorage(configStorage).calculator()).convertTokenDecimals(
-      IConfigStorage(configStorage).getAssetTokenDecimal(_token),
+  function _getFeeRate(address _token, uint256 _amount, uint256 _price) internal view returns (uint256) {
+    uint256 tokenUSDValueE30 = Calculator(ConfigStorage(configStorage).calculator()).convertTokenDecimals(
+      ConfigStorage(configStorage).getAssetTokenDecimal(_token),
       USD_DECIMALS,
       (_amount * _price) / PRICE_PRECISION // tokenValueInDecimal = amount * priceE30 / 1e30
     );
@@ -229,10 +232,10 @@ contract LiquidityService is ILiquidityService {
       revert LiquidityService_InsufficientLiquidityMint();
     }
 
-    uint256 _feeRate = ICalculator(IConfigStorage(configStorage).calculator()).getAddLiquidityFeeRate(
+    uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getAddLiquidityFeeRate(
       _token,
       tokenUSDValueE30,
-      IConfigStorage(configStorage)
+      ConfigStorage(configStorage)
     );
 
     return _feeRate;
@@ -242,8 +245,8 @@ contract LiquidityService is ILiquidityService {
   function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
     uint256 _fee = (_request._amount * _request._feeRate) / RATE_PRECISION;
 
-    IVaultStorage(vaultStorage).addFee(_request._token, _fee);
-    uint256 _decimals = IConfigStorage(configStorage).getAssetTokenDecimal(_request._token);
+    VaultStorage(vaultStorage).addFee(_request._token, _fee);
+    uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_request._token);
 
     if (_request._action == LiquidityAction.SWAP) {
       emit CollectSwapFee(_request._account, _request._token, (_fee * _request._tokenPriceUsd) / 10 ** _decimals, _fee);
@@ -268,15 +271,15 @@ contract LiquidityService is ILiquidityService {
   function _validatePLPHealthCheck(address _token) internal view {
     // liquidityLeft < bufferLiquidity
     if (
-      IVaultStorage(vaultStorage).plpLiquidity(_token) <
-      IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).bufferLiquidity
+      VaultStorage(vaultStorage).plpLiquidity(_token) <
+      ConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).bufferLiquidity
     ) {
       revert LiquidityService_InsufficientLiquidityBuffer();
     }
 
-    IConfigStorage.LiquidityConfig memory _liquidityConfig = IConfigStorage(configStorage).getLiquidityConfig();
-    IPerpStorage.GlobalState memory _globalState = IPerpStorage(perpStorage).getGlobalState();
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
+    ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
+    PerpStorage.GlobalState memory _globalState = PerpStorage(perpStorage).getGlobalState();
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     // Validate Max PLP Utilization
     // =====================================
@@ -295,13 +298,13 @@ contract LiquidityService is ILiquidityService {
   }
 
   function _validatePreAddRemoveLiquidity(address _token, uint256 _amount) internal view {
-    IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
 
-    if (!IConfigStorage(configStorage).getLiquidityConfig().enabled) {
+    if (!ConfigStorage(configStorage).getLiquidityConfig().enabled) {
       revert LiquidityService_CircuitBreaker();
     }
 
-    if (!IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).accepted) {
+    if (!ConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).accepted) {
       revert LiquidityService_InvalidToken();
     }
 

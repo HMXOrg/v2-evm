@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 

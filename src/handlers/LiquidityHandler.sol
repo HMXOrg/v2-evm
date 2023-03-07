@@ -1,20 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+// base
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
+
+// contracts
+import { LiquidityService } from "@hmx/services/LiquidityService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 // interfaces
-import { ILiquidityHandler } from "./interfaces/ILiquidityHandler.sol";
-import { ILiquidityService } from "../services/interfaces/ILiquidityService.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
-import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
-import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
-import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
-import { AddressUtils } from "../libraries/AddressUtils.sol";
+import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
@@ -73,7 +76,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     minExecutionFee = _minExecutionFee;
 
     // slither-disable-next-line unused-return
-    ILiquidityService(_liquidityService).perpStorage();
+    LiquidityService(_liquidityService).perpStorage();
     // slither-disable-next-line unused-return
     IPyth(_pyth).getValidTimePeriod();
   }
@@ -83,7 +86,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
    */
 
   modifier onlyAcceptedToken(address _token) {
-    IConfigStorage(ILiquidityService(liquidityService).configStorage()).validateAcceptedLiquidityToken(_token);
+    ConfigStorage(LiquidityService(liquidityService).configStorage()).validateAcceptedLiquidityToken(_token);
     _;
   }
 
@@ -93,7 +96,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   }
 
   receive() external payable {
-    if (msg.sender != IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth())
+    if (msg.sender != ConfigStorage(LiquidityService(liquidityService).configStorage()).weth())
       revert ILiquidityHandler_InvalidSender();
   }
 
@@ -167,7 +170,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
     if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
 
-    IERC20(IConfigStorage(ILiquidityService(liquidityService).configStorage()).plp()).safeTransferFrom(
+    IERC20(ConfigStorage(LiquidityService(liquidityService).configStorage()).plp()).safeTransferFrom(
       msg.sender,
       address(this),
       _amountIn
@@ -230,7 +233,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   // slither-disable-next-line
   function refund(LiquidityOrder memory _order) external {
     if (isRefund) {
-      if (_order.token == IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()) {
+      if (_order.token == ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()) {
         _transferOutETH(_order.amount, _order.account);
       } else {
         IERC20(_order.token).safeTransfer(_order.account, _order.amount);
@@ -273,11 +276,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
     if (isExecuting) {
       if (_order.isAdd) {
-        IERC20(_order.token).safeTransfer(ILiquidityService(liquidityService).vaultStorage(), _order.amount);
+        IERC20(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
         return
-          ILiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut);
+          LiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut);
       } else {
-        uint256 amountOut = ILiquidityService(liquidityService).removeLiquidity(
+        uint256 amountOut = LiquidityService(liquidityService).removeLiquidity(
           _order.account,
           _order.token,
           _order.amount,
@@ -298,7 +301,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @notice Transfer in ETH from user to be used as execution fee
   /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.
   function _transferInETH() private {
-    IWNative(IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()).deposit{ value: msg.value }();
+    IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).deposit{ value: msg.value }();
   }
 
   /// @notice Transfer out ETH to the receiver
@@ -306,7 +309,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @param _amountOut Amount of ETH to be transferred
   /// @param _receiver The receiver of ETH in its native form. The receiver must be able to accept native token.
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
-    IWNative(IConfigStorage(ILiquidityService(liquidityService).configStorage()).weth()).withdraw(_amountOut);
+    IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
     payable(_receiver).transfer(_amountOut);
   }
@@ -331,7 +334,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     if (_newLiquidityService == address(0)) revert ILiquidityHandler_InvalidAddress();
     emit LogSetLiquidityService(liquidityService, _newLiquidityService);
     liquidityService = _newLiquidityService;
-    ILiquidityService(_newLiquidityService).vaultStorage();
+    LiquidityService(_newLiquidityService).vaultStorage();
   }
 
   /// @notice setMinExecutionFee

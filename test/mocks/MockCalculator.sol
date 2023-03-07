@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { ICalculator } from "../../src/contracts/interfaces/ICalculator.sol";
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 contract MockCalculator is ICalculator {
   mapping(address => int256) equitiesOf;
@@ -148,7 +148,7 @@ contract MockCalculator is ICalculator {
   function getAddLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValue*/,
-    IConfigStorage /*_configStorage*/
+    ConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
     return 0.003 ether;
   }
@@ -156,7 +156,7 @@ contract MockCalculator is ICalculator {
   function getRemoveLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValueE30*/,
-    IConfigStorage /*_configStorage*/
+    ConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
     return 1e18;
   }

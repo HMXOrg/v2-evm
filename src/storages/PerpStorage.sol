@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
@@ -91,7 +90,7 @@ contract PerpStorage is IPerpStorage {
     return globalMarkets[_marketIndex];
   }
 
-  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
+  function getGlobalAssetClassByIndex(uint8 _assetClassIndex) external view returns (GlobalAssetClass memory) {
     return globalAssetClass[_assetClassIndex];
   }
 
@@ -138,7 +137,7 @@ contract PerpStorage is IPerpStorage {
     globalState = _newGlobalState;
   }
 
-  function updateGlobalAssetClass(uint256 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external {
+  function updateGlobalAssetClass(uint8 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external {
     globalAssetClass[_assetClassIndex] = _newAssetClass;
   }
 

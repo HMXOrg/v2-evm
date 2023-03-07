@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IConfigStorage } from "../../storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../../storages/interfaces/IVaultStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 interface ICalculator {
   /**
@@ -52,13 +52,13 @@ interface ICalculator {
   function getAddLiquidityFeeRate(
     address _token,
     uint256 _tokenValue,
-    IConfigStorage _configStorage
+    ConfigStorage _configStorage
   ) external returns (uint256);
 
   function getRemoveLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage
+    ConfigStorage _configStorage
   ) external returns (uint256);
 
   function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _imrE30);

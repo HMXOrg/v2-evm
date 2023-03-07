@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 import { IPyth, PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";

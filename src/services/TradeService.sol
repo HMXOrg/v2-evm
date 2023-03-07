@@ -72,7 +72,6 @@ contract TradeService is ITradeService {
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
-  address[] public hooks;
 
   constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
     // @todo - sanity check
@@ -1435,8 +1434,9 @@ contract TradeService is ITradeService {
     uint256 _marketIndex,
     uint256 _sizeDelta
   ) internal {
-    for (uint256 i; i < hooks.length; ) {
-      ITradeServiceHook(hooks[i]).onIncreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
+    address[] memory _hooks = IConfigStorage(configStorage).getTradeServiceHooks();
+    for (uint256 i; i < _hooks.length; ) {
+      ITradeServiceHook(_hooks[i]).onIncreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
       unchecked {
         ++i;
       }
@@ -1449,8 +1449,9 @@ contract TradeService is ITradeService {
     uint256 _marketIndex,
     uint256 _sizeDelta
   ) internal {
-    for (uint256 i; i < hooks.length; ) {
-      ITradeServiceHook(hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
+    address[] memory _hooks = IConfigStorage(configStorage).getTradeServiceHooks();
+    for (uint256 i; i < _hooks.length; ) {
+      ITradeServiceHook(_hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
       unchecked {
         ++i;
       }

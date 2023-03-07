@@ -163,6 +163,8 @@ interface IConfigStorage {
 
   function getAssetTokenDecimal(address _token) external view returns (uint8);
 
+  function getTradeServiceHooks() external view returns (address[] memory);
+
   /**
    * Setter
    */
@@ -207,4 +209,6 @@ interface IConfigStorage {
   function setWeth(address _weth) external;
 
   function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external;
+
+  function setTradeServiceHooks(address[] calldata _newHooks) external;
 }

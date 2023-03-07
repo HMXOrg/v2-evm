@@ -114,11 +114,11 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
     usdt = deployMockErc20("USD Tether", "USDT", 6);
     bad = deployMockErc20("Bad Coin", "BAD", 2);
 
-    plp = IPLPv2(Deployer.deployContract("PLPv2"));
+    plp = Deployer.deployPLPv2();
 
-    configStorage = IConfigStorage(Deployer.deployContract("ConfigStorage"));
-    perpStorage = IPerpStorage(Deployer.deployContract("PerpStorage"));
-    vaultStorage = IVaultStorage(Deployer.deployContract("VaultStorage"));
+    configStorage = Deployer.deployConfigStorage();
+    perpStorage = Deployer.deployPerpStorage();
+    vaultStorage = Deployer.deployVaultStorage();
 
     mockOracle = new MockOracleMiddleware();
     mockCalculator = new MockCalculator(address(mockOracle));
@@ -147,9 +147,7 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
     _setUpLiquidationConfig();
     _setUpAssetConfigs();
 
-    bytes memory _args = abi.encode(address(vaultStorage), address(configStorage));
-
-    feeCalculator = IFeeCalculator(Deployer.deployContractWithArguments("FeeCalculator", _args));
+    feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
 
     // set general config
     configStorage.setFeeCalculator(address(feeCalculator));
@@ -170,91 +168,6 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
   function deployPerp88v2() internal returns (Deployment.DeployReturnVars memory) {
     DeployLocalVars memory deployLocalVars = DeployLocalVars({ pyth: mockPyth, defaultOracleStaleTime: 300 });
     return deploy(deployLocalVars);
-  }
-
-  /**
-   * HANDLER
-   */
-
-  function deployCrossMarginHandler(address _crossMarginService, address _pyth) internal returns (ICrossMarginHandler) {
-    return
-      ICrossMarginHandler(
-        Deployer.deployContractWithArguments("CrossMarginHandler", abi.encode(_crossMarginService, _pyth))
-      );
-  }
-
-  function deployLiquidityHandler(
-    address _liquidityService,
-    address _pyth,
-    uint256 _minExecutionFee
-  ) internal returns (ILiquidityHandler) {
-    return
-      ILiquidityHandler(
-        Deployer.deployContractWithArguments("LiquidityHandler", abi.encode(_liquidityService, _pyth, _minExecutionFee))
-      );
-  }
-
-  function deployLimitTradeHandler(
-    address _weth,
-    address _tradeService,
-    address _pyth,
-    uint256 _minExecutionFee
-  ) internal returns (ILimitTradeHandler) {
-    return
-      ILimitTradeHandler(
-        Deployer.deployContractWithArguments(
-          "LimitTradeHandler",
-          abi.encode(_weth, _tradeService, _pyth, _minExecutionFee)
-        )
-      );
-  }
-
-  function deployMarketTradeHandler(address _tradeService, address _pyth) internal returns (IMarketTradeHandler) {
-    return
-      IMarketTradeHandler(Deployer.deployContractWithArguments("MarketTradeHandler", abi.encode(_tradeService, _pyth)));
-  }
-
-  function deployBotHandler(
-    address _tradeService,
-    address _liquidationService,
-    address _pyth
-  ) internal returns (IBotHandler) {
-    return
-      IBotHandler(
-        Deployer.deployContractWithArguments("BotHandler", abi.encode(_tradeService, _liquidationService, _pyth))
-      );
-  }
-
-  /**
-   * SERVICE
-   */
-
-  function deployCrossMarginService(
-    address _configStorage,
-    address _vaultStorage,
-    address _calculator
-  ) internal returns (ICrossMarginService) {
-    return
-      ICrossMarginService(
-        Deployer.deployContractWithArguments(
-          "CrossMarginService",
-          abi.encode(_configStorage, _vaultStorage, _calculator)
-        )
-      );
-  }
-
-  /**
-   * CALCULATOR
-   */
-
-  function deployCalculator(
-    address _oracle,
-    address _vaultStorage,
-    address _perpStorage,
-    address _configStorage
-  ) internal returns (ICalculator) {
-    bytes memory _args = abi.encode(_oracle, _vaultStorage, _perpStorage, _configStorage);
-    return ICalculator(Deployer.deployContractWithArguments("Calculator", _args));
   }
 
   /**

@@ -17,11 +17,10 @@ contract TradeService_FundingRate is Calculator_Base {
     super.setUp();
 
     // deploy services
-    tradeService = ITradeService(
-      Deployer.deployContractWithArguments(
-        "TradeService",
-        abi.encode(address(mockPerpStorage), address(mockVaultStorage), address(configStorage))
-      )
+    tradeService = Deployer.deployTradeService(
+      address(mockPerpStorage),
+      address(mockVaultStorage),
+      address(configStorage)
     );
 
     mockOracle.setExponent(-8);

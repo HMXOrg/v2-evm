@@ -2,6 +2,8 @@
 pragma solidity 0.8.18;
 
 import { BaseTest, IConfigStorage, IPerpStorage, MockErc20 } from "@hmx-test/base/BaseTest.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
@@ -22,15 +24,22 @@ contract CrossMarginHandler_Base is BaseTest {
     OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(wethAssetId, 1e6, 60);
     OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(wbtcAssetId, 1e6, 60);
 
-    calculator = deployCalculator(
+    calculator = Deployer.deployCalculator(
       address(deployed.oracleMiddleware),
       address(vaultStorage),
       address(mockPerpStorage),
       address(configStorage)
     );
 
-    crossMarginService = deployCrossMarginService(address(configStorage), address(vaultStorage), address(calculator));
-    crossMarginHandler = deployCrossMarginHandler(address(crossMarginService), address(deployed.pythAdapter.pyth()));
+    crossMarginService = Deployer.deployCrossMarginService(
+      address(configStorage),
+      address(vaultStorage),
+      address(calculator)
+    );
+    crossMarginHandler = Deployer.deployCrossMarginHandler(
+      address(crossMarginService),
+      address(deployed.pythAdapter.pyth())
+    );
 
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);

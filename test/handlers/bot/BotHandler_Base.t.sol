@@ -35,14 +35,9 @@ contract BotHandler_Base is BaseTest {
     globalMarketTester = new GlobalMarketTester(perpStorage);
 
     // deploy services
-    tradeService = ITradeService(
-      Deployer.deployContractWithArguments(
-        "TradeService",
-        abi.encode(address(perpStorage), address(vaultStorage), address(configStorage))
-      )
-    );
+    tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
 
-    botHandler = deployBotHandler(address(tradeService), address(mockLiquidationService), address(mockPyth));
+    botHandler = Deployer.deployBotHandler(address(tradeService), address(mockLiquidationService), address(mockPyth));
 
     address[] memory _positionManagers = new address[](1);
     _positionManagers[0] = address(this);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { console } from "forge-std/console.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { CrossMarginHandler_Base } from "./CrossMarginHandler_Base.t.sol";
 
@@ -31,7 +31,7 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
    */
 
   function testCorrectness_crossMarginHandler_setCrossMarginService() external {
-    ICrossMarginService newCrossMarginService = deployCrossMarginService(
+    ICrossMarginService newCrossMarginService = Deployer.deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
       address(calculator)

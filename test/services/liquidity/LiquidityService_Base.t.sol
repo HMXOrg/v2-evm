@@ -11,11 +11,10 @@ abstract contract LiquidityService_Base is BaseTest {
 
   function setUp() public virtual {
     // deploy liquidity service
-    liquidityService = ILiquidityService(
-      Deployer.deployContractWithArguments(
-        "LiquidityService",
-        abi.encode(address(configStorage), address(vaultStorage), address(perpStorage))
-      )
+    liquidityService = Deployer.deployLiquidityService(
+      address(configStorage),
+      address(vaultStorage),
+      address(perpStorage)
     );
 
     // set this Test to be service executor

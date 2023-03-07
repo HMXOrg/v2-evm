@@ -7,12 +7,9 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 import { MockCalculatorWithRealGetNextFundingRate } from "../../mocks/MockCalculatorWithRealGetNextFundingRate.sol";
 
 contract TradeService_FundingFee is TradeService_Base {
-  using AddressUtils for address;
-
   function setUp() public virtual override {
     super.setUp();
     mockCalculator = new MockCalculatorWithRealGetNextFundingRate(

@@ -62,7 +62,7 @@ contract MockTradeService is ITradeService {
     uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _positionSizeE30ToDecrease,
-    address _tpToken,
+    address /*_tpToken*/,
     uint256 _limitPriceE30
   ) external {
     decreasePositionCallCount++;
@@ -77,7 +77,28 @@ contract MockTradeService is ITradeService {
     );
   }
 
-  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
+  function forceClosePosition(
+    address /*_account*/,
+    uint8 /*_subAccountId*/,
+    uint256 /*_marketIndex*/,
+    address /*_tpToken*/
+  ) external {
     decreasePositionCallCount++;
+  }
+
+  function getNextFundingRate(
+    uint256 /*_marketIndex*/,
+    uint256 /*_price*/
+  ) external pure returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+    return (0, 0, 0);
+  }
+
+  function getDelta(
+    uint256 /*_size*/,
+    bool /*_isLong*/,
+    uint256 /*_markPrice*/,
+    uint256 /*_averagePrice*/
+  ) external pure returns (bool, uint256) {
+    return (false, 0);
   }
 }

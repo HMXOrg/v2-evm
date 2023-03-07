@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 //base
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 import { IteratableAddressList } from "@hmx/libraries/IteratableAddressList.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -14,21 +13,20 @@ import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
 contract ConfigStorage is IConfigStorage, Owned {
-  using AddressUtils for address;
   using IteratableAddressList for IteratableAddressList.List;
   using SafeERC20 for ERC20;
   /**
    * Events
    */
-  event SetServiceExecutor(address indexed _contractAddress, address _executorAddress, bool _isServiceExecutor);
-
-  event SetCalculator(address _calculator);
-  event SetFeeCalculator(address _feeCalculator);
-  event SetPLP(address _plp);
-  event SetLiquidityConfig(LiquidityConfig _liquidityConfig);
-  event SetDynamicEnabled(bool enabled);
-  event AddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
-  event RemoveUnderlying(address _token);
+  event LogSetServiceExecutor(address indexed _contractAddress, address _executorAddress, bool _isServiceExecutor);
+  event LogSetCalculator(address _calculator);
+  event LogSetFeeCalculator(address _feeCalculator);
+  event LogSetPLP(address _plp);
+  event LogSetLiquidityConfig(LiquidityConfig _liquidityConfig);
+  event LogSetDynamicEnabled(bool _enabled);
+  event LogSetLiqiduityEnabled(bool _enabled);
+  event LogAddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
+  event LogRemoveUnderlying(address _token);
 
   /**
    * Constants
@@ -200,7 +198,7 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function setCalculator(address _calculator) external {
     calculator = _calculator;
-    emit SetCalculator(calculator);
+    emit LogSetCalculator(calculator);
   }
 
   /// @notice Updates the fee calculator contract address.
@@ -208,7 +206,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   /// @param _feeCalculator The address of the new fee calculator contract.
   function setFeeCalculator(address _feeCalculator) external {
     feeCalculator = _feeCalculator;
-    emit SetFeeCalculator(_feeCalculator);
+    emit LogSetFeeCalculator(_feeCalculator);
   }
 
   function setOracle(address _oracle) external {
@@ -218,17 +216,22 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function setPLP(address _plp) external {
     plp = _plp;
-    emit SetPLP(plp);
+    emit LogSetPLP(plp);
   }
 
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external {
     liquidityConfig = _liquidityConfig;
-    emit SetLiquidityConfig(liquidityConfig);
+    emit LogSetLiquidityConfig(liquidityConfig);
   }
 
-  function setDynamicEnabled(bool enabled) external {
-    liquidityConfig.dynamicFeeEnabled = enabled;
-    emit SetDynamicEnabled(enabled);
+  function setLiquidityEnabled(bool _enabled) external {
+    liquidityConfig.enabled = _enabled;
+    emit LogSetLiqiduityEnabled(_enabled);
+  }
+
+  function setDynamicEnabled(bool _enabled) external {
+    liquidityConfig.dynamicFeeEnabled = _enabled;
+    emit LogSetDynamicEnabled(_enabled);
   }
 
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external {
@@ -244,7 +247,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   ) external onlyOwner {
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
 
-    emit SetServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
+    emit LogSetServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
   }
 
   function setPnlFactor(uint32 _pnlFactor) external onlyOwner {
@@ -335,7 +338,7 @@ contract ConfigStorage is IConfigStorage, Owned {
       }
       // Log
 
-      emit AddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
+      emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 
       // Update totalWeight accordingly
 
@@ -398,6 +401,6 @@ contract ConfigStorage is IConfigStorage, Owned {
     // Delete plpTokenConfig
     delete assetPlpTokenConfigs[_assetId];
 
-    emit RemoveUnderlying(_token);
+    emit LogRemoveUnderlying(_token);
   }
 }

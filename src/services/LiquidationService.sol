@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 // base
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -16,8 +15,6 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 
 contract LiquidationService is ILiquidationService {
-  using AddressUtils for address;
-
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
@@ -94,7 +91,7 @@ contract LiquidationService is ILiquidationService {
 
       // Calculate the amount of debt tokens to repay using the collateral token's price
       uint256 _collateralTokenDecimal = ERC20(_collateralToken).decimals();
-      (uint256 _price, ) = _oracle.getLatestPrice(_collateralToken.toBytes32(), false);
+      (uint256 _price, ) = _oracle.getLatestPrice(ConfigStorage(_configStorage).tokenAssetIds(_collateralToken), false);
 
       // Get the sub-account's balance of the collateral token from the vault storage and calculate value
       uint256 _traderBalanceValue = (VaultStorage(_vaultStorage).traderBalances(_subAccount, _collateralToken) *

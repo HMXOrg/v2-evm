@@ -3,6 +3,7 @@ src = 'src'
 out = 'out'
 libs = ['lib']
 test = 'test'
+fs_permissions = [{ access = "read-write", path = "./" }]
 
 [fmt]
 tab_width = 2

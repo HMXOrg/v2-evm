@@ -9,12 +9,7 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 /**
  * Libraries
  */
-
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
-
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
-
-import { Deployment } from "../../script/Deployment.s.sol";
 
 // Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
@@ -33,21 +28,14 @@ import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
+import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
-import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
-import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
-import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
-import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
-import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
-
-import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
-
-abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe {
-  using AddressUtils for address;
-
+abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -62,6 +50,10 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
   IPLPv2 internal plp;
   ICalculator internal calculator;
   IFeeCalculator internal feeCalculator;
+
+  // oracle
+  IOracleAdapter pythAdapter;
+  IOracleMiddleware oracleMiddleware;
 
   // mock
   MockPyth internal mockPyth;
@@ -107,12 +99,12 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
 
-    weth = deployMockWNative();
-    wbtc = deployMockErc20("Wrapped Bitcoin", "WBTC", 8);
-    dai = deployMockErc20("DAI Stablecoin", "DAI", 18);
-    usdc = deployMockErc20("USD Coin", "USDC", 6);
-    usdt = deployMockErc20("USD Tether", "USDT", 6);
-    bad = deployMockErc20("Bad Coin", "BAD", 2);
+    weth = new MockWNative();
+    wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
+    dai = new MockErc20("DAI Stablecoin", "DAI", 18);
+    usdc = new MockErc20("USD Coin", "USDC", 6);
+    usdt = new MockErc20("USD Tether", "USDT", 6);
+    bad = new MockErc20("Bad Coin", "BAD", 2);
 
     plp = Deployer.deployPLPv2();
 
@@ -128,6 +120,9 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
     mockOracle = new MockOracleMiddleware();
     mockTradeService = new MockTradeService();
     mockLiquidationService = new MockLiquidationService();
+
+    pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter));
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -154,20 +149,6 @@ abstract contract BaseTest is TestBase, Deployment, StdAssertions, StdCheatsSafe
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
     configStorage.setWeth(address(weth));
-  }
-
-  // --------- Deploy Helpers ---------
-  function deployMockWNative() internal returns (MockWNative) {
-    return new MockWNative();
-  }
-
-  function deployMockErc20(string memory name, string memory symbol, uint8 decimals) internal returns (MockErc20) {
-    return new MockErc20(name, symbol, decimals);
-  }
-
-  function deployPerp88v2() internal returns (Deployment.DeployReturnVars memory) {
-    DeployLocalVars memory deployLocalVars = DeployLocalVars({ pyth: mockPyth, defaultOracleStaleTime: 300 });
-    return deploy(deployLocalVars);
   }
 
   /**

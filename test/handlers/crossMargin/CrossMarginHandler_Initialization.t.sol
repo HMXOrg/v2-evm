@@ -42,8 +42,7 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
   }
 
   function testCorrectness_crossMarginHandler_setPyth() external {
-    DeployReturnVars memory deployed = deployPerp88v2();
-    crossMarginHandler.setPyth(address(deployed.pythAdapter.pyth()));
-    assertEq(crossMarginHandler.pyth(), address(deployed.pythAdapter.pyth()));
+    crossMarginHandler.setPyth(address(pythAdapter.pyth()));
+    assertEq(crossMarginHandler.pyth(), address(pythAdapter.pyth()));
   }
 }

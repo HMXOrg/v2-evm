@@ -8,6 +8,9 @@ import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
+import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
@@ -31,12 +34,12 @@ library Deployer {
    */
 
   function deployPLPv2() internal returns (IPLPv2) {
-    return IPLPv2(Deployer.deployContract("PLPv2"));
+    return IPLPv2(deployContract("PLPv2"));
   }
 
   function deployFeeCalculator(address _vaultStorage, address _configStorage) internal returns (IFeeCalculator) {
     bytes memory _args = abi.encode(_vaultStorage, _configStorage);
-    return IFeeCalculator(Deployer.deployContractWithArguments("FeeCalculator", _args));
+    return IFeeCalculator(deployContractWithArguments("FeeCalculator", _args));
   }
 
   function deployCalculator(
@@ -46,7 +49,19 @@ library Deployer {
     address _configStorage
   ) internal returns (ICalculator) {
     bytes memory _args = abi.encode(_oracle, _vaultStorage, _perpStorage, _configStorage);
-    return ICalculator(Deployer.deployContractWithArguments("Calculator", _args));
+    return ICalculator(deployContractWithArguments("Calculator", _args));
+  }
+
+  /**
+   * Oracles
+   */
+
+  function deployPythAdapter(address _pyth) internal returns (IOracleAdapter) {
+    return IOracleAdapter(deployContractWithArguments("PythAdapter", abi.encode(_pyth)));
+  }
+
+  function deployOracleMiddleware(address _pythAdapter) internal returns (IOracleMiddleware) {
+    return IOracleMiddleware(deployContractWithArguments("OracleMiddleware", abi.encode(_pythAdapter)));
   }
 
   /**
@@ -54,15 +69,15 @@ library Deployer {
    */
 
   function deployConfigStorage() internal returns (IConfigStorage) {
-    return IConfigStorage(Deployer.deployContract("ConfigStorage"));
+    return IConfigStorage(deployContract("ConfigStorage"));
   }
 
   function deployPerpStorage() internal returns (IPerpStorage) {
-    return IPerpStorage(Deployer.deployContract("PerpStorage"));
+    return IPerpStorage(deployContract("PerpStorage"));
   }
 
   function deployVaultStorage() internal returns (IVaultStorage) {
-    return IVaultStorage(Deployer.deployContract("VaultStorage"));
+    return IVaultStorage(deployContract("VaultStorage"));
   }
 
   /**
@@ -71,9 +86,7 @@ library Deployer {
 
   function deployCrossMarginHandler(address _crossMarginService, address _pyth) internal returns (ICrossMarginHandler) {
     return
-      ICrossMarginHandler(
-        Deployer.deployContractWithArguments("CrossMarginHandler", abi.encode(_crossMarginService, _pyth))
-      );
+      ICrossMarginHandler(deployContractWithArguments("CrossMarginHandler", abi.encode(_crossMarginService, _pyth)));
   }
 
   function deployLiquidityHandler(
@@ -83,7 +96,7 @@ library Deployer {
   ) internal returns (ILiquidityHandler) {
     return
       ILiquidityHandler(
-        Deployer.deployContractWithArguments("LiquidityHandler", abi.encode(_liquidityService, _pyth, _minExecutionFee))
+        deployContractWithArguments("LiquidityHandler", abi.encode(_liquidityService, _pyth, _minExecutionFee))
       );
   }
 
@@ -95,16 +108,12 @@ library Deployer {
   ) internal returns (ILimitTradeHandler) {
     return
       ILimitTradeHandler(
-        Deployer.deployContractWithArguments(
-          "LimitTradeHandler",
-          abi.encode(_weth, _tradeService, _pyth, _minExecutionFee)
-        )
+        deployContractWithArguments("LimitTradeHandler", abi.encode(_weth, _tradeService, _pyth, _minExecutionFee))
       );
   }
 
   function deployMarketTradeHandler(address _tradeService, address _pyth) internal returns (IMarketTradeHandler) {
-    return
-      IMarketTradeHandler(Deployer.deployContractWithArguments("MarketTradeHandler", abi.encode(_tradeService, _pyth)));
+    return IMarketTradeHandler(deployContractWithArguments("MarketTradeHandler", abi.encode(_tradeService, _pyth)));
   }
 
   function deployBotHandler(
@@ -113,9 +122,7 @@ library Deployer {
     address _pyth
   ) internal returns (IBotHandler) {
     return
-      IBotHandler(
-        Deployer.deployContractWithArguments("BotHandler", abi.encode(_tradeService, _liquidationService, _pyth))
-      );
+      IBotHandler(deployContractWithArguments("BotHandler", abi.encode(_tradeService, _liquidationService, _pyth)));
   }
 
   /**
@@ -129,10 +136,7 @@ library Deployer {
   ) internal returns (ICrossMarginService) {
     return
       ICrossMarginService(
-        Deployer.deployContractWithArguments(
-          "CrossMarginService",
-          abi.encode(_configStorage, _vaultStorage, _calculator)
-        )
+        deployContractWithArguments("CrossMarginService", abi.encode(_configStorage, _vaultStorage, _calculator))
       );
   }
 
@@ -143,7 +147,7 @@ library Deployer {
   ) internal returns (ITradeService) {
     return
       ITradeService(
-        Deployer.deployContractWithArguments("TradeService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
+        deployContractWithArguments("TradeService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
       );
   }
 
@@ -154,10 +158,7 @@ library Deployer {
   ) internal returns (ILiquidationService) {
     return
       ILiquidationService(
-        Deployer.deployContractWithArguments(
-          "LiquidationService",
-          abi.encode(_perpStorage, _vaultStorage, _configStorage)
-        )
+        deployContractWithArguments("LiquidationService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
       );
   }
 
@@ -168,10 +169,7 @@ library Deployer {
   ) internal returns (ILiquidityService) {
     return
       ILiquidityService(
-        Deployer.deployContractWithArguments(
-          "LiquidityService",
-          abi.encode(_perpStorage, _vaultStorage, _configStorage)
-        )
+        deployContractWithArguments("LiquidityService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
       );
   }
 

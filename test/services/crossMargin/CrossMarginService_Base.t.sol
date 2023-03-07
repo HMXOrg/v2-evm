@@ -5,13 +5,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { BaseTest, IConfigStorage, MockErc20 } from "@hmx-test/base/BaseTest.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
-import { console } from "forge-std/console.sol";
-
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 contract CrossMarginService_Base is BaseTest {
-  using AddressUtils for address;
   address internal CROSS_MARGIN_HANDLER;
 
   ICrossMarginService crossMarginService;

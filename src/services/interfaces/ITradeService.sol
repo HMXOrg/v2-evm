@@ -47,11 +47,6 @@ interface ITradeService {
     uint256 _limitPriceE30
   ) external;
 
-  function getNextFundingRate(
-    uint256 _marketIndex,
-    uint256 _price
-  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort);
-
   function getDelta(
     uint256 _size,
     bool _isLong,

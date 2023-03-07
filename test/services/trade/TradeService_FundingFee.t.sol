@@ -29,7 +29,6 @@ contract TradeService_FundingFee is TradeService_Base {
 
     // Set funding rate config
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(ethMarketIndex);
-    _marketConfig.assetId = "ETH"; // workaround method for resolving unit test bug
     _marketConfig.fundingRate.maxFundingRateBPS = 0.0004 * 1e4;
     _marketConfig.fundingRate.maxSkewScaleUSD = 3_000_000 * 1e30;
 
@@ -48,6 +47,7 @@ contract TradeService_FundingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1 USD
+    mockOracle.setPrice(1600 * 1e30);
     mockOracle.setPrice(wethAssetId, 1600 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
@@ -114,6 +114,7 @@ contract TradeService_FundingFee is TradeService_Base {
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
     // ETH price 1500 USD
+    mockOracle.setPrice(1500 * 1e30);
     mockOracle.setPrice(wethAssetId, 1500 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);

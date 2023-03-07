@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
-
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
@@ -16,9 +14,9 @@ contract PositionTester02 is StdAssertions {
     uint256 openInterest;
   }
 
-  PerpStorage perpStorage;
+  IPerpStorage perpStorage;
 
-  constructor(PerpStorage _perpStorage) {
+  constructor(IPerpStorage _perpStorage) {
     perpStorage = _perpStorage;
   }
 

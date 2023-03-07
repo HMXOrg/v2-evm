@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest } from "@hmx-test/integration/BaseIntTest.sol";
+import { BaseIntTest } from "@hmx-test/integration/BaseIntTest.i.sol";
 
 contract BaseIntTest_Oracle is BaseIntTest {
   function manipulatePrice() internal {}

@@ -26,9 +26,6 @@ import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 
-import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
-import { IWNative } from "@hmx/interfaces/IWNative.sol";
-
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -174,14 +171,6 @@ library Deployer {
       ILiquidityService(
         deployContractWithArguments("LiquidityService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
       );
-  }
-
-  function deployMockWNative() internal returns (IWNative) {
-    return IWNative(deployContract("WNative"));
-  }
-
-  function deployMockPyth(uint _validTimePeriod, uint _singleUpdateFeeInWei) internal returns (address) {
-    return deployContractWithArguments("MockPyth", abi.encode(_validTimePeriod, _singleUpdateFeeInWei));
   }
 
   /**

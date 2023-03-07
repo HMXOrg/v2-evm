@@ -33,7 +33,7 @@ import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationServic
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
-  uint32 internal constant DOLLAR = 1e30;
+  uint256 internal constant DOLLAR = 1e30;
 
   address internal ALICE;
   address internal BOB;
@@ -88,9 +88,9 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     DAVE = makeAddr("DAVE");
 
     // deploy MOCK weth
-    weth = Deployer.deployMockWNative();
+    weth = IWNative(Deployer.deployContract("WNative"));
 
-    pyth = Deployer.deployMockPyth(60, 1);
+    pyth = address(new MockPyth(60, 1));
 
     // deploy pyth adapter
     oracleAdapter = Deployer.deployPythAdapter(pyth);

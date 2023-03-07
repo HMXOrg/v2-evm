@@ -44,31 +44,27 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest {
   /// @param _assetClass Crypto = 1, Stock = 2, Forex = 3
   /// @param _imf Initail Margin Fraction
   /// @param _mmf Maintenance Margin Fraction
-  function _addMarketConfig(bytes32 calldata _assetId, uint8 _assetClass, uint32 _imf, uint32 _mmf) private {
+  function _addMarketConfig(bytes32 _assetId, uint8 _assetClass, uint32 _imf, uint32 _mmf) private {
     // default market config
-    IConfigStorage.MarketConfig memory _newMarketConfig;
-    IConfigStorage.OpenInterest memory _newOpenInterestConfig;
-    IConfigStorage.FundingRate memory _newFundingRateConfig;
-
-    defaultOpenInterestConfig.longMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
-    defaultOpenInterestConfig.shortMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
-
-    defaultFundingRateConfig.maxSkewScaleUSD = 3_000_000 * DOLLAR;
-    defaultFundingRateConfig.maxFundingRateBPS = 4; // 0.04%
-
-    defaultMarketConfig.assetId = _assetId;
-    defaultMarketConfig.increasePositionFeeRateBPS = 50; // 0.5%
-    defaultMarketConfig.decreasePositionFeeRateBPS = 50; // 0.5%
-    defaultMarketConfig.initialMarginFractionBPS = _imf;
-    defaultMarketConfig.maintenanceMarginFractionBPS = _mmf;
-    defaultMarketConfig.maxProfitRateBPS = 90000; // 900%
-    defaultMarketConfig.minLeverageBPS = 11000; // 110%
-    defaultMarketConfig.assetClass = _assetClass;
-    defaultMarketConfig.allowIncreasePosition = true;
-    defaultMarketConfig.active = true;
-    defaultMarketConfig.openInterest = defaultOpenInterestConfig;
-    defaultMarketConfig.fundingRate = defaultFundingRateConfig;
-
-    configStorage.addMarketConfig(_newMarketConfig);
+    // IConfigStorage.MarketConfig memory _newMarketConfig;
+    // IConfigStorage.OpenInterest memory _newOpenInterestConfig;
+    // IConfigStorage.FundingRate memory _newFundingRateConfig;
+    // defaultOpenInterestConfig.longMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
+    // defaultOpenInterestConfig.shortMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
+    // defaultFundingRateConfig.maxSkewScaleUSD = 3_000_000 * DOLLAR;
+    // defaultFundingRateConfig.maxFundingRateBPS = 4; // 0.04%
+    // defaultMarketConfig.assetId = _assetId;
+    // defaultMarketConfig.increasePositionFeeRateBPS = 50; // 0.5%
+    // defaultMarketConfig.decreasePositionFeeRateBPS = 50; // 0.5%
+    // defaultMarketConfig.initialMarginFractionBPS = _imf;
+    // defaultMarketConfig.maintenanceMarginFractionBPS = _mmf;
+    // defaultMarketConfig.maxProfitRateBPS = 90000; // 900%
+    // defaultMarketConfig.minLeverageBPS = 11000; // 110%
+    // defaultMarketConfig.assetClass = _assetClass;
+    // defaultMarketConfig.allowIncreasePosition = true;
+    // defaultMarketConfig.active = true;
+    // defaultMarketConfig.openInterest = defaultOpenInterestConfig;
+    // defaultMarketConfig.fundingRate = defaultFundingRateConfig;
+    // configStorage.addMarketConfig(_newMarketConfig);
   }
 }

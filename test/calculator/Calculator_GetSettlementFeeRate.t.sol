@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Calculator_BaseWithStorage, IPerpStorage } from "./Calculator_BaseWithStorage.t.sol";
+import { Calculator_BaseWithStorage } from "./Calculator_BaseWithStorage.t.sol";
+
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 // What is this test DONE
 // - correctness

@@ -4,7 +4,6 @@ pragma solidity 0.8.18;
 // base
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 // contracts
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -18,8 +17,6 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
 contract LiquidityService is ILiquidityService {
-  using AddressUtils for address;
-
   address public configStorage;
   address public vaultStorage;
   address public perpStorage;
@@ -80,7 +77,10 @@ contract LiquidityService is ILiquidityService {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     // 2. getMinPrice for using to join Pool
-    (uint256 _price, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(_token.toBytes32(), false);
+    (uint256 _price, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(
+      ConfigStorage(configStorage).tokenAssetIds(_token),
+      false
+    );
 
     // 3. get aum and lpSupply before deduction fee
     // TODO realize farm pnl to get pendingBorrowingFee
@@ -192,7 +192,10 @@ contract LiquidityService is ILiquidityService {
   ) internal returns (uint256) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
-    (uint256 _maxPrice, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(_tokenOut.toBytes32(), true);
+    (uint256 _maxPrice, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(
+      ConfigStorage(configStorage).tokenAssetIds(_tokenOut),
+      true
+    );
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
       30,

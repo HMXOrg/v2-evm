@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 // base
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 
 //contracts
@@ -17,9 +16,6 @@ import { ICalculator } from "./interfaces/ICalculator.sol";
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
-
-  // using libs for type
-  using AddressUtils for address;
 
   // EVENTS
   event LogSetOracle(address indexed oldOracle, address indexed newOracle);

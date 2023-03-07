@@ -1,0 +1,23 @@
+{
+  "storages": {
+    "config": "",
+    "perb": "",
+    "vault": ""
+  },
+  "handlers": {
+    "bot": "",
+    "crossMargin": "",
+    "limitTrade": "",
+    "liquidity": "",
+    "marketTrade": ""
+  },
+  "services": {
+    "crossMargin": "",
+    "liquidity": "",
+    "trade": ""
+  },
+  "calculator": "",
+  "feeCalculator": "",
+  "oracleMiddleware": "",
+  "pythAdaptor": ""
+}

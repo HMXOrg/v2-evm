@@ -169,6 +169,10 @@ interface IConfigStorage {
 
   function setPlpAssetId(bytes32[] memory _plpAssetIds) external;
 
+  function setLiquidityEnabled(bool _enabled) external;
+
+  function setDynamicEnabled(bool _enabled) external;
+
   function setCalculator(address _calculator) external;
 
   function setFeeCalculator(address _feeCalculator) external;

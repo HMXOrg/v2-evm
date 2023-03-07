@@ -73,7 +73,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetMarkets {
   /// @param _account Trader's address
   /// @param _subAccountId Trader's sub-account ID
   /// @param _collateralToken Collateral token address
-  /// @param _depositAmount amount to deposit
+  /// @param _withdrawAmount amount to withdraw
   /// @param _priceData Pyth's price data
   function withdrawCollateral(
     address _account,
@@ -84,7 +84,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetMarkets {
   ) internal {
     // @todo - approve
     vm.prank(_account);
-    crossMarginHandler.withdrawCollateral(_account, _subAccountId, _collateralToken, _depositAmount, _priceData);
+    crossMarginHandler.withdrawCollateral(_account, _subAccountId, _collateralToken, _withdrawAmount, _priceData);
   }
 
   /**

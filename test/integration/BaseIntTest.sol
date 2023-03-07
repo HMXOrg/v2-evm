@@ -11,7 +11,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 
-import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
+import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
@@ -32,13 +32,11 @@ import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.so
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
-abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
+abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
-
-  address internal constant PYTH_ADDRESS = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -67,7 +65,7 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
   IPLPv2 plpV2;
 
   // UNDERLYING ARBRITRUM GLP => ETH WBTC LINK UNI USDC USDT DAI FRAX
-  address internal constant weth = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1; //for native
+  IWNative weth; //for native
   ERC20 wbtc; // decimals 8
   ERC20 usdc; // decimals 6
   ERC20 usdt; // decimals 6
@@ -88,7 +86,8 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant jpyAssetId = "jpy";
 
   /* PYTH */
-  IOracleAdapter internal pyth;
+  address internal pyth;
+  IOracleAdapter internal oracleAdapter;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -96,8 +95,13 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
 
+    // deploy MOCK weth
+    weth = Deployer.deployMockWNative();
+
+    pyth = Deployer.deployMockPyth(60, 1);
+
     // deploy pyth adapter
-    IOracleAdapter oracleAdapter = Deployer.deployPythAdapter(PYTH_ADDRESS);
+    oracleAdapter = Deployer.deployPythAdapter(pyth);
     // deploy stakedGLPOracleAdapter
 
     // deploy oracleMiddleWare
@@ -141,15 +145,15 @@ abstract contract E2EBaseTest is TestBase, StdAssertions, StdCheatsSafe {
     );
     tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
 
-    botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), PYTH_ADDRESS);
-    crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), PYTH_ADDRESS);
+    botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), pyth);
+    crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), pyth);
 
     // TODO put last params
-    limitTradeHandler = Deployer.deployLimitTradeHandler(weth, address(tradeService), PYTH_ADDRESS, 0);
+    limitTradeHandler = Deployer.deployLimitTradeHandler(address(weth), address(tradeService), pyth, 0);
 
     // TODO put last params
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), PYTH_ADDRESS, 0);
-    marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), PYTH_ADDRESS);
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), pyth, 0);
+    marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), pyth);
 
     /* configStorage */
     // serviceExecutor

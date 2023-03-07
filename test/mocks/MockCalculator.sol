@@ -146,7 +146,7 @@ contract MockCalculator is ICalculator {
     uint256 /*_tokenValue*/,
     IConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
-    return 0.003 ether;
+    return 30;
   }
 
   function getRemoveLiquidityFeeRate(
@@ -154,7 +154,7 @@ contract MockCalculator is ICalculator {
     uint256 /*_tokenValueE30*/,
     IConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
-    return 1e18;
+    return 1e4;
   }
 
   function getFreeCollateral(

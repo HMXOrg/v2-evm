@@ -217,12 +217,12 @@ contract Calculator is Owned, ICalculator {
   }
 
   /// @notice getMintAmount in e18 format
-  /// @param _aum aum in PLP
+  /// @param _aum aum in PLP in e30 format
   /// @param _totalSupply PLP total supply
   /// @param _value value in USD e30
   /// @return mintAmount in e18 format
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
-    return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
+    return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum;
   }
 
   function convertTokenDecimals(

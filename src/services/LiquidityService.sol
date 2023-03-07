@@ -24,7 +24,6 @@ contract LiquidityService is ILiquidityService {
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
   uint32 internal constant BPS = 1e4;
   uint8 internal constant USD_DECIMALS = 30;
-  uint64 internal constant RATE_PRECISION = 1e18;
 
   event AddLiquidity(
     address account,
@@ -83,7 +82,7 @@ contract LiquidityService is ILiquidityService {
 
     // 3. Calculate aum and load lpSupply before minting
     // TODO realize farm pnl to get pendingBorrowingFee
-    uint256 _aum = _calculator.getAUM(true, 0, 0);
+    uint256 _aum = _calculator.getAUME30(true, 0, 0);
 
     uint256 _lpSupply = ERC20(configStorage.plp()).totalSupply();
 
@@ -240,7 +239,7 @@ contract LiquidityService is ILiquidityService {
 
   // calculate fee and accounting fee
   function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
-    uint256 _fee = (_request._amount * _request._feeRate) / RATE_PRECISION;
+    uint256 _fee = (_request._amount * _request._feeRate) / BPS;
 
     vaultStorage.addFee(_request._token, _fee);
     uint256 _decimals = IConfigStorage(configStorage).getAssetTokenDecimal(_request._token);

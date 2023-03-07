@@ -9,16 +9,19 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 // HMX
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
 import { IGmxRewardRouterV2 } from "@hmx/vendors/gmx/IGmxRewardRouterV2.sol";
 import { Deployment } from "@hmx-script/Deployment.s.sol";
 import { BaseTest, IConfigStorage, LiquidityHandler, IOracleAdapter } from "@hmx-test/base/BaseTest.sol";
+import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 // OZ
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
-abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdAssertions, StdCheatsSafe {
+abstract contract StakedGlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdAssertions, StdCheatsSafe {
   IGmxRewardRouterV2 gmxRewardRouterV2;
   ERC20 sGlp;
 
@@ -27,7 +30,13 @@ abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdA
   address treasury;
 
   ERC20 plp;
+  OracleMiddleware oracleMiddleware;
+
+  VaultStorage vaultStorage;
+
   LiquidityHandler liquidityHandler;
+
+  LiquidityTester liquidityTester;
 
   bytes32 constant sGlpAssetId = "sGLP";
 
@@ -109,11 +118,20 @@ abstract contract GlpStrategy_BaseForkTest is Config, Deployment, TestBase, StdA
     });
     deployedCore.configStorage.addOrUpdateAcceptedToken(_tokens, _configs);
 
+    // Deploy LiquidityTester
+    liquidityTester = new LiquidityTester(
+      ERC20(deployedCore.plp),
+      deployedCore.oracleMiddleware,
+      deployedCore.configStorage
+    );
+
     // Assign states
     gmxRewardRouterV2 = IGmxRewardRouterV2(gmxRewardRouterV2Address);
     sGlp = ERC20(sGlpAddress);
 
     plp = ERC20(deployedCore.plp);
+    oracleMiddleware = deployedCore.oracleMiddleware;
+    vaultStorage = deployedCore.vaultStorage;
     liquidityHandler = deployedCore.liquidityHandler;
   }
 }

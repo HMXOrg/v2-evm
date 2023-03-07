@@ -268,7 +268,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
         maxPLPUtilizationBPS: 0.8 * 1e4,
         plpTotalTokenWeight: 0,
         plpSafetyBufferThreshold: 0,
-        taxFeeRateBPS: 0.005 * 1e4, // 0.5%
+        taxFeeRateBPS: 0.005 * 1e4, // 0.50%
         flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: false,
         enabled: true

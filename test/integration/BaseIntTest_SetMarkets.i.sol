@@ -46,25 +46,29 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest {
   /// @param _mmf Maintenance Margin Fraction
   function _addMarketConfig(bytes32 _assetId, uint8 _assetClass, uint32 _imf, uint32 _mmf) private {
     // default market config
-    // IConfigStorage.MarketConfig memory _newMarketConfig;
-    // IConfigStorage.OpenInterest memory _newOpenInterestConfig;
-    // IConfigStorage.FundingRate memory _newFundingRateConfig;
-    // defaultOpenInterestConfig.longMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
-    // defaultOpenInterestConfig.shortMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
-    // defaultFundingRateConfig.maxSkewScaleUSD = 3_000_000 * DOLLAR;
-    // defaultFundingRateConfig.maxFundingRateBPS = 4; // 0.04%
-    // defaultMarketConfig.assetId = _assetId;
-    // defaultMarketConfig.increasePositionFeeRateBPS = 50; // 0.5%
-    // defaultMarketConfig.decreasePositionFeeRateBPS = 50; // 0.5%
-    // defaultMarketConfig.initialMarginFractionBPS = _imf;
-    // defaultMarketConfig.maintenanceMarginFractionBPS = _mmf;
-    // defaultMarketConfig.maxProfitRateBPS = 90000; // 900%
-    // defaultMarketConfig.minLeverageBPS = 11000; // 110%
-    // defaultMarketConfig.assetClass = _assetClass;
-    // defaultMarketConfig.allowIncreasePosition = true;
-    // defaultMarketConfig.active = true;
-    // defaultMarketConfig.openInterest = defaultOpenInterestConfig;
-    // defaultMarketConfig.fundingRate = defaultFundingRateConfig;
-    // configStorage.addMarketConfig(_newMarketConfig);
+    IConfigStorage.MarketConfig memory _newMarketConfig;
+    IConfigStorage.OpenInterest memory _newOpenInterestConfig;
+    IConfigStorage.FundingRate memory _newFundingRateConfig;
+
+    _newOpenInterestConfig.longMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
+    _newOpenInterestConfig.shortMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
+
+    _newFundingRateConfig.maxSkewScaleUSD = 3_000_000 * DOLLAR;
+    _newFundingRateConfig.maxFundingRateBPS = 4; // 0.04%
+
+    _newMarketConfig.assetId = _assetId;
+    _newMarketConfig.increasePositionFeeRateBPS = 50; // 0.5%
+    _newMarketConfig.decreasePositionFeeRateBPS = 50; // 0.5%
+    _newMarketConfig.initialMarginFractionBPS = _imf;
+    _newMarketConfig.maintenanceMarginFractionBPS = _mmf;
+    _newMarketConfig.maxProfitRateBPS = 90000; // 900%
+    _newMarketConfig.minLeverageBPS = 11000; // 110%
+    _newMarketConfig.assetClass = _assetClass;
+    _newMarketConfig.allowIncreasePosition = true;
+    _newMarketConfig.active = true;
+    _newMarketConfig.openInterest = _newOpenInterestConfig;
+    _newMarketConfig.fundingRate = _newFundingRateConfig;
+
+    configStorage.addMarketConfig(_newMarketConfig);
   }
 }

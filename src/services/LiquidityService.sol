@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
-import { PLPv2 } from "../contracts/PLPv2.sol";
+import { IPLPv2 } from "../contracts/interfaces/IPLPv2.sol";
 import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 /// @title LiquidityService
-contract LiquidityService is ILiquidityService {
+contract LiquidityService is ReentrancyGuard, ILiquidityService {
   using AddressUtils for address;
 
   address public configStorage;
@@ -55,20 +57,28 @@ contract LiquidityService is ILiquidityService {
     perpStorage = _perpStorage;
   }
 
-  /* TODO 
-  checklist
-  -add whitelisted
-  -emit event
-  -realizedPNL
-  */
+  /**
+   * MODIFIER
+   */
+
+  modifier onlyWhitelistedExecutor() {
+    IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    _;
+  }
+
+  modifier onlyAcceptedToken(address _token) {
+    IConfigStorage(configStorage).validateAcceptedLiquidityToken(_token);
+    _;
+  }
+
   function addLiquidity(
     address _lpProvider,
     address _token,
     uint256 _amount,
     uint256 _minAmount
-  ) external returns (uint256) {
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) returns (uint256) {
     // 1. _validate
-    _validatePreAddRemoveLiquidity(_token, _amount);
+    _validatePreAddRemoveLiquidity(_amount);
 
     if (IVaultStorage(vaultStorage).pullToken(_token) != _amount) {
       revert LiquidityService_InvalidInputAmount();
@@ -80,7 +90,6 @@ contract LiquidityService is ILiquidityService {
     (uint256 _price, ) = IOracleMiddleware(_calculator.oracle()).getLatestPrice(_token.toBytes32(), false);
 
     // 3. get aum and lpSupply before deduction fee
-    // TODO realize farm pnl to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(true, 0, 0);
 
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
@@ -96,32 +105,24 @@ contract LiquidityService is ILiquidityService {
     );
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
-    PLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
+    IPLPv2(IConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
     emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
 
     return mintAmount;
   }
 
-  /* TODO 
-  checklist
-  -add whitelisted
-  -emit event
-  -realizedPNL
-  */
-
   function removeLiquidity(
     address _lpProvider,
     address _tokenOut,
     uint256 _amount,
     uint256 _minAmount
-  ) external returns (uint256) {
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_tokenOut) returns (uint256) {
     // 1. _validate
-    _validatePreAddRemoveLiquidity(_tokenOut, _amount);
+    _validatePreAddRemoveLiquidity(_amount);
 
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 
-    //TODO should realized to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(false, 0, 0);
     uint256 _lpSupply = ERC20(IConfigStorage(configStorage).plp()).totalSupply();
 
@@ -131,7 +132,7 @@ contract LiquidityService is ILiquidityService {
     uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _amount, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
-    PLPv2(IConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
+    IPLPv2(IConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
     IVaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOut);
 
     emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValue, _amountOut);
@@ -294,15 +295,11 @@ contract LiquidityService is ILiquidityService {
     }
   }
 
-  function _validatePreAddRemoveLiquidity(address _token, uint256 _amount) internal view {
+  function _validatePreAddRemoveLiquidity(uint256 _amount) internal view {
     IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
 
     if (!IConfigStorage(configStorage).getLiquidityConfig().enabled) {
       revert LiquidityService_CircuitBreaker();
-    }
-
-    if (!IConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).accepted) {
-      revert LiquidityService_InvalidToken();
     }
 
     if (_amount == 0) {

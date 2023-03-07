@@ -33,6 +33,7 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
+    vaultStorage.setServiceExecutors(address(crossMarginService), true);
 
     // Set accepted token deposit/withdraw as WETH and USDC
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({

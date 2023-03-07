@@ -14,5 +14,8 @@ abstract contract LiquidityService_Base is BaseTest {
 
     // set this Test to be service executor
     configStorage.setServiceExecutor(address(liquidityService), address(this), true);
+    vaultStorage.setServiceExecutors(address(liquidityService), true);
+
+    plp.setMinter(address(liquidityService), true);
   }
 }

@@ -150,7 +150,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @notice Create a new RemoveLiquidity order
   /// @param _tokenOut address token in
   /// @param _amountIn amount token in (based on decimals)
-  /// @param _minOut minAmoutOut
+  /// @param _minOut minAmountOut
   /// @param _executionFee The execution fee of order
   /// @param _shouldUnwrap in case of user need native token
   function createRemoveLiquidityOrder(
@@ -244,7 +244,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @param _account the primary account of user
   /// @param _orderIndex Order Index which could be retrieved from lastOrderIndex(address) beware in case of index is 0`
   /// @param _priceData Price data from Pyth to be used for updating the market prices
-  // slither-disable-next-line reentrancy-eth
+  // slither-disable-next-line reentrance-eth
   function executeOrder(
     address _account,
     uint256 _orderIndex,
@@ -317,7 +317,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
   /// @notice get liquidity order
   /// @param _account the primary account of user
-  function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory _liquiditiyOrder) {
+  function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory _liquidityOrder) {
     return liquidityOrders[_account];
   }
 
@@ -327,7 +327,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
   /// @notice setLiquidityService
   /// @param _newLiquidityService liquidityService address
-  function setLiquidityService(address _newLiquidityService) external onlyOwner {
+  function setLiquidityService(address _newLiquidityService) external nonReentrant onlyOwner {
     if (_newLiquidityService == address(0)) revert ILiquidityHandler_InvalidAddress();
     emit LogSetLiquidityService(liquidityService, _newLiquidityService);
     liquidityService = _newLiquidityService;
@@ -336,7 +336,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;
   }
@@ -344,14 +344,14 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @notice setMinExecutionFee
   /// @param _executor address who will be executor
   /// @param _isAllow flag to allow to execute
-  function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
+  function setOrderExecutor(address _executor, bool _isAllow) external nonReentrant onlyOwner {
     orderExecutors[_executor] = _isAllow;
     emit LogSetOrderExecutor(_executor, _isAllow);
   }
 
   /// @notice Set new Pyth contract address.
   /// @param _pyth New Pyth contract address.
-  function setPyth(address _pyth) external onlyOwner {
+  function setPyth(address _pyth) external nonReentrant onlyOwner {
     if (_pyth == address(0)) revert ILiquidityHandler_InvalidAddress();
     emit LogSetPyth(pyth, _pyth);
     pyth = _pyth;

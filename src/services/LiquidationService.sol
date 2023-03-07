@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
@@ -12,15 +13,27 @@ import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
-contract LiquidationService is ILiquidationService {
+contract LiquidationService is ReentrancyGuard, ILiquidationService {
   using AddressUtils for address;
 
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
 
+  /**
+   * Modifiers
+   */
+  modifier onlyWhitelistedExecutor() {
+    IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    _;
+  }
+
   constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
-    // @todo - sanity check
+    // Sanity check
+    IPerpStorage(_perpStorage).getGlobalState();
+    IVaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    IConfigStorage(_configStorage).getLiquidityConfig();
+
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
@@ -28,7 +41,7 @@ contract LiquidationService is ILiquidationService {
 
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage
   /// @param _subAccount The sub-account to be liquidated
-  function liquidate(address _subAccount) external {
+  function liquidate(address _subAccount) external nonReentrant onlyWhitelistedExecutor {
     // Get the calculator contract from storage
     ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
 

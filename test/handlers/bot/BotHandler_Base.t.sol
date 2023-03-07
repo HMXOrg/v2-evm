@@ -40,9 +40,16 @@ contract BotHandler_Base is BaseTest {
     address[] memory _positionManagers = new address[](1);
     _positionManagers[0] = address(this);
 
-    // set Tester as position manangers
+    // set Tester as position managers
     botHandler.setPositionManagers(_positionManagers, true);
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
+
+    // Set whitelist for service executor
+    configStorage.setServiceExecutor(address(tradeService), address(botHandler), true);
+    perpStorage.setServiceExecutors(address(tradeService), true);
+
+    vaultStorage.setServiceExecutors(address(tradeService), true);
+    vaultStorage.setServiceExecutors(address(this), true);
   }
 
   function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {

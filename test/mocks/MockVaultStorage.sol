@@ -7,15 +7,13 @@ contract MockVaultStorage {
   mapping(address => mapping(address => uint256)) public traderBalances;
   mapping(address => address[]) public traderTokens;
 
+  uint256 public plpLiquidityDebtUSDE30;
+
   // =========================================
   // | ---------- Setter ------------------- |
   // =========================================
 
-  function setTraderBalance(
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external {
+  function setTraderBalance(address _subAccount, address _token, uint256 _amount) external {
     traderBalances[_subAccount][_token] = _amount;
   }
 
@@ -27,9 +25,7 @@ contract MockVaultStorage {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getTraderTokens(
-    address _subAccount
-  ) external view returns (address[] memory) {
+  function getTraderTokens(address _subAccount) external view returns (address[] memory) {
     return traderTokens[_subAccount];
   }
 }

@@ -16,7 +16,7 @@ import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.
 //   - remove liquidity of another PLP
 //   - remove liquidity with dynamic fee (will be test in Calculator and integration test)
 // - revert
-//   - PLP transfer in cooldown period
+//   - PLP transfer in cool down period
 contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();

@@ -2,37 +2,53 @@
 pragma solidity 0.8.18;
 
 // @todo - convert to upgradable
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { AddressUtils } from "../libraries/AddressUtils.sol";
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 import { AddressUtils } from "../libraries/AddressUtils.sol";
-import { Owned } from "../base/Owned.sol";
 import { IteratableAddressList } from "../libraries/IteratableAddressList.sol";
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Owned } from "../base/Owned.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
-contract ConfigStorage is IConfigStorage, Owned {
+contract ConfigStorage is ReentrancyGuard, IConfigStorage, Owned {
   using AddressUtils for address;
   using IteratableAddressList for IteratableAddressList.List;
   using SafeERC20 for ERC20;
+
   /**
    * Events
    */
-  event SetServiceExecutor(address indexed _contractAddress, address _executorAddress, bool _isServiceExecutor);
-
-  event SetCalculator(address _calculator);
-  event SetFeeCalculator(address _feeCalculator);
-  event SetPLP(address _plp);
-  event SetLiquidityConfig(LiquidityConfig _liquidityConfig);
+  event SetServiceExecutor(address indexed contractAddress, address executorAddress, bool isServiceExecutor);
+  event SetCalculator(address indexed oldCalculator, address newCalculator);
+  event SetFeeCalculator(address indexed oldFeeCalculator, address newFeeCalculator);
+  event SetOracle(address indexed oldOracle, address newOracle);
+  event SetPLP(address indexed oldPlp, address newPlp);
+  event SetLiquidityConfig(LiquidityConfig indexed oldLiquidityConfig, LiquidityConfig newLiquidityConfig);
   event SetDynamicEnabled(bool enabled);
-  event AddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
-  event RemoveUnderlying(address _token);
+  event SetPLPTotalTokenWeight(uint256 oldTotalTokenWeight, uint256 newTotalTokenWeight);
+  event SetPnlFactor(uint32 oldPnlFactorBPS, uint32 newPnlFactorBPS);
+  event SetSwapConfig(SwapConfig indexed oldConfig, SwapConfig newConfig);
+  event SetTradingConfig(TradingConfig indexed oldConfig, TradingConfig newConfig);
+  event SetLiquidationConfig(LiquidationConfig indexed oldConfig, LiquidationConfig newConfig);
+  event SetMarketConfig(uint256 marketIndex, MarketConfig oldConfig, MarketConfig newConfig);
+  event SetPlpTokenConfig(address token, PLPTokenConfig oldConfig, PLPTokenConfig newConfig);
+  event SetCollateralTokenConfig(bytes32 assetId, CollateralTokenConfig oldConfig, CollateralTokenConfig newConfig);
+  event SetAssetConfig(bytes32 assetId, AssetConfig oldConfig, AssetConfig newConfig);
+  event SetWeth(address indexed oldWeth, address newWeth);
+  event SetAssetClassConfigByIndex(uint256 index, AssetClassConfig oldConfig, AssetClassConfig newConfig);
+
+  event AddOrUpdatePLPTokenConfigs(address token, PLPTokenConfig oldConfig, PLPTokenConfig newConfig);
+  event AddAssetClassConfig(uint256 index, AssetClassConfig newConfig);
+  event AddMarketConfig(uint256 index, MarketConfig newConfig);
+  event RemoveUnderlying(address token);
+  event DelistMarket(uint256 marketIndex);
 
   /**
    * Constants
@@ -58,10 +74,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   address public treasury;
   uint32 public pnlFactorBPS; // factor that calculate unrealized PnL after collateral factor
   address public weth;
-
-  /**
-   * New States
-   */
 
   // Token's address => Asset ID
   mapping(address => bytes32) public tokenAssetIds;
@@ -198,45 +210,51 @@ contract ConfigStorage is IConfigStorage, Owned {
    * Setter
    */
 
-  function setPlpAssetId(bytes32[] memory _plpAssetIds) external {
+  function setPlpAssetId(bytes32[] memory _plpAssetIds) external onlyOwner {
     plpAssetIds = _plpAssetIds;
   }
 
-  function setCalculator(address _calculator) external {
+  function setCalculator(address _calculator) external onlyOwner {
+    emit SetCalculator(calculator, _calculator);
+    // @todo - add sanity check
     calculator = _calculator;
-    emit SetCalculator(calculator);
   }
 
   /// @notice Updates the fee calculator contract address.
   /// @dev This function can be used to set the address of the fee calculator contract.
   /// @param _feeCalculator The address of the new fee calculator contract.
-  function setFeeCalculator(address _feeCalculator) external {
+  function setFeeCalculator(address _feeCalculator) external onlyOwner {
+    emit SetFeeCalculator(feeCalculator, _feeCalculator);
+    // @todo - add sanity check
     feeCalculator = _feeCalculator;
-    emit SetFeeCalculator(_feeCalculator);
   }
 
-  function setOracle(address _oracle) external {
+  function setOracle(address _oracle) external onlyOwner {
+    emit SetOracle(oracle, _oracle);
     // @todo - sanity check
     oracle = _oracle;
   }
 
-  function setPLP(address _plp) external {
+  function setPLP(address _plp) external onlyOwner {
+    emit SetPLP(plp, _plp);
+    // @todo - sanity check
     plp = _plp;
-    emit SetPLP(plp);
   }
 
-  function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external {
+  function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external onlyOwner {
+    emit SetLiquidityConfig(liquidityConfig, _liquidityConfig);
+    // @todo - sanity check
     liquidityConfig = _liquidityConfig;
-    emit SetLiquidityConfig(liquidityConfig);
   }
 
-  function setDynamicEnabled(bool enabled) external {
+  function setDynamicEnabled(bool enabled) external onlyOwner {
     liquidityConfig.dynamicFeeEnabled = enabled;
     emit SetDynamicEnabled(enabled);
   }
 
-  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external {
+  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external onlyOwner {
     if (_totalTokenWeight > 1e18) revert IConfigStorage_ExceedLimitSetting();
+    emit SetPLPTotalTokenWeight(liquidityConfig.plpTotalTokenWeight, _totalTokenWeight);
     liquidityConfig.plpTotalTokenWeight = _totalTokenWeight;
   }
 
@@ -247,30 +265,34 @@ contract ConfigStorage is IConfigStorage, Owned {
     bool _isServiceExecutor
   ) external onlyOwner {
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
-
     emit SetServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
   }
 
-  function setPnlFactor(uint32 _pnlFactor) external onlyOwner {
-    pnlFactorBPS = _pnlFactor;
+  function setPnlFactor(uint32 _pnlFactorBPS) external onlyOwner {
+    emit SetPnlFactor(pnlFactorBPS, _pnlFactorBPS);
+    pnlFactorBPS = _pnlFactorBPS;
   }
 
-  function setSwapConfig(SwapConfig memory _newConfig) external {
+  function setSwapConfig(SwapConfig memory _newConfig) external onlyOwner {
+    emit SetSwapConfig(swapConfig, _newConfig);
     swapConfig = _newConfig;
   }
 
-  function setTradingConfig(TradingConfig memory _newConfig) external {
+  function setTradingConfig(TradingConfig memory _newConfig) external onlyOwner {
+    emit SetTradingConfig(tradingConfig, _newConfig);
     tradingConfig = _newConfig;
   }
 
-  function setLiquidationConfig(LiquidationConfig memory _newConfig) external {
+  function setLiquidationConfig(LiquidationConfig memory _newConfig) external onlyOwner {
+    emit SetLiquidationConfig(liquidationConfig, _newConfig);
     liquidationConfig = _newConfig;
   }
 
   function setMarketConfig(
     uint256 _marketIndex,
     MarketConfig memory _newConfig
-  ) external returns (MarketConfig memory _marketConfig) {
+  ) external onlyOwner returns (MarketConfig memory _marketConfig) {
+    emit SetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
     return marketConfigs[_marketIndex];
   }
@@ -278,39 +300,42 @@ contract ConfigStorage is IConfigStorage, Owned {
   function setPlpTokenConfig(
     address _token,
     PLPTokenConfig memory _newConfig
-  ) external returns (PLPTokenConfig memory _plpTokenConfig) {
+  ) external onlyOwner returns (PLPTokenConfig memory _plpTokenConfig) {
+    emit SetPlpTokenConfig(_token, assetPlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
     assetPlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
-
     return _newConfig;
   }
 
   function setCollateralTokenConfig(
     bytes32 _assetId,
     CollateralTokenConfig memory _newConfig
-  ) external returns (CollateralTokenConfig memory _collateralTokenConfig) {
+  ) external onlyOwner returns (CollateralTokenConfig memory _collateralTokenConfig) {
+    emit SetCollateralTokenConfig(_assetId, assetCollateralTokenConfigs[_assetId], _newConfig);
     assetCollateralTokenConfigs[_assetId] = _newConfig;
     collateralAssetIds.push(_assetId);
     return assetCollateralTokenConfigs[_assetId];
   }
 
   function setAssetConfig(
-    bytes32 assetId,
+    bytes32 _assetId,
     AssetConfig memory _newConfig
-  ) external returns (AssetConfig memory _assetConfig) {
-    assetConfigs[assetId] = _newConfig;
+  ) external onlyOwner returns (AssetConfig memory _assetConfig) {
+    emit SetAssetConfig(_assetId, assetConfigs[_assetId], _newConfig);
+    assetConfigs[_assetId] = _newConfig;
     address _token = _newConfig.tokenAddress;
 
     if (_token != address(0)) {
-      tokenAssetIds[_token] = assetId;
+      tokenAssetIds[_token] = _assetId;
 
       // sanity check
       ERC20(_token).decimals();
     }
 
-    return assetConfigs[assetId];
+    return assetConfigs[_assetId];
   }
 
-  function setWeth(address _weth) external {
+  function setWeth(address _weth) external onlyOwner {
+    emit SetWeth(weth, _weth);
     weth = _weth;
   }
 
@@ -338,7 +363,6 @@ contract ConfigStorage is IConfigStorage, Owned {
         plpAssetIds.push(_assetId);
       }
       // Log
-
       emit AddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 
       // Update totalWeight accordingly
@@ -359,23 +383,27 @@ contract ConfigStorage is IConfigStorage, Owned {
     }
   }
 
-  function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index) {
+  function addAssetClassConfig(AssetClassConfig calldata _newConfig) external onlyOwner returns (uint256 _index) {
     uint256 _newAssetClassIndex = assetClassConfigs.length;
     assetClassConfigs.push(_newConfig);
+    emit AddAssetClassConfig(_newAssetClassIndex, _newConfig);
     return _newAssetClassIndex;
   }
 
-  function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external {
+  function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external onlyOwner {
+    emit SetAssetClassConfigByIndex(_index, assetClassConfigs[_index], _newConfig);
     assetClassConfigs[_index] = _newConfig;
   }
 
-  function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index) {
+  function addMarketConfig(MarketConfig calldata _newConfig) external onlyOwner returns (uint256 _index) {
     uint256 _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
+    emit AddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;
   }
 
-  function delistMarket(uint256 _marketIndex) external {
+  function delistMarket(uint256 _marketIndex) external onlyOwner {
+    emit DelistMarket(_marketIndex);
     delete marketConfigs[_marketIndex].active;
   }
 

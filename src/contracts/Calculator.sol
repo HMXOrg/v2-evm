@@ -33,10 +33,15 @@ contract Calculator is Owned, ICalculator {
   address public perpStorage;
 
   constructor(address _oracle, address _vaultStorage, address _perpStorage, address _configStorage) {
-    // @todo - Sanity check
+    // Sanity check
     if (
       _oracle == address(0) || _vaultStorage == address(0) || _perpStorage == address(0) || _configStorage == address(0)
     ) revert ICalculator_InvalidAddress();
+
+    IPerpStorage(_perpStorage).getGlobalState();
+    IVaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    IConfigStorage(_configStorage).getLiquidityConfig();
+
     oracle = _oracle;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
@@ -122,26 +127,26 @@ contract Calculator is Owned, ICalculator {
   }
 
   /// @notice Get PLP underlying asset value in E30
-  /// @param _undelyingAssetId the underlying asset id, the one we want to find the value
+  /// @param _underlyingAssetId the underlying asset id, the one we want to find the value
   /// @param _configStorage config storage
   /// @param _isMaxPrice Use Max or Min Price
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
   function _getPLPUnderlyingAssetValueE30(
-    bytes32 _undelyingAssetId,
+    bytes32 _underlyingAssetId,
     IConfigStorage _configStorage,
     bool _isMaxPrice,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) internal view returns (uint256) {
-    IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_undelyingAssetId);
+    IConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
     uint256 _priceE30;
-    if (_limitPriceE30 > 0 && _limitAssetId == _undelyingAssetId) {
+    if (_limitPriceE30 > 0 && _limitAssetId == _underlyingAssetId) {
       _priceE30 = _limitPriceE30;
     } else {
-      (_priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_undelyingAssetId, _isMaxPrice);
+      (_priceE30, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
     }
     uint256 value = (IVaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
       (10 ** _assetConfig.decimals);
@@ -178,7 +183,7 @@ contract Calculator is Owned, ICalculator {
 
       (uint256 priceE30Short, , ) = IOracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, true);
 
-      //@todo - validate price, revert when crypto price stale, stock use Lastprice
+      //@todo - validate price, revert when crypto price stale, stock use Last price
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
         if (priceE30Long < _globalMarket.longAvgPrice) {
           uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) * _globalMarket.longPositionSize) /

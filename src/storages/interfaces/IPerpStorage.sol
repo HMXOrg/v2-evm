@@ -2,6 +2,11 @@
 pragma solidity 0.8.18;
 
 interface IPerpStorage {
+  /**
+   * Errors
+   */
+  error IPerpStorage_NotWhiteListed();
+
   struct GlobalState {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
     uint256 sumBorrowingRate;

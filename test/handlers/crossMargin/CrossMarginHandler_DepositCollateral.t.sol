@@ -7,8 +7,8 @@ import { CrossMarginHandler_Base, MockErc20 } from "./CrossMarginHandler_Base.t.
 
 // What is this test DONE
 // - revert
-//   - Try deposit token collaeral with not accepted token (Ex. Fx, Equity)
-//   - Try deposit token collateral with incufficent allowance
+//   - Try deposit token collateral with not accepted token (Ex. Fx, Equity)
+//   - Try deposit token collateral with insufficient allowance
 //   - Try deposit token collateral with exceed trader's balance
 // - success
 //   - Try deposit token collateral with initial balance and test accounting balance
@@ -24,14 +24,14 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
    * TEST REVERT
    */
 
-  // Try deposit token collaeral with not accepted token (Ex. Fx, Equity)
+  // Try deposit token collateral with not accepted token (Ex. Fx, Equity)
   function testRevert_handler_depositCollateral_onlyAcceptedToken() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
     crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, address(dai), 10 ether);
   }
 
-  // Try deposit token collateral with incufficent allowance
+  // Try deposit token collateral with insufficient allowance
   function testRevert_handler_depositCollateral_InsufficientAllowance() external {
     vm.startPrank(ALICE);
     vm.expectRevert("ERC20: insufficient allowance");

@@ -31,6 +31,14 @@ abstract contract LiquidationService_Base is BaseTest {
     tradeService = new TradeService(address(perpStorage), address(vaultStorage), address(configStorage));
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
     liquidationService = new LiquidationService(address(perpStorage), address(vaultStorage), address(configStorage));
+
+    configStorage.setServiceExecutor(address(liquidationService), address(this), true);
+
+    perpStorage.setServiceExecutors(address(tradeService), true);
+    perpStorage.setServiceExecutors(address(liquidationService), true);
+
+    vaultStorage.setServiceExecutors(address(liquidationService), true);
+    vaultStorage.setServiceExecutors(address(this), true);
   }
 
   function getSubAccount(address _account, uint8 _subAccountId) internal pure returns (address) {

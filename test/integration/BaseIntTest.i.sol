@@ -90,7 +90,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     // deploy MOCK weth
     weth = IWNative(Deployer.deployContract("WNative"));
 
-    pyth = address(new MockPyth(60, 1));
+    pyth = Deployer.deployContractWithArguments("MockPyth", abi.encode(60, 1));
 
     // deploy pyth adapter
     oracleAdapter = Deployer.deployPythAdapter(pyth);

@@ -5,6 +5,6 @@ interface IOracleAdapter {
   function getLatestPrice(
     bytes32 _assetId,
     bool _isMax,
-    uint256 _confidenceThreshold
-  ) external view returns (uint256, uint256);
+    uint32 _confidenceThreshold
+  ) external view returns (uint256, int32, uint256);
 }

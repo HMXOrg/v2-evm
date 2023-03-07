@@ -43,7 +43,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
     // Sanity check
     IConfigStorage(_configStorage).calculator();
-    IVaultStorage(_vaultStorage).plpTotalLiquidityUSDE30();
+    IVaultStorage(_vaultStorage).devFees(address(0));
     ICalculator(_calculator).oracle();
   }
 
@@ -73,7 +73,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /// @param _amount Token depositing amount.
   function depositCollateral(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     address _token,
     uint256 _amount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
@@ -111,7 +111,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /// @param _amount Token withdrawing amount.
   function withdrawCollateral(
     address _primaryAccount,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     address _token,
     uint256 _amount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
@@ -131,7 +131,8 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     IVaultStorage(_vaultStorage).setTraderBalance(_subAccount, _token, _newBalance);
 
     // Calculate validation for if new Equity is below IMR or not
-    if (ICalculator(calculator).getEquity(_subAccount) < ICalculator(calculator).getIMR(_subAccount))
+    int256 equity = ICalculator(calculator).getEquity(_subAccount, 0, 0);
+    if (equity < 0 || uint256(equity) < ICalculator(calculator).getIMR(_subAccount))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
     // If trader withdraws all token out, then remove token on traderTokens list
@@ -168,7 +169,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     vaultStorage = _vaultStorage;
 
     // Sanity check
-    IVaultStorage(_vaultStorage).plpTotalLiquidityUSDE30();
+    IVaultStorage(_vaultStorage).devFees(address(0));
   }
 
   /// @notice Set new Calculator contract address.
@@ -188,7 +189,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /// @param _primary Trader's primary wallet account.
   /// @param _subAccountId Trader's sub account ID.
   /// @return _subAccount Trader's sub account address used for trading.
-  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }

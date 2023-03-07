@@ -15,23 +15,27 @@ interface IConfigStorage {
   /**
    * Structs
    */
+  /// @notice Asset's config
+  struct AssetConfig {
+    address tokenAddress;
+    bytes32 assetId;
+    uint8 decimals;
+    bool isStableCoin; // token is stablecoin
+  }
+
   /// @notice perp liquidity provider token config
   struct PLPTokenConfig {
-    uint256 decimals; //token decimals
-    uint256 targetWeight; // pecentage of all accepted PLP tokens
+    uint256 targetWeight; // percentage of all accepted PLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
-    bool isStableCoin; // token is stablecoin
     bool accepted; // accepted to provide liquidity
   }
 
   /// @notice collateral token config
   struct CollateralTokenConfig {
-    uint256 decimals;
-    uint256 collateralFactor; // token reliability factor to calculate buying power, 1e18 = 100%
-    bool isStableCoin; // token is stablecoin
-    bool accepted; // accepted to deposit as collateral
     address settleStrategy; // determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+    uint32 collateralFactorBPS; // token reliability factor to calculate buying power, 1e4 = 100%
+    bool accepted; // accepted to deposit as collateral
   }
 
   struct OpenInterest {
@@ -40,21 +44,19 @@ interface IConfigStorage {
   }
 
   struct FundingRate {
-    uint256 maxFundingRate; // maximum funding rate
-    uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
+    uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRateBPS
+    uint32 maxFundingRateBPS; // maximum funding rate
   }
 
   struct MarketConfig {
     bytes32 assetId; // pyth network asset id
-    uint256 assetClass; // Crypto = 1, Forex = 2, Stock = 3
-    uint256 exponent;
-    uint256 maxProfitRate; // maximum profit that trader could take per position
-    uint256 minLeverage; // minimum leverage that trader could open position
-    uint256 initialMarginFraction; // IMF
-    uint256 maintenanceMarginFraction; // MMF
-    uint256 increasePositionFeeRate; // fee rate to increase position
-    uint256 decreasePositionFeeRate; // fee rate to decrease position
-    uint256 priceConfidentThreshold; // pyth price confidential treshold
+    uint32 increasePositionFeeRateBPS; // fee rate to increase position
+    uint32 decreasePositionFeeRateBPS; // fee rate to decrease position
+    uint32 initialMarginFractionBPS; // IMF
+    uint32 maintenanceMarginFractionBPS; // MMF
+    uint32 maxProfitRateBPS; // maximum profit that trader could take per position
+    uint32 minLeverageBPS; // minimum leverage that trader could open position
+    uint8 assetClass; // Crypto = 1, Forex = 2, Stock = 3
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
     OpenInterest openInterest;
@@ -62,31 +64,31 @@ interface IConfigStorage {
   }
 
   struct AssetClassConfig {
-    uint256 baseBorrowingRate;
+    uint32 baseBorrowingRateBPS;
   }
 
   struct LiquidityConfig {
-    uint256 depositFeeRate; // PLP deposit fee rate
-    uint256 withdrawFeeRate; // PLP withdraw fee rate
-    uint256 maxPLPUtilization; //% of max utilization
     uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
     uint256 plpSafetyBufferThreshold;
-    uint256 taxFeeRate; // PLP deposit, withdraw, settle collect when pool weight is imbalances
-    uint256 flashLoanFeeRate;
+    uint32 taxFeeRateBPS; // PLP deposit, withdraw, settle collect when pool weight is imbalances
+    uint32 flashLoanFeeRateBPS;
+    uint32 maxPLPUtilizationBPS; //% of max utilization
+    uint32 depositFeeRateBPS; // PLP deposit fee rate
+    uint32 withdrawFeeRateBPS; // PLP withdraw fee rate
     bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
     bool enabled; // Circuit breaker on Liquidity
   }
 
   struct SwapConfig {
-    uint256 stablecoinSwapFeeRate;
-    uint256 swapFeeRate;
+    uint32 stablecoinSwapFeeRateBPS;
+    uint32 swapFeeRateBPS;
   }
 
   struct TradingConfig {
     uint256 fundingInterval; // funding interval unit in seconds
-    uint256 devFeeRate;
     uint256 minProfitDuration;
-    uint256 maxPosition;
+    uint32 devFeeRateBPS;
+    uint8 maxPosition;
   }
 
   struct LiquidationConfig {
@@ -99,13 +101,15 @@ interface IConfigStorage {
 
   function calculator() external view returns (address);
 
+  function feeCalculator() external view returns (address);
+
   function oracle() external view returns (address);
 
   function plp() external view returns (address);
 
   function treasury() external view returns (address);
 
-  function pnlFactor() external view returns (uint256);
+  function pnlFactorBPS() external view returns (uint32);
 
   function weth() external view returns (address);
 
@@ -131,8 +135,6 @@ interface IConfigStorage {
 
   function getTradingConfig() external view returns (TradingConfig memory);
 
-  function getPlpTokenConfigs(address _token) external view returns (PLPTokenConfig memory);
-
   function getCollateralTokenConfigs(
     address _token
   ) external view returns (CollateralTokenConfig memory _collateralTokenConfig);
@@ -141,19 +143,30 @@ interface IConfigStorage {
 
   function getLiquidationConfig() external view returns (LiquidationConfig memory);
 
-  function getPLPTokenConfig(address _token) external view returns (PLPTokenConfig memory);
-
-  function getMarketConfigByToken(address _token) external view returns (MarketConfig memory);
-
   function getMarketConfigsLength() external view returns (uint256);
 
-  function getNextAcceptedToken(address token) external view returns (address);
-
   function getPlpTokens() external view returns (address[] memory);
+
+  function getCollateralTokens() external view returns (address[] memory);
+
+  function getAssetConfigByToken(address _token) external view returns (AssetConfig memory);
+
+  function getPlpAssetIds() external view returns (bytes32[] memory);
+
+  function getAssetConfig(bytes32 _assetId) external view returns (AssetConfig memory);
+
+  function getAssetPlpTokenConfig(bytes32 _assetId) external view returns (PLPTokenConfig memory);
+
+  function getAssetPlpTokenConfigByToken(address _token) external view returns (PLPTokenConfig memory);
+
+  function tokenAssetIds(address _token) external view returns (bytes32);
+
+  function getAssetTokenDecimal(address _token) external view returns (uint8);
 
   /**
    * Setter
    */
+
   function setCalculator(address _calculator) external;
 
   function setOracle(address _oracle) external;
@@ -187,9 +200,11 @@ interface IConfigStorage {
   ) external returns (PLPTokenConfig memory _plpTokenConfig);
 
   function setCollateralTokenConfig(
-    address _token,
+    bytes32 collateralAssetId,
     CollateralTokenConfig memory _newConfig
-  ) external returns (CollateralTokenConfig memory);
+  ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 
   function setWeth(address _weth) external;
+
+  function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external;
 }

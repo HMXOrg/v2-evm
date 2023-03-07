@@ -148,7 +148,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
   /// @param _tpToken Take profit token, when trader has profit
   function createOrder(
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
@@ -204,7 +204,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _priceData Price data from Pyth to be used for updating the market prices
   function executeOrder(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _orderIndex,
     address payable _feeReceiver,
     bytes[] memory _priceData
@@ -251,7 +251,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
           _primaryAccount: _account,
           _subAccountId: _subAccountId,
           _marketIndex: vars.order.marketIndex,
-          _sizeDelta: vars.order.sizeDelta
+          _sizeDelta: vars.order.sizeDelta,
+          _limitPriceE30: _currentPrice
         });
       } else if (!vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
@@ -263,14 +264,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
-            _tpToken: vars.order.tpToken
+            _tpToken: vars.order.tpToken,
+            _limitPriceE30: _currentPrice
           });
           // Flip it to Long position
           ITradeService(tradeService).increasePosition({
             _primaryAccount: _account,
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30
+            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
+            _limitPriceE30: _currentPrice
           });
         } else {
           // Not flip
@@ -282,7 +285,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
               uint256(vars.order.sizeDelta),
               uint256(-_existingPosition.positionSizeE30)
             ),
-            _tpToken: vars.order.tpToken
+            _tpToken: vars.order.tpToken,
+            _limitPriceE30: _currentPrice
           });
         }
       }
@@ -295,7 +299,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
           _primaryAccount: _account,
           _subAccountId: _subAccountId,
           _marketIndex: vars.order.marketIndex,
-          _sizeDelta: vars.order.sizeDelta
+          _sizeDelta: vars.order.sizeDelta,
+          _limitPriceE30: _currentPrice
         });
       } else if (vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
@@ -307,14 +312,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
-            _tpToken: vars.order.tpToken
+            _tpToken: vars.order.tpToken,
+            _limitPriceE30: _currentPrice
           });
           // Flip it to Short position
           ITradeService(tradeService).increasePosition({
             _primaryAccount: _account,
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30
+            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
+            _limitPriceE30: _currentPrice
           });
         } else {
           // Not flip
@@ -326,7 +333,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
               uint256(-vars.order.sizeDelta),
               uint256(_existingPosition.positionSizeE30)
             ),
-            _tpToken: vars.order.tpToken
+            _tpToken: vars.order.tpToken,
+            _limitPriceE30: _currentPrice
           });
         }
       }
@@ -353,7 +361,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @notice Cancel a limit order
   /// @param _subAccountId Sub-account Id
   /// @param _orderIndex Order Index which could be retrieved from the emitted event from `createOrder()`
-  function cancelOrder(uint256 _subAccountId, uint256 _orderIndex) external nonReentrant {
+  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
     address subAccount = _getSubAccount(msg.sender, _subAccountId);
     LimitOrder memory _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
@@ -388,7 +396,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
   /// @param _tpToken Take profit token, when trader has profit
   function updateOrder(
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
@@ -443,12 +451,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     vars.oracle = IOracleMiddleware(IConfigStorage(ITradeService(tradeService).configStorage()).oracle());
     vars.globalMarket = IPerpStorage(ITradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
 
-    (uint256 _currentPrice, , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (uint256 _currentPrice, , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
-      vars.marketConfig.exponent,
       _maximizePrice,
-      vars.marketConfig.priceConfidentThreshold,
-      30, // @todo retrieve price age from config
       (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
       _sizeDelta,
       vars.marketConfig.fundingRate.maxSkewScaleUSD
@@ -518,7 +523,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   }
 
   /// @notice Derive sub-account from primary account and sub-account id
-  function _getSubAccount(address primary, uint256 subAccountId) internal pure returns (address) {
+  function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {
     if (subAccountId > 255) revert ILimitTradeHandler_BadSubAccountId();
     return address(uint160(primary) ^ uint160(subAccountId));
   }

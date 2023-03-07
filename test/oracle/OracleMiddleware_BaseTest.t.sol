@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest } from "../base/BaseTest.sol";
-import { OracleMiddleware } from "../../src/oracle/OracleMiddleware.sol";
-import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
+import { BaseTest } from "@hmx-test/base/BaseTest.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 contract OracleMiddleware_BaseTest is BaseTest {
   using AddressUtils for address;

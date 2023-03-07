@@ -10,11 +10,13 @@ import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
 import { TradeService } from "@hmx/services/TradeService.sol";
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { LiquidationService } from "@hmx/services/LiquidationService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
-abstract contract TradeService_Base is BaseTest {
+abstract contract LiquidationService_Base is BaseTest {
   TradeService tradeService;
+  LiquidationService liquidationService;
   PositionTester positionTester;
   PositionTester02 positionTester02;
   GlobalMarketTester globalMarketTester;
@@ -28,6 +30,7 @@ abstract contract TradeService_Base is BaseTest {
     // deploy services
     tradeService = new TradeService(address(perpStorage), address(vaultStorage), address(configStorage));
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
+    liquidationService = new LiquidationService(address(perpStorage), address(vaultStorage), address(configStorage));
   }
 
   function getSubAccount(address _account, uint8 _subAccountId) internal pure returns (address) {

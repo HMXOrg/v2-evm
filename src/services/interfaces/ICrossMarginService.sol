@@ -18,7 +18,7 @@ interface ICrossMarginService {
 
   function setVaultStorage(address _vaultStorage) external;
 
-  function depositCollateral(address _primaryAccount, uint256 _subAccountId, address _token, uint256 _amount) external;
+  function depositCollateral(address _primaryAccount, uint8 _subAccountId, address _token, uint256 _amount) external;
 
-  function withdrawCollateral(address _primaryAccount, uint256 _subAccountId, address _token, uint256 _amount) external;
+  function withdrawCollateral(address _primaryAccount, uint8 _subAccountId, address _token, uint256 _amount) external;
 }

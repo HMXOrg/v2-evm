@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LimitTradeHandler_Base, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
-import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { LimitOrderTester } from "../../testers/LimitOrderTester.sol";
 
 // What is this test DONE
@@ -38,21 +38,6 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_IncorrectValueTransfer()"));
     limitTradeHandler.createOrder({
       _subAccountId: 3,
-      _marketIndex: 0,
-      _sizeDelta: 100,
-      _triggerPrice: 1000,
-      _triggerAboveThreshold: true,
-      _executionFee: 0.1 ether,
-      _reduceOnly: false,
-      _tpToken: address(weth)
-    });
-  }
-
-  // Create order with sub-account id > 255
-  function testRevert_createOrder_BadSubAccountId() external {
-    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_BadSubAccountId()"));
-    limitTradeHandler.createOrder{ value: 0.1 ether }({
-      _subAccountId: 1000,
       _marketIndex: 0,
       _sizeDelta: 100,
       _triggerPrice: 1000,

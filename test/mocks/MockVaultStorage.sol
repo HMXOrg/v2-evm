@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 contract MockVaultStorage {
   mapping(address => mapping(address => uint256)) public traderBalances;
@@ -11,11 +11,7 @@ contract MockVaultStorage {
   // | ---------- Setter ------------------- |
   // =========================================
 
-  function setTraderBalance(
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external {
+  function setTraderBalance(address _subAccount, address _token, uint256 _amount) external {
     traderBalances[_subAccount][_token] = _amount;
   }
 
@@ -27,9 +23,7 @@ contract MockVaultStorage {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getTraderTokens(
-    address _subAccount
-  ) external view returns (address[] memory) {
+  function getTraderTokens(address _subAccount) external view returns (address[] memory) {
     return traderTokens[_subAccount];
   }
 }

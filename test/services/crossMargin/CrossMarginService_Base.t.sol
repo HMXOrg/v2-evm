@@ -2,10 +2,12 @@
 pragma solidity 0.8.18;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { BaseTest, CrossMarginService, IConfigStorage, MockErc20 } from "../../base/BaseTest.sol";
+import { BaseTest, CrossMarginService, IConfigStorage, MockErc20 } from "@hmx-test/base/BaseTest.sol";
+import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 import { console } from "forge-std/console.sol";
 
 contract CrossMarginService_Base is BaseTest {
+  using AddressUtils for address;
   address internal CROSS_MARGIN_HANDLER;
 
   CrossMarginService crossMarginService;
@@ -27,23 +29,19 @@ contract CrossMarginService_Base is BaseTest {
 
     // Set accepted token deposit/withdraw
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
-      decimals: 18,
-      collateralFactor: 0.8 ether,
-      isStableCoin: false,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
     IConfigStorage.CollateralTokenConfig memory _collateralConfigUSDC = IConfigStorage.CollateralTokenConfig({
-      decimals: 6,
-      collateralFactor: 0.8 ether,
-      isStableCoin: true,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collateralConfigWETH);
-    configStorage.setCollateralTokenConfig(address(usdc), _collateralConfigUSDC);
+    configStorage.setCollateralTokenConfig(wethAssetId, _collateralConfigWETH);
+    configStorage.setCollateralTokenConfig(usdcAssetId, _collateralConfigUSDC);
   }
 
   // =========================================
@@ -65,7 +63,7 @@ contract CrossMarginService_Base is BaseTest {
     vm.stopPrank();
   }
 
-  function getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+  function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }

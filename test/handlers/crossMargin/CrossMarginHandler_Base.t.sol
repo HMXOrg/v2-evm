@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20 } from "../../base/BaseTest.sol";
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
+import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20 } from "@hmx-test/base/BaseTest.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 contract CrossMarginHandler_Base is BaseTest {
   using AddressUtils for address;
 
-  uint256 internal SUB_ACCOUNT_NO = 1;
+  uint8 internal SUB_ACCOUNT_NO = 1;
 
   CrossMarginHandler internal crossMarginHandler;
   CrossMarginService internal crossMarginService;
@@ -16,6 +17,9 @@ contract CrossMarginHandler_Base is BaseTest {
 
   function setUp() public virtual {
     DeployReturnVars memory deployed = deployPerp88v2();
+
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(wethAssetId, 1e6, 60);
+    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(wbtcAssetId, 1e6, 60);
 
     calculator = deployCalculator(
       address(deployed.oracleMiddleware),
@@ -32,45 +36,39 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set accepted token deposit/withdraw as WETH and USDC
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
-      decimals: 18,
-      collateralFactor: 0.8 ether,
-      isStableCoin: false,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
     IConfigStorage.CollateralTokenConfig memory _collateralConfigUSDC = IConfigStorage.CollateralTokenConfig({
-      decimals: 6,
-      collateralFactor: 0.8 ether,
-      isStableCoin: true,
+      collateralFactorBPS: 0.8 * 1e4,
       accepted: true,
       settleStrategy: address(0)
     });
 
-    configStorage.setCollateralTokenConfig(address(weth), _collateralConfigWETH);
-    configStorage.setCollateralTokenConfig(address(usdc), _collateralConfigUSDC);
+    configStorage.setCollateralTokenConfig(wethAssetId, _collateralConfigWETH);
+    configStorage.setCollateralTokenConfig(usdcAssetId, _collateralConfigUSDC);
 
     // Set market config
     configStorage.setMarketConfig(
       0,
       IConfigStorage.MarketConfig({
-        assetId: address(weth).toBytes32(),
+        assetId: wethAssetId,
         assetClass: 1,
-        exponent: 8,
-        maxProfitRate: 9e18,
-        minLeverage: 1,
-        initialMarginFraction: 0.1 * 1e18,
-        maintenanceMarginFraction: 0.005 * 1e18,
-        increasePositionFeeRate: 0,
-        decreasePositionFeeRate: 0,
-        priceConfidentThreshold: 1e18,
+        maxProfitRateBPS: 9 * 1e4,
+        minLeverageBPS: 1 * 1e4,
+        initialMarginFractionBPS: 0.1 * 1e4,
+        maintenanceMarginFractionBPS: 0.005 * 1e4,
+        increasePositionFeeRateBPS: 0,
+        decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
         openInterest: IConfigStorage.OpenInterest({
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 4 * 1e14, maxSkewScaleUSD: 3_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );
 
@@ -79,8 +77,8 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set Oracle data for Price feeding
     {
-      deployed.pythAdapter.setPythPriceId(address(wbtc).toBytes32(), wbtcPriceId);
-      deployed.pythAdapter.setPythPriceId(address(weth).toBytes32(), wethPriceId);
+      deployed.pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
+      deployed.pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
 
       priceDataBytes = new bytes[](2);
       priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
@@ -105,15 +103,15 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set market status
     deployed.oracleMiddleware.setUpdater(address(this), true);
-    deployed.oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), uint8(2)); // active
-    deployed.oracleMiddleware.setMarketStatus(address(weth).toBytes32(), uint8(2)); // active
+    deployed.oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // active
+    deployed.oracleMiddleware.setMarketStatus(wethAssetId, uint8(2)); // active
   }
 
   /**
    * COMMON FUNCTION
    */
 
-  function getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+  function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }

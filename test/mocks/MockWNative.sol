@@ -1,6 +1,6 @@
 pragma solidity 0.8.18;
 
-import { IWNative } from "../../src/interfaces/IWNative.sol";
+import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 // Copyright (C) 2015, 2016, 2017 Dapphub
 

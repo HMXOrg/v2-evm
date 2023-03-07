@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, MarketTradeHandler, IPerpStorage, IConfigStorage } from "../../base/BaseTest.sol";
+import { BaseTest, MarketTradeHandler, IPerpStorage, IConfigStorage } from "@hmx-test/base/BaseTest.sol";
 
 contract MarketTradeHandler_Base is BaseTest {
   MarketTradeHandler marketTradeHandler;
@@ -19,7 +19,7 @@ contract MarketTradeHandler_Base is BaseTest {
   // | ------- common function ------------- |
   // =========================================
 
-  function _getSubAccount(address primary, uint256 subAccountId) internal pure returns (address) {
+  function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {
     return address(uint160(primary) ^ uint160(subAccountId));
   }
 }

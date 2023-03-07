@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LiquidityService_Base } from "./LiquidityService_Base.t.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 // LiquidityService_AddLiquidity - unit test for add liquidity function
 // What is this test DONE
@@ -35,7 +35,6 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
 
     assertEq(dai.balanceOf(address(vaultStorage)), 100 ether, "VaultStorage should receive DAI from Handler.");
     assertEq(plp.totalSupply(), 99.7 ether, "PLP Total Supply");
-    assertEq(vaultStorage.plpTotalLiquidityUSDE30(), 99.7 * 10 ** 30);
   }
 
   // add liquidity when circuit break
@@ -60,7 +59,7 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
   // add liquidity on not accepted token
   function testRevert_WhenPLPAddLiquidity_WithNotAcceptedToken() external {
     // update weth to not accepted
-    IConfigStorage.PLPTokenConfig memory _plpTokenConfig = configStorage.getPLPTokenConfig(address(weth));
+    IConfigStorage.PLPTokenConfig memory _plpTokenConfig = configStorage.getAssetPlpTokenConfigByToken(address(weth));
     _plpTokenConfig.accepted = false;
     configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig);
 

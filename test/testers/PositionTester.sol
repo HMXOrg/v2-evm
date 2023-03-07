@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { PerpStorage } from "../../src/storages/PerpStorage.sol";
-import { VaultStorage } from "../../src/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 
@@ -16,7 +16,7 @@ import { console } from "forge-std/console.sol";
 contract PositionTester is StdAssertions {
   struct DecreasePositionAssertionData {
     address primaryAccount;
-    uint256 subAccountId;
+    uint8 subAccountId;
     // position info
     uint256 decreasedPositionSize;
     uint256 reserveValueDelta;
@@ -48,7 +48,7 @@ contract PositionTester is StdAssertions {
     oracle = _oracle;
   }
 
-  function watch(address _primaryAccount, uint256 _subAccountId, address _token, bytes32 _positionId) external {
+  function watch(address _primaryAccount, uint8 _subAccountId, address _token, bytes32 _positionId) external {
     address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
     // @todo - this can access state directly
     cachePositionId = _positionId;
@@ -185,7 +185,7 @@ contract PositionTester is StdAssertions {
     // );
   }
 
-  function _getSubAccount(address _primaryAccount, uint256 _subAccountId) internal pure returns (address) {
+  function _getSubAccount(address _primaryAccount, uint8 _subAccountId) internal pure returns (address) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primaryAccount) ^ uint160(_subAccountId));
   }

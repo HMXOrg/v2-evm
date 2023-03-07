@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IConfigStorage } from "../../storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../../storages/interfaces/IVaultStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 interface ICalculator {
   /**
@@ -27,13 +27,17 @@ interface ICalculator {
     SHORT
   }
 
-  function getAUM(bool isMaxPrice) external returns (uint256);
+  function getAUM(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
 
-  function getAUME30(bool isMaxPrice) external returns (uint256);
+  function getAUME30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
 
-  function getPLPValueE30(bool isMaxPrice) external view returns (uint256);
+  function getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external view returns (uint256);
 
-  function getFreeCollateral(address _subAccount) external returns (uint256);
+  function getFreeCollateral(
+    address _subAccount,
+    uint256 _price,
+    bytes32 _assetId
+  ) external view returns (uint256 _freeCollateral);
 
   function getPLPPrice(uint256 aum, uint256 supply) external returns (uint256);
 
@@ -48,15 +52,13 @@ interface ICalculator {
   function getAddLiquidityFeeRate(
     address _token,
     uint256 _tokenValue,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    ConfigStorage _configStorage
   ) external returns (uint256);
 
   function getRemoveLiquidityFeeRate(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage,
-    IVaultStorage _vaultStorage
+    ConfigStorage _configStorage
   ) external returns (uint256);
 
   function oracle() external returns (address);
@@ -65,13 +67,32 @@ interface ICalculator {
 
   function calculatePositionMMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _mmrE30);
 
-  function getEquity(address _subAccount) external returns (uint256 _equityValueE30);
+  function getEquity(
+    address _subAccount,
+    uint256 _price,
+    bytes32 _assetId
+  ) external view returns (int256 _equityValueE30);
 
-  function getUnrealizedPnl(address _subAccount) external view returns (int _unrealizedPnlE30);
+  function getUnrealizedPnl(
+    address _subAccount,
+    uint256 _price,
+    bytes32 _assetId
+  ) external view returns (int256 _unrealizedPnlE30);
 
   function getIMR(address _subAccount) external view returns (uint256 _imrValueE30);
 
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
 
-  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
+  function getSettlementFeeRate(
+    address _token,
+    uint256 _liquidityUsdDelta,
+    uint256 _limitPrice,
+    bytes32 _assetId
+  ) external returns (uint256);
+
+  function getCollateralValue(
+    address _subAccount,
+    uint256 _limitPrice,
+    bytes32 _assetId
+  ) external view returns (uint256 _collateralValueE30);
 }

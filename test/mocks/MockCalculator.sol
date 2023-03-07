@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { ICalculator } from "../../src/contracts/interfaces/ICalculator.sol";
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 contract MockCalculator is ICalculator {
-  mapping(address => uint256) equitiesOf;
+  mapping(address => int256) equitiesOf;
   mapping(address => uint256) imrOf;
   mapping(address => uint256) mmrOf;
   mapping(address => int256) unrealizedPnlOf;
 
+  uint256 collateralValue;
   uint256 freeCollateral;
   uint256 aum;
   uint256 plpValue;
@@ -30,7 +31,7 @@ contract MockCalculator is ICalculator {
   // | ---------- Setter ------------------- |
   // =========================================
 
-  function setEquity(address _subAccount, uint256 _mockEquity) external {
+  function setEquity(address _subAccount, int256 _mockEquity) external {
     equitiesOf[_subAccount] = _mockEquity;
   }
 
@@ -78,12 +79,12 @@ contract MockCalculator is ICalculator {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getEquity(address _subAccount) external view returns (uint256) {
+  function getEquity(address _subAccount, uint256 _price, bytes32 _assetId) external view returns (int256) {
     return equitiesOf[_subAccount];
   }
 
   // @todo - Add Description
-  function getUnrealizedPnl(address _subAccount) external view returns (int256) {
+  function getUnrealizedPnl(address _subAccount, uint256 _price, bytes32 _assetId) external view returns (int256) {
     return unrealizedPnlOf[_subAccount];
   }
 
@@ -111,15 +112,15 @@ contract MockCalculator is ICalculator {
     return 0;
   }
 
-  function getAUM(bool /* isMaxPrice */) external view returns (uint256) {
+  function getAUM(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
     return aum;
   }
 
-  function getAUME30(bool /* isMaxPrice */) external view returns (uint256) {
+  function getAUME30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
     return aum;
   }
 
-  function getPLPValueE30(bool /* isMaxPrice */) external view returns (uint256) {
+  function getPLPValueE30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
     return plpValue;
   }
 
@@ -143,8 +144,7 @@ contract MockCalculator is ICalculator {
   function getAddLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValue*/,
-    IConfigStorage /*_configStorage*/,
-    IVaultStorage /*_vaultStorage*/
+    ConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
     return 0.003 ether;
   }
@@ -152,13 +152,16 @@ contract MockCalculator is ICalculator {
   function getRemoveLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValueE30*/,
-    IConfigStorage /*_configStorage*/,
-    IVaultStorage /*_vaultStorage*/
+    ConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
     return 1e18;
   }
 
-  function getFreeCollateral(address /*_subAccount*/) external view returns (uint256) {
+  function getFreeCollateral(
+    address /*_subAccount*/,
+    uint256 /*_price*/,
+    bytes32 /*_assetId*/
+  ) external view returns (uint256) {
     return freeCollateral;
   }
 
@@ -181,9 +184,19 @@ contract MockCalculator is ICalculator {
 
   function getSettlementFeeRate(
     address /* _token */,
-    uint256 /* _liquidityUSDDelta */
+    uint256 /* _liquidityUSDDelta */,
+    uint256,
+    bytes32
   ) external pure returns (uint256) {
     // 0.5%
     return 5e15;
+  }
+
+  function getCollateralValue(
+    address /*_subAccount*/,
+    uint256 /*_limitPrice*/,
+    bytes32 /*_assetId*/
+  ) external view returns (uint256) {
+    return collateralValue;
   }
 }

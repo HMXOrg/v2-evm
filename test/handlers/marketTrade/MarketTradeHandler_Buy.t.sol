@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { MarketTradeHandler } from "../../../src/handlers/MarketTradeHandler.sol";
+import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 import { MarketTradeHandler_Base, IPerpStorage } from "./MarketTradeHandler_Base.t.sol";
-import { IMarketTradeHandler } from "../../../src/handlers/interfaces/IMarketTradeHandler.sol";
+import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
 // What is this test DONE
 // - revert
@@ -17,7 +17,7 @@ import { IMarketTradeHandler } from "../../../src/handlers/interfaces/IMarketTra
 contract MarketTradeHandler_Buy is MarketTradeHandler_Base {
   event LogBuy(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
     uint256 _shortDecreasingSizeE30,

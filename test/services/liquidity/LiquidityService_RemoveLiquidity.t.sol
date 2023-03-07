@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LiquidityService_Base } from "./LiquidityService_Base.t.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 // LiquidityService_RemoveLiquidity - unit test for remove liquidity function
 // What is this test DONE
@@ -37,7 +37,6 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     liquidityService.removeLiquidity(address(this), address(dai), 50 ether, 0);
 
     assertEq(plp.totalSupply(), 49.7 ether, "PLP Total Supply");
-    assertEq(vaultStorage.plpTotalLiquidityUSDE30(), 49.7 * 10 ** 30);
   }
 
   // remove liquidity when circuit break

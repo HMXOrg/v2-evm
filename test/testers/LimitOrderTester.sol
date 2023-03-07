@@ -3,8 +3,8 @@ pragma solidity 0.8.18;
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { LimitTradeHandler } from "../../src/handlers/LimitTradeHandler.sol";
-import { ILimitTradeHandler } from "../../src/handlers/interfaces/ILimitTradeHandler.sol";
+import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 
 contract LimitOrderTester is StdAssertions {
   struct LimitOrderAssertData {
@@ -13,7 +13,7 @@ contract LimitOrderTester is StdAssertions {
     bool triggerAboveThreshold;
     bool reduceOnly;
     int256 sizeDelta;
-    uint256 subAccountId;
+    uint8 subAccountId;
     uint256 marketIndex;
     uint256 triggerPrice;
     uint256 executionFee;

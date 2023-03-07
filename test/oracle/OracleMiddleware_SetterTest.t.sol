@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 import { OracleMiddleware_BaseTest } from "./OracleMiddleware_BaseTest.t.sol";
-import { OracleMiddleware } from "../../src/oracle/OracleMiddleware.sol";
-import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 contract OracleMiddleware_SetterTest is OracleMiddleware_BaseTest {
   using AddressUtils for address;
@@ -57,15 +57,11 @@ contract OracleMiddleware_SetterTest is OracleMiddleware_BaseTest {
     vm.startPrank(ALICE);
 
     // Revert if status > 2
-    vm.expectRevert(
-      abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()"));
     oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 3);
 
     // Revert if status > 2
-    vm.expectRevert(
-      abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()")
-    );
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()"));
     oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 4);
 
     // This one should be ok

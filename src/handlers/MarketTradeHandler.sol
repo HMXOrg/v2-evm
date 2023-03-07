@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+// base
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { Owned } from "../base/Owned.sol";
-
-// Interfaces
+import { Owned } from "@hmx/base/Owned.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { IMarketTradeHandler } from "./interfaces/IMarketTradeHandler.sol";
-import { ITradeService } from "../services/interfaces/ITradeService.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
+
+// contracts
+import { TradeService } from "@hmx/services/TradeService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+
+// interfaces
+import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
 contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /**
@@ -19,7 +22,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   event LogSetPyth(address oldPyth, address newPyth);
   event LogBuy(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
     uint256 _shortDecreasingSizeE30,
@@ -27,7 +30,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   );
   event LogSell(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _sellSizeE30,
     uint256 _longDecreasingSizeE30,
@@ -47,7 +50,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     pyth = _pyth;
 
     // Sanity check
-    ITradeService(_tradeService).perpStorage();
+    TradeService(_tradeService).perpStorage();
     IPyth(_pyth).getValidTimePeriod();
   }
 
@@ -67,7 +70,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     tradeService = _newTradeService;
 
     // Sanity check
-    ITradeService(_newTradeService).perpStorage();
+    TradeService(_newTradeService).perpStorage();
   }
 
   /// @notice Set new Pyth contract address.
@@ -95,7 +98,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
   function buy(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
     address _tpToken,
@@ -110,7 +113,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // 0. Get position
-    IPerpStorage.Position memory _position = _getPosition(_account, _subAccountId, _marketIndex);
+    PerpStorage.Position memory _position = _getPosition(_account, _subAccountId, _marketIndex);
 
     // 1. Find the `_shortDecreasingSizeE30` and `_longIncreasingSizeE30`
     uint256 _shortDecreasingSizeE30 = 0;
@@ -147,22 +150,24 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     // 2. Decrease the short position first
     if (_shortDecreasingSizeE30 > 0) {
-      ITradeService(tradeService).decreasePosition(
+      TradeService(tradeService).decreasePosition(
         _account,
         _subAccountId,
         _marketIndex,
         _shortDecreasingSizeE30,
-        _tpToken
+        _tpToken,
+        0
       );
     }
 
     // 3. Then, increase the long position
     if (_longIncreasingSizeE30 > 0) {
-      ITradeService(tradeService).increasePosition(
+      TradeService(tradeService).increasePosition(
         _account,
         _subAccountId,
         _marketIndex,
-        int256(_longIncreasingSizeE30)
+        int256(_longIncreasingSizeE30),
+        0
       );
     }
 
@@ -179,7 +184,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
   function sell(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _sellSizeE30,
     address _tpToken,
@@ -194,7 +199,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // 0. Get position
-    IPerpStorage.Position memory _position = _getPosition(_account, _subAccountId, _marketIndex);
+    PerpStorage.Position memory _position = _getPosition(_account, _subAccountId, _marketIndex);
 
     // 1. Find the `_longDecreasingSizeE30` and `_shortIncreasingSizeE30`
     uint256 _longDecreasingSizeE30 = 0;
@@ -231,22 +236,24 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     // 2. Decrease the long position first
     if (_longDecreasingSizeE30 > 0) {
-      ITradeService(tradeService).decreasePosition(
+      TradeService(tradeService).decreasePosition(
         _account,
         _subAccountId,
         _marketIndex,
         _longDecreasingSizeE30,
-        _tpToken
+        _tpToken,
+        0
       );
     }
 
     // 3. Then, increase the short position
     if (_shortIncreasingSizeE30 > 0) {
-      ITradeService(tradeService).increasePosition(
+      TradeService(tradeService).increasePosition(
         _account,
         _subAccountId,
         _marketIndex,
-        -int256(_shortIncreasingSizeE30)
+        -int256(_shortIncreasingSizeE30),
+        0
       );
     }
 
@@ -258,7 +265,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @param _primary Trader's primary wallet account.
   /// @param _subAccountId Trader's sub account ID.
   /// @return _subAccount Trader's sub account address used for trading.
-  function _getSubAccount(address _primary, uint256 _subAccountId) internal pure returns (address _subAccount) {
+  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
@@ -278,13 +285,13 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /// @return _position Position struct
   function _getPosition(
     address _account,
-    uint256 _subAccountId,
+    uint8 _subAccountId,
     uint256 _marketIndex
-  ) internal view returns (IPerpStorage.Position memory) {
-    address _perpStorage = ITradeService(tradeService).perpStorage();
+  ) internal view returns (PerpStorage.Position memory) {
+    address _perpStorage = TradeService(tradeService).perpStorage();
     address _subAccount = _getSubAccount(_account, _subAccountId);
     bytes32 _positionId = _getPositionId(_subAccount, _marketIndex);
 
-    return IPerpStorage(_perpStorage).getPositionById(_positionId);
+    return PerpStorage(_perpStorage).getPositionById(_positionId);
   }
 }

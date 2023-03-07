@@ -183,8 +183,6 @@ interface IConfigStorage {
 
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external;
 
-  function setDynamicEnabled(bool enabled) external;
-
   function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;
 
   // @todo - Add Description

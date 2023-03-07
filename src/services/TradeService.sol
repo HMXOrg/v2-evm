@@ -291,6 +291,7 @@ contract TradeService is ITradeService {
     // save the updated position to the storage
     IPerpStorage(perpStorage).savePosition(_vars.subAccount, _vars.positionId, _vars.position);
 
+    // Call Trade Service Hook
     _increasePositionHooks(_primaryAccount, _subAccountId, _marketIndex, _absSizeDelta);
   }
 
@@ -369,6 +370,9 @@ contract TradeService is ITradeService {
 
     // update position, market, and global market state
     _decreasePosition(_marketConfig, _marketIndex, _vars, _positionSizeE30ToDecrease, _tpToken, _limitPriceE30);
+
+    // Call Trade Service Hook
+    _decreasePositionHooks(_account, _subAccountId, _marketIndex, _positionSizeE30ToDecrease);
   }
 
   // @todo - access control
@@ -621,8 +625,6 @@ contract TradeService is ITradeService {
 
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
-
-    _decreasePositionHooks(_vars.subAccount, 0, _globalMarketIndex, _positionSizeE30ToDecrease);
 
     emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }

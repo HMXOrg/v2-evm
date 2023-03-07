@@ -246,8 +246,12 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @param _account the primary account of user
   /// @param _orderIndex Order Index which could be retrieved from lastOrderIndex(address) beware in case of index is 0`
   /// @param _priceData Price data from Pyth to be used for updating the market prices
-  // slither-disable-next-line reentrance-eth
-  function executeOrder(address _account, uint256 _orderIndex, bytes[] memory _priceData) external onlyOrderExecutor {
+  // slither-disable-next-line reentrancy-eth
+  function executeOrder(
+    address _account,
+    uint256 _orderIndex,
+    bytes[] memory _priceData
+  ) external nonReentrant onlyOrderExecutor {
     // Update price to Pyth
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);

@@ -622,7 +622,7 @@ contract TradeService is ITradeService {
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
-    _decreasePositionHooks(_account, _subAccountId, _marketIndex, _positionSizeE30ToDecrease);
+    _decreasePositionHooks(_vars.subAccount, 0, _globalMarketIndex, _positionSizeE30ToDecrease);
 
     emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
   }

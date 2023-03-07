@@ -247,11 +247,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @param _orderIndex Order Index which could be retrieved from lastOrderIndex(address) beware in case of index is 0`
   /// @param _priceData Price data from Pyth to be used for updating the market prices
   // slither-disable-next-line reentrance-eth
-  function executeOrder(
-    address _account,
-    uint256 _orderIndex,
-    bytes[] memory _priceData
-  ) external nonReentrant onlyOrderExecutor {
+  function executeOrder(address _account, uint256 _orderIndex, bytes[] memory _priceData) external onlyOrderExecutor {
     // Update price to Pyth
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -272,7 +268,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @notice execute either addLiquidity or removeLiquidity
   /// @param _order order of executing
   // slither-disable-next-line
-  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
+  function executeLiquidity(LiquidityOrder memory _order) external nonReentrant returns (uint256) {
     if (isExecuting) {
       if (_order.isAdd) {
         IERC20(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);

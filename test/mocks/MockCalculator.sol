@@ -178,7 +178,10 @@ contract MockCalculator is ICalculator {
     return fundingFee;
   }
 
-  function getNextFundingRate(uint256 /*marketIndex*/) external view returns (int256, int256, int256) {
+  function getNextFundingRate(
+    uint256 /*marketIndex*/,
+    uint256 /*limitPrice*/
+  ) external view virtual returns (int256, int256, int256) {
     return (fundingRate, fundingRateLong, fundingRateShort);
   }
 

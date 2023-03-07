@@ -700,4 +700,158 @@ contract Calculator is Owned, ICalculator {
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
   }
+
+  // /// @notice get next short average price with realized PNL
+  // /// @param _market - global market
+  // /// @param _currentPrice - min / max price depends on position direction
+  // /// @param _positionSizeDelta - position size after increase / decrease.
+  // ///                           if positive is LONG position, else is SHORT
+  // /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
+  // /// @return _nextAveragePrice next average price
+  // function calculateShortAveragePrice(
+  //   PerpStorage.GlobalMarket memory _market,
+  //   uint256 _currentPrice,
+  //   int256 _positionSizeDelta,
+  //   int256 _realizedPositionPnl
+  // ) external pure returns (uint256 _nextAveragePrice) {
+  //   // global
+  //   uint256 _globalPositionSize = _market.shortPositionSize;
+  //   int256 _globalAveragePrice = int256(_market.shortAvgPrice);
+
+  //   if (_globalAveragePrice == 0) return 0;
+
+  //   // if positive means, has profit
+  //   int256 _globalPnl = (int256(_globalPositionSize) * (_globalAveragePrice - int256(_currentPrice))) /
+  //     _globalAveragePrice;
+  //   int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
+
+  //   uint256 _newGlobalPositionSize;
+  //   // position > 0 is means decrease short position
+  //   // else is increase short position
+  //   if (_positionSizeDelta > 0) {
+  //     _newGlobalPositionSize = _globalPositionSize - uint256(_positionSizeDelta);
+  //   } else {
+  //     _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
+  //   }
+
+  //   bool _isGlobalProfit = _newGlobalPnl > 0;
+  //   uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
+
+  //   // divisor = latest global position size - pnl
+  //   uint256 divisor = _isGlobalProfit
+  //     ? (_newGlobalPositionSize - _absoluteGlobalPnl)
+  //     : (_newGlobalPositionSize + _absoluteGlobalPnl);
+
+  //   if (divisor == 0) return 0;
+
+  //   // next short average price = current price * latest global position size / latest global position size - pnl
+  //   _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
+
+  //   return _nextAveragePrice;
+  // }
+
+  // /// @notice get next long average price with realized PNL
+  // /// @param _market - global market
+  // /// @param _currentPrice - min / max price depends on position direction
+  // /// @param _positionSizeDelta - position size after increase / decrease.
+  // ///                           if positive is LONG position, else is SHORT
+  // /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
+  // /// @return _nextAveragePrice next average price
+  // function calculateLongAveragePrice(
+  //   PerpStorage.GlobalMarket memory _market,
+  //   uint256 _currentPrice,
+  //   int256 _positionSizeDelta,
+  //   int256 _realizedPositionPnl
+  // ) external pure returns (uint256 _nextAveragePrice) {
+  //   // global
+  //   uint256 _globalPositionSize = _market.longPositionSize;
+  //   int256 _globalAveragePrice = int256(_market.longAvgPrice);
+
+  //   if (_globalAveragePrice == 0) return 0;
+
+  //   // if positive means, has profit
+  //   int256 _globalPnl = (int256(_globalPositionSize) * (int256(_currentPrice) - _globalAveragePrice)) /
+  //     _globalAveragePrice;
+  //   int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
+
+  //   uint256 _newGlobalPositionSize;
+  //   // position > 0 is means increase short position
+  //   // else is decrease short position
+  //   if (_positionSizeDelta > 0) {
+  //     _newGlobalPositionSize = _globalPositionSize + uint256(_positionSizeDelta);
+  //   } else {
+  //     _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
+  //   }
+
+  //   bool _isGlobalProfit = _newGlobalPnl > 0;
+  //   uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
+
+  //   // divisor = latest global position size + pnl
+  //   uint256 divisor = _isGlobalProfit
+  //     ? (_newGlobalPositionSize + _absoluteGlobalPnl)
+  //     : (_newGlobalPositionSize - _absoluteGlobalPnl);
+
+  //   if (divisor == 0) return 0;
+
+  //   // next long average price = current price * latest global position size / latest global position size + pnl
+  //   _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
+
+  //   return _nextAveragePrice;
+  // }
+
+  /// @notice Calculate next funding rate using when increase/decrease position.
+  /// @param _marketIndex Market Index.
+  /// @param _limitPriceE30 Price from limit order
+  /// @return fundingRate next funding rate using for both LONG & SHORT positions.
+  /// @return fundingRateLong next funding rate for LONG.
+  /// @return fundingRateShort next funding rate for SHORT.
+  function getNextFundingRate(
+    uint256 _marketIndex,
+    uint256 _limitPriceE30
+  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+    GetFundingRateVar memory vars;
+    ConfigStorage.MarketConfig memory marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
+    PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    if (marketConfig.fundingRate.maxFundingRateBPS == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0)
+      return (0, 0, 0);
+    // Get funding interval
+    vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
+    // If block.timestamp not pass the next funding time, return 0.
+    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
+    int32 _exponent;
+    if (_limitPriceE30 != 0) {
+      vars.marketPriceE30 = _limitPriceE30;
+    } else {
+      //@todo - validate timestamp of these
+      (vars.marketPriceE30, _exponent, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+        marketConfig.assetId,
+        false
+      );
+    }
+    vars.marketSkewUSDE30 =
+      ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
+      int(10 ** uint32(-_exponent));
+    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRateBPS, maxFundingRateBPS]
+    vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
+    vars.ratio = _min(vars.ratio, 1e18);
+    vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRateBPS))) / 1e4;
+    vars.newFundingRate = globalMarket.currentFundingRate + vars.nextFundingRate;
+    vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
+    if (globalMarket.longOpenInterest > 0) {
+      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize) * vars.elapsedIntervals) / 1e30;
+    }
+    if (globalMarket.shortOpenInterest > 0) {
+      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize) * vars.elapsedIntervals) / 1e30;
+    }
+    return (vars.newFundingRate, fundingRateLong, fundingRateShort);
+  }
+
+  function _max(int256 a, int256 b) internal pure returns (int256) {
+    return a > b ? a : b;
+  }
+
+  function _min(int256 a, int256 b) internal pure returns (int256) {
+    return a < b ? a : b;
+  }
 }

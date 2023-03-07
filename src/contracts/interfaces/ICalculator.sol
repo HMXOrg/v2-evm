@@ -15,6 +15,15 @@ interface ICalculator {
   /**
    * STRUCTS
    */
+  struct GetFundingRateVar {
+    uint256 fundingInterval;
+    uint256 marketPriceE30;
+    int256 marketSkewUSDE30;
+    int256 ratio;
+    int256 nextFundingRate;
+    int256 newFundingRate;
+    int256 elapsedIntervals;
+  }
 
   //@todo - will be use in _getFeeRate
   enum LiquidityDirection {
@@ -95,4 +104,9 @@ interface ICalculator {
     uint256 _limitPrice,
     bytes32 _assetId
   ) external view returns (uint256 _collateralValueE30);
+
+  function getNextFundingRate(
+    uint256 _marketIndex,
+    uint256 _limitPriceE30
+  ) external view returns (int256, int256, int256);
 }

@@ -33,6 +33,8 @@ import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationServic
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
+  uint32 internal constant DOLLAR = 1e30;
+
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -74,16 +76,6 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   ERC20 gmx; //decimals 18
 
   address jpy = address(0);
-
-  /* MARKET */
-
-  // assetIds
-  bytes32 internal constant wethAssetId = "weth";
-  bytes32 internal constant wbtcAssetId = "wbtc";
-
-  bytes32 internal constant gmxAssetId = "gmx";
-
-  bytes32 internal constant jpyAssetId = "jpy";
 
   /* PYTH */
   address internal pyth;

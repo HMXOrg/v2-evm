@@ -993,15 +993,6 @@ contract TradeService is ITradeService {
     return (_reservedValue * _borrowingRate) / RATE_PRECISION;
   }
 
-  /// @notice Calculates the trading fee for a given position
-  /// @param _absSizeDelta Position size
-  /// @param _positionFeeRateBPS Position Fee
-  /// @return tradingFee The calculated trading fee for the position.
-  function getTradingFee(uint256 _absSizeDelta, uint256 _positionFeeRateBPS) public pure returns (uint256 tradingFee) {
-    if (_absSizeDelta == 0) return 0;
-    return (_absSizeDelta * _positionFeeRateBPS) / BPS;
-  }
-
   /// @notice This function collects margin fee from position
   /// @param _subAccount The sub-account from which to collect the fee.
   /// @param _absSizeDelta Position size to be increased or decreased in absolute value
@@ -1022,7 +1013,7 @@ contract TradeService is ITradeService {
     int256 feeUsd = _perpStorage.getSubAccountFee(_subAccount);
 
     // Calculate trading Fee USD
-    uint256 tradingFeeUsd = getTradingFee(_absSizeDelta, _positionFeeBPS);
+    uint256 tradingFeeUsd = (_absSizeDelta * _positionFeeBPS) / BPS;
     feeUsd += int(tradingFeeUsd);
 
     emit LogCollectTradingFee(_subAccount, _assetClassIndex, tradingFeeUsd);

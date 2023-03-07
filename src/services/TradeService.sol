@@ -1002,37 +1002,6 @@ contract TradeService is ITradeService {
     return (_absSizeDelta * _positionFeeRateBPS) / BPS;
   }
 
-  /**
-   * Funding Rate
-   */
-  /// @notice This function returns funding fee according to trader's position
-  /// @param _marketIndex Index of market
-  /// @param _isLong Is long or short exposure
-  /// @param _size Position size
-  /// @return fundingFee Funding fee of position
-  function getFundingFee(
-    uint256 _marketIndex,
-    bool _isLong,
-    int256 _size,
-    int256 _entryFundingRate
-  ) public view returns (int256 fundingFee) {
-    if (_size == 0) return 0;
-    uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
-
-    PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-
-    int256 _fundingRate = _globalMarket.currentFundingRate - _entryFundingRate;
-
-    // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
-    // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
-    fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
-    if (_isLong) {
-      return _fundingRate < 0 ? -fundingFee : fundingFee;
-    } else {
-      return _fundingRate < 0 ? fundingFee : -fundingFee;
-    }
-  }
-
   /// @notice This function collects margin fee from position
   /// @param _subAccount The sub-account from which to collect the fee.
   /// @param _absSizeDelta Position size to be increased or decreased in absolute value
@@ -1082,6 +1051,7 @@ contract TradeService is ITradeService {
     int256 _entryFundingRate
   ) public {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     // Get the debt fee of the sub-account
     int256 feeUsd = _perpStorage.getSubAccountFee(_subAccount);
@@ -1089,7 +1059,7 @@ contract TradeService is ITradeService {
     // Calculate the borrowing fee
     bool isLong = _positionSizeE30 > 0;
 
-    int256 fundingFee = getFundingFee(_marketIndex, isLong, _positionSizeE30, _entryFundingRate);
+    int256 fundingFee = _calculator.getFundingFee(_marketIndex, isLong, _positionSizeE30, _entryFundingRate);
     feeUsd += fundingFee;
 
     emit LogCollectFundingFee(_subAccount, _assetClassIndex, fundingFee);

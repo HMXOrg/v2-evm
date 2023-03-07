@@ -22,6 +22,7 @@ contract TradeService_FundingFee is TradeService_Base {
         address(configStorage)
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getNextFundingRate");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getFundingFee");
       // mockCalculator = m;
       configStorage.setCalculator(address(mockCalculator));
     }

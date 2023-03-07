@@ -179,7 +179,7 @@ contract MockCalculator is ICalculator {
     bool /*_isLong*/,
     int256 /*_size*/,
     int256 /*_entryFundingRate*/
-  ) public view returns (int256) {
+  ) public view virtual returns (int256) {
     return fundingFee;
   }
 

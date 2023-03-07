@@ -16,6 +16,7 @@ import { ICalculator } from "./interfaces/ICalculator.sol";
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
+  uint64 internal constant RATE_PRECISION = 1e18;
 
   // EVENTS
   event LogSetOracle(address indexed oldOracle, address indexed newOracle);
@@ -841,6 +842,37 @@ contract Calculator is Owned, ICalculator {
       fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize) * vars.elapsedIntervals) / 1e30;
     }
     return (vars.newFundingRate, fundingRateLong, fundingRateShort);
+  }
+
+  /**
+   * Funding Rate
+   */
+  /// @notice This function returns funding fee according to trader's position
+  /// @param _marketIndex Index of market
+  /// @param _isLong Is long or short exposure
+  /// @param _size Position size
+  /// @return fundingFee Funding fee of position
+  function getFundingFee(
+    uint256 _marketIndex,
+    bool _isLong,
+    int256 _size,
+    int256 _entryFundingRate
+  ) external view returns (int256 fundingFee) {
+    if (_size == 0) return 0;
+    uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
+
+    PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    int256 _fundingRate = _globalMarket.currentFundingRate - _entryFundingRate;
+
+    // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
+    // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
+    fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
+    if (_isLong) {
+      return _fundingRate < 0 ? -fundingFee : fundingFee;
+    } else {
+      return _fundingRate < 0 ? fundingFee : -fundingFee;
+    }
   }
 
   function _max(int256 a, int256 b) internal pure returns (int256) {

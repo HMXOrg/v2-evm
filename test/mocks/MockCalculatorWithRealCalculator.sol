@@ -22,6 +22,19 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     actualFunction[keccak256(_funcName)] = true;
   }
 
+  function getFundingFee(
+    uint256 _marketIndex,
+    bool _isLong,
+    int256 _size,
+    int256 _entryFundingRate
+  ) public view override returns (int256) {
+    if (actualFunction[keccak256("getFundingFee")]) {
+      return c.getFundingFee(_marketIndex, _isLong, _size, _entryFundingRate);
+    } else {
+      return super.getFundingFee(_marketIndex, _isLong, _size, _entryFundingRate);
+    }
+  }
+
   function getNextFundingRate(
     uint256 _marketIndex,
     uint256 _limitPriceE30

@@ -2,15 +2,17 @@
 pragma solidity 0.8.18;
 
 import { Owned } from "../base/Owned.sol";
-import { IMultiRewarder } from "./interfaces/IMultiRewarder.sol";
+import { IRewarder } from "./interfaces/IRewarder.sol";
+import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
 
-contract TradingStaking is Owned {
+contract TradingStaking is Owned, ITradingStaking {
   error TradingStaking_UnknownMarketIndex();
   error TradingStaking_InsufficientTokenAmount();
   error TradingStaking_NotRewarder();
   error TradingStaking_NotCompounder();
   error TradingStaking_BadDecimals();
   error TradingStaking_DuplicateStakingToken();
+  error TradingStaking_Forbidden();
 
   mapping(uint256 => mapping(address => uint256)) public userTokenAmount;
   mapping(uint256 => uint256) public totalShares;
@@ -20,12 +22,19 @@ contract TradingStaking is Owned {
   mapping(address => uint256[]) public rewarderMarketIndex;
 
   address public compounder;
+  address public whitelistedCaller;
 
   event LogDeposit(address indexed caller, address indexed user, uint256 marketIndex, uint256 amount);
   event LogWithdraw(address indexed caller, uint256 marketIndex, uint256 amount);
   event LogAddStakingToken(uint256 newMarketIndex, address[] newRewarders);
   event LogAddRewarder(address newRewarder, uint256[] newTokens);
   event LogSetCompounder(address oldCompounder, address newCompounder);
+  event LogSetWhitelistedCaller(address oldAddress, address newAddress);
+
+  modifier onlyWhitelistedCaller() {
+    if (msg.sender != whitelistedCaller) revert TradingStaking_Forbidden();
+    _;
+  }
 
   function addPool(uint256 _newMarketIndex, address[] memory newRewarders) external onlyOwner {
     uint256 length = newRewarders.length;
@@ -115,14 +124,19 @@ contract TradingStaking is Owned {
     compounder = compounder_;
   }
 
-  function deposit(address to, uint256 _marketIndex, uint256 amount) external {
+  function setWhitelistedCaller(address _whitelistedCaller) external onlyOwner {
+    emit LogSetWhitelistedCaller(whitelistedCaller, _whitelistedCaller);
+    whitelistedCaller = _whitelistedCaller;
+  }
+
+  function deposit(address to, uint256 _marketIndex, uint256 amount) external onlyWhitelistedCaller {
     if (!isMarketIndex[_marketIndex]) revert TradingStaking_UnknownMarketIndex();
 
     uint256 length = marketIndexRewarders[_marketIndex].length;
     for (uint256 i = 0; i < length; ) {
       address rewarder = marketIndexRewarders[_marketIndex][i];
 
-      IMultiRewarder(rewarder).onDeposit(to, amount);
+      IRewarder(rewarder).onDeposit(to, amount);
 
       unchecked {
         ++i;
@@ -139,29 +153,32 @@ contract TradingStaking is Owned {
     return userTokenAmount[_marketIndex][sender];
   }
 
-  function withdraw(uint256 _marketIndex, uint256 amount) external {
-    _withdraw(_marketIndex, amount);
-    emit LogWithdraw(msg.sender, _marketIndex, amount);
+  function getMarketIndexRewarders(uint256 _marketIndex) external view returns (address[] memory) {
+    return marketIndexRewarders[_marketIndex];
   }
 
-  function _withdraw(uint256 _marketIndex, uint256 amount) internal {
+  function withdraw(address _to, uint256 _marketIndex, uint256 amount) external onlyWhitelistedCaller {
+    _withdraw(_to, _marketIndex, amount);
+  }
+
+  function _withdraw(address _to, uint256 _marketIndex, uint256 amount) internal {
     if (!isMarketIndex[_marketIndex]) revert TradingStaking_UnknownMarketIndex();
-    if (userTokenAmount[_marketIndex][msg.sender] < amount) revert TradingStaking_InsufficientTokenAmount();
+    if (userTokenAmount[_marketIndex][_to] < amount) revert TradingStaking_InsufficientTokenAmount();
 
     uint256 length = marketIndexRewarders[_marketIndex].length;
     for (uint256 i = 0; i < length; ) {
       address rewarder = marketIndexRewarders[_marketIndex][i];
 
-      IMultiRewarder(rewarder).onWithdraw(msg.sender, amount);
+      IRewarder(rewarder).onWithdraw(_to, amount);
 
       unchecked {
         ++i;
       }
     }
-    userTokenAmount[_marketIndex][msg.sender] -= amount;
+    userTokenAmount[_marketIndex][_to] -= amount;
     totalShares[_marketIndex] -= amount;
 
-    emit LogWithdraw(msg.sender, _marketIndex, amount);
+    emit LogWithdraw(_to, _marketIndex, amount);
   }
 
   function harvest(address[] memory _rewarders) external {
@@ -180,7 +197,7 @@ contract TradingStaking is Owned {
         revert TradingStaking_NotRewarder();
       }
 
-      IMultiRewarder(_rewarders[i]).onHarvest(user, receiver);
+      IRewarder(_rewarders[i]).onHarvest(user, receiver);
 
       unchecked {
         ++i;

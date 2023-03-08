@@ -14,6 +14,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
+import { ITradeServiceHook } from "../services/interfaces/ITradeServiceHook.sol";
 
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {
@@ -1446,7 +1447,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _marketIndex,
     uint256 _sizeDelta
   ) internal {
-    address[] memory _hooks = IConfigStorage(configStorage).getTradeServiceHooks();
+    address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
     for (uint256 i; i < _hooks.length; ) {
       ITradeServiceHook(_hooks[i]).onIncreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
       unchecked {
@@ -1461,7 +1462,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _marketIndex,
     uint256 _sizeDelta
   ) internal {
-    address[] memory _hooks = IConfigStorage(configStorage).getTradeServiceHooks();
+    address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
     for (uint256 i; i < _hooks.length; ) {
       ITradeServiceHook(_hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
       unchecked {

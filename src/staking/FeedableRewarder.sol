@@ -6,8 +6,10 @@ import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { TradingStaking } from "./TradingStaking.sol";
+import { IRewarder } from "./interfaces/IRewarder.sol";
+import { console2 } from "forge-std/console2.sol";
 
-contract TradingStakingFeedableRewarder is Owned {
+contract FeedableRewarder is Owned, IRewarder {
   using SafeCast for uint256;
   using SafeCast for uint128;
   using SafeCast for int256;
@@ -29,7 +31,7 @@ contract TradingStakingFeedableRewarder is Owned {
   uint128 public accRewardPerShare;
   uint256 public rewardRate;
   uint256 public rewardRateExpiredAt;
-  uint256 private constant ACC_REWARD_PRECISION = 1e20;
+  uint256 private constant ACC_REWARD_PRECISION = 1e30;
 
   // Events
   event LogOnDeposit(address indexed user, uint256 shareAmount);
@@ -106,7 +108,9 @@ contract TradingStakingFeedableRewarder is Owned {
 
   function pendingReward(address user) external view returns (uint256) {
     uint256 projectedAccRewardPerShare = accRewardPerShare + _calculateAccRewardPerShare(_totalShare());
+    console2.log("projectedAccRewardPerShare", projectedAccRewardPerShare);
     int256 accumulatedRewards = ((_userShare(user) * projectedAccRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
+    console2.log("accumulatedRewards", accumulatedRewards);
 
     if (accumulatedRewards < userRewardDebts[user]) return 0;
     return (accumulatedRewards - userRewardDebts[user]).toUint256();
@@ -166,6 +170,8 @@ contract TradingStakingFeedableRewarder is Owned {
 
   function _calculateAccRewardPerShare(uint256 totalShare) internal view returns (uint128) {
     if (totalShare > 0) {
+      console2.log("_timePast()", _timePast());
+      console2.log("rewardRate", rewardRate);
       uint256 _rewards = _timePast() * rewardRate;
       return ((_rewards * ACC_REWARD_PRECISION) / totalShare).toUint128();
     }

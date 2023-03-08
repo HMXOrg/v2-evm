@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-interface IMultiRewarder {
+interface IRewarder {
   function name() external view returns (string memory);
 
   function rewardRate() external view returns (uint256);
@@ -13,4 +13,6 @@ interface IMultiRewarder {
   function onHarvest(address user, address receiver) external;
 
   function pendingReward(address user) external view returns (uint256);
+
+  function feed(uint256 feedAmount, uint256 duration) external;
 }

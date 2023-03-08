@@ -42,7 +42,7 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest {
   /// @notice to add market config with some default value
   /// @param _assetId Asset's ID
   /// @param _assetClass Crypto = 1, Stock = 2, Forex = 3
-  /// @param _imf Initail Margin Fraction
+  /// @param _imf Initial Margin Fraction
   /// @param _mmf Maintenance Margin Fraction
   function _addMarketConfig(bytes32 _assetId, uint8 _assetClass, uint32 _imf, uint32 _mmf) private {
     // default market config

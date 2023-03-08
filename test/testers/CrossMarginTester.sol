@@ -53,7 +53,7 @@ contract CrossMarginTester is StdAssertions {
   ///         - Trader balance
   ///         - Trader token list
   ///         - Total Amount - should be same with VaultStorage token balanceOf
-  function assertCrossMarginInfo(TraderAssertData memory _tdata, CrossMarginAssertData memory _data) internal {
+  function assertCrossMarginInfo(TraderAssertData memory _tdata, CrossMarginExpectedData memory _data) internal {
     address _tokenAddress = address(_data.token);
     uint256 _vaultTokenBalance = _data.vaultTokenBalance;
     // Check token balance

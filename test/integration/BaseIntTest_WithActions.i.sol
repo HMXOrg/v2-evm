@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetMarkets } from "./BaseIntTest_SetMarkets.i.sol";
+import { BaseIntTest_SetOracle } from "@hmx-test/integration/BaseIntTest_SetOracle.i.sol";
 
-contract BaseIntTest_WithActions is BaseIntTest_SetMarkets {
+contract BaseIntTest_WithActions is BaseIntTest_SetOracle {
   /**
    * Liquidity
    */

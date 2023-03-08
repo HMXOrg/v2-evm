@@ -5,7 +5,7 @@ import { BaseIntTest_SetMarkets } from "@hmx-test/integration/BaseIntTest_SetMar
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-contract BaseIntTest_Oracle is BaseIntTest_SetMarkets {
+abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   error BadArgs();
 
   bytes32 constant wethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000001;

@@ -71,4 +71,6 @@ interface ITradeService {
   ) external pure returns (bool, uint256);
 
   function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external;
+
+  function deleverage(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external;
 }

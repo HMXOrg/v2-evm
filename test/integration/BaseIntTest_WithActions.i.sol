@@ -11,95 +11,145 @@ contract BaseIntTest_WithActions is BaseIntTest_SetOracle {
    */
 
   /// @notice Helper function to create liquidity and execute order via handler
-  /// @param liquidityProvider liquidity provider address
-  /// @param tokenIn liquidity token to add
-  /// @param amountIn amount of token to provide
-  /// @param executionFee execution fee
-  /// @param priceData Pyth's price data
+  /// @param _liquidityProvider liquidity provider address
+  /// @param _tokenIn liquidity token to add
+  /// @param _amountIn amount of token to provide
+  /// @param _executionFee execution fee
+  /// @param _priceData Pyth's price data
   function addLiquidity(
-    address liquidityProvider,
-    ERC20 tokenIn,
-    uint256 amountIn,
-    uint256 executionFee,
-    bytes[] memory priceData
+    address _liquidityProvider,
+    ERC20 _tokenIn,
+    uint256 _amountIn,
+    uint256 _executionFee,
+    bytes[] memory _priceData
   ) internal {
-    vm.startPrank(liquidityProvider);
-    tokenIn.approve(address(liquidityHandler), amountIn);
+    vm.startPrank(_liquidityProvider);
+    _tokenIn.approve(address(liquidityHandler), _amountIn);
     /// note: minOut always 0 to make test passed
     /// note: shouldWrap treat as false when only GLP could be liquidity
-    liquidityHandler.createAddLiquidityOrder{ value: executionFee }(address(tokenIn), amountIn, 0, executionFee, false);
-    vm.stopPrank();
-
-    liquidityHandler.executeOrder(liquidityProvider, 0, priceData);
-  }
-
-  /// @notice Helper function to remove liquidity and execute order via handler
-  /// @param liquidityProvider liquidity provider address
-  /// @param tokenOut liquidity token to remove
-  /// @param amountIn PLP amount to remove
-  /// @param executionFee execution fee
-  /// @param priceData Pyth's price data
-  function removeLiquidity(
-    address liquidityProvider,
-    ERC20 tokenOut,
-    uint256 amountIn,
-    uint256 executionFee,
-    bytes[] calldata priceData
-  ) internal {
-    vm.startPrank(liquidityProvider);
-    tokenOut.approve(address(liquidityHandler), amountIn);
-    /// note: minOut always 0 to make test passed
-    /// note: shouldWrap treat as false when only GLP could be liquidity
-    liquidityHandler.createRemoveLiquidityOrder{ value: executionFee }(
-      address(tokenOut),
-      amountIn,
+    liquidityHandler.createAddLiquidityOrder{ value: _executionFee }(
+      address(_tokenIn),
+      _amountIn,
       0,
-      executionFee,
+      _executionFee,
       false
     );
     vm.stopPrank();
 
-    liquidityHandler.executeOrder(liquidityProvider, 0, priceData);
+    liquidityHandler.executeOrder(_liquidityProvider, 0, _priceData);
+  }
+
+  /// @notice Helper function to remove liquidity and execute order via handler
+  /// @param _liquidityProvider liquidity provider address
+  /// @param _tokenOut liquidity token to remove
+  /// @param _amountIn PLP amount to remove
+  /// @param _executionFee execution fee
+  /// @param _priceData Pyth's price data
+  function removeLiquidity(
+    address _liquidityProvider,
+    ERC20 _tokenOut,
+    uint256 _amountIn,
+    uint256 _executionFee,
+    bytes[] calldata _priceData
+  ) internal {
+    vm.startPrank(_liquidityProvider);
+    _tokenOut.approve(address(liquidityHandler), _amountIn);
+    /// note: minOut always 0 to make test passed
+    /// note: shouldWrap treat as false when only GLP could be liquidity
+    liquidityHandler.createRemoveLiquidityOrder{ value: _executionFee }(
+      address(_tokenOut),
+      _amountIn,
+      0,
+      _executionFee,
+      false
+    );
+    vm.stopPrank();
+
+    liquidityHandler.executeOrder(_liquidityProvider, 0, _priceData);
   }
 
   /**
    * Cross Margin
    */
   /// @notice Helper function to deposit collateral via handler
-  /// @param account Trader's address
-  /// @param subAccountId Trader's sub-account ID
-  /// @param collateralToken Collateral token to deposit
-  /// @param depositAmount amount to deposit
+  /// @param _account Trader's address
+  /// @param _subAccountId Trader's sub-account ID
+  /// @param _collateralToken Collateral token to deposit
+  /// @param _depositAmount amount to deposit
   function depositCollateral(
-    address account,
-    uint8 subAccountId,
-    ERC20 collateralToken,
-    uint256 depositAmount
+    address _account,
+    uint8 _subAccountId,
+    ERC20 _collateralToken,
+    uint256 _depositAmount
   ) internal {
-    vm.startPrank(account);
-    collateralToken.approve(address(crossMarginHandler), depositAmount);
-    crossMarginHandler.depositCollateral(account, subAccountId, address(collateralToken), depositAmount);
+    vm.startPrank(_account);
+    _collateralToken.approve(address(crossMarginHandler), _depositAmount);
+    crossMarginHandler.depositCollateral(_account, _subAccountId, address(_collateralToken), _depositAmount);
     vm.stopPrank();
   }
 
   /// @notice Helper function to withdraw collateral via handler
-  /// @param account Trader's address
-  /// @param subAccountId Trader's sub-account ID
-  /// @param collateralToken Collateral token to withdraw
-  /// @param withdrawAmount amount to withdraw
-  /// @param priceData Pyth's price data
+  /// @param _account Trader's address
+  /// @param _subAccountId Trader's sub-account ID
+  /// @param _collateralToken Collateral token to withdraw
+  /// @param _withdrawAmount amount to withdraw
+  /// @param _priceData Pyth's price data
   function withdrawCollateral(
-    address account,
-    uint8 subAccountId,
-    ERC20 collateralToken,
-    uint256 withdrawAmount,
-    bytes[] calldata priceData
+    address _account,
+    uint8 _subAccountId,
+    ERC20 _collateralToken,
+    uint256 _withdrawAmount,
+    bytes[] calldata _priceData
   ) internal {
-    vm.prank(account);
-    crossMarginHandler.withdrawCollateral(account, subAccountId, address(collateralToken), withdrawAmount, priceData);
+    vm.prank(_account);
+    crossMarginHandler.withdrawCollateral(
+      _account,
+      _subAccountId,
+      address(_collateralToken),
+      _withdrawAmount,
+      _priceData
+    );
   }
 
   /**
    * Trade
    */
+
+  /// @notice Helper function to call MarketHandler buy
+  /// @param _account Trader's primary wallet account.
+  /// @param _subAccountId Trader's sub account id.
+  /// @param _marketIndex Market index.
+  /// @param _buySizeE30 Buying size in e30 format.
+  /// @param _tpToken Take profit token
+  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
+  function buy(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _buySizeE30,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) internal {
+    vm.prank(_account);
+    marketTradeHandler.buy(_account, _subAccountId, _marketIndex, _buySizeE30, _tpToken, _priceData);
+  }
+
+  /// @notice Helper function to call MarketHandler sell
+  /// @param _account Trader's primary wallet account.
+  /// @param _subAccountId Trader's sub account id.
+  /// @param _marketIndex Market index.
+  /// @param _sellSizeE30 Buying size in e30 format.
+  /// @param _tpToken Take profit token
+  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
+  function sell(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sellSizeE30,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) internal {
+    vm.prank(_account);
+    marketTradeHandler.sell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData);
+  }
 }

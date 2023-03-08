@@ -37,7 +37,7 @@ contract LiquidityTester is StdAssertions {
     uint256 executionFee;
   }
 
-  /// @notice Assert function when PLP provider interact with Liquidity handler
+  /// @notice Assert function when PLP provider add / remove liquidity
   /// @dev This function will check
   ///      - PLPv2 total supply
   ///      - Execution fee in handler, if address is valid

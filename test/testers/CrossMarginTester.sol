@@ -34,7 +34,7 @@ contract CrossMarginTester is StdAssertions {
     ERC20 token;
   }
 
-  /// @notice Assert function when Trader interact with Liquidity handler
+  /// @notice Assert function when Trader interact deposit / withdraw collateral
   /// @dev This function will check
   ///      - Trader token balance in Trader Wallet
   ///      - Token balance in VaultStorage

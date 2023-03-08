@@ -64,7 +64,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
   /// @notice Set new trader service contract address.
   /// @param _newTradeService New trader service contract address.
-  function setTradeService(address _newTradeService) external onlyOwner {
+  function setTradeService(address _newTradeService) external nonReentrant onlyOwner {
     if (_newTradeService == address(0)) revert IMarketTradeHandler_InvalidAddress();
     emit LogSetTradeService(address(tradeService), _newTradeService);
     tradeService = _newTradeService;
@@ -75,7 +75,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
   /// @notice Set new Pyth contract address.
   /// @param _newPyth New Pyth contract address.
-  function setPyth(address _newPyth) external onlyOwner {
+  function setPyth(address _newPyth) external nonReentrant onlyOwner {
     if (_newPyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
     emit LogSetPyth(pyth, _newPyth);
     pyth = _newPyth;
@@ -101,7 +101,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
-    address _tpToken,
+    address _tpToken, // NOTE: current only support GLP as profit token
     bytes[] memory _priceData
   ) external nonReentrant {
     if (_buySizeE30 == 0) {
@@ -187,7 +187,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _sellSizeE30,
-    address _tpToken,
+    address _tpToken, // NOTE: current only support GLP as profit token
     bytes[] memory _priceData
   ) external nonReentrant {
     if (_sellSizeE30 == 0) {

@@ -107,14 +107,5 @@ interface ILimitTradeHandler {
     address _tpToken
   ) external;
 
-  function validatePositionOrderPrice(
-    bool _triggerAboveThreshold,
-    uint256 _triggerPrice,
-    uint256 _marketIndex,
-    int256 _sizeDelta,
-    bool _maximizePrice,
-    bool _revertOnError
-  ) external view returns (uint256, bool);
-
   function setPyth(address _pyth) external;
 }

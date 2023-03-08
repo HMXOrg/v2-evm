@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 // base
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -16,7 +17,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
-contract LiquidityService is ILiquidityService {
+contract LiquidityService is ReentrancyGuard, ILiquidityService {
   address public configStorage;
   address public vaultStorage;
   address public perpStorage;
@@ -55,20 +56,28 @@ contract LiquidityService is ILiquidityService {
     perpStorage = _perpStorage;
   }
 
-  /* TODO 
-  checklist
-  -add whitelisted
-  -emit event
-  -realizedPNL
-  */
+  /**
+   * MODIFIER
+   */
+
+  modifier onlyWhitelistedExecutor() {
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    _;
+  }
+
+  modifier onlyAcceptedToken(address _token) {
+    ConfigStorage(configStorage).validateAcceptedLiquidityToken(_token);
+    _;
+  }
+
   function addLiquidity(
     address _lpProvider,
     address _token,
     uint256 _amount,
     uint256 _minAmount
-  ) external returns (uint256) {
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) returns (uint256) {
     // 1. _validate
-    _validatePreAddRemoveLiquidity(_token, _amount);
+    _validatePreAddRemoveLiquidity(_amount);
 
     if (VaultStorage(vaultStorage).pullToken(_token) != _amount) {
       revert LiquidityService_InvalidInputAmount();
@@ -83,7 +92,6 @@ contract LiquidityService is ILiquidityService {
     );
 
     // 3. get aum and lpSupply before deduction fee
-    // TODO realize farm pnl to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(true, 0, 0);
 
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
@@ -106,25 +114,17 @@ contract LiquidityService is ILiquidityService {
     return mintAmount;
   }
 
-  /* TODO 
-  checklist
-  -add whitelisted
-  -emit event
-  -realizedPNL
-  */
-
   function removeLiquidity(
     address _lpProvider,
     address _tokenOut,
     uint256 _amount,
     uint256 _minAmount
-  ) external returns (uint256) {
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_tokenOut) returns (uint256) {
     // 1. _validate
-    _validatePreAddRemoveLiquidity(_tokenOut, _amount);
+    _validatePreAddRemoveLiquidity(_amount);
 
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
-    //TODO should realized to get pendingBorrowingFee
     uint256 _aum = _calculator.getAUM(false, 0, 0);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
@@ -286,7 +286,7 @@ contract LiquidityService is ILiquidityService {
 
     // Validate Max PLP Utilization
     // =====================================
-    // reserveValue / PLPTVL > maxPLPUtilization
+    // reserveValue / PLP TVL > maxPLPUtilization
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
     uint256 plpTVL = _calculator.getPLPValueE30(false, 0, 0);
@@ -300,15 +300,11 @@ contract LiquidityService is ILiquidityService {
     }
   }
 
-  function _validatePreAddRemoveLiquidity(address _token, uint256 _amount) internal view {
+  function _validatePreAddRemoveLiquidity(uint256 _amount) internal view {
     ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
 
     if (!ConfigStorage(configStorage).getLiquidityConfig().enabled) {
       revert LiquidityService_CircuitBreaker();
-    }
-
-    if (!ConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).accepted) {
-      revert LiquidityService_InvalidToken();
     }
 
     if (_amount == 0) {

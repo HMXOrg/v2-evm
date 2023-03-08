@@ -10,7 +10,7 @@ import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-// @todo - add test desciption + use position tester help to check
+// @todo - add test description + use position tester help to check
 // @todo - rename test case
 
 contract TradeService_IncreasePosition is TradeService_Base {

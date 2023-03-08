@@ -12,5 +12,8 @@ contract Calculator_BaseWithStorage is BaseTest {
       address(perpStorage),
       address(configStorage)
     );
+
+    vaultStorage.setServiceExecutors(address(this), true);
+    vaultStorage.setServiceExecutors(address(calculator), true);
   }
 }

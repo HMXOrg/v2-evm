@@ -5,6 +5,7 @@ interface IVaultStorage {
   /**
    * Errors
    */
+  error IVaultStorage_NotWhiteListed();
   error IVaultStorage_TraderTokenAlreadyExists();
   error IVaultStorage_TraderBalanceRemaining();
   error IVaultStorage_ZeroAddress();
@@ -47,8 +48,6 @@ interface IVaultStorage {
 
   function removeTraderToken(address _trader, address _token) external;
 
-  function transferToken(address _subAccount, address _token, uint256 _amount) external;
-
   function addFundingFee(address _token, uint256 _amount) external;
 
   function removeFundingFee(address _token, uint256 _amount) external;
@@ -65,41 +64,5 @@ interface IVaultStorage {
 
   function payPlp(address _trader, address _token, uint256 _amount) external;
 
-  function collectMarginFee(
-    address _subAccount,
-    address _token,
-    uint256 feeTokenAmount,
-    uint256 devFeeTokenAmount,
-    uint256 traderBalance
-  ) external;
-
-  function collectFundingFee(
-    address subAccount,
-    address underlyingToken,
-    uint256 collectFeeTokenAmount,
-    uint256 traderBalance
-  ) external;
-
-  function repayFundingFee(
-    address subAccount,
-    address underlyingToken,
-    uint256 repayFeeTokenAmount,
-    uint256 traderBalance
-  ) external;
-
-  function borrowFundingFeeFromPLP(
-    address subAccount,
-    address underlyingToken,
-    uint256 borrowFeeTokenAmount,
-    uint256 borrowFeeTokenValue,
-    uint256 traderBalance
-  ) external;
-
-  function repayFundingFeeToPLP(
-    address subAccount,
-    address underlyingToken,
-    uint256 repayFeeTokenAmount,
-    uint256 repayFeeTokenValue,
-    uint256 traderBalance
-  ) external;
+  function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
 }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import { IBotHandler } from "./interfaces/IBotHandler.sol";
 import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { LiquidationService } from "../services/LiquidationService.sol";
@@ -12,7 +14,7 @@ import { TradeService } from "@hmx/services/TradeService.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
 // @todo - integrate with BotHandler in another PRs
-contract BotHandler is IBotHandler, Owned {
+contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   /**
    * Events
    */
@@ -39,7 +41,7 @@ contract BotHandler is IBotHandler, Owned {
    * Modifiers
    */
 
-  /// @notice modifier to check msg.sender is in position manangers
+  /// @notice modifier to check msg.sender is in position managers
   modifier onlyPositionManager() {
     if (!positionManagers[msg.sender]) revert IBotHandler_UnauthorizedSender();
     _;
@@ -75,7 +77,7 @@ contract BotHandler is IBotHandler, Owned {
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.
   /// @param _subAccount The sub-account to be liquidated.
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function liquidate(address _subAccount, bytes[] memory _priceData) external onlyPositionManager {
+  function liquidate(address _subAccount, bytes[] memory _priceData) external nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -88,7 +90,7 @@ contract BotHandler is IBotHandler, Owned {
 
   /// @notice Reset trade service
   /// @param _newTradeService new trade service address
-  function setTradeService(address _newTradeService) external onlyOwner {
+  function setTradeService(address _newTradeService) external nonReentrant onlyOwner {
     emit LogSetTradeService(tradeService, _newTradeService);
 
     tradeService = _newTradeService;
@@ -100,7 +102,7 @@ contract BotHandler is IBotHandler, Owned {
   /// @notice This function use to set address who can close position when emergency happen
   /// @param _addresses list of address that we allow
   /// @param _isAllowed flag to allow / disallow list of address to close position
-  function setPositionManagers(address[] calldata _addresses, bool _isAllowed) external onlyOwner {
+  function setPositionManagers(address[] calldata _addresses, bool _isAllowed) external nonReentrant onlyOwner {
     uint256 _len = _addresses.length;
     address _address;
     for (uint256 _i; _i < _len; ) {

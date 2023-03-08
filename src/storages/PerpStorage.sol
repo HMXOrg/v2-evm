@@ -1,24 +1,45 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
 
+import { Owned } from "../base/Owned.sol";
+
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
-contract PerpStorage is IPerpStorage {
+contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
+  /**
+   * Modifiers
+   */
+  modifier onlyWhitelistedExecutor() {
+    if (!serviceExecutors[msg.sender]) revert IPerpStorage_NotWhiteListed();
+    _;
+  }
+
+  /**
+   * Events
+   */
+  event SetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
+
+  /**
+   * States
+   */
   GlobalState public globalState; // global state that accumulative value from all markets
 
   mapping(bytes32 => Position) public positions;
   mapping(address => bytes32[]) public subAccountPositionIds;
-
   mapping(address => int256) public subAccountFee;
-
   mapping(address => uint256) public badDebt;
-
   mapping(uint256 => GlobalMarket) public globalMarkets;
-
   mapping(uint256 => GlobalAssetClass) public globalAssetClass;
+  mapping(address => bool) public serviceExecutors;
+
+  /**
+   * Getter
+   */
 
   /// @notice Get all positions with a specific trader's sub-account
   /// @param _trader The address of the trader whose positions to retrieve
@@ -53,36 +74,6 @@ contract PerpStorage is IPerpStorage {
     return subAccountPositionIds[_subAccount].length;
   }
 
-  function savePosition(address _subAccount, bytes32 _positionId, Position calldata position) public {
-    IPerpStorage.Position memory _position = positions[_positionId];
-    // register new position for trader's sub-account
-    if (_position.positionSizeE30 == 0) {
-      subAccountPositionIds[_subAccount].push(_positionId);
-    }
-    positions[_positionId] = position;
-  }
-
-  /// @notice Resets the position associated with the given position ID.
-  /// @param _subAccount The sub account of the position.
-  /// @param _positionId The ID of the position to be reset.
-  function removePositionFromSubAccount(address _subAccount, bytes32 _positionId) public {
-    bytes32[] storage _positionIds = subAccountPositionIds[_subAccount];
-    uint256 _len = _positionIds.length;
-    for (uint256 _i; _i < _len; ) {
-      if (_positionIds[_i] == _positionId) {
-        _positionIds[_i] = _positionIds[_len - 1];
-        _positionIds.pop();
-        delete positions[_positionId];
-
-        break;
-      }
-
-      unchecked {
-        ++_i;
-      }
-    }
-  }
-
   // todo: add description
   // todo: support to update borrowing rate
   // todo: support to update funding rate
@@ -109,13 +100,56 @@ contract PerpStorage is IPerpStorage {
     return badDebt[subAccount];
   }
 
+  /**
+   * Setter
+   */
+
+  function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external onlyOwner nonReentrant {
+    serviceExecutors[_executorAddress] = _isServiceExecutor;
+    emit SetServiceExecutor(_executorAddress, _isServiceExecutor);
+  }
+
+  function savePosition(
+    address _subAccount,
+    bytes32 _positionId,
+    Position calldata position
+  ) external nonReentrant onlyWhitelistedExecutor {
+    IPerpStorage.Position memory _position = positions[_positionId];
+    // register new position for trader's sub-account
+    if (_position.positionSizeE30 == 0) {
+      subAccountPositionIds[_subAccount].push(_positionId);
+    }
+    positions[_positionId] = position;
+  }
+
+  /// @notice Resets the position associated with the given position ID.
+  /// @param _subAccount The sub account of the position.
+  /// @param _positionId The ID of the position to be reset.
+  function removePositionFromSubAccount(address _subAccount, bytes32 _positionId) external onlyWhitelistedExecutor {
+    bytes32[] storage _positionIds = subAccountPositionIds[_subAccount];
+    uint256 _len = _positionIds.length;
+    for (uint256 _i; _i < _len; ) {
+      if (_positionIds[_i] == _positionId) {
+        _positionIds[_i] = _positionIds[_len - 1];
+        _positionIds.pop();
+        delete positions[_positionId];
+
+        break;
+      }
+
+      unchecked {
+        ++_i;
+      }
+    }
+  }
+
   // @todo - update funding rate
   function updateGlobalLongMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
-  ) external {
+  ) external onlyWhitelistedExecutor {
     globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
     globalMarkets[_marketIndex].longOpenInterest = _newOpenInterest;
@@ -127,32 +161,38 @@ contract PerpStorage is IPerpStorage {
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
     uint256 _newOpenInterest
-  ) external {
+  ) external onlyWhitelistedExecutor {
     globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
     globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
   }
 
-  function updateGlobalState(GlobalState memory _newGlobalState) external {
+  function updateGlobalState(GlobalState memory _newGlobalState) external onlyWhitelistedExecutor {
     globalState = _newGlobalState;
   }
 
-  function updateGlobalAssetClass(uint8 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external {
+  function updateGlobalAssetClass(
+    uint8 _assetClassIndex,
+    GlobalAssetClass memory _newAssetClass
+  ) external onlyWhitelistedExecutor {
     globalAssetClass[_assetClassIndex] = _newAssetClass;
   }
 
-  function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external {
+  function updateGlobalMarket(
+    uint256 _marketIndex,
+    GlobalMarket memory _globalMarket
+  ) external onlyWhitelistedExecutor {
     globalMarkets[_marketIndex] = _globalMarket;
   }
 
-  function updateSubAccountFee(address _subAccount, int256 fee) external {
+  function updateSubAccountFee(address _subAccount, int256 fee) external onlyWhitelistedExecutor {
     subAccountFee[_subAccount] = fee;
   }
 
   /// @notice Adds bad debt to the specified sub-account.
   /// @param _subAccount The address of the sub-account to add bad debt to.
   /// @param _badDebt The amount of bad debt to add to the sub-account.
-  function addBadDebt(address _subAccount, uint256 _badDebt) external {
+  function addBadDebt(address _subAccount, uint256 _badDebt) external onlyWhitelistedExecutor {
     // Add the bad debt to the sub-account
     badDebt[_subAccount] += _badDebt;
   }

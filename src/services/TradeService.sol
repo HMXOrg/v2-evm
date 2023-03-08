@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-// base
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // contracts
@@ -16,7 +16,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeService } from "./interfaces/ITradeService.sol";
 
 // @todo - refactor, deduplicate code
-contract TradeService is ITradeService {
+contract TradeService is ReentrancyGuard, ITradeService {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
 
@@ -58,6 +58,14 @@ contract TradeService is ITradeService {
   }
 
   /**
+   * Modifiers
+   */
+  modifier onlyWhitelistedExecutor() {
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    _;
+  }
+
+  /**
    * Events
    */
   // @todo - modify event parameters
@@ -78,6 +86,14 @@ contract TradeService is ITradeService {
     uint256 _realizedProfit
   );
 
+  event LogDeleverage(
+    address indexed _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    uint256 _closedPositionSize
+  );
+
   /**
    * States
    */
@@ -87,7 +103,11 @@ contract TradeService is ITradeService {
   Calculator public calculator; // cache this from configStorage
 
   constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
-    // @todo - sanity check
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
+    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    ConfigStorage(_configStorage).getLiquidityConfig();
+
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
@@ -115,7 +135,7 @@ contract TradeService is ITradeService {
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _limitPriceE30
-  ) external {
+  ) external nonReentrant onlyWhitelistedExecutor {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     Calculator _calculator = calculator;
@@ -329,7 +349,7 @@ contract TradeService is ITradeService {
     uint256 _positionSizeE30ToDecrease,
     address _tpToken,
     uint256 _limitPriceE30
-  ) external {
+  ) external nonReentrant onlyWhitelistedExecutor {
     // init vars
     DecreasePositionVars memory _vars;
     // SLOAD
@@ -398,7 +418,12 @@ contract TradeService is ITradeService {
   /// @param _subAccountId sub-account id
   /// @param _marketIndex position market index
   /// @param _tpToken take profit token
-  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
+  function forceClosePosition(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  ) external nonReentrant onlyWhitelistedExecutor {
     // init vars
     DecreasePositionVars memory _vars;
 
@@ -473,6 +498,63 @@ contract TradeService is ITradeService {
       _vars.absPositionSizeE30,
       pnl > _vars.position.reserveValueE30 ? _vars.position.reserveValueE30 : pnl
     );
+  }
+
+  /// @notice This function is used to decrease a position and free up margin to reduce leverage.
+  /// @param _account The address of the user who wants to decrease their position.
+  /// @param _subAccountId The ID of the sub-account.
+  /// @param _marketIndex The index of the market for the position to decrease.
+  /// @param _tpToken The address of the token used as take profit.
+  function deleverage(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
+    // retrieve liquidity configuration and calculator from storage
+    ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
+    uint256 _aum = _calculator.getAUME30(false, 0, 0);
+    uint256 _tvl = _calculator.getPLPValueE30(false, 0, 0);
+
+    // check plp safety buffer
+    if ((_tvl - _aum) * BPS <= (BPS - _liquidityConfig.plpSafetyBufferBPS) * _tvl) revert ITradeService_PlpHealthy();
+
+    DecreasePositionVars memory _vars;
+    ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
+
+    _vars.subAccount = _getSubAccount(_account, _subAccountId);
+    _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
+    _vars.position = PerpStorage(perpStorage).getPositionById(_vars.positionId);
+    _vars.currentPositionSizeE30 = _vars.position.positionSizeE30;
+    _vars.isLongPosition = _vars.currentPositionSizeE30 > 0;
+    _vars.absPositionSizeE30 = uint256(
+      _vars.isLongPosition ? _vars.currentPositionSizeE30 : -_vars.currentPositionSizeE30
+    );
+
+    PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    {
+      uint8 _marketStatus;
+
+      (_vars.priceE30, , , _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
+        .getLatestAdaptivePriceWithMarketStatus(
+          _marketConfig.assetId,
+          !_vars.isLongPosition, // if current position is SHORT position, then we use max price
+          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          -_vars.currentPositionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD
+        );
+
+      // Market active represent the market is still listed on our protocol
+      if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
+
+      // if market status is not 2, means that the market is closed or market status has been defined yet
+      if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
+
+      // check sub account equity is under MMR
+      /// @dev no need to derived price on this
+      _subAccountHealthCheck(_vars.subAccount, 0, 0);
+    }
+
+    _decreasePosition(_marketConfig, _marketIndex, _vars, _vars.absPositionSizeE30, _tpToken, 0);
+
+    emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken, _vars.absPositionSizeE30);
   }
 
   /// @notice decrease trader position
@@ -687,7 +769,7 @@ contract TradeService is ITradeService {
       _limitPriceE30,
       _limitAssetId
     );
-    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / (10 ** _decimals);
+    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18;
 
     _vaultStorage.removePLPLiquidity(_tpToken, _tpTokenOut);
     _vaultStorage.addFee(_tpToken, _settlementFee);
@@ -933,7 +1015,7 @@ contract TradeService is ITradeService {
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
   /// @param _limitPriceE30 Price from limitOrder, zeros means no marketOrderPrice
-  function updateFundingRate(uint256 _marketIndex, uint256 _limitPriceE30) public {
+  function updateFundingRate(uint256 _marketIndex, uint256 _limitPriceE30) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -966,6 +1048,18 @@ contract TradeService is ITradeService {
     }
   }
 
+  /// @notice Calculates the trading fee for a given position
+  /// @param _absSizeDelta Position size
+  /// @param _positionFeeRateBPS Position Fee
+  /// @return tradingFee The calculated trading fee for the position.
+  function getTradingFee(
+    uint256 _absSizeDelta,
+    uint256 _positionFeeRateBPS
+  ) internal pure returns (uint256 tradingFee) {
+    if (_absSizeDelta == 0) return 0;
+    return (_absSizeDelta * _positionFeeRateBPS) / BPS;
+  }
+
   /// @notice This function collects margin fee from position
   /// @param _subAccount The sub-account from which to collect the fee.
   /// @param _absSizeDelta Position size to be increased or decreased in absolute value
@@ -979,7 +1073,7 @@ contract TradeService is ITradeService {
     uint256 _reservedValue,
     uint256 _entryBorrowingRate,
     uint32 _positionFeeBPS
-  ) public {
+  ) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the debt fee of the sub-account
@@ -1013,7 +1107,7 @@ contract TradeService is ITradeService {
     uint256 _marketIndex,
     int256 _positionSizeE30,
     int256 _entryFundingRate
-  ) public {
+  ) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the debt fee of the sub-account
@@ -1033,7 +1127,7 @@ contract TradeService is ITradeService {
 
   /// @notice This function settle margin fee from trader's sub-account
   /// @param _subAccount The sub-account from which to collect the fee.
-  function settleMarginFee(address _subAccount) public {
+  function settleMarginFee(address _subAccount) internal {
     FeeCalculator.SettleMarginFeeVar memory acmVars;
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     PerpStorage _perpStorage = PerpStorage(perpStorage);
@@ -1082,7 +1176,7 @@ contract TradeService is ITradeService {
         // Deducts for dev fee
         tmpVars.repayFeeTokenAmount -= tmpVars.devFeeTokenAmount;
 
-        _vaultStorage.collectMarginFee(
+        _collectMarginFee(
           _subAccount,
           tmpVars.underlyingToken,
           tmpVars.repayFeeTokenAmount,
@@ -1106,7 +1200,7 @@ contract TradeService is ITradeService {
   /// @param _subAccount The address of the sub-account to settle fees for.
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function settleFundingFee(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) public {
+  function settleFundingFee(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) internal {
     FeeCalculator.SettleFundingFeeVar memory acmVars;
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     PerpStorage _perpStorage = PerpStorage(perpStorage);
@@ -1193,6 +1287,27 @@ contract TradeService is ITradeService {
 
     // Update the fee amount for the sub-account in the PerpStorage contract
     _perpStorage.updateSubAccountFee(_subAccount, int(acmVars.absFeeUsd));
+  }
+
+  /// @notice This function does accounting when collecting trading fee from trader's sub-account.
+  /// @param subAccount The sub-account from which to collect the fee.
+  /// @param underlyingToken The underlying token for which the fee is collected.
+  /// @param tradingFeeAmount The amount of trading fee to be collected, after deducting dev fee.
+  /// @param devFeeTokenAmount The amount of dev fee deducted from the trading fee.
+  /// @param traderBalance The updated balance of the trader's underlying token.
+  function _collectMarginFee(
+    address subAccount,
+    address underlyingToken,
+    uint256 tradingFeeAmount,
+    uint256 devFeeTokenAmount,
+    uint256 traderBalance
+  ) internal {
+    // Deduct dev fee from the trading fee and add it to the dev fee pool.
+    VaultStorage(vaultStorage).addDevFee(underlyingToken, devFeeTokenAmount);
+    // Add the remaining trading fee to the protocol's fee pool.
+    VaultStorage(vaultStorage).addFee(underlyingToken, tradingFeeAmount);
+    // Update the trader's balance of the underlying token.
+    VaultStorage(vaultStorage).setTraderBalance(subAccount, underlyingToken, traderBalance);
   }
 
   /**

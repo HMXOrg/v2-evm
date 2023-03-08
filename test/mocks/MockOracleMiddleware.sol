@@ -78,11 +78,13 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   // todo: validate price stale here
   function getLatestPriceWithMarketStatus(
-    bytes32 /* _assetId */,
+    bytes32 _assetId,
     bool /* _isMax */
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
-    return (priceE30, lastUpdate, mockMarketStatus);
+    Price memory p = price[_assetId];
+    if (p.priceE30 == 0) return (priceE30, lastUpdate, mockMarketStatus);
+    return (p.priceE30, p.lastUpdate, mockMarketStatus);
   }
 
   function unsafeGetLatestPrice(
@@ -95,10 +97,12 @@ contract MockOracleMiddleware is IOracleMiddleware {
   }
 
   function unsafeGetLatestPriceWithMarketStatus(
-    bytes32 /* _assetId */,
+    bytes32 _assetId,
     bool /* _isMax */
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
-    return (priceE30, lastUpdate, mockMarketStatus);
+    Price memory p = price[_assetId];
+    if (p.priceE30 == 0) return (priceE30, lastUpdate, mockMarketStatus);
+    return (p.priceE30, p.lastUpdate, mockMarketStatus);
   }
 
   function getLatestAdaptivePrice(
@@ -109,7 +113,9 @@ contract MockOracleMiddleware is IOracleMiddleware {
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
-    return (priceE30, lastUpdate);
+    Price memory p = price[_assetId];
+    if (p.priceE30 == 0) return (priceE30, lastUpdate);
+    return (p.priceE30, p.lastUpdate);
   }
 
   function unsafeGetLatestAdaptivePrice(
@@ -132,7 +138,9 @@ contract MockOracleMiddleware is IOracleMiddleware {
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
-    return (priceE30, exponent, lastUpdate, mockMarketStatus);
+    Price memory p = price[_assetId];
+    if (p.priceE30 == 0) return (priceE30, exponent, lastUpdate, mockMarketStatus);
+    return (p.priceE30, exponent, p.lastUpdate, mockMarketStatus);
   }
 
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
@@ -142,7 +150,9 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
-    return (priceE30, lastUpdate, mockMarketStatus);
+    Price memory p = price[_assetId];
+    if (p.priceE30 == 0) return (priceE30, lastUpdate, mockMarketStatus);
+    return (p.priceE30, p.lastUpdate, mockMarketStatus);
   }
 
   function isSameAssetIdOnPyth(bytes32 _assetId1, bytes32 _assetId2) external view returns (bool) {

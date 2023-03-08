@@ -23,6 +23,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getBorrowingFee");
       configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
     }
   }
 

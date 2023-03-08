@@ -29,6 +29,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
       configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
     }
   }
 

@@ -23,8 +23,8 @@ contract TradeService_FundingFee is TradeService_Base {
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getNextFundingRate");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getFundingFee");
-      // mockCalculator = m;
       configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
     }
 
     // Set PLPLiquidity

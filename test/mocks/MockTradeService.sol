@@ -101,4 +101,6 @@ contract MockTradeService is ITradeService {
   ) external pure returns (bool, uint256) {
     return (false, 0);
   }
+
+  function reloadConfig() external {}
 }

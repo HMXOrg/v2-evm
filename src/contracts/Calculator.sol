@@ -55,14 +55,14 @@ contract Calculator is Owned, ICalculator {
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = 0;
     int256 pnlE30 = _getGlobalPNLE30();
-
     uint256 aum = _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId) + pendingBorrowingFeeE30;
     if (pnlE30 < 0) {
       uint256 _pnl = uint256(-pnlE30);
-      if (aum < _pnl) return 0;
-      aum -= _pnl;
+      aum += _pnl;
     } else {
-      aum += uint256(pnlE30);
+      uint256 _pnl = uint256(pnlE30);
+      if (aum < _pnl) return 0;
+      aum -= uint256(pnlE30);
     }
 
     return aum;

@@ -323,20 +323,22 @@ contract ConfigStorage is IConfigStorage, Owned {
       revert IConfigStorage_BadLen();
     }
 
-    uint256 _len = _tokens.length;
-    for (uint256 _i; _i < _len; ) {
+    uint256 _tokenLen = _tokens.length;
+    for (uint256 _i; _i < _tokenLen; ) {
       bytes32 _assetId = tokenAssetIds[_tokens[_i]];
 
-      // Enforce that isAccept must be true to prevent
-      // removing underlying token through this function.
-      if (!_configs[_i].accepted) revert IConfigStorage_BadArgs();
+      uint256 _assetIdLen = plpAssetIds.length;
 
-      // If plpTokenConfigs.accepted is previously false,
-      // then it is a new token to be added.
-      if (!assetPlpTokenConfigs[_assetId].accepted) {
+      bool _issetPLPAssetId = true;
+      for (uint256 _j; _j < _assetIdLen; ) {
+        if (plpAssetIds[_j] == _assetId) {
+          _issetPLPAssetId = false;
+        }
+      }
+
+      if (_issetPLPAssetId) {
         plpAssetIds.push(_assetId);
       }
-      // Log
 
       emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 

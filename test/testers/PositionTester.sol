@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { PerpStorage } from "../../src/storages/PerpStorage.sol";
-import { VaultStorage } from "../../src/storages/VaultStorage.sol";
-
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 
@@ -28,8 +25,8 @@ contract PositionTester is StdAssertions {
     uint256 newShortGlobalAveragePrice;
   }
 
-  PerpStorage perpStorage;
-  VaultStorage vaultStorage;
+  IPerpStorage perpStorage;
+  IVaultStorage vaultStorage;
   MockOracleMiddleware oracle;
 
   // cache position info
@@ -42,7 +39,7 @@ contract PositionTester is StdAssertions {
   uint256 cachePlpTokenLiquidity;
   uint256 cacheTraderBalance;
 
-  constructor(PerpStorage _perpStorage, VaultStorage _vaultStorage, MockOracleMiddleware _oracle) {
+  constructor(IPerpStorage _perpStorage, IVaultStorage _vaultStorage, MockOracleMiddleware _oracle) {
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     oracle = _oracle;

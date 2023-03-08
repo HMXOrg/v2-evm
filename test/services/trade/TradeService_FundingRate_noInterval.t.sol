@@ -1,20 +1,27 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { TradeService } from "../../../src/services/TradeService.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { Calculator_Base } from "../../calculator/Calculator_Base.t.sol";
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract TradeService_FundingRate is Calculator_Base {
-  TradeService tradeService;
+  ITradeService tradeService;
 
   function setUp() public virtual override {
     super.setUp();
 
     // deploy services
-    tradeService = new TradeService(address(mockPerpStorage), address(mockVaultStorage), address(configStorage));
+    tradeService = Deployer.deployTradeService(
+      address(mockPerpStorage),
+      address(mockVaultStorage),
+      address(configStorage)
+    );
 
     mockOracle.setExponent(-8);
 

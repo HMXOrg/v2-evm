@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { ICalculator } from "../../src/contracts/interfaces/ICalculator.sol";
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 contract MockCalculator is ICalculator {
   mapping(address => int256) equitiesOf;
   mapping(address => uint256) imrOf;
   mapping(address => uint256) mmrOf;
   mapping(address => int256) unrealizedPnlOf;
+
+  address public configStorage;
+  address public perpStorage;
+  address public vaultStorage;
 
   uint256 collateralValue;
   uint256 freeCollateral;
@@ -104,11 +108,11 @@ contract MockCalculator is ICalculator {
   // | ---------- Calculator --------------- |
   // =========================================
 
-  function calculatePositionIMR(uint256, uint256) external view returns (uint256) {
+  function calculatePositionIMR(uint256, uint256) external pure returns (uint256) {
     return 0;
   }
 
-  function calculatePositionMMR(uint256, uint256) external view returns (uint256) {
+  function calculatePositionMMR(uint256, uint256) external pure returns (uint256) {
     return 0;
   }
 
@@ -144,7 +148,7 @@ contract MockCalculator is ICalculator {
   function getAddLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValue*/,
-    IConfigStorage /*_configStorage*/
+    ConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
     return 0.003 ether;
   }
@@ -152,7 +156,7 @@ contract MockCalculator is ICalculator {
   function getRemoveLiquidityFeeRate(
     address /*_token*/,
     uint256 /*_tokenValueE30*/,
-    IConfigStorage /*_configStorage*/
+    ConfigStorage /*_configStorage*/
   ) external pure returns (uint256) {
     return 1e18;
   }
@@ -178,10 +182,6 @@ contract MockCalculator is ICalculator {
     return fundingFee;
   }
 
-  function getNextFundingRate(uint256 /*marketIndex*/) external view returns (int256, int256, int256) {
-    return (fundingRate, fundingRateLong, fundingRateShort);
-  }
-
   function getSettlementFeeRate(
     address /* _token */,
     uint256 /* _liquidityUSDDelta */,
@@ -199,4 +199,12 @@ contract MockCalculator is ICalculator {
   ) external view returns (uint256) {
     return collateralValue;
   }
+
+  function setOracle(address /*_oracle*/) external {}
+
+  function setVaultStorage(address /*_address*/) external {}
+
+  function setConfigStorage(address /*_address*/) external {}
+
+  function setPerpStorage(address /*_address*/) external {}
 }

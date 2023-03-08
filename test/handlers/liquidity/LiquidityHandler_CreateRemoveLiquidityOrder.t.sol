@@ -2,13 +2,13 @@
 pragma solidity 0.8.18;
 
 import { LiquidityHandler_Base, IConfigStorage, IPerpStorage } from "./LiquidityHandler_Base.t.sol";
-import { ILiquidityHandler } from "../../../src/handlers/interfaces/ILiquidityHandler.sol";
+import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { console } from "../../../lib/forge-std/src/console.sol";
 
 // - revert
 //   - Try notAcceptedToken
 //   - Try _executionFee < minExecutionFee
-//   - Try shoulWrap Error
+//   - Try shouldWrap Error
 //   - Try msg.value != minExecutionFee
 //   - Try cancelOrder not owner
 //   - Try cancelOrder with uncreated order
@@ -92,7 +92,7 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
     vm.startPrank(ALICE);
     plp.approve(address(liquidityHandler), type(uint256).max);
 
-    // plpIn 5 ether, executionfee 5
+    // plpIn 5 ether, execution fee 5
     liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(wbtc), 5 ether, 0, 5 ether, false);
     vm.stopPrank();
 

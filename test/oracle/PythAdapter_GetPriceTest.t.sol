@@ -2,18 +2,15 @@
 pragma solidity 0.8.18;
 
 import { PythAdapter_BaseTest } from "./PythAdapter_BaseTest.t.sol";
-import { PythAdapter } from "../../src/oracle/PythAdapter.sol";
+import { PythAdapter } from "@hmx/oracle/PythAdapter.sol";
 import { console2 } from "forge-std/console2.sol";
-import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
 
 contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
-  using AddressUtils for address;
-
   function setUp() public override {
     super.setUp();
 
-    pythAdapter.setPythPriceId(address(weth).toBytes32(), wethPriceId);
-    pythAdapter.setPythPriceId(address(wbtc).toBytes32(), wbtcPriceId);
+    pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
+    pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
   }
 
   function updateWbtcWithConf(uint64 conf) private {
@@ -55,20 +52,20 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
 
   function testRevert_GetBeforeUpdate() external {
     vm.expectRevert(abi.encodeWithSignature("PriceFeedNotFound()"));
-    pythAdapter.getLatestPrice(address(weth).toBytes32(), true, 1e6);
+    pythAdapter.getLatestPrice(wethAssetId, true, 1e6);
   }
 
   function testRevert_GetWhenPriceIsBad() external {
     updateWbtcWithBadParam();
     vm.expectRevert(abi.encodeWithSignature("PythAdapter_BrokenPythPrice()"));
-    pythAdapter.getLatestPrice(address(wbtc).toBytes32(), true, 1e6);
+    pythAdapter.getLatestPrice(wbtcAssetId, true, 1e6);
   }
 
   function testCorrectness_GetWhenNoConf() external {
     updateWbtcWithConf(0);
 
-    (uint256 maxPrice, , uint256 lastUpdate) = pythAdapter.getLatestPrice(address(wbtc).toBytes32(), true, 1e6);
-    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(address(wbtc).toBytes32(), false, 1e6);
+    (uint256 maxPrice, , uint256 lastUpdate) = pythAdapter.getLatestPrice(wbtcAssetId, true, 1e6);
+    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(wbtcAssetId, false, 1e6);
     assertEq(maxPrice, 20_000 * 1e30);
     assertEq(minPrice, 20_000 * 1e30);
     assertEq(lastUpdate, uint64(block.timestamp));
@@ -82,7 +79,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     vm.expectRevert(abi.encodeWithSignature("PythAdapter_ConfidenceRatioTooHigh()"));
     // But get price with 4% conf threshold, should revert as the conf 5% is unacceptable
     pythAdapter.getLatestPrice(
-      address(wbtc).toBytes32(),
+      wbtcAssetId,
       true,
       0.04 * 1e6 // accept up to 4% conf
     );
@@ -95,12 +92,12 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
 
     // And get price with 6% conf threshold
     (uint256 maxPrice, , ) = pythAdapter.getLatestPrice(
-      address(wbtc).toBytes32(),
+      wbtcAssetId,
       true,
       0.06 * 1e6 // 6% conf
     );
     (uint256 minPrice, , ) = pythAdapter.getLatestPrice(
-      address(wbtc).toBytes32(),
+      wbtcAssetId,
       false,
       0.051 * 1e6 // 5.1% conf
     );

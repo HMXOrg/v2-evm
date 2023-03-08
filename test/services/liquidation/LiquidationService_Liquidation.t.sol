@@ -3,13 +3,9 @@ pragma solidity 0.8.18;
 
 import { LiquidationService_Base } from "./LiquidationService_Base.t.sol";
 
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
-
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
-
-import { console } from "forge-std/console.sol";
 
 // What is this test DONE
 // - success
@@ -17,8 +13,6 @@ import { console } from "forge-std/console.sol";
 // - revert
 //   - account healthy
 contract LiquidationService_Liquidation is LiquidationService_Base {
-  using AddressUtils for address;
-
   function setUp() public virtual override {
     super.setUp();
   }
@@ -32,13 +26,13 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     mockCalculator.setFreeCollateral(15_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1_600 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1_600 * 1e30);
 
     // BTC price 25000 USD
-    mockOracle.setPrice(address(wbtc).toBytes32(), 25_000 * 1e30);
+    mockOracle.setPrice(wbtcAssetId, 25_000 * 1e30);
 
     // USDT price 1600 USD
-    mockOracle.setPrice(address(usdt).toBytes32(), 1 * 1e30);
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
@@ -49,7 +43,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
 
     // BTC price 24600 USD
-    mockOracle.setPrice(address(wbtc).toBytes32(), 24_500 * 1e30);
+    mockOracle.setPrice(wbtcAssetId, 24_500 * 1e30);
 
     mockCalculator.setEquity(aliceAddress, 16_000 * 1e30);
     mockCalculator.setMMR(aliceAddress, 7_500 * 1e30);
@@ -68,13 +62,13 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     mockCalculator.setFreeCollateral(15_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1_600 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1_600 * 1e30);
 
     // BTC price 25000 USD
-    mockOracle.setPrice(address(wbtc).toBytes32(), 25_000 * 1e30);
+    mockOracle.setPrice(wbtcAssetId, 25_000 * 1e30);
 
     // USDT price 1600 USD
-    mockOracle.setPrice(address(usdt).toBytes32(), 1 * 1e30);
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
@@ -88,7 +82,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
 
     // BTC price 24000 USD
-    mockOracle.setPrice(address(wbtc).toBytes32(), 24_000 * 1e30);
+    mockOracle.setPrice(wbtcAssetId, 24_000 * 1e30);
 
     mockCalculator.setEquity(aliceAddress, -4_240 * 1e30);
     mockCalculator.setMMR(aliceAddress, 7_500 * 1e30);
@@ -128,13 +122,13 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     mockCalculator.setFreeCollateral(15_000 * 1e30);
 
     // ETH price 1600 USD
-    mockOracle.setPrice(address(weth).toBytes32(), 1_600 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1_600 * 1e30);
 
     // BTC price 25000 USD
-    mockOracle.setPrice(address(wbtc).toBytes32(), 25_000 * 1e30);
+    mockOracle.setPrice(wbtcAssetId, 25_000 * 1e30);
 
     // USDT price 1600 USD
-    mockOracle.setPrice(address(usdt).toBytes32(), 1 * 1e30);
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
@@ -148,7 +142,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
 
     // BTC price 24500 USD
-    mockOracle.setPrice(address(wbtc).toBytes32(), 24_500 * 1e30);
+    mockOracle.setPrice(wbtcAssetId, 24_500 * 1e30);
 
     mockCalculator.setEquity(aliceAddress, 5_880 * 1e30);
     mockCalculator.setMMR(aliceAddress, 7_500 * 1e30);

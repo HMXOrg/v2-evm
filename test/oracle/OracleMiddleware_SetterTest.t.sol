@@ -2,12 +2,8 @@
 pragma solidity 0.8.18;
 
 import { OracleMiddleware_BaseTest } from "./OracleMiddleware_BaseTest.t.sol";
-import { OracleMiddleware } from "../../src/oracle/OracleMiddleware.sol";
-import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
 
 contract OracleMiddleware_SetterTest is OracleMiddleware_BaseTest {
-  using AddressUtils for address;
-
   function setUp() public override {
     super.setUp();
   }
@@ -29,11 +25,11 @@ contract OracleMiddleware_SetterTest is OracleMiddleware_BaseTest {
   }
 
   function testCorrectness_AccessControlWhenSetMarketStatus() external {
-    assertEq(oracleMiddleware.marketStatus(address(wbtc).toBytes32()), 0);
+    assertEq(oracleMiddleware.marketStatus(wbtcAssetId), 0);
     // Only updater could setMarketStatus()
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_OnlyUpdater()"));
     vm.startPrank(ALICE);
-    oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 2);
+    oracleMiddleware.setMarketStatus(wbtcAssetId, 2);
     vm.stopPrank();
 
     // Try set ALICE as updater
@@ -42,10 +38,10 @@ contract OracleMiddleware_SetterTest is OracleMiddleware_BaseTest {
     vm.stopPrank();
 
     vm.startPrank(ALICE);
-    oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 2);
+    oracleMiddleware.setMarketStatus(wbtcAssetId, 2);
     vm.stopPrank();
 
-    assertEq(oracleMiddleware.marketStatus(address(wbtc).toBytes32()), 2);
+    assertEq(oracleMiddleware.marketStatus(wbtcAssetId), 2);
   }
 
   function testRevert_WhenSetMarketStatusInvalidValue() external {
@@ -57,21 +53,17 @@ contract OracleMiddleware_SetterTest is OracleMiddleware_BaseTest {
     vm.startPrank(ALICE);
 
     // Revert if status > 2
-    vm.expectRevert(
-      abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()")
-    );
-    oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 3);
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()"));
+    oracleMiddleware.setMarketStatus(wbtcAssetId, 3);
 
     // Revert if status > 2
-    vm.expectRevert(
-      abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()")
-    );
-    oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 4);
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_InvalidMarketStatus()"));
+    oracleMiddleware.setMarketStatus(wbtcAssetId, 4);
 
     // This one should be ok
-    oracleMiddleware.setMarketStatus(address(wbtc).toBytes32(), 1);
+    oracleMiddleware.setMarketStatus(wbtcAssetId, 1);
     vm.stopPrank();
 
-    assertEq(oracleMiddleware.marketStatus(address(wbtc).toBytes32()), 1);
+    assertEq(oracleMiddleware.marketStatus(wbtcAssetId), 1);
   }
 }

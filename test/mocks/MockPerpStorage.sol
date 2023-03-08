@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { IPerpStorage } from "../../src/storages/interfaces/IPerpStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 contract MockPerpStorage {
   mapping(address => IPerpStorage.Position[]) public positions;
@@ -11,9 +11,16 @@ contract MockPerpStorage {
 
   mapping(bytes32 => IPerpStorage.Position) public positionById;
 
+  IPerpStorage.GlobalState public globalState; // global state that accumulative value from all markets
+
   /**
    * Getter
    */
+
+  function getGlobalState() external view returns (IPerpStorage.GlobalState memory) {
+    return globalState;
+  }
+
   function getGlobalMarketInfo(
     uint256 _marketIndex
   ) external view returns (int256 accumFundingLong, int256 accumFundingShort) {

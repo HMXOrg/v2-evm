@@ -26,10 +26,7 @@ abstract contract Pool_BaseTest is BaseTest {
     plpv2 = deployed.plpv2;
 
     // Setup default underlyings
-    (
-      address[] memory underlyings,
-      PoolConfig.UnderlyingConfig[] memory configs
-    ) = setupDefaultUnderlying();
+    (address[] memory underlyings, PoolConfig.UnderlyingConfig[] memory configs) = setupDefaultUnderlying();
     poolConfig.addOrUpdateUnderlying(underlyings, configs);
 
     // Setup pyth adapter

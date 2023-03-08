@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+//base
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
-import { Owned } from "../base/Owned.sol";
+// contracts
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
 
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
-import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 
 contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /**
@@ -42,9 +44,9 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     calculator = _calculator;
 
     // Sanity check
-    IConfigStorage(_configStorage).calculator();
-    IVaultStorage(_vaultStorage).devFees(address(0));
-    ICalculator(_calculator).oracle();
+    ConfigStorage(_configStorage).calculator();
+    VaultStorage(_vaultStorage).devFees(address(0));
+    Calculator(_calculator).oracle();
   }
 
   /**
@@ -52,13 +54,13 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
    */
   // NOTE: Validate only whitelisted contract be able to call this function
   modifier onlyWhitelistedExecutor() {
-    IConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
     _;
   }
 
   // NOTE: Validate only accepted collateral token to be deposited
   modifier onlyAcceptedToken(address _token) {
-    IConfigStorage(configStorage).validateAcceptedCollateral(_token);
+    ConfigStorage(configStorage).validateAcceptedCollateral(_token);
     _;
   }
 
@@ -84,20 +86,20 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
     // Get current collateral token balance of trader's account
     // and sum with new token depositing amount
-    uint256 _oldBalance = IVaultStorage(_vaultStorage).traderBalances(_subAccount, _token);
+    uint256 _oldBalance = VaultStorage(_vaultStorage).traderBalances(_subAccount, _token);
 
     uint256 _newBalance = _oldBalance + _amount;
 
     // Set new collateral token balance
-    IVaultStorage(_vaultStorage).setTraderBalance(_subAccount, _token, _newBalance);
+    VaultStorage(_vaultStorage).setTraderBalance(_subAccount, _token, _newBalance);
 
     // Update token balance
-    uint256 deltaBalance = IVaultStorage(_vaultStorage).pullToken(_token);
+    uint256 deltaBalance = VaultStorage(_vaultStorage).pullToken(_token);
     if (deltaBalance < _amount) revert ICrossMarginService_InvalidDepositBalance();
 
     // If trader's account never contain this token before then register new token to the account
     if (_oldBalance == 0 && _newBalance != 0) {
-      IVaultStorage(_vaultStorage).addTraderToken(_subAccount, _token);
+      VaultStorage(_vaultStorage).addTraderToken(_subAccount, _token);
     }
 
     emit LogDepositCollateral(_primaryAccount, _subAccount, _token, _amount);
@@ -122,26 +124,26 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
     // Get current collateral token balance of trader's account
     // and deduct with new token withdrawing amount
-    uint256 _oldBalance = IVaultStorage(_vaultStorage).traderBalances(_subAccount, _token);
+    uint256 _oldBalance = VaultStorage(_vaultStorage).traderBalances(_subAccount, _token);
     if (_amount > _oldBalance) revert ICrossMarginService_InsufficientBalance();
 
     uint256 _newBalance = _oldBalance - _amount;
 
     // Set new collateral token balance
-    IVaultStorage(_vaultStorage).setTraderBalance(_subAccount, _token, _newBalance);
+    VaultStorage(_vaultStorage).setTraderBalance(_subAccount, _token, _newBalance);
 
     // Calculate validation for if new Equity is below IMR or not
-    int256 equity = ICalculator(calculator).getEquity(_subAccount, 0, 0);
-    if (equity < 0 || uint256(equity) < ICalculator(calculator).getIMR(_subAccount))
+    int256 equity = Calculator(calculator).getEquity(_subAccount, 0, 0);
+    if (equity < 0 || uint256(equity) < Calculator(calculator).getIMR(_subAccount))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
     // If trader withdraws all token out, then remove token on traderTokens list
     if (_oldBalance != 0 && _newBalance == 0) {
-      IVaultStorage(_vaultStorage).removeTraderToken(_subAccount, _token);
+      VaultStorage(_vaultStorage).removeTraderToken(_subAccount, _token);
     }
 
     // Transfer withdrawing token from VaultStorage to trader's wallet
-    IVaultStorage(_vaultStorage).pushToken(_token, _primaryAccount, _amount);
+    VaultStorage(_vaultStorage).pushToken(_token, _primaryAccount, _amount);
 
     emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount);
   }
@@ -151,37 +153,37 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
    */
   /// @notice Set new ConfigStorage contract address.
   /// @param _configStorage New ConfigStorage contract address.
-  function setConfigStorage(address _configStorage) external onlyOwner {
+  function setConfigStorage(address _configStorage) external nonReentrant onlyOwner {
     if (_configStorage == address(0)) revert ICrossMarginService_InvalidAddress();
     emit LogSetConfigStorage(configStorage, _configStorage);
     configStorage = _configStorage;
 
     // Sanity check
-    IConfigStorage(_configStorage).calculator();
+    ConfigStorage(_configStorage).calculator();
   }
 
   /// @notice Set new VaultStorage contract address.
   /// @param _vaultStorage New VaultStorage contract address.
-  function setVaultStorage(address _vaultStorage) external onlyOwner {
+  function setVaultStorage(address _vaultStorage) external nonReentrant onlyOwner {
     if (_vaultStorage == address(0)) revert ICrossMarginService_InvalidAddress();
 
     emit LogSetVaultStorage(vaultStorage, _vaultStorage);
     vaultStorage = _vaultStorage;
 
     // Sanity check
-    IVaultStorage(_vaultStorage).devFees(address(0));
+    VaultStorage(_vaultStorage).devFees(address(0));
   }
 
   /// @notice Set new Calculator contract address.
   /// @param _calculator New Calculator contract address.
-  function setCalculator(address _calculator) external onlyOwner {
+  function setCalculator(address _calculator) external nonReentrant onlyOwner {
     if (_calculator == address(0)) revert ICrossMarginService_InvalidAddress();
 
     emit LogSetCalculator(calculator, _calculator);
     calculator = _calculator;
 
     // Sanity check
-    ICalculator(_calculator).oracle();
+    Calculator(_calculator).oracle();
   }
 
   /// @notice Calculate subAccount address on trader.

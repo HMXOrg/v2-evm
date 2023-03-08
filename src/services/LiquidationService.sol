@@ -1,26 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+// contracts
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+
+// interfaces
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
-import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
-import { IVaultStorage } from "../storages/interfaces/IVaultStorage.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
-import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
 
-import { AddressUtils } from "../libraries/AddressUtils.sol";
-
-contract LiquidationService is ILiquidationService {
-  using AddressUtils for address;
-
+contract LiquidationService is ReentrancyGuard, ILiquidationService {
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
 
+  /**
+   * Modifiers
+   */
+  modifier onlyWhitelistedExecutor() {
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    _;
+  }
+
   constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
-    // @todo - sanity check
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
+    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    ConfigStorage(_configStorage).getLiquidityConfig();
+
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
@@ -28,9 +40,9 @@ contract LiquidationService is ILiquidationService {
 
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage
   /// @param _subAccount The sub-account to be liquidated
-  function liquidate(address _subAccount) external {
+  function liquidate(address _subAccount) external nonReentrant onlyWhitelistedExecutor {
     // Get the calculator contract from storage
-    ICalculator _calculator = ICalculator(IConfigStorage(configStorage).calculator());
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     int256 _equity = _calculator.getEquity(_subAccount, 0, 0);
     // If the equity is greater than or equal to the MMR, the account is healthy and cannot be liquidated
@@ -38,7 +50,7 @@ contract LiquidationService is ILiquidationService {
       revert ILiquidationService_AccountHealthy();
 
     // Get the list of position ids associated with the sub-account
-    bytes32[] memory _positionIds = IPerpStorage(perpStorage).getPositionIds(_subAccount);
+    bytes32[] memory _positionIds = PerpStorage(perpStorage).getPositionIds(_subAccount);
 
     // Settles the sub-account by paying off its debt with its collateral
     _settle(_subAccount);
@@ -59,7 +71,7 @@ contract LiquidationService is ILiquidationService {
       _positionId = _positionIds[i];
 
       // Reset the position's value in storage
-      IPerpStorage(perpStorage).removePositionFromSubAccount(_subAccount, _positionId);
+      PerpStorage(perpStorage).removePositionFromSubAccount(_subAccount, _positionId);
 
       unchecked {
         ++i;
@@ -75,16 +87,14 @@ contract LiquidationService is ILiquidationService {
     address _vaultStorage = vaultStorage;
 
     // Get instances of the oracle contracts from storage
-    IOracleMiddleware _oracle = IOracleMiddleware(IConfigStorage(_configStorage).oracle());
+    OracleMiddleware _oracle = OracleMiddleware(ConfigStorage(_configStorage).oracle());
 
     // Get the list of collateral tokens from storage
-    address[] memory _collateralTokens = IConfigStorage(_configStorage).getCollateralTokens();
+    address[] memory _collateralTokens = ConfigStorage(_configStorage).getCollateralTokens();
 
     // Get the sub-account's unrealized profit/loss and add the liquidation fee
-    uint256 _absDebt = abs(
-      ICalculator(IConfigStorage(_configStorage).calculator()).getUnrealizedPnl(_subAccount, 0, 0)
-    );
-    _absDebt += IConfigStorage(_configStorage).getLiquidationConfig().liquidationFeeUSDE30;
+    uint256 _absDebt = abs(Calculator(ConfigStorage(_configStorage).calculator()).getUnrealizedPnl(_subAccount, 0, 0));
+    _absDebt += ConfigStorage(_configStorage).getLiquidationConfig().liquidationFeeUSDE30;
 
     uint256 _len = _collateralTokens.length;
     // Iterate over each collateral token in the list and pay off debt with its balance
@@ -93,16 +103,16 @@ contract LiquidationService is ILiquidationService {
 
       // Calculate the amount of debt tokens to repay using the collateral token's price
       uint256 _collateralTokenDecimal = ERC20(_collateralToken).decimals();
-      (uint256 _price, ) = _oracle.getLatestPrice(_collateralToken.toBytes32(), false);
+      (uint256 _price, ) = _oracle.getLatestPrice(ConfigStorage(_configStorage).tokenAssetIds(_collateralToken), false);
 
       // Get the sub-account's balance of the collateral token from the vault storage and calculate value
-      uint256 _traderBalanceValue = (IVaultStorage(_vaultStorage).traderBalances(_subAccount, _collateralToken) *
+      uint256 _traderBalanceValue = (VaultStorage(_vaultStorage).traderBalances(_subAccount, _collateralToken) *
         _price) / (10 ** _collateralTokenDecimal);
 
       // Repay the minimum of the debt token amount and the trader's balance of the collateral token
       uint256 _repayValue = _min(_absDebt, _traderBalanceValue);
       _absDebt -= _repayValue;
-      IVaultStorage(_vaultStorage).payPlp(
+      VaultStorage(_vaultStorage).payPlp(
         _subAccount,
         _collateralToken,
         (_repayValue * (10 ** _collateralTokenDecimal)) / _price
@@ -117,7 +127,7 @@ contract LiquidationService is ILiquidationService {
     }
 
     // If the debt has not been fully paid off, add it to the sub-account's bad debt balance in storage
-    if (_absDebt != 0) IPerpStorage(perpStorage).addBadDebt(_subAccount, _absDebt);
+    if (_absDebt != 0) PerpStorage(perpStorage).addBadDebt(_subAccount, _absDebt);
   }
 
   function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address) {

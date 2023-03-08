@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+// base
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
-/**
- * Interfaces
- */
+// contracts
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { TradeService } from "@hmx/services/TradeService.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+
+// interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { IOracleMiddleware } from "../oracle/interfaces/IOracleMiddleware.sol";
-import { ITradeService } from "../services/interfaces/ITradeService.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
 
 contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /**
@@ -116,7 +117,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     minExecutionFee = _minExecutionFee;
 
     // slither-disable-next-line unused-return
-    ITradeService(_tradeService).perpStorage();
+    TradeService(_tradeService).perpStorage();
     // slither-disable-next-line unused-return
     IPyth(_pyth).getValidTimePeriod();
   }
@@ -157,7 +158,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool _reduceOnly,
     address _tpToken
   ) external payable nonReentrant {
-    // Check if exectuion fee is lower than minExecutionFee, then it's too low. We won't allow it.
+    // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
     if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
     // The attached native token must be equal to _executionFee
     if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
@@ -225,7 +226,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // Validate if the current price is valid for the execution of this order
-    (uint256 _currentPrice, ) = validatePositionOrderPrice(
+    (uint256 _currentPrice, ) = _validatePositionOrderPrice(
       vars.order.triggerAboveThreshold,
       vars.order.triggerPrice,
       vars.order.marketIndex,
@@ -236,7 +237,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
     // Retrieve existing position
     vars.positionId = _getPositionId(vars.subAccount, vars.order.marketIndex);
-    IPerpStorage.Position memory _existingPosition = IPerpStorage(ITradeService(tradeService).perpStorage())
+    PerpStorage.Position memory _existingPosition = PerpStorage(TradeService(tradeService).perpStorage())
       .getPositionById(vars.positionId);
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
@@ -247,7 +248,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       if (vars.isNewPosition || vars.positionIsLong) {
         // New position and Long position
         // just increase position when BUY
-        ITradeService(tradeService).increasePosition({
+        TradeService(tradeService).increasePosition({
           _primaryAccount: _account,
           _subAccountId: _subAccountId,
           _marketIndex: vars.order.marketIndex,
@@ -259,7 +260,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
         if (_flipSide) {
           // Flip the position
           // Fully close Short position
-          ITradeService(tradeService).decreasePosition({
+          TradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -268,7 +269,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _limitPriceE30: _currentPrice
           });
           // Flip it to Long position
-          ITradeService(tradeService).increasePosition({
+          TradeService(tradeService).increasePosition({
             _primaryAccount: _account,
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -277,7 +278,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
           });
         } else {
           // Not flip
-          ITradeService(tradeService).decreasePosition({
+          TradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -295,7 +296,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       if (vars.isNewPosition || !vars.positionIsLong) {
         // New position and Short position
         // just increase position when SELL
-        ITradeService(tradeService).increasePosition({
+        TradeService(tradeService).increasePosition({
           _primaryAccount: _account,
           _subAccountId: _subAccountId,
           _marketIndex: vars.order.marketIndex,
@@ -307,7 +308,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
         if (_flipSide) {
           // Flip the position
           // Fully close Long position
-          ITradeService(tradeService).decreasePosition({
+          TradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -316,7 +317,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _limitPriceE30: _currentPrice
           });
           // Flip it to Short position
-          ITradeService(tradeService).increasePosition({
+          TradeService(tradeService).increasePosition({
             _primaryAccount: _account,
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -325,7 +326,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
           });
         } else {
           // Not flip
-          ITradeService(tradeService).decreasePosition({
+          TradeService(tradeService).decreasePosition({
             _account: _account,
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -429,49 +430,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   }
 
   struct ValidatePositionOrderPriceVars {
-    IConfigStorage.MarketConfig marketConfig;
-    IOracleMiddleware oracle;
-    IPerpStorage.GlobalMarket globalMarket;
-  }
-
-  function validatePositionOrderPrice(
-    bool _triggerAboveThreshold,
-    uint256 _triggerPrice,
-    uint256 _marketIndex,
-    int256 _sizeDelta,
-    bool _maximizePrice,
-    bool _revertOnError
-  ) public view returns (uint256, bool) {
-    ValidatePositionOrderPriceVars memory vars;
-
-    // Get price from Pyth
-    vars.marketConfig = IConfigStorage(ITradeService(tradeService).configStorage()).getMarketConfigByIndex(
-      _marketIndex
-    );
-    vars.oracle = IOracleMiddleware(IConfigStorage(ITradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = IPerpStorage(ITradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
-
-    (uint256 _currentPrice, , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
-      vars.marketConfig.assetId,
-      _maximizePrice,
-      (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
-      _sizeDelta,
-      vars.marketConfig.fundingRate.maxSkewScaleUSD
-    );
-
-    // Validate market status
-    if (_marketStatus != 2) {
-      if (_revertOnError) revert ILimitTradeHandler_MarketIsClosed();
-      else return (_currentPrice, false);
-    }
-
-    // Validate price is executable
-    bool isPriceValid = _triggerAboveThreshold ? _currentPrice > _triggerPrice : _currentPrice < _triggerPrice;
-    if (_revertOnError) {
-      if (!isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
-    }
-
-    return (_currentPrice, isPriceValid);
+    ConfigStorage.MarketConfig marketConfig;
+    OracleMiddleware oracle;
+    PerpStorage.GlobalMarket globalMarket;
   }
 
   /**
@@ -479,7 +440,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
    */
   function setTradeService(address _newTradeService) external onlyOwner {
     if (_newTradeService == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    ITradeService(_newTradeService).perpStorage();
+    TradeService(_newTradeService).perpStorage();
     emit LogSetTradeService(address(tradeService), _newTradeService);
     tradeService = _newTradeService;
   }
@@ -505,6 +466,44 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /**
    * Internal Functions
    */
+
+  function _validatePositionOrderPrice(
+    bool _triggerAboveThreshold,
+    uint256 _triggerPrice,
+    uint256 _marketIndex,
+    int256 _sizeDelta,
+    bool _maximizePrice,
+    bool _revertOnError
+  ) internal view returns (uint256, bool) {
+    ValidatePositionOrderPriceVars memory vars;
+
+    // Get price from Pyth
+    vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
+    vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
+    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
+
+    (uint256 _currentPrice, , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      vars.marketConfig.assetId,
+      _maximizePrice,
+      (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
+      _sizeDelta,
+      vars.marketConfig.fundingRate.maxSkewScaleUSD
+    );
+
+    // Validate market status
+    if (_marketStatus != 2) {
+      if (_revertOnError) revert ILimitTradeHandler_MarketIsClosed();
+      else return (_currentPrice, false);
+    }
+
+    // Validate price is executable
+    bool isPriceValid = _triggerAboveThreshold ? _currentPrice > _triggerPrice : _currentPrice < _triggerPrice;
+    if (_revertOnError) {
+      if (!isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
+    }
+
+    return (_currentPrice, isPriceValid);
+  }
 
   /// @notice Transfer in ETH from user to be used as execution fee
   /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.

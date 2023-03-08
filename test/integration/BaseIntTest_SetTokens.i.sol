@@ -1,12 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetMarkets } from "./BaseIntTest_SetMarkets.i.sol";
+import { BaseIntTest_SetOracle } from "@hmx-test/integration/BaseIntTest_SetOracle.i.sol";
+
+import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-abstract contract BaseIntTest_SetAssetConfig is BaseIntTest_SetMarkets {
-  // @todo - setting discuss
+abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
+  MockErc20 wbtc; // decimals 8
+  MockErc20 usdc; // decimals 6
+  MockErc20 usdt; // decimals 6
+  MockErc20 dai; // decimals 18
+
+  MockErc20 gmx; //decimals 18
+
   constructor() {
+    wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
+    dai = new MockErc20("DAI Stablecoin", "DAI", 18);
+    usdc = new MockErc20("USD Coin", "USDC", 6);
+    usdt = new MockErc20("USD Tether", "USDT", 6);
+    gmx = new MockErc20("GMX", "GMX", 18);
+
     _addAssetConfig(wethAssetId, address(weth), 18, false);
 
     _addAssetConfig(wbtcAssetId, address(wbtc), 8, false);

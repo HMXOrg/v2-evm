@@ -69,12 +69,6 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
 
   // UNDERLYING ARBRITRUM GLP => ETH WBTC LINK UNI USDC USDT DAI FRAX
   IWNative weth; //for native
-  ERC20 wbtc; // decimals 8
-  ERC20 usdc; // decimals 6
-  ERC20 usdt; // decimals 6
-  ERC20 dai; // decimals 18
-
-  ERC20 gmx; //decimals 18
 
   address jpy = address(0);
 

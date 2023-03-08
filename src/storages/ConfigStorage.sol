@@ -59,7 +59,7 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   // Token's address => Asset ID
   mapping(address => bytes32) public tokenAssetIds;
-  // Pyth Asset ID => Configs
+  // Asset ID => Configs
   mapping(bytes32 => AssetConfig) public assetConfigs;
   // PLP stuff
   bytes32[] public plpAssetIds;

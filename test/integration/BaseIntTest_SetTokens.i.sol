@@ -25,9 +25,9 @@ abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
 
     configStorage.setPLP(address(plpV2));
 
-    _addAssetConfig(wethAssetId, address(weth), 18, false);
+    _addAssetConfig(wethAssetId, address(weth), 18, true);
 
-    _addAssetConfig(wbtcAssetId, address(wbtc), 8, false);
+    _addAssetConfig(wbtcAssetId, address(wbtc), 8, true);
 
     _addAssetConfig(daiAssetId, address(dai), 18, true);
 
@@ -35,7 +35,7 @@ abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
 
     _addAssetConfig(usdtAssetId, address(usdt), 6, true);
 
-    _addAssetConfig(gmxAssetId, address(gmx), 18, false);
+    _addAssetConfig(gmxAssetId, address(gmx), 18, true);
   }
 
   /// @notice to add asset config with some default value

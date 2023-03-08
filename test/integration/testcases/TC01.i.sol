@@ -17,8 +17,10 @@ contract TC01 is BaseIntTest_WithActions {
      */
     // T1: As a Liquidity, Alice adds 10,000 USD(GLP)
     // btc is 20_000, so use 0.5 WBTC is $10k
-    // configStorage.tokenAssetIds[address(wbtc)];
+    // bytes32 _assetId = configStorage.tokenAssetIds[address(wbtc)];
     // configStorage.validateAcceptedLiquidityToken(address(wbtc));
+    // console.log("WBTC", address(wbtc));
+    // vm.deal(ALICE, 5);
     // addLiquidity(
     //   ALICE,
     //   wbtc,

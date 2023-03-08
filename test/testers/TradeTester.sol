@@ -29,11 +29,10 @@ contract TradeTester is StdAssertions {
   ) {
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
-    crossMarginHandler = _crossMarginHandler;
   }
 
   struct TradeExpectedData {
-    ;
+    uint256 xxx;
   }
 
   struct PerpStateExpectedData {

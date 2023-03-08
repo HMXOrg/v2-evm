@@ -9,6 +9,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
+import { console } from "forge-std/console.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -330,9 +331,13 @@ contract ConfigStorage is IConfigStorage, Owned {
       uint256 _assetIdLen = plpAssetIds.length;
 
       bool _issetPLPAssetId = true;
+
       for (uint256 _j; _j < _assetIdLen; ) {
         if (plpAssetIds[_j] == _assetId) {
           _issetPLPAssetId = false;
+        }
+        unchecked {
+          ++_j;
         }
       }
 
@@ -340,6 +345,7 @@ contract ConfigStorage is IConfigStorage, Owned {
         plpAssetIds.push(_assetId);
       }
 
+      assetPlpTokenConfigs[_assetId] = _configs[_i];
       emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 
       // Update totalWeight accordingly
@@ -347,8 +353,6 @@ contract ConfigStorage is IConfigStorage, Owned {
       liquidityConfig.plpTotalTokenWeight == 0 ? _configs[_i].targetWeight : liquidityConfig.plpTotalTokenWeight =
         (liquidityConfig.plpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
         _configs[_i].targetWeight;
-
-      assetPlpTokenConfigs[_assetId] = _configs[_i];
 
       if (liquidityConfig.plpTotalTokenWeight > 1e18) {
         revert IConfigStorage_ExceedLimitSetting();

@@ -169,7 +169,7 @@ library Deployer {
   ) internal returns (ILiquidityService) {
     return
       ILiquidityService(
-        deployContractWithArguments("LiquidityService", abi.encode(_configStorage, _vaultStorage, _perpStorage))
+        deployContractWithArguments("LiquidityService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
       );
   }
 

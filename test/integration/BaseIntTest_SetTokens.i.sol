@@ -5,6 +5,7 @@ import { BaseIntTest_SetOracle } from "@hmx-test/integration/BaseIntTest_SetOrac
 
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 
 abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
   MockErc20 wbtc; // decimals 8
@@ -20,6 +21,9 @@ abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
     gmx = new MockErc20("GMX", "GMX", 18);
+    plpV2 = IPLPv2(address(new MockErc20("PLPV2", "PLPv2", 18)));
+
+    configStorage.setPLP(address(plpV2));
 
     _addAssetConfig(wethAssetId, address(weth), 18, false);
 

@@ -71,6 +71,8 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   ) external onlyPositionManager {
     TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
 
+    // TradeService(tradeService).validateMaxProfit();
+
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }
 

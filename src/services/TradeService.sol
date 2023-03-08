@@ -507,11 +507,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      // Market active represent the market is still listed on our protocol
-      if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
-
+      // if market is delisted, ------
       // if market status is not 2, means that the market is closed or market status has been defined yet
-      if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
+      if (_marketConfig.active && _marketStatus != 2) revert ITradeService_MarketIsClosed();
 
       // check sub account equity is under MMR
       /// @dev no need to derived price on this
@@ -521,6 +519,26 @@ contract TradeService is ReentrancyGuard, ITradeService {
     _decreasePosition(_marketConfig, _marketIndex, _vars, _vars.absPositionSizeE30, _tpToken, 0);
 
     emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken, _vars.absPositionSizeE30);
+  }
+
+  function validateMarketDelisted(uint256 _marketIndex) external view {
+    if (ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex).active) {
+      revert ITradeService_PlpHealthy();
+    }
+  }
+
+  function validateDelevarage() external view {
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
+    uint256 _aum = _calculator.getAUME30(false, 0, 0);
+    uint256 _tvl = _calculator.getPLPValueE30(false, 0, 0);
+
+    // check plp safety buffer
+    if ((_tvl - _aum) * BPS <= (BPS - ConfigStorage(configStorage).getLiquidityConfig().plpSafetyBufferBPS) * _tvl)
+      revert ITradeService_PlpHealthy();
+  }
+
+  function validateMaxProfit(int256 realizedPnL) external {
+    
   }
 
   /// @notice decrease trader position

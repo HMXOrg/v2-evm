@@ -5,6 +5,8 @@ import { Owned } from "@hmx/base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract OracleMiddleware is Owned, IOracleMiddleware {
   /**
    * Structs

@@ -142,20 +142,21 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     limitTradeHandler = Deployer.deployLimitTradeHandler(address(weth), address(tradeService), address(pyth), 0);
 
     // TODO put last params
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), 0);
+    uint256 _minExecutionFee = 1 ether;
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), _minExecutionFee);
     marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), address(pyth));
 
-    /* configStorage */
+    // Setup ConfigStorage
     {
       configStorage.setOracle(address(oracleMiddleWare));
+      configStorage.setCalculator(address(calculator));
+
+      // Set whitelists for executors
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
       configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
-    }
+      configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
 
-    // serviceExecutor
-    // calculator
-    // oracle
-    // plp
-    // weth
+      configStorage.setWeth(address(weth));
+    }
   }
 }

@@ -49,6 +49,16 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     oracleMiddleWare.setMarketStatus(appleAssetId, uint8(2)); // active
     oracleMiddleWare.setMarketStatus(jpyAssetId, uint8(2)); // active
 
+    // set AssetPriceConfig
+    oracleMiddleWare.setAssetPriceConfig(wethAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(daiAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(usdcAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(usdtAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(gmxAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(appleAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(jpyAssetId, 1e6, 60);
+
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
       AssetPythPriceData memory _data = assetPythPriceDatas[i];
       // set PythId

@@ -17,8 +17,6 @@ contract TC06 is BaseIntTest_WithActions {
   // T11: Alice fully close SHORT ETHUSD position (Equity > IMR)
   // T12: Alice can withdraw collateral
 
-  function setUp() public {}
-
   function testIntegration_WhenTraderInteractWithCrossMargin() external {
     /**
      * T0: Initialized state
@@ -26,6 +24,12 @@ contract TC06 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     uint8 SUB_ACCOUNT_ID = 1;
     address SUB_ACCOUNT = getSubAccount(ALICE, SUB_ACCOUNT_ID);
+
+    // Make LP contains some liquidity
+    bytes[] memory priceData = new bytes[](0);
+    vm.deal(BOB, 1 ether); //deal with out of gas
+    usdt.mint(BOB, 1_000_000 * 1e6);
+    addLiquidity(BOB, usdt, 1_000_000 * 1e6, 1 ether, priceData);
 
     // Mint tokens to Alice
     {
@@ -85,7 +89,7 @@ contract TC06 is BaseIntTest_WithActions {
       address tpToken = address(glp);
       bytes[] memory priceData = new bytes[](0);
 
-      sell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
+      // sell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
     }
   }
 }

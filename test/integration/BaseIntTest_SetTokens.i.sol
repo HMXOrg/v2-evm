@@ -33,8 +33,6 @@ abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
 
     _addAssetConfig(daiAssetId, address(dai), 18, true);
 
-    console2.log("usdcAssetId");
-    console2.logBytes32(usdcAssetId);
     _addAssetConfig(usdcAssetId, address(usdc), 6, true);
 
     _addAssetConfig(usdtAssetId, address(usdt), 6, true);

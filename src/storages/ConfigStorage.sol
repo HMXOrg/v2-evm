@@ -11,7 +11,6 @@ import { console2 } from "forge-std/console2.sol";
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
-import { console } from "forge-std/console.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -94,9 +93,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
   /// @param _token Token address to be deposit/withdraw.
   function validateAcceptedCollateral(address _token) external view {
-    console2.log("-------------------- validateAcceptedCollateral()");
-    console2.log("_token", _token);
-    console2.logBytes32(tokenAssetIds[_token]);
     if (!assetCollateralTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedCollateral();
   }
 

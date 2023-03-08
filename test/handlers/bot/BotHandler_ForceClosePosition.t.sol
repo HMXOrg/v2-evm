@@ -5,15 +5,15 @@ import { BotHandler_Base } from "./BotHandler_Base.t.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
 
-/// @title BotHandler_ForceTakeMaxProfit
+/// @title BotHandler_ForceClosePosition
 /// @notice The purpose is test BotHandler contract able to call TradeService to force close position of trader
 ///         And take maximum of profit (reserved value of position)
-contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
+contract BotHandler_ForceClosePosition is BotHandler_Base {
   // What this test DONE
   // note: random correctness / revert cases from TradeService_ForceClosePosition
   // - correctness
-  //   - close and take profit when profit = reserved value
-  //   - close and take profit when profit > reserved value
+  //   - close and take profit
+  //   - close and take profit
   // revert
   //   - price stale
   //   - try close long position which already closed
@@ -47,7 +47,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
   function testRevert_WhenSomeoneCallBotHandler() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IBotHandler_UnauthorizedSender()"));
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0), prices);
+    botHandler.forceClosePosition(ALICE, 0, ethMarketIndex, address(0), prices);
   }
 
   /**
@@ -55,7 +55,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
    */
 
   // ref: testCorrectness_WhenExecutorCloseShortPositionForAlice_AndProfitIsGreaterThenReserved
-  function testCorrectness_WhenBotHandlerForceTakeMaxProfit_AndProfitIsGreaterThenReserved() external {
+  function testCorrectness_forceClosePosition_AndProfitIsGreaterThenReserved() external {
     // Prepare for this test
 
     // ALICE open SHORT position
@@ -77,7 +77,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     mockOracle.setPrice(0.9 * 1e30);
 
     // Bot force take max profit ALICE position
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, _tpToken, prices);
+    botHandler.forceClosePosition(ALICE, 0, ethMarketIndex, _tpToken, prices);
 
     // all calculation is same with testCorrectness_WhenExecutorCloseShortPositionForAlice_AndProfitIsGreaterThenReserved
     address[] memory _checkPlpTokens = new address[](1);
@@ -113,7 +113,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
   }
 
   // ref: testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved
-  function testCorrectness_WhenBotHandlerForceTakeMaxProfit_AndProfitIsEqualsToReserved() external {
+  function testCorrectness_forceClosePosition_AndProfitIsEqualsToReserved() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
@@ -133,7 +133,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     mockOracle.setPrice(1.09 * 1e30);
 
     // Tester close ALICE position
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, _tpToken, prices);
+    botHandler.forceClosePosition(ALICE, 0, ethMarketIndex, _tpToken, prices);
 
     // all calculation is same with testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved
     address[] memory _checkPlpTokens = new address[](1);
@@ -169,7 +169,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
   }
 
   // ref: testRevert_WhenExecutorTryClosePositionButPriceStale
-  function testRevert_WhenBotHandlerForceTakeMaxProfitButPriceStale() external {
+  function testRevert_forceClosePosition_ButPriceStale() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
@@ -177,11 +177,11 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     mockOracle.setPriceStale(true);
 
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0), prices);
+    botHandler.forceClosePosition(ALICE, 0, ethMarketIndex, address(0), prices);
   }
 
   // ref: testRevert_WhenExecutorTryCloseLongPositionButPositionIsAlreadyClosed
-  function testRevert_WhenBotHandlerForceTakeMaxProfitButPositionIsAlreadyClosed() external {
+  function testRevert_forceClosePosition_ButPositionIsAlreadyClosed() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
@@ -190,6 +190,6 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
 
     // Somehow Tester close ALICE position again
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionAlreadyClosed()"));
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0), prices);
+    botHandler.forceClosePosition(ALICE, 0, ethMarketIndex, address(0), prices);
   }
 }

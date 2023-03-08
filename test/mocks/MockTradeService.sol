@@ -82,18 +82,15 @@ contract MockTradeService is ITradeService {
     uint8 /*_subAccountId*/,
     uint256 /*_marketIndex*/,
     address /*_tpToken*/
-  ) external {
+  ) external returns (bool isMaxProfit) {
     decreasePositionCallCount++;
   }
 
-  function deleverage(
-    address /*_account*/,
-    uint8 /*_subAccountId*/,
-    uint256 /*_marketIndex*/,
-    address /*_tpToken*/
-  ) external {
-    decreasePositionCallCount++;
-  }
+  function validateMaxProfit(bool isMaxProfit) external view {}
+
+  function validateDeleverage() external view {}
+
+  function validateMarketDelisted(uint256 _marketIndex) external view {}
 
   function getNextFundingRate(
     uint256 /*_marketIndex*/,

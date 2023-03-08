@@ -22,15 +22,18 @@ contract TradeService_BorrowingFee is TradeService_Base {
         address(configStorage)
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getBorrowingFee");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getNextBorrowingRate");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getPLPValueE30");
       configStorage.setCalculator(address(mockCalculator));
       tradeService.reloadConfig();
     }
   }
 
   function testCorrectness_borrowingFee_WhenIncreasePosition() external {
-    // TVL
+    // TVL - make the plp value
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
+
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -140,7 +143,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
   function testCorrectness_borrowingFee_WhenDecreasePosition() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
+
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -221,7 +225,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
   function testCorrectness_borrowingFee() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
+
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);

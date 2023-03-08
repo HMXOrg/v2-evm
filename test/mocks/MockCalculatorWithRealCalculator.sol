@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { MockCalculator } from "./MockCalculator.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { console } from "forge-std/console.sol";
 
 contract MockCalculatorWithRealCalculator is MockCalculator {
   Calculator public c;
@@ -58,6 +59,18 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
+  function getNextBorrowingRate(
+    uint8 _assetClassIndex,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) public view override returns (uint256 _nextBorrowingRate) {
+    if (actualFunction[keccak256("getNextBorrowingRate")]) {
+      return c.getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+    } else {
+      return super.getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+    }
+  }
+
   function calculateShortAveragePrice(
     PerpStorage.GlobalMarket memory _market,
     uint256 _currentPrice,
@@ -81,6 +94,18 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
       return c.calculateLongAveragePrice(_market, _currentPrice, _positionSizeDelta, _realizedPositionPnl);
     } else {
       return super.calculateLongAveragePrice(_market, _currentPrice, _positionSizeDelta, _realizedPositionPnl);
+    }
+  }
+
+  function getPLPValueE30(
+    bool _isMaxPrice,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) public view override returns (uint256 _nextAveragePrice) {
+    if (actualFunction[keccak256("getPLPValueE30")]) {
+      return c.getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
+    } else {
+      return super.getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
     }
   }
 }

@@ -923,7 +923,7 @@ contract TradeService is ITradeService {
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastBorrowingTime + _fundingInterval <= block.timestamp) {
       // update borrowing rate
-      uint256 borrowingRate = getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+      uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
       _globalAssetClass.sumBorrowingRate += borrowingRate;
       _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
     }
@@ -964,44 +964,6 @@ contract TradeService is ITradeService {
 
       _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
     }
-  }
-
-  /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
-  /// @param _assetClassIndex The index of the asset class.
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  /// @return _nextBorrowingRate The next borrowing rate for the asset class.
-  function getNextBorrowingRate(
-    uint8 _assetClassIndex,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) public view returns (uint256 _nextBorrowingRate) {
-    ConfigStorage _configStorage = ConfigStorage(configStorage);
-
-    // Get the trading config, asset class config, and global asset class for the given asset class index.
-    ConfigStorage.TradingConfig memory _tradingConfig = _configStorage.getTradingConfig();
-    ConfigStorage.AssetClassConfig memory _assetClassConfig = _configStorage.getAssetClassConfigByIndex(
-      _assetClassIndex
-    );
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
-      _assetClassIndex
-    );
-    // Get the PLP TVL.
-    uint256 plpTVL = calculator.getPLPValueE30(false, _limitPriceE30, _limitAssetId);
-
-    // If block.timestamp not pass the next funding time, return 0.
-    if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
-    // If PLP TVL is 0, return 0.
-    if (plpTVL == 0) return 0;
-
-    // Calculate the number of funding intervals that have passed since the last borrowing time.
-    uint256 intervals = (block.timestamp - _globalAssetClass.lastBorrowingTime) / _tradingConfig.fundingInterval;
-
-    // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
-    return
-      (_assetClassConfig.baseBorrowingRateBPS * _globalAssetClass.reserveValueE30 * intervals * RATE_PRECISION) /
-      plpTVL /
-      BPS;
   }
 
   /// @notice This function collects margin fee from position

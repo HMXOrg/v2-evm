@@ -12,6 +12,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
+import { console } from "forge-std/console.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
@@ -893,6 +894,44 @@ contract Calculator is Owned, ICalculator {
     uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
     // Calculate the borrowing fee based on reserved value, borrowing rate.
     return (_reservedValue * _borrowingRate) / RATE_PRECISION;
+  }
+
+  /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
+  /// @param _assetClassIndex The index of the asset class.
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @return _nextBorrowingRate The next borrowing rate for the asset class.
+  function getNextBorrowingRate(
+    uint8 _assetClassIndex,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) public view returns (uint256 _nextBorrowingRate) {
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+
+    // Get the trading config, asset class config, and global asset class for the given asset class index.
+    ConfigStorage.TradingConfig memory _tradingConfig = _configStorage.getTradingConfig();
+    ConfigStorage.AssetClassConfig memory _assetClassConfig = _configStorage.getAssetClassConfigByIndex(
+      _assetClassIndex
+    );
+    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+    // Get the PLP TVL.
+    uint256 plpTVL = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
+
+    // If block.timestamp not pass the next funding time, return 0.
+    if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
+    // If PLP TVL is 0, return 0.
+    if (plpTVL == 0) return 0;
+
+    // Calculate the number of funding intervals that have passed since the last borrowing time.
+    uint256 intervals = (block.timestamp - _globalAssetClass.lastBorrowingTime) / _tradingConfig.fundingInterval;
+
+    // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
+    return
+      (_assetClassConfig.baseBorrowingRateBPS * _globalAssetClass.reserveValueE30 * intervals * RATE_PRECISION) /
+      plpTVL /
+      BPS;
   }
 
   function _max(int256 a, int256 b) internal pure returns (int256) {

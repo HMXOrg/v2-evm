@@ -125,7 +125,11 @@ contract MockCalculator is ICalculator {
     return aum;
   }
 
-  function getPLPValueE30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
+  function getPLPValueE30(
+    bool /* isMaxPrice */,
+    uint256 /*_price*/,
+    bytes32 /*_assetId*/
+  ) public view virtual returns (uint256) {
     return plpValue;
   }
 
@@ -170,7 +174,11 @@ contract MockCalculator is ICalculator {
     return freeCollateral;
   }
 
-  function getNextBorrowingRate(uint256 /*_assetClassIndex*/) external view returns (uint256) {
+  function getNextBorrowingRate(
+    uint8 /*_assetClassIndex*/,
+    uint256 /*_limitPriceE30*/,
+    bytes32 /*_limitAssetId*/
+  ) public view virtual returns (uint256) {
     return nextBorrowingRate;
   }
 

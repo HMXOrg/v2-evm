@@ -86,6 +86,15 @@ contract MockTradeService is ITradeService {
     decreasePositionCallCount++;
   }
 
+  function deleverage(
+    address /*_account*/,
+    uint8 /*_subAccountId*/,
+    uint256 /*_marketIndex*/,
+    address /*_tpToken*/
+  ) external {
+    decreasePositionCallCount++;
+  }
+
   function getNextFundingRate(
     uint256 /*_marketIndex*/,
     uint256 /*_price*/

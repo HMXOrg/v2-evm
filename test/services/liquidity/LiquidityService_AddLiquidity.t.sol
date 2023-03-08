@@ -10,6 +10,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 //   - add liquidity
 // - revert
 //   - add liquidity when circuit break
+//   - remove liquidity when circuit break
 //   - add liquidity on unlisted token
 //   - add liquidity on not accepted token
 //   - add liquidity with zero amount
@@ -37,21 +38,30 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
     assertEq(plp.totalSupply(), 99.7 ether, "PLP Total Supply");
   }
 
-  // add liquidity when circuit break
+  function testRevert_WhenPLPAddLiquidity_WithInvalidHandler() external {
+    vm.prank(BOB);
+    vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotWhiteListed()"));
+    liquidityService.addLiquidity(ALICE, address(weth), 10 ether, type(uint256).max);
+  }
 
+  // add liquidity when circuit break
   function testRevert_WhenCircuitBreak_PLPShouldNotAddLiquidity() external {
     // disable liquidity config
-    IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
-    _liquidityConfig.enabled = false;
-    configStorage.setLiquidityConfig(_liquidityConfig);
-
+    configStorage.setLiquidityEnabled(false);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
   }
 
+  // remove liquidity when circuit break
+  function testRevert_WhenCircuitBreak_PLPShouldNotRemoveLiquidity() external {
+    configStorage.setLiquidityEnabled(false);
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
+    liquidityService.removeLiquidity(ALICE, address(weth), 10 ether, 0);
+  }
+
   // add liquidity on unlisted token
   function testRevert_WhenPLPAddLiquidity_WithUnlistedToken() external {
-    vm.expectRevert(abi.encodeWithSignature("LiquidityService_InvalidToken()"));
+    vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedLiquidity()"));
     // bad is not listed as plp token
     liquidityService.addLiquidity(ALICE, address(bad), 10 ether, 0);
   }
@@ -63,7 +73,7 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
     _plpTokenConfig.accepted = false;
     configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig);
 
-    vm.expectRevert(abi.encodeWithSignature("LiquidityService_InvalidToken()"));
+    vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedLiquidity()"));
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
   }
 

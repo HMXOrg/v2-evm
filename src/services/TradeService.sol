@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-// base
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -17,9 +16,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeService } from "./interfaces/ITradeService.sol";
 
 // @todo - refactor, deduplicate code
-contract TradeService is ITradeService {
-  using AddressUtils for address;
-
+contract TradeService is ReentrancyGuard, ITradeService {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
 
@@ -45,6 +42,14 @@ contract TradeService is ITradeService {
     uint256 priceE30;
     int256 currentPositionSizeE30;
     bool isLongPosition;
+  }
+
+  /**
+   * Modifiers
+   */
+  modifier onlyWhitelistedExecutor() {
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    _;
   }
 
   /**
@@ -84,7 +89,11 @@ contract TradeService is ITradeService {
   address public configStorage;
 
   constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
-    // @todo - sanity check
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
+    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    ConfigStorage(_configStorage).getLiquidityConfig();
+
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
@@ -104,7 +113,7 @@ contract TradeService is ITradeService {
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _limitPriceE30
-  ) external {
+  ) external nonReentrant onlyWhitelistedExecutor {
     // validate service should be called from handler ONLY
     ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
 
@@ -315,7 +324,7 @@ contract TradeService is ITradeService {
     uint256 _positionSizeE30ToDecrease,
     address _tpToken,
     uint256 _limitPriceE30
-  ) external {
+  ) external nonReentrant onlyWhitelistedExecutor {
     // validate service should be called from handler ONLY
     ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
 
@@ -380,7 +389,12 @@ contract TradeService is ITradeService {
   /// @param _subAccountId sub-account id
   /// @param _marketIndex position market index
   /// @param _tpToken take profit token
-  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
+  function forceClosePosition(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  ) external nonReentrant onlyWhitelistedExecutor {
     // init vars
     DecreasePositionVars memory _vars;
 
@@ -965,7 +979,7 @@ contract TradeService is ITradeService {
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
   /// @param _limitPriceE30 Price from limitOrder, zeros means no marketOrderPrice
-  function updateFundingRate(uint256 _marketIndex, uint256 _limitPriceE30) public {
+  function updateFundingRate(uint256 _marketIndex, uint256 _limitPriceE30) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
@@ -1008,7 +1022,7 @@ contract TradeService is ITradeService {
     uint8 _assetClassIndex,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (uint256 _nextBorrowingRate) {
+  ) internal view returns (uint256 _nextBorrowingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     Calculator _calculator = Calculator(_configStorage.calculator());
 
@@ -1047,7 +1061,7 @@ contract TradeService is ITradeService {
     uint8 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _entryBorrowingRate
-  ) public view returns (uint256 borrowingFee) {
+  ) internal view returns (uint256 borrowingFee) {
     // Get the global asset class.
     PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
@@ -1062,7 +1076,10 @@ contract TradeService is ITradeService {
   /// @param _absSizeDelta Position size
   /// @param _positionFeeRateBPS Position Fee
   /// @return tradingFee The calculated trading fee for the position.
-  function getTradingFee(uint256 _absSizeDelta, uint256 _positionFeeRateBPS) public pure returns (uint256 tradingFee) {
+  function getTradingFee(
+    uint256 _absSizeDelta,
+    uint256 _positionFeeRateBPS
+  ) internal pure returns (uint256 tradingFee) {
     if (_absSizeDelta == 0) return 0;
     return (_absSizeDelta * _positionFeeRateBPS) / BPS;
   }
@@ -1080,7 +1097,7 @@ contract TradeService is ITradeService {
     bool _isLong,
     int256 _size,
     int256 _entryFundingRate
-  ) public view returns (int256 fundingFee) {
+  ) internal view returns (int256 fundingFee) {
     if (_size == 0) return 0;
     uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
 
@@ -1168,7 +1185,7 @@ contract TradeService is ITradeService {
     uint256 _reservedValue,
     uint256 _entryBorrowingRate,
     uint32 _positionFeeBPS
-  ) public {
+  ) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the debt fee of the sub-account
@@ -1202,7 +1219,7 @@ contract TradeService is ITradeService {
     uint256 _marketIndex,
     int256 _positionSizeE30,
     int256 _entryFundingRate
-  ) public {
+  ) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the debt fee of the sub-account
@@ -1222,7 +1239,7 @@ contract TradeService is ITradeService {
 
   /// @notice This function settle margin fee from trader's sub-account
   /// @param _subAccount The sub-account from which to collect the fee.
-  function settleMarginFee(address _subAccount) public {
+  function settleMarginFee(address _subAccount) internal {
     FeeCalculator.SettleMarginFeeVar memory acmVars;
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     PerpStorage _perpStorage = PerpStorage(perpStorage);
@@ -1271,7 +1288,7 @@ contract TradeService is ITradeService {
         // Deducts for dev fee
         tmpVars.repayFeeTokenAmount -= tmpVars.devFeeTokenAmount;
 
-        _vaultStorage.collectMarginFee(
+        _collectMarginFee(
           _subAccount,
           tmpVars.underlyingToken,
           tmpVars.repayFeeTokenAmount,
@@ -1295,7 +1312,7 @@ contract TradeService is ITradeService {
   /// @param _subAccount The address of the sub-account to settle fees for.
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function settleFundingFee(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) public {
+  function settleFundingFee(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) internal {
     FeeCalculator.SettleFundingFeeVar memory acmVars;
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     PerpStorage _perpStorage = PerpStorage(perpStorage);
@@ -1480,6 +1497,27 @@ contract TradeService is ITradeService {
     _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
 
     return _nextAveragePrice;
+  }
+
+  /// @notice This function does accounting when collecting trading fee from trader's sub-account.
+  /// @param subAccount The sub-account from which to collect the fee.
+  /// @param underlyingToken The underlying token for which the fee is collected.
+  /// @param tradingFeeAmount The amount of trading fee to be collected, after deducting dev fee.
+  /// @param devFeeTokenAmount The amount of dev fee deducted from the trading fee.
+  /// @param traderBalance The updated balance of the trader's underlying token.
+  function _collectMarginFee(
+    address subAccount,
+    address underlyingToken,
+    uint256 tradingFeeAmount,
+    uint256 devFeeTokenAmount,
+    uint256 traderBalance
+  ) internal {
+    // Deduct dev fee from the trading fee and add it to the dev fee pool.
+    VaultStorage(vaultStorage).addDevFee(underlyingToken, devFeeTokenAmount);
+    // Add the remaining trading fee to the protocol's fee pool.
+    VaultStorage(vaultStorage).addFee(underlyingToken, tradingFeeAmount);
+    // Update the trader's balance of the underlying token.
+    VaultStorage(vaultStorage).setTraderBalance(subAccount, underlyingToken, traderBalance);
   }
 
   /**

@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { console } from "forge-std/console.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-import { CrossMarginHandler_Base, CrossMarginService } from "./CrossMarginHandler_Base.t.sol";
+import { CrossMarginHandler_Base } from "./CrossMarginHandler_Base.t.sol";
+
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
   function setUp() public virtual override {
@@ -29,7 +31,7 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
    */
 
   function testCorrectness_crossMarginHandler_setCrossMarginService() external {
-    CrossMarginService newCrossMarginService = deployCrossMarginService(
+    ICrossMarginService newCrossMarginService = Deployer.deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
       address(calculator)
@@ -40,8 +42,7 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
   }
 
   function testCorrectness_crossMarginHandler_setPyth() external {
-    DeployReturnVars memory deployed = deployPerp88v2();
-    crossMarginHandler.setPyth(address(deployed.pythAdapter.pyth()));
-    assertEq(crossMarginHandler.pyth(), address(deployed.pythAdapter.pyth()));
+    crossMarginHandler.setPyth(address(pythAdapter.pyth()));
+    assertEq(crossMarginHandler.pyth(), address(pythAdapter.pyth()));
   }
 }

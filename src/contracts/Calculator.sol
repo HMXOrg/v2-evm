@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 // base
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 
 //contracts
@@ -18,9 +17,6 @@ contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
 
-  // using libs for type
-  using AddressUtils for address;
-
   // EVENTS
   event LogSetOracle(address indexed oldOracle, address indexed newOracle);
   event LogSetVaultStorage(address indexed oldVaultStorage, address indexed vaultStorage);
@@ -35,10 +31,15 @@ contract Calculator is Owned, ICalculator {
   address public perpStorage;
 
   constructor(address _oracle, address _vaultStorage, address _perpStorage, address _configStorage) {
-    // @todo - Sanity check
+    // Sanity check
     if (
       _oracle == address(0) || _vaultStorage == address(0) || _perpStorage == address(0) || _configStorage == address(0)
     ) revert ICalculator_InvalidAddress();
+
+    PerpStorage(_perpStorage).getGlobalState();
+    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    ConfigStorage(_configStorage).getLiquidityConfig();
+
     oracle = _oracle;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
@@ -181,7 +182,7 @@ contract Calculator is Owned, ICalculator {
 
       (uint256 priceE30Short, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, true);
 
-      //@todo - validate price, revert when crypto price stale, stock use Lastprice
+      //@todo - validate price, revert when crypto price stale, stock use Last price
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
         if (priceE30Long < _globalMarket.longAvgPrice) {
           uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) * _globalMarket.longPositionSize) /

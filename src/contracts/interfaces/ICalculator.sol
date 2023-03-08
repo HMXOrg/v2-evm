@@ -61,8 +61,6 @@ interface ICalculator {
     ConfigStorage _configStorage
   ) external returns (uint256);
 
-  function oracle() external returns (address);
-
   function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _imrE30);
 
   function calculatePositionMMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _mmrE30);
@@ -95,4 +93,20 @@ interface ICalculator {
     uint256 _limitPrice,
     bytes32 _assetId
   ) external view returns (uint256 _collateralValueE30);
+
+  function setOracle(address _oracle) external;
+
+  function setVaultStorage(address _address) external;
+
+  function setConfigStorage(address _address) external;
+
+  function setPerpStorage(address _address) external;
+
+  function oracle() external returns (address _address);
+
+  function vaultStorage() external returns (address _address);
+
+  function configStorage() external returns (address _address);
+
+  function perpStorage() external returns (address _address);
 }

@@ -6,11 +6,7 @@ import { TradeService_Base } from "./TradeService_Base.t.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
-
 contract TradeService_TradingFee is TradeService_Base {
-  using AddressUtils for address;
-
   function setUp() public virtual override {
     super.setUp();
 

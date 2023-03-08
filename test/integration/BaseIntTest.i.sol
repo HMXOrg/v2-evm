@@ -12,6 +12,8 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 
+import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
+
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
@@ -84,7 +86,8 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     DAVE = makeAddr("DAVE");
 
     // deploy MOCK weth
-    weth = new MockWNative();
+    weth = IWNative(new MockWNative());
+
     pyth = new MockPyth(60, 1);
 
     pythAdapter = IOracleAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));

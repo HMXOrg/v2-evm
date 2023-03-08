@@ -7,7 +7,14 @@ import { BaseIntTest_SetConfig } from "@hmx-test/integration/BaseIntTest_SetConf
 import { BaseIntTest_SetTokens } from "@hmx-test/integration/BaseIntTest_SetTokens.i.sol";
 import { BaseIntTest_SetCollaterals } from "@hmx-test/integration/BaseIntTest_SetCollaterals.i.sol";
 
-contract BaseIntTest_WithActions is BaseIntTest_SetConfig, BaseIntTest_SetTokens, BaseIntTest_SetCollaterals {
+import { BaseIntTest_SetPLP } from "@hmx-test/integration/BaseIntTest_SetPLP.i.sol";
+
+contract BaseIntTest_WithActions is
+  BaseIntTest_SetConfig,
+  BaseIntTest_SetTokens,
+  BaseIntTest_SetCollaterals,
+  BaseIntTest_SetPLP
+{
   /**
    * Liquidity
    */

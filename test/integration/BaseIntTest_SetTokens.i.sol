@@ -35,7 +35,7 @@ abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
 
     _addAssetConfig(usdtAssetId, address(usdt), 6, true);
 
-    _addAssetConfig(gmxAssetId, address(gmx), 18, false);
+    _addAssetConfig(gmxAssetId, address(gmx), 18, true);
   }
 
   /// @notice to add asset config with some default value

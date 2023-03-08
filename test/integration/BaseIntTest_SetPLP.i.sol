@@ -24,6 +24,8 @@ abstract contract BaseIntTest_SetPLP is BaseIntTest_SetTokens {
     );
 
     _setupAcceptedToken();
+
+    liquidityHandler.setOrderExecutor(address(this), true);
   }
 
   function _setupAcceptedToken() private {

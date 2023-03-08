@@ -9,6 +9,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
+import { console } from "forge-std/console.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -323,21 +324,28 @@ contract ConfigStorage is IConfigStorage, Owned {
       revert IConfigStorage_BadLen();
     }
 
-    uint256 _len = _tokens.length;
-    for (uint256 _i; _i < _len; ) {
+    uint256 _tokenLen = _tokens.length;
+    for (uint256 _i; _i < _tokenLen; ) {
       bytes32 _assetId = tokenAssetIds[_tokens[_i]];
 
-      // Enforce that isAccept must be true to prevent
-      // removing underlying token through this function.
-      if (!_configs[_i].accepted) revert IConfigStorage_BadArgs();
+      uint256 _assetIdLen = plpAssetIds.length;
 
-      // If plpTokenConfigs.accepted is previously false,
-      // then it is a new token to be added.
-      if (!assetPlpTokenConfigs[_assetId].accepted) {
+      bool _issetPLPAssetId = true;
+
+      for (uint256 _j; _j < _assetIdLen; ) {
+        if (plpAssetIds[_j] == _assetId) {
+          _issetPLPAssetId = false;
+        }
+        unchecked {
+          ++_j;
+        }
+      }
+
+      if (_issetPLPAssetId) {
         plpAssetIds.push(_assetId);
       }
-      // Log
 
+      assetPlpTokenConfigs[_assetId] = _configs[_i];
       emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 
       // Update totalWeight accordingly
@@ -345,8 +353,6 @@ contract ConfigStorage is IConfigStorage, Owned {
       liquidityConfig.plpTotalTokenWeight == 0 ? _configs[_i].targetWeight : liquidityConfig.plpTotalTokenWeight =
         (liquidityConfig.plpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
         _configs[_i].targetWeight;
-
-      assetPlpTokenConfigs[_assetId] = _configs[_i];
 
       if (liquidityConfig.plpTotalTokenWeight > 1e18) {
         revert IConfigStorage_ExceedLimitSetting();

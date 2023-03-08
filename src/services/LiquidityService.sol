@@ -49,10 +49,10 @@ contract LiquidityService is ILiquidityService {
   event CollectAddLiquidityFee(address user, address token, uint256 feeUsd, uint256 fee);
   event CollectRemoveLiquidityFee(address user, address token, uint256 feeUsd, uint256 fee);
 
-  constructor(address _configStorage, address _vaultStorage, address _perpStorage) {
-    configStorage = _configStorage;
-    vaultStorage = _vaultStorage;
+  constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
     perpStorage = _perpStorage;
+    vaultStorage = _vaultStorage;
+    configStorage = _configStorage;
   }
 
   /* TODO 

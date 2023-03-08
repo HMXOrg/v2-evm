@@ -31,6 +31,7 @@ import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginServic
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   uint256 internal constant DOLLAR = 1e30;
@@ -78,8 +79,8 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   address jpy = address(0);
 
   /* PYTH */
-  address internal pyth;
-  IOracleAdapter internal oracleAdapter;
+  MockPyth internal pyth;
+  IOracleAdapter internal pythAdapter;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -90,14 +91,14 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     // deploy MOCK weth
     weth = IWNative(Deployer.deployContract("WNative"));
 
-    pyth = Deployer.deployContractWithArguments("MockPyth", abi.encode(60, 1));
+    pyth = new MockPyth(60, 1);
 
-    // deploy pyth adapter
-    oracleAdapter = Deployer.deployPythAdapter(pyth);
+    pythAdapter = IOracleAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
+
     // deploy stakedGLPOracleAdapter
 
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware(address(oracleAdapter));
+    oracleMiddleWare = Deployer.deployOracleMiddleware(address(pyth));
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage();
@@ -137,15 +138,15 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     );
     tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
 
-    botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), pyth);
-    crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), pyth);
+    botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), address(pyth));
+    crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), address(pyth));
 
     // TODO put last params
-    limitTradeHandler = Deployer.deployLimitTradeHandler(address(weth), address(tradeService), pyth, 0);
+    limitTradeHandler = Deployer.deployLimitTradeHandler(address(weth), address(tradeService), address(pyth), 0);
 
     // TODO put last params
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), pyth, 0);
-    marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), pyth);
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), 0);
+    marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), address(pyth));
 
     /* configStorage */
     // serviceExecutor

@@ -39,29 +39,31 @@ contract LiquidityTester is StdAssertions {
 
   /// @notice Assert function when PLP provider interact with Liquidity handler
   /// @dev This function will check
-  ///      - PLP total supply
-  ///      - PLP liquidity
-  ///      - Token balance and Physical token balance
+  ///      - PLPv2 total supply
   ///      - Execution fee in handler, if address is valid
-  ///      - Tax Fee
+  ///      - PLP liquidity in VaultStorage's state
+  ///      - Total token amount in VaultStorage's state
+  ///      - Fee is VaultStorage's state
+  ///      - Token balance in VaultStorage
   function assertLiquidityInfo(LiquidityAssertData memory _data) internal {
     address _token = _data.token;
     uint256 _totalBalance = _data.tokenBalance;
 
+    // Check PLPv2 total supply
     assertEq(plp.totalSupply(), _data.lpTotalSupply, "PLP Total supply");
 
-    assertEq(vaultStorage.plpLiquidity(_token), _totalBalance, "PLP token liquidity amount");
-    assertEq(vaultStorage.totalAmount(_token), _totalBalance, "Token balance");
-
-    // check physical token
-    assertEq(IERC20(_token).balanceOf(address(vaultStorage)), _totalBalance);
-
     // Deposit / Withdraw fee
+    // note: to integrate this tester with LiquidityService
     if (liquidityHandler != address(0)) {
       assertEq(liquidityHandler.balance, _data.executionFee);
     }
 
-    // Tax Fee
+    // Check VaultStorage's state
+    assertEq(vaultStorage.plpLiquidity(_token), _totalBalance, "PLP token liquidity amount");
+    assertEq(vaultStorage.totalAmount(_token), _totalBalance, "Token balance");
     assertEq(vaultStorage.fees(_token), _data.fee);
+
+    // Check token balance
+    assertEq(IERC20(_token).balanceOf(address(vaultStorage)), _totalBalance);
   }
 }

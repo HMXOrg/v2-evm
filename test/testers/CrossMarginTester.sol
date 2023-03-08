@@ -38,16 +38,20 @@ contract CrossMarginTester is StdAssertions {
   /// @dev This function will check
   ///      - Trader token balance in Trader Wallet
   ///      - Token balance in VaultStorage
-  ///      - Token balance in CrossMarginHandler
+  ///      - Token balance in CrossMarginHandler, if address is valid
   ///      - Trader token balance in VaultStorage's state
-  ///      - Total Token balance in VaultStorage's state
+  ///      - Total token amount in VaultStorage's state
   function assertCrossMarginInfo(CrossMarginAssertData memory _data) internal {
     address _tokenAddress = address(_data.token);
     uint256 _vaultTokenBalance = _data.vaultTokenBalance;
     // Check token balance
     assertEq(_data.token.balanceOf(_data.trader), _data.traderRemainingBalance, "Trader token balance in Wallet");
     assertEq(_data.token.balanceOf(address(vaultStorage)), _vaultTokenBalance, "Token balance in VaultStorage");
-    assertEq(_data.token.balanceOf(crossMarginHandler), 0, "Token balance in CrossMarginHandler");
+
+    // note: to integrate this tester with CrossMarginService
+    if (crossMarginHandler != address(0)) {
+      assertEq(_data.token.balanceOf(crossMarginHandler), 0, "Token balance in CrossMarginHandler");
+    }
 
     // Check vault storage state
     assertEq(vaultStorage.totalAmount(_tokenAddress), _vaultTokenBalance, "Total amount of Token in VaultStorage");

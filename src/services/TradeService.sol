@@ -68,6 +68,14 @@ contract TradeService is ITradeService {
     uint256 _realizedProfit
   );
 
+  event LogDeleverage(
+    address indexed _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    uint256 _closedPositionSize
+  );
+
   /**
    * States
    */
@@ -444,6 +452,63 @@ contract TradeService is ITradeService {
     );
   }
 
+  /// @notice This function is used to decrease a position and free up margin to reduce leverage.
+  /// @param _account The address of the user who wants to decrease their position.
+  /// @param _subAccountId The ID of the sub-account.
+  /// @param _marketIndex The index of the market for the position to decrease.
+  /// @param _tpToken The address of the token used as take profit.
+  function deleverage(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
+    // retrieve liquidity configuration and calculator from storage
+    ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
+    Calculator calculator = Calculator(ConfigStorage(configStorage).calculator());
+    uint256 aum = calculator.getAUME30(false, 0, 0);
+    uint256 tvl = calculator.getPLPValueE30(false, 0, 0);
+
+    // check plp safety buffer
+    if ((tvl - aum) * BPS <= (BPS - _liquidityConfig.plpSafetyBufferBPS) * tvl) revert ITradeService_PlpHealthy();
+
+    DecreasePositionVars memory _vars;
+    ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
+
+    _vars.subAccount = _getSubAccount(_account, _subAccountId);
+    _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
+    _vars.position = PerpStorage(perpStorage).getPositionById(_vars.positionId);
+    _vars.currentPositionSizeE30 = _vars.position.positionSizeE30;
+    _vars.isLongPosition = _vars.currentPositionSizeE30 > 0;
+    _vars.absPositionSizeE30 = uint256(
+      _vars.isLongPosition ? _vars.currentPositionSizeE30 : -_vars.currentPositionSizeE30
+    );
+
+    PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    {
+      uint8 _marketStatus;
+
+      (_vars.priceE30, , , _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
+        .getLatestAdaptivePriceWithMarketStatus(
+          _marketConfig.assetId,
+          !_vars.isLongPosition, // if current position is SHORT position, then we use max price
+          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          -_vars.currentPositionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD
+        );
+
+      // Market active represent the market is still listed on our protocol
+      if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
+
+      // if market status is not 2, means that the market is closed or market status has been defined yet
+      if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
+
+      // check sub account equity is under MMR
+      /// @dev no need to derived price on this
+      _subAccountHealthCheck(_vars.subAccount, 0, 0);
+    }
+
+    _decreasePosition(_marketConfig, _marketIndex, _vars, _vars.absPositionSizeE30, _tpToken, 0);
+
+    emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken, _vars.absPositionSizeE30);
+  }
+
   /// @notice decrease trader position
   /// @param _marketConfig - target market config
   /// @param _globalMarketIndex - global market index
@@ -652,7 +717,7 @@ contract TradeService is ITradeService {
       _limitPriceE30,
       _limitAssetId
     );
-    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / (10 ** _decimals);
+    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18;
 
     VaultStorage(vaultStorage).removePLPLiquidity(_tpToken, _tpTokenOut);
     VaultStorage(vaultStorage).addFee(_tpToken, _settlementFee);

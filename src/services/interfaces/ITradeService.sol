@@ -21,6 +21,7 @@ interface ITradeService {
   error ITradeService_InsufficientLiquidity();
   error ITradeService_InsufficientFreeCollateral();
   error ITradeService_ReservedValueStillEnough();
+  error ITradeService_PlpHealthy();
 
   /**
    * STRUCTS

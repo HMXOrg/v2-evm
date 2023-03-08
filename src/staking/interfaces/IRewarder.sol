@@ -15,4 +15,12 @@ interface IRewarder {
   function pendingReward(address user) external view returns (uint256);
 
   function feed(uint256 feedAmount, uint256 duration) external;
+
+  function accRewardPerShare() external view returns (uint128);
+
+  function userRewardDebts(address user) external view returns (int256);
+
+  function lastRewardTime() external view returns (uint64);
+
+  function setFeeder(address feeder_) external;
 }

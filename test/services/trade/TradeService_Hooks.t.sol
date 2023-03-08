@@ -3,13 +3,11 @@ pragma solidity 0.8.18;
 
 import { MockErc20 } from "../../mocks/MockErc20.sol";
 import { TradeService_Base } from "./TradeService_Base.t.sol";
-import { PositionTester02 } from "../../testers/PositionTester02.sol";
-import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
-import { ITradeService } from "../../../src/services/interfaces/ITradeService.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
@@ -62,7 +60,6 @@ contract TradeService_Hooks is TradeService_Base {
 
     // input
     int256 sizeDelta = 1_000_000 * 1e30;
-    bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
 
     vm.expectRevert(abi.encodeWithSignature("TradingStaking_UnknownMarketIndex()"));
     tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta, 0);
@@ -83,7 +80,6 @@ contract TradeService_Hooks is TradeService_Base {
 
     // input
     int256 sizeDelta = 1_000_000 * 1e30;
-    bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
 
     tradingStaking.setWhitelistedCaller(address(ALICE));
     vm.expectRevert(abi.encodeWithSignature("TradingStaking_Forbidden()"));
@@ -105,7 +101,6 @@ contract TradeService_Hooks is TradeService_Base {
 
     // input
     int256 sizeDelta = 1_000_000 * 1e30;
-    bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
 
     vm.expectRevert(abi.encodeWithSignature("TradingStakingHook_Forbidden()"));
     tradingStakingHook.onIncreasePosition(ALICE, 0, ethMarketIndex, uint256(sizeDelta));
@@ -126,7 +121,6 @@ contract TradeService_Hooks is TradeService_Base {
 
     // input
     int256 sizeDelta = 1_000_000 * 1e30;
-    bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
 
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
 
@@ -151,7 +145,6 @@ contract TradeService_Hooks is TradeService_Base {
 
     // input
     int256 sizeDelta = 1_000_000 * 1e30;
-    bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
 
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
 

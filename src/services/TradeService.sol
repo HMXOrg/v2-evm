@@ -474,12 +474,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
   function deleverage(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
     // retrieve liquidity configuration and calculator from storage
     ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
-    Calculator calculator = Calculator(ConfigStorage(configStorage).calculator());
-    uint256 aum = calculator.getAUME30(false, 0, 0);
-    uint256 tvl = calculator.getPLPValueE30(false, 0, 0);
+    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
+    uint256 _aum = _calculator.getAUME30(false, 0, 0);
+    uint256 _tvl = _calculator.getPLPValueE30(false, 0, 0);
 
     // check plp safety buffer
-    if ((tvl - aum) * BPS <= (BPS - _liquidityConfig.plpSafetyBufferBPS) * tvl) revert ITradeService_PlpHealthy();
+    if ((_tvl - _aum) * BPS <= (BPS - _liquidityConfig.plpSafetyBufferBPS) * _tvl) revert ITradeService_PlpHealthy();
 
     DecreasePositionVars memory _vars;
     ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);

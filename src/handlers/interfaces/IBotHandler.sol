@@ -17,7 +17,29 @@ interface IBotHandler {
   /**
    * Functions
    */
-  function forceTakeMaxProfit(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external;
+  function forceTakeMaxProfit(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) external;
+
+  function deleverage(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) external;
+
+  function forceClosePosition(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) external;
 
   function liquidate(address _subAccount, bytes[] memory _priceData) external;
 

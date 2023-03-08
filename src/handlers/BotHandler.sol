@@ -67,13 +67,58 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,
-    address _tpToken
-  ) external onlyPositionManager {
+    address _tpToken,
+    bytes[] memory _priceData
+  ) external nonReentrant onlyPositionManager {
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+
+    bool isMaxProfit = TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+
+    TradeService(tradeService).validateMaxProfit(isMaxProfit);
+  }
+
+  /// @notice deleverage
+  /// @param _account position's owner
+  /// @param _subAccountId sub-account that owned position
+  /// @param _marketIndex market index of position
+  /// @param _tpToken token that trader receive as profit
+  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
+  function deleverage(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) external nonReentrant onlyPositionManager {
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+
+    TradeService(tradeService).validateDeleverage();
+
     TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+  }
 
-    // TradeService(tradeService).validateMaxProfit();
+  /// @notice forceClosePosition
+  /// @param _account position's owner
+  /// @param _subAccountId sub-account that owned position
+  /// @param _marketIndex market index of position
+  /// @param _tpToken token that trader receive as profit
+  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
+  function forceClosePosition(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) external nonReentrant onlyPositionManager {
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
-    emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
+    TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.

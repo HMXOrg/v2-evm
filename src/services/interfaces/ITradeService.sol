@@ -22,6 +22,7 @@ interface ITradeService {
   error ITradeService_InsufficientFreeCollateral();
   error ITradeService_ReservedValueStillEnough();
   error ITradeService_PlpHealthy();
+  error ITradeService_MarketHealthy();
 
   /**
    * STRUCTS
@@ -70,7 +71,16 @@ interface ITradeService {
     uint256 _averagePrice
   ) external pure returns (bool, uint256);
 
-  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external;
+  function forceClosePosition(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  ) external returns (bool isMaxProfit);
 
-  function deleverage(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external;
+  function validateMaxProfit(bool isMaxProfit) external view;
+
+  function validateDeleverage() external view;
+
+  function validateMarketDelisted(uint256 _marketIndex) external view;
 }

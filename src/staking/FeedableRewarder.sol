@@ -7,7 +7,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { TradingStaking } from "./TradingStaking.sol";
 import { IRewarder } from "./interfaces/IRewarder.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract FeedableRewarder is Owned, IRewarder {
   using SafeCast for uint256;
@@ -108,9 +107,7 @@ contract FeedableRewarder is Owned, IRewarder {
 
   function pendingReward(address user) external view returns (uint256) {
     uint256 projectedAccRewardPerShare = accRewardPerShare + _calculateAccRewardPerShare(_totalShare());
-    console2.log("projectedAccRewardPerShare", projectedAccRewardPerShare);
     int256 accumulatedRewards = ((_userShare(user) * projectedAccRewardPerShare) / ACC_REWARD_PRECISION).toInt256();
-    console2.log("accumulatedRewards", accumulatedRewards);
 
     if (accumulatedRewards < userRewardDebts[user]) return 0;
     return (accumulatedRewards - userRewardDebts[user]).toUint256();
@@ -170,8 +167,6 @@ contract FeedableRewarder is Owned, IRewarder {
 
   function _calculateAccRewardPerShare(uint256 totalShare) internal view returns (uint128) {
     if (totalShare > 0) {
-      console2.log("_timePast()", _timePast());
-      console2.log("rewardRate", rewardRate);
       uint256 _rewards = _timePast() * rewardRate;
       return ((_rewards * ACC_REWARD_PRECISION) / totalShare).toUint128();
     }

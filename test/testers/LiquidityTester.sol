@@ -12,17 +12,14 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 /// @title Liquidity Tester
 /// @notice This Tester help to check state after user interact with LiquidityHandler / LiquidityService
 contract LiquidityTester is StdAssertions {
+  /**
+   * States
+   */
   IPLPv2 plp;
 
-  /**
-   * Storages
-   */
   IVaultStorage vaultStorage;
   IPerpStorage perpStorage;
 
-  /**
-   * Handlers
-   */
   address liquidityHandler;
 
   constructor(IPLPv2 _plp, IVaultStorage _vaultStorage, IPerpStorage _perpStorage, address _liquidityHandler) {
@@ -32,9 +29,6 @@ contract LiquidityTester is StdAssertions {
     liquidityHandler = _liquidityHandler;
   }
 
-  /**
-   * Liquidity
-   */
   struct LiquidityAssertData {
     address token;
     uint256 lpTotalSupply;

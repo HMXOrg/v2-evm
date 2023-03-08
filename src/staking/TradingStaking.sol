@@ -1,305 +1,186 @@
 // SPDX-License-Identifier: BUSL-1.1
-
 pragma solidity 0.8.18;
 
 import { Owned } from "../base/Owned.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IMultiRewarder } from "./interfaces/IMultiRewarder.sol";
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IRewarder } from "./interfaces/IRewarder.sol";
-import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
+contract TradingStaking is Owned {
+  error TradingStaking_UnknownMarketIndex();
+  error TradingStaking_InsufficientTokenAmount();
+  error TradingStaking_NotRewarder();
+  error TradingStaking_NotCompounder();
+  error TradingStaking_BadDecimals();
+  error TradingStaking_DuplicateStakingToken();
 
-contract TradingStaking is Owned, ReentrancyGuard, ITradingStaking {
-  using SafeCast for int256;
-  using SafeCast for uint256;
-  using SafeERC20 for IERC20;
+  mapping(uint256 => mapping(address => uint256)) public userTokenAmount;
+  mapping(uint256 => uint256) public totalShares;
+  mapping(address => bool) public isRewarder;
+  mapping(uint256 => bool) public isMarketIndex;
+  mapping(uint256 => address[]) public marketIndexRewarders;
+  mapping(address => uint256[]) public rewarderMarketIndex;
 
-  error TradingStaking_DuplicatePool();
-  error TradingStaking_Forbidden();
-  error TradingStaking_InvalidArguments();
+  address public compounder;
 
-  struct UserInfo {
-    uint256 amount;
-    int256 rewardDebt;
-  }
+  event LogDeposit(address indexed caller, address indexed user, uint256 marketIndex, uint256 amount);
+  event LogWithdraw(address indexed caller, uint256 marketIndex, uint256 amount);
+  event LogAddStakingToken(uint256 newMarketIndex, address[] newRewarders);
+  event LogAddRewarder(address newRewarder, uint256[] newTokens);
+  event LogSetCompounder(address oldCompounder, address newCompounder);
 
-  struct PoolInfo {
-    uint128 accRewardTokenPerShare;
-    uint64 lastRewardTime;
-    uint64 allocPoint;
-    uint32 marketIndex;
-  }
+  function addPool(uint256 _newMarketIndex, address[] memory newRewarders) external onlyOwner {
+    uint256 length = newRewarders.length;
+    for (uint256 i = 0; i < length; ) {
+      _updatePool(_newMarketIndex, newRewarders[i]);
 
-  IERC20 public rewardToken;
-  PoolInfo[] public poolInfo;
-  mapping(uint256 => uint256) public poolIdByMarketIndex;
-  mapping(uint256 => uint256) public totalStakingSizeByPoolId;
-  IRewarder[] public rewarder;
-  mapping(uint256 => bool) public isAcceptedMarketIndex;
-  mapping(uint256 => mapping(address => UserInfo)) public userInfo;
-  uint256 public totalAllocPoint;
-  uint256 public rewardTokenPerSecond;
-  uint256 private constant ACC_REWARD_TOKEN_PRECISION = 1e20;
-  uint256 public maxRewardTokenPerSecond;
-  address public whitelistedCaller;
-
-  event LogDeposit(address indexed caller, address indexed user, uint256 indexed pid, uint256 amount);
-  event LogWithdraw(address indexed caller, address indexed user, uint256 indexed pid, uint256 amount);
-  event LogEmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount);
-  event LogHarvest(address indexed user, uint256 indexed pid, uint256 amount);
-  event LogAddPool(uint256 indexed pid, uint256 allocPoint, uint256 indexed marketIndex, address indexed rewarder);
-  event LogSetPool(uint256 indexed pid, uint256 allocPoint, IRewarder indexed rewarder, bool overwrite);
-  event LogUpdatePool(
-    uint256 indexed pid,
-    uint64 lastRewardTime,
-    uint256 stakedBalance,
-    uint256 accRewardTokenPerShare
-  );
-  event LogRewardTokenPerSecond(uint256 rewardTokenPerSecond);
-  event LogSetMaxRewardTokenPerSecond(uint256 maxRewardTokenPerSecond);
-  event LogSetWhitelistedCaller(address oldAddress, address newAddress);
-
-  /// @param _rewardToken The rewardToken token contract address.
-  constructor(address _rewardToken, uint256 _maxRewardTokenPerSecond) {
-    rewardToken = IERC20(_rewardToken);
-    maxRewardTokenPerSecond = _maxRewardTokenPerSecond;
-  }
-
-  modifier onlyWhitelistedCaller() {
-    if (msg.sender != whitelistedCaller) revert TradingStaking_Forbidden();
-    _;
-  }
-
-  /// @notice Returns the number of pools.
-  function poolLength() public view returns (uint256 pools) {
-    pools = poolInfo.length;
-  }
-
-  /// @notice Add a new staking token pool. Can only be called by the owner.
-  /// @param _allocPoint AP of the new pool.
-  /// @param _marketIndex Address of the staking token.
-  /// @param _rewarder Address of the rewarder delegate.
-  /// @param _withUpdate If true, do mass update pools.
-  function addPool(uint256 _allocPoint, uint256 _marketIndex, address _rewarder, bool _withUpdate) external onlyOwner {
-    uint256 _newPoolId = poolInfo.length;
-    if (isAcceptedMarketIndex[_marketIndex]) revert TradingStaking_DuplicatePool();
-    if (_withUpdate) massUpdatePools();
-
-    totalAllocPoint = totalAllocPoint + _allocPoint;
-    rewarder.push(IRewarder(_rewarder));
-    isAcceptedMarketIndex[_marketIndex] = true;
-    poolIdByMarketIndex[_newPoolId] = _marketIndex;
-
-    if (address(_rewarder) != address(0)) {
-      // Sanity check that the rewarder is a valid IRewarder.
-      IRewarder(_rewarder).name();
-    }
-
-    poolInfo.push(
-      PoolInfo({
-        allocPoint: _allocPoint.toUint64(),
-        lastRewardTime: block.timestamp.toUint64(),
-        accRewardTokenPerShare: 0,
-        marketIndex: uint32(_marketIndex)
-      })
-    );
-    emit LogAddPool(_newPoolId, _allocPoint, _marketIndex, _rewarder);
-  }
-
-  /// @notice Update the given pool's rewardToken allocation point and `IRewarder` contract.
-  /// @dev Can only be called by the owner.
-  /// @param _pid The index of the pool. See `poolInfo`.
-  /// @param _allocPoint New AP of the pool.
-  /// @param _rewarder Address of the rewarder delegate.
-  /// @param _overwrite True if _rewarder should be `set`. Otherwise `_rewarder` is ignored.
-  /// @param _withUpdate If true, do mass update pools
-  function setPool(
-    uint256 _pid,
-    uint256 _allocPoint,
-    IRewarder _rewarder,
-    bool _overwrite,
-    bool _withUpdate
-  ) external onlyOwner {
-    if (_withUpdate) massUpdatePools();
-
-    totalAllocPoint = totalAllocPoint - poolInfo[_pid].allocPoint + _allocPoint;
-    poolInfo[_pid].allocPoint = _allocPoint.toUint64();
-    if (_overwrite) {
-      // Sanity check that the rewarder is a valid IRewarder.
-      _rewarder.name();
-      rewarder[_pid] = _rewarder;
-    }
-    emit LogSetPool(_pid, _allocPoint, _overwrite ? _rewarder : rewarder[_pid], _overwrite);
-  }
-
-  /// @notice Sets the rewardToken per second to be distributed. Can only be called by the owner.
-  /// @param _rewardTokenPerSecond The amount of rewardToken to be distributed per second.
-  /// @param _withUpdate If true, do mass update pools
-  function setRewardTokenPerSecond(uint256 _rewardTokenPerSecond, bool _withUpdate) external onlyOwner {
-    if (_rewardTokenPerSecond > maxRewardTokenPerSecond) revert TradingStaking_InvalidArguments();
-
-    if (_withUpdate) massUpdatePools();
-    rewardTokenPerSecond = _rewardTokenPerSecond;
-    emit LogRewardTokenPerSecond(_rewardTokenPerSecond);
-  }
-
-  function setWhitelistedCaller(address _whitelistedCaller) external onlyOwner {
-    emit LogSetWhitelistedCaller(whitelistedCaller, _whitelistedCaller);
-    whitelistedCaller = _whitelistedCaller;
-  }
-
-  /// @notice View function to see pending rewardToken on frontend.
-  /// @param _pid The index of the pool. See `poolInfo`.
-  /// @param _user Address of a user.
-  /// @return pending rewardToken reward for a given user.
-  function pendingRewardToken(uint256 _pid, address _user) external view returns (uint256) {
-    PoolInfo memory pool = poolInfo[_pid];
-    UserInfo memory user = userInfo[_pid][_user];
-    uint256 accRewardTokenPerShare = pool.accRewardTokenPerShare;
-    uint256 stakedBalance = totalStakingSizeByPoolId[_pid];
-    if (block.timestamp > pool.lastRewardTime && stakedBalance != 0) {
-      uint256 timePast = block.timestamp - pool.lastRewardTime;
-      uint256 rewardTokenReward = (timePast * rewardTokenPerSecond * pool.allocPoint) / totalAllocPoint;
-      accRewardTokenPerShare =
-        accRewardTokenPerShare +
-        ((rewardTokenReward * ACC_REWARD_TOKEN_PRECISION) / stakedBalance);
-    }
-
-    return
-      (((user.amount * accRewardTokenPerShare) / ACC_REWARD_TOKEN_PRECISION).toInt256() - user.rewardDebt).toUint256();
-  }
-
-  /// @notice Perform actual update pool.
-  /// @param pid The index of the pool. See `poolInfo`.
-  /// @return pool Returns the pool that was updated.
-  function _updatePool(uint256 pid) internal returns (PoolInfo memory) {
-    PoolInfo memory pool = poolInfo[pid];
-    if (block.timestamp > pool.lastRewardTime) {
-      uint256 stakedBalance = totalStakingSizeByPoolId[pid];
-      if (stakedBalance > 0) {
-        uint256 timePast = block.timestamp - pool.lastRewardTime;
-        uint256 rewardTokenReward = (timePast * rewardTokenPerSecond * pool.allocPoint) / totalAllocPoint;
-        pool.accRewardTokenPerShare =
-          pool.accRewardTokenPerShare +
-          ((rewardTokenReward * ACC_REWARD_TOKEN_PRECISION) / stakedBalance).toUint128();
+      emit LogAddStakingToken(_newMarketIndex, newRewarders);
+      unchecked {
+        ++i;
       }
-      pool.lastRewardTime = block.timestamp.toUint64();
-      poolInfo[pid] = pool;
-      emit LogUpdatePool(pid, pool.lastRewardTime, stakedBalance, pool.accRewardTokenPerShare);
-    }
-    return pool;
-  }
-
-  /// @notice Update reward variables of the given pool.
-  /// @param _pid The index of the pool. See `poolInfo`.
-  /// @return pool Returns the pool that was updated.
-  function updatePool(uint256 _pid) external nonReentrant returns (PoolInfo memory) {
-    return _updatePool(_pid);
-  }
-
-  /// @notice Update reward variables for a given pools.
-  function updatePools(uint256[] calldata _pids) external nonReentrant {
-    uint256 len = _pids.length;
-    for (uint256 i = 0; i < len; i++) {
-      _updatePool(_pids[i]);
     }
   }
 
-  /// @notice Update reward variables for all pools.
-  function massUpdatePools() public nonReentrant {
-    uint256 len = poolLength();
-    for (uint256 i = 0; i < len; ++i) {
-      _updatePool(i);
+  function addRewarder(address newRewarder, uint256[] memory _newMarketIndex) external onlyOwner {
+    uint256 length = _newMarketIndex.length;
+    for (uint256 i = 0; i < length; ) {
+      _updatePool(_newMarketIndex[i], newRewarder);
+
+      emit LogAddRewarder(newRewarder, _newMarketIndex);
+      unchecked {
+        ++i;
+      }
     }
   }
 
-  /// @notice Deposit tokens to TradingStaking for rewardToken allocation.
-  /// @param _for The beneficary address of the deposit.
-  /// @param _pid The index of the pool. See `poolInfo`.
-  /// @param _amount amount to deposit.
-  function deposit(address _for, uint256 _pid, uint256 _amount) external onlyWhitelistedCaller nonReentrant {
-    PoolInfo memory pool = _updatePool(_pid);
-    UserInfo storage user = userInfo[_pid][_for];
+  function removeRewarderForMarketIndexByIndex(uint256 removeRewarderIndex, uint256 _marketIndex) external onlyOwner {
+    uint256 _marketIndexLength = marketIndexRewarders[_marketIndex].length;
+    address removedRewarder = marketIndexRewarders[_marketIndex][removeRewarderIndex];
+    marketIndexRewarders[_marketIndex][removeRewarderIndex] = marketIndexRewarders[_marketIndex][
+      _marketIndexLength - 1
+    ];
+    marketIndexRewarders[_marketIndex].pop();
 
-    // Effects
-    user.amount = user.amount + _amount;
-    user.rewardDebt =
-      user.rewardDebt +
-      ((_amount * pool.accRewardTokenPerShare) / ACC_REWARD_TOKEN_PRECISION).toInt256();
+    uint256 rewarderLength = rewarderMarketIndex[removedRewarder].length;
+    for (uint256 i = 0; i < rewarderLength; ) {
+      if (rewarderMarketIndex[removedRewarder][i] == _marketIndex) {
+        rewarderMarketIndex[removedRewarder][i] = rewarderMarketIndex[removedRewarder][rewarderLength - 1];
+        rewarderMarketIndex[removedRewarder].pop();
+        if (rewarderLength == 1) isRewarder[removedRewarder] = false;
 
-    // Update total staked position size of that market index
-    totalStakingSizeByPoolId[_pid] += _amount;
-
-    // Interactions
-    IRewarder _rewarder = rewarder[_pid];
-    if (address(_rewarder) != address(0)) {
-      _rewarder.onDeposit(_pid, _for, 0, user.amount);
+        break;
+      }
+      unchecked {
+        ++i;
+      }
     }
-
-    emit LogDeposit(msg.sender, _for, _pid, _amount);
   }
 
-  /// @notice Withdraw tokens from TradingStaking.
-  /// @param _for Withdraw for who?
-  /// @param _pid The index of the pool. See `poolInfo`.
-  /// @param _amount Staking token amount to withdraw.
-  function withdraw(address _for, uint256 _pid, uint256 _amount) external onlyWhitelistedCaller nonReentrant {
-    PoolInfo memory pool = _updatePool(_pid);
-    UserInfo storage user = userInfo[_pid][_for];
+  function _updatePool(uint256 _marketIndex, address newRewarder) internal {
+    if (!isDuplicatedRewarder(_marketIndex, newRewarder)) marketIndexRewarders[_marketIndex].push(newRewarder);
+    if (!isDuplicatedStakingToken(_marketIndex, newRewarder)) rewarderMarketIndex[newRewarder].push(_marketIndex);
 
-    // Effects
-    user.rewardDebt =
-      user.rewardDebt -
-      (((_amount * pool.accRewardTokenPerShare) / ACC_REWARD_TOKEN_PRECISION)).toInt256();
-    user.amount = user.amount - _amount;
-
-    // Update total staked position size of that market index
-    totalStakingSizeByPoolId[_pid] -= _amount;
-
-    // Interactions
-    IRewarder _rewarder = rewarder[_pid];
-    if (address(_rewarder) != address(0)) {
-      _rewarder.onWithdraw(_pid, _for, 0, user.amount);
+    isMarketIndex[_marketIndex] = true;
+    if (!isRewarder[newRewarder]) {
+      isRewarder[newRewarder] = true;
     }
-
-    emit LogWithdraw(msg.sender, _for, _pid, _amount);
   }
 
-  /// @notice Harvest rewardToken rewards
-  /// @param _pid The index of the pool. See `poolInfo`.
-  function harvest(uint256 _pid) external nonReentrant {
-    _harvest(_pid);
+  function isDuplicatedRewarder(uint256 _marketIndex, address rewarder) internal view returns (bool) {
+    uint256 length = marketIndexRewarders[_marketIndex].length;
+    for (uint256 i = 0; i < length; ) {
+      if (marketIndexRewarders[_marketIndex][i] == rewarder) {
+        return true;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+    return false;
   }
 
-  function _harvest(uint256 _pid) internal {
-    PoolInfo memory pool = _updatePool(_pid);
-    UserInfo storage user = userInfo[_pid][msg.sender];
-
-    int256 accumulatedrewardToken = ((user.amount * pool.accRewardTokenPerShare) / ACC_REWARD_TOKEN_PRECISION)
-      .toInt256();
-    uint256 _pendingrewardToken = (accumulatedrewardToken - user.rewardDebt).toUint256();
-
-    // Effects
-    user.rewardDebt = accumulatedrewardToken;
-
-    // Interactions
-    if (_pendingrewardToken != 0) {
-      rewardToken.safeTransfer(msg.sender, _pendingrewardToken);
+  function isDuplicatedStakingToken(uint256 _marketIndex, address rewarder) internal view returns (bool) {
+    uint256 length = rewarderMarketIndex[rewarder].length;
+    for (uint256 i = 0; i < length; ) {
+      if (rewarderMarketIndex[rewarder][i] == _marketIndex) {
+        return true;
+      }
+      unchecked {
+        ++i;
+      }
     }
-
-    IRewarder _rewarder = rewarder[_pid];
-    if (address(_rewarder) != address(0)) {
-      _rewarder.onHarvest(_pid, msg.sender, 0);
-    }
-
-    emit LogHarvest(msg.sender, _pid, _pendingrewardToken);
+    return false;
   }
 
-  function bulkHarvest(uint256[] calldata _pids) external nonReentrant {
-    for (uint256 i; i < _pids.length; ) {
-      _harvest(_pids[i]);
+  function setCompounder(address compounder_) external onlyOwner {
+    emit LogSetCompounder(compounder, compounder_);
+    compounder = compounder_;
+  }
+
+  function deposit(address to, uint256 _marketIndex, uint256 amount) external {
+    if (!isMarketIndex[_marketIndex]) revert TradingStaking_UnknownMarketIndex();
+
+    uint256 length = marketIndexRewarders[_marketIndex].length;
+    for (uint256 i = 0; i < length; ) {
+      address rewarder = marketIndexRewarders[_marketIndex][i];
+
+      IMultiRewarder(rewarder).onDeposit(to, amount);
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    userTokenAmount[_marketIndex][to] += amount;
+    totalShares[_marketIndex] += amount;
+
+    emit LogDeposit(msg.sender, to, _marketIndex, amount);
+  }
+
+  function getUserTokenAmount(uint256 _marketIndex, address sender) external view returns (uint256) {
+    return userTokenAmount[_marketIndex][sender];
+  }
+
+  function withdraw(uint256 _marketIndex, uint256 amount) external {
+    _withdraw(_marketIndex, amount);
+    emit LogWithdraw(msg.sender, _marketIndex, amount);
+  }
+
+  function _withdraw(uint256 _marketIndex, uint256 amount) internal {
+    if (!isMarketIndex[_marketIndex]) revert TradingStaking_UnknownMarketIndex();
+    if (userTokenAmount[_marketIndex][msg.sender] < amount) revert TradingStaking_InsufficientTokenAmount();
+
+    uint256 length = marketIndexRewarders[_marketIndex].length;
+    for (uint256 i = 0; i < length; ) {
+      address rewarder = marketIndexRewarders[_marketIndex][i];
+
+      IMultiRewarder(rewarder).onWithdraw(msg.sender, amount);
+
+      unchecked {
+        ++i;
+      }
+    }
+    userTokenAmount[_marketIndex][msg.sender] -= amount;
+    totalShares[_marketIndex] -= amount;
+
+    emit LogWithdraw(msg.sender, _marketIndex, amount);
+  }
+
+  function harvest(address[] memory _rewarders) external {
+    _harvestFor(msg.sender, msg.sender, _rewarders);
+  }
+
+  function harvestToCompounder(address user, address[] memory _rewarders) external {
+    if (compounder != msg.sender) revert TradingStaking_NotCompounder();
+    _harvestFor(user, compounder, _rewarders);
+  }
+
+  function _harvestFor(address user, address receiver, address[] memory _rewarders) internal {
+    uint256 length = _rewarders.length;
+    for (uint256 i = 0; i < length; ) {
+      if (!isRewarder[_rewarders[i]]) {
+        revert TradingStaking_NotRewarder();
+      }
+
+      IMultiRewarder(_rewarders[i]).onHarvest(user, receiver);
 
       unchecked {
         ++i;
@@ -307,11 +188,31 @@ contract TradingStaking is Owned, ReentrancyGuard, ITradingStaking {
     }
   }
 
-  /// @notice Set max reward per second
-  /// @param _maxRewardTokenPerSecond The max reward per second
-  function setMaxrewardTokenPerSecond(uint256 _maxRewardTokenPerSecond) external onlyOwner {
-    if (_maxRewardTokenPerSecond <= rewardTokenPerSecond) revert TradingStaking_InvalidArguments();
-    maxRewardTokenPerSecond = _maxRewardTokenPerSecond;
-    emit LogSetMaxRewardTokenPerSecond(_maxRewardTokenPerSecond);
+  function calculateShare(address rewarder, address user) external view returns (uint256) {
+    uint256[] memory marketIndices = rewarderMarketIndex[rewarder];
+    uint256 share = 0;
+    uint256 length = marketIndices.length;
+    for (uint256 i = 0; i < length; ) {
+      share += userTokenAmount[marketIndices[i]][user];
+
+      unchecked {
+        ++i;
+      }
+    }
+    return share;
+  }
+
+  function calculateTotalShare(address rewarder) external view returns (uint256) {
+    uint256[] memory marketIndices = rewarderMarketIndex[rewarder];
+    uint256 totalShare = 0;
+    uint256 length = marketIndices.length;
+    for (uint256 i = 0; i < length; ) {
+      totalShare += totalShares[marketIndices[i]];
+
+      unchecked {
+        ++i;
+      }
+    }
+    return totalShare;
   }
 }

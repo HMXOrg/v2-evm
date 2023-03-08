@@ -511,7 +511,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     address _rewardToken,
     uint256 _maxRewardTokenPerSecond
   ) internal returns (TradingStaking) {
-    return new TradingStaking(_rewardToken, _maxRewardTokenPerSecond);
+    return new TradingStaking();
   }
 
   function deployTradingStakingHook(

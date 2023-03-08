@@ -83,6 +83,27 @@ contract TradingStaking is Owned, ITradingStaking {
     }
   }
 
+  function removeRewarderForTokenByIndex(uint256 removeRewarderIndex, uint256 _marketIndex) external onlyOwner {
+    uint256 tokenLength = marketIndexRewarders[_marketIndex].length;
+    address removedRewarder = marketIndexRewarders[_marketIndex][removeRewarderIndex];
+    marketIndexRewarders[_marketIndex][removeRewarderIndex] = marketIndexRewarders[_marketIndex][tokenLength - 1];
+    marketIndexRewarders[_marketIndex].pop();
+
+    uint256 rewarderLength = rewarderMarketIndex[removedRewarder].length;
+    for (uint256 i = 0; i < rewarderLength; ) {
+      if (rewarderMarketIndex[removedRewarder][i] == _marketIndex) {
+        rewarderMarketIndex[removedRewarder][i] = rewarderMarketIndex[removedRewarder][rewarderLength - 1];
+        rewarderMarketIndex[removedRewarder].pop();
+        if (rewarderLength == 1) isRewarder[removedRewarder] = false;
+
+        break;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
   function _updatePool(uint256 _marketIndex, address newRewarder) internal {
     if (!isDuplicatedRewarder(_marketIndex, newRewarder)) marketIndexRewarders[_marketIndex].push(newRewarder);
     if (!isDuplicatedStakingToken(_marketIndex, newRewarder)) rewarderMarketIndex[newRewarder].push(_marketIndex);

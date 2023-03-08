@@ -3,9 +3,11 @@ pragma solidity 0.8.18;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import { BaseIntTest_SetConfig } from "@hmx-test/integration/BaseIntTest_SetConfig.i.sol";
 import { BaseIntTest_SetTokens } from "@hmx-test/integration/BaseIntTest_SetTokens.i.sol";
+import { BaseIntTest_SetCollaterals } from "@hmx-test/integration/BaseIntTest_SetCollaterals.i.sol";
 
-contract BaseIntTest_WithActions is BaseIntTest_SetTokens {
+contract BaseIntTest_WithActions is BaseIntTest_SetConfig, BaseIntTest_SetTokens, BaseIntTest_SetCollaterals {
   /**
    * Liquidity
    */
@@ -151,5 +153,14 @@ contract BaseIntTest_WithActions is BaseIntTest_SetTokens {
   ) internal {
     vm.prank(_account);
     marketTradeHandler.sell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData);
+  }
+
+  /**
+   * COMMON FUNCTION
+   */
+
+  function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 }

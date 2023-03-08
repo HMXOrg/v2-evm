@@ -12,6 +12,8 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
 

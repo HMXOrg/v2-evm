@@ -10,6 +10,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
@@ -83,8 +84,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     DAVE = makeAddr("DAVE");
 
     // deploy MOCK weth
-    weth = IWNative(Deployer.deployContract("WNative"));
-
+    weth = new MockWNative();
     pyth = new MockPyth(60, 1);
 
     pythAdapter = IOracleAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
@@ -92,7 +92,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     // deploy stakedGLPOracleAdapter
 
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware(address(pyth));
+    oracleMiddleWare = Deployer.deployOracleMiddleware(address(pythAdapter));
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage();
@@ -143,6 +143,12 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), address(pyth));
 
     /* configStorage */
+    {
+      configStorage.setOracle(address(oracleMiddleWare));
+      configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
+      configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
+    }
+
     // serviceExecutor
     // calculator
     // oracle

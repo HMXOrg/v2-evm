@@ -7,6 +7,8 @@ import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
   MockErc20 wbtc; // decimals 8
   MockErc20 usdc; // decimals 6
@@ -31,6 +33,8 @@ abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
 
     _addAssetConfig(daiAssetId, address(dai), 18, true);
 
+    console2.log("usdcAssetId");
+    console2.logBytes32(usdcAssetId);
     _addAssetConfig(usdcAssetId, address(usdc), 6, true);
 
     _addAssetConfig(usdtAssetId, address(usdt), 6, true);

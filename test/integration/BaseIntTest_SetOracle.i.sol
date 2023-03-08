@@ -18,7 +18,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   bytes32 constant jpyPriceid = 0x0000000000000000000000000000000000000000000000000000000000000008;
 
   constructor() {
-    //set PythId
+    // set PythId
     pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
     pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
     pythAdapter.setPythPriceId(daiAssetId, daiPriceId);
@@ -38,6 +38,17 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     _createPriceFeedUpdateData(gmxAssetId, 1);
     _createPriceFeedUpdateData(appleAssetId, 1);
     _createPriceFeedUpdateData(jpyAssetId, 1);
+
+    // set MarketStatus
+    oracleMiddleWare.setUpdater(address(this), true); // Whitelist updater for oracleMiddleWare
+    oracleMiddleWare.setMarketStatus(wethAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(wbtcAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(daiAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(usdcAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(usdtAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(gmxAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(appleAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(jpyAssetId, uint8(2)); // active
   }
 
   function setPrice(bytes32 _assetId, int64 _price) external {

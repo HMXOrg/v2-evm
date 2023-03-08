@@ -19,24 +19,33 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest {
   // forex
   bytes32 internal constant jpyAssetId = "jpy";
 
+  uint256 wethMarketIndex;
+  uint256 wbtcMarketIndex;
+  uint256 daiMarketIndex;
+  uint256 usdcMarketIndex;
+  uint256 usdtMarketIndex;
+  uint256 gmxMarketIndex;
+  uint256 appleMarketIndex;
+  uint256 jpyMarketIndex;
+
   // @todo - setting discuss
   constructor() {
     // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    _addMarketConfig(wethAssetId, 1, 100, 50);
+    wethMarketIndex = _addMarketConfig(wethAssetId, 1, 100, 50);
     // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    _addMarketConfig(wbtcAssetId, 1, 100, 50);
+    wbtcMarketIndex = _addMarketConfig(wbtcAssetId, 1, 100, 50);
     // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    _addMarketConfig(daiAssetId, 1, 100, 50);
+    daiMarketIndex = _addMarketConfig(daiAssetId, 1, 100, 50);
     // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    _addMarketConfig(usdcAssetId, 1, 100, 50);
+    usdcMarketIndex = _addMarketConfig(usdcAssetId, 1, 100, 50);
     // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    _addMarketConfig(usdtAssetId, 1, 100, 50);
+    usdtMarketIndex = _addMarketConfig(usdtAssetId, 1, 100, 50);
     // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    _addMarketConfig(gmxAssetId, 1, 100, 50);
+    gmxMarketIndex = _addMarketConfig(gmxAssetId, 1, 100, 50);
     // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    _addMarketConfig(appleAssetId, 1, 100, 50);
+    appleMarketIndex = _addMarketConfig(appleAssetId, 1, 100, 50);
     // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    _addMarketConfig(jpyAssetId, 1, 100, 50);
+    jpyMarketIndex = _addMarketConfig(jpyAssetId, 1, 100, 50);
   }
 
   /// @notice to add market config with some default value
@@ -44,7 +53,12 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest {
   /// @param _assetClass Crypto = 1, Stock = 2, Forex = 3
   /// @param _imf Initial Margin Fraction
   /// @param _mmf Maintenance Margin Fraction
-  function _addMarketConfig(bytes32 _assetId, uint8 _assetClass, uint32 _imf, uint32 _mmf) private {
+  function _addMarketConfig(
+    bytes32 _assetId,
+    uint8 _assetClass,
+    uint32 _imf,
+    uint32 _mmf
+  ) private returns (uint256 _index) {
     // default market config
     IConfigStorage.MarketConfig memory _newMarketConfig;
     IConfigStorage.OpenInterest memory _newOpenInterestConfig;
@@ -69,6 +83,6 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest {
     _newMarketConfig.openInterest = _newOpenInterestConfig;
     _newMarketConfig.fundingRate = _newFundingRateConfig;
 
-    configStorage.addMarketConfig(_newMarketConfig);
+    return configStorage.addMarketConfig(_newMarketConfig);
   }
 }

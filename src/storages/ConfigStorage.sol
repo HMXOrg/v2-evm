@@ -7,6 +7,8 @@ import { IteratableAddressList } from "@hmx/libraries/IteratableAddressList.sol"
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
@@ -91,6 +93,9 @@ contract ConfigStorage is IConfigStorage, Owned {
   /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
   /// @param _token Token address to be deposit/withdraw.
   function validateAcceptedCollateral(address _token) external view {
+    console2.log("-------------------- validateAcceptedCollateral()");
+    console2.log("_token", _token);
+    console2.logBytes32(tokenAssetIds[_token]);
     if (!assetCollateralTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedCollateral();
   }
 

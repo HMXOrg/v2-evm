@@ -4,6 +4,8 @@ pragma solidity 0.8.18;
 import { BaseIntTest_SetMarkets } from "./BaseIntTest_SetMarkets.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 abstract contract BaseIntTest_SetCollaterals is BaseIntTest_SetMarkets {
   // @todo - setting discuss
   constructor() {
@@ -14,6 +16,9 @@ abstract contract BaseIntTest_SetCollaterals is BaseIntTest_SetMarkets {
     // collateralFactorBPS = 0.8%
     _addCollateralConfig(daiAssetId, 0.8 * 1e4, true, address(0));
     // collateralFactorBPS = 0.8%
+    console2.log("-------------------- _addCollateralConfig()");
+    console2.log("usdcAssetId");
+    console2.logBytes32(usdcAssetId);
     _addCollateralConfig(usdcAssetId, 0.8 * 1e4, true, address(0));
     // collateralFactorBPS = 0.8%
     _addCollateralConfig(usdtAssetId, 0.8 * 1e4, true, address(0));

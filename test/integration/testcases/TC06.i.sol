@@ -27,7 +27,7 @@ contract TC06 is BaseIntTest_WithActions {
     bytes[] memory priceDataT0 = new bytes[](0);
     vm.deal(BOB, 1 ether); //deal with out of gas
     usdc.mint(BOB, 1_000_000 * 1e6);
-    addLiquidity(BOB, usdc, 1_000_000 * 1e6, 1 ether, priceDataT0, 0);
+    addLiquidity(BOB, usdc, 1_000_000 * 1e6, 0.0001 ether, priceDataT0, 0);
 
     // Mint tokens to Alice
     {
@@ -50,12 +50,12 @@ contract TC06 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       // Before Alice start depositing, VaultStorage must has 0 amount of all collateral tokens
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 0);
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(dai)), 0);
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0);
-      assertEq(usdc.balanceOf(address(vaultStorage)), 0);
-      assertEq(dai.balanceOf(address(vaultStorage)), 0);
-      assertEq(wbtc.balanceOf(address(vaultStorage)), 0);
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 0, "ALICE's USDC Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(dai)), 0, "ALICE's DAI Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0, "ALICE's WBTC Balance");
+      assertEq(usdc.balanceOf(address(vaultStorage)), 1_000_000 * 1e6, "Vault's USDC Balance");
+      assertEq(dai.balanceOf(address(vaultStorage)), 0, "Vault's DAI Balance");
+      assertEq(wbtc.balanceOf(address(vaultStorage)), 0, "Vault's WBTC Balance");
 
       // Alice deposits 100,000(USD) of USDC
       depositCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 100_000 * 1e6);
@@ -67,12 +67,12 @@ contract TC06 is BaseIntTest_WithActions {
       depositCollateral(ALICE, SUB_ACCOUNT_ID, wbtc, 0.5 * 1e8);
 
       // After Alice deposited all collaterals, VaultStorage must contain tokens
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 100_000 * 1e6);
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(dai)), 100_000 * 1e18);
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0.5 * 1e8);
-      assertEq(usdc.balanceOf(address(vaultStorage)), 100_000 * 1e6);
-      assertEq(dai.balanceOf(address(vaultStorage)), 100_000 * 1e18);
-      assertEq(wbtc.balanceOf(address(vaultStorage)), 0.5 * 1e8);
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 100_000 * 1e6, "ALICE's USDC Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(dai)), 100_000 * 1e18, "ALICE's DAI Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0.5 * 1e8, "ALICE's WBTC Balance");
+      assertEq(usdc.balanceOf(address(vaultStorage)), (1_000_000 + 100_000) * 1e6, "Vault's USDC Balance");
+      assertEq(dai.balanceOf(address(vaultStorage)), 100_000 * 1e18, "Vault's USDC Balance");
+      assertEq(wbtc.balanceOf(address(vaultStorage)), 0.5 * 1e8, "Vault's USDC Balance");
       // After Alice deposited all collaterals, Alice must have no token left
       assertEq(usdc.balanceOf(ALICE), 0, "USDC Balance Of");
       assertEq(dai.balanceOf(ALICE), 0, "DAI Balance Of");
@@ -167,7 +167,6 @@ contract TC06 is BaseIntTest_WithActions {
       uint256 buySizeE30 = 100_000 * 1e30;
       address tpToken = address(usdc);
       bytes[] memory priceDataT5 = new bytes[](0);
-      console2.log("XXX tpToken", tpToken);
       marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceDataT5);
     }
   }

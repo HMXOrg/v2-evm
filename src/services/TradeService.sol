@@ -1017,9 +1017,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
       );
 
       _globalMarket.currentFundingRate = newFundingRate;
-      _globalMarket.accumFundingLong += nextFundingFeeLong;
-      _globalMarket.accumFundingShort += nextFundingFeeShort;
-      _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      _globalMarket.accumFundingLong = nextFundingFeeLong;
+      _globalMarket.accumFundingShort = nextFundingFeeShort;
+      _globalMarket.lastFundingTime = block.timestamp;
 
       _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
     }
@@ -1113,9 +1113,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
       FeeCalculator.SettleMarginFeeLoopVar memory tmpVars; // This will be re-assigned every times when start looping
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
-
       tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(tmpVars.underlyingToken);
-
       tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);
 
       // If the sub-account has a balance of this underlying token (collateral token amount)
@@ -1221,9 +1219,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
               tmpVars
             );
           // If there are any remaining absFeeUsd, the trader must continue repaying the debt until the full amount is paid off
-          if (tmpVars.traderBalance != 0 && acmVars.absFeeUsd > 0) {
+          if (tmpVars.traderBalance != 0 && acmVars.absFeeUsd > 0)
             acmVars.absFeeUsd = _feeCalculator.payFundingFee(_subAccount, acmVars.absFeeUsd, tmpVars);
-          }
         }
       }
       // feeUSD < 0 or isPayFee == false, means trader receive fee

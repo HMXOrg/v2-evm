@@ -42,12 +42,11 @@ jobs:
         with:
           version: nightly
 
-      # TODO: enable size check
-      # - name: Run Forge build
-      #   run: |
-      #     forge --version
-      #     forge build --sizes
-      #   id: build
+      - name: Run Forge build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
 
       - name: Run Forge tests
         run: |

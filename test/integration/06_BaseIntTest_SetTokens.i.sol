@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetOracle } from "@hmx-test/integration/BaseIntTest_SetOracle.i.sol";
+import { BaseIntTest_SetCollaterals } from "@hmx-test/integration/05_BaseIntTest_SetCollaterals.i.sol";
 
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 
-abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
+abstract contract BaseIntTest_SetTokens is BaseIntTest_SetCollaterals {
   // use MockErc20 because want to mint token to user directly
   MockErc20 wbtc; // decimals 8
   MockErc20 usdc; // decimals 6

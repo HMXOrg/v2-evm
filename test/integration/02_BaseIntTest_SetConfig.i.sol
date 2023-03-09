@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest } from "./BaseIntTest.i.sol";
+import { BaseIntTest } from "./01_BaseIntTest.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 abstract contract BaseIntTest_SetConfig is BaseIntTest {

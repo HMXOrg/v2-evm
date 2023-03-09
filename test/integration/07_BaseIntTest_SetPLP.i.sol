@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetTokens } from "@hmx-test/integration/BaseIntTest_SetTokens.i.sol";
+import { BaseIntTest_SetTokens } from "@hmx-test/integration/06_BaseIntTest_SetTokens.i.sol";
+
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";

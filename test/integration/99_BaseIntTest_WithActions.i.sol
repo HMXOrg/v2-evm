@@ -122,7 +122,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
   /// @param _buySizeE30 Buying size in e30 format.
   /// @param _tpToken Take profit token
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function buy(
+  function marketBuy(
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,
@@ -141,7 +141,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
   /// @param _sellSizeE30 Buying size in e30 format.
   /// @param _tpToken Take profit token
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function sell(
+  function marketSell(
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,

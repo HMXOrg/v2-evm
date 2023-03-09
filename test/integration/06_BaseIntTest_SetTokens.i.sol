@@ -6,6 +6,7 @@ import { BaseIntTest_SetCollaterals } from "@hmx-test/integration/05_BaseIntTest
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 abstract contract BaseIntTest_SetTokens is BaseIntTest_SetCollaterals {
   // use MockErc20 because want to mint token to user directly
@@ -22,7 +23,8 @@ abstract contract BaseIntTest_SetTokens is BaseIntTest_SetCollaterals {
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
     gmx = new MockErc20("GMX", "GMX", 18);
-    plpV2 = IPLPv2(address(new MockErc20("PLPV2", "PLPv2", 18)));
+    plpV2 = Deployer.deployPLPv2();
+    plpV2.setMinter(address(liquidityService), true);
 
     configStorage.setPLP(address(plpV2));
     configStorage.setWeth(address(weth));

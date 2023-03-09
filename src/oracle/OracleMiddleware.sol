@@ -12,8 +12,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
    * Structs
    */
   struct AssetPriceConfig {
+    uint256 trustPriceAge;
     uint32 confidenceThresholdE6;
-    uint8 trustPriceAge;
   }
 
   /**
@@ -25,8 +25,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bytes32 indexed _assetId,
     uint32 _oldConfidenceThresholdE6,
     uint32 _newConfidenceThresholdE6,
-    uint8 _oldTrustPriceAge,
-    uint8 _newTrustPriceAge
+    uint256 _oldTrustPriceAge,
+    uint256 _newTrustPriceAge
   );
 
   /**
@@ -350,7 +350,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   function setAssetPriceConfig(
     bytes32 _assetId,
     uint32 _confidenceThresholdE6,
-    uint8 _trustPriceAge
+    uint256 _trustPriceAge
   ) external onlyOwner {
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
 

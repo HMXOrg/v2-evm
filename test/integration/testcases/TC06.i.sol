@@ -26,8 +26,8 @@ contract TC06 is BaseIntTest_WithActions {
     // Make LP contains some liquidity
     bytes[] memory priceDataT0 = new bytes[](0);
     vm.deal(BOB, 1 ether); //deal with out of gas
-    usdt.mint(BOB, 1_000_000 * 1e6);
-    addLiquidity(BOB, usdt, 1_000_000 * 1e6, executionOrderFee, priceDataT0, 0);
+    wbtc.mint(BOB, 1_000_000 * 1e6);
+    addLiquidity(BOB, wbtc, 1_000_000 * 1e6, executionOrderFee, priceDataT0, 0);
 
     // Mint tokens to Alice
     {

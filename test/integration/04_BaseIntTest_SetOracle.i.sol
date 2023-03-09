@@ -44,20 +44,26 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     );
     // @todo - after integrate with inverse config then price should be change to USDJPY
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: jpyAssetId, priceId: jpyPriceid, price: 0.0072 * 1e18, exponent: -18 })
+      AssetPythPriceData({ assetId: jpyAssetId, priceId: jpyPriceid, price: 0.0072 * 1e8, exponent: -8 })
     );
 
     // Set MarketStatus
     uint8 _marketActiveStatus = uint8(2);
     oracleMiddleWare.setUpdater(address(this), true); // Whitelist updater for oracleMiddleWare
+    // crypto
+    oracleMiddleWare.setMarketStatus(usdcAssetId, _marketActiveStatus); // active
+    oracleMiddleWare.setMarketStatus(usdtAssetId, _marketActiveStatus); // active
+    oracleMiddleWare.setMarketStatus(daiAssetId, _marketActiveStatus); // active
     oracleMiddleWare.setMarketStatus(wethAssetId, _marketActiveStatus); // active
     oracleMiddleWare.setMarketStatus(wbtcAssetId, _marketActiveStatus); // active
+    // equity
     oracleMiddleWare.setMarketStatus(appleAssetId, _marketActiveStatus); // active
+    // forex
     oracleMiddleWare.setMarketStatus(jpyAssetId, _marketActiveStatus); // active
 
     // Set AssetPriceConfig
     uint32 _confidenceThresholdE6 = 250; // 2.5% for test only
-    uint8 _trustPriceAge = type(uint8).max; // set max for test only
+    uint256 _trustPriceAge = type(uint256).max; // set max for test only
     oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(daiAssetId, _confidenceThresholdE6, _trustPriceAge);

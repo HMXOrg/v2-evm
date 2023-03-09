@@ -5,17 +5,19 @@ import { Owned } from "../base/Owned.sol";
 import { IRewarder } from "./interfaces/IRewarder.sol";
 import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
 
-contract TradingStaking is Owned, ITradingStaking {
+import { TraderLoyaltyCredit } from "@hmx/tokens/TraderLoyaltyCredit.sol";
+
+contract TLCStaking is Owned, ITradingStaking {
   /**
    * Errors
    */
-  error TradingStaking_UnknownMarketIndex();
-  error TradingStaking_InsufficientTokenAmount();
-  error TradingStaking_NotRewarder();
-  error TradingStaking_NotCompounder();
-  error TradingStaking_BadDecimals();
-  error TradingStaking_DuplicateStakingToken();
-  error TradingStaking_Forbidden();
+  error TLCStaking_UnknownMarketIndex();
+  error TLCStaking_InsufficientTokenAmount();
+  error TLCStaking_NotRewarder();
+  error TLCStaking_NotCompounder();
+  error TLCStaking_BadDecimals();
+  error TLCStaking_DuplicateStakingToken();
+  error TLCStaking_Forbidden();
 
   /**
    * Events
@@ -38,13 +40,18 @@ contract TradingStaking is Owned, ITradingStaking {
   mapping(address => uint256[]) public rewarderMarketIndex;
   address public compounder;
   address public whitelistedCaller;
+  TraderLoyaltyCredit public tlc;
 
   /**
    * Modifiers
    */
   modifier onlyWhitelistedCaller() {
-    if (msg.sender != whitelistedCaller) revert TradingStaking_Forbidden();
+    if (msg.sender != whitelistedCaller) revert TLCStaking_Forbidden();
     _;
+  }
+
+  constructor(address _tlc) {
+    tlc = TraderLoyaltyCredit(_tlc);
   }
 
   /// @dev Add a new Market Pool for multiple rewarding addresses. Only the owner of the contract can call this function.
@@ -187,7 +194,7 @@ contract TradingStaking is Owned, ITradingStaking {
 
   /// @dev Deposits _amount tokens from the caller's account to the contract and assign them to _to user's balance for market index _marketIndex.
   /// Only allowed for the whitelisted caller.
-  /// If the _marketIndex is not registered, it will revert with TradingStaking_UnknownMarketIndex() error.
+  /// If the _marketIndex is not registered, it will revert with TLCStaking_UnknownMarketIndex() error.
   /// Calls onDeposit() function for each rewarder registered on market index _marketIndex using its respective address specified in marketIndexRewarders.
   /// After calling each rewarder, the _amount is added to the user's token balance at the _marketIndex, along with total shares.
   /// Emits a LogDeposit event with information about caller, _to, _marketIndex and _amount.
@@ -200,8 +207,9 @@ contract TradingStaking is Owned, ITradingStaking {
   /// @param _to The address of the primary account
   /// @param _marketIndex Market index
   /// @param _amount Position Size
-  function deposit(address _to, uint256 _marketIndex, uint256 _amount) external onlyWhitelistedCaller {
-    if (!isMarketIndex[_marketIndex]) revert TradingStaking_UnknownMarketIndex();
+  function deposit(address _to, uint256 _marketIndex, uint256 _amount) external {
+    if (_to != msg.sender) revert TLCStaking_Forbidden();
+    if (!isMarketIndex[_marketIndex]) revert TLCStaking_UnknownMarketIndex();
 
     uint256 length = marketIndexRewarders[_marketIndex].length;
     for (uint256 i = 0; i < length; ) {
@@ -216,6 +224,8 @@ contract TradingStaking is Owned, ITradingStaking {
 
     userTokenAmount[_marketIndex][_to] += _amount;
     totalShares[_marketIndex] += _amount;
+
+    tlc.transferFrom(msg.sender, address(this), _amount);
 
     emit LogDeposit(msg.sender, _to, _marketIndex, _amount);
   }
@@ -242,8 +252,8 @@ contract TradingStaking is Owned, ITradingStaking {
   /// @param _marketIndex The market index for which tokens should be withdrawn.
   /// @param _amount The Amount of tokens that should be withdrawn from the given market index.
   function _withdraw(address _to, uint256 _marketIndex, uint256 _amount) internal {
-    if (!isMarketIndex[_marketIndex]) revert TradingStaking_UnknownMarketIndex();
-    if (userTokenAmount[_marketIndex][_to] < _amount) revert TradingStaking_InsufficientTokenAmount();
+    if (!isMarketIndex[_marketIndex]) revert TLCStaking_UnknownMarketIndex();
+    if (userTokenAmount[_marketIndex][_to] < _amount) revert TLCStaking_InsufficientTokenAmount();
 
     uint256 length = marketIndexRewarders[_marketIndex].length;
     for (uint256 i = 0; i < length; ) {
@@ -258,6 +268,8 @@ contract TradingStaking is Owned, ITradingStaking {
     userTokenAmount[_marketIndex][_to] -= _amount;
     totalShares[_marketIndex] -= _amount;
 
+    tlc.transfer(_to, _amount);
+
     emit LogWithdraw(_to, _marketIndex, _amount);
   }
 
@@ -266,7 +278,7 @@ contract TradingStaking is Owned, ITradingStaking {
   }
 
   function harvestToCompounder(address _user, address[] memory _rewarders) external {
-    if (compounder != msg.sender) revert TradingStaking_NotCompounder();
+    if (compounder != msg.sender) revert TLCStaking_NotCompounder();
     _harvestFor(_user, compounder, _rewarders);
   }
 
@@ -290,7 +302,7 @@ contract TradingStaking is Owned, ITradingStaking {
     uint256 length = _rewarders.length;
     for (uint256 i = 0; i < length; ) {
       if (!isRewarder[_rewarders[i]]) {
-        revert TradingStaking_NotRewarder();
+        revert TLCStaking_NotRewarder();
       }
 
       IRewarder(_rewarders[i]).onHarvest(_user, _receiver);

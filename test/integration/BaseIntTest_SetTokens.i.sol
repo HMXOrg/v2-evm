@@ -8,6 +8,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 
 abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
+  // use MockErc20 because want to mint token to user directly
   MockErc20 wbtc; // decimals 8
   MockErc20 usdc; // decimals 6
   MockErc20 usdt; // decimals 6
@@ -24,6 +25,7 @@ abstract contract BaseIntTest_SetTokens is BaseIntTest_SetOracle {
     plpV2 = IPLPv2(address(new MockErc20("PLPV2", "PLPv2", 18)));
 
     configStorage.setPLP(address(plpV2));
+    configStorage.setWeth(address(weth));
 
     _addAssetConfig(wethAssetId, address(weth), 18, false);
 

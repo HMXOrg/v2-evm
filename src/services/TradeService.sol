@@ -962,7 +962,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _assetClassIndex The index of the asset class.
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function updateBorrowingRate(uint8 _assetClassIndex, uint256 _limitPriceE30, bytes32 _limitAssetId) public {
+  function updateBorrowingRate(uint8 _assetClassIndex, uint256 _limitPriceE30, bytes32 _limitAssetId) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -1021,18 +1021,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
       _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
     }
-  }
-
-  /// @notice Calculates the trading fee for a given position
-  /// @param _absSizeDelta Position size
-  /// @param _positionFeeRateBPS Position Fee
-  /// @return tradingFee The calculated trading fee for the position.
-  function getTradingFee(
-    uint256 _absSizeDelta,
-    uint256 _positionFeeRateBPS
-  ) internal pure returns (uint256 tradingFee) {
-    if (_absSizeDelta == 0) return 0;
-    return (_absSizeDelta * _positionFeeRateBPS) / BPS;
   }
 
   /// @notice This function collects margin fee from position
@@ -1151,13 +1139,14 @@ contract TradeService is ReentrancyGuard, ITradeService {
         // Deducts for dev fee
         tmpVars.repayFeeTokenAmount -= tmpVars.devFeeTokenAmount;
 
-        _collectMarginFee(
-          _subAccount,
-          tmpVars.underlyingToken,
-          tmpVars.repayFeeTokenAmount,
-          tmpVars.devFeeTokenAmount,
-          tmpVars.traderBalance
-        );
+        {
+          // Deduct dev fee from the trading fee and add it to the dev fee pool.
+          _vaultStorage.addDevFee(tmpVars.underlyingToken, tmpVars.devFeeTokenAmount);
+          // Add the remaining trading fee to the protocol's fee pool.
+          _vaultStorage.addFee(tmpVars.underlyingToken, tmpVars.repayFeeTokenAmount);
+          // Update the trader's balance of the underlying token.
+          _vaultStorage.setTraderBalance(_subAccount, tmpVars.underlyingToken, tmpVars.traderBalance);
+        }
       }
 
       // If no remaining trading fee to pay then stop looping
@@ -1262,27 +1251,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // Update the fee amount for the sub-account in the PerpStorage contract
     _perpStorage.updateSubAccountFee(_subAccount, int(acmVars.absFeeUsd));
-  }
-
-  /// @notice This function does accounting when collecting trading fee from trader's sub-account.
-  /// @param subAccount The sub-account from which to collect the fee.
-  /// @param underlyingToken The underlying token for which the fee is collected.
-  /// @param tradingFeeAmount The amount of trading fee to be collected, after deducting dev fee.
-  /// @param devFeeTokenAmount The amount of dev fee deducted from the trading fee.
-  /// @param traderBalance The updated balance of the trader's underlying token.
-  function _collectMarginFee(
-    address subAccount,
-    address underlyingToken,
-    uint256 tradingFeeAmount,
-    uint256 devFeeTokenAmount,
-    uint256 traderBalance
-  ) internal {
-    // Deduct dev fee from the trading fee and add it to the dev fee pool.
-    VaultStorage(vaultStorage).addDevFee(underlyingToken, devFeeTokenAmount);
-    // Add the remaining trading fee to the protocol's fee pool.
-    VaultStorage(vaultStorage).addFee(underlyingToken, tradingFeeAmount);
-    // Update the trader's balance of the underlying token.
-    VaultStorage(vaultStorage).setTraderBalance(subAccount, underlyingToken, traderBalance);
   }
 
   /**

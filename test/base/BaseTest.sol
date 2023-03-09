@@ -140,7 +140,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
-    _setUpAssetConfigs();
 
     feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
 
@@ -188,7 +187,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
         withdrawFeeRateBPS: 0,
         maxPLPUtilizationBPS: 0.8 * 1e4,
         plpTotalTokenWeight: 0,
-        plpSafetyBufferThreshold: 0,
+        plpSafetyBufferBPS: 0.6 * 1e4,
         taxFeeRateBPS: 0.005 * 1e4, // 0.5%
         flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: false,

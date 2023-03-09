@@ -22,9 +22,41 @@ import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.
 //   - Try executing BUY order to partial close Short position
 //   - Try executing SELL order to partial close Long position
 
+struct Price {
+  // Price
+  int64 price;
+  // Confidence interval around the price
+  uint64 conf;
+  // Price exponent
+  int32 expo;
+  // Unix timestamp describing when the price was published
+  uint publishTime;
+}
+
+// PriceFeed represents a current aggregate price from pyth publisher feeds.
+struct PriceFeed {
+  // The price ID.
+  bytes32 id;
+  // Latest available price
+  Price price;
+  // Latest available exponentially-weighted moving average price
+  Price emaPrice;
+}
+
 contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
+  bytes[] internal priceData;
+
   function setUp() public override {
     super.setUp();
+
+    priceData = new bytes[](1);
+    priceData[0] = abi.encode(
+      PriceFeed({
+        id: "1234",
+        price: Price({ price: 0, conf: 0, expo: 0, publishTime: block.timestamp }),
+        emaPrice: Price({ price: 0, conf: 0, expo: 0, publishTime: block.timestamp })
+      })
+    );
 
     limitTradeHandler.setOrderExecutor(address(this), true);
 
@@ -98,7 +130,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
   }
 
@@ -110,7 +142,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
   }
 
@@ -137,7 +169,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
   }
 
@@ -164,7 +196,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
   }
 
@@ -198,11 +230,11 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
@@ -249,11 +281,11 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
@@ -305,7 +337,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     assertEq(mockTradeService.increasePositionCallCount(), 2);
@@ -350,11 +382,11 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
@@ -402,11 +434,11 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
@@ -457,7 +489,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     assertEq(mockTradeService.increasePositionCallCount(), 2);
@@ -497,7 +529,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be created
@@ -550,7 +582,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be fully closed and a new Short position should be opened
@@ -607,7 +639,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be created
@@ -660,7 +692,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be fully closed and a new Long position should be opened
@@ -671,7 +703,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       uint256 _decreaseSubAccountId,
       uint256 _decreaseMarketIndex,
       uint256 _decreasePositionSizeE30ToDecrease,
-      uint256 _decreaseLimitPriceE30
+
     ) = mockTradeService.decreasePositionCalls(0);
     assertEq(_decreaseAccount, address(this));
     assertEq(_decreaseSubAccountId, 0);
@@ -715,7 +747,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be created
@@ -768,7 +800,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be fully closed and a new Short position should not be opened
@@ -817,7 +849,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be created
@@ -870,7 +902,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be fully closed and a new Long position should not be opened
@@ -919,7 +951,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be created
@@ -972,7 +1004,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be partially closed
@@ -1021,7 +1053,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be created
@@ -1074,7 +1106,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be partially closed

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetTokens } from "@hmx-test/integration/06_BaseIntTest_SetTokens.i.sol";
+import { BaseIntTest_SetPLPTokens } from "@hmx-test/integration/07_BaseIntTest_SetPLPTokens.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { console } from "forge-std/console.sol";
 
-abstract contract BaseIntTest_SetPLP is BaseIntTest_SetTokens {
+abstract contract BaseIntTest_SetPLP is BaseIntTest_SetPLPTokens {
   constructor() {
     _setupAcceptedToken();
     liquidityHandler.setOrderExecutor(ORDER_EXECUTOR, true);

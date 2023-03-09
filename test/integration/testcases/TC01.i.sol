@@ -30,10 +30,11 @@ contract TC01 is BaseIntTest_WithActions {
       0
     );
 
+    uint256 _amountAlice = plpV2.balanceOf(ALICE);
     removeLiquidity(
       ALICE,
       ERC20(address(wbtc)),
-      _amount,
+      _amountAlice,
       _executionFee, // minExecutionFee
       initialPriceFeedDatas,
       1

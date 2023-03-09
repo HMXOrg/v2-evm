@@ -98,7 +98,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function validateAcceptedLiquidityToken(address _token) external view {
-    console.log("token", _token);
     if (!assetPlpTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedLiquidity();
   }
 

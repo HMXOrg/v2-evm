@@ -21,24 +21,18 @@ interface ITradeService {
   error ITradeService_InsufficientLiquidity();
   error ITradeService_InsufficientFreeCollateral();
   error ITradeService_ReservedValueStillEnough();
+  error ITradeService_PlpHealthy();
+  error ITradeService_MarketHealthy();
 
   /**
    * STRUCTS
    */
 
-  struct GetFundingRateVar {
-    uint256 fundingInterval;
-    uint256 marketPriceE30;
-    int256 marketSkewUSDE30;
-    int256 ratio;
-    int256 nextFundingRate;
-    int256 newFundingRate;
-    int256 elapsedIntervals;
-  }
-
   function configStorage() external view returns (address);
 
   function perpStorage() external view returns (address);
+
+  function reloadConfig() external;
 
   function increasePosition(
     address _primaryAccount,
@@ -57,11 +51,6 @@ interface ITradeService {
     uint256 _limitPriceE30
   ) external;
 
-  function getNextFundingRate(
-    uint256 _marketIndex,
-    uint256 _price
-  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort);
-
   function getDelta(
     uint256 _size,
     bool _isLong,
@@ -69,5 +58,16 @@ interface ITradeService {
     uint256 _averagePrice
   ) external pure returns (bool, uint256);
 
-  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external;
+  function forceClosePosition(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  ) external returns (bool _isMaxProfit, bool _isProfit, uint256 _delta);
+
+  function validateMaxProfit(bool isMaxProfit) external view;
+
+  function validateDeleverage() external view;
+
+  function validateMarketDelisted(uint256 _marketIndex) external view;
 }

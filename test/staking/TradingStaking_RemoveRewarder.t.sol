@@ -14,7 +14,7 @@ contract TradingStaking_RemoveRewarder is TradingStaking_Base {
   }
 
   function testCorrectness_RemoveRewarder() external {
-    tradingStaking.removeRewarderForTokenByIndex(1, ethMarketIndex);
+    tradingStaking.removeRewarderForMarketIndexByIndex(1, ethMarketIndex);
 
     assertEq(address(ethMarketRewarder), tradingStaking.marketIndexRewarders(ethMarketIndex, 0));
     assertEq(address(ethMarketRewarder3), tradingStaking.marketIndexRewarders(ethMarketIndex, 1));

@@ -19,6 +19,13 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
    * Events
    */
   event LogTakeMaxProfit(address indexed _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken);
+  event LogDeleverage(address indexed _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken);
+  event LogCloseDelistedMarketPosition(
+    address indexed _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  );
   event LogLiquidate(address _subAccount);
 
   event LogSetTradeService(address _oldTradeService, address _newTradeService);
@@ -67,11 +74,71 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,
-    address _tpToken
-  ) external onlyPositionManager {
-    TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+    address _tpToken,
+    bytes[] memory _priceData
+  ) external nonReentrant onlyPositionManager {
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+
+    (bool _isMaxProfit, , ) = TradeService(tradeService).forceClosePosition(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _tpToken
+    );
+
+    TradeService(tradeService).validateMaxProfit(_isMaxProfit);
 
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
+  }
+
+  /// @notice deleverage
+  /// @param _account position's owner
+  /// @param _subAccountId sub-account that owned position
+  /// @param _marketIndex market index of position
+  /// @param _tpToken token that trader receive as profit
+  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
+  function deleverage(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) external nonReentrant onlyPositionManager {
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+
+    TradeService(tradeService).validateDeleverage();
+
+    TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+
+    emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken);
+  }
+
+  /// @notice forceClosePosition
+  /// @param _account position's owner
+  /// @param _subAccountId sub-account that owned position
+  /// @param _marketIndex market index of position
+  /// @param _tpToken token that trader receive as profit
+  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
+  function closeDelistedMarketPosition(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) external nonReentrant onlyPositionManager {
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+
+    TradeService(tradeService).validateMarketDelisted(_marketIndex);
+
+    TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+
+    emit LogCloseDelistedMarketPosition(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.

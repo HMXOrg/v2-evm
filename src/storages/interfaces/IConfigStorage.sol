@@ -69,7 +69,7 @@ interface IConfigStorage {
 
   struct LiquidityConfig {
     uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
-    uint256 plpSafetyBufferThreshold;
+    uint32 plpSafetyBufferBPS;
     uint32 taxFeeRateBPS; // PLP deposit, withdraw, settle collect when pool weight is imbalances
     uint32 flashLoanFeeRateBPS;
     uint32 maxPLPUtilizationBPS; //% of max utilization

@@ -13,4 +13,6 @@ interface IOracleAdapter {
   ) external view returns (uint256, int32, uint256);
 
   function setPythPriceId(bytes32 _assetId, bytes32 _pythPriceId) external;
+
+  function pythPriceIdOf(bytes32 _assetId) external returns (bytes32);
 }

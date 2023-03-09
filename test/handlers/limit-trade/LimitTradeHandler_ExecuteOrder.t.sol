@@ -703,7 +703,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       uint256 _decreaseSubAccountId,
       uint256 _decreaseMarketIndex,
       uint256 _decreasePositionSizeE30ToDecrease,
-      uint256 _decreaseLimitPriceE30
+
     ) = mockTradeService.decreasePositionCalls(0);
     assertEq(_decreaseAccount, address(this));
     assertEq(_decreaseSubAccountId, 0);

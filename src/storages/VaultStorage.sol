@@ -41,10 +41,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   mapping(address => uint256) public fundingFee; // sum of realized funding fee when traders are settlement their fees
   mapping(address => uint256) public devFees;
 
-  // liquidity provider address => token => amount
-  mapping(address => mapping(address => uint256)) public liquidityProviderBalances;
-  mapping(address => address[]) public liquidityProviderTokens;
-
   // trader address (with sub-account) => token => amount
   mapping(address => mapping(address => uint256)) public traderBalances;
   // mapping(address => address[]) public traderTokens;

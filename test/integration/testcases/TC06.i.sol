@@ -6,8 +6,6 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/BaseIntTest_WithA
 import { console2 } from "forge-std/console2.sol";
 
 contract TC06 is BaseIntTest_WithActions {
-  // T4: Alice withdraw collateral
-  // T5: Alice partial close SHORT position 100 USD ETHUSD position and choose to settle with ETH  (Equity < IMR)
   // T6: Alice selll short ETHUSD 1000 USD and increase leverage
   // T7: Alice try to sell limit order ETHUSD 20 USD, but transaction is reversed
   // T8: Alice deposit collateral then IMR back to healthy
@@ -97,25 +95,24 @@ contract TC06 is BaseIntTest_WithActions {
       //   | DAI collateral value = amount * price * collateralFactor = 100_000 * 1 * 0.8 = 80_000
       //   | WBTC collateral value = amount * price * collateralFactor = 0.5 * 20_000 * 0.8 = 8_000
       // ALICE's IMR must be 0
-      console2.log("calculator.getEquity(SUB_ACCOUNT, 0, 0)", calculator.getEquity(SUB_ACCOUNT, 0, 0));
       assertEq(calculator.getEquity(SUB_ACCOUNT, 0, 0), 168_000 * 1e30, "ALICE's Equity");
       assertEq(calculator.getIMR(SUB_ACCOUNT), 0, "ALICE's IMR");
 
-      // uint256 sellSizeE30 = 2000.981234381823 * 1e30;
-      uint256 sellSizeE30 = 2_000_000.981234381823 * 1e30;
+      // uint256 sellSizeE30 = 827_000.981234381823 * 1e30;
+      uint256 sellSizeE30 = 827_000.981234381823 * 1e30;
       address tpToken = address(glp);
       bytes[] memory priceDataT2 = new bytes[](0);
 
-      // ALICE opens SHORT position with WETH Market Price = 1_500 USD
+      // ALICE opens SHORT position with WETH Market Price = 1500 USD
       sell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceDataT2);
 
       // Check states After Alice opened SHORT position
-
       // Alice's Equity must be upper IMR level
       assertTrue(
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) > calculator.getIMR(SUB_ACCOUNT),
         "ALICE's Equity > ALICE's IMR?"
       );
+      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
       console2.log("ALICE FREE COL", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
     }
 
@@ -139,7 +136,35 @@ contract TC06 is BaseIntTest_WithActions {
       _prices[3] = 20_000;
 
       setPrices(_assetIds, _prices);
-      console2.log("ALICE FREE COL", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
+      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
+      console2.log("FREE COL", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
+
+      // Check states After WETH market price move from 1500 USD to 1550 USD
+      // Alice's Equity must be lower IMR level
+      assertTrue(
+        uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) < calculator.getIMR(SUB_ACCOUNT),
+        "ALICE's Equity < ALICE's IMR?"
+      );
+    }
+
+    /**
+     * T4: Alice try withdrawing collateral but Alice can't withdraw
+     */
+    vm.warp(block.timestamp + 1);
+    {
+      // Alice withdraw 1(USD) of USDC
+      // Expect Alice can't withdraw collateral because Equity < IMR
+      vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
+      bytes[] memory priceDataT4 = new bytes[](0);
+      withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 1 * 1e6, priceDataT4);
+    }
+
+    /**
+     * T5: Alice partial close SHORT position 100 USD ETHUSD position and choose to settle with ETH  (Equity < IMR)
+     */
+    {
+
     }
   }
 }

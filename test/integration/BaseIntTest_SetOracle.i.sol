@@ -101,11 +101,11 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   }
 
   function _createPriceFeedUpdateData(bytes32 _assetId, int64 _price) internal returns (bytes memory) {
-    int64 decimals;
+    int64 pythDecimals;
 
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
       if (assetPythPriceDatas[i].assetId == _assetId) {
-        decimals = assetPythPriceDatas[i].pythDecimals;
+        pythDecimals = assetPythPriceDatas[i].pythDecimals;
         break;
       }
       unchecked {
@@ -113,13 +113,13 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       }
     }
 
-    int64 _decimalPow = int64(10) ** uint64(-decimals);
+    int64 _decimalPow = int64(10) ** uint64(-pythDecimals);
 
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
       pythAdapter.pythPriceIdOf(_assetId),
       _price * _decimalPow,
       0,
-      int8(decimals),
+      int8(pythDecimals),
       _price * _decimalPow,
       0,
       uint64(block.timestamp)

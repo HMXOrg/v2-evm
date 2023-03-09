@@ -693,7 +693,7 @@ contract Calculator is Owned, ICalculator {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = getIMR(_subAccount);
 
-    if (equity < 0) return 0;
+    if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
   }

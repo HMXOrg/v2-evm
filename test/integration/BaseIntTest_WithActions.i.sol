@@ -108,7 +108,7 @@ contract BaseIntTest_WithActions is
     uint8 _subAccountId,
     ERC20 _collateralToken,
     uint256 _withdrawAmount,
-    bytes[] calldata _priceData
+    bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
     crossMarginHandler.withdrawCollateral(

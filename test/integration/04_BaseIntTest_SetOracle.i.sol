@@ -60,7 +60,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
       AssetPythPriceData memory _data = assetPythPriceDatas[i];
       // set PythId
-      pythAdapter.setPythPriceId(_data.assetId, _data.assetId);
+      pythAdapter.setConfig(_data.assetId, _data.assetId, false);
+
       // set UpdatePriceFeed
       initialPriceFeedDatas.push(_createPriceFeedUpdateData(_data.assetId, _data.price));
 
@@ -111,9 +112,9 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     }
 
     int64 _pythDecimalPow = int64(10) ** uint64(-pythDecimals);
-
+    (bytes32 _pythPriceId, ) = pythAdapter.configs(_assetId);
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
-      pythAdapter.pythPriceIdOf(_assetId),
+      _pythPriceId,
       _price * _pythDecimalPow,
       0,
       int8(pythDecimals),

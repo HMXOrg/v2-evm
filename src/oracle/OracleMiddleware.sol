@@ -12,7 +12,9 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
    * Structs
    */
   struct AssetPriceConfig {
+    /// @dev The acceptable threshold confidence ratio. ex. _confidenceRatio = 0.01 ether means 1%
     uint32 confidenceThresholdE6;
+    /// @dev Acceptable price age in second.
     uint8 trustPriceAge;
   }
 

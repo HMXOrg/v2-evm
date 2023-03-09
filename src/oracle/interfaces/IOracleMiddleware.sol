@@ -10,7 +10,7 @@ interface IOracleMiddleware {
 
   function isUpdater(address _updater) external returns (bool);
 
-  function assetPriceConfigs(bytes32 _assetId) external returns (uint32, uint8);
+  function assetPriceConfigs(bytes32 _assetId) external returns (uint32, uint8, bool);
 
   function marketStatus(bytes32 _assetId) external returns (uint8);
 

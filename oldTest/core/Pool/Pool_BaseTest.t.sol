@@ -31,9 +31,9 @@ abstract contract Pool_BaseTest is BaseTest {
 
     // Setup pyth adapter
     pythAdapter = deployed.pythAdapter;
-    pythAdapter.setPythPriceId(address(weth).toBytes32(), wethPriceId);
-    pythAdapter.setPythPriceId(address(wbtc).toBytes32(), wbtcPriceId);
-    pythAdapter.setPythPriceId(address(dai).toBytes32(), daiPriceId);
-    pythAdapter.setPythPriceId(address(usdc).toBytes32(), usdcPriceId);
+    pythAdapter.setConfig(address(weth).toBytes32(), wethPriceId, false);
+    pythAdapter.setConfig(address(wbtc).toBytes32(), wbtcPriceId, false);
+    pythAdapter.setConfig(address(dai).toBytes32(), daiPriceId, false);
+    pythAdapter.setConfig(address(usdc).toBytes32(), usdcPriceId, false);
   }
 }

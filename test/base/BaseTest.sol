@@ -28,7 +28,7 @@ import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
@@ -52,7 +52,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   IFeeCalculator internal feeCalculator;
 
   // oracle
-  IOracleAdapter pythAdapter;
+  IPythAdapter pythAdapter;
   IOracleMiddleware oracleMiddleware;
 
   // mock

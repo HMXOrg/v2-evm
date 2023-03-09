@@ -3,9 +3,9 @@ pragma solidity 0.8.18;
 
 import { Owned } from "@hmx/base/Owned.sol";
 import { IPyth, PythStructs } from "pyth-sdk-solidity/IPyth.sol";
-import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
+import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
 
-contract PythAdapter is Owned, IOracleAdapter {
+contract PythAdapter is Owned, IPythAdapter {
   // errors
   error PythAdapter_BrokenPythPrice();
   error PythAdapter_ConfidenceRatioTooHigh();
@@ -15,13 +15,13 @@ contract PythAdapter is Owned, IOracleAdapter {
   // state variables
   IPyth public pyth;
   // mapping of our asset id to Pyth's price id
-  mapping(bytes32 => bytes32) public pythPriceIdOf;
+  mapping(bytes32 => IPythAdapter.PythPriceConfig) public configs;
 
   // whitelist mapping of price updater
   mapping(address => bool) public isUpdater;
 
   // events
-  event SetPythPriceId(bytes32 indexed _assetId, bytes32 _prevPythPriceId, bytes32 _pythPriceId);
+  event SetConfig(bytes32 indexed _assetId, bytes32 _pythPriceId, bool _inverse);
   event SetUpdater(address indexed _account, bool _isActive);
 
   constructor(IPyth _pyth) {
@@ -34,9 +34,14 @@ contract PythAdapter is Owned, IOracleAdapter {
   /// @notice Set the Pyth price id for the given asset.
   /// @param _assetId The asset address to set.
   /// @param _pythPriceId The Pyth price id to set.
-  function setPythPriceId(bytes32 _assetId, bytes32 _pythPriceId) external onlyOwner {
-    emit SetPythPriceId(_assetId, pythPriceIdOf[_assetId], _pythPriceId);
-    pythPriceIdOf[_assetId] = _pythPriceId;
+  function setConfig(bytes32 _assetId, bytes32 _pythPriceId, bool _inverse) external onlyOwner {
+    PythPriceConfig memory _config = configs[_assetId];
+
+    _config.pythPriceId = _pythPriceId;
+    _config.inverse = _inverse;
+    emit SetConfig(_assetId, _pythPriceId, _inverse);
+
+    configs[_assetId] = _config;
   }
 
   /// @notice convert Pyth's price to uint256.
@@ -81,15 +86,17 @@ contract PythAdapter is Owned, IOracleAdapter {
   /// @dev The price returns here can be staled.
   /// @param _assetId The asset id to get price.
   /// @param _isMax Whether to get the max price.
+  /// @param _confidenceThreshold The acceptable threshold confidence ratio. ex. _confidenceRatio = 0.01 ether means 1%
   function getLatestPrice(
     bytes32 _assetId,
     bool _isMax,
     uint32 _confidenceThreshold
   ) external view returns (uint256, int32, uint256) {
     // SLOAD
-    bytes32 _pythPriceId = pythPriceIdOf[_assetId];
-    if (_pythPriceId == bytes32(0)) revert PythAdapter_UnknownAssetId();
-    PythStructs.Price memory _price = pyth.getPriceUnsafe(_pythPriceId);
+    IPythAdapter.PythPriceConfig memory _config = configs[_assetId];
+
+    if (_config.pythPriceId == bytes32(0)) revert PythAdapter_UnknownAssetId();
+    PythStructs.Price memory _price = pyth.getPriceUnsafe(_config.pythPriceId);
     _validateConfidence(_price, _confidenceThreshold);
 
     return (_convertToUint256(_price, _isMax, 30), _price.expo, _price.publishTime);

@@ -8,7 +8,7 @@ import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
@@ -56,8 +56,8 @@ library Deployer {
    * Oracles
    */
 
-  function deployPythAdapter(address _pyth) internal returns (IOracleAdapter) {
-    return IOracleAdapter(deployContractWithArguments("PythAdapter", abi.encode(_pyth)));
+  function deployPythAdapter(address _pyth) internal returns (IPythAdapter) {
+    return IPythAdapter(deployContractWithArguments("PythAdapter", abi.encode(_pyth)));
   }
 
   function deployOracleMiddleware(address _pythAdapter) internal returns (IOracleMiddleware) {

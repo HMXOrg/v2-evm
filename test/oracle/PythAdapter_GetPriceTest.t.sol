@@ -9,8 +9,8 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
   function setUp() public override {
     super.setUp();
 
-    pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
-    pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
+    pythAdapter.setConfig(wethAssetId, wethPriceId, false);
+    pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
   }
 
   function updateWbtcWithConf(uint64 conf) private {

@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 // Forge-std
 import { TestBase } from "forge-std/Base.sol";
+import { console } from "forge-std/console.sol";
 import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
@@ -181,7 +182,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     {
       configStorage.setOracle(address(oracleMiddleWare));
       configStorage.setCalculator(address(calculator));
-      configStorage.setFeeCalculator(address(calculator));
+      configStorage.setFeeCalculator(address(feeCalculator));
       tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
 
       // Set whitelists for executors
@@ -197,6 +198,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       vaultStorage.setServiceExecutors(address(crossMarginService), true);
       vaultStorage.setServiceExecutors(address(tradeService), true);
       vaultStorage.setServiceExecutors(address(liquidityService), true);
+      vaultStorage.setServiceExecutors(address(feeCalculator), true);
     }
 
     // Setup PerpStorage

@@ -92,7 +92,6 @@ contract TradeService_FundingFee is TradeService_Base {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
       {
-        IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
         IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
 
         // Long position now must pay 133$ to Short Side

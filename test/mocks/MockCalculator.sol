@@ -84,12 +84,16 @@ contract MockCalculator is ICalculator {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getEquity(address _subAccount, uint256 _price, bytes32 _assetId) external view returns (int256) {
+  function getEquity(address _subAccount, uint256 /* _price */, bytes32 /* _assetId */) external view returns (int256) {
     return equitiesOf[_subAccount];
   }
 
   // @todo - Add Description
-  function getUnrealizedPnl(address _subAccount, uint256 _price, bytes32 _assetId) external view returns (int256) {
+  function getUnrealizedPnl(
+    address _subAccount,
+    uint256 /* _price */,
+    bytes32 /* _assetId */
+  ) external view returns (int256) {
     return unrealizedPnlOf[_subAccount];
   }
 
@@ -117,18 +121,22 @@ contract MockCalculator is ICalculator {
     return 0;
   }
 
-  function getAUM(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
+  function getAUM(bool /* isMaxPrice */, uint256 /* _price */, bytes32 /* _assetId */) external view returns (uint256) {
     return aum;
   }
 
-  function getAUME30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
+  function getAUME30(
+    bool /* isMaxPrice */,
+    uint256 /* _price */,
+    bytes32 /* _assetId */
+  ) external view returns (uint256) {
     return aum;
   }
 
   function getPLPValueE30(
     bool /* isMaxPrice */,
-    uint256 /*_price*/,
-    bytes32 /*_assetId*/
+    uint256 /* _price */,
+    bytes32 /* _assetId */
   ) public view virtual returns (uint256) {
     return plpValue;
   }

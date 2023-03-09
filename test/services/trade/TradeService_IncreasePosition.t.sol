@@ -703,7 +703,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     });
     positionTester02.assertPosition(_positionId, assetData);
 
-    (uint256 _price, uint256 _lastUpdate, uint8 _status) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false);
+    (uint256 _price, , ) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false);
     assertEq(_price, 1600 * 1e30);
   }
 }

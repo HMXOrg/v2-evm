@@ -21,6 +21,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 
@@ -50,6 +51,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   IPerpStorage perpStorage;
   IVaultStorage vaultStorage;
   ICalculator calculator;
+  IFeeCalculator feeCalculator;
 
   // handlers
   IBotHandler botHandler;
@@ -117,6 +119,9 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       address(configStorage)
     );
 
+    // deploy fee calculator
+    feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
+
     // deploy handler and service
     liquidityService = Deployer.deployLiquidityService(
       address(perpStorage),
@@ -150,6 +155,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     {
       configStorage.setOracle(address(oracleMiddleWare));
       configStorage.setCalculator(address(calculator));
+      configStorage.setFeeCalculator(address(calculator));
       tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
 
       // Set whitelists for executors

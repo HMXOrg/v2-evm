@@ -357,18 +357,18 @@ contract ConfigStorage is IConfigStorage, Owned {
 
       uint256 _assetIdLen = plpAssetIds.length;
 
-      bool _issetPLPAssetId = true;
+      bool _isSetPLPAssetId = true;
 
       for (uint256 _j; _j < _assetIdLen; ) {
         if (plpAssetIds[_j] == _assetId) {
-          _issetPLPAssetId = false;
+          _isSetPLPAssetId = false;
         }
         unchecked {
           ++_j;
         }
       }
 
-      if (_issetPLPAssetId) {
+      if (_isSetPLPAssetId) {
         plpAssetIds.push(_assetId);
       }
 

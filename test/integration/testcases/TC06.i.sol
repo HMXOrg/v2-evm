@@ -98,8 +98,7 @@ contract TC06 is BaseIntTest_WithActions {
       assertEq(calculator.getEquity(SUB_ACCOUNT, 0, 0), 168_000 * 1e30, "ALICE's Equity");
       assertEq(calculator.getIMR(SUB_ACCOUNT), 0, "ALICE's IMR");
 
-      // uint256 sellSizeE30 = 827_000.981234381823 * 1e30;
-      uint256 sellSizeE30 = 827_000.981234381823 * 1e30;
+      uint256 sellSizeE30 = 810_000.981234381823 * 1e30;
       address tpToken = address(glp);
       bytes[] memory priceDataT2 = new bytes[](0);
 
@@ -163,8 +162,13 @@ contract TC06 is BaseIntTest_WithActions {
     /**
      * T5: Alice partial close SHORT position 100 USD ETHUSD position and choose to settle with ETH  (Equity < IMR)
      */
+    console2.log("====================================================== T5");
     {
-
+      // ALICE partial close SHORT position with WETH Market Price = 1550 USD
+      uint256 buySizeE30 = 100_000 * 1e30;
+      address tpToken = address(glp);
+      bytes[] memory priceDataT5 = new bytes[](0);
+      // marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceDataT5);
     }
   }
 }

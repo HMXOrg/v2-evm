@@ -7,7 +7,6 @@ contract MockOracleMiddleware is IOracleMiddleware {
   struct AssetPriceConfig {
     uint32 confidenceThresholdE6;
     uint8 trustPriceAge;
-    bool inverse;
   }
 
   uint256 public priceE30;

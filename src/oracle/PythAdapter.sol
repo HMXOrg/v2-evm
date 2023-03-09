@@ -52,7 +52,8 @@ contract PythAdapter is Owned, IPythAdapter {
   function _convertToUint256(
     PythStructs.Price memory _priceStruct,
     bool _isMax,
-    uint8 _targetDecimals
+    uint8 _targetDecimals,
+    bool _shouldInvert
   ) private pure returns (uint256) {
     if (_priceStruct.price <= 0 || _priceStruct.expo > 0 || _priceStruct.expo < -255) {
       revert PythAdapter_BrokenPythPrice();
@@ -63,10 +64,22 @@ contract PythAdapter is Owned, IPythAdapter {
       ? uint64(_priceStruct.price) + _priceStruct.conf
       : uint64(_priceStruct.price) - _priceStruct.conf;
 
+    uint256 _price256;
     if (_targetDecimals - _priceDecimals >= 0) {
-      return uint256(_price) * 10 ** uint32(_targetDecimals - _priceDecimals);
+      _price256 = uint256(_price) * 10 ** uint32(_targetDecimals - _priceDecimals);
     } else {
-      return uint256(_price) / 10 ** uint32(_priceDecimals - _targetDecimals);
+      _price256 = uint256(_price) / 10 ** uint32(_priceDecimals - _targetDecimals);
+    }
+
+    if (!_shouldInvert) {
+      return _price256;
+    }
+
+    // Quote inversion. This is an intention to support the price like USD/JPY.
+    {
+      // Given _targetDecimals = 30, inverted quote price can be caluclated as followed.
+      // final anaswer = 10^60 / priceE30
+      return 10 ** uint32(_targetDecimals * 2) / _price256;
     }
   }
 
@@ -99,6 +112,6 @@ contract PythAdapter is Owned, IPythAdapter {
     PythStructs.Price memory _price = pyth.getPriceUnsafe(_config.pythPriceId);
     _validateConfidence(_price, _confidenceThreshold);
 
-    return (_convertToUint256(_price, _isMax, 30), _price.expo, _price.publishTime);
+    return (_convertToUint256(_price, _isMax, 30, _config.inverse), _price.expo, _price.publishTime);
   }
 }

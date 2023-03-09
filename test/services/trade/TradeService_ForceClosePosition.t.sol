@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { TradeService_Base } from "./TradeService_Base.t.sol";
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
 
 // What is this test DONE
 // - success
@@ -30,6 +31,20 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 contract TradeService_ForceClosePosition is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
+
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
+    }
 
     // TVL
     // 1000000 USDT -> 2000000 USD

@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { TradeService_Base } from "./TradeService_Base.t.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
 
 // What is this test DONE
 // - success
@@ -12,12 +13,27 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 contract TradeService_BorrowingFee is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getBorrowingFee");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getNextBorrowingRate");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getPLPValueE30");
+      configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
+    }
   }
 
   function testCorrectness_borrowingFee_WhenIncreasePosition() external {
-    // TVL
+    // TVL - make the plp value
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
+
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -127,7 +143,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
   function testCorrectness_borrowingFee_WhenDecreasePosition() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
+
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -208,7 +225,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
   function testCorrectness_borrowingFee() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
+
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);

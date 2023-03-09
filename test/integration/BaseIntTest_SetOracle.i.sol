@@ -22,6 +22,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     bytes32 assetId;
     bytes32 priceId;
     int64 price;
+    int64 pythDecimals;
   }
 
   AssetPythPriceData[] assetPythPriceDatas;
@@ -29,14 +30,14 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   bytes[] initialPriceFeedDatas;
 
   constructor() {
-    assetPythPriceDatas.push(AssetPythPriceData(wethAssetId, wethPriceId, 1500));
-    assetPythPriceDatas.push(AssetPythPriceData(wbtcAssetId, wbtcPriceId, 20000));
-    assetPythPriceDatas.push(AssetPythPriceData(daiAssetId, daiPriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(usdcAssetId, usdcPriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(usdtAssetId, usdtPriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(gmxAssetId, gmxPriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(appleAssetId, applePriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(jpyAssetId, jpyPriceid, 1));
+    assetPythPriceDatas.push(AssetPythPriceData(wethAssetId, wethPriceId, 1500, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(wbtcAssetId, wbtcPriceId, 20000, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(daiAssetId, daiPriceId, 1, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(usdcAssetId, usdcPriceId, 1, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(usdtAssetId, usdtPriceId, 1, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(gmxAssetId, gmxPriceId, 1, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(appleAssetId, applePriceId, 1, -5));
+    assetPythPriceDatas.push(AssetPythPriceData(jpyAssetId, jpyPriceid, 1, -3));
 
     // set MarketStatus
     oracleMiddleWare.setUpdater(address(this), true); // Whitelist updater for oracleMiddleWare
@@ -100,15 +101,25 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   }
 
   function _createPriceFeedUpdateData(bytes32 _assetId, int64 _price) internal returns (bytes memory) {
-    IConfigStorage.AssetConfig memory assetConfig = configStorage.getAssetConfig(_assetId);
+    int64 decimals;
 
-    int64 _decimalPow = int64(10) ** uint64(assetConfig.decimals);
+    for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
+      if (assetPythPriceDatas[i].assetId == _assetId) {
+        decimals = assetPythPriceDatas[i].pythDecimals;
+        break;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+
+    int64 _decimalPow = int64(10) ** uint64(-decimals);
 
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
       pythAdapter.pythPriceIdOf(_assetId),
       _price * _decimalPow,
       0,
-      -int8(assetConfig.decimals),
+      int8(decimals),
       _price * _decimalPow,
       0,
       uint64(block.timestamp)

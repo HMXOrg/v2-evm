@@ -14,6 +14,8 @@ interface IVaultStorage {
    * Functions
    */
 
+  function totalAmount(address _token) external returns (uint256);
+
   function plpLiquidityDebtUSDE30() external view returns (uint256);
 
   function traderBalances(address _trader, address _token) external view returns (uint256 amount);

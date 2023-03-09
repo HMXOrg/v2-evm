@@ -253,11 +253,12 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     bytes[] memory _priceData
   ) external nonReentrant onlyOrderExecutor {
     // Update price to Pyth
-    // slither-disable-next-line arbitrary-send-eth
+
     uint256 _feedPriceFee = IPyth(pyth).getUpdateFee(_priceData);
 
     // TODO will fix on another pr
     // _transferOutETH(_feedPriceFee, address(this));
+    // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: _feedPriceFee }(_priceData);
 
     if (liquidityOrders[_account].length == 0) revert ILiquidityHandler_NoOrder();

@@ -158,7 +158,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool _reduceOnly,
     address _tpToken
   ) external payable nonReentrant {
-    // Check if exectuion fee is lower than minExecutionFee, then it's too low. We won't allow it.
+    // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
     if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
     // The attached native token must be equal to _executionFee
     if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
@@ -226,7 +226,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // Validate if the current price is valid for the execution of this order
-    (uint256 _currentPrice, ) = validatePositionOrderPrice(
+    (uint256 _currentPrice, ) = _validatePositionOrderPrice(
       vars.order.triggerAboveThreshold,
       vars.order.triggerPrice,
       vars.order.marketIndex,
@@ -435,44 +435,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     PerpStorage.GlobalMarket globalMarket;
   }
 
-  function validatePositionOrderPrice(
-    bool _triggerAboveThreshold,
-    uint256 _triggerPrice,
-    uint256 _marketIndex,
-    int256 _sizeDelta,
-    bool _maximizePrice,
-    bool _revertOnError
-  ) public view returns (uint256, bool) {
-    ValidatePositionOrderPriceVars memory vars;
-
-    // Get price from Pyth
-    vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
-    vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
-
-    (uint256 _currentPrice, , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
-      vars.marketConfig.assetId,
-      _maximizePrice,
-      (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
-      _sizeDelta,
-      vars.marketConfig.fundingRate.maxSkewScaleUSD
-    );
-
-    // Validate market status
-    if (_marketStatus != 2) {
-      if (_revertOnError) revert ILimitTradeHandler_MarketIsClosed();
-      else return (_currentPrice, false);
-    }
-
-    // Validate price is executable
-    bool isPriceValid = _triggerAboveThreshold ? _currentPrice > _triggerPrice : _currentPrice < _triggerPrice;
-    if (_revertOnError) {
-      if (!isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
-    }
-
-    return (_currentPrice, isPriceValid);
-  }
-
   /**
    * Setters
    */
@@ -504,6 +466,44 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /**
    * Internal Functions
    */
+
+  function _validatePositionOrderPrice(
+    bool _triggerAboveThreshold,
+    uint256 _triggerPrice,
+    uint256 _marketIndex,
+    int256 _sizeDelta,
+    bool _maximizePrice,
+    bool _revertOnError
+  ) internal view returns (uint256, bool) {
+    ValidatePositionOrderPriceVars memory vars;
+
+    // Get price from Pyth
+    vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
+    vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
+    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
+
+    (uint256 _currentPrice, , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      vars.marketConfig.assetId,
+      _maximizePrice,
+      (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
+      _sizeDelta,
+      vars.marketConfig.fundingRate.maxSkewScaleUSD
+    );
+
+    // Validate market status
+    if (_marketStatus != 2) {
+      if (_revertOnError) revert ILimitTradeHandler_MarketIsClosed();
+      else return (_currentPrice, false);
+    }
+
+    // Validate price is executable
+    bool isPriceValid = _triggerAboveThreshold ? _currentPrice > _triggerPrice : _currentPrice < _triggerPrice;
+    if (_revertOnError) {
+      if (!isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
+    }
+
+    return (_currentPrice, isPriceValid);
+  }
 
   /// @notice Transfer in ETH from user to be used as execution fee
   /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.

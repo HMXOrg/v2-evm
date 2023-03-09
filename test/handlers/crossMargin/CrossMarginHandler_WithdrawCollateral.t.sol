@@ -5,8 +5,8 @@ import { CrossMarginHandler_Base, IPerpStorage } from "./CrossMarginHandler_Base
 
 // What is this test DONE
 // - revert
-//   - Try withdraw token collaeral with not accepted token (Ex. Fx, Equity)
-//   - Try withdraw token collateral with incufficent allowance
+//   - Try withdraw token collateral with not accepted token (Ex. Fx, Equity)
+//   - Try withdraw token collateral with insufficient allowance
 // - success
 //   - Try deposit and withdraw collateral with happy case
 //   - Try deposit and withdraw collateral with happy case and check on token list of sub account
@@ -21,14 +21,14 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginHandler_Base {
    * TEST REVERT
    */
 
-  // Try withdraw token collaeral with not accepted token (Ex. Fx, Equity)
+  // Try withdraw token collateral with not accepted token (Ex. Fx, Equity)
   function testRevert_handler_withdrawCollateral_onlyAcceptedToken() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
     crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(dai), 10 ether, priceDataBytes);
   }
 
-  //  Try withdraw token collateral with incufficent allowance
+  //  Try withdraw token collateral with insufficient allowance
   function testRevert_handler_withdrawCollateral_InsufficientBalance() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InsufficientBalance()"));

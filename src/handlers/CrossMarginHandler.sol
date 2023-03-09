@@ -64,7 +64,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
   /// @notice Set new CrossMarginService contract address.
   /// @param _crossMarginService New CrossMarginService contract address.
-  function setCrossMarginService(address _crossMarginService) external onlyOwner {
+  function setCrossMarginService(address _crossMarginService) external nonReentrant onlyOwner {
     if (_crossMarginService == address(0)) revert ICrossMarginHandler_InvalidAddress();
     emit LogSetCrossMarginService(crossMarginService, _crossMarginService);
     crossMarginService = _crossMarginService;
@@ -75,7 +75,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
   /// @notice Set new Pyth contract address.
   /// @param _pyth New Pyth contract address.
-  function setPyth(address _pyth) external onlyOwner {
+  function setPyth(address _pyth) external nonReentrant onlyOwner {
     if (_pyth == address(0)) revert ICrossMarginHandler_InvalidAddress();
     emit LogSetPyth(pyth, _pyth);
     pyth = _pyth;

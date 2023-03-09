@@ -2,6 +2,11 @@
 pragma solidity 0.8.18;
 
 interface IPerpStorage {
+  /**
+   * Errors
+   */
+  error IPerpStorage_NotWhiteListed();
+
   struct GlobalState {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
   }
@@ -93,4 +98,6 @@ interface IPerpStorage {
   function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external;
 
   function getPositionIds(address _subAccount) external returns (bytes32[] memory _positionIds);
+
+  function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
 }

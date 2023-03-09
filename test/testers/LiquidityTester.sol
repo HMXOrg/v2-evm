@@ -29,7 +29,7 @@ contract LiquidityTester is StdAssertions {
     liquidityHandler = _liquidityHandler;
   }
 
-  struct LiquidityAssertData {
+  struct LiquidityExpectedData {
     address token;
     uint256 lpTotalSupply;
     uint256 tokenBalance;
@@ -45,23 +45,23 @@ contract LiquidityTester is StdAssertions {
   ///      - Total token amount in VaultStorage's state
   ///      - Fee is VaultStorage's state
   ///      - Token balance in VaultStorage
-  function assertLiquidityInfo(LiquidityAssertData memory _data) internal {
-    address _token = _data.token;
-    uint256 _totalBalance = _data.tokenBalance;
+  function assertLiquidityInfo(LiquidityExpectedData memory _expectedData) internal {
+    address _token = _expectedData.token;
+    uint256 _totalBalance = _expectedData.tokenBalance;
 
     // Check PLPv2 total supply
-    assertEq(plp.totalSupply(), _data.lpTotalSupply, "PLP Total supply");
+    assertEq(plp.totalSupply(), _expectedData.lpTotalSupply, "PLP Total supply");
 
     // Deposit / Withdraw fee
     // note: to integrate this tester with LiquidityService
     if (liquidityHandler != address(0)) {
-      assertEq(liquidityHandler.balance, _data.executionFee);
+      assertEq(liquidityHandler.balance, _expectedData.executionFee);
     }
 
     // Check VaultStorage's state
     assertEq(vaultStorage.plpLiquidity(_token), _totalBalance, "PLP token liquidity amount");
     assertEq(vaultStorage.totalAmount(_token), _totalBalance, "Token balance");
-    assertEq(vaultStorage.fees(_token), _data.fee);
+    assertEq(vaultStorage.fees(_token), _expectedData.fee);
 
     // Check token balance
     assertEq(IERC20(_token).balanceOf(address(vaultStorage)), _totalBalance);

@@ -13,5 +13,6 @@ contract LiquidityHandler_Base is BaseTest {
 
   function setUp() public virtual {
     liquidityHandler = Deployer.deployLiquidityHandler(address(mockLiquidityService), address(mockPyth), 5 ether);
+    plp.setMinter(address(this), true);
   }
 }

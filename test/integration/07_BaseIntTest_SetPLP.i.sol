@@ -6,6 +6,7 @@ import { BaseIntTest_SetTokens } from "@hmx-test/integration/06_BaseIntTest_SetT
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { console } from "forge-std/console.sol";
 
 abstract contract BaseIntTest_SetPLP is BaseIntTest_SetTokens {
   constructor() {
@@ -25,8 +26,10 @@ abstract contract BaseIntTest_SetPLP is BaseIntTest_SetTokens {
     );
 
     _setupAcceptedToken();
+    liquidityHandler.setOrderExecutor(ORDER_EXECUTOR, true);
+    configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
 
-    liquidityHandler.setOrderExecutor(address(this), true);
+    vaultStorage.setServiceExecutors(address(liquidityService), true);
   }
 
   function _setupAcceptedToken() private {

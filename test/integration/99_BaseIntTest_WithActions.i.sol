@@ -21,7 +21,8 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     ERC20 _tokenIn,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData
+    bytes[] memory _priceData,
+    uint256 _orderIndex
   ) internal {
     vm.startPrank(_liquidityProvider);
     _tokenIn.approve(address(liquidityHandler), _amountIn);
@@ -36,7 +37,11 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     );
     vm.stopPrank();
 
-    liquidityHandler.executeOrder(_liquidityProvider, 0, _priceData);
+    //TODO fix this
+    vm.deal(address(liquidityHandler), 1 ether);
+
+    vm.prank(ORDER_EXECUTOR);
+    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, _priceData);
   }
 
   /// @notice Helper function to remove liquidity and execute order via handler
@@ -50,10 +55,13 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     ERC20 _tokenOut,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] calldata _priceData
+    bytes[] memory _priceData,
+    uint256 _orderIndex
   ) internal {
     vm.startPrank(_liquidityProvider);
-    _tokenOut.approve(address(liquidityHandler), _amountIn);
+
+    plpV2.approve(address(liquidityHandler), _amountIn);
+    // _tokenOut.approve(address(liquidityHandler), _amountIn);
     /// note: minOut always 0 to make test passed
     /// note: shouldWrap treat as false when only GLP could be liquidity
     liquidityHandler.createRemoveLiquidityOrder{ value: _executionFee }(
@@ -65,7 +73,11 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     );
     vm.stopPrank();
 
-    liquidityHandler.executeOrder(_liquidityProvider, 0, _priceData);
+    //TODO fix this
+    vm.deal(address(liquidityHandler), 1 ether);
+
+    vm.prank(ORDER_EXECUTOR);
+    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, _priceData);
   }
 
   /**

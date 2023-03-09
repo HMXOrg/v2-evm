@@ -9,6 +9,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
+import { console } from "forge-std/console.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -97,6 +98,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function validateAcceptedLiquidityToken(address _token) external view {
+    console.log("token", _token);
     if (!assetPlpTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedLiquidity();
   }
 

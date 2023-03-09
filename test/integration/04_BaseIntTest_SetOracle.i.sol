@@ -50,7 +50,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       }
     }
     uint256 fee = pyth.getUpdateFee(initialPriceFeedDatas);
-    vm.deal(address(this), fee);
+    vm.deal(address(this), 1 ether);
     pyth.updatePriceFeeds{ value: fee }(initialPriceFeedDatas);
   }
 

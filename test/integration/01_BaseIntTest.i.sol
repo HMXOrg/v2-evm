@@ -1,27 +1,41 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+// Forge-std
 import { TestBase } from "forge-std/Base.sol";
+import { console } from "forge-std/console.sol";
 import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Deployer } from "@hmx-test/libs/Deployer.sol";
+// Pyth
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 
-import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
+// Openzepline
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+// Libs
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+
+// Mock
+import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
+import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
+
+// Interfaces
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
+import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
+
+import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
@@ -33,10 +47,11 @@ import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginServic
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
+  /* Constants */
   uint256 internal constant DOLLAR = 1e30;
+  uint256 internal constant executionOrderFee = 0.0001 ether;
 
   address internal ALICE;
   address internal BOB;
@@ -44,6 +59,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal DAVE;
   address internal EVE;
   address internal FEEVER;
+  address internal ORDER_EXECUTOR;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -51,6 +67,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   IPerpStorage perpStorage;
   IVaultStorage vaultStorage;
   ICalculator calculator;
+  IFeeCalculator feeCalculator;
 
   // handlers
   IBotHandler botHandler;
@@ -71,10 +88,13 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   ERC20 glp;
   IPLPv2 plpV2;
 
+  MockErc20 wbtc; // decimals 8
+  MockErc20 usdc; // decimals 6
+  MockErc20 usdt; // decimals 6
+  MockErc20 dai; // decimals 18
+
   // UNDERLYING ARBRITRUM GLP => ETH WBTC LINK UNI USDC USDT DAI FRAX
   IWNative weth; //for native
-
-  address jpy = address(0);
 
   /* PYTH */
   MockPyth internal pyth;
@@ -87,6 +107,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     DAVE = makeAddr("DAVE");
     EVE = makeAddr("EVE");
     FEEVER = makeAddr("FEEVER");
+    ORDER_EXECUTOR = makeAddr("ORDER_EXECUTOR");
 
     // deploy MOCK weth
     weth = IWNative(new MockWNative());
@@ -109,8 +130,14 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     // deploy vaultStorage
     vaultStorage = Deployer.deployVaultStorage();
 
+    // Tokens
     // deploy plp
     plpV2 = Deployer.deployPLPv2();
+
+    wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
+    dai = new MockErc20("DAI Stablecoin", "DAI", 18);
+    usdc = new MockErc20("USD Coin", "USDC", 6);
+    usdt = new MockErc20("USD Tether", "USDT", 6);
 
     // deploy calculator
     calculator = Deployer.deployCalculator(
@@ -119,6 +146,9 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       address(perpStorage),
       address(configStorage)
     );
+
+    // deploy fee calculator
+    feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
 
     // deploy handler and service
     liquidityService = Deployer.deployLiquidityService(
@@ -141,18 +171,45 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), address(pyth));
     crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), address(pyth));
 
-    // TODO put last params
-    limitTradeHandler = Deployer.deployLimitTradeHandler(address(weth), address(tradeService), address(pyth), 0);
+    limitTradeHandler = Deployer.deployLimitTradeHandler(
+      address(weth),
+      address(tradeService),
+      address(pyth),
+      executionOrderFee
+    );
 
-    // TODO put last params
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), 0);
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), executionOrderFee);
+
     marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), address(pyth));
 
-    /* configStorage */
-    // serviceExecutor
-    // calculator
-    // oracle
-    // plp
-    // weth
+    // Setup ConfigStorage
+    {
+      configStorage.setOracle(address(oracleMiddleWare));
+      configStorage.setCalculator(address(calculator));
+      configStorage.setFeeCalculator(address(feeCalculator));
+      tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
+
+      // Set whitelists for executors
+      configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
+      configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
+      configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
+
+      configStorage.setWeth(address(weth));
+    }
+
+    // Setup VaultStorage
+    {
+      vaultStorage.setServiceExecutors(address(crossMarginService), true);
+      vaultStorage.setServiceExecutors(address(tradeService), true);
+      vaultStorage.setServiceExecutors(address(liquidityService), true);
+      vaultStorage.setServiceExecutors(address(feeCalculator), true);
+    }
+
+    // Setup PerpStorage
+    {
+      perpStorage.setServiceExecutors(address(crossMarginService), true);
+      perpStorage.setServiceExecutors(address(tradeService), true);
+      perpStorage.setServiceExecutors(address(liquidityService), true);
+    }
   }
 }

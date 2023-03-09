@@ -594,7 +594,6 @@ contract Calculator is Owned, ICalculator {
       // Calculate accumulative value of collateral tokens
       // collateral value = (collateral amount * price) * collateralFactorBPS
       // collateralFactor 1e4 = 100%
-
       _collateralValueE30 += (_amount * _priceE30 * collateralFactorBPS) / ((10 ** _decimals) * BPS);
 
       unchecked {
@@ -699,7 +698,7 @@ contract Calculator is Owned, ICalculator {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = getIMR(_subAccount);
 
-    if (equity < 0) return 0;
+    if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
   }
@@ -839,13 +838,15 @@ contract Calculator is Owned, ICalculator {
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
     vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRateBPS))) / 1e4;
-    vars.newFundingRate = globalMarket.currentFundingRate + vars.nextFundingRate;
+
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
+    vars.newFundingRate = (globalMarket.currentFundingRate + vars.nextFundingRate) * vars.elapsedIntervals;
+
     if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize) * vars.elapsedIntervals) / 1e30;
+      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize)) / 1e30;
     }
     if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize) * vars.elapsedIntervals) / 1e30;
+      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
     }
     return (vars.newFundingRate, fundingRateLong, fundingRateShort);
   }
@@ -874,10 +875,12 @@ contract Calculator is Owned, ICalculator {
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
+
+    // @todo - funding fee Bug found here, must be resolved
     if (_isLong) {
       return _fundingRate < 0 ? -fundingFee : fundingFee;
     } else {
-      return _fundingRate < 0 ? fundingFee : -fundingFee;
+      return _fundingRate < 0 ? -fundingFee : fundingFee;
     }
   }
 

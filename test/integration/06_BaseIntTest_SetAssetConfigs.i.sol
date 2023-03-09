@@ -1,43 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetCollaterals } from "@hmx-test/integration/05_BaseIntTest_SetCollaterals.i.sol";
+import { BaseIntTest_SetCollateralTokens } from "@hmx-test/integration/05_BaseIntTest_SetCollateralTokens.i.sol";
 
-import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 
-abstract contract BaseIntTest_SetTokens is BaseIntTest_SetCollaterals {
-  // use MockErc20 because want to mint token to user directly
-  MockErc20 wbtc; // decimals 8
-  MockErc20 usdc; // decimals 6
-  MockErc20 usdt; // decimals 6
-  MockErc20 dai; // decimals 18
-
-  MockErc20 gmx; //decimals 18
-
+abstract contract BaseIntTest_SetAssetConfigs is BaseIntTest_SetCollateralTokens {
   constructor() {
-    wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
-    dai = new MockErc20("DAI Stablecoin", "DAI", 18);
-    usdc = new MockErc20("USD Coin", "USDC", 6);
-    usdt = new MockErc20("USD Tether", "USDT", 6);
-    gmx = new MockErc20("GMX", "GMX", 18);
-    plpV2 = IPLPv2(address(new MockErc20("PLPV2", "PLPv2", 18)));
-
-    configStorage.setPLP(address(plpV2));
-    configStorage.setWeth(address(weth));
-
     _addAssetConfig(wethAssetId, address(weth), 18, false);
-
     _addAssetConfig(wbtcAssetId, address(wbtc), 8, false);
-
     _addAssetConfig(daiAssetId, address(dai), 18, true);
-
     _addAssetConfig(usdcAssetId, address(usdc), 6, true);
-
     _addAssetConfig(usdtAssetId, address(usdt), 6, true);
-
-    _addAssetConfig(gmxAssetId, address(gmx), 18, true);
   }
 
   /// @notice to add asset config with some default value

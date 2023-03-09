@@ -3,9 +3,9 @@ pragma solidity 0.8.18;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import { BaseIntTest_SetPLP } from "@hmx-test/integration/07_BaseIntTest_SetPLP.i.sol";
+import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
 
-contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
+contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
   /**
    * Liquidity
    */
@@ -21,7 +21,8 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     ERC20 _tokenIn,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData
+    bytes[] memory _priceData,
+    uint256 _orderIndex
   ) internal {
     vm.startPrank(_liquidityProvider);
     _tokenIn.approve(address(liquidityHandler), _amountIn);
@@ -36,7 +37,8 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     );
     vm.stopPrank();
 
-    liquidityHandler.executeOrder(_liquidityProvider, 0, payable(FEEVER), _priceData);
+    vm.prank(ORDER_EXECUTOR);
+    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, _priceData);
   }
 
   /// @notice Helper function to remove liquidity and execute order via handler
@@ -50,10 +52,13 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     ERC20 _tokenOut,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] calldata _priceData
+    bytes[] memory _priceData,
+    uint256 _orderIndex
   ) internal {
     vm.startPrank(_liquidityProvider);
-    _tokenOut.approve(address(liquidityHandler), _amountIn);
+
+    plpV2.approve(address(liquidityHandler), _amountIn);
+    // _tokenOut.approve(address(liquidityHandler), _amountIn);
     /// note: minOut always 0 to make test passed
     /// note: shouldWrap treat as false when only GLP could be liquidity
     liquidityHandler.createRemoveLiquidityOrder{ value: _executionFee }(
@@ -65,7 +70,8 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     );
     vm.stopPrank();
 
-    liquidityHandler.executeOrder(_liquidityProvider, 0, payable(FEEVER), _priceData);
+    vm.prank(ORDER_EXECUTOR);
+    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, _priceData);
   }
 
   /**
@@ -99,7 +105,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     uint8 _subAccountId,
     ERC20 _collateralToken,
     uint256 _withdrawAmount,
-    bytes[] calldata _priceData
+    bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
     crossMarginHandler.withdrawCollateral(
@@ -151,5 +157,14 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
   ) internal {
     vm.prank(_account);
     marketTradeHandler.sell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData);
+  }
+
+  /**
+   * COMMON FUNCTION
+   */
+
+  function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 }

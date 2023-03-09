@@ -584,6 +584,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         delta = _vars.position.reserveValueE30;
         _isMaxProfit = true;
       }
+
       if (isProfit) {
         _realizedPnl = int256((delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
       } else {
@@ -683,6 +684,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           );
         } else {
           // loss
+
           _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _vars.limitPriceE30, _marketConfig.assetId);
         }
       }
@@ -1009,15 +1011,15 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
-      (int256 newFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
+      (int256 newFundingRate, int256 nextFundingFeeLong, int256 nextFundingFeeShort) = calculator.getNextFundingRate(
         _marketIndex,
         _limitPriceE30
       );
 
       _globalMarket.currentFundingRate = newFundingRate;
-      _globalMarket.accumFundingLong += nextFundingRateLong;
-      _globalMarket.accumFundingShort += nextFundingRateShort;
-      _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      _globalMarket.accumFundingLong = nextFundingFeeLong;
+      _globalMarket.accumFundingShort = nextFundingFeeShort;
+      _globalMarket.lastFundingTime = block.timestamp;
 
       _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
     }
@@ -1111,9 +1113,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
       FeeCalculator.SettleMarginFeeLoopVar memory tmpVars; // This will be re-assigned every times when start looping
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
-
       tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(tmpVars.underlyingToken);
-
       tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);
 
       // If the sub-account has a balance of this underlying token (collateral token amount)
@@ -1193,21 +1193,23 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
       // Retrieve the balance of each plp underlying token for the sub-account (token collateral amount)
       tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);
+
       tmpVars.fundingFee = _vaultStorage.fundingFee(tmpVars.underlyingToken); // Global token amount of funding fee collected from traders
 
       // Retrieve the latest price and confident threshold of the plp underlying token
       // @todo refactor this?
       bytes32 _underlyingAssetId = _configStorage.tokenAssetIds(tmpVars.underlyingToken);
-      if (_limitPriceE30 != 0 && _underlyingAssetId == _limitAssetId) {
-        tmpVars.price = _limitPriceE30;
-      } else {
-        (tmpVars.price, ) = oracle.getLatestPrice(_underlyingAssetId, false);
-      }
 
       // feeUSD > 0 or isPayFee == true, means trader pay fee
       if (isPayFee) {
         // If the sub-account has a balance of this underlying token (collateral token amount)
         if (tmpVars.traderBalance != 0) {
+          if (_limitPriceE30 != 0 && _underlyingAssetId == _limitAssetId) {
+            tmpVars.price = _limitPriceE30;
+          } else {
+            (tmpVars.price, ) = oracle.getLatestPrice(_underlyingAssetId, false);
+          }
+
           // If this plp underlying token contains borrowing debt from PLP then trader must repays debt to PLP first
           if (acmVars.plpLiquidityDebtUSDE30 > 0)
             acmVars.absFeeUsd = _feeCalculator.repayFundingFeeDebtToPLP(
@@ -1224,6 +1226,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
       // feeUSD < 0 or isPayFee == false, means trader receive fee
       else {
         if (tmpVars.fundingFee != 0) {
+          if (_limitPriceE30 != 0 && _underlyingAssetId == _limitAssetId) {
+            tmpVars.price = _limitPriceE30;
+          } else {
+            (tmpVars.price, ) = oracle.getLatestPrice(_underlyingAssetId, false);
+          }
+
           acmVars.absFeeUsd = _feeCalculator.receiveFundingFee(_subAccount, acmVars.absFeeUsd, tmpVars);
         }
       }

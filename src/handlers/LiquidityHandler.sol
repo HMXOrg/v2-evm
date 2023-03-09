@@ -255,8 +255,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     address payable _feeReceiver,
     bytes[] memory _priceData
   ) external nonReentrant onlyOrderExecutor {
-    // Update price to Pyth
-
     if (liquidityOrders[_account].length == 0) revert ILiquidityHandler_NoOrder();
     uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
 

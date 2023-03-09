@@ -573,7 +573,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     int256 _realizedPnl;
     {
       _vars.avgEntryPriceE30 = _vars.position.avgEntryPriceE30;
-      (isProfit, delta) = getDelta(
+      (isProfit, delta) = _getDelta(
         _vars.absPositionSizeE30,
         _vars.isLongPosition,
         _vars.priceE30,
@@ -810,6 +810,15 @@ contract TradeService is ReentrancyGuard, ITradeService {
     }
   }
 
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) external pure returns (bool, uint256) {
+    return _getDelta(_size, _isLong, _markPrice, _averagePrice);
+  }
+
   // @todo - remove usage from test
   // @todo - move to calculator ??
   // @todo - pass current price here
@@ -820,12 +829,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _averagePrice The average price of the position.
   /// @return isProfit A boolean value indicating whether the position is profitable or not.
   /// @return delta The Profit between the average price and the fixed price, adjusted for the size of the order.
-  function getDelta(
+  function _getDelta(
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice
-  ) public pure returns (bool, uint256) {
+  ) internal pure returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
     if (_averagePrice == 0) revert ITradeService_InvalidAveragePrice();
 
@@ -879,8 +888,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _markPrice,
     uint256 _averagePrice
   ) internal pure returns (uint256) {
-    // Get the delta and isProfit value from the getDelta function
-    (bool isProfit, uint256 delta) = getDelta(_size, _isLong, _markPrice, _averagePrice);
+    // Get the delta and isProfit value from the _getDelta function
+    (bool isProfit, uint256 delta) = _getDelta(_size, _isLong, _markPrice, _averagePrice);
     // Calculate the next size and divisor
     uint256 nextSize = _size + _sizeDelta;
     uint256 divisor;

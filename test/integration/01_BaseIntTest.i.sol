@@ -10,6 +10,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 
@@ -20,6 +21,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 
@@ -49,6 +51,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   IPerpStorage perpStorage;
   IVaultStorage vaultStorage;
   ICalculator calculator;
+  IFeeCalculator feeCalculator;
 
   // handlers
   IBotHandler botHandler;
@@ -116,6 +119,9 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       address(configStorage)
     );
 
+    // deploy fee calculator
+    feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
+
     // deploy handler and service
     liquidityService = Deployer.deployLiquidityService(
       address(perpStorage),
@@ -141,14 +147,37 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     limitTradeHandler = Deployer.deployLimitTradeHandler(address(weth), address(tradeService), address(pyth), 0);
 
     // TODO put last params
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), 0);
+    uint256 _minExecutionFee = 1 ether;
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), _minExecutionFee);
     marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), address(pyth));
 
-    /* configStorage */
-    // serviceExecutor
-    // calculator
-    // oracle
-    // plp
-    // weth
+    // Setup ConfigStorage
+    {
+      configStorage.setOracle(address(oracleMiddleWare));
+      configStorage.setCalculator(address(calculator));
+      configStorage.setFeeCalculator(address(calculator));
+      tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
+
+      // Set whitelists for executors
+      configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
+      configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
+      configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
+
+      configStorage.setWeth(address(weth));
+    }
+
+    // Setup VaultStorage
+    {
+      vaultStorage.setServiceExecutors(address(crossMarginService), true);
+      vaultStorage.setServiceExecutors(address(tradeService), true);
+      vaultStorage.setServiceExecutors(address(liquidityService), true);
+    }
+
+    // Setup PerpStorage
+    {
+      perpStorage.setServiceExecutors(address(crossMarginService), true);
+      perpStorage.setServiceExecutors(address(tradeService), true);
+      perpStorage.setServiceExecutors(address(liquidityService), true);
+    }
   }
 }

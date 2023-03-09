@@ -3,9 +3,6 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_SetMarkets } from "@hmx-test/integration/03_BaseIntTest_SetMarkets.i.sol";
 
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { console } from "forge-std/console.sol";
-
 abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   error BadArgs();
 
@@ -22,6 +19,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     bytes32 assetId;
     bytes32 priceId;
     int64 price;
+    int64 pythDecimals;
   }
 
   AssetPythPriceData[] assetPythPriceDatas;
@@ -29,14 +27,35 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   bytes[] initialPriceFeedDatas;
 
   constructor() {
-    assetPythPriceDatas.push(AssetPythPriceData(wethAssetId, wethPriceId, 1500));
-    assetPythPriceDatas.push(AssetPythPriceData(wbtcAssetId, wbtcPriceId, 20000));
-    assetPythPriceDatas.push(AssetPythPriceData(daiAssetId, daiPriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(usdcAssetId, usdcPriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(usdtAssetId, usdtPriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(gmxAssetId, gmxPriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(appleAssetId, applePriceId, 1));
-    assetPythPriceDatas.push(AssetPythPriceData(jpyAssetId, jpyPriceid, 1));
+    assetPythPriceDatas.push(AssetPythPriceData(wethAssetId, wethPriceId, 1500, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(wbtcAssetId, wbtcPriceId, 20000, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(daiAssetId, daiPriceId, 1, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(usdcAssetId, usdcPriceId, 1, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(usdtAssetId, usdtPriceId, 1, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(gmxAssetId, gmxPriceId, 1, -8));
+    assetPythPriceDatas.push(AssetPythPriceData(appleAssetId, applePriceId, 1, -5));
+    assetPythPriceDatas.push(AssetPythPriceData(jpyAssetId, jpyPriceid, 1, -3));
+
+    // set MarketStatus
+    oracleMiddleWare.setUpdater(address(this), true); // Whitelist updater for oracleMiddleWare
+    oracleMiddleWare.setMarketStatus(wethAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(wbtcAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(daiAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(usdcAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(usdtAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(gmxAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(appleAssetId, uint8(2)); // active
+    oracleMiddleWare.setMarketStatus(jpyAssetId, uint8(2)); // active
+
+    // set AssetPriceConfig
+    oracleMiddleWare.setAssetPriceConfig(wethAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(daiAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(usdcAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(usdtAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(gmxAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(appleAssetId, 1e6, 60);
+    oracleMiddleWare.setAssetPriceConfig(jpyAssetId, 1e6, 60);
 
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
       AssetPythPriceData memory _data = assetPythPriceDatas[i];
@@ -79,15 +98,25 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   }
 
   function _createPriceFeedUpdateData(bytes32 _assetId, int64 _price) internal returns (bytes memory) {
-    IConfigStorage.AssetConfig memory assetConfig = configStorage.getAssetConfig(_assetId);
+    int64 pythDecimals;
 
-    int64 _decimalPow = int64(10) ** uint64(assetConfig.decimals);
+    for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
+      if (assetPythPriceDatas[i].assetId == _assetId) {
+        pythDecimals = assetPythPriceDatas[i].pythDecimals;
+        break;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+
+    int64 _decimalPow = int64(10) ** uint64(-pythDecimals);
 
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
       pythAdapter.pythPriceIdOf(_assetId),
       _price * _decimalPow,
       0,
-      -int8(assetConfig.decimals),
+      int8(pythDecimals),
       _price * _decimalPow,
       0,
       uint64(block.timestamp)

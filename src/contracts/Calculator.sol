@@ -13,6 +13,8 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
@@ -594,7 +596,6 @@ contract Calculator is Owned, ICalculator {
       // Calculate accumulative value of collateral tokens
       // collateral value = (collateral amount * price) * collateralFactorBPS
       // collateralFactor 1e4 = 100%
-
       _collateralValueE30 += (_amount * _priceE30 * collateralFactorBPS) / ((10 ** _decimals) * BPS);
 
       unchecked {
@@ -699,7 +700,7 @@ contract Calculator is Owned, ICalculator {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = getIMR(_subAccount);
 
-    if (equity < 0) return 0;
+    if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
   }

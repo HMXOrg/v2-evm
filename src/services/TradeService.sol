@@ -206,7 +206,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      _vars.priceE30 = _overwritePrice(_vars.priceE30, _limitPriceE30);
+      _vars.priceE30 = _limitPriceE30 != 0 ? _limitPriceE30 : _vars.priceE30;
 
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
@@ -402,7 +402,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      _vars.priceE30 = _overwritePrice(_vars.priceE30, _limitPriceE30);
+      _vars.priceE30 = _limitPriceE30 != 0 ? _limitPriceE30 : _vars.priceE30;
 
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
@@ -506,7 +506,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
   /// @notice This function validates if deleverage is safe and healthy in Pool liquidity provider.
   function validateDeleverage() external view {
-    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
+    // SLOAD
+    Calculator _calculator = calculator;
     uint256 _aum = _calculator.getAUME30(false, 0, 0);
     uint256 _tvl = _calculator.getPLPValueE30(false, 0, 0);
 
@@ -908,7 +909,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the total TVL
-    uint256 tvl = Calculator(calculator).getPLPValueE30(true, _limitPriceE30, _limitAssetId);
+    uint256 tvl = calculator.getPLPValueE30(true, _limitPriceE30, _limitAssetId);
 
     // Retrieve the global state
     PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
@@ -1281,10 +1282,4 @@ contract TradeService is ReentrancyGuard, ITradeService {
   function abs(int256 x) private pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
   }
-
-  function _overwritePrice(uint256 _price, uint256 _priceOverwrite) internal pure returns (uint256) {
-    return _priceOverwrite != 0 ? _priceOverwrite : _price;
-  }
-
-  function _updateDecreasePositionInfo() internal {}
 }

@@ -27,7 +27,7 @@ contract TC06 is BaseIntTest_WithActions {
     bytes[] memory priceDataT0 = new bytes[](0);
     vm.deal(BOB, 1 ether); //deal with out of gas
     usdt.mint(BOB, 1_000_000 * 1e6);
-    addLiquidity(BOB, usdt, 1_000_000 * 1e6, 1 ether, priceDataT0);
+    addLiquidity(BOB, usdt, 1_000_000 * 1e6, executionOrderFee, priceDataT0, 0);
 
     // Mint tokens to Alice
     {

@@ -38,7 +38,9 @@ import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
+  /* Constants */
   uint256 internal constant DOLLAR = 1e30;
+  uint256 internal constant executionOrderFee = 0.0001 ether;
 
   address internal ALICE;
   address internal BOB;
@@ -143,10 +145,14 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), address(pyth));
     crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), address(pyth));
 
-    uint256 _executionOrderFee = 0.0001 ether;
-    limitTradeHandler = Deployer.deployLimitTradeHandler(address(weth), address(tradeService), address(pyth), _executionOrderFee);
+    limitTradeHandler = Deployer.deployLimitTradeHandler(
+      address(weth),
+      address(tradeService),
+      address(pyth),
+      executionOrderFee
+    );
 
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), _executionOrderFee);
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), executionOrderFee);
 
     marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), address(pyth));
 

@@ -12,7 +12,6 @@ contract TC01 is BaseIntTest_WithActions {
     // WBTC = 20k
     // ALICE NEED 10k in terms of WBTC = 10000 /20000 * 10**8  = 5e7
     uint256 _amount = (10_000 * (10 ** configStorage.getAssetTokenDecimal(address(wbtc)))) / 20_000;
-    uint256 _executionFee = 0.01 ether;
 
     // mint 0.5 btc and give 0.01 gas
     vm.deal(ALICE, 1 ether);
@@ -21,24 +20,10 @@ contract TC01 is BaseIntTest_WithActions {
     // Alice Create Order And Executor Execute Order
 
     // T1: As a Liquidity, Alice adds 10,000 USD(GLP)
-    addLiquidity(
-      ALICE,
-      ERC20(address(wbtc)),
-      _amount,
-      _executionFee, // minExecutionFee
-      initialPriceFeedDatas,
-      0
-    );
+    addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas, 0);
 
     uint256 _amountAlice = plpV2.balanceOf(ALICE);
-    removeLiquidity(
-      ALICE,
-      ERC20(address(wbtc)),
-      _amountAlice,
-      _executionFee, // minExecutionFee
-      initialPriceFeedDatas,
-      1
-    );
+    removeLiquidity(ALICE, ERC20(address(wbtc)), _amountAlice, executionOrderFee, initialPriceFeedDatas, 1);
 
     // T2: Alice withdraws 100,000 USD with PLP
     // T3: Alice withdraws GLP 100 USD

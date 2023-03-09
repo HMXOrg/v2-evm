@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { IBridgeStrategy } from "../../interfaces/IBridgeStrategy.sol";
-import { ILayerZeroEndpoint } from "../../interfaces/ILayerZeroEndpoint.sol";
+import { IBridgeStrategy } from "../interfaces/IBridgeStrategy.sol";
+import { ILayerZeroEndpoint } from "../interfaces/ILayerZeroEndpoint.sol";
 
 contract LZBridgeStrategy is IBridgeStrategy, Ownable {
   event SetDestinationTokenContracts(uint256[] destChainIds, address[] tokenContracts);

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest } from "./BaseIntTest.i.sol";
+import { BaseIntTest_SetConfig } from "./02_BaseIntTest_SetConfig.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-abstract contract BaseIntTest_SetMarkets is BaseIntTest {
+abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
   // crypto
   bytes32 internal constant wethAssetId = "weth";
   bytes32 internal constant wbtcAssetId = "wbtc";

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetMarkets } from "./BaseIntTest_SetMarkets.i.sol";
+import { BaseIntTest_SetOracle } from "./04_BaseIntTest_SetOracle.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-abstract contract BaseIntTest_SetCollaterals is BaseIntTest_SetMarkets {
+abstract contract BaseIntTest_SetCollaterals is BaseIntTest_SetOracle {
   // @todo - setting discuss
   constructor() {
     // collateralFactorBPS = 0.8%

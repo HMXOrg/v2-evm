@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_WithActions } from "@hmx-test/integration/BaseIntTest_WithActions.i.sol";
+import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 import { console } from "forge-std/console.sol";
 
 contract TC01 is BaseIntTest_WithActions {

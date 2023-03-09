@@ -150,6 +150,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     {
       configStorage.setOracle(address(oracleMiddleWare));
       configStorage.setCalculator(address(calculator));
+      tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
 
       // Set whitelists for executors
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
@@ -157,6 +158,20 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
 
       configStorage.setWeth(address(weth));
+    }
+
+    // Setup VaultStorage
+    {
+      vaultStorage.setServiceExecutors(address(crossMarginService), true);
+      vaultStorage.setServiceExecutors(address(tradeService), true);
+      vaultStorage.setServiceExecutors(address(liquidityService), true);
+    }
+
+    // Setup PerpStorage
+    {
+      perpStorage.setServiceExecutors(address(crossMarginService), true);
+      perpStorage.setServiceExecutors(address(tradeService), true);
+      perpStorage.setServiceExecutors(address(liquidityService), true);
     }
   }
 }

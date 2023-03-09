@@ -43,8 +43,6 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _tpToken: address(weth)
     });
 
-    ILimitTradeHandler.LimitOrder memory limitOrder;
-
     limitOrderTester.assertLimitOrder({
       _subAccount: address(this),
       _orderIndex: 0,

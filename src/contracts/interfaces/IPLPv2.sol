@@ -2,6 +2,11 @@
 pragma solidity 0.8.18;
 
 interface IPLPv2 {
+  /**
+   * ERRORS
+   */
+  error IPLPv2_onlyMinter();
+
   function setMinter(address minter, bool isMinter) external;
 
   function mint(address to, uint256 amount) external;

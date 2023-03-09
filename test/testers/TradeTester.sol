@@ -21,35 +21,35 @@ contract TradeTester is StdAssertions {
   address limitTradeHandler;
   address marketHandler;
 
+  address[] interestTokens;
+
   constructor(
     IVaultStorage _vaultStorage,
     IPerpStorage _perpStorage,
-    address limitTradeHandler,
-    address marketHandler
+    address _limitTradeHandler,
+    address _marketHandler,
+    address[] memory _interestTokens
   ) {
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
+    limitTradeHandler = _limitTradeHandler;
+    marketHandler = _marketHandler;
+
+    interestTokens = _interestTokens;
   }
 
-  struct TradeExpectedData {
-    uint256 xxx;
-  }
-
-  struct PerpStateExpectedData {
-    uint256 subAccountFee;
-  }
-
-  struct GlobalStateExpectedData {
+  struct PositionExpectedData {
+    bytes32 positionId;
+    uint256 avgEntryPriceE30;
     uint256 reserveValueE30;
-  }
-
-  struct GlobalAssetClassExpectedData {
-    uint256 reserveValueE30;
-    uint256 sumBorrowingRate;
-    uint256 lastBorrowingTime;
+    uint256 openInterest;
+    uint256 lastIncreaseTimestamp;
+    int256 positionSizeE30;
+    int256 realizedPnl;
   }
 
   struct GlobalMarketExpectedData {
+    uint256 marketIndex;
     uint256 lastFundingTime;
     uint256 longPositionSize;
     uint256 longAvgPrice;
@@ -62,57 +62,220 @@ contract TradeTester is StdAssertions {
     int256 currentFundingRate;
   }
 
-  struct PositionExpectedData {
-    uint256 positionSizeE30;
-    uint256 avgEntryPriceE30;
+  struct GlobalStateExpectedData {
     uint256 reserveValueE30;
-    uint256 openInterest;
-    uint256 lastIncreaseTimestamp;
-    int256 realizedPnl;
+  }
+
+  struct GlobalAssetClassExpectedData {
+    uint256 reserveValueE30;
+    uint256 sumBorrowingRate;
+    uint256 lastBorrowingTime;
+    uint8 assetClassId;
+  }
+
+  struct PerpStorageExpectedData {
+    int256 subAccountFee;
+  }
+
+  struct VaultStorageExpectedData {
+    uint256 plpLiquidityDebtUSDE30;
+    mapping(address => uint256) plpLiquidity;
+    mapping(address => uint256) fees;
+    mapping(address => uint256) fundingFee;
+    mapping(address => uint256) devFees;
+    mapping(address => uint256) traderBalances;
   }
 
   /// @notice Assert function when Trader increase position
   /// @dev This function will check
-  ///       - PerpStorage's state
-  ///         - Sub-account fee
-  ///         - Global state
-  ///           - Reserve value
-  ///         - Global asset class
-  ///           - Last borrowing time
-  ///           - Borrowing Rate Summation
-  ///           - Reserve Value
-  ///         - Global market
-  ///           - Last funding time
-  ///           - Current functing rate
-  ///           - Accum funding long
-  ///           - Accum funding short
-  ///           - Long Position size
-  ///           - Long average price
-  ///           - Long Open interest
-  ///           - Short Position size
-  ///           - Short average price
-  ///           - Short Open interest
-  ///         - Position
-  ///           - Last increase timestamp
-  ///           - Open interest
-  ///           - Reserve value
-  ///           - Position size
-  ///           - Entry Borrowing rate - global asset class sum borrowing rate
-  ///           - Entry funding rate - global market current funding rate
-  ///           - Average entry price
-  ///       - VaultStorage's state
-  ///         - Trader balance
-  ///         - Dev fee
-  ///         - Funding Fee
-  ///         - Fee
-  ///         - PLP Liquidity
-  ///         - PLP Liquidity Debt value
-  function assertTradeInfo() internal {}
+  ///     - Position
+  ///       - Last increase timestamp
+  ///     - Global market
+  ///     - PerpStorage
+  ///     - VaultStorage
+  function assertAfterIncrease(
+    address _subAccount,
+    PositionExpectedData memory _positionExpectedData,
+    GlobalMarketExpectedData memory _globalMarketExpectedData,
+    GlobalAssetClassExpectedData memory _globalAssetClassExpectedData,
+    GlobalStateExpectedData memory _globalStateExpectedData,
+    PerpStorageExpectedData memory _perpStorageExpectedData,
+    VaultStorageExpectedData storage _vaultStorageExpectedData
+  ) internal {
+    // Check position info
+    IPerpStorage.Position memory _position = _assertPosition(
+      _positionExpectedData,
+      _globalMarketExpectedData,
+      _globalAssetClassExpectedData
+    );
 
-  /// @notice Assert function when Trader increase position
-  /// @dev This function will check (same with IncreasePosition) and additional below
-  ///       - PerpSotage's state
-  ///         - Position
-  ///           - Realized PnL
-  function assert() internal {}
+    // This assert only increase position
+    assertEq(_position.lastIncreaseTimestamp, block.timestamp, "Last increase timestamp");
+
+    // Check market
+    _assertMarket(_globalMarketExpectedData);
+
+    // Check perp storage
+    _assertPerpStorage(_subAccount, _perpStorageExpectedData, _globalAssetClassExpectedData, _globalStateExpectedData);
+    _assertVaultStorage(_subAccount, _vaultStorageExpectedData);
+  }
+
+  /// @notice Assert function when Trader decrease position
+  /// @dev This function will check
+  ///     - Position
+  ///       - Realized PnL
+  ///     - Global market
+  ///     - PerpStorage
+  ///     - VaultStorage
+  function assertAfterDecrease(
+    address _subAccount,
+    PositionExpectedData memory _positionExpectedData,
+    GlobalMarketExpectedData memory _globalMarketExpectedData,
+    GlobalAssetClassExpectedData memory _globalAssetClassExpectedData,
+    GlobalStateExpectedData memory _globalStateExpectedData,
+    PerpStorageExpectedData memory _perpStorageExpectedData,
+    VaultStorageExpectedData storage _vaultStorageExpectedData
+  ) internal {
+    // Check position info
+    IPerpStorage.Position memory _position = _assertPosition(
+      _positionExpectedData,
+      _globalMarketExpectedData,
+      _globalAssetClassExpectedData
+    );
+
+    // This assert only increase position
+    assertEq(_position.realizedPnl, _positionExpectedData.realizedPnl, "Last increase timestamp");
+
+    // Check market
+    _assertMarket(_globalMarketExpectedData);
+    _assertPerpStorage(_subAccount, _perpStorageExpectedData, _globalAssetClassExpectedData, _globalStateExpectedData);
+    _assertVaultStorage(_subAccount, _vaultStorageExpectedData);
+  }
+
+  /// @notice Assert position info
+  /// @dev This function will check
+  ///       - Average entry price
+  ///       - Reserve value
+  ///       - Position size
+  ///       - Open interest
+  ///       - Entry Borrowing rate - global asset class sum borrowing rate
+  ///       - Entry funding rate - global market current funding rate
+  function _assertPosition(
+    PositionExpectedData memory _positionExpectedData,
+    GlobalMarketExpectedData memory _globalMarketExpectedData,
+    GlobalAssetClassExpectedData memory _globalAssetClassExpectedData
+  ) internal returns (IPerpStorage.Position memory _position) {
+    _position = perpStorage.getPositionById(_positionExpectedData.positionId);
+
+    assertEq(_position.positionSizeE30, _positionExpectedData.positionSizeE30, "Position size");
+    assertEq(_position.avgEntryPriceE30, _positionExpectedData.avgEntryPriceE30, "Position Average Price");
+    assertEq(_position.reserveValueE30, _positionExpectedData.reserveValueE30, "Position Reserve");
+    assertEq(_position.openInterest, _positionExpectedData.openInterest, "Position Open Interest");
+
+    assertEq(_position.entryBorrowingRate, _globalAssetClassExpectedData.sumBorrowingRate, "Entry Borrowing rate");
+    assertEq(_position.entryFundingRate, _globalMarketExpectedData.currentFundingRate, "Entry Funding rate");
+  }
+
+  /// @notice Assert Market
+  /// @dev This function will check
+  ///       - Last funding time
+  ///       - Current functing rate
+  ///       - Accum funding long
+  ///       - Accum funding short
+  ///       - Long Position size
+  ///       - Long average price
+  ///       - Long Open interest
+  ///       - Short Position size
+  ///       - Short average price
+  ///       - Short Open interest
+  function _assertMarket(GlobalMarketExpectedData memory _globalMarketExpectedData) internal {
+    IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(
+      _globalMarketExpectedData.marketIndex
+    );
+
+    assertEq(_globalMarket.longPositionSize, _globalMarketExpectedData.longPositionSize, "Long Position size");
+    assertEq(_globalMarket.longAvgPrice, _globalMarketExpectedData.longAvgPrice, "Long Average Price");
+    assertEq(_globalMarket.longOpenInterest, _globalMarketExpectedData.longOpenInterest, "Long Open Interest");
+
+    assertEq(_globalMarket.shortPositionSize, _globalMarketExpectedData.shortPositionSize, "Short Position size");
+    assertEq(_globalMarket.shortAvgPrice, _globalMarketExpectedData.shortAvgPrice, "Short Average Price");
+    assertEq(_globalMarket.shortOpenInterest, _globalMarketExpectedData.shortOpenInterest, "Short Open Interest");
+
+    assertEq(_globalMarket.accumFundingLong, _globalMarketExpectedData.accumFundingLong, "Accum Funding Long");
+    assertEq(_globalMarket.accumFundingShort, _globalMarketExpectedData.accumFundingShort, "Accum Funding Short");
+    assertEq(_globalMarket.currentFundingRate, _globalMarketExpectedData.currentFundingRate, "Current Funding Rate");
+    assertEq(_globalMarket.lastFundingTime, _globalMarketExpectedData.lastFundingTime, "Last Funding Time");
+  }
+
+  /// @notice Assert PerpStorage
+  /// @dev This function will check
+  ///       - Sub-account fee
+  ///       - Global asset class
+  ///         - Last borrowing time
+  ///         - Borrowing Rate Summation
+  ///         - Reserve Value
+  ///       - Global state
+  ///         - Reserve value
+  function _assertPerpStorage(
+    address _subAccount,
+    PerpStorageExpectedData memory _perpStorageExpectedData,
+    GlobalAssetClassExpectedData memory _globalAssetClassExpectedData,
+    GlobalStateExpectedData memory _globalStateExpectedData
+  ) internal {
+    // Check Perp's state
+    assertEq(perpStorage.getSubAccountFee(_subAccount), _perpStorageExpectedData.subAccountFee, "Sub-account Fee");
+
+    IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(
+      _globalAssetClassExpectedData.assetClassId
+    );
+    IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
+
+    // Check global asset class
+    assertEq(_globalAssetClass.reserveValueE30, _globalAssetClassExpectedData.reserveValueE30, "Global Asset Reserve");
+    assertEq(
+      _globalAssetClass.sumBorrowingRate,
+      _globalAssetClassExpectedData.sumBorrowingRate,
+      "Global Asset Borrowing Rate"
+    );
+    assertEq(
+      _globalAssetClass.lastBorrowingTime,
+      _globalAssetClassExpectedData.lastBorrowingTime,
+      "Global Asset Last Borrowing time"
+    );
+
+    // Check global reserve
+    assertEq(_globalState.reserveValueE30, _globalStateExpectedData.reserveValueE30, "Global Reserve");
+  }
+
+  /// @notice Assert Vault info
+  /// @dev This function will check
+  ///       - Trader balance
+  ///       - Dev fee
+  ///       - Funding Fee
+  ///       - Fee
+  ///       - PLP Liquidity
+  ///       - PLP Liquidity Debt value
+  function _assertVaultStorage(address _subAccount, VaultStorageExpectedData storage _expectedData) internal {
+    assertEq(vaultStorage.plpLiquidityDebtUSDE30(), _expectedData.plpLiquidityDebtUSDE30);
+
+    uint256 _len = interestTokens.length;
+    address _token;
+    for (uint256 _i; _i < _len; ) {
+      _token = interestTokens[_i];
+
+      assertEq(vaultStorage.plpLiquidity(_token), _expectedData.plpLiquidity[_token], "PLP Liquidity");
+      assertEq(vaultStorage.fees(_token), _expectedData.fees[_token], "Fee");
+      assertEq(vaultStorage.fundingFee(_token), _expectedData.fundingFee[_token], "Funding Fee");
+      assertEq(vaultStorage.devFees(_token), _expectedData.devFees[_token], "Dev Fee");
+      assertEq(
+        vaultStorage.traderBalances(_subAccount, _token),
+        _expectedData.traderBalances[_token],
+        "Trader balance"
+      );
+
+      unchecked {
+        ++_i;
+      }
+    }
+  }
 }

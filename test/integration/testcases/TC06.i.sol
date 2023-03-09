@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_WithActions } from "@hmx-test/integration/BaseIntTest_WithActions.i.sol";
+import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
 import { console2 } from "forge-std/console2.sol";
 
@@ -104,7 +104,7 @@ contract TC06 is BaseIntTest_WithActions {
       bytes[] memory priceDataT2 = new bytes[](0);
 
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
-      sell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceDataT2);
+      marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceDataT2);
 
       // Check states After Alice opened SHORT position
       // Alice's Equity must be upper IMR level

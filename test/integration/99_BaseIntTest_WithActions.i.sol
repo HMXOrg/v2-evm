@@ -3,18 +3,9 @@ pragma solidity 0.8.18;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import { BaseIntTest_SetConfig } from "@hmx-test/integration/BaseIntTest_SetConfig.i.sol";
-import { BaseIntTest_SetTokens } from "@hmx-test/integration/BaseIntTest_SetTokens.i.sol";
-import { BaseIntTest_SetCollaterals } from "@hmx-test/integration/BaseIntTest_SetCollaterals.i.sol";
+import { BaseIntTest_SetPLP } from "@hmx-test/integration/07_BaseIntTest_SetPLP.i.sol";
 
-import { BaseIntTest_SetPLP } from "@hmx-test/integration/BaseIntTest_SetPLP.i.sol";
-
-contract BaseIntTest_WithActions is
-  BaseIntTest_SetConfig,
-  BaseIntTest_SetTokens,
-  BaseIntTest_SetCollaterals,
-  BaseIntTest_SetPLP
-{
+contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
   /**
    * Liquidity
    */
@@ -131,7 +122,7 @@ contract BaseIntTest_WithActions is
   /// @param _buySizeE30 Buying size in e30 format.
   /// @param _tpToken Take profit token
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function buy(
+  function marketBuy(
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,
@@ -150,7 +141,7 @@ contract BaseIntTest_WithActions is
   /// @param _sellSizeE30 Buying size in e30 format.
   /// @param _tpToken Take profit token
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function sell(
+  function marketSell(
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,

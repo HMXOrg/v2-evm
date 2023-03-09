@@ -23,6 +23,7 @@ contract CrossMarginService_Base is BaseTest {
 
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(crossMarginService), CROSS_MARGIN_HANDLER, true);
+    vaultStorage.setServiceExecutors(address(crossMarginService), true);
 
     // @note - ALICE must act as CROSS_MARGIN_HANDLER here because CROSS_MARGIN_HANDLER doesn't included on this unit test yet
     configStorage.setServiceExecutor(address(crossMarginService), ALICE, true);

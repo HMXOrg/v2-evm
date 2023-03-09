@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetTokens } from "@hmx-test/integration/BaseIntTest_SetTokens.i.sol";
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-
+import { BaseIntTest_SetTokens } from "@hmx-test/integration/06_BaseIntTest_SetTokens.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 abstract contract BaseIntTest_SetPLP is BaseIntTest_SetTokens {
@@ -15,7 +13,7 @@ abstract contract BaseIntTest_SetPLP is BaseIntTest_SetTokens {
         withdrawFeeRateBPS: 0,
         maxPLPUtilizationBPS: 0.8 * 1e4,
         plpTotalTokenWeight: 0,
-        plpSafetyBufferThreshold: 0,
+        plpSafetyBufferBPS: 0,
         taxFeeRateBPS: 0.005 * 1e4, // 0.5%
         flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: true,

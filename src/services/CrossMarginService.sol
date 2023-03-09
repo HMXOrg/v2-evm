@@ -153,7 +153,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
    */
   /// @notice Set new ConfigStorage contract address.
   /// @param _configStorage New ConfigStorage contract address.
-  function setConfigStorage(address _configStorage) external onlyOwner {
+  function setConfigStorage(address _configStorage) external nonReentrant onlyOwner {
     if (_configStorage == address(0)) revert ICrossMarginService_InvalidAddress();
     emit LogSetConfigStorage(configStorage, _configStorage);
     configStorage = _configStorage;
@@ -164,7 +164,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
   /// @notice Set new VaultStorage contract address.
   /// @param _vaultStorage New VaultStorage contract address.
-  function setVaultStorage(address _vaultStorage) external onlyOwner {
+  function setVaultStorage(address _vaultStorage) external nonReentrant onlyOwner {
     if (_vaultStorage == address(0)) revert ICrossMarginService_InvalidAddress();
 
     emit LogSetVaultStorage(vaultStorage, _vaultStorage);
@@ -176,7 +176,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
   /// @notice Set new Calculator contract address.
   /// @param _calculator New Calculator contract address.
-  function setCalculator(address _calculator) external onlyOwner {
+  function setCalculator(address _calculator) external nonReentrant onlyOwner {
     if (_calculator == address(0)) revert ICrossMarginService_InvalidAddress();
 
     emit LogSetCalculator(calculator, _calculator);

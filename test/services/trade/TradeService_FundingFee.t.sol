@@ -7,9 +7,25 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
+
 contract TradeService_FundingFee is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
+
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getNextFundingRate");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getFundingFee");
+      configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
+    }
 
     // Set PLPLiquidity
     vaultStorage.addPLPLiquidity(configStorage.getPlpTokens()[0], 1000 * 1e18);
@@ -76,7 +92,6 @@ contract TradeService_FundingFee is TradeService_Base {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
       {
-        IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
         IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
 
         // Long position now must pay 133$ to Short Side

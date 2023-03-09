@@ -1,8 +1,8 @@
 {
   "storages": {
-    "config": "",
-    "perb": "",
-    "vault": ""
+    "config": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "perp": "",
+    "vault": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
   },
   "handlers": {
     "bot": "",
@@ -16,8 +16,11 @@
     "liquidity": "",
     "trade": ""
   },
+  "oracle": {
+    "pyth": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
+    "pythAdapter": "",
+    "middleware": ""
+  },
   "calculator": "",
-  "feeCalculator": "",
-  "oracleMiddleware": "",
-  "pythAdaptor": ""
+  "feeCalculator": ""
 }

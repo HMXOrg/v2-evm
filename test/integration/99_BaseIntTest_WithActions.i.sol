@@ -36,7 +36,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     );
     vm.stopPrank();
 
-    liquidityHandler.executeOrder(_liquidityProvider, 0, _priceData);
+    liquidityHandler.executeOrder(_liquidityProvider, 0, payable(FEEVER), _priceData);
   }
 
   /// @notice Helper function to remove liquidity and execute order via handler
@@ -65,7 +65,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     );
     vm.stopPrank();
 
-    liquidityHandler.executeOrder(_liquidityProvider, 0, _priceData);
+    liquidityHandler.executeOrder(_liquidityProvider, 0, payable(FEEVER), _priceData);
   }
 
   /**

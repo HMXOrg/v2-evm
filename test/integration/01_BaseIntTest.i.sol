@@ -42,6 +42,8 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal EVE;
+  address internal FEEVER;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -83,6 +85,8 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    EVE = makeAddr("EVE");
+    FEEVER = makeAddr("FEEVER");
 
     // deploy MOCK weth
     weth = IWNative(new MockWNative());

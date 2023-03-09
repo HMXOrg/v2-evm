@@ -27,7 +27,5 @@ interface ITradingStaking {
 
   function isMarketIndex(uint256 marketIndex) external returns (bool);
 
-  function removeRewarderForTokenByIndex(uint256 removeRewarderIndex, uint256 _marketIndex) external;
-
   function marketIndexRewarders(uint256, uint256) external view returns (address);
 }

@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { BotHandler_Base } from "./BotHandler_Base.t.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
 
 /// @title BotHandler_CloseDelistedMarketPosition
 /// @notice The purpose is test BotHandler contract able to call TradeService to force close position of trader
@@ -20,6 +21,20 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
   //   - unauthorized (owned test)
   function setUp() public virtual override {
     super.setUp();
+
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
+    }
 
     // TVL
     // 1000000 USDT -> 2000000 USD

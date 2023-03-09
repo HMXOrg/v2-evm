@@ -9,6 +9,7 @@ import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
 
 // @todo - add test description + use position tester help to check
 // @todo - rename test case
@@ -16,6 +17,20 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 contract TradeService_IncreasePosition is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
+
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
+    }
   }
 
   ////////////////////////////////////////////////////////////////////////////////////

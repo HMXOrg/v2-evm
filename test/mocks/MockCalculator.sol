@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 contract MockCalculator is ICalculator {
   mapping(address => int256) equitiesOf;
@@ -136,7 +137,7 @@ contract MockCalculator is ICalculator {
     bool /* isMaxPrice */,
     uint256 /* _price */,
     bytes32 /* _assetId */
-  ) external view returns (uint256) {
+  ) public view virtual returns (uint256) {
     return plpValue;
   }
 
@@ -181,7 +182,11 @@ contract MockCalculator is ICalculator {
     return freeCollateral;
   }
 
-  function getNextBorrowingRate(uint256 /*_assetClassIndex*/) external view returns (uint256) {
+  function getNextBorrowingRate(
+    uint8 /*_assetClassIndex*/,
+    uint256 /*_limitPriceE30*/,
+    bytes32 /*_limitAssetId*/
+  ) public view virtual returns (uint256) {
     return nextBorrowingRate;
   }
 
@@ -190,8 +195,23 @@ contract MockCalculator is ICalculator {
     bool /*_isLong*/,
     int256 /*_size*/,
     int256 /*_entryFundingRate*/
-  ) public view returns (int256) {
+  ) public view virtual returns (int256) {
     return fundingFee;
+  }
+
+  function getBorrowingFee(
+    uint8 /*_assetClassIndex*/,
+    uint256 /*_reservedValue*/,
+    uint256 /*_entryBorrowingRate*/
+  ) public view virtual returns (uint256 borrowingFee) {
+    return borrowingFee;
+  }
+
+  function getNextFundingRate(
+    uint256 /*marketIndex*/,
+    uint256 /*limitPrice*/
+  ) public view virtual returns (int256, int256, int256) {
+    return (fundingRate, fundingRateLong, fundingRateShort);
   }
 
   function getSettlementFeeRate(
@@ -219,4 +239,18 @@ contract MockCalculator is ICalculator {
   function setConfigStorage(address /*_address*/) external {}
 
   function setPerpStorage(address /*_address*/) external {}
+
+  function calculateShortAveragePrice(
+    PerpStorage.GlobalMarket memory /*_market*/,
+    uint256 /*_currentPrice*/,
+    int256 /*_positionSizeDelta*/,
+    int256 /*_realizedPositionPnl*/
+  ) public view virtual returns (uint256 _nextAveragePrice) {}
+
+  function calculateLongAveragePrice(
+    PerpStorage.GlobalMarket memory /*_market*/,
+    uint256 /*_currentPrice*/,
+    int256 /*_positionSizeDelta*/,
+    int256 /*_realizedPositionPnl*/
+  ) public view virtual returns (uint256 _nextAveragePrice) {}
 }

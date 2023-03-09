@@ -17,7 +17,7 @@ abstract contract BaseIntTest_SetPLP is BaseIntTest_SetTokens {
         withdrawFeeRateBPS: 0,
         maxPLPUtilizationBPS: 0.8 * 1e4,
         plpTotalTokenWeight: 0,
-        plpSafetyBufferBPS: 0,
+        plpSafetyBufferBPS: 2000,
         taxFeeRateBPS: 0.005 * 1e4, // 0.5%
         flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: true,

@@ -82,8 +82,9 @@ contract MockTradeService is ITradeService {
     uint8 /*_subAccountId*/,
     uint256 /*_marketIndex*/,
     address /*_tpToken*/
-  ) external returns (bool isMaxProfit) {
+  ) external returns (bool _isMaxProfit, bool _isProfit, uint256 _delta) {
     decreasePositionCallCount++;
+    return (false, false, 0);
   }
 
   function validateMaxProfit(bool isMaxProfit) external view {}

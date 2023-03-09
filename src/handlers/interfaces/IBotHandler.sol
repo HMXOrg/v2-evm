@@ -33,7 +33,7 @@ interface IBotHandler {
     bytes[] memory _priceData
   ) external;
 
-  function forceClosePosition(
+  function closeDelistedMarketPosition(
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,

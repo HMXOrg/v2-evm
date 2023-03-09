@@ -73,7 +73,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _marketIndex,
     address _tpToken,
     uint256 _closedPositionSize,
-    uint256 _realizedProfit
+    bool isProfit,
+    uint256 _delta
   );
 
   event LogDeleverage(
@@ -399,7 +400,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken
-  ) external nonReentrant onlyWhitelistedExecutor returns (bool isMaxProfit) {
+  ) external nonReentrant onlyWhitelistedExecutor returns (bool _isMaxProfit, bool _isProfit, uint256 _delta) {
     // init vars
     DecreasePositionVars memory _vars;
 
@@ -447,7 +448,17 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // update position, market, and global market state
     /// @dev no need to derived price on this
-    return _decreasePosition(_marketConfig, _marketIndex, _vars);
+    (_isMaxProfit, _isProfit, _delta) = _decreasePosition(_marketConfig, _marketIndex, _vars);
+
+    emit LogForceClosePosition(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _tpToken,
+      _vars.absPositionSizeE30,
+      _isProfit,
+      _delta
+    );
   }
 
   /// @notice Validates if a market is delisted.
@@ -472,9 +483,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
   }
 
   /// @notice Validates if close position with max profit.
-  /// @param isMaxProfit close position with max profit.
-  function validateMaxProfit(bool isMaxProfit) external pure {
-    if (!isMaxProfit) revert ITradeService_ReservedValueStillEnough();
+  /// @param _isMaxProfit close position with max profit.
+  function validateMaxProfit(bool _isMaxProfit) external pure {
+    if (!_isMaxProfit) revert ITradeService_ReservedValueStillEnough();
   }
 
   /// @notice decrease trader position
@@ -486,7 +497,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     ConfigStorage.MarketConfig memory _marketConfig,
     uint256 _globalMarketIndex,
     DecreasePositionVars memory _vars
-  ) internal returns (bool _isMaxProfit) {
+  ) internal returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
     // Update borrowing rate
     updateBorrowingRate(_marketConfig.assetClass, _vars.limitPriceE30, _marketConfig.assetId);
 
@@ -528,7 +539,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     int256 _realizedPnl;
     {
       _vars.avgEntryPriceE30 = _vars.position.avgEntryPriceE30;
-      (bool isProfit, uint256 delta) = getDelta(
+      (isProfit, delta) = getDelta(
         _vars.absPositionSizeE30,
         _vars.isLongPosition,
         _vars.priceE30,

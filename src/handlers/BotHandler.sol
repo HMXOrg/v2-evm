@@ -19,6 +19,13 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
    * Events
    */
   event LogTakeMaxProfit(address indexed _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken);
+  event LogDeleverage(address indexed _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken);
+  event LogCloseDelistedMarketPosition(
+    address indexed _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken
+  );
   event LogLiquidate(address _subAccount);
 
   event LogSetTradeService(address _oldTradeService, address _newTradeService);
@@ -74,9 +81,16 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
-    bool isMaxProfit = TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+    (bool _isMaxProfit, , ) = TradeService(tradeService).forceClosePosition(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _tpToken
+    );
 
-    TradeService(tradeService).validateMaxProfit(isMaxProfit);
+    TradeService(tradeService).validateMaxProfit(_isMaxProfit);
+
+    emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
   /// @notice deleverage
@@ -99,6 +113,8 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     TradeService(tradeService).validateDeleverage();
 
     TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+
+    emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
   /// @notice forceClosePosition
@@ -107,7 +123,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   /// @param _marketIndex market index of position
   /// @param _tpToken token that trader receive as profit
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function forceClosePosition(
+  function closeDelistedMarketPosition(
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,
@@ -118,7 +134,11 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
+    TradeService(tradeService).validateMarketDelisted(_marketIndex);
+
     TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+
+    emit LogCloseDelistedMarketPosition(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.

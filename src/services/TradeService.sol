@@ -42,6 +42,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 priceE30;
     int256 currentPositionSizeE30;
     bool isLongPosition;
+    uint256 positionSizeE30ToDecrease;
+    address tpToken;
+    uint256 limitPriceE30;
     // for SLOAD
     Calculator calculator;
     PerpStorage perpStorage;
@@ -83,7 +86,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _marketIndex,
     address _tpToken,
     uint256 _closedPositionSize,
-    uint256 _realizedProfit
+    bool isProfit,
+    uint256 _delta
   );
 
   event LogDeleverage(
@@ -341,7 +345,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _positionSizeE30ToDecrease - position size to decrease
   /// @param _tpToken - take profit token
   /// @param _limitPriceE30  price from LimitTrade in e30 unit
-
   function decreasePosition(
     address _account,
     uint8 _subAccountId,
@@ -378,6 +381,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
     _vars.absPositionSizeE30 = uint256(
       _vars.isLongPosition ? _vars.currentPositionSizeE30 : -_vars.currentPositionSizeE30
     );
+    _vars.positionSizeE30ToDecrease = _positionSizeE30ToDecrease;
+    _vars.tpToken = _tpToken;
+    _vars.limitPriceE30 = _limitPriceE30;
 
     // position size to decrease is greater then position size, should be revert
     if (_positionSizeE30ToDecrease > _vars.absPositionSizeE30) revert ITradeService_DecreaseTooHighPositionSize();
@@ -409,7 +415,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     }
 
     // update position, market, and global market state
-    _decreasePosition(_marketConfig, _marketIndex, _vars, _positionSizeE30ToDecrease, _tpToken, _limitPriceE30);
+    _decreasePosition(_marketConfig, _marketIndex, _vars);
   }
 
   // @todo - access control
@@ -423,7 +429,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken
-  ) external nonReentrant onlyWhitelistedExecutor {
+  ) external nonReentrant onlyWhitelistedExecutor returns (bool _isMaxProfit, bool _isProfit, uint256 _delta) {
     // init vars
     DecreasePositionVars memory _vars;
 
@@ -449,6 +455,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
     _vars.absPositionSizeE30 = uint256(
       _vars.isLongPosition ? _vars.currentPositionSizeE30 : -_vars.currentPositionSizeE30
     );
+    _vars.positionSizeE30ToDecrease = _vars.absPositionSizeE30;
+    _vars.tpToken = _tpToken;
 
     PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_marketIndex);
 
@@ -464,31 +472,16 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      // Market active represent the market is still listed on our protocol
-      if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
-
       // if market status is not 2, means that the market is closed or market status has been defined yet
-      if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
-
+      if (_marketConfig.active && _marketStatus != 2) revert ITradeService_MarketIsClosed();
       // check sub account equity is under MMR
       /// @dev no need to derived price on this
       _subAccountHealthCheck(_vars.subAccount, 0, 0);
     }
 
-    // get pnl to check this position is reach to condition to auto take profit or not
-    (bool isProfit, uint256 pnl) = getDelta(
-      _vars.absPositionSizeE30,
-      _vars.isLongPosition,
-      _vars.priceE30,
-      _vars.position.avgEntryPriceE30
-    );
-
-    // When this position has profit and realized profit has >= reserved amount, then we force to close position
-    if (!isProfit || pnl < _vars.position.reserveValueE30) revert ITradeService_ReservedValueStillEnough();
-
     // update position, market, and global market state
     /// @dev no need to derived price on this
-    _decreasePosition(_marketConfig, _marketIndex, _vars, _vars.absPositionSizeE30, _tpToken, 0);
+    (_isMaxProfit, _isProfit, _delta) = _decreasePosition(_marketConfig, _marketIndex, _vars);
 
     emit LogForceClosePosition(
       _account,
@@ -496,91 +489,57 @@ contract TradeService is ReentrancyGuard, ITradeService {
       _marketIndex,
       _tpToken,
       _vars.absPositionSizeE30,
-      pnl > _vars.position.reserveValueE30 ? _vars.position.reserveValueE30 : pnl
+      _isProfit,
+      _delta
     );
   }
 
-  /// @notice This function is used to decrease a position and free up margin to reduce leverage.
-  /// @param _account The address of the user who wants to decrease their position.
-  /// @param _subAccountId The ID of the sub-account.
-  /// @param _marketIndex The index of the market for the position to decrease.
-  /// @param _tpToken The address of the token used as take profit.
-  function deleverage(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
-    // retrieve liquidity configuration and calculator from storage
-    ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
+  /// @notice Validates if a market is delisted.
+  /// @param _marketIndex The index of the market to be checked.
+  function validateMarketDelisted(uint256 _marketIndex) external view {
+    // Check if the market is currently active in the config storage
+    if (ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex).active) {
+      // If it's active, revert with a custom error message defined in the ITradeService_MarketHealthy error definition
+      revert ITradeService_MarketHealthy();
+    }
+  }
+
+  /// @notice This function validates if deleverage is safe and healthy in Pool liquidity provider.
+  function validateDeleverage() external view {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
     uint256 _aum = _calculator.getAUME30(false, 0, 0);
     uint256 _tvl = _calculator.getPLPValueE30(false, 0, 0);
 
     // check plp safety buffer
-    if ((_tvl - _aum) * BPS <= (BPS - _liquidityConfig.plpSafetyBufferBPS) * _tvl) revert ITradeService_PlpHealthy();
+    if ((_tvl - _aum) * BPS <= (BPS - ConfigStorage(configStorage).getLiquidityConfig().plpSafetyBufferBPS) * _tvl)
+      revert ITradeService_PlpHealthy();
+  }
 
-    DecreasePositionVars memory _vars;
-    ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
-
-    _vars.subAccount = _getSubAccount(_account, _subAccountId);
-    _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
-    _vars.position = PerpStorage(perpStorage).getPositionById(_vars.positionId);
-    _vars.currentPositionSizeE30 = _vars.position.positionSizeE30;
-    _vars.isLongPosition = _vars.currentPositionSizeE30 > 0;
-    _vars.absPositionSizeE30 = uint256(
-      _vars.isLongPosition ? _vars.currentPositionSizeE30 : -_vars.currentPositionSizeE30
-    );
-
-    PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-
-    {
-      uint8 _marketStatus;
-
-      (_vars.priceE30, , , _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
-        .getLatestAdaptivePriceWithMarketStatus(
-          _marketConfig.assetId,
-          !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
-          -_vars.currentPositionSizeE30,
-          _marketConfig.fundingRate.maxSkewScaleUSD
-        );
-
-      // Market active represent the market is still listed on our protocol
-      if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
-
-      // if market status is not 2, means that the market is closed or market status has been defined yet
-      if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
-
-      // check sub account equity is under MMR
-      /// @dev no need to derived price on this
-      _subAccountHealthCheck(_vars.subAccount, 0, 0);
-    }
-
-    _decreasePosition(_marketConfig, _marketIndex, _vars, _vars.absPositionSizeE30, _tpToken, 0);
-
-    emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken, _vars.absPositionSizeE30);
+  /// @notice Validates if close position with max profit.
+  /// @param _isMaxProfit close position with max profit.
+  function validateMaxProfit(bool _isMaxProfit) external pure {
+    if (!_isMaxProfit) revert ITradeService_ReservedValueStillEnough();
   }
 
   /// @notice decrease trader position
   /// @param _marketConfig - target market config
   /// @param _globalMarketIndex - global market index
   /// @param _vars - decrease criteria
-  /// @param _positionSizeE30ToDecrease - position size to decrease
-  /// @param _tpToken - take profit token
-  /// @param _limitPriceE30 - Price to be overwritten to a specified asset
+  /// @return _isMaxProfit - positiion is close with max profit
   function _decreasePosition(
     ConfigStorage.MarketConfig memory _marketConfig,
     uint256 _globalMarketIndex,
-    DecreasePositionVars memory _vars,
-    uint256 _positionSizeE30ToDecrease,
-    address _tpToken,
-    uint256 _limitPriceE30
-  ) internal {
+    DecreasePositionVars memory _vars
+  ) internal returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
     // Update borrowing rate
-    updateBorrowingRate(_marketConfig.assetClass, _limitPriceE30, _marketConfig.assetId);
+    updateBorrowingRate(_marketConfig.assetClass, _vars.limitPriceE30, _marketConfig.assetId);
 
     // Update funding rate
-    updateFundingRate(_globalMarketIndex, _limitPriceE30);
+    updateFundingRate(_globalMarketIndex, _vars.limitPriceE30);
 
     collectMarginFee(
       _vars.subAccount,
-      _positionSizeE30ToDecrease,
+      _vars.positionSizeE30ToDecrease,
       _marketConfig.assetClass,
       _vars.position.reserveValueE30,
       _vars.position.entryBorrowingRate,
@@ -598,9 +557,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
       _vars.position.entryFundingRate
     );
 
-    settleFundingFee(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
+    settleFundingFee(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
 
-    uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _positionSizeE30ToDecrease;
+    uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
     // check position is too tiny
     // @todo - now validate this at 1 USD, design where to keep this config
@@ -613,20 +572,21 @@ contract TradeService is ReentrancyGuard, ITradeService {
     int256 _realizedPnl;
     {
       _vars.avgEntryPriceE30 = _vars.position.avgEntryPriceE30;
-      (bool isProfit, uint256 pnl) = getDelta(
+      (isProfit, delta) = getDelta(
         _vars.absPositionSizeE30,
         _vars.isLongPosition,
         _vars.priceE30,
         _vars.avgEntryPriceE30
       );
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value
-      if (pnl > _vars.position.reserveValueE30) {
-        pnl = _vars.position.reserveValueE30;
+      if (delta >= _vars.position.reserveValueE30) {
+        delta = _vars.position.reserveValueE30;
+        _isMaxProfit = true;
       }
       if (isProfit) {
-        _realizedPnl = int256((pnl * _positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
+        _realizedPnl = int256((delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
       } else {
-        _realizedPnl = -int256((pnl * _positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
+        _realizedPnl = -int256((delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
       }
     }
 
@@ -634,7 +594,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
      *  update perp storage
      */
     {
-      uint256 _openInterestDelta = (_vars.position.openInterest * _positionSizeE30ToDecrease) /
+      uint256 _openInterestDelta = (_vars.position.openInterest * _vars.positionSizeE30ToDecrease) /
         _vars.absPositionSizeE30;
 
       {
@@ -644,12 +604,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
           uint256 _nextAvgPrice = _vars.calculator.calculateLongAveragePrice(
             _globalMarket,
             _vars.priceE30,
-            -int256(_positionSizeE30ToDecrease),
+            -int256(_vars.positionSizeE30ToDecrease),
             _realizedPnl
           );
           _vars.perpStorage.updateGlobalLongMarketById(
             _globalMarketIndex,
-            _globalMarket.longPositionSize - _positionSizeE30ToDecrease,
+            _globalMarket.longPositionSize - _vars.positionSizeE30ToDecrease,
             _nextAvgPrice,
             _globalMarket.longOpenInterest - _openInterestDelta
           );
@@ -657,12 +617,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
           uint256 _nextAvgPrice = _vars.calculator.calculateShortAveragePrice(
             _globalMarket,
             _vars.priceE30,
-            int256(_positionSizeE30ToDecrease),
+            int256(_vars.positionSizeE30ToDecrease),
             _realizedPnl
           );
           _vars.perpStorage.updateGlobalShortMarketById(
             _globalMarketIndex,
-            _globalMarket.shortPositionSize - _positionSizeE30ToDecrease,
+            _globalMarket.shortPositionSize - _vars.positionSizeE30ToDecrease,
             _nextAvgPrice,
             _globalMarket.shortOpenInterest - _openInterestDelta
           );
@@ -675,16 +635,15 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
         // update global storage
         // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
-        {
-          _globalState.reserveValueE30 -=
-            (_vars.position.reserveValueE30 * _positionSizeE30ToDecrease) /
-            _vars.absPositionSizeE30;
-          _globalAssetClass.reserveValueE30 -=
-            (_vars.position.reserveValueE30 * _positionSizeE30ToDecrease) /
-            _vars.absPositionSizeE30;
-          _vars.perpStorage.updateGlobalState(_globalState);
-          _vars.perpStorage.updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
-        }
+        _globalState.reserveValueE30 -=
+          (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
+          _vars.absPositionSizeE30;
+        _globalAssetClass.reserveValueE30 -=
+          (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
+          _vars.absPositionSizeE30;
+        _vars.perpStorage.updateGlobalState(_globalState);
+        _vars.perpStorage.updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
+
         // update position info
         {
           _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
@@ -714,10 +673,16 @@ contract TradeService is ReentrancyGuard, ITradeService {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
-          _settleProfit(_vars.subAccount, _tpToken, uint256(_realizedPnl), _limitPriceE30, _marketConfig.assetId);
+          _settleProfit(
+            _vars.subAccount,
+            _vars.tpToken,
+            uint256(_realizedPnl),
+            _vars.limitPriceE30,
+            _marketConfig.assetId
+          );
         } else {
           // loss
-          _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _limitPriceE30, _marketConfig.assetId);
+          _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _vars.limitPriceE30, _marketConfig.assetId);
         }
       }
     }
@@ -727,9 +692,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // =========================================
 
     // check sub account equity is under MMR
-    _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
+    _subAccountHealthCheck(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
 
-    emit LogDecreasePosition(_vars.positionId, _positionSizeE30ToDecrease);
+    emit LogDecreasePosition(_vars.positionId, _vars.positionSizeE30ToDecrease);
   }
 
   /// @notice settle profit

@@ -293,41 +293,6 @@ contract TradeService_ForceClosePosition is TradeService_Base {
    * Revert
    */
 
-  function testRevert_WhenAlicePositionLossingAndExecutorTryToCloseIt() external {
-    // ALICE open Long position at price 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-
-    // price has changed make ALICE position lossing
-    mockOracle.setPrice(0.95 * 1e30);
-
-    // Tester try to close ALICE position
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_ReservedValueStillEnough()"));
-    tradeService.forceClosePosition(ALICE, 0, ethMarketIndex, address(0));
-  }
-
-  function testRevert_WhenAlicePositionHasProfitButStillLessThanReservedValueAndExecutorTryToCloseIt() external {
-    // ALICE open Short position  price 1 USD
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-
-    // price has changed make ALICE position profit for ~899.9999999999%
-    mockOracle.setPrice(0.900000000001 * 1e30);
-
-    // Tester try to close ALICE position
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_ReservedValueStillEnough()"));
-    tradeService.forceClosePosition(ALICE, 0, ethMarketIndex, address(0));
-  }
-
-  function testRevert_WhenExecutorTryClosePositionButMarketIsDelistedFromPerp() external {
-    // ALICE open Long position
-    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-
-    // someone delist market
-    configStorage.delistMarket(ethMarketIndex);
-
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    tradeService.forceClosePosition(ALICE, 0, ethMarketIndex, address(0));
-  }
-
   function testRevert_WhenExecutorTryClosePositionButOracleTellMarketIsClose() external {
     // ALICE open LONG position
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);

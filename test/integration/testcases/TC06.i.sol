@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
 import { console2 } from "forge-std/console2.sol";
+import { console } from "forge-std/console.sol";
 
 contract TC06 is BaseIntTest_WithActions {
   // T6: Alice selll short ETHUSD 1000 USD and increase leverage
@@ -20,14 +21,13 @@ contract TC06 is BaseIntTest_WithActions {
      */
     vm.warp(block.timestamp + 1);
     uint8 SUB_ACCOUNT_ID = 1;
-    uint16 SIX_HOURS_TIMESTAMP = 6 * 60 * 60;
     address SUB_ACCOUNT = getSubAccount(ALICE, SUB_ACCOUNT_ID);
 
     // Make LP contains some liquidity
     bytes[] memory priceDataT0 = new bytes[](0);
     vm.deal(BOB, 1 ether); //deal with out of gas
-    usdt.mint(BOB, 1_000_000 * 1e6);
-    addLiquidity(BOB, usdt, 1_000_000 * 1e6, executionOrderFee, priceDataT0, 0);
+    usdc.mint(BOB, 1_000_000 * 1e6);
+    addLiquidity(BOB, usdc, 1_000_000 * 1e6, 1 ether, priceDataT0, 0);
 
     // Mint tokens to Alice
     {
@@ -99,7 +99,7 @@ contract TC06 is BaseIntTest_WithActions {
       assertEq(calculator.getIMR(SUB_ACCOUNT), 0, "ALICE's IMR");
 
       uint256 sellSizeE30 = 810_000.981234381823 * 1e30;
-      address tpToken = address(glp);
+      address tpToken = address(usdc);
       bytes[] memory priceDataT2 = new bytes[](0);
 
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
@@ -117,10 +117,9 @@ contract TC06 is BaseIntTest_WithActions {
 
     console2.log("====================================================== T3");
     /**
-     * T3: ETHUSD priced at 1,550 USD and the position has been opened for 6 hours (Equity < IMR)
+     * T3: ETHUSD priced at 1,550 USD and the position has been opened for 6 intervals (Equity < IMR)
      */
-    // warp block timestamp to 6 hours later
-    vm.warp(block.timestamp + SIX_HOURS_TIMESTAMP);
+    vm.warp(block.timestamp + 6);
     {
       //  Set Price for ETHUSD to 1,550 USD
       bytes32[] memory _assetIds = new bytes32[](4);
@@ -166,9 +165,10 @@ contract TC06 is BaseIntTest_WithActions {
     {
       // ALICE partial close SHORT position with WETH Market Price = 1550 USD
       uint256 buySizeE30 = 100_000 * 1e30;
-      address tpToken = address(glp);
+      address tpToken = address(usdc);
       bytes[] memory priceDataT5 = new bytes[](0);
-      // marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceDataT5);
+      console2.log("XXX tpToken", tpToken);
+      marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceDataT5);
     }
   }
 }

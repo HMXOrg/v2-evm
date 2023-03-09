@@ -111,7 +111,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     uint8 _subAccountId,
     ERC20 _collateralToken,
     uint256 _withdrawAmount,
-    bytes[] calldata _priceData
+    bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
     crossMarginHandler.withdrawCollateral(
@@ -163,5 +163,14 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
   ) internal {
     vm.prank(_account);
     marketTradeHandler.sell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData);
+  }
+
+  /**
+   * COMMON FUNCTION
+   */
+
+  function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 }

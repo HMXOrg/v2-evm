@@ -12,6 +12,8 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
 
@@ -558,7 +560,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
       _vars.position.entryFundingRate
     );
 
+    console2.log("------ start settleFundingFee");
     settleFundingFee(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
+    console2.log("------ end settleFundingFee");
 
     uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
@@ -1188,7 +1192,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
       FeeCalculator.SettleFundingFeeLoopVar memory tmpVars;
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
-
+      console2.log("SYMBOL", ERC20(tmpVars.underlyingToken).symbol());
       tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(tmpVars.underlyingToken);
 
       // Retrieve the balance of each plp underlying token for the sub-account (token collateral amount)
@@ -1198,16 +1202,17 @@ contract TradeService is ReentrancyGuard, ITradeService {
       // Retrieve the latest price and confident threshold of the plp underlying token
       // @todo refactor this?
       bytes32 _underlyingAssetId = _configStorage.tokenAssetIds(tmpVars.underlyingToken);
-      if (_limitPriceE30 != 0 && _underlyingAssetId == _limitAssetId) {
-        tmpVars.price = _limitPriceE30;
-      } else {
-        (tmpVars.price, ) = oracle.getLatestPrice(_underlyingAssetId, false);
-      }
 
       // feeUSD > 0 or isPayFee == true, means trader pay fee
       if (isPayFee) {
         // If the sub-account has a balance of this underlying token (collateral token amount)
         if (tmpVars.traderBalance != 0) {
+          if (_limitPriceE30 != 0 && _underlyingAssetId == _limitAssetId) {
+            tmpVars.price = _limitPriceE30;
+          } else {
+            (tmpVars.price, ) = oracle.getLatestPrice(_underlyingAssetId, false);
+          }
+
           // If this plp underlying token contains borrowing debt from PLP then trader must repays debt to PLP first
           if (acmVars.plpLiquidityDebtUSDE30 > 0)
             acmVars.absFeeUsd = _feeCalculator.repayFundingFeeDebtToPLP(
@@ -1224,6 +1229,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
       // feeUSD < 0 or isPayFee == false, means trader receive fee
       else {
         if (tmpVars.fundingFee != 0) {
+          if (_limitPriceE30 != 0 && _underlyingAssetId == _limitAssetId) {
+            tmpVars.price = _limitPriceE30;
+          } else {
+            (tmpVars.price, ) = oracle.getLatestPrice(_underlyingAssetId, false);
+          }
+
           acmVars.absFeeUsd = _feeCalculator.receiveFundingFee(_subAccount, acmVars.absFeeUsd, tmpVars);
         }
       }

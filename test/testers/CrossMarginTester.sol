@@ -13,8 +13,25 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 /// @notice This Tester help to check information after user interact with CrossMarginHandler / CrossMarginService
 contract CrossMarginTester is StdAssertions {
   /**
+   * Struct
+   */
+
+  struct CrossMarginExpectedData {
+    address trader;
+    uint256 traderRemainingBalance;
+    uint256 vaultTraderBalance;
+    uint256 vaultTokenBalance;
+    ERC20 token;
+  }
+
+  struct VaultStorageExpectedData {
+    uint256 traderBalance;
+    uint8 tokenLength;
+  }
+  /**
    * States
    */
+
   IVaultStorage vaultStorage;
   IPerpStorage perpStorage;
 
@@ -24,23 +41,6 @@ contract CrossMarginTester is StdAssertions {
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
     crossMarginHandler = _crossMarginHandler;
-  }
-
-  struct TraderAssertData {
-    uint256 tokenBalance;
-  }
-
-  struct VaultStorageExpectedData {
-    uint256 traderBalance;
-    uint8 tokenLength;
-  }
-
-  struct CrossMarginExpectedData {
-    address trader;
-    uint256 traderRemainingBalance;
-    uint256 vaultTraderBalance;
-    uint256 vaultTokenBalance;
-    ERC20 token;
   }
 
   /// @notice Assert function when Trader interact deposit / withdraw collateral
@@ -53,35 +53,25 @@ contract CrossMarginTester is StdAssertions {
   ///         - Trader balance
   ///         - Trader token list
   ///         - Total Amount - should be same with VaultStorage token balanceOf
-  function assertCrossMarginInfo(TraderAssertData memory _tdata, CrossMarginExpectedData memory _data) internal {
-    address _tokenAddress = address(_data.token);
-    uint256 _vaultTokenBalance = _data.vaultTokenBalance;
+  function assertCrossMarginInfo(VaultStorageExpectedData memory _vault, CrossMarginExpectedData memory _cm) internal {
+    address _tokenAddress = address(_cm.token);
+    uint256 _vaultTokenBalance = _cm.vaultTokenBalance;
+
     // Check token balance
-    assertEq(_data.token.balanceOf(_data.trader), _tdata.tokenBalance, "Trader token balance in Wallet");
-    assertEq(_data.token.balanceOf(address(vaultStorage)), _vaultTokenBalance, "Token balance in VaultStorage");
+    assertEq(_cm.token.balanceOf(_cm.trader), _vault.traderBalance, "Trader token balance in Wallet");
+    assertEq(_cm.token.balanceOf(address(vaultStorage)), _vaultTokenBalance, "Token balance in VaultStorage");
 
     // note: to integrate this tester with CrossMarginService
     if (crossMarginHandler != address(0)) {
-      assertEq(_data.token.balanceOf(crossMarginHandler), 0, "Token balance in CrossMarginHandler");
+      assertEq(_cm.token.balanceOf(crossMarginHandler), 0, "Token balance in CrossMarginHandler");
     }
 
     // Check vault storage state
     assertEq(vaultStorage.totalAmount(_tokenAddress), _vaultTokenBalance, "Total amount of Token in VaultStorage");
     assertEq(
-      vaultStorage.traderBalances(_data.trader, _tokenAddress),
-      _data.vaultTraderBalance,
+      vaultStorage.traderBalances(_cm.trader, _tokenAddress),
+      _cm.vaultTraderBalance,
       "Total amount of Token in VaultStorage"
     );
   }
-
-  /**
-  
-    TraderAssertData memory _data;
-
-
-    _data.tokenBalance = 10 ether;
-  
-
-    assertCrossMarginInfo();
-   */
 }

@@ -12,7 +12,6 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
-import { console } from "forge-std/console.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;

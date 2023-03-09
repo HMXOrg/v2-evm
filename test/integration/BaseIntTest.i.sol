@@ -94,7 +94,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     // deploy stakedGLPOracleAdapter
 
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware(address(pyth));
+    oracleMiddleWare = Deployer.deployOracleMiddleware(address(pythAdapter));
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage();

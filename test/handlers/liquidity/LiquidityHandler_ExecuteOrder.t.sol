@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import { LiquidityHandler_Base, IConfigStorage, IPerpStorage } from "./LiquidityHandler_Base.t.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 // - revert
 //   - Try directCall executeLiquidity
@@ -17,9 +18,42 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 //   - Try executeOrder_cancelOrder
 //   - Try executeOrder_refundOrder
 
+struct Price {
+  // Price
+  int64 price;
+  // Confidence interval around the price
+  uint64 conf;
+  // Price exponent
+  int32 expo;
+  // Unix timestamp describing when the price was published
+  uint publishTime;
+}
+
+// PriceFeed represents a current aggregate price from pyth publisher feeds.
+struct PriceFeed {
+  // The price ID.
+  bytes32 id;
+  // Latest available price
+  Price price;
+  // Latest available exponentially-weighted moving average price
+  Price emaPrice;
+}
+
 contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
+  bytes[] internal priceData;
+
   function setUp() public override {
     super.setUp();
+
+    priceData.push(
+      abi.encode(
+        PriceFeed({
+          id: "1234",
+          price: Price({ price: 0, conf: 0, expo: 0, publishTime: block.timestamp }),
+          emaPrice: Price({ price: 0, conf: 0, expo: 0, publishTime: block.timestamp })
+        })
+      )
+    );
 
     liquidityHandler.setOrderExecutor(address(this), true);
   }
@@ -49,7 +83,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NotWhitelisted()"));
-    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, priceData);
   }
 
   function test_revert_cancelOrder_notOwner() external {
@@ -76,7 +110,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     _createAddLiquidityOrder();
 
     // Handler executor
-    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, priceData);
     // Assertion after ExecuteOrder
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
@@ -90,7 +124,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     _createRemoveLiquidityOrder(0);
 
     // Handler executor
-    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, priceData);
     // Assertion after ExecuteOrder
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
 
@@ -104,8 +138,8 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     _createRemoveLiquidityOrder(1);
 
     // Handler executor
-    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
-    liquidityHandler.executeOrder(ALICE, 1, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, priceData);
+    liquidityHandler.executeOrder(ALICE, 1, priceData);
     // Assertion after ExecuteOrder
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
@@ -120,7 +154,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     _createRemoveLiquidityNativeOrder();
 
     // Handler executor
-    liquidityHandler.executeOrder(ALICE, 0, new bytes[](0));
+    liquidityHandler.executeOrder(ALICE, 0, priceData);
     // Assertion after ExecuteOrder
 
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders(address(ALICE));
@@ -200,24 +234,31 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
   function _createRemoveLiquidityNativeOrder() internal {
     vm.deal(ALICE, 5 ether);
-    plp.mint(ALICE, 5 ether);
+    plp.mint(ALICE, 10 ether);
 
     vm.startPrank(ALICE);
     plp.approve(address(liquidityHandler), type(uint256).max);
 
-    // plpIn 5 ether, executionfee 5
-    liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(weth), 5 ether, 0, 5 ether, true);
+    liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(weth), 10 ether, 0, 5 ether, true);
     vm.stopPrank();
 
+    //alice native should be 0
+    assertEq(ALICE.balance, 0, "Alice Balance After createOrder");
+    assertEq(
+      ERC20(configStorage.weth()).balanceOf(address(liquidityHandler)),
+      5 ether,
+      "LiquidityHandler Order ExecutionFee"
+    );
     assertEq(plp.balanceOf(ALICE), 0, "User PLP Balance");
 
     ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders(address(ALICE));
 
     assertEq(_orders[0].account, ALICE, "Alice Order.account");
     assertEq(_orders[0].token, address(weth), "Alice Order.token");
-    assertEq(_orders[0].amount, 5 ether, "Alice PLP Order.amount");
+    assertEq(_orders[0].amount, 10 ether, "Alice PLP Order.amount");
     assertEq(_orders[0].minOut, 0, "Alice WBTC Order.minOut");
     assertEq(_orders[0].isAdd, false, "Alice Order.isAdd");
+    assertEq(_orders[0].executionFee, 5 ether, "Alice Execute fee");
     assertEq(_orders[0].shouldUnwrap, true, "Alice Order.shouldUnwrap");
   }
 }

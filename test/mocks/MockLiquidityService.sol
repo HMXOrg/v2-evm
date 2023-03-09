@@ -36,8 +36,8 @@ contract MockLiquidityService {
   function removeLiquidity(
     address /*_lpProvider*/,
     address _tokenOut,
-    uint256 _amount,
-    uint256 /*_minAmount*/
+    uint256 _amount, // amountIn
+    uint256 _minAmount //minAmountOut
   ) external returns (uint256) {
     // mock service transfer out to handler
     MockErc20(_tokenOut).mint(msg.sender, _amount);

@@ -19,6 +19,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { console } from "forge-std/console.sol";
 
 /// @title LiquidityHandler
 contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
@@ -62,18 +63,17 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
   address liquidityService; //liquidityService
   address pyth; //pyth
-  uint256 public minExecutionFee; // minExecutionFee in tokenAmount unit
+  uint256 public executionOrderFee; // executionOrderFee in tokenAmount unit
   bool isRefund; // order is refund (prevent direct call refund()
   bool isExecuting; // order is executing (prevent direct call executeLiquidity()
   mapping(address => LiquidityOrder[]) public liquidityOrders; // user address => all liquidityOrder
   mapping(address => uint256) public lastOrderIndex; // user address => lastOrderIndex of liquidityOrder
   mapping(address => bool) public orderExecutors; //address -> flag to execute
 
-  constructor(address _liquidityService, address _pyth, uint256 _minExecutionFee) {
+  constructor(address _liquidityService, address _pyth, uint256 _executionOrderFee) {
     liquidityService = _liquidityService;
     pyth = _pyth;
-    minExecutionFee = _minExecutionFee;
-
+    executionOrderFee = _executionOrderFee;
     // slither-disable-next-line unused-return
     LiquidityService(_liquidityService).perpStorage();
     // slither-disable-next-line unused-return
@@ -119,14 +119,14 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     //1. convert native to WNative (including executionFee)
     _transferInETH();
 
-    if (_executionFee < minExecutionFee) revert ILiquidityHandler_InsufficientExecutionFee();
+    if (_executionFee < executionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
 
     if (_shouldWrap) {
-      if (msg.value != _amountIn + minExecutionFee) {
+      if (msg.value != _amountIn + executionOrderFee) {
         revert ILiquidityHandler_InCorrectValueTransfer();
       }
     } else {
-      if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
+      if (msg.value != executionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
       IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
@@ -138,6 +138,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
         amount: _amountIn,
         minOut: _minOut,
         isAdd: true,
+        executionFee: _executionFee,
         shouldUnwrap: false
       })
     );
@@ -165,9 +166,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     //convert native to WNative (including executionFee)
     _transferInETH();
 
-    if (_executionFee < minExecutionFee) revert ILiquidityHandler_InsufficientExecutionFee();
-
-    if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
+    if (_executionFee < executionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
 
     IERC20(ConfigStorage(LiquidityService(liquidityService).configStorage()).plp()).safeTransferFrom(
       msg.sender,
@@ -183,6 +182,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
         amount: _amountIn,
         minOut: _minOut,
         isAdd: false,
+        executionFee: _executionFee,
         shouldUnwrap: _shouldUnwrap
       })
     );
@@ -253,20 +253,35 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     bytes[] memory _priceData
   ) external nonReentrant onlyOrderExecutor {
     // Update price to Pyth
-    // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     if (liquidityOrders[_account].length == 0) revert ILiquidityHandler_NoOrder();
-
-    isExecuting = true;
+    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
+    // executionrFee weth 5
+    // fee 1 wei
+    // left = 4.99xxx
+    // amountOut =
     LiquidityOrder memory _order = liquidityOrders[_account][_orderIndex];
-    try this.executeLiquidity(_order) returns (uint256 result) {
-      emit LogExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
-      delete liquidityOrders[_order.account][_orderIndex];
-    } catch Error(string memory) {
+    IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_updateFee);
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+
+    // delete data on struct
+    delete liquidityOrders[_order.account][_orderIndex];
+
+    // refund in case of order updatePythFee > executionFee
+    if (_updateFee > _order.executionFee) {
       _userRefund(_order);
+    } else {
+      isExecuting = true;
+
+      try this.executeLiquidity(_order) returns (uint256 result) {
+        emit LogExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
+      } catch Error(string memory) {
+        //refund in case of slipage
+        _userRefund(_order);
+      }
+      isExecuting = false;
     }
-    isExecuting = false;
   }
 
   /// @notice execute either addLiquidity or removeLiquidity
@@ -279,12 +294,23 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
         return
           LiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut);
       } else {
+        uint256 _balanceLeft = IERC20(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth())
+          .balanceOf(address(this));
+
+        console.log("b4 execute removeLiquidity :: balanceleft", _balanceLeft);
         uint256 amountOut = LiquidityService(liquidityService).removeLiquidity(
           _order.account,
           _order.token,
           _order.amount,
           _order.minOut
         );
+        console.log("amountOut", amountOut);
+        _balanceLeft = IERC20(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).balanceOf(
+          address(this)
+        );
+
+        console.log("after execution :: balanceleft", _balanceLeft);
+        console.log("shouldUnwrap", _order.shouldUnwrap);
         if (_order.shouldUnwrap) {
           _transferOutETH(amountOut, payable(_order.account));
         } else {
@@ -308,6 +334,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @param _amountOut Amount of ETH to be transferred
   /// @param _receiver The receiver of ETH in its native form. The receiver must be able to accept native token.
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
+    uint256 _currBalance = IERC20(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).balanceOf(
+      address(this)
+    );
+    console.log("_currBalance", _currBalance);
+
     IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
     payable(_receiver).transfer(_amountOut);
@@ -339,8 +370,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
   function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
-    emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
-    minExecutionFee = _newMinExecutionFee;
+    emit LogSetMinExecutionFee(executionOrderFee, _newMinExecutionFee);
+    executionOrderFee = _newMinExecutionFee;
   }
 
   /// @notice setMinExecutionFee

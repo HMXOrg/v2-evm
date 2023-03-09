@@ -24,6 +24,7 @@ interface ILiquidityHandler {
     uint256 amount;
     uint256 minOut;
     bool isAdd;
+    uint256 executionFee;
     bool shouldUnwrap; // unwrap nativetoken when removeLiquidity
   }
 

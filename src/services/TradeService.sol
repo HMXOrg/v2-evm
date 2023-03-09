@@ -291,6 +291,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.priceE30,
         _marketConfig.assetId
       );
+      console2.log("subAccountFreeCollateral", subAccountFreeCollateral);
+      console2.log("_imr", _imr);
       // if the free collateral is less than the initial margin required, revert the transaction with an error
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
 
@@ -951,6 +953,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   function _subAccountHealthCheck(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view {
     // check sub account is healthy
+    console2.log("_subAccountHealthCheck");
     int256 _subAccountEquity = calculator.getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     // maintenance margin requirement (MMR) = position size * maintenance margin fraction
     // note: maintenanceMarginFractionBPS is 1e4
@@ -1105,7 +1108,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // If there's no fee that trader need to pay more, return early
     if (acmVars.feeUsd <= 0) return;
     acmVars.absFeeUsd = acmVars.feeUsd > 0 ? uint256(acmVars.feeUsd) : uint256(-acmVars.feeUsd);
-
+    console2.log("* acmVars.absFeeUsd", acmVars.absFeeUsd);
     ConfigStorage.TradingConfig memory _tradingConfig = _configStorage.getTradingConfig();
     acmVars.plpUnderlyingTokens = _configStorage.getPlpTokens();
 

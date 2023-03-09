@@ -460,6 +460,10 @@ contract Calculator is Owned, ICalculator {
     // Calculate unrealized PnL on opening trader's position(s)
     int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount, _limitPriceE30, _limitAssetId);
 
+    console2.log("getEquity");
+    console2.log("_collateralValueE30", _collateralValueE30);
+    console2.log("_unrealizedPnlValueE30", _unrealizedPnlValueE30);
+
     // Calculate Borrowing fee on opening trader's position(s)
     // @todo - calculate borrowing fee
     // uint256 borrowingFeeE30 = getBorrowingFee(_subAccount);
@@ -531,6 +535,11 @@ contract Calculator is Owned, ICalculator {
 
       int256 _delta = (_position.positionSizeE30 * int(_priceDeltaE30)) / int(_position.avgEntryPriceE30);
 
+      console2.log("_position.positionSizeE30", _position.positionSizeE30);
+      console2.log("_priceDeltaE30", _priceDeltaE30);
+      console2.log("_position.avgEntryPriceE30", _position.avgEntryPriceE30);
+      console2.log("_delta", _delta);
+
       if (_isLong) {
         _delta = _priceE30 > _position.avgEntryPriceE30 ? _delta : -_delta;
       } else {
@@ -538,7 +547,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // If profit then deduct PnL with collateral factor.
-      _delta = _delta > 0 ? (int32(ConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int32(BPS) : _delta;
+      // _delta = _delta > 0 ? (int32(ConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int32(BPS) : _delta;
 
       // Accumulative current unrealized PnL
       _unrealizedPnlE30 += _delta;
@@ -561,6 +570,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) public view returns (uint256 _collateralValueE30) {
+    console2.log("*** getCollateralValue");
     // Get list of current depositing tokens on trader's account
     address[] memory _traderTokens = VaultStorage(vaultStorage).getTraderTokens(_subAccount);
 
@@ -597,6 +607,11 @@ contract Calculator is Owned, ICalculator {
       // collateral value = (collateral amount * price) * collateralFactorBPS
       // collateralFactor 1e4 = 100%
       _collateralValueE30 += (_amount * _priceE30 * collateralFactorBPS) / ((10 ** _decimals) * BPS);
+      console2.log("  _amount", _amount);
+      console2.log("  _priceE30", _priceE30);
+      console2.log("  collateralFactorBPS", collateralFactorBPS);
+      console2.log("  _decimals", _decimals);
+      console2.log("  _collateralValueE30", _collateralValueE30);
 
       unchecked {
         i++;
@@ -697,8 +712,11 @@ contract Calculator is Owned, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) public view returns (uint256 _freeCollateral) {
+    console2.log("getFreeCollateral");
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = getIMR(_subAccount);
+
+    console2.log("imr", imr);
 
     if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;

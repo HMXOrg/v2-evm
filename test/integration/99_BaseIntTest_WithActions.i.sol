@@ -153,6 +153,11 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     marketTradeHandler.sell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData);
   }
 
+  function liquidate(address _subAccount, bytes[] memory _priceData) internal {
+    vm.prank(BOT);
+    botHandler.liquidate(_subAccount, _priceData);
+  }
+
   /**
    * COMMON FUNCTION
    */
@@ -160,5 +165,9 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
   function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
+  }
+
+  function getPositionId(address _subAccount, uint256 _marketIndex) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(_subAccount, _marketIndex));
   }
 }

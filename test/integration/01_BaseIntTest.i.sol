@@ -39,10 +39,15 @@ import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   uint256 internal constant DOLLAR = 1e30;
 
+  uint256 internal SECOND = 1;
+  uint256 internal MINUTE = SECOND * 60;
+  uint256 internal HOUR = MINUTE * 60;
+
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal BOT;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -84,6 +89,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    BOT = makeAddr("BOT");
 
     // deploy MOCK weth
     weth = IWNative(new MockWNative());
@@ -156,6 +162,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
       configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
+      configStorage.setServiceExecutor(address(liquidationService), address(botHandler), true);
 
       configStorage.setWeth(address(weth));
     }
@@ -165,6 +172,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       vaultStorage.setServiceExecutors(address(crossMarginService), true);
       vaultStorage.setServiceExecutors(address(tradeService), true);
       vaultStorage.setServiceExecutors(address(liquidityService), true);
+      vaultStorage.setServiceExecutors(address(liquidationService), true);
     }
 
     // Setup PerpStorage
@@ -172,6 +180,13 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       perpStorage.setServiceExecutors(address(crossMarginService), true);
       perpStorage.setServiceExecutors(address(tradeService), true);
       perpStorage.setServiceExecutors(address(liquidityService), true);
+      perpStorage.setServiceExecutors(address(liquidationService), true);
+    }
+
+    {
+      address[] memory bots = new address[](1);
+      bots[0] = BOT;
+      botHandler.setPositionManagers(bots, true);
     }
   }
 }

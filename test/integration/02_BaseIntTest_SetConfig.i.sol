@@ -65,5 +65,7 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     });
 
     configStorage.setLiquidationConfig(_liquidationConfig);
+
+    // configStorage.setPnlFactor();
   }
 }

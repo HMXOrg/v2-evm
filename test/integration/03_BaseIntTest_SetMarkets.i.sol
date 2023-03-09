@@ -71,8 +71,8 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     _newFundingRateConfig.maxFundingRateBPS = 4; // 0.04%
 
     _newMarketConfig.assetId = _assetId;
-    _newMarketConfig.increasePositionFeeRateBPS = 50; // 0.5%
-    _newMarketConfig.decreasePositionFeeRateBPS = 50; // 0.5%
+    _newMarketConfig.increasePositionFeeRateBPS = 10; // 0.1%
+    _newMarketConfig.decreasePositionFeeRateBPS = 10; // 0.1%
     _newMarketConfig.initialMarginFractionBPS = _imf;
     _newMarketConfig.maintenanceMarginFractionBPS = _mmf;
     _newMarketConfig.maxProfitRateBPS = 90000; // 900%

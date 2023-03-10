@@ -167,24 +167,25 @@ contract Calculator is Owned, ICalculator {
   /// @notice get all PNL in e30 format
   /// @return pnl value
   function _getGlobalPNLE30() internal view returns (int256) {
-    // @todo - REFACTOR if someone don't want totalPnlLong and short.
+    // SLOAD
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+    PerpStorage _perpStorage = PerpStorage(perpStorage);
+    OracleMiddleware _oracle = OracleMiddleware(oracle);
+
     int256 totalPnlLong = 0;
     int256 totalPnlShort = 0;
+    uint256 _len = _configStorage.getMarketConfigsLength();
 
-    for (uint256 i = 0; i < ConfigStorage(configStorage).getMarketConfigsLength(); ) {
-      ConfigStorage.MarketConfig memory marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(i);
-
-      PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(i);
+    for (uint256 i = 0; i < _len; ) {
+      ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(i);
+      PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(i);
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
 
-      //@todo - validate timestamp of these
-      (uint256 priceE30Long, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, false);
+      (uint256 priceE30Long, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
+      (uint256 priceE30Short, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, true);
 
-      (uint256 priceE30Short, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(marketConfig.assetId, true);
-
-      //@todo - validate price, revert when crypto price stale, stock use Last price
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
         if (priceE30Long < _globalMarket.longAvgPrice) {
           uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) * _globalMarket.longPositionSize) /

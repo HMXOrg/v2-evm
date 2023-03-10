@@ -60,9 +60,16 @@ contract PythAdapter is Owned, IPythAdapter {
     }
 
     uint8 _priceDecimals = uint8(uint32(-1 * _priceStruct.expo));
-    uint64 _price = _isMax
-      ? uint64(_priceStruct.price) + _priceStruct.conf
-      : uint64(_priceStruct.price) - _priceStruct.conf;
+
+    // Basicly, this is _isMax XOR _shouldInvert
+    //  _isMax  |  _shouldInvert  |  operator
+    //  true    |  true           |  -
+    //  true    |  false          |  +
+    //  false   |  true           |  +
+    //  false   |  false          |  -
+    uint64 _price = _isMax == _shouldInvert
+      ? uint64(_priceStruct.price) - _priceStruct.conf
+      : uint64(_priceStruct.price) + _priceStruct.conf;
 
     uint256 _price256;
     if (_targetDecimals - _priceDecimals >= 0) {

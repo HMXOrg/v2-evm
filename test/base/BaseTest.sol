@@ -77,6 +77,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   uint256 ethMarketIndex;
   uint256 btcMarketIndex;
 
+  // Crypto
   bytes32 internal constant wethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000001;
   bytes32 internal constant wbtcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000002;
   bytes32 internal constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
@@ -88,6 +89,11 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant daiAssetId = "DAI";
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
+
+  // Fx
+  bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
+
+  bytes32 internal constant jpyAssetId = "JPY";
 
   constructor() {
     // Creating a mock Pyth instance with 60 seconds valid time period

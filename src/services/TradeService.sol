@@ -15,8 +15,6 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
 
-import { console } from "forge-std/console.sol"; //@todo - remove
-
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {
   uint32 internal constant BPS = 1e4;
@@ -142,7 +140,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     int256 _sizeDelta,
     uint256 _limitPriceE30
   ) external nonReentrant onlyWhitelistedExecutor {
-    console.log("****************** increasePosition()");
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     Calculator _calculator = calculator;
@@ -283,9 +280,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     if (_vars.position.positionSizeE30 == 0) revert ITradeService_BadPositionSize();
 
     {
-      console.log(">>> _absSizeDelta", _absSizeDelta);
-      console.log(">>> _marketConfig.initialMarginFractionBPS", _marketConfig.initialMarginFractionBPS);
-
       // calculate the initial margin required for the new position
       uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFractionBPS) / BPS;
 
@@ -295,8 +289,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.priceE30,
         _marketConfig.assetId
       );
-      console.log(">>> _imr", _imr);
-      console.log(">>> subAccountFreeCollateral", subAccountFreeCollateral);
 
       // if the free collateral is less than the initial margin required, revert the transaction with an error
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
@@ -362,7 +354,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     address _tpToken,
     uint256 _limitPriceE30
   ) external nonReentrant onlyWhitelistedExecutor {
-    console.log("****************** decreasePosition()");
     // init vars
     DecreasePositionVars memory _vars;
     // SLOAD
@@ -960,21 +951,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   function _subAccountHealthCheck(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view {
-    console.log("****************** _subAccountHealthCheck()");
     // check sub account is healthy
     int256 _subAccountEquity = calculator.getEquity(_subAccount, _limitPriceE30, _limitAssetId);
-    console.log("_subAccountEquity");
-    console.logInt(_subAccountEquity);
-
-    // @todo - discuss about this later
-    // uint256 _imr = calculator.getIMR(_subAccount);
-    // console.log("_imr", _imr);
-    // if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _imr) revert ITradeService_SubAccountEquityIsUnderIMR();
 
     // maintenance margin requirement (MMR) = position size * maintenance margin fraction
     // note: maintenanceMarginFractionBPS is 1e4
     uint256 _mmr = calculator.getMMR(_subAccount);
-    console.log("_mmr", _mmr);
 
     // if sub account equity < MMR, then trader couldn't decrease position
     if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
@@ -1093,21 +1075,16 @@ contract TradeService is ReentrancyGuard, ITradeService {
     int256 _positionSizeE30,
     int256 _entryFundingRate
   ) internal {
-    console.log("****************** collectFundingFee()");
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the debt fee of the sub-account
     int256 feeUsd = _perpStorage.getSubAccountFee(_subAccount);
 
-    console.log("feeUsd");
-    console.logInt(feeUsd);
-
     // Calculate the borrowing fee
     bool isLong = _positionSizeE30 > 0;
 
     int256 fundingFee = calculator.getFundingFee(_marketIndex, isLong, _positionSizeE30, _entryFundingRate);
-    console.log("fundingFee");
-    console.logInt(fundingFee);
+
     feeUsd += fundingFee;
 
     emit LogCollectFundingFee(_subAccount, _assetClassIndex, fundingFee);

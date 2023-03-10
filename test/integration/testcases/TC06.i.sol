@@ -4,6 +4,8 @@ pragma solidity 0.8.18;
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract TC06 is BaseIntTest_WithActions {
   function testIntegration_WhenTraderInteractWithCrossMargin() external {
     /**
@@ -156,21 +158,26 @@ contract TC06 is BaseIntTest_WithActions {
       marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceData);
     }
 
-    // /**
-    //  * T6: Alice sell short ETHUSD 1000 USD and increase leverage
-    //  */
+    /**
+     * T6: Alice sell short ETHUSD 1000 USD and increase leverage
+     */
 
-    // {
-    //   uint256 sellSizeE30 = 1_000 * 1e30;
-    //   address tpToken = address(wbtc);
-    //   bytes[] memory priceData = new bytes[](0);
+    {
+      console2.log("============================================================");
+      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
+      console2.log("getFreeCollateral", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
 
-    //   // ALICE opens SHORT position with WETH Market Price = 1500 USD
-    //   // Expect Alice can't increase SHORT position because Equity < IMR
-    //   vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderIMR()"));
-    //   marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
+      uint256 sellSizeE30 = 1_000 * 1e30;
+      address tpToken = address(wbtc);
+      bytes[] memory priceData = new bytes[](0);
 
-    // }
+      // ALICE opens SHORT position with WETH Market Price = 1500 USD
+      // Expect Alice can't increase SHORT position because Equity < IMR
+      // vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderIMR()"));
+      marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
+      console2.log("============================================================");
+    }
 
     /**
      * T7: Alice try to sell limit order ETHUSD 20 USD, but transaction is reversed

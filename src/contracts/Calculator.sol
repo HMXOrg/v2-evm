@@ -497,52 +497,54 @@ contract Calculator is Owned, ICalculator {
       PerpStorage.Position memory _position = _traderPositions[i];
       bool _isLong = _position.positionSizeE30 > 0 ? true : false;
 
-      if (_position.positionSizeE30 != 0) {
-        if (_position.avgEntryPriceE30 == 0) revert ICalculator_InvalidAveragePrice();
-
-        // Get market config according to opening position
-        ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(
-          _position.marketIndex
-        );
-
-        // Long position always use MinPrice. Short position always use MaxPrice
-        bool _isUseMaxPrice = _isLong ? false : true;
-
-        // Check to overwrite price
-        uint256 _priceE30;
-        if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
-          _priceE30 = _limitPriceE30;
-        } else {
-          // Get price from oracle
-          // @todo - validate price age
-          (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
-            _marketConfig.assetId,
-            _isUseMaxPrice
-          );
-        }
-
-        // Calculate for priceDelta
-        uint256 _priceDeltaE30;
-        unchecked {
-          _priceDeltaE30 = _position.avgEntryPriceE30 > _priceE30
-            ? _position.avgEntryPriceE30 - _priceE30
-            : _priceE30 - _position.avgEntryPriceE30;
-        }
-
-        int256 _delta = (_position.positionSizeE30 * int(_priceDeltaE30)) / int(_position.avgEntryPriceE30);
-
-        if (_isLong) {
-          _delta = _priceE30 > _position.avgEntryPriceE30 ? _delta : -_delta;
-        } else {
-          _delta = _priceE30 < _position.avgEntryPriceE30 ? -_delta : _delta;
-        }
-
-        // If profit then deduct PnL with collateral factor.
-        _delta = _delta > 0 ? (int32(ConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int32(BPS) : _delta;
-
-        // Accumulative current unrealized PnL
-        _unrealizedPnlE30 += _delta;
+      if (_position.positionSizeE30 == 0) {
+        // Ignore closed position
+        continue;
       }
+      if (_position.avgEntryPriceE30 == 0) revert ICalculator_InvalidAveragePrice();
+
+      // Get market config according to opening position
+      ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(
+        _position.marketIndex
+      );
+
+      // Long position always use MinPrice. Short position always use MaxPrice
+      bool _isUseMaxPrice = _isLong ? false : true;
+
+      // Check to overwrite price
+      uint256 _priceE30;
+      if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
+        _priceE30 = _limitPriceE30;
+      } else {
+        // Get price from oracle
+        // @todo - validate price age
+        (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+          _marketConfig.assetId,
+          _isUseMaxPrice
+        );
+      }
+
+      // Calculate for priceDelta
+      uint256 _priceDeltaE30;
+      unchecked {
+        _priceDeltaE30 = _position.avgEntryPriceE30 > _priceE30
+          ? _position.avgEntryPriceE30 - _priceE30
+          : _priceE30 - _position.avgEntryPriceE30;
+      }
+
+      int256 _delta = (_position.positionSizeE30 * int(_priceDeltaE30)) / int(_position.avgEntryPriceE30);
+
+      if (_isLong) {
+        _delta = _priceE30 > _position.avgEntryPriceE30 ? _delta : -_delta;
+      } else {
+        _delta = _priceE30 < _position.avgEntryPriceE30 ? -_delta : _delta;
+      }
+
+      // If profit then deduct PnL with collateral factor.
+      _delta = _delta > 0 ? (int32(ConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int32(BPS) : _delta;
+
+      // Accumulative current unrealized PnL
+      _unrealizedPnlE30 += _delta;
 
       unchecked {
         i++;

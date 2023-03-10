@@ -5,15 +5,13 @@ import { Owned } from "@hmx/base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 contract OracleMiddleware is Owned, IOracleMiddleware {
   /**
    * Structs
    */
   struct AssetPriceConfig {
+    uint256 trustPriceAge;
     uint32 confidenceThresholdE6;
-    uint8 trustPriceAge;
   }
 
   /**
@@ -25,8 +23,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bytes32 indexed _assetId,
     uint32 _oldConfidenceThresholdE6,
     uint32 _newConfidenceThresholdE6,
-    uint8 _oldTrustPriceAge,
-    uint8 _newTrustPriceAge
+    uint256 _oldTrustPriceAge,
+    uint256 _newTrustPriceAge
   );
 
   /**
@@ -240,11 +238,6 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     // 1. get price from Pyth
     (_price, _exponent, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _assetConfig.confidenceThresholdE6);
 
-    console2.log("_price", _price);
-    console2.log("_exponent", _price);
-    console2.log("_lastUpdate", _lastUpdate);
-    console2.log("block.timestamp", block.timestamp);
-    console2.log("_assetConfig.trustPriceAge", _assetConfig.trustPriceAge);
     // check price age
     if (block.timestamp - _lastUpdate > _assetConfig.trustPriceAge) revert IOracleMiddleware_PythPriceStale();
 
@@ -350,7 +343,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   function setAssetPriceConfig(
     bytes32 _assetId,
     uint32 _confidenceThresholdE6,
-    uint8 _trustPriceAge
+    uint256 _trustPriceAge
   ) external onlyOwner {
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
 

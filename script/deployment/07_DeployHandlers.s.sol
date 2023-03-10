@@ -16,7 +16,7 @@ contract DeployHandlers is ConfigJsonRepo {
 
     address pythAddress = getJsonAddress(".oracle.pyth");
     address tradeServiceAddress = getJsonAddress(".services.trade");
-    address liquiditionServiceAddress = getJsonAddress(".services.liquidition");
+    address liquiditionServiceAddress = getJsonAddress(".services.liquidation");
     address liquidityServiceAddress = getJsonAddress(".services.liquidity");
     address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
     address weth = getJsonAddress(".tokens.weth");

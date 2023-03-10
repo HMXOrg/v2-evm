@@ -14,7 +14,7 @@
   "services": {
     "crossMargin": "",
     "liquidity": "",
-    "liquidition": "",
+    "liquidation": "",
     "trade": ""
   },
   "oracle": {

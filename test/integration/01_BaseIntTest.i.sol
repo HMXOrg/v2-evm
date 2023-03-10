@@ -57,6 +57,8 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal EVE;
+  address internal FEEVER;
   address internal ORDER_EXECUTOR;
 
   /* CONTRACTS */
@@ -103,6 +105,8 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    EVE = makeAddr("EVE");
+    FEEVER = makeAddr("FEEVER");
     ORDER_EXECUTOR = makeAddr("ORDER_EXECUTOR");
 
     // deploy MOCK weth

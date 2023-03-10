@@ -4,8 +4,6 @@ pragma solidity 0.8.18;
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 contract TC06 is BaseIntTest_WithActions {
   function testIntegration_WhenTraderInteractWithCrossMargin() external {
     /**
@@ -40,9 +38,7 @@ contract TC06 is BaseIntTest_WithActions {
     /**
      * T1: Alice deposits 100,000(USD) WETH, 100,000(USD) USDC and 10,000(USD) WBTC as collaterals
      */
-    console2.log(
-      "======================== T1: Alice deposits 100,000(USD) WETH, 100,000(USD) USDC and 10,000(USD) WBTC as collaterals"
-    );
+
     vm.warp(block.timestamp + 1);
     {
       // Before Alice start depositing, VaultStorage must has 0 amount of all collateral tokens
@@ -78,7 +74,7 @@ contract TC06 is BaseIntTest_WithActions {
     /**
      * T2: Alice open short ETHUSD at 2000.981234381823 USD, priced at 1500 USD
      */
-    console2.log("======================== T2: Alice open short ETHUSD at 2000.981234381823 USD, priced at 1500 USD");
+
     vm.warp(block.timestamp + 1);
     {
       // Check states Before Alice opening SHORT position
@@ -105,17 +101,12 @@ contract TC06 is BaseIntTest_WithActions {
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) > calculator.getIMR(SUB_ACCOUNT),
         "ALICE's Equity > ALICE's IMR?"
       );
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
-      console2.log("FREE COL", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
     }
 
     /**
      * T3: ETHUSD priced at 2893 USD and the position has been opened for 6s (Equity < IMR)
      */
-    console2.log(
-      "======================== T3: ETHUSD priced at 2893 USD and the position has been opened for 6s (Equity < IMR)"
-    );
+
     vm.warp(block.timestamp + 6);
     {
       //  Set Price for ETHUSD to 1,550 USD
@@ -131,9 +122,6 @@ contract TC06 is BaseIntTest_WithActions {
       _prices[3] = 20_000;
 
       setPrices(_assetIds, _prices);
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
-      console2.log("FREE COL", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
 
       // Check states After WETH market price move from 1500 USD to 1550 USD
       // Alice's Equity must be lower IMR level
@@ -142,15 +130,12 @@ contract TC06 is BaseIntTest_WithActions {
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) < calculator.getIMR(SUB_ACCOUNT),
         "ALICE's Equity < ALICE's IMR?"
       );
-
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
     }
 
     /**
      * T4: Alice try withdrawing collateral but Alice can't withdraw
      */
-    console2.log("======================== T4: Alice try withdrawing collateral but Alice can't withdraw");
+
     vm.warp(block.timestamp + 1);
     {
       // Alice withdraw 1(USD) of USDC
@@ -163,23 +148,18 @@ contract TC06 is BaseIntTest_WithActions {
     /**
      * T5: Alice partial close SHORT position 0.88 USD ETHUSD position and choose to settle with ETH  (Equity < IMR)
      */
-    console2.log(
-      "======================== T5: Alice partial close SHORT position 0.88 USD ETHUSD position and choose to settle with ETH  (Equity < IMR)"
-    );
+
     {
       uint256 buySizeE30 = 0.88 * 1e30;
       address tpToken = address(wbtc); // @note settle with WBTC that be treated as GLP token
       bytes[] memory priceData = new bytes[](0);
       marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceData);
-
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
     }
 
     // /**
     //  * T6: Alice sell short ETHUSD 1000 USD and increase leverage
     //  */
-    // console2.log("======================== T6: Alice sell short ETHUSD 1000 USD and increase leverage");
+
     // {
     //   uint256 sellSizeE30 = 1_000 * 1e30;
     //   address tpToken = address(wbtc);
@@ -190,8 +170,6 @@ contract TC06 is BaseIntTest_WithActions {
     //   vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderIMR()"));
     //   marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
 
-    //   console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-    //   console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
     // }
 
     /**
@@ -209,8 +187,6 @@ contract TC06 is BaseIntTest_WithActions {
       usdc.mint(ALICE, 100_000 * 1e6);
       // Alice deposits 100,000(USD) of USDC
       depositCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 100_000 * 1e6);
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
 
       // Alice's Equity must be upper IMR level
       // Equity = 102545.80392652086, IMR = 2800.0098123438183
@@ -258,9 +234,6 @@ contract TC06 is BaseIntTest_WithActions {
 
       // @todo - fix on this
       // setPrices(_assetIds, _prices);
-
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
 
       // Alice's Equity must be upper IMR level
       // Equity = 102545.80392652086, IMR = 2800.0098123438183

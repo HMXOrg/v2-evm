@@ -13,8 +13,6 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
 
-import { console } from "forge-std/console.sol"; //@todo - remove
-
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
@@ -491,7 +489,6 @@ contract Calculator is Owned, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) public view returns (int256 _unrealizedPnlE30) {
-    // console.log("****************** getUnrealizedPnl()");
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -499,9 +496,7 @@ contract Calculator is Owned, ICalculator {
     for (uint256 i; i < _traderPositions.length; ) {
       PerpStorage.Position memory _position = _traderPositions[i];
       bool _isLong = _position.positionSizeE30 > 0 ? true : false;
-      // console.log("_position.positionSizeE30");
-      // console.logInt(_position.positionSizeE30);
-      // console.log("_position.avgEntryPriceE30", _position.avgEntryPriceE30);
+
       if (_position.positionSizeE30 != 0) {
         if (_position.avgEntryPriceE30 == 0) revert ICalculator_InvalidAveragePrice();
 
@@ -525,8 +520,6 @@ contract Calculator is Owned, ICalculator {
             _isUseMaxPrice
           );
         }
-        // console.log("_priceE30", _priceE30);
-        console.log("_position.avgEntryPriceE30", _position.avgEntryPriceE30);
 
         // Calculate for priceDelta
         uint256 _priceDeltaE30;
@@ -535,8 +528,6 @@ contract Calculator is Owned, ICalculator {
             ? _position.avgEntryPriceE30 - _priceE30
             : _priceE30 - _position.avgEntryPriceE30;
         }
-
-        // console.log("_priceDeltaE30", _priceDeltaE30);
 
         int256 _delta = (_position.positionSizeE30 * int(_priceDeltaE30)) / int(_position.avgEntryPriceE30);
 
@@ -649,10 +640,8 @@ contract Calculator is Owned, ICalculator {
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _mmrValueE30 Total mmr of trader's account
   function getMMR(address _subAccount) public view returns (uint256 _mmrValueE30) {
-    console.log(">>> Calculator.getMMR()");
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
-    console.log("> _traderPositions.length", _traderPositions.length);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
@@ -665,8 +654,6 @@ contract Calculator is Owned, ICalculator {
         _size = uint(_position.positionSizeE30);
       }
 
-      console.log("> _size", _size);
-      console.log("> _position.marketIndex", _position.marketIndex);
       // Calculate MMR on position
       _mmrValueE30 += calculatePositionMMR(_size, _position.marketIndex);
 
@@ -695,11 +682,9 @@ contract Calculator is Owned, ICalculator {
   /// @param _marketIndex Market Index from opening position.
   /// @return _mmrE30 The MMR amount required on position size, 30 decimals.
   function calculatePositionMMR(uint256 _positionSizeE30, uint256 _marketIndex) public view returns (uint256 _mmrE30) {
-    console.log(">>> Calculator.calculatePositionMMR()");
     // Get market config according to position
     ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
 
-    console.log("> _marketConfig.maintenanceMarginFractionBPS()", _marketConfig.maintenanceMarginFractionBPS);
     _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFractionBPS) / BPS;
     return _mmrE30;
   }

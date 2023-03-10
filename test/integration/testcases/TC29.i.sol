@@ -3,9 +3,8 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { console2 } from "forge-std/console2.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract TC29 is BaseIntTest_WithActions {
   function testIntegration_WhenSubAccountHasBadDebt() external {
@@ -39,11 +38,9 @@ contract TC29 is BaseIntTest_WithActions {
     }
 
     /**
-     * T1: Alice deposits 12,000(USD) WETH, 9,000(USD) USDC and 1,000(USD) WBTC as collaterals
+     * T1: Alice has 2 position Loss on Sub-account 1
      */
-    console2.log(
-      "======================== T1: Alice deposits 12,000(USD) WETH, 9,000(USD) USDC and 1,000(USD) WBTC as collaterals"
-    );
+
     vm.warp(block.timestamp + 1);
     {
       // Before Alice start depositing, VaultStorage must has 0 amount of all collateral tokens
@@ -74,9 +71,100 @@ contract TC29 is BaseIntTest_WithActions {
       assertEq(weth.balanceOf(ALICE), 0, "WETH Balance Of");
       assertEq(usdc.balanceOf(ALICE), 0, "USDC Balance Of");
       assertEq(wbtc.balanceOf(ALICE), 0, "WBTC Balance Of");
+    }
 
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
+    /**
+     * Alice sell short ETHUSD limit order at 450,000 USD (ETH price at 1500 USD)
+     */
+
+    vm.warp(block.timestamp + 1);
+    {
+      uint256 sellSizeE30 = 200_000 * 1e30;
+      address tpToken = address(wbtc);
+      bytes[] memory priceData = new bytes[](0);
+
+      // ALICE opens SHORT position with WETH Market Price = 1500 USD
+      marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
+
+      // Alice's Equity must be upper IMR level
+      // Equity = 1051.8309859154929, IMR = 3200
+      assertTrue(
+        uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) > calculator.getIMR(SUB_ACCOUNT),
+        "ALICE's Equity > ALICE's IMR"
+      );
+    }
+
+    /**
+     * T2: Alice's sub account 1 equity goes below MMR
+     */
+
+    vm.warp(block.timestamp + 1);
+    {
+      //  Set Price for ETHUSD to 1,550 USD
+      bytes32[] memory _assetIds = new bytes32[](4);
+      _assetIds[0] = wethAssetId;
+      _assetIds[1] = usdcAssetId;
+      _assetIds[2] = daiAssetId;
+      _assetIds[3] = wbtcAssetId;
+      int64[] memory _prices = new int64[](4);
+      _prices[0] = 1_650;
+      _prices[1] = 1;
+      _prices[2] = 1;
+      _prices[3] = 20_000;
+
+      setPrices(_assetIds, _prices);
+
+      // Alice's Equity must be lower MMR level
+      assertTrue(
+        calculator.getEquity(SUB_ACCOUNT, 0, 0) < int(calculator.getMMR(SUB_ACCOUNT)),
+        "ALICE's Equity < MMR?"
+      );
+    }
+
+    /**
+     * T3: Liquidation on Alice's account happened
+     */
+
+    vm.warp(block.timestamp + 1);
+    {
+      bytes[] memory prices = new bytes[](0);
+      botHandler.liquidate(SUB_ACCOUNT, prices);
+    }
+
+    /**
+     * T4: Alice's account equity = 0, MMR = 0 USD
+     */
+
+    vm.warp(block.timestamp + 1);
+    {
+      // @todo - already liquidated but bad debt still not occurred
+
+      assertEq(calculator.getEquity(SUB_ACCOUNT, 0, 0), 0);
+      assertEq(calculator.getIMR(SUB_ACCOUNT), 0);
+      assertEq(calculator.getMMR(SUB_ACCOUNT), 0);
+    }
+
+    /**
+     * T5: Alice's Deposit more collateral
+     */
+
+    vm.warp(block.timestamp + 1);
+    {
+      // Mint USDC token to ALICE
+      usdc.mint(ALICE, 9_000 * 1e6);
+      depositCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 9_000 * 1e6);
+    }
+
+    /**
+     * T6: Alice buy Long ETH 3000 USD
+     */
+
+    vm.warp(block.timestamp + 1);
+    {
+      uint256 buySizeE30 = 3_000 * 1e30;
+      address tpToken = address(wbtc); // @note settle with WBTC that be treated as GLP token
+      bytes[] memory priceData = new bytes[](0);
+      marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceData);
     }
   }
 }

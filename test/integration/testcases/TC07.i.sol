@@ -3,9 +3,8 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { console2 } from "forge-std/console2.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract TC07 is BaseIntTest_WithActions {
   function testIntegration_WhenAdminAdjustIMF() external {
@@ -41,9 +40,7 @@ contract TC07 is BaseIntTest_WithActions {
     /**
      * T1: Alice deposits 12,000(USD) WETH, 9,000(USD) USDC and 1,000(USD) WBTC as collaterals
      */
-    console2.log(
-      "======================== T1: Alice deposits 12,000(USD) WETH, 9,000(USD) USDC and 1,000(USD) WBTC as collaterals"
-    );
+
     vm.warp(block.timestamp + 1);
     {
       // Before Alice start depositing, VaultStorage must has 0 amount of all collateral tokens
@@ -74,17 +71,12 @@ contract TC07 is BaseIntTest_WithActions {
       assertEq(weth.balanceOf(ALICE), 0, "WETH Balance Of");
       assertEq(usdc.balanceOf(ALICE), 0, "USDC Balance Of");
       assertEq(wbtc.balanceOf(ALICE), 0, "WBTC Balance Of");
-
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
     }
 
     /**
      * T2: Alice sell short ETHUSD limit order at 450,000 USD (ETH price at 1500 USD)
      */
-    console2.log(
-      "======================== T2: Alice sell short ETHUSD limit order at 450,000 USD (ETH price at 1500 USD)"
-    );
+
     vm.warp(block.timestamp + 1);
     {
       uint256 sellSizeE30 = 100_000 * 1e30;
@@ -94,8 +86,6 @@ contract TC07 is BaseIntTest_WithActions {
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
       marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
 
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
       // Alice's Equity must be upper IMR level
       // Equity = 1051.8309859154929, IMR = 3200
       assertTrue(
@@ -107,9 +97,7 @@ contract TC07 is BaseIntTest_WithActions {
     /**
      * T3: ETHUSD priced up to 1,550 USD
      */
-    console2.log(
-      "======================== T2: Alice sell short ETHUSD limit order at 450,000 USD (ETH price at 1500 USD)"
-    );
+
     vm.warp(block.timestamp + 1);
     {
       //  Set Price for ETHUSD to 1,550 USD
@@ -126,9 +114,6 @@ contract TC07 is BaseIntTest_WithActions {
 
       setPrices(_assetIds, _prices);
 
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
-
       // Alice's Equity must be upper IMR level
       // Equity = 102545.80392652086, IMR = 2800.0098123438183
       assertTrue(
@@ -140,7 +125,7 @@ contract TC07 is BaseIntTest_WithActions {
     /**
      * T4: Alice withdraw 1000 collateral, (Equity still > IMR)
      */
-    console2.log("======================== T4: Alice withdraw 1000 collateral, (Equity still > IMR)");
+
     vm.warp(block.timestamp + 1);
     {
       // Alice withdraw 1(USD) of USDC
@@ -151,7 +136,7 @@ contract TC07 is BaseIntTest_WithActions {
     /**
      * T5: Alice sell short ETHUSD position with Max Equity
      */
-    console2.log("======================== T5: Alice sell short ETHUSD position with Max Equity");
+
     vm.warp(block.timestamp + 1);
     {
       uint256 sellSizeE30 = 160_000 * 1e30;
@@ -161,9 +146,6 @@ contract TC07 is BaseIntTest_WithActions {
       // ALICE opens SHORT position with WETH Market Price = 1550 USD
       marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
 
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
-      console2.log("FREE COL", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
       // Alice's Free collateral must be zero
       assertEq(
         calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0),
@@ -182,7 +164,7 @@ contract TC07 is BaseIntTest_WithActions {
     /**
      * T6: Admin update IMF from 1% to 5%
      */
-    console2.log("======================== T6: Admin update IMF from 1% to 5%");
+
     vm.warp(block.timestamp + 1);
     {
       IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wethMarketIndex);
@@ -198,13 +180,9 @@ contract TC07 is BaseIntTest_WithActions {
     /**
      * T7: Alice cannot withdraw collateral
      */
-    console2.log("======================== T7: Alice cannot withdraw collateral");
+
     vm.warp(block.timestamp + 1);
     {
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
-      console2.log("FREE COL", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
-
       // Alice withdraw 1(USD) of USDC
       // Expect Alice can't withdraw collateral because Equity < IMR
       vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
@@ -222,7 +200,7 @@ contract TC07 is BaseIntTest_WithActions {
     /**
      * T8: Admin update IMF from 5% to 1%
      */
-    console2.log("======================== T8: Admin update IMF from 5% to 1%");
+
     vm.warp(block.timestamp + 1);
     {
       IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wethMarketIndex);
@@ -238,13 +216,9 @@ contract TC07 is BaseIntTest_WithActions {
     /**
      * T9: Alice can withdraw collateral 100 USD
      */
-    console2.log("======================== T9: Alice can withdraw collateral 100 USD");
+
     vm.warp(block.timestamp + 1);
     {
-      console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));
-      console2.log("FREE COL", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
-
       // Alice withdraw 100(USD) of USDC
       bytes[] memory priceData = new bytes[](0);
       withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 100 * 1e6, priceData);

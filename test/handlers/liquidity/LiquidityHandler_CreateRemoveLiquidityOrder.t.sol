@@ -37,22 +37,26 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
   }
 
   function test_revert_InsufficientExecutionFee() external {
-    wbtc.mint(ALICE, 1 ether);
     vm.deal(ALICE, 5 ether);
-    vm.prank(ALICE);
+    plp.mint(ALICE, 5 ether);
+    int256 _amountIn = 1 ether;
+    vm.startPrank(ALICE);
 
-    wbtc.approve(address(liquidityHandler), 1 ether);
+    plp.approve(address(liquidityHandler), 1 ether);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_InsufficientExecutionFee()"));
     liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(wbtc), 1 ether, 1 ether, 3 ether, false);
+    vm.stopPrank();
   }
 
   function test_revert_incorrectValueTransfer() external {
-    wbtc.mint(ALICE, 1 ether);
     vm.deal(ALICE, 5 ether);
-    vm.prank(ALICE);
-    wbtc.approve(address(liquidityHandler), 1 ether);
+    plp.mint(ALICE, 5 ether);
+    uint256 _amountIn = 1 ether;
+    vm.startPrank(ALICE);
+    plp.approve(address(liquidityHandler), _amountIn);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_InCorrectValueTransfer()"));
-    liquidityHandler.createRemoveLiquidityOrder{ value: 3 ether }(address(wbtc), 1 ether, 1 ether, 5 ether, false);
+    liquidityHandler.createRemoveLiquidityOrder{ value: 3 ether }(address(wbtc), _amountIn, 1 ether, 5 ether, false);
+    vm.stopPrank();
   }
 
   function test_revert_nativeIncorrectValueTransfer() external {

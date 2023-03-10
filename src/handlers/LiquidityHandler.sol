@@ -62,18 +62,17 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
   address liquidityService; //liquidityService
   address pyth; //pyth
-  uint256 public minExecutionFee; // minExecutionFee in tokenAmount unit
+  uint256 public executionOrderFee; // executionOrderFee in tokenAmount unit
   bool isRefund; // order is refund (prevent direct call refund()
   bool isExecuting; // order is executing (prevent direct call executeLiquidity()
   mapping(address => LiquidityOrder[]) public liquidityOrders; // user address => all liquidityOrder
   mapping(address => uint256) public lastOrderIndex; // user address => lastOrderIndex of liquidityOrder
   mapping(address => bool) public orderExecutors; //address -> flag to execute
 
-  constructor(address _liquidityService, address _pyth, uint256 _minExecutionFee) {
+  constructor(address _liquidityService, address _pyth, uint256 _executionOrderFee) {
     liquidityService = _liquidityService;
     pyth = _pyth;
-    minExecutionFee = _minExecutionFee;
-
+    executionOrderFee = _executionOrderFee;
     // slither-disable-next-line unused-return
     LiquidityService(_liquidityService).perpStorage();
     // slither-disable-next-line unused-return
@@ -119,14 +118,14 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     //1. convert native to WNative (including executionFee)
     _transferInETH();
 
-    if (_executionFee < minExecutionFee) revert ILiquidityHandler_InsufficientExecutionFee();
+    if (_executionFee < executionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
 
     if (_shouldWrap) {
-      if (msg.value != _amountIn + minExecutionFee) {
+      if (msg.value != _amountIn + executionOrderFee) {
         revert ILiquidityHandler_InCorrectValueTransfer();
       }
     } else {
-      if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
+      if (msg.value != executionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
       IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
@@ -138,6 +137,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
         amount: _amountIn,
         minOut: _minOut,
         isAdd: true,
+        executionFee: _executionFee,
         shouldUnwrap: false
       })
     );
@@ -165,9 +165,9 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     //convert native to WNative (including executionFee)
     _transferInETH();
 
-    if (_executionFee < minExecutionFee) revert ILiquidityHandler_InsufficientExecutionFee();
+    if (_executionFee < executionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
 
-    if (msg.value != minExecutionFee) revert ILiquidityHandler_InCorrectValueTransfer();
+    if (msg.value != executionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
 
     IERC20(ConfigStorage(LiquidityService(liquidityService).configStorage()).plp()).safeTransferFrom(
       msg.sender,
@@ -183,6 +183,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
         amount: _amountIn,
         minOut: _minOut,
         isAdd: false,
+        executionFee: _executionFee,
         shouldUnwrap: _shouldUnwrap
       })
     );
@@ -250,23 +251,40 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   function executeOrder(
     address _account,
     uint256 _orderIndex,
+    address payable _feeReceiver,
     bytes[] memory _priceData
   ) external nonReentrant onlyOrderExecutor {
-    // Update price to Pyth
-    // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
-
     if (liquidityOrders[_account].length == 0) revert ILiquidityHandler_NoOrder();
+    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
 
-    isExecuting = true;
     LiquidityOrder memory _order = liquidityOrders[_account][_orderIndex];
-    try this.executeLiquidity(_order) returns (uint256 result) {
-      emit LogExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
-      delete liquidityOrders[_order.account][_orderIndex];
-    } catch Error(string memory) {
+    IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_updateFee);
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+
+    // delete data on struct
+    delete liquidityOrders[_order.account][_orderIndex];
+
+    // refund in case of order updatePythFee > executionFee
+    if (_updateFee > _order.executionFee) {
       _userRefund(_order);
+    } else {
+      isExecuting = true;
+
+      try this.executeLiquidity(_order) returns (uint256 result) {
+        emit LogExecuteLiquidityOrder(_order.account, _order.token, _order.amount, _order.minOut, _order.isAdd, result);
+      } catch Error(string memory) {
+        //refund in case of slipage
+        _userRefund(_order);
+      }
+      isExecuting = false;
     }
-    isExecuting = false;
+
+    // Pay the executor
+    IERC20 _weth = IERC20(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth());
+    uint256 _currentWethBalance = _weth.balanceOf(address(this));
+    _transferOutETH(_order.executionFee - _updateFee, _feeReceiver);
+    _currentWethBalance = _weth.balanceOf(address(this));
   }
 
   /// @notice execute either addLiquidity or removeLiquidity
@@ -285,6 +303,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
           _order.amount,
           _order.minOut
         );
+
         if (_order.shouldUnwrap) {
           _transferOutETH(amountOut, payable(_order.account));
         } else {
@@ -339,8 +358,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
   function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
-    emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
-    minExecutionFee = _newMinExecutionFee;
+    emit LogSetMinExecutionFee(executionOrderFee, _newMinExecutionFee);
+    executionOrderFee = _newMinExecutionFee;
   }
 
   /// @notice setMinExecutionFee

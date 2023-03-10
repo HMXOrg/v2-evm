@@ -5,8 +5,8 @@ import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol"
 
 contract MockOracleMiddleware is IOracleMiddleware {
   struct AssetPriceConfig {
+    uint256 trustPriceAge;
     uint32 confidenceThresholdE6;
-    uint8 trustPriceAge;
   }
 
   uint256 public priceE30;
@@ -107,10 +107,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function getLatestAdaptivePrice(
     bytes32 _assetId,
-    bool _isMax,
-    int256 _marketSkew,
-    int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    bool /*_isMax*/,
+    int256 /*_marketSkew*/,
+    int256 /*_sizeDelta*/,
+    uint256 /*_maxSkewScaleUSD*/
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     Price memory p = price[_assetId];
@@ -120,10 +120,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
-    bool _isMax,
-    int256 _marketSkew,
-    int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    bool /*_isMax*/,
+    int256 /*_marketSkew*/,
+    int256 /*_sizeDelta*/,
+    uint256 /*_maxSkewScaleUSD*/
   ) external view returns (uint256 _price, uint256 _lastUpdate) {
     Price memory p = price[_assetId];
     if (p.priceE30 == 0) return (priceE30, lastUpdate);
@@ -132,10 +132,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
-    bool _isMax,
-    int256 _marketSkew,
-    int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    bool /*_isMax*/,
+    int256 /*_marketSkew*/,
+    int256 /*_sizeDelta*/,
+    uint256 /*_maxSkewScaleUSD*/
   ) external view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     Price memory p = price[_assetId];
@@ -145,10 +145,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
-    bool _isMax,
-    int256 _marketSkew,
-    int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    bool /*_isMax*/,
+    int256 /*_marketSkew*/,
+    int256 /*_sizeDelta*/,
+    uint256 /*_maxSkewScaleUSD*/
   ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
     Price memory p = price[_assetId];
     if (p.priceE30 == 0) return (priceE30, lastUpdate, mockMarketStatus);
@@ -166,6 +166,6 @@ contract MockOracleMiddleware is IOracleMiddleware {
   function setAssetPriceConfig(
     bytes32 /*_assetId*/,
     uint32 /*_confidenceThresholdE6*/,
-    uint8 _trustPriceAge
+    uint256 /*_trustPriceAge*/
   ) external {}
 }

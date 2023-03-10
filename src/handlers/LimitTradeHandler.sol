@@ -223,7 +223,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
     // Update price to Pyth
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
+    IWNative(weth).withdraw(_updateFee);
+    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
@@ -342,7 +344,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     }
 
     // Pay the executor
-    _transferOutETH(vars.order.executionFee, _feeReceiver);
+    _transferOutETH(vars.order.executionFee - _updateFee, _feeReceiver);
 
     emit LogExecuteLimitOrder(
       _account,

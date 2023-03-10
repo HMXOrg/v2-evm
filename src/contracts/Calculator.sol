@@ -16,6 +16,7 @@ import { ICalculator } from "./interfaces/ICalculator.sol";
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
+  uint64 internal constant RATE_PRECISION = 1e18;
 
   // EVENTS
   event LogSetOracle(address indexed oldOracle, address indexed newOracle);
@@ -593,7 +594,6 @@ contract Calculator is Owned, ICalculator {
       // Calculate accumulative value of collateral tokens
       // collateral value = (collateral amount * price) * collateralFactorBPS
       // collateralFactor 1e4 = 100%
-
       _collateralValueE30 += (_amount * _priceE30 * collateralFactorBPS) / ((10 ** _decimals) * BPS);
 
       unchecked {
@@ -698,8 +698,255 @@ contract Calculator is Owned, ICalculator {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = getIMR(_subAccount);
 
-    if (equity < 0) return 0;
+    if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
+  }
+
+  /// @notice get next short average price with realized PNL
+  /// @param _market - global market
+  /// @param _currentPrice - min / max price depends on position direction
+  /// @param _positionSizeDelta - position size after increase / decrease.
+  ///                           if positive is LONG position, else is SHORT
+  /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
+  /// @return _nextAveragePrice next average price
+  function calculateShortAveragePrice(
+    PerpStorage.GlobalMarket memory _market,
+    uint256 _currentPrice,
+    int256 _positionSizeDelta,
+    int256 _realizedPositionPnl
+  ) external pure returns (uint256 _nextAveragePrice) {
+    // global
+    uint256 _globalPositionSize = _market.shortPositionSize;
+    int256 _globalAveragePrice = int256(_market.shortAvgPrice);
+
+    if (_globalAveragePrice == 0) return 0;
+
+    // if positive means, has profit
+    int256 _globalPnl = (int256(_globalPositionSize) * (_globalAveragePrice - int256(_currentPrice))) /
+      _globalAveragePrice;
+    int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
+
+    uint256 _newGlobalPositionSize;
+    // position > 0 is means decrease short position
+    // else is increase short position
+    if (_positionSizeDelta > 0) {
+      _newGlobalPositionSize = _globalPositionSize - uint256(_positionSizeDelta);
+    } else {
+      _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
+    }
+
+    bool _isGlobalProfit = _newGlobalPnl > 0;
+    uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
+
+    // divisor = latest global position size - pnl
+    uint256 divisor = _isGlobalProfit
+      ? (_newGlobalPositionSize - _absoluteGlobalPnl)
+      : (_newGlobalPositionSize + _absoluteGlobalPnl);
+
+    if (divisor == 0) return 0;
+
+    // next short average price = current price * latest global position size / latest global position size - pnl
+    _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
+
+    return _nextAveragePrice;
+  }
+
+  /// @notice get next long average price with realized PNL
+  /// @param _market - global market
+  /// @param _currentPrice - min / max price depends on position direction
+  /// @param _positionSizeDelta - position size after increase / decrease.
+  ///                           if positive is LONG position, else is SHORT
+  /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
+  /// @return _nextAveragePrice next average price
+  function calculateLongAveragePrice(
+    PerpStorage.GlobalMarket memory _market,
+    uint256 _currentPrice,
+    int256 _positionSizeDelta,
+    int256 _realizedPositionPnl
+  ) external pure returns (uint256 _nextAveragePrice) {
+    // global
+    uint256 _globalPositionSize = _market.longPositionSize;
+    int256 _globalAveragePrice = int256(_market.longAvgPrice);
+
+    if (_globalAveragePrice == 0) return 0;
+
+    // if positive means, has profit
+    int256 _globalPnl = (int256(_globalPositionSize) * (int256(_currentPrice) - _globalAveragePrice)) /
+      _globalAveragePrice;
+    int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
+
+    uint256 _newGlobalPositionSize;
+    // position > 0 is means increase short position
+    // else is decrease short position
+    if (_positionSizeDelta > 0) {
+      _newGlobalPositionSize = _globalPositionSize + uint256(_positionSizeDelta);
+    } else {
+      _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
+    }
+
+    bool _isGlobalProfit = _newGlobalPnl > 0;
+    uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
+
+    // divisor = latest global position size + pnl
+    uint256 divisor = _isGlobalProfit
+      ? (_newGlobalPositionSize + _absoluteGlobalPnl)
+      : (_newGlobalPositionSize - _absoluteGlobalPnl);
+
+    if (divisor == 0) return 0;
+
+    // next long average price = current price * latest global position size / latest global position size + pnl
+    _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
+
+    return _nextAveragePrice;
+  }
+
+  /// @notice Calculate next funding rate using when increase/decrease position.
+  /// @param _marketIndex Market Index.
+  /// @param _limitPriceE30 Price from limit order
+  /// @return fundingRate next funding rate using for both LONG & SHORT positions.
+  /// @return fundingRateLong next funding rate for LONG.
+  /// @return fundingRateShort next funding rate for SHORT.
+  function getNextFundingRate(
+    uint256 _marketIndex,
+    uint256 _limitPriceE30
+  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+    GetFundingRateVar memory vars;
+    ConfigStorage.MarketConfig memory marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
+    PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    if (marketConfig.fundingRate.maxFundingRateBPS == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0)
+      return (0, 0, 0);
+    // Get funding interval
+    vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
+    // If block.timestamp not pass the next funding time, return 0.
+    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
+    int32 _exponent;
+    if (_limitPriceE30 != 0) {
+      vars.marketPriceE30 = _limitPriceE30;
+    } else {
+      //@todo - validate timestamp of these
+      (vars.marketPriceE30, _exponent, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+        marketConfig.assetId,
+        false
+      );
+    }
+    vars.marketSkewUSDE30 =
+      ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
+      int(10 ** uint32(-_exponent));
+    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRateBPS, maxFundingRateBPS]
+    vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
+    vars.ratio = _min(vars.ratio, 1e18);
+    vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRateBPS))) / 1e4;
+
+    vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
+    vars.newFundingRate = (globalMarket.currentFundingRate + vars.nextFundingRate) * vars.elapsedIntervals;
+
+    if (globalMarket.longOpenInterest > 0) {
+      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize)) / 1e30;
+    }
+    if (globalMarket.shortOpenInterest > 0) {
+      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
+    }
+    return (vars.newFundingRate, fundingRateLong, fundingRateShort);
+  }
+
+  /**
+   * Funding Rate
+   */
+  /// @notice This function returns funding fee according to trader's position
+  /// @param _marketIndex Index of market
+  /// @param _isLong Is long or short exposure
+  /// @param _size Position size
+  /// @return fundingFee Funding fee of position
+  function getFundingFee(
+    uint256 _marketIndex,
+    bool _isLong,
+    int256 _size,
+    int256 _entryFundingRate
+  ) external view returns (int256 fundingFee) {
+    if (_size == 0) return 0;
+    uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
+
+    PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+
+    int256 _fundingRate = _globalMarket.currentFundingRate - _entryFundingRate;
+
+    // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
+    // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
+    fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
+
+    // @todo - funding fee Bug found here, must be resolved
+    if (_isLong) {
+      return _fundingRate < 0 ? -fundingFee : fundingFee;
+    } else {
+      return _fundingRate < 0 ? -fundingFee : fundingFee;
+    }
+  }
+
+  /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.
+  /// @param _assetClassIndex The index of the asset class for which to calculate the borrowing fee.
+  /// @param _reservedValue The reserved value of the asset class.
+  /// @param _entryBorrowingRate The entry borrowing rate of the asset class.
+  /// @return borrowingFee The calculated borrowing fee for the asset class.
+  function getBorrowingFee(
+    uint8 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) external view returns (uint256 borrowingFee) {
+    // Get the global asset class.
+    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+    // Calculate borrowing rate.
+    uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
+    // Calculate the borrowing fee based on reserved value, borrowing rate.
+    return (_reservedValue * _borrowingRate) / RATE_PRECISION;
+  }
+
+  /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
+  /// @param _assetClassIndex The index of the asset class.
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @return _nextBorrowingRate The next borrowing rate for the asset class.
+  function getNextBorrowingRate(
+    uint8 _assetClassIndex,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) public view returns (uint256 _nextBorrowingRate) {
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+
+    // Get the trading config, asset class config, and global asset class for the given asset class index.
+    ConfigStorage.TradingConfig memory _tradingConfig = _configStorage.getTradingConfig();
+    ConfigStorage.AssetClassConfig memory _assetClassConfig = _configStorage.getAssetClassConfigByIndex(
+      _assetClassIndex
+    );
+    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+      _assetClassIndex
+    );
+    // Get the PLP TVL.
+    uint256 plpTVL = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
+
+    // If block.timestamp not pass the next funding time, return 0.
+    if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
+    // If PLP TVL is 0, return 0.
+    if (plpTVL == 0) return 0;
+
+    // Calculate the number of funding intervals that have passed since the last borrowing time.
+    uint256 intervals = (block.timestamp - _globalAssetClass.lastBorrowingTime) / _tradingConfig.fundingInterval;
+
+    // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
+    return
+      (_assetClassConfig.baseBorrowingRateBPS * _globalAssetClass.reserveValueE30 * intervals * RATE_PRECISION) /
+      plpTVL /
+      BPS;
+  }
+
+  function _max(int256 a, int256 b) internal pure returns (int256) {
+    return a > b ? a : b;
+  }
+
+  function _min(int256 a, int256 b) internal pure returns (int256) {
+    return a < b ? a : b;
   }
 }

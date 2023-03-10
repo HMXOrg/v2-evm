@@ -33,9 +33,9 @@ contract DeployServices is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".crossMargin", crossMarginServiceAddress);
-    updateJson(".liquidation", liquidationServiceAddress);
-    updateJson(".liquidity", liquidityServiceAddress);
-    updateJson(".trade", tradeServiceAddress);
+    updateJson(".services.crossMargin", crossMarginServiceAddress);
+    updateJson(".services.liquidation", liquidationServiceAddress);
+    updateJson(".services.liquidity", liquidityServiceAddress);
+    updateJson(".services.trade", tradeServiceAddress);
   }
 }

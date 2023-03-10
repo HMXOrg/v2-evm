@@ -1,27 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetTokens } from "@hmx-test/integration/06_BaseIntTest_SetTokens.i.sol";
+import { BaseIntTest_SetPLPTokens } from "@hmx-test/integration/07_BaseIntTest_SetPLPTokens.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { console } from "forge-std/console.sol";
 
-abstract contract BaseIntTest_SetPLP is BaseIntTest_SetTokens {
+abstract contract BaseIntTest_SetPLP is BaseIntTest_SetPLPTokens {
   constructor() {
-    // Assuming underlying of PLP is weth,wbtc,usdc,usdt,dai
-    configStorage.setLiquidityConfig(
-      IConfigStorage.LiquidityConfig({
-        depositFeeRateBPS: 0,
-        withdrawFeeRateBPS: 0,
-        maxPLPUtilizationBPS: 0.8 * 1e4,
-        plpTotalTokenWeight: 0,
-        plpSafetyBufferBPS: 2000,
-        taxFeeRateBPS: 0.005 * 1e4, // 0.5%
-        flashLoanFeeRateBPS: 0,
-        dynamicFeeEnabled: true,
-        enabled: true
-      })
-    );
-
     _setupAcceptedToken();
     liquidityHandler.setOrderExecutor(ORDER_EXECUTOR, true);
     configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);

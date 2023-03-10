@@ -13,8 +13,6 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
@@ -840,13 +838,15 @@ contract Calculator is Owned, ICalculator {
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
     vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRateBPS))) / 1e4;
-    vars.newFundingRate = globalMarket.currentFundingRate + vars.nextFundingRate;
+
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
+    vars.newFundingRate = (globalMarket.currentFundingRate + vars.nextFundingRate) * vars.elapsedIntervals;
+
     if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize) * vars.elapsedIntervals) / 1e30;
+      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize)) / 1e30;
     }
     if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize) * vars.elapsedIntervals) / 1e30;
+      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
     }
     return (vars.newFundingRate, fundingRateLong, fundingRateShort);
   }
@@ -875,10 +875,12 @@ contract Calculator is Owned, ICalculator {
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
+
+    // @todo - funding fee Bug found here, must be resolved
     if (_isLong) {
       return _fundingRate < 0 ? -fundingFee : fundingFee;
     } else {
-      return _fundingRate < 0 ? fundingFee : -fundingFee;
+      return _fundingRate < 0 ? -fundingFee : fundingFee;
     }
   }
 

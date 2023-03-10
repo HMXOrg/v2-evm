@@ -5,11 +5,11 @@
     "vault": "0xF16ECccDec21Efe74e48755b37A9132dd0bF6121"
   },
   "handlers": {
-    "bot": "0xE0F6A9D50420e4415D4d378b2976685Dc7c6a9b3",
-    "crossMargin": "0x01F488b7446A4d96424a0DAC097C3aFEf9BaF626",
-    "limitTrade": "0xC138582ed381480856712A9607aB5537a2D5ee11",
-    "liquidity": "0x22eF364C9e06f934d6F5334bc6faC2321De2Ac1b",
-    "marketTrade": "0xf1A5509BaC7FeD77647507B4840003608CFAb025"
+    "bot": "0x9152FC88de20906a9327F8046226c6e7aD1b37FF",
+    "crossMargin": "0x393E38191a6a12C0F1CE7b14f6AeAA6b61112f5a",
+    "limitTrade": "0x70C5B01dab75589D3a298916982e4dF995b94bEC",
+    "liquidity": "0xf6A7e8E3CbAF999BCC6031d530C6cB036cA16D59",
+    "marketTrade": "0xe608b4a4a58f8c1124Be27278ee22e32d76c1Fe7"
   },
   "services": {
     "crossMargin": "0x00740689eACEedbcea4b91bC378Da4c862F98E90",

@@ -10,10 +10,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
    * Structs
    */
   struct AssetPriceConfig {
-    /// @dev The acceptable threshold confidence ratio. ex. _confidenceRatio = 0.01 ether means 1%
-    uint32 confidenceThresholdE6;
     /// @dev Acceptable price age in second.
     uint32 trustPriceAge;
+    /// @dev The acceptable threshold confidence ratio. ex. _confidenceRatio = 0.01 ether means 1%
+    uint32 confidenceThresholdE6;
   }
 
   /**
@@ -345,7 +345,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   function setAssetPriceConfig(
     bytes32 _assetId,
     uint32 _confidenceThresholdE6,
-    uint256 _trustPriceAge
+    uint32 _trustPriceAge
   ) external onlyOwner {
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
 

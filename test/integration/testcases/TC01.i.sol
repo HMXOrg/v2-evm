@@ -3,31 +3,28 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 import { console } from "forge-std/console.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract TC01 is BaseIntTest_WithActions {
   function testCorrectness_AddAndRemoveLiquiditySuccess() external {
     // T0: Initialized state
+
+    // WBTC = 20k
+    // ALICE NEED 10k in terms of WBTC = 10000 /20000 * 10**8  = 5e7
+    uint256 _amount = (10_000 * (10 ** configStorage.getAssetTokenDecimal(address(wbtc)))) / 20_000;
+
+    // mint 0.5 btc and give 0.01 gas
+    vm.deal(ALICE, 1 ether);
+    wbtc.mint(ALICE, _amount);
+
     // Alice Create Order And Executor Execute Order
-    /* 
-    address _liquidityProvider,
-    ERC20 _tokenIn,
-    uint256 _amountIn,
-    uint256 _executionFee,
-    bytes[] memory _priceData
-     */
+
     // T1: As a Liquidity, Alice adds 10,000 USD(GLP)
-    // btc is 20_000, so use 0.5 WBTC is $10k
-    // bytes32 _assetId = configStorage.tokenAssetIds[address(wbtc)];
-    // configStorage.validateAcceptedLiquidityToken(address(wbtc));
-    // console.log("WBTC", address(wbtc));
-    // vm.deal(ALICE, 5);
-    // addLiquidity(
-    //   ALICE,
-    //   wbtc,
-    //   (5 * (10 ** configStorage.getAssetTokenDecimal(address(wbtc)))) / 10, //0.5 wbtc
-    //   0,
-    //   initialPriceFeedDatas
-    // );
+    addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas, 0);
+
+    uint256 _amountAlice = plpV2.balanceOf(ALICE);
+    removeLiquidity(ALICE, ERC20(address(wbtc)), _amountAlice, executionOrderFee, initialPriceFeedDatas, 1);
+
     // T2: Alice withdraws 100,000 USD with PLP
     // T3: Alice withdraws GLP 100 USD
     // T5: As a Liquidity, Bob adds 100 USD(GLP)

@@ -110,14 +110,14 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       }
     }
 
-    int64 _decimalPow = int64(10) ** uint64(-pythDecimals);
+    int64 _pythDecimalPow = int64(10) ** uint64(-pythDecimals);
 
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
       pythAdapter.pythPriceIdOf(_assetId),
-      _price * _decimalPow,
+      _price * _pythDecimalPow,
       0,
       int8(pythDecimals),
-      _price * _decimalPow,
+      _price * _pythDecimalPow,
       0,
       uint64(block.timestamp)
     );

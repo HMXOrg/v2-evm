@@ -11,6 +11,7 @@ import { console2 } from "forge-std/console2.sol";
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
+import { console } from "forge-std/console.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs

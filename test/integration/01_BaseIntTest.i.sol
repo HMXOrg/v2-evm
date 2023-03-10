@@ -38,12 +38,15 @@ import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
+  /* Constants */
   uint256 internal constant DOLLAR = 1e30;
+  uint256 internal constant executionOrderFee = 0.0001 ether;
 
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal ORDER_EXECUTOR;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -75,8 +78,6 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   // UNDERLYING ARBRITRUM GLP => ETH WBTC LINK UNI USDC USDT DAI FRAX
   IWNative weth; //for native
 
-  address jpy = address(0);
-
   /* PYTH */
   MockPyth internal pyth;
   IOracleAdapter internal pythAdapter;
@@ -86,6 +87,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    ORDER_EXECUTOR = makeAddr("ORDER_EXECUTOR");
 
     // deploy MOCK weth
     weth = IWNative(new MockWNative());
@@ -143,12 +145,15 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), address(pyth));
     crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), address(pyth));
 
-    // TODO put last params
-    limitTradeHandler = Deployer.deployLimitTradeHandler(address(weth), address(tradeService), address(pyth), 0);
+    limitTradeHandler = Deployer.deployLimitTradeHandler(
+      address(weth),
+      address(tradeService),
+      address(pyth),
+      executionOrderFee
+    );
 
-    // TODO put last params
-    uint256 _minExecutionFee = 1 ether;
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), _minExecutionFee);
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), executionOrderFee);
+
     marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), address(pyth));
 
     // Setup ConfigStorage

@@ -218,5 +218,10 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       // set Tester as position managers
       botHandler.setPositionManagers(_positionManagers, true);
     }
+
+    // Setup Limit Trade Handler
+    {
+      limitTradeHandler.setOrderExecutor(address(this), true);
+    }
   }
 }

@@ -13,6 +13,8 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
@@ -357,11 +359,20 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
+    console2.log("_totalLiquidityUsd", _totalLiquidityUsd);
+    console2.log(
+      "getAssetPlpTokenConfigByToken",
+      ConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight
+    );
+    console2.log("calculator.plpTotalTokenWeight", _liquidityConfig.plpTotalTokenWeight);
+
     uint256 _targetUsd = (_totalLiquidityUsd *
       ConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight) /
       _liquidityConfig.plpTotalTokenWeight;
 
     if (_targetUsd == 0) return 0;
+
+    console2.log("_targetUsd", _targetUsd);
 
     // next value
     uint256 _nextUsd = _tokenLiquidityUsd - _liquidityUsdDelta;
@@ -458,6 +469,10 @@ contract Calculator is Owned, ICalculator {
     // Calculate unrealized PnL on opening trader's position(s)
     int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount, _limitPriceE30, _limitAssetId);
 
+    // console2.log("getEquity.CollateralValueE30", _collateralValueE30);
+    // console2.log("getEquity.UnrealizedPnlValueE30");
+    // console2.logInt(_unrealizedPnlValueE30);
+
     // Calculate Borrowing fee on opening trader's position(s)
     // @todo - calculate borrowing fee
     // uint256 borrowingFeeE30 = getBorrowingFee(_subAccount);
@@ -523,6 +538,9 @@ contract Calculator is Owned, ICalculator {
           _isUseMaxPrice
         );
       }
+
+      // console2.log("getUnrealizedPnl.priceE30", _priceE30);
+      // console2.log("getUnrealizedPnl.avgEntryPriceE30", _position.avgEntryPriceE30);
 
       // Calculate for priceDelta
       uint256 _priceDeltaE30;

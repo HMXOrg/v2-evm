@@ -14,8 +14,6 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // interfaces
 import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
-import { console } from "forge-std/console.sol"; //@todo - remove
-
 contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /**
    * EVENT
@@ -106,7 +104,6 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     address _tpToken, // NOTE: current only support GLP as profit token
     bytes[] memory _priceData
   ) external nonReentrant {
-    console.log("****************** buy()");
     if (_buySizeE30 == 0) {
       revert IMarketTradeHandler_ZeroSizeInput();
     }
@@ -117,8 +114,6 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     // 0. Get position
     PerpStorage.Position memory _position = _getPosition(_account, _subAccountId, _marketIndex);
-    console.log("_position.positionSizeE30");
-    console.logInt(_position.positionSizeE30);
 
     // 1. Find the `_shortDecreasingSizeE30` and `_longIncreasingSizeE30`
     uint256 _shortDecreasingSizeE30 = 0;
@@ -152,8 +147,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
         _longIncreasingSizeE30 = _buySizeE30;
       }
     }
-    console.log("_shortDecreasingSizeE30", _shortDecreasingSizeE30);
-    console.log("_longIncreasingSizeE30", _longIncreasingSizeE30);
+
     // 2. Decrease the short position first
     if (_shortDecreasingSizeE30 > 0) {
       TradeService(tradeService).decreasePosition(
@@ -196,7 +190,6 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     address _tpToken, // NOTE: current only support GLP as profit token
     bytes[] memory _priceData
   ) external nonReentrant {
-    console.log("****************** sell()");
     if (_sellSizeE30 == 0) {
       revert IMarketTradeHandler_ZeroSizeInput();
     }

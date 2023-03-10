@@ -5,6 +5,9 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+
+import { console2 } from "forge-std/console2.sol";
 
 contract TC29 is BaseIntTest_WithActions {
   function testIntegration_WhenSubAccountHasBadDebt() external {
@@ -25,14 +28,14 @@ contract TC29 is BaseIntTest_WithActions {
 
     // Mint tokens to Alice
     {
-      // Mint WETH token to ALICE
-      weth.mint(ALICE, 8 * 1e18); // @note mint weth in value of 99_750 USD instead of 100_000 cause prevent decimal case (100_000 / 1_500 = 66.66666666666667 WETH)
+      // Mint USDT token to ALICE
+      usdt.mint(ALICE, 12_000 * 1e6);
       // Mint USDC token to ALICE
       usdc.mint(ALICE, 9_000 * 1e6);
       // Mint WBTC token to ALICE
       wbtc.mint(ALICE, 0.05 * 1e8);
 
-      assertEq(weth.balanceOf(ALICE), 8 * 1e18, "WETH Balance Of");
+      assertEq(usdt.balanceOf(ALICE), 12_000 * 1e6, "USDT Balance Of");
       assertEq(usdc.balanceOf(ALICE), 9_000 * 1e6, "USDC Balance Of");
       assertEq(wbtc.balanceOf(ALICE), 0.05 * 1e8, "WBTC Balance Of");
     }
@@ -44,15 +47,15 @@ contract TC29 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       // Before Alice start depositing, VaultStorage must has 0 amount of all collateral tokens
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(weth)), 0, "ALICE's WETH Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdt)), 0, "ALICE's USDT Balance");
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 0, "ALICE's USDC Balance");
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0, "ALICE's WBTC Balance");
-      assertEq(weth.balanceOf(address(vaultStorage)), 0, "Vault's WETH Balance");
+      assertEq(usdt.balanceOf(address(vaultStorage)), 0, "Vault's USDT Balance");
       assertEq(usdc.balanceOf(address(vaultStorage)), 0, "Vault's USDC Balance");
       assertEq(wbtc.balanceOf(address(vaultStorage)), 10 * 1e8, "Vault's WBTC Balance");
 
-      // Alice deposits 12,000(USD) of WETH
-      depositCollateral(ALICE, SUB_ACCOUNT_ID, MockErc20(address(weth)), 8 * 1e18);
+      // Alice deposits 12,000(USD) of USDT
+      depositCollateral(ALICE, SUB_ACCOUNT_ID, usdt, 12_000 * 1e6);
 
       // Alice deposits 10,000(USD) of USDC
       depositCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 9_000 * 1e6);
@@ -61,14 +64,14 @@ contract TC29 is BaseIntTest_WithActions {
       depositCollateral(ALICE, SUB_ACCOUNT_ID, wbtc, 0.05 * 1e8);
 
       // After Alice deposited all collaterals, VaultStorage must contain tokens
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(weth)), 8 * 1e18, "ALICE's WETH Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdt)), 12_000 * 1e6, "ALICE's USDT Balance");
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 9_000 * 1e6, "ALICE's USDC Balance");
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0.05 * 1e8, "ALICE's WBTC Balance");
-      assertEq(weth.balanceOf(address(vaultStorage)), 8 * 1e18, "Vault's WETH Balance");
+      assertEq(usdt.balanceOf(address(vaultStorage)), 12_000 * 1e6, "Vault's USDT Balance");
       assertEq(usdc.balanceOf(address(vaultStorage)), 9_000 * 1e6, "Vault's USDC Balance");
       assertEq(wbtc.balanceOf(address(vaultStorage)), (0.05 + 10) * 1e8, "Vault's WBTC Balance");
       // After Alice deposited all collaterals, Alice must have no token left
-      assertEq(weth.balanceOf(ALICE), 0, "WETH Balance Of");
+      assertEq(usdt.balanceOf(ALICE), 0, "USDT Balance Of");
       assertEq(usdc.balanceOf(ALICE), 0, "USDC Balance Of");
       assertEq(wbtc.balanceOf(ALICE), 0, "WBTC Balance Of");
     }
@@ -124,21 +127,26 @@ contract TC29 is BaseIntTest_WithActions {
     /**
      * T3: Liquidation on Alice's account happened
      */
-
     vm.warp(block.timestamp + 1);
     {
+      // ALICE's position before liquidate must contain 1 position
+      IPerpStorage.Position[] memory traderPositionBefore = perpStorage.getPositionBySubAccount(SUB_ACCOUNT);
+      assertEq(traderPositionBefore.length, 1);
+
       bytes[] memory prices = new bytes[](0);
       botHandler.liquidate(SUB_ACCOUNT, prices);
+
+      // ALICE's position before liquidate must contain 0 position
+      IPerpStorage.Position[] memory traderPositionAfter = perpStorage.getPositionBySubAccount(SUB_ACCOUNT);
+      assertEq(traderPositionAfter.length, 0);
     }
 
     /**
      * T4: Alice's account equity = 0, MMR = 0 USD
      */
-
     vm.warp(block.timestamp + 1);
     {
       // @todo - already liquidated but bad debt still not occurred
-
       assertEq(calculator.getEquity(SUB_ACCOUNT, 0, 0), 0);
       assertEq(calculator.getIMR(SUB_ACCOUNT), 0);
       assertEq(calculator.getMMR(SUB_ACCOUNT), 0);
@@ -147,12 +155,16 @@ contract TC29 is BaseIntTest_WithActions {
     /**
      * T5: Alice's Deposit more collateral
      */
-
     vm.warp(block.timestamp + 1);
     {
       // Mint USDC token to ALICE
       usdc.mint(ALICE, 9_000 * 1e6);
       depositCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 9_000 * 1e6);
+
+      // After Alice deposited USDC
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 9_000 * 1e6, "ALICE's USDC Balance");
+      assertEq(usdc.balanceOf(address(vaultStorage)), (9_000 + 9_000) * 1e6, "Vault's USDC Balance");
+      assertEq(usdc.balanceOf(ALICE), 0, "USDC Balance Of");
     }
 
     /**
@@ -164,7 +176,12 @@ contract TC29 is BaseIntTest_WithActions {
       uint256 buySizeE30 = 3_000 * 1e30;
       address tpToken = address(wbtc); // @note settle with WBTC that be treated as GLP token
       bytes[] memory priceData = new bytes[](0);
+
       marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceData);
+
+      // ALICE's position after open new position
+      IPerpStorage.Position[] memory traderPositionAfter = perpStorage.getPositionBySubAccount(SUB_ACCOUNT);
+      assertEq(traderPositionAfter.length, 1);
     }
   }
 }

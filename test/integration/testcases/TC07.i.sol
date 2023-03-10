@@ -6,6 +6,8 @@ import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract TC07 is BaseIntTest_WithActions {
   function testIntegration_WhenAdminAdjustIMF() external {
     /**
@@ -128,9 +130,20 @@ contract TC07 is BaseIntTest_WithActions {
 
     vm.warp(block.timestamp + 1);
     {
-      // Alice withdraw 1(USD) of USDC
+      // Before Alice withdraw USDC
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 8_900 * 1e6, "ALICE's USDC Balance");
+      assertEq(usdc.balanceOf(address(vaultStorage)), 9_000 * 1e6, "Vault's USDC Balance");
+      assertEq(usdc.balanceOf(ALICE), 0, "USDC Balance Of");
+
+      // Alice withdraw 1000(USD) of USDC
+      // Expect that Alice can normally withdraw collateral
       bytes[] memory priceData = new bytes[](0);
       withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 1_000 * 1e6, priceData);
+
+      // After Alice withdraw USDC
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), (8_900 - 1_000) * 1e6, "ALICE's USDC Balance");
+      assertEq(usdc.balanceOf(address(vaultStorage)), (9_000 - 1_000) * 1e6, "Vault's WBTC Balance");
+      assertEq(usdc.balanceOf(ALICE), 1_000 * 1e6, "USDC Balance Of");
     }
 
     /**
@@ -144,6 +157,7 @@ contract TC07 is BaseIntTest_WithActions {
       bytes[] memory priceData = new bytes[](0);
 
       // ALICE opens SHORT position with WETH Market Price = 1550 USD
+      // Expect after sell position, will make Equity more closer to IMR level
       marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
 
       // Alice's Free collateral must be zero
@@ -219,6 +233,9 @@ contract TC07 is BaseIntTest_WithActions {
 
     vm.warp(block.timestamp + 1);
     {
+      // Before Alice withdraw USDC
+      assertEq(usdc.balanceOf(ALICE), 1000 * 1e6, "USDC Balance Of");
+
       // Alice withdraw 100(USD) of USDC
       bytes[] memory priceData = new bytes[](0);
       withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 100 * 1e6, priceData);
@@ -229,6 +246,9 @@ contract TC07 is BaseIntTest_WithActions {
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) > calculator.getIMR(SUB_ACCOUNT),
         "ALICE's Equity > IMR?"
       );
+
+      // After Alice withdraw USDC
+      assertEq(usdc.balanceOf(ALICE), (1000 + 100) * 1e6, "USDC Balance Of");
     }
   }
 }

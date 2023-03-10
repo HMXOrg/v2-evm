@@ -7,11 +7,8 @@ import { IteratableAddressList } from "@hmx/libraries/IteratableAddressList.sol"
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
-import { console } from "forge-std/console.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs

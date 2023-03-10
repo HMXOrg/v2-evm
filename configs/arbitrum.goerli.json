@@ -1,31 +1,31 @@
 {
   "storages": {
-    "config": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-    "perp": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-    "vault": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+    "config": "0xC4605B61675654396f3b77F9D4c3bE661fa0d873",
+    "perp": "0x7AAF085e43f059105F7e1ECc525E8142fF962159",
+    "vault": "0x4Dc3c929DDa7451012F408d1f376221621dD2a56"
   },
   "handlers": {
-    "bot": "",
-    "crossMargin": "",
-    "limitTrade": "",
-    "liquidity": "",
-    "marketTrade": ""
+    "bot": "0x8a30913D47FeD617778058201846f5326bC9e65D",
+    "crossMargin": "0xA227221350f1D0Ca119be424710aCD9df89151c3",
+    "limitTrade": "0x35A301796949f5235f8fc3311E6013450aaf2354",
+    "liquidity": "0x4D9DF83C94c54F75aC2870514C2AD72047f96BB8",
+    "marketTrade": "0xDfc82d68Bb9B715a7DDFE80F2074E86958129B18"
   },
   "services": {
-    "crossMargin": "",
-    "liquidity": "",
-    "liquidation": "",
-    "trade": ""
+    "crossMargin": "0xfc51C8c673C27e1b3D89688ef46D706A77CA28DB",
+    "liquidity": "0x8b0D385b260a2532205CB0012F1550F9310d1d77",
+    "liquidation": "0x1e4D635cbae9D06CbFdd2fb9a0c47b247E15f60C",
+    "trade": "0x597b571Ee58892C044f4292703C5BF5e4783CA85"
   },
   "oracle": {
-    "pyth": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
-    "pythAdapter": "",
-    "middleware": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+    "pyth": "0x939C0e902FF5B3F7BA666Cc8F6aC75EE76d3f900",
+    "pythAdapter": "0x20E58fC5E1ee3C596fb3ebD6de6040e7800e82E6",
+    "middleware": "0x4c08D11Bc95075AD992Bd7A5776D0D9813E264d5"
   },
   "tokens": {
-    "plp": "",
-    "weth": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+    "plp": "0xFc41505F4e24345E3797b6730a948a2B03a5eC5e",
+    "weth": "0x995F553c6EF760ACB6EED102b376c3f159014e3c"
   },
-  "calculator": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-  "feeCalculator": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+  "calculator": "0x417B34E90990657BF6adC1Ecc2ac4B36069cc927",
+  "feeCalculator": "0x029c919Cf951C588819Acb7d95eeC1780E53f89C"
 }

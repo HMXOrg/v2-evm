@@ -10,10 +10,10 @@ import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 contract TC01 is BaseIntTest_WithActions {
   function testCorrectness_AddAndRemoveLiquiditySuccess() external {
     // T0: Initialized state
-
+    uint256 _totalExecutionOrderFee = executionOrderFee - initialPriceFeedDatas.length;
     // WBTC = 20k
     // ALICE NEED 10k in terms of WBTC = 10000 /20000 * 10**8  = 5e7
-    uint256 _amount = (10_000 * (10 ** configStorage.getAssetTokenDecimal(address(wbtc)))) / 20_000;
+    uint256 _amount = 5e7;
 
     // mint 0.5 btc and give 0.0001 gas
     vm.deal(ALICE, executionOrderFee);
@@ -22,26 +22,81 @@ contract TC01 is BaseIntTest_WithActions {
     // Alice Create Order And Executor Execute Order
 
     // T1: As a Liquidity, Alice adds 10,000 USD(GLP)
-    // After T1 alice receive
-
     addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas, 0);
 
-    /* liquidityTester.assertLiquidityInfo(
+    liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
-        lpTokenSupply: 10_000 * ether,
-        tokenBalance: 10,
-        fee: 0,
-        executionFee: 1
+        who: ALICE,
+        lpTotalSupply: 99_70 ether,
+        totalAmount: _amount,
+        plpLiquidity: 49_850_000,
+        plpAmount: 9_970 ether, //
+        fee: 150_000, //fee = 0.5e8( 0.5e8 -0.3%) = 0.0015 * 1e8
+        executionFee: _totalExecutionOrderFee
       })
-    ); */
-    /* 
-    uint256 _amountAlice = plpV2.balanceOf(ALICE);
-    removeLiquidity(ALICE, ERC20(address(wbtc)), _amountAlice, executionOrderFee, initialPriceFeedDatas, 1); */
+    );
+
+    // no one in PLP pool, so aum must be = totalSupply
+    assertEq(calculator.getAUM(false, 0, 0), plpV2.totalSupply(), "AUM & total Supply mismatch");
 
     // T2: Alice withdraws 100,000 USD with PLP
-    // T3: Alice withdraws GLP 100 USD
+    vm.deal(ALICE, executionOrderFee);
+
+    uint256 amountToRemove = 100_000 ether;
+    vm.startPrank(ALICE);
+
+    plpV2.approve(address(liquidityHandler), amountToRemove);
+    vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
+    liquidityHandler.createRemoveLiquidityOrder{ value: executionOrderFee }(
+      address(wbtc),
+      amountToRemove,
+      0,
+      executionOrderFee,
+      false
+    );
+    vm.stopPrank();
+
+    // T3: Alice withdraws PLP 100 USD
+    //  10000 -> 0.5 e8
+    //   100 -> 0.005 e7 btc
+    removeLiquidity(ALICE, address(wbtc), 100 ether, executionOrderFee, initialPriceFeedDatas, 1);
+
+    _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
+
+    // PLP LIQUIDITY BEFORE =
+    liquidityTester.assertLiquidityInfo(
+      LiquidityTester.LiquidityExpectedData({
+        token: address(wbtc),
+        who: ALICE,
+        lpTotalSupply: 98_70 ether, // 9970 plp - 100 plp
+        totalAmount: 49_501_400, //(0.5 e8 - 0.005)+ 1400 fee
+        plpLiquidity: 49_350_000, // 49_850_000 - 500_000
+        plpAmount: 9_870 ether, //user plp
+        //fee Alice addLiquidity (150_000) + fee Alice removeLiquidity(100 plp => 500_000-(500_000-0.28%) => 1,400 ) = 151400
+        fee: 151_400,
+        executionFee: _totalExecutionOrderFee
+      })
+    );
+
     // T5: As a Liquidity, Bob adds 100 USD(GLP)
+    vm.deal(BOB, executionOrderFee);
+    wbtc.mint(BOB, 500_000);
+    addLiquidity(BOB, ERC20(address(wbtc)), 500_000, executionOrderFee, initialPriceFeedDatas, 0);
+
+    liquidityTester.assertLiquidityInfo(
+      LiquidityTester.LiquidityExpectedData({
+        token: address(wbtc),
+        who: BOB,
+        lpTotalSupply: 99_70 ether,
+        totalAmount: 49_501_400,
+        plpLiquidity: 49_850_000,
+        plpAmount: 9_970 ether, //
+        fee: 150_000, //fee = 0.5e8( 0.5e8 -0.3%) = 0.0015 * 1e8
+        executionFee: _totalExecutionOrderFee
+      })
+    );
+
     // T6: Alice max withdraws 9,900 USD PLP in pools
   }
 }

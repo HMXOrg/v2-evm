@@ -10,6 +10,7 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
+import { console } from "forge-std/console.sol";
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
 
@@ -287,11 +288,17 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
     ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal pure returns (uint32) {
-    uint32 _feeRateBPS = direction == LiquidityDirection.ADD
+  ) internal view returns (uint32) {
+    console.log("ENTERING _getFeeBPS");
+    console.log("PARAMS");
+    console.log("_value", _value);
+    console.log("_liquidityUSD", _liquidityUSD);
+    console.log("_totalLiquidityUSD", _totalLiquidityUSD);
+    console.log("==================");
+    uint32 _feeBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
-    uint32 _taxRateBPS = _liquidityConfig.taxFeeRateBPS;
+    uint32 _taxBPS = _liquidityConfig.taxFeeRateBPS;
     uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
@@ -299,22 +306,38 @@ contract Calculator is Owned, ICalculator {
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
-    if (targetValue == 0) return _feeRateBPS;
+    console.log("_totalLiquidityUSD", _totalLiquidityUSD);
+    console.log("targetWeight", _plpTokenConfig.targetWeight);
+    console.log("_totalTokenWeight", _totalTokenWeight);
+    console.log("targetValue", targetValue);
+    console.log("_feeBPS", _feeBPS);
+    if (targetValue == 0) return _feeBPS;
+
+    console.log("startValue", startValue);
+    console.log("nextValue", nextValue);
+    console.log("targetValue", targetValue);
 
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
-
+    console.log("startTargetDiff", startTargetDiff);
     uint256 nextTargetDiff = nextValue > targetValue ? nextValue - targetValue : targetValue - nextValue;
+    console.log("nextTargetDiff", nextTargetDiff);
 
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
-      uint32 rebateRateBPS = uint32((_taxRateBPS * startTargetDiff) / targetValue);
-      return rebateRateBPS > _feeRateBPS ? 0 : _feeRateBPS - rebateRateBPS;
+      uint32 rebateBPS = uint32((_taxBPS * startTargetDiff) / targetValue);
+      console.log("rebateBPS", rebateBPS);
+      return rebateBPS > _feeBPS ? 0 : _feeBPS - rebateBPS;
     }
 
     // _nextWeight represented 18 precision
     uint256 _nextWeight = (nextValue * ETH_PRECISION) / targetValue;
+    console.log("_nextWeight", _nextWeight);
     // if weight exceed targetWeight(e18) + maxWeight(e18)
+    //1063296539220391404 >  0.95 * 1e18 + 0.01*e18
+    console.log("_plpTokenConfig.targetWeight", _plpTokenConfig.targetWeight);
+    console.log("_plpTokenConfig.maxWeightDif", _plpTokenConfig.maxWeightDiff);
+
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
     }
@@ -325,9 +348,14 @@ contract Calculator is Owned, ICalculator {
     if (midDiff > targetValue) {
       midDiff = targetValue;
     }
-    _taxRateBPS = uint32((_taxRateBPS * midDiff) / targetValue);
+    _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
 
-    return uint32(_feeRateBPS + _taxRateBPS);
+    console.log("_feeRateBPS");
+    console.logUint(_feeBPS);
+    console.log("_taxRateBPS");
+    console.logUint(_taxBPS);
+
+    return uint32(_feeBPS + _taxBPS);
   }
 
   /// @notice get settlement fee rate
@@ -389,9 +417,9 @@ contract Calculator is Owned, ICalculator {
 
   // return in e18
   function _getTargetValue(
-    uint256 totalLiquidityUSD, //e18
-    uint256 tokenWeight,
-    uint256 totalTokenWeight
+    uint256 totalLiquidityUSD, //e30
+    uint256 tokenWeight, //e18
+    uint256 totalTokenWeight //0
   ) public pure returns (uint256) {
     if (totalLiquidityUSD == 0) return 0;
 

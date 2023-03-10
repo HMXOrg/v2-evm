@@ -123,6 +123,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _amount,
     uint256 _minAmount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_tokenOut) returns (uint256) {
+    console.log("+=======================+REMOVE ==================");
     // 1. _validate
     _validatePreAddRemoveLiquidity(_amount);
 
@@ -177,6 +178,9 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       (amountAfterFee * _price) / PRICE_PRECISION
     );
 
+    console.log("  _aum", _aum);
+    console.log("_lpSupply", _lpSupply);
+    console.log("_tokenValueUSDAfterFee", _tokenValueUSDAfterFee);
     mintAmount = _calculator.getMintAmount(_aum, _lpSupply, _tokenValueUSDAfterFee);
 
     // 5. Check slippage: revert on error
@@ -208,6 +212,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       ConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
       (_lpUsdValue * PRICE_PRECISION) / _maxPrice
     );
+    console.log("AMOUNTOUT BEFORE FEE", _amountOut);
 
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
@@ -219,9 +224,13 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       ConfigStorage(configStorage)
     );
 
+    console.log("_feeBps", _feeBps);
+
     _amountOut = _collectFee(
       CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY)
     );
+
+    console.log("AMOUNTOUT AFTER FEE", _amountOut);
 
     if (_minAmount > _amountOut) {
       revert LiquidityService_Slippage();
@@ -253,7 +262,10 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
   // calculate fee and accounting fee
   function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
-    uint256 _fee = (_request._amount * (BPS - _request._feeBPS)) / BPS;
+    console.log("amount", _request._amount);
+    console.log("_request._feeBPS", _request._feeBPS);
+
+    uint256 _fee = _request._amount - ((_request._amount * (BPS - _request._feeBPS)) / BPS);
 
     VaultStorage(vaultStorage).addFee(_request._token, _fee);
     uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_request._token);

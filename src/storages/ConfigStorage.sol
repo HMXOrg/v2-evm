@@ -369,6 +369,20 @@ contract ConfigStorage is IConfigStorage, Owned {
         }
       }
 
+      // Adjust plpTotalToken Weight
+      if (liquidityConfig.plpTotalTokenWeight == 0) {
+        liquidityConfig.plpTotalTokenWeight = _configs[_i].targetWeight;
+      } else {
+        liquidityConfig.plpTotalTokenWeight =
+          (liquidityConfig.plpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
+          _configs[_i].targetWeight;
+      }
+
+      if (liquidityConfig.plpTotalTokenWeight > 1e18) {
+        revert IConfigStorage_ExceedLimitSetting();
+      }
+
+      // put asset ID after add totalWeight
       if (_isSetPLPAssetId) {
         plpAssetIds.push(_assetId);
       }
@@ -377,14 +391,6 @@ contract ConfigStorage is IConfigStorage, Owned {
       emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 
       // Update totalWeight accordingly
-
-      liquidityConfig.plpTotalTokenWeight == 0 ? _configs[_i].targetWeight : liquidityConfig.plpTotalTokenWeight =
-        (liquidityConfig.plpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
-        _configs[_i].targetWeight;
-
-      if (liquidityConfig.plpTotalTokenWeight > 1e18) {
-        revert IConfigStorage_ExceedLimitSetting();
-      }
 
       unchecked {
         ++_i;

@@ -20,6 +20,8 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
+import { console } from "forge-std/console.sol";
+
 /// @title LiquidityHandler
 contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   using SafeERC20 for IERC20;
@@ -281,10 +283,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     }
 
     // Pay the executor
-    IERC20 _weth = IERC20(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth());
-    uint256 _currentWethBalance = _weth.balanceOf(address(this));
     _transferOutETH(_order.executionFee - _updateFee, _feeReceiver);
-    _currentWethBalance = _weth.balanceOf(address(this));
   }
 
   /// @notice execute either addLiquidity or removeLiquidity

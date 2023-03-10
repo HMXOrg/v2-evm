@@ -206,7 +206,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     crossMarginTester = new CrossMarginTester(vaultStorage, perpStorage, address(crossMarginHandler));
     globalMarketTester = new GlobalMarketTester(perpStorage);
     limitOrderTester = new LimitOrderTester(limitTradeHandler);
-    liquidityTester = new LiquidityTester(plpV2, vaultStorage, perpStorage, address(liquidityHandler));
+    liquidityTester = new LiquidityTester(plpV2, vaultStorage, perpStorage, FEEVER);
     positionTester = new PositionTester(perpStorage, vaultStorage, oracleMiddleWare);
     positionTester02 = new PositionTester02(perpStorage);
 
@@ -234,6 +234,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
 
       configStorage.setWeth(address(weth));
+      configStorage.setPLP(address(plpV2));
     }
 
     // Setup VaultStorage

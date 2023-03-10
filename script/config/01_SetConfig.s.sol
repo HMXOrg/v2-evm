@@ -6,7 +6,6 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-// for local only
 contract SetConfig is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");

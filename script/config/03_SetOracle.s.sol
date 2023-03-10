@@ -9,7 +9,6 @@ import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 
-// for local only
 contract SetOracle is ConfigJsonRepo {
   error BadArgs();
 

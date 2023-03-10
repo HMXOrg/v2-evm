@@ -5,10 +5,11 @@ import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 
-contract SetMarkets is ConfigJsonRepo {
-  uint256 internal constant DOLLAR = 1e30;
-
+contract SetCollateralTokens is ConfigJsonRepo {
   // Arbitrum Goerli Price Feed IDs (https://pyth.network/developers/price-feed-ids#pyth-evm-testnet)
   bytes32 internal constant wethPriceId = 0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6;
   bytes32 internal constant wbtcPriceId = 0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b;
@@ -30,59 +31,39 @@ contract SetMarkets is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
-    // IMF = 1%, Max leverage = 100
-    // MMF = 0.5%
-    // Increase / Decrease position fee = 0.1%
-    _addMarketConfig(wethAssetId, 1, 100, 50, 10);
-    // IMF = 1%, Max leverage = 100
-    // MMF = 0.5%
-    // Increase / Decrease position fee = 0.1%
-    _addMarketConfig(wbtcAssetId, 1, 100, 50, 10);
-    // IMF = 5%, Max leverage = 20
-    // MMF = 2.5%
-    // Increase / Decrease position fee = 0.05%
-    _addMarketConfig(appleAssetId, 1, 500, 250, 5);
-    // IMF = 0.1%, Max leverage = 1000
-    // MMF = 0.05%
-    // Increase / Decrease position fee = 0.03%
-    _addMarketConfig(jpyAssetId, 1, 10, 5, 3);
+    // @todo - GLP
+    // collateralFactorBPS = 80%
+    _addCollateralConfig(wethAssetId, 8000, true, address(0));
+    // collateralFactorBPS = 80%
+    _addCollateralConfig(wbtcAssetId, 8000, true, address(0));
+    // collateralFactorBPS = 100%
+    _addCollateralConfig(daiAssetId, 10000, true, address(0));
+    // collateralFactorBPS = 100%
+    _addCollateralConfig(usdcAssetId, 10000, true, address(0));
+    // collateralFactorBPS = 100%
+    _addCollateralConfig(usdtAssetId, 10000, true, address(0));
 
     vm.stopBroadcast();
   }
 
-  function _addMarketConfig(
+  /// @notice to add collateral config with some default value
+  /// @param _assetId Asset's ID
+  /// @param _collateralFactorBPS token reliability factor to calculate buying power, 1e4 = 100%
+  /// @param _isAccepted accepted to deposit as collateral
+  /// @param _settleStrategy determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+  function _addCollateralConfig(
     bytes32 _assetId,
-    uint8 _assetClass,
-    uint32 _imf,
-    uint32 _mmf,
-    uint32 _managePositionFee
-  ) private returns (uint256 _index) {
+    uint32 _collateralFactorBPS,
+    bool _isAccepted,
+    address _settleStrategy
+  ) private {
+    IConfigStorage.CollateralTokenConfig memory _collatTokenConfig;
     IConfigStorage configStorage = IConfigStorage(getJsonAddress(".storages.config"));
 
-    // default market config
-    IConfigStorage.MarketConfig memory _newMarketConfig;
-    IConfigStorage.OpenInterest memory _newOpenInterestConfig;
-    IConfigStorage.FundingRate memory _newFundingRateConfig;
+    _collatTokenConfig.collateralFactorBPS = _collateralFactorBPS;
+    _collatTokenConfig.accepted = _isAccepted;
+    _collatTokenConfig.settleStrategy = _settleStrategy;
 
-    _newOpenInterestConfig.longMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
-    _newOpenInterestConfig.shortMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
-
-    _newFundingRateConfig.maxSkewScaleUSD = 3_000_000 * DOLLAR;
-    _newFundingRateConfig.maxFundingRateBPS = 4; // 0.04%
-
-    _newMarketConfig.assetId = _assetId;
-    _newMarketConfig.increasePositionFeeRateBPS = _managePositionFee;
-    _newMarketConfig.decreasePositionFeeRateBPS = _managePositionFee;
-    _newMarketConfig.initialMarginFractionBPS = _imf;
-    _newMarketConfig.maintenanceMarginFractionBPS = _mmf;
-    _newMarketConfig.maxProfitRateBPS = 90000; // 900%
-    _newMarketConfig.minLeverageBPS = 11000; // 110%
-    _newMarketConfig.assetClass = _assetClass;
-    _newMarketConfig.allowIncreasePosition = true;
-    _newMarketConfig.active = true;
-    _newMarketConfig.openInterest = _newOpenInterestConfig;
-    _newMarketConfig.fundingRate = _newFundingRateConfig;
-
-    return configStorage.addMarketConfig(_newMarketConfig);
+    configStorage.setCollateralTokenConfig(_assetId, _collatTokenConfig);
   }
 }

@@ -1,18 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetMarkets } from "@hmx-test/integration/03_BaseIntTest_SetMarkets.i.sol";
+import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 
-abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
+// for local only
+contract SetOracle is ConfigJsonRepo {
   error BadArgs();
 
-  bytes32 constant wethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000001;
-  bytes32 constant wbtcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000002;
-  bytes32 constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
-  bytes32 constant usdtPriceId = 0x0000000000000000000000000000000000000000000000000000000000000004;
-  bytes32 constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
-  bytes32 constant applePriceId = 0x0000000000000000000000000000000000000000000000000000000000000006;
-  bytes32 constant jpyPriceid = 0x0000000000000000000000000000000000000000000000000000000000000007;
+  uint256 internal constant DOLLAR = 1e30;
+
+  // Arbitrum Goerli Price Feed IDs (https://pyth.network/developers/price-feed-ids#pyth-evm-testnet)
+  bytes32 internal constant wethPriceId = 0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6;
+  bytes32 internal constant wbtcPriceId = 0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b;
+  bytes32 internal constant usdcPriceId = 0x41f3625971ca2ed2263e78573fe5ce23e13d2558ed3f2e47ab0f84fb9e7ae722;
+  bytes32 internal constant usdtPriceId = 0x1fc18861232290221461220bd4e2acd1dcdfbc89c84092c93c18bdc7756c1588;
+  bytes32 internal constant daiPriceId = 0x87a67534df591d2dd5ec577ab3c75668a8e3d35e92e27bf29d9e2e52df8de412;
+  bytes32 internal constant applePriceId = 0xafcc9a5bb5eefd55e12b6f0b4c8e6bccf72b785134ee232a5d175afd082e8832;
+  bytes32 internal constant jpyPriceId = 0x20a938f54b68f1f2ef18ea0328f6dd0747f8ea11486d22b021e83a900be89776;
+
+  bytes32 constant wethAssetId = 0x0000000000000000000000000000000000000000000000000000000000000001;
+  bytes32 constant wbtcAssetId = 0x0000000000000000000000000000000000000000000000000000000000000002;
+  bytes32 constant usdcAssetId = 0x0000000000000000000000000000000000000000000000000000000000000003;
+  bytes32 constant usdtAssetId = 0x0000000000000000000000000000000000000000000000000000000000000004;
+  bytes32 constant daiAssetId = 0x0000000000000000000000000000000000000000000000000000000000000005;
+  bytes32 constant appleAssetId = 0x0000000000000000000000000000000000000000000000000000000000000006;
+  bytes32 constant jpyAssetId = 0x0000000000000000000000000000000000000000000000000000000000000007;
 
   struct AssetPythPriceData {
     bytes32 assetId;
@@ -25,7 +43,18 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   /// @notice will change when a function called "setPrices" is used or when an object is created through a function called "constructor"
   bytes[] initialPriceFeedDatas;
 
-  constructor() {
+  IOracleMiddleware oracleMiddleWare;
+  IOracleAdapter pythAdapter;
+  IPyth pyth;
+
+  function run() public {
+    uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+    vm.startBroadcast(deployerPrivateKey);
+
+    oracleMiddleWare = IOracleMiddleware(getJsonAddress(".oracle.middleware"));
+    pythAdapter = IOracleAdapter(getJsonAddress(".oracle.pythAdapter"));
+    pyth = IPyth(getJsonAddress(".oracle.pyth"));
+
     assetPythPriceDatas.push(
       AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8 })
     );
@@ -44,12 +73,12 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     );
     // @todo - after integrate with inverse config then price should be change to USDJPY
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: jpyAssetId, priceId: jpyPriceid, price: 0.0072 * 1e8, exponent: -8 })
+      AssetPythPriceData({ assetId: jpyAssetId, priceId: jpyPriceId, price: 0.0072 * 1e8, exponent: -8 })
     );
 
     // Set MarketStatus
     uint8 _marketActiveStatus = uint8(2);
-    oracleMiddleWare.setUpdater(address(this), true); // Whitelist updater for oracleMiddleWare
+    oracleMiddleWare.setUpdater(0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a, true);
     // crypto
     oracleMiddleWare.setMarketStatus(usdcAssetId, _marketActiveStatus); // active
     oracleMiddleWare.setMarketStatus(usdtAssetId, _marketActiveStatus); // active
@@ -62,7 +91,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     oracleMiddleWare.setMarketStatus(jpyAssetId, _marketActiveStatus); // active
 
     // Set AssetPriceConfig
-    uint32 _confidenceThresholdE6 = 250; // 2.5% for test only
+    uint32 _confidenceThresholdE6 = 25000; // 2.5% for test only
     uint256 _trustPriceAge = type(uint256).max; // set max for test only
     oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge);
@@ -73,72 +102,17 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     oracleMiddleWare.setAssetPriceConfig(jpyAssetId, _confidenceThresholdE6, _trustPriceAge);
 
     AssetPythPriceData memory _data;
+
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
       _data = assetPythPriceDatas[i];
 
       // set PythId
       pythAdapter.setPythPriceId(_data.assetId, _data.priceId);
-      // set UpdatePriceFeed
-      initialPriceFeedDatas.push(_createPriceFeedUpdateData(_data.assetId, _data.price));
 
       unchecked {
         ++i;
       }
     }
-    uint256 fee = pyth.getUpdateFee(initialPriceFeedDatas);
-    vm.deal(address(this), fee);
-    pyth.updatePriceFeeds{ value: fee }(initialPriceFeedDatas);
-  }
-
-  /// @notice setPrices of pyth
-  /// @param _assetIds assetIds array
-  /// @param _prices price of each asset
-  /// @return _newDatas bytes[] of setting
-  function setPrices(bytes32[] memory _assetIds, int64[] memory _prices) public returns (bytes[] memory _newDatas) {
-    if (_assetIds.length != _prices.length) {
-      revert BadArgs();
-    }
-
-    _newDatas = new bytes[](_assetIds.length);
-
-    for (uint256 i = 0; i < _assetIds.length; ) {
-      _newDatas[i] = (_createPriceFeedUpdateData(_assetIds[i], _prices[i]));
-      unchecked {
-        ++i;
-      }
-    }
-
-    uint256 fee = pyth.getUpdateFee(_newDatas);
-    vm.deal(address(this), fee);
-    pyth.updatePriceFeeds{ value: fee }(_newDatas);
-    return _newDatas;
-  }
-
-  function _createPriceFeedUpdateData(bytes32 _assetId, int64 _price) internal returns (bytes memory) {
-    int64 pythDecimals;
-
-    for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
-      if (assetPythPriceDatas[i].assetId == _assetId) {
-        pythDecimals = assetPythPriceDatas[i].exponent;
-        break;
-      }
-      unchecked {
-        ++i;
-      }
-    }
-
-    int64 _pythDecimalPow = int64(10) ** uint64(-pythDecimals);
-
-    bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
-      pythAdapter.pythPriceIdOf(_assetId),
-      _price * _pythDecimalPow,
-      0,
-      int8(pythDecimals),
-      _price * _pythDecimalPow,
-      0,
-      uint64(block.timestamp)
-    );
-
-    return priceFeedData;
+    vm.stopBroadcast();
   }
 }

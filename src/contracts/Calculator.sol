@@ -239,17 +239,17 @@ contract Calculator is Owned, ICalculator {
     return (amount * 10 ** toTokenDecimals) / 10 ** fromTokenDecimals;
   }
 
-  function getAddLiquidityFeeRate(
+  function getAddLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
-  ) external view returns (uint256) {
+  ) external view returns (uint32) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
       return _configStorage.getLiquidityConfig().depositFeeRateBPS;
     }
 
     return
-      _getFeeRate(
+      _getFeeBPS(
         _tokenValueE30,
         _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false, 0, 0),
         _getPLPValueE30(false, 0, 0),
@@ -259,17 +259,17 @@ contract Calculator is Owned, ICalculator {
       );
   }
 
-  function getRemoveLiquidityFeeRate(
+  function getRemoveLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
-  ) external view returns (uint256) {
+  ) external view returns (uint32) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
       return _configStorage.getLiquidityConfig().withdrawFeeRateBPS;
     }
 
     return
-      _getFeeRate(
+      _getFeeBPS(
         _tokenValueE30,
         _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true, 0, 0),
         _getPLPValueE30(true, 0, 0),
@@ -279,7 +279,7 @@ contract Calculator is Owned, ICalculator {
       );
   }
 
-  function _getFeeRate(
+  function _getFeeBPS(
     uint256 _value,
     uint256 _liquidityUSD, //e30
     uint256 _totalLiquidityUSD, //e30
@@ -326,7 +326,7 @@ contract Calculator is Owned, ICalculator {
     }
     _taxRateBPS = uint32((_taxRateBPS * midDiff) / targetValue);
 
-    return _feeRateBPS + _taxRateBPS;
+    return uint32(_feeRateBPS + _taxRateBPS);
   }
 
   /// @notice get settlement fee rate

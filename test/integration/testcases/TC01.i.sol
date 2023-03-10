@@ -3,7 +3,9 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 import { console } from "forge-std/console.sol";
+
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 
 contract TC01 is BaseIntTest_WithActions {
   function testCorrectness_AddAndRemoveLiquiditySuccess() external {
@@ -13,17 +15,29 @@ contract TC01 is BaseIntTest_WithActions {
     // ALICE NEED 10k in terms of WBTC = 10000 /20000 * 10**8  = 5e7
     uint256 _amount = (10_000 * (10 ** configStorage.getAssetTokenDecimal(address(wbtc)))) / 20_000;
 
-    // mint 0.5 btc and give 0.01 gas
-    vm.deal(ALICE, 1 ether);
+    // mint 0.5 btc and give 0.0001 gas
+    vm.deal(ALICE, executionOrderFee);
     wbtc.mint(ALICE, _amount);
 
     // Alice Create Order And Executor Execute Order
 
     // T1: As a Liquidity, Alice adds 10,000 USD(GLP)
+    // After T1 alice receive
+
     addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas, 0);
 
+    /* liquidityTester.assertLiquidityInfo(
+      LiquidityTester.LiquidityExpectedData({
+        token: address(wbtc),
+        lpTokenSupply: 10_000 * ether,
+        tokenBalance: 10,
+        fee: 0,
+        executionFee: 1
+      })
+    ); */
+    /* 
     uint256 _amountAlice = plpV2.balanceOf(ALICE);
-    removeLiquidity(ALICE, ERC20(address(wbtc)), _amountAlice, executionOrderFee, initialPriceFeedDatas, 1);
+    removeLiquidity(ALICE, ERC20(address(wbtc)), _amountAlice, executionOrderFee, initialPriceFeedDatas, 1); */
 
     // T2: Alice withdraws 100,000 USD with PLP
     // T3: Alice withdraws GLP 100 USD

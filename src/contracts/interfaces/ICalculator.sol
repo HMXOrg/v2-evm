@@ -58,17 +58,17 @@ interface ICalculator {
     uint256 _amount
   ) external pure returns (uint256);
 
-  function getAddLiquidityFeeRate(
+  function getAddLiquidityFeeBPS(
     address _token,
     uint256 _tokenValue,
     ConfigStorage _configStorage
-  ) external returns (uint256);
+  ) external returns (uint32);
 
-  function getRemoveLiquidityFeeRate(
+  function getRemoveLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
-  ) external returns (uint256);
+  ) external returns (uint32);
 
   function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _imrE30);
 

@@ -491,7 +491,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) public view returns (int256 _unrealizedPnlE30) {
-    console.log("****************** getUnrealizedPnl()");
+    // console.log("****************** getUnrealizedPnl()");
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -499,9 +499,9 @@ contract Calculator is Owned, ICalculator {
     for (uint256 i; i < _traderPositions.length; ) {
       PerpStorage.Position memory _position = _traderPositions[i];
       bool _isLong = _position.positionSizeE30 > 0 ? true : false;
-      console.log("_position.positionSizeE30");
-      console.logInt(_position.positionSizeE30);
-      console.log("_position.avgEntryPriceE30", _position.avgEntryPriceE30);
+      // console.log("_position.positionSizeE30");
+      // console.logInt(_position.positionSizeE30);
+      // console.log("_position.avgEntryPriceE30", _position.avgEntryPriceE30);
       if (_position.positionSizeE30 != 0) {
         if (_position.avgEntryPriceE30 == 0) revert ICalculator_InvalidAveragePrice();
 

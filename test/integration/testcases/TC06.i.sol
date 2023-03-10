@@ -73,8 +73,6 @@ contract TC06 is BaseIntTest_WithActions {
       assertEq(weth.balanceOf(ALICE), 0, "WETH Balance Of");
       assertEq(usdc.balanceOf(ALICE), 0, "USDC Balance Of");
       assertEq(wbtc.balanceOf(ALICE), 0, "WBTC Balance Of");
-      console2.log("ALICE FREE COL", calculator.getEquity(SUB_ACCOUNT, 0, 0));
-      console2.log("ALICE FREE COL", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
     }
 
     /**
@@ -257,6 +255,9 @@ contract TC06 is BaseIntTest_WithActions {
       _prices[1] = 1;
       _prices[2] = 1;
       _prices[3] = 20_000;
+
+      // @todo - fix on this
+      // setPrices(_assetIds, _prices);
 
       console2.log("EQUITY", calculator.getEquity(SUB_ACCOUNT, 0, 0));
       console2.log("IMR", calculator.getIMR(SUB_ACCOUNT));

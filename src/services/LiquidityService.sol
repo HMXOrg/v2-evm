@@ -14,6 +14,7 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
+import { console } from "forge-std/console.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
@@ -126,12 +127,14 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     uint256 _aum = _calculator.getAUM(false, 0, 0);
+
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
     uint256 _lpUsdValue = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
 
-    uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _amount, _lpProvider, _minAmount);
+    //0.5 *1e8
+    uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
     PLPv2(ConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
@@ -186,7 +189,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   function _exitPool(
     address _tokenOut,
     uint256 _lpUsdValue,
-    uint256 _amount,
     address _lpProvider,
     uint256 _minAmount
   ) internal returns (uint256) {
@@ -198,7 +200,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
-      30,
+      18,
       ConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
       (_lpUsdValue * PRICE_PRECISION) / _maxPrice
     );
@@ -214,7 +216,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     _amountOut = _collectFee(
-      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amount, _feeRate, LiquidityAction.REMOVE_LIQUIDITY)
+      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeRate, LiquidityAction.REMOVE_LIQUIDITY)
     );
 
     if (_minAmount > _amountOut) {

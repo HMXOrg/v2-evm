@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
 import { console2 } from "forge-std/console2.sol";
+import { console } from "forge-std/console.sol";
 
 contract TC06 is BaseIntTest_WithActions {
   // T6: Alice selll short ETHUSD 1000 USD and increase leverage
@@ -20,14 +21,13 @@ contract TC06 is BaseIntTest_WithActions {
      */
     vm.warp(block.timestamp + 1);
     uint8 SUB_ACCOUNT_ID = 1;
-    uint16 SIX_HOURS_TIMESTAMP = 6 * 60 * 60;
     address SUB_ACCOUNT = getSubAccount(ALICE, SUB_ACCOUNT_ID);
 
     // Make LP contains some liquidity
     bytes[] memory priceDataT0 = new bytes[](0);
     vm.deal(BOB, 1 ether); //deal with out of gas
-    usdt.mint(BOB, 1_000_000 * 1e6);
-    addLiquidity(BOB, usdt, 1_000_000 * 1e6, 1 ether, priceDataT0);
+    wbtc.mint(BOB, 10 * 1e8);
+    addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceDataT0, 0);
 
     // Mint tokens to Alice
     {
@@ -50,12 +50,12 @@ contract TC06 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       // Before Alice start depositing, VaultStorage must has 0 amount of all collateral tokens
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 0);
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(dai)), 0);
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0);
-      assertEq(usdc.balanceOf(address(vaultStorage)), 0);
-      assertEq(dai.balanceOf(address(vaultStorage)), 0);
-      assertEq(wbtc.balanceOf(address(vaultStorage)), 0);
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 0, "ALICE's USDC Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(dai)), 0, "ALICE's DAI Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0, "ALICE's WBTC Balance");
+      assertEq(usdc.balanceOf(address(vaultStorage)), 0, "Vault's USDC Balance");
+      assertEq(dai.balanceOf(address(vaultStorage)), 0, "Vault's DAI Balance");
+      assertEq(wbtc.balanceOf(address(vaultStorage)), 10 * 1e8, "Vault's WBTC Balance");
 
       // Alice deposits 100,000(USD) of USDC
       depositCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 100_000 * 1e6);
@@ -67,12 +67,12 @@ contract TC06 is BaseIntTest_WithActions {
       depositCollateral(ALICE, SUB_ACCOUNT_ID, wbtc, 0.5 * 1e8);
 
       // After Alice deposited all collaterals, VaultStorage must contain tokens
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 100_000 * 1e6);
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(dai)), 100_000 * 1e18);
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0.5 * 1e8);
-      assertEq(usdc.balanceOf(address(vaultStorage)), 100_000 * 1e6);
-      assertEq(dai.balanceOf(address(vaultStorage)), 100_000 * 1e18);
-      assertEq(wbtc.balanceOf(address(vaultStorage)), 0.5 * 1e8);
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 100_000 * 1e6, "ALICE's USDC Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(dai)), 100_000 * 1e18, "ALICE's DAI Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(wbtc)), 0.5 * 1e8, "ALICE's WBTC Balance");
+      assertEq(usdc.balanceOf(address(vaultStorage)), 100_000 * 1e6, "Vault's USDC Balance");
+      assertEq(dai.balanceOf(address(vaultStorage)), 100_000 * 1e18, "Vault's DAI Balance");
+      assertEq(wbtc.balanceOf(address(vaultStorage)), (0.5 + 10) * 1e8, "Vault's WBTC Balance");
       // After Alice deposited all collaterals, Alice must have no token left
       assertEq(usdc.balanceOf(ALICE), 0, "USDC Balance Of");
       assertEq(dai.balanceOf(ALICE), 0, "DAI Balance Of");
@@ -90,16 +90,16 @@ contract TC06 is BaseIntTest_WithActions {
       // Check states Before Alice opening SHORT position
 
       // Calculate assert data
-      // ALICE's Equity = 80_000 + 80_000 + 8_000 = 168_000
-      //   | USDC collateral value = amount * price * collateralFactor = 100_000 * 1 * 0.8 = 80_000
-      //   | DAI collateral value = amount * price * collateralFactor = 100_000 * 1 * 0.8 = 80_000
+      // ALICE's Equity = 100_000 + 100_000 + 8_000 = 208_000
+      //   | USDC collateral value = amount * price * collateralFactor = 100_000 * 1 * 1 = 100_000
+      //   | DAI collateral value = amount * price * collateralFactor = 100_000 * 1 * 1 = 100_000
       //   | WBTC collateral value = amount * price * collateralFactor = 0.5 * 20_000 * 0.8 = 8_000
       // ALICE's IMR must be 0
-      assertEq(calculator.getEquity(SUB_ACCOUNT, 0, 0), 168_000 * 1e30, "ALICE's Equity");
+      assertEq(calculator.getEquity(SUB_ACCOUNT, 0, 0), 208_000 * 1e30, "ALICE's Equity");
       assertEq(calculator.getIMR(SUB_ACCOUNT), 0, "ALICE's IMR");
 
-      uint256 sellSizeE30 = 810_000.981234381823 * 1e30;
-      address tpToken = address(glp);
+      uint256 sellSizeE30 = 910_000.981234381823 * 1e30;
+      address tpToken = address(usdc);
       bytes[] memory priceDataT2 = new bytes[](0);
 
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
@@ -117,10 +117,9 @@ contract TC06 is BaseIntTest_WithActions {
 
     console2.log("====================================================== T3");
     /**
-     * T3: ETHUSD priced at 1,550 USD and the position has been opened for 6 hours (Equity < IMR)
+     * T3: ETHUSD priced at 1,550 USD and the position has been opened for 6 intervals (Equity < IMR)
      */
-    // warp block timestamp to 6 hours later
-    vm.warp(block.timestamp + SIX_HOURS_TIMESTAMP);
+    vm.warp(block.timestamp + 6);
     {
       //  Set Price for ETHUSD to 1,550 USD
       bytes32[] memory _assetIds = new bytes32[](4);
@@ -163,12 +162,12 @@ contract TC06 is BaseIntTest_WithActions {
      * T5: Alice partial close SHORT position 100 USD ETHUSD position and choose to settle with ETH  (Equity < IMR)
      */
     console2.log("====================================================== T5");
-    {
-      // ALICE partial close SHORT position with WETH Market Price = 1550 USD
-      uint256 buySizeE30 = 100_000 * 1e30;
-      address tpToken = address(glp);
-      bytes[] memory priceDataT5 = new bytes[](0);
-      // marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceDataT5);
-    }
+    // {
+    //   // ALICE partial close SHORT position with WETH Market Price = 1550 USD
+    //   uint256 buySizeE30 = 100_000 * 1e30;
+    //   address tpToken = address(usdc);
+    //   bytes[] memory priceDataT5 = new bytes[](0);
+    //   marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceDataT5);
+    // }
   }
 }

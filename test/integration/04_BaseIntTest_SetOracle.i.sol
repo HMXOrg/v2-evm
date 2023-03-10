@@ -8,18 +8,17 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
   bytes32 constant wethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000001;
   bytes32 constant wbtcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000002;
-  bytes32 constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
-  bytes32 constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000004;
-  bytes32 constant usdtPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
-  bytes32 constant gmxPriceId = 0x0000000000000000000000000000000000000000000000000000000000000006;
-  bytes32 constant applePriceId = 0x0000000000000000000000000000000000000000000000000000000000000007;
-  bytes32 constant jpyPriceid = 0x0000000000000000000000000000000000000000000000000000000000000008;
+  bytes32 constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
+  bytes32 constant usdtPriceId = 0x0000000000000000000000000000000000000000000000000000000000000004;
+  bytes32 constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
+  bytes32 constant applePriceId = 0x0000000000000000000000000000000000000000000000000000000000000006;
+  bytes32 constant jpyPriceid = 0x0000000000000000000000000000000000000000000000000000000000000007;
 
   struct AssetPythPriceData {
     bytes32 assetId;
     bytes32 priceId;
     int64 price;
-    int64 pythDecimals;
+    int64 exponent;
   }
 
   AssetPythPriceData[] assetPythPriceDatas;
@@ -27,38 +26,56 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   bytes[] initialPriceFeedDatas;
 
   constructor() {
-    assetPythPriceDatas.push(AssetPythPriceData(wethAssetId, wethPriceId, 1500, -8));
-    assetPythPriceDatas.push(AssetPythPriceData(wbtcAssetId, wbtcPriceId, 20000, -8));
-    assetPythPriceDatas.push(AssetPythPriceData(daiAssetId, daiPriceId, 1, -8));
-    assetPythPriceDatas.push(AssetPythPriceData(usdcAssetId, usdcPriceId, 1, -8));
-    assetPythPriceDatas.push(AssetPythPriceData(usdtAssetId, usdtPriceId, 1, -8));
-    assetPythPriceDatas.push(AssetPythPriceData(gmxAssetId, gmxPriceId, 1, -8));
-    assetPythPriceDatas.push(AssetPythPriceData(appleAssetId, applePriceId, 1, -5));
-    assetPythPriceDatas.push(AssetPythPriceData(jpyAssetId, jpyPriceid, 1, -3));
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8 })
+    );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: wbtcAssetId, priceId: wbtcPriceId, price: 20000, exponent: -8 })
+    );
+    assetPythPriceDatas.push(AssetPythPriceData({ assetId: daiAssetId, priceId: daiPriceId, price: 1, exponent: -8 }));
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: usdcAssetId, priceId: usdcPriceId, price: 1, exponent: -8 })
+    );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: usdtAssetId, priceId: usdtPriceId, price: 1, exponent: -8 })
+    );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: appleAssetId, priceId: applePriceId, price: 152, exponent: -5 })
+    );
+    // @todo - after integrate with inverse config then price should be change to USDJPY
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: jpyAssetId, priceId: jpyPriceid, price: 0.0072 * 1e8, exponent: -8 })
+    );
 
-    // set MarketStatus
+    // Set MarketStatus
+    uint8 _marketActiveStatus = uint8(2);
     oracleMiddleWare.setUpdater(address(this), true); // Whitelist updater for oracleMiddleWare
-    oracleMiddleWare.setMarketStatus(wethAssetId, uint8(2)); // active
-    oracleMiddleWare.setMarketStatus(wbtcAssetId, uint8(2)); // active
-    oracleMiddleWare.setMarketStatus(daiAssetId, uint8(2)); // active
-    oracleMiddleWare.setMarketStatus(usdcAssetId, uint8(2)); // active
-    oracleMiddleWare.setMarketStatus(usdtAssetId, uint8(2)); // active
-    oracleMiddleWare.setMarketStatus(gmxAssetId, uint8(2)); // active
-    oracleMiddleWare.setMarketStatus(appleAssetId, uint8(2)); // active
-    oracleMiddleWare.setMarketStatus(jpyAssetId, uint8(2)); // active
+    // crypto
+    oracleMiddleWare.setMarketStatus(usdcAssetId, _marketActiveStatus); // active
+    oracleMiddleWare.setMarketStatus(usdtAssetId, _marketActiveStatus); // active
+    oracleMiddleWare.setMarketStatus(daiAssetId, _marketActiveStatus); // active
+    oracleMiddleWare.setMarketStatus(wethAssetId, _marketActiveStatus); // active
+    oracleMiddleWare.setMarketStatus(wbtcAssetId, _marketActiveStatus); // active
+    // equity
+    oracleMiddleWare.setMarketStatus(appleAssetId, _marketActiveStatus); // active
+    // forex
+    oracleMiddleWare.setMarketStatus(jpyAssetId, _marketActiveStatus); // active
 
-    // set AssetPriceConfig
-    oracleMiddleWare.setAssetPriceConfig(wethAssetId, 1e6, 60);
-    oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, 1e6, 60);
-    oracleMiddleWare.setAssetPriceConfig(daiAssetId, 1e6, 60);
-    oracleMiddleWare.setAssetPriceConfig(usdcAssetId, 1e6, 60);
-    oracleMiddleWare.setAssetPriceConfig(usdtAssetId, 1e6, 60);
-    oracleMiddleWare.setAssetPriceConfig(gmxAssetId, 1e6, 60);
-    oracleMiddleWare.setAssetPriceConfig(appleAssetId, 1e6, 60);
-    oracleMiddleWare.setAssetPriceConfig(jpyAssetId, 1e6, 60);
+    // Set AssetPriceConfig
+    uint32 _confidenceThresholdE6 = 250; // 2.5% for test only
+    uint256 _trustPriceAge = type(uint256).max; // set max for test only
+    oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge);
+    oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge);
+    oracleMiddleWare.setAssetPriceConfig(daiAssetId, _confidenceThresholdE6, _trustPriceAge);
+    oracleMiddleWare.setAssetPriceConfig(usdcAssetId, _confidenceThresholdE6, _trustPriceAge);
+    oracleMiddleWare.setAssetPriceConfig(usdtAssetId, _confidenceThresholdE6, _trustPriceAge);
+    oracleMiddleWare.setAssetPriceConfig(appleAssetId, _confidenceThresholdE6, _trustPriceAge);
+    oracleMiddleWare.setAssetPriceConfig(jpyAssetId, _confidenceThresholdE6, _trustPriceAge);
 
+    AssetPythPriceData memory _data;
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
-      AssetPythPriceData memory _data = assetPythPriceDatas[i];
+      _data = assetPythPriceDatas[i];
+
       // set PythId
       pythAdapter.setPythPriceId(_data.assetId, _data.assetId);
       // set UpdatePriceFeed
@@ -102,7 +119,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
       if (assetPythPriceDatas[i].assetId == _assetId) {
-        pythDecimals = assetPythPriceDatas[i].pythDecimals;
+        pythDecimals = assetPythPriceDatas[i].exponent;
         break;
       }
       unchecked {
@@ -110,14 +127,14 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       }
     }
 
-    int64 _decimalPow = int64(10) ** uint64(-pythDecimals);
+    int64 _pythDecimalPow = int64(10) ** uint64(-pythDecimals);
 
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
       pythAdapter.pythPriceIdOf(_assetId),
-      _price * _decimalPow,
+      _price * _pythDecimalPow,
       0,
       int8(pythDecimals),
-      _price * _decimalPow,
+      _price * _pythDecimalPow,
       0,
       uint64(block.timestamp)
     );

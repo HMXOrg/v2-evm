@@ -6,46 +6,41 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
   // crypto
-  bytes32 internal constant wethAssetId = "weth";
-  bytes32 internal constant wbtcAssetId = "wbtc";
-  bytes32 internal constant daiAssetId = "dai";
-  bytes32 internal constant usdcAssetId = "usdc";
-  bytes32 internal constant usdtAssetId = "usdt";
-  bytes32 internal constant gmxAssetId = "gmx";
+  bytes32 internal constant wethAssetId = "WETHUSD";
+  bytes32 internal constant wbtcAssetId = "WBTCUSD";
+  bytes32 internal constant usdcAssetId = "USDCUSD";
+  bytes32 internal constant usdtAssetId = "USDTUSD";
+  bytes32 internal constant daiAssetId = "DAIUSD";
 
   // stock
-  bytes32 internal constant appleAssetId = "apple";
+  bytes32 internal constant appleAssetId = "AAPLUSD";
 
   // forex
-  bytes32 internal constant jpyAssetId = "jpy";
+  bytes32 internal constant jpyAssetId = "JPYUSD";
 
   uint256 wethMarketIndex;
   uint256 wbtcMarketIndex;
-  uint256 daiMarketIndex;
-  uint256 usdcMarketIndex;
-  uint256 usdtMarketIndex;
-  uint256 gmxMarketIndex;
   uint256 appleMarketIndex;
   uint256 jpyMarketIndex;
 
   // @todo - setting discuss
   constructor() {
-    // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    wethMarketIndex = _addMarketConfig(wethAssetId, 1, 100, 50);
-    // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    wbtcMarketIndex = _addMarketConfig(wbtcAssetId, 1, 100, 50);
-    // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    daiMarketIndex = _addMarketConfig(daiAssetId, 1, 100, 50);
-    // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    usdcMarketIndex = _addMarketConfig(usdcAssetId, 1, 100, 50);
-    // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    usdtMarketIndex = _addMarketConfig(usdtAssetId, 1, 100, 50);
-    // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    gmxMarketIndex = _addMarketConfig(gmxAssetId, 1, 100, 50);
-    // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    appleMarketIndex = _addMarketConfig(appleAssetId, 1, 100, 50);
-    // IMF = 1%, Max leverage = 100, MMF = 0.5%
-    jpyMarketIndex = _addMarketConfig(jpyAssetId, 1, 100, 50);
+    // IMF = 1%, Max leverage = 100
+    // MMF = 0.5%
+    // Increase / Decrease position fee = 0.1%
+    wethMarketIndex = _addMarketConfig(wethAssetId, 1, 100, 50, 10);
+    // IMF = 1%, Max leverage = 100
+    // MMF = 0.5%
+    // Increase / Decrease position fee = 0.1%
+    wbtcMarketIndex = _addMarketConfig(wbtcAssetId, 1, 100, 50, 10);
+    // IMF = 5%, Max leverage = 20
+    // MMF = 2.5%
+    // Increase / Decrease position fee = 0.05%
+    appleMarketIndex = _addMarketConfig(appleAssetId, 1, 500, 250, 5);
+    // IMF = 0.1%, Max leverage = 1000
+    // MMF = 0.05%
+    // Increase / Decrease position fee = 0.03%
+    jpyMarketIndex = _addMarketConfig(jpyAssetId, 1, 10, 5, 3);
   }
 
   /// @notice to add market config with some default value
@@ -57,7 +52,8 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     bytes32 _assetId,
     uint8 _assetClass,
     uint32 _imf,
-    uint32 _mmf
+    uint32 _mmf,
+    uint32 _managePositionFee
   ) private returns (uint256 _index) {
     // default market config
     IConfigStorage.MarketConfig memory _newMarketConfig;
@@ -71,8 +67,8 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     _newFundingRateConfig.maxFundingRateBPS = 4; // 0.04%
 
     _newMarketConfig.assetId = _assetId;
-    _newMarketConfig.increasePositionFeeRateBPS = 50; // 0.5%
-    _newMarketConfig.decreasePositionFeeRateBPS = 50; // 0.5%
+    _newMarketConfig.increasePositionFeeRateBPS = _managePositionFee;
+    _newMarketConfig.decreasePositionFeeRateBPS = _managePositionFee;
     _newMarketConfig.initialMarginFractionBPS = _imf;
     _newMarketConfig.maintenanceMarginFractionBPS = _mmf;
     _newMarketConfig.maxProfitRateBPS = 90000; // 900%

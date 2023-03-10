@@ -24,4 +24,8 @@ abstract contract ConfigJsonRepo is Script {
   function updateJson(string memory _key, string memory _value) internal {
     vm.writeJson(_value, configFilePath, _key);
   }
+
+  function updateJson(string memory _key, address _address) internal {
+    vm.writeJson(vm.toString(_address), configFilePath, _key);
+  }
 }

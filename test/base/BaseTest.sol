@@ -40,6 +40,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal FEEVER;
 
   // storages
   IConfigStorage internal configStorage;
@@ -104,6 +105,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    FEEVER = makeAddr("FEEVER");
 
     weth = new MockWNative();
     wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);

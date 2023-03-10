@@ -5,5 +5,6 @@ out/
 .vscode
 node_modules
 typechain
+broadcast/
 
 .env

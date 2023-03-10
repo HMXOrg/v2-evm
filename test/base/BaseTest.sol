@@ -140,7 +140,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
-    _setUpAssetConfigs();
 
     feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
 

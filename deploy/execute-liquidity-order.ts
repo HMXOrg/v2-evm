@@ -1,7 +1,12 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { CrossMarginHandler__factory, ERC20__factory, LiquidityHandler__factory } from "../typechain";
+import {
+  ConfigStorage__factory,
+  CrossMarginHandler__factory,
+  ERC20__factory,
+  LiquidityHandler__factory,
+} from "../typechain";
 import { getConfig } from "./utils/config";
 import { getPriceData } from "./utils/pyth";
 
@@ -21,11 +26,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const liquidityHandler = LiquidityHandler__factory.connect(config.handlers.liquidity, deployer);
+  const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
   // await (await liquidityHandler.setOrderExecutor(deployer.address, true)).wait();
-
-  console.log(`Execute Liquidity Order...`);
+  // await (await configStorage.setPLPTotalTokenWeight(ethers.utils.parseEther("1"))).wait();
+  await console.log(`Execute Liquidity Order...`);
   const priceData = await getPriceData(priceIds);
-  console.log(priceData);
+  // console.log(priceData);
   await (
     await liquidityHandler.executeOrder(deployer.address, 1, deployer.address, priceData, {
       gasLimit: 20000000,

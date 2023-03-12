@@ -6,9 +6,13 @@ import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { LiquidityService } from "@hmx/services/LiquidityService.sol";
+import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
+import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
-contract DeployServices is ConfigJsonRepo {
+contract UpgradeLiquidityService is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
@@ -16,26 +20,23 @@ contract DeployServices is ConfigJsonRepo {
     address configStorageAddress = getJsonAddress(".storages.config");
     address vaultStorageAddress = getJsonAddress(".storages.vault");
     address perpStorageAddress = getJsonAddress(".storages.perp");
-    address calculatorAddress = getJsonAddress(".calculator");
 
-    address crossMarginServiceAddress = address(
-      new CrossMarginService(configStorageAddress, vaultStorageAddress, calculatorAddress)
-    );
-    address liquidationServiceAddress = address(
-      new LiquidationService(perpStorageAddress, vaultStorageAddress, configStorageAddress)
-    );
     address liquidityServiceAddress = address(
       new LiquidityService(perpStorageAddress, vaultStorageAddress, configStorageAddress)
     );
-    address tradeServiceAddress = address(
-      new TradeService(perpStorageAddress, vaultStorageAddress, configStorageAddress)
+
+    address liquidityHandlerAddress = address(
+      new LiquidityHandler(liquidityServiceAddress, getJsonAddress(".oracle.pyth"), 1)
     );
 
-    vm.stopBroadcast();
+    PLPv2 plpV2 = PLPv2(getJsonAddress(".tokens.plp"));
+    plpV2.setMinter(getJsonAddress(".services.liquidity"), true);
 
-    updateJson(".services.crossMargin", crossMarginServiceAddress);
-    updateJson(".services.liquidation", liquidationServiceAddress);
+    IConfigStorage(configStorageAddress).setServiceExecutor(liquidityServiceAddress, liquidityHandlerAddress, true);
+    IVaultStorage(vaultStorageAddress).setServiceExecutors(liquidityServiceAddress, true);
+
+    vm.stopBroadcast();
     updateJson(".services.liquidity", liquidityServiceAddress);
-    updateJson(".services.trade", tradeServiceAddress);
+    updateJson(".handlers.liquidity", liquidityHandlerAddress);
   }
 }

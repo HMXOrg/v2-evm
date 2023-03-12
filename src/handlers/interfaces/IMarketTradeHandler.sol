@@ -20,7 +20,7 @@ interface IMarketTradeHandler {
     uint256 _buySizeE30,
     address _tpToken,
     bytes[] memory _priceData
-  ) external;
+  ) external payable;
 
   function sell(
     address _account,
@@ -29,5 +29,5 @@ interface IMarketTradeHandler {
     uint256 _sellSizeE30,
     address _tpToken,
     bytes[] memory _priceData
-  ) external;
+  ) external payable;
 }

@@ -331,7 +331,10 @@ contract Calculator is Owned, ICalculator {
     }
 
     // _nextWeight represented 18 precision
-    uint256 _nextWeight = (nextValue * ETH_PRECISION) / targetValue;
+    uint256 _nextWeight = (nextValue * ETH_PRECISION) / _totalLiquidityUSD;
+
+    uint256 _currentWeight = (startValue * ETH_PRECISION) / _totalLiquidityUSD;
+    console.log("currentWeight", _currentWeight);
     console.log("_nextWeight", _nextWeight);
     // if weight exceed targetWeight(e18) + maxWeight(e18)
     //1063296539220391404 >  0.95 * 1e18 + 0.01*e18

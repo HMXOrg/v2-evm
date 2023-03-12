@@ -21,7 +21,7 @@ abstract contract BaseIntTest_SetPLPTokens is BaseIntTest_SetAssetConfigs {
     _plpTokenConfig[0] = _buildAcceptedPLPTokenConfig({
       _targetWeight: 0.05 * 1e18,
       _bufferLiquidity: 0,
-      _maxWeightDiff: 0.1 * 1e18
+      _maxWeightDiff: 0.95 * 1e18
     });
     _plpTokenConfig[1] = _buildNotAcceptedPLPTokenConfig();
     _plpTokenConfig[2] = _buildNotAcceptedPLPTokenConfig();
@@ -29,7 +29,7 @@ abstract contract BaseIntTest_SetPLPTokens is BaseIntTest_SetAssetConfigs {
     _plpTokenConfig[4] = _buildAcceptedPLPTokenConfig({
       _targetWeight: 0.95 * 1e18,
       _bufferLiquidity: 0,
-      _maxWeightDiff: 0.1 * 1e18
+      _maxWeightDiff: 0.05 * 1e18
     });
 
     configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);

@@ -76,6 +76,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _amount,
     uint256 _minAmount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) returns (uint256) {
+    console.log("=======================ADD LQ ==================");
     // 1. _validate
     _validatePreAddRemoveLiquidity(_amount);
 
@@ -123,7 +124,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _amount,
     uint256 _minAmount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_tokenOut) returns (uint256) {
-    console.log("+=======================+REMOVE ==================");
+    console.log("======================= -REMOVE ==================");
     // 1. _validate
     _validatePreAddRemoveLiquidity(_amount);
 

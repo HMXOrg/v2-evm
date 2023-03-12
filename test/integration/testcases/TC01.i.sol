@@ -59,7 +59,7 @@ contract TC01 is BaseIntTest_WithActions {
 
     // T3: Alice withdraws PLP 100 USD
     //  10000 -> 0.5 e8
-    //   100 -> 0.005 e7 btc
+    //   100 -> 0.005 e8 btc
     removeLiquidity(ALICE, address(wbtc), 100 ether, executionOrderFee, initialPriceFeedDatas, 1);
 
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
@@ -82,6 +82,7 @@ contract TC01 is BaseIntTest_WithActions {
     // T5: As a Liquidity, Bob adds 100 USD(GLP)
     vm.deal(BOB, executionOrderFee);
     wbtc.mint(BOB, 500_000);
+
     addLiquidity(BOB, ERC20(address(wbtc)), 500_000, executionOrderFee, initialPriceFeedDatas, 0);
 
     liquidityTester.assertLiquidityInfo(

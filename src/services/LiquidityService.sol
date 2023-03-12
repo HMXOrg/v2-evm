@@ -55,6 +55,11 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
+
+    // Sanity Check
+    PerpStorage(_perpStorage).getGlobalState();
+    ConfigStorage(_configStorage).calculator();
+    VaultStorage(_vaultStorage).devFees(address(0));
   }
 
   /**

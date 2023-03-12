@@ -65,4 +65,6 @@ interface ILiquidityHandler {
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256);
 
   function refund(LiquidityOrder memory _order) external;
+
+  function executionOrderFee() external view returns (uint256);
 }

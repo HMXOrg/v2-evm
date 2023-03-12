@@ -13,6 +13,8 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 contract UpgradeLiquidityService is ConfigJsonRepo {
+  address ORDER_EXECUTOR = 0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a;
+
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
@@ -25,9 +27,14 @@ contract UpgradeLiquidityService is ConfigJsonRepo {
       new LiquidityService(perpStorageAddress, vaultStorageAddress, configStorageAddress)
     );
 
-    address liquidityHandlerAddress = address(
-      new LiquidityHandler(liquidityServiceAddress, getJsonAddress(".oracle.pyth"), 1)
+    LiquidityHandler liquidityHandler = new LiquidityHandler(
+      liquidityServiceAddress,
+      getJsonAddress(".oracle.pyth"),
+      1
     );
+    address liquidityHandlerAddress = address(liquidityHandler);
+
+    liquidityHandler.setOrderExecutor(ORDER_EXECUTOR, true);
 
     PLPv2 plpV2 = PLPv2(getJsonAddress(".tokens.plp"));
     plpV2.setMinter(getJsonAddress(".services.liquidity"), true);

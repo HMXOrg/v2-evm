@@ -21,10 +21,8 @@
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "ts-node": "^10.9.1",
     "typechain": "^8.0.0",
-    "typescript": "^4.9.5"
-  },
-  "dependencies": {
+    "typescript": "^4.9.5",
     "@nomiclabs/hardhat-ethers": "^2.2.2",
-    "chai": "^4.3.7"
+    "@pythnetwork/pyth-evm-js": "^1.1.0"
   }
 }

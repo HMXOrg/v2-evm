@@ -11,8 +11,8 @@ contract MintToken is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
-    MockErc20 token = MockErc20(getJsonAddress(".tokens.usdc"));
-    token.mint(0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a, 1000000 * 1e6);
+    MockErc20 token = MockErc20(getJsonAddress(".tokens.usdt"));
+    token.mint(0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a, 10_000_000 * 1e6);
 
     vm.stopBroadcast();
   }

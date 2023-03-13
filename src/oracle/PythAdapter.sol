@@ -28,7 +28,7 @@ contract PythAdapter is Owned, IPythAdapter {
     pyth = _pyth;
 
     // Sanity
-    pyth.getValidTimePeriod();
+    // pyth.getValidTimePeriod();
   }
 
   /// @notice Set the Pyth price id for the given asset.

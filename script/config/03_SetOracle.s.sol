@@ -7,7 +7,7 @@ import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { PythAdapter } from "@hmx/oracle/PythAdapter.sol";
 
 contract SetOracle is ConfigJsonRepo {
   error BadArgs();
@@ -36,6 +36,7 @@ contract SetOracle is ConfigJsonRepo {
     bytes32 priceId;
     int64 price;
     int64 exponent;
+    bool inverse;
   }
 
   AssetPythPriceData[] assetPythPriceDatas;
@@ -43,7 +44,7 @@ contract SetOracle is ConfigJsonRepo {
   bytes[] initialPriceFeedDatas;
 
   IOracleMiddleware oracleMiddleWare;
-  IOracleAdapter pythAdapter;
+  PythAdapter pythAdapter;
   IPyth pyth;
 
   function run() public {
@@ -51,28 +52,30 @@ contract SetOracle is ConfigJsonRepo {
     vm.startBroadcast(deployerPrivateKey);
 
     oracleMiddleWare = IOracleMiddleware(getJsonAddress(".oracle.middleware"));
-    pythAdapter = IOracleAdapter(getJsonAddress(".oracle.pythAdapter"));
+    pythAdapter = PythAdapter(getJsonAddress(".oracle.pythAdapter"));
     pyth = IPyth(getJsonAddress(".oracle.pyth"));
 
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8 })
+      AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8, inverse: false })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: wbtcAssetId, priceId: wbtcPriceId, price: 20000, exponent: -8 })
-    );
-    assetPythPriceDatas.push(AssetPythPriceData({ assetId: daiAssetId, priceId: daiPriceId, price: 1, exponent: -8 }));
-    assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: usdcAssetId, priceId: usdcPriceId, price: 1, exponent: -8 })
+      AssetPythPriceData({ assetId: wbtcAssetId, priceId: wbtcPriceId, price: 20000, exponent: -8, inverse: false })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: usdtAssetId, priceId: usdtPriceId, price: 1, exponent: -8 })
+      AssetPythPriceData({ assetId: daiAssetId, priceId: daiPriceId, price: 1, exponent: -8, inverse: false })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: appleAssetId, priceId: applePriceId, price: 152, exponent: -5 })
+      AssetPythPriceData({ assetId: usdcAssetId, priceId: usdcPriceId, price: 1, exponent: -8, inverse: false })
+    );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: usdtAssetId, priceId: usdtPriceId, price: 1, exponent: -8, inverse: false })
+    );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: appleAssetId, priceId: applePriceId, price: 152, exponent: -5, inverse: false })
     );
     // @todo - after integrate with inverse config then price should be change to USDJPY
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: jpyAssetId, priceId: jpyPriceId, price: 0.0072 * 1e8, exponent: -8 })
+      AssetPythPriceData({ assetId: jpyAssetId, priceId: jpyPriceId, price: 0.0072 * 1e8, exponent: -8, inverse: true })
     );
 
     // Set MarketStatus
@@ -90,8 +93,8 @@ contract SetOracle is ConfigJsonRepo {
     oracleMiddleWare.setMarketStatus(jpyAssetId, _marketActiveStatus); // active
 
     // Set AssetPriceConfig
-    uint32 _confidenceThresholdE6 = 25000; // 2.5% for test only
-    uint256 _trustPriceAge = type(uint256).max; // set max for test only
+    uint32 _confidenceThresholdE6 = 100000; // 2.5% for test only
+    uint32 _trustPriceAge = 30; // set max for test only
     oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(daiAssetId, _confidenceThresholdE6, _trustPriceAge);
@@ -106,7 +109,7 @@ contract SetOracle is ConfigJsonRepo {
       _data = assetPythPriceDatas[i];
 
       // set PythId
-      pythAdapter.setPythPriceId(_data.assetId, _data.priceId);
+      pythAdapter.setConfig(_data.assetId, _data.priceId, _data.inverse);
 
       unchecked {
         ++i;

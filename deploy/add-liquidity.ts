@@ -8,7 +8,6 @@ const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  console.log("yo");
   const deployer = (await ethers.getSigners())[0];
 
   const liquidityHandler = LiquidityHandler__factory.connect(config.handlers.liquidity, deployer);

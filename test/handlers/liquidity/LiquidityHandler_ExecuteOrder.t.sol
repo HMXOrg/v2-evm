@@ -197,7 +197,6 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     // 5 Create remove Liquidity order
     _orderIndex = _createRemoveLiquidityNativeOrder();
-    console.log("remove native _orderIndex", _orderIndex);
     // 6 execute liquidity order
     liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
 

@@ -254,7 +254,7 @@ contract Calculator is Owned, ICalculator {
       _getFeeBPS(
         _tokenValueE30,
         _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false, 0, 0),
-        _getPLPValueE30(false, 0, 0) + _tokenValueE30,
+        _getPLPValueE30(false, 0, 0),
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.ADD
@@ -274,7 +274,7 @@ contract Calculator is Owned, ICalculator {
       _getFeeBPS(
         _tokenValueE30,
         _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true, 0, 0),
-        _getPLPValueE30(true, 0, 0) - _tokenValueE30,
+        _getPLPValueE30(true, 0, 0),
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
@@ -314,7 +314,7 @@ contract Calculator is Owned, ICalculator {
     }
 
     // _nextWeight represented 18 precision
-    uint256 _nextWeight = (nextValue * ETH_PRECISION) / _totalLiquidityUSD;
+    uint256 _nextWeight = (nextValue * ETH_PRECISION) / (_totalLiquidityUSD + _value);
 
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();

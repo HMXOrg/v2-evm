@@ -63,7 +63,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
     // Set AssetPriceConfig
     uint32 _confidenceThresholdE6 = 250; // 2.5% for test only
-    uint256 _trustPriceAge = type(uint256).max; // set max for test only
+    uint32 _trustPriceAge = type(uint32).max; // set max for test only
     oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(daiAssetId, _confidenceThresholdE6, _trustPriceAge);
@@ -77,7 +77,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       _data = assetPythPriceDatas[i];
 
       // set PythId
-      pythAdapter.setPythPriceId(_data.assetId, _data.assetId);
+      pythAdapter.setConfig(_data.assetId, _data.assetId, false);
+
       // set UpdatePriceFeed
       initialPriceFeedDatas.push(_createPriceFeedUpdateData(_data.assetId, _data.price));
 
@@ -128,9 +129,9 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     }
 
     int64 _pythDecimalPow = int64(10) ** uint64(-pythDecimals);
-
+    (bytes32 _pythPriceId, ) = pythAdapter.configs(_assetId);
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
-      pythAdapter.pythPriceIdOf(_assetId),
+      _pythPriceId,
       _price * _pythDecimalPow,
       0,
       int8(pythDecimals),

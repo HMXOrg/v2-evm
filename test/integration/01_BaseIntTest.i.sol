@@ -36,6 +36,10 @@ import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol"
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
+import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
@@ -98,7 +102,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
 
   /* PYTH */
   MockPyth internal pyth;
-  IOracleAdapter internal pythAdapter;
+  IPythAdapter internal pythAdapter;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -114,7 +118,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
 
     pyth = new MockPyth(60, 1);
 
-    pythAdapter = IOracleAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
+    pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
 
     // deploy stakedGLPOracleAdapter
 
@@ -202,6 +206,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       vaultStorage.setServiceExecutors(address(crossMarginService), true);
       vaultStorage.setServiceExecutors(address(tradeService), true);
       vaultStorage.setServiceExecutors(address(liquidityService), true);
+      vaultStorage.setServiceExecutors(address(liquidationService), true);
       vaultStorage.setServiceExecutors(address(feeCalculator), true);
     }
 
@@ -210,6 +215,21 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       perpStorage.setServiceExecutors(address(crossMarginService), true);
       perpStorage.setServiceExecutors(address(tradeService), true);
       perpStorage.setServiceExecutors(address(liquidityService), true);
+      perpStorage.setServiceExecutors(address(liquidationService), true);
+    }
+
+    // Setup Bot Handler
+    {
+      address[] memory _positionManagers = new address[](1);
+      _positionManagers[0] = address(this);
+
+      // set Tester as position managers
+      botHandler.setPositionManagers(_positionManagers, true);
+    }
+
+    // Setup Limit Trade Handler
+    {
+      limitTradeHandler.setOrderExecutor(address(this), true);
     }
   }
 }

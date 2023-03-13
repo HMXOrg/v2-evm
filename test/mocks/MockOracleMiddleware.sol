@@ -5,7 +5,7 @@ import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol"
 
 contract MockOracleMiddleware is IOracleMiddleware {
   struct AssetPriceConfig {
-    uint256 trustPriceAge;
+    uint32 trustPriceAge;
     uint32 confidenceThresholdE6;
   }
 
@@ -166,6 +166,6 @@ contract MockOracleMiddleware is IOracleMiddleware {
   function setAssetPriceConfig(
     bytes32 /*_assetId*/,
     uint32 /*_confidenceThresholdE6*/,
-    uint256 /*_trustPriceAge*/
+    uint32 /*_trustPriceAge*/
   ) external {}
 }

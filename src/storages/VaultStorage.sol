@@ -176,6 +176,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     }
   }
 
+  // @todo - natSpec
+  function removeAllTraderTokens(address _trader) external onlyWhitelistedExecutor {
+    delete traderTokens[_trader];
+  }
+
   /// @notice increase sub-account collateral
   /// @param _subAccount - sub account
   /// @param _token - collateral token to increase

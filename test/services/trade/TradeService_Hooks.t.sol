@@ -103,7 +103,7 @@ contract TradeService_Hooks is TradeService_Base {
     int256 sizeDelta = 1_000_000 * 1e30;
 
     vm.expectRevert(abi.encodeWithSignature("TradingStakingHook_Forbidden()"));
-    tradingStakingHook.onIncreasePosition(ALICE, 0, ethMarketIndex, uint256(sizeDelta));
+    tradingStakingHook.onIncreasePosition(ALICE, 0, ethMarketIndex, uint256(sizeDelta), "");
   }
 
   function testCorrectness_hookOnIncreaseAndDecreasePosition() external {

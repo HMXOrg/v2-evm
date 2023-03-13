@@ -31,7 +31,8 @@ contract TradingStakingHook is ITradeServiceHook, Owned {
     address _primaryAccount,
     uint256,
     uint256 _marketIndex,
-    uint256 _sizeDelta
+    uint256 _sizeDelta,
+    bytes32
   ) external onlyTradeService {
     ITradingStaking(tradingStaking).deposit(_primaryAccount, _marketIndex, _sizeDelta);
   }
@@ -40,7 +41,8 @@ contract TradingStakingHook is ITradeServiceHook, Owned {
     address _primaryAccount,
     uint256,
     uint256 _marketIndex,
-    uint256 _sizeDelta
+    uint256 _sizeDelta,
+    bytes32
   ) external onlyTradeService {
     ITradingStaking(tradingStaking).withdraw(_primaryAccount, _marketIndex, _sizeDelta);
   }

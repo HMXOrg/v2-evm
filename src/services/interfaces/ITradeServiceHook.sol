@@ -13,13 +13,15 @@ interface ITradeServiceHook {
     address primaryAccount,
     uint256 subAccountId,
     uint256 marketIndex,
-    uint256 sizeDelta
+    uint256 sizeDelta,
+    bytes32 data
   ) external;
 
   function onDecreasePosition(
     address primaryAccount,
     uint256 subAccountId,
     uint256 marketIndex,
-    uint256 sizeDelta
+    uint256 sizeDelta,
+    bytes32 data
   ) external;
 }

@@ -1299,7 +1299,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
   ) internal {
     address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
     for (uint256 i; i < _hooks.length; ) {
-      ITradeServiceHook(_hooks[i]).onIncreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
+      ITradeServiceHook(_hooks[i]).onIncreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, "");
       unchecked {
         ++i;
       }
@@ -1314,32 +1314,11 @@ contract TradeService is ReentrancyGuard, ITradeService {
   ) internal {
     address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
     for (uint256 i; i < _hooks.length; ) {
-      ITradeServiceHook(_hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta);
+      ITradeServiceHook(_hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, "");
       unchecked {
         ++i;
       }
     }
-  }
-
-  /// @notice This function does accounting when collecting trading fee from trader's sub-account.
-  /// @param subAccount The sub-account from which to collect the fee.
-  /// @param underlyingToken The underlying token for which the fee is collected.
-  /// @param tradingFeeAmount The amount of trading fee to be collected, after deducting dev fee.
-  /// @param devFeeTokenAmount The amount of dev fee deducted from the trading fee.
-  /// @param traderBalance The updated balance of the trader's underlying token.
-  function _collectMarginFee(
-    address subAccount,
-    address underlyingToken,
-    uint256 tradingFeeAmount,
-    uint256 devFeeTokenAmount,
-    uint256 traderBalance
-  ) internal {
-    // Deduct dev fee from the trading fee and add it to the dev fee pool.
-    VaultStorage(vaultStorage).addDevFee(underlyingToken, devFeeTokenAmount);
-    // Add the remaining trading fee to the protocol's fee pool.
-    VaultStorage(vaultStorage).addFee(underlyingToken, tradingFeeAmount);
-    // Update the trader's balance of the underlying token.
-    VaultStorage(vaultStorage).setTraderBalance(subAccount, underlyingToken, traderBalance);
   }
 
   /**

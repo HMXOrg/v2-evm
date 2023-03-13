@@ -49,6 +49,7 @@ contract PythAdapter is Owned, IPythAdapter {
   /// @param _priceStruct The Pyth's price struct to convert.
   /// @param _isMax Whether to use the max price or min price.
   /// @param _targetDecimals The target decimals to convert to.
+  /// @param _shouldInvert Whether should invert(^-1) the final result or not.
   function _convertToUint256(
     PythStructs.Price memory _priceStruct,
     bool _isMax,
@@ -84,8 +85,10 @@ contract PythAdapter is Owned, IPythAdapter {
 
     // Quote inversion. This is an intention to support the price like USD/JPY.
     {
-      // Given _targetDecimals = 30, inverted quote price can be caluclated as followed.
-      // final anaswer = 10^60 / priceE30
+      // Formula: inverted price = 10^2N / priceEN, when N = target decimal
+      //
+      // Example: Given _targetDecimals = 30, inverted quote price can be caluclated as followed.
+      // inverted price = 10^60 / priceE30
       return 10 ** uint32(_targetDecimals * 2) / _price256;
     }
   }

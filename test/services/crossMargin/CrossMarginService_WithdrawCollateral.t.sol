@@ -64,7 +64,7 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
   // | ------- Test Correctness ------------ |
   // =========================================
 
-  // Try deposit and withdraw collateral with happy case
+  // Try deposit and withdraw collateral with happy case, and verify behavior of receiver param
   function testCorrectness_withdrawCollateral() external {
     // Before start depositing, ALICE must has 0 amount of WETH token
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), 0);
@@ -72,19 +72,33 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginService_Base {
     assertEq(weth.balanceOf(ALICE), 0 ether);
 
     weth.mint(ALICE, 10 ether);
+    // Deposit 10 WETH
     simulateAliceDepositToken(address(weth), (10 ether));
 
-    // After deposited, ALICE must has 10 WETH as collateral token
+    // After deposited, ALICE must have 10 WETH as collateral token
     assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(weth)), 10 ether);
     assertEq(weth.balanceOf(address(vaultStorage)), 10 ether);
     assertEq(weth.balanceOf(ALICE), 0 ether);
 
+    // Withdraw 3 WETH
     simulateAliceWithdrawToken(address(weth), 3 ether);
 
-    // After withdrawn, ALICE must has 7 WETH as collateral token
+    // After withdrawn, ALICE must have 7 WETH as collateral token
     assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(weth)), 7 ether);
     assertEq(weth.balanceOf(address(vaultStorage)), 7 ether);
     assertEq(weth.balanceOf(ALICE), 3 ether);
+
+    // Continue, withdraw 2.5 WETH, but this time receiver = Bob
+    vm.startPrank(ALICE);
+    crossMarginService.withdrawCollateral(ALICE, 1, address(weth), 2.5 ether, BOB);
+    vm.stopPrank();
+
+    // After withdrawn, ALICE must have 4.5 WETH as collateral token
+    // But, ALICE balance must remain the same, as 2.5 WETH should go to BOB
+    assertEq(vaultStorage.traderBalances(getSubAccount(ALICE, 1), address(weth)), 4.5 ether);
+    assertEq(weth.balanceOf(address(vaultStorage)), 4.5 ether);
+    assertEq(weth.balanceOf(ALICE), 3 ether);
+    assertEq(weth.balanceOf(BOB), 2.5 ether);
   }
 
   // Try deposit and withdraw collateral with happy case and check on token list of sub account

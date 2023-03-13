@@ -6,6 +6,9 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 abstract contract BaseIntTest_SetConfig is BaseIntTest {
   constructor() {
+    // Set Minter
+    plpV2.setMinter(address(liquidityService), true);
+
     // Setup Liquidity config for global used
     _setLiquidityConfig();
     // Setup Swap config for global used
@@ -18,19 +21,21 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     _setUpLiquidationConfig();
 
     configStorage.setCalculator(address(calculator));
+    configStorage.setPLP(address(plpV2));
+    configStorage.setWeth(address(weth));
   }
 
   function _setLiquidityConfig() private {
     configStorage.setLiquidityConfig(
       IConfigStorage.LiquidityConfig({
-        depositFeeRateBPS: 0,
-        withdrawFeeRateBPS: 0,
-        maxPLPUtilizationBPS: 0.8 * 1e4,
+        depositFeeRateBPS: 30, // 0.3%
+        withdrawFeeRateBPS: 30, // 0.3%
+        maxPLPUtilizationBPS: 8000, // 80%
         plpTotalTokenWeight: 0,
-        plpSafetyBufferBPS: 0,
-        taxFeeRateBPS: 0.005 * 1e4, // 0.5%
-        flashLoanFeeRateBPS: 0,
-        dynamicFeeEnabled: false,
+        plpSafetyBufferBPS: 2000, // 20%
+        taxFeeRateBPS: 50, // 0.5%
+        flashLoanFeeRateBPS: 0, // @todo - TBD
+        dynamicFeeEnabled: true,
         enabled: true
       })
     );
@@ -43,23 +48,27 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
   function _setUpTradingConfig() private {
     configStorage.setTradingConfig(
       IConfigStorage.TradingConfig({
-        fundingInterval: 1,
-        devFeeRateBPS: 0.15 * 1e4,
-        minProfitDuration: 0,
-        maxPosition: 5
+        fundingInterval: 1, // second
+        devFeeRateBPS: 1500, // 15%
+        minProfitDuration: 15, // second
+        maxPosition: 10
       })
     );
   }
 
   function _setUpAssetClassConfigs() private {
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRateBPS: 0.0001 * 1e4 // 0.01%
+      baseBorrowingRateBPS: 1 // 0.01%
+    });
+    IConfigStorage.AssetClassConfig memory _equityConfig = IConfigStorage.AssetClassConfig({
+      baseBorrowingRateBPS: 2 // 0.02%
     });
     IConfigStorage.AssetClassConfig memory _forexConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRateBPS: 0.0002 * 1e4 // 0.02%
+      baseBorrowingRateBPS: 3 // 0.03%
     });
 
     configStorage.addAssetClassConfig(_cryptoConfig);
+    configStorage.addAssetClassConfig(_equityConfig);
     configStorage.addAssetClassConfig(_forexConfig);
   }
 

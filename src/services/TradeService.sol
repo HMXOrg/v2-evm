@@ -12,8 +12,6 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "../services/interfaces/ITradeServiceHook.sol";
@@ -567,9 +565,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       _vars.position.entryFundingRate
     );
 
-    console2.log("------ start settleFundingFee");
     settleFundingFee(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
-    console2.log("------ end settleFundingFee");
 
     uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
@@ -595,6 +591,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         delta = _vars.position.reserveValueE30;
         _isMaxProfit = true;
       }
+
       if (isProfit) {
         _realizedPnl = int256((delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
       } else {
@@ -694,6 +691,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           );
         } else {
           // loss
+
           _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _vars.limitPriceE30, _marketConfig.assetId);
         }
       }
@@ -1020,15 +1018,15 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
-      (int256 newFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
+      (int256 newFundingRate, int256 nextFundingFeeLong, int256 nextFundingFeeShort) = calculator.getNextFundingRate(
         _marketIndex,
         _limitPriceE30
       );
 
       _globalMarket.currentFundingRate = newFundingRate;
-      _globalMarket.accumFundingLong += nextFundingRateLong;
-      _globalMarket.accumFundingShort += nextFundingRateShort;
-      _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      _globalMarket.accumFundingLong = nextFundingFeeLong;
+      _globalMarket.accumFundingShort = nextFundingFeeShort;
+      _globalMarket.lastFundingTime = block.timestamp;
 
       _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
     }
@@ -1122,9 +1120,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
       FeeCalculator.SettleMarginFeeLoopVar memory tmpVars; // This will be re-assigned every times when start looping
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
-
       tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(tmpVars.underlyingToken);
-
       tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);
 
       // If the sub-account has a balance of this underlying token (collateral token amount)
@@ -1199,11 +1195,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
     for (uint256 i = 0; i < acmVars.plpUnderlyingTokens.length; ) {
       FeeCalculator.SettleFundingFeeLoopVar memory tmpVars;
       tmpVars.underlyingToken = acmVars.plpUnderlyingTokens[i];
-      console2.log("SYMBOL", ERC20(tmpVars.underlyingToken).symbol());
+
       tmpVars.underlyingTokenDecimal = _configStorage.getAssetTokenDecimal(tmpVars.underlyingToken);
 
       // Retrieve the balance of each plp underlying token for the sub-account (token collateral amount)
       tmpVars.traderBalance = _vaultStorage.traderBalances(_subAccount, tmpVars.underlyingToken);
+
       tmpVars.fundingFee = _vaultStorage.fundingFee(tmpVars.underlyingToken); // Global token amount of funding fee collected from traders
 
       // Retrieve the latest price and confident threshold of the plp underlying token

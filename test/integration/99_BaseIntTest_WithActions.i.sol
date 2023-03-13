@@ -3,9 +3,9 @@ pragma solidity 0.8.18;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import { BaseIntTest_SetPLP } from "@hmx-test/integration/07_BaseIntTest_SetPLP.i.sol";
+import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
 
-contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
+contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
   /**
    * Liquidity
    */
@@ -37,11 +37,8 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     );
     vm.stopPrank();
 
-    //TODO fix this
-    vm.deal(address(liquidityHandler), 1 ether);
-
     vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, _priceData);
+    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, payable(FEEVER), _priceData);
   }
 
   /// @notice Helper function to remove liquidity and execute order via handler
@@ -73,11 +70,8 @@ contract BaseIntTest_WithActions is BaseIntTest_SetPLP {
     );
     vm.stopPrank();
 
-    //TODO fix this
-    vm.deal(address(liquidityHandler), 1 ether);
-
     vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, _priceData);
+    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, payable(FEEVER), _priceData);
   }
 
   /**

@@ -4,21 +4,20 @@ pragma solidity 0.8.18;
 import { BaseIntTest_SetOracle } from "./04_BaseIntTest_SetOracle.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-abstract contract BaseIntTest_SetCollaterals is BaseIntTest_SetOracle {
+abstract contract BaseIntTest_SetCollateralTokens is BaseIntTest_SetOracle {
   // @todo - setting discuss
   constructor() {
-    // collateralFactorBPS = 0.8%
-    _addCollateralConfig(wethAssetId, 0.8 * 1e4, true, address(0));
-    // collateralFactorBPS = 0.8%
-    _addCollateralConfig(wbtcAssetId, 0.8 * 1e4, true, address(0));
-    // collateralFactorBPS = 0.8%
-    _addCollateralConfig(daiAssetId, 0.8 * 1e4, true, address(0));
-    // collateralFactorBPS = 0.8%
-    _addCollateralConfig(usdcAssetId, 0.8 * 1e4, true, address(0));
-    // collateralFactorBPS = 0.8%
-    _addCollateralConfig(usdtAssetId, 0.8 * 1e4, true, address(0));
-    // collateralFactorBPS = 0.8%
-    _addCollateralConfig(gmxAssetId, 0.8 * 1e4, true, address(0));
+    // @todo - GLP
+    // collateralFactorBPS = 80%
+    _addCollateralConfig(wethAssetId, 8000, true, address(0));
+    // collateralFactorBPS = 80%
+    _addCollateralConfig(wbtcAssetId, 8000, true, address(0));
+    // collateralFactorBPS = 100%
+    _addCollateralConfig(daiAssetId, 10000, true, address(0));
+    // collateralFactorBPS = 100%
+    _addCollateralConfig(usdcAssetId, 10000, true, address(0));
+    // collateralFactorBPS = 100%
+    _addCollateralConfig(usdtAssetId, 10000, true, address(0));
   }
 
   /// @notice to add collateral config with some default value

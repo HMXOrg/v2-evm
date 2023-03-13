@@ -229,9 +229,9 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
 
   function updateGlobalMarketPrice(uint256 _marketIndex, bool _isLong, uint256 _price) external {
     if (_isLong) {
-      globalMarkets[_marketIndex].longAvgPrice -= _price;
+      globalMarkets[_marketIndex].longAvgPrice = _price;
     } else {
-      globalMarkets[_marketIndex].shortAvgPrice -= _price;
+      globalMarkets[_marketIndex].shortAvgPrice = _price;
     }
   }
 }

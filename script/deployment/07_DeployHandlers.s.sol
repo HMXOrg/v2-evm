@@ -21,7 +21,7 @@ contract DeployHandlers is ConfigJsonRepo {
     address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
     address weth = getJsonAddress(".tokens.weth");
     // @todo - TBD
-    uint256 minExecutionFee = 0;
+    uint256 minExecutionFee = 30;
 
     address botHandlerAddress = address(new BotHandler(tradeServiceAddress, liquiditionServiceAddress, pythAddress));
     address crossMarginHandlerAddress = address(new CrossMarginHandler(crossMarginServiceAddress, pythAddress));

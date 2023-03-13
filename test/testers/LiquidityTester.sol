@@ -10,8 +10,6 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
-import { Vm } from "forge-std/Vm.sol";
-
 /// @title Liquidity Tester
 /// @notice This Tester help to check state after user interact with LiquidityHandler / LiquidityService
 contract LiquidityTester is StdAssertions {
@@ -24,8 +22,6 @@ contract LiquidityTester is StdAssertions {
   IPerpStorage perpStorage;
 
   address feeReceiver;
-
-  Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
   constructor(IPLPv2 _plp, IVaultStorage _vaultStorage, IPerpStorage _perpStorage, address _feeReceiver) {
     plp = _plp;

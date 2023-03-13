@@ -21,7 +21,8 @@ interface ICrossMarginHandler {
     uint8 _subAccountId,
     address _token,
     uint256 _amount,
-    bytes[] memory _priceData
+    bytes[] memory _priceData,
+    bool _shouldUnwrap
   ) external;
 
   function crossMarginService() external returns (address);

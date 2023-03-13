@@ -138,13 +138,16 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     uint8 _subAccountId,
     address _token,
     uint256 _amount,
-    bytes[] memory _priceData
+    bytes[] memory _priceData,
+    bool _shouldUnwrap
   ) external nonReentrant onlyAcceptedToken(_token) {
+    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+
     // Call update oracle price
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // Call service to withdraw collateral
-    CrossMarginService(crossMarginService).withdrawCollateral(_account, _subAccountId, _token, _amount);
+    _crossMarginService.withdrawCollateral(_account, _subAccountId, _token, _amount, _account);
 
     emit LogWithdrawCollateral(_account, _subAccountId, _token, _amount);
   }

@@ -25,14 +25,14 @@ contract CrossMarginService_WithdrawCollateral is CrossMarginHandler_Base {
   function testRevert_handler_withdrawCollateral_onlyAcceptedToken() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(dai), 10 ether, priceDataBytes);
+    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(dai), 10 ether, priceDataBytes, false);
   }
 
   //  Try withdraw token collateral with insufficient allowance
   function testRevert_handler_withdrawCollateral_InsufficientBalance() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InsufficientBalance()"));
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), 10 ether, priceDataBytes);
+    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), 10 ether, priceDataBytes, false);
   }
 
   function testRevert_handler_withdrawCollateral_setOraclePrice_withdrawBalanceBelowIMR() external {

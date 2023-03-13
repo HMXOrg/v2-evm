@@ -115,7 +115,8 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     address _primaryAccount,
     uint8 _subAccountId,
     address _token,
-    uint256 _amount
+    uint256 _amount,
+    address _receiver
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     address _vaultStorage = vaultStorage;
 

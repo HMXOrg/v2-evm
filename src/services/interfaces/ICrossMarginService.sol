@@ -24,5 +24,11 @@ interface ICrossMarginService {
 
   function setCalculator(address _address) external;
 
-  function withdrawCollateral(address _primaryAccount, uint8 _subAccountId, address _token, uint256 _amount) external;
+  function withdrawCollateral(
+    address _primaryAccount,
+    uint8 _subAccountId,
+    address _token,
+    uint256 _amount,
+    address _receiver
+  ) external;
 }

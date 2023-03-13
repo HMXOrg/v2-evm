@@ -128,7 +128,7 @@ contract CrossMarginHandler_Base is BaseTest {
 
   function simulateAliceWithdrawToken(address _token, uint256 _withdrawAmount) internal {
     vm.startPrank(ALICE);
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, _token, _withdrawAmount, priceDataBytes);
+    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, _token, _withdrawAmount, priceDataBytes, false);
     vm.stopPrank();
   }
 }

@@ -26,6 +26,8 @@ import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -143,22 +145,30 @@ library Deployer {
   function deployTradeService(
     address _perpStorage,
     address _vaultStorage,
-    address _configStorage
+    address _configStorage,
+    address _tradeHelper
   ) internal returns (ITradeService) {
     return
       ITradeService(
-        deployContractWithArguments("TradeService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
+        deployContractWithArguments(
+          "TradeService",
+          abi.encode(_perpStorage, _vaultStorage, _configStorage, _tradeHelper)
+        )
       );
   }
 
   function deployLiquidationService(
     address _perpStorage,
     address _vaultStorage,
-    address _configStorage
+    address _configStorage,
+    address _tradeHelper
   ) internal returns (ILiquidationService) {
     return
       ILiquidationService(
-        deployContractWithArguments("LiquidationService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
+        deployContractWithArguments(
+          "LiquidationService",
+          abi.encode(_perpStorage, _vaultStorage, _configStorage, _tradeHelper)
+        )
       );
   }
 
@@ -171,6 +181,15 @@ library Deployer {
       ILiquidityService(
         deployContractWithArguments("LiquidityService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
       );
+  }
+
+  function deployTradeHelper(
+    address _perpStorage,
+    address _vaultStorage,
+    address _configStorage
+  ) internal returns (ITradeHelper) {
+    return
+      ITradeHelper(deployContractWithArguments("TradeHelper", abi.encode(_perpStorage, _vaultStorage, _configStorage)));
   }
 
   /**

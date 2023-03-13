@@ -10,6 +10,8 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 // interfaces
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
@@ -18,6 +20,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
+  address public tradeHelper;
 
   /**
    * Modifiers
@@ -27,7 +30,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
     _;
   }
 
-  constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
+  constructor(address _perpStorage, address _vaultStorage, address _configStorage, address _tradeHelper) {
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
     VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
@@ -36,6 +39,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
+    tradeHelper = _tradeHelper;
   }
 
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage
@@ -50,25 +54,60 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
       revert ILiquidationService_AccountHealthy();
 
     // Get the list of position ids associated with the sub-account
-    bytes32[] memory _positionIds = PerpStorage(perpStorage).getPositionIds(_subAccount);
+    // bytes32[] memory _positionIds = PerpStorage(perpStorage).getPositionIds(_subAccount);
+    IPerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
     // Settles the sub-account by paying off its debt with its collateral
     _settle(_subAccount);
 
     // Liquidate the positions by resetting their value in storage
-    _liquidatePosition(_subAccount, _positionIds);
+    _liquidatePosition(_subAccount, _positions);
   }
 
   /// @notice Liquidates a list of positions by resetting their value in storage
   /// @param _subAccount The sub account of positions
-  /// @param _positionIds The list of positions to be liquidated
-  function _liquidatePosition(address _subAccount, bytes32[] memory _positionIds) internal {
+  /// @param _positions The list of positions to be liquidated
+  function _liquidatePosition(address _subAccount, IPerpStorage.Position[] memory _positions) internal {
     // Loop through each position in the list
-    bytes32 _positionId;
-    uint256 _len = _positionIds.length;
+    IPerpStorage.Position memory _position;
+    uint256 _len = _positions.length;
     for (uint256 i; i < _len; ) {
       // Get the current position id from the list
-      _positionId = _positionIds[i];
+      _position = _positions[i];
+
+      // Calculator(ConfigStorage(configStorage).calculator());
+
+      ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(
+        _position.marketIndex
+      );
+
+      // Update borrowing rate
+      TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass, 0, 0);
+
+      // Update funding rate
+      TradeHelper(tradeHelper).updateFundingRate(_position.marketIndex, 0);
+
+      TradeHelper(tradeHelper).collectMarginFee(
+        _subAccount,
+        uint256(_position.positionSizeE30 > 0 ? _position.positionSizeE30 : -_position.positionSizeE30),
+        _marketConfig.assetClass,
+        _position.reserveValueE30,
+        _position.entryBorrowingRate,
+        _marketConfig.decreasePositionFeeRateBPS
+      );
+
+      TradeHelper(tradeHelper).settleMarginFee(_subAccount);
+
+      // Collect funding fee
+      TradeHelper(tradeHelper).collectFundingFee(
+        _subAccount,
+        _marketConfig.assetClass,
+        _position.marketIndex,
+        _position.positionSizeE30,
+        _position.entryFundingRate
+      );
+
+      TradeHelper(tradeHelper).settleFundingFee(_subAccount, 0, 0);
 
       // Reset the position's value in storage
       PerpStorage(perpStorage).removePositionFromSubAccount(_subAccount, _positionId);

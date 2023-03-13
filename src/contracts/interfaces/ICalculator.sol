@@ -123,4 +123,13 @@ interface ICalculator {
   function configStorage() external returns (address _address);
 
   function perpStorage() external returns (address _address);
+
+  // function calculateAveragePrice(
+  //   bool isLong,
+  //   uint256 _globalPositionSize,
+  //   uint256 _globalAveragePrice,
+  //   uint256 _currentPrice,
+  //   int256 _positionSizeDelta,
+  //   int256 _realizedPositionPnl
+  // ) external pure returns (uint256 _nextAveragePrice);
 }

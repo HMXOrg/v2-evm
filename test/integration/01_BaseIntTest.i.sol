@@ -35,6 +35,9 @@ import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginServic
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
@@ -68,6 +71,9 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   ILiquidityService liquidityService;
   ILiquidationService liquidationService;
   ITradeService tradeService;
+
+  // helpers
+  ITradeHelper tradeHelper;
 
   /* TOKENS */
 
@@ -125,6 +131,8 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
 
     // deploy handler and service
+    tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
+
     liquidityService = Deployer.deployLiquidityService(
       address(perpStorage),
       address(vaultStorage),
@@ -133,14 +141,20 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     liquidationService = Deployer.deployLiquidationService(
       address(perpStorage),
       address(vaultStorage),
-      address(configStorage)
+      address(configStorage),
+      address(tradeHelper)
     );
     crossMarginService = Deployer.deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
       address(calculator)
     );
-    tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
+    tradeService = Deployer.deployTradeService(
+      address(perpStorage),
+      address(vaultStorage),
+      address(configStorage),
+      address(tradeHelper)
+    );
 
     botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), address(pyth));
     crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), address(pyth));
@@ -162,6 +176,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       configStorage.setCalculator(address(calculator));
       configStorage.setFeeCalculator(address(calculator));
       tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
+      tradeHelper.reloadConfig(); // @TODO: refresh config storage address here, may remove later
 
       // Set whitelists for executors
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
@@ -175,6 +190,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     {
       vaultStorage.setServiceExecutors(address(crossMarginService), true);
       vaultStorage.setServiceExecutors(address(tradeService), true);
+      vaultStorage.setServiceExecutors(address(tradeHelper), true);
       vaultStorage.setServiceExecutors(address(liquidityService), true);
     }
 
@@ -182,6 +198,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     {
       perpStorage.setServiceExecutors(address(crossMarginService), true);
       perpStorage.setServiceExecutors(address(tradeService), true);
+      perpStorage.setServiceExecutors(address(tradeHelper), true);
       perpStorage.setServiceExecutors(address(liquidityService), true);
     }
   }

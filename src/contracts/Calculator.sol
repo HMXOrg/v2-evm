@@ -803,6 +803,90 @@ contract Calculator is Owned, ICalculator {
     return _nextAveragePrice;
   }
 
+  // function calculateAveragePrice(
+  //   bool _isLong,
+  //   uint256 _globalPositionSize,
+  //   uint256 _globalAveragePrice,
+  //   uint256 _currentPrice,
+  //   int256 _positionSizeDelta,
+  //   int256 _realizedPositionPnl
+  // ) external pure returns (uint256 _nextAveragePrice) {
+  //   // global
+  //   // uint256 _globalPositionSize = _market.longPositionSize;
+  //   // int256 _globalAveragePrice = int256(_market.longAvgPrice);
+
+  //   if (_globalAveragePrice == 0) return 0;
+
+  //   // if positive means, has profit
+  //   (bool isProfit, uint256 delta) = _getDelta(_globalPositionSize, _isLong, _currentPrice, _globalAveragePrice);
+  //   // if (isLong) {
+
+  //   // }
+  //   // int256 _globalPnl = (int256(_globalPositionSize) * (int256(_globalAveragePrice) - int256(_currentPrice))) /
+  //   //   int256(_globalAveragePrice);
+  //   uint256 _newGlobalPnl = delta - _realizedPositionPnl;
+
+  //   uint256 _newGlobalPositionSize;
+  //   // position > 0 is means decrease short position
+  //   // else is increase short position
+  //   if (_positionSizeDelta > 0) {
+  //     _newGlobalPositionSize = _globalPositionSize + uint256(_positionSizeDelta);
+  //   } else {
+  //     _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
+  //   }
+  //   uint256 divisor;
+  //   if (_isLong) {
+  //     divisor = isProfit ? _newGlobalPositionSize + _newGlobalPnl : _newGlobalPositionSize - _newGlobalPnl;
+  //   } else {
+  //     divisor = isProfit ? _newGlobalPositionSize - _newGlobalPnl : _newGlobalPositionSize + _newGlobalPnl;
+  //   }
+
+  //   // bool _isGlobalProfit = _newGlobalPnl > 0;
+  //   // uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
+
+  //   // // divisor = latest global position size - pnl
+  //   // uint256 divisor = _isGlobalProfit
+  //   //   ? (_newGlobalPositionSize - _absoluteGlobalPnl)
+  //   //   : (_newGlobalPositionSize + _absoluteGlobalPnl);
+
+  //   // if (divisor == 0) return 0;
+
+  //   // // next short average price = current price * latest global position size / latest global position size - pnl
+  //   _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
+
+  //   return _nextAveragePrice;
+  // }
+
+  function _getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) internal pure returns (bool, uint256) {
+    // Check for invalid input: averagePrice cannot be zero.
+    if (_averagePrice == 0) return (false, 0);
+
+    // Calculate the difference between the average price and the fixed price.
+    uint256 priceDelta;
+    unchecked {
+      priceDelta = _averagePrice > _markPrice ? _averagePrice - _markPrice : _markPrice - _averagePrice;
+    }
+
+    // Calculate the delta, adjusted for the size of the order.
+    uint256 delta = (_size * priceDelta) / _averagePrice;
+
+    // Determine if the position is profitable or not based on the averagePrice and the mark price.
+    bool isProfit;
+    if (_isLong) {
+      isProfit = _markPrice > _averagePrice;
+    } else {
+      isProfit = _markPrice < _averagePrice;
+    }
+
+    // Return the values of isProfit and delta.
+    return (isProfit, delta);
+  }
+
   /// @notice Calculate next funding rate using when increase/decrease position.
   /// @param _marketIndex Market Index.
   /// @param _limitPriceE30 Price from limit order

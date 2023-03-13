@@ -15,7 +15,9 @@ import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
-contract TradeHelper {
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+
+contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
 
   event LogCollectTradingFee(address account, uint8 assetClass, uint256 feeUsd);
@@ -39,6 +41,13 @@ contract TradeHelper {
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
     calculator = Calculator(ConfigStorage(_configStorage).calculator());
+  }
+
+  function reloadConfig() external {
+    // TODO: access control, sanity check, natspec
+    // TODO: discuss about this pattern
+
+    calculator = Calculator(ConfigStorage(configStorage).calculator());
   }
 
   /// @notice This function updates the borrowing rate for the given asset class index.
@@ -343,7 +352,7 @@ contract TradeHelper {
     _perpStorage.updateSubAccountFee(_subAccount, int(acmVars.absFeeUsd));
   }
 
-  function X(
+  function updateGlobal(
     uint256 _globalMarketIndex,
     uint8 _assetClass,
     bool _isLongPosition,
@@ -354,48 +363,46 @@ contract TradeHelper {
     int256 _realizedPnl,
     uint256 _reserveValueE30
   ) external {
+    // update global market
+    // (L/S)
+    //  - avgPrice
+    //  - size
+    //  - openInterest
+    // update global state
+    //  - reserveValue
+    // update global asset class
+    //  - reserveValue
+
     uint256 _openInterestDelta = (_openInterest * _positionSizeE30ToDecrease) / _absPositionSizeE30;
 
     PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_globalMarketIndex);
 
-    if (_isLongPosition) {
-      uint256 _nextAvgPrice = Calculator(calculator).calculateLongAveragePrice(
+    uint256 _nextAvgPrice = _isLongPosition
+      ? Calculator(calculator).calculateLongAveragePrice(
         _globalMarket,
         _priceE30,
         -int256(_positionSizeE30ToDecrease),
         _realizedPnl
-      );
-      PerpStorage(perpStorage).updateGlobalLongMarketById(
-        _globalMarketIndex,
-        _globalMarket.longPositionSize - _positionSizeE30ToDecrease,
-        _nextAvgPrice,
-        _globalMarket.longOpenInterest - _openInterestDelta
-      );
-    } else {
-      uint256 _nextAvgPrice = Calculator(calculator).calculateShortAveragePrice(
+      )
+      : Calculator(calculator).calculateShortAveragePrice(
         _globalMarket,
         _priceE30,
         int256(_positionSizeE30ToDecrease),
         _realizedPnl
       );
-      PerpStorage(perpStorage).updateGlobalShortMarketById(
-        _globalMarketIndex,
-        _globalMarket.shortPositionSize - _positionSizeE30ToDecrease,
-        _nextAvgPrice,
-        _globalMarket.shortOpenInterest - _openInterestDelta
-      );
-    }
 
-    PerpStorage.GlobalState memory _globalState = PerpStorage(perpStorage).getGlobalState();
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
-      _assetClass
+    PerpStorage(perpStorage).updateGlobalMarketPrice(_globalMarketIndex, _isLongPosition, _nextAvgPrice);
+
+    PerpStorage(perpStorage).decreaseOpenInterest(
+      _globalMarketIndex,
+      _isLongPosition,
+      _positionSizeE30ToDecrease,
+      _openInterestDelta
     );
 
-    // update global storage
-    // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
-    _globalState.reserveValueE30 -= (_reserveValueE30 * _positionSizeE30ToDecrease) / _absPositionSizeE30;
-    _globalAssetClass.reserveValueE30 -= (_reserveValueE30 * _positionSizeE30ToDecrease) / _absPositionSizeE30;
-    PerpStorage(perpStorage).updateGlobalState(_globalState);
-    PerpStorage(perpStorage).updateGlobalAssetClass(_assetClass, _globalAssetClass);
+    PerpStorage(perpStorage).decreaseReserved(
+      _assetClass,
+      (_reserveValueE30 * _positionSizeE30ToDecrease) / _absPositionSizeE30
+    );
   }
 }

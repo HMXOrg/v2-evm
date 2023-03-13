@@ -17,6 +17,8 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_WrongSizeDelta();
   error ILimitTradeHandler_UnknownOrderType();
   error ILimitTradeHandler_MaxExecutionFee();
+  error ILimitTradeHandler_TriggerPriceBelowCurrentPrice();
+  error ILimitTradeHandler_TriggerPriceAboveCurrentPrice();
 
   /**
    * Structs

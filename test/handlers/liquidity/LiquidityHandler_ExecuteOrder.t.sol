@@ -126,7 +126,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
   /// @dev plp burn and receive tokenOut in service
   function test_correctness_executeOrder_createRemoveLiquidityOrder() external {
-    uint256 _orderIndex = _createRemoveLiquidityOrder();
+    _createRemoveLiquidityOrder();
 
     // Handler executor
     ILiquidityHandler.LiquidityOrder[] memory _ordersBefore = liquidityHandler.getLiquidityOrders();
@@ -143,8 +143,8 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
   // FIXME HERE
   function test_correctness_executeOrder_createRemoveLiquidityOrders() external {
-    uint256 _orderIndex = _createRemoveLiquidityOrder();
-    uint256 _orderIndex2 = _createRemoveLiquidityOrder();
+    _createRemoveLiquidityOrder();
+    _createRemoveLiquidityOrder();
 
     // Handler executor
     ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders();
@@ -294,7 +294,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     vm.startPrank(ALICE);
     plp.approve(address(liquidityHandler), type(uint256).max);
 
-    uint256 _orderIndex = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(
+    _orderIndex = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(
       address(weth),
       _amount,
       0,

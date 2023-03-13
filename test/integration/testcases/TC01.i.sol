@@ -24,7 +24,7 @@ contract TC01 is BaseIntTest_WithActions {
 
     // T1: As a Liquidity, Alice adds 10,000 USD(GLP)
     addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas);
-
+    console.log("plpv2 afterAddLQ", plpV2.balanceOf(ALICE));
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
@@ -62,7 +62,7 @@ contract TC01 is BaseIntTest_WithActions {
     //  10000 -> 0.5 e8
     //   100 -> 0.005 e8 btc
     removeLiquidity(ALICE, address(wbtc), 100 ether, executionOrderFee, initialPriceFeedDatas);
-
+    console.log("plpv2 afterREMOVE LQ", plpV2.balanceOf(ALICE));
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
 
     // PLP LIQUIDITY BEFORE =
@@ -109,7 +109,7 @@ contract TC01 is BaseIntTest_WithActions {
         token: address(wbtc),
         who: ALICE,
         lpTotalSupply: 9_969.68 ether,
-        totalAmount: 50_001_400,
+        totalAmount: 50_001_400, //49_501_400 + 1600 + 500_000 =>
         plpLiquidity: 49_848_400,
         plpAmount: 9_870 ether,
         fee: 153_000,
@@ -117,11 +117,14 @@ contract TC01 is BaseIntTest_WithActions {
       })
     );
 
-    // T6: Alice max withdraws 9,900 USD PLP in pools
+    console.log("plpv2 afterBOB deposit", plpV2.balanceOf(ALICE));
+
+    // T6: Alice max withdraws 9,870 USD PLP in pools
     vm.deal(ALICE, executionOrderFee);
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
 
     removeLiquidity(ALICE, address(wbtc), 9_870 ether, executionOrderFee, initialPriceFeedDatas);
+    console.log("AFTER REMOVE ALICE LIQUIDITY");
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),

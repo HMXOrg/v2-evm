@@ -279,6 +279,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
     IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_updateFee);
 
+    // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
     uint256 _totalFeeReceiver = 0;
 

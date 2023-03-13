@@ -288,7 +288,7 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
     ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal view returns (uint32) {
+  ) internal pure returns (uint32) {
     uint32 _feeBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
@@ -328,7 +328,8 @@ contract Calculator is Owned, ICalculator {
     }
     _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
 
-    return uint32(_feeBPS + _taxBPS);
+    uint32 _fee = uint32(_feeBPS + _taxBPS);
+    return _fee;
   }
 
   /// @notice get settlement fee rate

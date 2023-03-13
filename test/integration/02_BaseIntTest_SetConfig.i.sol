@@ -27,7 +27,7 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
         depositFeeRateBPS: 30, // 0.3%
         withdrawFeeRateBPS: 30, // 0.3%
         maxPLPUtilizationBPS: 8000, // 80%
-        plpTotalTokenWeight: 0,
+        plpTotalTokenWeight: 1e18,
         plpSafetyBufferBPS: 2000, // 20%
         taxFeeRateBPS: 50, // 0.5%
         flashLoanFeeRateBPS: 0, // @todo - TBD

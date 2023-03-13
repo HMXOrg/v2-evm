@@ -359,6 +359,7 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
+
     uint256 _targetUsd = (_totalLiquidityUsd *
       ConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight) /
       _liquidityConfig.plpTotalTokenWeight;
@@ -499,6 +500,10 @@ contract Calculator is Owned, ICalculator {
       PerpStorage.Position memory _position = _traderPositions[i];
       bool _isLong = _position.positionSizeE30 > 0 ? true : false;
 
+      if (_position.positionSizeE30 == 0) {
+        // Ignore closed position
+        continue;
+      }
       if (_position.avgEntryPriceE30 == 0) revert ICalculator_InvalidAveragePrice();
 
       // Get market config according to opening position
@@ -521,6 +526,7 @@ contract Calculator is Owned, ICalculator {
           _isUseMaxPrice
         );
       }
+
       // Calculate for priceDelta
       uint256 _priceDeltaE30;
       unchecked {
@@ -652,6 +658,7 @@ contract Calculator is Owned, ICalculator {
       } else {
         _size = uint(_position.positionSizeE30);
       }
+
       // Calculate MMR on position
       _mmrValueE30 += calculatePositionMMR(_size, _position.marketIndex);
 

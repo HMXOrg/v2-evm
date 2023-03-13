@@ -85,6 +85,9 @@ contract PythAdapter is Owned, IPythAdapter {
 
     // Quote inversion. This is an intention to support the price like USD/JPY.
     {
+      // Safe div 0 check, possible when _priceStruct.price == _priceStruct.conf
+      if (_price256 == 0) return 0;
+
       // Formula: inverted price = 10^2N / priceEN, when N = target decimal
       //
       // Example: Given _targetDecimals = 30, inverted quote price can be caluclated as followed.

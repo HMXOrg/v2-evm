@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const liquidityHandler = LiquidityHandler__factory.connect(config.handlers.liquidity, deployer);
-  const token = ERC20__factory.connect(config.tokens.usdt, deployer);
+  const token = ERC20__factory.connect(config.tokens.wbtc, deployer);
   const allowance = await token.allowance(deployer.address, liquidityHandler.address);
   if (allowance.eq(0)) await (await token.approve(liquidityHandler.address, ethers.constants.MaxUint256)).wait();
 
@@ -21,7 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await (
     await liquidityHandler.createAddLiquidityOrder(
       token.address,
-      ethers.utils.parseUnits("1000000", 6),
+      ethers.utils.parseUnits("0.1", 8),
       0,
       executionFee,
       false,

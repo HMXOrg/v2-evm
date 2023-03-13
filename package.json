@@ -16,6 +16,7 @@
     "arbitrum:goerli:deploy:set-config-storage": "dotenv -- bash -c 'forge script ./script/deployment/05_SetConfigStorage.s.sol:SetConfigStorage --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",
     "arbitrum:goerli:deploy:services": "dotenv -- bash -c 'forge script ./script/deployment/06_DeployServices.s.sol:DeployServices --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",
     "arbitrum:goerli:deploy:handlers": "dotenv -- bash -c 'forge script ./script/deployment/07_DeployHandlers.s.sol:DeployHandlers --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",
+    "arbitrum:goerli:config:mint-token": "dotenv -- bash -c 'forge script ./script/config/0_MintToken.s.sol --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",
     "arbitrum:goerli:config:set-configs": "dotenv -- bash -c 'forge script ./script/config/01_SetConfig.s.sol --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",
     "arbitrum:goerli:config:set-markets": "dotenv -- bash -c 'forge script ./script/config/02_SetMarkets.s.sol --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",
     "arbitrum:goerli:config:set-oracle": "dotenv -- bash -c 'forge script ./script/config/03_SetOracle.s.sol --rpc-url $ARBITRUM_GOERLI_RPC --broadcast'",

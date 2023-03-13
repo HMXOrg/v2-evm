@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
 
 contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
@@ -21,8 +20,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     ERC20 _tokenIn,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData,
-    uint256 _orderIndex
+    bytes[] memory _priceData
   ) internal {
     vm.startPrank(_liquidityProvider);
     _tokenIn.approve(address(liquidityHandler), _amountIn);
@@ -37,8 +35,9 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     );
     vm.stopPrank();
 
-    vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, payable(FEEVER), _priceData);
+    vm.startPrank(ORDER_EXECUTOR);
+    liquidityHandler.executeOrder(liquidityHandler.getLiquidityOrders().length - 1, payable(FEEVER), _priceData);
+    vm.stopPrank();
   }
 
   /// @notice Helper function to remove liquidity and execute order via handler
@@ -52,8 +51,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     address _tokenOut,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData,
-    uint256 _orderIndex
+    bytes[] memory _priceData
   ) internal {
     vm.startPrank(_liquidityProvider);
 
@@ -64,8 +62,9 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     liquidityHandler.createRemoveLiquidityOrder{ value: _executionFee }(_tokenOut, _amountIn, 0, _executionFee, false);
     vm.stopPrank();
 
-    vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, payable(FEEVER), _priceData);
+    vm.startPrank(ORDER_EXECUTOR);
+    liquidityHandler.executeOrder(liquidityHandler.getLiquidityOrders().length - 1, payable(FEEVER), _priceData);
+    vm.stopPrank();
   }
 
   /**

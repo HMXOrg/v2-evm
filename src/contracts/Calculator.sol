@@ -288,7 +288,7 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
     ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal view returns (uint32) {
+  ) internal pure returns (uint32) {
     uint32 _feeBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
@@ -314,9 +314,7 @@ contract Calculator is Owned, ICalculator {
     }
 
     // _nextWeight represented 18 precision
-    uint256 _nextWeight = (nextValue * ETH_PRECISION) / _totalLiquidityUSD;
-
-    uint256 _currentWeight = (startValue * ETH_PRECISION) / _totalLiquidityUSD;
+    uint256 _nextWeight = (nextValue * ETH_PRECISION) / (_totalLiquidityUSD + _value);
 
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
@@ -330,7 +328,8 @@ contract Calculator is Owned, ICalculator {
     }
     _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
 
-    return uint32(_feeBPS + _taxBPS);
+    uint32 _fee = uint32(_feeBPS + _taxBPS);
+    return _fee;
   }
 
   /// @notice get settlement fee rate

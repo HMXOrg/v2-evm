@@ -178,7 +178,7 @@ contract MockCalculator is ICalculator {
     address /*_subAccount*/,
     uint256 /*_price*/,
     bytes32 /*_assetId*/
-  ) external view returns (uint256) {
+  ) public view virtual returns (uint256) {
     return freeCollateral;
   }
 
@@ -268,7 +268,7 @@ contract MockCalculator is ICalculator {
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice
-  ) external pure returns (bool, uint256) {}
+  ) public view virtual returns (bool, uint256) {}
 
   function getPositionNextAveragePrice(
     uint256 _size,

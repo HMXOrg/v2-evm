@@ -284,7 +284,7 @@ contract Calculator is Owned, ICalculator {
   function _getFeeBPS(
     uint256 _value,
     uint256 _liquidityUSD, //e30
-    uint256 _totalLiquidityUSD, //(currentLiquidityUSD) +- (newValueUSD) in e30
+    uint256 _totalLiquidityUSD, //e30
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
     ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction

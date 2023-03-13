@@ -6,7 +6,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
 
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state

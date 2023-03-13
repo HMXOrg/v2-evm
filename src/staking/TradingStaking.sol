@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 import { IRewarder } from "./interfaces/IRewarder.sol";
 import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
 

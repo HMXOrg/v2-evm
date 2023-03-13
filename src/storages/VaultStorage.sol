@@ -8,7 +8,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens

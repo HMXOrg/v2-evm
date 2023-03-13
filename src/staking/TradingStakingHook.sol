@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.18;
 
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 import { ITradeServiceHook } from "../services/interfaces/ITradeServiceHook.sol";
 import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { ITradingStaking } from "./interfaces/ITradingStaking.sol";

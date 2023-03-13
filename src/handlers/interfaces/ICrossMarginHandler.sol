@@ -6,8 +6,15 @@ interface ICrossMarginHandler {
    * Errors
    */
   error ICrossMarginHandler_InvalidAddress();
+  error ICrossMarginHandler_MismatchMsgValue();
 
-  function depositCollateral(address _account, uint8 _subAccountId, address _token, uint256 _amount) external;
+  function depositCollateral(
+    address _account,
+    uint8 _subAccountId,
+    address _token,
+    uint256 _amount,
+    bool _shouldWrap
+  ) external payable;
 
   function withdrawCollateral(
     address _account,

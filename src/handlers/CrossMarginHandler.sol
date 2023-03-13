@@ -11,6 +11,7 @@ import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandle
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IWNative } from "../interfaces/IWNative.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   using SafeERC20 for ERC20;
@@ -98,13 +99,29 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     address _account,
     uint8 _subAccountId,
     address _token,
-    uint256 _amount
-  ) external nonReentrant onlyAcceptedToken(_token) {
-    // Transfer depositing token from trader's wallet to VaultStorage
-    ERC20(_token).safeTransferFrom(msg.sender, CrossMarginService(crossMarginService).vaultStorage(), _amount);
+    uint256 _amount,
+    bool _shouldWrap
+  ) external payable nonReentrant onlyAcceptedToken(_token) {
+    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+
+    if (_shouldWrap) {
+      // Prevent mismatch msgValue and the input amount
+      if (msg.value != _amount) {
+        revert ICrossMarginHandler_MismatchMsgValue();
+      }
+
+      // Wrap the native to wNative. The _token must be wNative.
+      // If not, it would revert transfer amount exceed on the next line.
+      IWNative(_token).deposit{ value: _amount }();
+      // Transfer those wNative token from this contract to VaultStorage
+      ERC20(_token).safeTransfer(_crossMarginService.vaultStorage(), _amount);
+    } else {
+      // Transfer depositing token from trader's wallet to VaultStorage
+      ERC20(_token).safeTransferFrom(msg.sender, _crossMarginService.vaultStorage(), _amount);
+    }
 
     // Call service to deposit collateral
-    CrossMarginService(crossMarginService).depositCollateral(_account, _subAccountId, _token, _amount);
+    _crossMarginService.depositCollateral(_account, _subAccountId, _token, _amount);
 
     emit LogDepositCollateral(_account, _subAccountId, _token, _amount);
   }
@@ -131,4 +148,24 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
     emit LogWithdrawCollateral(_account, _subAccountId, _token, _amount);
   }
+
+  // /// @notice Transfer in ETH from user to be used as execution fee
+  // /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.
+  // function _transferInETH() private {
+  //   if (_shouldWrap) {
+  //     if (msg.value != _amountIn + executionOrderFee) {
+  //       revert ILiquidityHandler_InCorrectValueTransfer();
+  //     }
+  //   } else {
+  //     if (msg.value != executionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
+  //     IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
+  //   }
+
+  //   IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).deposit{ value: msg.value }();
+  // }
+
+  // receive() external payable {
+  //   if (msg.sender != ConfigStorage(LiquidityService(liquidityService).configStorage()).weth())
+  //     revert ILiquidityHandler_InvalidSender();
+  // }
 }

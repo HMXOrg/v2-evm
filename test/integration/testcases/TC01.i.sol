@@ -67,7 +67,7 @@ contract TC01 is BaseIntTest_WithActions {
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
         who: ALICE,
-        lpTotalSupply: 98_70 ether, // 9970 plp - 100 plp
+        lpTotalSupply: 9_870 ether, // 9970 plp - 100 plp
         totalAmount: 49_501_400, //(0.5 e8 - 0.005)+ 1400 fee
         plpLiquidity: 49_350_000, // 49_850_000 - 500_000
         plpAmount: 9_870 ether, // 9970 -100 (remove lq)
@@ -103,12 +103,12 @@ contract TC01 is BaseIntTest_WithActions {
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
-        who: ALICE,
+        who: BOB,
         lpTotalSupply: 9_969.68 ether,
-        totalAmount: 50_001_400, //
-        plpLiquidity: 49_848_400,
-        plpAmount: 9_870 ether,
-        fee: 153_000,
+        totalAmount: 50001400, //49_501_400 + 500_000
+        plpLiquidity: 49_848_400, //49_350_000
+        plpAmount: 99.68 ether,
+        fee: 153_000, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000
         executionFee: _totalExecutionOrderFee
       })
     );
@@ -122,11 +122,11 @@ contract TC01 is BaseIntTest_WithActions {
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
         who: ALICE,
-        lpTotalSupply: 99.68 ether,
+        lpTotalSupply: 99.68 ether, //only BOB LP LEFT
         totalAmount: 789_580,
         plpLiquidity: 498_400,
-        plpAmount: 0 ether,
-        fee: 291_180,
+        plpAmount: 0 ether, // ALICE PLP AMOUNT SHOULD BE 0
+        fee: 291_180, //153_000 +138_180 (9870 /20000 *1e8 - 0.28%) get rebates
         executionFee: _totalExecutionOrderFee
       })
     );

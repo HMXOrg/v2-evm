@@ -131,8 +131,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     // lp value to remove
     uint256 _lpUsdValue = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
-
-    //0.5 *1e8
     uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
@@ -187,7 +185,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
   function _exitPool(
     address _tokenOut,
-    uint256 _lpUsdValue,
+    uint256 _lpUsdValue, // 1e18
     address _lpProvider,
     uint256 _minAmount
   ) internal returns (uint256) {

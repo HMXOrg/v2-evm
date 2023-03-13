@@ -361,13 +361,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   // Execute a SELL order to create new Short position
   function testCorrectness_executeOrder_SellOrder_NewShortPosition() external {
     // Create Sell Order
-    mockOracle.setPrice(999 * 1e30);
+    mockOracle.setPrice(1000 * 1e30);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: -1000 * 1e30,
-      _triggerPrice: 1000 * 1e30,
-      _triggerAboveThreshold: true,
+      _triggerPrice: 999 * 1e30,
+      _triggerAboveThreshold: false,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
       _tpToken: address(weth)
@@ -379,7 +379,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
-    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setPrice(998 * 1e30);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -408,7 +408,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1000 * 1e30);
-    assertEq(_limitPriceE30, 1000 * 1e30);
+    assertEq(_limitPriceE30, 999 * 1e30);
   }
 
   // Execute a SELL order to create new Short position and create another SELL order to increase it

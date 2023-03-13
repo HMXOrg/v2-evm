@@ -103,7 +103,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint256 _buySizeE30,
     address _tpToken, // NOTE: current only support GLP as profit token
     bytes[] memory _priceData
-  ) external nonReentrant {
+  ) external payable nonReentrant {
     if (_buySizeE30 == 0) {
       revert IMarketTradeHandler_ZeroSizeInput();
     }
@@ -174,7 +174,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     emit LogBuy(_account, _subAccountId, _marketIndex, _buySizeE30, _shortDecreasingSizeE30, _longIncreasingSizeE30);
   }
 
-  /// @notice Perform sell, in which increasing position size towards long exposure.
+  /// @notice Perform sell, in which increasing position size towards short exposure.
   /// @dev Flipping from long exposure to short exposure is possible here.
   /// @param _account Trader's primary wallet account.
   /// @param _subAccountId Trader's sub account id.
@@ -189,7 +189,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint256 _sellSizeE30,
     address _tpToken, // NOTE: current only support GLP as profit token
     bytes[] memory _priceData
-  ) external nonReentrant {
+  ) external payable nonReentrant {
     if (_sellSizeE30 == 0) {
       revert IMarketTradeHandler_ZeroSizeInput();
     }

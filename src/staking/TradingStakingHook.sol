@@ -3,9 +3,9 @@
 pragma solidity 0.8.18;
 
 import { Owned } from "@hmx/base/Owned.sol";
-import { ITradeServiceHook } from "../services/interfaces/ITradeServiceHook.sol";
-import { ITradeService } from "../services/interfaces/ITradeService.sol";
-import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
+import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 
 contract TradingStakingHook is ITradeServiceHook, Owned {
   error TradingStakingHook_Forbidden();

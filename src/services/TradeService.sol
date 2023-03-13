@@ -13,8 +13,8 @@ import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 // interfaces
-import { ITradeService } from "./interfaces/ITradeService.sol";
-import { ITradeServiceHook } from "../services/interfaces/ITradeServiceHook.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {

@@ -262,4 +262,19 @@ contract MockCalculator is ICalculator {
     int256 _positionSizeDelta,
     int256 _realizedPositionPnl
   ) external pure returns (uint256 _nextAveragePrice) {}
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) external pure returns (bool, uint256) {}
+
+  function getPositionNextAveragePrice(
+    uint256 _size,
+    bool _isLong,
+    uint256 _sizeDelta,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) external pure returns (uint256) {}
 }

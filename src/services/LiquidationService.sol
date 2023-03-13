@@ -22,6 +22,8 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
   address public configStorage;
   address public tradeHelper;
 
+  Calculator calculator;
+
   /**
    * Modifiers
    */
@@ -75,8 +77,6 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
       // Get the current position id from the list
       _position = _positions[i];
 
-      // Calculator(ConfigStorage(configStorage).calculator());
-
       ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(
         _position.marketIndex
       );
@@ -109,8 +109,15 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
 
       TradeHelper(tradeHelper).settleFundingFee(_subAccount, 0, 0);
 
+      // (isProfit, delta) = _getDelta(
+      //   _vars.absPositionSizeE30,
+      //   _vars.isLongPosition,
+      //   _vars.priceE30,
+      //   _vars.avgEntryPriceE30
+      // );
+
       // Reset the position's value in storage
-      PerpStorage(perpStorage).removePositionFromSubAccount(_subAccount, _positionId);
+      // PerpStorage(perpStorage).removePositionFromSubAccount(_subAccount, _positionId);
 
       unchecked {
         ++i;

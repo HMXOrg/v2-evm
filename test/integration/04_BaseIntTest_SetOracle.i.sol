@@ -19,6 +19,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     bytes32 priceId;
     int64 price;
     int64 exponent;
+    bool inverse;
   }
 
   AssetPythPriceData[] assetPythPriceDatas;
@@ -27,24 +28,32 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
   constructor() {
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8 })
+      AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8, inverse: false })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: wbtcAssetId, priceId: wbtcPriceId, price: 20000, exponent: -8 })
-    );
-    assetPythPriceDatas.push(AssetPythPriceData({ assetId: daiAssetId, priceId: daiPriceId, price: 1, exponent: -8 }));
-    assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: usdcAssetId, priceId: usdcPriceId, price: 1, exponent: -8 })
+      AssetPythPriceData({ assetId: wbtcAssetId, priceId: wbtcPriceId, price: 20000, exponent: -8, inverse: false })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: usdtAssetId, priceId: usdtPriceId, price: 1, exponent: -8 })
+      AssetPythPriceData({ assetId: daiAssetId, priceId: daiPriceId, price: 1, exponent: -8, inverse: false })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: appleAssetId, priceId: applePriceId, price: 152, exponent: -5 })
+      AssetPythPriceData({ assetId: usdcAssetId, priceId: usdcPriceId, price: 1, exponent: -8, inverse: false })
+    );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: usdtAssetId, priceId: usdtPriceId, price: 1, exponent: -8, inverse: false })
+    );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({ assetId: appleAssetId, priceId: applePriceId, price: 152, exponent: -5, inverse: false })
     );
     // @todo - after integrate with inverse config then price should be change to USDJPY
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: jpyAssetId, priceId: jpyPriceid, price: 0.0072 * 1e8, exponent: -8 })
+      AssetPythPriceData({
+        assetId: jpyAssetId,
+        priceId: jpyPriceid,
+        price: 136.123 * 1e3,
+        exponent: -3,
+        inverse: true
+      })
     );
 
     // Set MarketStatus
@@ -63,8 +72,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
     // Set AssetPriceConfig
     uint32 _confidenceThresholdE6 = 2500; // 2.5% for test only
-    uint256 _trustPriceAge = type(uint256).max; // set max for test only
-
+    uint32 _trustPriceAge = type(uint32).max; // set max for test only
     oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(daiAssetId, _confidenceThresholdE6, _trustPriceAge);
@@ -78,8 +86,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       _data = assetPythPriceDatas[i];
 
       // set PythId
-      pythAdapter.setConfig(_data.assetId, _data.assetId, false);
-
+      pythAdapter.setConfig(_data.assetId, _data.priceId, _data.inverse);
       // set UpdatePriceFeed
       initialPriceFeedDatas.push(_createPriceFeedUpdateData(_data.assetId, _data.price));
 

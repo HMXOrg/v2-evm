@@ -394,7 +394,7 @@ contract Calculator is Owned, ICalculator {
   function _getTargetValue(
     uint256 totalLiquidityUSD, //e30
     uint256 tokenWeight, //e18
-    uint256 totalTokenWeight //0
+    uint256 totalTokenWeight // 1e18
   ) public pure returns (uint256) {
     if (totalLiquidityUSD == 0) return 0;
 

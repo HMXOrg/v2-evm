@@ -15,12 +15,11 @@ contract TC06 is BaseIntTest_WithActions {
     address TP_TOKEN = address(wbtc); // @note settle with WBTC that be treated as GLP token
 
     // Make LP contains some liquidity
-
     {
       bytes[] memory priceData = new bytes[](0);
       vm.deal(BOB, 1 ether); //deal with out of gas
       wbtc.mint(BOB, 10 * 1e8);
-      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceData, 0);
+      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceData);
     }
 
     // Mint tokens to Alice

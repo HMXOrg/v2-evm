@@ -289,12 +289,6 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
   ) internal view returns (uint32) {
-    console.log("ENTERING _getFeeBPS");
-    console.log("PARAMS");
-    console.log("_value", _value);
-    console.log("_liquidityUSD", _liquidityUSD);
-    console.log("_totalLiquidityUSD", _totalLiquidityUSD);
-    console.log("==================");
     uint32 _feeBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
@@ -306,27 +300,16 @@ contract Calculator is Owned, ICalculator {
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
-    console.log("_totalLiquidityUSD", _totalLiquidityUSD);
-    console.log("targetWeight", _plpTokenConfig.targetWeight);
-    console.log("_totalTokenWeight", _totalTokenWeight);
-    console.log("targetValue", targetValue);
-    console.log("_feeBPS", _feeBPS);
     if (targetValue == 0) return _feeBPS;
 
-    console.log("startValue", startValue);
-    console.log("nextValue", nextValue);
-    console.log("targetValue", targetValue);
-
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
-    console.log("startTargetDiff", startTargetDiff);
     uint256 nextTargetDiff = nextValue > targetValue ? nextValue - targetValue : targetValue - nextValue;
-    console.log("nextTargetDiff", nextTargetDiff);
 
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
       uint32 rebateBPS = uint32((_taxBPS * startTargetDiff) / targetValue);
-      console.log("rebateBPS", rebateBPS);
+
       return rebateBPS > _feeBPS ? 0 : _feeBPS - rebateBPS;
     }
 
@@ -334,12 +317,8 @@ contract Calculator is Owned, ICalculator {
     uint256 _nextWeight = (nextValue * ETH_PRECISION) / _totalLiquidityUSD;
 
     uint256 _currentWeight = (startValue * ETH_PRECISION) / _totalLiquidityUSD;
-    console.log("currentWeight", _currentWeight);
-    console.log("_nextWeight", _nextWeight);
     // if weight exceed targetWeight(e18) + maxWeight(e18)
     //1063296539220391404 >  0.95 * 1e18 + 0.01*e18
-    console.log("_plpTokenConfig.targetWeight", _plpTokenConfig.targetWeight);
-    console.log("_plpTokenConfig.maxWeightDif", _plpTokenConfig.maxWeightDiff);
 
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
@@ -352,11 +331,6 @@ contract Calculator is Owned, ICalculator {
       midDiff = targetValue;
     }
     _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
-
-    console.log("_feeRateBPS");
-    console.logUint(_feeBPS);
-    console.log("_taxRateBPS");
-    console.logUint(_taxBPS);
 
     return uint32(_feeBPS + _taxBPS);
   }

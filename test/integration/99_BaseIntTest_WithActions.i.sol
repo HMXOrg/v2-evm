@@ -21,8 +21,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     ERC20 _tokenIn,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData,
-    uint256 _orderIndex
+    bytes[] memory _priceData
   ) internal {
     vm.startPrank(_liquidityProvider);
     _tokenIn.approve(address(liquidityHandler), _amountIn);
@@ -38,7 +37,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     vm.stopPrank();
 
     vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(payable(FEEVER), _priceData);
+    liquidityHandler.executeOrder(liquidityHandler.getLiquidityOrders().length - 1, payable(FEEVER), _priceData);
   }
 
   /// @notice Helper function to remove liquidity and execute order via handler
@@ -52,8 +51,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     address _tokenOut,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData,
-    uint256 _orderIndex
+    bytes[] memory _priceData
   ) internal {
     vm.startPrank(_liquidityProvider);
 
@@ -65,7 +63,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     vm.stopPrank();
 
     vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(payable(FEEVER), _priceData);
+    liquidityHandler.executeOrder(liquidityHandler.getLiquidityOrders().length - 1, payable(FEEVER), _priceData);
   }
 
   /**

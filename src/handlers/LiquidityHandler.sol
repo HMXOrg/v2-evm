@@ -69,11 +69,9 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   uint256 public executionOrderFee; // executionOrderFee in tokenAmount unit
   bool isRefund; // order is refund (prevent direct call refund()
   bool isExecuting; // order is executing (prevent direct call executeLiquidity()
-  // mapping(address => LiquidityOrder[]) public liquidityOrders; // user address => all liquidityOrder
-  // mapping(address => uint256) public lastOrderIndex; // user address => lastOrderIndex of liquidityOrder
 
-  LiquidityOrder[] public liquidityOrders;
-  uint256 public lastExecutedOrderIndex;
+  uint256 public nextExecutionOrderIndex;
+  LiquidityOrder[] public liquidityOrders; // all liquidityOrder
 
   mapping(address => bool) public orderExecutors; //address -> flag to execute
 
@@ -149,7 +147,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       })
     );
 
-    uint256 _latestOrderIndex = liquidityOrders.length - 1;
+    _latestOrderIndex = liquidityOrders.length - 1;
 
     emit LogCreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee, _latestOrderIndex);
     return _latestOrderIndex;
@@ -193,7 +191,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       })
     );
 
-    uint256 _latestOrderIndex = liquidityOrders.length - 1;
+    _latestOrderIndex = liquidityOrders.length - 1;
 
     emit LogCreateRemoveLiquidityOrder(
       msg.sender,
@@ -219,10 +217,9 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @param _orderIndex Order Index which could be retrieved from lastOrderIndex(address) beware in case of index is 0`
   function _cancelLiquidityOrder(address _account, uint256 _orderIndex) internal {
     if (
-      _orderIndex > 0 &&
-      _orderIndex >= lastExecutedOrderIndex &&
-      liquidityOrders[_orderIndex].account != address(0) &&
-      msg.sender != liquidityOrders[_orderIndex].account
+      _orderIndex >= nextExecutionOrderIndex &&
+      liquidityOrders.length > _orderIndex &&
+      _account == liquidityOrders[_orderIndex].account
     ) {
       LiquidityOrder memory order = liquidityOrders[_orderIndex];
       isRefund = true;
@@ -265,21 +262,29 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @param _priceData Price data from Pyth to be used for updating the market prices
   // slither-disable-next-line reentrancy-eth
   function executeOrder(
+    uint256 _endIndex,
     address payable _feeReceiver,
     bytes[] memory _priceData
   ) external nonReentrant onlyOrderExecutor {
-    if (lastExecutedOrderIndex != 0 && lastExecutedOrderIndex == liquidityOrders.length - 1)
+    uint256 _orderLength = liquidityOrders.length;
+    uint256 _latestOrderIndex = _orderLength - 1;
+    if (_orderLength == 0 || nextExecutionOrderIndex == _orderLength) {
       revert ILiquidityHandler_NoOrder();
-    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
+    }
 
+    if (_endIndex > _latestOrderIndex) {
+      _endIndex = _latestOrderIndex;
+    }
+
+    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
     IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_updateFee);
 
     IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
     uint256 _totalFeeReceiver = 0;
-    for (uint256 i = lastExecutedOrderIndex; i < liquidityOrders.length; ) {
+
+    for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
       LiquidityOrder memory _order = liquidityOrders[i];
 
-      // delete liquidityOrder
       delete liquidityOrders[i];
 
       // refund in case of order updatePythFee > executionFee
@@ -308,9 +313,10 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
       unchecked {
         ++i;
-        ++lastExecutedOrderIndex;
       }
     }
+
+    nextExecutionOrderIndex = _endIndex + 1;
     // Pay the executor
     _transferOutETH(_totalFeeReceiver - _updateFee, _feeReceiver);
   }

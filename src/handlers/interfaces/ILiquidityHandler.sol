@@ -47,13 +47,13 @@ interface ILiquidityHandler {
     bool _shouldUnwrap
   ) external payable returns (uint256);
 
-  function executeOrder(address payable feeReceiver, bytes[] memory _priceData) external;
+  function executeOrder(uint256 endIndex, address payable feeReceiver, bytes[] memory _priceData) external;
 
   function cancelLiquidityOrder(uint256 _orderIndex) external;
 
   function getLiquidityOrders() external view returns (LiquidityOrder[] memory);
 
-  function lastExecutedOrderIndex() external view returns (uint256);
+  function nextExecutionOrderIndex() external view returns (uint256);
 
   function setOrderExecutor(address _executor, bool _isOk) external;
 

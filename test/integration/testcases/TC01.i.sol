@@ -6,6 +6,7 @@ import { console } from "forge-std/console.sol";
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
+import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 
 contract TC01 is BaseIntTest_WithActions {
   function testCorrectness_AddAndRemoveLiquiditySuccess() external {
@@ -14,8 +15,6 @@ contract TC01 is BaseIntTest_WithActions {
     // WBTC = 20k
     // ALICE NEED 10k in terms of WBTC = 10000 /20000 * 10**8  = 5e7
     uint256 _amount = 5e7;
-    uint256 _aliceOrderIndex = 0;
-    uint256 _bobOrderIndex = 0;
 
     // mint 0.5 btc and give 0.0001 gas
     vm.deal(ALICE, executionOrderFee);
@@ -24,7 +23,7 @@ contract TC01 is BaseIntTest_WithActions {
     // Alice Create Order And Executor Execute Order
 
     // T1: As a Liquidity, Alice adds 10,000 USD(GLP)
-    addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas, _aliceOrderIndex);
+    addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas);
 
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
@@ -38,8 +37,6 @@ contract TC01 is BaseIntTest_WithActions {
         executionFee: _totalExecutionOrderFee
       })
     );
-
-    ++_aliceOrderIndex;
 
     // no one in PLP pool, so aum must be = totalSupply
     assertEq(calculator.getAUM(false, 0, 0), plpV2.totalSupply(), "AUM & total Supply mismatch");
@@ -64,7 +61,7 @@ contract TC01 is BaseIntTest_WithActions {
     // T3: Alice withdraws PLP 100 USD
     //  10000 -> 0.5 e8
     //   100 -> 0.005 e8 btc
-    removeLiquidity(ALICE, address(wbtc), 100 ether, executionOrderFee, initialPriceFeedDatas, 1);
+    removeLiquidity(ALICE, address(wbtc), 100 ether, executionOrderFee, initialPriceFeedDatas);
 
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
 
@@ -82,8 +79,6 @@ contract TC01 is BaseIntTest_WithActions {
         executionFee: _totalExecutionOrderFee
       })
     );
-
-    ++_aliceOrderIndex;
 
     // T5: As a Liquidity, Bob adds 100 USD(GLP)
 
@@ -103,15 +98,18 @@ contract TC01 is BaseIntTest_WithActions {
     );
     vm.stopPrank();
 
+    ILiquidityHandler.LiquidityOrder[] memory orders = liquidityHandler.getLiquidityOrders();
+
     vm.prank(ORDER_EXECUTOR);
     vm.expectRevert(abi.encodeWithSignature("ICalculator_PoolImbalance()"));
-    liquidityHandler.executeOrder(payable(FEEVER), initialPriceFeedDatas);
+
+    liquidityHandler.executeOrder(orders.length - 1, payable(FEEVER), initialPriceFeedDatas);
 
     // T6: Alice max withdraws 9,900 USD PLP in pools
     vm.deal(ALICE, executionOrderFee);
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
 
-    removeLiquidity(ALICE, address(wbtc), 9_870 ether, executionOrderFee, initialPriceFeedDatas, _aliceOrderIndex);
+    removeLiquidity(ALICE, address(wbtc), 9_870 ether, executionOrderFee, initialPriceFeedDatas);
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
@@ -124,7 +122,5 @@ contract TC01 is BaseIntTest_WithActions {
         executionFee: _totalExecutionOrderFee
       })
     );
-
-    ++_aliceOrderIndex;
   }
 }

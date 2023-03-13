@@ -39,7 +39,6 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
   function test_revert_InsufficientExecutionFee() external {
     vm.deal(ALICE, 5 ether);
     plp.mint(ALICE, 5 ether);
-    int256 _amountIn = 1 ether;
     vm.startPrank(ALICE);
 
     plp.approve(address(liquidityHandler), 1 ether);
@@ -51,11 +50,11 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
   function test_revert_incorrectValueTransfer() external {
     vm.deal(ALICE, 5 ether);
     plp.mint(ALICE, 5 ether);
-    uint256 _amountIn = 1 ether;
+
     vm.startPrank(ALICE);
-    plp.approve(address(liquidityHandler), _amountIn);
+    plp.approve(address(liquidityHandler), 1 ether);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_InCorrectValueTransfer()"));
-    liquidityHandler.createRemoveLiquidityOrder{ value: 3 ether }(address(wbtc), _amountIn, 1 ether, 5 ether, false);
+    liquidityHandler.createRemoveLiquidityOrder{ value: 3 ether }(address(wbtc), 1 ether, 1 ether, 5 ether, false);
     vm.stopPrank();
   }
 

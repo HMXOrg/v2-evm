@@ -29,7 +29,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   event LogSetPLP(address indexed oldPlp, address newPlp);
   event LogSetLiquidityConfig(LiquidityConfig indexed oldLiquidityConfig, LiquidityConfig newLiquidityConfig);
   event LogSetDynamicEnabled(bool enabled);
-  event LogSetPLPTotalTokenWeight(uint256 oldTotalTokenWeight, uint256 newTotalTokenWeight);
   event LogSetPnlFactor(uint32 oldPnlFactorBPS, uint32 newPnlFactorBPS);
   event LogSetSwapConfig(SwapConfig indexed oldConfig, SwapConfig newConfig);
   event LogSetTradingConfig(TradingConfig indexed oldConfig, TradingConfig newConfig);
@@ -252,12 +251,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   function setDynamicEnabled(bool _enabled) external {
     liquidityConfig.dynamicFeeEnabled = _enabled;
     emit LogSetDynamicEnabled(_enabled);
-  }
-
-  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external onlyOwner {
-    if (_totalTokenWeight > 1e18) revert IConfigStorage_ExceedLimitSetting();
-    emit LogSetPLPTotalTokenWeight(liquidityConfig.plpTotalTokenWeight, _totalTokenWeight);
-    liquidityConfig.plpTotalTokenWeight = _totalTokenWeight;
   }
 
   // @todo - Add Description

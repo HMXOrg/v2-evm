@@ -317,8 +317,6 @@ contract Calculator is Owned, ICalculator {
     uint256 _nextWeight = (nextValue * ETH_PRECISION) / _totalLiquidityUSD;
 
     uint256 _currentWeight = (startValue * ETH_PRECISION) / _totalLiquidityUSD;
-    // if weight exceed targetWeight(e18) + maxWeight(e18)
-    //1063296539220391404 >  0.95 * 1e18 + 0.01*e18
 
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();

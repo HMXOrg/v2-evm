@@ -115,7 +115,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     return _newDatas;
   }
 
-  function _createPriceFeedUpdateData(bytes32 _assetId, int64 _price) internal returns (bytes memory) {
+  function _createPriceFeedUpdateData(bytes32 _assetId, int64 _price) internal view returns (bytes memory) {
     int64 pythDecimals;
 
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {

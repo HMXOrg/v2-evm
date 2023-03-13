@@ -39,7 +39,6 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
   function test_revert_InsufficientExecutionFee() external {
     vm.deal(ALICE, 5 ether);
     plp.mint(ALICE, 5 ether);
-    int256 _amountIn = 1 ether;
     vm.startPrank(ALICE);
 
     plp.approve(address(liquidityHandler), 1 ether);

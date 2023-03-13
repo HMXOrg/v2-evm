@@ -9,7 +9,7 @@ contract OracleMiddleware_BaseTest is BaseTest {
 
     // Feed wbtc
     {
-      pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
+      pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
 
       bytes[] memory priceDataBytes = new bytes[](1);
       priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(

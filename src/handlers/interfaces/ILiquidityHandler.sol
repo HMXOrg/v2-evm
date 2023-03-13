@@ -24,6 +24,7 @@ interface ILiquidityHandler {
     uint256 amount;
     uint256 minOut;
     bool isAdd;
+    uint256 executionFee;
     bool shouldUnwrap; // unwrap nativetoken when removeLiquidity
   }
 
@@ -46,7 +47,12 @@ interface ILiquidityHandler {
     bool _shouldUnwrap
   ) external payable;
 
-  function executeOrder(address _account, uint256 _orderIndex, bytes[] memory _priceData) external;
+  function executeOrder(
+    address _account,
+    uint256 _orderIndex,
+    address payable feeReceiver,
+    bytes[] memory _priceData
+  ) external;
 
   function cancelLiquidityOrder(uint256 _orderIndex) external;
 

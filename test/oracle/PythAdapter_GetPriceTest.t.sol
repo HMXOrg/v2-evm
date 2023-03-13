@@ -9,8 +9,9 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
   function setUp() public override {
     super.setUp();
 
-    pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
-    pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
+    pythAdapter.setConfig(wethAssetId, wethPriceId, false);
+    pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
+    pythAdapter.setConfig(jpyAssetId, jpyPriceId, true);
   }
 
   function updateWbtcWithConf(uint64 conf) private {
@@ -39,6 +40,22 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
       8,
       -20_000 * 1e8,
       0,
+      uint64(block.timestamp)
+    );
+
+    mockPyth.updatePriceFeeds{ value: mockPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
+  }
+
+  function updateJpyWithConf(uint64 conf) private {
+    // Feed only wbtc
+    bytes[] memory priceDataBytes = new bytes[](1);
+    priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
+      jpyPriceId,
+      136.123 * 1e3,
+      conf,
+      -3,
+      136.123 * 1e3,
+      conf,
       uint64(block.timestamp)
     );
 
@@ -106,5 +123,35 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     // And also, min vs max should be unequal
     assertEq(maxPrice, 21_000 * 1e30);
     assertEq(minPrice, 19_000 * 1e30);
+  }
+
+  function testCorrectness_GetInverseQuotePriceWithNoConf() external {
+    updateJpyWithConf(0);
+
+    // USD/JPY => 136.123
+    // So, JPY/USD should be 1/136.123 ~= 0.00734629...
+    (uint256 maxPrice, , uint256 lastUpdate) = pythAdapter.getLatestPrice(jpyAssetId, true, 1e6);
+    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(jpyAssetId, false, 1e6);
+    assertEq(maxPrice, 0.007346297098947275625720855402 * 1e30);
+    assertEq(minPrice, 0.007346297098947275625720855402 * 1e30);
+    assertEq(lastUpdate, uint64(block.timestamp));
+  }
+
+  function testCorrectness_GetInverseQuotePriceWithConf() external {
+    // Feed with +-10% conf
+    updateJpyWithConf(13.612 * 1e3);
+
+    // USD/JPY => 136.123
+    // Max before inversion: 136.123 + 13.612 = 149.735
+    // Min before inversion: 136.123 - 13.612 = 122.511
+    //
+    // Min: 1/149.735 ~= 0.006678465289
+    // Max: 1/122.511 ~= 0.008162532344
+    (uint256 maxPrice, , uint256 lastUpdate) = pythAdapter.getLatestPrice(jpyAssetId, true, 1e6);
+    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(jpyAssetId, false, 1e6);
+    assertEq(maxPrice, 0.008162532344034413236362449086 * 1e30, "Max price");
+    assertEq(minPrice, 0.006678465288676662103048719404 * 1e30, "Min price");
+    assertGt(maxPrice, minPrice, "Max > Min");
+    assertEq(lastUpdate, uint64(block.timestamp), "Timestamp");
   }
 }

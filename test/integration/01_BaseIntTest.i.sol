@@ -36,6 +36,10 @@ import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol"
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
+import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
@@ -57,6 +61,8 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal EVE;
+  address internal FEEVER;
   address internal ORDER_EXECUTOR;
 
   /* CONTRACTS */
@@ -96,13 +102,15 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
 
   /* PYTH */
   MockPyth internal pyth;
-  IOracleAdapter internal pythAdapter;
+  IPythAdapter internal pythAdapter;
 
   constructor() {
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    EVE = makeAddr("EVE");
+    FEEVER = makeAddr("FEEVER");
     ORDER_EXECUTOR = makeAddr("ORDER_EXECUTOR");
 
     // deploy MOCK weth
@@ -110,7 +118,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
 
     pyth = new MockPyth(60, 1);
 
-    pythAdapter = IOracleAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
+    pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
 
     // deploy stakedGLPOracleAdapter
 

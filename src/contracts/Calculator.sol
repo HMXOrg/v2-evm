@@ -10,6 +10,7 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
+import { console } from "forge-std/console.sol";
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
 
@@ -240,58 +241,58 @@ contract Calculator is Owned, ICalculator {
     return (amount * 10 ** toTokenDecimals) / 10 ** fromTokenDecimals;
   }
 
-  function getAddLiquidityFeeRate(
+  function getAddLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
-  ) external view returns (uint256) {
+  ) external view returns (uint32) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
       return _configStorage.getLiquidityConfig().depositFeeRateBPS;
     }
 
     return
-      _getFeeRate(
+      _getFeeBPS(
         _tokenValueE30,
         _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false, 0, 0),
-        _getPLPValueE30(false, 0, 0),
+        _getPLPValueE30(false, 0, 0) + _tokenValueE30,
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.ADD
       );
   }
 
-  function getRemoveLiquidityFeeRate(
+  function getRemoveLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
-  ) external view returns (uint256) {
+  ) external view returns (uint32) {
     if (!_configStorage.getLiquidityConfig().dynamicFeeEnabled) {
       return _configStorage.getLiquidityConfig().withdrawFeeRateBPS;
     }
 
     return
-      _getFeeRate(
+      _getFeeBPS(
         _tokenValueE30,
         _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true, 0, 0),
-        _getPLPValueE30(true, 0, 0),
+        _getPLPValueE30(true, 0, 0) - _tokenValueE30,
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
       );
   }
 
-  function _getFeeRate(
+  function _getFeeBPS(
     uint256 _value,
     uint256 _liquidityUSD, //e30
-    uint256 _totalLiquidityUSD, //e30
+    uint256 _totalLiquidityUSD, //(currentLiquidityUSD) +- (newValueUSD) in e30
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
     ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal pure returns (uint32) {
-    uint32 _feeRateBPS = direction == LiquidityDirection.ADD
+  ) internal view returns (uint32) {
+    uint32 _feeBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
-    uint32 _taxRateBPS = _liquidityConfig.taxFeeRateBPS;
+    uint32 _taxBPS = _liquidityConfig.taxFeeRateBPS;
     uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
@@ -299,22 +300,22 @@ contract Calculator is Owned, ICalculator {
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
-    if (targetValue == 0) return _feeRateBPS;
+    if (targetValue == 0) return _feeBPS;
 
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
-
     uint256 nextTargetDiff = nextValue > targetValue ? nextValue - targetValue : targetValue - nextValue;
 
     // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
-      uint32 rebateRateBPS = uint32((_taxRateBPS * startTargetDiff) / targetValue);
-      return rebateRateBPS > _feeRateBPS ? 0 : _feeRateBPS - rebateRateBPS;
+      uint32 rebateBPS = uint32((_taxBPS * startTargetDiff) / targetValue);
+
+      return rebateBPS > _feeBPS ? 0 : _feeBPS - rebateBPS;
     }
 
     // _nextWeight represented 18 precision
-    uint256 _nextWeight = (nextValue * ETH_PRECISION) / targetValue;
-    // if weight exceed targetWeight(e18) + maxWeight(e18)
+    uint256 _nextWeight = (nextValue * ETH_PRECISION) / _totalLiquidityUSD;
+
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
     }
@@ -325,9 +326,9 @@ contract Calculator is Owned, ICalculator {
     if (midDiff > targetValue) {
       midDiff = targetValue;
     }
-    _taxRateBPS = uint32((_taxRateBPS * midDiff) / targetValue);
+    _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
 
-    return _feeRateBPS + _taxRateBPS;
+    return uint32(_feeBPS + _taxBPS);
   }
 
   /// @notice get settlement fee rate
@@ -389,9 +390,9 @@ contract Calculator is Owned, ICalculator {
 
   // return in e18
   function _getTargetValue(
-    uint256 totalLiquidityUSD, //e18
-    uint256 tokenWeight,
-    uint256 totalTokenWeight
+    uint256 totalLiquidityUSD, //e30
+    uint256 tokenWeight, //e18
+    uint256 totalTokenWeight //0
   ) public pure returns (uint256) {
     if (totalLiquidityUSD == 0) return 0;
 

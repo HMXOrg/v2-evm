@@ -62,7 +62,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     oracleMiddleWare.setMarketStatus(jpyAssetId, _marketActiveStatus); // active
 
     // Set AssetPriceConfig
-    uint32 _confidenceThresholdE6 = 250; // 2.5% for test only
+    uint32 _confidenceThresholdE6 = 2500; // 2.5% for test only
     uint256 _trustPriceAge = type(uint256).max; // set max for test only
     oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge);

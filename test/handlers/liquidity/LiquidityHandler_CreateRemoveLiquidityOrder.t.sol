@@ -39,7 +39,6 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
   function test_revert_InsufficientExecutionFee() external {
     vm.deal(ALICE, 5 ether);
     plp.mint(ALICE, 5 ether);
-    int256 _amountIn = 1 ether;
     vm.startPrank(ALICE);
 
     plp.approve(address(liquidityHandler), 1 ether);
@@ -51,11 +50,11 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
   function test_revert_incorrectValueTransfer() external {
     vm.deal(ALICE, 5 ether);
     plp.mint(ALICE, 5 ether);
-    uint256 _amountIn = 1 ether;
+
     vm.startPrank(ALICE);
-    plp.approve(address(liquidityHandler), _amountIn);
+    plp.approve(address(liquidityHandler), 1 ether);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_InCorrectValueTransfer()"));
-    liquidityHandler.createRemoveLiquidityOrder{ value: 3 ether }(address(wbtc), _amountIn, 1 ether, 5 ether, false);
+    liquidityHandler.createRemoveLiquidityOrder{ value: 3 ether }(address(wbtc), 1 ether, 1 ether, 5 ether, false);
     vm.stopPrank();
   }
 
@@ -73,23 +72,23 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
    */
 
   function test_correctness_executeOrder_removeLiquidity() external {
-    _createRemoveLiquidityOrder(0);
+    _createRemoveLiquidityOrder();
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrders = liquidityHandler.getLiquidityOrders(address(ALICE));
+    ILiquidityHandler.LiquidityOrder[] memory _aliceOrders = liquidityHandler.getLiquidityOrders();
     assertEq(_aliceOrders.length, 1, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
+    assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Executed Order");
   }
 
   function test_correctness_executeOrder_removeLiquidity_multiple() external {
-    _createRemoveLiquidityOrder(0);
-    _createRemoveLiquidityOrder(1);
+    _createRemoveLiquidityOrder();
+    _createRemoveLiquidityOrder();
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrders = liquidityHandler.getLiquidityOrders(address(ALICE));
+    ILiquidityHandler.LiquidityOrder[] memory _aliceOrders = liquidityHandler.getLiquidityOrders();
     assertEq(_aliceOrders.length, 2, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Executed Order");
+    assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Executed Order");
   }
 
-  function _createRemoveLiquidityOrder(uint256 _index) internal {
+  function _createRemoveLiquidityOrder() internal {
     vm.deal(ALICE, 5 ether);
     plp.mint(ALICE, 5 ether);
 
@@ -97,12 +96,18 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
     plp.approve(address(liquidityHandler), type(uint256).max);
 
     // plpIn 5 ether, execution fee 5
-    liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(wbtc), 5 ether, 0, 5 ether, false);
+    uint256 _index = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(
+      address(wbtc),
+      5 ether,
+      0,
+      5 ether,
+      false
+    );
     vm.stopPrank();
 
     assertEq(plp.balanceOf(ALICE), 0, "User PLP Balance");
 
-    ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders(address(ALICE));
+    ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders();
 
     assertEq(_orders[_index].account, ALICE, "Alice Order.account");
     assertEq(_orders[_index].token, address(wbtc), "Alice Order.token");

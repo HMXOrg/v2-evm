@@ -19,10 +19,6 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     _setUpAssetClassConfigs();
     // Setup Liquidation config for global used
     _setUpLiquidationConfig();
-
-    configStorage.setCalculator(address(calculator));
-    configStorage.setPLP(address(plpV2));
-    configStorage.setWeth(address(weth));
   }
 
   function _setLiquidityConfig() private {

@@ -37,7 +37,7 @@ interface ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldUnwrap
-  ) external payable;
+  ) external payable returns (uint256);
 
   function createRemoveLiquidityOrder(
     address _tokenSell,
@@ -45,20 +45,15 @@ interface ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldUnwrap
-  ) external payable;
+  ) external payable returns (uint256);
 
-  function executeOrder(
-    address _account,
-    uint256 _orderIndex,
-    address payable feeReceiver,
-    bytes[] memory _priceData
-  ) external;
+  function executeOrder(address payable feeReceiver, bytes[] memory _priceData) external;
 
   function cancelLiquidityOrder(uint256 _orderIndex) external;
 
-  function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory);
+  function getLiquidityOrders() external view returns (LiquidityOrder[] memory);
 
-  function lastOrderIndex(address _account) external view returns (uint256);
+  function lastExecutedOrderIndex() external view returns (uint256);
 
   function setOrderExecutor(address _executor, bool _isOk) external;
 

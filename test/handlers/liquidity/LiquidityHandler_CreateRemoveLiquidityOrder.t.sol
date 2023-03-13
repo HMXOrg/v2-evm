@@ -74,18 +74,18 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
   function test_correctness_executeOrder_removeLiquidity() external {
     _createRemoveLiquidityOrder(0);
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrders = liquidityHandler.getLiquidityOrders(address(ALICE));
+    ILiquidityHandler.LiquidityOrder[] memory _aliceOrders = liquidityHandler.getLiquidityOrders();
     assertEq(_aliceOrders.length, 1, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
+    assertEq(liquidityHandler.lastExecutedOrderIndex(), 0, "Order Index After Executed Order");
   }
 
   function test_correctness_executeOrder_removeLiquidity_multiple() external {
     _createRemoveLiquidityOrder(0);
     _createRemoveLiquidityOrder(1);
 
-    ILiquidityHandler.LiquidityOrder[] memory _aliceOrders = liquidityHandler.getLiquidityOrders(address(ALICE));
+    ILiquidityHandler.LiquidityOrder[] memory _aliceOrders = liquidityHandler.getLiquidityOrders();
     assertEq(_aliceOrders.length, 2, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Executed Order");
+    assertEq(liquidityHandler.lastExecutedOrderIndex(), 1, "Order Index After Executed Order");
   }
 
   function _createRemoveLiquidityOrder(uint256 _index) internal {
@@ -101,7 +101,7 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
 
     assertEq(plp.balanceOf(ALICE), 0, "User PLP Balance");
 
-    ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders(address(ALICE));
+    ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders();
 
     assertEq(_orders[_index].account, ALICE, "Alice Order.account");
     assertEq(_orders[_index].token, address(wbtc), "Alice Order.token");

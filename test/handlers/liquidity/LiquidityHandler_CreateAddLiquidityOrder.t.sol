@@ -70,16 +70,16 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
   function test_correctness_addLiquidityOrder() external {
     _createAddLiquidityOrder(0);
 
-    assertEq(liquidityHandler.getLiquidityOrders(address(ALICE)).length, 1, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
+    assertEq(liquidityHandler.getLiquidityOrders().length, 1, "Order Amount After Executed Order");
+    assertEq(liquidityHandler.lastExecutedOrderIndex(), 0, "Order Index After Executed Order");
   }
 
   function test_correctness_addLiquidityOrder_multiple() external {
     _createAddLiquidityOrder(0);
     _createAddLiquidityOrder(1);
 
-    assertEq(liquidityHandler.getLiquidityOrders(address(ALICE)).length, 2, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Executed Order");
+    assertEq(liquidityHandler.getLiquidityOrders().length, 2, "Order Amount After Executed Order");
+    assertEq(liquidityHandler.lastExecutedOrderIndex(), 0, "Order Index After Executed Order");
   }
 
   function _createAddLiquidityOrder(uint256 _index) internal {
@@ -97,13 +97,11 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     // handler should has 1 order on alice
     assertEq(wbtc.balanceOf(ALICE), 0, "User Liquidity Balance");
 
-    ILiquidityHandler.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders(
-      address(ALICE)
-    );
+    ILiquidityHandler.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders();
     vm.stopPrank();
 
     assertEq(_beforeExecuteOrders.length, _index + 1, "Order Amount After Created Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), _index, "Order Index After Created Order");
+    assertEq(liquidityHandler.lastExecutedOrderIndex(), _index, "Order Index After Created Order");
 
     assertEq(_beforeExecuteOrders[_index].account, ALICE, "Alice Order.account");
     assertEq(_beforeExecuteOrders[_index].token, address(wbtc), "Alice Order.token");

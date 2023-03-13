@@ -38,7 +38,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     vm.stopPrank();
 
     vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, payable(FEEVER), _priceData);
+    liquidityHandler.executeOrder(payable(FEEVER), _priceData);
   }
 
   /// @notice Helper function to remove liquidity and execute order via handler
@@ -65,7 +65,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     vm.stopPrank();
 
     vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, payable(FEEVER), _priceData);
+    liquidityHandler.executeOrder(payable(FEEVER), _priceData);
   }
 
   /**

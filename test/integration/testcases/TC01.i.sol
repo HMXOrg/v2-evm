@@ -105,7 +105,7 @@ contract TC01 is BaseIntTest_WithActions {
 
     vm.prank(ORDER_EXECUTOR);
     vm.expectRevert(abi.encodeWithSignature("ICalculator_PoolImbalance()"));
-    liquidityHandler.executeOrder(BOB, _bobOrderIndex, payable(FEEVER), initialPriceFeedDatas);
+    liquidityHandler.executeOrder(payable(FEEVER), initialPriceFeedDatas);
 
     // T6: Alice max withdraws 9,900 USD PLP in pools
     vm.deal(ALICE, executionOrderFee);

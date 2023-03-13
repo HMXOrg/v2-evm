@@ -34,25 +34,25 @@ contract SetWhitelist is ConfigJsonRepo {
 
     // Set Liquidity service executors
     configStorage.setServiceExecutor(
-      getJsonAddress(".services.crossMargin"),
+      getJsonAddress(".services.liquidity"),
       getJsonAddress(".handlers.liquidity"),
       true
     );
 
     // Set Liquidation service executors
-    configStorage.setServiceExecutor(getJsonAddress(".services.crossMargin"), getJsonAddress(".handlers.bot"), true);
+    configStorage.setServiceExecutor(getJsonAddress(".services.liquidation"), getJsonAddress(".handlers.bot"), true);
 
     // Set Trade service executors
     configStorage.setServiceExecutor(getJsonAddress(".services.trade"), getJsonAddress(".handlers.limitTrade"), true);
     configStorage.setServiceExecutor(getJsonAddress(".services.trade"), getJsonAddress(".handlers.marketTrade"), true);
     configStorage.setServiceExecutor(getJsonAddress(".services.trade"), getJsonAddress(".handlers.bot"), true);
 
+    vaultStorage.setServiceExecutors(getJsonAddress(".services.liquidity"), true);
     vaultStorage.setServiceExecutors(getJsonAddress(".services.crossMargin"), true);
-    vaultStorage.setServiceExecutors(getJsonAddress(".services.crossMargin"), true);
+    vaultStorage.setServiceExecutors(getJsonAddress(".services.trade"), true);
 
     perpStorage.setServiceExecutors(getJsonAddress(".services.trade"), true);
     perpStorage.setServiceExecutors(getJsonAddress(".services.crossMargin"), true);
-
     vm.stopBroadcast();
   }
 }

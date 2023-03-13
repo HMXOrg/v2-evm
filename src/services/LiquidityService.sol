@@ -248,7 +248,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
   // calculate fee and accounting fee
   function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
-    uint256 _fee = (_request._amount * _request._feeRate) / RATE_PRECISION;
+    uint256 _fee = _request._amount - ((_request._amount * (BPS - 30)) / BPS);
 
     VaultStorage(vaultStorage).addFee(_request._token, _fee);
     uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_request._token);

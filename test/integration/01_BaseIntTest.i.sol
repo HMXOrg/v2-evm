@@ -52,6 +52,9 @@ import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.so
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
+// Tester
+import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
+
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   /* Constants */
   uint256 internal constant DOLLAR = 1e30;
@@ -103,6 +106,9 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   /* PYTH */
   MockPyth internal pyth;
   IPythAdapter internal pythAdapter;
+
+  // Tester
+  LiquidityTester liquidityTester;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -214,6 +220,11 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       perpStorage.setServiceExecutors(address(crossMarginService), true);
       perpStorage.setServiceExecutors(address(tradeService), true);
       perpStorage.setServiceExecutors(address(liquidityService), true);
+    }
+
+    // Setup Tester
+    {
+      liquidityTester = new LiquidityTester(plpV2, vaultStorage, perpStorage, address(liquidityHandler));
     }
   }
 }

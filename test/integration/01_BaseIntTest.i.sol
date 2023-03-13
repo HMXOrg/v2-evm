@@ -1,29 +1,45 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+// Forge-std
 import { TestBase } from "forge-std/Base.sol";
+import { console } from "forge-std/console.sol";
 import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
+// Pyth
+import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+
+// Openzepline
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+// Libs
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
-import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 
+// Mock
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
+import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 
+// Interfaces
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
+import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
+
+import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
@@ -49,6 +65,8 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal EVE;
+  address internal FEEVER;
   address internal ORDER_EXECUTOR;
 
   /* CONTRACTS */
@@ -81,18 +99,25 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   ERC20 glp;
   IPLPv2 plpV2;
 
+  MockErc20 wbtc; // decimals 8
+  MockErc20 usdc; // decimals 6
+  MockErc20 usdt; // decimals 6
+  MockErc20 dai; // decimals 18
+
   // UNDERLYING ARBRITRUM GLP => ETH WBTC LINK UNI USDC USDT DAI FRAX
   IWNative weth; //for native
 
   /* PYTH */
   MockPyth internal pyth;
-  IOracleAdapter internal pythAdapter;
+  IPythAdapter internal pythAdapter;
 
   constructor() {
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    EVE = makeAddr("EVE");
+    FEEVER = makeAddr("FEEVER");
     ORDER_EXECUTOR = makeAddr("ORDER_EXECUTOR");
 
     // deploy MOCK weth
@@ -100,7 +125,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
 
     pyth = new MockPyth(60, 1);
 
-    pythAdapter = IOracleAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
+    pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
 
     // deploy stakedGLPOracleAdapter
 
@@ -116,8 +141,14 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     // deploy vaultStorage
     vaultStorage = Deployer.deployVaultStorage();
 
+    // Tokens
     // deploy plp
     plpV2 = Deployer.deployPLPv2();
+
+    wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
+    dai = new MockErc20("DAI Stablecoin", "DAI", 18);
+    usdc = new MockErc20("USD Coin", "USDC", 6);
+    usdt = new MockErc20("USD Tether", "USDT", 6);
 
     // deploy calculator
     calculator = Deployer.deployCalculator(
@@ -174,7 +205,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     {
       configStorage.setOracle(address(oracleMiddleWare));
       configStorage.setCalculator(address(calculator));
-      configStorage.setFeeCalculator(address(calculator));
+      configStorage.setFeeCalculator(address(feeCalculator));
       tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
       tradeHelper.reloadConfig(); // @TODO: refresh config storage address here, may remove later
 
@@ -192,6 +223,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       vaultStorage.setServiceExecutors(address(tradeService), true);
       vaultStorage.setServiceExecutors(address(tradeHelper), true);
       vaultStorage.setServiceExecutors(address(liquidityService), true);
+      vaultStorage.setServiceExecutors(address(feeCalculator), true);
     }
 
     // Setup PerpStorage

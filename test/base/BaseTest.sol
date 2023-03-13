@@ -28,7 +28,7 @@ import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
@@ -40,6 +40,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal FEEVER;
 
   // storages
   IConfigStorage internal configStorage;
@@ -52,7 +53,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   IFeeCalculator internal feeCalculator;
 
   // oracle
-  IOracleAdapter pythAdapter;
+  IPythAdapter pythAdapter;
   IOracleMiddleware oracleMiddleware;
 
   // mock
@@ -77,6 +78,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   uint256 ethMarketIndex;
   uint256 btcMarketIndex;
 
+  // Crypto
   bytes32 internal constant wethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000001;
   bytes32 internal constant wbtcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000002;
   bytes32 internal constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
@@ -89,6 +91,11 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
 
+  // Fx
+  bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
+
+  bytes32 internal constant jpyAssetId = "JPY";
+
   constructor() {
     // Creating a mock Pyth instance with 60 seconds valid time period
     // and 1 wei for updating price.
@@ -98,6 +105,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    FEEVER = makeAddr("FEEVER");
 
     weth = new MockWNative();
     wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);

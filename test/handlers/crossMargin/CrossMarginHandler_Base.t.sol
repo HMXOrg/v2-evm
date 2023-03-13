@@ -80,8 +80,8 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set Oracle data for Price feeding
     {
-      pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
-      pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
+      pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
+      pythAdapter.setConfig(wethAssetId, wethPriceId, false);
 
       priceDataBytes = new bytes[](2);
       priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(

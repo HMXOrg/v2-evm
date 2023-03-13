@@ -103,7 +103,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint256 _buySizeE30,
     address _tpToken, // NOTE: current only support GLP as profit token
     bytes[] memory _priceData
-  ) external nonReentrant {
+  ) external payable nonReentrant {
     if (_buySizeE30 == 0) {
       revert IMarketTradeHandler_ZeroSizeInput();
     }
@@ -189,7 +189,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     uint256 _sellSizeE30,
     address _tpToken, // NOTE: current only support GLP as profit token
     bytes[] memory _priceData
-  ) external nonReentrant {
+  ) external payable nonReentrant {
     if (_sellSizeE30 == 0) {
       revert IMarketTradeHandler_ZeroSizeInput();
     }

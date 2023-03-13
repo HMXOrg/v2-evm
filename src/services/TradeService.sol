@@ -580,6 +580,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         delta = _vars.position.reserveValueE30;
         _isMaxProfit = true;
       }
+
       if (isProfit) {
         _realizedPnl = int256((delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
       } else {
@@ -679,6 +680,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           );
         } else {
           // loss
+
           _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _vars.limitPriceE30, _marketConfig.assetId);
         }
       }

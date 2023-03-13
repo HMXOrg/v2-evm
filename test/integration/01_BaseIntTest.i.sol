@@ -212,6 +212,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       vaultStorage.setServiceExecutors(address(crossMarginService), true);
       vaultStorage.setServiceExecutors(address(tradeService), true);
       vaultStorage.setServiceExecutors(address(liquidityService), true);
+      vaultStorage.setServiceExecutors(address(liquidationService), true);
       vaultStorage.setServiceExecutors(address(feeCalculator), true);
     }
 
@@ -220,6 +221,21 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       perpStorage.setServiceExecutors(address(crossMarginService), true);
       perpStorage.setServiceExecutors(address(tradeService), true);
       perpStorage.setServiceExecutors(address(liquidityService), true);
+      perpStorage.setServiceExecutors(address(liquidationService), true);
+    }
+
+    // Setup Bot Handler
+    {
+      address[] memory _positionManagers = new address[](1);
+      _positionManagers[0] = address(this);
+
+      // set Tester as position managers
+      botHandler.setPositionManagers(_positionManagers, true);
+    }
+
+    // Setup Limit Trade Handler
+    {
+      limitTradeHandler.setOrderExecutor(address(this), true);
     }
 
     // Setup Tester

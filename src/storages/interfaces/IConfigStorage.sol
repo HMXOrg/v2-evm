@@ -183,8 +183,6 @@ interface IConfigStorage {
 
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external;
 
-  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;
-
   // @todo - Add Description
   function setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) external;
 

@@ -55,6 +55,13 @@ import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
+import { CrossMarginTester } from "@hmx-test/testers/CrossMarginTester.sol";
+import { LimitOrderTester } from "@hmx-test/testers/LimitOrderTester.sol";
+import { PositionTester } from "@hmx-test/testers/PositionTester.sol";
+import { GlobalMarketTester } from "@hmx-test/testers/GlobalMarketTester.sol";
+import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
+import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
 abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   /* Constants */
@@ -111,6 +118,16 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   MockPyth internal pyth;
   IPythAdapter internal pythAdapter;
 
+  /* Tester */
+
+  CrossMarginTester crossMarginTester;
+  GlobalMarketTester globalMarketTester;
+  LimitOrderTester limitOrderTester;
+  LiquidityTester liquidityTester;
+  PositionTester positionTester;
+  PositionTester02 positionTester02;
+  TradeTester tradeTester;
+
   constructor() {
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
@@ -120,6 +137,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     FEEVER = makeAddr("FEEVER");
     ORDER_EXECUTOR = makeAddr("ORDER_EXECUTOR");
 
+    /* DEPLOY PART */
     // deploy MOCK weth
     weth = IWNative(new MockWNative());
 
@@ -201,6 +219,26 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
 
     marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), address(pyth));
 
+    // testers
+
+    crossMarginTester = new CrossMarginTester(vaultStorage, perpStorage, address(crossMarginHandler));
+    globalMarketTester = new GlobalMarketTester(perpStorage);
+    limitOrderTester = new LimitOrderTester(limitTradeHandler);
+    liquidityTester = new LiquidityTester(plpV2, vaultStorage, perpStorage, FEEVER);
+    positionTester = new PositionTester(perpStorage, vaultStorage, oracleMiddleWare);
+    positionTester02 = new PositionTester02(perpStorage);
+
+    address[] memory interestTokens = new address[](1);
+    // TODO fix this
+    interestTokens[0] = address(0);
+    tradeTester = new TradeTester(
+      vaultStorage,
+      perpStorage,
+      address(limitTradeHandler),
+      address(marketTradeHandler),
+      interestTokens
+    );
+    /* Setup part */
     // Setup ConfigStorage
     {
       configStorage.setOracle(address(oracleMiddleWare));
@@ -216,6 +254,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
 
       configStorage.setWeth(address(weth));
+      configStorage.setPLP(address(plpV2));
     }
 
     // Setup VaultStorage

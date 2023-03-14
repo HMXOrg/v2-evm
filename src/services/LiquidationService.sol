@@ -92,10 +92,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
 
       // Update borrowing rate
       TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass, 0, 0);
-
-      // Update funding rate
-      TradeHelper(tradeHelper).updateFundingRate(_position.marketIndex, 0);
-
+      // Collect margin fee
       TradeHelper(tradeHelper).collectMarginFee(
         _subAccount,
         uint256(_position.positionSizeE30 > 0 ? _position.positionSizeE30 : -_position.positionSizeE30),
@@ -104,9 +101,11 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
         _position.entryBorrowingRate,
         _marketConfig.decreasePositionFeeRateBPS
       );
-
+      // settle margin fee
       TradeHelper(tradeHelper).settleMarginFee(_subAccount);
 
+      // Update funding rate
+      TradeHelper(tradeHelper).updateFundingRate(_position.marketIndex, 0);
       // Collect funding fee
       TradeHelper(tradeHelper).collectFundingFee(
         _subAccount,
@@ -115,7 +114,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
         _position.positionSizeE30,
         _position.entryFundingRate
       );
-
+      // settle funding fee
       TradeHelper(tradeHelper).settleFundingFee(_subAccount, 0, 0);
 
       bool _isLong = _position.positionSizeE30 > 0;
@@ -132,6 +131,8 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
           _isLong ? -int(_position.positionSizeE30) : int(_position.positionSizeE30),
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
+
+      // Update global state
       {
         int256 _realizedPnl;
         uint256 absPositionSize = abs(_position.positionSizeE30);
@@ -145,7 +146,6 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
           _realizedPnl = _isProfit ? int256(_delta) : -int256(_delta);
           shouldPay += _realizedPnl;
         }
-
         uint256 _nextAvgPrice = _isLong
           ? calculator.calculateLongAveragePrice(
             _globalMarket,
@@ -159,19 +159,16 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
             int256(_position.positionSizeE30),
             _realizedPnl
           );
-
         PerpStorage(perpStorage).updateGlobalMarketPrice(_position.marketIndex, _isLong, _nextAvgPrice);
-
         PerpStorage(perpStorage).decreaseOpenInterest(
           _position.marketIndex,
           _isLong,
           absPositionSize,
           _position.openInterest
         );
-
         PerpStorage(perpStorage).decreaseReserved(_marketConfig.assetClass, _position.openInterest);
 
-        // Reset the position's value in storage
+        // remove the position's value in storage
         PerpStorage(perpStorage).removePositionFromSubAccount(_subAccount, _positionId);
       }
 
@@ -179,8 +176,6 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
         ++i;
       }
     }
-    //Reset Trader's collateral balances
-    VaultStorage(vaultStorage).removeAllTraderTokens(_subAccount);
   }
 
   struct SettleStruct {

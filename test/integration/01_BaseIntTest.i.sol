@@ -206,8 +206,9 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
       configStorage.setOracle(address(oracleMiddleWare));
       configStorage.setCalculator(address(calculator));
       configStorage.setFeeCalculator(address(feeCalculator));
-      tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
       tradeHelper.reloadConfig(); // @TODO: refresh config storage address here, may remove later
+      tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
+      liquidationService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
 
       // Set whitelists for executors
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);

@@ -28,16 +28,4 @@ interface ITradeHelper {
   function settleMarginFee(address _subAccount) external;
 
   function settleFundingFee(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) external;
-
-  function updateGlobal(
-    uint256 _globalMarketIndex,
-    uint8 _assetClass,
-    bool _isLongPosition,
-    uint256 _openInterest,
-    uint256 _positionSizeE30ToDecrease,
-    uint256 _absPositionSizeE30,
-    uint256 _priceE30,
-    int256 _realizedPnl,
-    uint256 _reserveValueE30
-  ) external;
 }

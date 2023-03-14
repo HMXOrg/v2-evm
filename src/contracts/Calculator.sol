@@ -502,6 +502,10 @@ contract Calculator is Owned, ICalculator {
       bool _isLong = _position.positionSizeE30 > 0 ? true : false;
 
       if (_position.positionSizeE30 == 0) {
+        unchecked {
+          i++;
+        }
+
         // Ignore closed position
         continue;
       }

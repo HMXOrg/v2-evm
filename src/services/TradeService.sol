@@ -810,9 +810,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
             _debtUsd = _debtUsd - _vars.collateralUsd;
           }
         }
-        unchecked {
-          ++_i;
-        }
+      }
+      unchecked {
+        ++_i;
       }
     }
   }

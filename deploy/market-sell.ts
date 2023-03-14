@@ -1,6 +1,6 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { ethers, tenderly } from "hardhat";
+import { ethers } from "hardhat";
 import {
   CrossMarginHandler__factory,
   ERC20__factory,
@@ -25,19 +25,22 @@ const priceIds = [
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
+  const service = TradeService__factory.connect(config.services.trade, deployer);
+  // await (await service.reloadConfig()).wait();
+
   const handler = MarketTradeHandler__factory.connect(config.handlers.marketTrade, deployer);
   const pyth = IPyth__factory.connect(config.oracle.pyth, deployer);
   const priceData = await getPriceData(priceIds);
   const updateFee = await pyth.getUpdateFee(priceData);
-  console.log("Market Buy...");
+  console.log("Market Sell...");
   await (
-    await handler.buy(deployer.address, 0, 0, ethers.utils.parseUnits("1000", 30), config.tokens.usdc, priceData, {
+    await handler.sell(deployer.address, 0, 0, ethers.utils.parseUnits("1", 30), config.tokens.usdc, priceData, {
       value: updateFee,
-      gasLimit: 10000000,
+      gasLimit: 21000000,
     })
   ).wait();
-  console.log("Market Buy Success!");
+  console.log("Market Sell Success!");
 };
 
 export default func;
-func.tags = ["MarketBuy"];
+func.tags = ["MarketSell"];

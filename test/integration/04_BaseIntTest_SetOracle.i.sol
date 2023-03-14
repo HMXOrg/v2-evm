@@ -28,22 +28,40 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
   constructor() {
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8, inverse: false })
+      AssetPythPriceData({
+        assetId: wethAssetId,
+        priceId: wethPriceId,
+        price: 1500 * 1e8,
+        exponent: -8,
+        inverse: false
+      })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: wbtcAssetId, priceId: wbtcPriceId, price: 20000, exponent: -8, inverse: false })
+      AssetPythPriceData({
+        assetId: wbtcAssetId,
+        priceId: wbtcPriceId,
+        price: 20000 * 1e8,
+        exponent: -8,
+        inverse: false
+      })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: daiAssetId, priceId: daiPriceId, price: 1, exponent: -8, inverse: false })
+      AssetPythPriceData({ assetId: daiAssetId, priceId: daiPriceId, price: 1 * 1e8, exponent: -8, inverse: false })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: usdcAssetId, priceId: usdcPriceId, price: 1, exponent: -8, inverse: false })
+      AssetPythPriceData({ assetId: usdcAssetId, priceId: usdcPriceId, price: 1 * 1e8, exponent: -8, inverse: false })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: usdtAssetId, priceId: usdtPriceId, price: 1, exponent: -8, inverse: false })
+      AssetPythPriceData({ assetId: usdtAssetId, priceId: usdtPriceId, price: 1 * 1e8, exponent: -8, inverse: false })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: appleAssetId, priceId: applePriceId, price: 152, exponent: -5, inverse: false })
+      AssetPythPriceData({
+        assetId: appleAssetId,
+        priceId: applePriceId,
+        price: 152 * 1e5,
+        exponent: -5,
+        inverse: false
+      })
     );
     // @todo - after integrate with inverse config then price should be change to USDJPY
     assetPythPriceDatas.push(
@@ -140,10 +158,10 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     (bytes32 _pythPriceId, ) = pythAdapter.configs(_assetId);
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
       _pythPriceId,
-      _price * _pythDecimalPow,
+      _price,
       0,
       int8(pythDecimals),
-      _price * _pythDecimalPow,
+      _price,
       0,
       uint64(block.timestamp)
     );

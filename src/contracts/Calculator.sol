@@ -9,8 +9,6 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
-
-import { console } from "forge-std/console.sol";
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
 
@@ -512,19 +510,21 @@ contract Calculator is Owned, ICalculator {
         _position.marketIndex
       );
 
-      // Long position always use MinPrice. Short position always use MaxPrice
-      bool _isUseMaxPrice = _isLong ? false : true;
-
       // Check to overwrite price
       uint256 _priceE30;
       if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
         _priceE30 = _limitPriceE30;
       } else {
-        // Get price from oracle
+        PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(
+          _position.marketIndex
+        );
         // @todo - validate price age
-        (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+        (_priceE30, , , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
-          _isUseMaxPrice
+          !_isLong, // if current position is SHORT position, then we use max price
+          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          -_position.positionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD
         );
       }
 

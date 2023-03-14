@@ -112,6 +112,6 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[_latestOrderIndex].amount, 1 ether, "Alice Order.amount");
     assertEq(_beforeExecuteOrders[_latestOrderIndex].minOut, 1 ether, "Alice Order.minOut");
     assertEq(_beforeExecuteOrders[_latestOrderIndex].isAdd, true, "Alice Order.isAdd");
-    assertEq(_beforeExecuteOrders[_latestOrderIndex].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+    assertEq(_beforeExecuteOrders[_latestOrderIndex].isNativeOut, false, "Alice Order.isNativeOut");
   }
 }

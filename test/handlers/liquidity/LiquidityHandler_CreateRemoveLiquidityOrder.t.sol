@@ -114,6 +114,6 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
     assertEq(_orders[_index].amount, 5 ether, "Alice PLP Order.amount");
     assertEq(_orders[_index].minOut, 0, "Alice WBTC Order.minOut");
     assertEq(_orders[_index].isAdd, false, "Alice Order.isAdd");
-    assertEq(_orders[_index].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+    assertEq(_orders[_index].isNativeOut, false, "Alice Order.isNativeOut");
   }
 }

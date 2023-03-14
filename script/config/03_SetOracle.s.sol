@@ -94,7 +94,7 @@ contract SetOracle is ConfigJsonRepo {
 
     // Set AssetPriceConfig
     uint32 _confidenceThresholdE6 = 100000; // 2.5% for test only
-    uint32 _trustPriceAge = 30; // set max for test only
+    uint32 _trustPriceAge = 1 days; // set max for test only
     oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge);
     oracleMiddleWare.setAssetPriceConfig(daiAssetId, _confidenceThresholdE6, _trustPriceAge);

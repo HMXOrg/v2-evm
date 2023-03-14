@@ -9,7 +9,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
-
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 
@@ -17,6 +17,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 abstract contract LiquidationService_Base is BaseTest {
+  ITradeHelper tradeHelper;
   ITradeService tradeService;
   ILiquidationService liquidationService;
   PositionTester positionTester;
@@ -29,22 +30,33 @@ abstract contract LiquidationService_Base is BaseTest {
     positionTester02 = new PositionTester02(perpStorage);
     globalMarketTester = new GlobalMarketTester(perpStorage);
 
+    tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
     // deploy services
-    tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
+    tradeService = Deployer.deployTradeService(
+      address(perpStorage),
+      address(vaultStorage),
+      address(configStorage),
+      address(tradeHelper)
+    );
 
     liquidationService = Deployer.deployLiquidationService(
       address(perpStorage),
       address(vaultStorage),
-      address(configStorage)
+      address(configStorage),
+      address(tradeHelper)
     );
+
+    liquidationService.reloadConfig();
 
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
     configStorage.setServiceExecutor(address(liquidationService), address(this), true);
 
     perpStorage.setServiceExecutors(address(tradeService), true);
+    perpStorage.setServiceExecutors(address(tradeHelper), true);
     perpStorage.setServiceExecutors(address(liquidationService), true);
 
     vaultStorage.setServiceExecutors(address(liquidationService), true);
+    vaultStorage.setServiceExecutors(address(tradeHelper), true);
     vaultStorage.setServiceExecutors(address(this), true);
   }
 

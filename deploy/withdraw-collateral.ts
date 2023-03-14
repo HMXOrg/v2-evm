@@ -7,7 +7,6 @@ import { getPriceData } from "./utils/pyth";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 1;
 
 const priceIds = [
   "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6", // ETH/USD
@@ -19,7 +18,7 @@ const priceIds = [
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
-  const address = BigNumber.from(deployer.address).xor(subAccountId).toHexString();
+  const subAccountId = 1;
 
   const pyth = IPyth__factory.connect(config.oracle.pyth, deployer);
   const priceData = await getPriceData(priceIds);
@@ -27,14 +26,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const crossMarginHandler = CrossMarginHandler__factory.connect(config.handlers.crossMargin, deployer);
   const token = ERC20__factory.connect(config.tokens.usdc, deployer);
 
-  await (await crossMarginHandler.withdrawCollateral(
-    address,
-    subAccountId,
-    token.address,
-    ethers.utils.parseUnits("50000", 6),
-    priceData,
-    { gasLimit: 20000000, value: updateFee }
-  )).wait();
+  await (
+    await crossMarginHandler.withdrawCollateral(
+      deployer.address,
+      subAccountId,
+      token.address,
+      ethers.utils.parseUnits("1", 6),
+      priceData,
+      { gasLimit: 20000000, value: updateFee }
+    )
+  ).wait();
 };
 
 export default func;

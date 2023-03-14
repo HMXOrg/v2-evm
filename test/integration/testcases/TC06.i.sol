@@ -6,6 +6,7 @@ import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 
 contract TC06 is BaseIntTest_WithActions {
   function testIntegration_WhenTraderInteractWithCrossMargin() external {
+    vm.deal(ALICE, 1 ether);
     /**
      * T0: Initialized state
      */
@@ -116,10 +117,10 @@ contract TC06 is BaseIntTest_WithActions {
       _assetIds[2] = daiAssetId;
       _assetIds[3] = wbtcAssetId;
       int64[] memory _prices = new int64[](4);
-      _prices[0] = 2_480; // @note - if set ETH to 2893 USD, Equity will < MMR level
-      _prices[1] = 1;
-      _prices[2] = 1;
-      _prices[3] = 20_000;
+      _prices[0] = 2_480 * 1e8; // @note - if set ETH to 2893 USD, Equity will < MMR level
+      _prices[1] = 1 * 1e8;
+      _prices[2] = 1 * 1e8;
+      _prices[3] = 20_000 * 1e8;
       setPrices(_assetIds, _prices);
 
       // Check states After WETH market price move from 1500 USD to 1550 USD
@@ -254,10 +255,10 @@ contract TC06 is BaseIntTest_WithActions {
       _assetIds[2] = daiAssetId;
       _assetIds[3] = wbtcAssetId;
       int64[] memory _prices = new int64[](4);
-      _prices[0] = 1_500;
-      _prices[1] = 1;
-      _prices[2] = 1;
-      _prices[3] = 20_000;
+      _prices[0] = 1_500 * 1e8;
+      _prices[1] = 1 * 1e8;
+      _prices[2] = 1 * 1e8;
+      _prices[3] = 20_000 * 1e8;
 
       setPrices(_assetIds, _prices);
 
@@ -276,7 +277,7 @@ contract TC06 is BaseIntTest_WithActions {
     {
       uint256 buySizeE30 = 280_000.9812343818 * 1e30;
       bytes[] memory priceData = new bytes[](0);
-      // marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, TP_TOKEN, priceData); //@todo - still can't fully close here
+      marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, TP_TOKEN, priceData);
     }
 
     /**

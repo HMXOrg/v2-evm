@@ -109,10 +109,10 @@ contract TC07 is BaseIntTest_WithActions {
       _assetIds[2] = daiAssetId;
       _assetIds[3] = wbtcAssetId;
       int64[] memory _prices = new int64[](4);
-      _prices[0] = 1_550;
-      _prices[1] = 1;
-      _prices[2] = 1;
-      _prices[3] = 20_000;
+      _prices[0] = 1_550 * 1e8;
+      _prices[1] = 1 * 1e8;
+      _prices[2] = 1 * 1e8;
+      _prices[3] = 20_000 * 1e8;
 
       setPrices(_assetIds, _prices);
 
@@ -200,8 +200,8 @@ contract TC07 is BaseIntTest_WithActions {
     {
       // Alice withdraw 1(USD) of USDC
       // Expect Alice can't withdraw collateral because Equity < IMR
-      vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
       bytes[] memory priceData = new bytes[](0);
+      vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
       withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 1 * 1e6, priceData);
 
       // Alice's Equity must be lower IMR level

@@ -2,9 +2,10 @@
 pragma solidity 0.8.18;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
 
-contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
+import { BaseIntTest_Assertions } from "@hmx-test/integration/98_BaseIntTest_Assertions.i.sol";
+
+contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /**
    * Liquidity
    */
@@ -130,7 +131,14 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
-    marketTradeHandler.buy(_account, _subAccountId, _marketIndex, _buySizeE30, _tpToken, _priceData);
+    marketTradeHandler.buy{ value: _priceData.length }(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _buySizeE30,
+      _tpToken,
+      _priceData
+    );
   }
 
   /// @notice Helper function to call MarketHandler sell
@@ -149,7 +157,14 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
-    marketTradeHandler.sell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData);
+    marketTradeHandler.sell{ value: _priceData.length }(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _sellSizeE30,
+      _tpToken,
+      _priceData
+    );
   }
 
   /**

@@ -122,7 +122,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     address _token,
     uint256 _amount,
     bytes[] memory _priceData
-  ) external nonReentrant onlyAcceptedToken(_token) {
+  ) external payable nonReentrant onlyAcceptedToken(_token) {
     // Call update oracle price
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 

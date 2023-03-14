@@ -108,4 +108,17 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
       return super.getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
     }
   }
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) public view override returns (bool, uint256) {
+    if (actualFunction[keccak256("getDelta")]) {
+      return c.getDelta(_size, _isLong, _markPrice, _averagePrice);
+    } else {
+      return super.getDelta(_size, _isLong, _markPrice, _averagePrice);
+    }
+  }
 }

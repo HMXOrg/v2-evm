@@ -26,6 +26,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getPLPValueE30");
       configStorage.setCalculator(address(mockCalculator));
       tradeService.reloadConfig();
+      tradeHelper.reloadConfig();
     }
   }
 

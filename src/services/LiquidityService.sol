@@ -26,7 +26,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
   uint32 internal constant BPS = 1e4;
   uint8 internal constant USD_DECIMALS = 30;
-  uint64 internal constant RATE_PRECISION = 1e18;
 
   event AddLiquidity(
     address account,
@@ -132,8 +131,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     // lp value to remove
     uint256 _lpUsdValue = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
-
-    //0.5 *1e8
     uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
@@ -161,7 +158,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
         _lpProvider,
         _price,
         _amount,
-        _getFeeRate(_token, _amount, _price),
+        _getAddLiquidityFeeBPS(_token, _amount, _price),
         LiquidityAction.ADD_LIQUIDITY
       )
     );
@@ -188,7 +185,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
   function _exitPool(
     address _tokenOut,
-    uint256 _lpUsdValue,
+    uint256 _lpUsdValue, // 1e18
     address _lpProvider,
     uint256 _minAmount
   ) internal returns (uint256) {
@@ -209,14 +206,14 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
 
-    uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeRate(
+    uint32 _feeBps = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeBPS(
       _tokenOut,
       _lpUsdValue,
       ConfigStorage(configStorage)
     );
 
     _amountOut = _collectFee(
-      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeRate, LiquidityAction.REMOVE_LIQUIDITY)
+      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY)
     );
 
     if (_minAmount > _amountOut) {
@@ -226,7 +223,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     return _amountOut;
   }
 
-  function _getFeeRate(address _token, uint256 _amount, uint256 _price) internal view returns (uint256) {
+  function _getAddLiquidityFeeBPS(address _token, uint256 _amount, uint256 _price) internal view returns (uint32) {
     uint256 tokenUSDValueE30 = Calculator(ConfigStorage(configStorage).calculator()).convertTokenDecimals(
       ConfigStorage(configStorage).getAssetTokenDecimal(_token),
       USD_DECIMALS,
@@ -237,18 +234,18 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       revert LiquidityService_InsufficientLiquidityMint();
     }
 
-    uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getAddLiquidityFeeRate(
+    uint32 _feeBps = Calculator(ConfigStorage(configStorage).calculator()).getAddLiquidityFeeBPS(
       _token,
       tokenUSDValueE30,
       ConfigStorage(configStorage)
     );
 
-    return _feeRate;
+    return _feeBps;
   }
 
   // calculate fee and accounting fee
   function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
-    uint256 _fee = _request._amount - ((_request._amount * (BPS - 30)) / BPS);
+    uint256 _fee = _request._amount - ((_request._amount * (BPS - _request._feeBPS)) / BPS);
 
     VaultStorage(vaultStorage).addFee(_request._token, _fee);
     uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_request._token);

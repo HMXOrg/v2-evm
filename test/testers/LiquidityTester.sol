@@ -8,6 +8,7 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 /// @title Liquidity Tester
 /// @notice This Tester help to check state after user interact with LiquidityHandler / LiquidityService
@@ -17,9 +18,11 @@ contract LiquidityTester is StdAssertions {
    */
   struct LiquidityExpectedData {
     address token;
+    address who;
     uint256 lpTotalSupply;
-    uint256 tokenLiquidity;
-    uint256 tokenBalance;
+    uint256 totalAmount; // totalAmount in vaultStorage
+    uint256 plpLiquidity;
+    uint256 plpAmount;
     uint256 fee;
     uint256 executionFee;
   }
@@ -32,13 +35,13 @@ contract LiquidityTester is StdAssertions {
   IVaultStorage vaultStorage;
   IPerpStorage perpStorage;
 
-  address liquidityHandler;
+  address feeReceiver;
 
-  constructor(IPLPv2 _plp, IVaultStorage _vaultStorage, IPerpStorage _perpStorage, address _liquidityHandler) {
+  constructor(IPLPv2 _plp, IVaultStorage _vaultStorage, IPerpStorage _perpStorage, address _feeReceiver) {
     plp = _plp;
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
-    liquidityHandler = _liquidityHandler;
+    feeReceiver = _feeReceiver;
   }
 
   /// @notice Assert function when PLP provider add / remove liquidity
@@ -51,23 +54,22 @@ contract LiquidityTester is StdAssertions {
   ///      - Token balance in VaultStorage
   function assertLiquidityInfo(LiquidityExpectedData memory _expectedData) external {
     address _token = _expectedData.token;
-    uint256 _totalBalance = _expectedData.tokenBalance;
 
     // Check PLPv2 total supply
     assertEq(plp.totalSupply(), _expectedData.lpTotalSupply, "PLP Total supply");
+    assertEq(plp.balanceOf(_expectedData.who), _expectedData.plpAmount, "PLP Amount");
 
-    // Deposit / Withdraw fee
-    // note: to integrate this tester with LiquidityService
-    if (liquidityHandler != address(0)) {
-      assertEq(liquidityHandler.balance, _expectedData.executionFee);
-    }
+    // Order execution fee is on OrderExecutor in Native
+    assertEq(feeReceiver.balance, _expectedData.executionFee, "Execution Order Fee");
 
     // Check VaultStorage's state
-    assertEq(vaultStorage.plpLiquidity(_token), _expectedData.tokenLiquidity, "PLP token liquidity amount");
-    assertEq(vaultStorage.totalAmount(_token), _totalBalance, "Token balance");
-    assertEq(vaultStorage.fees(_token), _expectedData.fee, "Fee in Token");
+    assertEq(vaultStorage.plpLiquidity(_token), _expectedData.plpLiquidity, "PLP token liquidity amount");
+    assertEq(vaultStorage.totalAmount(_token), _expectedData.totalAmount, "TokenAmount balance");
+    assertEq(vaultStorage.fees(_token), _expectedData.fee, "Fee");
+    assertEq(vaultStorage.totalAmount(_token), vaultStorage.plpLiquidity(_token) + vaultStorage.fees(_token));
 
     // Check token balance
-    assertEq(IERC20(_token).balanceOf(address(vaultStorage)), _totalBalance, "Vault token balance");
+    // balanceOf must be equals to plpLiquidity in Vault
+    assertEq(IERC20(_token).balanceOf(address(vaultStorage)), _expectedData.totalAmount, "Vault Storage Token Balance");
   }
 }

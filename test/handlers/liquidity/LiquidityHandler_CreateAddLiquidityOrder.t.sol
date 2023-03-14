@@ -68,21 +68,21 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
    */
 
   function test_correctness_addLiquidityOrder() external {
-    _createAddLiquidityOrder(0);
+    _createAddLiquidityOrder();
 
-    assertEq(liquidityHandler.getLiquidityOrders(address(ALICE)).length, 1, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 0, "Order Index After Executed Order");
+    assertEq(liquidityHandler.getLiquidityOrders().length, 1, "Order Amount After Executed Order");
+    assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Executed Order");
   }
 
   function test_correctness_addLiquidityOrder_multiple() external {
-    _createAddLiquidityOrder(0);
-    _createAddLiquidityOrder(1);
+    _createAddLiquidityOrder();
+    _createAddLiquidityOrder();
 
-    assertEq(liquidityHandler.getLiquidityOrders(address(ALICE)).length, 2, "Order Amount After Executed Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), 1, "Order Index After Executed Order");
+    assertEq(liquidityHandler.getLiquidityOrders().length, 2, "Order Amount After Executed Order");
+    assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Executed Order");
   }
 
-  function _createAddLiquidityOrder(uint256 _index) internal {
+  function _createAddLiquidityOrder() internal {
     vm.deal(ALICE, 5 ether); //deal with out of gas
     wbtc.mint(ALICE, 1 ether);
 
@@ -90,26 +90,28 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
 
     wbtc.approve(address(liquidityHandler), type(uint256).max);
 
-    liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(address(wbtc), 1 ether, 1 ether, 5 ether, false);
+    uint256 _latestOrderIndex = liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
+      address(wbtc),
+      1 ether,
+      1 ether,
+      5 ether,
+      false
+    );
 
     // Assertion after createLiquidity
     // alice should has 0 wbtc (open order)
     // handler should has 1 order on alice
     assertEq(wbtc.balanceOf(ALICE), 0, "User Liquidity Balance");
 
-    ILiquidityHandler.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders(
-      address(ALICE)
-    );
+    ILiquidityHandler.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders();
+
     vm.stopPrank();
 
-    assertEq(_beforeExecuteOrders.length, _index + 1, "Order Amount After Created Order");
-    assertEq(liquidityHandler.lastOrderIndex(ALICE), _index, "Order Index After Created Order");
-
-    assertEq(_beforeExecuteOrders[_index].account, ALICE, "Alice Order.account");
-    assertEq(_beforeExecuteOrders[_index].token, address(wbtc), "Alice Order.token");
-    assertEq(_beforeExecuteOrders[_index].amount, 1 ether, "Alice Order.amount");
-    assertEq(_beforeExecuteOrders[_index].minOut, 1 ether, "Alice Order.minOut");
-    assertEq(_beforeExecuteOrders[_index].isAdd, true, "Alice Order.isAdd");
-    assertEq(_beforeExecuteOrders[_index].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+    assertEq(_beforeExecuteOrders[_latestOrderIndex].account, ALICE, "Alice Order.account");
+    assertEq(_beforeExecuteOrders[_latestOrderIndex].token, address(wbtc), "Alice Order.token");
+    assertEq(_beforeExecuteOrders[_latestOrderIndex].amount, 1 ether, "Alice Order.amount");
+    assertEq(_beforeExecuteOrders[_latestOrderIndex].minOut, 1 ether, "Alice Order.minOut");
+    assertEq(_beforeExecuteOrders[_latestOrderIndex].isAdd, true, "Alice Order.isAdd");
+    assertEq(_beforeExecuteOrders[_latestOrderIndex].isNativeOut, false, "Alice Order.isNativeOut");
   }
 }

@@ -17,7 +17,7 @@ contract TC02 is BaseIntTest_WithActions {
 
     // T1: BOB provide liquidity as WBTC 1 token
     // price has no changed0
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0), 0);
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0));
 
     // BOB provide 1 WBTC with 0.3% deposit fee
     // Then BOB receive PLP value in 20,000 * 99.7% = 19,940 USD

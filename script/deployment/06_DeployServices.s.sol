@@ -17,18 +17,19 @@ contract DeployServices is ConfigJsonRepo {
     address vaultStorageAddress = getJsonAddress(".storages.vault");
     address perpStorageAddress = getJsonAddress(".storages.perp");
     address calculatorAddress = getJsonAddress(".calculator");
+    address tradeHelperAddress = getJsonAddress(".helpers.trade");
 
     address crossMarginServiceAddress = address(
       new CrossMarginService(configStorageAddress, vaultStorageAddress, calculatorAddress)
     );
     address liquidationServiceAddress = address(
-      new LiquidationService(perpStorageAddress, vaultStorageAddress, configStorageAddress)
+      new LiquidationService(perpStorageAddress, vaultStorageAddress, configStorageAddress, tradeHelperAddress)
     );
     address liquidityServiceAddress = address(
       new LiquidityService(configStorageAddress, vaultStorageAddress, perpStorageAddress)
     );
     address tradeServiceAddress = address(
-      new TradeService(perpStorageAddress, vaultStorageAddress, configStorageAddress)
+      new TradeService(perpStorageAddress, vaultStorageAddress, configStorageAddress, tradeHelperAddress)
     );
 
     vm.stopBroadcast();

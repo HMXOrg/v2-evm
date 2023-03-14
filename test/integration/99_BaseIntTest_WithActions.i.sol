@@ -21,8 +21,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     ERC20 _tokenIn,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData,
-    uint256 _orderIndex
+    bytes[] memory _priceData
   ) internal {
     vm.startPrank(_liquidityProvider);
     _tokenIn.approve(address(liquidityHandler), _amountIn);
@@ -37,8 +36,9 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     );
     vm.stopPrank();
 
-    vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, payable(FEEVER), _priceData);
+    vm.startPrank(ORDER_EXECUTOR);
+    liquidityHandler.executeOrder(liquidityHandler.getLiquidityOrders().length - 1, payable(FEEVER), _priceData);
+    vm.stopPrank();
   }
 
   /// @notice Helper function to remove liquidity and execute order via handler
@@ -49,11 +49,10 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /// @param _priceData Pyth's price data
   function removeLiquidity(
     address _liquidityProvider,
-    ERC20 _tokenOut,
+    address _tokenOut,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData,
-    uint256 _orderIndex
+    bytes[] memory _priceData
   ) internal {
     vm.startPrank(_liquidityProvider);
 
@@ -61,17 +60,12 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     // _tokenOut.approve(address(liquidityHandler), _amountIn);
     /// note: minOut always 0 to make test passed
     /// note: shouldWrap treat as false when only GLP could be liquidity
-    liquidityHandler.createRemoveLiquidityOrder{ value: _executionFee }(
-      address(_tokenOut),
-      _amountIn,
-      0,
-      _executionFee,
-      false
-    );
+    liquidityHandler.createRemoveLiquidityOrder{ value: _executionFee }(_tokenOut, _amountIn, 0, _executionFee, false);
     vm.stopPrank();
 
-    vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_liquidityProvider, _orderIndex, payable(FEEVER), _priceData);
+    vm.startPrank(ORDER_EXECUTOR);
+    liquidityHandler.executeOrder(liquidityHandler.getLiquidityOrders().length - 1, payable(FEEVER), _priceData);
+    vm.stopPrank();
   }
 
   /**

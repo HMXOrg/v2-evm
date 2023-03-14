@@ -158,27 +158,27 @@ contract MockCalculator is ICalculator {
     return (_amount * 10 ** _toTokenDecimals) / 10 ** _fromTokenDecimals;
   }
 
-  function getAddLiquidityFeeRate(
+  function getAddLiquidityFeeBPS(
     address /*_token*/,
     uint256 /*_tokenValue*/,
     ConfigStorage /*_configStorage*/
-  ) external pure returns (uint256) {
-    return 0.003 ether;
+  ) external pure returns (uint32) {
+    return uint32(30);
   }
 
-  function getRemoveLiquidityFeeRate(
+  function getRemoveLiquidityFeeBPS(
     address /*_token*/,
     uint256 /*_tokenValueE30*/,
     ConfigStorage /*_configStorage*/
-  ) external pure returns (uint256) {
-    return 1e18;
+  ) external pure returns (uint32) {
+    return uint32(30);
   }
 
   function getFreeCollateral(
     address /*_subAccount*/,
     uint256 /*_price*/,
     bytes32 /*_assetId*/
-  ) external view returns (uint256) {
+  ) public view virtual returns (uint256) {
     return freeCollateral;
   }
 
@@ -253,4 +253,28 @@ contract MockCalculator is ICalculator {
     int256 /*_positionSizeDelta*/,
     int256 /*_realizedPositionPnl*/
   ) public view virtual returns (uint256 _nextAveragePrice) {}
+
+  function calculateAveragePrice(
+    bool isLong,
+    uint256 _globalPositionSize,
+    uint256 _globalAveragePrice,
+    uint256 _currentPrice,
+    int256 _positionSizeDelta,
+    int256 _realizedPositionPnl
+  ) external pure returns (uint256 _nextAveragePrice) {}
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) public view virtual returns (bool, uint256) {}
+
+  function getPositionNextAveragePrice(
+    uint256 _size,
+    bool _isLong,
+    uint256 _sizeDelta,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) external pure returns (uint256) {}
 }

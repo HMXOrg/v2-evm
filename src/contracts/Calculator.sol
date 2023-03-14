@@ -952,6 +952,53 @@ contract Calculator is Owned, ICalculator {
       BPS;
   }
 
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) external pure returns (bool, uint256) {
+    return _getDelta(_size, _isLong, _markPrice, _averagePrice);
+  }
+
+  // @todo - pass current price here
+  /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
+  /// @param _size The size of the position.
+  /// @param _isLong position direction
+  /// @param _markPrice current market price
+  /// @param _averagePrice The average price of the position.
+  /// @return isProfit A boolean value indicating whether the position is profitable or not.
+  /// @return delta The Profit between the average price and the fixed price, adjusted for the size of the order.
+  function _getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice
+  ) internal pure returns (bool, uint256) {
+    // Check for invalid input: averagePrice cannot be zero.
+    if (_averagePrice == 0) return (false, 0);
+
+    // Calculate the difference between the average price and the fixed price.
+    uint256 priceDelta;
+    unchecked {
+      priceDelta = _averagePrice > _markPrice ? _averagePrice - _markPrice : _markPrice - _averagePrice;
+    }
+
+    // Calculate the delta, adjusted for the size of the order.
+    uint256 delta = (_size * priceDelta) / _averagePrice;
+
+    // Determine if the position is profitable or not based on the averagePrice and the mark price.
+    bool isProfit;
+    if (_isLong) {
+      isProfit = _markPrice > _averagePrice;
+    } else {
+      isProfit = _markPrice < _averagePrice;
+    }
+
+    // Return the values of isProfit and delta.
+    return (isProfit, delta);
+  }
+
   function _max(int256 a, int256 b) internal pure returns (int256) {
     return a > b ? a : b;
   }

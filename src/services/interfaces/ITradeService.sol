@@ -52,13 +52,6 @@ interface ITradeService {
     uint256 _limitPriceE30
   ) external;
 
-  function getDelta(
-    uint256 _size,
-    bool _isLong,
-    uint256 _markPrice,
-    uint256 _averagePrice
-  ) external pure returns (bool, uint256);
-
   function forceClosePosition(
     address _account,
     uint8 _subAccountId,

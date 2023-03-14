@@ -138,8 +138,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, , _lastUpdate) = _getLatestAdaptivePrice(
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate) {
+    (_adaptivePrice, _price, , _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -147,7 +147,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _maxSkewScaleUSD,
       true
     );
-    return (_price, _lastUpdate);
+    return (_adaptivePrice, _price, _lastUpdate);
   }
 
   /// @notice Return the unsafe latest adaptive rice of asset, last update of the given asset id
@@ -163,8 +163,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, , _lastUpdate) = _getLatestAdaptivePrice(
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate) {
+    (_adaptivePrice, _price, , _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -172,7 +172,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _maxSkewScaleUSD,
       false
     );
-    return (_price, _lastUpdate);
+    return (_adaptivePrice, _price, _lastUpdate);
   }
 
   /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
@@ -188,11 +188,15 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status) {
+  )
+    external
+    view
+    returns (uint256 _adaptivePrice, uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status)
+  {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, _exponent, _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _price, _exponent, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -200,7 +204,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _maxSkewScaleUSD,
       true
     );
-    return (_price, _exponent, _lastUpdate, _status);
+    return (_adaptivePrice, _price, _exponent, _lastUpdate, _status);
   }
 
   /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
@@ -216,11 +220,11 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, , _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _price, , _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -228,7 +232,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _maxSkewScaleUSD,
       false
     );
-    return (_price, _lastUpdate, _status);
+    return (_adaptivePrice, _price, _lastUpdate, _status);
   }
 
   function _getLatestPrice(
@@ -267,17 +271,17 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD,
     bool isSafe
-  ) private view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate) {
+  ) private view returns (uint256 _adaptivePrice, uint256 _price, int32 _exponent, uint256 _lastUpdate) {
     // Get price from Pyth
     (_price, _exponent, _lastUpdate) = isSafe
       ? _getLatestPrice(_assetId, _isMax)
       : _unsafeGetLatestPrice(_assetId, _isMax);
 
     // Apply premium/discount
-    _price = _calculateAdaptivePrice(_price, _exponent, _marketSkew, _sizeDelta, _maxSkewScaleUSD);
+    _adaptivePrice = _calculateAdaptivePrice(_price, _exponent, _marketSkew, _sizeDelta, _maxSkewScaleUSD);
 
     // Return the price and last update
-    return (_price, _exponent, _lastUpdate);
+    return (_adaptivePrice, _price, _exponent, _lastUpdate);
   }
 
   function _calculateAdaptivePrice(

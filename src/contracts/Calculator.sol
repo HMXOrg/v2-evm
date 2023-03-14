@@ -503,9 +503,8 @@ contract Calculator is Owned, ICalculator {
 
       if (_position.positionSizeE30 == 0) {
         unchecked {
-          i++;
+          ++i;
         }
-
         // Ignore closed position
         continue;
       }
@@ -555,7 +554,7 @@ contract Calculator is Owned, ICalculator {
       _unrealizedPnlE30 += _delta;
 
       unchecked {
-        i++;
+        ++i;
       }
     }
 

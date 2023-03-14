@@ -236,7 +236,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.isLong,
         _absSizeDelta,
         _vars.priceE30,
-        _vars.position.avgEntryPriceE30
+        _vars.position.avgEntryPriceE30,
+        _vars.position.lastIncreaseTimestamp
       );
     }
 
@@ -577,7 +578,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.absPositionSizeE30,
         _vars.isLongPosition,
         _vars.priceE30,
-        _vars.avgEntryPriceE30
+        _vars.avgEntryPriceE30,
+        _vars.position.lastIncreaseTimestamp
       );
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value
       if (delta >= _vars.position.reserveValueE30) {
@@ -840,10 +842,17 @@ contract TradeService is ReentrancyGuard, ITradeService {
     bool _isLong,
     uint256 _sizeDelta,
     uint256 _markPrice,
-    uint256 _averagePrice
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
   ) internal view returns (uint256) {
     // Get the delta and isProfit value from the _getDelta function
-    (bool isProfit, uint256 delta) = calculator.getDelta(_size, _isLong, _markPrice, _averagePrice);
+    (bool isProfit, uint256 delta) = calculator.getDelta(
+      _size,
+      _isLong,
+      _markPrice,
+      _averagePrice,
+      _lastIncreaseTimestamp
+    );
     // Calculate the next size and divisor
     uint256 nextSize = _size + _sizeDelta;
     uint256 divisor;

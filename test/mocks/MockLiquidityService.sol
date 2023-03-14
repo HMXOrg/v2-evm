@@ -41,10 +41,10 @@ contract MockLiquidityService {
   }
 
   function addLiquidity(
-    address _lpProvider,
-    address _token,
-    uint256 _amount,
-    uint256 _minAmount
+    address /*_lpProvider*/,
+    address /* _token */,
+    uint256 /* _amount */,
+    uint256 /* _minAmount */
   ) external returns (uint256) {
     if (reverted) {
       if (revertAsMessage) {
@@ -59,7 +59,7 @@ contract MockLiquidityService {
     address /*_lpProvider*/,
     address _tokenOut,
     uint256 _amount, // amountIn
-    uint256 /*_minAmount*/ //minAmountOut
+    uint256 /*_minAmount*/
   ) external returns (uint256) {
     if (reverted) {
       if (revertAsMessage) {

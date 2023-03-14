@@ -6,7 +6,6 @@ import { TestBase } from "forge-std/Base.sol";
 import { console } from "forge-std/console.sol";
 import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
-import { StdAssertions } from "forge-std/StdAssertions.sol";
 
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
@@ -52,10 +51,7 @@ import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.so
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
-// Tester
-import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
-
-abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
+abstract contract BaseIntTest is TestBase, StdCheatsSafe {
   /* Constants */
   uint256 internal constant DOLLAR = 1e30;
   uint256 internal constant executionOrderFee = 0.0001 ether;
@@ -106,9 +102,6 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   /* PYTH */
   MockPyth internal pyth;
   IPythAdapter internal pythAdapter;
-
-  // Tester
-  LiquidityTester liquidityTester;
 
   constructor() {
     ALICE = makeAddr("Alice");
@@ -236,11 +229,6 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     // Setup Limit Trade Handler
     {
       limitTradeHandler.setOrderExecutor(address(this), true);
-    }
-
-    // Setup Tester
-    {
-      liquidityTester = new LiquidityTester(plpV2, vaultStorage, perpStorage, address(liquidityHandler));
     }
   }
 }

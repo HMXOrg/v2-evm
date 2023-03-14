@@ -3,9 +3,9 @@ pragma solidity 0.8.18;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
+import { BaseIntTest_Assertions } from "@hmx-test/integration/98_BaseIntTest_Assertions.i.sol";
 
-contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
+contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /**
    * Liquidity
    */

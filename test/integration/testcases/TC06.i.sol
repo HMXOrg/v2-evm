@@ -274,8 +274,8 @@ contract TC06 is BaseIntTest_WithActions {
      */
     vm.warp(block.timestamp + 1);
     {
-      uint256 buySizeE30 = 280_000.9812343818 * 1e30;
-      bytes[] memory priceData = new bytes[](0);
+      // uint256 buySizeE30 = 280_000.9812343818 * 1e30;
+      // bytes[] memory priceData = new bytes[](0);
       // marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, TP_TOKEN, priceData); //@todo - still can't fully close here
     }
 

@@ -961,8 +961,6 @@ contract Calculator is Owned, ICalculator {
     return _getDelta(_size, _isLong, _markPrice, _averagePrice);
   }
 
-  // @todo - remove usage from test
-  // @todo - move to calculator ??
   // @todo - pass current price here
   /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
   /// @param _size The size of the position.

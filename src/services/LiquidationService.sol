@@ -65,15 +65,15 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
       revert ILiquidationService_AccountHealthy();
 
     // Liquidate the positions by resetting their value in storage
-    int256 _shouldPay = _liquidatePosition(_subAccount);
+    int256 _unrealizedPnL = _liquidatePosition(_subAccount);
 
     // Settles the sub-account by paying off its debt with its collateral
-    _settle(_subAccount, abs(_shouldPay));
+    _settlePnl(_subAccount, abs(_unrealizedPnL));
   }
 
   /// @notice Liquidates a list of positions by resetting their value in storage
   /// @param _subAccount The sub account of positions
-  function _liquidatePosition(address _subAccount) internal returns (int256 shouldPay) {
+  function _liquidatePosition(address _subAccount) internal returns (int256 _unrealizedPnL) {
     // Get the list of position ids associated with the sub-account
     bytes32[] memory positionIds = PerpStorage(perpStorage).getPositionIds(_subAccount);
 
@@ -144,7 +144,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
             _position.avgEntryPriceE30
           );
           _realizedPnl = _isProfit ? int256(_delta) : -int256(_delta);
-          shouldPay += _realizedPnl;
+          _unrealizedPnL += _realizedPnl;
         }
         uint256 _nextAvgPrice = _isLong
           ? calculator.calculateLongAveragePrice(
@@ -185,7 +185,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
 
   /// @notice Settles the sub-account by paying off its debt with its collateral
   /// @param _subAccount The sub-account to be settled
-  function _settle(address _subAccount, uint256 _shouldPay) internal {
+  function _settlePnl(address _subAccount, uint256 _unrealizedPnL) internal {
     SettleStruct memory _vars;
     // Get contract addresses from storage
     _vars.configStorage = configStorage;
@@ -198,7 +198,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
     address[] memory _collateralTokens = ConfigStorage(_vars.configStorage).getCollateralTokens();
 
     // Get the sub-account's unrealized profit/loss and add the liquidation fee
-    uint256 _absDebt = _shouldPay;
+    uint256 _absDebt = _unrealizedPnL;
     _absDebt += ConfigStorage(_vars.configStorage).getLiquidationConfig().liquidationFeeUSDE30;
 
     uint256 _len = _collateralTokens.length;

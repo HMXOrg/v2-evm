@@ -224,9 +224,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     }
 
     LiquidityOrder memory order = liquidityOrders[_orderIndex];
-
-    _refund(order);
     delete liquidityOrders[_orderIndex];
+    _refund(order);
 
     emit LogCancelLiquidityOrder(payable(_account), order.token, order.amount, order.minOut, order.isAdd);
   }

@@ -14,8 +14,6 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
   function setUp() public virtual override {
     super.setUp();
-
-    configStorage.setPLPTotalTokenWeight(1e18);
   }
 
   function testCorrectness_WhenGetSettlementFeeRateWithZeroDelta() external {

@@ -196,4 +196,42 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     // Add the bad debt to the sub-account
     badDebt[_subAccount] += _badDebt;
   }
+
+  function increaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
+    globalState.reserveValueE30 += _reserve;
+    globalAssetClass[_assetClassIndex].reserveValueE30 += _reserve;
+  }
+
+  function decreaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
+    globalState.reserveValueE30 -= _reserve;
+    globalAssetClass[_assetClassIndex].reserveValueE30 -= _reserve;
+  }
+
+  function increaseOpenInterest(uint256 _marketIndex, bool _isLong, uint256 _size, uint256 _openInterest) external {
+    if (_isLong) {
+      globalMarkets[_marketIndex].longPositionSize += _size;
+      globalMarkets[_marketIndex].longOpenInterest += _openInterest;
+    } else {
+      globalMarkets[_marketIndex].shortPositionSize += _size;
+      globalMarkets[_marketIndex].shortOpenInterest += _openInterest;
+    }
+  }
+
+  function decreaseOpenInterest(uint256 _marketIndex, bool _isLong, uint256 _size, uint256 _openInterest) external {
+    if (_isLong) {
+      globalMarkets[_marketIndex].longPositionSize -= _size;
+      globalMarkets[_marketIndex].longOpenInterest -= _openInterest;
+    } else {
+      globalMarkets[_marketIndex].shortPositionSize -= _size;
+      globalMarkets[_marketIndex].shortOpenInterest -= _openInterest;
+    }
+  }
+
+  function updateGlobalMarketPrice(uint256 _marketIndex, bool _isLong, uint256 _price) external {
+    if (_isLong) {
+      globalMarkets[_marketIndex].longAvgPrice = _price;
+    } else {
+      globalMarkets[_marketIndex].shortAvgPrice = _price;
+    }
+  }
 }

@@ -13,7 +13,12 @@ import { console } from "forge-std/console.sol";
 //   - Try cancelOrder with uncreated order
 
 // - success
+
 //   - Try executeOrder_addLiquidityOrder
+//   - Try executeOrder_refundAddLiquidityOrder (service revert as message)
+//   - Try executeOrder_refundAddLiquidityOrder (service revert as bytes)
+//   - Try executeOrder_refundRemoveLiquidityOrder (service revert as message)
+//   - Try executeOrder_refundRemoveLiquidityOrder (service revert as bytes)
 //   - Try executeOrder_removeLiquidityOrder
 //   - Try executeOrder_cancelOrder
 //   - Try executeOrder_refundOrder
@@ -68,16 +73,6 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     liquidityHandler.executeLiquidity(aliceOrders[0]);
   }
 
-  function test_revert_directCall_refund() external {
-    _createAddLiquidityWBTCOrder();
-
-    ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders();
-
-    // trying to directcall refund
-    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NotRefundState()"));
-    liquidityHandler.refund(_orders[0]);
-  }
-
   function test_revert_executeOrder_notOrderExecutor() external {
     _createAddLiquidityWBTCOrder();
 
@@ -102,6 +97,86 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NoOrder()"));
     liquidityHandler.cancelLiquidityOrder(0);
+  }
+
+  function test_correctness_userRefund_addLiquidity_revertAsMessage() external {
+    mockLiquidityService.setReverted(true);
+    mockLiquidityService.setRevertAsMessage(true);
+
+    uint256 _orderIndex = _createAddLiquidityWBTCOrder();
+    uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
+
+    // Handler executor
+    assertEq(_nextExecutionOrderIndex, 0, "nextExecutionOrderIndex");
+    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
+
+    // Assertion after Executed Order
+    _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
+    ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
+    //user have to get refund
+    assertEq(_nextExecutionOrderIndex, 1, "nextExecutionOrderIndex After executed");
+    assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
+    assertEq(wbtc.balanceOf(ALICE), 1 ether);
+  }
+
+  function test_correctness_userRefund_addLiquidity_revertAsBytes() external {
+    mockLiquidityService.setReverted(true);
+    mockLiquidityService.setRevertAsMessage(false);
+
+    uint256 _orderIndex = _createAddLiquidityWBTCOrder();
+    uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
+
+    // Handler executor
+    assertEq(_nextExecutionOrderIndex, 0, "nextExecutionOrderIndex");
+    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
+
+    // Assertion after Executed Order
+    _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
+    ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
+    //user have to get refund
+    assertEq(_nextExecutionOrderIndex, 1, "nextExecutionOrderIndex After executed");
+    assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
+    assertEq(wbtc.balanceOf(ALICE), 1 ether);
+  }
+
+  function test_correctness_userRefund_removeLiquidity_revertAsMessage() external {
+    mockLiquidityService.setReverted(true);
+    mockLiquidityService.setRevertAsMessage(true);
+
+    _createRemoveLiquidityOrder();
+
+    // Handler executor
+    ILiquidityHandler.LiquidityOrder[] memory _ordersBefore = liquidityHandler.getLiquidityOrders();
+    liquidityHandler.executeOrder(_ordersBefore.length - 1, payable(FEEVER), priceData);
+
+    // Assertion after ExecuteOrder
+    ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
+    uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
+
+    //user have to get refund
+    assertEq(_nextExecutionOrderIndex, 1, "nextExecutionOrderIndex After executed");
+    assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
+    assertEq(plp.balanceOf(ALICE), 5 ether);
+  }
+
+  function test_correctness_userRefund_removeLiquidity_revertAsBytes() external {
+    mockLiquidityService.setReverted(true);
+    mockLiquidityService.setRevertAsMessage(false);
+
+    _createRemoveLiquidityOrder();
+
+    // Handler executor
+    ILiquidityHandler.LiquidityOrder[] memory _ordersBefore = liquidityHandler.getLiquidityOrders();
+    liquidityHandler.executeOrder(_ordersBefore.length - 1, payable(FEEVER), priceData);
+
+    // Assertion after ExecuteOrder
+    ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
+    uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
+
+    //user have to get refund
+    assertEq(_nextExecutionOrderIndex, 1, "nextExecutionOrderIndex After executed");
+    assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
+    assertEq(plp.balanceOf(ALICE), 5 ether);
   }
 
   /**
@@ -141,7 +216,6 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_ordersAfter.length, _nextExecutionOrderIndex, "OrderAfter size != lastExecutedOrderIndex");
   }
 
-  // FIXME HERE
   function test_correctness_executeOrder_createRemoveLiquidityOrders() external {
     _createRemoveLiquidityOrder();
     _createRemoveLiquidityOrder();
@@ -183,7 +257,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[_orderIndex].minOut, 0, "Alice Order.minOut");
     assertEq(_beforeExecuteOrders[_orderIndex].isAdd, true, "Alice Order.isAdd");
     assertEq(_beforeExecuteOrders[_orderIndex].executionFee, 5 ether, "Alice Order.executionFee");
-    assertEq(_beforeExecuteOrders[_orderIndex].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+    assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
 
     // 3 execute create native order
     liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
@@ -206,6 +280,50 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_aliceOrdersAfter.length, 2, "Order Amount After Executed Order");
     assertEq(liquidityHandler.nextExecutionOrderIndex(), 2, "Order Index After Executed Order");
     assertEq(ALICE.balance, 5 ether, "ALICE received balance");
+  }
+
+  function test_correctness_executeOrder_native_refundCreateLiquidityOrder() external {
+    mockLiquidityService.setReverted(true);
+    mockLiquidityService.setRevertAsMessage(false);
+
+    // 1 Create Native add liquidity
+    vm.deal(ALICE, 10 ether); //5 for executeOrderFee , 5 for create liquidity position
+    vm.startPrank(ALICE);
+
+    uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 10 ether }(
+      address(weth),
+      5 ether,
+      0,
+      5 ether,
+      true
+    );
+
+    ILiquidityHandler.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders();
+    vm.stopPrank();
+
+    // 2 Assert LIquidity Order
+    assertEq(_beforeExecuteOrders.length, 1, "Order Amount After Created Order");
+    assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Created Order");
+
+    assertEq(_beforeExecuteOrders[_orderIndex].account, ALICE, "Alice Order.account");
+    assertEq(_beforeExecuteOrders[_orderIndex].token, address(weth), "Alice Order.token");
+    assertEq(_beforeExecuteOrders[_orderIndex].amount, 5 ether, "Alice Order.amount");
+    assertEq(_beforeExecuteOrders[_orderIndex].minOut, 0, "Alice Order.minOut");
+    assertEq(_beforeExecuteOrders[_orderIndex].isAdd, true, "Alice Order.isAdd");
+    assertEq(_beforeExecuteOrders[_orderIndex].executionFee, 5 ether, "Alice Order.executionFee");
+    assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
+
+    // 3 execute create native order
+    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
+
+    // Assertion after Executed Order
+    ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
+    //user have to get refund
+    assertEq(liquidityHandler.nextExecutionOrderIndex(), 1, "nextExecutionOrderIndex After executed");
+    assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
+
+    //alice will get 5 ether from order.amount (Native)
+    assertEq(ALICE.balance, _beforeExecuteOrders[_orderIndex].amount, "Alice refund Balance");
   }
 
   function test_correctness_cancelOrder() external {
@@ -250,7 +368,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[_orderIndex].amount, 1 ether, "Alice Order.amount");
     assertEq(_beforeExecuteOrders[_orderIndex].minOut, 1 ether, "Alice Order.minOut");
     assertEq(_beforeExecuteOrders[_orderIndex].isAdd, true, "Alice Order.isAdd");
-    assertEq(_beforeExecuteOrders[_orderIndex].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+    assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, false, "Alice Order.isNativeOut");
 
     return _orderIndex;
   }
@@ -281,7 +399,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_orders[_index].amount, 5 ether, "Alice PLP Order.amount");
     assertEq(_orders[_index].minOut, 0, "Alice WBTC Order.minOut");
     assertEq(_orders[_index].isAdd, false, "Alice Order.isAdd");
-    assertEq(_orders[_index].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+    assertEq(_orders[_index].isNativeOut, false, "Alice Order.isNativeOut");
 
     return _index;
   }
@@ -319,7 +437,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_orders[_orderIndex].minOut, 0, "Alice WBTC Order.minOut");
     assertEq(_orders[_orderIndex].isAdd, false, "Alice Order.isAdd");
     assertEq(_orders[_orderIndex].executionFee, 5 ether, "Alice Execute fee");
-    assertEq(_orders[_orderIndex].shouldUnwrap, true, "Alice Order.shouldUnwrap");
+    assertEq(_orders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
 
     return _orderIndex;
   }

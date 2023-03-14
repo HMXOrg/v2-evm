@@ -11,7 +11,6 @@ interface ILiquidityHandler {
   error ILiquidityHandler_InsufficientRefund();
   error ILiquidityHandler_NotWhitelisted();
   error ILiquidityHandler_InvalidAddress();
-  error ILiquidityHandler_NotRefundState();
   error ILiquidityHandler_NotExecutionState();
   error ILiquidityHandler_NoOrder();
 
@@ -25,7 +24,7 @@ interface ILiquidityHandler {
     uint256 minOut;
     bool isAdd;
     uint256 executionFee;
-    bool shouldUnwrap; // unwrap nativetoken when removeLiquidity
+    bool isNativeOut; // token Out for remove liquidity(!unwrap) and refund addLiquidity (shoulWrap) flag
   }
 
   /**
@@ -58,6 +57,4 @@ interface ILiquidityHandler {
   function setOrderExecutor(address _executor, bool _isOk) external;
 
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256);
-
-  function refund(LiquidityOrder memory _order) external;
 }

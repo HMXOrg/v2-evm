@@ -12,6 +12,9 @@ contract MockLiquidityService {
   //is reverted is true, it can set to revert as bytes or revert as message
   bool public revertAsMessage;
 
+  bool public plpEnabled;
+  error LiquidityService_CircuitBreaker();
+  error LiquidityService_BadAmount();
   error LiquidityService_RevertAsBytes();
 
   constructor(address _configStorage, address _perpStorage, address _vaultStorage) {
@@ -38,6 +41,10 @@ contract MockLiquidityService {
 
   function setRevertAsMessage(bool isRevertMessage) external {
     revertAsMessage = isRevertMessage;
+  }
+
+  function setPlpEnabled(bool _plpEnabled) external {
+    plpEnabled = _plpEnabled;
   }
 
   function addLiquidity(
@@ -72,5 +79,17 @@ contract MockLiquidityService {
     MockErc20(_tokenOut).mint(msg.sender, _amount);
 
     return _amount;
+  }
+
+  /// @notice validatePreAddRemoveLiquidity used in Handler,Service
+  /// @param _amount amountIn
+  function validatePreAddRemoveLiquidity(uint256 _amount) public view {
+    if (!plpEnabled) {
+      revert LiquidityService_CircuitBreaker();
+    }
+
+    if (_amount == 0) {
+      revert LiquidityService_BadAmount();
+    }
   }
 }

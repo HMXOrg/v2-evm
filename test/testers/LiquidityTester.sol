@@ -14,6 +14,20 @@ import { IWNative } from "@hmx/interfaces/IWNative.sol";
 /// @notice This Tester help to check state after user interact with LiquidityHandler / LiquidityService
 contract LiquidityTester is StdAssertions {
   /**
+   * Structs
+   */
+  struct LiquidityExpectedData {
+    address token;
+    address who;
+    uint256 lpTotalSupply;
+    uint256 totalAmount; // totalAmount in vaultStorage
+    uint256 plpLiquidity;
+    uint256 plpAmount;
+    uint256 fee;
+    uint256 executionFee;
+  }
+
+  /**
    * States
    */
   IPLPv2 plp;
@@ -28,17 +42,6 @@ contract LiquidityTester is StdAssertions {
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
     feeReceiver = _feeReceiver;
-  }
-
-  struct LiquidityExpectedData {
-    address token;
-    address who;
-    uint256 lpTotalSupply;
-    uint256 totalAmount; // totalAmount in vaultStorage
-    uint256 plpLiquidity;
-    uint256 plpAmount;
-    uint256 fee;
-    uint256 executionFee;
   }
 
   /// @notice Assert function when PLP provider add / remove liquidity

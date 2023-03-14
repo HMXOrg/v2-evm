@@ -111,7 +111,6 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   MockErc20 usdt; // decimals 6
   MockErc20 dai; // decimals 18
 
-  // UNDERLYING ARBRITRUM GLP => ETH WBTC LINK UNI USDC USDT DAI FRAX
   IWNative weth; //for native
 
   /* PYTH */

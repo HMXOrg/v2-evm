@@ -120,6 +120,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 _executionFee,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _latestOrderIndex) {
+    LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
+
     //1. convert native to WNative (including executionFee)
     _transferInETH();
 
@@ -165,6 +167,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 _executionFee,
     bool _isNativeOut
   ) external payable nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _latestOrderIndex) {
+    LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
+
     //convert native to WNative (including executionFee)
     _transferInETH();
 

@@ -112,6 +112,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
       // Wrap the native to wNative. The _token must be wNative.
       // If not, it would revert transfer amount exceed on the next line.
+      // slither-disable-next-line arbitrary-send-eth
       IWNative(_token).deposit{ value: _amount }();
       // Transfer those wNative token from this contract to VaultStorage
       ERC20(_token).safeTransfer(_crossMarginService.vaultStorage(), _amount);
@@ -142,6 +143,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     bool _shouldUnwrap
   ) external payable nonReentrant onlyAcceptedToken(_token) {
     // Call update oracle price
+    // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);

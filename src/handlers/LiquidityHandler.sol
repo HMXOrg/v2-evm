@@ -217,10 +217,13 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   function _cancelLiquidityOrder(address _account, uint256 _orderIndex) internal {
     if (
       _orderIndex < nextExecutionOrderIndex || // orderIndex to execute must >= nextExecutionOrderIndex
-      liquidityOrders.length <= _orderIndex || // orders length must > orderIndex
-      _account != liquidityOrders[_orderIndex].account // account should be the same in order
+      liquidityOrders.length <= _orderIndex // orders length must > orderIndex
     ) {
       revert ILiquidityHandler_NoOrder();
+    }
+
+    if (_account != liquidityOrders[_orderIndex].account) {
+      revert ILiquidityHandler_NotOrderOwner();
     }
 
     LiquidityOrder memory order = liquidityOrders[_orderIndex];

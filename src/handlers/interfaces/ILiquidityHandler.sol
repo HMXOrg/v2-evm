@@ -13,6 +13,7 @@ interface ILiquidityHandler {
   error ILiquidityHandler_InvalidAddress();
   error ILiquidityHandler_NotExecutionState();
   error ILiquidityHandler_NoOrder();
+  error ILiquidityHandler_NotOrderOwner();
 
   /**
    * Struct

@@ -9,11 +9,10 @@ import { console } from "forge-std/console.sol";
 //   - Try directCall executeLiquidity
 //   - Try directCall refund
 //   - Try executeOrder not orderExecutor
-//   - Try cancelOrder not owner
+//   - Try cancelOrder not ownerOrder
 //   - Try cancelOrder with uncreated order
 
 // - success
-
 //   - Try executeOrder_addLiquidityOrder
 //   - Try executeOrder_refundAddLiquidityOrder (service revert as message)
 //   - Try executeOrder_refundAddLiquidityOrder (service revert as bytes)
@@ -84,14 +83,12 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     liquidityHandler.executeOrder(_orders.length - 1, payable(FEEVER), priceData);
   }
 
-  function test_revert_cancelOrder_notOwner() external {
-    _createAddLiquidityWBTCOrder();
+  function test_revert_cancelOrder_notOwnerOrder() external {
+    uint256 _orderIndex = _createAddLiquidityWBTCOrder();
 
-    vm.prank(ALICE);
-    liquidityHandler.cancelLiquidityOrder(0);
-
-    ILiquidityHandler.LiquidityOrder[] memory aliceOrders = liquidityHandler.getLiquidityOrders();
-    assertEq(aliceOrders[0].account, address(0), "Alice account address");
+    vm.prank(BOB);
+    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NotOrderOwner()"));
+    liquidityHandler.cancelLiquidityOrder(_orderIndex);
   }
 
   function test_revert_cancelOrder_uncreatedOrder() external {

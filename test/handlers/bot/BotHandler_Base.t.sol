@@ -8,6 +8,7 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
@@ -16,6 +17,8 @@ import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
 contract BotHandler_Base is BaseTest {
+  ITradeHelper tradeHelper;
+
   ITradeService tradeService;
 
   PositionTester positionTester;
@@ -34,8 +37,15 @@ contract BotHandler_Base is BaseTest {
     positionTester02 = new PositionTester02(perpStorage);
     globalMarketTester = new GlobalMarketTester(perpStorage);
 
+    tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
+
     // deploy services
-    tradeService = Deployer.deployTradeService(address(perpStorage), address(vaultStorage), address(configStorage));
+    tradeService = Deployer.deployTradeService(
+      address(perpStorage),
+      address(vaultStorage),
+      address(configStorage),
+      address(tradeHelper)
+    );
 
     botHandler = Deployer.deployBotHandler(address(tradeService), address(mockLiquidationService), address(mockPyth));
 
@@ -49,8 +59,10 @@ contract BotHandler_Base is BaseTest {
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(tradeService), address(botHandler), true);
     perpStorage.setServiceExecutors(address(tradeService), true);
+    perpStorage.setServiceExecutors(address(tradeHelper), true);
 
     vaultStorage.setServiceExecutors(address(tradeService), true);
+    vaultStorage.setServiceExecutors(address(tradeHelper), true);
     vaultStorage.setServiceExecutors(address(this), true);
   }
 

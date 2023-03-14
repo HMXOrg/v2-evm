@@ -8,13 +8,17 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
 
 contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
+  // Token Balance
+  function assertTokenBalanceOf(address _account, address _token, uint256 _balance) internal {
+    assertEq(ERC20(_token).balanceOf(address(_account)), _balance, "Trader's balance is not matched");
+  }
+
+  // PLP
   function assertPLPTotalSupply(uint256 _totalSupply) internal {
     assertEq(plpV2.totalSupply(), _totalSupply, "PLPv2 Total supply is not matched");
   }
 
-  function assertAccountTokenBalance(address _account, address _token, uint256 _balance) internal {
-    assertEq(ERC20(_token).balanceOf(address(_account)), _balance, "Trader's balance is not matched");
-  }
+  // Vault's
 
   function assertPLPDebt(uint256 _plpDebt) internal {
     assertEq(vaultStorage.plpLiquidityDebtUSDE30(), _plpDebt, "PLP liquidity debt is not matched");

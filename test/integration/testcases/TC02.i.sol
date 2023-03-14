@@ -26,7 +26,7 @@ contract TC02 is BaseIntTest_WithActions {
     assertPLPLiquidity(address(wbtc), (1 - 0.003) * 1e8);
     assertVaultTokenBalance(address(wbtc), 1 * 1e8);
     assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _fundingFee: 0, _devFee: 0 });
-    assertAccountTokenBalance(BOB, address(wbtc), 99 * 1e8);
+    assertTokenBalanceOf(BOB, address(wbtc), 99 * 1e8);
 
     //   Steps (market):
     //   - alice deposit BTC 200 USD

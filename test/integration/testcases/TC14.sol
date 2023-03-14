@@ -10,11 +10,10 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 
 // TC14 - TC15 will include in this case
 contract TC14 is BaseIntTest_WithActions {
-  function testCorrectness_CircuitBreaker() external {
+  function testCorrectness_AddLiquidity_CircuitBreaker() external {
     // T0: Initialized state
     // set circuit breaker
     configStorage.setLiquidityEnabled(false);
-
     // ALICE NEED 10k in terms of WBTC = 10000 /20000 * 10**8  = 5e7
     uint256 _amount = 5e7;
 
@@ -22,58 +21,40 @@ contract TC14 is BaseIntTest_WithActions {
     vm.deal(ALICE, executionOrderFee);
     wbtc.mint(ALICE, _amount);
 
-    //T1 Alice Create Order Add Liquidity
-    uint256 _orderIndex = _addLiquidityOnly(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee);
-
-    // Validate After CREATED Order
-    ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders();
-    assertEq(wbtc.balanceOf(ALICE), 0, "Alice Balance After Created Order");
-
-    assertEq(_orders.length, 1, "Order Alice");
-    assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Created Order");
-    assertEq(FEEVER.balance, 0, "Feever Balance After Created Order");
-
-    assertEq(weth.balanceOf(address(liquidityHandler)), executionOrderFee, "Balance WETH on Handler");
-
-    assertEq(_orders[_orderIndex].account, ALICE, "Alice Order.account");
-    assertEq(_orders[_orderIndex].token, address(wbtc), "Alice Order.token");
-    assertEq(_orders[_orderIndex].amount, 5e7, "Alice Order.amount");
-    assertEq(_orders[_orderIndex].minOut, 0, "Alice Order.minOut");
-    assertEq(_orders[_orderIndex].isAdd, true, "Alice Order.isAdd");
-    assertEq(_orders[_orderIndex].isNativeOut, false, "Alice Order.isNativeOut");
-
-    // T2 Execute Order
-    vm.prank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), initialPriceFeedDatas);
-
-    _orders = liquidityHandler.getLiquidityOrders();
-    // Validate After EXECUTED Order
-    assertEq(wbtc.balanceOf(ALICE), _amount, "Token Balance After Executed Order");
-    assertEq(FEEVER.balance, executionOrderFee - initialPriceFeedDatas.length, "Feever Balance After Executed Order");
-    assertEq(weth.balanceOf(address(liquidityHandler)), 0, " Balance WETH on Handler After Executed Order");
-    assertEq(liquidityHandler.nextExecutionOrderIndex(), 1, "Order Index After Executed Order");
-    assertEq(_orders[_orderIndex].amount, 0, "Alice Order should be delete After Executed Order");
-  }
-
-  function _addLiquidityOnly(
-    address _liquidityProvider,
-    ERC20 _tokenIn,
-    uint256 _amountIn,
-    uint256 _executionFee
-  ) internal returns (uint256 _orderIndex) {
-    vm.startPrank(_liquidityProvider);
-    _tokenIn.approve(address(liquidityHandler), _amountIn);
+    vm.startPrank(ALICE);
+    wbtc.approve(address(liquidityHandler), _amount);
     /// note: minOut always 0 to make test passed
     /// note: shouldWrap treat as false when only GLP could be liquidity
-    _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: _executionFee }(
-      address(_tokenIn),
-      _amountIn,
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
+    liquidityHandler.createAddLiquidityOrder{ value: executionOrderFee }(
+      address(wbtc),
+      _amount,
       0,
-      _executionFee,
+      executionOrderFee,
       false
     );
     vm.stopPrank();
+  }
 
-    return _orderIndex;
+  function testCorrectness_RemoveLiquidity_CircuitBreaker() external {
+    configStorage.setLiquidityEnabled(false);
+    // T0 initial State
+    vm.deal(ALICE, executionOrderFee);
+    uint256 _amount = 10 ether;
+    vm.prank(address(liquidityService));
+    plpV2.mint(ALICE, _amount);
+
+    vm.startPrank(ALICE);
+
+    plpV2.approve(address(liquidityHandler), _amount);
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
+    liquidityHandler.createRemoveLiquidityOrder{ value: executionOrderFee }(
+      address(wbtc),
+      _amount,
+      0,
+      executionOrderFee,
+      false
+    );
+    vm.stopPrank();
   }
 }

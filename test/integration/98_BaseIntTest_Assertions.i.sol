@@ -95,6 +95,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   }
 
   // Perp Storage
+
   function assertPositionInfoOf(
     address _subAccount,
     uint256 _marketIndex,
@@ -112,7 +113,50 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     assertEq(_position.reserveValueE30, _reserveValue, "Position's reserve value is not matched");
   }
 
-  function assertPositionPnLWithFee(address _subAccount, uint256 _marketIndex, int256 realizedPnl) internal {}
+  function assertPositionPnL(address _subAccount, uint256 _marketIndex, int256 realizedPnl) internal {
+    bytes32 _positionId = keccak256(abi.encodePacked(_subAccount, _marketIndex));
+    IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
+
+    assertEq(_position.realizedPnl, realizedPnl, "Position's realized PNL is not matched");
+  }
+
+  function assertMarketLongPosition(
+    uint256 _marketIndex,
+    uint256 _positionSize,
+    uint256 _avgPrice,
+    uint256 _openInterest
+  ) internal {
+    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
+
+    assertEq(_market.longPositionSize, _positionSize, "Market's Long position size");
+    assertEq(_market.longAvgPrice, _avgPrice, "Market's Long avg price size");
+    assertEq(_market.longOpenInterest, _openInterest, "Market's Long open interest size");
+  }
+
+  function assertMarketShortPosition(
+    uint256 _marketIndex,
+    uint256 _positionSize,
+    uint256 _avgPrice,
+    uint256 _openInterest
+  ) internal {
+    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
+
+    assertEq(_market.shortPositionSize, _positionSize, "Market's Short position size");
+    assertEq(_market.shortAvgPrice, _avgPrice, "Market's Short avg price size");
+    assertEq(_market.shortOpenInterest, _openInterest, "Market's Short open interest size");
+  }
+
+  function assertGlobalTotalReserved(uint256 _totalReserve) internal {
+    assertEq(perpStorage.getGlobalState().reserveValueE30, _totalReserve, "Total global Reserve value");
+  }
+
+  function assertAssetClassTotalReserved(uint8 _assetClassIndex, uint256 _reserved) internal {
+    assertEq(
+      perpStorage.getGlobalAssetClassByIndex(_assetClassIndex).reserveValueE30,
+      _reserved,
+      "Total asset class Reserve value"
+    );
+  }
 
   // Calculator
 

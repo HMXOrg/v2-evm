@@ -21,7 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const handler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
   // await (await handler.setMinExecutionFee(30)).wait();
   const executionFee = await handler.minExecutionFee();
-  console.log("Limit Buy...");
+  console.log("Limit Order...");
   await (
     await handler.createOrder(
       0,
@@ -35,8 +35,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       { value: executionFee }
     )
   ).wait();
-  console.log("Limit Buy Success!");
+  console.log("Limit Order Success!");
 };
 
 export default func;
-func.tags = ["LimitBuy"];
+func.tags = ["LimitOrder"];

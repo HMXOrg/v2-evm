@@ -27,14 +27,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const crossMarginHandler = CrossMarginHandler__factory.connect(config.handlers.crossMargin, deployer);
   const token = ERC20__factory.connect(config.tokens.usdc, deployer);
 
-  await crossMarginHandler.withdrawCollateral(
+  await (await crossMarginHandler.withdrawCollateral(
     address,
     subAccountId,
     token.address,
-    ethers.utils.parseUnits("1", 6),
+    ethers.utils.parseUnits("50000", 6),
     priceData,
     { gasLimit: 20000000, value: updateFee }
-  );
+  )).wait();
 };
 
 export default func;

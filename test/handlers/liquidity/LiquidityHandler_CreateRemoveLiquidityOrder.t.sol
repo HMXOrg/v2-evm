@@ -67,6 +67,40 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
     liquidityHandler.createRemoveLiquidityOrder{ value: 3 ether }(address(weth), 1 ether, 1 ether, 5 ether, false);
   }
 
+  function test_revert_plpCircuitBreaker() external {
+    mockLiquidityService.setPlpEnabled(false);
+
+    vm.deal(ALICE, 5 ether);
+    plp.mint(ALICE, 5 ether);
+
+    vm.startPrank(ALICE);
+    plp.approve(address(liquidityHandler), type(uint256).max);
+
+    // plpIn 5 ether, execution fee 5
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
+    uint256 _index = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(
+      address(wbtc),
+      5 ether,
+      0,
+      5 ether,
+      false
+    );
+    vm.stopPrank();
+  }
+
+  function test_revert_badAmount() external {
+    vm.deal(ALICE, 5 ether);
+    plp.mint(ALICE, 5 ether);
+
+    vm.startPrank(ALICE);
+    plp.approve(address(liquidityHandler), type(uint256).max);
+
+    // plpIn 5 ether, execution fee 5
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
+    uint256 _index = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(wbtc), 0, 0, 5 ether, false);
+    vm.stopPrank();
+  }
+
   /**
    * CORRECTNESS
    */

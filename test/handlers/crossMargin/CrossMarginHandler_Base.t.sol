@@ -122,13 +122,13 @@ contract CrossMarginHandler_Base is BaseTest {
   function simulateAliceDepositToken(address _token, uint256 _depositAmount) internal {
     vm.startPrank(ALICE);
     MockErc20(_token).approve(address(crossMarginHandler), _depositAmount);
-    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, _token, _depositAmount, false);
+    crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, _token, _depositAmount, false);
     vm.stopPrank();
   }
 
   function simulateAliceWithdrawToken(address _token, uint256 _withdrawAmount) internal {
     vm.startPrank(ALICE);
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, _token, _withdrawAmount, priceDataBytes, false);
+    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, _token, _withdrawAmount, priceDataBytes, false);
     vm.stopPrank();
   }
 }

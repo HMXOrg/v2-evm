@@ -25,14 +25,14 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
   function testRevert_handler_withdrawCollateral_onlyAcceptedToken() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(dai), 10 ether, priceDataBytes, false);
+    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, address(dai), 10 ether, priceDataBytes, false);
   }
 
   //  Try withdraw token collateral with insufficient allowance
   function testRevert_handler_withdrawCollateral_InsufficientBalance() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InsufficientBalance()"));
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), 10 ether, priceDataBytes, false);
+    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, address(weth), 10 ether, priceDataBytes, false);
   }
 
   function testRevert_handler_withdrawCollateral_setOraclePrice_withdrawBalanceBelowIMR() external {
@@ -89,7 +89,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
       simulateAliceDepositToken(address(weth), (7 ether));
       vm.deal(ALICE, 3 ether);
       vm.startPrank(ALICE);
-      crossMarginHandler.depositCollateral{ value: 3 ether }(ALICE, SUB_ACCOUNT_NO, address(weth), 3 ether, true);
+      crossMarginHandler.depositCollateral{ value: 3 ether }(SUB_ACCOUNT_NO, address(weth), 3 ether, true);
       vm.stopPrank();
     }
 
@@ -106,7 +106,8 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(weth.balanceOf(ALICE), 3 ether);
 
     // Try withdraw WETH, but with unwrap option
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, address(weth), 1.5 ether, priceDataBytes, true);
+    vm.prank(ALICE);
+    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, address(weth), 1.5 ether, priceDataBytes, true);
 
     // After withdrawn with unwrap,
     // - Vault must have 5.5 WETH

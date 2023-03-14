@@ -91,12 +91,10 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
   /// @notice Calculate new trader balance after deposit collateral token.
   /// @dev This uses to call deposit function on service and calculate new trader balance when they depositing token as collateral.
-  /// @param _account Trader's primary wallet account.
   /// @param _subAccountId Trader's sub account ID.
   /// @param _token Token that's deposited as collateral.
   /// @param _amount Token depositing amount.
   function depositCollateral(
-    address _account,
     uint8 _subAccountId,
     address _token,
     uint256 _amount,
@@ -122,20 +120,18 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     }
 
     // Call service to deposit collateral
-    _crossMarginService.depositCollateral(_account, _subAccountId, _token, _amount);
+    _crossMarginService.depositCollateral(msg.sender, _subAccountId, _token, _amount);
 
-    emit LogDepositCollateral(_account, _subAccountId, _token, _amount);
+    emit LogDepositCollateral(msg.sender, _subAccountId, _token, _amount);
   }
 
   /// @notice Calculate new trader balance after withdraw collateral token.
   /// @dev This uses to call withdraw function on service and calculate new trader balance when they withdrawing token as collateral.
-  /// @param _account Trader's primary wallet account.
   /// @param _subAccountId Trader's sub account ID.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
   /// @param _priceData Price update data
   function withdrawCollateral(
-    address _account,
     uint8 _subAccountId,
     address _token,
     uint256 _amount,
@@ -151,17 +147,17 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     // Call service to withdraw collateral
     if (_shouldUnwrap) {
       // Withdraw wNative straight to this contract first.
-      _crossMarginService.withdrawCollateral(_account, _subAccountId, _token, _amount, address(this));
+      _crossMarginService.withdrawCollateral(msg.sender, _subAccountId, _token, _amount, address(this));
       // Then we unwrap the wNative token. The receiving amount should be the exact same as _amount. (No fee deducted when withdraw)
       IWNative(_token).withdraw(_amount);
       // Finally, transfer those native token right to user.
-      payable(_account).transfer(_amount);
+      payable(msg.sender).transfer(_amount);
     } else {
       // Withdraw _token straight to the user
-      _crossMarginService.withdrawCollateral(_account, _subAccountId, _token, _amount, _account);
+      _crossMarginService.withdrawCollateral(msg.sender, _subAccountId, _token, _amount, msg.sender);
     }
 
-    emit LogWithdrawCollateral(_account, _subAccountId, _token, _amount);
+    emit LogWithdrawCollateral(msg.sender, _subAccountId, _token, _amount);
   }
 
   receive() external payable {

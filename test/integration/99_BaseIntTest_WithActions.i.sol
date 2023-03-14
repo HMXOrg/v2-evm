@@ -90,7 +90,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
   ) internal {
     vm.startPrank(_account);
     _collateralToken.approve(address(crossMarginHandler), _depositAmount);
-    crossMarginHandler.depositCollateral(_account, _subAccountId, address(_collateralToken), _depositAmount, false);
+    crossMarginHandler.depositCollateral(_subAccountId, address(_collateralToken), _depositAmount, false);
     vm.stopPrank();
   }
 
@@ -108,14 +108,7 @@ contract BaseIntTest_WithActions is BaseIntTest_SetWhitelist {
     bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
-    crossMarginHandler.withdrawCollateral(
-      _account,
-      _subAccountId,
-      address(_collateralToken),
-      _withdrawAmount,
-      _priceData,
-      false
-    );
+    crossMarginHandler.withdrawCollateral(_subAccountId, address(_collateralToken), _withdrawAmount, _priceData, false);
   }
 
   /**

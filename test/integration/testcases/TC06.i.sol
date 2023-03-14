@@ -6,6 +6,7 @@ import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 
 contract TC06 is BaseIntTest_WithActions {
   function testIntegration_WhenTraderInteractWithCrossMargin() external {
+    vm.deal(ALICE, 1 ether);
     /**
      * T0: Initialized state
      */

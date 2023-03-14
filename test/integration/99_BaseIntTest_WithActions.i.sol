@@ -130,10 +130,15 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     address _tpToken,
     bytes[] memory _priceData
   ) internal {
-    // @todo - remove after fix market handler to let msg.sender pay update price fee
-    vm.deal(address(marketTradeHandler), 1 ether);
     vm.prank(_account);
-    marketTradeHandler.buy(_account, _subAccountId, _marketIndex, _buySizeE30, _tpToken, _priceData);
+    marketTradeHandler.buy{ value: _priceData.length }(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _buySizeE30,
+      _tpToken,
+      _priceData
+    );
   }
 
   /// @notice Helper function to call MarketHandler sell
@@ -152,7 +157,14 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
-    marketTradeHandler.sell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData);
+    marketTradeHandler.sell{ value: _priceData.length }(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _sellSizeE30,
+      _tpToken,
+      _priceData
+    );
   }
 
   /**

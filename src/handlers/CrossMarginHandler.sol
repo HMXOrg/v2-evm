@@ -140,35 +140,31 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     uint256 _amount,
     bytes[] memory _priceData,
     bool _shouldUnwrap
-  ) external nonReentrant onlyAcceptedToken(_token) {
-    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
-
+  ) external payable nonReentrant onlyAcceptedToken(_token) {
     // Call update oracle price
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
+    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+
     // Call service to withdraw collateral
-    _crossMarginService.withdrawCollateral(_account, _subAccountId, _token, _amount, _account);
+    if (_shouldUnwrap) {
+      // Withdraw wNative straight to this contract first.
+      _crossMarginService.withdrawCollateral(_account, _subAccountId, _token, _amount, address(this));
+      // Then we unwrap the wNative token. The receiving amount should be the exact same as _amount. (No fee deducted when withdraw)
+      IWNative(_token).withdraw(_amount);
+      // Finally, transfer those native token right to user.
+      payable(_account).transfer(_amount);
+    } else {
+      // Withdraw _token straight to the user
+      _crossMarginService.withdrawCollateral(_account, _subAccountId, _token, _amount, _account);
+    }
 
     emit LogWithdrawCollateral(_account, _subAccountId, _token, _amount);
   }
 
-  // /// @notice Transfer in ETH from user to be used as execution fee
-  // /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.
-  // function _transferInETH() private {
-  //   if (_shouldWrap) {
-  //     if (msg.value != _amountIn + executionOrderFee) {
-  //       revert ILiquidityHandler_InCorrectValueTransfer();
-  //     }
-  //   } else {
-  //     if (msg.value != executionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
-  //     IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
-  //   }
-
-  //   IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).deposit{ value: msg.value }();
-  // }
-
-  // receive() external payable {
-  //   if (msg.sender != ConfigStorage(LiquidityService(liquidityService).configStorage()).weth())
-  //     revert ILiquidityHandler_InvalidSender();
-  // }
+  receive() external payable {
+    // @dev Cannot enable this check due to Solidity Fallback Function Gas Limit introduced in 0.8.17.
+    // ref - https://stackoverflow.com/questions/74930609/solidity-fallback-function-gas-limit
+    // require(msg.sender == ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth());
+  }
 }

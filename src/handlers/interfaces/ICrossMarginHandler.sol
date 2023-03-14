@@ -23,7 +23,7 @@ interface ICrossMarginHandler {
     uint256 _amount,
     bytes[] memory _priceData,
     bool _shouldUnwrap
-  ) external;
+  ) external payable;
 
   function crossMarginService() external returns (address);
 

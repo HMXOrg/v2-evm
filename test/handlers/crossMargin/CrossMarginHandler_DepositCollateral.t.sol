@@ -161,5 +161,6 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
     // After deposited, ALICE's sub account must has 20 WETH as collateral token
     assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 20 ether);
     assertEq(weth.balanceOf(address(vaultStorage)), 20 ether);
+    assertEq(ALICE.balance, 0 ether);
   }
 }

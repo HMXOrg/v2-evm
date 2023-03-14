@@ -5,10 +5,13 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+
 import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
 
 contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
-  // Token Balance
+  // Token Balances
+
   function assertTokenBalanceOf(address _account, address _token, uint256 _balance) internal {
     assertEq(ERC20(_token).balanceOf(address(_account)), _balance, "Trader's balance is not matched");
   }
@@ -18,7 +21,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     assertEq(plpV2.totalSupply(), _totalSupply, "PLPv2 Total supply is not matched");
   }
 
-  // Vault's
+  // Vault Storage
 
   function assertPLPDebt(uint256 _plpDebt) internal {
     assertEq(vaultStorage.plpLiquidityDebtUSDE30(), _plpDebt, "PLP liquidity debt is not matched");
@@ -89,5 +92,35 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       _tokens.length,
       "Trader's token list length is not matched"
     );
+  }
+
+  // Perp Storage
+  function assertPositionInfoOf(
+    address _subAccount,
+    uint256 _marketIndex,
+    int256 _positionSize,
+    uint256 _avgPrice,
+    uint256 _openInterest,
+    uint256 _reserveValue
+  ) internal {
+    bytes32 _positionId = keccak256(abi.encodePacked(_subAccount, _marketIndex));
+    IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
+
+    assertEq(_position.positionSizeE30, _positionSize, "Position's size is not matched");
+    assertEq(_position.avgEntryPriceE30, _avgPrice, "Position's average price is not matched");
+    assertEq(_position.openInterest, _openInterest, "Position's open interest is not matched");
+    assertEq(_position.reserveValueE30, _reserveValue, "Position's reserve value is not matched");
+  }
+
+  function assertPositionPnLWithFee(address _subAccount, uint256 _marketIndex, int256 realizedPnl) internal {}
+
+  // Calculator
+
+  function assertSubAccounStatus(address _subAccount, uint256 _freeCollateral, uint256 _imr, uint256 _mmr) internal {
+    // note: 2,3 argument use for limited price
+    // assertEq(calculator.getEquity(SUB_ACCOUNT, 0, 0), "Equity is not matched");
+    assertEq(calculator.getFreeCollateral(_subAccount, 0, 0), _freeCollateral, "Free collateral is not matched");
+    assertEq(calculator.getIMR(_subAccount), _imr, "IMR is not matched");
+    assertEq(calculator.getMMR(_subAccount), _mmr, "MMR is not matched");
   }
 }

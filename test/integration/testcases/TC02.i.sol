@@ -6,32 +6,151 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
 contract TC02 is BaseIntTest_WithActions {
-  //  TC02 - trader could take profit both long and short position
-  //   Prices:
-  //     WBTC - 20,000 USD
-  //     WETH -  1,500 USD
-  //     JPY  - 136.123 (USDJPY) => 0.007346297099
+  // TC02 - trader could take profit both long and short position
+  // Prices:
+  //    WBTC - 20,000 USD
+  //    WETH -  1,500 USD
+  //    JPY  - 136.123 (USDJPY) => 0.007346297099
+  // Environment
+  //    Add liquidity fee - 0.3%
+  //    Max Profit        - 900%
+  // Market info
+  //    WETH - IMF 1%, MMF 0.5%
   function testCorrectness_TC2_TradeWithTakeProfitScenario() external {
-    vm.deal(BOB, 1 ether); // mint native token for BOB 1 ether
-    wbtc.mint(BOB, 100 * 1e8); // mint btc for BOB 100 BTC
+    // prepare token for wallet
+
+    // mint native token
+    vm.deal(BOB, 1 ether);
+    vm.deal(ALICE, 1 ether);
+
+    // mint BTC
+    wbtc.mint(ALICE, 100 * 1e8);
+    wbtc.mint(BOB, 100 * 1e8);
 
     // T1: BOB provide liquidity as WBTC 1 token
-    // price has no changed0
+    // note: price has no changed0
     addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0));
 
-    // BOB provide 1 WBTC with 0.3% deposit fee
-    // Then BOB receive PLP value in 20,000 * 99.7% = 19,940 USD
-    // Fee = 0.003;
+    // ------------------------------------------
+    // | PLP's info                             |
+    // | -------------------------------------- |
+    // | Total supply | 19,940 TOKENs           |
+    // ------------------------------------------
+
+    // ----------------------------------------------------
+    // | Liquidity's info                                 |
+    // | ------------------------------------------------ |
+    // | PLP    | Token   | Liquidity   | Total Liquidity |
+    // | ------ | ------- | ----------- | --------------- |
+    // | BOB    | WBTC    | 0.997 BTC   | 0.997 BTC       |
+    // | --------------------------------------------------
+
+    // --------------------------------------------------------------------
+    // | Vault's Info                                                     |
+    // | ---------------------------------------------------------------- |
+    // | Token  | Total amount | Balance |    Fee | Dev fee | Funding fee |
+    // | ------ | ------------ | ------- | ------ | ------- | ----------- |
+    // | WBTC   |           1  |       1 |   0.03 |       0 |           0 |
+    // --------------------------------------------------------------------
+
     assertPLPTotalSupply(19_940 * 1e18);
-    assertPLPLiquidity(address(wbtc), (1 - 0.003) * 1e8);
     assertVaultTokenBalance(address(wbtc), 1 * 1e8);
     assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _fundingFee: 0, _devFee: 0 });
+    assertPLPLiquidity(address(wbtc), 0.997 * 1e8);
+    // check to prove transfer corrected amount from liquidity provider
     assertTokenBalanceOf(BOB, address(wbtc), 99 * 1e8);
 
-    //   Steps (market):
-    //   - alice deposit BTC 200 USD
-    //   - open weth long position with 200,000 USD (1000x) - revert poor
-    //   - open weth long position with 300 USD
+    // Steps (market):
+
+    // T2: alice deposit BTC 200 USD at price 20,000
+    // 200 / 20000 = 0.01 BTC
+    address _aliceSubAccount0 = getSubAccount(ALICE, 0);
+    depositCollateral(ALICE, 0, wbtc, 0.01 * 1e8);
+
+    // --------------------------------------------------------------------
+    // | Vault's Info                                                     |
+    // | ---------------------------------------------------------------- |
+    // | Token  | Total amount | Balance |    Fee | Dev fee | Funding fee |
+    // | ------ | ------------ | ------- | ------ | ------- | ----------- |
+    // | WBTC   |         1.01 |    1.01 |   0.03 |       0 |           0 |
+    // --------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------------------
+    // | Trader's Collateral                                                             |
+    // | ------------------------------------------------------------------------------- |
+    // | Account  | Sub-account's ID | Token    | Balance | Collat Factor | Collat Value |
+    // | -------- | ---------------- | -------- | ------- | ------------- | ------------ |
+    // | ALICE    |               0  | WBTC     |    0.01 |           0.8 |          160 |
+    // -----------------------------------------------------------------------------------
+
+    // -----------------------------------------------------
+    // | Sub-account's Status                              |
+    // | ------------------------------------------------- |
+    // | Sub-account |    IMR |    MMR | Free Collat (USD) |
+    // | ----------- | ------ | ------ | ----------------- |
+    // | ALICE-0     |      0 |      0 |               160 |
+    // -----------------------------------------------------
+
+    // prove liquidity info not changed once deposit collateral
+    assertPLPTotalSupply(19_940 * 1e18);
+    assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _fundingFee: 0, _devFee: 0 });
+    assertPLPLiquidity(address(wbtc), 0.997 * 1e8);
+
+    // + 0.01 from deposit collateral
+    assertVaultTokenBalance(address(wbtc), 1.01 * 1e8);
+
+    // sub-account's stuff
+    assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01 * 1e8);
+    assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _freeCollateral: 160 * DOLLAR, _imr: 0, _mmr: 0 });
+
+    // check to prove transfer corrected amount from trader
+    assertTokenBalanceOf(ALICE, address(wbtc), 99.99 * 1e8);
+
+    // T3: ALICE market buy weth with 200,000 USD (1000x) at price 20,000 USD
+    // should revert InsufficientFreeCollateral
+    // note: price has no changed0
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
+    marketBuy(ALICE, 0, wethMarketIndex, 200_000 * DOLLAR, address(0), new bytes[](0));
+
+    // T4: ALICE market buy weth with 300 USD at price 20,000 USD
+    // initialPriceFeedDatas is from
+    marketBuy(ALICE, 0, wethMarketIndex, 300 * DOLLAR, address(0), initialPriceFeedDatas);
+
+    // ----------------------------------------------------------------------------------------------------------------
+    // | Adaptive price's table                                                                                       |
+    // -------------------------------------------------------------------------------------------------------------- |
+    // | Asset | Pyth Price | Adaptive price | Max Screw   |  Market Screw  |  Premium discount |      Price          |
+    // -------------------------------------------------------------------------------------------------------------- |
+    // |       |            |                |             | Before | After | Before | After    | Before | After      |
+    // | ----- | ---------- | -------------- | ----------- | ------ | ----- | ------ | -------- | ------ | ---------- |
+    // | WETH  |      1,500 |    1,500.00075 | 300,000,000 | 0      | +300  |      0 | 0.000001 | 1,500  | 1,500.0015 |
+    // ----------------------------------------------------------------------------------------------------------------
+
+    // --------------------------------------------------------------------------------------
+    // | Position's Info                                                                    |
+    // | ---------------------------------------------------------------------------------- |
+    // | Sub-account | Market | Direction | Size | IMR | MMR | Avg price   | OI   | Reserve |
+    // | ----------- | ------ | --------- | ---- | --- | --- | ----------- | ---- | ------- |
+    // | ALICE-0     | WETH   | LONG      |  300 |   3 | 1.5 | 1,500.00075 |  0.2 |      27 |
+    // ------------------------------------------------------------------------------------
+
+    // -----------------------------------------------------
+    // | Sub-account's Status                              |
+    // | ------------------------------------------------- |
+    // | Sub-account |    IMR |    MMR | Free Collat (USD) |
+    // | ----------- | ------ | ------ | ----------------- |
+    // | ALICE-0     |      3 |    1.5 |               160 |
+    // -----------------------------------------------------
+
+    assertPositionInfoOf({
+      _subAccount: _aliceSubAccount0,
+      _marketIndex: wethMarketIndex,
+      _positionSize: int256(300 * DOLLAR), // positive for LONG position
+      _avgPrice: (1_500_00075 * DOLLAR) / 1e5, // 1,500.00075
+      _openInterest: 0.19999990 * 1e8, // after change OI to e18 should assert => 0.199999900000049999
+      _reserveValue: 27 * DOLLAR
+    });
+
     //   - alice withdraw 200 USD - revert
     //   - weth pump price up 5% (1650 USD)
     //   - partial close position for 150 USD

@@ -198,18 +198,18 @@ contract TC07 is BaseIntTest_WithActions {
 
     vm.warp(block.timestamp + 1);
     {
-      // @todo - uncomment this
       // Alice withdraw 1(USD) of USDC
       // Expect Alice can't withdraw collateral because Equity < IMR
-      // bytes[] memory priceData = new bytes[](0);
-      // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-      // withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 1 * 1e6, priceData);
+      bytes[] memory priceData = new bytes[](0);
+      vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
+      withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 1 * 1e6, priceData);
+
       // Alice's Equity must be lower IMR level
       // Equity = 2850.5766353065096, IMR = 13000
-      // assertTrue(
-      //   uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) < calculator.getIMR(SUB_ACCOUNT),
-      //   "ALICE's Equity < ALICE's IMR?"
-      // );
+      assertTrue(
+        uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) < calculator.getIMR(SUB_ACCOUNT),
+        "ALICE's Equity < ALICE's IMR?"
+      );
     }
 
     /**

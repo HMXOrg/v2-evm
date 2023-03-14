@@ -174,7 +174,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     emit LogBuy(_account, _subAccountId, _marketIndex, _buySizeE30, _shortDecreasingSizeE30, _longIncreasingSizeE30);
   }
 
-  /// @notice Perform sell, in which increasing position size towards long exposure.
+  /// @notice Perform sell, in which increasing position size towards short exposure.
   /// @dev Flipping from long exposure to short exposure is possible here.
   /// @param _account Trader's primary wallet account.
   /// @param _subAccountId Trader's sub account id.

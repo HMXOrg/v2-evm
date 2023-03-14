@@ -162,6 +162,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
     // The attached native token must be equal to _executionFee
     if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
+
+    _validateCreateOrderPrice(_triggerAboveThreshold, _triggerPrice, _marketIndex, _sizeDelta, _sizeDelta > 0);
+
     // Transfer in the native token to be used as execution fee
     _transferInETH();
 
@@ -255,7 +258,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
           _subAccountId: _subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-          _limitPriceE30: _currentPrice
+          _limitPriceE30: vars.order.triggerPrice
         });
       } else if (!vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
@@ -268,7 +271,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: _currentPrice
+            _limitPriceE30: vars.order.triggerPrice
           });
           // Flip it to Long position
           TradeService(tradeService).increasePosition({
@@ -276,7 +279,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-            _limitPriceE30: _currentPrice
+            _limitPriceE30: vars.order.triggerPrice
           });
         } else {
           // Not flip
@@ -289,7 +292,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
               uint256(-_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: _currentPrice
+            _limitPriceE30: vars.order.triggerPrice
           });
         }
       }
@@ -303,7 +306,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
           _subAccountId: _subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-          _limitPriceE30: _currentPrice
+          _limitPriceE30: vars.order.triggerPrice
         });
       } else if (vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
@@ -316,7 +319,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: _currentPrice
+            _limitPriceE30: vars.order.triggerPrice
           });
           // Flip it to Short position
           TradeService(tradeService).increasePosition({
@@ -324,7 +327,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
             _subAccountId: _subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-            _limitPriceE30: _currentPrice
+            _limitPriceE30: vars.order.triggerPrice
           });
         } else {
           // Not flip
@@ -337,7 +340,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
               uint256(_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: _currentPrice
+            _limitPriceE30: vars.order.triggerPrice
           });
         }
       }
@@ -505,6 +508,42 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     }
 
     return (_currentPrice, isPriceValid);
+  }
+
+  function _validateCreateOrderPrice(
+    bool _triggerAboveThreshold,
+    uint256 _triggerPrice,
+    uint256 _marketIndex,
+    int256 _sizeDelta,
+    bool _maximizePrice
+  ) internal view returns (uint256 _currentPrice, bool _isPriceValid) {
+    ValidatePositionOrderPriceVars memory vars;
+
+    // Get price from Pyth
+    vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
+    vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
+    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
+
+    (_currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      vars.marketConfig.assetId,
+      _maximizePrice,
+      (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
+      _sizeDelta,
+      vars.marketConfig.fundingRate.maxSkewScaleUSD
+    );
+
+    if (_triggerAboveThreshold) {
+      if (_triggerPrice <= _currentPrice) {
+        revert ILimitTradeHandler_TriggerPriceBelowCurrentPrice();
+      }
+    } else {
+      if (_triggerPrice >= _currentPrice) {
+        revert ILimitTradeHandler_TriggerPriceAboveCurrentPrice();
+      }
+    }
+
+    _isPriceValid = true;
+    return (_currentPrice, _isPriceValid);
   }
 
   /// @notice Transfer in ETH from user to be used as execution fee

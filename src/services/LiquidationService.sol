@@ -59,6 +59,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     int256 _equity = _calculator.getEquity(_subAccount, 0, 0);
+
     // If the equity is greater than or equal to the MMR, the account is healthy and cannot be liquidated
     if (_equity >= 0 && uint256(_equity) >= _calculator.getMMR(_subAccount))
       revert ILiquidationService_AccountHealthy();
@@ -178,6 +179,8 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
         ++i;
       }
     }
+    //Reset Trader's collateral balances
+    VaultStorage(vaultStorage).removeAllTraderTokens(_subAccount);
   }
 
   struct SettleStruct {

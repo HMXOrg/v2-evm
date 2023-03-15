@@ -131,11 +131,4 @@ interface ICalculator {
   function configStorage() external returns (address _address);
 
   function perpStorage() external returns (address _address);
-
-  function getDelta(
-    uint256 _size,
-    bool _isLong,
-    uint256 _markPrice,
-    uint256 _averagePrice
-  ) external view returns (bool, uint256);
 }

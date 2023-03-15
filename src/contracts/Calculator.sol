@@ -508,7 +508,7 @@ contract Calculator is Owned, ICalculator {
     // Loop through all trader's positions
     for (uint256 i; i < _len; ) {
       _var.position = _positions[i];
-      _var.absSize = abs(_var.position.positionSizeE30);
+      _var.absSize = _abs(_var.position.positionSizeE30);
       _var.isLong = _var.position.positionSizeE30 > 0;
 
       // Get market config according to opening position
@@ -530,6 +530,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       {
+        // Calculate pnl
         (_var.isProfit, _var.delta) = _getDelta(
           _var.absSize,
           _var.isLong,
@@ -544,16 +545,20 @@ contract Calculator is Owned, ICalculator {
       }
 
       {
+        // Calculate borrowing fee
         _unrealizedFeeE30 += int256(
           getBorrowingFee(_marketConfig.assetClass, _var.position.reserveValueE30, _var.position.entryBorrowingRate)
         );
+        // Calculate funding fee
         _unrealizedFeeE30 += getFundingFee(
           _var.position.marketIndex,
           _var.position.positionSizeE30 > 0,
           _var.position.positionSizeE30,
           _var.position.entryFundingRate
         );
+        // Calculate trading fee
         _unrealizedFeeE30 += int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
+        // Calculate liquidation fee
         _unrealizedFeeE30 += int256(liquidationFee);
       }
 
@@ -1014,7 +1019,7 @@ contract Calculator is Owned, ICalculator {
     return a < b ? a : b;
   }
 
-  function abs(int256 x) private pure returns (uint256) {
+  function _abs(int256 x) private pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
   }
 }

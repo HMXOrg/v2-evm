@@ -89,7 +89,9 @@ contract Calculator_Equity is Calculator_Base {
     // If Profit then UnrealizedPnl = UnrealizedPnl * pnlFactor
     // UnrealizedPnl = (100,000 * (2,000 - 1,600))/1,600 = 25,000 in Profit
     // UnrealizedPnl = 25,000 * 0.8 = 20,000
-    // UnrealizedPnl = 20,000 - 5 = 19,995
+    // UnrealizedPnl = 20,000 = 19,995
+    // UnrealizedFee = 5
+    // Equity = 20,000 - 5 = 19,995
 
     assertEq(calculator.getEquity(ALICE, 0, 0), 19_995 * 1e30);
   }
@@ -133,6 +135,8 @@ contract Calculator_Equity is Calculator_Base {
 
     // Equity = Collateral value + UnrealizedPnl
     // Equity = 56_000 + (-12_500) = 43_500
+    // Equity = 43,500
+    // UnrealizedFee = 5
     // Equity = 43,500 - 5 = 43,495
     assertEq(calculator.getEquity(ALICE, 0, 0), 43_495 * 1e30);
   }

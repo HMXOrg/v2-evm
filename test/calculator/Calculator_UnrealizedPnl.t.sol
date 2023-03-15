@@ -61,7 +61,8 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
     // UnrealizedPnl = ABS(positionSize - priceDelta)/avgEntryPrice
     // If Profit then UnrealizedPnl = UnrealizedPnl * pnlFactor
     // UnrealizedPnl = (100,000 * (2,000 - 1,600))/1,600 = 25,000 in Profit
-    // UnrealizedPnl = 25,000 * 0.8 = 20,000 - 5 = 19,995
+    // UnrealizedPnl = 25,000 * 0.8 = 20,000
+    // UnrealizedFee = 5
     {
       (int256 unrealizedPnl, int256 unrealizedFee) = calculator.getUnrealizedPnlAndFee(ALICE, 0, 0);
       assertEq(unrealizedPnl, 20_000 * 1e30);
@@ -97,7 +98,8 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
     // UnrealizedPnl = ABS(positionSize - priceDelta)/avgEntryPrice
     // If Profit then UnrealizedPnl = UnrealizedPnl * pnlFactor
     // UnrealizedPnl = (-100,000 * (1,600 - 1,400))/1,600 = 12,500 in Profit
-    // UnrealizedPnl = 12,500 * 0.8 = 10,000 - 5 = 9,995
+    // UnrealizedPnl = 12,500 * 0.8 = 10,000
+    // UnrealizedFee = 5
     {
       (int256 unrealizedPnl, int256 unrealizedFee) = calculator.getUnrealizedPnlAndFee(ALICE, 0, 0);
       assertEq(unrealizedPnl, 10_000 * 1e30);
@@ -133,7 +135,8 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
     // UnrealizedPnl = ABS(positionSize - priceDelta)/avgEntryPrice
     // If Profit then UnrealizedPnl = UnrealizedPnl * pnlFactor
     // UnrealizedPnl = -1 * (100,000 * (2,000 - 1,600))/1,600 = -12,500 in Loss
-    // UnrealizedPnl = -12,500 - 5 = -12,505
+    // UnrealizedPnl = -12,500
+    // UnrealizedFee = 5
     {
       (int256 unrealizedPnl, int256 unrealizedFee) = calculator.getUnrealizedPnlAndFee(ALICE, 0, 0);
       assertEq(unrealizedPnl, -12_500 * 1e30);
@@ -169,7 +172,8 @@ contract Calculator_UnrealizedPnl is Calculator_Base {
     // UnrealizedPnl = ABS(positionSize - priceDelta)/avgEntryPrice
     // If Profit then UnrealizedPnl = UnrealizedPnl * pnlFactor
     // UnrealizedPnl = (-100,000 * (1,600 - 1,800))/1,600 = 12,500 in Loss
-    // UnrealizedPnl = -12,500 - 5 = 12,505
+    // UnrealizedPnl = -12,500
+    // UnrealizedFee = 5
     {
       (int256 unrealizedPnl, int256 unrealizedFee) = calculator.getUnrealizedPnlAndFee(ALICE, 0, 0);
       assertEq(unrealizedPnl, -12_500 * 1e30);

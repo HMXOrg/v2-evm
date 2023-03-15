@@ -11,6 +11,8 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 //   - Try msg.value != minExecutionFee
 //   - Try cancelOrder not owner
 //   - Try cancelOrder with uncreated order
+//   - Try addLiquidity BadAmount
+//   - Try addLiquidity CircuitBreaker
 
 // - success
 //   - Try executeOrder_createAddLiquidityOrder
@@ -63,6 +65,42 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     liquidityHandler.createAddLiquidityOrder{ value: 3 ether }(address(weth), 1 ether, 1 ether, 5 ether, false);
   }
 
+  function test_revert_plpCircuitBreaker() external {
+    mockLiquidityService.setPlpEnabled(false);
+
+    vm.deal(ALICE, 5 ether); //deal with out of gas
+    wbtc.mint(ALICE, 1 ether);
+
+    vm.startPrank(ALICE);
+    wbtc.approve(address(liquidityHandler), type(uint256).max);
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
+    uint256 _latestOrderIndex = liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
+      address(wbtc),
+      1 ether,
+      1 ether,
+      5 ether,
+      false
+    );
+    vm.stopPrank();
+  }
+
+  function test_revert_badAmount() external {
+    vm.deal(ALICE, 5 ether); //deal with out of gas
+    wbtc.mint(ALICE, 1 ether);
+
+    vm.startPrank(ALICE);
+    wbtc.approve(address(liquidityHandler), type(uint256).max);
+    vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
+    uint256 _latestOrderIndex = liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
+      address(wbtc),
+      0,
+      0,
+      5 ether,
+      false
+    );
+    vm.stopPrank();
+  }
+
   /**
    * CORRECTNESS
    */
@@ -112,6 +150,6 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[_latestOrderIndex].amount, 1 ether, "Alice Order.amount");
     assertEq(_beforeExecuteOrders[_latestOrderIndex].minOut, 1 ether, "Alice Order.minOut");
     assertEq(_beforeExecuteOrders[_latestOrderIndex].isAdd, true, "Alice Order.isAdd");
-    assertEq(_beforeExecuteOrders[_latestOrderIndex].shouldUnwrap, false, "Alice Order.shouldUnwrap");
+    assertEq(_beforeExecuteOrders[_latestOrderIndex].isNativeOut, false, "Alice Order.isNativeOut");
   }
 }

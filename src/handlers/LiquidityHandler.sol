@@ -47,7 +47,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 amountIn,
     uint256 minOut,
     uint256 executionFee,
-    bool shouldUnwrap,
+    bool isNativeOut,
     uint256 orderIndex
   );
   event LogExecuteLiquidityOrder(
@@ -67,7 +67,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   address liquidityService; //liquidityService
   address pyth; //pyth
   uint256 public executionOrderFee; // executionOrderFee in tokenAmount unit
-  bool isRefund; // order is refund (prevent direct call refund()
   bool isExecuting; // order is executing (prevent direct call executeLiquidity()
 
   uint256 public nextExecutionOrderIndex;
@@ -121,6 +120,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 _executionFee,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _latestOrderIndex) {
+    LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
+
     //1. convert native to WNative (including executionFee)
     _transferInETH();
 
@@ -143,7 +144,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
         minOut: _minOut,
         isAdd: true,
         executionFee: _executionFee,
-        shouldUnwrap: false
+        isNativeOut: _shouldWrap
       })
     );
 
@@ -158,14 +159,16 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @param _amountIn amount token in (based on decimals)
   /// @param _minOut minAmountOut
   /// @param _executionFee The execution fee of order
-  /// @param _shouldUnwrap in case of user need native token
+  /// @param _isNativeOut in case of user need native token
   function createRemoveLiquidityOrder(
     address _tokenOut,
     uint256 _amountIn,
     uint256 _minOut,
     uint256 _executionFee,
-    bool _shouldUnwrap
+    bool _isNativeOut
   ) external payable nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _latestOrderIndex) {
+    LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
+
     //convert native to WNative (including executionFee)
     _transferInETH();
 
@@ -187,7 +190,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
         minOut: _minOut,
         isAdd: false,
         executionFee: _executionFee,
-        shouldUnwrap: _shouldUnwrap
+        isNativeOut: _isNativeOut
       })
     );
 
@@ -199,7 +202,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       _amountIn,
       _minOut,
       _executionFee,
-      _shouldUnwrap,
+      _isNativeOut,
       _latestOrderIndex
     );
 
@@ -217,43 +220,41 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /// @param _orderIndex Order Index which could be retrieved from lastOrderIndex(address) beware in case of index is 0`
   function _cancelLiquidityOrder(address _account, uint256 _orderIndex) internal {
     if (
-      _orderIndex >= nextExecutionOrderIndex &&
-      liquidityOrders.length > _orderIndex &&
-      _account == liquidityOrders[_orderIndex].account
+      _orderIndex < nextExecutionOrderIndex || // orderIndex to execute must >= nextExecutionOrderIndex
+      liquidityOrders.length <= _orderIndex // orders length must > orderIndex
     ) {
-      LiquidityOrder memory order = liquidityOrders[_orderIndex];
-      isRefund = true;
-      _userRefund(order);
-      delete liquidityOrders[_orderIndex];
-
-      emit LogCancelLiquidityOrder(payable(_account), order.token, order.amount, order.minOut, order.isAdd);
-      isRefund = false;
-    } else {
       revert ILiquidityHandler_NoOrder();
     }
-  }
 
-  /// @notice Refund when cancel order, execution add failed
-  /// @param _order order to execute
-  function _userRefund(LiquidityOrder memory _order) internal {
-    try this.refund(_order) {} catch Error(string memory) {
-      revert ILiquidityHandler_InsufficientRefund();
+    if (_account != liquidityOrders[_orderIndex].account) {
+      revert ILiquidityHandler_NotOrderOwner();
     }
+
+    LiquidityOrder memory order = liquidityOrders[_orderIndex];
+    delete liquidityOrders[_orderIndex];
+    _refund(order);
+
+    emit LogCancelLiquidityOrder(payable(_account), order.token, order.amount, order.minOut, order.isAdd);
   }
 
   /// @notice refund order
   /// @dev this method has not be called directly
   /// @param _order order to execute
   // slither-disable-next-line
-  function refund(LiquidityOrder memory _order) external {
-    if (isRefund) {
-      if (_order.token == ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()) {
+  function _refund(LiquidityOrder memory _order) internal {
+    if (_order.amount == 0) {
+      revert ILiquidityHandler_NoOrder();
+    }
+    address _plp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
+
+    if (_order.isAdd) {
+      if (_order.isNativeOut) {
         _transferOutETH(_order.amount, _order.account);
       } else {
         IERC20(_order.token).safeTransfer(_order.account, _order.amount);
       }
     } else {
-      revert ILiquidityHandler_NotRefundState();
+      IERC20(_plp).safeTransfer(_order.account, _order.amount);
     }
   }
 
@@ -290,7 +291,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
       // refund in case of order updatePythFee > executionFee
       if (_updateFee > _order.executionFee) {
-        _userRefund(_order);
+        _refund(_order);
       } else {
         isExecuting = true;
 
@@ -304,8 +305,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
             result
           );
         } catch Error(string memory) {
-          //refund in case of slipage
-          _userRefund(_order);
+          //refund in case of revert as message
+          _refund(_order);
+        } catch (bytes memory) {
+          //refund in case of revert as bytes
+          _refund(_order);
         }
         isExecuting = false;
       }
@@ -339,7 +343,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
           _order.minOut
         );
 
-        if (_order.shouldUnwrap) {
+        if (_order.isNativeOut) {
           _transferOutETH(amountOut, payable(_order.account));
         } else {
           IERC20(_order.token).safeTransfer(_order.account, amountOut);

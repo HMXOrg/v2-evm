@@ -63,7 +63,6 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
         inverse: false
       })
     );
-    // @todo - after integrate with inverse config then price should be change to USDJPY
     assetPythPriceDatas.push(
       AssetPythPriceData({
         assetId: jpyAssetId,
@@ -104,7 +103,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       _data = assetPythPriceDatas[i];
 
       // set PythId
-      pythAdapter.setConfig(_data.assetId, _data.priceId, _data.inverse);
+      pythAdapter.setConfig(_data.assetId, _data.assetId, _data.inverse);
+
       // set UpdatePriceFeed
       initialPriceFeedDatas.push(_createPriceFeedUpdateData(_data.assetId, _data.price));
 
@@ -141,7 +141,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     return _newDatas;
   }
 
-  function _createPriceFeedUpdateData(bytes32 _assetId, int64 _price) internal returns (bytes memory) {
+  function _createPriceFeedUpdateData(bytes32 _assetId, int64 _price) internal view returns (bytes memory) {
     int64 pythDecimals;
 
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
@@ -154,7 +154,6 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       }
     }
 
-    int64 _pythDecimalPow = int64(10) ** uint64(-pythDecimals);
     (bytes32 _pythPriceId, ) = pythAdapter.configs(_assetId);
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
       _pythPriceId,

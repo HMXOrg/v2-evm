@@ -34,7 +34,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // console.log(priceData);
   await (
     await liquidityHandler.executeOrder(ethers.constants.MaxUint256, deployer.address, priceData, {
-      gasLimit: 20000000,
+      gasLimit: 200000000,
     })
   ).wait();
   console.log("Execute Liquidity Order Success!");

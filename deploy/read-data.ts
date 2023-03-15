@@ -1,7 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { Calculator__factory, OracleMiddleware__factory, VaultStorage__factory, ERC20__factory } from "../typechain";
+import { Calculator__factory, OracleMiddleware__factory, VaultStorage__factory, ERC20__factory, PLPv2__factory } from "../typechain";
 import { getConfig } from "./utils/config";
 
 const BigNumber = ethers.BigNumber;
@@ -44,8 +44,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, deployer);
   const calculator = Calculator__factory.connect(config.calculator, deployer);
   const oracle = OracleMiddleware__factory.connect(config.oracle.middleware, deployer)
+  const plp = PLPv2__factory.connect(config.tokens.plp, deployer)
 
-  const traderBalances = await vaultStorage.traderBalances(address, config.tokens.usdc)
+  const traderBalancesUsdc = await vaultStorage.traderBalances(address, config.tokens.usdc)
+  const traderBalancesUsdt = await vaultStorage.traderBalances(address, config.tokens.usdt)
+  const traderBalancesWbtc = await vaultStorage.traderBalances(address, config.tokens.wbtc)
+  const traderBalancesEth = await vaultStorage.traderBalances(address, config.tokens.weth)
+  const traderBalancesDai = await vaultStorage.traderBalances(address, config.tokens.dai)
+
+
+
   const freeCollateral = await calculator.getFreeCollateral(address, 0, "0x0000000000000000000000000000000000000000000000000000000000000000")
   const equity = await calculator.getEquity(address, 0, "0x0000000000000000000000000000000000000000000000000000000000000000")
   const usdcPrice = (await oracle.getLatestPrice(usdcAssetId, false))._price;
@@ -53,17 +61,34 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const wbtcPrice = (await oracle.getLatestPrice(wbtcAssetId, false))._price;
   const daiPrice = (await oracle.getLatestPrice(daiAssetId, false))._price;
   const ethPrice = (await oracle.getLatestPrice(ethAssetId, false))._price;
+  const plpBalance = await plp.balanceOf(deployer.address)
 
-  console.log("usdcPrice", ethers.utils.formatUnits(usdcPrice, 30));
-  console.log("usdtPrice", ethers.utils.formatUnits(usdtPrice, 30));
-  console.log("wbtcPrice", ethers.utils.formatUnits(wbtcPrice, 30));
-  console.log("daiPrice", ethers.utils.formatUnits(daiPrice, 30));
-  console.log("ethPrice", ethers.utils.formatUnits(ethPrice, 30));
-
-  console.log("traderBalances", ethers.utils.formatUnits(traderBalances, 6));
+  console.log("USDCPrice", ethers.utils.formatUnits(usdcPrice, 30));
+  console.log("USDTPrice", ethers.utils.formatUnits(usdtPrice, 30));
+  console.log("WBTCPrice", ethers.utils.formatUnits(wbtcPrice, 30));
+  console.log("DAIPrice", ethers.utils.formatUnits(daiPrice, 30));
+  console.log("ETHPrice", ethers.utils.formatUnits(ethPrice, 30));
+  console.log("=====================");
+  console.log("traderBalancesUSDC", ethers.utils.formatUnits(traderBalancesUsdc, 6));
+  console.log("traderBalancesUSDT", ethers.utils.formatUnits(traderBalancesUsdt, 6));
+  console.log("traderBalancesWBTC", ethers.utils.formatUnits(traderBalancesWbtc, 8));
+  console.log("traderBalancesETH", ethers.utils.formatUnits(traderBalancesEth, 18));
+  console.log("traderBalancesDAI", ethers.utils.formatUnits(traderBalancesDai, 18));
+  console.log("=====================");
   console.log("equity", ethers.utils.formatUnits(equity, 30));
   console.log("freeCollateral", ethers.utils.formatUnits(freeCollateral, 30));
-
+  console.log("=====================");
+  console.log("plpBalance", ethers.utils.formatUnits(plpBalance, 18));
+  console.log("plpTotalSupply", ethers.utils.formatUnits(await plp.totalSupply(), 18));
+  console.log("plpLiquidity USDC", ethers.utils.formatUnits(await vaultStorage.plpLiquidity(config.tokens.usdc), 6));
+  console.log("plpLiquidity USDT", ethers.utils.formatUnits(await vaultStorage.plpLiquidity(config.tokens.usdt), 6));
+  console.log("plpLiquidity WBTC", ethers.utils.formatUnits(await vaultStorage.plpLiquidity(config.tokens.wbtc), 8));
+  console.log("plpLiquidity ETH", ethers.utils.formatUnits(await vaultStorage.plpLiquidity(config.tokens.weth), 18));
+  console.log("=========platform fee============");
+  console.log("fees USDC", ethers.utils.formatUnits(await vaultStorage.fees(config.tokens.usdc), 6));
+  console.log("fees USDT", ethers.utils.formatUnits(await vaultStorage.fees(config.tokens.usdt), 6));
+  console.log("fees WBTC", ethers.utils.formatUnits(await vaultStorage.fees(config.tokens.wbtc), 8));
+  console.log("fees ETH", ethers.utils.formatUnits(await vaultStorage.fees(config.tokens.weth), 18));
 };
 
 export default func;

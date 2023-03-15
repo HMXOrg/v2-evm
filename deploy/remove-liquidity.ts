@@ -20,12 +20,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`Creating Remove Liquidity Order...`);
   await (
     await liquidityHandler.createRemoveLiquidityOrder(
-      config.tokens.usdc,
-      ethers.utils.parseUnits("0.1", 8),
+      config.tokens.wbtc,
+      ethers.utils.parseUnits("2474.14000948", 18),
       0,
       executionFee,
       false,
-      { value: executionFee, gasLimit: 2000000 }
+      { value: executionFee, gasLimit: 20000000 }
     )
   ).wait();
   console.log("Create Remove Liquidity Order Success!");

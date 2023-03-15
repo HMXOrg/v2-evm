@@ -36,7 +36,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await (
     await handler.sell(deployer.address, 0, 0, ethers.utils.parseUnits("1", 30), config.tokens.usdc, priceData, {
       value: updateFee,
-      gasLimit: 21000000,
+      gasLimit: 210000000,
     })
   ).wait();
   console.log("Market Sell Success!");

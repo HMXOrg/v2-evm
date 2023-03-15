@@ -31,9 +31,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const updateFee = await pyth.getUpdateFee(priceData);
   console.log("Market Buy...");
   await (
-    await handler.buy(deployer.address, 0, 0, ethers.utils.parseUnits("1000", 30), config.tokens.usdc, priceData, {
+    await handler.buy(deployer.address, 0, 0, ethers.utils.parseUnits("1000", 30), config.tokens.usdc, [], {
       value: updateFee,
-      gasLimit: 10000000,
+      gasLimit: 300000000,
     })
   ).wait();
   console.log("Market Buy Success!");

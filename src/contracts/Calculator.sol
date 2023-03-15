@@ -536,7 +536,8 @@ contract Calculator is Owned, ICalculator {
           _var.absSize,
           _var.isLong,
           _var.priceE30,
-          _var.position.avgEntryPriceE30
+          _var.position.avgEntryPriceE30,
+          _var.position.lastIncreaseTimestamp
         );
         if (_var.isProfit) {
           _unrealizedPnlE30 += int256((pnlFactorBps * _var.delta) / BPS);

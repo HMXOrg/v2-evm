@@ -19,10 +19,6 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     _setUpAssetClassConfigs();
     // Setup Liquidation config for global used
     _setUpLiquidationConfig();
-
-    configStorage.setCalculator(address(calculator));
-    configStorage.setPLP(address(plpV2));
-    configStorage.setWeth(address(weth));
   }
 
   function _setLiquidityConfig() private {
@@ -31,7 +27,7 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
         depositFeeRateBPS: 30, // 0.3%
         withdrawFeeRateBPS: 30, // 0.3%
         maxPLPUtilizationBPS: 8000, // 80%
-        plpTotalTokenWeight: 1e18,
+        plpTotalTokenWeight: 0,
         plpSafetyBufferBPS: 2000, // 20%
         taxFeeRateBPS: 50, // 0.5%
         flashLoanFeeRateBPS: 0, // @todo - TBD

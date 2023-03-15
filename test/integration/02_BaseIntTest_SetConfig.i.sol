@@ -19,6 +19,8 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     _setUpAssetClassConfigs();
     // Setup Liquidation config for global used
     _setUpLiquidationConfig();
+
+    _setUpPnlFactor();
   }
 
   function _setLiquidityConfig() private {
@@ -74,5 +76,9 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     });
 
     configStorage.setLiquidationConfig(_liquidationConfig);
+  }
+
+  function _setUpPnlFactor() private {
+    configStorage.setPnlFactor(0.8 * 1e4);
   }
 }

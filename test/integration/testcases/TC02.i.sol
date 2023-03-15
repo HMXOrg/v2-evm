@@ -126,14 +126,13 @@ contract TC02 is BaseIntTest_WithActions {
     // | WETH  |      1,500 |      1,500.075 | 300      | 0         |  3,000,000 | 0      | 300 - 0 = +300       |      0 | 0.0001   | 1,500  | 1,500.15 |
     // ---------------------------------------------------------------------------------------------------------------------------------------------------
 
-    // ------------------------------------------------------------------------------------------
-    // | Position's Info                                                                        |
-    // | -------------------------------------------------------------------------------------- |
-    // | Sub-account | Market | Direction | Size | IMR | MMR | Avg price   | OI **    | Reserve |
-    // | ----------- | ------ | --------- | ---- | --- | --- | ----------- | -------- | ------- |
-    // | ALICE-0     | WETH   | LONG      |  300 |   3 | 1.5 | 1,500.075   |  0.19999 |      27 |
-    // ------------------------------------------------------------------------------------------
-    // ** now OI calculation using adaptive price, correct way is use real price
+    // ---------------------------------------------------------------------------------------
+    // | Position's Info                                                                     |
+    // | ----------------------------------------------------------------------------------- |
+    // | Sub-account | Market | Direction | Size | IMR | MMR | Avg price   | OI    | Reserve |
+    // | ----------- | ------ | --------- | ---- | --- | --- | ----------- | ----- | ------- |
+    // | ALICE-0     | WETH   | LONG      |  300 |   3 | 1.5 | 1,500.075   |  0.2  |      27 |
+    // ---------------------------------------------------------------------------------------
 
     // -----------------------------------------------------
     // | Sub-account's Status                              |
@@ -143,31 +142,28 @@ contract TC02 is BaseIntTest_WithActions {
     // | ALICE-0     |      3 |    1.5 |               160 |
     // -----------------------------------------------------
 
-    // Check position
-    int256 _expectedPositionSize = int256(300 * DOLLAR);
-    uint256 _expectedAvgPrice = (1_500_075 * DOLLAR) / 1e3; // 1,500.075
-    uint256 _expectedOI = 0.19999 * 1e8; // @todo - fix calculation should be 0.2
-
+    // Assert position
     assertPositionInfoOf({
       _subAccount: _aliceSubAccount0,
       _marketIndex: wethMarketIndex,
-      _positionSize: _expectedPositionSize,
-      _avgPrice: _expectedAvgPrice,
-      _openInterest: _expectedOI,
+      _positionSize: int256(300 * DOLLAR),
+      _avgPrice: (1_500_075 * DOLLAR) / 1e3, // 1,500.075
+      _openInterest: 0.2 * 1e8,
       _reserveValue: 27 * DOLLAR
     });
 
-    // Market
-    assertMarketLongPosition(wethMarketIndex, uint256(_expectedPositionSize), _expectedAvgPrice, _expectedOI);
+    // Assert Market
+    assertMarketLongPosition(wethMarketIndex, 300 * DOLLAR, (1_500_075 * DOLLAR) / 1e3, 0.2 * 1e8);
     assertMarketShortPosition(wethMarketIndex, 0, 0, 0);
 
+    // Assert AssetClass
     // Asset class check crypto
     assertAssetClassTotalReserved(1, 27 * DOLLAR);
     // prove not impact another asset class
     assertAssetClassTotalReserved(2, 0);
     assertAssetClassTotalReserved(3, 0);
 
-    // Global
+    // Assert Global
     assertGlobalTotalReserved(27 * DOLLAR);
 
     //   - alice withdraw 200 USD - revert

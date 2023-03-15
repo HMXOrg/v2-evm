@@ -151,6 +151,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
       // Then we unwrap the wNative token. The receiving amount should be the exact same as _amount. (No fee deducted when withdraw)
       IWNative(_token).withdraw(_amount);
       // Finally, transfer those native token right to user.
+      // slither-disable-next-line arbitrary-send-eth
       payable(msg.sender).transfer(_amount);
     } else {
       // Withdraw _token straight to the user

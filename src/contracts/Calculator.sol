@@ -457,25 +457,28 @@ contract Calculator is Owned, ICalculator {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
 
-    // Calculate unrealized PnL on opening trader's position(s)
-    int256 _unrealizedPnlValueE30 = getUnrealizedPnl(_subAccount, _limitPriceE30, _limitAssetId);
+    // Calculate unrealized PnL and unrelized fee
+    (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
+      _subAccount,
+      _limitPriceE30,
+      _limitAssetId
+    );
 
-    // Calculate Borrowing fee on opening trader's position(s)
-    // @todo - calculate borrowing fee
-    // uint256 borrowingFeeE30 = getBorrowingFee(_subAccount);
-
-    // @todo - calculate funding fee
-    // uint256 fundingFeeE30 = getFundingFee(_subAccount);
-
-    // Sum all asset's values
+    // Calculate equity
     _equityValueE30 += int256(_collateralValueE30);
     _equityValueE30 += _unrealizedPnlValueE30;
-
-    // @todo - include borrowing and funding fee
-    // _equityValueE30 -= borrowingFeeE30;
-    // _equityValueE30 -= fundingFeeE30;
+    _equityValueE30 -= _unrealizedFeeValueE30;
 
     return _equityValueE30;
+  }
+
+  struct GetUnrealizedPnlAndFee {
+    PerpStorage.Position position;
+    uint256 absSize;
+    bool isLong;
+    uint256 priceE30;
+    bool isProfit;
+    uint256 delta;
   }
 
   // @todo integrate realizedPnl Value
@@ -486,79 +489,80 @@ contract Calculator is Owned, ICalculator {
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _unrealizedPnlE30 PnL value after deducted by collateral factor.
-  function getUnrealizedPnl(
+  function getUnrealizedPnlAndFee(
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (int256 _unrealizedPnlE30) {
+  ) public view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
     // Get all trader's opening positions
-    PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    PerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+
+    ConfigStorage.MarketConfig memory _marketConfig;
+    PerpStorage.GlobalMarket memory _globalMarket;
+    uint256 pnlFactorBps = ConfigStorage(configStorage).pnlFactorBPS();
+    uint256 liquidationFee = ConfigStorage(configStorage).getLiquidationConfig().liquidationFeeUSDE30;
+
+    GetUnrealizedPnlAndFee memory _var;
+    uint256 _len = _positions.length;
 
     // Loop through all trader's positions
-    for (uint256 i; i < _traderPositions.length; ) {
-      PerpStorage.Position memory _position = _traderPositions[i];
-      bool _isLong = _position.positionSizeE30 > 0 ? true : false;
-
-      if (_position.positionSizeE30 == 0) {
-        unchecked {
-          ++i;
-        }
-        // Ignore closed position
-        continue;
-      }
-      if (_position.avgEntryPriceE30 == 0) revert ICalculator_InvalidAveragePrice();
+    for (uint256 i; i < _len; ) {
+      _var.position = _positions[i];
+      _var.absSize = abs(_var.position.positionSizeE30);
+      _var.isLong = _var.position.positionSizeE30 > 0;
 
       // Get market config according to opening position
-      ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(
-        _position.marketIndex
-      );
+      _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_var.position.marketIndex);
+      _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_var.position.marketIndex);
 
       // Check to overwrite price
-      uint256 _priceE30;
       if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
-        _priceE30 = _limitPriceE30;
+        _var.priceE30 = _limitPriceE30;
       } else {
-        PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(
-          _position.marketIndex
-        );
         // @todo - validate price age
-        (_priceE30, , , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+        (_var.priceE30, , , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
-          !_isLong, // if current position is SHORT position, then we use max price
+          !_var.isLong, // if current position is SHORT position, then we use max price
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
-          -_position.positionSizeE30,
+          -_var.position.positionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
       }
 
-      // Calculate for priceDelta
-      uint256 _priceDeltaE30;
-      unchecked {
-        _priceDeltaE30 = _position.avgEntryPriceE30 > _priceE30
-          ? _position.avgEntryPriceE30 - _priceE30
-          : _priceE30 - _position.avgEntryPriceE30;
+      {
+        (_var.isProfit, _var.delta) = _getDelta(
+          _var.absSize,
+          _var.isLong,
+          _var.priceE30,
+          _var.position.avgEntryPriceE30
+        );
+        if (_var.isProfit) {
+          _unrealizedPnlE30 += int256((pnlFactorBps * _var.delta) / BPS);
+        } else {
+          _unrealizedPnlE30 -= int256(_var.delta);
+        }
       }
 
-      int256 _delta = (_position.positionSizeE30 * int(_priceDeltaE30)) / int(_position.avgEntryPriceE30);
-
-      if (_isLong) {
-        _delta = _priceE30 > _position.avgEntryPriceE30 ? _delta : -_delta;
-      } else {
-        _delta = _priceE30 < _position.avgEntryPriceE30 ? -_delta : _delta;
+      {
+        _unrealizedFeeE30 += int256(
+          getBorrowingFee(_marketConfig.assetClass, _var.position.reserveValueE30, _var.position.entryBorrowingRate)
+        );
+        _unrealizedFeeE30 += getFundingFee(
+          _var.position.marketIndex,
+          _var.position.positionSizeE30 > 0,
+          _var.position.positionSizeE30,
+          _var.position.entryFundingRate
+        );
+        _unrealizedFeeE30 += int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
+        _unrealizedFeeE30 += int256(liquidationFee);
       }
-
-      // If profit then deduct PnL with collateral factor.
-      _delta = _delta > 0 ? (int32(ConfigStorage(configStorage).pnlFactorBPS()) * _delta) / int32(BPS) : _delta;
-
-      // Accumulative current unrealized PnL
-      _unrealizedPnlE30 += _delta;
 
       unchecked {
         ++i;
       }
     }
 
-    return _unrealizedPnlE30;
+    return (_unrealizedPnlE30, _unrealizedFeeE30);
   }
 
   /// @notice Calculate collateral tokens to value from trader's sub account.
@@ -877,7 +881,7 @@ contract Calculator is Owned, ICalculator {
     bool _isLong,
     int256 _size,
     int256 _entryFundingRate
-  ) external view returns (int256 fundingFee) {
+  ) public view returns (int256 fundingFee) {
     if (_size == 0) return 0;
     uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
 
@@ -906,7 +910,7 @@ contract Calculator is Owned, ICalculator {
     uint8 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _entryBorrowingRate
-  ) external view returns (uint256 borrowingFee) {
+  ) public view returns (uint256 borrowingFee) {
     // Get the global asset class.
     PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
@@ -1008,5 +1012,9 @@ contract Calculator is Owned, ICalculator {
 
   function _min(int256 a, int256 b) internal pure returns (int256) {
     return a < b ? a : b;
+  }
+
+  function abs(int256 x) private pure returns (uint256) {
+    return uint256(x >= 0 ? x : -x);
   }
 }

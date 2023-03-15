@@ -52,10 +52,19 @@ contract Calculator is Owned, ICalculator {
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value in E18 format
-  function getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) public view returns (uint256) {
+  function getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) external view returns (uint256) {
+    return _getAUME30(_isMaxPrice, _limitPriceE30, _limitAssetId);
+  }
+
+  /// @notice _getAUM in E30
+  /// @param _isMaxPrice Use Max or Min Price
+  /// @param _limitPriceE30 Price to be overwritten to a specified asset
+  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
+  /// @return PLP Value in E18 format
+  function _getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view returns (uint256) {
     // @todo -  pendingBorrowingFeeE30
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
-    uint256 pendingBorrowingFeeE30 = 0;
+    uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
     int256 pnlE30 = _getGlobalPNLE30();
     uint256 aum = _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId) + pendingBorrowingFeeE30;
     if (pnlE30 < 0) {
@@ -71,13 +80,40 @@ contract Calculator is Owned, ICalculator {
     return aum;
   }
 
+  /// @notice _getPendingBorrowingFeeE30 This internal function calculates the total pending borrowing fee from all asset classes.
+  /// @return total pending borrowing fee in e30 format
+  function _getPendingBorrowingFeeE30() internal view returns (uint256) {
+    // SLOAD
+    PerpStorage _perpStorage = PerpStorage(perpStorage);
+    uint256 _len = ConfigStorage(configStorage).getAssetClassConfigsLength();
+
+    uint256 _pendingBorrowingFee; // sum from each asset class
+    for (uint256 i; i < _len; ) {
+      PerpStorage.GlobalAssetClass memory _assetClassState = _perpStorage.getGlobalAssetClassByIndex(i);
+
+      // Formula:
+      // pendingBorrowingFee = totalBorrowingFee - collectedBorrowingFee
+      // totalBorrowingFee = sumBorrowingRate * intervalInSeconds * reserveValue
+      uint256 _assetClasssTotalBorrowingFeeE30 = (_assetClassState.sumBorrowingRate *
+        (block.timestamp - _assetClassState.lastBorrowingTime) *
+        _assetClassState.reserveValueE30) / RATE_PRECISION;
+      _pendingBorrowingFee += _assetClasssTotalBorrowingFeeE30 - _assetClassState.collectedBorrowingFeeE30;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    return _pendingBorrowingFee;
+  }
+
   /// @notice getAUM
   /// @param _isMaxPrice Use Max or Min Price
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value in E18 format
   function getAUM(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) public view returns (uint256) {
-    return getAUME30(_isMaxPrice, _limitPriceE30, _limitAssetId) / 1e12;
+    return _getAUME30(_isMaxPrice, _limitPriceE30, _limitAssetId) / 1e12;
   }
 
   /// @notice GetPLPValue in E30
@@ -909,11 +945,11 @@ contract Calculator is Owned, ICalculator {
     uint256 _entryBorrowingRate
   ) external view returns (uint256 borrowingFee) {
     // Get the global asset class.
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+    PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
     // Calculate borrowing rate.
-    uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
+    uint256 _borrowingRate = _assetClassState.sumBorrowingRate - _entryBorrowingRate;
     // Calculate the borrowing fee based on reserved value, borrowing rate.
     return (_reservedValue * _borrowingRate) / RATE_PRECISION;
   }
@@ -935,23 +971,23 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.AssetClassConfig memory _assetClassConfig = _configStorage.getAssetClassConfigByIndex(
       _assetClassIndex
     );
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+    PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
     // Get the PLP TVL.
     uint256 plpTVL = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
 
     // If block.timestamp not pass the next funding time, return 0.
-    if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
+    if (_assetClassState.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
     // If PLP TVL is 0, return 0.
     if (plpTVL == 0) return 0;
 
     // Calculate the number of funding intervals that have passed since the last borrowing time.
-    uint256 intervals = (block.timestamp - _globalAssetClass.lastBorrowingTime) / _tradingConfig.fundingInterval;
+    uint256 intervals = (block.timestamp - _assetClassState.lastBorrowingTime) / _tradingConfig.fundingInterval;
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
     return
-      (_assetClassConfig.baseBorrowingRateBPS * _globalAssetClass.reserveValueE30 * intervals * RATE_PRECISION) /
+      (_assetClassConfig.baseBorrowingRateBPS * _assetClassState.reserveValueE30 * intervals * RATE_PRECISION) /
       plpTVL /
       BPS;
   }

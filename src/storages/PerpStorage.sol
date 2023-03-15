@@ -81,7 +81,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     return globalMarkets[_marketIndex];
   }
 
-  function getGlobalAssetClassByIndex(uint8 _assetClassIndex) external view returns (GlobalAssetClass memory) {
+  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
     return globalAssetClass[_assetClassIndex];
   }
 

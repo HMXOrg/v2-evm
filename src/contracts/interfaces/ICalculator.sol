@@ -108,6 +108,14 @@ interface ICalculator {
     uint256 _limitPriceE30
   ) external view returns (int256, int256, int256);
 
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastincreaseTimestamp
+  ) external view returns (bool, uint256);
+
   function setOracle(address _oracle) external;
 
   function setVaultStorage(address _address) external;

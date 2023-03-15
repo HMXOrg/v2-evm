@@ -84,7 +84,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   ) internal {
     vm.startPrank(_account);
     _collateralToken.approve(address(crossMarginHandler), _depositAmount);
-    crossMarginHandler.depositCollateral(_account, _subAccountId, address(_collateralToken), _depositAmount);
+    crossMarginHandler.depositCollateral(_subAccountId, address(_collateralToken), _depositAmount, false);
     vm.stopPrank();
   }
 
@@ -102,13 +102,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
-    crossMarginHandler.withdrawCollateral(
-      _account,
-      _subAccountId,
-      address(_collateralToken),
-      _withdrawAmount,
-      _priceData
-    );
+    crossMarginHandler.withdrawCollateral(_subAccountId, address(_collateralToken), _withdrawAmount, _priceData, false);
   }
 
   /**
@@ -167,6 +161,11 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     );
   }
 
+  function liquidate(address _subAccount, bytes[] memory _priceData) internal {
+    vm.prank(BOT);
+    botHandler.liquidate(_subAccount, _priceData);
+  }
+
   /**
    * COMMON FUNCTION
    */
@@ -174,5 +173,13 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
+  }
+
+  function getPositionId(
+    address _primary,
+    uint8 _subAcountIndex,
+    uint256 _marketIndex
+  ) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(getSubAccount(_primary, _subAcountIndex), _marketIndex));
   }
 }

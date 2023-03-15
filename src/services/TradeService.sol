@@ -30,6 +30,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     bool isLong;
     bool isNewPosition;
     bool currentPositionIsLong;
+    uint256 adaptivePriceE30;
     uint256 priceE30;
     int32 exponent;
   }
@@ -193,8 +194,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint8 _marketStatus;
 
       // Get Price market.
-      (_vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(_configStorage.oracle())
-        .getLatestAdaptivePriceWithMarketStatus(
+      (_vars.adaptivePriceE30, _vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(
+        _configStorage.oracle()
+      ).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _vars.isLong, // if current position is SHORT position, then we use max price
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
@@ -223,7 +225,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // if the position size is zero, set the average price to the current price (new position)
     if (_vars.isNewPosition) {
-      _vars.position.avgEntryPriceE30 = _vars.priceE30;
+      _vars.position.avgEntryPriceE30 = _vars.adaptivePriceE30;
       _vars.position.primaryAccount = _primaryAccount;
       _vars.position.subAccountId = _subAccountId;
       _vars.position.marketIndex = _marketIndex;
@@ -235,8 +237,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
         abs(_vars.position.positionSizeE30),
         _vars.isLong,
         _absSizeDelta,
-        _vars.priceE30,
-        _vars.position.avgEntryPriceE30
+        _vars.adaptivePriceE30,
+        _vars.position.avgEntryPriceE30,
+        _vars.position.lastIncreaseTimestamp
       );
     }
 
@@ -285,7 +288,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = _calculator.getFreeCollateral(
         _vars.subAccount,
-        _vars.priceE30,
+        _limitPriceE30,
         _marketConfig.assetId
       );
 
@@ -309,8 +312,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
       // update global market state
       if (_vars.isLong) {
         uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
-          ? _vars.priceE30
-          : _calculator.calculateLongAveragePrice(_globalMarket, _vars.priceE30, _sizeDelta, 0);
+          ? _vars.adaptivePriceE30
+          : _calculator.calculateLongAveragePrice(_globalMarket, _vars.adaptivePriceE30, _sizeDelta, 0);
 
         _perpStorage.updateGlobalLongMarketById(
           _marketIndex,
@@ -321,8 +324,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
       } else {
         // to increase SHORT position sizeDelta should be negative
         uint256 _nextAvgPrice = _globalMarket.shortPositionSize == 0
-          ? _vars.priceE30
-          : _calculator.calculateShortAveragePrice(_globalMarket, _vars.priceE30, _sizeDelta, 0);
+          ? _vars.adaptivePriceE30
+          : _calculator.calculateShortAveragePrice(_globalMarket, _vars.adaptivePriceE30, _sizeDelta, 0);
 
         _perpStorage.updateGlobalShortMarketById(
           _marketIndex,
@@ -393,7 +396,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_vars.priceE30, , _lastPriceUpdated, _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
+      (_vars.priceE30, , , _lastPriceUpdated, _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
@@ -463,7 +466,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     {
       uint8 _marketStatus;
 
-      (_vars.priceE30, , , _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
+      (_vars.priceE30, , , , _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
@@ -573,11 +576,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
     int256 _realizedPnl;
     {
       _vars.avgEntryPriceE30 = _vars.position.avgEntryPriceE30;
-      (isProfit, delta) = _getDelta(
+      (isProfit, delta) = calculator.getDelta(
         _vars.absPositionSizeE30,
         _vars.isLongPosition,
         _vars.priceE30,
-        _vars.avgEntryPriceE30
+        _vars.avgEntryPriceE30,
+        _vars.position.lastIncreaseTimestamp
       );
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value
       if (delta >= _vars.position.reserveValueE30) {
@@ -813,55 +817,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     }
   }
 
-  function getDelta(
-    uint256 _size,
-    bool _isLong,
-    uint256 _markPrice,
-    uint256 _averagePrice
-  ) external pure returns (bool, uint256) {
-    return _getDelta(_size, _isLong, _markPrice, _averagePrice);
-  }
-
-  // @todo - remove usage from test
-  // @todo - move to calculator ??
-  // @todo - pass current price here
-  /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
-  /// @param _size The size of the position.
-  /// @param _isLong position direction
-  /// @param _markPrice current market price
-  /// @param _averagePrice The average price of the position.
-  /// @return isProfit A boolean value indicating whether the position is profitable or not.
-  /// @return delta The Profit between the average price and the fixed price, adjusted for the size of the order.
-  function _getDelta(
-    uint256 _size,
-    bool _isLong,
-    uint256 _markPrice,
-    uint256 _averagePrice
-  ) internal pure returns (bool, uint256) {
-    // Check for invalid input: averagePrice cannot be zero.
-    if (_averagePrice == 0) revert ITradeService_InvalidAveragePrice();
-
-    // Calculate the difference between the average price and the fixed price.
-    uint256 priceDelta;
-    unchecked {
-      priceDelta = _averagePrice > _markPrice ? _averagePrice - _markPrice : _markPrice - _averagePrice;
-    }
-
-    // Calculate the delta, adjusted for the size of the order.
-    uint256 delta = (_size * priceDelta) / _averagePrice;
-
-    // Determine if the position is profitable or not based on the averagePrice and the mark price.
-    bool isProfit;
-    if (_isLong) {
-      isProfit = _markPrice > _averagePrice;
-    } else {
-      isProfit = _markPrice < _averagePrice;
-    }
-
-    // Return the values of isProfit and delta.
-    return (isProfit, delta);
-  }
-
   /**
    * Internal functions
    */
@@ -889,10 +844,17 @@ contract TradeService is ReentrancyGuard, ITradeService {
     bool _isLong,
     uint256 _sizeDelta,
     uint256 _markPrice,
-    uint256 _averagePrice
-  ) internal pure returns (uint256) {
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
+  ) internal view returns (uint256) {
     // Get the delta and isProfit value from the _getDelta function
-    (bool isProfit, uint256 delta) = _getDelta(_size, _isLong, _markPrice, _averagePrice);
+    (bool isProfit, uint256 delta) = calculator.getDelta(
+      _size,
+      _isLong,
+      _markPrice,
+      _averagePrice,
+      _lastIncreaseTimestamp
+    );
     // Calculate the next size and divisor
     uint256 nextSize = _size + _sizeDelta;
     uint256 divisor;

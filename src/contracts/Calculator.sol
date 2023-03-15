@@ -9,10 +9,9 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
-
-import { console } from "forge-std/console.sol";
 // Interfaces
 import { ICalculator } from "./interfaces/ICalculator.sol";
+import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
@@ -515,19 +514,21 @@ contract Calculator is Owned, ICalculator {
         _position.marketIndex
       );
 
-      // Long position always use MinPrice. Short position always use MaxPrice
-      bool _isUseMaxPrice = _isLong ? false : true;
-
       // Check to overwrite price
       uint256 _priceE30;
       if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
         _priceE30 = _limitPriceE30;
       } else {
-        // Get price from oracle
+        PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(
+          _position.marketIndex
+        );
         // @todo - validate price age
-        (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+        (_priceE30, , , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
-          _isUseMaxPrice
+          !_isLong, // if current position is SHORT position, then we use max price
+          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          -_position.positionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD
         );
       }
 
@@ -959,9 +960,10 @@ contract Calculator is Owned, ICalculator {
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
-    uint256 _averagePrice
-  ) external pure returns (bool, uint256) {
-    return _getDelta(_size, _isLong, _markPrice, _averagePrice);
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
+  ) external view returns (bool, uint256) {
+    return _getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
   }
 
   // @todo - pass current price here
@@ -976,8 +978,9 @@ contract Calculator is Owned, ICalculator {
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
-    uint256 _averagePrice
-  ) internal pure returns (bool, uint256) {
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
+  ) internal view returns (bool, uint256) {
     // Check for invalid input: averagePrice cannot be zero.
     if (_averagePrice == 0) return (false, 0);
 
@@ -996,6 +999,16 @@ contract Calculator is Owned, ICalculator {
       isProfit = _markPrice > _averagePrice;
     } else {
       isProfit = _markPrice < _averagePrice;
+    }
+
+    // In case of profit, we need to check the current timestamp againt minProfitDuration
+    // in order to prevent front-run attack, or price manipulation.
+    // Check `isProfit` first, to save SLOAD in loss case.
+    if (isProfit) {
+      IConfigStorage.TradingConfig memory _tradingConfig = ConfigStorage(configStorage).getTradingConfig();
+      if (block.timestamp < _lastIncreaseTimestamp + _tradingConfig.minProfitDuration) {
+        return (isProfit, 0);
+      }
     }
 
     // Return the values of isProfit and delta.

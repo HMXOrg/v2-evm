@@ -167,6 +167,11 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     );
   }
 
+  function liquidate(address _subAccount, bytes[] memory _priceData) internal {
+    vm.prank(BOT);
+    botHandler.liquidate(_subAccount, _priceData);
+  }
+
   /**
    * COMMON FUNCTION
    */
@@ -174,5 +179,13 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
+  }
+
+  function getPositionId(
+    address _primary,
+    uint8 _subAcountIndex,
+    uint256 _marketIndex
+  ) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(getSubAccount(_primary, _subAcountIndex), _marketIndex));
   }
 }

@@ -487,7 +487,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
     vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
 
-    (uint256 _currentPrice, , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (uint256 _currentPrice, , , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
@@ -524,7 +524,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
     vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
 
-    (_currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (_currentPrice, , , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),

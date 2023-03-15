@@ -30,6 +30,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     bool isLong;
     bool isNewPosition;
     bool currentPositionIsLong;
+    uint256 adaptivePriceE30;
     uint256 priceE30;
     int32 exponent;
   }
@@ -193,8 +194,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint8 _marketStatus;
 
       // Get Price market.
-      (_vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(_configStorage.oracle())
-        .getLatestAdaptivePriceWithMarketStatus(
+      (_vars.adaptivePriceE30, _vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(
+        _configStorage.oracle()
+      ).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _vars.isLong, // if current position is SHORT position, then we use max price
           (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
@@ -223,7 +225,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // if the position size is zero, set the average price to the current price (new position)
     if (_vars.isNewPosition) {
-      _vars.position.avgEntryPriceE30 = _vars.priceE30;
+      _vars.position.avgEntryPriceE30 = _vars.adaptivePriceE30;
       _vars.position.primaryAccount = _primaryAccount;
       _vars.position.subAccountId = _subAccountId;
       _vars.position.marketIndex = _marketIndex;
@@ -235,7 +237,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         abs(_vars.position.positionSizeE30),
         _vars.isLong,
         _absSizeDelta,
-        _vars.priceE30,
+        _vars.adaptivePriceE30,
         _vars.position.avgEntryPriceE30
       );
     }
@@ -285,7 +287,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = _calculator.getFreeCollateral(
         _vars.subAccount,
-        _vars.priceE30,
+        _limitPriceE30,
         _marketConfig.assetId
       );
 
@@ -309,8 +311,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
       // update global market state
       if (_vars.isLong) {
         uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
-          ? _vars.priceE30
-          : _calculator.calculateLongAveragePrice(_globalMarket, _vars.priceE30, _sizeDelta, 0);
+          ? _vars.adaptivePriceE30
+          : _calculator.calculateLongAveragePrice(_globalMarket, _vars.adaptivePriceE30, _sizeDelta, 0);
 
         _perpStorage.updateGlobalLongMarketById(
           _marketIndex,
@@ -321,8 +323,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
       } else {
         // to increase SHORT position sizeDelta should be negative
         uint256 _nextAvgPrice = _globalMarket.shortPositionSize == 0
-          ? _vars.priceE30
-          : _calculator.calculateShortAveragePrice(_globalMarket, _vars.priceE30, _sizeDelta, 0);
+          ? _vars.adaptivePriceE30
+          : _calculator.calculateShortAveragePrice(_globalMarket, _vars.adaptivePriceE30, _sizeDelta, 0);
 
         _perpStorage.updateGlobalShortMarketById(
           _marketIndex,
@@ -393,7 +395,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_vars.priceE30, , _lastPriceUpdated, _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
+      (_vars.priceE30, , , _lastPriceUpdated, _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
@@ -463,7 +465,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     {
       uint8 _marketStatus;
 
-      (_vars.priceE30, , , _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
+      (_vars.priceE30, , , , _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price

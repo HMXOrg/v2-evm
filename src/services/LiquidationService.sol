@@ -123,7 +123,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
         _position.marketIndex
       );
 
-      (uint256 _priceE30, , , ) = OracleMiddleware(ConfigStorage(configStorage).oracle())
+      (uint256 _priceE30, , , , ) = OracleMiddleware(ConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _isLong,

@@ -57,7 +57,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 10 * 1e6);
 
-      assertEq(vaultStorage.fees(address(usdt)), 0);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 0);
 
       assertEq(vaultStorage.devFees(address(usdt)), 0);
     }
@@ -77,7 +77,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 9.19 * 1e6);
 
       // 0.81 * 85% = 0.6885
-      assertEq(vaultStorage.fees(address(usdt)), 0.6885 * 1e6);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 0.6885 * 1e6);
       // 0.81 * 15% = 0.1215
       assertEq(vaultStorage.devFees(address(usdt)), 0.1215 * 1e6);
     }
@@ -97,7 +97,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
 
       // 9.19 * 85% = 7.8115 | 0.6885 + 7.8115 = 8.5
-      assertEq(vaultStorage.fees(address(usdt)), 8.5 * 1e6);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 8.5 * 1e6);
       // 9.19 * 15% = 1.3785 | 0.1215 + 1.3785 = 1.5
       assertEq(vaultStorage.devFees(address(usdt)), 1.5 * 1e6);
     }
@@ -117,7 +117,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 0);
 
-      assertEq(vaultStorage.fees(address(usdt)), 8.5 * 1e6);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 8.5 * 1e6);
       assertEq(vaultStorage.devFees(address(usdt)), 1.5 * 1e6);
     }
 
@@ -136,7 +136,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 0);
 
-      assertEq(vaultStorage.fees(address(usdt)), 8.5 * 1e6);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 8.5 * 1e6);
       assertEq(vaultStorage.devFees(address(usdt)), 1.5 * 1e6);
     }
   }
@@ -173,7 +173,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 10 * 1e6);
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 5 * 1e6);
 
-      assertEq(vaultStorage.fees(address(usdt)), 0);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 0);
 
       assertEq(vaultStorage.devFees(address(usdt)), 0);
     }
@@ -195,7 +195,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 5 * 1e6);
 
       // 10 * 85% = 8.5
-      assertEq(vaultStorage.fees(address(usdt)), 8.5 * 1e6);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 8.5 * 1e6);
       // 10 * 15% = 1.5
       assertEq(vaultStorage.devFees(address(usdt)), 1.5 * 1e6);
     }
@@ -217,7 +217,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 0);
 
       // 5 * 85% = 4.25 | 8.5 + 4.25 = 12.75
-      assertEq(vaultStorage.fees(address(usdt)), 12.75 * 1e6);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 12.75 * 1e6);
       // 5 * 15% = 0.75 | 1.5 + 0.75 = 2.25
       assertEq(vaultStorage.devFees(address(usdt)), 2.25 * 1e6);
     }
@@ -263,7 +263,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(bobAddress, address(wbtc)), 0.01 * 1e8);
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 50 * 1e6);
 
-      assertEq(vaultStorage.fees(address(usdt)), 0);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 0);
 
       assertEq(vaultStorage.devFees(address(usdt)), 0);
     }
@@ -292,7 +292,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 50 * 1e6);
 
       // 0.00759375 * 85% = 0.0064546875
-      assertEq(vaultStorage.fees(address(weth)), 0.0064546875 * 1e18);
+      assertEq(vaultStorage.protocolFees(address(weth)), 0.0064546875 * 1e18);
       // 0.00759375 * 15% = 0.0011390625
       assertEq(vaultStorage.devFees(address(weth)), 0.0011390625 * 1e18);
     }
@@ -323,11 +323,11 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 50 * 1e6);
 
       // 0.00240625 * 85% = 0.0020453125 | 0.0064546875 + 0.0020453125 = 0.0085
-      assertEq(vaultStorage.fees(address(weth)), 0.0085 * 1e18);
+      assertEq(vaultStorage.protocolFees(address(weth)), 0.0085 * 1e18);
       // 0.002025 * 85% = 0.00172125
-      assertEq(vaultStorage.fees(address(wbtc)), 0.00172125 * 1e8);
+      assertEq(vaultStorage.protocolFees(address(wbtc)), 0.00172125 * 1e8);
       // 100 * 85% = 85
-      assertEq(vaultStorage.fees(address(usdt)), 85 * 1e6);
+      assertEq(vaultStorage.protocolFees(address(usdt)), 85 * 1e6);
       // 0.00240625 * 15% = 0.0003609375 | 0.0011390625 + 0.0003609375 = 0.0015
       assertEq(vaultStorage.devFees(address(weth)), 0.0015 * 1e18);
       // 0.002025 * 15% = 0.00030375

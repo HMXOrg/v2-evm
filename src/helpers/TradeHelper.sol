@@ -26,6 +26,9 @@ contract TradeHelper is ITradeHelper {
 
   event LogCollectFundingFee(address account, uint8 assetClass, int256 feeUsd);
 
+  event LogSettleTradingFeeValue(address subAccount, uint256 feeUsd);
+  event LogSettleTradingFeeAmount(address subAccount, address token, uint256 devFeeAmount, uint256 protocolFeeAmount);
+
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
@@ -350,5 +353,96 @@ contract TradeHelper is ITradeHelper {
 
     // Update the fee amount for the sub-account in the PerpStorage contract
     _perpStorage.updateSubAccountFee(_subAccount, int(acmVars.absFeeUsd));
+  }
+
+  struct SettleTradingFeeVars {
+    PerpStorage perpStorage;
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    uint256 tradingFeeToBePaid;
+    address[] collateralTokens;
+    uint256 collateralTokensLength;
+    ConfigStorage.TradingConfig tradingConfig;
+  }
+
+  function settleTradingFee(address _subAccount, uint256 _absSizeDelta, uint32 _positionFeeBPS) external {
+    SettleTradingFeeVars memory _vars;
+    // SLOAD
+    _vars.vaultStorage = VaultStorage(vaultStorage);
+    _vars.perpStorage = PerpStorage(perpStorage);
+    _vars.configStorage = ConfigStorage(configStorage);
+    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
+    _vars.collateralTokens = _vars.configStorage.getCollateralTokens();
+    _vars.collateralTokensLength = _vars.collateralTokens.length;
+    _vars.tradingConfig = _vars.configStorage.getTradingConfig();
+
+    // Calculate trading Fee USD
+    _vars.tradingFeeToBePaid = (_absSizeDelta * _positionFeeBPS) / BPS;
+
+    emit LogSettleTradingFeeValue(_subAccount, _vars.tradingFeeToBePaid);
+
+    // We are now trying our best to pay `_vars.tradingFeeToBePaid` by deducting balance from the trader collateral.
+    // If one collateral cannot cover, try the next one and so on.
+    // If all of the collaterals still cannot cover, revert.
+    for (uint256 i; i < _vars.collateralTokensLength; ) {
+      // Get trader balance of each collateral
+      uint256 _traderBalance = _vars.vaultStorage.traderBalances(_subAccount, _vars.collateralTokens[i]);
+
+      // if trader has some of this collateral token, try cover the fee with it
+      if (_traderBalance > 0) {
+        uint256 _tradingFeeAmount = _valueToTokenAmount(
+          _vars.configStorage,
+          _vars.oracle,
+          _vars.tradingFeeToBePaid,
+          _vars.collateralTokens[i]
+        );
+        uint256 _totalRepayAmount; // protocol fee portion + dev fee portion
+        if (_traderBalance > _tradingFeeAmount) {
+          // _traderBalance can cover the rest of the fee
+          _totalRepayAmount = _tradingFeeAmount;
+        } else {
+          // _traderBalance cannot cover the rest of the fee, just take the amount the trader have
+          _totalRepayAmount = _traderBalance;
+        }
+
+        // devFee = tradingFee * devFeeRate
+        uint256 _devFeeAmount = (_totalRepayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
+        // the rest after dev fee deduction belongs to protocol fee portion
+        uint256 _protocolFeeAmount = _totalRepayAmount - _devFeeAmount;
+
+        // book those moving balances
+        _vars.vaultStorage.payTradingFee(_subAccount, _vars.collateralTokens[i], _devFeeAmount, _protocolFeeAmount);
+
+        // deduct _vars.tradingFeeToBePaid with _totalRepayAmount, so that the next iteration could continue deducting the fee
+        _vars.tradingFeeToBePaid -= _totalRepayAmount;
+
+        emit LogSettleTradingFeeAmount(_subAccount, _vars.collateralTokens[i], _devFeeAmount, _protocolFeeAmount);
+      }
+      // else continue, as trader does not have any of this collateral token
+
+      // stop iteration, if all fees are covered
+      if (_vars.tradingFeeToBePaid == 0) break;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    // If fee cannot be covered, revert.
+    if (_vars.tradingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
+  }
+
+  function _valueToTokenAmount(
+    ConfigStorage _configStorage,
+    OracleMiddleware _oracle,
+    uint256 _valueE30,
+    address _token
+  ) internal view returns (uint256) {
+    bytes32 _tokenAssetId = _configStorage.tokenAssetIds(_token);
+    uint8 _tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
+    (uint256 _tokenPrice, ) = _oracle.getLatestPrice(_tokenAssetId, false);
+
+    return (_valueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
   }
 }

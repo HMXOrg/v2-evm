@@ -22,7 +22,7 @@ interface IVaultStorage {
 
   function getTraderTokens(address _trader) external view returns (address[] memory);
 
-  function fees(address _token) external view returns (uint256);
+  function protocolFees(address _token) external view returns (uint256);
 
   function fundingFee(address _token) external view returns (uint256);
 

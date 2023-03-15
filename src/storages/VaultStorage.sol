@@ -36,9 +36,9 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
   mapping(address => uint256) public totalAmount; //token => tokenAmount
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
-  mapping(address => uint256) public fees; // fee in token unit
+  mapping(address => uint256) public protocolFees; // protocol fee in token unit
 
-  mapping(address => uint256) public fundingFee; // sum of realized funding fee when traders are settlement their fees
+  mapping(address => uint256) public fundingFee; // sum of realized funding fee when traders are settlement their protocolFees
   mapping(address => uint256) public devFees;
 
   // trader address (with sub-account) => token => amount
@@ -105,7 +105,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   }
 
   function addFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
-    fees[_token] += _amount;
+    protocolFees[_token] += _amount;
   }
 
   function addDevFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
@@ -134,7 +134,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
   function withdrawFee(address _token, uint256 _amount, address _receiver) external onlyWhitelistedExecutor {
     if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
-    fees[_token] -= _amount;
+    protocolFees[_token] -= _amount;
     IERC20(_token).safeTransfer(_receiver, _amount);
   }
 
@@ -214,5 +214,19 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     plpLiquidity[_token] += _amount;
     // Decrease the trader's balance for the specified token
     traderBalances[_trader][_token] -= _amount;
+  }
+
+  function payTradingFee(
+    address _trader,
+    address _token,
+    uint256 _devFeeAmount,
+    uint256 _protocolFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from trader balance
+    traderBalances[_trader][_token] -= _devFeeAmount + _protocolFeeAmount;
+
+    // Increase the amount to devFees and protocolFees
+    devFees[_token] += _devFeeAmount;
+    protocolFees[_token] += _protocolFeeAmount;
   }
 }

@@ -57,13 +57,13 @@ contract SetConfig is ConfigJsonRepo {
 
   function _setUpAssetClassConfigs(IConfigStorage configStorage) private {
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRateBPS: 1 // 0.01%
+      baseBorrowingRateBPS: 0 // 0.01%
     });
     IConfigStorage.AssetClassConfig memory _equityConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRateBPS: 2 // 0.02%
+      baseBorrowingRateBPS: 0 // 0.02%
     });
     IConfigStorage.AssetClassConfig memory _forexConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRateBPS: 3 // 0.03%
+      baseBorrowingRateBPS: 0 // 0.03%
     });
 
     configStorage.addAssetClassConfig(_cryptoConfig);

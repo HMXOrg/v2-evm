@@ -113,12 +113,13 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
-    uint256 _averagePrice
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
   ) public view override returns (bool, uint256) {
     if (actualFunction[keccak256("getDelta")]) {
-      return c.getDelta(_size, _isLong, _markPrice, _averagePrice);
+      return c.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
     } else {
-      return super.getDelta(_size, _isLong, _markPrice, _averagePrice);
+      return super.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
     }
   }
 }

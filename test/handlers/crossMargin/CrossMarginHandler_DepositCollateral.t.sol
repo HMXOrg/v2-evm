@@ -28,14 +28,14 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
   function testRevert_handler_depositCollateral_onlyAcceptedToken() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
-    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, address(dai), 10 ether);
+    crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, address(dai), 10 ether, false);
   }
 
   // Try deposit token collateral with insufficient allowance
   function testRevert_handler_depositCollateral_InsufficientAllowance() external {
     vm.startPrank(ALICE);
     vm.expectRevert("ERC20: insufficient allowance");
-    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, address(wbtc), 10 ether);
+    crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, address(wbtc), 10 ether, false);
     vm.stopPrank();
   }
 
@@ -46,7 +46,40 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
     vm.startPrank(ALICE);
     wbtc.approve(address(crossMarginHandler), depositAmount);
     vm.expectRevert("ERC20: transfer amount exceeds balance");
-    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, address(wbtc), depositAmount);
+    crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, address(wbtc), depositAmount, false);
+    vm.stopPrank();
+  }
+
+  // Try deposit native token as collateral, but with mismatch msg.value
+  function testRevert_handler_depositCollateral_wNativeToken_withBadMsgValue() external {
+    vm.deal(ALICE, 20 ether);
+
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ICrossMarginHandler_MismatchMsgValue()"));
+    // amount = 20 ether, but msg.value = 19 ether
+    crossMarginHandler.depositCollateral{ value: 19 ether }(SUB_ACCOUNT_NO, address(weth), 20 ether, true);
+    vm.stopPrank();
+  }
+
+  // Try deposit native token as collateral, but has not enough native balance
+  function testRevert_handler_depositCollateral_wNativeToken_withInsufficientNativeBalance() external {
+    // Give Alice 19 ETH, but Alice will try to deposit 20 ETH
+    vm.deal(ALICE, 19 ether);
+
+    vm.startPrank(ALICE);
+    vm.expectRevert(); // EvmError: OutOfFund
+    crossMarginHandler.depositCollateral{ value: 20 ether }(SUB_ACCOUNT_NO, address(weth), 20 ether, true);
+    vm.stopPrank();
+  }
+
+  // Try deposit token with _shouldWrap = true, but with non-wNative token
+  function testRevert_handler_depositCollateral_withShouldWrap_butWithNonWNativeToken() external {
+    vm.deal(ALICE, 20 ether);
+
+    vm.startPrank(ALICE);
+    vm.expectRevert(); // EvmError: Revert (WBTC has no deposit func)
+    // Alice will deposit with _shouldWrap = true, but input _address as WBTC (non-wNative).
+    crossMarginHandler.depositCollateral{ value: 20 ether }(SUB_ACCOUNT_NO, address(wbtc), 20 ether, true);
     vm.stopPrank();
   }
 
@@ -110,5 +143,24 @@ contract CrossMarginHandler_DepositCollateral is CrossMarginHandler_Base {
     assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 20 ether);
     assertEq(weth.balanceOf(address(vaultStorage)), 20 ether);
     assertEq(weth.balanceOf(ALICE), 0);
+  }
+
+  // Try deposit native token as collateral
+  function testCorrectness_handler_depositCollateral_wNativeToken() external {
+    address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
+
+    // Before start depositing, ALICE must has 0 amount of WETH token
+    assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 0);
+    assertEq(weth.balanceOf(address(vaultStorage)), 0);
+
+    vm.deal(ALICE, 20 ether);
+    vm.startPrank(ALICE);
+    crossMarginHandler.depositCollateral{ value: 20 ether }(SUB_ACCOUNT_NO, address(weth), 20 ether, true);
+    vm.stopPrank();
+
+    // After deposited, ALICE's sub account must has 20 WETH as collateral token
+    assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 20 ether);
+    assertEq(weth.balanceOf(address(vaultStorage)), 20 ether);
+    assertEq(ALICE.balance, 0 ether);
   }
 }

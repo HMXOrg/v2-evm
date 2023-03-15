@@ -60,7 +60,7 @@ contract CrossMarginService_Base is BaseTest {
 
   function simulateAliceWithdrawToken(address _token, uint256 _withdrawAmount) internal {
     vm.startPrank(ALICE);
-    crossMarginService.withdrawCollateral(ALICE, 1, _token, _withdrawAmount);
+    crossMarginService.withdrawCollateral(ALICE, 1, _token, _withdrawAmount, ALICE);
     vm.stopPrank();
   }
 

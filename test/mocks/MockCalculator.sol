@@ -267,7 +267,8 @@ contract MockCalculator is ICalculator {
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
-    uint256 _averagePrice
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
   ) public view virtual returns (bool, uint256) {}
 
   function getPositionNextAveragePrice(
@@ -275,6 +276,7 @@ contract MockCalculator is ICalculator {
     bool _isLong,
     uint256 _sizeDelta,
     uint256 _markPrice,
-    uint256 _averagePrice
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
   ) external pure returns (uint256) {}
 }

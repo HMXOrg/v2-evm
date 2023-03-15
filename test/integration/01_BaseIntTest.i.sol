@@ -67,6 +67,11 @@ abstract contract BaseIntTest is TestBase, StdCheatsSafe {
   uint256 internal constant DOLLAR = 1e30;
   uint256 internal constant executionOrderFee = 0.0001 ether;
 
+  uint256 internal constant SECONDS = 1;
+  uint256 internal constant MINUTES = SECONDS * 60;
+  uint256 internal constant HOURS = MINUTES * 60;
+  uint256 internal constant DAYS = HOURS * 24;
+
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -74,6 +79,7 @@ abstract contract BaseIntTest is TestBase, StdCheatsSafe {
   address internal EVE;
   address internal FEEVER;
   address internal ORDER_EXECUTOR;
+  address internal BOT;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -134,6 +140,7 @@ abstract contract BaseIntTest is TestBase, StdCheatsSafe {
     EVE = makeAddr("EVE");
     FEEVER = makeAddr("FEEVER");
     ORDER_EXECUTOR = makeAddr("ORDER_EXECUTOR");
+    BOT = makeAddr("BOT");
 
     /* DEPLOY PART */
     // deploy MOCK weth
@@ -276,8 +283,9 @@ abstract contract BaseIntTest is TestBase, StdCheatsSafe {
 
     // Setup Bot Handler
     {
-      address[] memory _positionManagers = new address[](1);
+      address[] memory _positionManagers = new address[](2);
       _positionManagers[0] = address(this);
+      _positionManagers[1] = BOT;
 
       // set Tester as position managers
       botHandler.setPositionManagers(_positionManagers, true);

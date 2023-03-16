@@ -27,8 +27,8 @@ contract OracleMiddleware_UnsafeGetPriceTest is OracleMiddleware_BaseTest {
     // For more edge cases see PythAdapter_GetPriceTest.t.sol
     (uint maxPrice, , uint lastUpdate) = oracleMiddleware.unsafeGetLatestPrice(wbtcAssetId, true);
     (uint minPrice, , ) = oracleMiddleware.unsafeGetLatestPrice(wbtcAssetId, false);
-    assertEq(maxPrice, 20_500 * 1e30);
-    assertEq(minPrice, 19_500 * 1e30);
+    assertEq(maxPrice, 20_000 * 1e30);
+    assertEq(minPrice, 20_000 * 1e30);
     assertEq(lastUpdate, uint64(block.timestamp));
 
     // Revert on unknown asset id

@@ -89,12 +89,12 @@ contract MockCalculator is ICalculator {
   }
 
   // @todo - Add Description
-  function getUnrealizedPnl(
+  function getUnrealizedPnlAndFee(
     address _subAccount,
     uint256 /* _price */,
     bytes32 /* _assetId */
-  ) external view returns (int256) {
-    return unrealizedPnlOf[_subAccount];
+  ) public view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+    return (unrealizedPnlOf[_subAccount], 0);
   }
 
   // @todo - Add Description

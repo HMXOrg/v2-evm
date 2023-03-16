@@ -7,7 +7,7 @@ contract MockPerpStorage {
   mapping(address => IPerpStorage.Position[]) public positions;
   mapping(uint256 => IPerpStorage.GlobalMarket) public globalMarkets;
 
-  mapping(uint256 => IPerpStorage.GlobalAssetClass) public globalAssetClass;
+  mapping(uint8 => IPerpStorage.GlobalAssetClass) public globalAssetClass;
 
   mapping(bytes32 => IPerpStorage.Position) public positionById;
 
@@ -35,7 +35,7 @@ contract MockPerpStorage {
   }
 
   function getGlobalAssetClassByIndex(
-    uint256 _assetClassIndex
+    uint8 _assetClassIndex
   ) external view returns (IPerpStorage.GlobalAssetClass memory) {
     return globalAssetClass[_assetClassIndex];
   }
@@ -94,7 +94,7 @@ contract MockPerpStorage {
   }
 
   function updateGlobalAssetClass(
-    uint256 _assetClassIndex,
+    uint8 _assetClassIndex,
     IPerpStorage.GlobalAssetClass memory _newAssetClass
   ) external {
     globalAssetClass[_assetClassIndex] = _newAssetClass;

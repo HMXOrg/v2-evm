@@ -223,7 +223,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
   //   }
   // }
 
-  function testCorrectness_borrowingFee() external {
+  function testCorrectness_borrowingFee_calculation() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
     vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
@@ -284,7 +284,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(perpStorage.getSubAccountFee(aliceAddress), 0);
       assertEq(perpStorage.getSubAccountFee(bobAddress), 0);
 
-      // 12.15 / 1600 = 0.00759375 | 0.01 - 0.00759375 = 0.00240625
+      // 12.15 / 1600 = 0.00759375 | 1.01 - 0.00759375 = 1.00240625
       assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 1.00240625 * 1e18);
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
 
@@ -301,35 +301,40 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(150);
     {
+      // weth reserve has decreased for 180,000 USD
       tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 2_000_000 * 1e30, address(0), 0);
       tradeService.decreasePosition(BOB, 0, btcMarketIndex, 100_000 * 1e30, address(0), 0);
 
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-      // 0.0001 * 270000 / 1000000 * (150 - 110) = 0.00108 | 0.000135 + 0.00108 = 0.001215
-      assertEq(_globalAssetClass.sumBorrowingRate, 0.001215 * 1e18);
+      // 0.0001 * 270000 / 1000010.3275 * (150 - 110) = 0.001079988846415188 | 0.000135 + 0.001079988846415188 = 0.001215
+      assertEq(_globalAssetClass.sumBorrowingRate, 0.001214988846415188 * 1e18);
       assertEq(_globalAssetClass.lastBorrowingTime, 150);
 
-      // 3.85 / 1600 = 0.00240625 | 0.00240625 - 0.00240625 = 0
-      assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 0);
-      // 100 - 190.55 = 0
-      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
+      // 0.001079988846415188 * 180000 = 194.39799235473384
+      // 194.39799235473384 / 1600 = 0.12149874522170865 | 1.00240625 - 0.12149874522170865 = 0.88090750477829135
+      assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 0.88090750477829135 * 1e18);
+      // usdt should not affected when can gather fee from weth
+      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
 
-      // 48.6 / 24000 = 0.002025 | 0.01 - 0.002025 = 0.007975
-      assertEq(vaultStorage.traderBalances(bobAddress, address(wbtc)), 0.007975 * 1e8);
+      // 0.001079988846415188 * 45000 = 48.59949808868346
+      // 48.59949808868346 / 24000 = 0.00202497 | 0.01 - 0.00202497 = 0.00797503
+      assertEq(vaultStorage.traderBalances(bobAddress, address(wbtc)), 0.00797503 * 1e8);
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 50 * 1e6);
 
-      // 0.00240625 * 85% = 0.0020453125 | 0.0064546875 + 0.0020453125 = 0.0085
-      assertEq(vaultStorage.protocolFees(address(weth)), 0.0085 * 1e18);
-      // 0.002025 * 85% = 0.00172125
-      assertEq(vaultStorage.protocolFees(address(wbtc)), 0.00172125 * 1e8);
-      // 100 * 85% = 85
-      assertEq(vaultStorage.protocolFees(address(usdt)), 85 * 1e6);
-      // 0.00240625 * 15% = 0.0003609375 | 0.0011390625 + 0.0003609375 = 0.0015
-      assertEq(vaultStorage.devFees(address(weth)), 0.0015 * 1e18);
-      // 0.002025 * 15% = 0.00030375
-      assertEq(vaultStorage.devFees(address(wbtc)), 0.00030375 * 1e8);
-      // 100 * 15% = 15
-      assertEq(vaultStorage.devFees(address(usdt)), 15 * 1e6);
+      // 0.12149874522170865 * 15% = 0.018224811783256297 | 0.0011390625 + 0.018224811783256297 = 0.019363874283256297
+      assertEq(vaultStorage.devFees(address(weth)), 0.019363874283256297 * 1e18);
+      // 0.12149874522170865 - 0.018224811783256297 = 0.103273933438452353
+      assertEq(vaultStorage.plpLiquidity(address(weth)), 0.109728620938452353 * 1e18);
+
+      // 0.00202497 * 15% = 0.00030374
+      assertEq(vaultStorage.devFees(address(wbtc)), 0.00030374 * 1e8);
+      // 0.00202497 - 0.00030374 = 0.00172123
+      assertEq(vaultStorage.plpLiquidity(address(wbtc)), 0.00172123 * 1e8);
+
+      // prove not get any alice usdt because weth enough
+      // and not affect to plp liquidity
+      assertEq(vaultStorage.devFees(address(usdt)), 0);
+      assertEq(vaultStorage.plpLiquidity(address(usdt)), 1_000_000 * 1e6);
     }
   }
 }

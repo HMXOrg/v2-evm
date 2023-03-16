@@ -62,7 +62,8 @@ contract Calculator is Owned, ICalculator {
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value in E18 format
   function _getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view returns (uint256) {
-    // @todo -  pendingBorrowingFeeE30
+    // @todo - pendingBorrowingFeeE30
+    // @todo - pending funding fee ?
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
     int256 pnlE30 = _getGlobalPNLE30();

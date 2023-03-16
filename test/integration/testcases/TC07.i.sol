@@ -21,7 +21,7 @@ contract TC07 is BaseIntTest_WithActions {
   //     bytes[] memory priceData = new bytes[](0);
   //     vm.deal(BOB, 1 ether); //deal with out of gas
   //     wbtc.mint(BOB, 10 * 1e8);
-  //     addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceData);
+  //     addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceData,true);
   //   }
   //   // Mint tokens to Alice
   //   {

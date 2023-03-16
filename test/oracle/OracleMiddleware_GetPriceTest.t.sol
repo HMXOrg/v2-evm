@@ -28,8 +28,8 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
     (uint256 maxPrice, uint256 lastUpdate) = oracleMiddleware.getLatestPrice(wbtcAssetId, true);
     (uint256 minPrice, ) = oracleMiddleware.getLatestPrice(wbtcAssetId, false);
 
-    assertEq(maxPrice, 20_500 * 1e30);
-    assertEq(minPrice, 19_500 * 1e30);
+    assertEq(maxPrice, 20_000 * 1e30);
+    assertEq(minPrice, 20_000 * 1e30);
     assertEq(lastUpdate, uint64(block.timestamp));
 
     // Revert on unknown asset id

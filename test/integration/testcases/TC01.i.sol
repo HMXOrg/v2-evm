@@ -23,7 +23,7 @@ contract TC01 is BaseIntTest_WithActions {
     // Alice Create Order And Executor Execute Order
 
     // T1: As a Liquidity, Alice adds 10,000 USD(GLP)
-    addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas);
+    addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas, true);
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
@@ -60,7 +60,7 @@ contract TC01 is BaseIntTest_WithActions {
     // T3: Alice withdraws PLP 100 USD
     //  10000 -> 0.5 e8
     //   100 -> 0.005 e8 btc
-    removeLiquidity(ALICE, address(wbtc), 100 ether, executionOrderFee, initialPriceFeedDatas);
+    removeLiquidity(ALICE, address(wbtc), 100 ether, executionOrderFee, initialPriceFeedDatas, true);
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
 
     liquidityTester.assertLiquidityInfo(
@@ -117,7 +117,7 @@ contract TC01 is BaseIntTest_WithActions {
     vm.deal(ALICE, executionOrderFee);
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
 
-    removeLiquidity(ALICE, address(wbtc), 9_870 ether, executionOrderFee, initialPriceFeedDatas);
+    removeLiquidity(ALICE, address(wbtc), 9_870 ether, executionOrderFee, initialPriceFeedDatas, true);
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),

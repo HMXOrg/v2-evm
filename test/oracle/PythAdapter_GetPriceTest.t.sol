@@ -121,8 +121,8 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
 
     // Should get price successfully
     // And also, min vs max should be unequal
-    assertEq(maxPrice, 21_000 * 1e30);
-    assertEq(minPrice, 19_000 * 1e30);
+    assertEq(maxPrice, 20_000 * 1e30);
+    assertEq(minPrice, 20_000 * 1e30);
   }
 
   function testCorrectness_GetInverseQuotePriceWithNoConf() external {
@@ -142,16 +142,11 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     updateJpyWithConf(13.612 * 1e3);
 
     // USD/JPY => 136.123
-    // Max before inversion: 136.123 + 13.612 = 149.735
-    // Min before inversion: 136.123 - 13.612 = 122.511
-    //
-    // Min: 1/149.735 ~= 0.006678465289
-    // Max: 1/122.511 ~= 0.008162532344
+    // after inversion => 1/136.123 = 0.0073463
     (uint256 maxPrice, , uint256 lastUpdate) = pythAdapter.getLatestPrice(jpyAssetId, true, 1e6);
     (uint256 minPrice, , ) = pythAdapter.getLatestPrice(jpyAssetId, false, 1e6);
-    assertEq(maxPrice, 0.008162532344034413236362449086 * 1e30, "Max price");
-    assertEq(minPrice, 0.006678465288676662103048719404 * 1e30, "Min price");
-    assertGt(maxPrice, minPrice, "Max > Min");
+    assertEq(maxPrice, 0.007346297098947275625720855402 * 1e30, "Max price");
+    assertEq(minPrice, 0.007346297098947275625720855402 * 1e30, "Min price");
     assertEq(lastUpdate, uint64(block.timestamp), "Timestamp");
   }
 }

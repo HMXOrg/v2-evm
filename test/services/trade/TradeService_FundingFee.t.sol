@@ -42,7 +42,7 @@ contract TradeService_FundingFee is TradeService_Base {
 
     // Set funding rate config
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(ethMarketIndex);
-    _marketConfig.fundingRate.maxFundingRateBPS = 0.0004 * 1e4;
+    _marketConfig.fundingRate.maxFundingRate = 0.0004 * 1e18;
     _marketConfig.fundingRate.maxSkewScaleUSD = 3_000_000 * 1e30;
 
     configStorage.setMarketConfig(ethMarketIndex, _marketConfig);

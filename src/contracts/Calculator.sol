@@ -302,12 +302,12 @@ contract Calculator is Owned, ICalculator {
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
 
-    if (targetValue == 0) {
-      return _feeBPS;
-    }
+    if (targetValue == 0) return _feeBPS;
 
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
     uint256 nextTargetDiff = nextValue > targetValue ? nextValue - targetValue : targetValue - nextValue;
+
+    // nextValue moves closer to the targetValue -> positive case;
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
       uint32 rebateBPS = uint32((_taxBPS * startTargetDiff) / targetValue);

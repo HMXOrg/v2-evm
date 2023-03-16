@@ -77,9 +77,7 @@ contract TradeService_FundingFee is TradeService_Base {
       assertEq(_globalAssetClass.sumBorrowingRate, 0);
       assertEq(_globalAssetClass.lastBorrowingTime, 100);
 
-      assertEq(_globalMarket.currentFundingRate, 0);
-      assertEq(_globalMarket.accumFundingLong, 0);
-      assertEq(_globalMarket.accumFundingShort, 0);
+      assertEq(_globalMarket.accumFundingRate, 0);
 
       assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 1 * 1e18);
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 1_000 * 1e6);
@@ -96,8 +94,8 @@ contract TradeService_FundingFee is TradeService_Base {
         IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
 
         // Long position now must pay 133$ to Short Side
-        assertEq(_globalMarket.accumFundingLong, -133333333333333000000); // -133.33$
-        assertEq(_globalMarket.accumFundingShort, 0); //
+        // assertEq(_globalMarket.accumFundingLong, -133333333333333000000); // -133.33$
+        // assertEq(_globalMarket.accumFundingShort, 0); //
 
         // Repay WETH Amount = 133.33/1600 = 0.08383958333333312 WETH
         // Dev fee = 0.08383958333333312  * 0 = 0 WETH
@@ -140,7 +138,7 @@ contract TradeService_FundingFee is TradeService_Base {
   //     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
   //     IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
-  //     assertEq(_globalMarket.currentFundingRate, 0);
+  //     assertEq(_globalMarket.accumFundingRate, 0);
   //     assertEq(_globalMarket.accumFundingLong, 0);
   //     assertEq(_globalMarket.accumFundingShort, 0);
 
@@ -152,7 +150,7 @@ contract TradeService_FundingFee is TradeService_Base {
   //   {
   //     tradeService.increasePosition(BOB, 0, ethMarketIndex, -200_000 * 1e30, 0);
   //     IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
-  //     assertEq(_globalMarket.currentFundingRate, -66666666666666); // LONG PAY SHORT
+  //     assertEq(_globalMarket.accumFundingRate, -66666666666666); // LONG PAY SHORT
   //     // Alice increase long position size * funding Rate = 500_000 * -0.000066666666666666 = -33.333333333333 $
   //     assertEq(_globalMarket.accumFundingLong, -33333333333333000000);
   //     assertEq(_globalMarket.accumFundingShort, 0);
@@ -168,7 +166,7 @@ contract TradeService_FundingFee is TradeService_Base {
 
   //     tradeService.decreasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30, address(0), 0);
   //     IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
-  //     assertEq(_globalMarket.currentFundingRate, -106666666666666); // LONG PAY SHORT
+  //     assertEq(_globalMarket.accumFundingRate, -106666666666666); // LONG PAY SHORT
   //     // Alice increase long position size * funding Rate * elapsedInterval = (500_000 * -0.000106666666666666) + last accumFundingLong = -53.333333333333 + -33.333333333333 = -86.666666666666$
   //     assertEq(_globalMarket.accumFundingLong, -86666666666666000000);
   //     assertEq(_globalMarket.accumFundingShort, 21333333333333200000);

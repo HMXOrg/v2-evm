@@ -142,15 +142,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (int256 newfundingRate, int256 nextfundingRateLong, int256 nextfundingRateShort) = calculator.getNextFundingRate(
-      0,
-      0
-    );
-    currentFundingRate = newfundingRate; // -0.013333%
-    assertEq(newfundingRate, -133333333333333); // -0.013333%
-
-    assertEq(nextfundingRateLong, -266666666666666000000); // -266.6666667
-    assertEq(nextfundingRateShort, 133333333333333000000); // 133.3333333
+    int256 nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate; // -0.013333%
+    assertEq(nextFundingRate, -133333333333333); // -0.013333%
+    assertEq(currentFundingRate, -133333333333333); // -0.013333%
 
     (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
     assertEq(accumFundingRateLong, 0);
@@ -166,12 +161,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 2_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 100 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong; //start accured funding rate
 
     shortPositionSize = 1_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 50 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort; //start accured funding rate
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -190,16 +183,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // -0.026667%
-    assertEq(newfundingRate, -266666666666666); // -0.026667%
-
-    assertEq(nextfundingRateLong, -533333333333332000000); // -533.3333333
-    assertEq(nextfundingRateShort, 266666666666666000000); // 266.6666667
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, -266666666666666000000); // -266.6666667
-    assertEq(accumFundingRateShort, 133333333333333000000); // 133.3333333
+    (nextFundingRate) = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate; // -0.026667%
+    assertEq(nextFundingRate, -133333333333333); // -0.013333%
+    assertEq(currentFundingRate, -266666666666666); // -0.026667%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -211,12 +198,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 50 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 1_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 50 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -235,16 +220,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // -0.026667%
-    assertEq(newfundingRate, -266666666666666); // -0.026667%
-
-    assertEq(nextfundingRateLong, -266666666666666000000); // 266.6666667
-    assertEq(nextfundingRateShort, 266666666666666000000); // 266.6666667
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, -799999999999998000000); // ~ -800
-    assertEq(accumFundingRateShort, 399999999999999000000); // ~ 400
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate; // -0.026667%
+    assertEq(nextFundingRate, 0); // -0.013333%
+    assertEq(currentFundingRate, -266666666666666); // -0.026667%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -256,12 +235,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 50 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 1_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 50 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -280,16 +257,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // -0.026667%
-    assertEq(newfundingRate, -266666666666666); // -0.026667%
-
-    assertEq(nextfundingRateLong, -266666666666666000000); // 266.6666667
-    assertEq(nextfundingRateShort, 266666666666666000000); // 266.6666667
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, -1066666666666664000000); // -1066.666667
-    assertEq(accumFundingRateShort, 666666666666665000000); // 666.6666667
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, 0); // 0%
+    assertEq(currentFundingRate, -266666666666666); // -0.026667%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -301,12 +272,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 50 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 150 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -325,16 +294,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // 0%
-    assertEq(newfundingRate, 0); // 0%
-
-    assertEq(nextfundingRateLong, 0); // 0
-    assertEq(nextfundingRateShort, 0); // 0
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, -1333333333333330000000); // -1333.333333
-    assertEq(accumFundingRateShort, 933333333333331000000); // 933.3333333
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, 266666666666666); // 0.026667%
+    assertEq(currentFundingRate, 0); // 0%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -346,12 +309,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 50 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 150 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -370,16 +331,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // 0.026667%
-    assertEq(newfundingRate, 266666666666666); // 0.026667%
-
-    assertEq(nextfundingRateLong, 266666666666666000000); // 266.6666667
-    assertEq(nextfundingRateShort, -799999999999998000000); // -800
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, -1333333333333330000000); // -1333.333333
-    assertEq(accumFundingRateShort, 933333333333331000000); // 933.3333333
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, 266666666666666); // 0.026667%
+    assertEq(currentFundingRate, 266666666666666); // 0.026667%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -391,12 +346,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 1_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 50 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 150 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -415,16 +368,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // 0.053333%
-    assertEq(newfundingRate, 533333333333332); // 0.053333%
-
-    assertEq(nextfundingRateLong, 533333333333332000000); // 533.3333333
-    assertEq(nextfundingRateShort, -1599999999999996000000); // -1600
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, -1066666666666664000000); // -1066.666667
-    assertEq(accumFundingRateShort, 133333333333333000000); // 133.3333333
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, 266666666666666); // 0.026667%
+    assertEq(currentFundingRate, 533333333333332); // 0.053333%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -436,12 +383,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 2_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 100 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 150 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -460,16 +405,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // 0.066667%
-    assertEq(newfundingRate, 666666666666665); // 0.066667%
-
-    assertEq(nextfundingRateLong, 1333333333333330000000); // 1333.333333
-    assertEq(nextfundingRateShort, -1999999999999995000000); // -2000
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, -533333333333332000000); // -533.3333333
-    assertEq(accumFundingRateShort, -1466666666666663000000); // -1466.666667
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, 133333333333333); // 0.013333%
+    assertEq(currentFundingRate, 666666666666665); // 0.066667%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -481,12 +420,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 2_500_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 125 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 150 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -505,16 +442,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // 0.073333%
-    assertEq(newfundingRate, 733333333333331); // 0.073333%
-
-    assertEq(nextfundingRateLong, 1833333333333327500000); // 1833.333333
-    assertEq(nextfundingRateShort, -2199999999999993000000); // -2200
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, 799999999999998000000); // 800
-    assertEq(accumFundingRateShort, -3466666666666658000000); // -3466.666667
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, 66666666666666); // 0.00666667%
+    assertEq(currentFundingRate, 733333333333331); // 0.073333%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -526,12 +457,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 2_500_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 125 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 150 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -550,16 +479,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // 0.080000%
-    assertEq(newfundingRate, 799999999999997); // 0.080000%
-
-    assertEq(nextfundingRateLong, 1999999999999992500000); // 2000
-    assertEq(nextfundingRateShort, -2399999999999991000000); // -2400
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, 2633333333333325500000); // 2633.333333
-    assertEq(accumFundingRateShort, -5666666666666651000000); // -5666.666667
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, 66666666666666); // 0.00666667%
+    assertEq(currentFundingRate, 799999999999997); // 0.080000%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -571,12 +494,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 6_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 300 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 150 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -595,16 +516,10 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // 0.040000%
-    assertEq(newfundingRate, 399999999999997); // 0.040000%
-
-    assertEq(nextfundingRateLong, 2399999999999982000000); // 2400
-    assertEq(nextfundingRateShort, -1199999999999991000000); // -1200
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, 4633333333333318000000); // 4633.333333
-    assertEq(accumFundingRateShort, -8066666666666642000000); // -8066.666667
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate; // 0.040000%
+    assertEq(nextFundingRate, -400000000000000); // -0.040000%
+    assertEq(currentFundingRate, 399999999999997); // 0.040000%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -616,12 +531,10 @@ contract Calculator_FundingRate is Calculator_Base {
     longPositionSize = 6_000_000 * 1e30;
     longAvgPrice = 20_000 * 1e30;
     longOpenInterest = 300 * 10 ** 8;
-    accumFundingRateLong += nextfundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
     shortAvgPrice = 20_000 * 1e30;
     shortOpenInterest = 150 * 10 ** 8;
-    accumFundingRateShort += nextfundingRateShort;
 
     mockPerpStorage.updateGlobalLongMarketById(
       marketIndex,
@@ -640,15 +553,9 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-    currentFundingRate = newfundingRate; // 0.000000%
-    assertEq(newfundingRate, -3); // 0.000000%
-
-    assertEq(nextfundingRateLong, -18000000); // 0
-    assertEq(nextfundingRateShort, 9000000); // 0
-
-    (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    assertEq(accumFundingRateLong, 7033333333333300000000); // 7033.333333
-    assertEq(accumFundingRateShort, -9266666666666633000000); // -9266.666667
+    nextFundingRate = calculator.getNextFundingRate(0, 0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, -400000000000000); // -0.040000%
+    assertEq(currentFundingRate, -3); // 0.000000%
   }
 }

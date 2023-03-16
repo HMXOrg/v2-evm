@@ -20,8 +20,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`Creating Remove Liquidity Order...`);
   await (
     await liquidityHandler.createRemoveLiquidityOrder(
-      config.tokens.wbtc,
-      ethers.utils.parseUnits("2474.14000948", 18),
+      config.tokens.usdc,
+      ethers.utils.parseUnits("400", 18),
       0,
       executionFee,
       false,

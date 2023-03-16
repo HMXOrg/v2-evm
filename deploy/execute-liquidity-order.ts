@@ -33,7 +33,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const priceData = await getPriceData(priceIds);
   // console.log(priceData);
   await (
-    await liquidityHandler.executeOrder(ethers.constants.MaxUint256, deployer.address, priceData, {
+    await liquidityHandler.executeOrder(ethers.constants.MaxUint256, deployer.address, [], {
       gasLimit: 200000000,
     })
   ).wait();

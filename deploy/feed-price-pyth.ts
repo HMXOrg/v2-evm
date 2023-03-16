@@ -20,7 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     logger: console, // Providing logger will allow the connection to log its events.
   });
 
-  const priceIds = [wethPriceId, wbtcPriceId, usdcPriceId, usdtPriceId, daiPriceId];
+  const priceIds = [wethPriceId, wbtcPriceId, usdcPriceId, usdtPriceId, daiPriceId, applePriceId, jpyPriceId];
   // console.log(priceIds);
   const priceFeeds = await connection.getLatestPriceFeeds(priceIds);
   // console.log(priceFeeds);

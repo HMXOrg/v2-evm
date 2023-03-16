@@ -14,7 +14,6 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
-import { console } from "forge-std/console.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
@@ -94,7 +93,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     // 3. get aum and lpSupply before deduction fee
     uint256 _aum = _calculator.getAUM(true, 0, 0);
-
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
@@ -128,7 +126,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     uint256 _aum = _calculator.getAUM(false, 0, 0);
-
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
@@ -193,10 +190,8 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   ) internal returns (uint256) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
-    (uint256 _maxPrice, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(
-      ConfigStorage(configStorage).tokenAssetIds(_tokenOut),
-      true
-    );
+    bytes32 tokenAssetId = ConfigStorage(configStorage).tokenAssetIds(_tokenOut);
+    (uint256 _maxPrice, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(tokenAssetId, false);
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
       18,

@@ -55,6 +55,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
       configStorage.setCalculator(address(mockCalculator));
       tradeService.reloadConfig();
     }

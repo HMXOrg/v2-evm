@@ -71,105 +71,120 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
     _settlePnl(_subAccount, abs(_unrealizedPnL));
   }
 
+  struct LiquidatePositionVars {
+    TradeHelper tradeHelper;
+    PerpStorage perpStorage;
+    ConfigStorage configStorage;
+    Calculator calculator;
+    OracleMiddleware oracle;
+    IPerpStorage.Position position;
+    PerpStorage.GlobalMarket globalMarket;
+    ConfigStorage.MarketConfig marketConfig;
+    bytes32 positionId;
+  }
+
   /// @notice Liquidates a list of positions by resetting their value in storage
   /// @param _subAccount The sub account of positions
   function _liquidatePosition(address _subAccount) internal returns (int256 _unrealizedPnL) {
+    LiquidatePositionVars memory _vars;
     // Get the list of position ids associated with the sub-account
     bytes32[] memory positionIds = PerpStorage(perpStorage).getPositionIds(_subAccount);
 
-    bytes32 _positionId;
-    IPerpStorage.Position memory _position;
+    _vars.tradeHelper = TradeHelper(tradeHelper);
+    _vars.perpStorage = PerpStorage(perpStorage);
+    _vars.configStorage = ConfigStorage(configStorage);
+    _vars.calculator = Calculator(calculator);
+    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
+
     uint256 _len = positionIds.length;
     // Loop through each position in the list
     for (uint256 i; i < _len; ) {
       // Get the current position id from the list
-      _positionId = positionIds[i];
-      _position = PerpStorage(perpStorage).getPositionById(_positionId);
+      _vars.positionId = positionIds[i];
+      _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
 
-      ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(
-        _position.marketIndex
-      );
+      _vars.marketConfig = _vars.configStorage.getMarketConfigByIndex(_vars.position.marketIndex);
 
       // Update borrowing rate
-      TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass, 0, 0);
+      _vars.tradeHelper.updateBorrowingRate(_vars.marketConfig.assetClass, 0, 0);
       // Collect margin fee
-      TradeHelper(tradeHelper).collectMarginFee(
+      _vars.tradeHelper.collectMarginFee(
         _subAccount,
-        uint256(_position.positionSizeE30 > 0 ? _position.positionSizeE30 : -_position.positionSizeE30),
-        _marketConfig.assetClass,
-        _position.reserveValueE30,
-        _position.entryBorrowingRate,
-        _marketConfig.decreasePositionFeeRateBPS
+        uint256(_vars.position.positionSizeE30 > 0 ? _vars.position.positionSizeE30 : -_vars.position.positionSizeE30),
+        _vars.marketConfig.assetClass,
+        _vars.position.reserveValueE30,
+        _vars.position.entryBorrowingRate,
+        _vars.marketConfig.decreasePositionFeeRateBPS
       );
       // settle margin fee
-      TradeHelper(tradeHelper).settleMarginFee(_subAccount);
+      _vars.tradeHelper.settleMarginFee(_subAccount);
 
       // Update funding rate
-      TradeHelper(tradeHelper).updateFundingRate(_position.marketIndex, 0);
+      _vars.tradeHelper.updateFundingRate(_vars.position.marketIndex, 0);
       // Collect funding fee
-      TradeHelper(tradeHelper).collectFundingFee(
+      _vars.tradeHelper.collectFundingFee(
         _subAccount,
-        _marketConfig.assetClass,
-        _position.marketIndex,
-        _position.positionSizeE30,
-        _position.entryFundingRate
+        _vars.marketConfig.assetClass,
+        _vars.position.marketIndex,
+        _vars.position.positionSizeE30,
+        _vars.position.entryFundingRate
       );
       // settle funding fee
-      TradeHelper(tradeHelper).settleFundingFee(_subAccount, 0, 0);
+      _vars.tradeHelper.settleFundingFee(_subAccount, 0, 0);
 
-      bool _isLong = _position.positionSizeE30 > 0;
+      bool _isLong = _vars.position.positionSizeE30 > 0;
 
-      PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(
-        _position.marketIndex
+      _vars.globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.position.marketIndex);
+
+      (uint256 _priceE30, , , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+        _vars.marketConfig.assetId,
+        _isLong,
+        (int(_vars.globalMarket.longOpenInterest) - int(_vars.globalMarket.shortOpenInterest)),
+        _isLong ? -int(_vars.position.positionSizeE30) : int(_vars.position.positionSizeE30),
+        _vars.marketConfig.fundingRate.maxSkewScaleUSD
       );
-
-      (uint256 _priceE30, , , ) = OracleMiddleware(ConfigStorage(configStorage).oracle())
-        .getLatestAdaptivePriceWithMarketStatus(
-          _marketConfig.assetId,
-          _isLong,
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
-          _isLong ? -int(_position.positionSizeE30) : int(_position.positionSizeE30),
-          _marketConfig.fundingRate.maxSkewScaleUSD
-        );
 
       // Update global state
       {
         int256 _realizedPnl;
-        uint256 absPositionSize = abs(_position.positionSizeE30);
+        uint256 absPositionSize = abs(_vars.position.positionSizeE30);
         {
           (bool _isProfit, uint256 _delta) = calculator.getDelta(
             absPositionSize,
-            _position.positionSizeE30 > 0,
+            _vars.position.positionSizeE30 > 0,
             _priceE30,
-            _position.avgEntryPriceE30
+            _vars.position.avgEntryPriceE30,
+            _vars.position.lastIncreaseTimestamp
           );
           _realizedPnl = _isProfit ? int256(_delta) : -int256(_delta);
           _unrealizedPnL += _realizedPnl;
         }
-        uint256 _nextAvgPrice = _isLong
-          ? calculator.calculateLongAveragePrice(
-            _globalMarket,
-            _priceE30,
-            -int256(_position.positionSizeE30),
-            _realizedPnl
-          )
-          : calculator.calculateShortAveragePrice(
-            _globalMarket,
-            _priceE30,
-            int256(_position.positionSizeE30),
-            _realizedPnl
-          );
-        PerpStorage(perpStorage).updateGlobalMarketPrice(_position.marketIndex, _isLong, _nextAvgPrice);
-        PerpStorage(perpStorage).decreaseOpenInterest(
-          _position.marketIndex,
+        {
+          uint256 _nextAvgPrice = _isLong
+            ? calculator.calculateLongAveragePrice(
+              _vars.globalMarket,
+              _priceE30,
+              -int256(_vars.position.positionSizeE30),
+              _realizedPnl
+            )
+            : calculator.calculateShortAveragePrice(
+              _vars.globalMarket,
+              _priceE30,
+              int256(_vars.position.positionSizeE30),
+              _realizedPnl
+            );
+          _vars.perpStorage.updateGlobalMarketPrice(_vars.position.marketIndex, _isLong, _nextAvgPrice);
+        }
+        _vars.perpStorage.decreaseOpenInterest(
+          _vars.position.marketIndex,
           _isLong,
           absPositionSize,
-          _position.openInterest
+          _vars.position.openInterest
         );
-        PerpStorage(perpStorage).decreaseReserved(_marketConfig.assetClass, _position.openInterest);
+        _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.openInterest);
 
         // remove the position's value in storage
-        PerpStorage(perpStorage).removePositionFromSubAccount(_subAccount, _positionId);
+        _vars.perpStorage.removePositionFromSubAccount(_subAccount, _vars.positionId);
       }
 
       unchecked {

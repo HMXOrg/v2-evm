@@ -19,6 +19,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     bytes32 priceId;
     int64 price;
     int64 exponent;
+    uint64 conf;
     bool inverse;
   }
 
@@ -28,31 +29,73 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
   constructor() {
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8, inverse: false })
+      AssetPythPriceData({
+        assetId: wethAssetId,
+        priceId: wethPriceId,
+        price: 1500 * 1e8,
+        exponent: -8,
+        inverse: false,
+        conf: 0
+      })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: wbtcAssetId, priceId: wbtcPriceId, price: 20000, exponent: -8, inverse: false })
+      AssetPythPriceData({
+        assetId: wbtcAssetId,
+        priceId: wbtcPriceId,
+        price: 20000 * 1e8,
+        exponent: -8,
+        inverse: false,
+        conf: 0
+      })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: daiAssetId, priceId: daiPriceId, price: 1, exponent: -8, inverse: false })
+      AssetPythPriceData({
+        assetId: daiAssetId,
+        priceId: daiPriceId,
+        price: 1 * 1e8,
+        exponent: -8,
+        inverse: false,
+        conf: 0
+      })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: usdcAssetId, priceId: usdcPriceId, price: 1, exponent: -8, inverse: false })
+      AssetPythPriceData({
+        assetId: usdcAssetId,
+        priceId: usdcPriceId,
+        price: 1 * 1e8,
+        exponent: -8,
+        inverse: false,
+        conf: 0
+      })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: usdtAssetId, priceId: usdtPriceId, price: 1, exponent: -8, inverse: false })
+      AssetPythPriceData({
+        assetId: usdtAssetId,
+        priceId: usdtPriceId,
+        price: 1 * 1e8,
+        exponent: -8,
+        inverse: false,
+        conf: 0
+      })
     );
     assetPythPriceDatas.push(
-      AssetPythPriceData({ assetId: appleAssetId, priceId: applePriceId, price: 152, exponent: -5, inverse: false })
+      AssetPythPriceData({
+        assetId: appleAssetId,
+        priceId: applePriceId,
+        price: 152 * 1e5,
+        exponent: -5,
+        inverse: false,
+        conf: 0
+      })
     );
-    // @todo - after integrate with inverse config then price should be change to USDJPY
     assetPythPriceDatas.push(
       AssetPythPriceData({
         assetId: jpyAssetId,
         priceId: jpyPriceid,
         price: 136.123 * 1e3,
         exponent: -3,
-        inverse: true
+        inverse: true,
+        conf: 0
       })
     );
 
@@ -87,8 +130,9 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
       // set PythId
       pythAdapter.setConfig(_data.assetId, _data.priceId, _data.inverse);
+
       // set UpdatePriceFeed
-      initialPriceFeedDatas.push(_createPriceFeedUpdateData(_data.assetId, _data.price));
+      initialPriceFeedDatas.push(_createPriceFeedUpdateData(_data.assetId, _data.price, _data.conf));
 
       unchecked {
         ++i;
@@ -97,21 +141,27 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     uint256 fee = pyth.getUpdateFee(initialPriceFeedDatas);
     vm.deal(address(this), fee);
     pyth.updatePriceFeeds{ value: fee }(initialPriceFeedDatas);
+    skip(1);
   }
 
   /// @notice setPrices of pyth
   /// @param _assetIds assetIds array
   /// @param _prices price of each asset
   /// @return _newDatas bytes[] of setting
-  function setPrices(bytes32[] memory _assetIds, int64[] memory _prices) public returns (bytes[] memory _newDatas) {
-    if (_assetIds.length != _prices.length) {
+  function setPrices(
+    bytes32[] memory _assetIds,
+    int64[] memory _prices,
+    uint64[] memory _conf
+  ) public returns (bytes[] memory _newDatas) {
+    if (_assetIds.length != _prices.length || _assetIds.length != _conf.length) {
       revert BadArgs();
     }
 
     _newDatas = new bytes[](_assetIds.length);
 
     for (uint256 i = 0; i < _assetIds.length; ) {
-      _newDatas[i] = (_createPriceFeedUpdateData(_assetIds[i], _prices[i]));
+      _newDatas[i] = (_createPriceFeedUpdateData(_assetIds[i], _prices[i], _conf[i]));
+
       unchecked {
         ++i;
       }
@@ -120,10 +170,15 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     uint256 fee = pyth.getUpdateFee(_newDatas);
     vm.deal(address(this), fee);
     pyth.updatePriceFeeds{ value: fee }(_newDatas);
+
     return _newDatas;
   }
 
-  function _createPriceFeedUpdateData(bytes32 _assetId, int64 _price) internal view returns (bytes memory) {
+  function _createPriceFeedUpdateData(
+    bytes32 _assetId,
+    int64 _price,
+    uint64 _conf
+  ) internal view returns (bytes memory) {
     int64 pythDecimals;
 
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
@@ -136,14 +191,14 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       }
     }
 
-    int64 _pythDecimalPow = int64(10) ** uint64(-pythDecimals);
     (bytes32 _pythPriceId, ) = pythAdapter.configs(_assetId);
+
     bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
       _pythPriceId,
-      _price * _pythDecimalPow,
-      0,
+      _price,
+      _conf,
       int8(pythDecimals),
-      _price * _pythDecimalPow,
+      _price,
       0,
       uint64(block.timestamp)
     );

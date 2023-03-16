@@ -5,8 +5,7 @@ pragma solidity 0.8.18;
 import { TestBase } from "forge-std/Base.sol";
 import { console } from "forge-std/console.sol";
 import { console2 } from "forge-std/console2.sol";
-import { StdCheatsSafe } from "forge-std/StdCheats.sol";
-import { StdAssertions } from "forge-std/StdAssertions.sol";
+import { StdCheats } from "forge-std/StdCheats.sol";
 
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
@@ -63,10 +62,15 @@ import { GlobalMarketTester } from "@hmx-test/testers/GlobalMarketTester.sol";
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
-abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
+abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
   uint256 internal constant DOLLAR = 1e30;
   uint256 internal constant executionOrderFee = 0.0001 ether;
+
+  uint256 internal constant SECONDS = 1;
+  uint256 internal constant MINUTES = SECONDS * 60;
+  uint256 internal constant HOURS = MINUTES * 60;
+  uint256 internal constant DAYS = HOURS * 24;
 
   address internal ALICE;
   address internal BOB;
@@ -75,6 +79,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal EVE;
   address internal FEEVER;
   address internal ORDER_EXECUTOR;
+  address internal BOT;
 
   /* CONTRACTS */
   IOracleMiddleware oracleMiddleWare;
@@ -111,7 +116,6 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
   MockErc20 usdt; // decimals 6
   MockErc20 dai; // decimals 18
 
-  // UNDERLYING ARBRITRUM GLP => ETH WBTC LINK UNI USDC USDT DAI FRAX
   IWNative weth; //for native
 
   /* PYTH */
@@ -136,6 +140,7 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
     EVE = makeAddr("EVE");
     FEEVER = makeAddr("FEEVER");
     ORDER_EXECUTOR = makeAddr("ORDER_EXECUTOR");
+    BOT = makeAddr("BOT");
 
     /* DEPLOY PART */
     // deploy MOCK weth
@@ -278,8 +283,9 @@ abstract contract BaseIntTest is TestBase, StdAssertions, StdCheatsSafe {
 
     // Setup Bot Handler
     {
-      address[] memory _positionManagers = new address[](1);
+      address[] memory _positionManagers = new address[](2);
       _positionManagers[0] = address(this);
+      _positionManagers[1] = BOT;
 
       // set Tester as position managers
       botHandler.setPositionManagers(_positionManagers, true);

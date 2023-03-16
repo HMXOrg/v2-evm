@@ -89,12 +89,12 @@ contract MockCalculator is ICalculator {
   }
 
   // @todo - Add Description
-  function getUnrealizedPnl(
+  function getUnrealizedPnlAndFee(
     address _subAccount,
     uint256 /* _price */,
     bytes32 /* _assetId */
-  ) external view returns (int256) {
-    return unrealizedPnlOf[_subAccount];
+  ) public view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+    return (unrealizedPnlOf[_subAccount], 0);
   }
 
   // @todo - Add Description
@@ -267,7 +267,8 @@ contract MockCalculator is ICalculator {
     uint256 _size,
     bool _isLong,
     uint256 _markPrice,
-    uint256 _averagePrice
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
   ) public view virtual returns (bool, uint256) {}
 
   function getPositionNextAveragePrice(
@@ -275,6 +276,7 @@ contract MockCalculator is ICalculator {
     bool _isLong,
     uint256 _sizeDelta,
     uint256 _markPrice,
-    uint256 _averagePrice
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
   ) external pure returns (uint256) {}
 }

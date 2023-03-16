@@ -38,14 +38,14 @@ interface IPerpStorage {
   struct Position {
     address primaryAccount;
     uint256 marketIndex;
-    int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
-    int256 realizedPnl;
     uint256 avgEntryPriceE30;
     uint256 entryBorrowingRate;
-    int256 entryFundingRate;
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     uint256 openInterest;
+    int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
+    int256 realizedPnl;
+    int256 entryFundingRate;
     uint8 subAccountId;
   }
 

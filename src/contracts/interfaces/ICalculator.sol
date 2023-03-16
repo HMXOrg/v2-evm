@@ -80,11 +80,11 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (int256 _equityValueE30);
 
-  function getUnrealizedPnl(
+  function getUnrealizedPnlAndFee(
     address _subAccount,
-    uint256 _price,
-    bytes32 _assetId
-  ) external view returns (int256 _unrealizedPnlE30);
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) external view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30);
 
   function getIMR(address _subAccount) external view returns (uint256 _imrValueE30);
 
@@ -107,6 +107,14 @@ interface ICalculator {
     uint256 _marketIndex,
     uint256 _limitPriceE30
   ) external view returns (int256, int256, int256);
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastincreaseTimestamp
+  ) external view returns (bool, uint256);
 
   function setOracle(address _oracle) external;
 

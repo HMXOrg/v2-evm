@@ -100,14 +100,5 @@ contract MockTradeService is ITradeService {
     return (0, 0, 0);
   }
 
-  function getDelta(
-    uint256 /*_size*/,
-    bool /*_isLong*/,
-    uint256 /*_markPrice*/,
-    uint256 /*_averagePrice*/
-  ) external pure returns (bool, uint256) {
-    return (false, 0);
-  }
-
   function reloadConfig() external {}
 }

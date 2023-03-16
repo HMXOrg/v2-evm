@@ -25,7 +25,8 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     address indexed primaryAccount,
     address indexed subAccount,
     address token,
-    uint256 amount
+    uint256 amount,
+    address receiver
   );
 
   /**
@@ -115,7 +116,8 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     address _primaryAccount,
     uint8 _subAccountId,
     address _token,
-    uint256 _amount
+    uint256 _amount,
+    address _receiver
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
     address _vaultStorage = vaultStorage;
 
@@ -142,10 +144,10 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
       VaultStorage(_vaultStorage).removeTraderToken(_subAccount, _token);
     }
 
-    // Transfer withdrawing token from VaultStorage to trader's wallet
-    VaultStorage(_vaultStorage).pushToken(_token, _primaryAccount, _amount);
+    // Transfer withdrawing token from VaultStorage to destination wallet
+    VaultStorage(_vaultStorage).pushToken(_token, _receiver, _amount);
 
-    emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount);
+    emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount, _receiver);
   }
 
   /**

@@ -15,7 +15,7 @@ contract TC34 is BaseIntTest_WithActions {
     // T0: Initialized state
     uint256 _totalExecutionOrderFee = executionOrderFee - initialPriceFeedDatas.length;
 
-    uint256 _amount = 5e7;
+    uint256 _amount = 5e7; //0.5 btc
 
     // mint 0.5 btc and give 0.0001 gas
     vm.deal(ALICE, executionOrderFee);

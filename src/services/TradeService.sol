@@ -524,34 +524,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _globalMarketIndex,
     DecreasePositionVars memory _vars
   ) internal returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
-    // Update borrowing rate
-    TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass, _vars.limitPriceE30, _marketConfig.assetId);
-
-    // Update funding rate
-    TradeHelper(tradeHelper).updateFundingRate(_globalMarketIndex, _vars.limitPriceE30);
-
-    TradeHelper(tradeHelper).collectMarginFee(
-      _vars.subAccount,
-      _vars.positionSizeE30ToDecrease,
-      _marketConfig.assetClass,
-      _vars.position.reserveValueE30,
-      _vars.position.entryBorrowingRate,
-      _marketConfig.decreasePositionFeeRateBPS
-    );
-
-    TradeHelper(tradeHelper).settleMarginFee(_vars.subAccount);
-
-    // Collect funding fee
-    TradeHelper(tradeHelper).collectFundingFee(
-      _vars.subAccount,
-      _marketConfig.assetClass,
-      _globalMarketIndex,
-      _vars.position.positionSizeE30,
-      _vars.position.entryFundingRate
-    );
-
-    TradeHelper(tradeHelper).settleFundingFee(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
-
     // Settle
     // - trading fees
     // - borrowing fees

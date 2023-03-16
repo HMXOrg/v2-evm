@@ -345,9 +345,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       : 0,
     usdc: ethers.utils.formatUnits(plpLiquidityUsdc, 6),
     usdt: ethers.utils.formatUnits(plpLiquidityUsdt, 6),
-    dai: ethers.utils.formatUnits(plpLiquidityDai, 6),
-    weth: ethers.utils.formatUnits(plpLiquidityWeth, 6),
-    wbtc: ethers.utils.formatUnits(plpLiquidityWbtc, 6),
+    dai: ethers.utils.formatUnits(plpLiquidityDai, 18),
+    weth: ethers.utils.formatUnits(plpLiquidityWeth, 18),
+    wbtc: ethers.utils.formatUnits(plpLiquidityWbtc, 8),
   });
   console.log("=== Asset Class ====");
   console.table({
@@ -371,17 +371,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.table({
     usdc: ethers.utils.formatUnits(feeUsdc, 6),
     usdt: ethers.utils.formatUnits(feeUsdt, 6),
-    dai: ethers.utils.formatUnits(feeDai, 6),
-    weth: ethers.utils.formatUnits(feeWeth, 6),
-    wbtc: ethers.utils.formatUnits(feeWbtc, 6),
+    dai: ethers.utils.formatUnits(feeDai, 18),
+    weth: ethers.utils.formatUnits(feeWeth, 18),
+    wbtc: ethers.utils.formatUnits(feeWbtc, 8),
   });
   console.log("=== Dev Fees ===");
   console.table({
     usdc: ethers.utils.formatUnits(devFeeUsdc, 6),
     usdt: ethers.utils.formatUnits(devFeeUsdt, 6),
-    dai: ethers.utils.formatUnits(devFeeDai, 6),
-    weth: ethers.utils.formatUnits(devFeeWeth, 6),
-    wbtc: ethers.utils.formatUnits(devFeeWbtc, 6),
+    dai: ethers.utils.formatUnits(devFeeDai, 18),
+    weth: ethers.utils.formatUnits(devFeeWeth, 18),
+    wbtc: ethers.utils.formatUnits(devFeeWbtc, 8),
   });
 };
 

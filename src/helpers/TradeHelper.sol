@@ -29,6 +29,9 @@ contract TradeHelper is ITradeHelper {
   event LogSettleTradingFeeValue(address subAccount, uint256 feeUsd);
   event LogSettleTradingFeeAmount(address subAccount, address token, uint256 devFeeAmount, uint256 protocolFeeAmount);
 
+  event LogSettleBorrowingFeeValue(address subAccount, uint256 feeUsd);
+  event LogSettleBorrowingFeeAmount(address subAccount, address token, uint256 devFeeAmount, uint256 plpFeeAmount);
+
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
@@ -356,7 +359,6 @@ contract TradeHelper is ITradeHelper {
   }
 
   struct SettleTradingFeeVars {
-    PerpStorage perpStorage;
     VaultStorage vaultStorage;
     ConfigStorage configStorage;
     OracleMiddleware oracle;
@@ -370,7 +372,6 @@ contract TradeHelper is ITradeHelper {
     SettleTradingFeeVars memory _vars;
     // SLOAD
     _vars.vaultStorage = VaultStorage(vaultStorage);
-    _vars.perpStorage = PerpStorage(perpStorage);
     _vars.configStorage = ConfigStorage(configStorage);
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
     _vars.collateralTokens = _vars.configStorage.getCollateralTokens();
@@ -391,20 +392,14 @@ contract TradeHelper is ITradeHelper {
 
       // if trader has some of this collateral token, try cover the fee with it
       if (_traderBalance > 0) {
-        uint256 _tradingFeeAmount = _valueToTokenAmount(
+        // protocol fee portion + dev fee portion
+        uint256 _totalRepayAmount = _getRepayAmount(
           _vars.configStorage,
           _vars.oracle,
+          _traderBalance,
           _vars.tradingFeeToBePaid,
           _vars.collateralTokens[i]
         );
-        uint256 _totalRepayAmount; // protocol fee portion + dev fee portion
-        if (_traderBalance > _tradingFeeAmount) {
-          // _traderBalance can cover the rest of the fee
-          _totalRepayAmount = _tradingFeeAmount;
-        } else {
-          // _traderBalance cannot cover the rest of the fee, just take the amount the trader have
-          _totalRepayAmount = _traderBalance;
-        }
 
         // devFee = tradingFee * devFeeRate
         uint256 _devFeeAmount = (_totalRepayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
@@ -433,6 +428,83 @@ contract TradeHelper is ITradeHelper {
     if (_vars.tradingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
   }
 
+  struct SettleBorrowingFeeVars {
+    PerpStorage perpStorage;
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    uint256 borrowingFeeToBePaid;
+    address[] collateralTokens;
+    uint256 collateralTokensLength;
+    ConfigStorage.TradingConfig tradingConfig;
+  }
+
+  function settleBorrowingFee(
+    address _subAccount,
+    uint8 _assetClassIndex,
+    uint256 _reservedValue,
+    uint256 _entryBorrowingRate
+  ) external {
+    SettleBorrowingFeeVars memory _vars;
+    // SLOAD
+    _vars.vaultStorage = VaultStorage(vaultStorage);
+    _vars.perpStorage = PerpStorage(perpStorage);
+    _vars.configStorage = ConfigStorage(configStorage);
+    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
+    _vars.collateralTokens = _vars.configStorage.getCollateralTokens();
+    _vars.collateralTokensLength = _vars.collateralTokens.length;
+    _vars.tradingConfig = _vars.configStorage.getTradingConfig();
+
+    // Calculate the borrowing fee
+    _vars.borrowingFeeToBePaid = calculator.getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
+
+    emit LogSettleBorrowingFeeValue(_subAccount, _vars.borrowingFeeToBePaid);
+
+    // We are now trying our best to pay `_vars.borrowingFeeToBePaid` by deducting balance from the trader collateral.
+    // If one collateral cannot cover, try the next one and so on.
+    // If all of the collaterals still cannot cover, revert.
+    for (uint256 i; i < _vars.collateralTokensLength; ) {
+      // Get trader balance of each collateral
+      uint256 _traderBalance = _vars.vaultStorage.traderBalances(_subAccount, _vars.collateralTokens[i]);
+
+      // if trader has some of this collateral token, try cover the fee with it
+      if (_traderBalance > 0) {
+        // plp fee portion + dev fee portion
+        uint256 _totalRepayAmount = _getRepayAmount(
+          _vars.configStorage,
+          _vars.oracle,
+          _traderBalance,
+          _vars.borrowingFeeToBePaid,
+          _vars.collateralTokens[i]
+        );
+
+        // devFee = tradingFee * devFeeRate
+        uint256 _devFeeAmount = (_totalRepayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
+        // the rest after dev fee deduction belongs to plp fee portion
+        uint256 _plpFeeAmount = _totalRepayAmount - _devFeeAmount;
+
+        // book those moving balances
+        _vars.vaultStorage.payBorrowingFee(_subAccount, _vars.collateralTokens[i], _devFeeAmount, _plpFeeAmount);
+
+        // deduct _vars.tradingFeeToBePaid with _totalRepayAmount, so that the next iteration could continue deducting the fee
+        _vars.borrowingFeeToBePaid -= _totalRepayAmount;
+
+        emit LogSettleBorrowingFeeAmount(_subAccount, _vars.collateralTokens[i], _devFeeAmount, _plpFeeAmount);
+      }
+      // else continue, as trader does not have any of this collateral token
+
+      // stop iteration, if all fees are covered
+      if (_vars.borrowingFeeToBePaid == 0) break;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    // If fee cannot be covered, revert.
+    if (_vars.borrowingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
+  }
+
   function _valueToTokenAmount(
     ConfigStorage _configStorage,
     OracleMiddleware _oracle,
@@ -444,5 +516,23 @@ contract TradeHelper is ITradeHelper {
     (uint256 _tokenPrice, ) = _oracle.getLatestPrice(_tokenAssetId, false);
 
     return (_valueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
+  }
+
+  function _getRepayAmount(
+    ConfigStorage _configStorage,
+    OracleMiddleware _oracle,
+    uint256 _traderBalance,
+    uint256 _feeValueE30,
+    address _token
+  ) internal view returns (uint256 _totalRepayAmount) {
+    uint256 _feeAmount = _valueToTokenAmount(_configStorage, _oracle, _feeValueE30, _token);
+
+    if (_traderBalance > _feeAmount) {
+      // _traderBalance can cover the rest of the fee
+      return _feeAmount;
+    } else {
+      // _traderBalance cannot cover the rest of the fee, just take the amount the trader have
+      return _traderBalance;
+    }
   }
 }

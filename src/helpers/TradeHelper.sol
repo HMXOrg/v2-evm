@@ -101,12 +101,12 @@ contract TradeHelper is ITradeHelper {
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
-      (int256 newFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
+      (int256 nextFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
         _marketIndex,
         _limitPriceE30
       );
 
-      _globalMarket.currentFundingRate = newFundingRate;
+      _globalMarket.currentFundingRate += nextFundingRate;
       _globalMarket.accumFundingLong += nextFundingRateLong;
       _globalMarket.accumFundingShort += nextFundingRateShort;
       _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;

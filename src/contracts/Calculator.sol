@@ -863,15 +863,15 @@ contract Calculator is Owned, ICalculator {
     vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
 
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
-    vars.newFundingRate = (globalMarket.currentFundingRate + vars.nextFundingRate) * vars.elapsedIntervals;
+    vars.nextFundingRate = vars.nextFundingRate * vars.elapsedIntervals;
 
     if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize)) / 1e30;
+      fundingRateLong = (vars.nextFundingRate * int(globalMarket.longPositionSize)) / 1e30;
     }
     if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
+      fundingRateShort = (vars.nextFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
     }
-    return (vars.newFundingRate, fundingRateLong, fundingRateShort);
+    return (vars.nextFundingRate, fundingRateLong, fundingRateShort);
   }
 
   /**

@@ -275,7 +275,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       );
 
       _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
-      _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
+      _vars.position.entryFundingRate = _globalMarket.accumFundingRate;
     }
 
     // if the position size is zero after the update, revert the transaction with an error
@@ -653,7 +653,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         // update position info
         {
           _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
-          _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
+          _vars.position.entryFundingRate = _globalMarket.accumFundingRate;
           _vars.position.positionSizeE30 = _vars.isLongPosition
             ? int256(_newAbsPositionSizeE30)
             : -int256(_newAbsPositionSizeE30);

@@ -829,21 +829,16 @@ contract Calculator is Owned, ICalculator {
   /// @param _marketIndex Market Index.
   /// @param _limitPriceE30 Price from limit order
   /// @return fundingRate next funding rate using for both LONG & SHORT positions.
-  /// @return fundingRateLong next funding rate for LONG.
-  /// @return fundingRateShort next funding rate for SHORT.
-  function getNextFundingRate(
-    uint256 _marketIndex,
-    uint256 _limitPriceE30
-  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+  function getNextFundingRate(uint256 _marketIndex, uint256 _limitPriceE30) external view returns (int256 fundingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
     PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
+    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return 0;
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     // If block.timestamp not pass the next funding time, return 0.
-    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
+    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return 0;
     int32 _exponent;
     if (_limitPriceE30 != 0) {
       vars.marketPriceE30 = _limitPriceE30;
@@ -865,13 +860,7 @@ contract Calculator is Owned, ICalculator {
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
     vars.nextFundingRate = vars.nextFundingRate * vars.elapsedIntervals;
 
-    if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.nextFundingRate * int(globalMarket.longPositionSize)) / 1e30;
-    }
-    if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.nextFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
-    }
-    return (vars.nextFundingRate, fundingRateLong, fundingRateShort);
+    return vars.nextFundingRate;
   }
 
   /**
@@ -893,7 +882,7 @@ contract Calculator is Owned, ICalculator {
 
     PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
-    int256 _fundingRate = _globalMarket.currentFundingRate - _entryFundingRate;
+    int256 _fundingRate = _globalMarket.accumFundingRate - _entryFundingRate;
 
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG

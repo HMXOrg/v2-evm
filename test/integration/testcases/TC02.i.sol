@@ -29,7 +29,7 @@ contract TC02 is BaseIntTest_WithActions {
 
     // T1: BOB provide liquidity as WBTC 1 token
     // note: price has no changed0
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0));
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0), true);
 
     // ------------------------------------------
     // | PLP's info                             |

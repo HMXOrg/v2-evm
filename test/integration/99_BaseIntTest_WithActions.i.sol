@@ -21,13 +21,14 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     ERC20 _tokenIn,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData
+    bytes[] memory _priceData,
+    bool executeNow
   ) internal {
     vm.startPrank(_liquidityProvider);
     _tokenIn.approve(address(liquidityHandler), _amountIn);
     /// note: minOut always 0 to make test passed
     /// note: shouldWrap treat as false when only GLP could be liquidity
-    liquidityHandler.createAddLiquidityOrder{ value: _executionFee }(
+    uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: _executionFee }(
       address(_tokenIn),
       _amountIn,
       0,
@@ -36,8 +37,14 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     );
     vm.stopPrank();
 
+    if (executeNow) {
+      exeutePLPOrder(_orderIndex, _priceData);
+    }
+  }
+
+  function exeutePLPOrder(uint256 _endIndex, bytes[] memory _priceData) internal {
     vm.startPrank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(liquidityHandler.getLiquidityOrders().length - 1, payable(FEEVER), _priceData);
+    liquidityHandler.executeOrder(_endIndex, payable(FEEVER), _priceData);
     vm.stopPrank();
   }
 
@@ -52,7 +59,8 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     address _tokenOut,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData
+    bytes[] memory _priceData,
+    bool executeNow
   ) internal {
     vm.startPrank(_liquidityProvider);
 
@@ -60,12 +68,18 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     // _tokenOut.approve(address(liquidityHandler), _amountIn);
     /// note: minOut always 0 to make test passed
     /// note: shouldWrap treat as false when only GLP could be liquidity
-    liquidityHandler.createRemoveLiquidityOrder{ value: _executionFee }(_tokenOut, _amountIn, 0, _executionFee, false);
+    uint256 _orderIndex = liquidityHandler.createRemoveLiquidityOrder{ value: _executionFee }(
+      _tokenOut,
+      _amountIn,
+      0,
+      _executionFee,
+      false
+    );
     vm.stopPrank();
 
-    vm.startPrank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(liquidityHandler.getLiquidityOrders().length - 1, payable(FEEVER), _priceData);
-    vm.stopPrank();
+    if (executeNow) {
+      exeutePLPOrder(_orderIndex, _priceData);
+    }
   }
 
   /**

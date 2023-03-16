@@ -47,12 +47,11 @@ contract PythAdapter is Owned, IPythAdapter {
   /// @notice convert Pyth's price to uint256.
   /// @dev This is partially taken from https://github.com/pyth-network/pyth-crosschain/blob/main/target_chains/ethereum/examples/oracle_swap/contract/src/OracleSwap.sol#L92
   /// @param _priceStruct The Pyth's price struct to convert.
-  /// @param _isMax Whether to use the max price or min price.
   /// @param _targetDecimals The target decimals to convert to.
   /// @param _shouldInvert Whether should invert(^-1) the final result or not.
   function _convertToUint256(
     PythStructs.Price memory _priceStruct,
-    bool _isMax,
+    bool /*_isMax*/,
     uint8 _targetDecimals,
     bool _shouldInvert
   ) private pure returns (uint256) {
@@ -62,15 +61,7 @@ contract PythAdapter is Owned, IPythAdapter {
 
     uint8 _priceDecimals = uint8(uint32(-1 * _priceStruct.expo));
 
-    // Basicly, this is _isMax XOR _shouldInvert
-    //  _isMax  |  _shouldInvert  |  operator
-    //  true    |  true           |  -
-    //  true    |  false          |  +
-    //  false   |  true           |  +
-    //  false   |  false          |  -
-    uint64 _price = _isMax == _shouldInvert
-      ? uint64(_priceStruct.price) - _priceStruct.conf
-      : uint64(_priceStruct.price) + _priceStruct.conf;
+    uint64 _price = uint64(_priceStruct.price);
 
     uint256 _price256;
     if (_targetDecimals - _priceDecimals >= 0) {

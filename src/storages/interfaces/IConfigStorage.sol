@@ -64,7 +64,7 @@ interface IConfigStorage {
   }
 
   struct AssetClassConfig {
-    uint32 baseBorrowingRateBPS;
+    uint256 baseBorrowingRate;
   }
 
   struct LiquidityConfig {

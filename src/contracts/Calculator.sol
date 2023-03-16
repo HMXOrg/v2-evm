@@ -10,8 +10,8 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
-import { ICalculator } from "./interfaces/ICalculator.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
@@ -959,10 +959,7 @@ contract Calculator is Owned, ICalculator {
     uint256 intervals = (block.timestamp - _globalAssetClass.lastBorrowingTime) / _tradingConfig.fundingInterval;
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
-    return
-      (_assetClassConfig.baseBorrowingRateBPS * _globalAssetClass.reserveValueE30 * intervals * RATE_PRECISION) /
-      plpTVL /
-      BPS;
+    return (_assetClassConfig.baseBorrowingRate * _globalAssetClass.reserveValueE30 * intervals) / plpTVL;
   }
 
   function getDelta(

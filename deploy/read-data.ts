@@ -275,6 +275,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "devFees",
       args: [config.tokens.wbtc],
     },
+    // Global Markets
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "globalMarkets",
+      args: [0],
+    },
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "globalMarkets",
+      args: [1],
+    },
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "globalMarkets",
+      args: [2],
+    },
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "globalMarkets",
+      args: [3],
+    },
   ];
   const [
     blockNumber,
@@ -313,8 +338,66 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       devFeeDai,
       devFeeWeth,
       devFeeWbtc,
+      ethusdMarket,
+      btcusdMarket,
+      applusdMarket,
+      jpyusdMarket,
     ],
   ] = await multi.multiCall(inputs);
+
+  const adaptivePriceInputs = [
+    {
+      interface: OracleMiddleware__factory.abi,
+      target: config.oracle.middleware,
+      function: "getLatestAdaptivePrice",
+      args: [
+        ethAssetId,
+        true,
+        ethusdMarket.longOpenInterest.sub(ethusdMarket.shortOpenInterest),
+        0,
+        ethers.utils.parseUnits("3000000", 30),
+      ],
+    },
+    {
+      interface: OracleMiddleware__factory.abi,
+      target: config.oracle.middleware,
+      function: "getLatestAdaptivePrice",
+      args: [
+        wbtcAssetId,
+        true,
+        ethusdMarket.longOpenInterest.sub(btcusdMarket.shortOpenInterest),
+        0,
+        ethers.utils.parseUnits("3000000", 30),
+      ],
+    },
+    {
+      interface: OracleMiddleware__factory.abi,
+      target: config.oracle.middleware,
+      function: "getLatestAdaptivePrice",
+      args: [
+        appleAssetId,
+        true,
+        ethusdMarket.longOpenInterest.sub(applusdMarket.shortOpenInterest),
+        0,
+        ethers.utils.parseUnits("3000000", 30),
+      ],
+    },
+    {
+      interface: OracleMiddleware__factory.abi,
+      target: config.oracle.middleware,
+      function: "getLatestAdaptivePrice",
+      args: [
+        jpyAssetId,
+        true,
+        ethusdMarket.longOpenInterest.sub(jpyusdMarket.shortOpenInterest),
+        0,
+        ethers.utils.parseUnits("3000000", 30),
+      ],
+    },
+  ];
+  const [blockNumber2, [ethusdAdaptivePrice, btcusdAdaptivePrice, applusdAdaptivePrice, jpyusdAdaptivePrice]] =
+    await multi.multiCall(adaptivePriceInputs);
+
   console.log("=== Prices ===");
   console.log(ethers.utils.formatUnits(usdcPrice._price, 30));
   console.log(ethers.utils.formatUnits(usdtPrice._price, 30));
@@ -323,6 +406,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(ethers.utils.formatUnits(wbtcPrice._price, 30));
   console.log(ethers.utils.formatUnits(applePrice._price, 30));
   console.log(ethers.utils.formatUnits(jpyPrice._price, 30));
+  console.log("=== Adaptive Prices ===");
+  console.log(ethers.utils.formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
+  console.log(ethers.utils.formatUnits(btcusdAdaptivePrice._adaptivePrice, 30));
+  console.log(ethers.utils.formatUnits(applusdAdaptivePrice._adaptivePrice, 30));
+  console.log(ethers.utils.formatUnits(jpyusdAdaptivePrice._adaptivePrice, 30));
   console.log("=== Cross Margin Account ===");
   console.table({
     equity: ethers.utils.formatUnits(equity, 30),
@@ -382,6 +470,41 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: ethers.utils.formatUnits(devFeeDai, 18),
     weth: ethers.utils.formatUnits(devFeeWeth, 18),
     wbtc: ethers.utils.formatUnits(devFeeWbtc, 8),
+  });
+  console.log("=== Markets ===");
+  console.table({
+    ETHUSD: {
+      longPositionSize: ethers.utils.formatUnits(ethusdMarket.longPositionSize, 30),
+      longAvgPrice: ethers.utils.formatUnits(ethusdMarket.longAvgPrice, 30),
+      longOpenInterest: ethusdMarket.longOpenInterest,
+      shortPositionSize: ethers.utils.formatUnits(ethusdMarket.shortPositionSize, 30),
+      shortAvgPrice: ethers.utils.formatUnits(ethusdMarket.shortAvgPrice, 30),
+      shortOpenInterest: ethusdMarket.shortOpenInterest,
+    },
+    BTCUSD: {
+      longPositionSize: ethers.utils.formatUnits(btcusdMarket.longPositionSize, 30),
+      longAvgPrice: ethers.utils.formatUnits(btcusdMarket.longAvgPrice, 30),
+      longOpenInterest: btcusdMarket.longOpenInterest,
+      shortPositionSize: ethers.utils.formatUnits(btcusdMarket.shortPositionSize, 30),
+      shortAvgPrice: ethers.utils.formatUnits(btcusdMarket.shortAvgPrice, 30),
+      shortOpenInterest: btcusdMarket.shortOpenInterest,
+    },
+    APPLUSD: {
+      longPositionSize: ethers.utils.formatUnits(applusdMarket.longPositionSize, 30),
+      longAvgPrice: ethers.utils.formatUnits(applusdMarket.longAvgPrice, 30),
+      longOpenInterest: applusdMarket.longOpenInterest,
+      shortPositionSize: ethers.utils.formatUnits(applusdMarket.shortPositionSize, 30),
+      shortAvgPrice: ethers.utils.formatUnits(applusdMarket.shortAvgPrice, 30),
+      shortOpenInterest: applusdMarket.shortOpenInterest,
+    },
+    JPYUSD: {
+      longPositionSize: ethers.utils.formatUnits(jpyusdMarket.longPositionSize, 30),
+      longAvgPrice: ethers.utils.formatUnits(jpyusdMarket.longAvgPrice, 30),
+      longOpenInterest: jpyusdMarket.longOpenInterest,
+      shortPositionSize: ethers.utils.formatUnits(jpyusdMarket.shortPositionSize, 30),
+      shortAvgPrice: ethers.utils.formatUnits(jpyusdMarket.shortAvgPrice, 30),
+      shortOpenInterest: jpyusdMarket.shortOpenInterest,
+    },
   });
 };
 

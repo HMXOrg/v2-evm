@@ -10,12 +10,12 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
-contract TCTC999 is BaseIntTest_WithActions {
-  function test_bug_liquidity() external {
+contract TC34 is BaseIntTest_WithActions {
+  function test_correctness_swingPriceViaExecution() external {
     // T0: Initialized state
     uint256 _totalExecutionOrderFee = executionOrderFee - initialPriceFeedDatas.length;
 
-    uint256 _amount = 5e7;
+    uint256 _amount = 5e7; //0.5 btc
 
     // mint 0.5 btc and give 0.0001 gas
     vm.deal(ALICE, executionOrderFee);
@@ -36,7 +36,12 @@ contract TCTC999 is BaseIntTest_WithActions {
       })
     );
 
-    // setup for remove liquidity
+    vm.deal(ALICE, executionOrderFee);
+    uint256 _balanceAll = plpV2.balanceOf(ALICE);
+    removeLiquidity(ALICE, address(wbtc), _balanceAll, executionOrderFee, new bytes[](0), false);
+
+    // setup for remove liquidity feed only 1 token
+    skip(10);
     bytes32[] memory _newAssetIds = new bytes32[](1);
     int64[] memory _prices = new int64[](1);
     uint64[] memory _conf = new uint64[](1);
@@ -44,17 +49,11 @@ contract TCTC999 is BaseIntTest_WithActions {
     _prices[0] = 21_000 * 1e8;
     _conf[0] = 2;
 
-    // feed only 1 token
-    _totalExecutionOrderFee += (executionOrderFee - 1);
-
     bytes[] memory _newPrices = setPrices(_newAssetIds, _prices, _conf);
 
-    vm.deal(ALICE, executionOrderFee);
-    uint256 _balanceAll = plpV2.balanceOf(ALICE);
-    removeLiquidity(ALICE, address(wbtc), _balanceAll, executionOrderFee, _newPrices, true);
+    exeutePLPOrder(liquidityHandler.nextExecutionOrderIndex(), _newPrices);
 
-    assertEq(vaultStorage.plpLiquidity(address(wbtc)), 0, "vaultStorage");
-
+    _totalExecutionOrderFee += (executionOrderFee - 1);
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),

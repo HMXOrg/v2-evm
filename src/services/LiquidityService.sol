@@ -14,6 +14,7 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
+import { console } from "forge-std/console.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
@@ -189,9 +190,10 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _minAmount
   ) internal returns (uint256) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
-
-    bytes32 tokenAssetId = ConfigStorage(configStorage).tokenAssetIds(_tokenOut);
-    (uint256 _maxPrice, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(tokenAssetId, false);
+    (uint256 _maxPrice, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(
+      ConfigStorage(configStorage).tokenAssetIds(_tokenOut),
+      false
+    );
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
       18,

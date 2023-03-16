@@ -5,7 +5,7 @@ pragma solidity 0.8.18;
 import { TestBase } from "forge-std/Base.sol";
 import { console } from "forge-std/console.sol";
 import { console2 } from "forge-std/console2.sol";
-import { StdCheatsSafe } from "forge-std/StdCheats.sol";
+import { StdCheats } from "forge-std/StdCheats.sol";
 
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
@@ -62,9 +62,8 @@ import { GlobalMarketTester } from "@hmx-test/testers/GlobalMarketTester.sol";
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
-abstract contract BaseIntTest is TestBase, StdCheatsSafe {
+abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
-  uint256 internal constant DOLLAR = 1e30;
   uint256 internal constant executionOrderFee = 0.0001 ether;
 
   uint256 internal constant SECONDS = 1;

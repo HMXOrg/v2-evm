@@ -33,11 +33,11 @@ contract SetMarkets is ConfigJsonRepo {
     // IMF = 1%, Max leverage = 100
     // MMF = 0.5%
     // Increase / Decrease position fee = 0.1%
-    _addMarketConfig(wethAssetId, 1, 100, 50, 10);
+    _addMarketConfig(wethAssetId, 0, 100, 50, 10);
     // IMF = 1%, Max leverage = 100
     // MMF = 0.5%
     // Increase / Decrease position fee = 0.1%
-    _addMarketConfig(wbtcAssetId, 1, 100, 50, 10);
+    _addMarketConfig(wbtcAssetId, 0, 100, 50, 10);
     // IMF = 5%, Max leverage = 20
     // MMF = 2.5%
     // Increase / Decrease position fee = 0.05%
@@ -45,7 +45,7 @@ contract SetMarkets is ConfigJsonRepo {
     // IMF = 0.1%, Max leverage = 1000
     // MMF = 0.05%
     // Increase / Decrease position fee = 0.03%
-    _addMarketConfig(jpyAssetId, 1, 10, 5, 3);
+    _addMarketConfig(jpyAssetId, 2, 10, 5, 3);
 
     vm.stopBroadcast();
   }

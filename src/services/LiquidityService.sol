@@ -14,6 +14,7 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
+import { console } from "forge-std/console.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 

@@ -16,6 +16,7 @@ import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
@@ -386,6 +387,9 @@ contract TradeHelper is ITradeHelper {
 
     emit LogSettleTradingFeeValue(_subAccount, _vars.tradingFeeToBePaid);
 
+    // If there is no fee, just return
+    if (_vars.tradingFeeToBePaid == 0) return;
+
     // We are now trying our best to pay `_vars.tradingFeeToBePaid` by deducting balance from the trader collateral.
     // If one collateral cannot cover, try the next one and so on.
     // If all of the collaterals still cannot cover, revert.
@@ -461,6 +465,9 @@ contract TradeHelper is ITradeHelper {
 
     emit LogSettleBorrowingFeeValue(_subAccount, _vars.borrowingFeeToBePaid);
 
+    // If there is no fee, just return
+    if (_vars.borrowingFeeToBePaid == 0) return;
+
     // We are now trying our best to pay `_vars.borrowingFeeToBePaid` by deducting balance from the trader collateral.
     // If one collateral cannot cover, try the next one and so on.
     // If all of the collaterals still cannot cover, revert.
@@ -501,6 +508,8 @@ contract TradeHelper is ITradeHelper {
         ++i;
       }
     }
+
+    console2.log(_vars.borrowingFeeToBePaid);
 
     // If fee cannot be covered, revert.
     if (_vars.borrowingFeeToBePaid > 0) revert ITradeHelper_BorrowingFeeCannotBeCovered();

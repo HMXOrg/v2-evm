@@ -243,28 +243,17 @@ contract TradeService is ReentrancyGuard, ITradeService {
       );
     }
 
-    // MarginFee = Trading Fee + Borrowing Fee
-    TradeHelper(tradeHelper).collectMarginFee(
-      _vars.subAccount,
+    // Settle
+    // - trading fees
+    // - borrowing fees
+    // - funding fees
+    TradeHelper(tradeHelper).settleAllFees(
+      _vars.position,
       _absSizeDelta,
+      _marketConfig.increasePositionFeeRateBPS,
       _marketConfig.assetClass,
-      _vars.position.reserveValueE30,
-      _vars.position.entryBorrowingRate,
-      _marketConfig.increasePositionFeeRateBPS
+      _marketIndex
     );
-
-    TradeHelper(tradeHelper).settleMarginFee(_vars.subAccount);
-
-    // Collect funding fee
-    TradeHelper(tradeHelper).collectFundingFee(
-      _vars.subAccount,
-      _marketConfig.assetClass,
-      _marketIndex,
-      _vars.position.positionSizeE30,
-      _vars.position.entryFundingRate
-    );
-
-    TradeHelper(tradeHelper).settleFundingFee(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     // update the position size by adding the new size delta
     _vars.position.positionSizeE30 += _sizeDelta;
@@ -562,6 +551,18 @@ contract TradeService is ReentrancyGuard, ITradeService {
     );
 
     TradeHelper(tradeHelper).settleFundingFee(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
+
+    // Settle
+    // - trading fees
+    // - borrowing fees
+    // - funding fees
+    TradeHelper(tradeHelper).settleAllFees(
+      _vars.position,
+      _vars.positionSizeE30ToDecrease,
+      _marketConfig.increasePositionFeeRateBPS,
+      _marketConfig.assetClass,
+      _globalMarketIndex
+    );
 
     uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 

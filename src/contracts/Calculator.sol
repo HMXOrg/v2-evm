@@ -932,11 +932,10 @@ contract Calculator is Owned, ICalculator {
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
 
-    // @todo - funding fee Bug found here, must be resolved
     if (_isLong) {
       return _fundingRate < 0 ? -fundingFee : fundingFee;
     } else {
-      return _fundingRate < 0 ? -fundingFee : fundingFee;
+      return _fundingRate > 0 ? -fundingFee : fundingFee;
     }
   }
 

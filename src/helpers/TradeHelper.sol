@@ -371,7 +371,7 @@ contract TradeHelper is ITradeHelper {
     ConfigStorage.TradingConfig tradingConfig;
   }
 
-  function settleTradingFee(address _subAccount, uint256 _absSizeDelta, uint32 _positionFeeBPS) external {
+  function _settleTradingFee(address _subAccount, uint256 _absSizeDelta, uint32 _positionFeeBPS) internal {
     SettleTradingFeeVars memory _vars;
     // SLOAD
     _vars.vaultStorage = VaultStorage(vaultStorage);
@@ -396,7 +396,7 @@ contract TradeHelper is ITradeHelper {
       // if trader has some of this collateral token, try cover the fee with it
       if (_traderBalance > 0) {
         // protocol fee portion + dev fee portion
-        uint256 _totalRepayAmount = _getRepayAmount(
+        (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
           _vars.configStorage,
           _vars.oracle,
           _traderBalance,
@@ -405,15 +405,15 @@ contract TradeHelper is ITradeHelper {
         );
 
         // devFee = tradingFee * devFeeRate
-        uint256 _devFeeAmount = (_totalRepayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
+        uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
         // the rest after dev fee deduction belongs to protocol fee portion
-        uint256 _protocolFeeAmount = _totalRepayAmount - _devFeeAmount;
+        uint256 _protocolFeeAmount = _repayAmount - _devFeeAmount;
 
         // book those moving balances
         _vars.vaultStorage.payTradingFee(_subAccount, _vars.collateralTokens[i], _devFeeAmount, _protocolFeeAmount);
 
-        // deduct _vars.tradingFeeToBePaid with _totalRepayAmount, so that the next iteration could continue deducting the fee
-        _vars.tradingFeeToBePaid -= _totalRepayAmount;
+        // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+        _vars.tradingFeeToBePaid -= _repayValue;
 
         emit LogSettleTradingFeeAmount(_subAccount, _vars.collateralTokens[i], _devFeeAmount, _protocolFeeAmount);
       }
@@ -441,12 +441,12 @@ contract TradeHelper is ITradeHelper {
     ConfigStorage.TradingConfig tradingConfig;
   }
 
-  function settleBorrowingFee(
+  function _settleBorrowingFee(
     address _subAccount,
     uint8 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _entryBorrowingRate
-  ) external {
+  ) internal {
     SettleBorrowingFeeVars memory _vars;
     // SLOAD
     _vars.vaultStorage = VaultStorage(vaultStorage);
@@ -471,7 +471,7 @@ contract TradeHelper is ITradeHelper {
       // if trader has some of this collateral token, try cover the fee with it
       if (_traderBalance > 0) {
         // plp fee portion + dev fee portion
-        uint256 _totalRepayAmount = _getRepayAmount(
+        (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
           _vars.configStorage,
           _vars.oracle,
           _traderBalance,
@@ -480,15 +480,15 @@ contract TradeHelper is ITradeHelper {
         );
 
         // devFee = tradingFee * devFeeRate
-        uint256 _devFeeAmount = (_totalRepayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
+        uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
         // the rest after dev fee deduction belongs to plp liquidity
-        uint256 _plpFeeAmount = _totalRepayAmount - _devFeeAmount;
+        uint256 _plpFeeAmount = _repayAmount - _devFeeAmount;
 
         // book those moving balances
         _vars.vaultStorage.payBorrowingFee(_subAccount, _vars.collateralTokens[i], _devFeeAmount, _plpFeeAmount);
 
-        // deduct _vars.tradingFeeToBePaid with _totalRepayAmount, so that the next iteration could continue deducting the fee
-        _vars.borrowingFeeToBePaid -= _totalRepayAmount;
+        // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+        _vars.borrowingFeeToBePaid -= _repayValue;
 
         emit LogSettleBorrowingFeeAmount(_subAccount, _vars.collateralTokens[i], _devFeeAmount, _plpFeeAmount);
       }
@@ -519,12 +519,12 @@ contract TradeHelper is ITradeHelper {
     bool traderMustPay;
   }
 
-  function settleFundingFee(
+  function _settleFundingFee(
     address _subAccount,
     uint256 _marketIndex,
     int256 _positionSizeE30,
     int256 _entryFundingRate
-  ) external {
+  ) internal {
     SettleFundingFeeVars memory _vars;
     // SLOAD
     _vars.vaultStorage = VaultStorage(vaultStorage);
@@ -533,8 +533,6 @@ contract TradeHelper is ITradeHelper {
     _vars.collateralTokens = _vars.configStorage.getCollateralTokens();
     _vars.collateralTokensLength = _vars.collateralTokens.length;
     _vars.tradingConfig = _vars.configStorage.getTradingConfig();
-
-    // Calculate the borrowing fee
 
     // Calculate the funding fee
     _vars.isLong = _positionSizeE30 > 0;
@@ -574,7 +572,7 @@ contract TradeHelper is ITradeHelper {
         // so we need to check whether trader has this collateral token or not.
         // If not skip to next token
         if (_traderBalance > 0) {
-          uint256 _totalRepayAmount = _getRepayAmount(
+          (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
             _vars.configStorage,
             _vars.oracle,
             _traderBalance,
@@ -583,14 +581,10 @@ contract TradeHelper is ITradeHelper {
           );
 
           // book the balances
-          _vars.vaultStorage.payFundingFeeFromTraderToPlp(
-            _subAccount,
-            _vars.collateralTokens[i],
-            _vars.absFundingFeeToBePaid
-          );
+          _vars.vaultStorage.payFundingFeeFromTraderToPlp(_subAccount, _vars.collateralTokens[i], _repayAmount);
 
-          // deduct _vars.absFundingFeeToBePaid with _totalRepayAmount, so that the next iteration could continue deducting the fee
-          _vars.absFundingFeeToBePaid -= _totalRepayAmount;
+          // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+          _vars.absFundingFeeToBePaid -= _repayValue;
         }
       } else {
         // When plp liquidity is the payer
@@ -600,7 +594,7 @@ contract TradeHelper is ITradeHelper {
         // so we need to check whether plp has this collateral token or not.
         // If not skip to next token
         if (_plpBalance > 0) {
-          uint256 _totalRepayAmount = _getRepayAmount(
+          (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
             _vars.configStorage,
             _vars.oracle,
             _plpBalance,
@@ -609,14 +603,10 @@ contract TradeHelper is ITradeHelper {
           );
 
           // book the balances
-          _vars.vaultStorage.payFundingFeeFromPlpToTrader(
-            _subAccount,
-            _vars.collateralTokens[i],
-            _vars.absFundingFeeToBePaid
-          );
+          _vars.vaultStorage.payFundingFeeFromPlpToTrader(_subAccount, _vars.collateralTokens[i], _repayAmount);
 
-          // deduct _vars.absFundingFeeToBePaid with _totalRepayAmount, so that the next iteration could continue deducting the fee
-          _vars.absFundingFeeToBePaid -= _totalRepayAmount;
+          // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+          _vars.absFundingFeeToBePaid -= _repayValue;
         }
       }
 
@@ -632,18 +622,31 @@ contract TradeHelper is ITradeHelper {
     if (_vars.absFundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
   }
 
-  function _valueToTokenAmount(
-    ConfigStorage _configStorage,
-    OracleMiddleware _oracle,
-    uint256 _valueE30,
-    address _token
-  ) internal view returns (uint256) {
-    bytes32 _tokenAssetId = _configStorage.tokenAssetIds(_token);
-    uint8 _tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
-    (uint256 _tokenPrice, ) = _oracle.getLatestPrice(_tokenAssetId, false);
-
-    return (_valueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
+  function settleAllFees(
+    PerpStorage.Position memory _position,
+    uint256 _absSizeDelta,
+    uint32 _positionFeeBPS,
+    uint8 _assetClassIndex,
+    uint256 _marketIndex
+  ) external {
+    address _subAccount = _getSubAccount(_position.primaryAccount, _position.subAccountId);
+    _settleTradingFee(_subAccount, _absSizeDelta, _positionFeeBPS);
+    _settleBorrowingFee(_subAccount, _assetClassIndex, _position.reserveValueE30, _position.entryBorrowingRate);
+    _settleFundingFee(_subAccount, _marketIndex, _position.positionSizeE30, _position.entryFundingRate);
   }
+
+  // function _valueToTokenAmount(
+  //   ConfigStorage _configStorage,
+  //   OracleMiddleware _oracle,
+  //   uint256 _valueE30,
+  //   address _token
+  // ) internal view returns (uint256) {
+  //   bytes32 _tokenAssetId = _configStorage.tokenAssetIds(_token);
+  //   uint8 _tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
+  //   (uint256 _tokenPrice, ) = _oracle.getLatestPrice(_tokenAssetId, false);
+
+  //   return (_valueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
+  // }
 
   function _getRepayAmount(
     ConfigStorage _configStorage,
@@ -651,19 +654,29 @@ contract TradeHelper is ITradeHelper {
     uint256 _traderBalance,
     uint256 _feeValueE30,
     address _token
-  ) internal view returns (uint256 _totalRepayAmount) {
-    uint256 _feeAmount = _valueToTokenAmount(_configStorage, _oracle, _feeValueE30, _token);
+  ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
+    bytes32 _tokenAssetId = _configStorage.tokenAssetIds(_token);
+    uint8 _tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
+    (uint256 _tokenPrice, ) = _oracle.getLatestPrice(_tokenAssetId, false);
+
+    uint256 _feeAmount = (_feeValueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
 
     if (_traderBalance > _feeAmount) {
       // _traderBalance can cover the rest of the fee
-      return _feeAmount;
+      return (_feeAmount, _feeValueE30);
     } else {
       // _traderBalance cannot cover the rest of the fee, just take the amount the trader have
-      return _traderBalance;
+      uint256 _traderBalanceValue = (_traderBalance * _tokenPrice) / (10 ** _tokenDecimal);
+      return (_traderBalance, _traderBalanceValue);
     }
   }
 
   function _abs(int256 x) private pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
+  }
+
+  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 }

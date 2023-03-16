@@ -29,11 +29,11 @@ contract SetPLP is ConfigJsonRepo {
 
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](_tokens.length);
     // TODO need to set real maxWeightDiff
-    _plpTokenConfig[0] = _getPLPTokenConfigStruct(2e17, 0, type(uint256).max, true);
-    _plpTokenConfig[1] = _getPLPTokenConfigStruct(2e17, 0, type(uint256).max, true);
-    _plpTokenConfig[2] = _getPLPTokenConfigStruct(1e17, 0, type(uint256).max, true);
-    _plpTokenConfig[3] = _getPLPTokenConfigStruct(3e17, 0, type(uint256).max, true);
-    _plpTokenConfig[4] = _getPLPTokenConfigStruct(2e17, 0, type(uint256).max, true);
+    _plpTokenConfig[0] = _getPLPTokenConfigStruct(2e17, 0, 1000e18, true);
+    _plpTokenConfig[1] = _getPLPTokenConfigStruct(2e17, 0, 1000e18, true);
+    _plpTokenConfig[2] = _getPLPTokenConfigStruct(1e17, 0, 1000e18, true);
+    _plpTokenConfig[3] = _getPLPTokenConfigStruct(3e17, 0, 1000e18, true);
+    _plpTokenConfig[4] = _getPLPTokenConfigStruct(2e17, 0, 1000e18, true);
 
     configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
   }

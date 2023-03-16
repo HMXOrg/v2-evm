@@ -3,6 +3,8 @@ pragma solidity 0.8.18;
 
 interface ITradeHelper {
   error ITradeHelper_TradingFeeCannotBeCovered();
+  error ITradeHelper_BorrowingFeeCannotBeCovered();
+  error ITradeHelper_FundingFeeCannotBeCovered();
 
   function reloadConfig() external;
 

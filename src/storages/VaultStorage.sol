@@ -243,4 +243,28 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     devFees[_token] += _devFeeAmount;
     plpLiquidity[_token] += _plpFeeAmount;
   }
+
+  function payFundingFeeFromTraderToPlp(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from trader balance
+    traderBalances[_trader][_token] -= _fundingFeeAmount;
+
+    // Increase the amount to plpLiquidity
+    plpLiquidity[_token] += _fundingFeeAmount;
+  }
+
+  function payFundingFeeFromPlpToTrader(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from plpLiquidity
+    plpLiquidity[_token] -= _fundingFeeAmount;
+
+    // Increase the amount to trader
+    traderBalances[_trader][_token] += _fundingFeeAmount;
+  }
 }

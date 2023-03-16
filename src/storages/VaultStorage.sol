@@ -229,4 +229,18 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     devFees[_token] += _devFeeAmount;
     protocolFees[_token] += _protocolFeeAmount;
   }
+
+  function payBorrowingFee(
+    address _trader,
+    address _token,
+    uint256 _devFeeAmount,
+    uint256 _plpFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from trader balance
+    traderBalances[_trader][_token] -= _devFeeAmount + _plpFeeAmount;
+
+    // Increase the amount to devFees and plpLiquidity
+    devFees[_token] += _devFeeAmount;
+    plpLiquidity[_token] += _plpFeeAmount;
+  }
 }

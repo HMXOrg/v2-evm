@@ -480,7 +480,7 @@ contract TradeHelper is ITradeHelper {
 
         // devFee = tradingFee * devFeeRate
         uint256 _devFeeAmount = (_totalRepayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
-        // the rest after dev fee deduction belongs to plp fee portion
+        // the rest after dev fee deduction belongs to plp liquidity
         uint256 _plpFeeAmount = _totalRepayAmount - _devFeeAmount;
 
         // book those moving balances

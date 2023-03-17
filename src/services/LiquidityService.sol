@@ -18,6 +18,8 @@ import { console } from "forge-std/console.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
+import { console } from "forge-std/console.sol";
+
 contract LiquidityService is ReentrancyGuard, ILiquidityService {
   address public configStorage;
   address public vaultStorage;
@@ -110,7 +112,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     PLPv2(ConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
     emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
-
     return mintAmount;
   }
 
@@ -130,14 +131,16 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
-    uint256 _lpUsdValue = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
-    uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _lpProvider, _minAmount);
+    uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aum * 1e12) / _lpSupply : 0;
+    uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValueE30, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
     PLPv2(ConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
     VaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOut);
 
-    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValue, _amountOut);
+    _validatePLPHealthCheck(_tokenOut);
+
+    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValueE30, _amountOut);
 
     return _amountOut;
   }
@@ -185,7 +188,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
   function _exitPool(
     address _tokenOut,
-    uint256 _lpUsdValue, // 1e18
+    uint256 _lpUsdValue,
     address _lpProvider,
     uint256 _minAmount
   ) internal returns (uint256) {
@@ -196,20 +199,20 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
-      18,
+      30,
       ConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
       (_lpUsdValue * PRICE_PRECISION) / _maxPrice
     );
 
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
-    VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
-
     uint32 _feeBps = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeBPS(
       _tokenOut,
       _lpUsdValue,
       ConfigStorage(configStorage)
     );
+
+    VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
 
     _amountOut = _collectFee(
       CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY)

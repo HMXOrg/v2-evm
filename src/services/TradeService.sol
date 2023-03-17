@@ -583,6 +583,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.avgEntryPriceE30,
         _vars.position.lastIncreaseTimestamp
       );
+
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value
       if (delta >= _vars.position.reserveValueE30) {
         delta = _vars.position.reserveValueE30;
@@ -810,9 +811,10 @@ contract TradeService is ReentrancyGuard, ITradeService {
             _debtUsd = _debtUsd - _vars.collateralUsd;
           }
         }
-        unchecked {
-          ++_i;
-        }
+      }
+
+      unchecked {
+        ++_i;
       }
     }
   }

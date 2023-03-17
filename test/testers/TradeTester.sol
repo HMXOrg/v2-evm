@@ -264,7 +264,7 @@ contract TradeTester is StdAssertions {
       _token = interestTokens[_i];
 
       assertEq(vaultStorage.plpLiquidity(_token), _expectedData.plpLiquidity[_token], "PLP Liquidity");
-      assertEq(vaultStorage.fees(_token), _expectedData.fees[_token], "Fee");
+      assertEq(vaultStorage.protocolFees(_token), _expectedData.fees[_token], "Protocol Fee");
       assertEq(vaultStorage.fundingFee(_token), _expectedData.fundingFee[_token], "Funding Fee");
       assertEq(vaultStorage.devFees(_token), _expectedData.devFees[_token], "Dev Fee");
       assertEq(

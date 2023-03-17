@@ -30,198 +30,139 @@ contract TradeService_BorrowingFee is TradeService_Base {
     }
   }
 
-  // function testCorrectness_borrowingFee_WhenIncreasePosition() external {
-  //   // TVL - make the plp value
-  //   // 1000000 USDT -> 1000000 USD
-  //   vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
+  function testCorrectness_borrowingFee_WhenIncreasePosition() external {
+    // TVL - make the plp value
+    // 1000000 USDT -> 1000000 USD
+    vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
 
-  //   // ALICE add collateral
-  //   // 10000 USDT -> free collateral -> 10000 USD
-  //   mockCalculator.setFreeCollateral(10_000 * 1e30);
+    // ALICE add collateral
+    // 10000 USDT -> free collateral -> 10000 USD
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
 
-  //   // ETH price 1600 USD
-  //   mockOracle.setPrice(wethAssetId, 1600 * 1e30);
-  //   // USDT price 1 USD
-  //   mockOracle.setPrice(usdtAssetId, 1 * 1e30);
+    // ETH price 1600 USD
+    mockOracle.setPrice(wethAssetId, 1600 * 1e30);
+    // USDT price 1 USD
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
-  //   address aliceAddress = getSubAccount(ALICE, 0);
-  //   address bobAddress = getSubAccount(BOB, 0);
-  //   vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10 * 1e6);
+    address aliceAddress = getSubAccount(ALICE, 0);
+    address bobAddress = getSubAccount(BOB, 0);
+    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 100 * 1e6);
 
-  //   vm.warp(100);
-  //   {
-  //     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-  //     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-  //     assertEq(_globalAssetClass.sumBorrowingRate, 0);
-  //     assertEq(_globalAssetClass.lastBorrowingTime, 100);
+    vm.warp(100);
+    {
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      assertEq(_globalAssetClass.sumBorrowingRate, 0);
+      assertEq(_globalAssetClass.lastBorrowingTime, 100);
 
-  //     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 10 * 1e6);
+      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
 
-  //     assertEq(vaultStorage.protocolFees(address(usdt)), 0);
+      // no more borrowing fee to protocol fee, that portion should be at plp liquidity
+      assertEq(vaultStorage.protocolFees(address(usdt)), 0);
 
-  //     assertEq(vaultStorage.devFees(address(usdt)), 0);
-  //   }
+      // untouched
+      assertEq(vaultStorage.plpLiquidity(address(usdt)), 1000000 * 1e6);
+      assertEq(vaultStorage.devFees(address(usdt)), 0);
+    }
 
-  //   vm.warp(101);
-  //   {
-  //     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-  //     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-  //     // 0.0001 * 90000 / 1000000 = 0.000009
-  //     assertEq(_globalAssetClass.sumBorrowingRate, 0.000009 * 1e18);
-  //     assertEq(_globalAssetClass.lastBorrowingTime, 101);
+    vm.warp(101);
+    {
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      // 0.0001 * 90000 / 1000000 = 0.000009
+      assertEq(_globalAssetClass.sumBorrowingRate, 0.000009 * 1e18);
+      assertEq(_globalAssetClass.lastBorrowingTime, 101);
 
-  //     // 0.000009 * 90000 = 0.81
-  //     assertEq(perpStorage.getSubAccountFee(aliceAddress), 0);
+      // Fee: 0.000009 * 90000 = 0.81
+      // 1 * 100 = 100 | 100 - 0.81 = 99.19
+      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 99.19 * 1e6);
 
-  //     // 1 * 10 = 10 | 10 - 0.81 = 9.19
-  //     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 9.19 * 1e6);
+      // no more borrowing fee to protocol fee, that portion should be at plp liquidity
+      assertEq(vaultStorage.protocolFees(address(usdt)), 0);
+      // 0.81 * 85% = 0.6885
+      assertEq(vaultStorage.plpLiquidity(address(usdt)), 1000000.6885 * 1e6);
+      // 0.81 * 15% = 0.1215
+      assertEq(vaultStorage.devFees(address(usdt)), 0.1215 * 1e6);
+    }
 
-  //     // 0.81 * 85% = 0.6885
-  //     assertEq(vaultStorage.protocolFees(address(usdt)), 0.6885 * 1e6);
-  //     // 0.81 * 15% = 0.1215
-  //     assertEq(vaultStorage.devFees(address(usdt)), 0.1215 * 1e6);
-  //   }
+    vm.warp(120);
+    {
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      // 0.0001 * 180000 / 1000000.6885 * (120 - 101) = 0.000341999764533162 | 0.000009 + 0.000341999764533162 = 0.000350999764533162
+      assertEq(_globalAssetClass.sumBorrowingRate, 0.000350999764533162 * 1e18);
+      assertEq(_globalAssetClass.lastBorrowingTime, 120);
 
-  //   vm.warp(120);
-  //   {
-  //     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-  //     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-  //     // 0.0001 * 180000 / 1000000 * (120 - 101) = 0.000342 | 0.000009 + 0.000342 = 0.000351
-  //     assertEq(_globalAssetClass.sumBorrowingRate, 0.000351 * 1e18);
-  //     assertEq(_globalAssetClass.lastBorrowingTime, 120);
+      // Fee: (0.000350999764533162 - 0.000009) * 180000 = 61.55995761596916
+      // 99.19 - 61.55995761596916 = 37.63004238403084
+      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 37.630043 * 1e6);
 
-  //     // (0.000351 - 0.000009) * 180000 = 61.56 | 61.56 - 9.19 = 52.37
-  //     assertEq(perpStorage.getSubAccountFee(aliceAddress), 52.37 * 1e30);
+      // 61.55995761596916 * 85% = 52.325964 | 1000000.6885 + 52.325964 = 1000053.014464
+      assertEq(vaultStorage.plpLiquidity(address(usdt)), 1000053.014464 * 1e6);
+      // 61.55995761596916 * 15% = 9.233993 | 0.1215 + 9.233993 = 9.355493
+      assertEq(vaultStorage.devFees(address(usdt)), 9.355493 * 1e6);
+    }
+  }
 
-  //     // 1 * 9.19 = 9.19 | 9.19 - 9.19 = 0
-  //     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
+  function testCorrectness_borrowingFee_WhenDecreasePosition() external {
+    // TVL
+    // 1000000 USDT -> 1000000 USD
+    vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
 
-  //     // 9.19 * 85% = 7.8115 | 0.6885 + 7.8115 = 8.5
-  //     assertEq(vaultStorage.protocolFees(address(usdt)), 8.5 * 1e6);
-  //     // 9.19 * 15% = 1.3785 | 0.1215 + 1.3785 = 1.5
-  //     assertEq(vaultStorage.devFees(address(usdt)), 1.5 * 1e6);
-  //   }
+    // ALICE add collateral
+    // 10000 USDT -> free collateral -> 10000 USD
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
 
-  //   vm.warp(130);
-  //   {
-  //     tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
-  //     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-  //     // 0.0001 * 270000 / 1000000 * (130 - 120) = 0.00027 | 0.000351 + 0.00027 = 0.000621
-  //     assertEq(_globalAssetClass.sumBorrowingRate, 0.000621 * 1e18);
-  //     assertEq(_globalAssetClass.lastBorrowingTime, 130);
+    // ETH price 1600 USD
+    mockOracle.setPrice(wethAssetId, 1600 * 1e30);
+    // USDT price 1 USD
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
-  //     // (0.000621 - 0.000351) * 270000 = 30.78 | 52.37 + 30.78 = 83.15
-  //     assertEq(perpStorage.getSubAccountFee(aliceAddress), 52.37 * 1e30);
-  //     assertEq(perpStorage.getSubAccountFee(bobAddress), 0);
+    address aliceAddress = getSubAccount(ALICE, 0);
+    address bobAddress = getSubAccount(BOB, 0);
+    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 100 * 1e6);
+    vaultStorage.setTraderBalance(bobAddress, address(usdt), 50 * 1e6);
 
-  //     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
-  //     assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 0);
+    vm.warp(100);
+    {
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+      tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
-  //     assertEq(vaultStorage.protocolFees(address(usdt)), 8.5 * 1e6);
-  //     assertEq(vaultStorage.devFees(address(usdt)), 1.5 * 1e6);
-  //   }
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
 
-  //   vm.warp(135);
-  //   {
-  //     tradeService.increasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30, 0);
-  //     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-  //     // 0.0001 * 315000 / 1000000 * (135 - 130) = 0.0001575 | 0.000621 + 0.0001575 = 0.0007785
-  //     assertEq(_globalAssetClass.sumBorrowingRate, 0.0007785 * 1e18);
-  //     assertEq(_globalAssetClass.lastBorrowingTime, 135);
+      assertEq(_globalAssetClass.sumBorrowingRate, 0);
+      assertEq(_globalAssetClass.lastBorrowingTime, 100);
 
-  //     assertEq(perpStorage.getSubAccountFee(aliceAddress), 52.37 * 1e30);
-  //     // (0.0007785 - 0.000621) * 45000 = 7.0875
-  //     assertEq(perpStorage.getSubAccountFee(bobAddress), 7.0875 * 1e30);
+      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
+      assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 50 * 1e6);
 
-  //     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
-  //     assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 0);
+      // no more borrowing fee to protocol fee, that portion should be at plp liquidity
+      assertEq(vaultStorage.protocolFees(address(usdt)), 0);
 
-  //     assertEq(vaultStorage.protocolFees(address(usdt)), 8.5 * 1e6);
-  //     assertEq(vaultStorage.devFees(address(usdt)), 1.5 * 1e6);
-  //   }
-  // }
+      // untouched
+      assertEq(vaultStorage.plpLiquidity(address(usdt)), 1000000 * 1e6);
+      assertEq(vaultStorage.devFees(address(usdt)), 0);
+    }
 
-  // function testCorrectness_borrowingFee_WhenDecreasePosition() external {
-  //   // TVL
-  //   // 1000000 USDT -> 1000000 USD
-  //   vaultStorage.addPLPLiquidity(address(usdt), 1_000_000 * 1e6);
+    vm.warp(110);
+    {
+      tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0), 0);
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      // 0.0001 * 135000 / 1000000 * (110 - 100) = 0.000135
+      assertEq(_globalAssetClass.sumBorrowingRate, 0.000135 * 1e18);
+      assertEq(_globalAssetClass.lastBorrowingTime, 110);
 
-  //   // ALICE add collateral
-  //   // 10000 USDT -> free collateral -> 10000 USD
-  //   mockCalculator.setFreeCollateral(10_000 * 1e30);
+      // Fee: 90000 * 0.000135 = 12.15
+      // Alice Balance: 100 - 12.15 = 87.85
+      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 87.85 * 1e6);
+      assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 50 * 1e6);
 
-  //   // ETH price 1600 USD
-  //   mockOracle.setPrice(wethAssetId, 1600 * 1e30);
-  //   // USDT price 1 USD
-  //   mockOracle.setPrice(usdtAssetId, 1 * 1e30);
-
-  //   address aliceAddress = getSubAccount(ALICE, 0);
-  //   address bobAddress = getSubAccount(BOB, 0);
-  //   vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10 * 1e6);
-  //   vaultStorage.setTraderBalance(bobAddress, address(usdt), 5 * 1e6);
-
-  //   vm.warp(100);
-  //   {
-  //     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-  //     tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
-
-  //     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-
-  //     assertEq(_globalAssetClass.sumBorrowingRate, 0);
-  //     assertEq(_globalAssetClass.lastBorrowingTime, 100);
-
-  //     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 10 * 1e6);
-  //     assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 5 * 1e6);
-
-  //     assertEq(vaultStorage.protocolFees(address(usdt)), 0);
-
-  //     assertEq(vaultStorage.devFees(address(usdt)), 0);
-  //   }
-
-  //   vm.warp(110);
-  //   {
-  //     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0), 0);
-  //     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-  //     // 0.0001 * 135000 / 1000000 * (110 - 100) = 0.000135
-  //     assertEq(_globalAssetClass.sumBorrowingRate, 0.000135 * 1e18);
-  //     assertEq(_globalAssetClass.lastBorrowingTime, 110);
-
-  //     // (0.000135 - 0) * 90000 = 18.225 | 12.15 - 10 = 2.15
-  //     assertEq(perpStorage.getSubAccountFee(aliceAddress), 2.15 * 1e30);
-  //     assertEq(perpStorage.getSubAccountFee(bobAddress), 0);
-
-  //     // 12.15 - 10 = 0
-  //     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
-  //     assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 5 * 1e6);
-
-  //     // 10 * 85% = 8.5
-  //     assertEq(vaultStorage.protocolFees(address(usdt)), 8.5 * 1e6);
-  //     // 10 * 15% = 1.5
-  //     assertEq(vaultStorage.devFees(address(usdt)), 1.5 * 1e6);
-  //   }
-
-  //   vm.warp(120);
-  //   {
-  //     tradeService.decreasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, address(0), 0);
-  //     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-  //     // 0.0001 * 90000 / 1000000 * (120 - 110) = 0.00009 | 0.000135 + 0.00009 = 0.000225
-  //     assertEq(_globalAssetClass.sumBorrowingRate, 0.000225 * 1e18);
-  //     assertEq(_globalAssetClass.lastBorrowingTime, 120);
-
-  //     assertEq(perpStorage.getSubAccountFee(aliceAddress), 2.15 * 1e30);
-  //     // (0.000225 - 0) * 45000 = 10.125 | 10.125 - 5 = 5.125
-  //     assertEq(perpStorage.getSubAccountFee(bobAddress), 5.125 * 1e30);
-
-  //     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
-  //     // 10.125 - 5 = 0
-  //     assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 0);
-
-  //     // 5 * 85% = 4.25 | 8.5 + 4.25 = 12.75
-  //     assertEq(vaultStorage.protocolFees(address(usdt)), 12.75 * 1e6);
-  //     // 5 * 15% = 0.75 | 1.5 + 0.75 = 2.25
-  //     assertEq(vaultStorage.devFees(address(usdt)), 2.25 * 1e6);
-  //   }
-  // }
+      // 12.15 * 0.85 = 10.3275 | 1000000 + 10.3275 = 1000010.3275
+      assertEq(vaultStorage.plpLiquidity(address(usdt)), 1000010.3275 * 1e6);
+      // 12.15 * 0.15 = 1.8225
+      assertEq(vaultStorage.devFees(address(usdt)), 1.8225 * 1e6);
+    }
+  }
 
   function testCorrectness_borrowingFee_calculation() external {
     // TVL

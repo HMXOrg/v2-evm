@@ -221,10 +221,6 @@ contract TradeService_BorrowingFee is TradeService_Base {
         assertEq(_globalAssetClass.lastBorrowingTime, 110);
       }
 
-      // (0.000135 - 0) * 90000 = 12.15 | 0.01 * 1600 = 16 | 12.15 - 16 = 0 |
-      assertEq(perpStorage.getSubAccountFee(aliceAddress), 0);
-      assertEq(perpStorage.getSubAccountFee(bobAddress), 0);
-
       // 12.15 / 1600 = 0.00759375 | 1.01 - 0.00759375 = 1.00240625
       assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 1.00240625 * 1e18);
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);

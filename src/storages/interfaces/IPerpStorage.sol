@@ -15,6 +15,8 @@ interface IPerpStorage {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
     uint256 sumBorrowingRate;
     uint256 lastBorrowingTime;
+    uint256 sumBorrowingFeeE30;
+    uint256 settledBorrowingFeeE30;
   }
 
   // mapping _marketIndex => globalPosition;
@@ -59,7 +61,7 @@ interface IPerpStorage {
 
   function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory);
 
-  function getGlobalAssetClassByIndex(uint8 _assetClassIndex) external view returns (GlobalAssetClass memory);
+  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory);
 
   function getGlobalState() external view returns (GlobalState memory);
 

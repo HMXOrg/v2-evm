@@ -90,6 +90,7 @@ contract Calculator is Owned, ICalculator {
   /// @notice _getPendingBorrowingFeeE30 This function calculates the total pending borrowing fee from all asset classes.
   /// @return total pending borrowing fee in e30 format
   function _getPendingBorrowingFeeE30() internal view returns (uint256) {
+    // TODO: Finish this properly
     // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     uint256 _len = ConfigStorage(configStorage).getAssetClassConfigsLength();

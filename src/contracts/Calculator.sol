@@ -273,7 +273,7 @@ contract Calculator is Owned, ICalculator {
       _getFeeBPS(
         _tokenValueE30,
         _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true, 0, 0),
-        _getPLPValueE30(true, 0, 0),
+        _getPLPValueE30(false, 0, 0), // min and max price should be the same
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
@@ -299,6 +299,7 @@ contract Calculator is Owned, ICalculator {
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
+
     if (targetValue == 0) return _feeBPS;
 
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
@@ -308,13 +309,11 @@ contract Calculator is Owned, ICalculator {
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
       uint32 rebateBPS = uint32((_taxBPS * startTargetDiff) / targetValue);
-
       return rebateBPS > _feeBPS ? 0 : _feeBPS - rebateBPS;
     }
 
     // _nextWeight represented 18 precision
     uint256 _nextWeight = (nextValue * ETH_PRECISION) / (_totalLiquidityUSD + _value);
-
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
     }
@@ -327,8 +326,7 @@ contract Calculator is Owned, ICalculator {
     }
     _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
 
-    uint32 _fee = uint32(_feeBPS + _taxBPS);
-    return _fee;
+    return uint32(_feeBPS + _taxBPS);
   }
 
   /// @notice get settlement fee rate

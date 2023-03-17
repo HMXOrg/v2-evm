@@ -56,7 +56,6 @@ contract TC01 is BaseIntTest_WithActions {
       false
     );
     vm.stopPrank();
-
     // T3: Alice withdraws PLP 100 USD
     //  10000 -> 0.5 e8
     //   100 -> 0.005 e8 btc
@@ -123,10 +122,10 @@ contract TC01 is BaseIntTest_WithActions {
         token: address(wbtc),
         who: ALICE,
         lpTotalSupply: 99.68 ether, //only BOB LP LEFT
-        totalAmount: 789_580,
+        totalAmount: 927_760,
         plpLiquidity: 498_400,
         plpAmount: 0 ether, // ALICE PLP AMOUNT SHOULD BE 0
-        fee: 291_180, //153_000 +138_180 (9870 /20000 *1e8 - 0.28%) get rebates
+        fee: 429_360, //153_000 + 276_360
         executionFee: _totalExecutionOrderFee
       })
     );

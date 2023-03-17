@@ -75,9 +75,6 @@ contract TradeService_TradingFee is TradeService_Base {
 
       // After ALICE increased LONG position
       {
-        // Alice already paid last trading fee, so Alice has no fee remaining
-        assertEq(perpStorage.getSubAccountFee(aliceAddress), 0);
-
         // trading Fee = size * increase position fee = 600_000 * 0.0001 = 60 USDC
         // trading Fee in WETH amount =  60/1500 = 0.04 WETH
         assertEq(vaultStorage.protocolFees(address(weth)), 66666666666666666 + 40000000000000000); // 0.066 + 0.04 WETH
@@ -176,7 +173,6 @@ contract TradeService_TradingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 99850 * 1e6);
 
       // Ignore Borrowing, Funding, and Dev Fees
-      assertEq(perpStorage.getSubAccountFee(aliceAddress), 0);
       assertEq(vaultStorage.fundingFee(address(weth)), 0);
       assertEq(vaultStorage.devFees(address(usdt)), 0);
     }
@@ -191,7 +187,6 @@ contract TradeService_TradingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 99800 * 1e6);
 
       // Ignore Borrowing, Funding, and Dev Fees
-      assertEq(perpStorage.getSubAccountFee(aliceAddress), 0);
       assertEq(vaultStorage.fundingFee(address(weth)), 0);
       assertEq(vaultStorage.devFees(address(usdt)), 0);
     }

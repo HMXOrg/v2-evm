@@ -222,9 +222,6 @@ contract TradeTester is StdAssertions {
     GlobalAssetClassExpectedData memory _globalAssetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData
   ) internal {
-    // Check Perp's state
-    assertEq(perpStorage.getSubAccountFee(_subAccount), _perpStorageExpectedData.subAccountFee, "Sub-account Fee");
-
     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(
       _globalAssetClassExpectedData.assetClassId
     );

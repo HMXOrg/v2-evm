@@ -31,7 +31,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
 
   mapping(bytes32 => Position) public positions;
   mapping(address => bytes32[]) public subAccountPositionIds;
-  mapping(address => int256) public subAccountFee;
   mapping(address => uint256) public subAccountBorrowingFee;
   mapping(address => uint256) public badDebt;
   mapping(uint256 => GlobalMarket) public globalMarkets;
@@ -88,10 +87,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
 
   function getGlobalState() external view returns (GlobalState memory) {
     return globalState;
-  }
-
-  function getSubAccountFee(address subAccount) external view returns (int256 fee) {
-    return subAccountFee[subAccount];
   }
 
   /// @notice Gets the bad debt associated with the given sub-account.
@@ -184,32 +179,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     GlobalMarket memory _globalMarket
   ) external onlyWhitelistedExecutor {
     globalMarkets[_marketIndex] = _globalMarket;
-  }
-
-  function updateSubAccountFee(address _subAccount, int256 fee) external onlyWhitelistedExecutor {
-    subAccountFee[_subAccount] = fee;
-  }
-
-  function increaseSubAccountFee(
-    address _subAccount,
-    int256 _totalFee,
-    uint256 _borrowingFee
-  ) external onlyWhitelistedExecutor {
-    subAccountBorrowingFee[_subAccount] += _borrowingFee;
-  }
-
-  function decreaseSubAccountFee(
-    address _subAccount,
-    uint256 _totalFee,
-    uint256 _borrowingFee
-  ) external onlyWhitelistedExecutor {
-    // Maximum decrease the current amount
-    if (subAccountBorrowingFee[_subAccount] < _borrowingFee) {
-      subAccountBorrowingFee[_subAccount] = 0;
-      return;
-    }
-
-    subAccountBorrowingFee[_subAccount] -= _borrowingFee;
   }
 
   function increaseSubAccountBorrowingFee(address _subAccount, uint256 _borrowingFee) external onlyWhitelistedExecutor {

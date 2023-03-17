@@ -29,7 +29,7 @@ contract TC02 is BaseIntTest_WithActions {
 
     // T1: BOB provide liquidity as WBTC 1 token
     // note: price has no changed0
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0));
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0), true);
     {
       // Check BOB balance
       assertTokenBalanceOf(BOB, address(wbtc), 99 * 1e8, "T1: ");
@@ -271,7 +271,7 @@ contract TC02 is BaseIntTest_WithActions {
     // T6: Alice partial close Long position at WETH market for 150 USD
     //     WETH price 1,575 USD, then Alice should take profit ~5%
     updatePriceData = new bytes[](1);
-    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_575 * 1e8);
+    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_575 * 1e8, 0);
     marketSell(ALICE, 0, wethMarketIndex, 150 * 1e30, address(wbtc), updatePriceData);
     {
       // Adaptive price calculate

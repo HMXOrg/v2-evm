@@ -28,8 +28,8 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
     (uint256 maxPrice, , uint256 lastUpdate) = oracleMiddleware.getLatestAdaptivePrice(wbtcAssetId, true, 0, 0, 0);
     (uint256 minPrice, , ) = oracleMiddleware.getLatestAdaptivePrice(wbtcAssetId, false, 0, 0, 0);
 
-    assertEq(maxPrice, 20_500 * 1e30);
-    assertEq(minPrice, 19_500 * 1e30);
+    assertEq(maxPrice, 20_000 * 1e30);
+    assertEq(minPrice, 20_000 * 1e30);
     assertEq(lastUpdate, uint64(block.timestamp));
 
     // Revert on unknown asset id
@@ -108,7 +108,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       1_000_000 * 1e30 // 1M Skew Scale
     );
 
-    assertEq(maxPrice, 20925.375 * 1e30);
+    assertEq(maxPrice, 20405 * 1e30);
 
     // minPrice is 19_500
     (uint256 minPrice, , ) = oracleMiddleware.getLatestAdaptivePrice(
@@ -119,7 +119,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       1_000_000 * 1e30 // 1M Skew Scale
     );
 
-    assertEq(minPrice, 19885.125 * 1e30);
+    assertEq(minPrice, 20405 * 1e30);
   }
 
   function testCorrectness_getLatestPrice_discountPrice() external {
@@ -132,7 +132,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       1_000_000 * 1e30 // 1M Skew Scale
     );
 
-    assertEq(maxPrice, 18472.55 * 1e30);
+    assertEq(maxPrice, 18072 * 1e30);
 
     // minPrice is 19_500
     (uint256 minPrice, , ) = oracleMiddleware.getLatestAdaptivePrice(
@@ -143,6 +143,6 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       1_000_000 * 1e30 // 1M Skew Scale
     );
 
-    assertEq(minPrice, 17668.95 * 1e30);
+    assertEq(minPrice, 18072 * 1e30);
   }
 }

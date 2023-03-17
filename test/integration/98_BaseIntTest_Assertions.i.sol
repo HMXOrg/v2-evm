@@ -75,7 +75,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _devFee,
     string memory _str
   ) internal {
-    assertEq(vaultStorage.fees(_token), _fee, string.concat(_str, "Vault's Fee is not matched"));
+    assertEq(vaultStorage.protocolFees(_token), _fee, string.concat(_str, "Vault's Fee is not matched"));
     assertEq(vaultStorage.fundingFee(_token), _fundingFee, string.concat(_str, "Vault's Funding fee is not matched"));
 
     assertEq(vaultStorage.devFees(_token), _devFee, string.concat(_str, "Vault's Dev fee is not matched"));

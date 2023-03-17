@@ -65,8 +65,8 @@ contract LiquidityTester is StdAssertions {
     // Check VaultStorage's state
     assertEq(vaultStorage.plpLiquidity(_token), _expectedData.plpLiquidity, "PLP token liquidity amount");
     assertEq(vaultStorage.totalAmount(_token), _expectedData.totalAmount, "TokenAmount balance");
-    assertEq(vaultStorage.fees(_token), _expectedData.fee, "Fee");
-    assertEq(vaultStorage.totalAmount(_token), vaultStorage.plpLiquidity(_token) + vaultStorage.fees(_token));
+    assertEq(vaultStorage.protocolFees(_token), _expectedData.fee, "Protocol Fee");
+    assertEq(vaultStorage.totalAmount(_token), vaultStorage.plpLiquidity(_token) + vaultStorage.protocolFees(_token));
 
     // Check token balance
     // balanceOf must be equals to plpLiquidity in Vault

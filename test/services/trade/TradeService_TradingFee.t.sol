@@ -11,7 +11,7 @@ contract TradeService_TradingFee is TradeService_Base {
     super.setUp();
 
     // Ignore Borrowing fee on this test
-    IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRateBPS: 0 });
+    IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
     configStorage.setAssetClassConfigByIndex(0, _cryptoConfig);
 
     // Ignore Developer fee on this test

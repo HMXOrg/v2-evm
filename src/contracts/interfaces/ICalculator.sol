@@ -21,7 +21,6 @@ interface ICalculator {
     int256 marketSkewUSDE30;
     int256 ratio;
     int256 nextFundingRate;
-    int256 newFundingRate;
     int256 elapsedIntervals;
   }
 

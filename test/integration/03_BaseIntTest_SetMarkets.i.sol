@@ -64,7 +64,7 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     _newOpenInterestConfig.shortMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
 
     _newFundingRateConfig.maxSkewScaleUSD = 3_000_000 * DOLLAR;
-    _newFundingRateConfig.maxFundingRateBPS = 4; // 0.04%
+    _newFundingRateConfig.maxFundingRate = 4; // 0.04%
 
     _newMarketConfig.assetId = _assetId;
     _newMarketConfig.increasePositionFeeRateBPS = _managePositionFee;

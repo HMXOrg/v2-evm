@@ -10,8 +10,8 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
-import { ICalculator } from "./interfaces/ICalculator.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
@@ -883,8 +883,7 @@ contract Calculator is Owned, ICalculator {
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
     PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    if (marketConfig.fundingRate.maxFundingRateBPS == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0)
-      return (0, 0, 0);
+    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     // If block.timestamp not pass the next funding time, return 0.
@@ -902,21 +901,21 @@ contract Calculator is Owned, ICalculator {
     vars.marketSkewUSDE30 =
       ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
       int(10 ** uint32(-_exponent));
-    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRateBPS, maxFundingRateBPS]
+    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
-    vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRateBPS))) / 1e4;
+    vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
 
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
-    vars.newFundingRate = (globalMarket.currentFundingRate + vars.nextFundingRate) * vars.elapsedIntervals;
+    vars.nextFundingRate = vars.nextFundingRate * vars.elapsedIntervals;
 
     if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize)) / 1e30;
+      fundingRateLong = (vars.nextFundingRate * int(globalMarket.longPositionSize)) / 1e30;
     }
     if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
+      fundingRateShort = (vars.nextFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
     }
-    return (vars.newFundingRate, fundingRateLong, fundingRateShort);
+    return (vars.nextFundingRate, fundingRateLong, fundingRateShort);
   }
 
   /**
@@ -1003,10 +1002,7 @@ contract Calculator is Owned, ICalculator {
     uint256 intervals = (block.timestamp - _assetClassState.lastBorrowingTime) / _tradingConfig.fundingInterval;
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
-    return
-      (_assetClassConfig.baseBorrowingRateBPS * _assetClassState.reserveValueE30 * intervals * RATE_PRECISION) /
-      plpTVL /
-      BPS;
+    return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / plpTVL;
   }
 
   function getDelta(

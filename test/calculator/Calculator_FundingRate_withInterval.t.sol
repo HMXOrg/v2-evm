@@ -12,7 +12,7 @@ contract Calculator_FundingRate is Calculator_Base {
     mockOracle.setExponent(-8);
 
     // Set market config
-    // maxFundingRateBPS = 0.04%
+    // maxFundingRate = 0.04%
     // maxSkewScaleUSD = 3m USD
     configStorage.setMarketConfig(
       0,
@@ -31,7 +31,7 @@ contract Calculator_FundingRate is Calculator_Base {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );
 

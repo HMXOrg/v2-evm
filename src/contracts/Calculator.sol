@@ -90,7 +90,6 @@ contract Calculator is Owned, ICalculator {
   /// @notice _getPendingBorrowingFeeE30 This function calculates the total pending borrowing fee from all asset classes.
   /// @return total pending borrowing fee in e30 format
   function _getPendingBorrowingFeeE30() internal view returns (uint256) {
-    // TODO: Finish this properly
     // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     uint256 _len = ConfigStorage(configStorage).getAssetClassConfigsLength();
@@ -100,12 +99,8 @@ contract Calculator is Owned, ICalculator {
       PerpStorage.GlobalAssetClass memory _assetClassState = _perpStorage.getGlobalAssetClassByIndex(i);
 
       // Formula:
-      // pendingBorrowingFee = totalBorrowingFee - settledBorrowingFee
-      // totalBorrowingFee = sumBorrowingRate * intervalInSeconds * reserveValue
-      uint256 _assetClasssTotalBorrowingFeeE30 = (_assetClassState.sumBorrowingRate *
-        (block.timestamp - _assetClassState.lastBorrowingTime) *
-        _assetClassState.reserveValueE30) / RATE_PRECISION;
-      _pendingBorrowingFee += _assetClasssTotalBorrowingFeeE30 - _assetClassState.settledBorrowingFeeE30;
+      // pendingBorrowingFee = sumBorrowingFeeE30 - sumSettledBorrowingFeeE30
+      _pendingBorrowingFee += _assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30;
 
       unchecked {
         ++i;

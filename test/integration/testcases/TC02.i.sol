@@ -9,10 +9,6 @@ contract TC02 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
   // TC02 - trader could take profit both long and short position
-  // Prices:
-  //    WBTC - 20,000 USD
-  //    WETH -  1,500 USD
-  //    JPY  - 136.123 (USDJPY) => 0.007346297099
   function testCorrectness_TC2_TradeWithTakeProfitScenario() external {
     // prepare token for wallet
 
@@ -31,39 +27,41 @@ contract TC02 is BaseIntTest_WithActions {
     // note: price has no changed0
     addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0), true);
     {
-      // Check BOB balance
+      // When Bob provide 1 BTC as liquidity
       assertTokenBalanceOf(BOB, address(wbtc), 99 * 1e8, "T1: ");
 
-      // PLP's Total supply = 19,940 TOKENs
-      assertPLPTotalSupply(19_940 * 1e18, "T1: ");
+      // Then Bob should pay fee for 0.3% = 0.003 BTC
 
-      // ----------------------------------------------------
-      // | Liquidity's info                                 |
-      // | ------------------------------------------------ |
-      // | PLP    | Token   | Liquidity   | Total Liquidity |
-      // | ------ | ------- | ----------- | --------------- |
-      // | BOB    | WBTC    | 0.997 BTC   | 0.997 BTC       |
-      // ----------------------------------------------------
-      // ** Add liquidity fee - 0.3%
-
+      // Assert PLP Liquidity
+      //    BTC = 0.997 (amount - fee)
       assertPLPLiquidity(address(wbtc), 0.997 * 1e8, "T1: ");
 
-      // Add liquidity fee
-      //    PLP provice 1 BTC, then 1 * 0.3% = 0.003 BTC and distributed to Protocol fee
+      // When PLP Token price is 1$
+      // Then PLP Token should Mint = 0.997 btc * 20,000 USD = 19,940 USD
+      //                            = 19940 / 1 = 19940 Tokens
+      assertPLPTotalSupply(19_940 * 1e18, "T1: ");
 
-      // --------------------------------------------------------------------------
-      // | Vault's Info                                                           |
-      // | ---------------------------------------------------------------------- |
-      // | Token  | Total amount | Balance | Protocol Fee | Dev fee | Funding fee |
-      // | ------ | ------------ | ------- | ------------ | ------- | ----------- |
-      // | WBTC   |            1 |       1 |        0.003 |       0 |           0 |
-      // --------------------------------------------------------------------------
+      // Assert Fee distribution
+      // According from T0
+      // Vault's fees has nothing
 
+      // Then after Bob provide liquidity, then Bob pay fees
+      //    Add Liquidity fee
+      //      BTC - 0.003 btc
+      //          - distribute all  protocol fee
+
+      // In Summarize Vault's fees
+      //    BTC - protocol fee  = 0 + 0.003 = 0.00309563 btc
+
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _str: "T1: " });
+
+      // Finally after Bob add liquidity Vault balance should be correct
+      // note: token balance is including all liquidity, dev fee and protocal fee
+      //    BTC - 1
       assertVaultTokenBalance(address(wbtc), 1 * 1e8, "T1: ");
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _fundingFee: 0, _devFee: 0, _str: "T1: " });
     }
 
-    // block.timestamp + 60
+    // time passed for 60 seconds
     skip(60);
 
     // T2: alice deposit BTC 200 USD at price 20,000
@@ -71,63 +69,32 @@ contract TC02 is BaseIntTest_WithActions {
     address _aliceSubAccount0 = getSubAccount(ALICE, 0);
     depositCollateral(ALICE, 0, wbtc, 0.01 * 1e8);
     {
-      // Check ALICE balance
+      // When Alice deposit Collateral for 0.01 btc
       assertTokenBalanceOf(ALICE, address(wbtc), 99.99 * 1e8, "T2: ");
 
-      // Prove Data should not affected
+      // Then Vault btc's balance should be increased by 0.01
+      assertVaultTokenBalance(address(wbtc), 1.01 * 1e8, "T2: ");
+
+      // And Alice's sub-account balances should be correct
+      //    BTC - 0.01
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01 * 1e8, "T2: ");
+
+      // And PLP total supply and Liquidity must not be changed
+      // note: data from T1
       assertPLPTotalSupply(19_940 * 1e18, "T2: ");
       assertPLPLiquidity(address(wbtc), 0.997 * 1e8, "T2: ");
 
-      // --------------------------------------------------------------------------
-      // | Vault's Info                                                           |
-      // | ---------------------------------------------------------------------- |
-      // | Token  | Total amount | Balance | Protocol Fee | Dev fee | Funding fee |
-      // | ------ | ------------ | ------- | ------------ | ------- | ----------- |
-      // | WBTC   |         1.01 |    1.01 |        0.003 |       0 |           0 |
-      // --------------------------------------------------------------------------
-
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFee: 0, _str: "T2: " });
-
-      // + 0.01 from deposit collateral
-      assertVaultTokenBalance(address(wbtc), 1.01 * 1e8, "T2: ");
-
-      // -----------------------------------------------------------------------------------
-      // | Trader sub-account's Collateral                                                  |
-      // | ------------------------------------------------------------------------------- |
-      // | Account  | Sub-account's ID | Token    | Balance | Collat Factor | Collat Value |
-      // | -------- | ---------------- | -------- | ------- | ------------- | ------------ |
-      // | ALICE    |               0  | WBTC     |    0.01 |           0.8 |          160 |
-      // -----------------------------------------------------------------------------------
-      // ** WBTC price 20,000 USD
-      // ** Collateral value = 0.01 * 20,000 * 0.8 = 160 USD
-
-      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01 * 1e8, "T2: ");
-
-      // -----------------------------------------------------
-      // | Sub-account's summary                             |
-      // | ------------------------------------------------- |
-      // | Sub-account |    IMR |    MMR | Free Collat (USD) |
-      // | ----------- | ------ | ------ | ----------------- |
-      // | ALICE-0     |      0 |      0 |               160 |
-      // -----------------------------------------------------
-      // ** Equity = Collat value +- PnL - Borrowing rage +- Funding Rate
-      // ** Free Collat = Equity - IMR
-
-      assertSubAccounStatus({
-        _subAccount: _aliceSubAccount0,
-        _freeCollateral: 160 * 1e30,
-        _imr: 0,
-        _mmr: 0,
-        _str: "T2: "
-      });
+      // And Alice should not pay any fee
+      // note: vault's fees should be same with T1
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _str: "T2: " });
     }
 
-    // block.timestamp + 60
+    // time passed for 60 seconds
     skip(60);
 
     // T3: ALICE market buy weth with 200,000 USD (1000x) at price 20,000 USD
     // should revert InsufficientFreeCollateral
-    // note: price has no changed0
+    // note: price has no changed
     vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
     marketBuy(ALICE, 0, wethMarketIndex, 200_000 * 1e30, address(0), new bytes[](0));
 
@@ -136,48 +103,36 @@ contract TC02 is BaseIntTest_WithActions {
     // initialPriceFeedDatas is from
     marketBuy(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), new bytes[](0));
     {
-      // prove liquidity not affected
-      assertPLPLiquidity(address(wbtc), 0.997 * 1e8, "T4: ");
+      // When Alice Buy WETH Market
+      // And Alice has no position
+      // Then it means Alice open new Long position
+      // Given increase size = 300 USD
+      // WETH Price = 1500 USD
 
-      // ---------------------------------------------------------
-      // | Asset class's info                                    |
-      // | ----------------------------------------------------- |
-      // | Asset   | Reserve    | Sum Borrowing rate | timestamp |
-      // | ------- | ---------- | ------------------ | --------- |
-      // | Crypto  |         27 |                  0 | 1120      |
-      // | Equity  |          0 |                  0 | 0         |
-      // | Forex   |          0 |                  0 | 0         |
-      // ---------------------------------------------------------
+      // Then Check position Info
+      // Max scale skew       = 300,000,000 USD
+      // Market skew          = 0
+      // new Market skew      = 0 + 300
+      // Premium before       = 0 / 300000000 = 0
+      // Premium after        = 300 / 300000000 = 0.000001
+      // Premium median       = (0 + 0.000001) / 2 = 0.0000005
+      // Adaptive price       = 1500 * (1 + 0.0000005)
+      //                      = 1500.00075
 
-      // Assert AssetClass
-      // Asset class check crypto
-      assertAssetClassState(0, 27 * 1e30, 0, 1120, "T4: ");
+      // WETH market IMF      = 0.1%
+      // WETH market MMF      = 0.05%
+      // Inc / Dec Fee        = 0.1%
+      // Position size        = 300 USD
+      // Open interest        = 300 USD / oracle price
+      //                      = 300 / 1500 = 0.2
+      // Avg price            = 1500.00075 USD
+      // IMR                  = 300 * IMF = 3 USD
+      // MMR                  = 300 * MMF = 1.5 USD
+      // Reserve              = IMR * Max profit
+      //                      = 3 * 900%
+      //                      = 27
+      // Trading fee          = 300 * 0.1% = 0.3 USD
 
-      // Just prove not affected with others asset class when Market buy
-      assertAssetClassState(1, 0, 0, 0, "T4: ");
-      assertAssetClassState(2, 0, 0, 0, "T4: ");
-
-      // Adaptive price calculate
-      // WETH price = 1,500 USD,
-      // Market skew = 0
-      // Position size delta = 300 USD
-      // Premium before = 0 / 300000000 = 0
-      // Premium after = (0 + 300) / 300000000 = 0.000001
-      // Median = (0 + 0.000001) / 2  = 0.0000005
-      // Adaptive price = 1500 * (1 + 0.0000005) = 1500.00075
-
-      // --------------------------------------------------------------------------------------------------------------------------------------------------------
-      // | Position's summary                                                                                                                                   |
-      // | -----------------------------------------------------------------------------------------------------------------------------------------------------|
-      // | Sub-account | Market | Direction | Size | IMR | MMR | Avg price   | OI    | Reserve | Realized PnL | Borrowing rate | Fundind Rate | Max Trading fee |
-      // | ----------- | ------ | --------- | ---- | --- | --- | ----------- | ----- | ------- | ------------ | -------------- | ------------ | --------------- |
-      // | ALICE-0     | WETH   | LONG      |  300 |   3 | 1.5 | 1,500.00075 |  0.2  |      27 |            0 | 0              | 0            | 0.3 USD         |
-      // --------------------------------------------------------------------------------------------------------------------------------------------------------
-      // ** Increase / Decrease trading fee 0.1%
-      // ** Max Profit 900%, Reserve = Size * 900%
-      // ** WETH Market - IMF 1%, MMF 0.5%
-
-      // Assert Position
       assertPositionInfoOf({
         _subAccount: _aliceSubAccount0,
         _marketIndex: wethMarketIndex,
@@ -191,79 +146,78 @@ contract TC02 is BaseIntTest_WithActions {
         _str: "T4: "
       });
 
-      // ------------------------------------------------------------------------------------------------------------------
-      // | Market's summary                                                                                               |
-      // | -------------------------------------------------------------------------------------------------------------- |
-      // | Asset | Long Size | Long avg Price | Long OI   | Short Size | Short avg Price | Short OI | Funding rate | time |
-      // | ----- | --------- | -------------- | --------- | ---------- | --------------- | -------- | ------------ | ---- |
-      // | WETH  | 300       | 1,500.00075    | 0.2       | 0          | 0               | 0        | 0            | 1120 |
-      // ------------------------------------------------------------------------------------------------------------------
+      // Sub-account's state
+      // According from T2
+      //    IMR           = 0 USD
+      //    MMR           = 0 USD
+      // In Summarize
+      //    IMR = 0 + 3   =   3 USD
+      //    MMR = 0 + 1.5 = 1.5 USD
+
+      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 3 * 1e30, _mmr: 1.5 * 1e30, _str: "T4: " });
+
+      // Assert Alice Sub-account's Collateral
+      // According to T2, Alice's collateral balances
+      //    BTC - 0.01
+      // When Alice buy WETH with 300 USD
+      // Then Alice has fees to pay below
+      //    Trading fee - 0.3 USD
+
+      // Then Alice pay fee by Collateral
+      //    BTC, (price: 20,000 USD)
+      //      Trading fee = 0.3 / 20000 = 0.000015 btc
+      // In Summarize, Alice's collateral balances
+      //    BTC - 0.01 - 0.000015 = 0.009985
+
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.009985 * 1e8, "T4: ");
+
+      // Assert Fee distribution
+      // According from T2
+      // Vault's fees
+      //    BTC - protocol fee  = 0.003 btc
+      //        - dev fee       = 0 btc
+      // and PLP's liquidity
+      //    BTC - 0.997 btc
+
+      // Alice paid fees list
+      //    BTC
+      //      Trading fee - 0.000015 btc
+      //                  - pay for protocol (85%)  = 0.00001275 btc
+      //                  - pay for dev (15%)       = 0.00000225 btc
+      //    Borrowing fee = 0 USD
+      //    Funding fee   = 0 USD
+
+      // In Summarize Vault's fees
+      //    BTC - protocol fee  = 0.003 + 0.00001275 = 0.00301275 btc
+      //        - dev fee       = 0 + 0.00000225     = 0.00000225 btc
+      // and PLP's liquidity still be
+      //    BTC - 0.997 btc
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.00301275 * 1e8, _devFee: 0.00000225 * 1e8, _str: "T4: " });
+
+      assertPLPLiquidity(address(wbtc), 0.997 * 1e8, "T4: ");
 
       // Assert Market
       assertMarketLongPosition(wethMarketIndex, 300 * 1e30, 1_500.00075 * 1e30, 0.2 * 1e8, "T4: ");
       assertMarketShortPosition(wethMarketIndex, 0, 0, 0, "T4: ");
       assertMarketFundingRate(wethMarketIndex, 0, 1120, "T4: ");
 
-      // Trading fee's calculation
-      //    Increas position fee 0.1%, Size delta = 150 USD, then Fee * 0.1% = 0.15 USD
-      //    Fee in Token = 0.3 / 20,000 = 0.000015 BTC
-      //    Distribute to Vault's Dev fee (15%) = 0.00015 * 15% = 0.00000225 BTC
-      //    Distribute to Vault's Protocol Fee 0.00015 - 0.0000225 = 0.0001275 BTC
+      // Assert Asset class
+      // Crypto's reserve should be increased by = 27 USD
+      assertAssetClassReserve(0, 27 * 1e30, "T4: ");
+      // borrowing rate still not calculated
+      assertAssetClassSumBorrowingRate(0, 0, 1120, "T4: ");
 
-      // -----------------------------------------------------------------------------
-      // | Vault's Info                                                              |
-      // | ------------------------------------------------------------------------- |
-      // | Token  | Total amount | Balance | Protocol Fee |    Dev fee | Funding fee |
-      // | ------ | ------------ | ------- | ------------ | ---------- | ----------- |
-      // | WBTC   |         1.01 |    1.01 |   0.00301275 | 0.00000225 |           0 |
-      // -----------------------------------------------------------------------------
-
-      // Assert Vault
-      assertVaultTokenBalance(address(wbtc), 1.01 * 1e8, "T4: ");
-      assertVaultsFees({
-        _token: address(wbtc),
-        _fee: 0.00301275 * 1e8,
-        _devFee: 0.00000225 * 1e8,
-        _fundingFee: 0,
-        _str: "T4: "
-      });
-
-      // ------------------------------------------------------------------------------------
-      // | Trader sub-account's Collateral                                                  |
-      // | -------------------------------------------------------------------------------- |
-      // | Account  | Sub-account's ID | Token    | Balance  | Collat Factor | Collat Value |
-      // | -------- | ---------------- | -------- | -------- | ------------- | ------------ |
-      // | ALICE    |               0  | WBTC     | 0.009985 |           0.8 |       159.76 |
-      // ------------------------------------------------------------------------------------
-      // ** WBTC price 20,000 USD
-      // ** Collateral value = 0.009985 * 20,000 * 0.8 = 159.76 USD
-
-      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.009985 * 1e8, "T4: ");
-
-      // Equity = 159.76 + (+0) - (0) + (+0) - 0.3 + 5 = 154.46
-      // --------------------------------------------------------
-      // | Sub-account's summary                                |
-      // | ---------------------------------------------------- |
-      // | Sub-account |    IMR |    MMR | Equity | Free Collat |
-      // | ----------- | ------ | ------ | ------ | ----------- |
-      // | ALICE-0     |      3 |    1.5 | 154.46 | 151.46      |
-      // --------------------------------------------------------
-      // ** Equity = Collat value +- PnL - Borrowing rage +- Funding Rate - Max Trading fee - Liquidition fee (5 USD)
-      // ** Free Collat = Equity - IMR
-
-      assertSubAccounStatus({
-        _subAccount: _aliceSubAccount0,
-        _freeCollateral: 151.46 * 1e30,
-        _imr: 3 * 1e30,
-        _mmr: 1.5 * 1e30,
-        _str: "T4: "
-      });
+      // Just prove not affected with others asset class when Market buy
+      assertAssetClassReserve(1, 0, "T4: ");
+      assertAssetClassSumBorrowingRate(1, 0, 0, "T4: ");
+      assertAssetClassReserve(2, 0, "T4: ");
+      assertAssetClassSumBorrowingRate(2, 0, 0, "T4: ");
     }
 
-    // block.timestamp + 60
+    // Time passed for 60 seconds
     skip(60);
 
-    // T6: Alice withdraw BTC 200 USD (200 / 20000 = 0.01 BTC)
+    // T5: Alice withdraw BTC 200 USD (200 / 20000 = 0.01 BTC)
     // should revert ICrossMarginService_InsufficientBalance
     vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InsufficientBalance()"));
     withdrawCollateral(ALICE, 0, wbtc, 0.1 * 1e8, new bytes[](0));
@@ -274,134 +228,76 @@ contract TC02 is BaseIntTest_WithActions {
     updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_575 * 1e8, 0);
     marketSell(ALICE, 0, wethMarketIndex, 150 * 1e30, address(wbtc), updatePriceData);
     {
-      // Trading fee's calculation
-      //    Decrease position fee 0.1%, Size delta = 150 USD, then Fee * 0.1% = 0.15 USD
+      // When Alice Sell WETH Market
+      // And Alice has Long position
+      // Then it means Alice decrease Long position
+      // Given decrease size = 150 USD
+      // WETH Price = 1575 USD
 
-      // Others Fee calculation
-      // ** Funding interval 1s
-      //    Intervals = 60s (timepast) / 1s = 60
-      //    TVL       = 19,940 USD
-      // Borrowing fee
-      //  Asset class:
+      // Then Check position Info
 
-      // -----------------------------------------------------------------------------------------------------------
-      // | Asset class's borrowing fee calculation                                                                 |
-      // | ------------------------------------------------------------------------------------------------------- |
-      // | Asset   | Base Rate | Reserve    | Old Borrowing rate | Pending Borrowing rate |     Sum Borrowing rate |
-      // | ------- | --------- | ---------- | ------------------ | ---------------------- | ---------------------- |
-      // | Crypto  |      0.01 |         27 |                  0 |   0.000008124373119358 |   0.000008124373119358 |
-      // | Forex   |      0.03 |          0 |                  0 |                      0 |                      0 |
-      // | Equity  |      0.02 |          0 |                  0 |                      0 |                      0 |
-      // -----------------------------------------------------------------------------------------------------------
-      // ** Pending borrowing rate  = Reserve * Intervals * Base fee / TVL
+      // Time passed          = 60 seconds (60 intevals)
+      // TVL                  = 19,940 USD
 
-      // --------------------------------------------------------------------------------------------------
-      // | Position's borrowing fee calculation                                                           |
-      // | ---------------------------------------------------------------------------------------------- |
-      // | Position      | Reserve | Entry Borrowing rate | Asset's Borrowing rate | Borrowing Fee        |
-      // | ------------- | ------- | -------------------- | ---------------------- | -------------------- |
-      // | ALICE-0-WETH  |  27     |                    0 | 0.000008124373119358   | 0.000219358074222666 |
-      // --------------------------------------------------------------------------------------------------
-      // ** Borrowing fee = (Sum Borrowing rate - Entry Borrowing rate) * Reserve
+      // Max Funding rate     = 0.04%
+      // Max scale skew       = 300,000,000 USD
+      // Market skew          = 300
+      // new Market skew      = 300 + -(150) = 150
+      // Premium before       = 300 / 300000000 = 0.000001
+      // Premium after        = 150 / 300000000 = 0.0000005
+      // Premium median       = (0.000001 + 0.0000005) / 2 = 0.00000075
+      // Adaptive price       = 1575 * (1 + 0.00000075)
+      //                      = 1575.00118125
 
-      // ------------------------------------------------------------------------------------------------------------------------
-      // | Market Funding fee calculation                                                                                       |
-      // | -------------------------------------------------------------------------------------------------------------------- |
-      // | Asset | Price      | Long OI   | Short OI | Market skew  | Skew ratio | Funding rate | Pending       | Sum           |
-      // | ----- | ---------- | --------- | -------- | ------------ | ---------- | ------------ | ------------- | ------------- |
-      // | WETH  |      1,575 | 0.2       | 0        | 315          | 0.00000105 | 0            | -0.0000000252 | -0.0000000252 |
-      // ------------------------------------------------------------------------------------------------------------------------
-      // ** Max skew = 300,000,000 USD
-      // ** Market skew = (Long OI - Short OI) * Price
-      // ** Skew ratio = Market skew / Max skew
-      // ** Max funding rate = 0.04% --> @todo fix
-      // ** Peding Funding rate = -(Skew ratio * Max funding rate * Intervals)
-      // !!! maximum funding rate [-max funding rate, max funding rate] per interval
+      // Market's Funding rate
+      // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
+      //                      = -(60 * 300 / 300000000 * 0.0004)
+      //                      = -0.000000024
+      assertMarketFundingRate(wethMarketIndex, -0.000000024 * 1e18, 1180, "T6: ");
 
-      // ---------------------------------------------------------------------------------------------------
-      // | Position's funding fee calculation                                                              |
-      // | ----------------------------------------------------------------------------------------------- |
-      // | Position      | Position size | Entry Funding rate | Market's funding rate | Funding Fee        |
-      // | ------------- | ------------- | ------------------ | --------------------- | ------------------ |
-      // | ALICE-0-WETH  | 300           |                  0 | -0.0000000252         | -0.00000756        |
-      // ---------------------------------------------------------------------------------------------------
-      // ** Funding fee = (Market's funding rate - Entry Funding rate) * Position size
+      // WETH market IMF      = 0.1%
+      // WETH market MMF      = 0.05%
+      // Inc / Dec Fee        = 0.1%
+      // Borrowing base Rate  = 0.01%
 
-      // Adaptive price calculate
-      // WETH price = 1,575 USD,
-      // Market skew = 300
-      // Position size delta = -150 USD
-      // Premium before = 300 / 300000000  = 0.000001
-      // Premium after = (300 + -(150)) / 300000000 = 0.0000005
-      // Median = (0.000001 + 0.0000005) / 2 = 0.00000075
-      // Adaptive priice = 1575 * (1 + 0.00000075) = 1575.00118125
+      // Crypto Borrowing rate
+      //    = reserve * interval * base rate / tvl
+      //    = 27 * 60 * 0.01% / 19940
+      //    = 0.000008124373119358
+      assertAssetClassSumBorrowingRate(0, 0.000008124373119358 * 1e18, 1180, "T6: ");
 
-      // Realized PnL
-      //    Position size       = 300 USD
-      //    Position size delta = 150 USD
-      //    Position Avg price = 1,500.00075, Current price = 1,575.00118125
-      //    Realized PnL  = (Position size delta * (Current price - Position Avg price)) / Position Avg price
-      //                    = 150 * (1575.00118125 - 1500.00075)) / 1500.00075
-      //                    = 7.500039374980312509843745078127
-      //    in BTC          = 7.500039374980312509843745078127 / 20000 = 0.000375
-      //    Settlement Fee = 0%
+      // Before:
+      //    Position size     = 300
+      //    Open interest     = 0.2
+      //    Reserve           = 27 USD
+      //    Borrowing rate    = 0
+      //    Finding rate      = 0
 
-      // Summary Fee distribution
-      //    Trading fee - 0.15 USD
-      //                - 0.15 / 20000 = 0.0000075
-      //                    - Dev 15%: 0.00000112
-      //                    - Protocol: 0.0000075 - 0.00000112 = 0.00000638 btc
-      //    Borrow fee  - 0.000219358074222666 USD
-      //                - 0.00000001 btc
-      //                    - Dev 15%: 0.00000001 * 15% = 0.00000000(15) (too small)
-      //                    - PLP: 0.00000001 - 0 = 0.00000001 btc
-      //    Fundind fee - -0.00000756 USD (PLP pay trader)
-      //                - -0.00000756 / 20000 = 0.00000000(0378) (too small)
-      //    Total Dev fee = 0.00000112 + 0 = 0.00000112 then vault should has 0.00000225 + 0.00000112 = 0.00000337
-      //    Protocol fee  = 0.00000638                  then vault should has 0.00301275 + 0.00000638 = 0.00301913
-      //    to PLP        = -(Position PnL) + Borrowing fee
-      //                  = -0.000375 + 0.00000001 = -0.00037499
-      //                                                then PLP should has   0.997 + (-0.00037499)   = 0.99662501
+      // After:
+      //    Position size     = 300 - 150 = 150
+      //    Open interest     = 150 / 300 * 0.2
+      //                      = 0.1
+      //    Avg price         = 1500.00075 USD (not change for decrease)
+      //    IMR               = 150 * IMF = 1.5 USD
+      //    MMR               = 150 * MMF = 0.75 USD
+      //    Reserve           = IMR * Max profit
+      //                      = 1.5 * 900%
+      //                      = 13.5
+      //    Trading fee       = 150 * 0.1% = 0.15 USD
+      //    Borrowing rate    = 0.000008124373119358
+      //    Funding rate      = -0.000000024
 
-      // ---------------------------------------------------------------
-      // | Vault's summary                                             |
-      // | ------------------------------------------------------------|
-      // | Token  | Total amount | Balance | Protocol Fee |    Dev fee |
-      // | ------ | ------------ | ------- | ------------ | ---------- |
-      // | WBTC   |         1.01 |    1.01 |   0.00301913 | 0.00000337 |
-      // ---------------------------------------------------------------
+      //    Borrowing fee     = (0.000008124373119358 - 0) * 13.5 (reserve)
+      //                      = 0.000219358074222666
+      //    Funding fee       = (-0.000000024 - 0) * 150 (position size)
+      //                      = -0.0000036 USD
 
-      // -------------------------
-      // | PLP's info            |
-      // | --------------------- |
-      // | Token   | Liquidity   |
-      // | ------- | ----------- |
-      // | WBTC    | 0.99700093  |
-      // -------------------------
+      // PnL
+      // note: long position: size delta * (adaptive price - avg price) / avg price
+      //       short position: size delta * (avg price - adaptive price) / avg price
+      // unrealized PnL = size delta * (adaptive price - avg price) / avg price (for long position)
+      //                = 150 * (1575.00118125 - 1500.00075) / 1500.00075 = 7.500039374980312509843745078127
 
-      // Assert Vault
-      assertVaultsFees({
-        _token: address(wbtc),
-        _fee: 0.00301913 * 1e8,
-        _devFee: 0.00000337 * 1e8,
-        _fundingFee: 0,
-        _str: "T6: "
-      });
-
-      assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T6: ");
-
-      // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-      // | Position's summary                                                                                                                                                             |
-      // | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-      // | Sub-account | Market | Direction | Size | IMR | MMR  | Avg price   | OI    | Reserve | Realized PnL                     | Borrowing rate     | Fundind Rate  | Max Trading fee |
-      // | ----------- | ------ | --------- | ---- | --- | ---- | ----------- | ----- | ------- | -------------------------------- | ------------------ | ------------- | --------------- |
-      // | ALICE-0     | WETH   | LONG      |  150 | 1.5 | 0.75 | 1500.00075  |  0.1  |    13.5 | 7.500039374980312509843745078127 | 0.0008124373119358 | -0.0000000252 | 0.15 USD        |
-      // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-      // ** Increase / Decrease trading fee 0.1%
-      // ** Max Profit 900%, Reserve = Size * 900%
-      // ** WETH Market - IMF 1%, MMF 0.5%
-
-      // Assert Position
       assertPositionInfoOf({
         _subAccount: _aliceSubAccount0,
         _marketIndex: wethMarketIndex,
@@ -411,65 +307,86 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 13.5 * 1e30,
         _realizedPnl: 7.500039374980312509843745078127 * 1e30,
         _entryBorrowingRate: 0.000008124373119358 * 1e18,
-        _entryFundingRate: -0.0000000252 * 1e18,
+        _entryFundingRate: -0.000000024 * 1e18,
         _str: "T6: "
       });
 
-      // Trader's transaction summary
-      //    Trading fee - 0.15 USD                              => 0.0000075 BTC
-      //    Borrow fee  - 0.000219358074222666 USD              => 0.00000001 BTC
-      //    Fundind fee - 0                                     => 0 BTC
-      // Realized PnL
-      //    Profit      - 7.500039374980312509843745078127 USD  => 0.000375 BTC
-      // Total = 0.009985 - 0.0000075 - 0.00000001 - (0) + 0.000375
-      //       = 0.01035249
+      // Sub-account's state
+      // According from T4
+      //    IMR           =   3 USD
+      //    MMR           = 1.5 USD
+      // In Summarize
+      //    IMR = 3 - 1.5     =  1.5 USD
+      //    MMR = 1.5 + 0.75  = 0.75 USD
 
-      // --------------------------------------------------------------------------------------
-      // | Trader sub-account's Collateral                                                    |
-      // | ---------------------------------------------------------------------------------- |
-      // | Account  | Sub-account's ID | Token    | Balance    | Collat Factor | Collat Value |
-      // | -------- | ---------------- | -------- | ---------- | ------------- | ------------ |
-      // | ALICE    |               0  | WBTC     | 0.01035249 |           0.8 |    165.63984 |
-      // --------------------------------------------------------------------------------------
-      // ** WBTC price 20,000 USD
-      // ** Collateral value = 0.01035249 * 20000 * 0.8 = 165.63984 USD
+      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T4: " });
+
+      // Assert Alice Sub-account's Collateral
+      // According to T4, Alice's collateral balances
+      //    BTC - 0.009985
+      // When Alice sell WETH with 150 USD
+
+      // Then Alice has to pay
+      //    Trading fee   - 0.15 USD
+      //    Borrowing fee - 0.000219358074222666 USD
+
+      // And Alice has to received
+      //    Funding fee   - 0.0000036 USD
+      //    Profit        - 7.500039374980312509843745078127 USD
+
+      // Then Alice pay fee by Collateral
+      //    BTC, (price: 20,000 USD)
+      //      Trading fee     = 0.15 / 20000                  = 0.0000075 btc
+      //      Borrowing fee   = 0.000219358074222666 / 20000  = 0.00000001 btc
+
+      // And Alice receive funding fee from PLP
+      // When PLP pay Alice by Liquidity
+      //    BTC, (price: 20,000 USD)
+      //      Funding fee     = 0.0000036 / 20000             = 0.00000000 (018) btc !too small
+      //      Trader's profit = 7.500039374980312509843745078127 / 20000
+      //                      = 0.000375 btc
+
+      // In Summarize, Alice's collateral balances
+      //    BTC - 0.009985 - 0.0000075 - 0.00000001 + 0.00000000 + 0.000375 = 0.01035249
 
       assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01035249 * 1e8, "T6: ");
 
-      // Estimate Adaptive price when close all position
-      // WETH price = 1,575 USD,
-      // Market skew = 150
-      // Position size delta = -150 USD
-      // Premium before = 150 / 300000000  = 0.0000005
-      // Premium after = (150 + -(150)) / 300000000 = 0
-      // Median = (0.0000005 + 0) / 2 = 0.00000025
-      // Adaptive priice = 1575 * (1 + 0.00000025) = 1575.00039375
+      // Assert Fee distribution
+      // According from T4
+      // Vault's fees
+      //    BTC - protocol fee  = 0.00301275 btc
+      //        - dev fee       = 0.00000225 btc
+      // and PLP's liquidity
+      //    BTC - 0.997 btc
 
-      // Position Avg price = 1500.00075, Current price = 1575.00039375
-      // Unrealized PnL  = (Position size * (Current price - Position Avg price)) / Position Avg price
-      //                 = (150 * (1575.00039375 - 1500.00075)) / 1500.00075
-      //                 = 7.499960625019687490156254921872 * 0.8
-      //                 = 5.9999685000157499921250039374976
-      // Equity = 165.63984 + (+5.9999685000157499921250039374976) - (0) + (+0) - 0.15 - 5 = 166.489808500015749992125003937497
-      // Free Collat = 166.489808500015749992125003937497 - 1.5 = 164.989808500015749992125003937497
-      // ----------------------------------------------------------------------
-      // | Sub-account's summary                                              |
-      // | ------------------------------------------------------------------ |
-      // | Sub-account |    IMR |    MMR | Free Collat (USD)                  |
-      // | ----------- | ------ | ------ | ---------------------------------- |
-      // | ALICE-0     |    1.5 |   0.75 | 164.989808500015749992125003937497 |
-      // ----------------------------------------------------------------------
-      // ** Equity = Collat value +- Unrealized pnl - Borrowing rage +- Funding Rate - Max Trading fee - Liquidition fee (5 USD)
-      // ** Unrealized pnl = (current price - avg price) / avg price * pnl factor
-      // ** Free Collat = Equity - IMR
+      // Alice paid list
+      //    BTC
+      //      Trading fee - 0.0000075 btc
+      //        - pay for dev (15%)       = 0.00000112 btc
+      //        - pay for protocol (85%)  = 0.00000112 - 0.0000075
+      //                                  = 0.00000638 btc
+      //      Borrowing fee - 0.00000001 btc
+      //        - pay for dev (15%)       = 0.00000000 (15) btc !too small
+      //        - pay for PLP (85%)       = 0.00000001 - 0
+      //                                  = 0.00000001 btc
 
-      assertSubAccounStatus({
-        _subAccount: _aliceSubAccount0,
-        _freeCollateral: 164.989808500015749992125003937497 * 1e30,
-        _imr: 1.5 * 1e30,
-        _mmr: 0.75 * 1e30,
-        _str: "T6: "
-      });
+      // PLP paid list
+      //    BTC
+      //      Funding fee   - 0.00000000 (018) btc !too small
+      //      Trader profit - 0.000375 btc
+
+      // In Summarize Vault's fees
+      //    BTC - protocol fee  = 0.00301275 + 0.00000638     = 0.00301913 btc
+      //        - dev fee       = 0.00000225 + 0 + 0.00000112 = 0.00000337 btc
+      // and PLP's liquidity
+      //    BTC - 0.997 + 0.00000001 - 0.000375 = 0.99662501 btc
+
+      // Assert Vault
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.00301913 * 1e8, _devFee: 0.00000337 * 1e8, _str: "T6: " });
+
+      assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T6: ");
+
+      // Assert Market
 
       // Average Price Calculation
       //  Long:
@@ -482,15 +399,6 @@ contract TC02 is BaseIntTest_WithActions {
       //                  = (1575.00118125 * 150) / (150 + 7.500039374980312509843745078127)
       //                  = 1500.000750000000000000000000000004
 
-      // ---------------------------------------------------------------------------------------------------------------------------------------------
-      // | Market's summary                                                                                                                          |
-      // | ----------------------------------------------------------------------------------------------------------------------------------------- |
-      // | Asset | Long Size   | Previous Avg Price | Long avg Price    | Long OI   | Short Size | Short avg Price | Short OI | Funding rate  | time |
-      // | ----- | ----------- | ------------------ | ----------------- | --------- | ---------- | -------------------------- | ------------- | ---- |
-      // | WETH  | 300 -> 150  | 1500.00075 / 0     | 1500.00075....    | 0.1       | 0          | 0               | 0        | -0.0000000252 | 1180 |
-      // ---------------------------------------------------------------------------------------------------------------------------------------------
-
-      // Assert Market
       assertMarketLongPosition(
         wethMarketIndex,
         150 * 1e30,
@@ -499,28 +407,141 @@ contract TC02 is BaseIntTest_WithActions {
         "T6: "
       );
       assertMarketShortPosition(wethMarketIndex, 0, 0, 0, "T6: ");
-      assertMarketFundingRate(wethMarketIndex, -0.0000000252 * 1e18, 1180, "T6: ");
 
-      // -----------------------------------------------------------
-      // | Asset class's summary                                   |
-      // | ------------------------------------------------------- |
-      // | Asset   | Reserve    | Sum Borrowing rate   | timestamp |
-      // | ------- | ---------- | -------------------- | --------- |
-      // | Crypto  |       13.5 | 0.000008124373119358 | 1180      |
-      // | Equity  |          0 |                    0 | 0         |
-      // | Forex   |          0 |                    0 | 0         |
-      // -----------------------------------------------------------
-
-      // Assert AssetClass
-      // Asset class check crypto
-      assertAssetClassState(0, 13.5 * 1e30, 0.000008124373119358 * 1e18, 1180, "T6: ");
+      // Assert Asset class
+      // According T4
+      // Crypto's reserve is 27
+      // When alice decreased position reserve should be reduced by = 13.5 USD
+      // Then 27 - 13.5 = 13.5 USD
+      // note: sum of borrowing rate is calculated on position info
+      assertAssetClassReserve(0, 13.5 * 1e30, "T6: ");
 
       // Just prove not affected with others asset class when Market sell
-      assertAssetClassState(1, 0, 0, 0, "T6: ");
-      assertAssetClassState(2, 0, 0, 0, "T6: ");
+      assertAssetClassReserve(1, 0, "T6: ");
+      assertAssetClassReserve(2, 0, "T6: ");
     }
 
-    //   - alice open short JPY position 5000 USD
+    skip(60);
+
+    // T7: Alice Sell JPY Market for 6000 USD with same Sub-account
+    // JPY price = 136.123 (USDJPY) => 0.007346297098947275625720855402 USD
+    marketSell(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), updatePriceData);
+    {
+      // Assert ALICE JPY position
+      // Adaptive price
+      //    JPY Price         = 136.123 USDJPY (pyth price)
+      //                      = 0.007346297098947275625720855402 USD
+      //    Market skew       = 0
+      //    new Market skew   = 0 + -6000 (short position)
+      //    Premium before    = 0 / 300000000 = 0
+      //    Premium after     = -6000 / 300000000 = -0.00002
+      //    Premium median    = (0 + -0.00002) / 2 = -0.00001
+      //    Adaptive price    = 0.007346297098947275625720855402 * (1 + -0.00001)
+      //                      = 0.007346223635976286152964598193
+
+      // JPY market IMF       = 0.01%
+      // JPY market MMF       = 0.005%
+      // Inc / Dec Fee        = 0.03%
+      // Position size        = 6000 USD
+      // Open interest        = 6000 USD / oracle price
+      //                      = 6000 / 0.007346297098947275625720855402
+      //                      = 816738
+      // Avg price            = Adaptive price
+      //                      = 0.007346223635976286152964598193
+      // IMR                  = 6000 * IMF = 6 USD
+      // MMR                  = 6000 * MMF = 3 USD
+      // Reserve              = IMR * Max profit
+      //                      = 6 * 900%
+      //                      = 54
+      // Trading fee          = 6000 * 0.03% = 1.8 USD
+
+      assertPositionInfoOf({
+        _subAccount: _aliceSubAccount0,
+        _marketIndex: jpyMarketIndex,
+        _positionSize: int256(-6_000 * 1e30),
+        _avgPrice: 0.007346223635976286152964598193 * 1e30,
+        _openInterest: 816738 * 1e3,
+        _reserveValue: 54 * 1e30,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _entryFundingRate: 0,
+        _str: "T7: "
+      });
+
+      // Assert Alice Sub-account's Collateral
+      // According to T2, Alice's collateral balances
+      //    BTC - 0.01
+      // When Alice sell JPY with 6000 USD
+      // Then Alice has to pay
+      //    Trading fee - 1.8 USD
+
+      // And Alice pay fee by collateral
+      //    BTC, (price: 20,000 USD)
+      //      Trading fee = 1.8 / 20000 = 0.00009 btc
+
+      // In Summarize, Alice's collateral balances
+      //    BTC - 0.01035249 - 0.00009 = 0.01026249
+
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01026249 * 1e8, "T7: ");
+
+      // Sub-account's state
+      // According from T6
+      //    IMR             =  1.5 USD
+      //    MMR             = 0.75 USD
+      // In Summarize
+      //    IMR = 1.5 + 6   =  7.5 USD
+      //    MMR = 0.75 + 3  = 3.75 USD
+
+      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 7.5 * 1e30, _mmr: 3.75 * 1e30, _str: "T7: " });
+
+      // Assert Fee distribution
+      // According from T6
+      // Vault's fees
+      //    BTC - protocol fee  = 0.00301913 btc
+      //        - dev fee       = 0.00000337 btc
+      // and PLP's liquidity
+      //    BTC - 0.99662501 btc
+
+      // Alice paid fees list
+      //    Trading fee
+      //      BTC - 00009 btc
+      //          - pay for protocol (85%)  = 0.0000765 btc
+      //          - pay for dev (15%)       = 0.0000135 btc
+      //    Borrowing fee = 0 USD
+      //    Funding fee   = 0 USD
+
+      // In Summarize Vault's fees
+      //    BTC - protocol fee  = 0.00301913 + 0.0000765 = 0.00309563 btc
+      //        - dev fee       = 0.00000337 + 0.0000135 = 0.00001687 btc
+      // and PLP's liquidity
+      //    BTC - 0.99662501 btc
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.00309563 * 1e8, _devFee: 0.00001687 * 1e8, _str: "T6: " });
+
+      assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T6: ");
+
+      // Assert Market
+      assertMarketLongPosition(jpyMarketIndex, 0, 0, 0, "T7: ");
+      assertMarketShortPosition(
+        jpyMarketIndex,
+        6_000 * 1e30,
+        0.007346223635976286152964598193 * 1e30,
+        816738 * 1e3,
+        "T7: "
+      );
+      assertMarketFundingRate(jpyMarketIndex, 0, 1240, "T7: ");
+
+      // Assert Asset class
+      // Forex's reserve should be increased by = 54 USD
+      assertAssetClassReserve(2, 54 * 1e30, "T7: ");
+      assertAssetClassSumBorrowingRate(2, 0, 1240, "T7: ");
+
+      // Just prove not affected with others asset class when Market sell
+      assertAssetClassReserve(0, 13.5 * 1e30, "T7: ");
+      assertAssetClassSumBorrowingRate(0, 0.000008124373119358 * 1e18, 1180, "T7: ");
+
+      assertAssetClassReserve(1, 0, "T7: ");
+    }
+
     //   - jpy pump price 3%
     //   - alice fully close JPY position
     //   Steps (limit):

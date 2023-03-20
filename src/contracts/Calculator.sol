@@ -898,9 +898,7 @@ contract Calculator is Owned, ICalculator {
         false
       );
     }
-    vars.marketSkewUSDE30 =
-      ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
-      int(10 ** uint32(-_exponent));
+    vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
     // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);

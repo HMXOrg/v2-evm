@@ -80,7 +80,7 @@ contract TradeHelper is ITradeHelper {
 
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastBorrowingTime + _fundingInterval <= block.timestamp) {
-      uint256 _plpTVL = calculator.getPLPValueE30(false, 0, 0);
+      uint256 _plpTVL = calculator.getPLPValueE30(false);
 
       // update borrowing rate
       uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _plpTVL);

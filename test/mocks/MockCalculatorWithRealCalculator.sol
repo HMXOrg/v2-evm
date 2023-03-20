@@ -93,15 +93,11 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
-  function getPLPValueE30(
-    bool _isMaxPrice,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) public view override returns (uint256 _nextAveragePrice) {
+  function getPLPValueE30(bool _isMaxPrice) public view override returns (uint256 _nextAveragePrice) {
     if (actualFunction[keccak256("getPLPValueE30")]) {
-      return c.getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
+      return c.getPLPValueE30(_isMaxPrice);
     } else {
-      return super.getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
+      return super.getPLPValueE30(_isMaxPrice);
     }
   }
 

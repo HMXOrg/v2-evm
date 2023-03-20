@@ -35,11 +35,11 @@ interface ICalculator {
     SHORT
   }
 
-  function getAUM(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
+  function getAUM(bool isMaxPrice) external returns (uint256);
 
-  function getAUME30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
+  function getAUME30(bool isMaxPrice) external returns (uint256);
 
-  function getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external view returns (uint256);
+  function getPLPValueE30(bool isMaxPrice) external view returns (uint256);
 
   function getFreeCollateral(
     address _subAccount,

@@ -214,8 +214,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     }
 
     // market validation
-    // check sub account equity is under IMR
-    _subAccountIMRCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
@@ -287,7 +285,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       // calculate the maximum amount of reserve required for the new position
       uint256 _maxReserve = (_imr * _marketConfig.maxProfitRateBPS) / BPS;
       // increase the reserved amount by the maximum reserve required for the new position
-      _increaseReserved(_marketConfig.assetClass, _maxReserve, _limitPriceE30, _marketConfig.assetId);
+      _increaseReserved(_marketConfig.assetClass, _maxReserve);
       _vars.position.reserveValueE30 += _maxReserve;
     }
 
@@ -500,8 +498,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
   function validateDeleverage() external view {
     // SLOAD
     Calculator _calculator = calculator;
-    uint256 _aum = _calculator.getAUME30(false, 0, 0);
-    uint256 _tvl = _calculator.getPLPValueE30(false, 0, 0);
+    uint256 _aum = _calculator.getAUME30(false);
+    uint256 _tvl = _calculator.getPLPValueE30(false);
 
     // check plp safety buffer
     if ((_tvl - _aum) * BPS <= (BPS - ConfigStorage(configStorage).getLiquidityConfig().plpSafetyBufferBPS) * _tvl)
@@ -852,19 +850,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @notice This function increases the reserve value
   /// @param _assetClassIndex The index of asset class.
   /// @param _reservedValue The amount by which to increase the reserve value.
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function _increaseReserved(
-    uint8 _assetClassIndex,
-    uint256 _reservedValue,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) internal {
+  function _increaseReserved(uint8 _assetClassIndex, uint256 _reservedValue) internal {
     // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the total TVL
-    uint256 tvl = calculator.getPLPValueE30(true, _limitPriceE30, _limitAssetId);
+    uint256 tvl = calculator.getPLPValueE30(true);
 
     // Retrieve the global state
     PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
@@ -887,22 +878,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // Update the new reserve value in the PerpStorage contract
     _perpStorage.updateGlobalState(_globalState);
     _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
-  }
-
-  /// @notice health check for sub account that equity > initial margin required
-  /// @param _subAccount target sub account for health check
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function _subAccountIMRCheck(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view {
-    // check sub account is healthy
-    int256 _subAccountEquity = calculator.getEquity(_subAccount, _limitPriceE30, _limitAssetId);
-
-    // initial margin requirement (IMR) = position size * initial margin fraction
-    // note: initialMarginFractionBPS is 1e4
-    uint256 _imr = calculator.getIMR(_subAccount);
-
-    // if sub account equity < IMR, then trader couldn't increase position
-    if (uint256(_subAccountEquity) < _imr) revert ITradeService_SubAccountEquityIsUnderIMR();
   }
 
   /// @notice health check for sub account that equity > margin maintenance required

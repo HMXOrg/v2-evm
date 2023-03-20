@@ -105,6 +105,11 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
 
       _vars.marketConfig = _vars.configStorage.getMarketConfigByIndex(_vars.position.marketIndex);
 
+      // Update borrowing rate
+      TradeHelper(tradeHelper).updateBorrowingRate(_vars.marketConfig.assetClass, 0, 0);
+      // Update funding rate
+      TradeHelper(tradeHelper).updateFundingRate(_vars.position.marketIndex, 0);
+
       // Settle
       // - trading fees
       // - borrowing fees

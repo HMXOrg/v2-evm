@@ -17,6 +17,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { console2 } from "forge-std/console2.sol";
+import { console } from "forge-std/console.sol";
 
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
@@ -384,7 +385,7 @@ contract TradeHelper is ITradeHelper {
 
     // Calculate trading Fee USD
     _vars.tradingFeeToBePaid = (_absSizeDelta * _positionFeeBPS) / BPS;
-
+    console.log("tradingFeeToBePaid", _vars.tradingFeeToBePaid);
     emit LogSettleTradingFeeValue(_subAccount, _vars.tradingFeeToBePaid);
 
     // If there is no fee, just return
@@ -462,7 +463,7 @@ contract TradeHelper is ITradeHelper {
 
     // Calculate the borrowing fee
     _vars.borrowingFeeToBePaid = calculator.getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
-
+    console.log("borrowingFeeToBePaid", _vars.borrowingFeeToBePaid);
     emit LogSettleBorrowingFeeValue(_subAccount, _vars.borrowingFeeToBePaid);
 
     // If there is no fee, just return
@@ -508,8 +509,6 @@ contract TradeHelper is ITradeHelper {
         ++i;
       }
     }
-
-    console2.log(_vars.borrowingFeeToBePaid);
 
     // If fee cannot be covered, revert.
     if (_vars.borrowingFeeToBePaid > 0) revert ITradeHelper_BorrowingFeeCannotBeCovered();
@@ -563,7 +562,7 @@ contract TradeHelper is ITradeHelper {
 
     // Basicly, this is !xor
     _vars.traderMustPay = (_vars.isLong != _vars.fundingFeeToBePaid > 0);
-
+    console.log("fundingFeeToBePaid", uint256(-_vars.fundingFeeToBePaid));
     emit LogSettleFundingFeeValue(_subAccount, _vars.fundingFeeToBePaid);
 
     // if no funding fee at all, just exit to save gas

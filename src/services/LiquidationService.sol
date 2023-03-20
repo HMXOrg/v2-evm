@@ -105,32 +105,17 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
 
       _vars.marketConfig = _vars.configStorage.getMarketConfigByIndex(_vars.position.marketIndex);
 
-      // Update borrowing rate
-      _vars.tradeHelper.updateBorrowingRate(_vars.marketConfig.assetClass, 0, 0);
-      // Collect margin fee
-      _vars.tradeHelper.collectMarginFee(
-        _subAccount,
+      // Settle
+      // - trading fees
+      // - borrowing fees
+      // - funding fees
+      TradeHelper(tradeHelper).settleAllFees(
+        _vars.position,
         uint256(_vars.position.positionSizeE30 > 0 ? _vars.position.positionSizeE30 : -_vars.position.positionSizeE30),
+        _vars.marketConfig.decreasePositionFeeRateBPS,
         _vars.marketConfig.assetClass,
-        _vars.position.reserveValueE30,
-        _vars.position.entryBorrowingRate,
-        _vars.marketConfig.decreasePositionFeeRateBPS
+        _vars.position.marketIndex
       );
-      // settle margin fee
-      _vars.tradeHelper.settleMarginFee(_subAccount);
-
-      // Update funding rate
-      _vars.tradeHelper.updateFundingRate(_vars.position.marketIndex, 0);
-      // Collect funding fee
-      _vars.tradeHelper.collectFundingFee(
-        _subAccount,
-        _vars.marketConfig.assetClass,
-        _vars.position.marketIndex,
-        _vars.position.positionSizeE30,
-        _vars.position.entryFundingRate
-      );
-      // settle funding fee
-      _vars.tradeHelper.settleFundingFee(_subAccount, 0, 0);
 
       bool _isLong = _vars.position.positionSizeE30 > 0;
 
@@ -139,7 +124,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
       (uint256 _priceE30, , , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _vars.marketConfig.assetId,
         _isLong,
-        (int(_vars.globalMarket.longOpenInterest) - int(_vars.globalMarket.shortOpenInterest)),
+        (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
         _isLong ? -int(_vars.position.positionSizeE30) : int(_vars.position.positionSizeE30),
         _vars.marketConfig.fundingRate.maxSkewScaleUSD
       );

@@ -199,7 +199,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       ).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _vars.isLong, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           _sizeDelta,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
@@ -243,28 +243,17 @@ contract TradeService is ReentrancyGuard, ITradeService {
       );
     }
 
-    // MarginFee = Trading Fee + Borrowing Fee
-    TradeHelper(tradeHelper).collectMarginFee(
-      _vars.subAccount,
+    // Settle
+    // - trading fees
+    // - borrowing fees
+    // - funding fees
+    TradeHelper(tradeHelper).settleAllFees(
+      _vars.position,
       _absSizeDelta,
+      _marketConfig.increasePositionFeeRateBPS,
       _marketConfig.assetClass,
-      _vars.position.reserveValueE30,
-      _vars.position.entryBorrowingRate,
-      _marketConfig.increasePositionFeeRateBPS
+      _marketIndex
     );
-
-    TradeHelper(tradeHelper).settleMarginFee(_vars.subAccount);
-
-    // Collect funding fee
-    TradeHelper(tradeHelper).collectFundingFee(
-      _vars.subAccount,
-      _marketConfig.assetClass,
-      _marketIndex,
-      _vars.position.positionSizeE30,
-      _vars.position.entryFundingRate
-    );
-
-    TradeHelper(tradeHelper).settleFundingFee(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     // update the position size by adding the new size delta
     _vars.position.positionSizeE30 += _sizeDelta;
@@ -400,7 +389,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           _vars.isLongPosition ? -int(_positionSizeE30ToDecrease) : int(_positionSizeE30ToDecrease),
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
@@ -470,7 +459,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           -_vars.currentPositionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
@@ -541,27 +530,17 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // Update funding rate
     TradeHelper(tradeHelper).updateFundingRate(_globalMarketIndex, _vars.limitPriceE30);
 
-    TradeHelper(tradeHelper).collectMarginFee(
-      _vars.subAccount,
+    // Settle
+    // - trading fees
+    // - borrowing fees
+    // - funding fees
+    TradeHelper(tradeHelper).settleAllFees(
+      _vars.position,
       _vars.positionSizeE30ToDecrease,
+      _marketConfig.increasePositionFeeRateBPS,
       _marketConfig.assetClass,
-      _vars.position.reserveValueE30,
-      _vars.position.entryBorrowingRate,
-      _marketConfig.decreasePositionFeeRateBPS
+      _globalMarketIndex
     );
-
-    TradeHelper(tradeHelper).settleMarginFee(_vars.subAccount);
-
-    // Collect funding fee
-    TradeHelper(tradeHelper).collectFundingFee(
-      _vars.subAccount,
-      _marketConfig.assetClass,
-      _globalMarketIndex,
-      _vars.position.positionSizeE30,
-      _vars.position.entryFundingRate
-    );
-
-    TradeHelper(tradeHelper).settleFundingFee(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
 
     uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
@@ -583,6 +562,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.avgEntryPriceE30,
         _vars.position.lastIncreaseTimestamp
       );
+
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value
       if (delta >= _vars.position.reserveValueE30) {
         delta = _vars.position.reserveValueE30;
@@ -810,9 +790,10 @@ contract TradeService is ReentrancyGuard, ITradeService {
             _debtUsd = _debtUsd - _vars.collateralUsd;
           }
         }
-        unchecked {
-          ++_i;
-        }
+      }
+
+      unchecked {
+        ++_i;
       }
     }
   }

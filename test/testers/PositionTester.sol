@@ -100,7 +100,7 @@ contract PositionTester is StdAssertions {
 
         assertEq(vaultStorage.traderBalances(_subAccount, _token), _expectBalance, "trader balance");
         assertEq(vaultStorage.plpLiquidity(_token), _expectLiquidity, "liquidity");
-        assertEq(vaultStorage.fees(_token), _expectFee, "fee");
+        assertEq(vaultStorage.protocolFees(_token), _expectFee, "protocol fee");
 
         unchecked {
           ++_i;

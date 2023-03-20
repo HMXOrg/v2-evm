@@ -696,6 +696,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18;
 
+    // TODO: no more fee to protocol fee, but discount deduction amount of PLP instead
     _vaultStorage.removePLPLiquidity(_tpToken, _tpTokenOut);
     _vaultStorage.addFee(_tpToken, _settlementFee);
     _vaultStorage.increaseTraderBalance(_subAccount, _tpToken, _tpTokenOut - _settlementFee);

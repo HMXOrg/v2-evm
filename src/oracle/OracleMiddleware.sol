@@ -5,6 +5,7 @@ import { Owned } from "@hmx/base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 
+
 contract OracleMiddleware is Owned, IOracleMiddleware {
   /**
    * Structs
@@ -278,68 +279,51 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       : _unsafeGetLatestPrice(_assetId, _isMax);
 
     // Apply premium/discount
-    _adaptivePrice = _calculateAdaptivePrice(_price, _exponent, _marketSkew, _sizeDelta, _maxSkewScaleUSD);
+    _adaptivePrice = _calculateAdaptivePrice(_marketSkew, _sizeDelta, _price, _maxSkewScaleUSD);
 
     // Return the price and last update
     return (_adaptivePrice, _price, _exponent, _lastUpdate);
   }
 
+  /// @notice Calcuatate adaptive base on Market skew by position size
+  /// @param _marketSkew Long position size - Short position size
+  /// @param _sizeDelta Position size delta
+  /// @param _price Oracle price
+  /// @param _maxSkewScaleUSD Config from Market config
+  /// @return _adaptivePrice
   function _calculateAdaptivePrice(
-    uint256 _price,
-    int32 _exponent,
     int256 _marketSkew,
     int256 _sizeDelta,
+    uint256 _price,
     uint256 _maxSkewScaleUSD
-  ) internal pure returns (uint256) {
-    // Formula
-    // marketSkew = longOpenInterest - shortOpenInterest
-    // marketSkewUSD = marketSkew * price
-    // premiumDiscountBefore = marketSkewUSD / maxSkewScaleUSD
-    // premiumDiscountAfter = (marketSkewUSD + sizeDelta) / maxSkewScaleUSD
-    // priceBefore = price + (price * premiumDiscountBefore)
-    // priceAfter = price + (price * premiumDiscountAfter)
-    // adaptivePrice = (priceBefore + priceAfter) / 2
-    //
-    // Example
-    // price            = $1200 USD (oracle)
-    // size             = 100
-    // markerSkew       = 0
-    // maxSkewScaleUSD  = $1,000,000
-    //
-    // Then,
-    //
-    // premiumDiscountBefore = 0 / 1,000,000
-    //           = 0
-    // premiumDiscountAfter  = (0 + 100) / 1,000,000
-    //           = 100 / 1,000,000
-    //           = 0.0001
-    //
-    // priceBefore = 1200 * (1 + premiumDiscountBefore)
-    //              = 1200 * (1 + 0)
-    //              = 1200
-    // priceAfter  = 1200 * (1 + premiumDiscountAfter)
-    //              = 1200 * (1 + 0.0001)
-    //              = 1200 * (1.0001)
-    //              = 1200.12
-    // Finally,
-    //
-    // adaptivePrice = (priceBefore + priceAfter) / 2
-    //            = (1200 + 1200.12) / 2
-    //            = 1200.06
-    int256 _priceInt = int256(_price);
-    int256 _marketSkewUSD = (_marketSkew * _priceInt) / int256(10 ** uint32(-_exponent));
+  ) internal view returns (uint256 _adaptivePrice) {
+    // couldn't calculate adaptive price because max skew scale config is used to calcualte premium with market skew
+    // then just return oracle price
+    if (_maxSkewScaleUSD == 0) return _price;
 
-    int256 _premiumDiscountBefore = _maxSkewScaleUSD > 0
-      ? (_marketSkewUSD * 1e30) / int256(_maxSkewScaleUSD)
-      : int256(0);
-    int256 _premiumDiscountAfter = _maxSkewScaleUSD > 0
-      ? ((_marketSkewUSD + _sizeDelta) * 1e30) / int256(_maxSkewScaleUSD)
-      : int256(0);
+    // Given
+    //    Max skew scale = 300,000,000 USD
+    //    Current Price  =       1,500 USD
+    //    Given:
+    //      Long Position size   = 1,000,000 USD
+    //      Short Position size  =   700,000 USD
+    //      then Market skew     = Long - Short = 300,000 USD
+    //
+    //    If Trader manipulatate by Decrease Long position for 150,000 USD
+    //    Then:
+    //      Premium (before) = 300,000 / 300,000,000 = 0.001
+    int256 _premium = (_marketSkew * 1e18) / int256(_maxSkewScaleUSD);
+    
+    //      Premium (after)  = (300,000 - 150,000) / 300,000,000 = 0.0005
+    //      ** + When user increase Long position ot Decrease Short position
+    //      ** - When user increase Short position ot Decrease Long position
+    int256 _premiumAfter = ((_marketSkew - _sizeDelta) * 1e18) / int256(_maxSkewScaleUSD);
 
-    int256 _priceBefore = _priceInt + ((_priceInt * _premiumDiscountBefore) / 1e30);
-    int256 _priceAfter = _priceInt + ((_priceInt * _premiumDiscountAfter) / 1e30);
-    int256 _adaptivePrice = (_priceBefore + _priceAfter) / 2;
-    return _adaptivePrice > 0 ? uint256(_adaptivePrice) : 0;
+    //      Adaptive price = Price * (1 + Median of Before and After)
+    //                     = 1,500 * (1 + (0.001 + 0.0005 / 2))
+    //                     = 1,500 * (1 + 0.00125) = 1,501.875
+    int256 _premiumMedian = (_premium + _premiumAfter) / 2;
+    return (_price * uint256(1e18 + _premiumMedian)) / 1e18;
   }
 
   /// @notice Set asset price configs

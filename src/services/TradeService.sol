@@ -182,7 +182,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     if (!_vars.isNewPosition && _vars.currentPositionIsLong != _vars.isLong) revert ITradeService_BadExposure();
 
     // Update borrowing rate
-    TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass, _limitPriceE30, _marketConfig.assetId);
+    TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 
     // Update funding rate
     TradeHelper(tradeHelper).updateFundingRate(_marketIndex, _limitPriceE30);
@@ -525,7 +525,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     DecreasePositionVars memory _vars
   ) internal returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
     // Update borrowing rate
-    TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass, _vars.limitPriceE30, _marketConfig.assetId);
+    TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 
     // Update funding rate
     TradeHelper(tradeHelper).updateFundingRate(_globalMarketIndex, _vars.limitPriceE30);

@@ -176,6 +176,9 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
         ++i;
       }
     }
+
+    //Reset Trader's collateral balances
+    VaultStorage(vaultStorage).removeAllTraderTokens(_subAccount);
   }
 
   struct SettleStruct {

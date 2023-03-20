@@ -502,7 +502,7 @@ contract Calculator is Owned, ICalculator {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
 
-    // Calculate unrealized PnL and unrelized fee
+    // Calculate unrealized PnL and unrealized fee
     (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
       _subAccount,
       _limitPriceE30,
@@ -942,11 +942,23 @@ contract Calculator is Owned, ICalculator {
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
+    uint256 absFundingFee = _abs(fundingFee);
+
+    // Position Exposure   | Funding Rate       | Fund Flow
+    // (isLong)            | (fundingRate > 0)  | (traderMustPay)
+    // ---------------------------------------------------------------------
+    // true                | true               | false  (fee reserve -> trader)
+    // true                | false              | true   (trader -> fee reserve)
+    // false               | true               | true   (trader -> fee reserve)
+    // false               | false              | false  (fee reserve -> trader)
+
+    // If fundingFee is negative mean Trader receives Fee
+    // If fundingFee is positive mean Trader pays Fee
 
     if (_isLong) {
-      return _fundingRate < 0 ? -fundingFee : fundingFee;
+      return _fundingRate > 0 ? -int(absFundingFee) : int(absFundingFee);
     } else {
-      return _fundingRate > 0 ? -fundingFee : fundingFee;
+      return _fundingRate > 0 ? int(absFundingFee) : -int(absFundingFee);
     }
   }
 
@@ -1050,7 +1062,7 @@ contract Calculator is Owned, ICalculator {
       isProfit = _markPrice < _averagePrice;
     }
 
-    // In case of profit, we need to check the current timestamp againt minProfitDuration
+    // In case of profit, we need to check the current timestamp against minProfitDuration
     // in order to prevent front-run attack, or price manipulation.
     // Check `isProfit` first, to save SLOAD in loss case.
     if (isProfit) {

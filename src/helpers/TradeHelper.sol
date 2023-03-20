@@ -16,7 +16,6 @@ import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
@@ -199,8 +198,8 @@ contract TradeHelper is ITradeHelper {
       // false               | true          | true   (trader -> fee reserve)
       // false               | false         | false  (fee reserve -> trader)
 
-      // Basicly, this is !xor
-      _vars.traderMustPay = (_vars.isLong != _vars.fundingFeeToBePaid > 0);
+      // Basically, this is !xor
+      _vars.traderMustPay = (_vars.fundingFeeToBePaid > 0);
 
       emit LogSettleFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBePaid);
     }

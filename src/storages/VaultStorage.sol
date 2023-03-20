@@ -16,7 +16,7 @@ contract VaultStorage is Owned, IVaultStorage {
 
   // EVENTs
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
-  event SetStrategyOf(address indexed token, address prevStrategy, address newStrategy);
+  event LogSetStrategyAllowanceOf(address indexed token, address strategy, address prevTarget, address newTarget);
 
   mapping(address => uint256) public totalAmount; //token => tokenAmount
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
@@ -35,8 +35,8 @@ contract VaultStorage is Owned, IVaultStorage {
   mapping(address => mapping(address => uint256)) public traderBalances;
   // mapping(address => address[]) public traderTokens;
   mapping(address => address[]) public traderTokens;
-  // mapping(token => strategy)
-  mapping(address => address) public strategyOf;
+  // mapping(token => strategy => target)
+  mapping(address => mapping(address => address)) public strategyAllowanceOf;
 
   // @todo - modifier?
   function addFee(address _token, uint256 _amount) public {
@@ -166,9 +166,10 @@ contract VaultStorage is Owned, IVaultStorage {
   /// @notice Set the strategy for a token
   /// @param _token The token to set the strategy for
   /// @param _strategy The strategy to set
-  function setStrategyOf(address _token, address _strategy) external onlyOwner {
-    emit SetStrategyOf(_token, strategyOf[_token], _strategy);
-    strategyOf[_token] = _strategy;
+  /// @param _target The target to set
+  function setStrategyOf(address _token, address _strategy, address _target) external onlyOwner {
+    emit LogSetStrategyAllowanceOf(_token, _strategy, strategyAllowanceOf[_token][_strategy], _target);
+    strategyAllowanceOf[_token][_strategy] = _target;
   }
 
   /**
@@ -187,7 +188,7 @@ contract VaultStorage is Owned, IVaultStorage {
   function cook(address _target, address _token, bytes calldata _callData) external returns (bytes memory) {
     // Check
     // 1. Only strategy for specific token can call this function
-    if (strategyOf[_token] != msg.sender) revert IVaultStorage_Forbidden();
+    if (strategyAllowanceOf[_token][msg.sender] != _target) revert IVaultStorage_Forbidden();
     // 2. Target must be a contract. This to prevent strategy calling to EOA.
     if (!_target.isContract()) revert IVaultStorage_TargetNotContract();
 

@@ -9,6 +9,10 @@ contract StakedGlpStrategy_ExecuteForkTest is StakedGlpStrategy_BaseForkTest {
   }
 
   function testCorrectness_WhenTakeStakedGlpAsLiquidity() external {
+    // Test states
+    uint256 plpBalance = 0;
+    uint256 fee = 0;
+
     // Provide 100 ETH liquidity on GMX
     vm.deal(address(this), 100 ether);
     gmxRewardRouterV2.mintAndStakeGlpETH{ value: 100 ether }(0, 0);
@@ -35,13 +39,11 @@ contract StakedGlpStrategy_ExecuteForkTest is StakedGlpStrategy_BaseForkTest {
     (uint256 expectedLiquidity, uint256 expectedFee) = liquidityTester.expectLiquidityMint(sGlpAssetId, 1_000 ether);
 
     // Execute the add liquidity order
-    uint256 plpBefore = plp.balanceOf(address(this));
     vm.prank(keeper);
     liquidityHandler.executeOrder(address(this), 0, new bytes[](0));
-    uint256 plpAfter = plp.balanceOf(address(this));
 
-    assertEq(plpAfter - plpBefore, expectedLiquidity);
-    assertEq(vaultStorage.fees(sGlpAddress), expectedFee);
+    assertEq(plp.balanceOf(address(this)), plpBalance += expectedLiquidity);
+    assertEq(vaultStorage.fees(sGlpAddress), fee += expectedFee);
 
     // Provide another 500 sGLP liquidity on HMX
     sGlp.approve(address(liquidityHandler), 500 ether);
@@ -57,11 +59,10 @@ contract StakedGlpStrategy_ExecuteForkTest is StakedGlpStrategy_BaseForkTest {
     (expectedLiquidity, expectedFee) = liquidityTester.expectLiquidityMint(sGlpAssetId, 500 ether);
 
     // Execute the add liquidity order
-    plpBefore = plp.balanceOf(address(this));
     vm.prank(keeper);
     liquidityHandler.executeOrder(address(this), 1, new bytes[](0));
-    plpAfter = plp.balanceOf(address(this));
 
-    assertEq(plpAfter - plpBefore, expectedLiquidity);
+    assertEq(plp.balanceOf(address(this)), plpBalance += expectedLiquidity);
+    assertEq(vaultStorage.fees(sGlpAddress), fee += expectedFee);
   }
 }

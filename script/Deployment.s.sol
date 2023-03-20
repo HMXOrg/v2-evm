@@ -154,6 +154,6 @@ abstract contract Deployment {
     );
 
     // Set strategy on vault storage to allow the strategy to cook.
-    vaultStorage.setStrategyOf(address(localVars.sGlp), address(stakedGlpStrategy));
+    vaultStorage.setStrategyOf(address(localVars.sGlp), address(stakedGlpStrategy), localVars.glpFeeTracker);
   }
 }

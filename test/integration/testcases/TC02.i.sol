@@ -159,15 +159,12 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Adaptive price calculate
       // WETH price = 1,500 USD,
-      // Before:
-      //    Market skew = 0
-      //    Premium discount = 0 / 300,000,000 = 0
-      //    Price with premium = 1500 * (1 + 0) = 1500
-      // After:
-      //    Market skew = Before + 300 USD = 300 USD
-      //    Premium discount  = 300 / 300,000,000 = 0.000001
-      //    Price with premium = 1500 * (1 + 0.000001) = 1500.0015
-      // Adaptive price = (1500 + 1500.0015) / 2 = 1500.00075
+      // Market skew = 0
+      // Position size delta = 300 USD
+      // Premium before = 0 / 300000000 = 0
+      // Premium after = (0 + 300) / 300000000 = 0.000001
+      // Median = (0 + 0.000001) / 2  = 0.0000005
+      // Adaptive price = 1500 * (1 + 0.0000005) = 1500.00075
 
       // --------------------------------------------------------------------------------------------------------------------------------------------------------
       // | Position's summary                                                                                                                                   |
@@ -277,18 +274,6 @@ contract TC02 is BaseIntTest_WithActions {
     updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_575 * 1e8, 0);
     marketSell(ALICE, 0, wethMarketIndex, 150 * 1e30, address(wbtc), updatePriceData);
     {
-      // Adaptive price calculate
-      // WETH price = 1,575 USD,
-      // Before:
-      //    Market skew = (0.2 - 0) * 1575 = +315 USD
-      //    Premium discount = +315 / 300,000,000 = 0.00000105
-      //    Price with premium = 1575 * (1 + 0.00000105) = 1,575.00165375
-      // After:
-      //    Market skew = Before - 150 = 165 USD
-      //    Premium discount  = +165 / 300,000,000 = 0.00000055
-      //    Price with premium = 1575 * (1 + 0.00000055) = 1,575.00086625
-      // Adaptive price = (1,575.00165375 + 1,575.00086625) / 2 = 1,575.00126
-
       // Trading fee's calculation
       //    Decrease position fee 0.1%, Size delta = 150 USD, then Fee * 0.1% = 0.15 USD
 
@@ -342,17 +327,23 @@ contract TC02 is BaseIntTest_WithActions {
       // ---------------------------------------------------------------------------------------------------
       // ** Funding fee = (Market's funding rate - Entry Funding rate) * Position size
 
+      // Adaptive price calculate
+      // WETH price = 1,575 USD,
+      // Market skew = 300
+      // Position size delta = -150 USD
+      // Premium before = 300 / 300000000  = 0.000001
+      // Premium after = (300 + -(150)) / 300000000 = 0.0000005
+      // Median = (0.000001 + 0.0000005) / 2 = 0.00000075
+      // Adaptive priice = 1575 * (1 + 0.00000075) = 1575.00118125
+
       // Realized PnL
       //    Position size       = 300 USD
       //    Position size delta = 150 USD
-      //    Position Avg price = 1,500.00075, Current price = 1,575.00126
-      //    Unrealized PnL  = (Position size * (Current price - Position Avg price)) / Position Avg price
-      //                    = (300 * (1,575.00126 - 1,500.00075)) / 1,500.00075
-      //                    = 15.000094499952750023624988187505
-      //    Realized PnL  = (Unrealized PnL * Delta) / Position size
-      //                  = (15.000094499952750023624988187505 * 150) / 300
-      //                  = 7.500047249976375011812494093752
-      //                  = 7.500047249976375011812494093752 / 20000 = 0.000375
+      //    Position Avg price = 1,500.00075, Current price = 1,575.00118125
+      //    Realized PnL  = (Position size delta * (Current price - Position Avg price)) / Position Avg price
+      //                    = 150 * (1575.00118125 - 1500.00075)) / 1500.00075
+      //                    = 7.500039374980312509843745078127
+      //    in BTC          = 7.500039374980312509843745078127 / 20000 = 0.000375
       //    Settlement Fee = 0%
 
       // Summary Fee distribution
@@ -372,13 +363,13 @@ contract TC02 is BaseIntTest_WithActions {
       //                  = -0.000375 + 0.00000001 = -0.00037499
       //                                                then PLP should has   0.997 + (-0.00037499)   = 0.99662501
 
-      // -----------------------------------------------------------------------------
-      // | Vault's summary                                                           |
-      // | ------------------------------------------------------------------------- |
-      // | Token  | Total amount | Balance | Protocol Fee |    Dev fee | Funding fee |
-      // | ------ | ------------ | ------- | ------------ | ---------- | ----------- |
-      // | WBTC   |         1.01 |    1.01 |   0.00301913 | 0.00000337 |           0 |
-      // -----------------------------------------------------------------------------
+      // ---------------------------------------------------------------
+      // | Vault's summary                                             |
+      // | ------------------------------------------------------------|
+      // | Token  | Total amount | Balance | Protocol Fee |    Dev fee |
+      // | ------ | ------------ | ------- | ------------ | ---------- |
+      // | WBTC   |         1.01 |    1.01 |   0.00301913 | 0.00000337 |
+      // ---------------------------------------------------------------
 
       // -------------------------
       // | PLP's info            |
@@ -404,7 +395,7 @@ contract TC02 is BaseIntTest_WithActions {
       // | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
       // | Sub-account | Market | Direction | Size | IMR | MMR  | Avg price   | OI    | Reserve | Realized PnL                     | Borrowing rate     | Fundind Rate  | Max Trading fee |
       // | ----------- | ------ | --------- | ---- | --- | ---- | ----------- | ----- | ------- | -------------------------------- | ------------------ | ------------- | --------------- |
-      // | ALICE-0     | WETH   | LONG      |  150 | 1.5 | 0.75 | 1500.00075  |  0.1  |    13.5 | 7.500047249976375011812494093752 | 0.0008124373119358 | -0.0000000252 | 0.15 USD        |
+      // | ALICE-0     | WETH   | LONG      |  150 | 1.5 | 0.75 | 1500.00075  |  0.1  |    13.5 | 7.500039374980312509843745078127 | 0.0008124373119358 | -0.0000000252 | 0.15 USD        |
       // ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
       // ** Increase / Decrease trading fee 0.1%
       // ** Max Profit 900%, Reserve = Size * 900%
@@ -418,7 +409,7 @@ contract TC02 is BaseIntTest_WithActions {
         _avgPrice: 1500.00075 * 1e30,
         _openInterest: 0.1 * 1e8,
         _reserveValue: 13.5 * 1e30,
-        _realizedPnl: 7.500047249976375011812494093752 * 1e30,
+        _realizedPnl: 7.500039374980312509843745078127 * 1e30,
         _entryBorrowingRate: 0.000008124373119358 * 1e18,
         _entryFundingRate: -0.0000000252 * 1e18,
         _str: "T6: "
@@ -429,7 +420,7 @@ contract TC02 is BaseIntTest_WithActions {
       //    Borrow fee  - 0.000219358074222666 USD              => 0.00000001 BTC
       //    Fundind fee - 0                                     => 0 BTC
       // Realized PnL
-      //    Profit      - 7.500047249976375011812494093752 USD  => 0.000375 BTC
+      //    Profit      - 7.500039374980312509843745078127 USD  => 0.000375 BTC
       // Total = 0.009985 - 0.0000075 - 0.00000001 - (0) + 0.000375
       //       = 0.01035249
 
@@ -445,31 +436,28 @@ contract TC02 is BaseIntTest_WithActions {
 
       assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01035249 * 1e8, "T6: ");
 
-      // Estimate Adaptive price when close position in sub account
+      // Estimate Adaptive price when close all position
       // WETH price = 1,575 USD,
-      // Before:
-      //    Market skew = (0.1 - 0) * 1575 = +157.5 USD
-      //    Premium discount = +157.5 / 300,000,000 = 0.000000525
-      //    Price with premium = 1575 * (1 + 0.000000525) = 1575.000826875
-      // After: ()
-      //    Market skew = Before - 150 = 7.5 USD
-      //    Premium discount  = +7.5 / 300,000,000 = 0.000000025
-      //    Price with premium = 1575 * (1 + 0.000000025) = 1575.000039375
-      // Adaptive price = (1575.000826875 + 1575.000039375) / 2 = 1575.000433125
+      // Market skew = 150
+      // Position size delta = -150 USD
+      // Premium before = 150 / 300000000  = 0.0000005
+      // Premium after = (150 + -(150)) / 300000000 = 0
+      // Median = (0.0000005 + 0) / 2 = 0.00000025
+      // Adaptive priice = 1575 * (1 + 0.00000025) = 1575.00039375
 
-      // Position Avg price = 1500.00075, Current price = 1575.000433125
+      // Position Avg price = 1500.00075, Current price = 1575.00039375
       // Unrealized PnL  = (Position size * (Current price - Position Avg price)) / Position Avg price
-      //                 = (150 * (1575.000433125 - 1500.00075)) / 1500.00075
-      //                 = 7.499964562517718741140629429685 * 0.8
-      //                 = 5.999971650014174992912503543748
-      // Equity = 165.63984 + (+5.999971650014174992912503543748) - (0) + (+0) - 0.15 - 5 = 166.489811650014174992912503543748
-      // Free Collat = 166.489811650014174992912503543748 - 1.5 = 164.989811650014174992912503543748
+      //                 = (150 * (1575.00039375 - 1500.00075)) / 1500.00075
+      //                 = 7.499960625019687490156254921872 * 0.8
+      //                 = 5.9999685000157499921250039374976
+      // Equity = 165.63984 + (+5.9999685000157499921250039374976) - (0) + (+0) - 0.15 - 5 = 166.489808500015749992125003937497
+      // Free Collat = 166.489808500015749992125003937497 - 1.5 = 164.989808500015749992125003937497
       // ----------------------------------------------------------------------
       // | Sub-account's summary                                              |
       // | ------------------------------------------------------------------ |
       // | Sub-account |    IMR |    MMR | Free Collat (USD)                  |
       // | ----------- | ------ | ------ | ---------------------------------- |
-      // | ALICE-0     |    1.5 |   0.75 | 164.989811650014174992912503543748 |
+      // | ALICE-0     |    1.5 |   0.75 | 164.989808500015749992125003937497 |
       // ----------------------------------------------------------------------
       // ** Equity = Collat value +- Unrealized pnl - Borrowing rage +- Funding Rate - Max Trading fee - Liquidition fee (5 USD)
       // ** Unrealized pnl = (current price - avg price) / avg price * pnl factor
@@ -477,7 +465,7 @@ contract TC02 is BaseIntTest_WithActions {
 
       assertSubAccounStatus({
         _subAccount: _aliceSubAccount0,
-        _freeCollateral: 164.989811650014174992912503543748 * 1e30,
+        _freeCollateral: 164.989808500015749992125003937497 * 1e30,
         _imr: 1.5 * 1e30,
         _mmr: 0.75 * 1e30,
         _str: "T6: "
@@ -485,28 +473,28 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Average Price Calculation
       //  Long:
-      //    Market's Avg price = 1,500.00075, Current price = 1,575.00126
-      //    Market's PnL  = (300 * (1,575.00126 - 1,500.00075)) / 1,500.00075
-      //                  = 15.000094499952750023624988187505
-      //    Actual PnL    = Market's PnL - Realized PnL = 15.000094499952750023624988187505 - 7.500047249976375011812494093752
-      //                  = 7.500047249976375011812494093753
+      //    Market's Avg price = 1500.00075, Current price = 1575.00118125
+      //    Market's PnL  = (300 * (1575.00118125 - 1500.00075)) / 1500.00075
+      //                  = 15.000078749960625019687490156254
+      //    Actual PnL    = Market's PnL - Realized PnL = 15.000078749960625019687490156254 - 7.500039374980312509843745078127
+      //                  = 7.500039374980312509843745078127
       //    Avg Price     = Current Price * New Position size / New Position size + Actual PnL
-      //                  = (1575.00126 * 150) / (150 + 7.500047249976375011812494093753)
-      //                  = 1500.000749999999999999999999999999
+      //                  = (1575.00118125 * 150) / (150 + 7.500039374980312509843745078127)
+      //                  = 1500.000750000000000000000000000004
 
       // ---------------------------------------------------------------------------------------------------------------------------------------------
       // | Market's summary                                                                                                                          |
       // | ----------------------------------------------------------------------------------------------------------------------------------------- |
       // | Asset | Long Size   | Previous Avg Price | Long avg Price    | Long OI   | Short Size | Short avg Price | Short OI | Funding rate  | time |
       // | ----- | ----------- | ------------------ | ----------------- | --------- | ---------- | -------------------------- | ------------- | ---- |
-      // | WETH  | 300 -> 150  | 1500.00075 / 0     | 1500.00074999.... | 0.1       | 0          | 0               | 0        | -0.0000000252 | 1180 |
+      // | WETH  | 300 -> 150  | 1500.00075 / 0     | 1500.00075....    | 0.1       | 0          | 0               | 0        | -0.0000000252 | 1180 |
       // ---------------------------------------------------------------------------------------------------------------------------------------------
 
       // Assert Market
       assertMarketLongPosition(
         wethMarketIndex,
         150 * 1e30,
-        1500.000749999999999999999999999999 * 1e30,
+        1500.000750000000000000000000000004 * 1e30,
         0.1 * 1e8,
         "T6: "
       );

@@ -5,8 +5,6 @@ import { Owned } from "@hmx/base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 
-import { console } from "forge-std/console.sol";
-
 contract OracleMiddleware is Owned, IOracleMiddleware {
   /**
    * Structs
@@ -313,13 +311,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     //    If Trader manipulatate by Decrease Long position for 150,000 USD
     //    Then:
     //      Premium (before) = 300,000 / 300,000,000 = 0.001
-    console.log("welcome to new adaptive price logic");
-    console.logInt(_marketSkew);
-    console.logInt(_sizeDelta);
-    console.log("max", _maxSkewScaleUSD);
     int256 _premium = (_marketSkew * 1e18) / int256(_maxSkewScaleUSD);
-    console.log("premium");
-    console.logInt(_premium);
 
     //      Premium (after)  = (300,000 - 150,000) / 300,000,000 = 0.0005
     //      ** + When user increase Long position ot Decrease Short position

@@ -317,7 +317,7 @@ contract Calculator is Owned, ICalculator {
       _getFeeBPS(
         _tokenValueE30,
         _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true, 0, 0),
-        _getPLPValueE30(false, 0, 0), // min and max price should be the same
+        _getPLPValueE30(true, 0, 0),
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE

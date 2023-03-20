@@ -96,8 +96,7 @@ contract TradeHelper is ITradeHelper {
 
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
-  /// @param _limitPriceE30 Price from limitOrder, zeros means no marketOrderPrice
-  function updateFundingRate(uint256 _marketIndex, uint256 _limitPriceE30) external {
+  function updateFundingRate(uint256 _marketIndex) external {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -117,8 +116,7 @@ contract TradeHelper is ITradeHelper {
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
       (int256 nextFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
-        _marketIndex,
-        _limitPriceE30
+        _marketIndex
       );
 
       _globalMarket.currentFundingRate += nextFundingRate;

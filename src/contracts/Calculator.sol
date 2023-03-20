@@ -873,13 +873,11 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice Calculate next funding rate using when increase/decrease position.
   /// @param _marketIndex Market Index.
-  /// @param _limitPriceE30 Price from limit order
   /// @return fundingRate next funding rate using for both LONG & SHORT positions.
   /// @return fundingRateLong next funding rate for LONG.
   /// @return fundingRateShort next funding rate for SHORT.
   function getNextFundingRate(
-    uint256 _marketIndex,
-    uint256 _limitPriceE30
+    uint256 _marketIndex
   ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
@@ -891,15 +889,14 @@ contract Calculator is Owned, ICalculator {
     // If block.timestamp not pass the next funding time, return 0.
     if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
     int32 _exponent;
-    if (_limitPriceE30 != 0) {
-      vars.marketPriceE30 = _limitPriceE30;
-    } else {
-      //@todo - validate timestamp of these
-      (vars.marketPriceE30, _exponent, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        false
-      );
-    }
+
+    // @todo - revise exponent usage
+    // @todo - validate timestamp of these
+    (vars.marketPriceE30, _exponent, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+      marketConfig.assetId,
+      false
+    );
+
     vars.marketSkewUSDE30 =
       ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
       int(10 ** uint32(-_exponent));

@@ -185,7 +185,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 
     // Update funding rate
-    TradeHelper(tradeHelper).updateFundingRate(_marketIndex, _limitPriceE30);
+    TradeHelper(tradeHelper).updateFundingRate(_marketIndex);
 
     // get the global market for the given market index
     PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
@@ -528,7 +528,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 
     // Update funding rate
-    TradeHelper(tradeHelper).updateFundingRate(_globalMarketIndex, _vars.limitPriceE30);
+    TradeHelper(tradeHelper).updateFundingRate(_globalMarketIndex);
 
     // Settle
     // - trading fees

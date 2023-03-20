@@ -188,7 +188,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
   function _exitPool(
     address _tokenOut,
-    uint256 _lpUsdValue,
+    uint256 _lpUsdValueE30,
     address _lpProvider,
     uint256 _minAmount
   ) internal returns (uint256) {
@@ -201,14 +201,14 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _amountOut = _calculator.convertTokenDecimals(
       30,
       ConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
-      (_lpUsdValue * PRICE_PRECISION) / _maxPrice
+      (_lpUsdValueE30 * PRICE_PRECISION) / _maxPrice
     );
 
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
     uint32 _feeBps = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeBPS(
       _tokenOut,
-      _lpUsdValue,
+      _lpUsdValueE30,
       ConfigStorage(configStorage)
     );
 

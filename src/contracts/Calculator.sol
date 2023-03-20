@@ -346,14 +346,10 @@ contract Calculator is Owned, ICalculator {
   /// @notice get settlement fee rate
   /// @param _token - token
   /// @param _liquidityUsdDelta - withdrawal amount
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _settlementFeeRate in e18 format
   function getSettlementFeeRate(
     address _token,
-    uint256 _liquidityUsdDelta,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    uint256 _liquidityUsdDelta
   ) external view returns (uint256 _settlementFeeRate) {
     // usd debt
     uint256 _tokenLiquidityUsd = _getPLPUnderlyingAssetValueE30(

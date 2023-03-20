@@ -657,17 +657,10 @@ contract TradeService is ReentrancyGuard, ITradeService {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
-          _settleProfit(
-            _vars.subAccount,
-            _vars.tpToken,
-            uint256(_realizedPnl),
-            _vars.limitPriceE30,
-            _marketConfig.assetId
-          );
+          _settleProfit(_vars.subAccount, _vars.tpToken, uint256(_realizedPnl));
         } else {
           // loss
-
-          _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _vars.limitPriceE30, _marketConfig.assetId);
+          _settleLoss(_vars.subAccount, uint256(-_realizedPnl));
         }
       }
     }
@@ -686,39 +679,20 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _subAccount - Sub-account of trader
   /// @param _tpToken - token that trader want to take profit as collateral
   /// @param _realizedProfitE30 - trader profit in USD
-  /// @param _limitPriceE30 - Price to be overwritten to a specified asset
-  /// @param _limitAssetId - Asset to be overwritten by _limitPriceE30
-  function _settleProfit(
-    address _subAccount,
-    address _tpToken,
-    uint256 _realizedProfitE30,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) internal {
+  function _settleProfit(address _subAccount, address _tpToken, uint256 _realizedProfitE30) internal {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
-    uint256 _tpTokenPrice;
     bytes32 _tpAssetId = _configStorage.tokenAssetIds(_tpToken);
-
-    if (_tpAssetId == _limitAssetId && _limitPriceE30 != 0) {
-      _tpTokenPrice = _limitPriceE30;
-    } else {
-      (_tpTokenPrice, ) = OracleMiddleware(_configStorage.oracle()).getLatestPrice(_tpAssetId, false);
-    }
+    (uint256 _tpTokenPrice, ) = OracleMiddleware(_configStorage.oracle()).getLatestPrice(_tpAssetId, false);
 
     uint256 _decimals = _configStorage.getAssetTokenDecimal(_tpToken);
 
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
 
-    uint256 _settlementFeeRate = calculator.getSettlementFeeRate(
-      _tpToken,
-      _realizedProfitE30,
-      _limitPriceE30,
-      _limitAssetId
-    );
+    uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_tpToken, _realizedProfitE30);
 
     uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18;
 
@@ -732,9 +706,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @notice settle loss
   /// @param _subAccount - Sub-account of trader
   /// @param _debtUsd - Loss in USD
-  /// @param _limitPriceE30 - Price to be overwritten to a specified asset
-  /// @param _limitAssetId - Asset to be overwritten by _limitPriceE30
-  function _settleLoss(address _subAccount, uint256 _debtUsd, uint256 _limitPriceE30, bytes32 _limitAssetId) internal {
+  function _settleLoss(address _subAccount, uint256 _debtUsd) internal {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
@@ -759,11 +731,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.tokenAssetId = _configStorage.tokenAssetIds(_token);
 
         // Retrieve the latest price and confident threshold of the plp underlying token
-        if (_vars.tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
-          _vars.price = _limitPriceE30;
-        } else {
-          (_vars.price, ) = _oracleMiddleware.getLatestPrice(_vars.tokenAssetId, false);
-        }
+        (_vars.price, ) = _oracleMiddleware.getLatestPrice(_vars.tokenAssetId, false);
 
         _vars.collateralUsd = (_vars.collateral * _vars.price) / (10 ** _vars.decimals);
 

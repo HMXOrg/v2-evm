@@ -121,11 +121,11 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
     // size delta     = 500
     // max scale skew = 1000000
     // premium (before) = 20000 / 1000000 = 0.02
-    // premium (affter) = (20000 - 500) / 1000000 = 0.0195
-    // medium = (0.02 + 0.0195) / 2 = 0.01975
-    // adaptive price = 20000 * (1 + 0.01975) = 20395
+    // premium (affter) = (20000 + 500) / 1000000 = 0.0205
+    // medium = (0.02 + 0.0205) / 2 = 0.02025
+    // adaptive price = 20000 * (1 + 0.02025) = 20405
 
-    assertEq(maxPrice, 20395 * 1e30);
+    assertEq(maxPrice, 20405 * 1e30);
     // note: unsupport min, max price logic then min & max price should be same
     assertEq(minPrice, maxPrice);
   }
@@ -135,7 +135,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       wbtcAssetId,
       true,
       -100_000 * 1e30, // Short skew
-      7200 * 1e30, // 7200 USD sizeDelta
+      -7200 * 1e30, // 7200 USD sizeDelta
       1_000_000 * 1e30 // 1M Skew Scale
     );
 
@@ -143,7 +143,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       wbtcAssetId,
       false,
       -100_000 * 1e30, // Short skew
-      7200 * 1e30, // 7200 USD sizeDelta
+      -7200 * 1e30, // 7200 USD sizeDelta
       1_000_000 * 1e30 // 1M Skew Scale
     );
 
@@ -153,7 +153,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
     // size delta     = 7200
     // max scale skew = 1000000
     // premium (before) = -100000 / 1000000 = -0.1
-    // premium (affter) = (-100000 - 7200) / 1000000 = -0.1072
+    // premium (affter) = (-100000 + -(7200)) / 1000000 = -0.1072
     // medium = (-0.1 - 0.1072) / 2 = -0.1036
     // adaptive price = 20000 * (1 + -0.1036) = 17928
 

@@ -806,6 +806,9 @@ contract Calculator is Owned, ICalculator {
       _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
     }
 
+    // possible happen when trader close last short position of the market
+    if (_newGlobalPositionSize == 0) return 0;
+
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
 
@@ -854,6 +857,9 @@ contract Calculator is Owned, ICalculator {
     } else {
       _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
     }
+
+    // possible happen when trader close last long position of the market
+    if (_newGlobalPositionSize == 0) return 0;
 
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);

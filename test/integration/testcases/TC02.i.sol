@@ -255,16 +255,16 @@ contract TC02 is BaseIntTest_WithActions {
       //                      = -0.000000024
       assertMarketFundingRate(wethMarketIndex, -0.000000024 * 1e18, 1180, "T6: ");
 
-      // WETH market IMF      = 0.1%
-      // WETH market MMF      = 0.05%
-      // Inc / Dec Fee        = 0.1%
-      // Borrowing base Rate  = 0.01%
-
       // Crypto Borrowing rate
       //    = reserve * interval * base rate / tvl
       //    = 27 * 60 * 0.01% / 19940
       //    = 0.000008124373119358
       assertAssetClassSumBorrowingRate(0, 0.000008124373119358 * 1e18, 1180, "T6: ");
+
+      // WETH market IMF      = 0.1%
+      // WETH market MMF      = 0.05%
+      // Inc / Dec Fee        = 0.1%
+      // Borrowing base Rate  = 0.01%
 
       // Before:
       //    Position size     = 300
@@ -292,11 +292,10 @@ contract TC02 is BaseIntTest_WithActions {
       //    Funding fee       = (-0.000000024 - 0) * 150 (position size)
       //                      = -0.0000036 USD
 
-      // PnL
+      // Profit and Loss
       // note: long position: size delta * (adaptive price - avg price) / avg price
       //       short position: size delta * (avg price - adaptive price) / avg price
-      // unrealized PnL = size delta * (adaptive price - avg price) / avg price (for long position)
-      //                = 150 * (1575.00118125 - 1500.00075) / 1500.00075 = 7.500039374980312509843745078127
+      // unrealized PnL = 150 * (1575.00118125 - 1500.00075) / 1500.00075 = 7.500039374980312509843745078127
 
       assertPositionInfoOf({
         _subAccount: _aliceSubAccount0,
@@ -319,12 +318,14 @@ contract TC02 is BaseIntTest_WithActions {
       //    IMR = 3 - 1.5     =  1.5 USD
       //    MMR = 1.5 + 0.75  = 0.75 USD
 
-      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T4: " });
+      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T6: " });
 
       // Assert Alice Sub-account's Collateral
       // According to T4, Alice's collateral balances
       //    BTC - 0.009985
-      // When Alice sell WETH with 150 USD
+      // When Alice sell WETH with 150 USD (decrease Long position)
+      // And Funding rate is nagative so Short pay Long
+      // Then Alice should receive funding fee
 
       // Then Alice has to pay
       //    Trading fee   - 0.15 USD
@@ -421,16 +422,20 @@ contract TC02 is BaseIntTest_WithActions {
       assertAssetClassReserve(2, 0, "T6: ");
     }
 
+    // Time passed for 60 seconds
     skip(60);
 
     // T7: Alice Sell JPY Market for 6000 USD with same Sub-account
-    // JPY price = 136.123 (USDJPY) => 0.007346297098947275625720855402 USD
     marketSell(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), updatePriceData);
     {
-      // Assert ALICE JPY position
+      // When Alice Sell JPY Market
+      // And Alice has no position
+      // Then it means Alice open new Long position
+      // Given increase size = 6000 USD
+      // JPY Price = 136.123 USDJPY (pyth price)
+      //           = 0.007346297098947275625720855402 USD
+
       // Adaptive price
-      //    JPY Price         = 136.123 USDJPY (pyth price)
-      //                      = 0.007346297098947275625720855402 USD
       //    Market skew       = 0
       //    new Market skew   = 0 + -6000 (short position)
       //    Premium before    = 0 / 300000000 = 0
@@ -469,8 +474,8 @@ contract TC02 is BaseIntTest_WithActions {
       });
 
       // Assert Alice Sub-account's Collateral
-      // According to T2, Alice's collateral balances
-      //    BTC - 0.01
+      // According to T6, Alice's collateral balances
+      //    BTC - 0.01035249
       // When Alice sell JPY with 6000 USD
       // Then Alice has to pay
       //    Trading fee - 1.8 USD
@@ -504,9 +509,10 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Alice paid fees list
       //    Trading fee
-      //      BTC - 00009 btc
-      //          - pay for protocol (85%)  = 0.0000765 btc
+      //      BTC - 0.00009 btc
       //          - pay for dev (15%)       = 0.0000135 btc
+      //          - pay for protocol (85%)  = 0.00009 - 0.0000135
+      //                                    = 0.0000765 btc
       //    Borrowing fee = 0 USD
       //    Funding fee   = 0 USD
 
@@ -515,9 +521,9 @@ contract TC02 is BaseIntTest_WithActions {
       //        - dev fee       = 0.00000337 + 0.0000135 = 0.00001687 btc
       // and PLP's liquidity
       //    BTC - 0.99662501 btc
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.00309563 * 1e8, _devFee: 0.00001687 * 1e8, _str: "T6: " });
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.00309563 * 1e8, _devFee: 0.00001687 * 1e8, _str: "T7: " });
 
-      assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T6: ");
+      assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T7: ");
 
       // Assert Market
       assertMarketLongPosition(jpyMarketIndex, 0, 0, 0, "T7: ");
@@ -542,8 +548,189 @@ contract TC02 is BaseIntTest_WithActions {
       assertAssetClassReserve(1, 0, "T7: ");
     }
 
-    //   - jpy pump price 3%
-    //   - alice fully close JPY position
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T8: Alice fully close JPY Short Position
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 136.533 * 1e3, 0);
+    marketBuy(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), updatePriceData);
+    {
+      // When Alice Buy JPY Market
+      // And Alice has Short position
+      // Then it means Alice decrease Short position
+      // Given decrease size = 6000 USD (fully close)
+      // And Price pump from T7 ~0.3%
+      // JPY Price = 136.533 USDJPY (pyth price)
+      //           = 0.007324236631437088469454271128 USD
+
+      // Then Check position Info
+
+      // Time passed          = 60 seconds (60 intevals)
+      // TVL                  = ??? @todo - resolve TVL
+
+      // Max Funding rate     = 0.04%
+      // Max scale skew       = 300,000,000 USD
+      // Market skew          = -6000
+      // new Market skew      = -6000 + 6000 (short position)
+      // Premium before       = -6000 / 300000000 = -0.00002
+      // Premium after        = 0 / 300000000 = 0
+      // Premium median       = (-0.00002 + 0) / 2 = -0.00001
+      // Adaptive price       = 0.007324236631437088469454271128 * (1 + -0.00001)
+      //                      = 0.007324163389070774098569576585
+
+      // Market's Funding rate
+      // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
+      //                      = -(60 * -6000 / 300000000 * 0.0004)
+      //                      = 0.00000048
+      assertMarketFundingRate(jpyMarketIndex, 0.00000048 * 1e18, 1300, "T8: ");
+
+      // Forex Borrowing rate
+      //    = reserve * interval * base rate / tvl
+      //    = 54 * 60 * 0.03% / ???
+      //    = 0.972
+      //    @todo calculate this again 0.000048764579969752
+      assertAssetClassSumBorrowingRate(2, 0.000048764579969752 * 1e18, 1300, "T8: ");
+
+      // JPY market IMF       = 0.01%
+      // JPY market MMF       = 0.005%
+      // Inc / Dec Fee        = 0.03%
+
+      // Before:
+      //    Position size     = -6000
+      //    Open interest     = 816738
+      //    Avg Price         = 0.007346223635976286152964598193 USD
+      //    Reserve           = 54 USD
+      //    Borrowing rate    = 0
+      //    Finding rate      = 0
+
+      // After:
+      //    Position size     = -6000 + 6000      = 0
+      //    Open interest     = 0 / 6000 * 816738 = 0
+      //    Avg price         = 0 USD (fully close)
+      //    IMR               = 0
+      //    MMR               = 0
+      //    Reserve           = 0
+      //    Trading fee       = 6000 * 0.03% = 1.8 USD
+      //    Borrowing rate    = 0.000048764579969752
+      //    Funding rate      = 0.00000048
+
+      //    Borrowing fee     = (0.000048764579969752 - 0) * 54 (reserve delta)
+      //                      = 0.002633287318366608
+      //    Funding fee       = (0.00000048 - 0) * 6000 (position size)
+      //                      = 0.00288 USD
+
+      // Profit and Loss
+      // note: long position: size delta * (adaptive price - avg price) / avg price
+      //       short position: size delta * (avg price - adaptive price) / avg price
+      // unrealized PnL = 6000 * (0.007346223635976286152964598193 - 0.007324163389070774098569576585) / 0.007346223635976286152964598193
+      //                = 18.01762211333523763485750665291 USD
+
+      assertPositionInfoOf({
+        _subAccount: _aliceSubAccount0,
+        _marketIndex: jpyMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _reserveValue: 0,
+        _realizedPnl: 18.01762211333523763485750665291 * 1e30,
+        _entryBorrowingRate: 0.000048764579969752 * 1e18,
+        _entryFundingRate: 0.00000048 * 1e18,
+        _str: "T8: "
+      });
+
+      // Sub-account's state
+      // According from T7
+      //    IMR             =  7.5 USD
+      //    MMR             = 3.75 USD
+      // In Summarize
+      //    IMR = 7.5 - 6   =  1.5 USD
+      //    MMR = 3.75 - 3  = 0.75 USD
+
+      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T8: " });
+
+      // Assert Alice Sub-account's Collateral
+      // According to T7, Alice's collateral balances
+      //    BTC - 0.01026249
+      // When Alice Buy JPY with 6000 USD (close Short position)
+      // And Funding rate is position so Long pay Short
+      // Then Alice should receive funding fee
+
+      // Then Alice has to pay
+      //    Trading fee   - 1.8 USD
+      //    Borrowing fee - 0.002633287318366608 USD
+      //    Funding fee   - 0.00288 USD
+
+      // And Alice has to received
+      //    Profit        - 18.01762211333523763485750665291 USD
+
+      // Then Alice pay fee by Collateral
+      //    BTC, (price: 20,000 USD)
+      //      Trading fee     = 1.8 / 20000                   = 0.00009 btc
+      //      Borrowing fee   = 0.002633287318366608 / 20000  = 0.00000013 btc
+
+      // And Alice receive funding fee from PLP
+      // When PLP pay Alice by Liquidity
+      //    BTC, (price: 20,000 USD)
+      //      Funding fee     = 0.00288 / 20000               = 0.00000014 btc
+      //      Trader's profit = 18.01762211333523763485750665291 / 20000
+      //                      = 0.00090088 btc
+
+      // In Summarize, Alice's collateral balances
+      //    BTC - 0.01026249 - 0.00009 - 0.00000013 + 0.00000014 + 0.00090088 = 0.01107338
+
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01107338 * 1e8, "T8: ");
+
+      // Assert Fee distribution
+      // According from T7
+      // Vault's fees
+      //    BTC - protocol fee  = 0.00309563 btc
+      //        - dev fee       = 0.00001687 btc
+      // and PLP's liquidity
+      //    BTC - 0.99662501 btc
+
+      // Alice paid fees list
+      //    Trading fee
+      //      BTC - 0.00009 btc
+      //          - pay for dev (15%)       = 0.0000135 btc
+      //          - pay for protocol (85%)  = 0.00009 - 0.0000135
+      //                                    = 0.0000765 btc
+      //    Borrowing fee
+      //      BTC - 0.00000013 btc
+      //          - pay for dev (15%)       = 0.00000001 btc
+      //          - pay for PLP (85%)       = 0.00000013 - 0.00000001
+      //                                    = 0.00000012
+
+      // PLP paid list
+      //    BTC
+      //      Funding fee   - 0.00000014 btc
+      //      Trader profit - 0.00090088 btc
+
+      // In Summarize Vault's fees
+      //    BTC - protocol fee  0.00309563 + 0.0000765              = 0.00317213 btc
+      //        - dev fee       0.00001687 + 0.0000135 + 0.00000001 = 0.00003038 btc
+      // and PLP's liquidity
+      //    BTC - 0.99662501 + 0.00000012 - 0.00000014 - 0.00090088 = 0.99572411 btc
+
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.00317213 * 1e8, _devFee: 0.00003038 * 1e8, _str: "T8: " });
+
+      assertPLPLiquidity(address(wbtc), 0.99572411 * 1e8, "T8: ");
+
+      // Assert Market
+      assertMarketLongPosition(jpyMarketIndex, 0, 0, 0, "T8: ");
+      assertMarketShortPosition(jpyMarketIndex, 0, 0, 0, "T8: ");
+
+      // Assert Asset class
+      // Forex's reserve should be increased by = 54 USD
+      assertAssetClassReserve(2, 0, "T8: ");
+
+      // Just prove not affected with others asset class when Market sell
+      assertAssetClassReserve(0, 13.5 * 1e30, "T8: ");
+      assertAssetClassSumBorrowingRate(0, 0.000008124373119358 * 1e18, 1180, "T8: ");
+
+      assertAssetClassReserve(1, 0, "T8: ");
+    }
+
     //   Steps (limit):
     //   - bob deposit BTC 100 USD
     //   - bob create buy BTC position order at price 18,000 USD with 500 USD (order 0)

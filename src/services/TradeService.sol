@@ -200,7 +200,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       ).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _vars.isLong, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           _sizeDelta,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
@@ -399,7 +399,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           _vars.isLongPosition ? -int(_positionSizeE30ToDecrease) : int(_positionSizeE30ToDecrease),
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
@@ -469,7 +469,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           -_vars.currentPositionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );

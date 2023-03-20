@@ -89,6 +89,7 @@ contract TradeHelper is ITradeHelper {
       _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
 
       uint256 borrowingFee = (_globalAssetClass.reserveValueE30 * borrowingRate) / RATE_PRECISION;
+      console2.log(99, borrowingFee, _globalAssetClass.reserveValueE30, borrowingRate);
       _globalAssetClass.sumBorrowingFeeE30 += borrowingFee;
     }
     _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);

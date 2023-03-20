@@ -279,4 +279,6 @@ contract MockCalculator is ICalculator {
     uint256 _averagePrice,
     uint256 _lastIncreaseTimestamp
   ) external pure returns (uint256) {}
+
+  function getPendingBorrowingFeeE30() public view virtual returns (uint256) {}
 }

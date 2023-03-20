@@ -62,7 +62,6 @@ contract Calculator is Owned, ICalculator {
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value in E18 format
   function _getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view returns (uint256) {
-    // @todo - pendingBorrowingFeeE30
     // @todo - pending funding fee ?
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
@@ -98,9 +97,14 @@ contract Calculator is Owned, ICalculator {
     for (uint256 i; i < _len; ) {
       PerpStorage.GlobalAssetClass memory _assetClassState = _perpStorage.getGlobalAssetClassByIndex(i);
 
+      uint256 _borrowingFeeE30 = (_getNextBorrowingRate(uint8(i), 0, bytes32(0)) * _assetClassState.reserveValueE30) /
+        RATE_PRECISION;
+
       // Formula:
-      // pendingBorrowingFee = sumBorrowingFeeE30 - sumSettledBorrowingFeeE30
-      _pendingBorrowingFee += _assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30;
+      // pendingBorrowingFee = (sumBorrowingFeeE30 - sumSettledBorrowingFeeE30) + latestBorrowingFee
+      _pendingBorrowingFee +=
+        (_assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30) +
+        _borrowingFeeE30;
 
       unchecked {
         ++i;
@@ -182,6 +186,7 @@ contract Calculator is Owned, ICalculator {
   ) internal view returns (uint256) {
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
+    // @todo: remove limit price
     uint256 _priceE30;
     if (_limitPriceE30 > 0 && _limitAssetId == _underlyingAssetId) {
       _priceE30 = _limitPriceE30;
@@ -965,16 +970,24 @@ contract Calculator is Owned, ICalculator {
     return (_reservedValue * _borrowingRate) / RATE_PRECISION;
   }
 
+  function getNextBorrowingRate(
+    uint8 _assetClassIndex,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) external view returns (uint256 _nextBorrowingRate) {
+    return _getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+  }
+
   /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
   /// @param _assetClassIndex The index of the asset class.
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _nextBorrowingRate The next borrowing rate for the asset class.
-  function getNextBorrowingRate(
+  function _getNextBorrowingRate(
     uint8 _assetClassIndex,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (uint256 _nextBorrowingRate) {
+  ) internal view returns (uint256 _nextBorrowingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     // Get the trading config, asset class config, and global asset class for the given asset class index.
@@ -987,7 +1000,6 @@ contract Calculator is Owned, ICalculator {
     );
     // Get the PLP TVL.
     uint256 plpTVL = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
-
     // If block.timestamp not pass the next funding time, return 0.
     if (_assetClassState.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
     // If PLP TVL is 0, return 0.

@@ -122,4 +122,12 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
       return super.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
     }
   }
+
+  function getPendingBorrowingFeeE30() public view override returns (uint256) {
+    if (actualFunction[keccak256("getPendingBorrowingFeeE30")]) {
+      return c.getPendingBorrowingFeeE30();
+    } else {
+      return super.getPendingBorrowingFeeE30();
+    }
+  }
 }

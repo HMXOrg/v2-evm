@@ -38,7 +38,7 @@ contract TC34 is BaseIntTest_WithActions {
 
     vm.deal(ALICE, executionOrderFee);
     uint256 _balanceAll = plpV2.balanceOf(ALICE);
-    console.log("ALICE in hand", _balanceAll);
+
     removeLiquidity(ALICE, address(wbtc), _balanceAll, executionOrderFee, new bytes[](0), false);
 
     // setup for remove liquidity feed only 1 token
@@ -52,8 +52,6 @@ contract TC34 is BaseIntTest_WithActions {
 
     bytes[] memory _newPrices = setPrices(_newAssetIds, _prices, _conf);
 
-    console.log("plp LQ ", vaultStorage.plpLiquidity(address(wbtc)));
-    console.log("old Fee", vaultStorage.fees(address(wbtc)));
     exeutePLPOrder(liquidityHandler.nextExecutionOrderIndex(), _newPrices);
 
     _totalExecutionOrderFee += (executionOrderFee - 1);

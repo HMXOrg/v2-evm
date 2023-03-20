@@ -530,7 +530,7 @@ contract Calculator is Owned, ICalculator {
         (_var.priceE30, , , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           -_var.position.positionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );

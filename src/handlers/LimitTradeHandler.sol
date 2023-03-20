@@ -490,7 +490,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     (uint256 _currentPrice, , , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
-      (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
+      (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),
       _sizeDelta,
       vars.marketConfig.fundingRate.maxSkewScaleUSD
     );
@@ -527,7 +527,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     (_currentPrice, , , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
-      (int(vars.globalMarket.longOpenInterest) - int(vars.globalMarket.shortOpenInterest)),
+      (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),
       _sizeDelta,
       vars.marketConfig.fundingRate.maxSkewScaleUSD
     );

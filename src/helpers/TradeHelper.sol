@@ -16,7 +16,6 @@ import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
@@ -83,13 +82,15 @@ contract TradeHelper is ITradeHelper {
 
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastBorrowingTime + _fundingInterval <= block.timestamp) {
+      uint256 _plpTVL = calculator.getPLPValueE30(false, 0, 0);
+
       // update borrowing rate
-      uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+      uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _plpTVL);
       _globalAssetClass.sumBorrowingRate += borrowingRate;
       _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
 
       uint256 borrowingFee = (_globalAssetClass.reserveValueE30 * borrowingRate) / RATE_PRECISION;
-      console2.log(99, borrowingFee, _globalAssetClass.reserveValueE30, borrowingRate);
+
       _globalAssetClass.sumBorrowingFeeE30 += borrowingFee;
     }
     _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
@@ -332,10 +333,7 @@ contract TradeHelper is ITradeHelper {
     }
   }
 
-  function _settleFundingFeeWhenTraderReceive(
-    SettleAllFeesVars memory _vars,
-    address _collateralToken
-  ) internal returns (uint256) {
+  function _settleFundingFeeWhenTraderReceive(SettleAllFeesVars memory _vars, address _collateralToken) internal {
     // When plp liquidity is the payer
     uint256 _plpBalance = _vars.vaultStorage.plpLiquidity(_collateralToken);
 
@@ -361,7 +359,7 @@ contract TradeHelper is ITradeHelper {
     }
   }
 
-  function _settleTradingFee(SettleAllFeesVars memory _vars, address _collateralToken) internal returns (uint256) {
+  function _settleTradingFee(SettleAllFeesVars memory _vars, address _collateralToken) internal {
     // Get trader balance of each collateral
     uint256 _traderBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _collateralToken);
 
@@ -392,7 +390,7 @@ contract TradeHelper is ITradeHelper {
     // else continue, as trader does not have any of this collateral token
   }
 
-  function _settleBorrowingFee(SettleAllFeesVars memory _vars, address _collateralToken) internal returns (uint256) {
+  function _settleBorrowingFee(SettleAllFeesVars memory _vars, address _collateralToken) internal {
     // Get trader balance of each collateral
     uint256 _traderBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _collateralToken);
 

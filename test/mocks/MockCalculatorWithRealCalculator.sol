@@ -61,13 +61,12 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
 
   function getNextBorrowingRate(
     uint8 _assetClassIndex,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    uint256 _plpTVL
   ) public view override returns (uint256 _nextBorrowingRate) {
     if (actualFunction[keccak256("getNextBorrowingRate")]) {
-      return c.getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+      return c.getNextBorrowingRate(_assetClassIndex, _plpTVL);
     } else {
-      return super.getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+      return super.getNextBorrowingRate(_assetClassIndex, _plpTVL);
     }
   }
 

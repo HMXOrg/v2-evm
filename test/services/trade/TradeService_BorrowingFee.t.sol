@@ -375,7 +375,7 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
       // Final anwser = (T110-120 portion) + (T101-110 portion)
       // = 50.62496514471135 + 16.402488706886445 = 67.027453851597795
-      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 67.027453851597795 * 1e30, "PendingBorrowingFee T102");
+      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 67.027453851597795 * 1e30, "PendingBorrowingFee T120");
     }
   }
 }

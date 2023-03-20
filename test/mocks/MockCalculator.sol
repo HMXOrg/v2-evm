@@ -182,11 +182,7 @@ contract MockCalculator is ICalculator {
     return freeCollateral;
   }
 
-  function getNextBorrowingRate(
-    uint8 /*_assetClassIndex*/,
-    uint256 /*_limitPriceE30*/,
-    bytes32 /*_limitAssetId*/
-  ) public view virtual returns (uint256) {
+  function getNextBorrowingRate(uint8 /*_assetClassIndex*/, uint256 /*_plpTVL*/) public view virtual returns (uint256) {
     return nextBorrowingRate;
   }
 
@@ -279,4 +275,6 @@ contract MockCalculator is ICalculator {
     uint256 _averagePrice,
     uint256 _lastIncreaseTimestamp
   ) external pure returns (uint256) {}
+
+  function getPendingBorrowingFeeE30() public view virtual returns (uint256) {}
 }

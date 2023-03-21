@@ -35,8 +35,6 @@ interface IVaultStorage {
 
   function addFee(address _token, uint256 _amount) external;
 
-  function addDevFee(address _token, uint256 _amount) external;
-
   function addPLPLiquidity(address _token, uint256 _amount) external;
 
   function withdrawFee(address _token, uint256 _amount, address _receiver) external;

@@ -64,7 +64,6 @@ import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
-  uint256 internal constant DOLLAR = 1e30;
   uint256 internal constant executionOrderFee = 0.0001 ether;
 
   uint256 internal constant SECONDS = 1;

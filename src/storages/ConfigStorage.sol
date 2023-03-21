@@ -149,6 +149,10 @@ contract ConfigStorage is IConfigStorage, Owned {
     return marketConfigs.length;
   }
 
+  function getAssetClassConfigsLength() external view returns (uint256) {
+    return assetClassConfigs.length;
+  }
+
   function getPlpTokens() external view returns (address[] memory) {
     address[] memory _result = new address[](plpAssetIds.length);
 

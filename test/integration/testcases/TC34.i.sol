@@ -38,6 +38,7 @@ contract TC34 is BaseIntTest_WithActions {
 
     vm.deal(ALICE, executionOrderFee);
     uint256 _balanceAll = plpV2.balanceOf(ALICE);
+
     removeLiquidity(ALICE, address(wbtc), _balanceAll, executionOrderFee, new bytes[](0), false);
 
     // setup for remove liquidity feed only 1 token
@@ -59,10 +60,10 @@ contract TC34 is BaseIntTest_WithActions {
         token: address(wbtc),
         who: ALICE,
         lpTotalSupply: 0,
-        totalAmount: 299_550,
+        totalAmount: 429_160,
         plpLiquidity: 0,
-        plpAmount: 0, // alice plp amount should be 0
-        fee: 299_550, //fee = 0.5e8( 0.5e8 -0.3%) = 0.0015 * 1e8
+        plpAmount: 0,
+        fee: 429_160, //150_000 +279_160
         executionFee: _totalExecutionOrderFee
       })
     );

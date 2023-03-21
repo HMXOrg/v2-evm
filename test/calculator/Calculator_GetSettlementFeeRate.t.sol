@@ -17,7 +17,7 @@ contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
   }
 
   function testCorrectness_WhenGetSettlementFeeRateWithZeroDelta() external {
-    uint256 _rate = calculator.getSettlementFeeRate(address(weth), 0, 0, 0);
+    uint256 _rate = calculator.getSettlementFeeRate(address(weth), 0);
     assertEq(_rate, 0);
   }
 
@@ -31,7 +31,7 @@ contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
     // tax fee rate = 0.5%
     // total weight = 100%
     // plp WETH pool weigh = 20%
-    uint256 _rate = calculator.getSettlementFeeRate(address(weth), 1200 * 1e30, 0, 0);
+    uint256 _rate = calculator.getSettlementFeeRate(address(weth), 1200 * 1e30);
 
     // calculation
     // usd debt = 3000
@@ -53,7 +53,7 @@ contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
     // tax fee rate = 0.5%
     // total weight = 100%
     // plp DAI pool weigh = 10%
-    uint256 _rate = calculator.getSettlementFeeRate(address(dai), 200 * 1e30, 0, 0);
+    uint256 _rate = calculator.getSettlementFeeRate(address(dai), 200 * 1e30);
 
     // calculation
     // usd debt = 1000

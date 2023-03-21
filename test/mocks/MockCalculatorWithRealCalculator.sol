@@ -48,26 +48,22 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
-  function getNextFundingRate(
-    uint256 _marketIndex,
-    uint256 _limitPriceE30
-  ) public view virtual override returns (int256, int256, int256) {
+  function getNextFundingRate(uint256 _marketIndex) public view virtual override returns (int256, int256, int256) {
     if (actualFunction[keccak256("getNextFundingRate")]) {
-      return c.getNextFundingRate(_marketIndex, _limitPriceE30);
+      return c.getNextFundingRate(_marketIndex);
     } else {
-      return super.getNextFundingRate(_marketIndex, _limitPriceE30);
+      return super.getNextFundingRate(_marketIndex);
     }
   }
 
   function getNextBorrowingRate(
     uint8 _assetClassIndex,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    uint256 _plpTVL
   ) public view override returns (uint256 _nextBorrowingRate) {
     if (actualFunction[keccak256("getNextBorrowingRate")]) {
-      return c.getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+      return c.getNextBorrowingRate(_assetClassIndex, _plpTVL);
     } else {
-      return super.getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+      return super.getNextBorrowingRate(_assetClassIndex, _plpTVL);
     }
   }
 
@@ -97,15 +93,11 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
-  function getPLPValueE30(
-    bool _isMaxPrice,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) public view override returns (uint256 _nextAveragePrice) {
+  function getPLPValueE30(bool _isMaxPrice) public view override returns (uint256 _nextAveragePrice) {
     if (actualFunction[keccak256("getPLPValueE30")]) {
-      return c.getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
+      return c.getPLPValueE30(_isMaxPrice);
     } else {
-      return super.getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
+      return super.getPLPValueE30(_isMaxPrice);
     }
   }
 
@@ -120,6 +112,14 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
       return c.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
     } else {
       return super.getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
+    }
+  }
+
+  function getPendingBorrowingFeeE30() public view override returns (uint256) {
+    if (actualFunction[keccak256("getPendingBorrowingFeeE30")]) {
+      return c.getPendingBorrowingFeeE30();
+    } else {
+      return super.getPendingBorrowingFeeE30();
     }
   }
 }

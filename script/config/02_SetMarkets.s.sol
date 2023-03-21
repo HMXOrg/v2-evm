@@ -68,7 +68,7 @@ contract SetMarkets is ConfigJsonRepo {
     _newOpenInterestConfig.shortMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
 
     _newFundingRateConfig.maxSkewScaleUSD = 3_000_000 * DOLLAR;
-    _newFundingRateConfig.maxFundingRateBPS = 0; // 0.04%
+    _newFundingRateConfig.maxFundingRate = 0.00000116 * 1e18; // 10% per day
 
     _newMarketConfig.assetId = _assetId;
     _newMarketConfig.increasePositionFeeRateBPS = _managePositionFee;

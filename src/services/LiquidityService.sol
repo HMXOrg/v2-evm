@@ -18,8 +18,6 @@ import { console } from "forge-std/console.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
-import { console } from "forge-std/console.sol";
-
 contract LiquidityService is ReentrancyGuard, ILiquidityService {
   address public configStorage;
   address public vaultStorage;

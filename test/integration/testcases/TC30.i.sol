@@ -10,6 +10,7 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 contract TC30 is BaseIntTest_WithActions {
   function test_correctness_executeMultipleOrders() external {
     // T0: Initialized state
+    uint256 _pythGasFee = initialPriceFeedDatas.length;
 
     vm.deal(ALICE, executionOrderFee);
     uint256 _aliceBTCAmount = 1e8;
@@ -92,7 +93,7 @@ contract TC30 is BaseIntTest_WithActions {
 
     // assert FEEVER
     uint256 nextExecutedIndex = liquidityHandler.nextExecutionOrderIndex();
-    uint256 _executionFeeAddliquidity = ((executionOrderFee * nextExecutedIndex) - initialPriceFeedDatas.length);
+    uint256 _executionFeeAddliquidity = ((executionOrderFee * nextExecutedIndex) - _pythGasFee);
     assertEq(FEEVER.balance, _executionFeeAddliquidity, "FEEVER fee");
 
     // END PART ADD LIQUIDITY
@@ -146,7 +147,8 @@ contract TC30 is BaseIntTest_WithActions {
     nextExecutedIndex = liquidityHandler.nextExecutionOrderIndex();
 
     //execute 3 orders
-    uint256 _executionFeeTotal = _executionFeeAddliquidity + (3 * executionOrderFee) - initialPriceFeedDatas.length;
+
+    uint256 _executionFeeTotal = _executionFeeAddliquidity + (3 * executionOrderFee) - _pythGasFee;
     // END PART REMOVE LIQUIDITY
 
     assertPLPTotalSupply(0);

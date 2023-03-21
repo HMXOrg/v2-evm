@@ -21,12 +21,6 @@ contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
 
-  event LogCollectTradingFee(address account, uint8 assetClass, uint256 feeUsd);
-
-  event LogCollectBorrowingFee(address account, uint8 assetClass, uint256 feeUsd);
-
-  event LogCollectFundingFee(address account, uint8 assetClass, int256 feeUsd);
-
   event LogSettleTradingFeeValue(address subAccount, uint256 feeUsd);
   event LogSettleTradingFeeAmount(address subAccount, address token, uint256 devFeeAmount, uint256 protocolFeeAmount);
 

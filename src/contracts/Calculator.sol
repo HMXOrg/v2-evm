@@ -766,6 +766,9 @@ contract Calculator is Owned, ICalculator {
       _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
     }
 
+    // possible happen when trader close last short position of the market
+    if (_newGlobalPositionSize == 0) return 0;
+
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
 
@@ -815,6 +818,9 @@ contract Calculator is Owned, ICalculator {
       _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
     }
 
+    // possible happen when trader close last long position of the market
+    if (_newGlobalPositionSize == 0) return 0;
+
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
 
@@ -841,25 +847,21 @@ contract Calculator is Owned, ICalculator {
   ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
-    ConfigStorage.MarketConfig memory marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
+    ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     // If block.timestamp not pass the next funding time, return 0.
     if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
-    int32 _exponent;
 
-    // @todo - revise exponent usage
-    // @todo - validate timestamp of these
-    (vars.marketPriceE30, _exponent, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+    // Find market skew
+    (vars.marketPriceE30, , ) = OracleMiddleware(_configStorage.oracle()).unsafeGetLatestPrice(
       marketConfig.assetId,
       false
     );
+    vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
 
-    vars.marketSkewUSDE30 =
-      ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
-      int(10 ** uint32(-_exponent));
     // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);

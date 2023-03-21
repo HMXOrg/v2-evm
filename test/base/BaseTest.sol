@@ -26,7 +26,6 @@ import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
 import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
@@ -41,6 +40,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal CAROL;
   address internal DAVE;
   address internal FEEVER;
+  address internal BOT;
 
   // storages
   IConfigStorage internal configStorage;
@@ -50,7 +50,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   // other contracts
   IPLPv2 internal plp;
   ICalculator internal calculator;
-  IFeeCalculator internal feeCalculator;
 
   // oracle
   IPythAdapter pythAdapter;
@@ -149,10 +148,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
 
-    feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
-
     // set general config
-    configStorage.setFeeCalculator(address(feeCalculator));
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
     configStorage.setWeth(address(weth));

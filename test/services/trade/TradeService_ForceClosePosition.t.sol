@@ -63,7 +63,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
-    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
+    vaultStorage.increaseTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
   }
 
   /**

@@ -11,8 +11,6 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 
-import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
-
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";

@@ -385,7 +385,7 @@ contract TradeHelper is ITradeHelper {
 
     // Calculate trading Fee USD
     _vars.tradingFeeToBePaid = (_absSizeDelta * _positionFeeBPS) / BPS;
-    console.log("tradingFeeToBePaid", _vars.tradingFeeToBePaid);
+    console.log("== trading fee", _vars.tradingFeeToBePaid);
     emit LogSettleTradingFeeValue(_subAccount, _vars.tradingFeeToBePaid);
 
     // If there is no fee, just return
@@ -408,7 +408,7 @@ contract TradeHelper is ITradeHelper {
           _vars.tradingFeeToBePaid,
           _vars.collateralTokens[i]
         );
-
+        console.log("== _repay amount", _repayAmount);
         // devFee = tradingFee * devFeeRate
         uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
         // the rest after dev fee deduction belongs to protocol fee portion
@@ -463,7 +463,7 @@ contract TradeHelper is ITradeHelper {
 
     // Calculate the borrowing fee
     _vars.borrowingFeeToBePaid = calculator.getBorrowingFee(_assetClassIndex, _reservedValue, _entryBorrowingRate);
-    console.log("borrowingFeeToBePaid", _vars.borrowingFeeToBePaid);
+    console.log("== borrowing fee", _vars.borrowingFeeToBePaid);
     emit LogSettleBorrowingFeeValue(_subAccount, _vars.borrowingFeeToBePaid);
 
     // If there is no fee, just return
@@ -486,6 +486,7 @@ contract TradeHelper is ITradeHelper {
           _vars.borrowingFeeToBePaid,
           _vars.collateralTokens[i]
         );
+        console.log("== _repay amount", _repayAmount);
 
         // devFee = tradingFee * devFeeRate
         uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
@@ -561,8 +562,9 @@ contract TradeHelper is ITradeHelper {
     // false               | false         | false  (fee reserve -> trader)
 
     // Basicly, this is !xor
-    _vars.traderMustPay = (_vars.isLong != _vars.fundingFeeToBePaid > 0);
-    console.log("fundingFeeToBePaid", uint256(-_vars.fundingFeeToBePaid));
+    _vars.traderMustPay = (_vars.fundingFeeToBePaid > 0);
+    console.log("_vars.traderMustPay", _vars.traderMustPay);
+    console.log("== funding fee", uint256(_vars.fundingFeeToBePaid));
     emit LogSettleFundingFeeValue(_subAccount, _vars.fundingFeeToBePaid);
 
     // if no funding fee at all, just exit to save gas
@@ -587,6 +589,7 @@ contract TradeHelper is ITradeHelper {
             _vars.absFundingFeeToBePaid,
             _vars.collateralTokens[i]
           );
+          console.log("== _repay amount", _repayAmount);
 
           // book the balances
           _vars.vaultStorage.payFundingFeeFromTraderToPlp(_subAccount, _vars.collateralTokens[i], _repayAmount);
@@ -609,6 +612,8 @@ contract TradeHelper is ITradeHelper {
             _vars.absFundingFeeToBePaid,
             _vars.collateralTokens[i]
           );
+
+          console.log("== _repay amount", _repayAmount);
 
           // book the balances
           _vars.vaultStorage.payFundingFeeFromPlpToTrader(_subAccount, _vars.collateralTokens[i], _repayAmount);
@@ -637,6 +642,7 @@ contract TradeHelper is ITradeHelper {
     uint8 _assetClassIndex,
     uint256 _marketIndex
   ) external {
+    console.log("= settle all fees");
     address _subAccount = _getSubAccount(_position.primaryAccount, _position.subAccountId);
     _settleTradingFee(_subAccount, _absSizeDelta, _positionFeeBPS);
     _settleBorrowingFee(_subAccount, _assetClassIndex, _position.reserveValueE30, _position.entryBorrowingRate);

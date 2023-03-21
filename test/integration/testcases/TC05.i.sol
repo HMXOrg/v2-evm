@@ -71,7 +71,7 @@ contract TC05 is BaseIntTest_WithActions {
        */
       // assertEq(calculator.getCollateralValue(ALICE, 0, 0), 108_000 * 1e30);
       assertEq(calculator.getCollateralValue(ALICE, 0, 0), 800 * 1e30);
-      console.log("trader balance", vaultStorage.traderBalances(ALICE, address(wbtc)));
+      // console.log("trader balance", vaultStorage.traderBalances(ALICE, address(wbtc)));
     }
 
     vm.warp(block.timestamp + 1);
@@ -113,25 +113,25 @@ contract TC05 is BaseIntTest_WithActions {
        * OI: 100,000 / 0.008 = 12,500,000
        */
 
-      // PositionTester02.PositionAssertionData memory _assetData = PositionTester02.PositionAssertionData({
-      //   size: 100_000 * 1e30,
-      //   avgPrice: 0.008133333333333333333333333333 * 1e30,
-      //   reserveValue: 900 * 1e30,
-      //   lastIncreaseTimestamp: 4,
-      //   openInterest: 12_500_000 * 1e3
-      // });
-      // positionTester02.assertPosition(_positionId, _assetData);
+      PositionTester02.PositionAssertionData memory _assetData = PositionTester02.PositionAssertionData({
+        size: 100_000 * 1e30,
+        avgPrice: 0.008133333333333333333333333333 * 1e30,
+        reserveValue: 900 * 1e30,
+        lastIncreaseTimestamp: 5,
+        openInterest: 12_500_000 * 1e3
+      });
+      positionTester02.assertPosition(_positionId, _assetData);
     }
 
     // T2: Alice buy the position for 20 mins, JPYUSD dumped hard to 0.0048 USD. This makes Alice account went below her kill level
-    vm.warp(block.timestamp + (20 * MINUTES));
+    vm.warp(block.timestamp + (5 * MINUTES));
     {
       bytes32[] memory _assetIds = new bytes32[](3);
       _assetIds[0] = jpyAssetId;
       _assetIds[1] = usdcAssetId;
       _assetIds[2] = wbtcAssetId;
       int64[] memory _prices = new int64[](3);
-      _prices[0] = 125.85 * 1e3;
+      _prices[0] = 125.40 * 1e3;
       _prices[1] = 1 * 1e8;
       _prices[2] = 20_000 * 1e8;
       uint64[] memory _confs = new uint64[](3);
@@ -156,26 +156,95 @@ contract TC05 is BaseIntTest_WithActions {
       // );
       // console.log("isProfit", isProfit);
       // console.log("delta", delta);
-      console.log("========================= Before");
-      console.log("collateral", calculator.getCollateralValue(ALICE, 0, 0));
+      // console.log("========================= Before");
+      // console.log("collateral", calculator.getCollateralValue(ALICE, 0, 0));
+      (int256 pnl, int256 fee) = calculator.getUnrealizedPnlAndFee(ALICE, 0, 0);
+      console.log("pnl", uint256(-pnl));
+      console.log("fee", uint256(fee));
+      // console.log("trader balance", vaultStorage.traderBalances(ALICE, address(wbtc)));
+      // console.log("before equity", uint256(calculator.getEquity(ALICE, 0, 0)));
+      // console.log("mmr", calculator.getMMR(ALICE));
+      //
+      // (int256 _unrealizedPnl, int256 _unrealizedFee) = calculator.getUnrealizedPnlAndFee(ALICE, 0, 0);
+      // console.log("wbtc", address(wbtc));
+      // console.log("vaultStorage", address(vaultStorage));
+      // console.log("trader balance", vaultStorage.traderBalances(ALICE, address(wbtc)));
+      // liquidate
+      // console.log("plp wbtc", vaultStorage.plpLiquidity(address(wbtc)));
+      // console.log("protocol fee", vaultStorage.protocolFees(address(wbtc)));
+      // console.log("dev fee", vaultStorage.devFees(address(wbtc)));
+      // console.log("========================= Liquidate");
+      liquidate(getSubAccount(ALICE, 0), priceData);
+      /*
+       * delta:
+       *
+       * |       loss        | trading | borrowing | funding | liquidation |
+       * |-------------------|---------|-----------|---------|-------------|
+       * | 697.4021646518535 |      30 |         0 |       0 |           5 |
+       * |         0.0348701 |  0.0015 |         0 |       0 |     0.00025 |
+       *
+       * total pay: 697.4021646518535 + 30 + 5 = 732.4021646518535 (0.0366201 BTC)
+       * trader balance = 0.04850000 - 0.0366201 = 0.0118799
+       * plp liquidity = 9.97 + 0.0348701 = 10.0048701
+       * dev fee = 0.0015 * 15% = 0.000225 | 0.000225 + 0.000225 = 0.00045
+       * protocol fee = 0.0015 * 85% = 0.001275 | 0.000225 + 0.000225 = 0.03255
+       * liquidation fee = 0.00025
+       */
+      assertEq(vaultStorage.traderBalances(ALICE, address(wbtc)), 0.0118799 * 1e8);
+      assertEq(vaultStorage.plpLiquidity(address(wbtc)), 10.0048701 * 1e8);
+      assertEq(vaultStorage.devFees(address(wbtc)), 0.00045 * 1e8);
+      assertEq(vaultStorage.protocolFees(address(wbtc)), 0.032550 * 1e8);
+      assertEq(vaultStorage.traderBalances(BOT, address(wbtc)), 0.00025 * 1e8);
+      assertEq(perpStorage.getNumberOfSubAccountPosition(ALICE), 0);
+
+      // console.log("========================= After");
+      // console.log("collateral", calculator.getCollateralValue(ALICE, 0, 0));
       // (int256 pnl, int256 fee) = calculator.getUnrealizedPnlAndFee(ALICE, 0, 0);
       // console.log("pnl", uint256(-pnl));
       // console.log("fee", uint256(fee));
-      console.log("trader balance", vaultStorage.traderBalances(ALICE, address(wbtc)));
-      console.log("before equity", uint256(calculator.getEquity(ALICE, 0, 0)));
-      // console.log("mmr", calculator.getMMR(ALICE));
+      // console.log("trader balance", vaultStorage.traderBalances(ALICE, address(wbtc)));
+      // Alice 0.04850000
+      // delta 0.8 - 0.8076611290608315842681630887 = 697.4021646518535
+      // fee 30 + 5 + 0 = 35
+      // 697.4021646518535 + 35 = 732.4021646518535
+      // 0.03662010823259267 BTC
+      // 100000000
+      // 01187989
+      // 0.04850000 - 0.03662010823259267 0.01187989
+      // 0.47
+      // 697.4021646518535 + 5 =
+      // 0.047 - 0.03512010 = 0.01187980
+      // 0.04700000
+      // 0.03512010
+      // 0.01187990
+      // assertEq(vaultStorage.traderBalances(ALICE, address(wbtc)), 0.01187990 * 1e8);
+      // trading fee: 30
+      // borrowing fee: 0
+      // fundind fee: 0
+      // liquidation fee: 5
+      // delta: -697.4021646518535
+
+      // plp:697.4021646518535
+      //    : 0.03487010
+      // 9.97+0.03487010 = 10.0048701
+
+      //    : 0.0015*85% = 0.001275
+      // assertEq(vaultStorage.plpLiquidity(address(wbtc)), 10.0048701 * 1e8);
+      // 30*15% = 4.5
+      // 4.5 / 20000 = 0.000225
+      // 0.000225 + 0.000225 = 0.00045
+      // assertEq(vaultStorage.devFees(address(wbtc)), 0.00045 * 1e8);
+      // 30*85% = 25.5
+      // 25.5 / 20000 = 0.001275
+      // 0.03127500 + 0.001275 = 0.032550
+      // assertEq(vaultStorage.protocolFees(address(wbtc)), 0.032550 * 1e8);
+      // 30
+      // 5 / 20000 = 0.00025
+      // assertEq(vaultStorage.traderBalances(BOT, address(wbtc)), 0.00025 * 1e8);
+      // assertEq(perpStorage.getNumberOfSubAccountPosition(ALICE), 0);
+      //
+      //
+      // console.log("after equity", uint256(calculator.getEquity(ALICE, 0, 0)));
     }
-    // console.log("wbtc", address(wbtc));
-    // console.log("vaultStorage", address(vaultStorage));
-    // console.log("trader balance", vaultStorage.traderBalances(ALICE, address(wbtc)));
-    // liquidate
-    liquidate(getSubAccount(ALICE, 0), priceData);
-    console.log("========================= After");
-    console.log("collateral", calculator.getCollateralValue(ALICE, 0, 0));
-    // (int256 pnl, int256 fee) = calculator.getUnrealizedPnlAndFee(ALICE, 0, 0);
-    // console.log("pnl", uint256(-pnl));
-    // console.log("fee", uint256(fee));
-    console.log("trader balance", vaultStorage.traderBalances(ALICE, address(wbtc)));
-    console.log("after equity", uint256(calculator.getEquity(ALICE, 0, 0)));
   }
 }

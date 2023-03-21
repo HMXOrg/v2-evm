@@ -12,7 +12,8 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { console } from "forge-std/console.sol";
+
+import { console2 } from "forge-std/console2.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
@@ -502,14 +503,12 @@ contract Calculator is Owned, ICalculator {
   ) public view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
-
     // Calculate unrealized PnL and unrelized fee
     (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
       _subAccount,
       _limitPriceE30,
       _limitAssetId
     );
-
     // Calculate equity
     _equityValueE30 += int256(_collateralValueE30);
     _equityValueE30 += _unrealizedPnlValueE30;
@@ -597,17 +596,13 @@ contract Calculator is Owned, ICalculator {
           uint256 _nextBorrowingRate = getNextBorrowingRate(_marketConfig.assetClass, _limitPriceE30, _limitAssetId);
           uint256 _borrowingRate = _nextBorrowingRate - _var.position.entryBorrowingRate;
           // Calculate the borrowing fee based on reserved value, borrowing rate.
-          console.log("borrowing fee", (_var.position.reserveValueE30 * _borrowingRate) / 1e18);
           _unrealizedFeeE30 += int256((_var.position.reserveValueE30 * _borrowingRate) / 1e18);
           // getBorrowingFee(_marketConfig.assetClass, _var.position.reserveValueE30, _var.position.entryBorrowingRate)
         }
         {
           // Calculate funding fee
           (int256 nextFundingRate, , ) = getNextFundingRate(_var.position.marketIndex, _limitPriceE30);
-          console.log(
-            "funding fee",
-            uint256(_getFundingFee(_var.isLong, _var.absSize, nextFundingRate, _var.position.entryFundingRate))
-          );
+
           _unrealizedFeeE30 += _getFundingFee(
             _var.isLong,
             _var.absSize,
@@ -623,7 +618,7 @@ contract Calculator is Owned, ICalculator {
           // );
         }
         // Calculate trading fee
-        console.log("trading fee", (_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
+
         _unrealizedFeeE30 += int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
       }
 
@@ -925,6 +920,10 @@ contract Calculator is Owned, ICalculator {
     vars.marketSkewUSDE30 =
       ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
       int(10 ** uint32(-_exponent));
+    console2.log("long oi", globalMarket.longOpenInterest);
+    console2.log("short oi", globalMarket.shortOpenInterest);
+    console2.log("marketSkewUSDE30", vars.marketSkewUSDE30);
+
     // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
@@ -967,11 +966,16 @@ contract Calculator is Owned, ICalculator {
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
 
+    console2.log("absSize", absSize);
+    console2.log("_globalMarket.currentFundingRate", _globalMarket.currentFundingRate);
+    console2.log("_entryFundingRate", _entryFundingRate);
+    console2.log("_entryFundingRate", _entryFundingRate);
+    console2.log("fundingFee", fundingFee);
+
     if (_isLong) {
-      return _fundingRate < 0 ? -fundingFee : fundingFee;
-    } else {
-      return _fundingRate > 0 ? -fundingFee : fundingFee;
+      return -fundingFee;
     }
+    return fundingFee;
   }
 
   function _getFundingFee(
@@ -983,11 +987,12 @@ contract Calculator is Owned, ICalculator {
     int256 _fundingRate = _sumFundingRate - _entryFundingRate;
 
     fundingFee = (int256(_size) * _fundingRate) / int64(RATE_PRECISION);
+    uint256 absFundingFee = _abs(fundingFee);
 
     if (_isLong) {
-      return _fundingRate < 0 ? -fundingFee : fundingFee;
+      return _fundingRate > 0 ? -int(absFundingFee) : int(absFundingFee);
     } else {
-      return _fundingRate > 0 ? -fundingFee : fundingFee;
+      return _fundingRate > 0 ? int(absFundingFee) : -int(absFundingFee);
     }
   }
 

@@ -145,17 +145,9 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     emit LogSetTraderBalance(_trader, _token, _balance);
   }
 
-  function addTraderToken(address _trader, address _token) external onlyWhitelistedExecutor {
-    _addTraderToken(_trader, _token);
-  }
-
   function _addTraderToken(address _trader, address _token) internal onlyWhitelistedExecutor {
     validateAddTraderToken(_trader, _token);
     traderTokens[_trader].push(_token);
-  }
-
-  function removeTraderToken(address _trader, address _token) external onlyWhitelistedExecutor {
-    _removeTraderToken(_trader, _token);
   }
 
   function _removeTraderToken(address _trader, address _token) internal {

@@ -1108,8 +1108,8 @@ contract TC02 is BaseIntTest_WithActions {
       //          - pay for dev (15%)               = 0.00002380 btc
       //          - pay for protocol (85%)          = 0.00015873 - 0.00002380
       //                                            = 0.00013493 btc
-      //    Borrowing fee - 0.02440433740513113 USD
-      //      BTC - 0.02440433740513113 / 18900.01  = 0.00000129 btc
+      //    Borrowing fee - 0.02440432913084829 USD
+      //      BTC - 0.02440432913084829 / 18900.01  = 0.00000129 btc
       //          - pay for dev (15%)               = 0.00000019 btc
       //          - pay for PLP (85%)               = 0.00000129 - 0.00000019
       //                                            = 0.0000011

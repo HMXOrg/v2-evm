@@ -272,6 +272,19 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     _increaseTraderBalance(_trader, _token, _fundingFeeAmount);
   }
 
+  function payTraderProfit(
+    address _trader,
+    address _token,
+    uint256 _totalProfitAmount,
+    uint256 _settlementFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from plpLiquidity
+    plpLiquidity[_token] -= _totalProfitAmount;
+
+    protocolFees[_token] += _settlementFeeAmount;
+    _increaseTraderBalance(_trader, _token, _totalProfitAmount - _settlementFeeAmount);
+  }
+
   function _increaseTraderBalance(address _trader, address _token, uint256 _amount) internal {
     if (_amount == 0) return;
 

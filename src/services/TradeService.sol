@@ -707,9 +707,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18;
 
     // TODO: no more fee to protocol fee, but discount deduction amount of PLP instead
-    _vaultStorage.removePLPLiquidity(_tpToken, _tpTokenOut);
-    _vaultStorage.addFee(_tpToken, _settlementFee);
-    _vaultStorage.increaseTraderBalance(_subAccount, _tpToken, _tpTokenOut - _settlementFee);
+    _vaultStorage.payTraderProfit(_subAccount, _tpToken, _tpTokenOut, _settlementFee);
 
     // @todo - emit LogSettleProfit(trader, collateralToken, addedAmount, settlementFee)
   }
@@ -750,9 +748,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           // When this collateral token can cover all the debt, use this token to pay it all
           _vars.collateralToRemove = (_debtUsd * (10 ** _vars.decimals)) / _vars.price;
 
-          // _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
-          _vaultStorage.addPLPLiquidity(_token, _vars.collateralToRemove);
-          _vaultStorage.decreaseTraderBalance(_subAccount, _token, _vars.collateralToRemove);
+          _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
           // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
           // In this case, all debt are paid. We can break the loop right away.
           break;
@@ -760,9 +756,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
           _vars.collateralToRemove = (_vars.collateralUsd * (10 ** _vars.decimals)) / _vars.price;
 
-          // _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
-          _vaultStorage.addPLPLiquidity(_token, _vars.collateralToRemove);
-          _vaultStorage.decreaseTraderBalance(_subAccount, _token, _vars.collateralToRemove);
+          _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
           // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
           // update debtUsd
           unchecked {

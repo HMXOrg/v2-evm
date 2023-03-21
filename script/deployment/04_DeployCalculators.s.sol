@@ -4,7 +4,6 @@ pragma solidity 0.8.18;
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 
 contract DeployCalculators is ConfigJsonRepo {
   function run() public {
@@ -19,11 +18,9 @@ contract DeployCalculators is ConfigJsonRepo {
     address calculatorAddress = address(
       new Calculator(oracleMiddlewareAddress, vaultStorageAddress, perpStorageAddress, configStorageAddress)
     );
-    address feeCalculatorAddress = address(new FeeCalculator(vaultStorageAddress, configStorageAddress));
 
     vm.stopBroadcast();
 
     updateJson(".calculator", calculatorAddress);
-    updateJson(".feeCalculator", feeCalculatorAddress);
   }
 }

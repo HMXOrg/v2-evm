@@ -5,6 +5,7 @@ import { TradeService_Base } from "./TradeService_Base.t.sol";
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
 import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
+import { console } from "forge-std/console.sol";
 
 // What is this test DONE
 // - pre validation
@@ -76,7 +77,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
-    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
+    vaultStorage.increaseTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
   }
 
   /**
@@ -238,11 +239,16 @@ contract TradeService_DecreasePosition is TradeService_Base {
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     positionTester.watch(ALICE, 0, _tpToken, _positionId);
 
-    // reset collateral for ALICE sub-account 0
-    // this sub-account has weth 10000 ether
-    //                      wbtc 10000 WBTC
-    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(weth), 10_000 ether);
-    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(wbtc), 10_000 * 1e8);
+    // Setup collateral for ALICE sub-account 0 to be as following
+    // - weth 10000 ether
+    // - wbtc 10000 WBTC
+    // so that the loss could eat up all the WETH, and partially eat WBTC.
+    {
+      // Decrease from 100,000 WETH to 10,000 WETH
+      vaultStorage.decreaseTraderBalance(getSubAccount(ALICE, 0), address(weth), 90_000 ether);
+      // Increase from 0 WBTC to 10,000 WBTC
+      vaultStorage.increaseTraderBalance(getSubAccount(ALICE, 0), address(wbtc), 10_000 * 1e8);
+    }
 
     // and wbtc price is 100 USD
     mockOracle.setPrice(wbtcAssetId, 100 * 1e30);

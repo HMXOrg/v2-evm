@@ -53,7 +53,7 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
-    vaultStorage.setTraderBalance(_getSubAccount(ALICE, 0), address(weth), 100_000 ether);
+    vaultStorage.increaseTraderBalance(_getSubAccount(ALICE, 0), address(weth), 100_000 ether);
   }
 
   /**

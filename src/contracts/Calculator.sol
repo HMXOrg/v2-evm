@@ -47,7 +47,7 @@ contract Calculator is Owned, ICalculator {
     perpStorage = _perpStorage;
   }
 
-  /// @notice _getAUME30
+  /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
@@ -81,22 +81,24 @@ contract Calculator is Owned, ICalculator {
   /// @notice _getPendingBorrowingFeeE30 This function calculates the total pending borrowing fee from all asset classes.
   /// @return total pending borrowing fee in e30 format
   function _getPendingBorrowingFeeE30() internal view returns (uint256) {
-    // TODO: Finish this properly
     // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     uint256 _len = ConfigStorage(configStorage).getAssetClassConfigsLength();
 
+    // Get the PLP TVL.
+    uint256 _plpTVL = _getPLPValueE30(false, 0, 0);
     uint256 _pendingBorrowingFee; // sum from each asset class
     for (uint256 i; i < _len; ) {
       PerpStorage.GlobalAssetClass memory _assetClassState = _perpStorage.getGlobalAssetClassByIndex(i);
 
+      uint256 _borrowingFeeE30 = (_getNextBorrowingRate(uint8(i), _plpTVL) * _assetClassState.reserveValueE30) /
+        RATE_PRECISION;
+
       // Formula:
-      // pendingBorrowingFee = totalBorrowingFee - settledBorrowingFee
-      // totalBorrowingFee = sumBorrowingRate * intervalInSeconds * reserveValue
-      uint256 _assetClasssTotalBorrowingFeeE30 = (_assetClassState.sumBorrowingRate *
-        (block.timestamp - _assetClassState.lastBorrowingTime) *
-        _assetClassState.reserveValueE30) / RATE_PRECISION;
-      _pendingBorrowingFee += _assetClasssTotalBorrowingFeeE30 - _assetClassState.settledBorrowingFeeE30;
+      // pendingBorrowingFee = (sumBorrowingFeeE30 - sumSettledBorrowingFeeE30) + latestBorrowingFee
+      _pendingBorrowingFee +=
+        (_assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30) +
+        _borrowingFeeE30;
 
       unchecked {
         ++i;
@@ -169,6 +171,7 @@ contract Calculator is Owned, ICalculator {
   ) internal view returns (uint256) {
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
+    // @todo: remove limit price
     uint256 _priceE30;
     if (_limitPriceE30 > 0 && _limitAssetId == _underlyingAssetId) {
       _priceE30 = _limitPriceE30;
@@ -784,6 +787,9 @@ contract Calculator is Owned, ICalculator {
       _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
     }
 
+    // possible happen when trader close last short position of the market
+    if (_newGlobalPositionSize == 0) return 0;
+
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
 
@@ -833,6 +839,9 @@ contract Calculator is Owned, ICalculator {
       _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
     }
 
+    // possible happen when trader close last long position of the market
+    if (_newGlobalPositionSize == 0) return 0;
+
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
 
@@ -878,9 +887,7 @@ contract Calculator is Owned, ICalculator {
         false
       );
     }
-    vars.marketSkewUSDE30 =
-      ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
-      int(10 ** uint32(-_exponent));
+    vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
     // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
@@ -950,16 +957,21 @@ contract Calculator is Owned, ICalculator {
     return (_reservedValue * _borrowingRate) / RATE_PRECISION;
   }
 
-  /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
-  /// @param _assetClassIndex The index of the asset class.
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  /// @return _nextBorrowingRate The next borrowing rate for the asset class.
   function getNextBorrowingRate(
     uint8 _assetClassIndex,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) public view returns (uint256 _nextBorrowingRate) {
+    uint256 _plpTVL
+  ) external view returns (uint256 _nextBorrowingRate) {
+    return _getNextBorrowingRate(_assetClassIndex, _plpTVL);
+  }
+
+  /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
+  /// @param _assetClassIndex The index of the asset class.
+  /// @param _plpTVL value in plp
+  /// @return _nextBorrowingRate The next borrowing rate for the asset class.
+  function _getNextBorrowingRate(
+    uint8 _assetClassIndex,
+    uint256 _plpTVL
+  ) internal view returns (uint256 _nextBorrowingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     // Get the trading config, asset class config, and global asset class for the given asset class index.
@@ -970,19 +982,17 @@ contract Calculator is Owned, ICalculator {
     PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
-    // Get the PLP TVL.
-    uint256 plpTVL = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
 
     // If block.timestamp not pass the next funding time, return 0.
     if (_assetClassState.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
     // If PLP TVL is 0, return 0.
-    if (plpTVL == 0) return 0;
+    if (_plpTVL == 0) return 0;
 
     // Calculate the number of funding intervals that have passed since the last borrowing time.
     uint256 intervals = (block.timestamp - _assetClassState.lastBorrowingTime) / _tradingConfig.fundingInterval;
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
-    return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / plpTVL;
+    return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL;
   }
 
   function getDelta(

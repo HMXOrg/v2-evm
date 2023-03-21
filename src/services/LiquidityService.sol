@@ -93,7 +93,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     // 3. get aum and lpSupply before deduction fee
-    uint256 _aumE30 = _calculator.getAUM(true);
+    uint256 _aumE30 = _calculator.getAUME30(true);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(

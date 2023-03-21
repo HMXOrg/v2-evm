@@ -38,7 +38,7 @@ contract TC01 is BaseIntTest_WithActions {
     );
 
     // no one in PLP pool, so aum must be = totalSupply
-    assertEq(calculator.getAUME30(false), plpV2.totalSupply(), "AUM & total Supply mismatch");
+    assertEq(calculator.getAUME30(false) / 1e12, plpV2.totalSupply(), "AUM & total Supply mismatch");
 
     // T2: Alice withdraws 100,000 USD with PLP
     vm.deal(ALICE, executionOrderFee);

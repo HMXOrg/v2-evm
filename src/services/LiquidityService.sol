@@ -93,7 +93,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     // 3. get aum and lpSupply before deduction fee
-    uint256 _aumE30 = _calculator.getAUME30(true, 0, 0);
+    uint256 _aumE30 = _calculator.getAUM(true);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
@@ -125,7 +125,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
-    uint256 _aum = _calculator.getAUME30(false, 0, 0);
+    uint256 _aum = _calculator.getAUME30(false);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
@@ -288,7 +288,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     // reserveValue / PLP TVL > maxPLPUtilization
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
-    uint256 plpTVL = _calculator.getPLPValueE30(false, 0, 0);
+    uint256 plpTVL = _calculator.getPLPValueE30(false);
     if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxPLPUtilizationBPS * plpTVL) {
       revert LiquidityService_MaxPLPUtilizationExceeded();
     }

@@ -49,16 +49,14 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value in E18 format
-  function getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) external view returns (uint256) {
+  function getAUME30(bool _isMaxPrice) external view returns (uint256) {
     // @todo - pendingBorrowingFeeE30
     // @todo - pending funding fee ?
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
     int256 pnlE30 = _getGlobalPNLE30();
-    uint256 aum = _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId) + pendingBorrowingFeeE30;
+    uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30;
     if (pnlE30 < 0) {
       aum += uint256(-pnlE30);
     } else {
@@ -86,7 +84,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _len = ConfigStorage(configStorage).getAssetClassConfigsLength();
 
     // Get the PLP TVL.
-    uint256 _plpTVL = _getPLPValueE30(false, 0, 0);
+    uint256 _plpTVL = _getPLPValueE30(false);
     uint256 _pendingBorrowingFee; // sum from each asset class
     for (uint256 i; i < _len; ) {
       PerpStorage.GlobalAssetClass memory _assetClassState = _perpStorage.getGlobalAssetClassByIndex(i);
@@ -110,27 +108,15 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice GetPLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
-  function getPLPValueE30(
-    bool _isMaxPrice,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) external view returns (uint256) {
-    return _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
+  function getPLPValueE30(bool _isMaxPrice) external view returns (uint256) {
+    return _getPLPValueE30(_isMaxPrice);
   }
 
   /// @notice GetPLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
-  function _getPLPValueE30(
-    bool _isMaxPrice,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) internal view returns (uint256) {
+  function _getPLPValueE30(bool _isMaxPrice) internal view returns (uint256) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     bytes32[] memory _plpAssetIds = _configStorage.getPlpAssetIds();
@@ -138,13 +124,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _len = _plpAssetIds.length;
 
     for (uint256 i = 0; i < _len; ) {
-      uint256 value = _getPLPUnderlyingAssetValueE30(
-        _plpAssetIds[i],
-        _configStorage,
-        _isMaxPrice,
-        _limitPriceE30,
-        _limitAssetId
-      );
+      uint256 value = _getPLPUnderlyingAssetValueE30(_plpAssetIds[i], _configStorage, _isMaxPrice);
 
       unchecked {
         assetValue += value;
@@ -159,25 +139,15 @@ contract Calculator is Owned, ICalculator {
   /// @param _underlyingAssetId the underlying asset id, the one we want to find the value
   /// @param _configStorage config storage
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
   function _getPLPUnderlyingAssetValueE30(
     bytes32 _underlyingAssetId,
     ConfigStorage _configStorage,
-    bool _isMaxPrice,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    bool _isMaxPrice
   ) internal view returns (uint256) {
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
-    // @todo: remove limit price
-    uint256 _priceE30;
-    if (_limitPriceE30 > 0 && _limitAssetId == _underlyingAssetId) {
-      _priceE30 = _limitPriceE30;
-    } else {
-      (_priceE30, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
-    }
+    (uint256 _priceE30, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
     uint256 value = (VaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
       (10 ** _assetConfig.decimals);
 
@@ -281,8 +251,8 @@ contract Calculator is Owned, ICalculator {
     return
       _getFeeBPS(
         _tokenValueE30,
-        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false, 0, 0),
-        _getPLPValueE30(false, 0, 0),
+        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false),
+        _getPLPValueE30(false),
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.ADD
@@ -301,8 +271,8 @@ contract Calculator is Owned, ICalculator {
     return
       _getFeeBPS(
         _tokenValueE30,
-        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true, 0, 0),
-        _getPLPValueE30(true, 0, 0),
+        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true),
+        _getPLPValueE30(true),
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
@@ -361,28 +331,22 @@ contract Calculator is Owned, ICalculator {
   /// @notice get settlement fee rate
   /// @param _token - token
   /// @param _liquidityUsdDelta - withdrawal amount
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _settlementFeeRate in e18 format
   function getSettlementFeeRate(
     address _token,
-    uint256 _liquidityUsdDelta,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    uint256 _liquidityUsdDelta
   ) external view returns (uint256 _settlementFeeRate) {
     // usd debt
     uint256 _tokenLiquidityUsd = _getPLPUnderlyingAssetValueE30(
       ConfigStorage(configStorage).tokenAssetIds(_token),
       ConfigStorage(configStorage),
-      false,
-      _limitPriceE30,
-      _limitAssetId
+      false
     );
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
 
-    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
+    uint256 _totalLiquidityUsd = _getPLPValueE30(false);
     ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
@@ -860,34 +824,29 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice Calculate next funding rate using when increase/decrease position.
   /// @param _marketIndex Market Index.
-  /// @param _limitPriceE30 Price from limit order
   /// @return fundingRate next funding rate using for both LONG & SHORT positions.
   /// @return fundingRateLong next funding rate for LONG.
   /// @return fundingRateShort next funding rate for SHORT.
   function getNextFundingRate(
-    uint256 _marketIndex,
-    uint256 _limitPriceE30
+    uint256 _marketIndex
   ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
-    ConfigStorage.MarketConfig memory marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
+    ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     // If block.timestamp not pass the next funding time, return 0.
     if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
-    int32 _exponent;
-    if (_limitPriceE30 != 0) {
-      vars.marketPriceE30 = _limitPriceE30;
-    } else {
-      //@todo - validate timestamp of these
-      (vars.marketPriceE30, _exponent, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        false
-      );
-    }
+
+    // Find market skew
+    (vars.marketPriceE30, , ) = OracleMiddleware(_configStorage.oracle()).unsafeGetLatestPrice(
+      marketConfig.assetId,
+      false
+    );
     vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
+
     // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);

@@ -121,19 +121,11 @@ contract MockCalculator is ICalculator {
     return 0;
   }
 
-  function getAUME30(
-    bool /* isMaxPrice */,
-    uint256 /* _price */,
-    bytes32 /* _assetId */
-  ) external view returns (uint256) {
+  function getAUME30(bool /* isMaxPrice */) external view returns (uint256) {
     return aum;
   }
 
-  function getPLPValueE30(
-    bool /* isMaxPrice */,
-    uint256 /* _price */,
-    bytes32 /* _assetId */
-  ) public view virtual returns (uint256) {
+  function getPLPValueE30(bool /* isMaxPrice */) public view virtual returns (uint256) {
     return plpValue;
   }
 
@@ -199,18 +191,13 @@ contract MockCalculator is ICalculator {
     return borrowingFee;
   }
 
-  function getNextFundingRate(
-    uint256 /*marketIndex*/,
-    uint256 /*limitPrice*/
-  ) public view virtual returns (int256, int256, int256) {
+  function getNextFundingRate(uint256 /*marketIndex*/) public view virtual returns (int256, int256, int256) {
     return (fundingRate, fundingRateLong, fundingRateShort);
   }
 
   function getSettlementFeeRate(
     address /* _token */,
-    uint256 /* _liquidityUSDDelta */,
-    uint256,
-    bytes32
+    uint256 /* _liquidityUSDDelta */
   ) external pure returns (uint256) {
     // 0.5%
     return 5e15;

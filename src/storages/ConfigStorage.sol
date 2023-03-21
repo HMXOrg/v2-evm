@@ -82,6 +82,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   // Trade
   MarketConfig[] public marketConfigs;
   AssetClassConfig[] public assetClassConfigs;
+  address[] public tradeServiceHooks;
 
   constructor() {}
 
@@ -202,6 +203,10 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function getPlpAssetIds() external view returns (bytes32[] memory) {
     return plpAssetIds;
+  }
+
+  function getTradeServiceHooks() external view returns (address[] memory) {
+    return tradeServiceHooks;
   }
 
   /**
@@ -432,5 +437,9 @@ contract ConfigStorage is IConfigStorage, Owned {
     delete assetPlpTokenConfigs[_assetId];
 
     emit LogRemoveUnderlying(_token);
+  }
+
+  function setTradeServiceHooks(address[] calldata _newHooks) external onlyOwner {
+    tradeServiceHooks = _newHooks;
   }
 }

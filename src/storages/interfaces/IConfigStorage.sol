@@ -161,6 +161,8 @@ interface IConfigStorage {
 
   function getPlpAssetIds() external view returns (bytes32[] memory);
 
+  function getTradeServiceHooks() external view returns (address[] memory);
+
   /**
    * Setter
    */
@@ -217,6 +219,8 @@ interface IConfigStorage {
   function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);
 
   function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external;
+
+  function setTradeServiceHooks(address[] calldata _newHooks) external;
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
 

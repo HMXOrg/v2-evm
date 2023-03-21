@@ -24,6 +24,9 @@ import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginServic
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
+import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
+import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
+import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
@@ -119,6 +122,26 @@ library Deployer {
   ) internal returns (IBotHandler) {
     return
       IBotHandler(deployContractWithArguments("BotHandler", abi.encode(_tradeService, _liquidationService, _pyth)));
+  }
+
+  function deployTradingStaking() internal returns (ITradingStaking) {
+    return ITradingStaking(deployContract("TradingStaking"));
+  }
+
+  function deployTradingStakingHook(
+    address _tradingStaking,
+    address _tradeService
+  ) internal returns (ITradeServiceHook) {
+    return
+      ITradeServiceHook(deployContractWithArguments("TradingStakingHook", abi.encode(_tradingStaking, _tradeService)));
+  }
+
+  function deployFeedableRewarder(
+    string memory name_,
+    address rewardToken_,
+    address staking_
+  ) internal returns (IRewarder) {
+    return IRewarder(deployContractWithArguments("FeedableRewarder", abi.encode(name_, rewardToken_, staking_)));
   }
 
   /**

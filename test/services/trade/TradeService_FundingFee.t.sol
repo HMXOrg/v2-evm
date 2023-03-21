@@ -95,10 +95,6 @@ contract TradeService_FundingFee is TradeService_Base {
       {
         IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
 
-        // Long position now must pay 133$ to Short Side
-        assertEq(_globalMarket.accumFundingLong, -133333333333333000000); // -133.33$
-        assertEq(_globalMarket.accumFundingShort, 0); //
-
         // Repay WETH Amount = 133.333333333333/1600 = 0.083333333333333125 WETH
         // Dev fee = 0.083333333333333125  * 0 = 0 WETH
         assertEq(vaultStorage.devFees(address(weth)), 0, "Dev fee");

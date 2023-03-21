@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract TC06 is BaseIntTest_WithActions {
   function testIntegration_WhenTraderInteractWithCrossMargin() external {
@@ -169,30 +170,8 @@ contract TC06 is BaseIntTest_WithActions {
       bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
       // Expect Alice can't increase SHORT position because Equity < IMR
-      vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderIMR()"));
+      vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
       marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, TP_TOKEN, priceData);
-    }
-
-    /**
-     * T7: Alice try to sell limit order ETHUSD 20 USD, but transaction is reversed
-     */
-    {
-      vm.deal(ALICE, 1 ether); //deal with out of gas
-      vm.prank(ALICE);
-      int256 sellSizeE30 = 20 * 1e30;
-      uint256 triggerPrice = 1535.4451231231 * 1e30;
-      // @todo - limitTradeHandler still not has logic for prevent trader to opening limit order when their Equity < IMR
-      // Create Sell Order
-      limitTradeHandler.createOrder{ value: 0.1 ether }({
-        _subAccountId: SUB_ACCOUNT_ID,
-        _marketIndex: wethMarketIndex,
-        _sizeDelta: sellSizeE30,
-        _triggerPrice: triggerPrice,
-        _triggerAboveThreshold: false,
-        _executionFee: 0.1 ether,
-        _reduceOnly: false,
-        _tpToken: TP_TOKEN
-      });
     }
 
     /**

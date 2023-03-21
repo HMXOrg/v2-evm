@@ -190,15 +190,8 @@ contract TradeHelper is ITradeHelper {
       );
       _vars.absFundingFeeToBePaid = _abs(_vars.fundingFeeToBePaid);
 
-      // Position Exposure   | Funding Fee + | Fund Flow
-      // (isLong)            | (fee > 0)     | (traderMustPay)
-      // ---------------------------------------------------------------------
-      // true                | true          | false  (fee reserve -> trader)
-      // true                | false         | true   (trader -> fee reserve)
-      // false               | true          | true   (trader -> fee reserve)
-      // false               | false         | false  (fee reserve -> trader)
-
-      // Basically, this is !xor
+      // If fundingFee is negative mean Trader receives Fee
+      // If fundingFee is positive mean Trader pays Fee
       _vars.traderMustPay = (_vars.fundingFeeToBePaid > 0);
 
       emit LogSettleFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBePaid);

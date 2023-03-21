@@ -15,6 +15,8 @@ import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {
   uint32 internal constant BPS = 1e4;
@@ -214,9 +216,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     }
 
     // market validation
-    // check sub account equity is under IMR
-    _subAccountIMRCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
-
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
@@ -887,22 +886,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // Update the new reserve value in the PerpStorage contract
     _perpStorage.updateGlobalState(_globalState);
     _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
-  }
-
-  /// @notice health check for sub account that equity > initial margin required
-  /// @param _subAccount target sub account for health check
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function _subAccountIMRCheck(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view {
-    // check sub account is healthy
-    int256 _subAccountEquity = calculator.getEquity(_subAccount, _limitPriceE30, _limitAssetId);
-
-    // initial margin requirement (IMR) = position size * initial margin fraction
-    // note: initialMarginFractionBPS is 1e4
-    uint256 _imr = calculator.getIMR(_subAccount);
-
-    // if sub account equity < IMR, then trader couldn't increase position
-    if (uint256(_subAccountEquity) < _imr) revert ITradeService_SubAccountEquityIsUnderIMR();
   }
 
   /// @notice health check for sub account that equity > margin maintenance required

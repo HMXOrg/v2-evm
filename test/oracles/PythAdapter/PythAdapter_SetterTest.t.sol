@@ -2,12 +2,9 @@
 pragma solidity 0.8.18;
 
 import { PythAdapter_BaseTest } from "./PythAdapter_BaseTest.t.sol";
-import { PythAdapter } from "../../../src/oracles/PythAdapter.sol";
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
+import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 
 contract PythAdapter_SetterTest is PythAdapter_BaseTest {
-  using AddressUtils for address;
-
   function setUp() public override {
     super.setUp();
 
@@ -15,16 +12,16 @@ contract PythAdapter_SetterTest is PythAdapter_BaseTest {
     vm.deal(BOB, 1 ether);
   }
 
-  function testCorrectness_AccessControlWhenSetPythPriceId() external {
+  function testCorrectness_AccessControlWhenSetConfig() external {
     // Revert if not owner
     vm.expectRevert(abi.encodeWithSignature("Owned_NotOwner()"));
     vm.startPrank(address(ALICE));
-    pythAdapter.setPythPriceId(address(weth).toBytes32(), wethPriceId);
+    pythAdapter.setConfig(wethAssetId, wethPriceId, false);
     vm.stopPrank();
 
     // Should be fine when executed by owner
     vm.startPrank(address(this));
-    pythAdapter.setPythPriceId(address(weth).toBytes32(), wethPriceId);
+    pythAdapter.setConfig(wethAssetId, wethPriceId, false);
     vm.stopPrank();
   }
 }

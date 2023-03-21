@@ -60,4 +60,33 @@ contract LiquidityTester {
       ? _amountInUSDe30 / 1e12
       : (_amountInUSDe30 * plp.totalSupply()) / _calculator.getAUME30(false, 0, 0);
   }
+
+  /// @notice Assert function when PLP provider add / remove liquidity
+  /// @dev This function will check
+  ///      - PLPv2 total supply
+  ///      - Execution fee in handler, if address is valid
+  ///      - PLP liquidity in VaultStorage's state
+  ///      - Total token amount in VaultStorage's state
+  ///      - Fee is VaultStorage's state
+  ///      - Token balance in VaultStorage
+  function assertLiquidityInfo(LiquidityExpectedData memory _expectedData) external {
+    address _token = _expectedData.token;
+
+    // Check PLPv2 total supply
+    assertEq(plp.totalSupply(), _expectedData.lpTotalSupply, "PLP Total supply");
+    assertEq(plp.balanceOf(_expectedData.who), _expectedData.plpAmount, "PLP Amount");
+
+    // Order execution fee is on OrderExecutor in Native
+    assertEq(feeReceiver.balance, _expectedData.executionFee, "Execution Order Fee");
+
+    // Check VaultStorage's state
+    assertEq(vaultStorage.plpLiquidity(_token), _expectedData.plpLiquidity, "PLP token liquidity amount");
+    assertEq(vaultStorage.totalAmount(_token), _expectedData.totalAmount, "TokenAmount balance");
+    assertEq(vaultStorage.protocolFees(_token), _expectedData.fee, "Protocol Fee");
+    assertEq(vaultStorage.totalAmount(_token), vaultStorage.plpLiquidity(_token) + vaultStorage.protocolFees(_token));
+
+    // Check token balance
+    // balanceOf must be equals to plpLiquidity in Vault
+    assertEq(IERC20(_token).balanceOf(address(vaultStorage)), _expectedData.totalAmount, "Vault Storage Token Balance");
+  }
 }

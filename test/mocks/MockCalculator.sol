@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { ICalculator } from "../../src/contracts/interfaces/ICalculator.sol";
-import { IConfigStorage } from "../../src/storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../../src/storages/interfaces/IVaultStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 contract MockCalculator is ICalculator {
   mapping(address => int256) equitiesOf;
   mapping(address => uint256) imrOf;
   mapping(address => uint256) mmrOf;
   mapping(address => int256) unrealizedPnlOf;
+
+  address public configStorage;
+  address public perpStorage;
+  address public vaultStorage;
 
   uint256 collateralValue;
   uint256 freeCollateral;
@@ -79,13 +84,17 @@ contract MockCalculator is ICalculator {
   // | ---------- Getter ------------------- |
   // =========================================
 
-  function getEquity(address _subAccount, uint256 _price, bytes32 _assetId) external view returns (int256) {
+  function getEquity(address _subAccount, uint256 /* _price */, bytes32 /* _assetId */) external view returns (int256) {
     return equitiesOf[_subAccount];
   }
 
   // @todo - Add Description
-  function getUnrealizedPnl(address _subAccount, uint256 _price, bytes32 _assetId) external view returns (int256) {
-    return unrealizedPnlOf[_subAccount];
+  function getUnrealizedPnlAndFee(
+    address _subAccount,
+    uint256 /* _price */,
+    bytes32 /* _assetId */
+  ) public view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+    return (unrealizedPnlOf[_subAccount], 0);
   }
 
   // @todo - Add Description
@@ -104,23 +113,31 @@ contract MockCalculator is ICalculator {
   // | ---------- Calculator --------------- |
   // =========================================
 
-  function calculatePositionIMR(uint256, uint256) external view returns (uint256) {
+  function calculatePositionIMR(uint256, uint256) external pure returns (uint256) {
     return 0;
   }
 
-  function calculatePositionMMR(uint256, uint256) external view returns (uint256) {
+  function calculatePositionMMR(uint256, uint256) external pure returns (uint256) {
     return 0;
   }
 
-  function getAUM(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
+  function getAUM(bool /* isMaxPrice */, uint256 /* _price */, bytes32 /* _assetId */) external view returns (uint256) {
     return aum;
   }
 
-  function getAUME30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
+  function getAUME30(
+    bool /* isMaxPrice */,
+    uint256 /* _price */,
+    bytes32 /* _assetId */
+  ) external view returns (uint256) {
     return aum;
   }
 
-  function getPLPValueE30(bool /* isMaxPrice */, uint256 _price, bytes32 _assetId) external view returns (uint256) {
+  function getPLPValueE30(
+    bool /* isMaxPrice */,
+    uint256 /* _price */,
+    bytes32 /* _assetId */
+  ) public view virtual returns (uint256) {
     return plpValue;
   }
 
@@ -141,31 +158,31 @@ contract MockCalculator is ICalculator {
     return (_amount * 10 ** _toTokenDecimals) / 10 ** _fromTokenDecimals;
   }
 
-  function getAddLiquidityFeeRate(
+  function getAddLiquidityFeeBPS(
     address /*_token*/,
     uint256 /*_tokenValue*/,
-    IConfigStorage /*_configStorage*/
-  ) external pure returns (uint256) {
-    return 30;
+    ConfigStorage /*_configStorage*/
+  ) external pure returns (uint32) {
+    return uint32(30);
   }
 
-  function getRemoveLiquidityFeeRate(
+  function getRemoveLiquidityFeeBPS(
     address /*_token*/,
     uint256 /*_tokenValueE30*/,
-    IConfigStorage /*_configStorage*/
-  ) external pure returns (uint256) {
-    return 1e4;
+    ConfigStorage /*_configStorage*/
+  ) external pure returns (uint32) {
+    return uint32(30);
   }
 
   function getFreeCollateral(
     address /*_subAccount*/,
     uint256 /*_price*/,
     bytes32 /*_assetId*/
-  ) external view returns (uint256) {
+  ) public view virtual returns (uint256) {
     return freeCollateral;
   }
 
-  function getNextBorrowingRate(uint256 /*_assetClassIndex*/) external view returns (uint256) {
+  function getNextBorrowingRate(uint8 /*_assetClassIndex*/, uint256 /*_plpTVL*/) public view virtual returns (uint256) {
     return nextBorrowingRate;
   }
 
@@ -174,11 +191,22 @@ contract MockCalculator is ICalculator {
     bool /*_isLong*/,
     int256 /*_size*/,
     int256 /*_entryFundingRate*/
-  ) public view returns (int256) {
+  ) public view virtual returns (int256) {
     return fundingFee;
   }
 
-  function getNextFundingRate(uint256 /*marketIndex*/) external view returns (int256, int256, int256) {
+  function getBorrowingFee(
+    uint8 /*_assetClassIndex*/,
+    uint256 /*_reservedValue*/,
+    uint256 /*_entryBorrowingRate*/
+  ) public view virtual returns (uint256 borrowingFee) {
+    return borrowingFee;
+  }
+
+  function getNextFundingRate(
+    uint256 /*marketIndex*/,
+    uint256 /*limitPrice*/
+  ) public view virtual returns (int256, int256, int256) {
     return (fundingRate, fundingRateLong, fundingRateShort);
   }
 
@@ -199,4 +227,54 @@ contract MockCalculator is ICalculator {
   ) external view returns (uint256) {
     return collateralValue;
   }
+
+  function setOracle(address /*_oracle*/) external {}
+
+  function setVaultStorage(address /*_address*/) external {}
+
+  function setConfigStorage(address /*_address*/) external {}
+
+  function setPerpStorage(address /*_address*/) external {}
+
+  function calculateShortAveragePrice(
+    PerpStorage.GlobalMarket memory /*_market*/,
+    uint256 /*_currentPrice*/,
+    int256 /*_positionSizeDelta*/,
+    int256 /*_realizedPositionPnl*/
+  ) public view virtual returns (uint256 _nextAveragePrice) {}
+
+  function calculateLongAveragePrice(
+    PerpStorage.GlobalMarket memory /*_market*/,
+    uint256 /*_currentPrice*/,
+    int256 /*_positionSizeDelta*/,
+    int256 /*_realizedPositionPnl*/
+  ) public view virtual returns (uint256 _nextAveragePrice) {}
+
+  function calculateAveragePrice(
+    bool isLong,
+    uint256 _globalPositionSize,
+    uint256 _globalAveragePrice,
+    uint256 _currentPrice,
+    int256 _positionSizeDelta,
+    int256 _realizedPositionPnl
+  ) external pure returns (uint256 _nextAveragePrice) {}
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
+  ) public view virtual returns (bool, uint256) {}
+
+  function getPositionNextAveragePrice(
+    uint256 _size,
+    bool _isLong,
+    uint256 _sizeDelta,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
+  ) external pure returns (uint256) {}
+
+  function getPendingBorrowingFeeE30() public view virtual returns (uint256) {}
 }

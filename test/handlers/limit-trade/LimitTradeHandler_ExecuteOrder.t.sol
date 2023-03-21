@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LimitTradeHandler_Base, IConfigStorage, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
-import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 
 // What is this test DONE
 // - revert
@@ -22,9 +22,41 @@ import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTrade
 //   - Try executing BUY order to partial close Short position
 //   - Try executing SELL order to partial close Long position
 
+struct Price {
+  // Price
+  int64 price;
+  // Confidence interval around the price
+  uint64 conf;
+  // Price exponent
+  int32 expo;
+  // Unix timestamp describing when the price was published
+  uint publishTime;
+}
+
+// PriceFeed represents a current aggregate price from pyth publisher feeds.
+struct PriceFeed {
+  // The price ID.
+  bytes32 id;
+  // Latest available price
+  Price price;
+  // Latest available exponentially-weighted moving average price
+  Price emaPrice;
+}
+
 contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
+  bytes[] internal priceData;
+
   function setUp() public override {
     super.setUp();
+
+    priceData = new bytes[](1);
+    priceData[0] = abi.encode(
+      PriceFeed({
+        id: "1234",
+        price: Price({ price: 0, conf: 0, expo: 0, publishTime: block.timestamp }),
+        emaPrice: Price({ price: 0, conf: 0, expo: 0, publishTime: block.timestamp })
+      })
+    );
 
     limitTradeHandler.setOrderExecutor(address(this), true);
 
@@ -44,7 +76,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
       })
     );
 
@@ -64,7 +96,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
       })
     );
 
@@ -84,7 +116,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
       })
     );
   }
@@ -98,7 +130,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
   }
 
@@ -110,12 +142,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
   }
 
   // Execute an order on the market that is currently closed
   function testRevert_executeOrder_MarketIsClosed() external {
+    mockOracle.setPrice(999 * 1e30);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
       _marketIndex: 1,
@@ -137,12 +170,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
   }
 
   // Execute an order when the price has not reached the trigger price
   function testRevert_executeOrder_InvalidPriceForExecution() external {
+    mockOracle.setPrice(999 * 1e30);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
       _marketIndex: 1,
@@ -164,13 +198,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
   }
 
   // Execute a BUY order to create new Long position
   function testCorrectness_executeOrder_BuyOrder_NewLongPosition() external {
     // Create Buy Order
+    mockOracle.setPrice(999 * 1e30);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
       _marketIndex: 1,
@@ -198,11 +233,11 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
@@ -216,12 +251,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1000 * 1e30);
   }
 
   // Execute a BUY order to create new Long position and create another BUY order to increase it
   function testCorrectness_executeOrder_BuyOrder_IncreaseLongPosition() external {
     // Create Buy Order
+    mockOracle.setPrice(999 * 1e30);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
       _marketIndex: 1,
@@ -249,11 +285,11 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
@@ -268,7 +304,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1000 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -292,12 +328,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 500 * 1e30,
-      _triggerPrice: 1000 * 1e30,
+      _triggerPrice: 1002 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
       _tpToken: address(weth)
     });
+
+    mockOracle.setPrice(1002.1 * 1e30);
 
     // Execute Long Increase Order
     limitTradeHandler.executeOrder({
@@ -305,7 +343,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     assertEq(mockTradeService.increasePositionCallCount(), 2);
@@ -317,18 +355,19 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 500 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1002 * 1e30);
   }
 
   // Execute a SELL order to create new Short position
   function testCorrectness_executeOrder_SellOrder_NewShortPosition() external {
     // Create Sell Order
+    mockOracle.setPrice(1000 * 1e30);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: -1000 * 1e30,
-      _triggerPrice: 1000 * 1e30,
-      _triggerAboveThreshold: true,
+      _triggerPrice: 999 * 1e30,
+      _triggerAboveThreshold: false,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
       _tpToken: address(weth)
@@ -340,7 +379,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
-    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setPrice(998 * 1e30);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -350,11 +389,11 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
@@ -369,12 +408,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1000 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 999 * 1e30);
   }
 
   // Execute a SELL order to create new Short position and create another SELL order to increase it
   function testCorrectness_executeOrder_SellOrder_IncreaseShortPosition() external {
     // Create Sell Order
+    mockOracle.setPrice(999 * 1e30);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
       _marketIndex: 1,
@@ -402,11 +442,11 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
@@ -420,7 +460,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1000 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1000 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -444,12 +484,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: -500 * 1e30,
-      _triggerPrice: 1000 * 1e30,
+      _triggerPrice: 1002 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
       _tpToken: address(weth)
     });
+
+    mockOracle.setPrice(1003 * 1e30);
 
     // Execute Short Increase Order
     limitTradeHandler.executeOrder({
@@ -457,7 +499,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     assertEq(mockTradeService.increasePositionCallCount(), 2);
@@ -468,14 +510,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -500 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1002 * 1e30);
   }
 
   // Create Long position and flip it with SELL order
   function testCorrectness_executeOrder_FlipLongToShort() external {
     // Mock price to make the order executable
-    uint256 _price = 1001 * 1e30;
-    mockOracle.setPrice(_price);
+    mockOracle.setPrice(999 * 1e30);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -491,13 +532,15 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _tpToken: address(weth)
     });
 
+    mockOracle.setPrice(1001 * 1e30);
+
     // Execute Buy Order
     limitTradeHandler.executeOrder({
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be created
@@ -513,7 +556,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1000 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -537,12 +580,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: -1500 * 1e30,
-      _triggerPrice: 1000 * 1e30,
+      _triggerPrice: 1002 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
       _tpToken: address(weth)
     });
+
+    mockOracle.setPrice(1003 * 1e30);
 
     // Execute Sell Order
     limitTradeHandler.executeOrder({
@@ -550,7 +595,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be fully closed and a new Short position should be opened
@@ -567,7 +612,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 1000 * 1e30);
-    assertEq(_decreaseLimitPriceE30, _price);
+    assertEq(_decreaseLimitPriceE30, 1002 * 1e30);
 
     // Assert increase position call
     assertEq(mockTradeService.increasePositionCallCount(), 2);
@@ -578,14 +623,12 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -500 * 1e30);
-    assertEq(_limitPriceE30, _price);
+    assertEq(_limitPriceE30, 1002 * 1e30);
   }
 
   // Create Short position and flip it with BUY order
   function testCorrectness_executeOrder_FlipShortToLong() external {
-    uint256 _price = 1001 * 1e30;
-    // Mock price to make the order executable
-    mockOracle.setPrice(_price);
+    mockOracle.setPrice(999 * 1e30);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -601,13 +644,15 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _tpToken: address(weth)
     });
 
+    mockOracle.setPrice(1001 * 1e30);
+
     // Execute Sell Order
     limitTradeHandler.executeOrder({
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be created
@@ -623,7 +668,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1200 * 1e30);
-    assertEq(_limitPriceE30, _price);
+    assertEq(_limitPriceE30, 1000 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -647,12 +692,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 2000 * 1e30,
-      _triggerPrice: 1000 * 1e30,
+      _triggerPrice: 1002 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
       _tpToken: address(weth)
     });
+
+    mockOracle.setPrice(1003 * 1e30);
 
     // Execute Buy Order
     limitTradeHandler.executeOrder({
@@ -660,7 +707,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be fully closed and a new Long position should be opened
@@ -671,7 +718,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       uint256 _decreaseSubAccountId,
       uint256 _decreaseMarketIndex,
       uint256 _decreasePositionSizeE30ToDecrease,
-      uint256 _decreaseLimitPriceE30
+
     ) = mockTradeService.decreasePositionCalls(0);
     assertEq(_decreaseAccount, address(this));
     assertEq(_decreaseSubAccountId, 0);
@@ -687,13 +734,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 800 * 1e30);
-    assertEq(_limitPriceE30, _price);
+    assertEq(_limitPriceE30, 1002 * 1e30);
   }
 
   // Create Long position and create a Reduce-Only with big sizeDelta to see that the position is not flipped
   function testCorrectness_executeOrder_FlipLongToShort_ReduceOnly() external {
     // Mock price to make the order executable
-    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setPrice(999 * 1e30);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -709,13 +756,15 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _tpToken: address(weth)
     });
 
+    mockOracle.setPrice(1001 * 1e30);
+
     // Execute Buy Order
     limitTradeHandler.executeOrder({
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be created
@@ -731,7 +780,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1000 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -755,12 +804,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: -1500 * 1e30,
-      _triggerPrice: 1000 * 1e30,
+      _triggerPrice: 1002 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: true,
       _tpToken: address(weth)
     });
+
+    mockOracle.setPrice(1003 * 1e30);
 
     // Execute Sell Order
     limitTradeHandler.executeOrder({
@@ -768,7 +819,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be fully closed and a new Short position should not be opened
@@ -785,7 +836,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 1000 * 1e30);
-    assertEq(_decreaseLimitPriceE30, 1001 * 1e30);
+    assertEq(_decreaseLimitPriceE30, 1002 * 1e30);
     //@todo assertion?
 
     // Assert increase position call
@@ -795,7 +846,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   // Create Short position and create a Reduce-Only with big sizeDelta to see that the position is not flipped
   function testCorrectness_executeOrder_FlipShortToLong_ReduceOnly() external {
     // Mock price to make the order executable
-    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setPrice(999 * 1e30);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -811,13 +862,15 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _tpToken: address(weth)
     });
 
+    mockOracle.setPrice(1001 * 1e30);
+
     // Execute Sell Order
     limitTradeHandler.executeOrder({
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be created
@@ -833,7 +886,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1200 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1000 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -857,12 +910,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 2000 * 1e30,
-      _triggerPrice: 1000 * 1e30,
+      _triggerPrice: 1002 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: true,
       _tpToken: address(weth)
     });
+
+    mockOracle.setPrice(1003 * 1e30);
 
     // Execute Buy Order
     limitTradeHandler.executeOrder({
@@ -870,7 +925,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be fully closed and a new Long position should not be opened
@@ -887,7 +942,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 1200 * 1e30);
-    assertEq(_decreaseLimitPriceE30, 1001 * 1e30);
+    assertEq(_decreaseLimitPriceE30, 1002 * 1e30);
     // @todo validate limitprice ?
 
     // Assert increase position call
@@ -897,7 +952,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   // Execute a SELL order to partial close a Long position
   function testCorrectness_executeOrder_PartialCloseLongPosition() external {
     // Mock price to make the order executable
-    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setPrice(999 * 1e30);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -913,13 +968,15 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _tpToken: address(weth)
     });
 
+    mockOracle.setPrice(1001 * 1e30);
+
     // Execute Buy Order
     limitTradeHandler.executeOrder({
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be created
@@ -935,7 +992,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1000 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -959,12 +1016,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: -700 * 1e30,
-      _triggerPrice: 1000 * 1e30,
+      _triggerPrice: 1002 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
       _tpToken: address(weth)
     });
+
+    mockOracle.setPrice(1003 * 1e30);
 
     // Execute Sell Order
     limitTradeHandler.executeOrder({
@@ -972,7 +1031,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Long position should be partially closed
@@ -989,7 +1048,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 700 * 1e30);
-    assertEq(_decreaseLimitPriceE30, 1001 * 1e30);
+    assertEq(_decreaseLimitPriceE30, 1002 * 1e30);
     //@todo validate _decreaseLimitPriceE30??
 
     // Assert increase position call
@@ -999,7 +1058,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   // Execute a BUY order to partial close a Short position
   function testCorrectness_executeOrder_PartialCloseShortPosition() external {
     // Mock price to make the order executable
-    mockOracle.setPrice(1001 * 1e30);
+    mockOracle.setPrice(999 * 1e30);
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
@@ -1015,13 +1074,15 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _tpToken: address(weth)
     });
 
+    mockOracle.setPrice(1001 * 1e30);
+
     // Execute Sell Order
     limitTradeHandler.executeOrder({
       _account: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be created
@@ -1037,7 +1098,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, -1200 * 1e30);
-    assertEq(_limitPriceE30, 1001 * 1e30);
+    assertEq(_limitPriceE30, 1000 * 1e30);
 
     mockPerpStorage.setPositionBySubAccount(
       address(this),
@@ -1061,12 +1122,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 100 * 1e30,
-      _triggerPrice: 1000 * 1e30,
+      _triggerPrice: 1002 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
       _tpToken: address(weth)
     });
+
+    mockOracle.setPrice(1003 * 1e30);
 
     // Execute Buy Order
     limitTradeHandler.executeOrder({
@@ -1074,7 +1137,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: new bytes[](0)
+      _priceData: priceData
     });
 
     // Short position should be partially closed
@@ -1091,7 +1154,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     assertEq(_decreaseSubAccountId, 0);
     assertEq(_decreaseMarketIndex, 1);
     assertEq(_decreasePositionSizeE30ToDecrease, 100 * 1e30);
-    assertEq(_decreaseLimitPriceE30, 1001 * 1e30);
+    assertEq(_decreaseLimitPriceE30, 1002 * 1e30);
     //@todo _decreaseLimitPriceE30
 
     // Assert increase position call

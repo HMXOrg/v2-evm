@@ -1,38 +1,41 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseTest, CrossMarginService, CrossMarginHandler, IConfigStorage, IPerpStorage, MockErc20, IOracleAdapter } from "@hmx-test/base/BaseTest.sol";
-import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
+import { BaseTest, IConfigStorage, IPerpStorage, MockErc20 } from "@hmx-test/base/BaseTest.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+
+import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 
 contract CrossMarginHandler_Base is BaseTest {
-  using AddressUtils for address;
+  ICrossMarginHandler internal crossMarginHandler;
+  ICrossMarginService internal crossMarginService;
 
   uint8 internal SUB_ACCOUNT_NO = 1;
-
-  CrossMarginHandler internal crossMarginHandler;
-  CrossMarginService internal crossMarginService;
 
   bytes[] internal priceDataBytes;
 
   function setUp() public virtual {
-    DeployCoreReturnVars memory deployed = deployPerp88v2();
+    oracleMiddleware.setAssetPriceConfig(wethAssetId, 1e6, 60);
+    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60);
 
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(wethAssetId, 1e6, 60);
-    OracleMiddleware(deployed.oracleMiddleware).setAssetPriceConfig(wbtcAssetId, 1e6, 60);
-
-    calculator = deployCalculator(
-      address(deployed.oracleMiddleware),
+    calculator = Deployer.deployCalculator(
+      address(oracleMiddleware),
       address(vaultStorage),
       address(mockPerpStorage),
       address(configStorage)
     );
 
-    crossMarginService = deployCrossMarginService(address(configStorage), address(vaultStorage), address(calculator));
-    crossMarginHandler = deployCrossMarginHandler(address(crossMarginService), address(deployed.pythAdapter.pyth()));
+    crossMarginService = Deployer.deployCrossMarginService(
+      address(configStorage),
+      address(vaultStorage),
+      address(calculator)
+    );
+    crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), address(pythAdapter.pyth()));
 
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
+    vaultStorage.setServiceExecutors(address(crossMarginService), true);
 
     // Set accepted token deposit/withdraw as WETH and USDC
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
@@ -68,7 +71,7 @@ contract CrossMarginHandler_Base is BaseTest {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );
 
@@ -77,8 +80,8 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set Oracle data for Price feeding
     {
-      deployed.pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
-      deployed.pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
+      pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
+      pythAdapter.setConfig(wethAssetId, wethPriceId, false);
 
       priceDataBytes = new bytes[](2);
       priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
@@ -102,20 +105,9 @@ contract CrossMarginHandler_Base is BaseTest {
     }
 
     // Set market status
-    deployed.oracleMiddleware.setUpdater(address(this), true);
-    deployed.oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // active
-    deployed.oracleMiddleware.setMarketStatus(wethAssetId, uint8(2)); // active
-
-    bytes32[] memory marketIds = new bytes32[](2);
-    marketIds[0] = wbtcAssetId;
-    marketIds[1] = wethAssetId;
-
-    IOracleAdapter[] memory adapters = new IOracleAdapter[](2);
-    adapters[0] = deployed.pythAdapter;
-    adapters[1] = deployed.pythAdapter;
-
-    deployed.oracleMiddleware.setOracleAdapters(marketIds, adapters);
-    deployed.oracleMiddleware.setOracleAdapters(marketIds, adapters);
+    oracleMiddleware.setUpdater(address(this), true);
+    oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // active
+    oracleMiddleware.setMarketStatus(wethAssetId, uint8(2)); // active
   }
 
   /**
@@ -130,13 +122,13 @@ contract CrossMarginHandler_Base is BaseTest {
   function simulateAliceDepositToken(address _token, uint256 _depositAmount) internal {
     vm.startPrank(ALICE);
     MockErc20(_token).approve(address(crossMarginHandler), _depositAmount);
-    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, _token, _depositAmount);
+    crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, _token, _depositAmount, false);
     vm.stopPrank();
   }
 
   function simulateAliceWithdrawToken(address _token, uint256 _withdrawAmount) internal {
     vm.startPrank(ALICE);
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, _token, _withdrawAmount, priceDataBytes);
+    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, _token, _withdrawAmount, priceDataBytes, false);
     vm.stopPrank();
   }
 }

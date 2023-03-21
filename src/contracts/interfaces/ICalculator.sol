@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IConfigStorage } from "../../storages/interfaces/IConfigStorage.sol";
-import { IVaultStorage } from "../../storages/interfaces/IVaultStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 interface ICalculator {
   /**
@@ -15,6 +15,14 @@ interface ICalculator {
   /**
    * STRUCTS
    */
+  struct GetFundingRateVar {
+    uint256 fundingInterval;
+    uint256 marketPriceE30;
+    int256 marketSkewUSDE30;
+    int256 ratio;
+    int256 nextFundingRate;
+    int256 elapsedIntervals;
+  }
 
   //@todo - will be use in _getFeeRate
   enum LiquidityDirection {
@@ -49,19 +57,17 @@ interface ICalculator {
     uint256 _amount
   ) external pure returns (uint256);
 
-  function getAddLiquidityFeeRate(
+  function getAddLiquidityFeeBPS(
     address _token,
     uint256 _tokenValue,
-    IConfigStorage _configStorage
-  ) external returns (uint256);
+    ConfigStorage _configStorage
+  ) external returns (uint32);
 
-  function getRemoveLiquidityFeeRate(
+  function getRemoveLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
-    IConfigStorage _configStorage
-  ) external returns (uint256);
-
-  function oracle() external returns (address);
+    ConfigStorage _configStorage
+  ) external returns (uint32);
 
   function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _imrE30);
 
@@ -73,11 +79,11 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (int256 _equityValueE30);
 
-  function getUnrealizedPnl(
+  function getUnrealizedPnlAndFee(
     address _subAccount,
-    uint256 _price,
-    bytes32 _assetId
-  ) external view returns (int256 _unrealizedPnlE30);
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) external view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30);
 
   function getIMR(address _subAccount) external view returns (uint256 _imrValueE30);
 
@@ -95,4 +101,35 @@ interface ICalculator {
     uint256 _limitPrice,
     bytes32 _assetId
   ) external view returns (uint256 _collateralValueE30);
+
+  function getNextFundingRate(
+    uint256 _marketIndex,
+    uint256 _limitPriceE30
+  ) external view returns (int256, int256, int256);
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastincreaseTimestamp
+  ) external view returns (bool, uint256);
+
+  function setOracle(address _oracle) external;
+
+  function setVaultStorage(address _address) external;
+
+  function setConfigStorage(address _address) external;
+
+  function setPerpStorage(address _address) external;
+
+  function oracle() external returns (address _address);
+
+  function vaultStorage() external returns (address _address);
+
+  function configStorage() external returns (address _address);
+
+  function perpStorage() external returns (address _address);
+
+  function getPendingBorrowingFeeE30() external view returns (uint256);
 }

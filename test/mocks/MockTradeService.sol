@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { ITradeService } from "../../src/services/interfaces/ITradeService.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
 contract MockTradeService is ITradeService {
   struct IncreasePositionInputs {
@@ -62,7 +62,7 @@ contract MockTradeService is ITradeService {
     uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _positionSizeE30ToDecrease,
-    address _tpToken,
+    address /*_tpToken*/,
     uint256 _limitPriceE30
   ) external {
     decreasePositionCallCount++;
@@ -77,7 +77,28 @@ contract MockTradeService is ITradeService {
     );
   }
 
-  function forceClosePosition(address _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken) external {
+  function forceClosePosition(
+    address /*_account*/,
+    uint8 /*_subAccountId*/,
+    uint256 /*_marketIndex*/,
+    address /*_tpToken*/
+  ) external returns (bool _isMaxProfit, bool _isProfit, uint256 _delta) {
     decreasePositionCallCount++;
+    return (false, false, 0);
   }
+
+  function validateMaxProfit(bool isMaxProfit) external view {}
+
+  function validateDeleverage() external view {}
+
+  function validateMarketDelisted(uint256 _marketIndex) external view {}
+
+  function getNextFundingRate(
+    uint256 /*_marketIndex*/,
+    uint256 /*_price*/
+  ) external pure returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+    return (0, 0, 0);
+  }
+
+  function reloadConfig() external {}
 }

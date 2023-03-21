@@ -45,8 +45,8 @@ interface IConfigStorage {
   }
 
   struct FundingRate {
-    uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRateBPS
-    uint32 maxFundingRateBPS; // maximum funding rate
+    uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
+    uint256 maxFundingRate; // maximum funding rate
   }
 
   struct MarketConfig {
@@ -65,12 +65,12 @@ interface IConfigStorage {
   }
 
   struct AssetClassConfig {
-    uint32 baseBorrowingRateBPS;
+    uint256 baseBorrowingRate;
   }
 
   struct LiquidityConfig {
     uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
-    uint256 plpSafetyBufferThreshold;
+    uint32 plpSafetyBufferBPS;
     uint32 taxFeeRateBPS; // PLP deposit, withdraw, settle collect when pool weight is imbalances
     uint32 flashLoanFeeRateBPS;
     uint32 maxPLPUtilizationBPS; //% of max utilization
@@ -114,31 +114,35 @@ interface IConfigStorage {
 
   function weth() external view returns (address);
 
+  function tokenAssetIds(address _token) external view returns (bytes32);
+
   /**
    * Validation
    */
+
   function validateServiceExecutor(address _contractAddress, address _executorAddress) external view;
 
-  function validateAcceptedCollateral(address _token) external view;
-
   function validateAcceptedLiquidityToken(address _token) external view;
+
+  function validateAcceptedCollateral(address _token) external view;
 
   /**
    * Getter
    */
-  function ITERABLE_ADDRESS_LIST_START() external view returns (address);
 
-  function ITERABLE_ADDRESS_LIST_END() external view returns (address);
+  function getMarketConfigById(uint256 _marketIndex) external view returns (MarketConfig memory _marketConfig);
+
+  function getTradingConfig() external view returns (TradingConfig memory);
 
   function getMarketConfigByIndex(uint256 _index) external view returns (MarketConfig memory _marketConfig);
 
   function getAssetClassConfigByIndex(uint256 _index) external view returns (AssetClassConfig memory _assetClassConfig);
 
-  function getTradingConfig() external view returns (TradingConfig memory);
-
   function getCollateralTokenConfigs(
     address _token
   ) external view returns (CollateralTokenConfig memory _collateralTokenConfig);
+
+  function getAssetTokenDecimal(address _token) external view returns (uint8);
 
   function getLiquidityConfig() external view returns (LiquidityConfig memory);
 
@@ -148,11 +152,9 @@ interface IConfigStorage {
 
   function getPlpTokens() external view returns (address[] memory);
 
-  function getCollateralTokens() external view returns (address[] memory);
-
   function getAssetConfigByToken(address _token) external view returns (AssetConfig memory);
 
-  function getPlpAssetIds() external view returns (bytes32[] memory);
+  function getCollateralTokens() external view returns (address[] memory);
 
   function getAssetConfig(bytes32 _assetId) external view returns (AssetConfig memory);
 
@@ -160,29 +162,32 @@ interface IConfigStorage {
 
   function getAssetPlpTokenConfigByToken(address _token) external view returns (PLPTokenConfig memory);
 
-  function tokenAssetIds(address _token) external view returns (bytes32);
-
-  function getAssetTokenDecimal(address _token) external view returns (uint8);
+  function getPlpAssetIds() external view returns (bytes32[] memory);
 
   /**
    * Setter
    */
 
+  function setPlpAssetId(bytes32[] memory _plpAssetIds) external;
+
+  function setLiquidityEnabled(bool _enabled) external;
+
+  function setDynamicEnabled(bool _enabled) external;
+
   function setCalculator(address _calculator) external;
+
+  function setFeeCalculator(address _feeCalculator) external;
 
   function setOracle(address _oracle) external;
 
   function setPLP(address _plp) external;
 
-  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external;
+  function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external;
 
+  // @todo - Add Description
   function setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) external;
 
-  function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);
-
-  function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
-
-  function setLiquidityConfig(LiquidityConfig memory _newConfig) external;
+  function setPnlFactor(uint32 _pnlFactor) external;
 
   function setSwapConfig(SwapConfig memory _newConfig) external;
 
@@ -201,11 +206,26 @@ interface IConfigStorage {
   ) external returns (PLPTokenConfig memory _plpTokenConfig);
 
   function setCollateralTokenConfig(
-    bytes32 collateralAssetId,
+    bytes32 _assetId,
     CollateralTokenConfig memory _newConfig
   ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 
+  function setAssetConfig(
+    bytes32 assetId,
+    AssetConfig memory _newConfig
+  ) external returns (AssetConfig memory _assetConfig);
+
   function setWeth(address _weth) external;
 
+  function addOrUpdateAcceptedToken(address[] calldata _tokens, PLPTokenConfig[] calldata _configs) external;
+
+  function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);
+
   function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external;
+
+  function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
+
+  function delistMarket(uint256 _marketIndex) external;
+
+  function removeAcceptedToken(address _token) external;
 }

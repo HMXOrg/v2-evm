@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { MarketTradeHandler } from "../../../src/handlers/MarketTradeHandler.sol";
+import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 import { MarketTradeHandler_Base, IPerpStorage } from "./MarketTradeHandler_Base.t.sol";
-import { IMarketTradeHandler } from "../../../src/handlers/interfaces/IMarketTradeHandler.sol";
+import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
 // What is this test DONE
 // - revert
@@ -30,7 +30,7 @@ contract MarketTradeHandler_Buy is MarketTradeHandler_Base {
 
   function testRevert_WhenBuyWithZeroSize() external {
     vm.expectRevert(abi.encodeWithSignature("IMarketTradeHandler_ZeroSizeInput()"));
-    marketTradeHandler.buy(ALICE, 0, 0, 0, address(weth), prices);
+    marketTradeHandler.buy{ value: 1 }(ALICE, 0, 0, 0, address(weth), prices);
   }
 
   function testCorrectness_WhenBuyWithNoExistingPosition() external {
@@ -39,7 +39,7 @@ contract MarketTradeHandler_Buy is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogBuy(ALICE, 0, 0, _buySize, 0, _buySize);
 
-    marketTradeHandler.buy(ALICE, 0, 0, _buySize, address(weth), prices);
+    marketTradeHandler.buy{ value: 1 }(ALICE, 0, 0, _buySize, address(weth), prices);
   }
 
   function testCorrectness_WhenBuyWithExistingLongPosition() external {
@@ -65,7 +65,7 @@ contract MarketTradeHandler_Buy is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogBuy(ALICE, 0, 0, _buySize, 0, _buySize);
 
-    marketTradeHandler.buy(ALICE, 0, 0, _buySize, address(weth), prices);
+    marketTradeHandler.buy{ value: 1 }(ALICE, 0, 0, _buySize, address(weth), prices);
   }
 
   function testCorrectness_WhenBuyWithExistingShortPosition_WithSmallBuySize() external {
@@ -91,7 +91,7 @@ contract MarketTradeHandler_Buy is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogBuy(ALICE, 0, 0, _buySize, _buySize, 0);
 
-    marketTradeHandler.buy(ALICE, 0, 0, _buySize, address(weth), prices);
+    marketTradeHandler.buy{ value: 1 }(ALICE, 0, 0, _buySize, address(weth), prices);
   }
 
   function testCorrectness_WhenBuyWithExistingShortPosition_WithLargeBuySize() external {
@@ -117,6 +117,6 @@ contract MarketTradeHandler_Buy is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogBuy(ALICE, 0, 0, _buySize, 15_000 * 1e30, 5_000 * 1e30);
 
-    marketTradeHandler.buy(ALICE, 0, 0, _buySize, address(weth), prices);
+    marketTradeHandler.buy{ value: 1 }(ALICE, 0, 0, _buySize, address(weth), prices);
   }
 }

@@ -6,11 +6,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IGmxGlpManager } from "@hmx/vendors/gmx/IGmxGlpManager.sol";
 import { StakedGlpOracleAdapter } from "@hmx/oracles/stakedGlpOracleAdapter.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 
 contract StakedGlpOracleAdapter_GetLatestPriceForkTest is Config, StdAssertions {
-  using AddressUtils for address;
-
   bytes32 public constant sGlpAssetId = "sGLP";
   StakedGlpOracleAdapter stakedGlpOracleAdapter;
 

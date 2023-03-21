@@ -6,10 +6,10 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { AddressUtils } from "../../src/libraries/AddressUtils.sol";
-
-import { Deployment } from "../../script/Deployment.s.sol";
-import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
+/**
+ * Libraries
+ */
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 // Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
@@ -21,59 +21,40 @@ import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
-import { MockGlpManager } from "../mocks/MockGlpManager.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 
-import { Deployment } from "../../script/Deployment.s.sol";
-import { StorageDeployment } from "../deployment/StorageDeployment.s.sol";
+// Interfaces
+import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
-// Calculator
-import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
-// Handlers
-import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
-import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
-import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
-import { BotHandler } from "@hmx/handlers/BotHandler.sol";
-
-// Services
-import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
-import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
-
-// Storages
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
-import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
-
-// Oracles
-import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
-
-import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
-
-// Handlers
-import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
-import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 
 abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
-  using AddressUtils for address;
-
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal FEEVER;
 
   // storages
-  ConfigStorage internal configStorage;
-  PerpStorage internal perpStorage;
-  VaultStorage internal vaultStorage;
+  IConfigStorage internal configStorage;
+  IPerpStorage internal perpStorage;
+  IVaultStorage internal vaultStorage;
 
   // other contracts
-  PLPv2 internal plp;
-  Calculator internal calculator;
-  FeeCalculator internal feeCalculator;
+  IPLPv2 internal plp;
+  ICalculator internal calculator;
+  IFeeCalculator internal feeCalculator;
+
+  // oracle
+  IPythAdapter pythAdapter;
+  IOracleMiddleware oracleMiddleware;
 
   // mock
   MockPyth internal mockPyth;
@@ -100,6 +81,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   uint256 ethMarketIndex;
   uint256 btcMarketIndex;
 
+  // Crypto
   bytes32 internal constant wethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000001;
   bytes32 internal constant wbtcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000002;
   bytes32 internal constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
@@ -113,6 +95,11 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   bytes32 internal constant usdtAssetId = "USDT";
   bytes32 internal constant glpAssetId = "GLP";
 
+  // Fx
+  bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
+
+  bytes32 internal constant jpyAssetId = "JPY";
+
   constructor() {
     // Creating a mock Pyth instance with 60 seconds valid time period
     // and 1 wei for updating price.
@@ -122,20 +109,20 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    FEEVER = makeAddr("FEEVER");
 
-    weth = deployMockWNative();
-    wbtc = deployMockErc20("Wrapped Bitcoin", "WBTC", 8);
-    dai = deployMockErc20("DAI Stablecoin", "DAI", 18);
-    usdc = deployMockErc20("USD Coin", "USDC", 6);
-    usdt = deployMockErc20("USD Tether", "USDT", 6);
-    bad = deployMockErc20("Bad Coin", "BAD", 2);
-    sGlp = deployMockErc20("Staked Glp Coin", "sGLP", 18);
+    weth = new MockWNative();
+    wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
+    dai = new MockErc20("DAI Stablecoin", "DAI", 18);
+    usdc = new MockErc20("USD Coin", "USDC", 6);
+    usdt = new MockErc20("USD Tether", "USDT", 6);
+    bad = new MockErc20("Bad Coin", "BAD", 2);
 
-    plp = new PLPv2();
+    plp = Deployer.deployPLPv2();
 
-    configStorage = deployConfigStorage();
-    perpStorage = deployPerpStorage();
-    vaultStorage = deployVaultStorage();
+    configStorage = Deployer.deployConfigStorage();
+    perpStorage = Deployer.deployPerpStorage();
+    vaultStorage = Deployer.deployVaultStorage();
 
     mockOracle = new MockOracleMiddleware();
     mockCalculator = new MockCalculator(address(mockOracle));
@@ -147,6 +134,9 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     mockLiquidationService = new MockLiquidationService();
 
     mockGlpManager = new MockGlpManager();
+
+    pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter));
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -164,70 +154,14 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     _setUpPlpTokenConfigs();
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
-    _setUpAssetConfigs();
 
-    feeCalculator = new FeeCalculator(address(vaultStorage), address(configStorage));
+    feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
 
     // set general config
     configStorage.setFeeCalculator(address(feeCalculator));
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
     configStorage.setWeth(address(weth));
-  }
-
-  // --------- Deploy Helpers ---------
-  function deployMockWNative() internal returns (MockWNative) {
-    return new MockWNative();
-  }
-
-  function deployMockErc20(string memory name, string memory symbol, uint8 decimals) internal returns (MockErc20) {
-    return new MockErc20(name, symbol, decimals);
-  }
-
-  function deployPerp88v2() internal returns (Deployment.DeployCoreReturnVars memory) {
-    DeployCoreLocalVars memory deployCoreLocalVars = DeployCoreLocalVars({
-      pyth: address(mockPyth),
-      defaultOracleStaleTime: 300,
-      minExecutionFee: 0,
-      sGlp: address(sGlp),
-      sGlpAssetId: "sGLP",
-      glpManager: address(mockGlpManager),
-      weth: address(weth)
-    });
-    return deployCore(deployCoreLocalVars);
-  }
-
-  /**
-   * HANDLER
-   */
-
-  function deployCrossMarginHandler(address _crossMarginService, address _pyth) internal returns (CrossMarginHandler) {
-    return new CrossMarginHandler(_crossMarginService, _pyth);
-  }
-
-  /**
-   * SERVICE
-   */
-
-  function deployCrossMarginService(
-    address _configStorage,
-    address _vaultStorage,
-    address _calculator
-  ) internal returns (CrossMarginService) {
-    return new CrossMarginService(_configStorage, _vaultStorage, _calculator);
-  }
-
-  /**
-   * CALCULATOR
-   */
-
-  function deployCalculator(
-    address _oracle,
-    address _vaultStorage,
-    address _perpStorage,
-    address _configStorage
-  ) internal returns (Calculator) {
-    return new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
   }
 
   /**
@@ -267,8 +201,8 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
         withdrawFeeRateBPS: 0,
         maxPLPUtilizationBPS: 0.8 * 1e4,
         plpTotalTokenWeight: 0,
-        plpSafetyBufferThreshold: 0,
-        taxFeeRateBPS: 0.005 * 1e4, // 0.50%
+        plpSafetyBufferBPS: 0.6 * 1e4,
+        taxFeeRateBPS: 0.005 * 1e4, // 0.5%
         flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: false,
         enabled: true
@@ -296,10 +230,10 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   /// @notice set up all asset class configs in Perp
   function _setUpAssetClassConfigs() private {
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRateBPS: 0.0001 * 1e4
+      baseBorrowingRate: 0.0001 * 1e18 // 0.01% per fundingInterval
     });
     IConfigStorage.AssetClassConfig memory _forexConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRateBPS: 0.0002 * 1e4
+      baseBorrowingRate: 0.0002 * 1e18 // 0.02% per fundingInterval
     });
     configStorage.addAssetClassConfig(_cryptoConfig);
     configStorage.addAssetClassConfig(_forexConfig);
@@ -323,7 +257,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
       }),
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
@@ -341,7 +275,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
       }),
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
     ethMarketIndex = configStorage.addMarketConfig(_ethConfig);
@@ -488,34 +422,5 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
 
   function abs(int256 x) external pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
-  }
-
-  function deployLiquidityHandler(
-    ILiquidityService _liquidityService,
-    address _pyth,
-    uint256 _minExecutionFee
-  ) internal returns (LiquidityHandler) {
-    return new LiquidityHandler(_liquidityService, _pyth, _minExecutionFee);
-  }
-
-  function deployLimitTradeHandler(
-    address _weth,
-    address _tradeService,
-    address _pyth,
-    uint256 _minExecutionFee
-  ) internal returns (LimitTradeHandler) {
-    return new LimitTradeHandler(_weth, _tradeService, _pyth, _minExecutionFee);
-  }
-
-  function deployMarketTradeHandler(address _tradeService, address _pyth) internal returns (MarketTradeHandler) {
-    return new MarketTradeHandler(_tradeService, _pyth);
-  }
-
-  function deployBotHandler(
-    address _tradeService,
-    address _liquidationService,
-    address _pyth
-  ) internal returns (BotHandler) {
-    return new BotHandler(_tradeService, _liquidationService, _pyth);
   }
 }

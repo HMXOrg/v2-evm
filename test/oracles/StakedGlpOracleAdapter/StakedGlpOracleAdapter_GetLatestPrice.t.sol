@@ -2,11 +2,8 @@
 pragma solidity 0.8.18;
 
 import { StakedGlpOracleAdapter_BaseTest } from "./StakedGlpOracleAdapter_BaseTest.t.sol";
-import { AddressUtils } from "../../../src/libraries/AddressUtils.sol";
 
 contract StakedGlpOracleAdapter_GetLatestPriceTest is StakedGlpOracleAdapter_BaseTest {
-  using AddressUtils for address;
-
   function setUp() public override {
     super.setUp();
   }

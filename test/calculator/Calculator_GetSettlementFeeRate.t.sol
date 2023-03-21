@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Calculator_BaseWithStorage, IPerpStorage } from "./Calculator_BaseWithStorage.t.sol";
+import { Calculator_BaseWithStorage } from "./Calculator_BaseWithStorage.t.sol";
+
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 // What is this test DONE
 // - correctness
@@ -12,8 +14,6 @@ import { Calculator_BaseWithStorage, IPerpStorage } from "./Calculator_BaseWithS
 contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
   function setUp() public virtual override {
     super.setUp();
-
-    configStorage.setPLPTotalTokenWeight(1e18);
   }
 
   function testCorrectness_WhenGetSettlementFeeRateWithZeroDelta() external {

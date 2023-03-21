@@ -10,6 +10,8 @@ interface ICrossMarginService {
   error ICrossMarginService_InsufficientBalance();
   error ICrossMarginService_WithdrawBalanceBelowIMR();
 
+  function calculator() external returns (address);
+
   function configStorage() external returns (address _configStorage);
 
   function vaultStorage() external returns (address _vaultStorage);
@@ -20,5 +22,13 @@ interface ICrossMarginService {
 
   function depositCollateral(address _primaryAccount, uint8 _subAccountId, address _token, uint256 _amount) external;
 
-  function withdrawCollateral(address _primaryAccount, uint8 _subAccountId, address _token, uint256 _amount) external;
+  function setCalculator(address _address) external;
+
+  function withdrawCollateral(
+    address _primaryAccount,
+    uint8 _subAccountId,
+    address _token,
+    uint256 _amount,
+    address _receiver
+  ) external;
 }

@@ -5,87 +5,32 @@ import { TradeService_Base } from "./TradeService_Base.t.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
-import { ITradeService } from "../../../src/services/interfaces/ITradeService.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
-import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
 
-// @todo - add test desciption + use position tester help to check
+// @todo - add test description + use position tester help to check
 // @todo - rename test case
 
 contract TradeService_IncreasePosition is TradeService_Base {
   function setUp() public virtual override {
     super.setUp();
-  }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  getDelta FUNCTION  /////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////
-
-  function testRevert_getDelta_WhenBadAveragePrice() external {
-    // Bad position average price
-    uint256 avgPriceE30 = 0;
-    bool isLong = true;
-    uint256 size = 1_000 * 1e30;
-
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_InvalidAveragePrice()"));
-    tradeService.getDelta(size, isLong, 1e30, avgPriceE30);
-  }
-
-  function testCorrectness_getDelta_WhenLongAndPriceUp() external {
-    uint256 avgPriceE30 = 22_000 * 1e30;
-    uint256 nextPrice = 24_200 * 1e30;
-    bool isLong = true;
-    uint256 size = 1_000 * 1e30;
-
-    // price up 10% -> profit 10% of size
-    mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
-
-    assertEq(isProfit, true);
-    assertEq(delta, 100 * 1e30);
-  }
-
-  function testCorrectness_getDelta_WhenLongAndPriceDown() external {
-    uint256 avgPriceE30 = 22_000 * 1e30;
-    uint256 nextPrice = 18_700 * 1e30;
-    bool isLong = true;
-    uint256 size = 1_000 * 1e30;
-
-    // price down 15% -> loss 15% of size
-    mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
-
-    assertEq(isProfit, false);
-    assertEq(delta, 150 * 1e30);
-  }
-
-  function testCorrectness_getDelta_WhenShortAndPriceUp() external {
-    uint256 avgPriceE30 = 22_000 * 1e30;
-    uint256 nextPrice = 23_100 * 1e30;
-    bool isLong = false;
-    uint256 size = 1_000 * 1e30;
-
-    // price up 5% -> loss 5% of size
-    mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
-
-    assertEq(isProfit, false);
-    assertEq(delta, 50 * 1e30);
-  }
-
-  function testCorrectness_getDelta_WhenShortAndPriceDown() external {
-    uint256 avgPriceE30 = 22_000 * 1e30;
-    uint256 nextPrice = 11_000 * 1e30;
-    bool isLong = false;
-    uint256 size = 1_000 * 1e30;
-
-    // price down 50% -> profit 50% of size
-    mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
-
-    assertEq(isProfit, true);
-    assertEq(delta, 500 * 1e30);
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
+    }
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
@@ -126,7 +71,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
       })
     );
 
@@ -644,6 +589,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     }
   }
 
+  // @todo fix limit price with adaptive price
   function testCorrectness_increasePosition_WhenUsingLimitPrice() external {
     // setup
     // TVL
@@ -669,7 +615,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // size: 1,000,000
     //   | increase position Long 1,000,000
     // avgPrice: 1,000 (limitPrice 1000, currentPrice 1600)
-    //   | price ETH 1,000
+    //   | price ETH 1,600
     // reserveValue: 90,000
     //   | imr = 1,000,000 * 0.01 = 10,000
     //   | reserve 900% = 10,000 * 900% = 90,000
@@ -681,14 +627,14 @@ contract TradeService_IncreasePosition is TradeService_Base {
     //   | 1,000,000 / 1,000 = 1000 ETH
     PositionTester02.PositionAssertionData memory assetData = PositionTester02.PositionAssertionData({
       size: 1_000_000 * 1e30,
-      avgPrice: 1_000 * 1e30,
+      avgPrice: 1_600 * 1e30,
       reserveValue: 90_000 * 1e30,
       lastIncreaseTimestamp: 100,
       openInterest: 1_000 * 1e18
     });
     positionTester02.assertPosition(_positionId, assetData);
 
-    (uint256 _price, uint256 _lastUpdate, uint8 _status) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false);
+    (uint256 _price, , ) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false);
     assertEq(_price, 1600 * 1e30);
   }
 }

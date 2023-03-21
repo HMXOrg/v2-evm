@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { MarketTradeHandler } from "../../../src/handlers/MarketTradeHandler.sol";
+import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 import { MarketTradeHandler_Base, IPerpStorage } from "./MarketTradeHandler_Base.t.sol";
-import { IMarketTradeHandler } from "../../../src/handlers/interfaces/IMarketTradeHandler.sol";
+import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
 // What is this test DONE
 // - revert
@@ -30,7 +30,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
 
   function testRevert_WhenSellWithZeroSize() external {
     vm.expectRevert(abi.encodeWithSignature("IMarketTradeHandler_ZeroSizeInput()"));
-    marketTradeHandler.sell(ALICE, 0, 0, 0, address(weth), prices);
+    marketTradeHandler.sell{ value: 1 }(ALICE, 0, 0, 0, address(weth), prices);
   }
 
   function testCorrectness_WhenSellWithNoExistingPosition() external {
@@ -39,7 +39,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogSell(ALICE, 0, 0, _sellSize, 0, _sellSize);
 
-    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, address(weth), prices);
+    marketTradeHandler.sell{ value: 1 }(ALICE, 0, 0, _sellSize, address(weth), prices);
   }
 
   function testCorrectness_WhenSellWithExistingShortPosition() external {
@@ -65,7 +65,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogSell(ALICE, 0, 0, _sellSize, 0, _sellSize);
 
-    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, address(weth), prices);
+    marketTradeHandler.sell{ value: 1 }(ALICE, 0, 0, _sellSize, address(weth), prices);
   }
 
   function testCorrectness_WhenSellWithExistingLongPosition_WithSmallSellSize() external {
@@ -91,7 +91,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogSell(ALICE, 0, 0, _sellSize, _sellSize, 0);
 
-    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, address(weth), prices);
+    marketTradeHandler.sell{ value: 1 }(ALICE, 0, 0, _sellSize, address(weth), prices);
   }
 
   function testCorrectness_WhenSellWithExistingLongPosition_WithLargeSellSize() external {
@@ -117,6 +117,6 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
     vm.expectEmit(false, false, false, true, address(marketTradeHandler));
     emit LogSell(ALICE, 0, 0, _sellSize, 15_000 * 1e30, 5_000 * 1e30);
 
-    marketTradeHandler.sell(ALICE, 0, 0, _sellSize, address(weth), prices);
+    marketTradeHandler.sell{ value: 1 }(ALICE, 0, 0, _sellSize, address(weth), prices);
   }
 }

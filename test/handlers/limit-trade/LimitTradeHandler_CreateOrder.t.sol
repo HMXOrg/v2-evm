@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LimitTradeHandler_Base, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
-import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { LimitOrderTester } from "../../testers/LimitOrderTester.sol";
 
 // What is this test DONE
@@ -25,7 +25,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 0,
       _sizeDelta: 100,
-      _triggerPrice: 1000,
+      _triggerPrice: 2e30,
       _triggerAboveThreshold: true,
       _executionFee: 0 ether,
       _reduceOnly: false,
@@ -40,7 +40,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
       _subAccountId: 3,
       _marketIndex: 0,
       _sizeDelta: 100,
-      _triggerPrice: 1000,
+      _triggerPrice: 2e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -54,7 +54,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
 
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
-      _marketIndex: 1,
+      _marketIndex: 0,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
       _triggerAboveThreshold: true,
@@ -77,7 +77,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
         reduceOnly: false,
         sizeDelta: 1000 * 1e30,
         subAccountId: 0,
-        marketIndex: 1,
+        marketIndex: 0,
         triggerPrice: 1000 * 1e30,
         executionFee: 0.1 ether
       })
@@ -86,7 +86,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     // Open another Long order with the same sub account
     limitTradeHandler.createOrder{ value: 0.2 ether }({
       _subAccountId: 0,
-      _marketIndex: 2,
+      _marketIndex: 1,
       _sizeDelta: 2000 * 1e30,
       _triggerPrice: 2000 * 1e30,
       _triggerAboveThreshold: true,
@@ -106,7 +106,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
         reduceOnly: false,
         sizeDelta: 2000 * 1e30,
         subAccountId: 0,
-        marketIndex: 2,
+        marketIndex: 1,
         triggerPrice: 2000 * 1e30,
         executionFee: 0.2 ether
       })
@@ -115,9 +115,9 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     // Open another Long order with another sub account
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 7,
-      _marketIndex: 3,
+      _marketIndex: 1,
       _sizeDelta: 3000 * 1e30,
-      _triggerPrice: 3000 * 1e30,
+      _triggerPrice: 0.3 * 1e30,
       _triggerAboveThreshold: false,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -139,8 +139,8 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
         reduceOnly: false,
         sizeDelta: 3000 * 1e30,
         subAccountId: 7,
-        marketIndex: 3,
-        triggerPrice: 3000 * 1e30,
+        marketIndex: 1,
+        triggerPrice: 0.3 * 1e30,
         executionFee: 0.1 ether
       })
     });
@@ -148,9 +148,9 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
     // Open another Short order with 7th sub account
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 7,
-      _marketIndex: 4,
+      _marketIndex: 1,
       _sizeDelta: 4000 * 1e30,
-      _triggerPrice: 4000 * 1e30,
+      _triggerPrice: 0.4 * 1e30,
       _triggerAboveThreshold: false,
       _executionFee: 0.1 ether,
       _reduceOnly: true,
@@ -172,8 +172,8 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
         reduceOnly: true,
         sizeDelta: 4000 * 1e30,
         subAccountId: 7,
-        marketIndex: 4,
-        triggerPrice: 4000 * 1e30,
+        marketIndex: 1,
+        triggerPrice: 0.4 * 1e30,
         executionFee: 0.1 ether
       })
     });
@@ -185,7 +185,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
 
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 0,
-      _marketIndex: 1,
+      _marketIndex: 0,
       _sizeDelta: -1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
       _triggerAboveThreshold: true,
@@ -208,7 +208,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
         reduceOnly: false,
         sizeDelta: -1000 * 1e30,
         subAccountId: 0,
-        marketIndex: 1,
+        marketIndex: 0,
         triggerPrice: 1000 * 1e30,
         executionFee: 0.1 ether
       })
@@ -216,7 +216,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
 
     limitTradeHandler.createOrder{ value: 0.2 ether }({
       _subAccountId: 0,
-      _marketIndex: 2,
+      _marketIndex: 1,
       _sizeDelta: -2000 * 1e30,
       _triggerPrice: 2000 * 1e30,
       _triggerAboveThreshold: true,
@@ -236,7 +236,7 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
         reduceOnly: false,
         sizeDelta: -2000 * 1e30,
         subAccountId: 0,
-        marketIndex: 2,
+        marketIndex: 1,
         triggerPrice: 2000 * 1e30,
         executionFee: 0.2 ether
       })
@@ -244,9 +244,9 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
 
     limitTradeHandler.createOrder{ value: 0.1 ether }({
       _subAccountId: 7,
-      _marketIndex: 3,
+      _marketIndex: 1,
       _sizeDelta: -3000 * 1e30,
-      _triggerPrice: 3000 * 1e30,
+      _triggerPrice: 0.3 * 1e30,
       _triggerAboveThreshold: false,
       _executionFee: 0.1 ether,
       _reduceOnly: true,
@@ -268,8 +268,8 @@ contract LimitTradeHandler_CreateOrder is LimitTradeHandler_Base {
         reduceOnly: true,
         sizeDelta: -3000 * 1e30,
         subAccountId: 7,
-        marketIndex: 3,
-        triggerPrice: 3000 * 1e30,
+        marketIndex: 1,
+        triggerPrice: 0.3 * 1e30,
         executionFee: 0.1 ether
       })
     });

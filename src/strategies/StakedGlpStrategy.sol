@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 import { Owned } from "@hmx/base/Owned.sol";
-import { AddressUtils } from "@hmx/libraries/AddressUtils.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
@@ -11,8 +10,6 @@ import { IGmxRewardTracker } from "@hmx/vendors/gmx/IGmxRewardTracker.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract StakedGlpStrategy is Owned, IStrategy {
-  using AddressUtils for address;
-
   error StakedGlpStrategy_OnlyKeeper();
 
   ERC20 public sGlp;

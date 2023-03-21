@@ -17,6 +17,8 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_WrongSizeDelta();
   error ILimitTradeHandler_UnknownOrderType();
   error ILimitTradeHandler_MaxExecutionFee();
+  error ILimitTradeHandler_TriggerPriceBelowCurrentPrice();
+  error ILimitTradeHandler_TriggerPriceAboveCurrentPrice();
 
   /**
    * Structs
@@ -32,6 +34,37 @@ interface ILimitTradeHandler {
     uint256 triggerPrice;
     uint256 executionFee;
   }
+
+  /**
+   * States
+   */
+
+  function pyth() external returns (address);
+
+  function tradeService() external returns (address);
+
+  function minExecutionFee() external returns (uint256);
+
+  function orderExecutors(address _address) external returns (bool);
+
+  function limitOrdersIndex(address _address) external returns (uint256);
+
+  function limitOrders(
+    address _subAccount,
+    uint256 _index
+  )
+    external
+    returns (
+      address account,
+      address tpToken,
+      bool triggerAboveThreshold,
+      bool reduceOnly,
+      int256 sizeDelta,
+      uint8 subAccountId,
+      uint256 marketIndex,
+      uint256 triggerPrice,
+      uint256 executionFee
+    );
 
   /**
    * Setters
@@ -76,12 +109,5 @@ interface ILimitTradeHandler {
     address _tpToken
   ) external;
 
-  function validatePositionOrderPrice(
-    bool _triggerAboveThreshold,
-    uint256 _triggerPrice,
-    uint256 _marketIndex,
-    int256 _sizeDelta,
-    bool _maximizePrice,
-    bool _revertOnError
-  ) external view returns (uint256, bool);
+  function setPyth(address _pyth) external;
 }

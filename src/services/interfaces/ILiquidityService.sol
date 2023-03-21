@@ -29,7 +29,7 @@ interface ILiquidityService {
     address _account;
     uint256 _tokenPriceUsd;
     uint256 _amount;
-    uint256 _feeRate;
+    uint32 _feeBPS;
     LiquidityAction _action;
   }
 

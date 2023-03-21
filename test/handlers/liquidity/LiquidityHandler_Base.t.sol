@@ -2,17 +2,18 @@
 pragma solidity 0.8.18;
 
 import { BaseTest } from "@hmx-test/base/BaseTest.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-import { BaseTest, LiquidityHandler, IPerpStorage, IConfigStorage, ILiquidityService } from "../../base/BaseTest.sol";
+import { BaseTest, IPerpStorage, IConfigStorage } from "../../base/BaseTest.sol";
+
+import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 
 contract LiquidityHandler_Base is BaseTest {
-  LiquidityHandler liquidityHandler;
+  ILiquidityHandler liquidityHandler;
 
   function setUp() public virtual {
-    liquidityHandler = deployLiquidityHandler(
-      ILiquidityService(address(mockLiquidityService)),
-      address(mockPyth),
-      5 ether
-    );
+    liquidityHandler = Deployer.deployLiquidityHandler(address(mockLiquidityService), address(mockPyth), 5 ether);
+    plp.setMinter(address(this), true);
+    mockLiquidityService.setPlpEnabled(true);
   }
 }

@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LimitTradeHandler_Base, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
-import { ILimitTradeHandler } from "../../../src/handlers/interfaces/ILimitTradeHandler.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { LimitOrderTester } from "../../testers/LimitOrderTester.sol";
 
 // What is this test DONE
@@ -23,7 +23,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _sizeDelta: 100,
-      _triggerPrice: 1000,
+      _triggerPrice: 2e30,
       _triggerAboveThreshold: true,
       _reduceOnly: false,
       _tpToken: address(0)
@@ -36,14 +36,12 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 100,
-      _triggerPrice: 1000,
+      _triggerPrice: 2e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
       _tpToken: address(weth)
     });
-
-    ILimitTradeHandler.LimitOrder memory limitOrder;
 
     limitOrderTester.assertLimitOrder({
       _subAccount: address(this),
@@ -56,7 +54,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
         sizeDelta: 100,
         subAccountId: 0,
         marketIndex: 1,
-        triggerPrice: 1000,
+        triggerPrice: 2e30,
         executionFee: 0.1 ether
       })
     });
@@ -65,7 +63,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _sizeDelta: 200,
-      _triggerPrice: 2000,
+      _triggerPrice: 3e30,
       _triggerAboveThreshold: true,
       _reduceOnly: false,
       _tpToken: address(0)
@@ -82,7 +80,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
         sizeDelta: 200,
         subAccountId: 0,
         marketIndex: 1,
-        triggerPrice: 2000,
+        triggerPrice: 3e30,
         executionFee: 0.1 ether
       })
     });

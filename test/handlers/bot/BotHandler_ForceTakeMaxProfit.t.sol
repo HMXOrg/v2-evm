@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { BotHandler_Base } from "./BotHandler_Base.t.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
 
 /// @title BotHandler_ForceTakeMaxProfit
 /// @notice The purpose is test BotHandler contract able to call TradeService to force close position of trader
@@ -20,6 +21,21 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
   //   - unauthorized (owned test)
   function setUp() public virtual override {
     super.setUp();
+
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
+      configStorage.setCalculator(address(mockCalculator));
+      tradeService.reloadConfig();
+    }
 
     // TVL
     // 1000000 USDT -> 2000000 USD
@@ -47,7 +63,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
   function testRevert_WhenSomeoneCallBotHandler() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IBotHandler_UnauthorizedSender()"));
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0));
+    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0), prices);
   }
 
   /**
@@ -77,7 +93,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     mockOracle.setPrice(0.9 * 1e30);
 
     // Bot force take max profit ALICE position
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, _tpToken);
+    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, _tpToken, prices);
 
     // all calculation is same with testCorrectness_WhenExecutorCloseShortPositionForAlice_AndProfitIsGreaterThenReserved
     address[] memory _checkPlpTokens = new address[](1);
@@ -133,7 +149,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     mockOracle.setPrice(1.09 * 1e30);
 
     // Tester close ALICE position
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, _tpToken);
+    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, _tpToken, prices);
 
     // all calculation is same with testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved
     address[] memory _checkPlpTokens = new address[](1);
@@ -190,6 +206,6 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
 
     // Somehow Tester close ALICE position again
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionAlreadyClosed()"));
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0));
+    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0), prices);
   }
 }

@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { LiquidityService_Base } from "./LiquidityService_Base.t.sol";
-import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 // LiquidityService_RemoveLiquidity - unit test for remove liquidity function
 // What is this test DONE
@@ -16,7 +16,7 @@ import { IConfigStorage } from "../../../src/storages/interfaces/IConfigStorage.
 //   - remove liquidity of another PLP
 //   - remove liquidity with dynamic fee (will be test in Calculator and integration test)
 // - revert
-//   - PLP transfer in cooldown period
+//   - PLP transfer in cool down period
 contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -30,7 +30,7 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     //       unrealized PnL - 0
     //       borrowing fee  - 0
     // aum = tvl + unrealized pnl + borrowing fee = 99.7 e30 + 0 + 0
-    mockCalculator.setAUM(99.7e30);
+    mockCalculator.setAUM(99.7e18);
   }
 
   function testCorrectness_WhenPLPRemoveLiquidity() external {

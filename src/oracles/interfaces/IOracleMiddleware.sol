@@ -9,9 +9,11 @@ interface IOracleMiddleware {
   error IOracleMiddleware_OnlyUpdater();
   error IOracleMiddleware_InvalidMarketStatus();
 
-  // =========================================
-  // | ---------- Getter ------------------- |
-  // =========================================
+  function isUpdater(address _updater) external returns (bool);
+
+  function assetPriceConfigs(bytes32 _assetId) external returns (uint32, uint32);
+
+  function marketStatus(bytes32 _assetId) external returns (uint8);
 
   function getLatestPrice(bytes32 _assetId, bool _isMax) external view returns (uint256 _price, uint256 _lastUpdated);
 
@@ -26,7 +28,7 @@ interface IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate);
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate);
 
   function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
@@ -34,7 +36,7 @@ interface IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate);
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate);
 
   function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
@@ -50,7 +52,7 @@ interface IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate, uint8 _status);
 
   function unsafeGetLatestPrice(
     bytes32 _assetId,
@@ -61,4 +63,10 @@ interface IOracleMiddleware {
     bytes32 _assetId,
     bool _isMax
   ) external view returns (uint256 _price, uint256 _lastUpdated, uint8 _status);
+
+  function setMarketStatus(bytes32 _assetId, uint8 _status) external;
+
+  function setUpdater(address _updater, bool _isActive) external;
+
+  function setAssetPriceConfig(bytes32 _assetId, uint32 _confidenceThresholdE6, uint32 _trustPriceAge) external;
 }

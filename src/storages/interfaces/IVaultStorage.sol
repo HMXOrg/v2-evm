@@ -43,8 +43,6 @@ interface IVaultStorage {
 
   function pushToken(address _token, address _to, uint256 _amount) external;
 
-  function setTraderBalance(address _trader, address _token, uint256 _balance) external;
-
   function addFundingFee(address _token, uint256 _amount) external;
 
   function removeFundingFee(address _token, uint256 _amount) external;

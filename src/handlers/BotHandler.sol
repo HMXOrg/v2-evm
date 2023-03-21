@@ -4,8 +4,8 @@ pragma solidity 0.8.18;
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import { IBotHandler } from "./interfaces/IBotHandler.sol";
-import { ITradeService } from "../services/interfaces/ITradeService.sol";
-import { LiquidationService } from "../services/LiquidationService.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 // contracts

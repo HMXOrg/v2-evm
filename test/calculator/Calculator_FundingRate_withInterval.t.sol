@@ -137,7 +137,6 @@ contract Calculator_FundingRate is Calculator_Base {
     );
 
     (int256 nextFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
-      0,
       0
     );
     accumFundingRate += nextFundingRate;
@@ -188,7 +187,7 @@ contract Calculator_FundingRate is Calculator_Base {
         accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0, 0);
+      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
       accumFundingRate += nextFundingRate;
       assertEq(nextFundingRate, -666666666666665);
       assertEq(accumFundingRate, -799999999999998);
@@ -238,7 +237,7 @@ contract Calculator_FundingRate is Calculator_Base {
         accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0, 0);
+      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
       accumFundingRate += nextFundingRate;
       assertEq(nextFundingRate, 0);
       assertEq(accumFundingRate, -799999999999998); // -0.0008
@@ -288,7 +287,7 @@ contract Calculator_FundingRate is Calculator_Base {
         accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0, 0);
+      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
       accumFundingRate += nextFundingRate;
       assertEq(nextFundingRate, 0);
       assertEq(accumFundingRate, -799999999999998);
@@ -338,7 +337,7 @@ contract Calculator_FundingRate is Calculator_Base {
         accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0, 0);
+      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
       accumFundingRate += nextFundingRate;
       assertEq(nextFundingRate, 1333333333333330); //0.00133333
       assertEq(accumFundingRate, 533333333333332); //0.00053333
@@ -389,7 +388,7 @@ contract Calculator_FundingRate is Calculator_Base {
         accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0, 0);
+      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
       accumFundingRate += nextFundingRate;
       assertEq(nextFundingRate, 1333333333333330); //0.00133333
       assertEq(accumFundingRate, 1866666666666662); //0.00186667

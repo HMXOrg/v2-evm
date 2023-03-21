@@ -5,6 +5,8 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract TC07 is BaseIntTest_WithActions {
   function testIntegration_WhenAdminAdjustIMF() external {
     /**
@@ -140,7 +142,7 @@ contract TC07 is BaseIntTest_WithActions {
      */
     vm.warp(block.timestamp + 1);
     {
-      uint256 sellSizeE30 = 1_200_000 * 1e30;
+      uint256 sellSizeE30 = 1_150_000 * 1e30;
       address tpToken = address(wbtc);
       bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1550 USD
@@ -150,7 +152,7 @@ contract TC07 is BaseIntTest_WithActions {
       // Alice's Free collateral must be almost zero
       assertEq(
         calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0),
-        46248906439232480554022636592717, // 46.24890643923248 $
+        385054617961161359604512580756695, // 385.0546179611614 $
         "ALICE's free collateral is almost zero"
       );
 

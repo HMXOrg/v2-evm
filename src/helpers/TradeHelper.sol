@@ -19,12 +19,7 @@ import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
-
-  event LogCollectTradingFee(address account, uint8 assetClass, uint256 feeUsd);
-
-  event LogCollectBorrowingFee(address account, uint8 assetClass, uint256 feeUsd);
-
-  event LogCollectFundingFee(address account, uint8 assetClass, int256 feeUsd);
+  uint64 internal constant RATE_PRECISION = 1e18;
 
   event LogSettleTradingFeeValue(address subAccount, uint256 feeUsd);
   event LogSettleTradingFeeAmount(address subAccount, address token, uint256 devFeeAmount, uint256 protocolFeeAmount);
@@ -33,7 +28,8 @@ contract TradeHelper is ITradeHelper {
   event LogSettleBorrowingFeeAmount(address subAccount, address token, uint256 devFeeAmount, uint256 plpFeeAmount);
 
   event LogSettleFundingFeeValue(address subAccount, int256 feeUsd);
-  // event LogSettleFundingFeeAmount(address subAccount, address token, uint256 devFeeAmount, uint256 plpFeeAmount);
+  event LogSettleFundingFeeAmountWhenTraderPays(address subAccount, address token, uint256 amount);
+  event LogSettleFundingFeeAmountWhenTraderReceives(address subAccount, address token, uint256 amount);
 
   address public perpStorage;
   address public vaultStorage;
@@ -61,9 +57,7 @@ contract TradeHelper is ITradeHelper {
 
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function updateBorrowingRate(uint8 _assetClassIndex, uint256 _limitPriceE30, bytes32 _limitAssetId) external {
+  function updateBorrowingRate(uint8 _assetClassIndex) external {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -80,18 +74,23 @@ contract TradeHelper is ITradeHelper {
 
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastBorrowingTime + _fundingInterval <= block.timestamp) {
+      uint256 _plpTVL = calculator.getPLPValueE30(false);
+
       // update borrowing rate
-      uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _limitPriceE30, _limitAssetId);
+      uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _plpTVL);
       _globalAssetClass.sumBorrowingRate += borrowingRate;
       _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+
+      uint256 borrowingFee = (_globalAssetClass.reserveValueE30 * borrowingRate) / RATE_PRECISION;
+
+      _globalAssetClass.sumBorrowingFeeE30 += borrowingFee;
     }
     _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
   }
 
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
-  /// @param _limitPriceE30 Price from limitOrder, zeros means no marketOrderPrice
-  function updateFundingRate(uint256 _marketIndex, uint256 _limitPriceE30) external {
+  function updateFundingRate(uint256 _marketIndex) external {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -111,8 +110,7 @@ contract TradeHelper is ITradeHelper {
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
       (int256 nextFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
-        _marketIndex,
-        _limitPriceE30
+        _marketIndex
       );
 
       _globalMarket.currentFundingRate += nextFundingRate;
@@ -196,6 +194,11 @@ contract TradeHelper is ITradeHelper {
       _vars.traderMustPay = (_vars.fundingFeeToBePaid > 0);
 
       emit LogSettleFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBePaid);
+    }
+
+    // Update global state
+    {
+      _accumSettledBorrowingFee(_assetClassIndex, _vars.borrowingFeeToBePaid);
     }
 
     // In case trader must receive funding fee, process it first and separately from other fees
@@ -426,10 +429,12 @@ contract TradeHelper is ITradeHelper {
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
+
+      emit LogSettleFundingFeeAmountWhenTraderReceives(_vars.subAccount, _collateralToken, _repayAmount);
     }
   }
 
-  function _settleTradingFee(SettleAllFeesVars memory _vars, address _collateralToken) internal returns (uint256) {
+  function _settleTradingFee(SettleAllFeesVars memory _vars, address _collateralToken) internal {
     // Get trader balance of each collateral
     uint256 _traderBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _collateralToken);
 
@@ -461,7 +466,7 @@ contract TradeHelper is ITradeHelper {
     // else continue, as trader does not have any of this collateral token
   }
 
-  function _settleBorrowingFee(SettleAllFeesVars memory _vars, address _collateralToken) internal returns (uint256) {
+  function _settleBorrowingFee(SettleAllFeesVars memory _vars, address _collateralToken) internal {
     // Get trader balance of each collateral
     uint256 _traderBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _collateralToken);
 
@@ -491,6 +496,15 @@ contract TradeHelper is ITradeHelper {
       emit LogSettleBorrowingFeeAmount(_vars.subAccount, _collateralToken, _devFeeAmount, _plpFeeAmount);
     }
     // else continue, as trader does not have any of this collateral token
+  }
+
+  function _accumSettledBorrowingFee(uint256 _assetClassIndex, uint256 _borrowingFeeToBeSettled) internal {
+    PerpStorage _perpStorage = PerpStorage(perpStorage);
+    PerpStorage.GlobalAssetClass memory _globalAssetClass = _perpStorage.getGlobalAssetClassByIndex(
+      uint8(_assetClassIndex)
+    );
+    _globalAssetClass.sumSettledBorrowingFeeE30 += _borrowingFeeToBeSettled;
+    _perpStorage.updateGlobalAssetClass(uint8(_assetClassIndex), _globalAssetClass);
   }
 
   function _getRepayAmount(

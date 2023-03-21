@@ -125,7 +125,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
         _vars.marketConfig.assetId,
         _isLong,
         (int(_vars.globalMarket.longOpenInterest) - int(_vars.globalMarket.shortOpenInterest)),
-        _isLong ? -int(_vars.position.positionSizeE30) : int(_vars.position.positionSizeE30),
+        -_vars.position.positionSizeE30,
         _vars.marketConfig.fundingRate.maxSkewScaleUSD
       );
 

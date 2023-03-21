@@ -130,4 +130,6 @@ interface ICalculator {
   function configStorage() external returns (address _address);
 
   function perpStorage() external returns (address _address);
+
+  function getPendingBorrowingFeeE30() external view returns (uint256);
 }

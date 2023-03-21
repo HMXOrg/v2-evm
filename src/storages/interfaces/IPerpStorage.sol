@@ -16,7 +16,7 @@ interface IPerpStorage {
     uint256 sumBorrowingRate;
     uint256 lastBorrowingTime;
     uint256 sumBorrowingFeeE30;
-    uint256 settledBorrowingFeeE30;
+    uint256 sumSettledBorrowingFeeE30;
   }
 
   // mapping _marketIndex => globalPosition;

@@ -67,4 +67,20 @@ interface IVaultStorage {
   function payPlp(address _trader, address _token, uint256 _amount) external;
 
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
+
+  function payFundingFeeFromFundingFeeToTrader(address _trader, address _token, uint256 _fundingFeeAmount) external;
+
+  function borrowFundingFeeFromPlpToTrader(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount,
+    uint256 _fundingFeeValue
+  ) external;
+
+  function repayFundingFeeDebtFromTraderToPlp(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount,
+    uint256 _fundingFeeValue
+  ) external;
 }

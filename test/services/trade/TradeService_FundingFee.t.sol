@@ -107,8 +107,8 @@ contract TradeService_FundingFee is TradeService_Base {
         // Alice's WETH remaining = 1 - 0.083333333333333125 = 0.916666666666666875 WETH
         assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 916666666666666875, "Weth balance");
 
-        // new plpLiquidity = old plpLiquidity + (fee collect from ALICE - dev Fee) = 1_000_000 + ( 0.08383958333333312 - 0) = 1000000.0838395833 WETH
-        assertEq(vaultStorage.plpLiquidity(address(weth)), (1000 + 0.083333333333333125) * 1e18);
+        // new fundingFee = old fundingFee + (fee collect from ALICE - dev Fee) = 10 + ( 0.08383958333333312 - 0) = 10.0838395833 WETH
+        assertEq(vaultStorage.fundingFee(address(weth)), (10 + 0.083333333333333125) * 1e18);
       }
     }
   }

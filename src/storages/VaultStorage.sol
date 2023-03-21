@@ -32,13 +32,14 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   /**
    * States
    */
-  uint256 public plpLiquidityDebtUSDE30; // USD dept accounting when fundingFee is not enough to repay to trader
 
   mapping(address => uint256) public totalAmount; //token => tokenAmount
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
   mapping(address => uint256) public protocolFees; // protocol fee in token unit
 
-  mapping(address => uint256) public fundingFee; // sum of realized funding fee when traders are settlement their protocolFees
+  uint256 public plpLiquidityDebtUSDE30; // USD dept accounting when fundingFee is not enough to repay to trader
+  mapping(address => uint256) public fundingFee; // sum of realized funding fee amount
+
   mapping(address => uint256) public devFees;
 
   // trader address (with sub-account) => token => amount
@@ -266,5 +267,61 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
     // Increase the amount to trader
     traderBalances[_trader][_token] += _fundingFeeAmount;
+  }
+
+  function payFundingFeeFromTraderToFundingFee(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from trader balance
+    traderBalances[_trader][_token] -= _fundingFeeAmount;
+
+    // Increase the amount to fundingFee
+    fundingFee[_token] += _fundingFeeAmount;
+  }
+
+  function payFundingFeeFromFundingFeeToTrader(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from fundingFee
+    fundingFee[_token] -= _fundingFeeAmount;
+
+    // Increase the amount to trader
+    traderBalances[_trader][_token] += _fundingFeeAmount;
+  }
+
+  function repayFundingFeeDebtFromTraderToPlp(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount,
+    uint256 _fundingFeeValue
+  ) external {
+    // Deduct amount from trader balance
+    traderBalances[_trader][_token] -= _fundingFeeAmount;
+
+    // Add token amounts that PLP received
+    plpLiquidity[_token] += _fundingFeeAmount;
+
+    // Remove debt value on PLP as received
+    plpLiquidityDebtUSDE30 -= _fundingFeeValue;
+  }
+
+  function borrowFundingFeeFromPlpToTrader(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount,
+    uint256 _fundingFeeValue
+  ) external {
+    // Deduct token amounts from PLP
+    plpLiquidity[_token] -= _fundingFeeAmount;
+
+    // Increase the amount to trader
+    traderBalances[_trader][_token] += _fundingFeeAmount;
+
+    // Add debt value on PLP
+    plpLiquidityDebtUSDE30 += _fundingFeeValue;
   }
 }

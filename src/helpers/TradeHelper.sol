@@ -133,6 +133,7 @@ contract TradeHelper is ITradeHelper {
     address[] collateralTokens;
     uint256 collateralTokensLength;
     address subAccount;
+    uint256 tokenPrice;
     // Trading fee vars
     uint256 tradingFeeToBePaid;
     // Borrowing fee vars
@@ -205,6 +206,8 @@ contract TradeHelper is ITradeHelper {
       // If one collateral cannot cover, try the next one and so on.
       // If all of the collaterals still cannot cover, revert.
       for (uint256 i; i < _vars.collateralTokensLength; ) {
+        bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
+        (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
         _settleFundingFeeWhenTraderMustReceive(_vars, _vars.collateralTokens[i]);
 
         // stop iteration, if all fees are covered
@@ -215,8 +218,17 @@ contract TradeHelper is ITradeHelper {
         }
       }
 
-      // If fee cannot be covered, revert.
-      // This could occur when plp does not have enough liquidity to pay funding fee to trader
+      // This could occur when funding fee does not have enough liquidity to pay funding fee to trader
+      // If fee cannot be covered, borrow from PLP and book as PLP Debts
+      for (uint256 i; i < _vars.collateralTokensLength; ) {
+        bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
+        (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
+        _settleFundingFeeWhenBorrowingFromPLP(_vars, _vars.collateralTokens[i]);
+        unchecked {
+          ++i;
+        }
+      }
+
       if (_vars.absFundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
     }
 
@@ -228,6 +240,22 @@ contract TradeHelper is ITradeHelper {
     // If one collateral cannot cover, try the next one and so on.
     // If all of the collaterals still cannot cover, revert.
     for (uint256 i; i < _vars.collateralTokensLength; ) {
+      bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
+      (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
+
+      // Funding fee
+      if (_vars.absFundingFeeToBePaid > 0) {
+        _settleFundingFeeWhenTraderMustPay(_vars, _vars.collateralTokens[i]);
+
+        // still cannot cover all, move to next iteration
+        if (_vars.absFundingFeeToBePaid > 0) {
+          unchecked {
+            ++i;
+          }
+          continue;
+        }
+      }
+
       // Trading fee
       if (_vars.tradingFeeToBePaid > 0) {
         _settleTradingFee(_vars, _vars.collateralTokens[i]);
@@ -254,23 +282,10 @@ contract TradeHelper is ITradeHelper {
         }
       }
 
-      // Funding fee
-      if (_vars.absFundingFeeToBePaid > 0) {
-        _settleFundingFeeWhenTraderMustPay(_vars, _vars.collateralTokens[i]);
-
-        // still cannot cover all, move to next iteration
-        if (_vars.absFundingFeeToBePaid > 0) {
-          unchecked {
-            ++i;
-          }
-          continue;
-        }
-      }
-
-      // _vars.absFundingFeeToBePaid is the last fee to be covered
-      // simply check _vars.absFundingFeeToBePaid == 0
+      // _vars.borrowingFeeToBePaid  is the last fee to be covered
+      // simply check _vars.borrowingFeeToBePaid  == 0
       // stop iteration, if all fees are covered
-      if (_vars.absFundingFeeToBePaid == 0) break;
+      if (_vars.borrowingFeeToBePaid == 0) break;
 
       unchecked {
         ++i;
@@ -290,24 +305,74 @@ contract TradeHelper is ITradeHelper {
   ) internal returns (uint256) {
     // When trader is the payer
     uint256 _traderBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _collateralToken);
+    uint256 _plpLiquidityDebtUSDE30 = _vars.vaultStorage.plpLiquidityDebtUSDE30();
 
     // We are going to deduct trader balance,
     // so we need to check whether trader has this collateral token or not.
     // If not skip to next token
     if (_traderBalance > 0) {
-      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-        _vars.configStorage,
-        _vars.oracle,
-        _traderBalance,
-        _vars.absFundingFeeToBePaid,
-        _collateralToken
-      );
+      uint256 _repayAmount;
+      uint256 _repayValue;
 
-      // book the balances
-      _vars.vaultStorage.payFundingFeeFromTraderToPlp(_vars.subAccount, _collateralToken, _repayAmount);
+      // If there's borrowing debts from PLP, then trader must repays to PLP first
+      if (_plpLiquidityDebtUSDE30 > 0) {
+        if (_vars.absFundingFeeToBePaid < _plpLiquidityDebtUSDE30) {
+          (_repayAmount, _repayValue) = _getRepayAmount(
+            _vars.configStorage,
+            _vars.oracle,
+            _traderBalance,
+            _vars.absFundingFeeToBePaid,
+            _collateralToken,
+            _vars.tokenPrice
+          );
 
-      // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
-      _vars.absFundingFeeToBePaid -= _repayValue;
+          // Trader repay with all current collateral amounts to PLP
+          _vars.vaultStorage.repayFundingFeeDebtFromTraderToPlp(
+            _vars.subAccount,
+            _collateralToken,
+            _repayAmount,
+            _repayValue
+          );
+        } else {
+          // Trader repay with just enough current collateral amounts to PLP
+          (_repayAmount, _repayValue) = _getRepayAmount(
+            _vars.configStorage,
+            _vars.oracle,
+            _traderBalance,
+            _plpLiquidityDebtUSDE30,
+            _collateralToken,
+            _vars.tokenPrice
+          );
+          _vars.vaultStorage.repayFundingFeeDebtFromTraderToPlp(
+            _vars.subAccount,
+            _collateralToken,
+            _repayAmount,
+            _repayValue
+          );
+        }
+
+        _vars.absFundingFeeToBePaid -= _repayValue;
+      }
+
+      // If no borrowing debts from PLP
+      // or
+      // If trader still must pays for funding fee after repay borrowing debts
+      if (_vars.absFundingFeeToBePaid > 0) {
+        (_repayAmount, _repayValue) = _getRepayAmount(
+          _vars.configStorage,
+          _vars.oracle,
+          _traderBalance,
+          _vars.absFundingFeeToBePaid,
+          _collateralToken,
+          _vars.tokenPrice
+        );
+
+        // book the balances
+        _vars.vaultStorage.payFundingFeeFromTraderToFundingFee(_vars.subAccount, _collateralToken, _repayAmount);
+
+        // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+        _vars.absFundingFeeToBePaid -= _repayValue;
+      }
     }
   }
 
@@ -315,6 +380,31 @@ contract TradeHelper is ITradeHelper {
     SettleAllFeesVars memory _vars,
     address _collateralToken
   ) internal returns (uint256) {
+    // When funding fee is the payer
+    uint256 _fundingFeeBalance = _vars.vaultStorage.fundingFee(_collateralToken);
+
+    // We are going to deduct funding fee balance,
+    // so we need to check whether funding fee has this collateral token or not.
+    // If not skip to next token
+    if (_fundingFeeBalance > 0) {
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.configStorage,
+        _vars.oracle,
+        _fundingFeeBalance,
+        _vars.absFundingFeeToBePaid,
+        _collateralToken,
+        _vars.tokenPrice
+      );
+
+      // book the balances
+      _vars.vaultStorage.payFundingFeeFromFundingFeeToTrader(_vars.subAccount, _collateralToken, _repayAmount);
+
+      // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+      _vars.absFundingFeeToBePaid -= _repayValue;
+    }
+  }
+
+  function _settleFundingFeeWhenBorrowingFromPLP(SettleAllFeesVars memory _vars, address _collateralToken) internal {
     // When plp liquidity is the payer
     uint256 _plpBalance = _vars.vaultStorage.plpLiquidity(_collateralToken);
 
@@ -327,11 +417,12 @@ contract TradeHelper is ITradeHelper {
         _vars.oracle,
         _plpBalance,
         _vars.absFundingFeeToBePaid,
-        _collateralToken
+        _collateralToken,
+        _vars.tokenPrice
       );
 
       // book the balances
-      _vars.vaultStorage.payFundingFeeFromPlpToTrader(_vars.subAccount, _collateralToken, _repayAmount);
+      _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _collateralToken, _repayAmount, _repayValue);
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -350,7 +441,8 @@ contract TradeHelper is ITradeHelper {
         _vars.oracle,
         _traderBalance,
         _vars.tradingFeeToBePaid,
-        _collateralToken
+        _collateralToken,
+        _vars.tokenPrice
       );
 
       // devFee = tradingFee * devFeeRate
@@ -381,7 +473,8 @@ contract TradeHelper is ITradeHelper {
         _vars.oracle,
         _traderBalance,
         _vars.borrowingFeeToBePaid,
-        _collateralToken
+        _collateralToken,
+        _vars.tokenPrice
       );
 
       // devFee = tradingFee * devFeeRate
@@ -405,12 +498,10 @@ contract TradeHelper is ITradeHelper {
     OracleMiddleware _oracle,
     uint256 _traderBalance,
     uint256 _feeValueE30,
-    address _token
+    address _token,
+    uint256 _tokenPrice
   ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
-    bytes32 _tokenAssetId = _configStorage.tokenAssetIds(_token);
     uint8 _tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
-    (uint256 _tokenPrice, ) = _oracle.getLatestPrice(_tokenAssetId, false);
-
     uint256 _feeAmount = (_feeValueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
 
     if (_traderBalance > _feeAmount) {

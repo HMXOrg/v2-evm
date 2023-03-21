@@ -942,7 +942,6 @@ contract Calculator is Owned, ICalculator {
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
-    uint256 absFundingFee = _abs(fundingFee);
 
     // Position Exposure   | Funding Rate       | Fund Flow
     // (isLong)            | (fundingRate > 0)  | (traderMustPay)
@@ -954,12 +953,10 @@ contract Calculator is Owned, ICalculator {
 
     // If fundingFee is negative mean Trader receives Fee
     // If fundingFee is positive mean Trader pays Fee
-
     if (_isLong) {
-      return _fundingRate > 0 ? -int(absFundingFee) : int(absFundingFee);
-    } else {
-      return _fundingRate > 0 ? int(absFundingFee) : -int(absFundingFee);
+      return -fundingFee;
     }
+    return fundingFee;
   }
 
   /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.

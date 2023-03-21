@@ -177,6 +177,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
       }
     }
 
+    // @todo - remove this later
     //Reset Trader's collateral balances
     VaultStorage(vaultStorage).removeAllTraderTokens(_subAccount);
   }

@@ -47,17 +47,11 @@ contract Calculator is Owned, ICalculator {
     perpStorage = _perpStorage;
   }
 
-  /// @notice getAUM in E30
+  /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
   /// @return PLP Value in E18 format
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
-    return _getAUME30(_isMaxPrice);
-  }
-
-  /// @notice _getAUM in E30
-  /// @param _isMaxPrice Use Max or Min Price
-  /// @return PLP Value in E18 format
-  function _getAUME30(bool _isMaxPrice) internal view returns (uint256) {
+    // @todo - pendingBorrowingFeeE30
     // @todo - pending funding fee ?
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
@@ -110,13 +104,6 @@ contract Calculator is Owned, ICalculator {
     }
 
     return _pendingBorrowingFee;
-  }
-
-  /// @notice getAUM
-  /// @param _isMaxPrice Use Max or Min Price
-  /// @return PLP Value in E18 format
-  function getAUM(bool _isMaxPrice) public view returns (uint256) {
-    return _getAUME30(_isMaxPrice) / 1e12;
   }
 
   /// @notice GetPLPValue in E30
@@ -236,12 +223,12 @@ contract Calculator is Owned, ICalculator {
   }
 
   /// @notice getMintAmount in e18 format
-  /// @param _aum aum in PLP
+  /// @param _aumE30 aum in PLP E30
   /// @param _totalSupply PLP total supply
   /// @param _value value in USD e30
   /// @return mintAmount in e18 format
-  function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
-    return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
+  function getMintAmount(uint256 _aumE30, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
+    return _aumE30 == 0 ? _value / 1e12 : (_value * _totalSupply) / _aumE30;
   }
 
   function convertTokenDecimals(
@@ -293,7 +280,7 @@ contract Calculator is Owned, ICalculator {
   }
 
   function _getFeeBPS(
-    uint256 _value,
+    uint256 _value, //e30
     uint256 _liquidityUSD, //e30
     uint256 _totalLiquidityUSD, //e30
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
@@ -311,6 +298,7 @@ contract Calculator is Owned, ICalculator {
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
+
     if (targetValue == 0) return _feeBPS;
 
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
@@ -320,13 +308,11 @@ contract Calculator is Owned, ICalculator {
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
       uint32 rebateBPS = uint32((_taxBPS * startTargetDiff) / targetValue);
-
       return rebateBPS > _feeBPS ? 0 : _feeBPS - rebateBPS;
     }
 
     // _nextWeight represented 18 precision
     uint256 _nextWeight = (nextValue * ETH_PRECISION) / (_totalLiquidityUSD + _value);
-
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
     }
@@ -339,8 +325,7 @@ contract Calculator is Owned, ICalculator {
     }
     _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
 
-    uint32 _fee = uint32(_feeBPS + _taxBPS);
-    return _fee;
+    return uint32(_feeBPS + _taxBPS);
   }
 
   /// @notice get settlement fee rate

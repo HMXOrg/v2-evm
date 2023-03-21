@@ -93,7 +93,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     // 3. get aum and lpSupply before deduction fee
-    uint256 _aum = _calculator.getAUM(true);
+    uint256 _aumE30 = _calculator.getAUME30(true);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
@@ -102,15 +102,14 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       _price,
       _lpProvider,
       _minAmount,
-      _aum,
+      _aumE30,
       _lpSupply
     );
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
     PLPv2(ConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
-    emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
-
+    emit AddLiquidity(_lpProvider, _token, _amount, _aumE30, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
     return mintAmount;
   }
 
@@ -126,18 +125,20 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
-    uint256 _aum = _calculator.getAUM(false);
+    uint256 _aum = _calculator.getAUME30(false);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
-    uint256 _lpUsdValue = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
-    uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _lpProvider, _minAmount);
+    uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
+    uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValueE30, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
     PLPv2(ConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
     VaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOut);
 
-    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValue, _amountOut);
+    _validatePLPHealthCheck(_tokenOut);
+
+    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValueE30, _amountOut);
 
     return _amountOut;
   }
@@ -148,7 +149,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _price,
     address _lpProvider,
     uint256 _minAmount,
-    uint256 _aum,
+    uint256 _aumE30,
     uint256 _lpSupply
   ) internal returns (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
@@ -170,7 +171,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       (amountAfterFee * _price) / PRICE_PRECISION
     );
 
-    mintAmount = _calculator.getMintAmount(_aum, _lpSupply, _tokenValueUSDAfterFee);
+    mintAmount = _calculator.getMintAmount(_aumE30, _lpSupply, _tokenValueUSDAfterFee);
 
     // 5. Check slippage: revert on error
     if (mintAmount < _minAmount) revert LiquidityService_InsufficientLiquidityMint();
@@ -185,7 +186,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
   function _exitPool(
     address _tokenOut,
-    uint256 _lpUsdValue, // 1e18
+    uint256 _lpUsdValueE30,
     address _lpProvider,
     uint256 _minAmount
   ) internal returns (uint256) {
@@ -196,20 +197,20 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
-      18,
+      30,
       ConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
-      (_lpUsdValue * PRICE_PRECISION) / _maxPrice
+      (_lpUsdValueE30 * PRICE_PRECISION) / _maxPrice
     );
 
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
-    VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
-
     uint32 _feeBps = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeBPS(
       _tokenOut,
-      _lpUsdValue,
+      _lpUsdValueE30,
       ConfigStorage(configStorage)
     );
+
+    VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
 
     _amountOut = _collectFee(
       CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY)

@@ -139,6 +139,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   }
 
   function removePLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
+    if (plpLiquidity[_token] < _amount) revert IVaultStorage_PLPBalanceRemaining();
     plpLiquidity[_token] -= _amount;
   }
 

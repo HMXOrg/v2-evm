@@ -15,6 +15,7 @@ contract TC02 is BaseIntTest_WithActions {
     // mint native token
     vm.deal(BOB, 1 ether);
     vm.deal(ALICE, 1 ether);
+    vm.deal(FEEVER, 1 ether);
 
     // mint BTC
     wbtc.mint(ALICE, 100 * 1e8);
@@ -207,7 +208,7 @@ contract TC02 is BaseIntTest_WithActions {
       // borrowing rate still not calculated
       assertAssetClassSumBorrowingRate(0, 0, 1120, "T4: ");
 
-      // Just prove not affected with others asset class when Market buy
+      // Invariant testing
       assertAssetClassReserve(1, 0, "T4: ");
       assertAssetClassSumBorrowingRate(1, 0, 0, "T4: ");
       assertAssetClassReserve(2, 0, "T4: ");
@@ -417,7 +418,7 @@ contract TC02 is BaseIntTest_WithActions {
       // note: sum of borrowing rate is calculated on position info
       assertAssetClassReserve(0, 13.5 * 1e30, "T6: ");
 
-      // Just prove not affected with others asset class when Market sell
+      // Invariant testing
       assertAssetClassReserve(1, 0, "T6: ");
       assertAssetClassReserve(2, 0, "T6: ");
     }
@@ -541,7 +542,7 @@ contract TC02 is BaseIntTest_WithActions {
       assertAssetClassReserve(2, 54 * 1e30, "T7: ");
       assertAssetClassSumBorrowingRate(2, 0, 1240, "T7: ");
 
-      // Just prove not affected with others asset class when Market sell
+      // Invariant testing
       assertAssetClassReserve(0, 13.5 * 1e30, "T7: ");
       assertAssetClassSumBorrowingRate(0, 0.000008124373119358 * 1e18, 1180, "T7: ");
 
@@ -567,7 +568,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Then Check position Info
 
       // Time passed          = 60 seconds (60 intevals)
-      // TVL                  = ??? @todo - resolve TVL
+      // TVL                  = 0.99662501 * 20000 = 19932.5002
 
       // Max Funding rate     = 0.04%
       // Max scale skew       = 300,000,000 USD
@@ -587,9 +588,8 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Forex Borrowing rate
       //    = reserve * interval * base rate / tvl
-      //    = 54 * 60 * 0.03% / ???
-      //    = 0.972
-      //    @todo calculate this again 0.000048764579969752
+      //    = 54 * 60 * 0.03% / 19932.5002
+      //    = 0.000048764579969752
       assertAssetClassSumBorrowingRate(2, 0.000048764579969752 * 1e18, 1300, "T8: ");
 
       // JPY market IMF       = 0.01%
@@ -724,30 +724,342 @@ contract TC02 is BaseIntTest_WithActions {
       // Forex's reserve should be increased by = 54 USD
       assertAssetClassReserve(2, 0, "T8: ");
 
-      // Just prove not affected with others asset class when Market sell
+      // Invariant testing
       assertAssetClassReserve(0, 13.5 * 1e30, "T8: ");
       assertAssetClassSumBorrowingRate(0, 0.000008124373119358 * 1e18, 1180, "T8: ");
 
       assertAssetClassReserve(1, 0, "T8: ");
     }
 
-    //   Steps (limit):
-    //   - bob deposit BTC 100 USD
-    //   - bob create buy BTC position order at price 18,000 USD with 500 USD (order 0)
-    //   - price BTC dump to 17,500 USD
-    //   - execute order 0 - not trigger
-    //   - price BTC dump to 17,999.99 USD
-    //   - execute order 0 - BOB will has long position 500 USD with entry price 18,000 USD
-    //   - bob create sell BTC position order at price 18,900 USD with 500 USD (order 1)
-    //   - price BTC pump to 18,500 USD
-    //   - execute order 1 - not trigger
-    //   - price BTC pump to 18,900.01 USD
-    //   - execute order 1 - BOB fully close short at 18,900 USD
-    //   - bob create sell BTC position order at price 21,000 USD with 500 USD (order 2)
-    //   - price BTC pump to 21,050 USD
-    //   - execute order 2 - BOB will has short position 500 USD with entry price 21,000 USD
-    //   - bob create buy BTC position order at price 18,900 USD with 500 USD (order 3)
-    //   - price BTC dump to 17,999.99 USD
-    //   - execute order 3 - BOB fully close long at 18,900 USD
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T9: Bob deposit BTC 100 USD at price 20,000
+    // 100 / 20000 = 0.005 BTC
+    address _bobSubAccount0 = getSubAccount(BOB, 0);
+    depositCollateral(BOB, 0, wbtc, 0.01 * 1e8);
+
+    assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.01 * 1e8, "T9: ");
+
+    // And BOB create limit order to open long position for 500 USD at Btc price 18,000 USD
+    // Order Index: 0
+    createLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _marketIndex: wbtcMarketIndex,
+      _sizeDelta: 3000 * 1e30,
+      _triggerPrice: 18_000 * 1e30,
+      _triggerAboveThreshold: false,
+      _executionFee: executionOrderFee,
+      _reduceOnly: true,
+      _tpToken: address(wbtc)
+    });
+
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T11: Btc Price has changed to 18,500 USD
+    //      Should revert ILimitTradeHandler_InvalidPriceForExecution
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_500 * 1e8, 0);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+
+    // T12: Btc Price has changed to 17,500 USD
+    //      Execute Bob order index 0
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 17_500 * 1e8, 0);
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+    {
+      // When Limit order index 0 has executed
+      // Then Bob should has Long position
+      // And Position size should be 3000 USD at Price 18000 USD
+
+      // Given Oracle price   = 17500 USD
+      // And TVL
+      //  - BTC               = 0.99572411 * 17500 = 17425.171925
+      //  - Total             = 17425.171925 USD
+
+      // Max Funding rate     = 0.04%
+      // Max scale skew       = 300,000,000 USD
+      // Market skew          = 0
+      // new Market skew      = 0 + 3000 (long position)
+      // Premium before       = 0 / 300000000 = 0
+      // Premium after        = 3000 / 300000000 = 0.00001
+      // Premium median       = (0 + 0.00001) / 2 = 0.000005
+      // Adaptive price       = 17500 * (1 + 0.000005) = 17500.0875
+      //                      = 17500.0875
+
+      // Market's Funding rate calculation
+      // When Market skew is 0
+      // Then Funding rate is 0
+      assertMarketFundingRate(wbtcMarketIndex, 0, 1420, "T12: ");
+
+      // Crypto Borrowing rate calulation
+      // Given Latest info
+      //    Reserve                 = 13.5 USD
+      //    Sum borrowing rate      = 0.000008124373119358
+      //    Latest borrowing time   = 1180
+      // And Time passed            = 1420 - 1180 = 240 seconds (240 intervals)
+      // Then
+      //    Pending borrowing rate  = 13.5 * 240 * 0.01% / 17425.171925
+      //                            = 0.000018593790718079
+      // And Sum borrowing rate     = 0.000008124373119358 + 0.000018593790718079
+      //                            = 0.000026718163837437
+      assertAssetClassSumBorrowingRate(0, 0.000026718163837437 * 1e18, 1420, "T12: ");
+
+      // BTC market IMF       = 1%
+      // BTC market MMF       = 0.5%
+      // Inc / Dec Fee        = 0.1%
+
+      // Before:
+      //    Position size     = 0
+      //    Open interest     = 0
+      //    Avg Price         = 0
+      //    Reserve           = 0
+      //    Borrowing rate    = 0
+      //    Finding rate      = 0
+
+      // After:
+      //    Position size     = 3000
+      //    Open interest     = 3000 / 17500 = 0.17142857
+      //    Avg price         = 18000 USD
+      //    IMR               = 3000 * 1%   =  30 USD
+      //    MMR               = 3000 * 0.5% =  15 USD
+      //    Reserve           = 30 * 900%   = 270 USD
+      //    Trading fee       = 3000 * 0.1% =   3 USD
+      //    Borrowing rate    = 0
+      //    Funding rate      = 0
+
+      //    Borrowing fee     = 0
+      //    Funding fee       = 0
+
+      // Profit and Loss
+      // note: long position: size delta * (adaptive price - avg price) / avg price
+      //       short position: size delta * (avg price - adaptive price) / avg price
+      // unrealized PnL = 0
+
+      assertPositionInfoOf({
+        _subAccount: _bobSubAccount0,
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 3_000 * 1e30,
+        _avgPrice: 18_000 * 1e30,
+        _openInterest: 0.17142857 * 1e8,
+        _reserveValue: 270 * 1e30,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0.000026718163837437 * 1e18,
+        _entryFundingRate: 0,
+        _str: "T12: "
+      });
+
+      // BOB Sub-account's state
+      //    IMR             = 0 USD
+      //    MMR             = 0 USD
+      // In Summarize
+      //    IMR = 0 + 30    =  31.5 USD
+      //    MMR = 0 + 15    = 15.75 USD
+
+      assertSubAccounStatus({ _subAccount: _bobSubAccount0, _imr: 30 * 1e30, _mmr: 15 * 1e30, _str: "T12: " });
+
+      // Invariant Testing
+      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T12: " });
+
+      // Assert Trader's balances, Vault's fees and PLP's Liquidity
+
+      // Bob's collateral before settle payment
+      //    BTC - 0.01 btc
+
+      // Vault's fees before settle payment
+      //    BTC - protocol fee  = 0.00317213 btc
+      //        - dev fee       = 0.00003038 btc
+
+      // PLP's liquidity before settle payment
+      //    BTC - 0.99572411 btc
+
+      // Settlement detail
+      // Bob has to pay
+      //    Trading fee   - 3 USD
+      //      BTC - 3 / 17500               = 0.00017142 btc
+      //          - pay for dev (15%)       = 0.00002571 btc
+      //          - pay for protocol (85%)  = 0.00017142 - 0.00002571
+      //                                    = 0.00014571 btc
+
+      // And PLP has to pay
+      //     nothing
+
+      // Bob's collateral after settle payment
+      //    BTC - 0.01 - 0.00017142 = 0.00982858 btc
+
+      assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.00982858 * 1e8, "T12: ");
+
+      // Vault's fees after settle payment
+      //    BTC - protocol fee  = 0.00317213 + 0.00014571 = 0.00331784 btc
+      //        - dev fee       = 0.00003038 + 0.00002571 = 0.00005609 btc
+
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.00331784 * 1e8, _devFee: 0.00005609 * 1e8, _str: "T12: " });
+
+      // PLP's liquidity after settle payment
+      //    nothing changed
+      assertPLPLiquidity(address(wbtc), 0.99572411 * 1e8, "T12: ");
+
+      // Asset Market's state, Asset class's state
+
+      // When Bob buy Btc position for 3000 USD
+      // Then Market on Long side should affected
+      // Given Market's state before Bob bought Btc
+      //
+
+      assertMarketLongPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 3000 * 1e30,
+        _avgPrice: 18_000 * 1e30,
+        _openInterest: 0.17142857 * 1e8,
+        _str: "T12: "
+      });
+      // And Short side should invariant
+      assertMarketShortPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _str: "T12: "
+      });
+
+      // Assert Asset class
+      // Given Crypto's reserve is 13.5
+      // When Bob increase Btc position for 3000 USD
+      // And reserve is 270 USD
+      // Then Crypto's reserve should increased by 270
+      assertAssetClassReserve(0, (13.5 + 270) * 1e30, "T12: ");
+
+      // Invariant testing
+      assertAssetClassReserve(2, 0, "T12: ");
+      assertAssetClassReserve(1, 0, "T12: ");
+    }
+
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T13: Bob create limit order to close position
+    // Order Index: 1
+    createLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _marketIndex: wbtcMarketIndex,
+      _sizeDelta: -500 * 1e30,
+      _triggerPrice: 18_900 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: executionOrderFee,
+      _reduceOnly: true,
+      _tpToken: address(wbtc)
+    });
+
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T14: Btc Price has changed to 18,500 USD
+    //      Execute Bob order index 1, but price is not trigger
+    //      Should revert ILimitTradeHandler_InvalidPriceForExecution
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_500 * 1e8, 0);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+
+    // T15: Btc Price has changed to 18,900.01 USD
+    //      Execute Bob order index 1
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_900.01 * 1e8, 0);
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+    {
+      // BOB has closed position with profit
+    }
+
+    // T16: Bob create limit order sell Btc for 500 USD at price 21,000 USD
+    // Order Index: 2
+    createLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _marketIndex: wbtcMarketIndex,
+      _sizeDelta: -500 * 1e30,
+      _triggerPrice: 21_000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: executionOrderFee,
+      _reduceOnly: true,
+      _tpToken: address(wbtc)
+    });
+
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T17: Btc Price has changed to 21,500 USD
+    //      Execute Bob order index 2
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 21_500 * 1e8, 0);
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 2,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+    {
+      // BOB has position short 500 USD
+    }
+
+    // T18: Bob create limit order close short position 500 USD at price 18,900 USD
+    // Order Index: 3
+    createLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _marketIndex: wbtcMarketIndex,
+      _sizeDelta: 500 * 1e30,
+      _triggerPrice: 18_900 * 1e30,
+      _triggerAboveThreshold: false,
+      _executionFee: executionOrderFee,
+      _reduceOnly: true,
+      _tpToken: address(wbtc)
+    });
+
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T17: Btc Price has changed to 17,500.00 USD
+    //      Execute Bob order index 2
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 17_500 * 1e8, 0);
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 3,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+    {
+      // BOB has position short 500 USD
+    }
   }
 }

@@ -205,12 +205,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      _vars.priceE30 = _limitPriceE30 != 0 ? _limitPriceE30 : _vars.priceE30;
+      _vars.adaptivePriceE30 = _limitPriceE30 != 0 ? _limitPriceE30 : _vars.adaptivePriceE30;
 
       (_vars.closePriceE30, , , , ) = OracleMiddleware(_configStorage.oracle()).getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         _vars.isLong, // if current position is SHORT position, then we use max price
-        (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+        (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
         _marketConfig.fundingRate.maxSkewScaleUSD
       );

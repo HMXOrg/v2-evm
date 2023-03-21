@@ -13,8 +13,6 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
@@ -450,6 +448,7 @@ contract Calculator is Owned, ICalculator {
   ) public view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
+
     // Calculate unrealized PnL and unrelized fee
     (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
       _subAccount,
@@ -541,8 +540,13 @@ contract Calculator is Owned, ICalculator {
         {
           // Calculate borrowing fee
           uint256 _plpTVL = _getPLPValueE30(false);
+          PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+            _marketConfig.assetClass
+          );
           uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);
-          uint256 _borrowingRate = _nextBorrowingRate - _var.position.entryBorrowingRate;
+          uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate +
+            _nextBorrowingRate -
+            _var.position.entryBorrowingRate;
           // Calculate the borrowing fee based on reserved value, borrowing rate.
           _unrealizedFeeE30 += int256((_var.position.reserveValueE30 * _borrowingRate) / 1e18);
           // getBorrowingFee(_marketConfig.assetClass, _var.position.reserveValueE30, _var.position.entryBorrowingRate)
@@ -550,23 +554,10 @@ contract Calculator is Owned, ICalculator {
         {
           // Calculate funding fee
           (int256 nextFundingRate, , ) = _getNextFundingRate(_var.position.marketIndex);
-
-          _unrealizedFeeE30 += _getFundingFee(
-            _var.isLong,
-            _var.absSize,
-            nextFundingRate,
-            _var.position.entryFundingRate
-          );
-          // (block.timestamp / _fundingInterval) * _fundingInterval;
-          // _unrealizedFeeE30 += getFundingFee(
-          //   _var.position.marketIndex,
-          //   _var.isLong,
-          //   _var.position.positionSizeE30,
-          //   _var.position.entryFundingRate
-          // );
+          int256 fundingRate = _globalMarket.currentFundingRate + nextFundingRate;
+          _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
         }
         // Calculate trading fee
-
         _unrealizedFeeE30 += int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
       }
 
@@ -898,28 +889,13 @@ contract Calculator is Owned, ICalculator {
     bool _isLong,
     int256 _size,
     int256 _entryFundingRate
-  ) public view returns (int256 fundingFee) {
+  ) external view returns (int256 fundingFee) {
     if (_size == 0) return 0;
     uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
 
     PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
-    int256 _fundingRate = _globalMarket.currentFundingRate - _entryFundingRate;
-
-    // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
-    // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
-    fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
-
-    console2.log("absSize", absSize);
-    console2.log("_globalMarket.currentFundingRate", _globalMarket.currentFundingRate);
-    console2.log("_entryFundingRate", _entryFundingRate);
-    console2.log("_entryFundingRate", _entryFundingRate);
-    console2.log("fundingFee", fundingFee);
-
-    if (_isLong) {
-      return -fundingFee;
-    }
-    return fundingFee;
+    return _getFundingFee(_isLong, absSize, _globalMarket.currentFundingRate, _entryFundingRate);
   }
 
   function _getFundingFee(
@@ -930,14 +906,14 @@ contract Calculator is Owned, ICalculator {
   ) private pure returns (int256 fundingFee) {
     int256 _fundingRate = _sumFundingRate - _entryFundingRate;
 
+    // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
+    // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int256(_size) * _fundingRate) / int64(RATE_PRECISION);
-    uint256 absFundingFee = _abs(fundingFee);
 
     if (_isLong) {
-      return _fundingRate > 0 ? -int(absFundingFee) : int(absFundingFee);
-    } else {
-      return _fundingRate > 0 ? int(absFundingFee) : -int(absFundingFee);
+      return -fundingFee;
     }
+    return fundingFee;
   }
 
   /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.
@@ -949,13 +925,22 @@ contract Calculator is Owned, ICalculator {
     uint8 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _entryBorrowingRate
-  ) public view returns (uint256 borrowingFee) {
+  ) external view returns (uint256 borrowingFee) {
     // Get the global asset class.
     PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
+    // // Calculate borrowing fee.
+    return _getBorrowingFee(_reservedValue, _assetClassState.sumBorrowingRate, _entryBorrowingRate);
+  }
+
+  function _getBorrowingFee(
+    uint256 _reservedValue,
+    uint256 _sumBorrowingRate,
+    uint256 _entryBorrowingRate
+  ) internal view returns (uint256 borrowingFee) {
     // Calculate borrowing rate.
-    uint256 _borrowingRate = _assetClassState.sumBorrowingRate - _entryBorrowingRate;
+    uint256 _borrowingRate = _sumBorrowingRate - _entryBorrowingRate;
     // Calculate the borrowing fee based on reserved value, borrowing rate.
     return (_reservedValue * _borrowingRate) / RATE_PRECISION;
   }
@@ -985,9 +970,9 @@ contract Calculator is Owned, ICalculator {
     PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
-
     // If block.timestamp not pass the next funding time, return 0.
     if (_assetClassState.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
+
     // If PLP TVL is 0, return 0.
     if (_plpTVL == 0) return 0;
 

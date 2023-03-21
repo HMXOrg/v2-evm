@@ -35,11 +35,11 @@ interface ICalculator {
     SHORT
   }
 
-  function getAUM(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
+  function getAUM(bool isMaxPrice) external returns (uint256);
 
-  function getAUME30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
+  function getAUME30(bool isMaxPrice) external returns (uint256);
 
-  function getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external view returns (uint256);
+  function getPLPValueE30(bool isMaxPrice) external view returns (uint256);
 
   function getFreeCollateral(
     address _subAccount,
@@ -89,12 +89,7 @@ interface ICalculator {
 
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
 
-  function getSettlementFeeRate(
-    address _token,
-    uint256 _liquidityUsdDelta,
-    uint256 _limitPrice,
-    bytes32 _assetId
-  ) external returns (uint256);
+  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
 
   function getCollateralValue(
     address _subAccount,
@@ -102,10 +97,7 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (uint256 _collateralValueE30);
 
-  function getNextFundingRate(
-    uint256 _marketIndex,
-    uint256 _limitPriceE30
-  ) external view returns (int256, int256, int256);
+  function getNextFundingRate(uint256 _marketIndex) external view returns (int256, int256, int256);
 
   function getDelta(
     uint256 _size,

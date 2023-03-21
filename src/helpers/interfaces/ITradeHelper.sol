@@ -10,9 +10,9 @@ interface ITradeHelper {
 
   function reloadConfig() external;
 
-  function updateBorrowingRate(uint8 _assetClassIndex, uint256 _limitPriceE30, bytes32 _limitAssetId) external;
+  function updateBorrowingRate(uint8 _assetClassIndex) external;
 
-  function updateFundingRate(uint256 _marketIndex, uint256 _limitPriceE30) external;
+  function updateFundingRate(uint256 _marketIndex) external;
 
   function settleAllFees(
     PerpStorage.Position memory position,

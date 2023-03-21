@@ -57,9 +57,7 @@ contract TradeHelper is ITradeHelper {
 
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function updateBorrowingRate(uint8 _assetClassIndex, uint256 _limitPriceE30, bytes32 _limitAssetId) external {
+  function updateBorrowingRate(uint8 _assetClassIndex) external {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -76,7 +74,7 @@ contract TradeHelper is ITradeHelper {
 
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastBorrowingTime + _fundingInterval <= block.timestamp) {
-      uint256 _plpTVL = calculator.getPLPValueE30(false, 0, 0);
+      uint256 _plpTVL = calculator.getPLPValueE30(false);
 
       // update borrowing rate
       uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _plpTVL);
@@ -92,8 +90,7 @@ contract TradeHelper is ITradeHelper {
 
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
-  /// @param _limitPriceE30 Price from limitOrder, zeros means no marketOrderPrice
-  function updateFundingRate(uint256 _marketIndex, uint256 _limitPriceE30) external {
+  function updateFundingRate(uint256 _marketIndex) external {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -113,8 +110,7 @@ contract TradeHelper is ITradeHelper {
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
       (int256 nextFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
-        _marketIndex,
-        _limitPriceE30
+        _marketIndex
       );
 
       _globalMarket.currentFundingRate += nextFundingRate;

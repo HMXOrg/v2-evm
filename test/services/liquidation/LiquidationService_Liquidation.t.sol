@@ -56,8 +56,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
-    vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
 
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
     tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
@@ -92,8 +92,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
-    vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
 
     bytes32 _wethPositionId = getPositionId(ALICE, 0, ethMarketIndex);
     bytes32 _wbtcPositionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -153,10 +153,10 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     address aliceAddress = getSubAccount(ALICE, 0);
     address bobAddress = getSubAccount(BOB, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
-    vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
 
-    vaultStorage.setTraderBalance(bobAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(bobAddress, address(usdt), 10_000 * 1e6);
 
     bytes32 _wethPositionId = getPositionId(ALICE, 0, ethMarketIndex);
     bytes32 _wbtcPositionId = getPositionId(ALICE, 0, ethMarketIndex);

@@ -44,8 +44,8 @@ interface IConfigStorage {
   }
 
   struct FundingRate {
-    uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRateBPS
-    uint32 maxFundingRateBPS; // maximum funding rate
+    uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
+    uint256 maxFundingRate; // maximum funding rate
   }
 
   struct MarketConfig {
@@ -64,12 +64,12 @@ interface IConfigStorage {
   }
 
   struct AssetClassConfig {
-    uint32 baseBorrowingRateBPS;
+    uint256 baseBorrowingRate;
   }
 
   struct LiquidityConfig {
     uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
-    uint32 plpSafetyBufferBPS;
+    uint32 plpSafetyBufferBPS; // for PLP deleverage
     uint32 taxFeeRateBPS; // PLP deposit, withdraw, settle collect when pool weight is imbalances
     uint32 flashLoanFeeRateBPS;
     uint32 maxPLPUtilizationBPS; //% of max utilization
@@ -100,8 +100,6 @@ interface IConfigStorage {
    */
 
   function calculator() external view returns (address);
-
-  function feeCalculator() external view returns (address);
 
   function oracle() external view returns (address);
 
@@ -176,8 +174,6 @@ interface IConfigStorage {
   function setDynamicEnabled(bool _enabled) external;
 
   function setCalculator(address _calculator) external;
-
-  function setFeeCalculator(address _feeCalculator) external;
 
   function setOracle(address _oracle) external;
 

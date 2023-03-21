@@ -8,7 +8,6 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 
@@ -33,6 +32,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     bool currentPositionIsLong;
     uint256 adaptivePriceE30;
     uint256 priceE30;
+    uint256 closePriceE30;
     int32 exponent;
   }
   struct DecreasePositionVars {
@@ -183,10 +183,10 @@ contract TradeService is ReentrancyGuard, ITradeService {
     if (!_vars.isNewPosition && _vars.currentPositionIsLong != _vars.isLong) revert ITradeService_BadExposure();
 
     // Update borrowing rate
-    TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass, _limitPriceE30, _marketConfig.assetId);
+    TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 
     // Update funding rate
-    TradeHelper(tradeHelper).updateFundingRate(_marketIndex, _limitPriceE30);
+    TradeHelper(tradeHelper).updateFundingRate(_marketIndex);
 
     // get the global market for the given market index
     PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
@@ -200,12 +200,20 @@ contract TradeService is ReentrancyGuard, ITradeService {
       ).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _vars.isLong, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           _sizeDelta,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
       _vars.priceE30 = _limitPriceE30 != 0 ? _limitPriceE30 : _vars.priceE30;
+
+      (_vars.closePriceE30, , , , ) = OracleMiddleware(_configStorage.oracle()).getLatestAdaptivePriceWithMarketStatus(
+        _marketConfig.assetId,
+        _vars.isLong, // if current position is SHORT position, then we use max price
+        (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+        -_vars.position.positionSizeE30,
+        _marketConfig.fundingRate.maxSkewScaleUSD
+      );
 
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
@@ -215,8 +223,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     }
 
     // market validation
-    // check sub account equity is under IMR
-    _subAccountIMRCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
@@ -239,33 +245,23 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.isLong,
         _absSizeDelta,
         _vars.adaptivePriceE30,
+        _vars.closePriceE30,
         _vars.position.avgEntryPriceE30,
         _vars.position.lastIncreaseTimestamp
       );
     }
 
-    // MarginFee = Trading Fee + Borrowing Fee
-    TradeHelper(tradeHelper).collectMarginFee(
-      _vars.subAccount,
+    // Settle
+    // - trading fees
+    // - borrowing fees
+    // - funding fees
+    TradeHelper(tradeHelper).settleAllFees(
+      _vars.position,
       _absSizeDelta,
+      _marketConfig.increasePositionFeeRateBPS,
       _marketConfig.assetClass,
-      _vars.position.reserveValueE30,
-      _vars.position.entryBorrowingRate,
-      _marketConfig.increasePositionFeeRateBPS
+      _marketIndex
     );
-
-    TradeHelper(tradeHelper).settleMarginFee(_vars.subAccount);
-
-    // Collect funding fee
-    TradeHelper(tradeHelper).collectFundingFee(
-      _vars.subAccount,
-      _marketConfig.assetClass,
-      _marketIndex,
-      _vars.position.positionSizeE30,
-      _vars.position.entryFundingRate
-    );
-
-    TradeHelper(tradeHelper).settleFundingFee(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     // update the position size by adding the new size delta
     _vars.position.positionSizeE30 += _sizeDelta;
@@ -299,7 +295,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       // calculate the maximum amount of reserve required for the new position
       uint256 _maxReserve = (_imr * _marketConfig.maxProfitRateBPS) / BPS;
       // increase the reserved amount by the maximum reserve required for the new position
-      _increaseReserved(_marketConfig.assetClass, _maxReserve, _limitPriceE30, _marketConfig.assetId);
+      _increaseReserved(_marketConfig.assetClass, _maxReserve);
       _vars.position.reserveValueE30 += _maxReserve;
     }
 
@@ -404,7 +400,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           _vars.isLongPosition ? -int(_positionSizeE30ToDecrease) : int(_positionSizeE30ToDecrease),
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
@@ -477,7 +473,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           -_vars.currentPositionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
@@ -518,8 +514,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
   function validateDeleverage() external view {
     // SLOAD
     Calculator _calculator = calculator;
-    uint256 _aum = _calculator.getAUME30(false, 0, 0);
-    uint256 _tvl = _calculator.getPLPValueE30(false, 0, 0);
+    uint256 _aum = _calculator.getAUME30(false);
+    uint256 _tvl = _calculator.getPLPValueE30(false);
 
     // check plp safety buffer
     if ((_tvl - _aum) * BPS <= (BPS - ConfigStorage(configStorage).getLiquidityConfig().plpSafetyBufferBPS) * _tvl)
@@ -543,32 +539,22 @@ contract TradeService is ReentrancyGuard, ITradeService {
     DecreasePositionVars memory _vars
   ) internal returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
     // Update borrowing rate
-    TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass, _vars.limitPriceE30, _marketConfig.assetId);
+    TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 
     // Update funding rate
-    TradeHelper(tradeHelper).updateFundingRate(_globalMarketIndex, _vars.limitPriceE30);
+    TradeHelper(tradeHelper).updateFundingRate(_globalMarketIndex);
 
-    TradeHelper(tradeHelper).collectMarginFee(
-      _vars.subAccount,
+    // Settle
+    // - trading fees
+    // - borrowing fees
+    // - funding fees
+    TradeHelper(tradeHelper).settleAllFees(
+      _vars.position,
       _vars.positionSizeE30ToDecrease,
+      _marketConfig.increasePositionFeeRateBPS,
       _marketConfig.assetClass,
-      _vars.position.reserveValueE30,
-      _vars.position.entryBorrowingRate,
-      _marketConfig.decreasePositionFeeRateBPS
+      _globalMarketIndex
     );
-
-    TradeHelper(tradeHelper).settleMarginFee(_vars.subAccount);
-
-    // Collect funding fee
-    TradeHelper(tradeHelper).collectFundingFee(
-      _vars.subAccount,
-      _marketConfig.assetClass,
-      _globalMarketIndex,
-      _vars.position.positionSizeE30,
-      _vars.position.entryFundingRate
-    );
-
-    TradeHelper(tradeHelper).settleFundingFee(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
 
     uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
@@ -590,6 +576,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.avgEntryPriceE30,
         _vars.position.lastIncreaseTimestamp
       );
+
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value
       if (delta >= _vars.position.reserveValueE30) {
         delta = _vars.position.reserveValueE30;
@@ -686,17 +673,10 @@ contract TradeService is ReentrancyGuard, ITradeService {
       if (_realizedPnl != 0) {
         if (_realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
-          _settleProfit(
-            _vars.subAccount,
-            _vars.tpToken,
-            uint256(_realizedPnl),
-            _vars.limitPriceE30,
-            _marketConfig.assetId
-          );
+          _settleProfit(_vars.subAccount, _vars.tpToken, uint256(_realizedPnl));
         } else {
           // loss
-
-          _settleLoss(_vars.subAccount, uint256(-_realizedPnl), _vars.limitPriceE30, _marketConfig.assetId);
+          _settleLoss(_vars.subAccount, uint256(-_realizedPnl));
         }
       }
     }
@@ -715,45 +695,25 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _subAccount - Sub-account of trader
   /// @param _tpToken - token that trader want to take profit as collateral
   /// @param _realizedProfitE30 - trader profit in USD
-  /// @param _limitPriceE30 - Price to be overwritten to a specified asset
-  /// @param _limitAssetId - Asset to be overwritten by _limitPriceE30
-  function _settleProfit(
-    address _subAccount,
-    address _tpToken,
-    uint256 _realizedProfitE30,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) internal {
+  function _settleProfit(address _subAccount, address _tpToken, uint256 _realizedProfitE30) internal {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
-    uint256 _tpTokenPrice;
     bytes32 _tpAssetId = _configStorage.tokenAssetIds(_tpToken);
-
-    if (_tpAssetId == _limitAssetId && _limitPriceE30 != 0) {
-      _tpTokenPrice = _limitPriceE30;
-    } else {
-      (_tpTokenPrice, ) = OracleMiddleware(_configStorage.oracle()).getLatestPrice(_tpAssetId, false);
-    }
+    (uint256 _tpTokenPrice, ) = OracleMiddleware(_configStorage.oracle()).getLatestPrice(_tpAssetId, false);
 
     uint256 _decimals = _configStorage.getAssetTokenDecimal(_tpToken);
 
     // calculate token trader should received
     uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
 
-    uint256 _settlementFeeRate = calculator.getSettlementFeeRate(
-      _tpToken,
-      _realizedProfitE30,
-      _limitPriceE30,
-      _limitAssetId
-    );
+    uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_tpToken, _realizedProfitE30);
 
     uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18;
 
-    _vaultStorage.removePLPLiquidity(_tpToken, _tpTokenOut);
-    _vaultStorage.addFee(_tpToken, _settlementFee);
-    _vaultStorage.increaseTraderBalance(_subAccount, _tpToken, _tpTokenOut - _settlementFee);
+    // TODO: no more fee to protocol fee, but discount deduction amount of PLP instead
+    _vaultStorage.payTraderProfit(_subAccount, _tpToken, _tpTokenOut, _settlementFee);
 
     // @todo - emit LogSettleProfit(trader, collateralToken, addedAmount, settlementFee)
   }
@@ -761,9 +721,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @notice settle loss
   /// @param _subAccount - Sub-account of trader
   /// @param _debtUsd - Loss in USD
-  /// @param _limitPriceE30 - Price to be overwritten to a specified asset
-  /// @param _limitAssetId - Asset to be overwritten by _limitPriceE30
-  function _settleLoss(address _subAccount, uint256 _debtUsd, uint256 _limitPriceE30, bytes32 _limitAssetId) internal {
+  function _settleLoss(address _subAccount, uint256 _debtUsd) internal {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
@@ -788,11 +746,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.tokenAssetId = _configStorage.tokenAssetIds(_token);
 
         // Retrieve the latest price and confident threshold of the plp underlying token
-        if (_vars.tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
-          _vars.price = _limitPriceE30;
-        } else {
-          (_vars.price, ) = _oracleMiddleware.getLatestPrice(_vars.tokenAssetId, false);
-        }
+        (_vars.price, ) = _oracleMiddleware.getLatestPrice(_vars.tokenAssetId, false);
 
         _vars.collateralUsd = (_vars.collateral * _vars.price) / (10 ** _vars.decimals);
 
@@ -800,8 +754,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           // When this collateral token can cover all the debt, use this token to pay it all
           _vars.collateralToRemove = (_debtUsd * (10 ** _vars.decimals)) / _vars.price;
 
-          _vaultStorage.addPLPLiquidity(_token, _vars.collateralToRemove);
-          _vaultStorage.decreaseTraderBalance(_subAccount, _token, _vars.collateralToRemove);
+          _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
           // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
           // In this case, all debt are paid. We can break the loop right away.
           break;
@@ -809,17 +762,17 @@ contract TradeService is ReentrancyGuard, ITradeService {
           // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
           _vars.collateralToRemove = (_vars.collateralUsd * (10 ** _vars.decimals)) / _vars.price;
 
-          _vaultStorage.addPLPLiquidity(_token, _vars.collateralToRemove);
-          _vaultStorage.decreaseTraderBalance(_subAccount, _token, _vars.collateralToRemove);
+          _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
           // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
           // update debtUsd
           unchecked {
             _debtUsd = _debtUsd - _vars.collateralUsd;
           }
         }
-        unchecked {
-          ++_i;
-        }
+      }
+
+      unchecked {
+        ++_i;
       }
     }
   }
@@ -844,6 +797,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _isLong Whether the position is long or short.
   /// @param _sizeDelta The size difference between the current position and the next position.
   /// @param _markPrice current market price
+  /// @param _closePrice the adaptive price of this market if this position is fully closed. This is used to correctly calculate position pnl.
   /// @param _averagePrice The current average price of the position.
   /// @return The next average price of the position.
   function _getPositionNextAveragePrice(
@@ -851,6 +805,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     bool _isLong,
     uint256 _sizeDelta,
     uint256 _markPrice,
+    uint256 _closePrice,
     uint256 _averagePrice,
     uint256 _lastIncreaseTimestamp
   ) internal view returns (uint256) {
@@ -858,10 +813,11 @@ contract TradeService is ReentrancyGuard, ITradeService {
     (bool isProfit, uint256 delta) = calculator.getDelta(
       _size,
       _isLong,
-      _markPrice,
+      _closePrice,
       _averagePrice,
       _lastIncreaseTimestamp
     );
+
     // Calculate the next size and divisor
     uint256 nextSize = _size + _sizeDelta;
     uint256 divisor;
@@ -878,19 +834,12 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @notice This function increases the reserve value
   /// @param _assetClassIndex The index of asset class.
   /// @param _reservedValue The amount by which to increase the reserve value.
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function _increaseReserved(
-    uint8 _assetClassIndex,
-    uint256 _reservedValue,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) internal {
+  function _increaseReserved(uint8 _assetClassIndex, uint256 _reservedValue) internal {
     // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the total TVL
-    uint256 tvl = calculator.getPLPValueE30(true, _limitPriceE30, _limitAssetId);
+    uint256 tvl = calculator.getPLPValueE30(true);
 
     // Retrieve the global state
     PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
@@ -913,22 +862,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // Update the new reserve value in the PerpStorage contract
     _perpStorage.updateGlobalState(_globalState);
     _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
-  }
-
-  /// @notice health check for sub account that equity > initial margin required
-  /// @param _subAccount target sub account for health check
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function _subAccountIMRCheck(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view {
-    // check sub account is healthy
-    int256 _subAccountEquity = calculator.getEquity(_subAccount, _limitPriceE30, _limitAssetId);
-
-    // initial margin requirement (IMR) = position size * initial margin fraction
-    // note: initialMarginFractionBPS is 1e4
-    uint256 _imr = calculator.getIMR(_subAccount);
-
-    // if sub account equity < IMR, then trader couldn't increase position
-    if (uint256(_subAccountEquity) < _imr) revert ITradeService_SubAccountEquityIsUnderIMR();
   }
 
   /// @notice health check for sub account that equity > margin maintenance required

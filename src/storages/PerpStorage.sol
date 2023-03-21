@@ -31,7 +31,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
 
   mapping(bytes32 => Position) public positions;
   mapping(address => bytes32[]) public subAccountPositionIds;
-  mapping(address => int256) public subAccountFee;
+  mapping(address => uint256) public subAccountBorrowingFee;
   mapping(address => uint256) public badDebt;
   mapping(uint256 => GlobalMarket) public globalMarkets;
   mapping(uint256 => GlobalAssetClass) public globalAssetClass;
@@ -81,16 +81,12 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     return globalMarkets[_marketIndex];
   }
 
-  function getGlobalAssetClassByIndex(uint8 _assetClassIndex) external view returns (GlobalAssetClass memory) {
+  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
     return globalAssetClass[_assetClassIndex];
   }
 
   function getGlobalState() external view returns (GlobalState memory) {
     return globalState;
-  }
-
-  function getSubAccountFee(address subAccount) external view returns (int256 fee) {
-    return subAccountFee[subAccount];
   }
 
   /// @notice Gets the bad debt associated with the given sub-account.
@@ -185,8 +181,18 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     globalMarkets[_marketIndex] = _globalMarket;
   }
 
-  function updateSubAccountFee(address _subAccount, int256 fee) external onlyWhitelistedExecutor {
-    subAccountFee[_subAccount] = fee;
+  function increaseSubAccountBorrowingFee(address _subAccount, uint256 _borrowingFee) external onlyWhitelistedExecutor {
+    subAccountBorrowingFee[_subAccount] += _borrowingFee;
+  }
+
+  function decreaseSubAccountBorrowingFee(address _subAccount, uint256 _borrowingFee) external onlyWhitelistedExecutor {
+    // Maximum decrease the current amount
+    if (subAccountBorrowingFee[_subAccount] < _borrowingFee) {
+      subAccountBorrowingFee[_subAccount] = 0;
+      return;
+    }
+
+    subAccountBorrowingFee[_subAccount] -= _borrowingFee;
   }
 
   /// @notice Adds bad debt to the specified sub-account.

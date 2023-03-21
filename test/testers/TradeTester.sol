@@ -222,9 +222,6 @@ contract TradeTester is StdAssertions {
     GlobalAssetClassExpectedData memory _globalAssetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData
   ) internal {
-    // Check Perp's state
-    assertEq(perpStorage.getSubAccountFee(_subAccount), _perpStorageExpectedData.subAccountFee, "Sub-account Fee");
-
     IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(
       _globalAssetClassExpectedData.assetClassId
     );
@@ -264,7 +261,7 @@ contract TradeTester is StdAssertions {
       _token = interestTokens[_i];
 
       assertEq(vaultStorage.plpLiquidity(_token), _expectedData.plpLiquidity[_token], "PLP Liquidity");
-      assertEq(vaultStorage.fees(_token), _expectedData.fees[_token], "Fee");
+      assertEq(vaultStorage.protocolFees(_token), _expectedData.fees[_token], "Protocol Fee");
       assertEq(vaultStorage.fundingFee(_token), _expectedData.fundingFee[_token], "Funding Fee");
       assertEq(vaultStorage.devFees(_token), _expectedData.devFees[_token], "Dev Fee");
       assertEq(

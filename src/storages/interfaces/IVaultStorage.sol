@@ -9,6 +9,7 @@ interface IVaultStorage {
   error IVaultStorage_TraderTokenAlreadyExists();
   error IVaultStorage_TraderBalanceRemaining();
   error IVaultStorage_ZeroAddress();
+  error IVaultStorage_PLPBalanceRemaining();
 
   /**
    * Functions
@@ -22,7 +23,7 @@ interface IVaultStorage {
 
   function getTraderTokens(address _trader) external view returns (address[] memory);
 
-  function fees(address _token) external view returns (uint256);
+  function protocolFees(address _token) external view returns (uint256);
 
   function fundingFee(address _token) external view returns (uint256);
 
@@ -34,8 +35,6 @@ interface IVaultStorage {
 
   function addFee(address _token, uint256 _amount) external;
 
-  function addDevFee(address _token, uint256 _amount) external;
-
   function addPLPLiquidity(address _token, uint256 _amount) external;
 
   function withdrawFee(address _token, uint256 _amount, address _receiver) external;
@@ -43,12 +42,6 @@ interface IVaultStorage {
   function removePLPLiquidity(address _token, uint256 _amount) external;
 
   function pushToken(address _token, address _to, uint256 _amount) external;
-
-  function setTraderBalance(address _trader, address _token, uint256 _balance) external;
-
-  function addTraderToken(address _trader, address _token) external;
-
-  function removeTraderToken(address _trader, address _token) external;
 
   function addFundingFee(address _token, uint256 _amount) external;
 

@@ -10,8 +10,8 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
-import { ICalculator } from "./interfaces/ICalculator.sol";
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
@@ -47,17 +47,16 @@ contract Calculator is Owned, ICalculator {
     perpStorage = _perpStorage;
   }
 
-  /// @notice getAUM in E30
+  /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value in E18 format
-  function getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) public view returns (uint256) {
-    // @todo -  pendingBorrowingFeeE30
+  function getAUME30(bool _isMaxPrice) external view returns (uint256) {
+    // @todo - pendingBorrowingFeeE30
+    // @todo - pending funding fee ?
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
-    uint256 pendingBorrowingFeeE30 = 0;
+    uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
     int256 pnlE30 = _getGlobalPNLE30();
-    uint256 aum = _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId) + pendingBorrowingFeeE30;
+    uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30;
     if (pnlE30 < 0) {
       aum += uint256(-pnlE30);
     } else {
@@ -71,38 +70,53 @@ contract Calculator is Owned, ICalculator {
     return aum;
   }
 
-  /// @notice getAUM
-  /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  /// @return PLP Value in E18 format
-  function getAUM(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) public view returns (uint256) {
-    return getAUME30(_isMaxPrice, _limitPriceE30, _limitAssetId) / 1e12;
+  /// @notice getPendingBorrowingFeeE30 This function calculates the total pending borrowing fee from all asset classes.
+  /// @return total pending borrowing fee in e30 format
+  function getPendingBorrowingFeeE30() external view returns (uint256) {
+    return _getPendingBorrowingFeeE30();
+  }
+
+  /// @notice _getPendingBorrowingFeeE30 This function calculates the total pending borrowing fee from all asset classes.
+  /// @return total pending borrowing fee in e30 format
+  function _getPendingBorrowingFeeE30() internal view returns (uint256) {
+    // SLOAD
+    PerpStorage _perpStorage = PerpStorage(perpStorage);
+    uint256 _len = ConfigStorage(configStorage).getAssetClassConfigsLength();
+
+    // Get the PLP TVL.
+    uint256 _plpTVL = _getPLPValueE30(false);
+    uint256 _pendingBorrowingFee; // sum from each asset class
+    for (uint256 i; i < _len; ) {
+      PerpStorage.GlobalAssetClass memory _assetClassState = _perpStorage.getGlobalAssetClassByIndex(i);
+
+      uint256 _borrowingFeeE30 = (_getNextBorrowingRate(uint8(i), _plpTVL) * _assetClassState.reserveValueE30) /
+        RATE_PRECISION;
+
+      // Formula:
+      // pendingBorrowingFee = (sumBorrowingFeeE30 - sumSettledBorrowingFeeE30) + latestBorrowingFee
+      _pendingBorrowingFee +=
+        (_assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30) +
+        _borrowingFeeE30;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    return _pendingBorrowingFee;
   }
 
   /// @notice GetPLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
-  function getPLPValueE30(
-    bool _isMaxPrice,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) external view returns (uint256) {
-    return _getPLPValueE30(_isMaxPrice, _limitPriceE30, _limitAssetId);
+  function getPLPValueE30(bool _isMaxPrice) external view returns (uint256) {
+    return _getPLPValueE30(_isMaxPrice);
   }
 
   /// @notice GetPLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
-  function _getPLPValueE30(
-    bool _isMaxPrice,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) internal view returns (uint256) {
+  function _getPLPValueE30(bool _isMaxPrice) internal view returns (uint256) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     bytes32[] memory _plpAssetIds = _configStorage.getPlpAssetIds();
@@ -110,13 +124,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _len = _plpAssetIds.length;
 
     for (uint256 i = 0; i < _len; ) {
-      uint256 value = _getPLPUnderlyingAssetValueE30(
-        _plpAssetIds[i],
-        _configStorage,
-        _isMaxPrice,
-        _limitPriceE30,
-        _limitAssetId
-      );
+      uint256 value = _getPLPUnderlyingAssetValueE30(_plpAssetIds[i], _configStorage, _isMaxPrice);
 
       unchecked {
         assetValue += value;
@@ -131,24 +139,15 @@ contract Calculator is Owned, ICalculator {
   /// @param _underlyingAssetId the underlying asset id, the one we want to find the value
   /// @param _configStorage config storage
   /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value
   function _getPLPUnderlyingAssetValueE30(
     bytes32 _underlyingAssetId,
     ConfigStorage _configStorage,
-    bool _isMaxPrice,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    bool _isMaxPrice
   ) internal view returns (uint256) {
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
-    uint256 _priceE30;
-    if (_limitPriceE30 > 0 && _limitAssetId == _underlyingAssetId) {
-      _priceE30 = _limitPriceE30;
-    } else {
-      (_priceE30, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
-    }
+    (uint256 _priceE30, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
     uint256 value = (VaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
       (10 ** _assetConfig.decimals);
 
@@ -224,12 +223,12 @@ contract Calculator is Owned, ICalculator {
   }
 
   /// @notice getMintAmount in e18 format
-  /// @param _aum aum in PLP
+  /// @param _aumE30 aum in PLP E30
   /// @param _totalSupply PLP total supply
   /// @param _value value in USD e30
   /// @return mintAmount in e18 format
-  function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
-    return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
+  function getMintAmount(uint256 _aumE30, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
+    return _aumE30 == 0 ? _value / 1e12 : (_value * _totalSupply) / _aumE30;
   }
 
   function convertTokenDecimals(
@@ -252,8 +251,8 @@ contract Calculator is Owned, ICalculator {
     return
       _getFeeBPS(
         _tokenValueE30,
-        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false, 0, 0),
-        _getPLPValueE30(false, 0, 0),
+        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false),
+        _getPLPValueE30(false),
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.ADD
@@ -272,8 +271,8 @@ contract Calculator is Owned, ICalculator {
     return
       _getFeeBPS(
         _tokenValueE30,
-        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true, 0, 0),
-        _getPLPValueE30(true, 0, 0),
+        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true),
+        _getPLPValueE30(true),
         _configStorage.getLiquidityConfig(),
         _configStorage.getAssetPlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
@@ -281,7 +280,7 @@ contract Calculator is Owned, ICalculator {
   }
 
   function _getFeeBPS(
-    uint256 _value,
+    uint256 _value, //e30
     uint256 _liquidityUSD, //e30
     uint256 _totalLiquidityUSD, //e30
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
@@ -299,6 +298,7 @@ contract Calculator is Owned, ICalculator {
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
     uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
+
     if (targetValue == 0) return _feeBPS;
 
     uint256 startTargetDiff = startValue > targetValue ? startValue - targetValue : targetValue - startValue;
@@ -308,13 +308,11 @@ contract Calculator is Owned, ICalculator {
     // Should apply rebate.
     if (nextTargetDiff < startTargetDiff) {
       uint32 rebateBPS = uint32((_taxBPS * startTargetDiff) / targetValue);
-
       return rebateBPS > _feeBPS ? 0 : _feeBPS - rebateBPS;
     }
 
     // _nextWeight represented 18 precision
     uint256 _nextWeight = (nextValue * ETH_PRECISION) / (_totalLiquidityUSD + _value);
-
     if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
       revert ICalculator_PoolImbalance();
     }
@@ -327,35 +325,28 @@ contract Calculator is Owned, ICalculator {
     }
     _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
 
-    uint32 _fee = uint32(_feeBPS + _taxBPS);
-    return _fee;
+    return uint32(_feeBPS + _taxBPS);
   }
 
   /// @notice get settlement fee rate
   /// @param _token - token
   /// @param _liquidityUsdDelta - withdrawal amount
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return _settlementFeeRate in e18 format
   function getSettlementFeeRate(
     address _token,
-    uint256 _liquidityUsdDelta,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    uint256 _liquidityUsdDelta
   ) external view returns (uint256 _settlementFeeRate) {
     // usd debt
     uint256 _tokenLiquidityUsd = _getPLPUnderlyingAssetValueE30(
       ConfigStorage(configStorage).tokenAssetIds(_token),
       ConfigStorage(configStorage),
-      false,
-      _limitPriceE30,
-      _limitAssetId
+      false
     );
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
 
-    uint256 _totalLiquidityUsd = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
+    uint256 _totalLiquidityUsd = _getPLPValueE30(false);
     ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
@@ -524,7 +515,7 @@ contract Calculator is Owned, ICalculator {
         (_var.priceE30, , , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           -_var.position.positionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
@@ -760,6 +751,9 @@ contract Calculator is Owned, ICalculator {
       _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
     }
 
+    // possible happen when trader close last short position of the market
+    if (_newGlobalPositionSize == 0) return 0;
+
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
 
@@ -809,6 +803,9 @@ contract Calculator is Owned, ICalculator {
       _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
     }
 
+    // possible happen when trader close last long position of the market
+    if (_newGlobalPositionSize == 0) return 0;
+
     bool _isGlobalProfit = _newGlobalPnl > 0;
     uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
 
@@ -827,52 +824,44 @@ contract Calculator is Owned, ICalculator {
 
   /// @notice Calculate next funding rate using when increase/decrease position.
   /// @param _marketIndex Market Index.
-  /// @param _limitPriceE30 Price from limit order
   /// @return fundingRate next funding rate using for both LONG & SHORT positions.
   /// @return fundingRateLong next funding rate for LONG.
   /// @return fundingRateShort next funding rate for SHORT.
   function getNextFundingRate(
-    uint256 _marketIndex,
-    uint256 _limitPriceE30
+    uint256 _marketIndex
   ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
-    ConfigStorage.MarketConfig memory marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
+    ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    if (marketConfig.fundingRate.maxFundingRateBPS == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0)
-      return (0, 0, 0);
+    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     // If block.timestamp not pass the next funding time, return 0.
     if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
-    int32 _exponent;
-    if (_limitPriceE30 != 0) {
-      vars.marketPriceE30 = _limitPriceE30;
-    } else {
-      //@todo - validate timestamp of these
-      (vars.marketPriceE30, _exponent, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
-        marketConfig.assetId,
-        false
-      );
-    }
-    vars.marketSkewUSDE30 =
-      ((int(globalMarket.longOpenInterest) - int(globalMarket.shortOpenInterest)) * int(vars.marketPriceE30)) /
-      int(10 ** uint32(-_exponent));
-    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRateBPS, maxFundingRateBPS]
+
+    // Find market skew
+    (vars.marketPriceE30, , ) = OracleMiddleware(_configStorage.oracle()).unsafeGetLatestPrice(
+      marketConfig.assetId,
+      false
+    );
+    vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
+
+    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
-    vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRateBPS))) / 1e4;
+    vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
 
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
-    vars.newFundingRate = (globalMarket.currentFundingRate + vars.nextFundingRate) * vars.elapsedIntervals;
+    vars.nextFundingRate = vars.nextFundingRate * vars.elapsedIntervals;
 
     if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.newFundingRate * int(globalMarket.longPositionSize)) / 1e30;
+      fundingRateLong = (vars.nextFundingRate * int(globalMarket.longPositionSize)) / 1e30;
     }
     if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.newFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
+      fundingRateShort = (vars.nextFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
     }
-    return (vars.newFundingRate, fundingRateLong, fundingRateShort);
+    return (vars.nextFundingRate, fundingRateLong, fundingRateShort);
   }
 
   /**
@@ -900,11 +889,10 @@ contract Calculator is Owned, ICalculator {
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
 
-    // @todo - funding fee Bug found here, must be resolved
     if (_isLong) {
       return _fundingRate < 0 ? -fundingFee : fundingFee;
     } else {
-      return _fundingRate < 0 ? -fundingFee : fundingFee;
+      return _fundingRate > 0 ? -fundingFee : fundingFee;
     }
   }
 
@@ -919,25 +907,30 @@ contract Calculator is Owned, ICalculator {
     uint256 _entryBorrowingRate
   ) public view returns (uint256 borrowingFee) {
     // Get the global asset class.
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+    PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
     // Calculate borrowing rate.
-    uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate - _entryBorrowingRate;
+    uint256 _borrowingRate = _assetClassState.sumBorrowingRate - _entryBorrowingRate;
     // Calculate the borrowing fee based on reserved value, borrowing rate.
     return (_reservedValue * _borrowingRate) / RATE_PRECISION;
   }
 
-  /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
-  /// @param _assetClassIndex The index of the asset class.
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  /// @return _nextBorrowingRate The next borrowing rate for the asset class.
   function getNextBorrowingRate(
     uint8 _assetClassIndex,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) public view returns (uint256 _nextBorrowingRate) {
+    uint256 _plpTVL
+  ) external view returns (uint256 _nextBorrowingRate) {
+    return _getNextBorrowingRate(_assetClassIndex, _plpTVL);
+  }
+
+  /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
+  /// @param _assetClassIndex The index of the asset class.
+  /// @param _plpTVL value in plp
+  /// @return _nextBorrowingRate The next borrowing rate for the asset class.
+  function _getNextBorrowingRate(
+    uint8 _assetClassIndex,
+    uint256 _plpTVL
+  ) internal view returns (uint256 _nextBorrowingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     // Get the trading config, asset class config, and global asset class for the given asset class index.
@@ -945,25 +938,20 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.AssetClassConfig memory _assetClassConfig = _configStorage.getAssetClassConfigByIndex(
       _assetClassIndex
     );
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+    PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
-    // Get the PLP TVL.
-    uint256 plpTVL = _getPLPValueE30(false, _limitPriceE30, _limitAssetId);
 
     // If block.timestamp not pass the next funding time, return 0.
-    if (_globalAssetClass.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
+    if (_assetClassState.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
     // If PLP TVL is 0, return 0.
-    if (plpTVL == 0) return 0;
+    if (_plpTVL == 0) return 0;
 
     // Calculate the number of funding intervals that have passed since the last borrowing time.
-    uint256 intervals = (block.timestamp - _globalAssetClass.lastBorrowingTime) / _tradingConfig.fundingInterval;
+    uint256 intervals = (block.timestamp - _assetClassState.lastBorrowingTime) / _tradingConfig.fundingInterval;
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
-    return
-      (_assetClassConfig.baseBorrowingRateBPS * _globalAssetClass.reserveValueE30 * intervals * RATE_PRECISION) /
-      plpTVL /
-      BPS;
+    return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL;
   }
 
   function getDelta(

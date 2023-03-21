@@ -40,6 +40,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal CAROL;
   address internal DAVE;
   address internal FEEVER;
+  address internal BOT;
 
   // storages
   IConfigStorage internal configStorage;

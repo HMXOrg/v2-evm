@@ -6,7 +6,7 @@ interface ILiquidationService {
 
   function reloadConfig() external;
 
-  function liquidate(address subAccount) external;
+  function liquidate(address subAccount, address _liquidator) external;
 
   function perpStorage() external view returns (address);
 }

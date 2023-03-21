@@ -103,8 +103,8 @@ contract TradeService_TradingFee is TradeService_Base {
     mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
-    vaultStorage.setTraderBalance(aliceAddress, address(weth), 0.01 * 1e18);
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 100_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(weth), 0.01 * 1e18);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 100_000 * 1e6);
 
     vm.warp(100);
     {

@@ -8,9 +8,10 @@ import {
   ERC20__factory,
   PLPv2__factory,
   PerpStorage__factory,
+  ConfigStorage__factory,
 } from "../typechain";
 import { getConfig } from "./utils/config";
-import { MultiCall, JsonFragment } from "@indexed-finance/multicall";
+import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
@@ -161,7 +162,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getAUME30",
-      args: [true, 0, ethAssetId],
+      args: [true],
     },
     // PLP Liquidity
     {
@@ -217,31 +218,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "fees",
+      function: "protocolFees",
       args: [config.tokens.usdc],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "fees",
+      function: "protocolFees",
       args: [config.tokens.usdt],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "fees",
+      function: "protocolFees",
       args: [config.tokens.dai],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "fees",
+      function: "protocolFees",
       args: [config.tokens.weth],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "fees",
+      function: "protocolFees",
       args: [config.tokens.wbtc],
     },
     // Dev Fees
@@ -427,10 +428,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("=== PLP ===");
   console.table({
     plpTotalSupply: ethers.utils.formatUnits(plpTotalSupply, 18),
-    plpAum: ethers.utils.formatUnits(plpAum, 30),
-    plpPrice: plpAum.gt(0)
-      ? ethers.utils.formatUnits(plpAum.mul(ethers.utils.parseEther("1")).div(plpTotalSupply), 30)
-      : 0,
+    // plpAum: ethers.utils.formatUnits(plpAum, 30),
+    // plpPrice: plpAum.gt(0)
+    //   ? ethers.utils.formatUnits(plpAum.mul(ethers.utils.parseEther("1")).div(plpTotalSupply), 30)
+    //   : 0,
     usdc: ethers.utils.formatUnits(plpLiquidityUsdc, 6),
     usdt: ethers.utils.formatUnits(plpLiquidityUsdt, 6),
     dai: ethers.utils.formatUnits(plpLiquidityDai, 18),

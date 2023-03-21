@@ -32,6 +32,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     bool currentPositionIsLong;
     uint256 adaptivePriceE30;
     uint256 priceE30;
+    uint256 closePriceE30;
     int32 exponent;
   }
   struct DecreasePositionVars {
@@ -206,6 +207,14 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
       _vars.priceE30 = _limitPriceE30 != 0 ? _limitPriceE30 : _vars.priceE30;
 
+      (_vars.closePriceE30, , , , ) = OracleMiddleware(_configStorage.oracle()).getLatestAdaptivePriceWithMarketStatus(
+        _marketConfig.assetId,
+        _vars.isLong, // if current position is SHORT position, then we use max price
+        (int(_globalMarket.longOpenInterest) - int(_globalMarket.shortOpenInterest)),
+        -_vars.position.positionSizeE30,
+        _marketConfig.fundingRate.maxSkewScaleUSD
+      );
+
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
 
@@ -236,6 +245,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.isLong,
         _absSizeDelta,
         _vars.adaptivePriceE30,
+        _vars.closePriceE30,
         _vars.position.avgEntryPriceE30,
         _vars.position.lastIncreaseTimestamp
       );
@@ -785,6 +795,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _isLong Whether the position is long or short.
   /// @param _sizeDelta The size difference between the current position and the next position.
   /// @param _markPrice current market price
+  /// @param _closePrice the adaptive price of this market if this position is fully closed. This is used to correctly calculate position pnl.
   /// @param _averagePrice The current average price of the position.
   /// @return The next average price of the position.
   function _getPositionNextAveragePrice(
@@ -792,6 +803,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     bool _isLong,
     uint256 _sizeDelta,
     uint256 _markPrice,
+    uint256 _closePrice,
     uint256 _averagePrice,
     uint256 _lastIncreaseTimestamp
   ) internal view returns (uint256) {
@@ -799,10 +811,11 @@ contract TradeService is ReentrancyGuard, ITradeService {
     (bool isProfit, uint256 delta) = calculator.getDelta(
       _size,
       _isLong,
-      _markPrice,
+      _closePrice,
       _averagePrice,
       _lastIncreaseTimestamp
     );
+
     // Calculate the next size and divisor
     uint256 nextSize = _size + _sizeDelta;
     uint256 divisor;

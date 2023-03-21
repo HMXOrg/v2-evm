@@ -6,7 +6,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
 
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
@@ -31,7 +31,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
 
   mapping(bytes32 => Position) public positions;
   mapping(address => bytes32[]) public subAccountPositionIds;
-  mapping(address => int256) public subAccountFee;
+  mapping(address => uint256) public subAccountBorrowingFee;
   mapping(address => uint256) public badDebt;
   mapping(uint256 => GlobalMarket) public globalMarkets;
   mapping(uint256 => GlobalAssetClass) public globalAssetClass;
@@ -81,16 +81,12 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     return globalMarkets[_marketIndex];
   }
 
-  function getGlobalAssetClassByIndex(uint8 _assetClassIndex) external view returns (GlobalAssetClass memory) {
+  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
     return globalAssetClass[_assetClassIndex];
   }
 
   function getGlobalState() external view returns (GlobalState memory) {
     return globalState;
-  }
-
-  function getSubAccountFee(address subAccount) external view returns (int256 fee) {
-    return subAccountFee[subAccount];
   }
 
   /// @notice Gets the bad debt associated with the given sub-account.
@@ -185,8 +181,18 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     globalMarkets[_marketIndex] = _globalMarket;
   }
 
-  function updateSubAccountFee(address _subAccount, int256 fee) external onlyWhitelistedExecutor {
-    subAccountFee[_subAccount] = fee;
+  function increaseSubAccountBorrowingFee(address _subAccount, uint256 _borrowingFee) external onlyWhitelistedExecutor {
+    subAccountBorrowingFee[_subAccount] += _borrowingFee;
+  }
+
+  function decreaseSubAccountBorrowingFee(address _subAccount, uint256 _borrowingFee) external onlyWhitelistedExecutor {
+    // Maximum decrease the current amount
+    if (subAccountBorrowingFee[_subAccount] < _borrowingFee) {
+      subAccountBorrowingFee[_subAccount] = 0;
+      return;
+    }
+
+    subAccountBorrowingFee[_subAccount] -= _borrowingFee;
   }
 
   /// @notice Adds bad debt to the specified sub-account.
@@ -195,5 +201,43 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   function addBadDebt(address _subAccount, uint256 _badDebt) external onlyWhitelistedExecutor {
     // Add the bad debt to the sub-account
     badDebt[_subAccount] += _badDebt;
+  }
+
+  function increaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
+    globalState.reserveValueE30 += _reserve;
+    globalAssetClass[_assetClassIndex].reserveValueE30 += _reserve;
+  }
+
+  function decreaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
+    globalState.reserveValueE30 -= _reserve;
+    globalAssetClass[_assetClassIndex].reserveValueE30 -= _reserve;
+  }
+
+  function increaseOpenInterest(uint256 _marketIndex, bool _isLong, uint256 _size, uint256 _openInterest) external {
+    if (_isLong) {
+      globalMarkets[_marketIndex].longPositionSize += _size;
+      globalMarkets[_marketIndex].longOpenInterest += _openInterest;
+    } else {
+      globalMarkets[_marketIndex].shortPositionSize += _size;
+      globalMarkets[_marketIndex].shortOpenInterest += _openInterest;
+    }
+  }
+
+  function decreaseOpenInterest(uint256 _marketIndex, bool _isLong, uint256 _size, uint256 _openInterest) external {
+    if (_isLong) {
+      globalMarkets[_marketIndex].longPositionSize -= _size;
+      globalMarkets[_marketIndex].longOpenInterest -= _openInterest;
+    } else {
+      globalMarkets[_marketIndex].shortPositionSize -= _size;
+      globalMarkets[_marketIndex].shortOpenInterest -= _openInterest;
+    }
+  }
+
+  function updateGlobalMarketPrice(uint256 _marketIndex, bool _isLong, uint256 _price) external {
+    if (_isLong) {
+      globalMarkets[_marketIndex].longAvgPrice = _price;
+    } else {
+      globalMarkets[_marketIndex].shortAvgPrice = _price;
+    }
   }
 }

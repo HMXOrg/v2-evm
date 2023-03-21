@@ -8,6 +8,15 @@ contract MockLiquidityService {
   address public perpStorage;
   address public vaultStorage;
 
+  bool public reverted;
+  //is reverted is true, it can set to revert as bytes or revert as message
+  bool public revertAsMessage;
+
+  bool public plpEnabled;
+  error LiquidityService_CircuitBreaker();
+  error LiquidityService_BadAmount();
+  error LiquidityService_RevertAsBytes();
+
   constructor(address _configStorage, address _perpStorage, address _vaultStorage) {
     configStorage = _configStorage;
     perpStorage = _perpStorage;
@@ -26,22 +35,61 @@ contract MockLiquidityService {
     vaultStorage = _address;
   }
 
+  function setReverted(bool _reverted) external {
+    reverted = _reverted;
+  }
+
+  function setRevertAsMessage(bool isRevertMessage) external {
+    revertAsMessage = isRevertMessage;
+  }
+
+  function setPlpEnabled(bool _plpEnabled) external {
+    plpEnabled = _plpEnabled;
+  }
+
   function addLiquidity(
-    address _lpProvider,
-    address _token,
-    uint256 _amount,
-    uint256 _minAmount
-  ) external returns (uint256) {}
+    address /*_lpProvider*/,
+    address /* _token */,
+    uint256 /* _amount */,
+    uint256 /* _minAmount */
+  ) external returns (uint256) {
+    if (reverted) {
+      if (revertAsMessage) {
+        require(false, "Reverted as Message");
+      } else {
+        revert LiquidityService_RevertAsBytes();
+      }
+    }
+  }
 
   function removeLiquidity(
     address /*_lpProvider*/,
     address _tokenOut,
-    uint256 _amount,
+    uint256 _amount, // amountIn
     uint256 /*_minAmount*/
   ) external returns (uint256) {
-    // mock service transfer out to handler
+    if (reverted) {
+      if (revertAsMessage) {
+        require(false, "Reverted as Message");
+      } else {
+        revert LiquidityService_RevertAsBytes();
+      }
+    }
+
     MockErc20(_tokenOut).mint(msg.sender, _amount);
 
     return _amount;
+  }
+
+  /// @notice validatePreAddRemoveLiquidity used in Handler,Service
+  /// @param _amount amountIn
+  function validatePreAddRemoveLiquidity(uint256 _amount) public view {
+    if (!plpEnabled) {
+      revert LiquidityService_CircuitBreaker();
+    }
+
+    if (_amount == 0) {
+      revert LiquidityService_BadAmount();
+    }
   }
 }

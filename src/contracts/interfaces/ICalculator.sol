@@ -21,7 +21,6 @@ interface ICalculator {
     int256 marketSkewUSDE30;
     int256 ratio;
     int256 nextFundingRate;
-    int256 newFundingRate;
     int256 elapsedIntervals;
   }
 
@@ -36,11 +35,9 @@ interface ICalculator {
     SHORT
   }
 
-  function getAUM(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
+  function getAUME30(bool isMaxPrice) external returns (uint256);
 
-  function getAUME30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
-
-  function getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external view returns (uint256);
+  function getPLPValueE30(bool isMaxPrice) external view returns (uint256);
 
   function getFreeCollateral(
     address _subAccount,
@@ -58,17 +55,17 @@ interface ICalculator {
     uint256 _amount
   ) external pure returns (uint256);
 
-  function getAddLiquidityFeeRate(
+  function getAddLiquidityFeeBPS(
     address _token,
     uint256 _tokenValue,
     ConfigStorage _configStorage
-  ) external returns (uint256);
+  ) external returns (uint32);
 
-  function getRemoveLiquidityFeeRate(
+  function getRemoveLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
-  ) external returns (uint256);
+  ) external returns (uint32);
 
   function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _imrE30);
 
@@ -80,22 +77,17 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (int256 _equityValueE30);
 
-  function getUnrealizedPnl(
+  function getUnrealizedPnlAndFee(
     address _subAccount,
-    uint256 _price,
-    bytes32 _assetId
-  ) external view returns (int256 _unrealizedPnlE30);
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) external view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30);
 
   function getIMR(address _subAccount) external view returns (uint256 _imrValueE30);
 
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
 
-  function getSettlementFeeRate(
-    address _token,
-    uint256 _liquidityUsdDelta,
-    uint256 _limitPrice,
-    bytes32 _assetId
-  ) external returns (uint256);
+  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
 
   function getCollateralValue(
     address _subAccount,
@@ -103,10 +95,15 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (uint256 _collateralValueE30);
 
-  function getNextFundingRate(
-    uint256 _marketIndex,
-    uint256 _limitPriceE30
-  ) external view returns (int256, int256, int256);
+  function getNextFundingRate(uint256 _marketIndex) external view returns (int256, int256, int256);
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastincreaseTimestamp
+  ) external view returns (bool, uint256);
 
   function setOracle(address _oracle) external;
 
@@ -123,4 +120,6 @@ interface ICalculator {
   function configStorage() external returns (address _address);
 
   function perpStorage() external returns (address _address);
+
+  function getPendingBorrowingFeeE30() external view returns (uint256);
 }

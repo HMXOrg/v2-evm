@@ -11,6 +11,7 @@ import { console2 } from "forge-std/console2.sol";
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
+import { console } from "forge-std/console.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -23,12 +24,10 @@ contract ConfigStorage is IConfigStorage, Owned {
    */
   event LogSetServiceExecutor(address indexed contractAddress, address executorAddress, bool isServiceExecutor);
   event LogSetCalculator(address indexed oldCalculator, address newCalculator);
-  event LogSetFeeCalculator(address indexed oldFeeCalculator, address newFeeCalculator);
   event LogSetOracle(address indexed oldOracle, address newOracle);
   event LogSetPLP(address indexed oldPlp, address newPlp);
   event LogSetLiquidityConfig(LiquidityConfig indexed oldLiquidityConfig, LiquidityConfig newLiquidityConfig);
   event LogSetDynamicEnabled(bool enabled);
-  event LogSetPLPTotalTokenWeight(uint256 oldTotalTokenWeight, uint256 newTotalTokenWeight);
   event LogSetPnlFactor(uint32 oldPnlFactorBPS, uint32 newPnlFactorBPS);
   event LogSetSwapConfig(SwapConfig indexed oldConfig, SwapConfig newConfig);
   event LogSetTradingConfig(TradingConfig indexed oldConfig, TradingConfig newConfig);
@@ -63,7 +62,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
   mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer
 
-  address public feeCalculator;
   address public calculator;
   address public oracle;
   address public plp;
@@ -153,6 +151,10 @@ contract ConfigStorage is IConfigStorage, Owned {
     return marketConfigs.length;
   }
 
+  function getAssetClassConfigsLength() external view returns (uint256) {
+    return assetClassConfigs.length;
+  }
+
   function getPlpTokens() external view returns (address[] memory) {
     address[] memory _result = new address[](plpAssetIds.length);
 
@@ -221,15 +223,6 @@ contract ConfigStorage is IConfigStorage, Owned {
     calculator = _calculator;
   }
 
-  /// @notice Updates the fee calculator contract address.
-  /// @dev This function can be used to set the address of the fee calculator contract.
-  /// @param _feeCalculator The address of the new fee calculator contract.
-  function setFeeCalculator(address _feeCalculator) external onlyOwner {
-    emit LogSetFeeCalculator(feeCalculator, _feeCalculator);
-    // @todo - add sanity check
-    feeCalculator = _feeCalculator;
-  }
-
   function setOracle(address _oracle) external onlyOwner {
     emit LogSetOracle(oracle, _oracle);
     // @todo - sanity check
@@ -256,12 +249,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   function setDynamicEnabled(bool _enabled) external {
     liquidityConfig.dynamicFeeEnabled = _enabled;
     emit LogSetDynamicEnabled(_enabled);
-  }
-
-  function setPLPTotalTokenWeight(uint256 _totalTokenWeight) external onlyOwner {
-    if (_totalTokenWeight > 1e18) revert IConfigStorage_ExceedLimitSetting();
-    emit LogSetPLPTotalTokenWeight(liquidityConfig.plpTotalTokenWeight, _totalTokenWeight);
-    liquidityConfig.plpTotalTokenWeight = _totalTokenWeight;
   }
 
   // @todo - Add Description
@@ -373,6 +360,20 @@ contract ConfigStorage is IConfigStorage, Owned {
         }
       }
 
+      // Adjust plpTotalToken Weight
+      if (liquidityConfig.plpTotalTokenWeight == 0) {
+        liquidityConfig.plpTotalTokenWeight = _configs[_i].targetWeight;
+      } else {
+        liquidityConfig.plpTotalTokenWeight =
+          (liquidityConfig.plpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
+          _configs[_i].targetWeight;
+      }
+
+      if (liquidityConfig.plpTotalTokenWeight > 1e18) {
+        revert IConfigStorage_ExceedLimitSetting();
+      }
+
+      // put asset ID after add totalWeight
       if (_isSetPLPAssetId) {
         plpAssetIds.push(_assetId);
       }
@@ -381,14 +382,6 @@ contract ConfigStorage is IConfigStorage, Owned {
       emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
 
       // Update totalWeight accordingly
-
-      liquidityConfig.plpTotalTokenWeight == 0 ? _configs[_i].targetWeight : liquidityConfig.plpTotalTokenWeight =
-        (liquidityConfig.plpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
-        _configs[_i].targetWeight;
-
-      if (liquidityConfig.plpTotalTokenWeight > 1e18) {
-        revert IConfigStorage_ExceedLimitSetting();
-      }
 
       unchecked {
         ++_i;

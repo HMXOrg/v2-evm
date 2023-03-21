@@ -1,0 +1,33 @@
+{
+  "storages": {
+    "config": "",
+    "perp": "",
+    "vault": ""
+  },
+  "handlers": {
+    "bot": "",
+    "crossMargin": "",
+    "limitTrade": "",
+    "liquidity": "",
+    "marketTrade": ""
+  },
+  "helpers": {
+    "trade": ""
+  },
+  "services": {
+    "crossMargin": "",
+    "liquidity": "",
+    "liquidation": "",
+    "trade": ""
+  },
+  "oracle": {
+    "pyth": "",
+    "pythAdapter": "",
+    "middleware": ""
+  },
+  "tokens": {
+    "plp": "",
+    "weth": ""
+  },
+  "calculator": ""
+}

@@ -8,7 +8,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
@@ -36,9 +36,9 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
   mapping(address => uint256) public totalAmount; //token => tokenAmount
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
-  mapping(address => uint256) public fees; // fee in token unit
+  mapping(address => uint256) public protocolFees; // protocol fee in token unit
 
-  mapping(address => uint256) public fundingFee; // sum of realized funding fee when traders are settlement their fees
+  mapping(address => uint256) public fundingFee; // sum of realized funding fee when traders are settlement their protocolFees
   mapping(address => uint256) public devFees;
 
   // trader address (with sub-account) => token => amount
@@ -105,11 +105,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   }
 
   function addFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
-    fees[_token] += _amount;
-  }
-
-  function addDevFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
-    devFees[_token] += _amount;
+    protocolFees[_token] += _amount;
   }
 
   function addFundingFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
@@ -134,25 +130,21 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
   function withdrawFee(address _token, uint256 _amount, address _receiver) external onlyWhitelistedExecutor {
     if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
-    fees[_token] -= _amount;
+    protocolFees[_token] -= _amount;
     IERC20(_token).safeTransfer(_receiver, _amount);
   }
 
   function removePLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
+    if (plpLiquidity[_token] < _amount) revert IVaultStorage_PLPBalanceRemaining();
     plpLiquidity[_token] -= _amount;
   }
 
-  function setTraderBalance(address _trader, address _token, uint256 _balance) external onlyWhitelistedExecutor {
-    traderBalances[_trader][_token] = _balance;
-    emit LogSetTraderBalance(_trader, _token, _balance);
-  }
-
-  function addTraderToken(address _trader, address _token) external onlyWhitelistedExecutor {
+  function _addTraderToken(address _trader, address _token) internal onlyWhitelistedExecutor {
     validateAddTraderToken(_trader, _token);
     traderTokens[_trader].push(_token);
   }
 
-  function removeTraderToken(address _trader, address _token) external onlyWhitelistedExecutor {
+  function _removeTraderToken(address _trader, address _token) internal {
     validateRemoveTraderToken(_trader, _token);
 
     address[] storage traderToken = traderTokens[_trader];
@@ -176,6 +168,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     }
   }
 
+  // @todo - natSpec
+  function removeAllTraderTokens(address _trader) external onlyWhitelistedExecutor {
+    delete traderTokens[_trader];
+  }
+
   /// @notice increase sub-account collateral
   /// @param _subAccount - sub account
   /// @param _token - collateral token to increase
@@ -185,7 +182,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     address _token,
     uint256 _amount
   ) external onlyWhitelistedExecutor {
-    traderBalances[_subAccount][_token] += _amount;
+    _increaseTraderBalance(_subAccount, _token, _amount);
   }
 
   /// @notice decrease sub-account collateral
@@ -197,7 +194,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     address _token,
     uint256 _amount
   ) external onlyWhitelistedExecutor {
-    traderBalances[_subAccount][_token] -= _amount;
+    _deductTraderBalance(_subAccount, _token, _amount);
   }
 
   /// @notice Pays the PLP for providing liquidity with the specified token and amount.
@@ -207,7 +204,91 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   function payPlp(address _trader, address _token, uint256 _amount) external onlyWhitelistedExecutor {
     // Increase the PLP's liquidity for the specified token
     plpLiquidity[_token] += _amount;
+
     // Decrease the trader's balance for the specified token
+    _deductTraderBalance(_trader, _token, _amount);
+  }
+
+  function payTradingFee(
+    address _trader,
+    address _token,
+    uint256 _devFeeAmount,
+    uint256 _protocolFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from trader balance
+    _deductTraderBalance(_trader, _token, _devFeeAmount + _protocolFeeAmount);
+
+    // Increase the amount to devFees and protocolFees
+    devFees[_token] += _devFeeAmount;
+    protocolFees[_token] += _protocolFeeAmount;
+  }
+
+  function payBorrowingFee(
+    address _trader,
+    address _token,
+    uint256 _devFeeAmount,
+    uint256 _plpFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from trader balance
+    _deductTraderBalance(_trader, _token, _devFeeAmount + _plpFeeAmount);
+
+    // Increase the amount to devFees and plpLiquidity
+    devFees[_token] += _devFeeAmount;
+    plpLiquidity[_token] += _plpFeeAmount;
+  }
+
+  function payFundingFeeFromTraderToPlp(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from trader balance
+    _deductTraderBalance(_trader, _token, _fundingFeeAmount);
+
+    // Increase the amount to plpLiquidity
+    plpLiquidity[_token] += _fundingFeeAmount;
+  }
+
+  function payFundingFeeFromPlpToTrader(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from plpLiquidity
+    plpLiquidity[_token] -= _fundingFeeAmount;
+
+    // Increase the amount to trader
+    _increaseTraderBalance(_trader, _token, _fundingFeeAmount);
+  }
+
+  function payTraderProfit(
+    address _trader,
+    address _token,
+    uint256 _totalProfitAmount,
+    uint256 _settlementFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from plpLiquidity
+    plpLiquidity[_token] -= _totalProfitAmount;
+
+    protocolFees[_token] += _settlementFeeAmount;
+    _increaseTraderBalance(_trader, _token, _totalProfitAmount - _settlementFeeAmount);
+  }
+
+  function _increaseTraderBalance(address _trader, address _token, uint256 _amount) internal {
+    if (_amount == 0) return;
+
+    if (traderBalances[_trader][_token] == 0) {
+      _addTraderToken(_trader, _token);
+    }
+    traderBalances[_trader][_token] += _amount;
+  }
+
+  function _deductTraderBalance(address _trader, address _token, uint256 _amount) internal {
+    if (_amount == 0) return;
+
     traderBalances[_trader][_token] -= _amount;
+    if (traderBalances[_trader][_token] == 0) {
+      _removeTraderToken(_trader, _token);
+    }
   }
 }

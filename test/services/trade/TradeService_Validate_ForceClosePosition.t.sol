@@ -95,7 +95,7 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
     tradeService.validateDeleverage();
   }
 
-  function testRevert_validateMaxProfit() external {
+  function testRevert_validateMaxProfit() external view {
     tradeService.validateMaxProfit(true);
   }
 }

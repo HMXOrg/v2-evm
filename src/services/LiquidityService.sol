@@ -14,6 +14,7 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
+import { console } from "forge-std/console.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
@@ -25,7 +26,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   uint256 internal constant PRICE_PRECISION = 10 ** 30;
   uint32 internal constant BPS = 1e4;
   uint8 internal constant USD_DECIMALS = 30;
-  uint64 internal constant RATE_PRECISION = 1e18;
 
   event AddLiquidity(
     address account,
@@ -77,7 +77,8 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _minAmount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) returns (uint256) {
     // 1. _validate
-    _validatePreAddRemoveLiquidity(_amount);
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    validatePreAddRemoveLiquidity(_amount);
 
     if (VaultStorage(vaultStorage).pullToken(_token) != _amount) {
       revert LiquidityService_InvalidInputAmount();
@@ -92,8 +93,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     // 3. get aum and lpSupply before deduction fee
-    uint256 _aum = _calculator.getAUM(true, 0, 0);
-
+    uint256 _aumE30 = _calculator.getAUME30(true);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
@@ -102,15 +102,14 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       _price,
       _lpProvider,
       _minAmount,
-      _aum,
+      _aumE30,
       _lpSupply
     );
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
     PLPv2(ConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
-    emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
-
+    emit AddLiquidity(_lpProvider, _token, _amount, _aumE30, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
     return mintAmount;
   }
 
@@ -121,23 +120,25 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _minAmount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_tokenOut) returns (uint256) {
     // 1. _validate
-    _validatePreAddRemoveLiquidity(_amount);
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    validatePreAddRemoveLiquidity(_amount);
 
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
-    uint256 _aum = _calculator.getAUM(false, 0, 0);
+    uint256 _aum = _calculator.getAUME30(false);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
-    uint256 _lpUsdValue = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
-
-    uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValue, _amount, _lpProvider, _minAmount);
+    uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
+    uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValueE30, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
     PLPv2(ConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
     VaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOut);
 
-    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValue, _amountOut);
+    _validatePLPHealthCheck(_tokenOut);
+
+    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValueE30, _amountOut);
 
     return _amountOut;
   }
@@ -148,7 +149,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _price,
     address _lpProvider,
     uint256 _minAmount,
-    uint256 _aum,
+    uint256 _aumE30,
     uint256 _lpSupply
   ) internal returns (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
@@ -158,7 +159,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
         _lpProvider,
         _price,
         _amount,
-        _getFeeRate(_token, _amount, _price),
+        _getAddLiquidityFeeBPS(_token, _amount, _price),
         LiquidityAction.ADD_LIQUIDITY
       )
     );
@@ -170,7 +171,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       (amountAfterFee * _price) / PRICE_PRECISION
     );
 
-    mintAmount = _calculator.getMintAmount(_aum, _lpSupply, _tokenValueUSDAfterFee);
+    mintAmount = _calculator.getMintAmount(_aumE30, _lpSupply, _tokenValueUSDAfterFee);
 
     // 5. Check slippage: revert on error
     if (mintAmount < _minAmount) revert LiquidityService_InsufficientLiquidityMint();
@@ -185,36 +186,34 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
   function _exitPool(
     address _tokenOut,
-    uint256 _lpUsdValue,
-    uint256 _amount,
+    uint256 _lpUsdValueE30,
     address _lpProvider,
     uint256 _minAmount
   ) internal returns (uint256) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
-
     (uint256 _maxPrice, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(
       ConfigStorage(configStorage).tokenAssetIds(_tokenOut),
-      true
+      false
     );
 
     uint256 _amountOut = _calculator.convertTokenDecimals(
       30,
       ConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
-      (_lpUsdValue * PRICE_PRECISION) / _maxPrice
+      (_lpUsdValueE30 * PRICE_PRECISION) / _maxPrice
     );
 
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
-    VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
-
-    uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeRate(
+    uint32 _feeBps = Calculator(ConfigStorage(configStorage).calculator()).getRemoveLiquidityFeeBPS(
       _tokenOut,
-      _lpUsdValue,
+      _lpUsdValueE30,
       ConfigStorage(configStorage)
     );
 
+    VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
+
     _amountOut = _collectFee(
-      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amount, _feeRate, LiquidityAction.REMOVE_LIQUIDITY)
+      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY)
     );
 
     if (_minAmount > _amountOut) {
@@ -224,7 +223,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     return _amountOut;
   }
 
-  function _getFeeRate(address _token, uint256 _amount, uint256 _price) internal view returns (uint256) {
+  function _getAddLiquidityFeeBPS(address _token, uint256 _amount, uint256 _price) internal view returns (uint32) {
     uint256 tokenUSDValueE30 = Calculator(ConfigStorage(configStorage).calculator()).convertTokenDecimals(
       ConfigStorage(configStorage).getAssetTokenDecimal(_token),
       USD_DECIMALS,
@@ -235,18 +234,18 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       revert LiquidityService_InsufficientLiquidityMint();
     }
 
-    uint256 _feeRate = Calculator(ConfigStorage(configStorage).calculator()).getAddLiquidityFeeRate(
+    uint32 _feeBps = Calculator(ConfigStorage(configStorage).calculator()).getAddLiquidityFeeBPS(
       _token,
       tokenUSDValueE30,
       ConfigStorage(configStorage)
     );
 
-    return _feeRate;
+    return _feeBps;
   }
 
   // calculate fee and accounting fee
   function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
-    uint256 _fee = (_request._amount * _request._feeRate) / RATE_PRECISION;
+    uint256 _fee = _request._amount - ((_request._amount * (BPS - _request._feeBPS)) / BPS);
 
     VaultStorage(vaultStorage).addFee(_request._token, _fee);
     uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_request._token);
@@ -289,7 +288,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     // reserveValue / PLP TVL > maxPLPUtilization
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
-    uint256 plpTVL = _calculator.getPLPValueE30(false, 0, 0);
+    uint256 plpTVL = _calculator.getPLPValueE30(false);
     if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxPLPUtilizationBPS * plpTVL) {
       revert LiquidityService_MaxPLPUtilizationExceeded();
     }
@@ -300,9 +299,9 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     }
   }
 
-  function _validatePreAddRemoveLiquidity(uint256 _amount) internal view {
-    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
-
+  /// @notice validatePreAddRemoveLiquidity used in Handler,Service
+  /// @param _amount amountIn
+  function validatePreAddRemoveLiquidity(uint256 _amount) public view {
     if (!ConfigStorage(configStorage).getLiquidityConfig().enabled) {
       revert LiquidityService_CircuitBreaker();
     }

@@ -15,6 +15,8 @@ interface IPerpStorage {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
     uint256 sumBorrowingRate;
     uint256 lastBorrowingTime;
+    uint256 sumBorrowingFeeE30;
+    uint256 sumSettledBorrowingFeeE30;
   }
 
   // mapping _marketIndex => globalPosition;
@@ -38,14 +40,14 @@ interface IPerpStorage {
   struct Position {
     address primaryAccount;
     uint256 marketIndex;
-    int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
-    int256 realizedPnl;
     uint256 avgEntryPriceE30;
     uint256 entryBorrowingRate;
-    int256 entryFundingRate;
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     uint256 openInterest;
+    int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
+    int256 realizedPnl;
+    int256 entryFundingRate;
     uint8 subAccountId;
   }
 
@@ -59,13 +61,11 @@ interface IPerpStorage {
 
   function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory);
 
-  function getGlobalAssetClassByIndex(uint8 _assetClassIndex) external view returns (GlobalAssetClass memory);
+  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory);
 
   function getGlobalState() external view returns (GlobalState memory);
 
   function getNumberOfSubAccountPosition(address _subAccount) external view returns (uint256);
-
-  function getSubAccountFee(address _subAccount) external view returns (int256 fee);
 
   function getBadDebt(address _subAccount) external view returns (uint256 badDebt);
 
@@ -91,8 +91,6 @@ interface IPerpStorage {
 
   function updateGlobalAssetClass(uint8 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
 
-  function updateSubAccountFee(address _subAccount, int256 fee) external;
-
   function addBadDebt(address _subAccount, uint256 _badDebt) external;
 
   function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external;
@@ -100,4 +98,8 @@ interface IPerpStorage {
   function getPositionIds(address _subAccount) external returns (bytes32[] memory _positionIds);
 
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
+
+  function increaseReserved(uint8 _assetClassIndex, uint256 _reserve) external;
+
+  function decreaseReserved(uint8 _assetClassIndex, uint256 _reserve) external;
 }

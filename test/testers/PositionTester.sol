@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
-import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
+import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
@@ -27,7 +27,7 @@ contract PositionTester is StdAssertions {
 
   IPerpStorage perpStorage;
   IVaultStorage vaultStorage;
-  MockOracleMiddleware oracle;
+  IOracleMiddleware oracle;
 
   // cache position info
   bytes32 cachePositionId;
@@ -39,7 +39,7 @@ contract PositionTester is StdAssertions {
   uint256 cachePlpTokenLiquidity;
   uint256 cacheTraderBalance;
 
-  constructor(IPerpStorage _perpStorage, IVaultStorage _vaultStorage, MockOracleMiddleware _oracle) {
+  constructor(IPerpStorage _perpStorage, IVaultStorage _vaultStorage, IOracleMiddleware _oracle) {
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     oracle = _oracle;
@@ -100,7 +100,7 @@ contract PositionTester is StdAssertions {
 
         assertEq(vaultStorage.traderBalances(_subAccount, _token), _expectBalance, "trader balance");
         assertEq(vaultStorage.plpLiquidity(_token), _expectLiquidity, "liquidity");
-        assertEq(vaultStorage.fees(_token), _expectFee, "fee");
+        assertEq(vaultStorage.protocolFees(_token), _expectFee, "protocol fee");
 
         unchecked {
           ++_i;

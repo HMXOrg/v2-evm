@@ -12,16 +12,16 @@ contract PythAdapter_SetterTest is PythAdapter_BaseTest {
     vm.deal(BOB, 1 ether);
   }
 
-  function testCorrectness_AccessControlWhenSetPythPriceId() external {
+  function testCorrectness_AccessControlWhenSetConfig() external {
     // Revert if not owner
     vm.expectRevert(abi.encodeWithSignature("Owned_NotOwner()"));
     vm.startPrank(address(ALICE));
-    pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
+    pythAdapter.setConfig(wethAssetId, wethPriceId, false);
     vm.stopPrank();
 
     // Should be fine when executed by owner
     vm.startPrank(address(this));
-    pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
+    pythAdapter.setConfig(wethAssetId, wethPriceId, false);
     vm.stopPrank();
   }
 }

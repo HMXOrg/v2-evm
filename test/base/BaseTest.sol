@@ -26,9 +26,8 @@ import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
@@ -40,6 +39,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal BOB;
   address internal CAROL;
   address internal DAVE;
+  address internal FEEVER;
 
   // storages
   IConfigStorage internal configStorage;
@@ -49,10 +49,9 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   // other contracts
   IPLPv2 internal plp;
   ICalculator internal calculator;
-  IFeeCalculator internal feeCalculator;
 
   // oracle
-  IOracleAdapter pythAdapter;
+  IPythAdapter pythAdapter;
   IOracleMiddleware oracleMiddleware;
 
   // mock
@@ -77,6 +76,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   uint256 ethMarketIndex;
   uint256 btcMarketIndex;
 
+  // Crypto
   bytes32 internal constant wethPriceId = 0x0000000000000000000000000000000000000000000000000000000000000001;
   bytes32 internal constant wbtcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000002;
   bytes32 internal constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
@@ -89,6 +89,11 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
 
+  // Fx
+  bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
+
+  bytes32 internal constant jpyAssetId = "JPY";
+
   constructor() {
     // Creating a mock Pyth instance with 60 seconds valid time period
     // and 1 wei for updating price.
@@ -98,6 +103,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
     DAVE = makeAddr("DAVE");
+    FEEVER = makeAddr("FEEVER");
 
     weth = new MockWNative();
     wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
@@ -141,10 +147,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
 
-    feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
-
     // set general config
-    configStorage.setFeeCalculator(address(feeCalculator));
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
     configStorage.setWeth(address(weth));
@@ -216,10 +219,10 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   /// @notice set up all asset class configs in Perp
   function _setUpAssetClassConfigs() private {
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRateBPS: 0.0001 * 1e4
+      baseBorrowingRate: 0.0001 * 1e18 // 0.01% per fundingInterval
     });
     IConfigStorage.AssetClassConfig memory _forexConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRateBPS: 0.0002 * 1e4
+      baseBorrowingRate: 0.0002 * 1e18 // 0.02% per fundingInterval
     });
     configStorage.addAssetClassConfig(_cryptoConfig);
     configStorage.addAssetClassConfig(_forexConfig);
@@ -243,7 +246,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
       }),
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
@@ -261,7 +264,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
         longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
         shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
       }),
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
     ethMarketIndex = configStorage.addMarketConfig(_ethConfig);

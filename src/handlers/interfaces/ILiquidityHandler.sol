@@ -11,9 +11,9 @@ interface ILiquidityHandler {
   error ILiquidityHandler_InsufficientRefund();
   error ILiquidityHandler_NotWhitelisted();
   error ILiquidityHandler_InvalidAddress();
-  error ILiquidityHandler_NotRefundState();
   error ILiquidityHandler_NotExecutionState();
   error ILiquidityHandler_NoOrder();
+  error ILiquidityHandler_NotOrderOwner();
 
   /**
    * Struct
@@ -24,7 +24,8 @@ interface ILiquidityHandler {
     uint256 amount;
     uint256 minOut;
     bool isAdd;
-    bool shouldUnwrap; // unwrap nativetoken when removeLiquidity
+    uint256 executionFee;
+    bool isNativeOut; // token Out for remove liquidity(!unwrap) and refund addLiquidity (shoulWrap) flag
   }
 
   /**
@@ -36,7 +37,7 @@ interface ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldUnwrap
-  ) external payable;
+  ) external payable returns (uint256);
 
   function createRemoveLiquidityOrder(
     address _tokenSell,
@@ -44,19 +45,17 @@ interface ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldUnwrap
-  ) external payable;
+  ) external payable returns (uint256);
 
-  function executeOrder(address _account, uint256 _orderIndex, bytes[] memory _priceData) external;
+  function executeOrder(uint256 endIndex, address payable feeReceiver, bytes[] memory _priceData) external;
 
   function cancelLiquidityOrder(uint256 _orderIndex) external;
 
-  function getLiquidityOrders(address _account) external view returns (LiquidityOrder[] memory);
+  function getLiquidityOrders() external view returns (LiquidityOrder[] memory);
 
-  function lastOrderIndex(address _account) external view returns (uint256);
+  function nextExecutionOrderIndex() external view returns (uint256);
 
   function setOrderExecutor(address _executor, bool _isOk) external;
 
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256);
-
-  function refund(LiquidityOrder memory _order) external;
 }

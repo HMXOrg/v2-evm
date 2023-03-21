@@ -71,7 +71,7 @@ contract CrossMarginHandler_Base is BaseTest {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );
 
@@ -80,8 +80,8 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set Oracle data for Price feeding
     {
-      pythAdapter.setPythPriceId(wbtcAssetId, wbtcPriceId);
-      pythAdapter.setPythPriceId(wethAssetId, wethPriceId);
+      pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
+      pythAdapter.setConfig(wethAssetId, wethPriceId, false);
 
       priceDataBytes = new bytes[](2);
       priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
@@ -122,13 +122,13 @@ contract CrossMarginHandler_Base is BaseTest {
   function simulateAliceDepositToken(address _token, uint256 _depositAmount) internal {
     vm.startPrank(ALICE);
     MockErc20(_token).approve(address(crossMarginHandler), _depositAmount);
-    crossMarginHandler.depositCollateral(ALICE, SUB_ACCOUNT_NO, _token, _depositAmount);
+    crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, _token, _depositAmount, false);
     vm.stopPrank();
   }
 
   function simulateAliceWithdrawToken(address _token, uint256 _withdrawAmount) internal {
     vm.startPrank(ALICE);
-    crossMarginHandler.withdrawCollateral(ALICE, SUB_ACCOUNT_NO, _token, _withdrawAmount, priceDataBytes);
+    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, _token, _withdrawAmount, priceDataBytes, false);
     vm.stopPrank();
   }
 }

@@ -5,8 +5,8 @@ import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol"
 
 contract MockOracleMiddleware is IOracleMiddleware {
   struct AssetPriceConfig {
+    uint32 trustPriceAge;
     uint32 confidenceThresholdE6;
-    uint8 trustPriceAge;
   }
 
   uint256 public priceE30;
@@ -111,11 +111,11 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 /*_marketSkew*/,
     int256 /*_sizeDelta*/,
     uint256 /*_maxSkewScaleUSD*/
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     Price memory p = price[_assetId];
-    if (p.priceE30 == 0) return (priceE30, lastUpdate);
-    return (p.priceE30, p.lastUpdate);
+    if (p.priceE30 == 0) return (priceE30, priceE30, lastUpdate);
+    return (p.priceE30, p.priceE30, p.lastUpdate);
   }
 
   function unsafeGetLatestAdaptivePrice(
@@ -124,10 +124,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 /*_marketSkew*/,
     int256 /*_sizeDelta*/,
     uint256 /*_maxSkewScaleUSD*/
-  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate) {
     Price memory p = price[_assetId];
-    if (p.priceE30 == 0) return (priceE30, lastUpdate);
-    return (p.priceE30, p.lastUpdate);
+    if (p.priceE30 == 0) return (priceE30, priceE30, lastUpdate);
+    return (p.priceE30, p.priceE30, p.lastUpdate);
   }
 
   function getLatestAdaptivePriceWithMarketStatus(
@@ -136,11 +136,15 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 /*_marketSkew*/,
     int256 /*_sizeDelta*/,
     uint256 /*_maxSkewScaleUSD*/
-  ) external view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status) {
+  )
+    external
+    view
+    returns (uint256 _adaptivePrice, uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status)
+  {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     Price memory p = price[_assetId];
-    if (p.priceE30 == 0) return (priceE30, exponent, lastUpdate, mockMarketStatus);
-    return (p.priceE30, exponent, p.lastUpdate, mockMarketStatus);
+    if (p.priceE30 == 0) return (priceE30, priceE30, exponent, lastUpdate, mockMarketStatus);
+    return (p.priceE30, p.priceE30, exponent, p.lastUpdate, mockMarketStatus);
   }
 
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
@@ -149,10 +153,10 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 /*_marketSkew*/,
     int256 /*_sizeDelta*/,
     uint256 /*_maxSkewScaleUSD*/
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status) {
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate, uint8 _status) {
     Price memory p = price[_assetId];
-    if (p.priceE30 == 0) return (priceE30, lastUpdate, mockMarketStatus);
-    return (p.priceE30, p.lastUpdate, mockMarketStatus);
+    if (p.priceE30 == 0) return (priceE30, priceE30, lastUpdate, mockMarketStatus);
+    return (p.priceE30, p.priceE30, p.lastUpdate, mockMarketStatus);
   }
 
   function isSameAssetIdOnPyth(bytes32 _assetId1, bytes32 _assetId2) external view returns (bool) {
@@ -166,6 +170,6 @@ contract MockOracleMiddleware is IOracleMiddleware {
   function setAssetPriceConfig(
     bytes32 /*_assetId*/,
     uint32 /*_confidenceThresholdE6*/,
-    uint8 /*_trustPriceAge*/
+    uint32 /*_trustPriceAge*/
   ) external {}
 }

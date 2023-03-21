@@ -9,6 +9,7 @@ interface ITradeService {
   error ITradeService_MarketIsClosed();
   error ITradeService_PositionAlreadyClosed();
   error ITradeService_DecreaseTooHighPositionSize();
+  error ITradeService_SubAccountEquityIsUnderIMR();
   error ITradeService_SubAccountEquityIsUnderMMR();
   error ITradeService_TooTinyPosition();
   error ITradeService_BadSubAccountId();
@@ -50,13 +51,6 @@ interface ITradeService {
     address _tpToken,
     uint256 _limitPriceE30
   ) external;
-
-  function getDelta(
-    uint256 _size,
-    bool _isLong,
-    uint256 _markPrice,
-    uint256 _averagePrice
-  ) external pure returns (bool, uint256);
 
   function forceClosePosition(
     address _account,

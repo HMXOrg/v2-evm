@@ -89,12 +89,12 @@ contract MockCalculator is ICalculator {
   }
 
   // @todo - Add Description
-  function getUnrealizedPnl(
+  function getUnrealizedPnlAndFee(
     address _subAccount,
     uint256 /* _price */,
     bytes32 /* _assetId */
-  ) external view returns (int256) {
-    return unrealizedPnlOf[_subAccount];
+  ) public view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+    return (unrealizedPnlOf[_subAccount], 0);
   }
 
   // @todo - Add Description
@@ -121,23 +121,11 @@ contract MockCalculator is ICalculator {
     return 0;
   }
 
-  function getAUM(bool /* isMaxPrice */, uint256 /* _price */, bytes32 /* _assetId */) external view returns (uint256) {
+  function getAUME30(bool /* isMaxPrice */) external view returns (uint256) {
     return aum;
   }
 
-  function getAUME30(
-    bool /* isMaxPrice */,
-    uint256 /* _price */,
-    bytes32 /* _assetId */
-  ) external view returns (uint256) {
-    return aum;
-  }
-
-  function getPLPValueE30(
-    bool /* isMaxPrice */,
-    uint256 /* _price */,
-    bytes32 /* _assetId */
-  ) public view virtual returns (uint256) {
+  function getPLPValueE30(bool /* isMaxPrice */) public view virtual returns (uint256) {
     return plpValue;
   }
 
@@ -158,35 +146,31 @@ contract MockCalculator is ICalculator {
     return (_amount * 10 ** _toTokenDecimals) / 10 ** _fromTokenDecimals;
   }
 
-  function getAddLiquidityFeeRate(
+  function getAddLiquidityFeeBPS(
     address /*_token*/,
     uint256 /*_tokenValue*/,
     ConfigStorage /*_configStorage*/
-  ) external pure returns (uint256) {
-    return 0.003 ether;
+  ) external pure returns (uint32) {
+    return uint32(30);
   }
 
-  function getRemoveLiquidityFeeRate(
+  function getRemoveLiquidityFeeBPS(
     address /*_token*/,
     uint256 /*_tokenValueE30*/,
     ConfigStorage /*_configStorage*/
-  ) external pure returns (uint256) {
-    return 1e18;
+  ) external pure returns (uint32) {
+    return uint32(30);
   }
 
   function getFreeCollateral(
     address /*_subAccount*/,
     uint256 /*_price*/,
     bytes32 /*_assetId*/
-  ) external view returns (uint256) {
+  ) public view virtual returns (uint256) {
     return freeCollateral;
   }
 
-  function getNextBorrowingRate(
-    uint8 /*_assetClassIndex*/,
-    uint256 /*_limitPriceE30*/,
-    bytes32 /*_limitAssetId*/
-  ) public view virtual returns (uint256) {
+  function getNextBorrowingRate(uint8 /*_assetClassIndex*/, uint256 /*_plpTVL*/) public view virtual returns (uint256) {
     return nextBorrowingRate;
   }
 
@@ -207,18 +191,13 @@ contract MockCalculator is ICalculator {
     return borrowingFee;
   }
 
-  function getNextFundingRate(
-    uint256 /*marketIndex*/,
-    uint256 /*limitPrice*/
-  ) public view virtual returns (int256, int256, int256) {
+  function getNextFundingRate(uint256 /*marketIndex*/) public view virtual returns (int256, int256, int256) {
     return (fundingRate, fundingRateLong, fundingRateShort);
   }
 
   function getSettlementFeeRate(
     address /* _token */,
-    uint256 /* _liquidityUSDDelta */,
-    uint256,
-    bytes32
+    uint256 /* _liquidityUSDDelta */
   ) external pure returns (uint256) {
     // 0.5%
     return 5e15;
@@ -253,4 +232,32 @@ contract MockCalculator is ICalculator {
     int256 /*_positionSizeDelta*/,
     int256 /*_realizedPositionPnl*/
   ) public view virtual returns (uint256 _nextAveragePrice) {}
+
+  function calculateAveragePrice(
+    bool isLong,
+    uint256 _globalPositionSize,
+    uint256 _globalAveragePrice,
+    uint256 _currentPrice,
+    int256 _positionSizeDelta,
+    int256 _realizedPositionPnl
+  ) external pure returns (uint256 _nextAveragePrice) {}
+
+  function getDelta(
+    uint256 _size,
+    bool _isLong,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
+  ) public view virtual returns (bool, uint256) {}
+
+  function getPositionNextAveragePrice(
+    uint256 _size,
+    bool _isLong,
+    uint256 _sizeDelta,
+    uint256 _markPrice,
+    uint256 _averagePrice,
+    uint256 _lastIncreaseTimestamp
+  ) external pure returns (uint256) {}
+
+  function getPendingBorrowingFeeE30() public view virtual returns (uint256) {}
 }

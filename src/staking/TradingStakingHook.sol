@@ -2,10 +2,10 @@
 
 pragma solidity 0.8.18;
 
-import { Owned } from "../base/Owned.sol";
-import { ITradeServiceHook } from "../services/interfaces/ITradeServiceHook.sol";
-import { ITradeService } from "../services/interfaces/ITradeService.sol";
-import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
+import { Owned } from "@hmx/base/Owned.sol";
+import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 
 contract TradingStakingHook is ITradeServiceHook, Owned {
   error TradingStakingHook_Forbidden();
@@ -31,7 +31,8 @@ contract TradingStakingHook is ITradeServiceHook, Owned {
     address _primaryAccount,
     uint256,
     uint256 _marketIndex,
-    uint256 _sizeDelta
+    uint256 _sizeDelta,
+    bytes32
   ) external onlyTradeService {
     ITradingStaking(tradingStaking).deposit(_primaryAccount, _marketIndex, _sizeDelta);
   }
@@ -40,7 +41,8 @@ contract TradingStakingHook is ITradeServiceHook, Owned {
     address _primaryAccount,
     uint256,
     uint256 _marketIndex,
-    uint256 _sizeDelta
+    uint256 _sizeDelta,
+    bytes32
   ) external onlyTradeService {
     ITradingStaking(tradingStaking).withdraw(_primaryAccount, _marketIndex, _sizeDelta);
   }

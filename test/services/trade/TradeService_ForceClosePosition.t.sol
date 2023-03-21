@@ -42,6 +42,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
       configStorage.setCalculator(address(mockCalculator));
       tradeService.reloadConfig();
     }
@@ -62,7 +63,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
-    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
+    vaultStorage.increaseTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
   }
 
   /**

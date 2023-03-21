@@ -7,6 +7,8 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 
+import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
+
 // What is this test DONE
 // - success
 //   - liquidate
@@ -15,6 +17,24 @@ import { PositionTester02 } from "../../testers/PositionTester02.sol";
 contract LiquidationService_Liquidation is LiquidationService_Base {
   function setUp() public virtual override {
     super.setUp();
+
+    // Override the mock calculator
+    {
+      mockCalculator = new MockCalculatorWithRealCalculator(
+        address(mockOracle),
+        address(vaultStorage),
+        address(perpStorage),
+        address(configStorage)
+      );
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
+
+      configStorage.setCalculator(address(mockCalculator));
+
+      tradeHelper.reloadConfig();
+      tradeService.reloadConfig();
+      liquidationService.reloadConfig();
+    }
   }
 
   function testRevert_liquidate_WhenAccountHealthy() external {
@@ -36,8 +56,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
-    vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
 
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
     tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
@@ -72,8 +92,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
-    vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
 
     bytes32 _wethPositionId = getPositionId(ALICE, 0, ethMarketIndex);
     bytes32 _wbtcPositionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -131,15 +151,21 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
+    address bobAddress = getSubAccount(BOB, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
-    vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+
+    vaultStorage.increaseTraderBalance(bobAddress, address(usdt), 10_000 * 1e6);
 
     bytes32 _wethPositionId = getPositionId(ALICE, 0, ethMarketIndex);
     bytes32 _wbtcPositionId = getPositionId(ALICE, 0, ethMarketIndex);
 
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
     tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
+
+    mockOracle.setPrice(wbtcAssetId, 24_800 * 1e30);
+    tradeService.increasePosition(BOB, 0, btcMarketIndex, 124_000 * 1e30, 0);
 
     // BTC price 24500 USD
     mockOracle.setPrice(wbtcAssetId, 24_500 * 1e30);
@@ -160,6 +186,16 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     // reset position
     positionTester02.assertPosition(_wethPositionId, assertData);
     positionTester02.assertPosition(_wbtcPositionId, assertData);
+
+    {
+      IPerpStorage.GlobalMarket memory btcGlobalMarket = perpStorage.getGlobalMarketByIndex(btcMarketIndex);
+      // 500,000 + 100,000 = 600,000
+      assertEq(btcGlobalMarket.longPositionSize, 124_000 * 1e30);
+
+      assertEq(btcGlobalMarket.longAvgPrice, 24_800 * 1e30);
+      // 600,000 / 25,000 = 24
+      assertEq(btcGlobalMarket.longOpenInterest, 5 * 1e18);
+    }
 
     // 0.3 * 24,500 = 7,350
     // 10,005 - 7,350 = 2,655

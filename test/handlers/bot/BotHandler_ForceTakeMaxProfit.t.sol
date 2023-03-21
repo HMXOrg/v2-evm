@@ -32,6 +32,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
       configStorage.setCalculator(address(mockCalculator));
       tradeService.reloadConfig();
     }
@@ -52,7 +53,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
-    vaultStorage.setTraderBalance(_getSubAccount(ALICE, 0), address(weth), 100_000 ether);
+    vaultStorage.increaseTraderBalance(_getSubAccount(ALICE, 0), address(weth), 100_000 ether);
   }
 
   /**

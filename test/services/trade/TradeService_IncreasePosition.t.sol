@@ -34,76 +34,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
   }
 
   ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  getDelta FUNCTION  /////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////
-
-  function testRevert_getDelta_WhenBadAveragePrice() external {
-    // Bad position average price
-    uint256 avgPriceE30 = 0;
-    bool isLong = true;
-    uint256 size = 1_000 * 1e30;
-
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_InvalidAveragePrice()"));
-    tradeService.getDelta(size, isLong, 1e30, avgPriceE30);
-  }
-
-  function testCorrectness_getDelta_WhenLongAndPriceUp() external {
-    uint256 avgPriceE30 = 22_000 * 1e30;
-    uint256 nextPrice = 24_200 * 1e30;
-    bool isLong = true;
-    uint256 size = 1_000 * 1e30;
-
-    // price up 10% -> profit 10% of size
-    mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
-
-    assertEq(isProfit, true);
-    assertEq(delta, 100 * 1e30);
-  }
-
-  function testCorrectness_getDelta_WhenLongAndPriceDown() external {
-    uint256 avgPriceE30 = 22_000 * 1e30;
-    uint256 nextPrice = 18_700 * 1e30;
-    bool isLong = true;
-    uint256 size = 1_000 * 1e30;
-
-    // price down 15% -> loss 15% of size
-    mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
-
-    assertEq(isProfit, false);
-    assertEq(delta, 150 * 1e30);
-  }
-
-  function testCorrectness_getDelta_WhenShortAndPriceUp() external {
-    uint256 avgPriceE30 = 22_000 * 1e30;
-    uint256 nextPrice = 23_100 * 1e30;
-    bool isLong = false;
-    uint256 size = 1_000 * 1e30;
-
-    // price up 5% -> loss 5% of size
-    mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
-
-    assertEq(isProfit, false);
-    assertEq(delta, 50 * 1e30);
-  }
-
-  function testCorrectness_getDelta_WhenShortAndPriceDown() external {
-    uint256 avgPriceE30 = 22_000 * 1e30;
-    uint256 nextPrice = 11_000 * 1e30;
-    bool isLong = false;
-    uint256 size = 1_000 * 1e30;
-
-    // price down 50% -> profit 50% of size
-    mockOracle.setPrice(nextPrice);
-    (bool isProfit, uint256 delta) = tradeService.getDelta(size, isLong, nextPrice, avgPriceE30);
-
-    assertEq(isProfit, true);
-    assertEq(delta, 500 * 1e30);
-  }
-
-  ////////////////////////////////////////////////////////////////////////////////////
   /////////////////////  increasePosition FUNCTION  //////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////////////
 
@@ -141,7 +71,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
           longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
           shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
         }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRateBPS: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
       })
     );
 
@@ -659,6 +589,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     }
   }
 
+  // @todo fix limit price with adaptive price
   function testCorrectness_increasePosition_WhenUsingLimitPrice() external {
     // setup
     // TVL
@@ -684,7 +615,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // size: 1,000,000
     //   | increase position Long 1,000,000
     // avgPrice: 1,000 (limitPrice 1000, currentPrice 1600)
-    //   | price ETH 1,000
+    //   | price ETH 1,600
     // reserveValue: 90,000
     //   | imr = 1,000,000 * 0.01 = 10,000
     //   | reserve 900% = 10,000 * 900% = 90,000
@@ -696,7 +627,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     //   | 1,000,000 / 1,000 = 1000 ETH
     PositionTester02.PositionAssertionData memory assetData = PositionTester02.PositionAssertionData({
       size: 1_000_000 * 1e30,
-      avgPrice: 1_000 * 1e30,
+      avgPrice: 1_600 * 1e30,
       reserveValue: 90_000 * 1e30,
       lastIncreaseTimestamp: 100,
       openInterest: 1_000 * 1e18

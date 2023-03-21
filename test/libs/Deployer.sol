@@ -6,9 +6,8 @@ import { Vm } from "forge-std/Vm.sol";
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
@@ -29,6 +28,8 @@ import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 
+import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -38,11 +39,6 @@ library Deployer {
 
   function deployPLPv2() internal returns (IPLPv2) {
     return IPLPv2(deployContract("PLPv2"));
-  }
-
-  function deployFeeCalculator(address _vaultStorage, address _configStorage) internal returns (IFeeCalculator) {
-    bytes memory _args = abi.encode(_vaultStorage, _configStorage);
-    return IFeeCalculator(deployContractWithArguments("FeeCalculator", _args));
   }
 
   function deployCalculator(
@@ -59,8 +55,8 @@ library Deployer {
    * Oracles
    */
 
-  function deployPythAdapter(address _pyth) internal returns (IOracleAdapter) {
-    return IOracleAdapter(deployContractWithArguments("PythAdapter", abi.encode(_pyth)));
+  function deployPythAdapter(address _pyth) internal returns (IPythAdapter) {
+    return IPythAdapter(deployContractWithArguments("PythAdapter", abi.encode(_pyth)));
   }
 
   function deployOracleMiddleware(address _pythAdapter) internal returns (IOracleMiddleware) {
@@ -166,22 +162,30 @@ library Deployer {
   function deployTradeService(
     address _perpStorage,
     address _vaultStorage,
-    address _configStorage
+    address _configStorage,
+    address _tradeHelper
   ) internal returns (ITradeService) {
     return
       ITradeService(
-        deployContractWithArguments("TradeService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
+        deployContractWithArguments(
+          "TradeService",
+          abi.encode(_perpStorage, _vaultStorage, _configStorage, _tradeHelper)
+        )
       );
   }
 
   function deployLiquidationService(
     address _perpStorage,
     address _vaultStorage,
-    address _configStorage
+    address _configStorage,
+    address _tradeHelper
   ) internal returns (ILiquidationService) {
     return
       ILiquidationService(
-        deployContractWithArguments("LiquidationService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
+        deployContractWithArguments(
+          "LiquidationService",
+          abi.encode(_perpStorage, _vaultStorage, _configStorage, _tradeHelper)
+        )
       );
   }
 
@@ -194,6 +198,15 @@ library Deployer {
       ILiquidityService(
         deployContractWithArguments("LiquidityService", abi.encode(_perpStorage, _vaultStorage, _configStorage))
       );
+  }
+
+  function deployTradeHelper(
+    address _perpStorage,
+    address _vaultStorage,
+    address _configStorage
+  ) internal returns (ITradeHelper) {
+    return
+      ITradeHelper(deployContractWithArguments("TradeHelper", abi.encode(_perpStorage, _vaultStorage, _configStorage)));
   }
 
   /**

@@ -6,6 +6,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 import { Owned } from "@hmx/base/Owned.sol";
 
 // contracts
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
@@ -19,6 +20,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
    */
   event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
+  event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
   event LogSetCalculator(address indexed oldCalculator, address newCalculator);
   event LogDepositCollateral(address indexed primaryAccount, address indexed subAccount, address token, uint256 amount);
   event LogWithdrawCollateral(
@@ -35,18 +37,21 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   address public configStorage;
   address public vaultStorage;
   address public calculator;
+  address public perpStorage;
 
-  constructor(address _configStorage, address _vaultStorage, address _calculator) {
+  constructor(address _configStorage, address _vaultStorage, address _perpStorage, address _calculator) {
     if (_configStorage == address(0) || _vaultStorage == address(0) || _calculator == address(0))
       revert ICrossMarginService_InvalidAddress();
 
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
+    perpStorage = _perpStorage;
     calculator = _calculator;
 
     // Sanity check
     ConfigStorage(_configStorage).calculator();
     VaultStorage(_vaultStorage).devFees(address(0));
+    PerpStorage(_perpStorage).getGlobalState();
     Calculator(_calculator).oracle();
   }
 
@@ -174,6 +179,18 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
     // Sanity check
     VaultStorage(_vaultStorage).devFees(address(0));
+  }
+
+  /// @notice Set new PerpStorage contract address.
+  /// @param _perpStorage New PerpStorage contract address.
+  function setPerpStorage(address _perpStorage) external nonReentrant onlyOwner {
+    if (_perpStorage == address(0)) revert ICrossMarginService_InvalidAddress();
+
+    emit LogSetPerpStorage(perpStorage, _perpStorage);
+    perpStorage = _perpStorage;
+
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
   }
 
   /// @notice Set new Calculator contract address.

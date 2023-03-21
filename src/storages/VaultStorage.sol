@@ -26,7 +26,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
    * Events
    */
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
-
   event SetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
 
   /**

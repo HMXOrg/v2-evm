@@ -200,6 +200,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     crossMarginService = Deployer.deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
+      address(perpStorage),
       address(calculator)
     );
     tradeService = Deployer.deployTradeService(

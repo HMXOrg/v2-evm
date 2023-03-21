@@ -340,7 +340,6 @@ contract TradeHelper is ITradeHelper {
       if (_vars.absFundingFeeToBePaid > 0) {
         (_repayAmount, _repayValue) = _getRepayAmount(
           _vars.configStorage,
-          _vars.oracle,
           _traderBalance,
           _vars.absFundingFeeToBePaid,
           _collateralToken,
@@ -378,7 +377,6 @@ contract TradeHelper is ITradeHelper {
     if (_vars.absFundingFeeToBePaid < _vars.plpLiquidityDebtUSDE30) {
       (_repayAmount, _repayValue) = _getRepayAmount(
         _vars.configStorage,
-        _vars.oracle,
         _traderBalance,
         _vars.absFundingFeeToBePaid,
         _collateralToken,
@@ -396,7 +394,6 @@ contract TradeHelper is ITradeHelper {
       // Trader repay with just enough current collateral amounts to PLP
       (_repayAmount, _repayValue) = _getRepayAmount(
         _vars.configStorage,
-        _vars.oracle,
         _traderBalance,
         _vars.plpLiquidityDebtUSDE30,
         _collateralToken,
@@ -436,7 +433,6 @@ contract TradeHelper is ITradeHelper {
     if (_fundingFeeBalance > 0) {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _vars.configStorage,
-        _vars.oracle,
         _fundingFeeBalance,
         _vars.absFundingFeeToBePaid,
         _collateralToken,
@@ -471,7 +467,6 @@ contract TradeHelper is ITradeHelper {
     if (_plpBalance > 0) {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _vars.configStorage,
-        _vars.oracle,
         _plpBalance,
         _vars.absFundingFeeToBePaid,
         _collateralToken,
@@ -505,7 +500,6 @@ contract TradeHelper is ITradeHelper {
       // protocol fee portion + dev fee portion
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _vars.configStorage,
-        _vars.oracle,
         _traderBalance,
         _vars.tradingFeeToBePaid,
         _collateralToken,
@@ -537,7 +531,6 @@ contract TradeHelper is ITradeHelper {
       // plp fee portion + dev fee portion
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _vars.configStorage,
-        _vars.oracle,
         _traderBalance,
         _vars.borrowingFeeToBePaid,
         _collateralToken,
@@ -571,7 +564,6 @@ contract TradeHelper is ITradeHelper {
 
   function _getRepayAmount(
     ConfigStorage _configStorage,
-    OracleMiddleware _oracle,
     uint256 _traderBalance,
     uint256 _feeValueE30,
     address _token,

@@ -16,7 +16,7 @@ interface IPerpStorage {
     uint256 sumBorrowingRate;
     uint256 lastBorrowingTime;
     uint256 sumBorrowingFeeE30;
-    uint256 settledBorrowingFeeE30;
+    uint256 sumSettledBorrowingFeeE30;
   }
 
   // mapping _marketIndex => globalPosition;
@@ -67,8 +67,6 @@ interface IPerpStorage {
 
   function getNumberOfSubAccountPosition(address _subAccount) external view returns (uint256);
 
-  function getSubAccountFee(address _subAccount) external view returns (int256 fee);
-
   function getBadDebt(address _subAccount) external view returns (uint256 badDebt);
 
   function updateGlobalLongMarketById(
@@ -92,8 +90,6 @@ interface IPerpStorage {
   function removePositionFromSubAccount(address _subAccount, bytes32 _positionId) external;
 
   function updateGlobalAssetClass(uint8 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
-
-  function updateSubAccountFee(address _subAccount, int256 fee) external;
 
   function addBadDebt(address _subAccount, uint256 _badDebt) external;
 

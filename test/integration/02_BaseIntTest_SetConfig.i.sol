@@ -56,13 +56,13 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
 
   function _setUpAssetClassConfigs() private {
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRate: 1 // 0.01%
+      baseBorrowingRate: 0.0001 * 1e18 // 0.01%
     });
     IConfigStorage.AssetClassConfig memory _equityConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRate: 2 // 0.02%
+      baseBorrowingRate: 0.0002 * 1e18 // 0.02%
     });
     IConfigStorage.AssetClassConfig memory _forexConfig = IConfigStorage.AssetClassConfig({
-      baseBorrowingRate: 3 // 0.03%
+      baseBorrowingRate: 0.0003 * 1e18 // 0.03%
     });
 
     configStorage.addAssetClassConfig(_cryptoConfig);

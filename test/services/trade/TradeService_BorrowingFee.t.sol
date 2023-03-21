@@ -221,10 +221,6 @@ contract TradeService_BorrowingFee is TradeService_Base {
         assertEq(_globalAssetClass.lastBorrowingTime, 110);
       }
 
-      // (0.000135 - 0) * 90000 = 12.15 | 0.01 * 1600 = 16 | 12.15 - 16 = 0 |
-      assertEq(perpStorage.getSubAccountFee(aliceAddress), 0);
-      assertEq(perpStorage.getSubAccountFee(bobAddress), 0);
-
       // 12.15 / 1600 = 0.00759375 | 1.01 - 0.00759375 = 1.00240625
       assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 1.00240625 * 1e18);
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
@@ -276,6 +272,110 @@ contract TradeService_BorrowingFee is TradeService_Base {
       // and not affect to plp liquidity
       assertEq(vaultStorage.devFees(address(usdt)), 0);
       assertEq(vaultStorage.plpLiquidity(address(usdt)), 1_000_000 * 1e6);
+    }
+  }
+
+  function testCorrectness_pendingBorrowingFee() external {
+    // TVL - make the plp value
+    // 1000000 USDT -> 1000000 USD
+    vaultStorage.addPLPLiquidity(address(usdt), 500_000 * 1e6);
+    vaultStorage.addPLPLiquidity(address(usdc), 500_000 * 1e6);
+
+    // ALICE add collateral
+    // 10000 USDT -> free collateral -> 10000 USD
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
+    MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getPendingBorrowingFeeE30");
+
+    // ETH price 1600 USD
+    mockOracle.setPrice(wethAssetId, 1600 * 1e30);
+    // USDT price 1 USD
+    mockOracle.setPrice(usdtAssetId, 1 * 1e30);
+
+    address aliceAddress = getSubAccount(ALICE, 0);
+    address bobAddress = getSubAccount(BOB, 0);
+    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 100 * 1e6);
+    vaultStorage.setTraderBalance(bobAddress, address(usdt), 50 * 1e6);
+
+    vm.warp(100);
+    {
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      assertEq(_globalAssetClass.reserveValueE30, 90000 * 1e30);
+      assertEq(_globalAssetClass.sumBorrowingRate, 0);
+      assertEq(_globalAssetClass.lastBorrowingTime, 100);
+      assertEq(_globalAssetClass.sumBorrowingFeeE30, 0);
+      assertEq(_globalAssetClass.sumSettledBorrowingFeeE30, 0);
+
+      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 0, "PendingBorrowingFee T100");
+    }
+
+    vm.warp(101);
+    {
+      // Try again with Alice, there should be no pending borrowing fee, as there is only Alice in the game.
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, 0);
+
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      // 0.0001 * 90000 / 1000000 = 0.000009
+      assertEq(_globalAssetClass.reserveValueE30, 135000 * 1e30);
+      assertEq(_globalAssetClass.sumBorrowingRate, 0.000009 * 1e18);
+      assertEq(_globalAssetClass.lastBorrowingTime, 101);
+
+      // 0.000009 * 90000 = 0.81
+      assertEq(_globalAssetClass.sumBorrowingFeeE30, 0.81 * 1e30);
+      assertEq(_globalAssetClass.sumSettledBorrowingFeeE30, 0.81 * 1e30);
+
+      // no pending
+      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 0, "PendingBorrowingFee T101");
+    }
+
+    vm.warp(102);
+    {
+      // Last fee to Plp = 0.81 * 85% = 0.6885
+      // Plp Value = 1000000 + 0.6885 = 1000000.6885
+      // BorrowingRate: 0.0001 * 135000 / 1000000.6885 * (102 - 101) = 0.000013499990705256
+      // BorrowingFee: 0.000013499990705256 * 135000 = 1.82249874520956
+      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 1.82249874520956 * 1e30, "PendingBorrowingFee T102");
+    }
+
+    vm.warp(110);
+    {
+      // Bob buys on USDT
+      tradeService.increasePosition(BOB, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
+      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+
+      // 0.0001 * 135000 / 1000000.6885 * (110 - 101) = 0.000121499916347307 | 0.000009 + 0.000121499916347307 = 0.000130499916347307
+      assertEq(_globalAssetClass.reserveValueE30, 225000 * 1e30);
+      assertEq(_globalAssetClass.sumBorrowingRate, 0.000130499916347307 * 1e18);
+      assertEq(_globalAssetClass.lastBorrowingTime, 110);
+
+      // SumFee = 0.81 + (nextBorrowingRate * reserveValue)
+      // 0.81 + (0.000121499916347307 * 135000) ~= 17.212488706886445
+      assertEq(_globalAssetClass.sumBorrowingFeeE30, 17.212488706886445 * 1e30);
+      // SumSettledFee = Alice(T:100 to 101)
+      //               = 0.81
+      // So, it remains the same
+      assertEq(_globalAssetClass.sumSettledBorrowingFeeE30, 0.81 * 1e30);
+
+      // At this point, can still ignore BOB, as BOB has just joined, timeDelta = 0
+      // Last fee to Plp = 0.81 * 85% = 0.6885
+      // Plp Value = 1000000 + 0.6885 = 1000000.6885
+      // BorrowingRate: 0.0001 * 135000 / 1000000.6885 * (110 - 101) = 0.000121499916347307
+      // BorrowingFee: 0.000121499916347307 * 135000 = 16.402488706886444
+      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 16.402488706886445 * 1e30, "PendingBorrowingFee T110");
+    }
+
+    vm.warp(120);
+    {
+      // Last fee to Plp = 0.81 * 85% = 0.6885
+      // Plp Value = 1000000 + 0.6885 = 1000000.6885
+
+      // T110-120 portion
+      // BorrowingRate: 0.0001 * 225000 / 1000000.6885 * (120 - 110) = 0.000224999845087606
+      // BorrowingFee: 0.000224999845087606 * 225000 = 50.62496514471135
+
+      // Final anwser = (T110-120 portion) + (T101-110 portion)
+      // = 50.62496514471135 + 16.402488706886445 = 67.027453851597795
+      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 67.027453851597795 * 1e30, "PendingBorrowingFee T120");
     }
   }
 }

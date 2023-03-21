@@ -9,6 +9,7 @@ interface IVaultStorage {
   error IVaultStorage_TraderTokenAlreadyExists();
   error IVaultStorage_TraderBalanceRemaining();
   error IVaultStorage_ZeroAddress();
+  error IVaultStorage_PLPBalanceRemaining();
 
   /**
    * Functions

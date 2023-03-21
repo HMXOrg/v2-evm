@@ -8,12 +8,12 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { FeeCalculator } from "@hmx/contracts/FeeCalculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 
 // interfaces
-import { ITradeService } from "./interfaces/ITradeService.sol";
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {
@@ -334,6 +334,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // save the updated position to the storage
     _perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
+
+    // Call Trade Service Hook
+    _increasePositionHooks(_primaryAccount, _subAccountId, _marketIndex, _absSizeDelta);
   }
 
   // @todo - rewrite description
@@ -415,6 +418,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // update position, market, and global market state
     _decreasePosition(_marketConfig, _marketIndex, _vars);
+
+    // Call Trade Service Hook
+    _decreasePositionHooks(_account, _subAccountId, _marketIndex, _positionSizeE30ToDecrease);
   }
 
   // @todo - access control
@@ -706,9 +712,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18;
 
     // TODO: no more fee to protocol fee, but discount deduction amount of PLP instead
-    _vaultStorage.removePLPLiquidity(_tpToken, _tpTokenOut);
-    _vaultStorage.addFee(_tpToken, _settlementFee);
-    _vaultStorage.increaseTraderBalance(_subAccount, _tpToken, _tpTokenOut - _settlementFee);
+    _vaultStorage.payTraderProfit(_subAccount, _tpToken, _tpTokenOut, _settlementFee);
 
     // @todo - emit LogSettleProfit(trader, collateralToken, addedAmount, settlementFee)
   }
@@ -749,8 +753,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           // When this collateral token can cover all the debt, use this token to pay it all
           _vars.collateralToRemove = (_debtUsd * (10 ** _vars.decimals)) / _vars.price;
 
-          _vaultStorage.addPLPLiquidity(_token, _vars.collateralToRemove);
-          _vaultStorage.decreaseTraderBalance(_subAccount, _token, _vars.collateralToRemove);
+          _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
           // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
           // In this case, all debt are paid. We can break the loop right away.
           break;
@@ -758,8 +761,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
           _vars.collateralToRemove = (_vars.collateralUsd * (10 ** _vars.decimals)) / _vars.price;
 
-          _vaultStorage.addPLPLiquidity(_token, _vars.collateralToRemove);
-          _vaultStorage.decreaseTraderBalance(_subAccount, _token, _vars.collateralToRemove);
+          _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
           // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
           // update debtUsd
           unchecked {
@@ -875,6 +877,36 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // if sub account equity < MMR, then trader couldn't decrease position
     if (_subAccountEquity < 0 || uint256(_subAccountEquity) < _mmr) revert ITradeService_SubAccountEquityIsUnderMMR();
+  }
+
+  function _increasePositionHooks(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sizeDelta
+  ) internal {
+    address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
+    for (uint256 i; i < _hooks.length; ) {
+      ITradeServiceHook(_hooks[i]).onIncreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, "");
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _decreasePositionHooks(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sizeDelta
+  ) internal {
+    address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
+    for (uint256 i; i < _hooks.length; ) {
+      ITradeServiceHook(_hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, "");
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /**

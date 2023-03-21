@@ -17,6 +17,8 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
@@ -109,13 +111,21 @@ contract TradeHelper is ITradeHelper {
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
-      (int256 nextFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
-        _marketIndex
-      );
+      int256 fundingFeeLong;
+      int256 fundingFeeShort;
+      int256 nextFundingRate = calculator.getNextFundingRate(_marketIndex);
 
       _globalMarket.currentFundingRate += nextFundingRate;
-      _globalMarket.accumFundingLong += nextFundingRateLong;
-      _globalMarket.accumFundingShort += nextFundingRateShort;
+
+      if (_globalMarket.longOpenInterest > 0) {
+        fundingFeeLong = (_globalMarket.currentFundingRate * int(_globalMarket.longPositionSize)) / 1e30;
+      }
+      if (_globalMarket.shortOpenInterest > 0) {
+        fundingFeeShort = (_globalMarket.currentFundingRate * -int(_globalMarket.shortPositionSize)) / 1e30;
+      }
+
+      _globalMarket.accumFundingLong += fundingFeeLong;
+      _globalMarket.accumFundingShort += fundingFeeShort;
       _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
 
       _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);

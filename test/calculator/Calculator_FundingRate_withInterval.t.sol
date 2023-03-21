@@ -6,6 +6,16 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract Calculator_FundingRate is Calculator_Base {
+  struct FundingRate {
+    int256 accumFundingLong;
+    int256 accumFundingShort;
+    int256 accumFundingRate;
+    int256 nextFundingRateLong;
+    int256 nextFundingRateShort;
+    int256 fundingFeeLong;
+    int256 fundingFeeShort;
+  }
+
   function setUp() public virtual override {
     super.setUp();
 
@@ -95,11 +105,14 @@ contract Calculator_FundingRate is Calculator_Base {
   // |  14 |   65 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |      -0.00346667 |
   // |  15 |   70 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |      -0.00546667 |
   // |  16 |   75 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |      -0.00746667 |
+
   function testCorrectness_getNextFundingRate_withInterval() external {
     // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
     // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
     // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
     // |   1 |    0 |       2000000 |        1000000 |         1000000 |       -0.00013333 |              -0.00013333 |      -0.00013333 |
+
+    FundingRate memory vars;
 
     // Mock global market config as table above
     uint256 marketIndex = 0;
@@ -107,14 +120,18 @@ contract Calculator_FundingRate is Calculator_Base {
     uint256 longPositionSize = 2_000_000 * 1e30;
     uint256 longAvgPrice = 20_000 * 1e30;
     uint256 longOpenInterest = 100 * 10 ** 8;
-    int256 accumFundingRateLong = 0;
 
     uint256 shortPositionSize = 1_000_000 * 1e30;
     uint256 shortAvgPrice = 20_000 * 1e30;
     uint256 shortOpenInterest = 50 * 10 ** 8;
-    int256 accumFundingRateShort = 0;
 
-    int256 accumFundingRate = 0;
+    vars.accumFundingLong = 0;
+    vars.accumFundingShort = 0;
+    vars.accumFundingRate = 0;
+    vars.nextFundingRateLong = 0;
+    vars.nextFundingRateShort = 0;
+    vars.fundingFeeLong = 0;
+    vars.fundingFeeShort = 0;
 
     // Set WBTC 20,000
     mockOracle.setPrice(20_000 * 1e30);
@@ -124,32 +141,35 @@ contract Calculator_FundingRate is Calculator_Base {
       longPositionSize,
       longAvgPrice,
       longOpenInterest,
-      accumFundingRateLong,
-      accumFundingRate
+      vars.accumFundingLong,
+      vars.accumFundingRate
     );
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
       shortAvgPrice,
       shortOpenInterest,
-      accumFundingRateShort,
-      accumFundingRate
+      vars.accumFundingShort,
+      vars.accumFundingRate
     );
 
-    (int256 nextFundingRate, int256 nextFundingRateLong, int256 nextFundingRateShort) = calculator.getNextFundingRate(
-      0
-    );
-    accumFundingRate += nextFundingRate;
-    assertEq(accumFundingRate, -133333333333333);
+    int256 nextFundingRate = calculator.getNextFundingRate(0);
+    vars.accumFundingRate += nextFundingRate;
+
+    if (longPositionSize > 0) {
+      vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+    }
+    if (shortPositionSize > 0) {
+      vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+    }
+
+    vars.accumFundingLong += vars.fundingFeeLong;
+    vars.accumFundingShort += vars.fundingFeeShort;
+
+    assertEq(vars.accumFundingRate, -133333333333333);
     assertEq(nextFundingRate, -133333333333333);
-
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, -266666666666666000000); // -266.6666667
-    // assertEq(nextFundingRateShort, 133333333333333000000); // 133.3333333
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, 0);
-    // assertEq(accumFundingRateShort, 0);
+    assertEq(vars.fundingFeeLong, -266666666666666000000);
+    assertEq(vars.fundingFeeShort, 133333333333333000000);
 
     // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
     // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
@@ -163,42 +183,47 @@ contract Calculator_FundingRate is Calculator_Base {
       longPositionSize = 2_000_000 * 1e30;
       longAvgPrice = 20_000 * 1e30;
       longOpenInterest = 100 * 10 ** 8;
-      accumFundingRateLong += nextFundingRateLong; //start accrued funding rate
+      vars.accumFundingLong += vars.nextFundingRateLong; //start accrued funding rate
 
       shortPositionSize = 1_000_000 * 1e30;
       shortAvgPrice = 20_000 * 1e30;
       shortOpenInterest = 50 * 10 ** 8;
-      accumFundingRateShort += nextFundingRateShort; //start accrued funding rate
+      vars.accumFundingShort += vars.nextFundingRateShort; //start accrued funding rate
 
       mockPerpStorage.updateGlobalLongMarketById(
         marketIndex,
         longPositionSize,
         longAvgPrice,
         longOpenInterest,
-        accumFundingRateLong,
-        accumFundingRate
+        vars.accumFundingLong,
+        vars.accumFundingRate
       );
       mockPerpStorage.updateGlobalShortMarketById(
         marketIndex,
         shortPositionSize,
         shortAvgPrice,
         shortOpenInterest,
-        accumFundingRateShort,
-        accumFundingRate
+        vars.accumFundingShort,
+        vars.accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
-      accumFundingRate += nextFundingRate;
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
+
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
+
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
+
       assertEq(nextFundingRate, -666666666666665);
-      assertEq(accumFundingRate, -799999999999998);
-
-      // @todo come back to fix this after dealing with excessive funding fee to plp
-      // assertEq(nextFundingRateLong, -2666666666666660000000); // -2666.666667
-      // assertEq(nextFundingRateShort, 1333333333333330000000); // 1333.333333
-
-      // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-      // assertEq(accumFundingRateLong, -266666666666666000000); // -266.6666667
-      // assertEq(accumFundingRateShort, 133333333333333000000); // 133.3333333
+      assertEq(vars.accumFundingRate, -799999999999998);
+      assertEq(vars.fundingFeeLong, -1599999999999996000000);
+      assertEq(vars.fundingFeeShort, 799999999999998000000);
     }
 
     vm.warp(5);
@@ -213,42 +238,47 @@ contract Calculator_FundingRate is Calculator_Base {
       longPositionSize = 1_000_000 * 1e30;
       longAvgPrice = 20_000 * 1e30;
       longOpenInterest = 50 * 10 ** 8;
-      accumFundingRateLong += nextFundingRateLong;
+      vars.accumFundingLong += vars.nextFundingRateLong;
 
       shortPositionSize = 1_000_000 * 1e30;
       shortAvgPrice = 20_000 * 1e30;
       shortOpenInterest = 50 * 10 ** 8;
-      accumFundingRateShort += nextFundingRateShort;
+      vars.accumFundingShort += vars.nextFundingRateShort;
 
       mockPerpStorage.updateGlobalLongMarketById(
         marketIndex,
         longPositionSize,
         longAvgPrice,
         longOpenInterest,
-        accumFundingRateLong,
-        accumFundingRate
+        vars.accumFundingLong,
+        vars.accumFundingRate
       );
       mockPerpStorage.updateGlobalShortMarketById(
         marketIndex,
         shortPositionSize,
         shortAvgPrice,
         shortOpenInterest,
-        accumFundingRateShort,
-        accumFundingRate
+        vars.accumFundingShort,
+        vars.accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
-      accumFundingRate += nextFundingRate;
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
+
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
+
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
+
       assertEq(nextFundingRate, 0);
-      assertEq(accumFundingRate, -799999999999998); // -0.0008
-
-      // @todo come back to fix this after dealing with excessive funding fee to plp
-      // assertEq(nextFundingRateLong, -1333333333333330000000); // -1333.333333
-      // assertEq(nextFundingRateShort, 1333333333333330000000); // 1333.333333
-
-      // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-      // assertEq(accumFundingRateLong, -2933333333333326000000); // -2933.333333
-      // assertEq(accumFundingRateShort, 1466666666666663000000); // 1466.666667
+      assertEq(vars.accumFundingRate, -799999999999998); // -0.0008
+      assertEq(vars.fundingFeeLong, -799999999999998000000);
+      assertEq(vars.fundingFeeShort, 799999999999998000000);
     }
 
     vm.warp(5);
@@ -263,42 +293,47 @@ contract Calculator_FundingRate is Calculator_Base {
       longPositionSize = 1_000_000 * 1e30;
       longAvgPrice = 20_000 * 1e30;
       longOpenInterest = 50 * 10 ** 8;
-      accumFundingRateLong += nextFundingRateLong;
+      vars.accumFundingLong += vars.nextFundingRateLong;
 
       shortPositionSize = 1_000_000 * 1e30;
       shortAvgPrice = 20_000 * 1e30;
       shortOpenInterest = 50 * 10 ** 8;
-      accumFundingRateShort += nextFundingRateShort;
+      vars.accumFundingShort += vars.nextFundingRateShort;
 
       mockPerpStorage.updateGlobalLongMarketById(
         marketIndex,
         longPositionSize,
         longAvgPrice,
         longOpenInterest,
-        accumFundingRateLong,
-        accumFundingRate
+        vars.accumFundingLong,
+        vars.accumFundingRate
       );
       mockPerpStorage.updateGlobalShortMarketById(
         marketIndex,
         shortPositionSize,
         shortAvgPrice,
         shortOpenInterest,
-        accumFundingRateShort,
-        accumFundingRate
+        vars.accumFundingShort,
+        vars.accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
-      accumFundingRate += nextFundingRate;
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
+
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
+
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
+
       assertEq(nextFundingRate, 0);
-      assertEq(accumFundingRate, -799999999999998);
-
-      // @todo come back to fix this after dealing with excessive funding fee to plp
-      // assertEq(nextFundingRateLong, -1333333333333330000000); // -1333.333333
-      // assertEq(nextFundingRateShort, 1333333333333330000000); // 1333.333333
-
-      // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-      // assertEq(accumFundingRateLong, -4266666666666656000000); // -4266.666667
-      // assertEq(accumFundingRateShort, 2799999999999993000000); // 2800
+      assertEq(vars.accumFundingRate, -799999999999998); // -0.0008
+      assertEq(vars.fundingFeeLong, -799999999999998000000);
+      assertEq(vars.fundingFeeShort, 799999999999998000000);
     }
 
     vm.warp(5);
@@ -313,42 +348,47 @@ contract Calculator_FundingRate is Calculator_Base {
       longPositionSize = 1_000_000 * 1e30;
       longAvgPrice = 20_000 * 1e30;
       longOpenInterest = 50 * 10 ** 8;
-      accumFundingRateLong += nextFundingRateLong;
+      vars.accumFundingLong += vars.nextFundingRateLong;
 
       shortPositionSize = 3_000_000 * 1e30;
       shortAvgPrice = 20_000 * 1e30;
       shortOpenInterest = 150 * 10 ** 8;
-      accumFundingRateShort += nextFundingRateShort;
+      vars.accumFundingShort += vars.nextFundingRateShort;
 
       mockPerpStorage.updateGlobalLongMarketById(
         marketIndex,
         longPositionSize,
         longAvgPrice,
         longOpenInterest,
-        accumFundingRateLong,
-        accumFundingRate
+        vars.accumFundingLong,
+        vars.accumFundingRate
       );
       mockPerpStorage.updateGlobalShortMarketById(
         marketIndex,
         shortPositionSize,
         shortAvgPrice,
         shortOpenInterest,
-        accumFundingRateShort,
-        accumFundingRate
+        vars.accumFundingShort,
+        vars.accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
-      accumFundingRate += nextFundingRate;
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
+
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
+
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
+
       assertEq(nextFundingRate, 1333333333333330); //0.00133333
-      assertEq(accumFundingRate, 533333333333332); //0.00053333
-
-      // @todo come back to fix this after dealing with excessive funding fee to plp
-      // assertEq(nextFundingRateLong, 0);
-      // assertEq(nextFundingRateShort, 0);
-
-      // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-      // assertEq(accumFundingRateLong, -5599999999999986000000); // -5600
-      // assertEq(accumFundingRateShort, 4133333333333323000000); // 4133.333333
+      assertEq(vars.accumFundingRate, 533333333333332); //0.00053333
+      assertEq(vars.fundingFeeLong, 533333333333332000000);
+      assertEq(vars.fundingFeeShort, -1599999999999996000000);
     }
 
     vm.warp(5);
@@ -364,42 +404,47 @@ contract Calculator_FundingRate is Calculator_Base {
       longPositionSize = 1_000_000 * 1e30;
       longAvgPrice = 20_000 * 1e30;
       longOpenInterest = 50 * 10 ** 8;
-      accumFundingRateLong += nextFundingRateLong;
+      vars.accumFundingLong += vars.nextFundingRateLong;
 
       shortPositionSize = 3_000_000 * 1e30;
       shortAvgPrice = 20_000 * 1e30;
       shortOpenInterest = 150 * 10 ** 8;
-      accumFundingRateShort += nextFundingRateShort;
+      vars.accumFundingShort += vars.nextFundingRateShort;
 
       mockPerpStorage.updateGlobalLongMarketById(
         marketIndex,
         longPositionSize,
         longAvgPrice,
         longOpenInterest,
-        accumFundingRateLong,
-        accumFundingRate
+        vars.accumFundingLong,
+        vars.accumFundingRate
       );
       mockPerpStorage.updateGlobalShortMarketById(
         marketIndex,
         shortPositionSize,
         shortAvgPrice,
         shortOpenInterest,
-        accumFundingRateShort,
-        accumFundingRate
+        vars.accumFundingShort,
+        vars.accumFundingRate
       );
 
-      (nextFundingRate, nextFundingRateLong, nextFundingRateShort) = calculator.getNextFundingRate(0);
-      accumFundingRate += nextFundingRate;
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
+
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
+
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
+
       assertEq(nextFundingRate, 1333333333333330); //0.00133333
-      assertEq(accumFundingRate, 1866666666666662); //0.00186667
-
-      // // @todo come back to fix this after dealing with excessive funding fee to plp
-      // assertEq(nextFundingRateLong, 1333333333333330000000); // 1333.333333
-      // assertEq(nextFundingRateShort, -3999999999999990000000); // -4000
-
-      // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-      // assertEq(accumFundingRateLong, -5599999999999986000000); // -5600
-      // assertEq(accumFundingRateShort, 4133333333333323000000); // 4133.333333
+      assertEq(vars.accumFundingRate, 1866666666666662); //0.00186667
+      assertEq(vars.fundingFeeLong, 1866666666666662000000);
+      assertEq(vars.fundingFeeShort, -5599999999999986000000);
     }
   }
 }

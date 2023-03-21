@@ -191,8 +191,8 @@ contract MockCalculator is ICalculator {
     return borrowingFee;
   }
 
-  function getNextFundingRate(uint256 /*marketIndex*/) public view virtual returns (int256, int256, int256) {
-    return (fundingRate, fundingRateLong, fundingRateShort);
+  function getNextFundingRate(uint256 /*marketIndex*/) public view virtual returns (int256) {
+    return fundingRate;
   }
 
   function getSettlementFeeRate(

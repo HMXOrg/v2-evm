@@ -15,8 +15,6 @@ import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {
   uint32 internal constant BPS = 1e4;

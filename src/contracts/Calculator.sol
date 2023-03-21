@@ -13,6 +13,8 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
@@ -825,20 +827,16 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate next funding rate using when increase/decrease position.
   /// @param _marketIndex Market Index.
   /// @return fundingRate next funding rate using for both LONG & SHORT positions.
-  /// @return fundingRateLong next funding rate for LONG.
-  /// @return fundingRateShort next funding rate for SHORT.
-  function getNextFundingRate(
-    uint256 _marketIndex
-  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+  function getNextFundingRate(uint256 _marketIndex) external view returns (int256 fundingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
+    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return 0;
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     // If block.timestamp not pass the next funding time, return 0.
-    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
+    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return 0;
 
     // Find market skew
     (vars.marketPriceE30, , ) = OracleMiddleware(_configStorage.oracle()).unsafeGetLatestPrice(
@@ -855,13 +853,7 @@ contract Calculator is Owned, ICalculator {
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
     vars.nextFundingRate = vars.nextFundingRate * vars.elapsedIntervals;
 
-    if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.nextFundingRate * int(globalMarket.longPositionSize)) / 1e30;
-    }
-    if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.nextFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
-    }
-    return (vars.nextFundingRate, fundingRateLong, fundingRateShort);
+    return vars.nextFundingRate;
   }
 
   /**

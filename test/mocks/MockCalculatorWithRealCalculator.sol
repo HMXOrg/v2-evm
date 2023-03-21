@@ -48,7 +48,7 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
-  function getNextFundingRate(uint256 _marketIndex) public view virtual override returns (int256, int256, int256) {
+  function getNextFundingRate(uint256 _marketIndex) public view virtual override returns (int256) {
     if (actualFunction[keccak256("getNextFundingRate")]) {
       return c.getNextFundingRate(_marketIndex);
     } else {

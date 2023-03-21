@@ -35,8 +35,6 @@ interface ICalculator {
     SHORT
   }
 
-  function getAUM(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
-
   function getAUME30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external returns (uint256);
 
   function getPLPValueE30(bool isMaxPrice, uint256 _price, bytes32 _assetId) external view returns (uint256);

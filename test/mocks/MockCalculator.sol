@@ -121,10 +121,6 @@ contract MockCalculator is ICalculator {
     return 0;
   }
 
-  function getAUM(bool /* isMaxPrice */, uint256 /* _price */, bytes32 /* _assetId */) external view returns (uint256) {
-    return aum;
-  }
-
   function getAUME30(
     bool /* isMaxPrice */,
     uint256 /* _price */,

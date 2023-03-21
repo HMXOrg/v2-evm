@@ -47,21 +47,12 @@ contract Calculator is Owned, ICalculator {
     perpStorage = _perpStorage;
   }
 
-  /// @notice getAUM in E30
+  /// @notice _getAUME30
   /// @param _isMaxPrice Use Max or Min Price
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   /// @return PLP Value in E18 format
   function getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) external view returns (uint256) {
-    return _getAUME30(_isMaxPrice, _limitPriceE30, _limitAssetId);
-  }
-
-  /// @notice _getAUM in E30
-  /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  /// @return PLP Value in E18 format
-  function _getAUME30(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view returns (uint256) {
     // @todo - pendingBorrowingFeeE30
     // @todo - pending funding fee ?
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
@@ -113,15 +104,6 @@ contract Calculator is Owned, ICalculator {
     }
 
     return _pendingBorrowingFee;
-  }
-
-  /// @notice getAUM
-  /// @param _isMaxPrice Use Max or Min Price
-  /// @param _limitPriceE30 Price to be overwritten to a specified asset
-  /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  /// @return PLP Value in E18 format
-  function getAUM(bool _isMaxPrice, uint256 _limitPriceE30, bytes32 _limitAssetId) public view returns (uint256) {
-    return _getAUME30(_isMaxPrice, _limitPriceE30, _limitAssetId) / 1e12;
   }
 
   /// @notice GetPLPValue in E30
@@ -268,12 +250,12 @@ contract Calculator is Owned, ICalculator {
   }
 
   /// @notice getMintAmount in e18 format
-  /// @param _aum aum in PLP
+  /// @param _aumE30 aum in PLP E30
   /// @param _totalSupply PLP total supply
   /// @param _value value in USD e30
   /// @return mintAmount in e18 format
-  function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
-    return _aum == 0 ? _value / 1e12 : (_value * _totalSupply) / _aum / 1e12;
+  function getMintAmount(uint256 _aumE30, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
+    return _aumE30 == 0 ? _value / 1e12 : (_value * _totalSupply) / _aumE30;
   }
 
   function convertTokenDecimals(
@@ -325,7 +307,7 @@ contract Calculator is Owned, ICalculator {
   }
 
   function _getFeeBPS(
-    uint256 _value,
+    uint256 _value, //e30
     uint256 _liquidityUSD, //e30
     uint256 _totalLiquidityUSD, //e30
     ConfigStorage.LiquidityConfig memory _liquidityConfig,

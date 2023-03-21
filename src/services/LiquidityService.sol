@@ -93,7 +93,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     // 3. get aum and lpSupply before deduction fee
-    uint256 _aum = _calculator.getAUM(true, 0, 0);
+    uint256 _aumE30 = _calculator.getAUME30(true, 0, 0);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
@@ -102,14 +102,14 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       _price,
       _lpProvider,
       _minAmount,
-      _aum,
+      _aumE30,
       _lpSupply
     );
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
     PLPv2(ConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
 
-    emit AddLiquidity(_lpProvider, _token, _amount, _aum, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
+    emit AddLiquidity(_lpProvider, _token, _amount, _aumE30, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
     return mintAmount;
   }
 
@@ -125,11 +125,11 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
-    uint256 _aum = _calculator.getAUM(false, 0, 0);
+    uint256 _aum = _calculator.getAUME30(false, 0, 0);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
-    uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aum * 1e12) / _lpSupply : 0;
+    uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
     uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValueE30, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
@@ -149,7 +149,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _price,
     address _lpProvider,
     uint256 _minAmount,
-    uint256 _aum,
+    uint256 _aumE30,
     uint256 _lpSupply
   ) internal returns (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
@@ -171,7 +171,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
       (amountAfterFee * _price) / PRICE_PRECISION
     );
 
-    mintAmount = _calculator.getMintAmount(_aum, _lpSupply, _tokenValueUSDAfterFee);
+    mintAmount = _calculator.getMintAmount(_aumE30, _lpSupply, _tokenValueUSDAfterFee);
 
     // 5. Check slippage: revert on error
     if (mintAmount < _minAmount) revert LiquidityService_InsufficientLiquidityMint();

@@ -66,7 +66,7 @@ contract TC30 is BaseIntTest_WithActions {
     uint256 _lastOrderIndex = liquidityHandler.getLiquidityOrders().length - 1;
     exeutePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
 
-    assertEq(calculator.getAUM(false, 0, 0) / plpV2.totalSupply(), 1, "AUM");
+    assertEq(calculator.getAUME30(false, 0, 0) / plpV2.totalSupply() / 1e12, 1, "AUM");
     assertPLPTotalSupply(49_773.496 * 1e18);
 
     // assert PLP
@@ -153,7 +153,7 @@ contract TC30 is BaseIntTest_WithActions {
 
     assertPLPTotalSupply(0);
 
-    assertEq(calculator.getAUM(false, 0, 0), 0, "AUM");
+    assertEq(calculator.getAUME30(false, 0, 0), 0, "AUM");
 
     assertPLPLiquidity(address(wbtc), 0);
     assertPLPLiquidity(address(usdc), 0);

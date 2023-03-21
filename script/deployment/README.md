@@ -9,7 +9,6 @@
   - PLPv2
 4. Deploy calculators
   - Calculator
-  - Fee Calcualtor
 5. Set calculator in ConfigStorage
 6. Deploy services
   - Cross margin service

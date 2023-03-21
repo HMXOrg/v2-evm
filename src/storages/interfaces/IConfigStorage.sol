@@ -101,8 +101,6 @@ interface IConfigStorage {
 
   function calculator() external view returns (address);
 
-  function feeCalculator() external view returns (address);
-
   function oracle() external view returns (address);
 
   function plp() external view returns (address);
@@ -174,8 +172,6 @@ interface IConfigStorage {
   function setDynamicEnabled(bool _enabled) external;
 
   function setCalculator(address _calculator) external;
-
-  function setFeeCalculator(address _feeCalculator) external;
 
   function setOracle(address _oracle) external;
 

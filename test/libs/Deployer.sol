@@ -6,7 +6,6 @@ import { Vm } from "forge-std/Vm.sol";
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
 import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
@@ -37,11 +36,6 @@ library Deployer {
 
   function deployPLPv2() internal returns (IPLPv2) {
     return IPLPv2(deployContract("PLPv2"));
-  }
-
-  function deployFeeCalculator(address _vaultStorage, address _configStorage) internal returns (IFeeCalculator) {
-    bytes memory _args = abi.encode(_vaultStorage, _configStorage);
-    return IFeeCalculator(deployContractWithArguments("FeeCalculator", _args));
   }
 
   function deployCalculator(

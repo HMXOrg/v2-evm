@@ -1501,7 +1501,7 @@ contract TC03 is BaseIntTest_WithActions {
       // PLP's liquidity after settle payment
       //    BTC = 0.99879139 + 0.00000080 + 0.00323206
       //        = 1.00202425
-      assertPLPLiquidity(address(wbtc), 1.00202468 * 1e8, "T19: ");
+      assertPLPLiquidity(address(wbtc), 1.00202425 * 1e8, "T19: ");
 
       // Asset Market's state, Asset class's state
 

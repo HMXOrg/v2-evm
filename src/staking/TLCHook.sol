@@ -8,10 +8,9 @@ import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
 import { TraderLoyaltyCredit } from "@hmx/tokens/TraderLoyaltyCredit.sol";
 
-contract TLCStakingHook is ITradeServiceHook, Owned {
+contract TLCHook is ITradeServiceHook, Owned {
   error TradingStakingHook_Forbidden();
 
-  address public tlcStaking;
   address public tradeService;
   address public tlc;
 
@@ -20,13 +19,11 @@ contract TLCStakingHook is ITradeServiceHook, Owned {
     _;
   }
 
-  constructor(address _tlcStaking, address _tradeService, address _tlc) {
-    tlcStaking = _tlcStaking;
+  constructor(address _tradeService, address _tlc) {
     tradeService = _tradeService;
     tlc = _tlc;
 
     // Sanity checks
-    ITradingStaking(tlcStaking).isRewarder(address(0));
     ITradeService(tradeService).configStorage();
     TraderLoyaltyCredit(tlc).symbol();
   }

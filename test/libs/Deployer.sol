@@ -29,6 +29,7 @@ import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.so
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -207,6 +208,14 @@ library Deployer {
   ) internal returns (ITradeHelper) {
     return
       ITradeHelper(deployContractWithArguments("TradeHelper", abi.encode(_perpStorage, _vaultStorage, _configStorage)));
+  }
+
+  function deployTLCToken(address _rewardToken) internal returns (ITraderLoyaltyCredit) {
+    return ITraderLoyaltyCredit(deployContractWithArguments("TraderLoyaltyCredit", abi.encode(_rewardToken)));
+  }
+
+  function deployTLCHook(address _tradeService, address _tlc) internal returns (ITradeServiceHook) {
+    return ITradeServiceHook(deployContractWithArguments("TLCHook", abi.encode(_tradeService, _tlc)));
   }
 
   /**

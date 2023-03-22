@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity 0.8.18;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 
 contract TraderLoyaltyCredit is Owned {
@@ -15,10 +16,10 @@ contract TraderLoyaltyCredit is Owned {
   event Transfer(address indexed from, address indexed to, uint256 value);
 
   /**
-   * @dev Emitted when the allowance of a `spender` for an `owner` is set by
+   * @dev Emitted when the allowance of a `spender` for an `user` is set by
    * a call to {approve}. `value` is the new allowance.
    */
-  event Approval(address indexed owner, address indexed spender, uint256 value);
+  event Approval(address indexed user, address indexed spender, uint256 value);
   event FeedReward(address indexed feeder, uint256 indexed epochTimestamp, uint256 rewardAmount);
   event Claim(address indexed user, uint256 indexed epochTimestamp, uint256 userShare, uint256 rewardAmount);
   event SetMinter(address indexed minter, bool mintable);
@@ -33,6 +34,7 @@ contract TraderLoyaltyCredit is Owned {
   string private constant _name = "Trader Loyalty Credit";
   string private constant _symbol = "TLC";
   uint256 public constant epochLength = 1 weeks;
+  uint256 private constant PRECISION = 1e27;
 
   address public rewardToken;
   mapping(uint256 => uint256) rewardBalanceMapByEpochTimestamp;
@@ -42,6 +44,13 @@ contract TraderLoyaltyCredit is Owned {
   modifier onlyMinter() {
     require(minter[msg.sender], "TLC: Not Minter");
     _;
+  }
+
+  constructor(address _rewardToken) {
+    rewardToken = _rewardToken;
+
+    // Sanity Check
+    IERC20(_rewardToken).totalSupply();
   }
 
   /**
@@ -99,16 +108,16 @@ contract TraderLoyaltyCredit is Owned {
    * - the caller must have a balance of at least `amount`.
    */
   function transfer(address to, uint256 amount) public returns (bool) {
-    address owner = msg.sender;
-    _transfer(owner, to, amount);
+    address user = msg.sender;
+    _transfer(getCurrentEpochTimestamp(), user, to, amount);
     return true;
   }
 
   /**
    * @dev See {IERC20-allowance}.
    */
-  function allowance(address owner, address spender) public view returns (uint256) {
-    return _allowances[owner][spender];
+  function allowance(address user, address spender) public view returns (uint256) {
+    return _allowances[user][spender];
   }
 
   /**
@@ -122,8 +131,8 @@ contract TraderLoyaltyCredit is Owned {
    * - `spender` cannot be the zero address.
    */
   function approve(address spender, uint256 amount) public returns (bool) {
-    address owner = msg.sender;
-    _approve(owner, spender, amount);
+    address user = msg.sender;
+    _approve(user, spender, amount);
     return true;
   }
 
@@ -146,7 +155,7 @@ contract TraderLoyaltyCredit is Owned {
   function transferFrom(address from, address to, uint256 amount) public returns (bool) {
     address spender = msg.sender;
     _spendAllowance(from, spender, amount);
-    _transfer(from, to, amount);
+    _transfer(getCurrentEpochTimestamp(), from, to, amount);
     return true;
   }
 
@@ -163,8 +172,8 @@ contract TraderLoyaltyCredit is Owned {
    * - `spender` cannot be the zero address.
    */
   function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
-    address owner = msg.sender;
-    _approve(owner, spender, allowance(owner, spender) + addedValue);
+    address user = msg.sender;
+    _approve(user, spender, allowance(user, spender) + addedValue);
     return true;
   }
 
@@ -183,11 +192,11 @@ contract TraderLoyaltyCredit is Owned {
    * `subtractedValue`.
    */
   function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
-    address owner = msg.sender;
-    uint256 currentAllowance = allowance(owner, spender);
+    address user = msg.sender;
+    uint256 currentAllowance = allowance(user, spender);
     require(currentAllowance >= subtractedValue, "TLC: decreased allowance below zero");
     unchecked {
-      _approve(owner, spender, currentAllowance - subtractedValue);
+      _approve(user, spender, currentAllowance - subtractedValue);
     }
 
     return true;
@@ -207,19 +216,19 @@ contract TraderLoyaltyCredit is Owned {
    * - `to` cannot be the zero address.
    * - `from` must have a balance of at least `amount`.
    */
-  function _transfer(address from, address to, uint256 amount) internal {
+  function _transfer(uint256 epochTimestamp, address from, address to, uint256 amount) internal {
     require(from != address(0), "TLC: transfer from the zero address");
     require(to != address(0), "TLC: transfer to the zero address");
 
     _beforeTokenTransfer(from, to, amount);
 
-    uint256 fromBalance = _balances[getCurrentEpochTimestamp()][from];
+    uint256 fromBalance = _balances[epochTimestamp][from];
     require(fromBalance >= amount, "TLC: transfer amount exceeds balance");
     unchecked {
-      _balances[getCurrentEpochTimestamp()][from] = fromBalance - amount;
+      _balances[epochTimestamp][from] = fromBalance - amount;
       // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
       // decrementing then incrementing.
-      _balances[getCurrentEpochTimestamp()][to] += amount;
+      _balances[epochTimestamp][to] += amount;
     }
 
     emit Transfer(from, to, amount);
@@ -241,8 +250,14 @@ contract TraderLoyaltyCredit is Owned {
 
     _beforeTokenTransfer(address(0), account, amount);
 
+    uint256 thisEpochTimestamp = getCurrentEpochTimestamp();
+
     _totalSupply += amount;
-    totalSupplyByEpoch[getCurrentEpochTimestamp()] += amount;
+    totalSupplyByEpoch[thisEpochTimestamp] += amount;
+
+    accumRewardPerShareMapByEpochTimestamp[thisEpochTimestamp] =
+      (rewardBalanceMapByEpochTimestamp[thisEpochTimestamp] * PRECISION) /
+      totalSupplyByEpoch[thisEpochTimestamp];
 
     unchecked {
       // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
@@ -283,7 +298,7 @@ contract TraderLoyaltyCredit is Owned {
   }
 
   /**
-   * @dev Sets `amount` as the allowance of `spender` over the `owner` s tokens.
+   * @dev Sets `amount` as the allowance of `spender` over the `user` s tokens.
    *
    * This internal function is equivalent to `approve`, and can be used to
    * e.g. set automatic allowances for certain subsystems, etc.
@@ -292,31 +307,31 @@ contract TraderLoyaltyCredit is Owned {
    *
    * Requirements:
    *
-   * - `owner` cannot be the zero address.
+   * - `user` cannot be the zero address.
    * - `spender` cannot be the zero address.
    */
-  function _approve(address owner, address spender, uint256 amount) internal {
-    require(owner != address(0), "TLC: approve from the zero address");
+  function _approve(address user, address spender, uint256 amount) internal {
+    require(user != address(0), "TLC: approve from the zero address");
     require(spender != address(0), "TLC: approve to the zero address");
 
-    _allowances[owner][spender] = amount;
-    emit Approval(owner, spender, amount);
+    _allowances[user][spender] = amount;
+    emit Approval(user, spender, amount);
   }
 
   /**
-   * @dev Updates `owner` s allowance for `spender` based on spent `amount`.
+   * @dev Updates `user` s allowance for `spender` based on spent `amount`.
    *
    * Does not update the allowance amount in case of infinite allowance.
    * Revert if not enough allowance is available.
    *
    * Might emit an {Approval} event.
    */
-  function _spendAllowance(address owner, address spender, uint256 amount) internal {
-    uint256 currentAllowance = allowance(owner, spender);
+  function _spendAllowance(address user, address spender, uint256 amount) internal {
+    uint256 currentAllowance = allowance(user, spender);
     if (currentAllowance != type(uint256).max) {
       require(currentAllowance >= amount, "TLC: insufficient allowance");
       unchecked {
-        _approve(owner, spender, currentAllowance - amount);
+        _approve(user, spender, currentAllowance - amount);
       }
     }
   }
@@ -365,9 +380,12 @@ contract TraderLoyaltyCredit is Owned {
     rewardBalanceMapByEpochTimestamp[epochTimestamp] += amount;
 
     // Recalculate the accum reward per share of this epoch
-    accumRewardPerShareMapByEpochTimestamp[epochTimestamp] =
-      (rewardBalanceMapByEpochTimestamp[epochTimestamp] * 1e20) /
-      totalSupplyByEpoch[epochTimestamp];
+    uint256 totalSupplyOfThisEpoch = totalSupplyByEpoch[epochTimestamp];
+    if (totalSupplyOfThisEpoch > 0) {
+      accumRewardPerShareMapByEpochTimestamp[epochTimestamp] =
+        (rewardBalanceMapByEpochTimestamp[epochTimestamp] * PRECISION) /
+        totalSupplyOfThisEpoch;
+    }
 
     // Transfer in reward token
     IERC20(rewardToken).transferFrom(msg.sender, address(this), amount);
@@ -383,7 +401,7 @@ contract TraderLoyaltyCredit is Owned {
     uint256 epochTimestamp = startEpochTimestamp;
     for (uint256 i = 0; i < noOfEpochs; ) {
       // If the epoch is in the future, then break the loop
-      if (epochTimestamp > block.timestamp) break;
+      if (epochTimestamp + epochLength > block.timestamp) break;
 
       // Get user balance of the epoch
       userShare = _balances[epochTimestamp][userAddress];
@@ -394,10 +412,10 @@ contract TraderLoyaltyCredit is Owned {
       // If accumRewardPerShare is zero, then the reward might not be distributed for that epoch yet. We will skip without burning user share.
       if (userShare > 0 && accumRewardPerShare > 0) {
         // Calculate pending reward
-        pendingRewardAmount = (userShare * accumRewardPerShare) / 1e20;
+        pendingRewardAmount = (userShare * accumRewardPerShare) / PRECISION;
         totalRewardAmount += pendingRewardAmount;
         // Burn the user share
-        _burn(epochTimestamp, userAddress, userShare);
+        _transfer(epochTimestamp, userAddress, address(this), userShare);
         emit Claim(userAddress, epochTimestamp, userShare, pendingRewardAmount);
       }
 
@@ -411,6 +429,43 @@ contract TraderLoyaltyCredit is Owned {
 
     // Transfer reward token to the user
     IERC20(rewardToken).transfer(userAddress, totalRewardAmount);
+  }
+
+  function pendingReward(
+    uint256 startEpochTimestamp,
+    uint256 noOfEpochs,
+    address userAddress
+  ) external view returns (uint256) {
+    uint256 userShare;
+    uint256 accumRewardPerShare;
+    uint256 pendingRewardAmount;
+    uint256 totalRewardAmount;
+    uint256 epochTimestamp = (startEpochTimestamp / epochLength) * epochLength;
+    for (uint256 i = 0; i < noOfEpochs; ) {
+      // If the epoch is in the future, then break the loop
+      if (epochTimestamp + epochLength > block.timestamp) break;
+
+      // Get user balance of the epoch
+      userShare = _balances[epochTimestamp][userAddress];
+      // Get accum reward per share of the epoch
+      accumRewardPerShare = accumRewardPerShareMapByEpochTimestamp[epochTimestamp];
+
+      // If userShare is zero, then the user will not be eligible for reward in that epoch.
+      // If accumRewardPerShare is zero, then the reward might not be distributed for that epoch yet. We will skip without burning user share.
+      if (userShare > 0 && accumRewardPerShare > 0) {
+        // Calculate pending reward
+        pendingRewardAmount = (userShare * accumRewardPerShare) / PRECISION;
+        totalRewardAmount += pendingRewardAmount;
+      }
+
+      // Increment epoch timestamp
+      epochTimestamp += epochLength;
+
+      unchecked {
+        ++i;
+      }
+    }
+    return totalRewardAmount;
   }
 
   function setMinter(address _minter, bool _mintable) external onlyOwner {

@@ -279,14 +279,22 @@ contract TradeService_Hooks is TradeService_Base {
 
     // Claim TLC Reward
     // Alice should receive 358.285714285714285713 reward token
+    assertEq(tlc.balanceOf(0, ALICE), 1_000_000 ether);
+    assertEq(tlc.balanceOf(1 weeks, ALICE), 700_000 ether);
     rewardBalanceBeforeAlice = rewardToken.balanceOf(ALICE);
     tlc.claimReward(0, type(uint256).max, ALICE);
     rewardBalanceAfterAlice = rewardToken.balanceOf(ALICE);
     assertEq(rewardBalanceAfterAlice - rewardBalanceBeforeAlice, 358.285714285714285713 ether);
+    assertEq(tlc.balanceOf(0, ALICE), 0);
+    assertEq(tlc.balanceOf(1 weeks, ALICE), 0);
     // Bob should receive 85.714285714285714285 reward token
+    assertEq(tlc.balanceOf(0, BOB), 400_000 ether);
+    assertEq(tlc.balanceOf(1 weeks, BOB), 0 ether);
     rewardBalanceBeforeBob = rewardToken.balanceOf(BOB);
     tlc.claimReward(0, type(uint256).max, BOB);
     rewardBalanceAfterBob = rewardToken.balanceOf(BOB);
     assertEq(rewardBalanceAfterBob - rewardBalanceBeforeBob, 85.714285714285714285 ether);
+    assertEq(tlc.balanceOf(0, BOB), 0 ether);
+    assertEq(tlc.balanceOf(1 weeks, BOB), 0 ether);
   }
 }

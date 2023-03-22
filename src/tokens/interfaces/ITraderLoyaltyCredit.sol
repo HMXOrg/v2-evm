@@ -17,4 +17,6 @@ interface ITraderLoyaltyCredit {
     uint256 noOfEpochs,
     address userAddress
   ) external view returns (uint256);
+
+  function balanceOf(uint256 epochTimestamp, address account) external view returns (uint256);
 }

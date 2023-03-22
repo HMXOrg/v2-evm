@@ -205,7 +205,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      _vars.adaptivePriceE30 = _limitPriceE30 != 0 ? _limitPriceE30 : _vars.adaptivePriceE30;
+      if (_limitPriceE30 != 0) {
+        _vars.adaptivePriceE30 = _limitPriceE30;
+      }
 
       (_vars.closePriceE30, , , , ) = OracleMiddleware(_configStorage.oracle()).getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,

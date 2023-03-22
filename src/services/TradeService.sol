@@ -205,7 +205,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      _vars.adaptivePriceE30 = _limitPriceE30 != 0 ? _limitPriceE30 : _vars.adaptivePriceE30;
+      if (_limitPriceE30 != 0) {
+        _vars.adaptivePriceE30 = _limitPriceE30;
+      }
 
       (_vars.closePriceE30, , , , ) = OracleMiddleware(_configStorage.oracle()).getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
@@ -644,7 +646,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.perpStorage.updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
 
         if (_newAbsPositionSizeE30 != 0) {
-        // update position info
+          // update position info
           _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
           _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
           _vars.position.positionSizeE30 = _vars.isLongPosition
@@ -654,9 +656,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
             ((_newAbsPositionSizeE30 * _marketConfig.initialMarginFractionBPS * _marketConfig.maxProfitRateBPS) / BPS) /
             BPS;
           _vars.position.avgEntryPriceE30 = _vars.avgEntryPriceE30;
-        _vars.position.openInterest = _vars.position.openInterest - _openInterestDelta;
-        _vars.position.realizedPnl += _realizedPnl;
-        _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
+          _vars.position.openInterest = _vars.position.openInterest - _openInterestDelta;
+          _vars.position.realizedPnl += _realizedPnl;
+          _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
         } else {
           _vars.perpStorage.removePositionFromSubAccount(_vars.subAccount, _vars.positionId);
         }

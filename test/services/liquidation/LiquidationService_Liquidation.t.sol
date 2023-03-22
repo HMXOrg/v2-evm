@@ -114,8 +114,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
       size: 0,
       avgPrice: 0,
       reserveValue: 0,
-      lastIncreaseTimestamp: 0,
-      openInterest: 0
+      lastIncreaseTimestamp: 0
     });
     // reset position
     positionTester02.assertPosition(_wethPositionId, assertData);
@@ -184,8 +183,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
       size: 0,
       avgPrice: 0,
       reserveValue: 0,
-      lastIncreaseTimestamp: 0,
-      openInterest: 0
+      lastIncreaseTimestamp: 0
     });
     // reset position
     positionTester02.assertPosition(_wethPositionId, assertData);
@@ -197,8 +195,6 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
       assertEq(btcGlobalMarket.longPositionSize, 124_000 * 1e30);
 
       assertEq(btcGlobalMarket.longAvgPrice, 24_800 * 1e30);
-      // 600,000 / 25,000 = 24
-      assertEq(btcGlobalMarket.longOpenInterest, 5 * 1e18);
     }
 
     // liquidation fee

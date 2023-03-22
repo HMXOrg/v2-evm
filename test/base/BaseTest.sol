@@ -243,10 +243,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
-      openInterest: IConfigStorage.OpenInterest({
-        longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-        shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
-      }),
       fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 
@@ -261,10 +257,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
-      openInterest: IConfigStorage.OpenInterest({
-        longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-        shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
-      }),
       fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
     });
 

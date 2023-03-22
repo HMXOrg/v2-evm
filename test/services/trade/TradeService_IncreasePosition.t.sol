@@ -67,10 +67,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
-        openInterest: IConfigStorage.OpenInterest({
-          longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-          shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
-        }),
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
       })
     );
@@ -295,14 +291,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     //   | increase time 100
     // realizedPnl: 0
     //   | new position
-    // openInterest: 625
-    //   | 1,000,000 / 1,600 = 625 ETH
     PositionTester02.PositionAssertionData memory assetData = PositionTester02.PositionAssertionData({
       size: 1_000_000 * 1e30,
       avgPrice: 1_600 * 1e30,
       reserveValue: 90_000 * 1e30,
-      lastIncreaseTimestamp: 100,
-      openInterest: 625 * 1e18
+      lastIncreaseTimestamp: 100
     });
     positionTester02.assertPosition(_positionId, assetData);
   }
@@ -340,14 +333,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
     //   | increase time 100
     // realizedPnl: 0
     //   | new position
-    // openInterest: 32
-    //   | 1,000,000 / 25,000 = 32 BTC
     PositionTester02.PositionAssertionData memory assetData = PositionTester02.PositionAssertionData({
       size: -800_000 * 1e30,
       avgPrice: 25_000 * 1e30,
       reserveValue: 72_000 * 1e30,
-      lastIncreaseTimestamp: 100,
-      openInterest: 32 * 1e8
+      lastIncreaseTimestamp: 100
     });
     positionTester02.assertPosition(_positionId, assetData);
   }
@@ -383,14 +373,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
       //   | increase time 100
       // realizedPnl: 0
       //   | new position
-      // openInterest: 312.5
-      //   | 500,000 / 1,600 = 312.5 ETH
       PositionTester02.PositionAssertionData memory positionAssetData = PositionTester02.PositionAssertionData({
         size: 500_000 * 1e30,
         avgPrice: 1_600 * 1e30,
         reserveValue: 45_000 * 1e30,
-        lastIncreaseTimestamp: 100,
-        openInterest: 312.5 * 1e18
+        lastIncreaseTimestamp: 100
       });
       positionTester02.assertPosition(_positionId, positionAssetData);
 
@@ -399,18 +386,13 @@ contract TradeService_IncreasePosition is TradeService_Base {
       //   | increase position Long 500,000
       // longAvgPrice: 1,600
       //   | price ETH 1,600
-      // longOpenInterest: 312.5
-      //   | 500,000 / 1,600 = 312.5 ETH
       // shortPositionSize: 0,
       // shortAvgPrice: 0,
-      // shortOpenInterest: 0
       GlobalMarketTester.AssertData memory globalMarketAssetData = GlobalMarketTester.AssertData({
         longPositionSize: 500_000 * 1e30,
         longAvgPrice: 1_600 * 1e30,
-        longOpenInterest: 312.5 * 1e18,
         shortPositionSize: 0,
-        shortAvgPrice: 0,
-        shortOpenInterest: 0
+        shortAvgPrice: 0
       });
       globalMarketTester.assertGlobalMarket(0, globalMarketAssetData);
     }
@@ -434,15 +416,11 @@ contract TradeService_IncreasePosition is TradeService_Base {
       //   | increase time 100
       // realizedPnl: 0
       //   | new position
-      // openInterest: 312.5
-      //   | 400,000 / 1,600 = 250 ETH
-      //   | 312.5 + 250 = 562.5
       PositionTester02.PositionAssertionData memory assetData = PositionTester02.PositionAssertionData({
         size: 900_000 * 1e30,
         avgPrice: 1_600 * 1e30,
         reserveValue: 81_000 * 1e30,
-        lastIncreaseTimestamp: 100,
-        openInterest: 562.5 * 1e18
+        lastIncreaseTimestamp: 100
       });
       positionTester02.assertPosition(_positionId, assetData);
 
@@ -452,19 +430,13 @@ contract TradeService_IncreasePosition is TradeService_Base {
       //   | 500,000 + 400,000 = 900,000
       // longAvgPrice: 1,600
       //   | price ETH 1,600
-      // longOpenInterest: 562.5
-      //   | 400,000 / 1,600 = 250 ETH
-      //   | 312.5 + 250 = 562.5
       // shortPositionSize: 0,
       // shortAvgPrice: 0,
-      // shortOpenInterest: 0
       GlobalMarketTester.AssertData memory globalMarketAssetData = GlobalMarketTester.AssertData({
         longPositionSize: 900_000 * 1e30,
         longAvgPrice: 1_600 * 1e30,
-        longOpenInterest: 562.5 * 1e18,
         shortPositionSize: 0,
-        shortAvgPrice: 0,
-        shortOpenInterest: 0
+        shortAvgPrice: 0
       });
       globalMarketTester.assertGlobalMarket(0, globalMarketAssetData);
     }
@@ -502,34 +474,26 @@ contract TradeService_IncreasePosition is TradeService_Base {
       //   | increase time 100
       // realizedPnl: 0
       //   | new position
-      // openInterest: 10
-      //   | 250,000 / 25,000 = 10 BTC
       PositionTester02.PositionAssertionData memory positionAssetData = PositionTester02.PositionAssertionData({
         size: -250_000 * 1e30,
         avgPrice: 25_000 * 1e30,
         reserveValue: 22_500 * 1e30,
-        lastIncreaseTimestamp: 100,
-        openInterest: 10 * 1e8
+        lastIncreaseTimestamp: 100
       });
       positionTester02.assertPosition(_positionId, positionAssetData);
 
       // Calculate assert data
       // longPositionSize: 0
       // longAvgPrice: 0
-      // longOpenInterest: 0
       // shortPositionSize: 250,000
       //   | increase position Short 250,000
       // shortAvgPrice: 25,000
       //   | price BTC 25,000
-      // shortOpenInterest: 10
-      //   | 250,000 / 25,000 = 10 BTC
       GlobalMarketTester.AssertData memory globalMarketAssertData = GlobalMarketTester.AssertData({
         longPositionSize: 0,
         longAvgPrice: 0,
-        longOpenInterest: 0,
         shortPositionSize: 250_000 * 1e30,
-        shortAvgPrice: 25_000 * 1e30,
-        shortOpenInterest: 10 * 1e8
+        shortAvgPrice: 25_000 * 1e30
       });
       globalMarketTester.assertGlobalMarket(1, globalMarketAssertData);
     }
@@ -553,89 +517,74 @@ contract TradeService_IncreasePosition is TradeService_Base {
       //   | increase time 100
       // realizedPnl: 0
       //   | new position
-      // openInterest: 40
-      //   | 750,000 / 25,000 = 30 BTC
-      //   | 10 + 30 = 40
       PositionTester02.PositionAssertionData memory positionAssetData = PositionTester02.PositionAssertionData({
         size: -1_000_000 * 1e30,
         avgPrice: 25_000 * 1e30,
         reserveValue: 90_000 * 1e30,
-        lastIncreaseTimestamp: 100,
-        openInterest: 40 * 1e8
+        lastIncreaseTimestamp: 100
       });
       positionTester02.assertPosition(_positionId, positionAssetData);
 
       // Calculate assert data
       // longPositionSize: 0
       // longAvgPrice: 0
-      // longOpenInterest: 0
       // shortPositionSize: 1,000,000
       //   | increase position Short 750,000
       //   | 250,000 + 750,000 = 1,000,000
       // shortAvgPrice: 25,000
       //   | price BTC 25,000
-      // shortOpenInterest: 40
-      //   | 750,000 / 25,000 = 30 BTC
-      //   | 10 + 30 = 40
       GlobalMarketTester.AssertData memory globalMarketAssertData = GlobalMarketTester.AssertData({
         longPositionSize: 0,
         longAvgPrice: 0,
-        longOpenInterest: 0,
         shortPositionSize: 1_000_000 * 1e30,
-        shortAvgPrice: 25_000 * 1e30,
-        shortOpenInterest: 40 * 1e8
+        shortAvgPrice: 25_000 * 1e30
       });
       globalMarketTester.assertGlobalMarket(1, globalMarketAssertData);
     }
   }
 
-  // @todo uncomment this test
-  // @todo fix limit price with adaptive price
-  // function testCorrectness_increasePosition_WhenUsingLimitPrice() external {
-  //   // setup
-  //   // TVL
-  //   // 1000000 USDT -> 1000000 USD
-  //   mockCalculator.setPLPValue(1_000_000 * 1e30);
-  //   // ALICE add collateral
-  //   // 10000 USDT -> free collateral -> 10000 USD
-  //   mockCalculator.setFreeCollateral(10_000 * 1e30);
+  function testCorrectness_increasePosition_WhenUsingLimitPrice() external {
+    // setup
+    // TVL
+    // 1000000 USDT -> 1000000 USD
+    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    // ALICE add collateral
+    // 10000 USDT -> free collateral -> 10000 USD
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
 
-  //   // ETH price 1600 USD
-  //   uint256 price = 1_600 * 1e30;
-  //   mockOracle.setPrice(price);
+    // ETH price 1600 USD
+    uint256 price = 1_600 * 1e30;
+    mockOracle.setPrice(price);
 
-  //   // input
-  //   int256 sizeDelta = 1_000_000 * 1e30;
-  //   bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
+    // input
+    int256 sizeDelta = 1_000_000 * 1e30;
+    bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
 
-  //   vm.warp(100);
-  //   // derivedPrice to 1000
-  //   tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 1_000 * 1e30);
+    vm.warp(100);
+    // derivedPrice to 1000
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 1_000 * 1e30);
 
-  //   // Calculate assert data
-  //   // size: 1,000,000
-  //   //   | increase position Long 1,000,000
-  //   // avgPrice: 1,000 (limitPrice 1000, currentPrice 1600)
-  //   //   | price ETH 1,600
-  //   // reserveValue: 90,000
-  //   //   | imr = 1,000,000 * 0.01 = 10,000
-  //   //   | reserve 900% = 10,000 * 900% = 90,000
-  //   // lastIncreaseTimestamp: 100
-  //   //   | increase time 100
-  //   // realizedPnl: 0
-  //   //   | new position
-  //   // openInterest: 1000 (derived interest)
-  //   //   | 1,000,000 / 1,000 = 1000 ETH
-  //   PositionTester02.PositionAssertionData memory assetData = PositionTester02.PositionAssertionData({
-  //     size: 1_000_000 * 1e30,
-  //     avgPrice: 1_000 * 1e30,
-  //     reserveValue: 90_000 * 1e30,
-  //     lastIncreaseTimestamp: 100,
-  //     openInterest: 1_000 * 1e18
-  //   });
-  //   positionTester02.assertPosition(_positionId, assetData);
+    // Calculate assert data
+    // size: 1,000,000
+    //   | increase position Long 1,000,000
+    // avgPrice: 1,000 (limitPrice 1000, currentPrice 1600)
+    //   | price ETH 1,600
+    // reserveValue: 90,000
+    //   | imr = 1,000,000 * 0.01 = 10,000
+    //   | reserve 900% = 10,000 * 900% = 90,000
+    // lastIncreaseTimestamp: 100
+    //   | increase time 100
+    // realizedPnl: 0
+    //   | new position
+    PositionTester02.PositionAssertionData memory assetData = PositionTester02.PositionAssertionData({
+      size: 1_000_000 * 1e30,
+      avgPrice: 1_000 * 1e30,
+      reserveValue: 90_000 * 1e30,
+      lastIncreaseTimestamp: 100
+    });
+    positionTester02.assertPosition(_positionId, assetData);
 
-  //   (uint256 _price, , ) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false);
-  //   assertEq(_price, 1600 * 1e30);
-  // }
+    (uint256 _price, , ) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false);
+    assertEq(_price, 1600 * 1e30);
+  }
 }

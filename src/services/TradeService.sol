@@ -299,10 +299,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     }
 
     {
-      // calculate the change in open interest for the new position
-      uint256 _changedOpenInterest = (_absSizeDelta * (10 ** uint32(-_vars.exponent))) / _vars.priceE30;
-
-      _vars.position.openInterest += _changedOpenInterest;
       _vars.position.lastIncreaseTimestamp = block.timestamp;
 
       // update global market state
@@ -314,8 +310,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _perpStorage.updateGlobalLongMarketById(
           _marketIndex,
           _globalMarket.longPositionSize + _absSizeDelta,
-          _nextAvgPrice,
-          _globalMarket.longOpenInterest + _changedOpenInterest
+          _nextAvgPrice
         );
       } else {
         // to increase SHORT position sizeDelta should be negative
@@ -326,8 +321,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _perpStorage.updateGlobalShortMarketById(
           _marketIndex,
           _globalMarket.shortPositionSize + _absSizeDelta,
-          _nextAvgPrice,
-          _globalMarket.shortOpenInterest + _changedOpenInterest
+          _nextAvgPrice
         );
       }
     }
@@ -592,76 +586,70 @@ contract TradeService is ReentrancyGuard, ITradeService {
     /**
      *  update perp storage
      */
+
     {
-      uint256 _openInterestDelta = (_vars.position.openInterest * _vars.positionSizeE30ToDecrease) /
-        _vars.absPositionSizeE30;
+      PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_globalMarketIndex);
 
-      {
-        PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_globalMarketIndex);
-
-        if (_vars.isLongPosition) {
-          uint256 _nextAvgPrice = _vars.calculator.calculateLongAveragePrice(
-            _globalMarket,
-            _vars.priceE30,
-            -int256(_vars.positionSizeE30ToDecrease),
-            _realizedPnl
-          );
-          _vars.perpStorage.updateGlobalLongMarketById(
-            _globalMarketIndex,
-            _globalMarket.longPositionSize - _vars.positionSizeE30ToDecrease,
-            _nextAvgPrice,
-            _globalMarket.longOpenInterest - _openInterestDelta
-          );
-        } else {
-          uint256 _nextAvgPrice = _vars.calculator.calculateShortAveragePrice(
-            _globalMarket,
-            _vars.priceE30,
-            int256(_vars.positionSizeE30ToDecrease),
-            _realizedPnl
-          );
-          _vars.perpStorage.updateGlobalShortMarketById(
-            _globalMarketIndex,
-            _globalMarket.shortPositionSize - _vars.positionSizeE30ToDecrease,
-            _nextAvgPrice,
-            _globalMarket.shortOpenInterest - _openInterestDelta
-          );
-        }
-
-        PerpStorage.GlobalState memory _globalState = _vars.perpStorage.getGlobalState();
-        PerpStorage.GlobalAssetClass memory _globalAssetClass = _vars.perpStorage.getGlobalAssetClassByIndex(
-          _marketConfig.assetClass
+      if (_vars.isLongPosition) {
+        uint256 _nextAvgPrice = _vars.calculator.calculateLongAveragePrice(
+          _globalMarket,
+          _vars.priceE30,
+          -int256(_vars.positionSizeE30ToDecrease),
+          _realizedPnl
         );
+        _vars.perpStorage.updateGlobalLongMarketById(
+          _globalMarketIndex,
+          _globalMarket.longPositionSize - _vars.positionSizeE30ToDecrease,
+          _nextAvgPrice
+        );
+      } else {
+        uint256 _nextAvgPrice = _vars.calculator.calculateShortAveragePrice(
+          _globalMarket,
+          _vars.priceE30,
+          int256(_vars.positionSizeE30ToDecrease),
+          _realizedPnl
+        );
+        _vars.perpStorage.updateGlobalShortMarketById(
+          _globalMarketIndex,
+          _globalMarket.shortPositionSize - _vars.positionSizeE30ToDecrease,
+          _nextAvgPrice
+        );
+      }
 
-        // update global storage
-        // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
-        _globalState.reserveValueE30 -=
-          (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
-          _vars.absPositionSizeE30;
-        _globalAssetClass.reserveValueE30 -=
-          (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
-          _vars.absPositionSizeE30;
-        _vars.perpStorage.updateGlobalState(_globalState);
-        _vars.perpStorage.updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
+      PerpStorage.GlobalState memory _globalState = _vars.perpStorage.getGlobalState();
+      PerpStorage.GlobalAssetClass memory _globalAssetClass = _vars.perpStorage.getGlobalAssetClassByIndex(
+        _marketConfig.assetClass
+      );
 
-        if (_newAbsPositionSizeE30 != 0) {
+      // update global storage
+      // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
+      _globalState.reserveValueE30 -=
+        (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
+        _vars.absPositionSizeE30;
+      _globalAssetClass.reserveValueE30 -=
+        (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
+        _vars.absPositionSizeE30;
+      _vars.perpStorage.updateGlobalState(_globalState);
+      _vars.perpStorage.updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
+
+      if (_newAbsPositionSizeE30 != 0) {
         // update position info
-          _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
-          _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
-          _vars.position.positionSizeE30 = _vars.isLongPosition
-            ? int256(_newAbsPositionSizeE30)
-            : -int256(_newAbsPositionSizeE30);
-          _vars.position.reserveValueE30 =
-            ((_newAbsPositionSizeE30 * _marketConfig.initialMarginFractionBPS * _marketConfig.maxProfitRateBPS) / BPS) /
-            BPS;
-          _vars.position.avgEntryPriceE30 = _vars.avgEntryPriceE30;
-        _vars.position.openInterest = _vars.position.openInterest - _openInterestDelta;
+        _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
+        _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
+        _vars.position.positionSizeE30 = _vars.isLongPosition
+          ? int256(_newAbsPositionSizeE30)
+          : -int256(_newAbsPositionSizeE30);
+        _vars.position.reserveValueE30 =
+          ((_newAbsPositionSizeE30 * _marketConfig.initialMarginFractionBPS * _marketConfig.maxProfitRateBPS) / BPS) /
+          BPS;
+        _vars.position.avgEntryPriceE30 = _vars.avgEntryPriceE30;
         _vars.position.realizedPnl += _realizedPnl;
         _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
-        } else {
-          _vars.perpStorage.removePositionFromSubAccount(_vars.subAccount, _vars.positionId);
-        }
+      } else {
+        _vars.perpStorage.removePositionFromSubAccount(_vars.subAccount, _vars.positionId);
       }
     }
+
     // =======================================
     // | ------ settle profit & loss ------- |
     // =======================================

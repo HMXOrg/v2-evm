@@ -128,7 +128,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
       (uint256 _priceE30, , , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _vars.marketConfig.assetId,
         _isLong,
-        (int(_vars.globalMarket.longOpenInterest) - int(_vars.globalMarket.shortOpenInterest)),
+        (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
         _vars.marketConfig.fundingRate.maxSkewScaleUSD
       );
@@ -164,13 +164,8 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
             );
           _vars.perpStorage.updateGlobalMarketPrice(_vars.position.marketIndex, _isLong, _nextAvgPrice);
         }
-        _vars.perpStorage.decreaseOpenInterest(
-          _vars.position.marketIndex,
-          _isLong,
-          absPositionSize,
-          _vars.position.openInterest
-        );
-        _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.openInterest);
+        _vars.perpStorage.decreasePositionSize(_vars.position.marketIndex, _isLong, absPositionSize);
+        _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.reserveValueE30);
 
         // remove the position's value in storage
         _vars.perpStorage.removePositionFromSubAccount(_subAccount, _vars.positionId);

@@ -68,10 +68,6 @@ contract CrossMarginHandler_Base is BaseTest {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
-        openInterest: IConfigStorage.OpenInterest({
-          longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-          shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
-        }),
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );

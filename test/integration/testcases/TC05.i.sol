@@ -112,8 +112,8 @@ contract TC05 is BaseIntTest_WithActions {
       assertPLPLiquidity(address(wbtc), 10.00383251 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);
       assertNumberOfPosition(ALICE, 0);
-      assertPositionInfoOf(ALICE, jpyMarketIndex, 0, 0, 0, 0, 0, 0, 0);
-      assertMarketLongPosition(jpyMarketIndex, 0, 0, 0);
+      assertPositionInfoOf(ALICE, jpyMarketIndex, 0, 0, 0, 0, 0, 0);
+      assertMarketLongPosition(jpyMarketIndex, 0, 0);
     }
   }
 }

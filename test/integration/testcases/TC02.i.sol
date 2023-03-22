@@ -124,8 +124,6 @@ contract TC02 is BaseIntTest_WithActions {
       // WETH market MMF      = 0.05%
       // Inc / Dec Fee        = 0.1%
       // Position size        = 300 USD
-      // Open interest        = 300 USD / adaptive price
-      //                      = 300 / 1500 = 0.2
       // Avg price            = 1500.00075 USD
       // IMR                  = 300 * IMF = 3 USD
       // MMR                  = 300 * MMF = 1.5 USD
@@ -139,7 +137,6 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: wethMarketIndex,
         _positionSize: int256(300 * 1e30),
         _avgPrice: 1_500.00075 * 1e30, // 1,500.00075
-        _openInterest: 0.2 * 1e8,
         _reserveValue: 27 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
@@ -204,8 +201,8 @@ contract TC02 is BaseIntTest_WithActions {
       assertPLPLiquidity(address(wbtc), 0.997 * 1e8, "T4: ");
 
       // Assert Market
-      assertMarketLongPosition(wethMarketIndex, 300 * 1e30, 1_500.00075 * 1e30, 0.2 * 1e8, "T4: ");
-      assertMarketShortPosition(wethMarketIndex, 0, 0, 0, "T4: ");
+      assertMarketLongPosition(wethMarketIndex, 300 * 1e30, 1_500.00075 * 1e30, "T4: ");
+      assertMarketShortPosition(wethMarketIndex, 0, 0, "T4: ");
       assertMarketFundingRate(wethMarketIndex, 0, 1120, "T4: ");
 
       // Assert Asset class
@@ -275,15 +272,12 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Before:
       //    Position size     = 300
-      //    Open interest     = 0.2
       //    Reserve           = 27 USD
       //    Borrowing rate    = 0
       //    Finding rate      = 0
 
       // After:
       //    Position size     = 300 - 150 = 150
-      //    Open interest     = 150 / 300 * 0.2
-      //                      = 0.1
       //    Avg price         = 1500.00075 USD (not change for decrease)
       //    IMR               = 150 * IMF = 1.5 USD
       //    MMR               = 150 * MMF = 0.75 USD
@@ -309,7 +303,6 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: wethMarketIndex,
         _positionSize: int256(150 * 1e30),
         _avgPrice: 1500.00075 * 1e30,
-        _openInterest: 0.1 * 1e8,
         _reserveValue: 13.5 * 1e30,
         _realizedPnl: 7.500039374980312509843745078127 * 1e30,
         _entryBorrowingRate: 0.000008124373119358 * 1e18,
@@ -413,14 +406,8 @@ contract TC02 is BaseIntTest_WithActions {
       //                  = (1575.00118125 * 150) / (150 + 7.500039374980312509843745078127)
       //                  = 1500.000750000000000000000000000004
 
-      assertMarketLongPosition(
-        wethMarketIndex,
-        150 * 1e30,
-        1500.000750000000000000000000000004 * 1e30,
-        0.1 * 1e8,
-        "T6: "
-      );
-      assertMarketShortPosition(wethMarketIndex, 0, 0, 0, "T6: ");
+      assertMarketLongPosition(wethMarketIndex, 150 * 1e30, 1500.000750000000000000000000000004 * 1e30, "T6: ");
+      assertMarketShortPosition(wethMarketIndex, 0, 0, "T6: ");
 
       // Assert Asset class
       // According T4
@@ -461,9 +448,6 @@ contract TC02 is BaseIntTest_WithActions {
       // JPY market MMF       = 0.005%
       // Inc / Dec Fee        = 0.03%
       // Position size        = 6000 USD
-      // Open interest        = 6000 USD / adaptive price
-      //                      = 6000 / 0.007346297098947275625720855402
-      //                      = 816738.000
       // Avg price            = Adaptive price
       //                      = 0.007346223635976286152964598193
       // IMR                  = 6000 * IMF = 6 USD
@@ -478,7 +462,6 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: jpyMarketIndex,
         _positionSize: int256(-6_000 * 1e30),
         _avgPrice: 0.007346223635976286152964598193 * 1e30,
-        _openInterest: 816738.000 * 1e3,
         _reserveValue: 54 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
@@ -545,14 +528,8 @@ contract TC02 is BaseIntTest_WithActions {
       assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T7: ");
 
       // Assert Market
-      assertMarketLongPosition(jpyMarketIndex, 0, 0, 0, "T7: ");
-      assertMarketShortPosition(
-        jpyMarketIndex,
-        6_000 * 1e30,
-        0.007346223635976286152964598193 * 1e30,
-        816738.000 * 1e3,
-        "T7: "
-      );
+      assertMarketLongPosition(jpyMarketIndex, 0, 0, "T7: ");
+      assertMarketShortPosition(jpyMarketIndex, 6_000 * 1e30, 0.007346223635976286152964598193 * 1e30, "T7: ");
       assertMarketFundingRate(jpyMarketIndex, 0, 1240, "T7: ");
 
       // Assert Asset class
@@ -616,7 +593,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Before:
       //    Position size     = -6000
-      //    Open interest     = 816738.000
       //    Avg Price         = 0.007346223635976286152964598193 USD
       //    Reserve           = 54 USD
       //    Borrowing rate    = 0
@@ -624,7 +600,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // After:
       //    Position size     = -6000 + 6000      = 0
-      //    Open interest     = 0 / 6000 * 816738 = 0
       //    Avg price         = 0 USD (fully close)
       //    IMR               = 0
       //    MMR               = 0
@@ -650,7 +625,6 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: jpyMarketIndex,
         _positionSize: 0,
         _avgPrice: 0,
-        _openInterest: 0,
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
@@ -747,8 +721,8 @@ contract TC02 is BaseIntTest_WithActions {
       assertPLPLiquidity(address(wbtc), 0.99572425 * 1e8, "T8: ");
 
       // Assert Market
-      assertMarketLongPosition(jpyMarketIndex, 0, 0, 0, "T8: ");
-      assertMarketShortPosition(jpyMarketIndex, 0, 0, 0, "T8: ");
+      assertMarketLongPosition(jpyMarketIndex, 0, 0, "T8: ");
+      assertMarketShortPosition(jpyMarketIndex, 0, 0, "T8: ");
 
       // Assert Asset class
       // Forex's reserve should be increased by = 54 USD
@@ -856,7 +830,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Before:
       //    Position size     = 0
-      //    Open interest     = 0
       //    Avg Price         = 0
       //    Reserve           = 0
       //    Borrowing rate    = 0
@@ -867,7 +840,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // After:
       //    Position size     = 3000
-      //    Open interest     = 3000 / 17500 = 0.17142857
       //    Avg price         = 17500.0875 USD
       //    IMR               = 3000 * 1%   =  30 USD
       //    MMR               = 3000 * 0.5% =  15 USD
@@ -886,7 +858,6 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: wbtcMarketIndex,
         _positionSize: 3_000 * 1e30,
         _avgPrice: 18000 * 1e30,
-        _openInterest: 0.17142857 * 1e8,
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0.000026718161223128 * 1e18,
@@ -956,17 +927,10 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: wbtcMarketIndex,
         _positionSize: 3000 * 1e30,
         _avgPrice: 18_000 * 1e30,
-        _openInterest: 0.17142857 * 1e8,
         _str: "T12: "
       });
       // And Short side should invariant
-      assertMarketShortPosition({
-        _marketIndex: wbtcMarketIndex,
-        _positionSize: 0,
-        _avgPrice: 0,
-        _openInterest: 0,
-        _str: "T12: "
-      });
+      assertMarketShortPosition({ _marketIndex: wbtcMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "T12: " });
 
       // Assert Asset class
       // Given Crypto's reserve is 13.5
@@ -1069,7 +1033,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Before:
       //    Position size     = 3000
-      //    Open interest     = 0.17142857
       //    Avg Price         = 18000 USD
       //    Reserve           = 270 USD
       //    Borrowing rate    = 0.000026718163837437
@@ -1077,7 +1040,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // After: (close position)
       //    Position size     = 0
-      //    Open interest     = 0
       //    Avg price         = 0
       //    IMR               = 0
       //    MMR               = 0
@@ -1103,7 +1065,6 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: wbtcMarketIndex,
         _positionSize: 0,
         _avgPrice: 0,
-        _openInterest: 0,
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
@@ -1181,21 +1142,9 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Asset Market's state, Asset class's state
 
-      assertMarketLongPosition({
-        _marketIndex: wbtcMarketIndex,
-        _positionSize: 0,
-        _avgPrice: 0,
-        _openInterest: 0,
-        _str: "T15: "
-      });
+      assertMarketLongPosition({ _marketIndex: wbtcMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "T15: " });
       // And Short side should invariant
-      assertMarketShortPosition({
-        _marketIndex: wbtcMarketIndex,
-        _positionSize: 0,
-        _avgPrice: 0,
-        _openInterest: 0,
-        _str: "T15: "
-      });
+      assertMarketShortPosition({ _marketIndex: wbtcMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "T15: " });
 
       // Assert Asset class
       // Given Crypto's reserve is 283.5
@@ -1284,7 +1233,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Before:
       //    Position size     = 0
-      //    Open interest     = 0
       //    Avg Price         = 0
       //    Reserve           = 0
       //    Borrowing rate    = 0
@@ -1292,7 +1240,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // After: (new position)
       //    Position size     = -3000 USD
-      //    Open interest     = 3000 / 21500 = 0.13953488
       //    Avg price         = 21,000 USD
       //    IMR               = 30
       //    MMR               = 15
@@ -1315,7 +1262,6 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: wbtcMarketIndex,
         _positionSize: -3_000 * 1e30,
         _avgPrice: 21_000 * 1e30,
-        _openInterest: 0.13953488 * 1e8,
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0.000120918598722811 * 1e18,
@@ -1384,19 +1330,12 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Asset Market's state, Asset class's state
 
-      assertMarketLongPosition({
-        _marketIndex: wbtcMarketIndex,
-        _positionSize: 0,
-        _avgPrice: 0,
-        _openInterest: 0,
-        _str: "T17: "
-      });
+      assertMarketLongPosition({ _marketIndex: wbtcMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "T17: " });
       // And Short side should invariant
       assertMarketShortPosition({
         _marketIndex: wbtcMarketIndex,
         _positionSize: 3000 * 1e30,
         _avgPrice: 21_000 * 1e30,
-        _openInterest: 0.13953488 * 1e8,
         _str: "T17: "
       });
 
@@ -1487,7 +1426,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Before:
       //    Position size     = -3000
-      //    Open interest     = 0.13953488
       //    Avg Price         = 21000 USD
       //    Reserve           = 270 USD
       //    Borrowing rate    = 0.000120918598722811
@@ -1495,7 +1433,6 @@ contract TC02 is BaseIntTest_WithActions {
 
       // After: (close short position)
       //    Position size     = 0
-      //    Open interest     = 0
       //    Avg price         = 0
       //    IMR               = 0
       //    MMR               = 0
@@ -1522,7 +1459,6 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: wbtcMarketIndex,
         _positionSize: 0,
         _avgPrice: 0,
-        _openInterest: 0,
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
@@ -1600,21 +1536,9 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Asset Market's state, Asset class's state
 
-      assertMarketLongPosition({
-        _marketIndex: wbtcMarketIndex,
-        _positionSize: 0,
-        _avgPrice: 0,
-        _openInterest: 0,
-        _str: "T19: "
-      });
+      assertMarketLongPosition({ _marketIndex: wbtcMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "T19: " });
       // And Short side should invariant
-      assertMarketShortPosition({
-        _marketIndex: wbtcMarketIndex,
-        _positionSize: 0,
-        _avgPrice: 0,
-        _openInterest: 0,
-        _str: "T19: "
-      });
+      assertMarketShortPosition({ _marketIndex: wbtcMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "T19: " });
 
       // Assert Asset class
       // Given Crypto's reserve is 283.5

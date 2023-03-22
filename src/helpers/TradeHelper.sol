@@ -110,10 +110,10 @@ contract TradeHelper is ITradeHelper {
 
       _globalMarket.currentFundingRate += nextFundingRate;
 
-      if (_globalMarket.longOpenInterest > 0) {
+      if (_globalMarket.longPositionSize != 0) {
         fundingFeeLong = (_globalMarket.currentFundingRate * int(_globalMarket.longPositionSize)) / 1e30;
       }
-      if (_globalMarket.shortOpenInterest > 0) {
+      if (_globalMarket.shortPositionSize != 0) {
         fundingFeeShort = (_globalMarket.currentFundingRate * -int(_globalMarket.shortPositionSize)) / 1e30;
       }
 

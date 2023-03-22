@@ -124,8 +124,8 @@ contract TradeService_FundingFee is TradeService_Base {
     address aliceAddress = getSubAccount(ALICE, 0);
     address bobAddress = getSubAccount(BOB, 0);
     // Set Alice collateral balance
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 1_000 * 1e6);
-    vaultStorage.setTraderBalance(bobAddress, address(usdt), 500 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 1_000 * 1e6);
+    vaultStorage.increaseTraderBalance(bobAddress, address(usdt), 500 * 1e6);
 
     vm.warp(100);
     {

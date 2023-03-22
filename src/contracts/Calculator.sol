@@ -555,7 +555,7 @@ contract Calculator is Owned, ICalculator {
         }
         {
           // Calculate funding fee
-          (int256 nextFundingRate, , ) = _getNextFundingRate(_var.position.marketIndex);
+          int256 nextFundingRate = _getNextFundingRate(_var.position.marketIndex);
           int256 fundingRate = _globalMarket.currentFundingRate + nextFundingRate;
           _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
         }
@@ -835,20 +835,14 @@ contract Calculator is Owned, ICalculator {
     return _nextAveragePrice;
   }
 
-  function getNextFundingRate(
-    uint256 _marketIndex
-  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+  function getNextFundingRate(uint256 _marketIndex) external view returns (int256 fundingRate) {
     return _getNextFundingRate(_marketIndex);
   }
 
   /// @notice Calculate next funding rate using when increase/decrease position.
   /// @param _marketIndex Market Index.
   /// @return fundingRate next funding rate using for both LONG & SHORT positions.
-  /// @return fundingRateLong next funding rate for LONG.
-  /// @return fundingRateShort next funding rate for SHORT.
-  function _getNextFundingRate(
-    uint256 _marketIndex
-  ) internal view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+  function _getNextFundingRate(uint256 _marketIndex) internal view returns (int256 fundingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);

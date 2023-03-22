@@ -180,10 +180,6 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
         ++i;
       }
     }
-
-    // @todo - remove this later
-    //Reset Trader's collateral balances
-    VaultStorage(vaultStorage).removeAllTraderTokens(_subAccount);
   }
 
   struct SettleStruct {

@@ -29,6 +29,7 @@ contract CrossMarginHandler_Base is BaseTest {
     crossMarginService = Deployer.deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
+      address(perpStorage),
       address(calculator)
     );
     crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), address(pythAdapter.pyth()));

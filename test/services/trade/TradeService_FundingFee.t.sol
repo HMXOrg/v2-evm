@@ -85,7 +85,7 @@ contract TradeService_FundingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 1_000 * 1e6);
 
       assertEq(vaultStorage.devFees(address(weth)), 0);
-      assertEq(vaultStorage.fundingFee(address(weth)), 10 * 1e18); // Initial margin fee WETH = 10 WETH
+      assertEq(vaultStorage.fundingFeeReserve(address(weth)), 10 * 1e18); // Initial funding fee WETH = 10 WETH
     }
 
     vm.warp(block.timestamp + 1);
@@ -95,86 +95,77 @@ contract TradeService_FundingFee is TradeService_Base {
       {
         IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
 
-        // Long position now must pay 133$ to Short Side
-        assertEq(_globalMarket.accumFundingLong, -133333333333333000000); // -133.33$
-        assertEq(_globalMarket.accumFundingShort, 0); //
-
         // Repay WETH Amount = 133.333333333333/1600 = 0.083333333333333125 WETH
         // Dev fee = 0.083333333333333125  * 0 = 0 WETH
         assertEq(vaultStorage.devFees(address(weth)), 0, "Dev fee");
 
         // After Alice pay fee, Alice's WETH amount will be decreased
-        // Alice's WETH remaining = 1 + 0.083333333333333125 = 1.083333333333333125 WETH
-        assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 1083333333333333125, "Weth balance");
+        // Alice's WETH remaining = 1 - 0.083333333333333125 = 0.916666666666666875 WETH
+        assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 916666666666666875, "Weth balance");
 
-        // new fundingFee = old fundingFee + (fee collect from ALICE - dev Fee) = 10 + ( 0.08383958333333312 - 0) = 10083333333333333125 WETH
-        // assertEq(vaultStorage.fundingFee(address(weth)), 10083333333333333125, "Funding fee");
+        // new fundingFee = old fundingFee + (fee collect from ALICE - dev Fee) = 10 + ( 0.08383958333333312 - 0) = 10.0838395833 WETH
+        assertEq(vaultStorage.fundingFeeReserve(address(weth)), (10 + 0.083333333333333125) * 1e18);
       }
     }
   }
 
-  // TODO: Working on this later -> (cause from fixed accum funding rate logic)
-  // function testCorrectness_fundingFee_borrowFundingFeeFromPLP() external {
-  //   // TVL
-  //   // 1000000 USDT -> 1000000 USD
-  //   mockCalculator.setPLPValue(1_000_000 * 1e30);
-  //   // ALICE add collateral
-  //   // 10000 USDT -> free collateral -> 10000 USD
-  //   mockCalculator.setFreeCollateral(10_000 * 1e30);
+  function testCorrectness_fundingFee_borrowFundingFeeFromPLP() external {
+    // TVL
+    // 1000000 USDT -> 1000000 USD
+    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    // ALICE add collateral
+    // 10000 USDT -> free collateral -> 10000 USD
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
 
-  //   // ETH price 1500 USD
-  //   mockOracle.setPrice(1500 * 1e30);
-  //   mockOracle.setPrice(wethAssetId, 1500 * 1e30);
+    // ETH price 1500 USD
+    mockOracle.setPrice(1500 * 1e30);
+    mockOracle.setPrice(wethAssetId, 1500 * 1e30);
 
-  //   address aliceAddress = getSubAccount(ALICE, 0);
-  //   address bobAddress = getSubAccount(BOB, 0);
-  //   // Set Alice collateral balance
-  //   vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 1_000 * 1e6);
-  //   vaultStorage.increaseTraderBalance(bobAddress, address(usdt), 500 * 1e6);
+    address aliceAddress = getSubAccount(ALICE, 0);
+    address bobAddress = getSubAccount(BOB, 0);
+    // Set Alice collateral balance
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 1_000 * 1e6);
+    vaultStorage.increaseTraderBalance(bobAddress, address(usdt), 500 * 1e6);
 
-  //   vm.warp(100);
-  //   {
-  //     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, 0);
+    vm.warp(100);
+    {
+      tradeService.increasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
-  //     IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
-  //     assertEq(_globalMarket.currentFundingRate, 0);
-  //     assertEq(_globalMarket.accumFundingLong, 0);
-  //     assertEq(_globalMarket.accumFundingShort, 0);
+      IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
+      assertEq(_globalMarket.currentFundingRate, 0);
+      assertEq(_globalMarket.accumFundingLong, 0);
+      assertEq(_globalMarket.accumFundingShort, 0);
 
-  //     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 1_000 * 1e6);
-  //     assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 500 * 1e6);
-  //   }
+      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 1_000 * 1e6);
+      assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 500 * 1e6);
+    }
 
-  //   vm.warp(block.timestamp + 1);
-  //   {
-  //     tradeService.increasePosition(BOB, 0, ethMarketIndex, -200_000 * 1e30, 0);
-  //     IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
-  //     assertEq(_globalMarket.currentFundingRate, -66666666666666); // LONG PAY SHORT
-  //     // Alice increase long position size * funding Rate = 500_000 * -0.000066666666666666 = -33.333333333333 $
-  //     assertEq(_globalMarket.accumFundingLong, -33333333333333000000);
-  //     assertEq(_globalMarket.accumFundingShort, 0);
+    vm.warp(block.timestamp + 1);
+    {
+      tradeService.increasePosition(BOB, 0, ethMarketIndex, -200_000 * 1e30, 0);
+      IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
+      assertEq(_globalMarket.currentFundingRate, -66666666666666); // LONG PAY SHORT
+      // Alice increase long position size * funding Rate = 500_000 * -0.000066666666666666 = -33.333333333333 $
+      assertEq(_globalMarket.accumFundingLong, -33333333333333000000);
+      assertEq(_globalMarket.accumFundingShort, 0);
 
-  //     assertEq(vaultStorage.fundingFee(address(usdt)), 0);
-  //   }
+      assertEq(vaultStorage.fundingFeeReserve(address(usdt)), 0);
+    }
 
-  //   // Simulate BOB close Short position, BOB should receive funding fee
-  //   vm.warp(block.timestamp + 1);
-  //   {
-  //     assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 0);
-  //     assertEq(vaultStorage.plpLiquidityDebtUSDE30(), 0);
+    // Simulate BOB close Short position, BOB should receive funding fee
+    vm.warp(block.timestamp + 1);
+    {
+      assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 0);
+      assertEq(vaultStorage.plpLiquidityDebtUSDE30(), 0);
 
-  //     tradeService.decreasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30, address(0), 0);
-  //     IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
-  //     assertEq(_globalMarket.currentFundingRate, -106666666666666); // LONG PAY SHORT
-  //     // Alice increase long position size * funding Rate * elapsedInterval = (500_000 * -0.000106666666666666) + last accumFundingLong = -53.333333333333 + -33.333333333333 = -86.666666666666$
-  //     assertEq(_globalMarket.accumFundingLong, -86666666666666000000);
-  //     assertEq(_globalMarket.accumFundingShort, 21333333333333200000);
+      tradeService.decreasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30, address(0), 0);
+      IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
+      assertEq(_globalMarket.currentFundingRate, -106666666666666); // LONG PAY SHORT
 
-  //     // After BOB close short position, BOB must get funding fee
-  //     assertEq(vaultStorage.fundingFee(address(usdt)), 0);
-  //     assertEq(vaultStorage.plpLiquidityDebtUSDE30(), 8000000000000000000000000000000); // 8$
-  //     assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 5333333333333333); // 0.005333333333333333 ETH
-  //     assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 500 * 1e6);
-  //   }
-  // }
+      // After BOB close short position, BOB must get funding fee
+      assertEq(vaultStorage.fundingFeeReserve(address(usdt)), 0);
+      assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 5333333333333333); // 0.005333333333333333 ETH
+      assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 500 * 1e6);
+    }
+  }
 }

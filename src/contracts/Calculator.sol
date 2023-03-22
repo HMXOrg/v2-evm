@@ -13,6 +13,8 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
@@ -449,7 +451,7 @@ contract Calculator is Owned, ICalculator {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
 
-    // Calculate unrealized PnL and unrelized fee
+    // Calculate unrealized PnL and unrealized fee
     (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
       _subAccount,
       _limitPriceE30,
@@ -553,7 +555,7 @@ contract Calculator is Owned, ICalculator {
         }
         {
           // Calculate funding fee
-          (int256 nextFundingRate, , ) = _getNextFundingRate(_var.position.marketIndex);
+          int256 nextFundingRate = _getNextFundingRate(_var.position.marketIndex);
           int256 fundingRate = _globalMarket.currentFundingRate + nextFundingRate;
           _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
         }
@@ -833,29 +835,23 @@ contract Calculator is Owned, ICalculator {
     return _nextAveragePrice;
   }
 
-  function getNextFundingRate(
-    uint256 _marketIndex
-  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+  function getNextFundingRate(uint256 _marketIndex) external view returns (int256 fundingRate) {
     return _getNextFundingRate(_marketIndex);
   }
 
   /// @notice Calculate next funding rate using when increase/decrease position.
   /// @param _marketIndex Market Index.
   /// @return fundingRate next funding rate using for both LONG & SHORT positions.
-  /// @return fundingRateLong next funding rate for LONG.
-  /// @return fundingRateShort next funding rate for SHORT.
-  function _getNextFundingRate(
-    uint256 _marketIndex
-  ) internal view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+  function _getNextFundingRate(uint256 _marketIndex) internal view returns (int256 fundingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
+    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return 0;
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     // If block.timestamp not pass the next funding time, return 0.
-    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
+    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return 0;
 
     vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
 
@@ -867,13 +863,7 @@ contract Calculator is Owned, ICalculator {
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
     vars.nextFundingRate = vars.nextFundingRate * vars.elapsedIntervals;
 
-    if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.nextFundingRate * int(globalMarket.longPositionSize)) / 1e30;
-    }
-    if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.nextFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
-    }
-    return (vars.nextFundingRate, fundingRateLong, fundingRateShort);
+    return vars.nextFundingRate;
   }
 
   /**
@@ -910,6 +900,16 @@ contract Calculator is Owned, ICalculator {
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
     fundingFee = (int256(_size) * _fundingRate) / int64(RATE_PRECISION);
 
+    // Position Exposure   | Funding Rate       | Fund Flow
+    // (isLong)            | (fundingRate > 0)  | (traderMustPay)
+    // ---------------------------------------------------------------------
+    // true                | true               | false  (fee reserve -> trader)
+    // true                | false              | true   (trader -> fee reserve)
+    // false               | true               | true   (trader -> fee reserve)
+    // false               | false              | false  (fee reserve -> trader)
+
+    // If fundingFee is negative mean Trader receives Fee
+    // If fundingFee is positive mean Trader pays Fee
     if (_isLong) {
       return -fundingFee;
     }
@@ -1028,7 +1028,7 @@ contract Calculator is Owned, ICalculator {
       isProfit = _markPrice < _averagePrice;
     }
 
-    // In case of profit, we need to check the current timestamp againt minProfitDuration
+    // In case of profit, we need to check the current timestamp against minProfitDuration
     // in order to prevent front-run attack, or price manipulation.
     // Check `isProfit` first, to save SLOAD in loss case.
     if (isProfit) {

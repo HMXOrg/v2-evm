@@ -151,11 +151,15 @@ library Deployer {
   function deployCrossMarginService(
     address _configStorage,
     address _vaultStorage,
+    address _perpStorage,
     address _calculator
   ) internal returns (ICrossMarginService) {
     return
       ICrossMarginService(
-        deployContractWithArguments("CrossMarginService", abi.encode(_configStorage, _vaultStorage, _calculator))
+        deployContractWithArguments(
+          "CrossMarginService",
+          abi.encode(_configStorage, _vaultStorage, _perpStorage, _calculator)
+        )
       );
   }
 

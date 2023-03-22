@@ -25,7 +25,7 @@ interface IVaultStorage {
 
   function protocolFees(address _token) external view returns (uint256);
 
-  function fundingFee(address _token) external view returns (uint256);
+  function fundingFeeReserve(address _token) external view returns (uint256);
 
   function devFees(address _token) external view returns (uint256);
 
@@ -60,4 +60,18 @@ interface IVaultStorage {
   function payPlp(address _trader, address _token, uint256 _amount) external;
 
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
+
+  function borrowFundingFeeFromPlpToTrader(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount,
+    uint256 _fundingFeeValue
+  ) external;
+
+  function repayFundingFeeDebtFromTraderToPlp(
+    address _trader,
+    address _token,
+    uint256 _fundingFeeAmount,
+    uint256 _fundingFeeValue
+  ) external;
 }

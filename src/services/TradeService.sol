@@ -223,7 +223,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     }
 
     // market validation
-
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 

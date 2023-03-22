@@ -18,6 +18,7 @@ contract CrossMarginService_Base is BaseTest {
     crossMarginService = Deployer.deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
+      address(perpStorage),
       address(mockCalculator)
     );
 

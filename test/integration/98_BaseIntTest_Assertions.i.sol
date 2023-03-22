@@ -68,13 +68,24 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     assertVaultTokenBalance(_token, _balance, "");
   }
 
-  function assertVaultsFees(address _token, uint256 _fee, uint256 _devFee, string memory _str) internal {
+  function assertVaultsFees(
+    address _token,
+    uint256 _fee,
+    uint256 _devFee,
+    uint256 _fundingFee,
+    string memory _str
+  ) internal {
     assertEq(vaultStorage.protocolFees(_token), _fee, string.concat(_str, "Vault's Fee is not matched"));
     assertEq(vaultStorage.devFees(_token), _devFee, string.concat(_str, "Vault's Dev fee is not matched"));
+    assertEq(
+      vaultStorage.fundingFeeReserve(_token),
+      _fundingFee,
+      string.concat(_str, "Vault's Funding fee is not matched")
+    );
   }
 
-  function assertVaultsFees(address _token, uint256 _fee, uint256 _devFee) internal {
-    assertVaultsFees(_token, _fee, _devFee, "");
+  function assertVaultsFees(address _token, uint256 _fee, uint256 _devFee, uint256 _fundingFee) internal {
+    assertVaultsFees(_token, _fee, _devFee, _fundingFee, "");
   }
 
   function assertSubAccountTokenBalance(
@@ -353,12 +364,12 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   }
 
   // Calculator
-  function assertSubAccounStatus(address _subAccount, uint256 _imr, uint256 _mmr, string memory _str) internal {
+  function assertSubAccountStatus(address _subAccount, uint256 _imr, uint256 _mmr, string memory _str) internal {
     assertEq(calculator.getIMR(_subAccount), _imr, string.concat(_str, "IMR is not matched"));
     assertEq(calculator.getMMR(_subAccount), _mmr, string.concat(_str, "MMR is not matched"));
   }
 
-  function assertSubAccounStatus(address _subAccount, uint256 _imr, uint256 _mmr) internal {
-    assertSubAccounStatus(_subAccount, _imr, _mmr, "");
+  function assertSubAccountStatus(address _subAccount, uint256 _imr, uint256 _mmr) internal {
+    assertSubAccountStatus(_subAccount, _imr, _mmr, "");
   }
 }

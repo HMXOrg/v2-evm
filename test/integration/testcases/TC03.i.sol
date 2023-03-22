@@ -1351,7 +1351,7 @@ contract TC03 is BaseIntTest_WithActions {
     });
     {
       // When Limit order index 2 has executed
-      // Then Bob fully close Btc short position at price 22000 USD
+      // Then Bob fully close Btc short position at price 21500 USD
 
       // Given Oracle price   = 22100 USD
       // And TVL

@@ -56,8 +56,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
-    vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
 
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
     tradeService.increasePosition(ALICE, 0, btcMarketIndex, 500_000 * 1e30, 0);
@@ -70,7 +70,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     mockCalculator.setUnrealizedPnl(aliceAddress, 0);
 
     vm.expectRevert(abi.encodeWithSignature("ILiquidationService_AccountHealthy()"));
-    liquidationService.liquidate(aliceAddress);
+    liquidationService.liquidate(aliceAddress, BOT);
   }
 
   function testCorrectness_liquidate_WhenBadDebt() external {
@@ -92,8 +92,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
-    vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
 
     bytes32 _wethPositionId = getPositionId(ALICE, 0, ethMarketIndex);
     bytes32 _wbtcPositionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -108,7 +108,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     mockCalculator.setMMR(aliceAddress, 7_500 * 1e30);
     mockCalculator.setUnrealizedPnl(aliceAddress, -20_000 * 1e30);
 
-    liquidationService.liquidate(aliceAddress);
+    liquidationService.liquidate(aliceAddress, BOT);
 
     PositionTester02.PositionAssertionData memory assertData = PositionTester02.PositionAssertionData({
       size: 0,
@@ -121,16 +121,21 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     positionTester02.assertPosition(_wethPositionId, assertData);
     positionTester02.assertPosition(_wbtcPositionId, assertData);
 
-    // 0.3 * 24,000 = 7,200
-    // 20,005 - 7,200 = 12,805
-    // 12,805 / 1 = 12,805
-    // 10,000 - 12,805 = -2,805
-    assertEq(vaultStorage.plpLiquidity(address(wbtc)), 0.3 * 1e8);
+    // liquidation fee
+    // 5 / 24,000 = 0.00020833
+    // loss
+    // 0.3 - 0.00020833 = 0.29979167
+    // 0.29979167 * 24,000 = 7,195.00008
+    // 20,000 - 7,195.00008 = 12,804.99992
+    // 12,804.99992 / 1 = 12,804.99992
+    // 10,000 - 12,804.99992 = -2,804.99992
+    assertEq(vaultStorage.traderBalances(BOT, address(wbtc)), 0.00020833 * 1e8);
+    assertEq(vaultStorage.plpLiquidity(address(wbtc)), 0.29979167 * 1e8);
     assertEq(vaultStorage.plpLiquidity(address(usdt)), 10_000 * 1e6);
     assertEq(vaultStorage.traderBalances(aliceAddress, address(wbtc)), 0);
     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
 
-    assertEq(perpStorage.getBadDebt(aliceAddress), 2_805 * 1e30);
+    assertEq(perpStorage.getBadDebt(aliceAddress), 2_804.99992 * 1e30);
   }
 
   function testCorrectness_liquidate() external {
@@ -153,10 +158,10 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     address aliceAddress = getSubAccount(ALICE, 0);
     address bobAddress = getSubAccount(BOB, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
-    vaultStorage.setTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
 
-    vaultStorage.setTraderBalance(bobAddress, address(usdt), 10_000 * 1e6);
+    vaultStorage.increaseTraderBalance(bobAddress, address(usdt), 10_000 * 1e6);
 
     bytes32 _wethPositionId = getPositionId(ALICE, 0, ethMarketIndex);
     bytes32 _wbtcPositionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -173,8 +178,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     mockCalculator.setEquity(aliceAddress, 5_880 * 1e30);
     mockCalculator.setMMR(aliceAddress, 7_500 * 1e30);
     mockCalculator.setUnrealizedPnl(aliceAddress, -10_000 * 1e30);
-
-    liquidationService.liquidate(aliceAddress);
+    liquidationService.liquidate(aliceAddress, BOT);
 
     PositionTester02.PositionAssertionData memory assertData = PositionTester02.PositionAssertionData({
       size: 0,
@@ -197,14 +201,19 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
       assertEq(btcGlobalMarket.longOpenInterest, 5 * 1e18);
     }
 
-    // 0.3 * 24,500 = 7,350
-    // 10,005 - 7,350 = 2,655
-    // 2,655 / 1 = 2,655
-    // 10,000 - 2,655 = 7,345
-    assertEq(vaultStorage.plpLiquidity(address(wbtc)), 0.3 * 1e8);
-    assertEq(vaultStorage.plpLiquidity(address(usdt)), 2_655 * 1e6);
+    // liquidation fee
+    // 5 / 24,500 = 0.00020408
+    // 0.29979592
+    // loss
+    // 0.29979592 * 24,500 = 7,345.00004
+    // 10,000 - 7,345.00004 = 2,654.99996
+    // 2,654.99996 / 1 = 2,654.99996
+    // 10,000 - 2,654.99996 = 7,345.00004
+    assertEq(vaultStorage.traderBalances(BOT, address(wbtc)), 0.00020408 * 1e8);
+    assertEq(vaultStorage.plpLiquidity(address(wbtc)), 0.29979592 * 1e8);
+    assertEq(vaultStorage.plpLiquidity(address(usdt)), 2_654.99996 * 1e6);
     assertEq(vaultStorage.traderBalances(aliceAddress, address(wbtc)), 0);
-    assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 7_345 * 1e6);
+    assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 7_345.00004 * 1e6);
 
     assertEq(perpStorage.getBadDebt(aliceAddress), 0);
   }

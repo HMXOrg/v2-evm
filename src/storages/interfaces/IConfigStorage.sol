@@ -101,8 +101,6 @@ interface IConfigStorage {
 
   function calculator() external view returns (address);
 
-  function feeCalculator() external view returns (address);
-
   function oracle() external view returns (address);
 
   function plp() external view returns (address);
@@ -163,6 +161,8 @@ interface IConfigStorage {
 
   function getPlpAssetIds() external view returns (bytes32[] memory);
 
+  function getTradeServiceHooks() external view returns (address[] memory);
+
   /**
    * Setter
    */
@@ -174,8 +174,6 @@ interface IConfigStorage {
   function setDynamicEnabled(bool _enabled) external;
 
   function setCalculator(address _calculator) external;
-
-  function setFeeCalculator(address _feeCalculator) external;
 
   function setOracle(address _oracle) external;
 
@@ -221,6 +219,8 @@ interface IConfigStorage {
   function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);
 
   function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external;
+
+  function setTradeServiceHooks(address[] calldata _newHooks) external;
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
 

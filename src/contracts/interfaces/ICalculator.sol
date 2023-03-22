@@ -17,7 +17,6 @@ interface ICalculator {
    */
   struct GetFundingRateVar {
     uint256 fundingInterval;
-    uint256 marketPriceE30;
     int256 marketSkewUSDE30;
     int256 ratio;
     int256 nextFundingRate;

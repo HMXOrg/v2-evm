@@ -5,8 +5,10 @@ pragma solidity 0.8.18;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
 import { Owned } from "@hmx/base/Owned.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract TraderLoyaltyCredit is Owned {
+  using SafeERC20 for IERC20;
   /**
    * @dev Emitted when `value` tokens are moved from one account (`from`) to
    * another (`to`).
@@ -392,7 +394,7 @@ contract TraderLoyaltyCredit is Owned {
     }
 
     // Transfer in reward token
-    IERC20(rewardToken).transferFrom(msg.sender, address(this), amount);
+    IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), amount);
 
     emit FeedReward(msg.sender, epochTimestamp, amount);
   }
@@ -432,7 +434,7 @@ contract TraderLoyaltyCredit is Owned {
     }
 
     // Transfer reward token to the user
-    IERC20(rewardToken).transfer(userAddress, totalRewardAmount);
+    IERC20(rewardToken).safeTransfer(userAddress, totalRewardAmount);
   }
 
   function pendingReward(

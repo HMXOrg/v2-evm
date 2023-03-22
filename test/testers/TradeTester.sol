@@ -57,13 +57,13 @@ contract TradeTester is StdAssertions {
     uint256 shortPositionSize;
     uint256 shortAvgPrice;
     uint256 shortOpenInterest;
-    int256 accumFundingLong;
-    int256 accumFundingShort;
     int256 currentFundingRate;
   }
 
   struct GlobalStateExpectedData {
     uint256 reserveValueE30;
+    int256 accumFundingLong;
+    int256 accumFundingShort;
   }
 
   struct GlobalAssetClassExpectedData {
@@ -179,9 +179,7 @@ contract TradeTester is StdAssertions {
   /// @notice Assert Market
   /// @dev This function will check
   ///       - Last funding time
-  ///       - Current functing rate
-  ///       - Accum funding long
-  ///       - Accum funding short
+  ///       - Current funding rate
   ///       - Long Position size
   ///       - Long average price
   ///       - Long Open interest
@@ -201,8 +199,6 @@ contract TradeTester is StdAssertions {
     assertEq(_globalMarket.shortAvgPrice, _globalMarketExpectedData.shortAvgPrice, "Short Average Price");
     assertEq(_globalMarket.shortOpenInterest, _globalMarketExpectedData.shortOpenInterest, "Short Open Interest");
 
-    assertEq(_globalMarket.accumFundingLong, _globalMarketExpectedData.accumFundingLong, "Accum Funding Long");
-    assertEq(_globalMarket.accumFundingShort, _globalMarketExpectedData.accumFundingShort, "Accum Funding Short");
     assertEq(_globalMarket.currentFundingRate, _globalMarketExpectedData.currentFundingRate, "Current Funding Rate");
     assertEq(_globalMarket.lastFundingTime, _globalMarketExpectedData.lastFundingTime, "Last Funding Time");
   }
@@ -242,6 +238,8 @@ contract TradeTester is StdAssertions {
 
     // Check global reserve
     assertEq(_globalState.reserveValueE30, _globalStateExpectedData.reserveValueE30, "Global Reserve");
+    assertEq(_globalState.accumFundingLong, _globalStateExpectedData.accumFundingLong, "Accum Funding Long");
+    assertEq(_globalState.accumFundingShort, _globalStateExpectedData.accumFundingShort, "Accum Funding Short");
   }
 
   /// @notice Assert Vault info

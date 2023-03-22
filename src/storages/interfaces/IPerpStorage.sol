@@ -9,6 +9,8 @@ interface IPerpStorage {
 
   struct GlobalState {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
+    int256 accumFundingLong; // accumulative of funding fee value on LONG positions using for calculating surplus
+    int256 accumFundingShort; // accumulative of funding fee value on SHORT positions using for calculating surplus
   }
 
   struct GlobalAssetClass {
@@ -30,8 +32,6 @@ interface IPerpStorage {
     uint256 shortAvgPrice;
     uint256 shortOpenInterest;
     // funding rate
-    int256 accumFundingLong;
-    int256 accumFundingShort;
     int256 currentFundingRate;
     uint256 lastFundingTime;
   }

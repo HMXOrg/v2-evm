@@ -104,23 +104,20 @@ contract TradeHelper is ITradeHelper {
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
-      int256 fundingFeeLong;
-      int256 fundingFeeShort;
       int256 nextFundingRate = calculator.getNextFundingRate(_marketIndex);
 
       _globalMarket.currentFundingRate += nextFundingRate;
 
       if (_globalMarket.longOpenInterest > 0) {
-        fundingFeeLong = (_globalMarket.currentFundingRate * int(_globalMarket.longPositionSize)) / 1e30;
+        int256 fundingFeeLong = (_globalMarket.currentFundingRate * int(_globalMarket.longPositionSize)) / 1e30;
+        _updateAccumFundingLong(fundingFeeLong);
       }
       if (_globalMarket.shortOpenInterest > 0) {
-        fundingFeeShort = (_globalMarket.currentFundingRate * -int(_globalMarket.shortPositionSize)) / 1e30;
+        int256 fundingFeeShort = (_globalMarket.currentFundingRate * -int(_globalMarket.shortPositionSize)) / 1e30;
+        _updateAccumFundingLong(fundingFeeShort);
       }
 
-      _globalMarket.accumFundingLong += fundingFeeLong;
-      _globalMarket.accumFundingShort += fundingFeeShort;
       _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-
       _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
     }
   }
@@ -348,14 +345,8 @@ contract TradeHelper is ITradeHelper {
       // book the balances
       _vars.vaultStorage.payFundingFeeFromTraderToFundingFeeReserve(_vars.subAccount, _collateralToken, _repayAmount);
 
-      // @todo - split to withdraw surplus PR
-      // // Update accum funding fee on Global storage for surplus calculation
-      // if (_vars.isLong) {
-      //   _globalMarket.accumFundingLong += int(_repayValue);
-      // } else {
-      //   _globalMarket.accumFundingShort += int(_repayValue);
-      // }
-      // _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
+      // Update accum funding fee on Global storage for surplus calculation
+      _vars.isLong ? _updateAccumFundingLong(int(_repayValue)) : _updateAccumFundingShort(int(_repayValue));
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -363,8 +354,6 @@ contract TradeHelper is ITradeHelper {
   }
 
   function _repayBorrowDebtFromTraderToPlp(SettleAllFeesVars memory _vars, address _collateralToken) internal {
-    // PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
-
     // When trader is the payer
     uint256 _traderBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _collateralToken);
 
@@ -393,14 +382,8 @@ contract TradeHelper is ITradeHelper {
         _repayValue
       );
 
-      // @todo - split to withdraw surplus PR
-      // // Update accum funding fee on Global storage for surplus calculation
-      // if (_vars.isLong) {
-      //   _globalMarket.accumFundingLong += int(_repayValue);
-      // } else {
-      //   _globalMarket.accumFundingShort += int(_repayValue);
-      // }
-      // _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
+      // Update accum funding fee on Global storage for surplus calculation
+      // _vars.isLong? _updateAccumFundingLong(int(_repayValue)): _updateAccumFundingShort(int(_repayValue));
 
       _vars.absFundingFeeToBePaid -= _repayValue;
     }
@@ -410,8 +393,6 @@ contract TradeHelper is ITradeHelper {
     SettleAllFeesVars memory _vars,
     address _collateralToken
   ) internal returns (uint256) {
-    // PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
-
     // When funding fee is the payer
     uint256 _fundingFeeBalance = _vars.vaultStorage.fundingFeeReserve(_collateralToken);
 
@@ -430,14 +411,9 @@ contract TradeHelper is ITradeHelper {
       // book the balances
       _vars.vaultStorage.payFundingFeeFromFundingFeeReserveToTrader(_vars.subAccount, _collateralToken, _repayAmount);
 
-      // @todo - split to withdraw surplus PR
       // // Update accum funding fee on Global storage for surplus calculation
-      // if (_vars.isLong) {
-      //   _globalMarket.accumFundingLong -= int(_repayValue);
-      // } else {
-      //   _globalMarket.accumFundingShort -= int(_repayValue);
-      // }
-      // _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
+      // (int256 fundingLong, int256 fundingShort) = _vars.isLong ? (-int(_repayValue), 0) : (0, -int(_repayValue));
+      // _updateAccumFunding(fundingLong, fundingShort);
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -445,8 +421,6 @@ contract TradeHelper is ITradeHelper {
   }
 
   function _settleFundingFeeWhenBorrowingFromPLP(SettleAllFeesVars memory _vars, address _collateralToken) internal {
-    // PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
-
     // When plp liquidity is the payer
     uint256 _plpBalance = _vars.vaultStorage.plpLiquidity(_collateralToken);
 
@@ -465,14 +439,9 @@ contract TradeHelper is ITradeHelper {
       // book the balances
       _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _collateralToken, _repayAmount, _repayValue);
 
-      // @todo - split to withdraw surplus PR
       // // Update accum funding fee on Global storage for surplus calculation
-      // if (_vars.isLong) {
-      //   _globalMarket.accumFundingLong -= int(_repayValue);
-      // } else {
-      //   _globalMarket.accumFundingShort -= int(_repayValue);
-      // }
-      // _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
+      // (int256 fundingLong, int256 fundingShort) = _vars.isLong ? (-int(_repayValue), 0) : (0, -int(_repayValue));
+      // _updateAccumFunding(fundingLong, fundingShort);
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -570,6 +539,22 @@ contract TradeHelper is ITradeHelper {
       uint256 _traderBalanceValue = (_traderBalance * _tokenPrice) / (10 ** _tokenDecimal);
       return (_traderBalance, _traderBalanceValue);
     }
+  }
+
+  function _updateAccumFundingLong(int256 fundingLong) internal {
+    PerpStorage _perpStorage = PerpStorage(perpStorage);
+    PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
+
+    _globalState.accumFundingLong += fundingLong;
+    _perpStorage.updateGlobalState(_globalState);
+  }
+
+  function _updateAccumFundingShort(int256 fundingShort) internal {
+    PerpStorage _perpStorage = PerpStorage(perpStorage);
+    PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
+
+    _globalState.accumFundingShort += fundingShort;
+    _perpStorage.updateGlobalState(_globalState);
   }
 
   function _abs(int256 x) private pure returns (uint256) {

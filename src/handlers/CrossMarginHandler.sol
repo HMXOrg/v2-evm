@@ -166,7 +166,6 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     emit LogWithdrawCollateral(msg.sender, _subAccountId, _token, _amount);
   }
 
-  // @todo - will be split to another PR
   // /// @notice Check funding fee surplus for transfer to PLP
   // function withdrawFundingFeeSurplus() external nonReentrant onlyOwner {
   //   ConfigStorage _configStorage = ConfigStorage(CrossMarginService(crossMarginService).configStorage());
@@ -248,25 +247,25 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   //   }
   // }
 
-  // function _getRepayAmount(
-  //   ConfigStorage _configStorage,
-  //   uint256 _traderBalance,
-  //   uint256 _feeValueE30,
-  //   address _token,
-  //   uint256 _tokenPrice
-  // ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
-  //   uint8 _tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
-  //   uint256 _feeAmount = (_feeValueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
+  function _getRepayAmount(
+    ConfigStorage _configStorage,
+    uint256 _traderBalance,
+    uint256 _feeValueE30,
+    address _token,
+    uint256 _tokenPrice
+  ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
+    uint8 _tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
+    uint256 _feeAmount = (_feeValueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
 
-  //   if (_traderBalance > _feeAmount) {
-  //     // _traderBalance can cover the rest of the fee
-  //     return (_feeAmount, _feeValueE30);
-  //   } else {
-  //     // _traderBalance cannot cover the rest of the fee, just take the amount the trader have
-  //     uint256 _traderBalanceValue = (_traderBalance * _tokenPrice) / (10 ** _tokenDecimal);
-  //     return (_traderBalance, _traderBalanceValue);
-  //   }
-  // }
+    if (_traderBalance > _feeAmount) {
+      // _traderBalance can cover the rest of the fee
+      return (_feeAmount, _feeValueE30);
+    } else {
+      // _traderBalance cannot cover the rest of the fee, just take the amount the trader have
+      uint256 _traderBalanceValue = (_traderBalance * _tokenPrice) / (10 ** _tokenDecimal);
+      return (_traderBalance, _traderBalanceValue);
+    }
+  }
 
   receive() external payable {
     // @dev Cannot enable this check due to Solidity Fallback Function Gas Limit introduced in 0.8.17.

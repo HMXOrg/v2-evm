@@ -21,13 +21,6 @@ contract MockPerpStorage {
     return globalState;
   }
 
-  function getGlobalMarketInfo(
-    uint256 _marketIndex
-  ) external view returns (int256 accumFundingLong, int256 accumFundingShort) {
-    IPerpStorage.GlobalMarket memory _globalMarket = globalMarkets[_marketIndex];
-    return (_globalMarket.accumFundingLong, _globalMarket.accumFundingShort);
-  }
-
   function getPositionBySubAccount(
     address _subAccount
   ) external view returns (IPerpStorage.Position[] memory traderPositions) {
@@ -73,7 +66,6 @@ contract MockPerpStorage {
     globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
     globalMarkets[_marketIndex].longOpenInterest = _newOpenInterest;
-    globalMarkets[_marketIndex].accumFundingLong = _newAccumFundingLong;
     globalMarkets[_marketIndex].currentFundingRate = _currentFundingRate;
   }
 
@@ -89,7 +81,6 @@ contract MockPerpStorage {
     globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
     globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
-    globalMarkets[_marketIndex].accumFundingShort = _newAccumFundingShort;
     globalMarkets[_marketIndex].currentFundingRate = _currentFundingRate;
   }
 

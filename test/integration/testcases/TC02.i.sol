@@ -53,7 +53,7 @@ contract TC02 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  = 0 + 0.003 = 0.00309563 btc
 
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _str: "T1: " });
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFee: 0, _str: "T1: " });
 
       // Finally after Bob add liquidity Vault balance should be correct
       // note: token balance is including all liquidity, dev fee and protocal fee
@@ -86,7 +86,7 @@ contract TC02 is BaseIntTest_WithActions {
 
       // And Alice should not pay any fee
       // note: vault's fees should be same with T1
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _str: "T2: " });
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFee: 0, _str: "T2: " });
     }
 
     // time passed for 60 seconds
@@ -154,7 +154,7 @@ contract TC02 is BaseIntTest_WithActions {
       //    IMR = 0 + 3   =   3 USD
       //    MMR = 0 + 1.5 = 1.5 USD
 
-      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 3 * 1e30, _mmr: 1.5 * 1e30, _str: "T4: " });
+      assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 3 * 1e30, _mmr: 1.5 * 1e30, _str: "T4: " });
 
       // Assert Alice Sub-account's Collateral
       // According to T2, Alice's collateral balances
@@ -192,7 +192,13 @@ contract TC02 is BaseIntTest_WithActions {
       //        - dev fee       = 0 + 0.00000225     = 0.00000225 btc
       // and PLP's liquidity still be
       //    BTC - 0.997 btc
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.00301275 * 1e8, _devFee: 0.00000225 * 1e8, _str: "T4: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: 0.00301275 * 1e8,
+        _devFee: 0.00000225 * 1e8,
+        _fundingFee: 0,
+        _str: "T4: "
+      });
 
       assertPLPLiquidity(address(wbtc), 0.997 * 1e8, "T4: ");
 
@@ -318,7 +324,7 @@ contract TC02 is BaseIntTest_WithActions {
       //    IMR = 3 - 1.5     =  1.5 USD
       //    MMR = 1.5 + 0.75  = 0.75 USD
 
-      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T6: " });
+      assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T6: " });
 
       // Assert Alice Sub-account's Collateral
       // According to T4, Alice's collateral balances
@@ -383,7 +389,13 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.997 + 0.00000001 - 0.000375 = 0.99662501 btc
 
       // Assert Vault
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.00301913 * 1e8, _devFee: 0.00000337 * 1e8, _str: "T6: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: 0.00301913 * 1e8,
+        _devFee: 0.00000337 * 1e8,
+        _fundingFee: 0,
+        _str: "T6: "
+      });
 
       assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T6: ");
 
@@ -497,7 +509,7 @@ contract TC02 is BaseIntTest_WithActions {
       //    IMR = 1.5 + 6   =  7.5 USD
       //    MMR = 0.75 + 3  = 3.75 USD
 
-      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 7.5 * 1e30, _mmr: 3.75 * 1e30, _str: "T7: " });
+      assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 7.5 * 1e30, _mmr: 3.75 * 1e30, _str: "T7: " });
 
       // Assert Fee distribution
       // According from T6
@@ -521,7 +533,13 @@ contract TC02 is BaseIntTest_WithActions {
       //        - dev fee       = 0.00000337 + 0.0000135 = 0.00001687 btc
       // and PLP's liquidity
       //    BTC - 0.99662501 btc
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.00309563 * 1e8, _devFee: 0.00001687 * 1e8, _str: "T7: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: 0.00309563 * 1e8,
+        _devFee: 0.00001687 * 1e8,
+        _fundingFee: 0,
+        _str: "T7: "
+      });
 
       assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T7: ");
 
@@ -647,14 +665,14 @@ contract TC02 is BaseIntTest_WithActions {
       //    IMR = 7.5 - 6   =  1.5 USD
       //    MMR = 3.75 - 3  = 0.75 USD
 
-      assertSubAccounStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T8: " });
+      assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T8: " });
 
       // Assert Alice Sub-account's Collateral
       // According to T7, Alice's collateral balances
       //    BTC - 0.01026249
       // When Alice Buy JPY with 6000 USD (close Short position)
-      // And Funding rate is position so Long pay Short
-      // Then Alice should receive funding fee
+      // And Funding rate is position so Short pay Long
+      // Then Alice should pay funding fee
 
       // Then Alice has to pay
       //    Trading fee   - 1.8 USD
@@ -677,9 +695,9 @@ contract TC02 is BaseIntTest_WithActions {
       //                      = 0.00090088 btc
 
       // In Summarize, Alice's collateral balances
-      //    BTC - 0.01026249 - 0.00009 - 0.00000013 + 0.00000014 + 0.00090088 = 0.01107338
+      //    BTC - 0.01026249 - 0.00009 - 0.00000013 - 0.00000014 + 0.00090088 = 0.01107310
 
-      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01107338 * 1e8, "T8: ");
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01107310 * 1e8, "T8: ");
 
       // Assert Fee distribution
       // According from T7
@@ -700,7 +718,10 @@ contract TC02 is BaseIntTest_WithActions {
       //          - pay for dev (15%)       = 0.00000001 btc
       //          - pay for PLP (85%)       = 0.00000013 - 0.00000001
       //                                    = 0.00000012
-
+      //    Funding fee
+      //      BTC - 0.00000014 btc
+      //          - pay for funding fee (100%) = 0.00000014 btc
+      //
       // PLP paid list
       //    BTC
       //      Funding fee   - 0.00000014 btc
@@ -709,12 +730,19 @@ contract TC02 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  0.00309563 + 0.0000765              = 0.00317213 btc
       //        - dev fee       0.00001687 + 0.0000135 + 0.00000001 = 0.00003038 btc
+      //        - funding fee   0.00000014 btc
       // and PLP's liquidity
-      //    BTC - 0.99662501 + 0.00000012 - 0.00000014 - 0.00090088 = 0.99572411 btc
+      //    BTC - 0.99662501 + 0.00000012 - 0.00090088 = 0.99572425 btc
 
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.00317213 * 1e8, _devFee: 0.00003038 * 1e8, _str: "T8: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: 0.00317213 * 1e8,
+        _devFee: 0.00003038 * 1e8,
+        _fundingFee: 0.00000014 * 1e8,
+        _str: "T8: "
+      });
 
-      assertPLPLiquidity(address(wbtc), 0.99572411 * 1e8, "T8: ");
+      assertPLPLiquidity(address(wbtc), 0.99572425 * 1e8, "T8: ");
 
       // Assert Market
       assertMarketLongPosition(jpyMarketIndex, 0, 0, 0, "T8: ");

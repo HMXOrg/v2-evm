@@ -34,6 +34,7 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
     ICrossMarginService newCrossMarginService = Deployer.deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
+      address(perpStorage),
       address(calculator)
     );
     assertEq(crossMarginHandler.crossMarginService(), address(crossMarginService));

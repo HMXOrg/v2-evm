@@ -94,7 +94,7 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (uint256 _collateralValueE30);
 
-  function getNextFundingRate(uint256 _marketIndex) external view returns (int256, int256, int256);
+  function getNextFundingRate(uint256 _marketIndex) external view returns (int256);
 
   function getDelta(
     uint256 _size,

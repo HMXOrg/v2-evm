@@ -34,27 +34,27 @@ contract TLCStakingHook is ITradeServiceHook, Owned {
   function onIncreasePosition(
     address _primaryAccount,
     uint256,
-    uint256 _marketIndex,
-    uint256 _sizeDelta
+    uint256,
+    uint256 _sizeDelta,
+    bytes32
   ) external onlyTradeService {
-    _mintAndDeposit(_primaryAccount, _marketIndex, _sizeDelta);
+    _mintTLC(_primaryAccount, _sizeDelta);
   }
 
   function onDecreasePosition(
     address _primaryAccount,
     uint256,
-    uint256 _marketIndex,
-    uint256 _sizeDelta
+    uint256,
+    uint256 _sizeDelta,
+    bytes32
   ) external onlyTradeService {
-    _mintAndDeposit(_primaryAccount, _marketIndex, _sizeDelta);
+    _mintTLC(_primaryAccount, _sizeDelta);
   }
 
-  function _mintAndDeposit(address _primaryAccount, uint256 _marketIndex, uint256 _sizeDelta) internal {
+  function _mintTLC(address _primaryAccount, uint256 _sizeDelta) internal {
     // Calculate mint amount which is equal to sizeDelta but convert decimal from 1e30 to 1e18
     // This is to make the TLC token composable as ERC20 with regular 18 decimals
     uint256 _mintAmount = _sizeDelta / 1e12;
-    TraderLoyaltyCredit(tlc).mint(address(this), _mintAmount);
-    TraderLoyaltyCredit(tlc).approve(tlcStaking, _mintAmount);
-    ITradingStaking(tlcStaking).deposit(_primaryAccount, _marketIndex, _mintAmount);
+    TraderLoyaltyCredit(tlc).mint(_primaryAccount, _mintAmount);
   }
 }

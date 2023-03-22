@@ -64,7 +64,7 @@ contract TradeService_TradingFee is TradeService_Base {
         assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
 
         // Ignore Borrowing, Funding, and Dev Fees
-        assertEq(vaultStorage.fundingFee(address(weth)), 0);
+        assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
         assertEq(vaultStorage.devFees(address(weth)), 0);
       }
     }
@@ -83,7 +83,7 @@ contract TradeService_TradingFee is TradeService_Base {
         assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
 
         // Ignore Borrowing, Funding, and Dev Fees
-        assertEq(vaultStorage.fundingFee(address(weth)), 0);
+        assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
         assertEq(vaultStorage.devFees(address(weth)), 0);
       }
     }
@@ -128,7 +128,7 @@ contract TradeService_TradingFee is TradeService_Base {
         assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), (100_000 - 45) * 1e6);
 
         // Ignore Borrowing, Funding, and Dev Fees
-        assertEq(vaultStorage.fundingFee(address(weth)), 0);
+        assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
         assertEq(vaultStorage.devFees(address(weth)), 0);
       }
     }
@@ -160,7 +160,7 @@ contract TradeService_TradingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 99_900 * 1e6);
 
       // Ignore Borrowing, Funding, and Dev Fees
-      assertEq(vaultStorage.fundingFee(address(weth)), 0);
+      assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
       assertEq(vaultStorage.devFees(address(weth)), 0);
     }
 
@@ -173,7 +173,7 @@ contract TradeService_TradingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 99850 * 1e6);
 
       // Ignore Borrowing, Funding, and Dev Fees
-      assertEq(vaultStorage.fundingFee(address(weth)), 0);
+      assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
       assertEq(vaultStorage.devFees(address(usdt)), 0);
     }
 
@@ -187,7 +187,7 @@ contract TradeService_TradingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 99800 * 1e6);
 
       // Ignore Borrowing, Funding, and Dev Fees
-      assertEq(vaultStorage.fundingFee(address(weth)), 0);
+      assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
       assertEq(vaultStorage.devFees(address(usdt)), 0);
     }
   }

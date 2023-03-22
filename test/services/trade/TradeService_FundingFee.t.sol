@@ -85,7 +85,7 @@ contract TradeService_FundingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 1_000 * 1e6);
 
       assertEq(vaultStorage.devFees(address(weth)), 0);
-      assertEq(vaultStorage.fundingFee(address(weth)), 10 * 1e18); // Initial funding fee WETH = 10 WETH
+      assertEq(vaultStorage.fundingFeeReserve(address(weth)), 10 * 1e18); // Initial funding fee WETH = 10 WETH
     }
 
     vm.warp(block.timestamp + 1);
@@ -104,7 +104,7 @@ contract TradeService_FundingFee is TradeService_Base {
         assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 916666666666666875, "Weth balance");
 
         // new fundingFee = old fundingFee + (fee collect from ALICE - dev Fee) = 10 + ( 0.08383958333333312 - 0) = 10.0838395833 WETH
-        assertEq(vaultStorage.fundingFee(address(weth)), (10 + 0.083333333333333125) * 1e18);
+        assertEq(vaultStorage.fundingFeeReserve(address(weth)), (10 + 0.083333333333333125) * 1e18);
       }
     }
   }
@@ -149,7 +149,7 @@ contract TradeService_FundingFee is TradeService_Base {
       assertEq(_globalMarket.accumFundingLong, -33333333333333000000);
       assertEq(_globalMarket.accumFundingShort, 0);
 
-      assertEq(vaultStorage.fundingFee(address(usdt)), 0);
+      assertEq(vaultStorage.fundingFeeReserve(address(usdt)), 0);
     }
 
     // Simulate BOB close Short position, BOB should receive funding fee
@@ -163,7 +163,7 @@ contract TradeService_FundingFee is TradeService_Base {
       assertEq(_globalMarket.currentFundingRate, -106666666666666); // LONG PAY SHORT
 
       // After BOB close short position, BOB must get funding fee
-      assertEq(vaultStorage.fundingFee(address(usdt)), 0);
+      assertEq(vaultStorage.fundingFeeReserve(address(usdt)), 0);
       assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 5333333333333333); // 0.005333333333333333 ETH
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 500 * 1e6);
     }

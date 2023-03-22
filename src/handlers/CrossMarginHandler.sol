@@ -209,7 +209,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   //       uint8 tokenDecimal = _configStorage.getAssetTokenDecimal(collateralTokens[i]);
   //       (uint256 tokenPrice, ) = _oracle.getLatestPrice(tokenAssetId, false);
 
-  //       uint256 fundingFeeAmount = _vaultStorage.fundingFee(collateralTokens[i]);
+  //       uint256 fundingFeeAmount = _vaultStorage.fundingFeeReserve(collateralTokens[i]);
   //       if (fundingFeeAmount > 0) {
   //         fundingFeeValue += (fundingFeeAmount * tokenPrice) / (10 ** tokenDecimal);
   //       }
@@ -233,7 +233,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   //       uint8 tokenDecimal = _configStorage.getAssetTokenDecimal(collateralTokens[i]);
   //       (uint256 tokenPrice, ) = _oracle.getLatestPrice(tokenAssetId, false);
 
-  //       uint256 fundingFeeAmount = _vaultStorage.fundingFee(collateralTokens[i]);
+  //       uint256 fundingFeeAmount = _vaultStorage.fundingFeeReserve(collateralTokens[i]);
   //       uint256 fundingFeeValue = (fundingFeeAmount * tokenPrice) / (10 ** tokenDecimal);
 
   //       //@todo - still implementing

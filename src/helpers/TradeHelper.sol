@@ -230,14 +230,16 @@ contract TradeHelper is ITradeHelper {
         }
       }
 
-      // This could occur when funding fee does not have enough liquidity to pay funding fee to trader
-      // If fee cannot be covered, borrow from PLP and book as PLP Debts
-      for (uint256 i; i < _vars.collateralTokensLength; ) {
-        bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
-        (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
-        _settleFundingFeeWhenBorrowingFromPLP(_vars, _vars.collateralTokens[i]);
-        unchecked {
-          ++i;
+      if (_vars.absFundingFeeToBePaid > 0) {
+        // This could occur when funding fee does not have enough liquidity to pay funding fee to trader
+        // If fee cannot be covered, borrow from PLP and book as PLP Debts
+        for (uint256 i; i < _vars.collateralTokensLength; ) {
+          bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
+          (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
+          _settleFundingFeeWhenBorrowingFromPLP(_vars, _vars.collateralTokens[i]);
+          unchecked {
+            ++i;
+          }
         }
       }
 
@@ -257,7 +259,18 @@ contract TradeHelper is ITradeHelper {
 
       // Funding fee
       if (_vars.absFundingFeeToBePaid > 0) {
-        _settleFundingFeeWhenTraderMustPay(_vars, _vars.collateralTokens[i]);
+        // If there's borrowing debts from PLP, then trader must repays to PLP first
+        _vars.plpLiquidityDebtUSDE30 = _vars.vaultStorage.plpLiquidityDebtUSDE30();
+        if (_vars.plpLiquidityDebtUSDE30 > 0) {
+          _repayBorrowDebtFromTraderToPlp(_vars, _vars.collateralTokens[i]);
+        }
+
+        // If no borrowing debts from PLP
+        // or
+        // If trader still must pays for funding fee reserve after repay borrowing debts
+        if (_vars.absFundingFeeToBePaid > 0) {
+          _settleFundingFeeWhenTraderMustPay(_vars, _vars.collateralTokens[i]);
+        }
 
         // still cannot cover all, move to next iteration
         if (_vars.absFundingFeeToBePaid > 0) {
@@ -315,66 +328,16 @@ contract TradeHelper is ITradeHelper {
     SettleAllFeesVars memory _vars,
     address _collateralToken
   ) internal returns (uint256) {
-    PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
+    // PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
 
     // When trader is the payer
     uint256 _traderBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _collateralToken);
-    _vars.plpLiquidityDebtUSDE30 = _vars.vaultStorage.plpLiquidityDebtUSDE30();
 
     // We are going to deduct trader balance,
     // so we need to check whether trader has this collateral token or not.
     // If not skip to next token
     if (_traderBalance > 0) {
-      uint256 _repayAmount;
-      uint256 _repayValue;
-
-      // If there's borrowing debts from PLP, then trader must repays to PLP first
-      if (_vars.plpLiquidityDebtUSDE30 > 0) {
-        _repayBorrowDebtFromTraderToPlp(_vars, _collateralToken, _traderBalance);
-      }
-
-      // If no borrowing debts from PLP
-      // or
-      // If trader still must pays for funding fee after repay borrowing debts
-      if (_vars.absFundingFeeToBePaid > 0) {
-        (_repayAmount, _repayValue) = _getRepayAmount(
-          _vars.configStorage,
-          _traderBalance,
-          _vars.absFundingFeeToBePaid,
-          _collateralToken,
-          _vars.tokenPrice
-        );
-
-        // book the balances
-        _vars.vaultStorage.payFundingFeeFromTraderToFundingFee(_vars.subAccount, _collateralToken, _repayAmount);
-
-        // Update accum funding fee on Global storage for surplus calculation
-        if (_vars.isLong) {
-          _globalMarket.accumFundingLong += int(_repayValue);
-        } else {
-          _globalMarket.accumFundingShort += int(_repayValue);
-        }
-        _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
-
-        // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
-        _vars.absFundingFeeToBePaid -= _repayValue;
-      }
-    }
-  }
-
-  function _repayBorrowDebtFromTraderToPlp(
-    SettleAllFeesVars memory _vars,
-    address _collateralToken,
-    uint256 _traderBalance
-  ) internal {
-    PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
-
-    uint256 _repayAmount;
-    uint256 _repayValue;
-
-    // If there's borrowing debts from PLP, then trader must repays to PLP first
-    if (_vars.absFundingFeeToBePaid < _vars.plpLiquidityDebtUSDE30) {
-      (_repayAmount, _repayValue) = _getRepayAmount(
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _vars.configStorage,
         _traderBalance,
         _vars.absFundingFeeToBePaid,
@@ -382,19 +345,44 @@ contract TradeHelper is ITradeHelper {
         _vars.tokenPrice
       );
 
-      // Trader repay with all current collateral amounts to PLP
-      _vars.vaultStorage.repayFundingFeeDebtFromTraderToPlp(
-        _vars.subAccount,
-        _collateralToken,
-        _repayAmount,
-        _repayValue
-      );
-    } else {
+      // book the balances
+      _vars.vaultStorage.payFundingFeeFromTraderToFundingFeeReserve(_vars.subAccount, _collateralToken, _repayAmount);
+
+      // @todo - split to withdraw surplus PR
+      // // Update accum funding fee on Global storage for surplus calculation
+      // if (_vars.isLong) {
+      //   _globalMarket.accumFundingLong += int(_repayValue);
+      // } else {
+      //   _globalMarket.accumFundingShort += int(_repayValue);
+      // }
+      // _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
+
+      // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+      _vars.absFundingFeeToBePaid -= _repayValue;
+    }
+  }
+
+  function _repayBorrowDebtFromTraderToPlp(SettleAllFeesVars memory _vars, address _collateralToken) internal {
+    // PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
+
+    // When trader is the payer
+    uint256 _traderBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _collateralToken);
+
+    // We are going to deduct trader balance,
+    // so we need to check whether trader has this collateral token or not.
+    // If not skip to next token
+    if (_traderBalance > 0) {
+      // If absFundingFeeToBePaid is less than borrowing debts from PLP, Then Trader repay with all current collateral amounts to PLP
+      // Else Trader repay with just enough current collateral amounts to PLP
+      uint256 repayFundingFeeValue = _vars.absFundingFeeToBePaid < _vars.plpLiquidityDebtUSDE30
+        ? _vars.absFundingFeeToBePaid
+        : _vars.plpLiquidityDebtUSDE30;
+
       // Trader repay with just enough current collateral amounts to PLP
-      (_repayAmount, _repayValue) = _getRepayAmount(
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _vars.configStorage,
         _traderBalance,
-        _vars.plpLiquidityDebtUSDE30,
+        repayFundingFeeValue,
         _collateralToken,
         _vars.tokenPrice
       );
@@ -404,27 +392,28 @@ contract TradeHelper is ITradeHelper {
         _repayAmount,
         _repayValue
       );
-    }
 
-    // Update accum funding fee on Global storage for surplus calculation
-    if (_vars.isLong) {
-      _globalMarket.accumFundingLong += int(_repayValue);
-    } else {
-      _globalMarket.accumFundingShort += int(_repayValue);
-    }
-    _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
+      // @todo - split to withdraw surplus PR
+      // // Update accum funding fee on Global storage for surplus calculation
+      // if (_vars.isLong) {
+      //   _globalMarket.accumFundingLong += int(_repayValue);
+      // } else {
+      //   _globalMarket.accumFundingShort += int(_repayValue);
+      // }
+      // _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
 
-    _vars.absFundingFeeToBePaid -= _repayValue;
+      _vars.absFundingFeeToBePaid -= _repayValue;
+    }
   }
 
   function _settleFundingFeeWhenTraderMustReceive(
     SettleAllFeesVars memory _vars,
     address _collateralToken
   ) internal returns (uint256) {
-    PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
+    // PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
 
     // When funding fee is the payer
-    uint256 _fundingFeeBalance = _vars.vaultStorage.fundingFee(_collateralToken);
+    uint256 _fundingFeeBalance = _vars.vaultStorage.fundingFeeReserve(_collateralToken);
 
     // We are going to deduct funding fee balance,
     // so we need to check whether funding fee has this collateral token or not.
@@ -439,15 +428,16 @@ contract TradeHelper is ITradeHelper {
       );
 
       // book the balances
-      _vars.vaultStorage.payFundingFeeFromFundingFeeToTrader(_vars.subAccount, _collateralToken, _repayAmount);
+      _vars.vaultStorage.payFundingFeeFromFundingFeeReserveToTrader(_vars.subAccount, _collateralToken, _repayAmount);
 
-      // Update accum funding fee on Global storage for surplus calculation
-      if (_vars.isLong) {
-        _globalMarket.accumFundingLong -= int(_repayValue);
-      } else {
-        _globalMarket.accumFundingShort -= int(_repayValue);
-      }
-      _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
+      // @todo - split to withdraw surplus PR
+      // // Update accum funding fee on Global storage for surplus calculation
+      // if (_vars.isLong) {
+      //   _globalMarket.accumFundingLong -= int(_repayValue);
+      // } else {
+      //   _globalMarket.accumFundingShort -= int(_repayValue);
+      // }
+      // _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -455,7 +445,7 @@ contract TradeHelper is ITradeHelper {
   }
 
   function _settleFundingFeeWhenBorrowingFromPLP(SettleAllFeesVars memory _vars, address _collateralToken) internal {
-    PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
+    // PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.marketIndex);
 
     // When plp liquidity is the payer
     uint256 _plpBalance = _vars.vaultStorage.plpLiquidity(_collateralToken);
@@ -475,13 +465,14 @@ contract TradeHelper is ITradeHelper {
       // book the balances
       _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _collateralToken, _repayAmount, _repayValue);
 
-      // Update accum funding fee on Global storage for surplus calculation
-      if (_vars.isLong) {
-        _globalMarket.accumFundingLong -= int(_repayValue);
-      } else {
-        _globalMarket.accumFundingShort -= int(_repayValue);
-      }
-      _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
+      // @todo - split to withdraw surplus PR
+      // // Update accum funding fee on Global storage for surplus calculation
+      // if (_vars.isLong) {
+      //   _globalMarket.accumFundingLong -= int(_repayValue);
+      // } else {
+      //   _globalMarket.accumFundingShort -= int(_repayValue);
+      // }
+      // _vars.perpStorage.updateGlobalMarket(_vars.marketIndex, _globalMarket);
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;

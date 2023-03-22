@@ -37,7 +37,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   mapping(address => uint256) public protocolFees; // protocol fee in token unit
 
   uint256 public plpLiquidityDebtUSDE30; // USD dept accounting when fundingFee is not enough to repay to trader
-  mapping(address => uint256) public fundingFee; // sum of realized funding fee amount
+  mapping(address => uint256) public fundingFeeReserve; // sum of realized funding fee amount
 
   mapping(address => uint256) public devFees;
 
@@ -109,11 +109,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   }
 
   function addFundingFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
-    fundingFee[_token] += _amount;
+    fundingFeeReserve[_token] += _amount;
   }
 
   function removeFundingFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
-    fundingFee[_token] -= _amount;
+    fundingFeeReserve[_token] -= _amount;
   }
 
   function addPlpLiquidityDebtUSDE30(uint256 _value) external onlyWhitelistedExecutor {
@@ -177,11 +177,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   /// @param _subAccount - sub account
   /// @param _token - collateral token to increase
   /// @param _amount - amount to increase
-  function increaseTraderBalance(
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external onlyWhitelistedExecutor {
+  function increaseTraderBalance(address _subAccount, address _token, uint256 _amount) public onlyWhitelistedExecutor {
     _increaseTraderBalance(_subAccount, _token, _amount);
   }
 
@@ -189,11 +185,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   /// @param _subAccount - sub account
   /// @param _token - collateral token to increase
   /// @param _amount - amount to increase
-  function decreaseTraderBalance(
-    address _subAccount,
-    address _token,
-    uint256 _amount
-  ) external onlyWhitelistedExecutor {
+  function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) public onlyWhitelistedExecutor {
     _deductTraderBalance(_subAccount, _token, _amount);
   }
 
@@ -297,28 +289,28 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     }
   }
 
-  function payFundingFeeFromTraderToFundingFee(
+  function payFundingFeeFromTraderToFundingFeeReserve(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount
   ) external onlyWhitelistedExecutor {
     // Deduct amount from trader balance
-    traderBalances[_trader][_token] -= _fundingFeeAmount;
+    decreaseTraderBalance(_trader, _token, _fundingFeeAmount);
 
     // Increase the amount to fundingFee
-    fundingFee[_token] += _fundingFeeAmount;
+    fundingFeeReserve[_token] += _fundingFeeAmount;
   }
 
-  function payFundingFeeFromFundingFeeToTrader(
+  function payFundingFeeFromFundingFeeReserveToTrader(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount
   ) external onlyWhitelistedExecutor {
     // Deduct amount from fundingFee
-    fundingFee[_token] -= _fundingFeeAmount;
+    fundingFeeReserve[_token] -= _fundingFeeAmount;
 
     // Increase the amount to trader
-    traderBalances[_trader][_token] += _fundingFeeAmount;
+    increaseTraderBalance(_trader, _token, _fundingFeeAmount);
   }
 
   function repayFundingFeeDebtFromTraderToPlp(
@@ -328,7 +320,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     uint256 _fundingFeeValue
   ) external {
     // Deduct amount from trader balance
-    traderBalances[_trader][_token] -= _fundingFeeAmount;
+    decreaseTraderBalance(_trader, _token, _fundingFeeAmount);
 
     // Add token amounts that PLP received
     plpLiquidity[_token] += _fundingFeeAmount;
@@ -347,7 +339,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     plpLiquidity[_token] -= _fundingFeeAmount;
 
     // Increase the amount to trader
-    traderBalances[_trader][_token] += _fundingFeeAmount;
+    increaseTraderBalance(_trader, _token, _fundingFeeAmount);
 
     // Add debt value on PLP
     plpLiquidityDebtUSDE30 += _fundingFeeValue;

@@ -644,8 +644,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.perpStorage.updateGlobalState(_globalState);
         _vars.perpStorage.updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
 
+        if (_newAbsPositionSizeE30 != 0) {
         // update position info
-        {
           _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
           _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
           _vars.position.positionSizeE30 = _vars.isLongPosition
@@ -654,16 +654,13 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _vars.position.reserveValueE30 =
             ((_newAbsPositionSizeE30 * _marketConfig.initialMarginFractionBPS * _marketConfig.maxProfitRateBPS) / BPS) /
             BPS;
-        }
-        {
-          // @todo - is close position then we should delete positions[x]
-          bool isClosePosition = _newAbsPositionSizeE30 == 0;
-          _vars.position.avgEntryPriceE30 = isClosePosition ? 0 : _vars.avgEntryPriceE30;
-        }
-
+          _vars.position.avgEntryPriceE30 = _vars.avgEntryPriceE30;
         _vars.position.openInterest = _vars.position.openInterest - _openInterestDelta;
         _vars.position.realizedPnl += _realizedPnl;
         _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
+        } else {
+          _vars.perpStorage.removePositionFromSubAccount(_vars.subAccount, _vars.positionId);
+        }
       }
     }
     // =======================================

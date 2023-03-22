@@ -3,8 +3,9 @@
 pragma solidity 0.8.18;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
-contract TraderLoyaltyCredit {
+contract TraderLoyaltyCredit is Owned {
   /**
    * @dev Emitted when `value` tokens are moved from one account (`from`) to
    * another (`to`).
@@ -18,6 +19,9 @@ contract TraderLoyaltyCredit {
    * a call to {approve}. `value` is the new allowance.
    */
   event Approval(address indexed owner, address indexed spender, uint256 value);
+  event FeedReward(address indexed feeder, uint256 indexed epochTimestamp, uint256 rewardAmount);
+  event Claim(address indexed user, uint256 indexed epochTimestamp, uint256 userShare, uint256 rewardAmount);
+  event SetMinter(address indexed minter, bool mintable);
 
   mapping(uint256 => mapping(address => uint256)) private _balances;
 
@@ -367,12 +371,15 @@ contract TraderLoyaltyCredit {
 
     // Transfer in reward token
     IERC20(rewardToken).transferFrom(msg.sender, address(this), amount);
+
+    emit FeedReward(msg.sender, epochTimestamp, amount);
   }
 
   function claimReward(uint256 startEpochTimestamp, uint256 noOfEpochs, address userAddress) external {
     uint256 userShare;
     uint256 accumRewardPerShare;
-    uint256 pendingReward;
+    uint256 pendingRewardAmount;
+    uint256 totalRewardAmount;
     uint256 epochTimestamp = startEpochTimestamp;
     for (uint256 i = 0; i < noOfEpochs; ) {
       // If the epoch is in the future, then break the loop
@@ -387,9 +394,11 @@ contract TraderLoyaltyCredit {
       // If accumRewardPerShare is zero, then the reward might not be distributed for that epoch yet. We will skip without burning user share.
       if (userShare > 0 && accumRewardPerShare > 0) {
         // Calculate pending reward
-        pendingReward += (userShare * accumRewardPerShare) / 1e20;
+        pendingRewardAmount = (userShare * accumRewardPerShare) / 1e20;
+        totalRewardAmount += pendingRewardAmount;
         // Burn the user share
         _burn(epochTimestamp, userAddress, userShare);
+        emit Claim(userAddress, epochTimestamp, userShare, pendingRewardAmount);
       }
 
       // Increment epoch timestamp
@@ -401,6 +410,12 @@ contract TraderLoyaltyCredit {
     }
 
     // Transfer reward token to the user
-    IERC20(rewardToken).transfer(userAddress, pendingReward);
+    IERC20(rewardToken).transfer(userAddress, totalRewardAmount);
+  }
+
+  function setMinter(address _minter, bool _mintable) external onlyOwner {
+    minter[_minter] = _mintable;
+
+    emit SetMinter(_minter, _mintable);
   }
 }

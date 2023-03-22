@@ -38,6 +38,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     address token,
     uint256 amount
   );
+  event LogWithdrawFundingFeeSurplus(uint256 surplusValue);
 
   /**
    * STATES
@@ -166,104 +167,113 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     emit LogWithdrawCollateral(msg.sender, _subAccountId, _token, _amount);
   }
 
-  // /// @notice Check funding fee surplus for transfer to PLP
-  // function withdrawFundingFeeSurplus() external nonReentrant onlyOwner {
-  //   ConfigStorage _configStorage = ConfigStorage(CrossMarginService(crossMarginService).configStorage());
-  //   PerpStorage _perpStorage = PerpStorage(CrossMarginService(crossMarginService).perpStorage());
-  //   VaultStorage _vaultStorage = VaultStorage(CrossMarginService(crossMarginService).vaultStorage());
-  //   OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
+  /// @notice Check funding fee surplus and transfer to PLP
+  /// @dev Check if value on funding fee reserve have exceed balance for paying to traders
+  ///      - If yes means exceed value are the surplus for platform and can be booked to PLP
+  function withdrawFundingFeeSurplus() external nonReentrant onlyOwner {
+    ConfigStorage _configStorage = ConfigStorage(CrossMarginService(crossMarginService).configStorage());
+    PerpStorage _perpStorage = PerpStorage(CrossMarginService(crossMarginService).perpStorage());
+    VaultStorage _vaultStorage = VaultStorage(CrossMarginService(crossMarginService).vaultStorage());
+    OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
 
-  //   // Loop through all markets and sum accum of funding fee LONG & SHORT
-  //   int256 totalFundingFeeLong = 0;
-  //   int256 totalFundingFeeShort = 0;
-  //   {
-  //     uint256 _len = _configStorage.getMarketConfigsLength();
-  //     for (uint256 i = 0; i < _len; ) {
-  //       PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(i);
+    // Get funding Fee LONG & SHORT to find positive values
+    // positive value mean how much protocol book funding fee value that will be paid to trader
+    PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
 
-  //       if (_globalMarket.longOpenInterest > 0 || _globalMarket.shortOpenInterest > 0) {
-  //         totalFundingFeeLong += _globalMarket.accumFundingLong;
-  //         totalFundingFeeShort += _globalMarket.accumFundingShort;
-  //       }
+    if (_globalState.accumFundingLong < 0 && _globalState.accumFundingShort < 0)
+      revert ICrossMarginHandler_NoFundingFeeSurplus();
 
-  //       unchecked {
-  //         i++;
-  //       }
-  //     }
-  //   }
+    // Focus on positive funding accrued side
+    uint256 fundingFeeBook = _globalState.accumFundingLong > _globalState.accumFundingShort
+      ? uint(_globalState.accumFundingLong)
+      : uint(_globalState.accumFundingShort);
 
-  //   // Focus on positive funding accrued side
-  //   uint256 totalFundingFee = totalFundingFeeLong > totalFundingFeeShort
-  //     ? uint(totalFundingFeeLong)
-  //     : uint(totalFundingFeeShort);
+    // Calculate value of current Funding fee reserve
+    uint256 totalFundingFeeReserveValue;
+    address[] memory collateralTokens = _configStorage.getCollateralTokens();
+    uint256 collateralTokensLength = collateralTokens.length;
+    {
+      for (uint256 i; i < collateralTokensLength; ) {
+        bytes32 tokenAssetId = _configStorage.tokenAssetIds(collateralTokens[i]);
+        uint8 tokenDecimal = _configStorage.getAssetTokenDecimal(collateralTokens[i]);
+        (uint256 tokenPrice, ) = _oracle.getLatestPrice(tokenAssetId, false);
 
-  //   // Calculate value of current FundingFee amounts
-  //   uint256 fundingFeeValue;
-  //   address[] memory collateralTokens = _configStorage.getCollateralTokens();
-  //   uint256 collateralTokensLength = collateralTokens.length;
+        uint256 fundingFeeAmount = _vaultStorage.fundingFeeReserve(collateralTokens[i]);
+        if (fundingFeeAmount > 0) {
+          totalFundingFeeReserveValue += (fundingFeeAmount * tokenPrice) / (10 ** tokenDecimal);
+        }
 
-  //   {
-  //     for (uint256 i; i < collateralTokensLength; ) {
-  //       bytes32 tokenAssetId = _configStorage.tokenAssetIds(collateralTokens[i]);
-  //       uint8 tokenDecimal = _configStorage.getAssetTokenDecimal(collateralTokens[i]);
-  //       (uint256 tokenPrice, ) = _oracle.getLatestPrice(tokenAssetId, false);
+        unchecked {
+          ++i;
+        }
+      }
+    }
 
-  //       uint256 fundingFeeAmount = _vaultStorage.fundingFeeReserve(collateralTokens[i]);
-  //       if (fundingFeeAmount > 0) {
-  //         fundingFeeValue += (fundingFeeAmount * tokenPrice) / (10 ** tokenDecimal);
-  //       }
+    // If totalFundingFeeReserveValue > fundingFeeBook  means protocol has exceed balance of fee reserved for paying to traders
+    // Funding fee surplus = totalFundingFeeReserveValue - fundingFeeBook
+    if (fundingFeeBook < totalFundingFeeReserveValue) revert ICrossMarginHandler_NoFundingFeeSurplus();
+    uint256 fundingFeeSurplusValue = totalFundingFeeReserveValue - fundingFeeBook;
 
-  //       unchecked {
-  //         ++i;
-  //       }
-  //     }
-  //   }
+    // Looping through fundingFee to transfer surplus amount to PLP
+    {
+      for (uint256 i; i < collateralTokensLength; ) {
+        uint256 _fundingFeeAmount = _vaultStorage.fundingFeeReserve(collateralTokens[i]);
 
-  //   // If totalFundingFee > fundingFeeValue means protocol has exceed balance of fee reserved for paying to traders
-  //   // Funding fee surplus = totalFundingFee - fundingFeeValue
-  //   if (totalFundingFee < fundingFeeValue) revert ICrossMarginHandler_NoFundingFeeSurplus();
-  //   uint256 fundingFeeSurplusValue = totalFundingFee - fundingFeeValue;
-  //   uint256 fundingFeeSurplusAmount;
+        if (_fundingFeeAmount > 0) {
+          (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+            _configStorage,
+            _oracle,
+            _fundingFeeAmount,
+            fundingFeeSurplusValue,
+            collateralTokens[i]
+          );
 
-  //   // Looping through fundingFee to transfer surplus amount to PLP
-  //   {
-  //     for (uint256 i; i < collateralTokensLength; ) {
-  //       bytes32 tokenAssetId = _configStorage.tokenAssetIds(collateralTokens[i]);
-  //       uint8 tokenDecimal = _configStorage.getAssetTokenDecimal(collateralTokens[i]);
-  //       (uint256 tokenPrice, ) = _oracle.getLatestPrice(tokenAssetId, false);
+          _vaultStorage.withdrawSurplusFromFundingFeeReserveToPLP(collateralTokens[i], _repayAmount);
+          fundingFeeSurplusValue -= _repayValue;
+        }
 
-  //       uint256 fundingFeeAmount = _vaultStorage.fundingFeeReserve(collateralTokens[i]);
-  //       uint256 fundingFeeValue = (fundingFeeAmount * tokenPrice) / (10 ** tokenDecimal);
+        if (fundingFeeSurplusValue == 0) break;
 
-  //       //@todo - still implementing
-  //       if (fundingFeeValue > fundingFeeSurplusValue) {
-  //         fundingFeeSurplusAmount = (fundingFeeSurplusValue * RATE_PRECISION) / tokenPrice;
-  //       }
+        unchecked {
+          ++i;
+        }
+      }
+    }
 
-  //       unchecked {
-  //         ++i;
-  //       }
-  //     }
-  //   }
-  // }
+    // If fee cannot be covered, revert.
+    if (fundingFeeSurplusValue > 0) revert ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
+
+    // Update Global state
+    if (_globalState.accumFundingLong > _globalState.accumFundingShort) {
+      _globalState.accumFundingLong -= int(fundingFeeSurplusValue);
+    } else {
+      _globalState.accumFundingShort -= int(fundingFeeSurplusValue);
+    }
+    _perpStorage.updateGlobalState(_globalState);
+
+    emit LogWithdrawFundingFeeSurplus(fundingFeeSurplusValue);
+  }
 
   function _getRepayAmount(
     ConfigStorage _configStorage,
-    uint256 _traderBalance,
-    uint256 _feeValueE30,
-    address _token,
-    uint256 _tokenPrice
+    OracleMiddleware _oracle,
+    uint256 _reserveBalance,
+    uint256 _feeSurplusValueE30,
+    address _token
   ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
-    uint8 _tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
-    uint256 _feeAmount = (_feeValueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
+    bytes32 tokenAssetId = _configStorage.tokenAssetIds(_token);
+    (uint256 tokenPrice, ) = _oracle.getLatestPrice(tokenAssetId, false);
 
-    if (_traderBalance > _feeAmount) {
-      // _traderBalance can cover the rest of the fee
-      return (_feeAmount, _feeValueE30);
+    uint8 tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
+    uint256 feeSurplusAmount = (_feeSurplusValueE30 * (10 ** tokenDecimal)) / tokenPrice;
+
+    if (_reserveBalance > feeSurplusAmount) {
+      // _reserveBalance can cover the rest of the surplus fee
+      return (feeSurplusAmount, _feeSurplusValueE30);
     } else {
-      // _traderBalance cannot cover the rest of the fee, just take the amount the trader have
-      uint256 _traderBalanceValue = (_traderBalance * _tokenPrice) / (10 ** _tokenDecimal);
-      return (_traderBalance, _traderBalanceValue);
+      // _reserveBalance cannot cover the rest of the surplus fee, just take the amount the fee reserve have
+      uint256 _reserveBalanceValue = (_reserveBalance * tokenPrice) / (10 ** tokenDecimal);
+      return (_reserveBalance, _reserveBalanceValue);
     }
   }
 

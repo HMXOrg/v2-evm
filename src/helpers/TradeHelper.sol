@@ -383,7 +383,7 @@ contract TradeHelper is ITradeHelper {
       );
 
       // Update accum funding fee on Global storage for surplus calculation
-      // _vars.isLong? _updateAccumFundingLong(int(_repayValue)): _updateAccumFundingShort(int(_repayValue));
+      _vars.isLong ? _updateAccumFundingLong(int(_repayValue)) : _updateAccumFundingShort(int(_repayValue));
 
       _vars.absFundingFeeToBePaid -= _repayValue;
     }
@@ -411,9 +411,8 @@ contract TradeHelper is ITradeHelper {
       // book the balances
       _vars.vaultStorage.payFundingFeeFromFundingFeeReserveToTrader(_vars.subAccount, _collateralToken, _repayAmount);
 
-      // // Update accum funding fee on Global storage for surplus calculation
-      // (int256 fundingLong, int256 fundingShort) = _vars.isLong ? (-int(_repayValue), 0) : (0, -int(_repayValue));
-      // _updateAccumFunding(fundingLong, fundingShort);
+      // Update accum funding fee on Global storage for surplus calculation
+      _vars.isLong ? _updateAccumFundingLong(-int(_repayValue)) : _updateAccumFundingShort(-int(_repayValue));
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -439,9 +438,8 @@ contract TradeHelper is ITradeHelper {
       // book the balances
       _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _collateralToken, _repayAmount, _repayValue);
 
-      // // Update accum funding fee on Global storage for surplus calculation
-      // (int256 fundingLong, int256 fundingShort) = _vars.isLong ? (-int(_repayValue), 0) : (0, -int(_repayValue));
-      // _updateAccumFunding(fundingLong, fundingShort);
+      // Update accum funding fee on Global storage for surplus calculation
+      _vars.isLong ? _updateAccumFundingLong(-int(_repayValue)) : _updateAccumFundingShort(-int(_repayValue));
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;

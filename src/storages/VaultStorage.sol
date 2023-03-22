@@ -289,6 +289,17 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     }
   }
 
+  function withdrawSurplusFromFundingFeeReserveToPLP(
+    address _token,
+    uint256 _fundingFeeAmount
+  ) external onlyWhitelistedExecutor {
+    // Deduct amount from funding fee reserve
+    fundingFeeReserve[_token] -= _fundingFeeAmount;
+
+    // Increase the amount to PLP
+    plpLiquidity[_token] += _fundingFeeAmount;
+  }
+
   function payFundingFeeFromTraderToFundingFeeReserve(
     address _trader,
     address _token,

@@ -128,7 +128,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
       (uint256 _priceE30, , , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _vars.marketConfig.assetId,
         _isLong,
-        (int(_vars.globalMarket.longOpenInterest) - int(_vars.globalMarket.shortOpenInterest)),
+        (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
         _vars.marketConfig.fundingRate.maxSkewScaleUSD
       );

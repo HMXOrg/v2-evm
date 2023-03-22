@@ -226,6 +226,18 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     );
   }
 
+  function assertNumberOfPosition(address _subAccount, uint256 _numberOfPosition, string memory _str) internal {
+    assertEq(
+      perpStorage.getNumberOfSubAccountPosition(_subAccount),
+      _numberOfPosition,
+      string.concat(_str, "Number of position")
+    );
+  }
+
+  function assertNumberOfPosition(address _subAccount, uint256 _numberOfPosition) internal {
+    assertEq(perpStorage.getNumberOfSubAccountPosition(_subAccount), _numberOfPosition, "");
+  }
+
   function assertMarketFundingRate(
     uint256 _marketIndex,
     int256 _currentFundingRate,

@@ -202,8 +202,8 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   }
 
   function transfer(address _token, address _from, address _to, uint256 _amount) external onlyWhitelistedExecutor {
-    traderBalances[_from][_token] -= _amount;
-    traderBalances[_to][_token] += _amount;
+    _deductTraderBalance(_from, _token, _amount);
+    _increaseTraderBalance(_to, _token, _amount);
   }
 
   function payTradingFee(

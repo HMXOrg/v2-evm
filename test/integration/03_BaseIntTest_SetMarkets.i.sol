@@ -57,11 +57,7 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
   ) private returns (uint256 _index) {
     // default market config
     IConfigStorage.MarketConfig memory _newMarketConfig;
-    IConfigStorage.OpenInterest memory _newOpenInterestConfig;
     IConfigStorage.FundingRate memory _newFundingRateConfig;
-
-    _newOpenInterestConfig.longMaxOpenInterestUSDE30 = 10_000_000 * 1e30;
-    _newOpenInterestConfig.shortMaxOpenInterestUSDE30 = 10_000_000 * 1e30;
 
     _newFundingRateConfig.maxSkewScaleUSD = 300_000_000 * 1e30;
     _newFundingRateConfig.maxFundingRate = 0.0004 * 1e18; // 0.04%
@@ -76,7 +72,6 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     _newMarketConfig.assetClass = _assetClass;
     _newMarketConfig.allowIncreasePosition = true;
     _newMarketConfig.active = true;
-    _newMarketConfig.openInterest = _newOpenInterestConfig;
     _newMarketConfig.fundingRate = _newFundingRateConfig;
 
     return configStorage.addMarketConfig(_newMarketConfig);

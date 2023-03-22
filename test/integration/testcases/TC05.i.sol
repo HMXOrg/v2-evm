@@ -93,8 +93,6 @@
 
 //       // buy
 //       // IPerpStorage.GlobalMarket memory jpyMarket = perpStorage.getGlobalMarketByIndex(3);
-//       // console.log("longOpenInterest", jpyMarket.longOpenInterest);
-//       // console.log("shortOpenInterest", jpyMarket.shortOpenInterest);
 
 //       bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
 //       // console.log("equity", uint256(calculator.getEquity(ALICE, 0, 0)));
@@ -117,8 +115,7 @@
 //         size: 100_000 * 1e30,
 //         avgPrice: 0.008133333333333333333333333333 * 1e30,
 //         reserveValue: 900 * 1e30,
-//         lastIncreaseTimestamp: 5,
-//         openInterest: 12_500_000 * 1e3
+//         lastIncreaseTimestamp: 5
 //       });
 //       positionTester02.assertPosition(_positionId, _assetData);
 //     }
@@ -144,8 +141,6 @@
 //        *
 //        */
 //       // IPerpStorage.GlobalMarket memory jpyMarket = perpStorage.getGlobalMarketByIndex(3);
-//       // console.log("longOpenInterest", jpyMarket.longOpenInterest);
-//       // console.log("shortOpenInterest", jpyMarket.shortOpenInterest);
 //       // assertEq(calculator.getEquity(ALICE, 0, 0), 0);
 //       // (bool isProfit, uint256 delta) = calculator.getDelta(
 //       //   100_000 * 1e30,

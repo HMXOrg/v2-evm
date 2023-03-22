@@ -17,7 +17,6 @@ contract PositionTester is StdAssertions {
     // position info
     uint256 decreasedPositionSize;
     uint256 reserveValueDelta;
-    uint256 openInterestDelta;
     int256 realizedPnl;
     // average price
     uint256 newPositionAveragePrice;
@@ -67,10 +66,8 @@ contract PositionTester is StdAssertions {
   //   - size delta
   //   - reserve delta
   //   - average price
-  //   - open interest
   // - global market
   //   - long / short position size
-  //   - long / short open interest
   //   - long / short average price
   //   - [pending] funding rate
   // - global state
@@ -119,11 +116,7 @@ contract PositionTester is StdAssertions {
       _data.reserveValueDelta,
       "position reserve value"
     );
-    assertEq(
-      cachePosition.openInterest - _currentPosition.openInterest,
-      _data.openInterestDelta,
-      "position open interest"
-    );
+
     assertEq(_currentPosition.realizedPnl, _data.realizedPnl, "position realized pnl");
 
     // assert market global
@@ -139,12 +132,6 @@ contract PositionTester is StdAssertions {
         "market long position size"
       );
       assertEq(_currentMarketGlobal.longAvgPrice, _data.newLongGlobalAveragePrice, "global long average price");
-
-      assertEq(
-        cacheMarketGlobal.longOpenInterest - _currentMarketGlobal.longOpenInterest,
-        _data.openInterestDelta,
-        "market long open interest"
-      );
     } else {
       // check global SHORT position
       assertEq(
@@ -153,11 +140,6 @@ contract PositionTester is StdAssertions {
         "market short position size"
       );
       assertEq(_currentMarketGlobal.shortAvgPrice, _data.newShortGlobalAveragePrice, "global short average price");
-      assertEq(
-        cacheMarketGlobal.shortOpenInterest - _currentMarketGlobal.shortOpenInterest,
-        _data.openInterestDelta,
-        "market short open interest"
-      );
     }
 
     // todo: support on funding rate calculation story

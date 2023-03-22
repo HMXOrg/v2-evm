@@ -72,10 +72,6 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        openInterest: IConfigStorage.OpenInterest({
-          longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-          shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
-        }),
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
       })
     );
@@ -92,10 +88,6 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        openInterest: IConfigStorage.OpenInterest({
-          longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-          shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
-        }),
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
       })
     );
@@ -112,10 +104,6 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        openInterest: IConfigStorage.OpenInterest({
-          longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-          shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
-        }),
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
       })
     );
@@ -318,8 +306,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 0
+        realizedPnl: 0
       })
     );
 
@@ -474,8 +461,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 0
+        realizedPnl: 0
       })
     );
 
@@ -570,8 +556,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 0
+        realizedPnl: 0
       })
     );
 
@@ -682,8 +667,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 0
+        realizedPnl: 0
       })
     );
 
@@ -794,8 +778,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 0
+        realizedPnl: 0
       })
     );
 
@@ -900,8 +883,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 0
+        realizedPnl: 0
       })
     );
 
@@ -1006,8 +988,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 0
+        realizedPnl: 0
       })
     );
 
@@ -1112,8 +1093,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 0
+        realizedPnl: 0
       })
     );
 

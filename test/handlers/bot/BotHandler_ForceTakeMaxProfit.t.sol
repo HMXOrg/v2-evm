@@ -112,7 +112,6 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 1_000_000 * 1e18,
       // realizedPnl: 90_000 * 1e30,
       realizedPnl: 0,
       // average prices
@@ -169,7 +168,6 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 1_000_000 * 1e18,
       // realizedPnl: 90_000 * 1e30,
       realizedPnl: 0,
       // average prices

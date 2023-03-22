@@ -516,7 +516,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
       openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: -50_000 * 1e30,
+      // realizedPnl: -50_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30,
@@ -621,7 +622,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
       openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: 50_000 * 1e30,
+      // realizedPnl: 50_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0,
@@ -732,7 +734,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
       openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: 90_000 * 1e30,
+      // realizedPnl: 90_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 1.030330062444246208742194469222 * 1e30,
@@ -840,7 +843,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
       openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: 50_000 * 1e30,
+      // realizedPnl: 50_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0,
@@ -946,7 +950,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
       openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: -50_000 * 1e30,
+      // realizedPnl: -50_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30,

@@ -15,6 +15,7 @@ contract TC02 is BaseIntTest_WithActions {
     // mint native token
     vm.deal(BOB, 1 ether);
     vm.deal(ALICE, 1 ether);
+    vm.deal(FEEVER, 1 ether);
 
     // mint BTC
     wbtc.mint(ALICE, 100 * 1e8);
@@ -123,7 +124,7 @@ contract TC02 is BaseIntTest_WithActions {
       // WETH market MMF      = 0.05%
       // Inc / Dec Fee        = 0.1%
       // Position size        = 300 USD
-      // Open interest        = 300 USD / oracle price
+      // Open interest        = 300 USD / adaptive price
       //                      = 300 / 1500 = 0.2
       // Avg price            = 1500.00075 USD
       // IMR                  = 300 * IMF = 3 USD
@@ -213,7 +214,7 @@ contract TC02 is BaseIntTest_WithActions {
       // borrowing rate still not calculated
       assertAssetClassSumBorrowingRate(0, 0, 1120, "T4: ");
 
-      // Just prove not affected with others asset class when Market buy
+      // Invariant testing
       assertAssetClassReserve(1, 0, "T4: ");
       assertAssetClassSumBorrowingRate(1, 0, 0, "T4: ");
       assertAssetClassReserve(2, 0, "T4: ");
@@ -429,7 +430,7 @@ contract TC02 is BaseIntTest_WithActions {
       // note: sum of borrowing rate is calculated on position info
       assertAssetClassReserve(0, 13.5 * 1e30, "T6: ");
 
-      // Just prove not affected with others asset class when Market sell
+      // Invariant testing
       assertAssetClassReserve(1, 0, "T6: ");
       assertAssetClassReserve(2, 0, "T6: ");
     }
@@ -460,9 +461,9 @@ contract TC02 is BaseIntTest_WithActions {
       // JPY market MMF       = 0.005%
       // Inc / Dec Fee        = 0.03%
       // Position size        = 6000 USD
-      // Open interest        = 6000 USD / oracle price
+      // Open interest        = 6000 USD / adaptive price
       //                      = 6000 / 0.007346297098947275625720855402
-      //                      = 816738
+      //                      = 816738.000
       // Avg price            = Adaptive price
       //                      = 0.007346223635976286152964598193
       // IMR                  = 6000 * IMF = 6 USD
@@ -477,7 +478,7 @@ contract TC02 is BaseIntTest_WithActions {
         _marketIndex: jpyMarketIndex,
         _positionSize: int256(-6_000 * 1e30),
         _avgPrice: 0.007346223635976286152964598193 * 1e30,
-        _openInterest: 816738 * 1e3,
+        _openInterest: 816738.000 * 1e3,
         _reserveValue: 54 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
@@ -549,7 +550,7 @@ contract TC02 is BaseIntTest_WithActions {
         jpyMarketIndex,
         6_000 * 1e30,
         0.007346223635976286152964598193 * 1e30,
-        816738 * 1e3,
+        816738.000 * 1e3,
         "T7: "
       );
       assertMarketFundingRate(jpyMarketIndex, 0, 1240, "T7: ");
@@ -559,7 +560,7 @@ contract TC02 is BaseIntTest_WithActions {
       assertAssetClassReserve(2, 54 * 1e30, "T7: ");
       assertAssetClassSumBorrowingRate(2, 0, 1240, "T7: ");
 
-      // Just prove not affected with others asset class when Market sell
+      // Invariant testing
       assertAssetClassReserve(0, 13.5 * 1e30, "T7: ");
       assertAssetClassSumBorrowingRate(0, 0.000008124373119358 * 1e18, 1180, "T7: ");
 
@@ -585,7 +586,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Then Check position Info
 
       // Time passed          = 60 seconds (60 intevals)
-      // TVL                  = ??? @todo - resolve TVL
+      // TVL                  = 0.99662501 * 20000 = 19932.5002
 
       // Max Funding rate     = 0.04%
       // Max scale skew       = 300,000,000 USD
@@ -605,9 +606,8 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Forex Borrowing rate
       //    = reserve * interval * base rate / tvl
-      //    = 54 * 60 * 0.03% / ???
-      //    = 0.972
-      //    @todo calculate this again 0.000048764579969752
+      //    = 54 * 60 * 0.03% / 19932.5002
+      //    = 0.000048764579969752
       assertAssetClassSumBorrowingRate(2, 0.000048764579969752 * 1e18, 1300, "T8: ");
 
       // JPY market IMF       = 0.01%
@@ -616,7 +616,7 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Before:
       //    Position size     = -6000
-      //    Open interest     = 816738
+      //    Open interest     = 816738.000
       //    Avg Price         = 0.007346223635976286152964598193 USD
       //    Reserve           = 54 USD
       //    Borrowing rate    = 0
@@ -629,9 +629,10 @@ contract TC02 is BaseIntTest_WithActions {
       //    IMR               = 0
       //    MMR               = 0
       //    Reserve           = 0
+      //    Borrowing rate    = 0
+      //    Funding rate      = 0
+
       //    Trading fee       = 6000 * 0.03% = 1.8 USD
-      //    Borrowing rate    = 0.000048764579969752
-      //    Funding rate      = 0.00000048
 
       //    Borrowing fee     = (0.000048764579969752 - 0) * 54 (reserve delta)
       //                      = 0.002633287318366608
@@ -651,9 +652,9 @@ contract TC02 is BaseIntTest_WithActions {
         _avgPrice: 0,
         _openInterest: 0,
         _reserveValue: 0,
-        _realizedPnl: 18.01762211333523763485750665291 * 1e30,
-        _entryBorrowingRate: 0.000048764579969752 * 1e18,
-        _entryFundingRate: 0.00000048 * 1e18,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _entryFundingRate: 0,
         _str: "T8: "
       });
 
@@ -686,18 +687,19 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC, (price: 20,000 USD)
       //      Trading fee     = 1.8 / 20000                   = 0.00009 btc
       //      Borrowing fee   = 0.002633287318366608 / 20000  = 0.00000013 btc
+      //      Funding fee     = 0.00288 / 20000               = 0.00000014 btc
 
       // And Alice receive funding fee from PLP
       // When PLP pay Alice by Liquidity
       //    BTC, (price: 20,000 USD)
-      //      Funding fee     = 0.00288 / 20000               = 0.00000014 btc
       //      Trader's profit = 18.01762211333523763485750665291 / 20000
       //                      = 0.00090088 btc
 
       // In Summarize, Alice's collateral balances
-      //    BTC - 0.01026249 - 0.00009 - 0.00000013 - 0.00000014 + 0.00090088 = 0.01107310
+      //    BTC - 0.01026249 - 0.00009 - 0.00000013 - 0.00000014 + 0.00090088
+      //        = 0.0110731
 
-      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01107310 * 1e8, "T8: ");
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.0110731 * 1e8, "T8: ");
 
       // Assert Fee distribution
       // According from T7
@@ -722,9 +724,9 @@ contract TC02 is BaseIntTest_WithActions {
       //      BTC - 0.00000014 btc
       //          - pay for funding fee (100%) = 0.00000014 btc
       //
+
       // PLP paid list
       //    BTC
-      //      Funding fee   - 0.00000014 btc
       //      Trader profit - 0.00090088 btc
 
       // In Summarize Vault's fees
@@ -752,30 +754,878 @@ contract TC02 is BaseIntTest_WithActions {
       // Forex's reserve should be increased by = 54 USD
       assertAssetClassReserve(2, 0, "T8: ");
 
-      // Just prove not affected with others asset class when Market sell
+      // Invariant testing
       assertAssetClassReserve(0, 13.5 * 1e30, "T8: ");
       assertAssetClassSumBorrowingRate(0, 0.000008124373119358 * 1e18, 1180, "T8: ");
 
       assertAssetClassReserve(1, 0, "T8: ");
     }
 
-    //   Steps (limit):
-    //   - bob deposit BTC 100 USD
-    //   - bob create buy BTC position order at price 18,000 USD with 500 USD (order 0)
-    //   - price BTC dump to 17,500 USD
-    //   - execute order 0 - not trigger
-    //   - price BTC dump to 17,999.99 USD
-    //   - execute order 0 - BOB will has long position 500 USD with entry price 18,000 USD
-    //   - bob create sell BTC position order at price 18,900 USD with 500 USD (order 1)
-    //   - price BTC pump to 18,500 USD
-    //   - execute order 1 - not trigger
-    //   - price BTC pump to 18,900.01 USD
-    //   - execute order 1 - BOB fully close short at 18,900 USD
-    //   - bob create sell BTC position order at price 21,000 USD with 500 USD (order 2)
-    //   - price BTC pump to 21,050 USD
-    //   - execute order 2 - BOB will has short position 500 USD with entry price 21,000 USD
-    //   - bob create buy BTC position order at price 18,900 USD with 500 USD (order 3)
-    //   - price BTC dump to 17,999.99 USD
-    //   - execute order 3 - BOB fully close long at 18,900 USD
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T9: Bob deposit BTC 100 USD at price 20,000
+    // 100 / 20000 = 0.005 BTC
+    address _bobSubAccount0 = getSubAccount(BOB, 0);
+    depositCollateral(BOB, 0, wbtc, 0.01 * 1e8);
+
+    assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.01 * 1e8, "T9: ");
+
+    // And BOB create limit order to open long position for 500 USD at Btc price 18,000 USD
+    // Order Index: 0
+    createLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _marketIndex: wbtcMarketIndex,
+      _sizeDelta: 3000 * 1e30,
+      _triggerPrice: 18_000 * 1e30,
+      _triggerAboveThreshold: false,
+      _executionFee: executionOrderFee,
+      _reduceOnly: true,
+      _tpToken: address(wbtc)
+    });
+
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T11: Btc Price has changed to 18,500 USD
+    //      Should revert ILimitTradeHandler_InvalidPriceForExecution
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_500 * 1e8, 0);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+
+    // T12: Btc Price has changed to 17,500 USD
+    //      Execute Bob order index 0
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 17_500 * 1e8, 0);
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+    {
+      // When Limit order index 0 has executed
+      // Then Bob should has Long position
+      // And Position size should be 3000 USD at Price 18000 USD
+
+      // Given Oracle price   = 17500 USD
+      // And TVL
+      //  - BTC               = 0.99572425 * 17500 = 17425.174375
+      //  - Total             = 17425.174375 USD
+
+      // Max Funding rate     = 0.04%
+      // Max scale skew       = 300,000,000 USD
+      // Market skew          = 0
+      // new Market skew      = 0 + 3000 (long position)
+      // Premium before       = 0 / 300000000 = 0
+      // Premium after        = 3000 / 300000000 = 0.00001
+      // Premium median       = (0 + 0.00001) / 2 = 0.000005
+      // Adaptive price       = 17500 * (1 + 0.000005) = 17500.0875
+      //                      = 17500.0875
+
+      // Market's Funding rate calculation
+      // When Market skew is 0
+      // Then Funding rate is 0
+      assertMarketFundingRate(wbtcMarketIndex, 0, 1420, "T12: ");
+
+      // Crypto Borrowing rate calulation
+      // Given Latest info
+      //    Reserve                 = 13.5 USD
+      //    Sum borrowing rate      = 0.000008124373119358
+      //    Latest borrowing time   = 1180
+      // And Time passed            = 1420 - 1180 = 240 seconds (240 intervals)
+      // Then
+      //    Pending borrowing rate  = 13.5 * 240 * 0.01% / 17425.174375
+      //                            = 0.000018593788103770
+      // And Sum borrowing rate     = 0.000008124373119358 + 0.000018593788103770
+      //                            = 0.000026718161223128
+      assertAssetClassSumBorrowingRate(0, 0.000026718161223128 * 1e18, 1420, "T12: ");
+
+      // BTC market IMF       = 1%
+      // BTC market MMF       = 0.5%
+      // Inc / Dec Fee        = 0.1%
+
+      // Before:
+      //    Position size     = 0
+      //    Open interest     = 0
+      //    Avg Price         = 0
+      //    Reserve           = 0
+      //    Borrowing rate    = 0
+      //    Finding rate      = 0
+
+      //    Borrowing fee     = 0
+      //    Funding fee       = 0
+
+      // After:
+      //    Position size     = 3000
+      //    Open interest     = 3000 / 17500 = 0.17142857
+      //    Avg price         = 17500.0875 USD
+      //    IMR               = 3000 * 1%   =  30 USD
+      //    MMR               = 3000 * 0.5% =  15 USD
+      //    Reserve           = 30 * 900%   = 270 USD
+      //    Trading fee       = 3000 * 0.1% =   3 USD
+      //    Borrowing rate    = 0.000026718161223128
+      //    Funding rate      = 0
+
+      // Profit and Loss
+      // note: long position: size delta * (adaptive price - avg price) / avg price
+      //       short position: size delta * (avg price - adaptive price) / avg price
+      // unrealized PnL = 0
+
+      assertPositionInfoOf({
+        _subAccount: _bobSubAccount0,
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 3_000 * 1e30,
+        _avgPrice: 18000 * 1e30,
+        _openInterest: 0.17142857 * 1e8,
+        _reserveValue: 270 * 1e30,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0.000026718161223128 * 1e18,
+        _entryFundingRate: 0,
+        _str: "T12: "
+      });
+
+      // BOB Sub-account's state
+      //    IMR             = 0 USD
+      //    MMR             = 0 USD
+      // In Summarize
+      //    IMR = 0 + 30    = 30 USD
+      //    MMR = 0 + 15    = 15 USD
+
+      assertSubAccountStatus({ _subAccount: _bobSubAccount0, _imr: 30 * 1e30, _mmr: 15 * 1e30, _str: "T12: " });
+
+      // Invariant Testing
+      assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T12: " });
+
+      // Assert Trader's balances, Vault's fees and PLP's Liquidity
+
+      // Bob's collateral before settle payment
+      //    BTC - 0.01 btc
+
+      // Vault's fees before settle payment
+      //    BTC - protocol fee  = 0.00317213 btc
+      //        - dev fee       = 0.00003038 btc
+
+      // PLP's liquidity before settle payment
+      //    BTC - 0.99572425 btc
+
+      // Settlement detail
+      // Bob has to pay
+      //    Trading fee   - 3 USD
+      //      BTC - 3 / 17500               = 0.00017142 btc
+      //          - pay for dev (15%)       = 0.00002571 btc
+      //          - pay for protocol (85%)  = 0.00017142 - 0.00002571
+      //                                    = 0.00014571 btc
+
+      // And PLP has to pay
+      //     nothing
+
+      // Bob's collateral after settle payment
+      //    BTC - 0.01 - 0.00017142 = 0.00982858 btc
+
+      assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.00982858 * 1e8, "T12: ");
+
+      // Vault's fees after settle payment
+      //    BTC - protocol fee  = 0.00317213 + 0.00014571 = 0.00331784 btc
+      //        - dev fee       = 0.00003038 + 0.00002571 = 0.00005609 btc
+
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: 0.00331784 * 1e8,
+        _devFee: 0.00005609 * 1e8,
+        _fundingFee: 0.00000014 * 1e8,
+        _str: "T12: "
+      });
+
+      // PLP's liquidity after settle payment
+      //    nothing changed
+      assertPLPLiquidity(address(wbtc), 0.99572425 * 1e8, "T12: ");
+
+      // Asset Market's state, Asset class's state
+
+      assertMarketLongPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 3000 * 1e30,
+        _avgPrice: 18_000 * 1e30,
+        _openInterest: 0.17142857 * 1e8,
+        _str: "T12: "
+      });
+      // And Short side should invariant
+      assertMarketShortPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _str: "T12: "
+      });
+
+      // Assert Asset class
+      // Given Crypto's reserve is 13.5
+      // When Bob increase Btc position for 3000 USD
+      // And reserve is 270 USD
+      // Then Crypto's reserve should increased by 270 = 283.5 USD
+      assertAssetClassReserve(0, 283.5 * 1e30, "T12: ");
+
+      // Invariant testing
+      assertAssetClassReserve(2, 0, "T12: ");
+      assertAssetClassReserve(1, 0, "T12: ");
+    }
+
+    // T13: Bob create limit order to close position
+    // Order Index: 1
+    createLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _marketIndex: wbtcMarketIndex,
+      _sizeDelta: -3000 * 1e30,
+      _triggerPrice: 18_900 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: executionOrderFee,
+      _reduceOnly: true,
+      _tpToken: address(wbtc)
+    });
+
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T14: Btc Price has changed to 18,500 USD
+    //      Execute Bob order index 1, but price is not trigger
+    //      Should revert ILimitTradeHandler_InvalidPriceForExecution
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_500 * 1e8, 0);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+
+    // T15: Btc Price has changed to 18,900.01 USD
+    //      Execute Bob order index 1
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_900.01 * 1e8, 0);
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 1,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+    {
+      // When Limit order index 1 has executed
+      // Then Bob Btc Long position would decreased by 3000 USD at price 18,900 USD
+      // And Bob's position has been closed
+
+      // Given Oracle price   = 18,900.01 USD
+      // And TVL
+      //  - BTC               = 0.99572425 * 18900.01 = 18819.1982822425
+      //  - Total             = 18819.1982822425 USD
+
+      // Max Funding rate     = 0.04%
+      // Max scale skew       = 300,000,000 USD
+      // Market skew          = 3000
+      // new Market skew      = 3000 - 0
+      // Premium before       = 3000 / 300000000 = 0.00001
+      // Premium after        = 0 / 300000000 = 0
+      // Premium median       = (0.00001 + 0) / 2 = 0.000005
+      // Adaptive price       = 18900.01 * (1 + 0.000005)
+      //                      = 18900.10450005
+
+      // Market's Funding rate calculation
+      // When Market skew is 3000
+      // And Funding rate fomula = -(Intervals * (Skew ratio * Max funding rate))
+      // And Time passed         = 1480 - 1420 = 60 seconds (60 intervals)
+      // Then Funding rate       = -(60 * (3000 / 300000000) * 0.04%)
+      //                         = -0.00000024
+      assertMarketFundingRate(wbtcMarketIndex, -0.00000024 * 1e18, 1480, "T15: ");
+
+      // Crypto Borrowing rate calulation
+      // Given Latest info
+      //    Reserve                 = 283.5 USD
+      //    Sum borrowing rate      = 0.000026718163837437
+      //    Latest borrowing time   = 1420
+      // And Time passed            = 1480 - 1420 = 60 seconds (60 intervals)
+      // Then
+      //    Pending borrowing rate  = 283.5 * 60 * 0.01% / 18819.1982822425
+      //                            = 0.000090386422125380
+      // And Sum borrowing rate     = 0.000026718161223128 + 0.000090386422125380
+      //                            = 0.000117104583348508
+      assertAssetClassSumBorrowingRate(0, 0.000117104583348508 * 1e18, 1480, "T15: ");
+
+      // BTC market IMF       = 1%
+      // BTC market MMF       = 0.5%
+      // Inc / Dec Fee        = 0.1%
+
+      // Before:
+      //    Position size     = 3000
+      //    Open interest     = 0.17142857
+      //    Avg Price         = 18000 USD
+      //    Reserve           = 270 USD
+      //    Borrowing rate    = 0.000026718163837437
+      //    Finding rate      = -0.00000024
+
+      // After: (close position)
+      //    Position size     = 0
+      //    Open interest     = 0
+      //    Avg price         = 0
+      //    IMR               = 0
+      //    MMR               = 0
+      //    Reserve           = 0
+      //    Borrowing rate    = 0
+      //    Funding rate      = 0
+
+      //    Trading fee       = 3000 * 0.1% = 3 USD
+
+      //    Borrowing fee     = 270 * (0.000117104583348508 - 0.000026718163837437)
+      //                      = 0.02440433326798917 USD
+      //    Funding fee       = (-0.00000024 - 0) * 3000
+      //                      = -0.00072 USD
+
+      // Profit and Loss
+      // note: long position: size delta * (adaptive price - avg price) / avg price
+      //       short position: size delta * (avg price - adaptive price) / avg price
+      // unrealized PnL = 3000 * (18900 - 18000) / 18000
+      //                = 150 USD
+
+      assertPositionInfoOf({
+        _subAccount: _bobSubAccount0,
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _reserveValue: 0,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _entryFundingRate: 0,
+        _str: "T15: "
+      });
+
+      // BOB Sub-account's state
+      //    IMR             = 30 USD
+      //    MMR             = 15 USD
+      // In Summarize, after close position
+      //    IMR = 30 - 30   = 0 USD
+      //    MMR = 15 - 15   = 0 USD
+
+      assertSubAccountStatus({ _subAccount: _bobSubAccount0, _imr: 0, _mmr: 0, _str: "T15: " });
+
+      // Invariant Testing
+      assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T15: " });
+
+      // Assert Trader's balances, Vault's fees and PLP's Liquidity
+
+      // Bob's collateral before settle payment
+      //    BTC - 0.00982858 btc
+
+      // Vault's fees before settle payment
+      //    BTC - protocol fee  = 0.00331784 btc
+      //        - dev fee       = 0.00005609 btc
+
+      // PLP's liquidity before settle payment
+      //    BTC - 0.99572425 btc
+
+      // Settlement detail
+      // Bob has to pay
+      //    Trading fee - 3 USD
+      //      BTC - 3 / 18900.01                    = 0.00015873 btc
+      //          - pay for dev (15%)               = 0.00002380 btc
+      //          - pay for protocol (85%)          = 0.00015873 - 0.00002380
+      //                                            = 0.00013493 btc
+      //    Borrowing fee - 0.02440433326798917 USD
+      //      BTC - 0.02440433326798917 / 18900.01  = 0.00000129 btc
+      //          - pay for dev (15%)               = 0.00000019 btc
+      //          - pay for PLP (85%)               = 0.00000129 - 0.00000019
+      //                                            = 0.0000011
+      //    Funding fee - 0.00072 USD
+      //      BTC - 0.00072 / 18900.01              = 0.00000003 btc
+      //          - pay for funding fee (100%)      = 0.00000003 btc
+      //
+
+      // And PLP has to pay
+      //    Trader profit - 150 USD
+      //      BTC - 150 / 18900.01                  = 0.00793650 btc
+
+      // Bob's collateral after settle payment
+      //    BTC = 0.00982858 - 0.00015873 - 0.00000129 - 0.00000003 + 0.00793650
+      //        = 0.01760503 btc
+
+      assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.01760503 * 1e8, "T15: ");
+
+      // Vault's fees after settle payment
+      //    BTC - protocol fee  = 0.00331784 + 0.00013493              = 0.00345277 btc
+      //        - dev fee       = 0.00005609 + 0.00002380 + 0.00000019 = 0.00008008 btc
+      //        - funding fee   = 0.00000014 + 0.00000003              = 0.00000017 btc
+
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: 0.00345277 * 1e8,
+        _devFee: 0.00008008 * 1e8,
+        _fundingFee: 0.00000017 * 1e8,
+        _str: "T15: "
+      });
+
+      // PLP's liquidity after settle payment
+      //    BTC - 0.99572425 + 0.0000011 - 0.00793650 = 0.98778885
+      assertPLPLiquidity(address(wbtc), 0.98778885 * 1e8, "T15: ");
+
+      // Asset Market's state, Asset class's state
+
+      assertMarketLongPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _str: "T15: "
+      });
+      // And Short side should invariant
+      assertMarketShortPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _str: "T15: "
+      });
+
+      // Assert Asset class
+      // Given Crypto's reserve is 283.5
+      // When Bob decrease Btc long position for 3000 USD
+      // And dereased reserve is 270 USD
+      // Then Crypto's reserve should decresed by 270 = 13.5 USD
+      assertAssetClassReserve(0, 13.5 * 1e30, "T15: ");
+
+      // Invariant testing
+      assertAssetClassReserve(2, 0, "T15: ");
+      assertAssetClassReserve(1, 0, "T15: ");
+    }
+
+    // T16: Bob create limit order sell Btc for 3000 USD at price 21,000 USD
+    // Order Index: 2
+    createLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _marketIndex: wbtcMarketIndex,
+      _sizeDelta: -3000 * 1e30,
+      _triggerPrice: 21_000 * 1e30,
+      _triggerAboveThreshold: true,
+      _executionFee: executionOrderFee,
+      _reduceOnly: true,
+      _tpToken: address(wbtc)
+    });
+
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T17: Btc Price has changed to 21,500 USD
+    //      Execute Bob order index 2
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 21_500 * 1e8, 0);
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 2,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+    {
+      // When Limit order index 2 has executed
+      // Then Bob would has Btc Short position size 3000 USD at price 21,000 USD
+
+      // Given Oracle price   = 21,500 USD
+      // And TVL
+      //  - BTC               = 0.98778885 * 21500 = 21237.460275
+      //  - Total             = 21237.460275 USD
+
+      // Max Funding rate     = 0.04%
+      // Max scale skew       = 300,000,000 USD
+      // Market skew          = 0
+      // new Market skew      = 0 - 3000
+      // Premium before       = 0 / 300000000 = 0
+      // Premium after        = -3000 / 300000000 = -0.00001
+      // Premium median       = (0 + -0.00001) / 2 = -0.000005
+      // Adaptive price       = 21500 * (1 - 0.000005)
+      //                      = 21499.8925 USD
+
+      // Market's Funding rate calculation
+      // When Market skew is 0
+      // And Funding rate fomula        = -(Intervals * (Skew ratio * Max funding rate))
+      // And Time passed                = 1540 - 1480 = 60 seconds (60 intervals)
+      // Then Pending Funding rate      = -(60 * (0 / 300000000) * 0.04%)
+      //                                = 0
+      // And Market's sum Funding rate  = -0.00000024 + 0
+      assertMarketFundingRate(wbtcMarketIndex, -0.00000024 * 1e18, 1540, "T17: ");
+
+      // Crypto Borrowing rate calulation
+      // Given Latest info
+      //    Reserve                 = 13.5 USD
+      //    Sum borrowing rate      = 0.000117104583348508
+      //    Latest borrowing time   = 1480
+      // And Time passed            = 1540 - 1480 = 60 seconds (60 intervals)
+      // Then
+      //    Pending borrowing rate  = 13.5 * 60 * 0.01% / 21237.460275
+      //                            = 0.000003814015374303
+      // And Sum borrowing rate     = 0.000117104583348508 + 0.000003814015374303
+      //                            = 0.000120918598722811
+      assertAssetClassSumBorrowingRate(0, 0.000120918598722811 * 1e18, 1540, "T17: ");
+
+      // BTC market IMF       = 1%
+      // BTC market MMF       = 0.5%
+      // Inc / Dec Fee        = 0.1%
+
+      // Before:
+      //    Position size     = 0
+      //    Open interest     = 0
+      //    Avg Price         = 0
+      //    Reserve           = 0
+      //    Borrowing rate    = 0
+      //    Finding rate      = 0
+
+      // After: (new position)
+      //    Position size     = -3000 USD
+      //    Open interest     = 3000 / 21500 = 0.13953488
+      //    Avg price         = 21,000 USD
+      //    IMR               = 30
+      //    MMR               = 15
+      //    Reserve           = 270
+      //    Borrowing rate    = 0.000120918598722811
+      //    Funding rate      = -0.00000024
+
+      //    Trading fee       = 3000 * 0.1% = 3 USD
+
+      //    Borrowing fee     = 0
+      //    Funding fee       = 0
+
+      // Profit and Loss
+      // note: long position: size delta * (adaptive price - avg price) / avg price
+      //       short position: size delta * (avg price - adaptive price) / avg price
+      // unrealized PnL = 0 (new position)
+
+      assertPositionInfoOf({
+        _subAccount: _bobSubAccount0,
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: -3_000 * 1e30,
+        _avgPrice: 21_000 * 1e30,
+        _openInterest: 0.13953488 * 1e8,
+        _reserveValue: 270 * 1e30,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0.000120918598722811 * 1e18,
+        _entryFundingRate: -0.00000024 * 1e18,
+        _str: "T17: "
+      });
+
+      // BOB Sub-account's state
+      //    IMR             = 0 USD
+      //    MMR             = 0 USD
+      // In Summarize, after close position
+      //    IMR = 0 + 30   = 30 USD
+      //    MMR = 0 + 15   = 15 USD
+
+      assertSubAccountStatus({ _subAccount: _bobSubAccount0, _imr: 30 * 1e30, _mmr: 15 * 1e30, _str: "T17: " });
+
+      // Invariant Testing
+      assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T17: " });
+
+      // Assert Trader's balances, Vault's fees and PLP's Liquidity
+
+      // Bob's collateral before settle payment
+      //    BTC - 0.01760503 btc
+
+      // Vault's fees before settle payment
+      //    BTC - protocol fee  = 0.00345277 btc
+      //        - dev fee       = 0.00008008 btc
+      //        - funding fee   = 0.00000017 btc
+
+      // PLP's liquidity before settle payment
+      //    BTC - 0.98778896 btc
+
+      // Settlement detail
+      // Bob has to pay
+      //    Trading fee - 3 USD
+      //      BTC - 3 / 21500                    = 0.00013953 btc
+      //          - pay for dev (15%)            = 0.00002092 btc
+      //          - pay for protocol (85%)       = 0.00013953 - 0.00002092
+      //                                         = 0.00011861 btc
+
+      // And PLP has to pay
+      //    nothing
+
+      // Bob's collateral after settle payment
+      //    BTC = 0.01760503 - 0.00013953
+      //        = 0.01746550 btc
+
+      assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.01746550 * 1e8, "T17: ");
+
+      // Vault's fees after settle payment
+      //    BTC - protocol fee  = 0.00345277 + 0.00011861 = 0.00357138 btc
+      //        - dev fee       = 0.00008008 + 0.00002092 = 0.00010100 btc
+      //        - funding fee   = 0.00000017              = 0.00000017 btc
+
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: 0.00357138 * 1e8,
+        _devFee: 0.00010100 * 1e8,
+        _fundingFee: 0.00000017 * 1e8,
+        _str: "T17: "
+      });
+
+      // PLP's liquidity after settle payment
+      //    BTC - 0.98778885
+      assertPLPLiquidity(address(wbtc), 0.98778885 * 1e8, "T17: ");
+
+      // Asset Market's state, Asset class's state
+
+      assertMarketLongPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _str: "T17: "
+      });
+      // And Short side should invariant
+      assertMarketShortPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 3000 * 1e30,
+        _avgPrice: 21_000 * 1e30,
+        _openInterest: 0.13953488 * 1e8,
+        _str: "T17: "
+      });
+
+      // Assert Asset class
+      // Given Crypto's reserve is 283.5
+      // When Bob open Btc short position for 3000 USD
+      // And increase reserve as 270 USD
+      // Then Crypto's reserve should increased by 270 = 283.5 USD
+      assertAssetClassReserve(0, 283.5 * 1e30, "T17: ");
+
+      // Invariant testing
+      assertAssetClassReserve(2, 0, "T17: ");
+      assertAssetClassReserve(1, 0, "T17: ");
+    }
+
+    // T18: Bob create limit order close short position 3000 USD at price 18,900 USD
+    // Order Index: 3
+    createLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _marketIndex: wbtcMarketIndex,
+      _sizeDelta: 3000 * 1e30,
+      _triggerPrice: 18_900 * 1e30,
+      _triggerAboveThreshold: false,
+      _executionFee: executionOrderFee,
+      _reduceOnly: true,
+      _tpToken: address(wbtc)
+    });
+
+    // Time passed for 60 seconds
+    skip(60);
+
+    // T19: Btc Price has changed to 17,500.00 USD
+    //      Execute Bob order index 2
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 17_500 * 1e8, 0);
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 3,
+      _feeReceiver: payable(FEEVER),
+      _priceData: updatePriceData
+    });
+    {
+      // When Limit order index 2 has executed
+      // Then Bob fully close Btc short position at price 18,900 USD
+
+      // Given Oracle price   = 17,500 USD
+      // And TVL
+      //  - BTC               = 0.98778885 * 17500 = 17286.304875 USD
+      //  - Total             = 17286.304875 USD
+
+      // Max Funding rate     = 0.04%
+      // Max scale skew       = 300,000,000 USD
+      // Market skew          = -3000
+      // new Market skew      = -3000 + 3000
+      // Premium before       = -3000 / 300000000 = -0.00001
+      // Premium after        = 0 / 300000000 = 0
+      // Premium median       = (-0.00001 + 0) / 2 = -0.000005
+      // Adaptive price       = 17500 * (1 + -0.000005)
+      //                      = 17499.9125
+
+      // Market's Funding rate calculation
+      // When Market skew is -3000
+      // And Funding rate fomula = -(Intervals * (Skew ratio * Max funding rate))
+      // And Time passed         = 1600 - 1549 = 60 seconds (60 intervals)
+      // Then Funding rate       = -(60 * (-3000 / 300000000) * 0.04%)
+      //                         = 0.00000024
+      // And Market's sum Funding rate  = -0.00000024 + 0.00000024
+      assertMarketFundingRate(wbtcMarketIndex, 0, 1600, "T19: ");
+
+      // Crypto Borrowing rate calulation
+      // Given Latest info
+      //    Reserve                 = 283.5 USD
+      //    Sum borrowing rate      = 0.000026718163837437
+      //    Latest borrowing time   = 1420
+      // And Time passed            = 1480 - 1420 = 60 seconds (60 intervals)
+      // Then
+      //    Pending borrowing rate  = 283.5 * 60 * 0.01% / 17286.304875
+      //                            = 0.000098401596657018
+      // And Sum borrowing rate     = 0.000120918598722811 + 0.000098401596657018
+      //                            = 0.000219320195379829
+      assertAssetClassSumBorrowingRate(0, 0.000219320195379829 * 1e18, 1600, "T19: ");
+
+      // BTC market IMF       = 1%
+      // BTC market MMF       = 0.5%
+      // Inc / Dec Fee        = 0.1%
+
+      // Before:
+      //    Position size     = -3000
+      //    Open interest     = 0.13953488
+      //    Avg Price         = 21000 USD
+      //    Reserve           = 270 USD
+      //    Borrowing rate    = 0.000120918598722811
+      //    Finding rate      = -0.00000024
+
+      // After: (close short position)
+      //    Position size     = 0
+      //    Open interest     = 0
+      //    Avg price         = 0
+      //    IMR               = 0
+      //    MMR               = 0
+      //    Reserve           = 0
+      //    Borrowing rate    = 0
+      //    Funding rate      = 0
+
+      //    Trading fee       = 3000 * 0.1% = 3 USD
+
+      //    Borrowing fee     = 270 * (0.000219320195379829 - 0.000120918598722811)
+      //                      = 0.02656843109739486 USD
+      //    Funding fee       = (0 - -(0.00000024)) * 3000
+      //                      = 0.00072 USD
+
+      // Profit and Loss
+      // note: long position: size delta * (adaptive price - avg price) / avg price
+      //       short position: size delta * (avg price - adaptive price) / avg price
+      // unrealized PnL = 3000 * (21000 - 18900) / 21000
+      //                = 300 USD
+      // !note: but mamx profit is 270 then Bob will realized profit just 270 USD
+
+      assertPositionInfoOf({
+        _subAccount: _bobSubAccount0,
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _reserveValue: 0,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _entryFundingRate: 0,
+        _str: "T19: "
+      });
+
+      // BOB Sub-account's state
+      //    IMR             = 30 USD
+      //    MMR             = 15 USD
+      // In Summarize, after close position
+      //    IMR = 30 - 30   = 0 USD
+      //    MMR = 15 - 15   = 0 USD
+
+      assertSubAccountStatus({ _subAccount: _bobSubAccount0, _imr: 0, _mmr: 0, _str: "T19: " });
+
+      // Invariant Testing
+      assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T19: " });
+
+      // Assert Trader's balances, Vault's fees and PLP's Liquidity
+
+      // Bob's collateral before settle payment
+      //    BTC - 0.01746550 btc
+
+      // Vault's fees before settle payment
+      //    BTC - protocol fee  = 0.00331784 btc
+      //        - dev fee       = 0.00005609 btc
+
+      // PLP's liquidity before settle payment
+      //    BTC - 0.98778885 btc
+
+      // Settlement detail
+      // Bob has to pay
+      //    Trading fee - 3 USD
+      //      BTC - 3 / 17500                       = 0.00017142 btc
+      //          - pay for dev (15%)               = 0.00002571 btc
+      //          - pay for protocol (85%)          = 0.00017142 - 0.00002571
+      //                                            = 0.00014571 btc
+      //    Borrowing fee - 0.02656843109739486 USD
+      //      BTC - 0.02656843109739486 / 17500     = 0.00000151 btc
+      //          - pay for dev (15%)               = 0.00000022 btc
+      //          - pay for PLP (85%)               = 0.00000151 - 0.00000022
+      //                                            = 0.00000129 btc
+      //    Funding fee - 0.00072 USD
+      //      BTC - 0.00072 / 17500                 = 0.00000004 btc
+      //          - pay for fundind fee (100%)      = 0.00000004 btc
+
+      // And PLP has to pay
+      //    Trader profit - 270 USD
+      //      BTC - 270 / 17500                     = 0.01542857 btc
+
+      // Bob's collateral after settle payment
+      //    BTC = 0.01746550 - 0.00017142 - 0.00000151 - 0.00000004 + 0.01542857
+      //        = 0.03272110 btc
+
+      assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.03272110 * 1e8, "T19: ");
+
+      // Vault's fees after settle payment
+      //    BTC - protocol fee  = 0.00357138 + 0.00014571              = 0.00371709 btc
+      //        - dev fee       = 0.00010100 + 0.00002571 + 0.00000022 = 0.00012693 btc
+      //        - funding fee   = 0.00000017 + 0.00000004              = 0.00000021 btc
+
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: 0.00371709 * 1e8,
+        _devFee: 0.00012693 * 1e8,
+        _fundingFee: 0.00000021 * 1e8,
+        _str: "T19: "
+      });
+
+      // PLP's liquidity after settle payment
+      //    BTC = 0.98778885 + 0.00000129 - 0.01542857
+      //        = 0.97236157
+      assertPLPLiquidity(address(wbtc), 0.97236157 * 1e8, "T19: ");
+
+      // Asset Market's state, Asset class's state
+
+      assertMarketLongPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _str: "T19: "
+      });
+      // And Short side should invariant
+      assertMarketShortPosition({
+        _marketIndex: wbtcMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _openInterest: 0,
+        _str: "T19: "
+      });
+
+      // Assert Asset class
+      // Given Crypto's reserve is 283.5
+      // When Bob decrease Btc short position for 3000 USD
+      // And dereased reserve is 270 USD
+      // Then Crypto's reserve should decresed by 270 = 13.5 USD
+      assertAssetClassReserve(0, 13.5 * 1e30, "T19: ");
+
+      // Invariant testing
+      assertAssetClassReserve(2, 0, "T19: ");
+      assertAssetClassReserve(1, 0, "T19: ");
+    }
   }
 }

@@ -22,8 +22,8 @@
   },
   "oracle": {
     "pyth": "0x939C0e902FF5B3F7BA666Cc8F6aC75EE76d3f900",
-    "pythAdapter": "0x6855742e3Df393178461EAF7B36f5E245672C9F1",
-    "middleware": "0x95ee67B20482f1A2BBEF1bb4c0F7044F1d725476"
+    "pythAdapter": "0x5d499720C6421998A407D34b83D6eCb03A82aa90",
+    "middleware": "0x2a71A878Cc39CCfD8978ec07BF0b510b30e07B09"
   },
   "tokens": {
     "plp": "0x6eDf1D0CFAcd820E9EA25D0d4c8580a39f797EF6",

@@ -17,9 +17,6 @@ contract PythAdapter is Owned, IPythAdapter {
   // mapping of our asset id to Pyth's price id
   mapping(bytes32 => IPythAdapter.PythPriceConfig) public configs;
 
-  // whitelist mapping of price updater
-  mapping(address => bool) public isUpdater;
-
   // events
   event SetConfig(bytes32 indexed _assetId, bytes32 _pythPriceId, bool _inverse);
   event SetUpdater(address indexed _account, bool _isActive);

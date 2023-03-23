@@ -28,6 +28,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _oldTrustPriceAge,
     uint256 _newTrustPriceAge
   );
+  event LogSetPythAdapter(address oldPythAdapter, address newPythAdapter);
 
   /**
    * States
@@ -63,6 +64,12 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       revert IOracleMiddleware_OnlyUpdater();
     }
     _;
+  }
+
+  function setPythAdapter(address _newPythAdapter) external onlyOwner {
+    emit LogSetPythAdapter(address(pythAdapter), _newPythAdapter);
+
+    pythAdapter = IOracleAdapter(_newPythAdapter);
   }
 
   /// @notice Return the latest price and last update of the given asset id.

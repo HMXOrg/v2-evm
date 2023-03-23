@@ -17,7 +17,7 @@ contract LimitTradeHandler_Base is BaseTest {
     limitTradeHandler = Deployer.deployLimitTradeHandler(
       address(weth),
       address(mockTradeService),
-      address(mockPyth),
+      address(leanPyth),
       0.1 ether
     );
 

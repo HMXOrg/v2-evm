@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 import { BaseIntTest_SetMarkets } from "@hmx-test/integration/03_BaseIntTest_SetMarkets.i.sol";
+import { PythStructs } from "pyth-sdk-solidity/MockPyth.sol";
 
 abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   error BadArgs();
@@ -193,16 +194,22 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
     (bytes32 _pythPriceId, ) = pythAdapter.configs(_assetId);
 
-    bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
-      _pythPriceId,
-      _price,
-      _conf,
-      int8(pythDecimals),
-      _price,
-      0,
-      uint64(block.timestamp)
-    );
+    {
+      PythStructs.PriceFeed memory priceFeed;
 
-    return priceFeedData;
+      priceFeed.id = _pythPriceId;
+
+      priceFeed.price.price = _price;
+      priceFeed.price.conf = _conf;
+      priceFeed.price.expo = int8(pythDecimals);
+      priceFeed.price.publishTime = uint64(block.timestamp);
+
+      priceFeed.emaPrice.price = _price;
+      priceFeed.emaPrice.conf = _conf;
+      priceFeed.emaPrice.expo = int8(pythDecimals);
+      priceFeed.emaPrice.publishTime = uint64(block.timestamp);
+
+      return abi.encode(priceFeed);
+    }
   }
 }

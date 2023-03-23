@@ -225,7 +225,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
@@ -277,7 +277,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
@@ -380,7 +380,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
@@ -433,7 +433,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     });
     (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
+    assertEq(ALICE.balance, 0.1 ether, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (

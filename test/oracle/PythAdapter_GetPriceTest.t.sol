@@ -17,7 +17,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
   function updateWbtcWithConf(uint64 conf) private {
     // Feed only wbtc
     bytes[] memory priceDataBytes = new bytes[](1);
-    priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
+    priceDataBytes[0] = _createPriceFeedUpdateData(
       wbtcPriceId,
       20_000 * 1e8,
       conf,
@@ -27,13 +27,13 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
       uint64(block.timestamp)
     );
 
-    mockPyth.updatePriceFeeds{ value: mockPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
+    leanPyth.updatePriceFeeds{ value: leanPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
   }
 
   function updateWbtcWithBadParam() private {
     // Feed only wbtc
     bytes[] memory priceDataBytes = new bytes[](1);
-    priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
+    priceDataBytes[0] = _createPriceFeedUpdateData(
       wbtcPriceId,
       -20_000 * 1e8,
       0,
@@ -43,13 +43,13 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
       uint64(block.timestamp)
     );
 
-    mockPyth.updatePriceFeeds{ value: mockPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
+    leanPyth.updatePriceFeeds{ value: leanPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
   }
 
   function updateJpyWithConf(uint64 conf) private {
     // Feed only wbtc
     bytes[] memory priceDataBytes = new bytes[](1);
-    priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
+    priceDataBytes[0] = _createPriceFeedUpdateData(
       jpyPriceId,
       136.123 * 1e3,
       conf,
@@ -59,7 +59,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
       uint64(block.timestamp)
     );
 
-    mockPyth.updatePriceFeeds{ value: mockPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
+    leanPyth.updatePriceFeeds{ value: leanPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
   }
 
   function testRevert_GetWithUnregisteredAssetId() external {
@@ -68,7 +68,7 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
   }
 
   function testRevert_GetBeforeUpdate() external {
-    vm.expectRevert(abi.encodeWithSignature("PriceFeedNotFound()"));
+    vm.expectRevert(abi.encodeWithSignature("LeanPyth_PriceFeedNotFound()"));
     pythAdapter.getLatestPrice(wethAssetId, true, 1e6);
   }
 

@@ -56,7 +56,7 @@ contract LimitTradeHandler_Setter is LimitTradeHandler_Base {
   }
 
   function testCorrectness_setPyth() external {
-    limitTradeHandler.setPyth(address(mockPyth));
-    assertEq(limitTradeHandler.pyth(), address(mockPyth));
+    limitTradeHandler.setPyth(address(leanPyth));
+    assertEq(limitTradeHandler.pyth(), address(leanPyth));
   }
 }

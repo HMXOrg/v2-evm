@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { LeanPyth } from "@hmx/oracle/LeanPyth.sol";
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 
@@ -14,7 +14,7 @@ contract DeployLocalContract is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    address pythAddress = address(new MockPyth(60, 1));
+    address pythAddress = address(new LeanPyth());
     address nativeAddress = address(new MockWNative());
 
     vm.stopBroadcast();

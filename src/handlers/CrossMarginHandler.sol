@@ -9,7 +9,7 @@ import { Owned } from "@hmx/base/Owned.sol";
 // interfaces
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { ILeanPyth } from "@hmx/oracle/interfaces/ILeanPyth.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
@@ -51,7 +51,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
     // Sanity check
     CrossMarginService(_crossMarginService).vaultStorage();
-    IPyth(_pyth).getValidTimePeriod();
+    ILeanPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   /**
@@ -87,7 +87,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     pyth = _pyth;
 
     // Sanity check
-    IPyth(_pyth).getValidTimePeriod();
+    ILeanPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   /**
@@ -145,7 +145,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   ) external payable nonReentrant onlyAcceptedToken(_token) {
     // Call update oracle price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    ILeanPyth(pyth).updatePriceFeeds{ value: ILeanPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
 

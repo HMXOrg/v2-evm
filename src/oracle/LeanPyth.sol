@@ -75,7 +75,7 @@ contract LeanPyth is Owned, ILeanPyth {
 
   /// @dev Returns the update fee for the given price feed update data.
   /// @return feeAmount The update fee, which is always 0.
-  function getUpdateFee(bytes[] calldata /*updateData*/) external pure returns (uint feeAmount) {
+  function getUpdateFee(bytes[] calldata /*updateData*/) external pure returns (uint) {
     // The update fee is always 0, so simply return 0
     return 0;
   }

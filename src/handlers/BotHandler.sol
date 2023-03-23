@@ -2,16 +2,17 @@
 pragma solidity 0.8.18;
 
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
-import { IBotHandler } from "./interfaces/IBotHandler.sol";
-import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
-import { LiquidationService } from "@hmx/services/LiquidationService.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { Owned } from "@hmx/base/Owned.sol";
+
 // contracts
+import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
+
 // interfaces
+import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
+import { ILeanPyth } from "@hmx/oracle/interfaces/ILeanPyth.sol";
+import { console2 } from "forge-std/console2.sol";
 
 // @todo - integrate with BotHandler in another PRs
 contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
@@ -58,7 +59,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     // Sanity check
     ITradeService(_tradeService).configStorage();
     LiquidationService(_liquidationService).perpStorage();
-    IPyth(_pyth).getValidTimePeriod();
+    ILeanPyth(_pyth).getUpdateFee(new bytes[](0));
 
     tradeService = _tradeService;
     liquidationService = _liquidationService;
@@ -79,7 +80,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   ) external nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    ILeanPyth(pyth).updatePriceFeeds{ value: ILeanPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     (bool _isMaxProfit, , ) = TradeService(tradeService).forceClosePosition(
       _account,
@@ -108,7 +109,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   ) external nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    ILeanPyth(pyth).updatePriceFeeds{ value: ILeanPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     TradeService(tradeService).validateDeleverage();
 
@@ -132,7 +133,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   ) external nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    ILeanPyth(pyth).updatePriceFeeds{ value: ILeanPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     TradeService(tradeService).validateMarketDelisted(_marketIndex);
 
@@ -147,7 +148,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   function liquidate(address _subAccount, bytes[] memory _priceData) external nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    ILeanPyth(pyth).updatePriceFeeds{ value: ILeanPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // liquidate
     LiquidationService(liquidationService).liquidate(_subAccount, msg.sender);
@@ -201,7 +202,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   /// @param _newPyth New Pyth contract address.
   function setPyth(address _newPyth) external onlyOwner {
     // Sanity check
-    IPyth(_newPyth).getValidTimePeriod();
+    ILeanPyth(pyth).getUpdateFee(new bytes[](0));
 
     pyth = _newPyth;
 

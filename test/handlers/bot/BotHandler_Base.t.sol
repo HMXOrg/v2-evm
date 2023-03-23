@@ -16,6 +16,8 @@ import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
 import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract BotHandler_Base is BaseTest {
   ITradeHelper tradeHelper;
 
@@ -47,7 +49,8 @@ contract BotHandler_Base is BaseTest {
       address(tradeHelper)
     );
 
-    botHandler = Deployer.deployBotHandler(address(tradeService), address(mockLiquidationService), address(mockPyth));
+    botHandler = Deployer.deployBotHandler(address(tradeService), address(mockLiquidationService), address(leanPyth));
+    // leanPyth.setUpdater(address(botHandler), true);
 
     address[] memory _positionManagers = new address[](1);
     _positionManagers[0] = address(this);

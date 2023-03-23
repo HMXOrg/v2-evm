@@ -41,7 +41,7 @@ contract MarketTradeHandler_Base is BaseTest {
       })
     );
 
-    marketTradeHandler = Deployer.deployMarketTradeHandler(address(mockTradeService), address(mockPyth));
+    marketTradeHandler = Deployer.deployMarketTradeHandler(address(mockTradeService), address(leanPyth));
     mockTradeService.setConfigStorage(address(configStorage));
     mockTradeService.setPerpStorage(address(mockPerpStorage));
   }

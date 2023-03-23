@@ -13,7 +13,7 @@ import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 contract TC34 is BaseIntTest_WithActions {
   function test_correctness_swingPriceViaExecution() external {
     // T0: Initialized state
-    uint256 _totalExecutionOrderFee = executionOrderFee - initialPriceFeedDatas.length;
+    uint256 _totalExecutionOrderFee = executionOrderFee;
 
     uint256 _amount = 5e7; //0.5 btc
 
@@ -54,7 +54,7 @@ contract TC34 is BaseIntTest_WithActions {
 
     exeutePLPOrder(liquidityHandler.nextExecutionOrderIndex(), _newPrices);
 
-    _totalExecutionOrderFee += (executionOrderFee - 1);
+    _totalExecutionOrderFee += executionOrderFee;
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),

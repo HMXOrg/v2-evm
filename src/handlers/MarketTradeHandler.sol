@@ -4,7 +4,6 @@ pragma solidity 0.8.18;
 // base
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "@hmx/base/Owned.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 // contracts
 import { TradeService } from "@hmx/services/TradeService.sol";
@@ -12,6 +11,7 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 // interfaces
+import { ILeanPyth } from "@hmx/oracle/interfaces/ILeanPyth.sol";
 import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
 contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
@@ -51,7 +51,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     // Sanity check
     TradeService(_tradeService).perpStorage();
-    IPyth(_pyth).getValidTimePeriod();
+    ILeanPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   /**
@@ -81,7 +81,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     pyth = _newPyth;
 
     // Sanity check
-    IPyth(_newPyth).getValidTimePeriod();
+    ILeanPyth(pyth).getUpdateFee(new bytes[](0));
   }
 
   /**
@@ -110,7 +110,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    ILeanPyth(pyth).updatePriceFeeds{ value: ILeanPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // 0. Get position
     PerpStorage.Position memory _position = _getPosition(_account, _subAccountId, _marketIndex);
@@ -196,7 +196,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    ILeanPyth(pyth).updatePriceFeeds{ value: ILeanPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // 0. Get position
     PerpStorage.Position memory _position = _getPosition(_account, _subAccountId, _marketIndex);

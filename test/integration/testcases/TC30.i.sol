@@ -10,7 +10,7 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 contract TC30 is BaseIntTest_WithActions {
   function test_correctness_executeMultipleOrders() external {
     // T0: Initialized state
-    uint256 _pythGasFee = initialPriceFeedDatas.length;
+    uint256 _pythGasFee = 0;
 
     vm.deal(ALICE, executionOrderFee);
     uint256 _aliceBTCAmount = 1e8;

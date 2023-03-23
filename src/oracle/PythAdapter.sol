@@ -2,8 +2,9 @@
 pragma solidity 0.8.18;
 
 import { Owned } from "@hmx/base/Owned.sol";
-import { IPyth, PythStructs } from "pyth-sdk-solidity/IPyth.sol";
+import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
+import { ILeanPyth } from "./interfaces/ILeanPyth.sol";
 
 contract PythAdapter is Owned, IPythAdapter {
   // errors
@@ -13,7 +14,7 @@ contract PythAdapter is Owned, IPythAdapter {
   error PythAdapter_UnknownAssetId();
 
   // state variables
-  IPyth public pyth;
+  ILeanPyth public pyth;
   // mapping of our asset id to Pyth's price id
   mapping(bytes32 => IPythAdapter.PythPriceConfig) public configs;
 
@@ -21,11 +22,11 @@ contract PythAdapter is Owned, IPythAdapter {
   event SetConfig(bytes32 indexed _assetId, bytes32 _pythPriceId, bool _inverse);
   event SetUpdater(address indexed _account, bool _isActive);
 
-  constructor(IPyth _pyth) {
-    pyth = _pyth;
+  constructor(address _pyth) {
+    pyth = ILeanPyth(_pyth);
 
     // Sanity
-    pyth.getValidTimePeriod();
+    pyth.getUpdateFee(new bytes[](0));
   }
 
   /// @notice Set the Pyth price id for the given asset.

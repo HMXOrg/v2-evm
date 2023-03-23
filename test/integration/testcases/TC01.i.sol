@@ -11,7 +11,7 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 contract TC01 is BaseIntTest_WithActions {
   function testCorrectness_AddAndRemoveLiquiditySuccess() external {
     // T0: Initialized state
-    uint256 _totalExecutionOrderFee = executionOrderFee - initialPriceFeedDatas.length;
+    uint256 _totalExecutionOrderFee = executionOrderFee;
     // WBTC = 20k
     // ALICE NEED 10k in terms of WBTC = 10000 /20000 * 10**8  = 5e7
     uint256 _amount = 5e7;
@@ -60,7 +60,7 @@ contract TC01 is BaseIntTest_WithActions {
     //  10000 -> 0.5 e8
     //   100 -> 0.005 e8 btc
     removeLiquidity(ALICE, address(wbtc), 100 ether, executionOrderFee, initialPriceFeedDatas, true);
-    _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
+    _totalExecutionOrderFee += (executionOrderFee);
 
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
@@ -93,7 +93,7 @@ contract TC01 is BaseIntTest_WithActions {
     );
     vm.stopPrank();
 
-    _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
+    _totalExecutionOrderFee += (executionOrderFee);
 
     ILiquidityHandler.LiquidityOrder[] memory orders = liquidityHandler.getLiquidityOrders();
 
@@ -114,7 +114,7 @@ contract TC01 is BaseIntTest_WithActions {
 
     // T6: Alice max withdraws 9,870 USD PLP in pools
     vm.deal(ALICE, executionOrderFee);
-    _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
+    _totalExecutionOrderFee += (executionOrderFee);
 
     removeLiquidity(ALICE, address(wbtc), 9_870 ether, executionOrderFee, initialPriceFeedDatas, true);
     liquidityTester.assertLiquidityInfo(

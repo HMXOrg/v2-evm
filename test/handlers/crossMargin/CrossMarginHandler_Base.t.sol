@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import { BaseTest, IConfigStorage, IPerpStorage, MockErc20 } from "@hmx-test/base/BaseTest.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
+import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
@@ -81,7 +82,7 @@ contract CrossMarginHandler_Base is BaseTest {
       pythAdapter.setConfig(wethAssetId, wethPriceId, false);
 
       priceDataBytes = new bytes[](2);
-      priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
+      priceDataBytes[0] = _createPriceFeedUpdateData(
         wbtcPriceId,
         20_000 * 1e8,
         500 * 1e8,
@@ -90,7 +91,7 @@ contract CrossMarginHandler_Base is BaseTest {
         500 * 1e8,
         uint64(block.timestamp)
       );
-      priceDataBytes[1] = mockPyth.createPriceFeedUpdateData(
+      priceDataBytes[1] = _createPriceFeedUpdateData(
         wethPriceId,
         1_500 * 1e8,
         50 * 1e8,

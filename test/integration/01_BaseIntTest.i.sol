@@ -8,8 +8,7 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheats } from "forge-std/StdCheats.sol";
 
 // Pyth
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { LeanPyth } from "@hmx/oracle/LeanPyth.sol";
 
 // Openzepline
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -46,10 +45,11 @@ import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginServic
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
-
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { ILeanPyth } from "@hmx/oracle/interfaces/ILeanPyth.sol";
+
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { CrossMarginTester } from "@hmx-test/testers/CrossMarginTester.sol";
 import { LimitOrderTester } from "@hmx-test/testers/LimitOrderTester.sol";
@@ -113,7 +113,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   IWNative weth; //for native
 
   /* PYTH */
-  MockPyth internal pyth;
+  ILeanPyth pyth;
   IPythAdapter internal pythAdapter;
 
   /* Tester */
@@ -140,7 +140,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     // deploy MOCK weth
     weth = IWNative(new MockWNative());
 
-    pyth = new MockPyth(60, 1);
+    pyth = new LeanPyth();
 
     pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
 

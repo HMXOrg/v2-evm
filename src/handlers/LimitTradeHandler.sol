@@ -15,7 +15,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { ILeanPyth } from "@hmx/oracle/interfaces/ILeanPyth.sol";
 
 contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /**
@@ -118,8 +118,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
     // slither-disable-next-line unused-return
     TradeService(_tradeService).perpStorage();
+
     // slither-disable-next-line unused-return
-    IPyth(_pyth).getValidTimePeriod();
+    ILeanPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   receive() external payable {
@@ -226,9 +227,9 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
     // Update price to Pyth
     // slither-disable-next-line arbitrary-send-eth
-    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
+    uint256 _updateFee = ILeanPyth(pyth).getUpdateFee(_priceData);
     IWNative(weth).withdraw(_updateFee);
-    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+    ILeanPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
@@ -463,7 +464,12 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
   function setPyth(address _newPyth) external onlyOwner {
     if (_newPyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    IPyth(_newPyth).getValidTimePeriod();
+
+    // sanity
+    {
+      ILeanPyth(_newPyth).getUpdateFee(new bytes[](0));
+    }
+
     emit LogSetPyth(address(tradeService), _newPyth);
     pyth = _newPyth;
   }

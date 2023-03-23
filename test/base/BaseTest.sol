@@ -5,6 +5,7 @@ import { TestBase } from "forge-std/Base.sol";
 import { console2 } from "forge-std/console2.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
+import { PythStructs } from "pyth-sdk-solidity/MockPyth.sol";
 
 /**
  * Libraries
@@ -14,7 +15,6 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 // Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockWNative } from "../mocks/MockWNative.sol";
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
 import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
 import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
@@ -22,6 +22,9 @@ import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
+
+// Contract
+import { LeanPyth } from "@hmx/oracle/LeanPyth.sol";
 
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
@@ -54,9 +57,9 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   // oracle
   IPythAdapter pythAdapter;
   IOracleMiddleware oracleMiddleware;
+  LeanPyth leanPyth;
 
   // mock
-  MockPyth internal mockPyth;
   MockCalculator internal mockCalculator;
   MockPerpStorage internal mockPerpStorage;
   MockVaultStorage internal mockVaultStorage;
@@ -96,10 +99,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant jpyAssetId = "JPY";
 
   constructor() {
-    // Creating a mock Pyth instance with 60 seconds valid time period
-    // and 1 wei for updating price.
-    mockPyth = new MockPyth(60, 1);
-
+    console2.log(uint(1111));
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
@@ -128,8 +128,12 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockTradeService = new MockTradeService();
     mockLiquidationService = new MockLiquidationService();
 
-    pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
+    console2.log(uint(1));
+    leanPyth = new LeanPyth();
+    console2.log(uint(2));
+    pythAdapter = Deployer.deployPythAdapter(address(leanPyth));
     oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter));
+    console2.log(uint(3));
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -165,7 +169,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     require(priceData.length == 4, "invalid price data length");
     bytes[] memory priceDataBytes = new bytes[](4);
     for (uint256 i = 1; i <= priceData.length; ) {
-      priceDataBytes[i - 1] = mockPyth.createPriceFeedUpdateData(
+      priceDataBytes[i - 1] = _createPriceFeedUpdateData(
         bytes32(uint256(i)),
         priceData[i - 1] * 1e8,
         0,
@@ -400,6 +404,36 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       isStableCoin: true
     });
     configStorage.setAssetConfig(daiAssetId, _assetConfigDai);
+  }
+
+  // function _setPythUpdater() {
+  //   pyth.setUpdater(configStorage, true);
+  // }
+
+  function _createPriceFeedUpdateData(
+    bytes32 id,
+    int64 price,
+    uint64 conf,
+    int32 expo,
+    int64 emaPrice,
+    uint64 emaConf,
+    uint64 publishTime
+  ) public pure returns (bytes memory priceFeedData) {
+    PythStructs.PriceFeed memory priceFeed;
+
+    priceFeed.id = id;
+
+    priceFeed.price.price = price;
+    priceFeed.price.conf = conf;
+    priceFeed.price.expo = expo;
+    priceFeed.price.publishTime = publishTime;
+
+    priceFeed.emaPrice.price = emaPrice;
+    priceFeed.emaPrice.conf = emaConf;
+    priceFeed.emaPrice.expo = expo;
+    priceFeed.emaPrice.publishTime = publishTime;
+
+    priceFeedData = abi.encode(priceFeed);
   }
 
   function abs(int256 x) external pure returns (uint256) {

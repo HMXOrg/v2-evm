@@ -18,7 +18,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 // interfaces
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { ILeanPyth } from "@hmx/oracle/interfaces/ILeanPyth.sol";
 
 import { console } from "forge-std/console.sol";
 
@@ -81,7 +81,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     // slither-disable-next-line unused-return
     LiquidityService(_liquidityService).perpStorage();
     // slither-disable-next-line unused-return
-    IPyth(_pyth).getValidTimePeriod();
+    ILeanPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   /**
@@ -277,11 +277,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       _endIndex = _latestOrderIndex;
     }
 
-    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
+    uint256 _updateFee = ILeanPyth(pyth).getUpdateFee(_priceData);
     IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_updateFee);
 
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+    ILeanPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
     uint256 _totalFeeReceiver = 0;
 
     for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
@@ -416,6 +416,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     pyth = _pyth;
 
     // Sanity check
-    IPyth(_pyth).getValidTimePeriod();
+    ILeanPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 }

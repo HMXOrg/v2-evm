@@ -38,11 +38,11 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      exeutePLPOrder(_orderIndex, _priceData);
+      executePLPOrder(_orderIndex, _priceData);
     }
   }
 
-  function exeutePLPOrder(uint256 _endIndex, bytes[] memory _priceData) internal {
+  function executePLPOrder(uint256 _endIndex, bytes[] memory _priceData) internal {
     vm.startPrank(ORDER_EXECUTOR);
     liquidityHandler.executeOrder(_endIndex, payable(FEEVER), _priceData);
     vm.stopPrank();
@@ -78,7 +78,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      exeutePLPOrder(_orderIndex, _priceData);
+      executePLPOrder(_orderIndex, _priceData);
     }
   }
 

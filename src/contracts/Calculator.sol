@@ -12,6 +12,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { console } from "forge-std/console.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
@@ -51,12 +52,15 @@ contract Calculator is Owned, ICalculator {
   /// @param _isMaxPrice Use Max or Min Price
   /// @return PLP Value in E18 format
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
-    // @todo - pendingBorrowingFeeE30
-    // @todo - pending funding fee ?
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
+    console.log("pendingBorrowingFeeE30", pendingBorrowingFeeE30);
     int256 pnlE30 = _getGlobalPNLE30();
+    console.log("pnlE30");
+    console.logInt(pnlE30);
     uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30;
+    console.log("PLPTVL", _getPLPValueE30(_isMaxPrice));
+
     if (pnlE30 < 0) {
       aum += uint256(-pnlE30);
     } else {
@@ -66,6 +70,7 @@ contract Calculator is Owned, ICalculator {
         aum -= _pnl;
       }
     }
+    console.log("aum", aum);
 
     return aum;
   }
@@ -125,7 +130,6 @@ contract Calculator is Owned, ICalculator {
 
     for (uint256 i = 0; i < _len; ) {
       uint256 value = _getPLPUnderlyingAssetValueE30(_plpAssetIds[i], _configStorage, _isMaxPrice);
-
       unchecked {
         assetValue += value;
         ++i;
@@ -158,7 +162,7 @@ contract Calculator is Owned, ICalculator {
   /// @param _aum aum in PLP
   /// @param _plpSupply Total Supply of PLP token
   /// @return PLP Price in e18
-  function getPLPPrice(uint256 _aum, uint256 _plpSupply) public pure returns (uint256) {
+  function getPLPPrice(uint256 _aum, uint256 _plpSupply) external pure returns (uint256) {
     if (_plpSupply == 0) return 0;
     return _aum / _plpSupply;
   }
@@ -181,38 +185,45 @@ contract Calculator is Owned, ICalculator {
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
+      (uint256 priceE30, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
-      (uint256 priceE30Long, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
-      (uint256 priceE30Short, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, true);
-
+      console.log("priceE30", priceE30);
+      console.log("_globalMarket.longAvgPrice", _globalMarket.longAvgPrice);
+      console.log("_globalMarket.shortAvgPrice", _globalMarket.shortAvgPrice);
+      console.log("_globalMarket.longPositionSize", _globalMarket.longPositionSize);
+      console.log("_globalMarket.shortPositionSize", _globalMarket.shortPositionSize);
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
-        if (priceE30Long < _globalMarket.longAvgPrice) {
-          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) * _globalMarket.longPositionSize) /
+        if (priceE30 < _globalMarket.longAvgPrice) {
+          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30) * _globalMarket.longPositionSize) /
             _globalMarket.longAvgPrice;
           _pnlLongE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((priceE30Long - _globalMarket.longAvgPrice) * _globalMarket.longPositionSize) /
+          uint256 _absPNL = ((priceE30 - _globalMarket.longAvgPrice) * _globalMarket.longPositionSize) /
             _globalMarket.longAvgPrice;
           _pnlLongE30 = int256(_absPNL);
         }
       }
+      console.log("_pnlLongE30");
+      console.logInt(_pnlLongE30);
 
       if (_globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0) {
-        if (_globalMarket.shortAvgPrice < priceE30Short) {
-          uint256 _absPNL = ((priceE30Short - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
+        if (_globalMarket.shortAvgPrice < priceE30) {
+          uint256 _absPNL = ((priceE30 - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
             _globalMarket.shortAvgPrice;
 
           _pnlShortE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30Short) * _globalMarket.shortPositionSize) /
+          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30) * _globalMarket.shortPositionSize) /
             _globalMarket.shortAvgPrice;
           _pnlShortE30 = int256(_absPNL);
         }
       }
+      console.log("_pnlShortE30");
+      console.logInt(_pnlShortE30);
 
       {
         unchecked {
-          i++;
+          ++i;
           totalPnlLong += _pnlLongE30;
           totalPnlShort += _pnlShortE30;
         }
@@ -448,7 +459,7 @@ contract Calculator is Owned, ICalculator {
   ) public view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
-
+    console.log("equity:collatValue", _collateralValueE30);
     // Calculate unrealized PnL and unrelized fee
     (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
       _subAccount,
@@ -587,9 +598,10 @@ contract Calculator is Owned, ICalculator {
 
       // Get collateralFactor from ConfigStorage
       uint32 collateralFactorBPS = _collateralTokenConfig.collateralFactorBPS;
-
+      console.log("collateralFactorBPS", collateralFactorBPS);
       // Get current collateral token balance of trader's account
       uint256 _amount = VaultStorage(vaultStorage).traderBalances(_subAccount, _token);
+      console.log("traderBalance AMOUNT", _amount);
 
       // Get price from oracle
       uint256 _priceE30;
@@ -604,6 +616,7 @@ contract Calculator is Owned, ICalculator {
           _tokenAssetId,
           false // @note Collateral value always use Min price
         );
+        console.log("priceE30", _priceE30);
       }
       // Calculate accumulative value of collateral tokens
       // collateral value = (collateral amount * price) * collateralFactorBPS
@@ -711,8 +724,10 @@ contract Calculator is Owned, ICalculator {
     bytes32 _limitAssetId
   ) public view returns (uint256 _freeCollateral) {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
+    console.log("equity");
+    console.logInt(equity);
     uint256 imr = getIMR(_subAccount);
-
+    console.log("imr", imr);
     if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;

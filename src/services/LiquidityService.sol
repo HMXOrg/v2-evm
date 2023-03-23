@@ -124,21 +124,21 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     validatePreAddRemoveLiquidity(_amount);
 
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
-
-    uint256 _aum = _calculator.getAUME30(false);
+    uint256 _aumE30 = _calculator.getAUME30(false);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
-    uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
+    uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aumE30) / _lpSupply : 0;
     uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValueE30, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
     PLPv2(ConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
+
     VaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOut);
 
     _validatePLPHealthCheck(_tokenOut);
 
-    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValueE30, _amountOut);
+    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aumE30, _lpSupply, _lpUsdValueE30, _amountOut);
 
     return _amountOut;
   }
@@ -289,6 +289,9 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
     uint256 plpTVL = _calculator.getPLPValueE30(false);
+    console.log("PLPTVL", plpTVL); //2093999000000000000000000000000000000 /1e30 =>2093999*8000
+    console.log("_liquidityConfig.maxPLPUtilizationBPS", _liquidityConfig.maxPLPUtilizationBPS);
+    console.log("_globalState.reserveValueE30", _globalState.reserveValueE30); // 18900*10000
     if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxPLPUtilizationBPS * plpTVL) {
       revert LiquidityService_MaxPLPUtilizationExceeded();
     }

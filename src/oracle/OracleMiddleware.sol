@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { Owned } from "@hmx/base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
+import { console } from "forge-std/console.sol";
 
 contract OracleMiddleware is Owned, IOracleMiddleware {
   /**
@@ -280,6 +281,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     // Apply premium/discount
     _adaptivePrice = _calculateAdaptivePrice(_marketSkew, _sizeDelta, _price, _maxSkewScaleUSD);
 
+    console.log("_adaptivePrice", _adaptivePrice);
     // Return the price and last update
     return (_adaptivePrice, _price, _exponent, _lastUpdate);
   }
@@ -299,6 +301,14 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     // couldn't calculate adaptive price because max skew scale config is used to calcualte premium with market skew
     // then just return oracle price
     if (_maxSkewScaleUSD == 0) return _price;
+    console.log("================================================");
+    console.log("==== params adaptive Price ====");
+    console.log("_marketSkew");
+    console.logInt(_marketSkew);
+    console.log("_sizeDelta");
+    console.logInt(_sizeDelta);
+    console.log("_price", _price);
+    console.log("==== end params");
 
     // Given
     //    Max skew scale = 300,000,000 USD
@@ -312,16 +322,23 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     //    Then:
     //      Premium (before) = 300,000 / 300,000,000 = 0.001
     int256 _premium = (_marketSkew * 1e18) / int256(_maxSkewScaleUSD);
+    console.log("premium");
+    console.logInt(_premium);
 
     //      Premium (after)  = (300,000 - 150,000) / 300,000,000 = 0.0005
     //      ** + When user increase Long position ot Decrease Short position
     //      ** - When user increase Short position ot Decrease Long position
     int256 _premiumAfter = ((_marketSkew + _sizeDelta) * 1e18) / int256(_maxSkewScaleUSD);
+    console.log("_premiumAfter");
+    console.logInt(_premiumAfter);
 
     //      Adaptive price = Price * (1 + Median of Before and After)
     //                     = 1,500 * (1 + (0.001 + 0.0005 / 2))
     //                     = 1,500 * (1 + 0.00125) = 1,501.875
     int256 _premiumMedian = (_premium + _premiumAfter) / 2;
+    console.log("_premiumMedian");
+    console.logInt(_premiumMedian);
+    console.log("result", (_price * uint256(1e18 + _premiumMedian)) / 1e18);
     return (_price * uint256(1e18 + _premiumMedian)) / 1e18;
   }
 

@@ -15,6 +15,8 @@ import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 // interfaces
 import { ITradeService } from "./interfaces/ITradeService.sol";
 
+import { console } from "forge-std/console.sol";
+
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {
   uint32 internal constant BPS = 1e4;
@@ -195,6 +197,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint8 _marketStatus;
 
       // Get Price market.
+      console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx get adaptive price xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
       (_vars.adaptivePriceE30, _vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(
         _configStorage.oracle()
       ).getLatestAdaptivePriceWithMarketStatus(
@@ -206,7 +209,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
         );
 
       _vars.priceE30 = _limitPriceE30 != 0 ? _limitPriceE30 : _vars.priceE30;
-
+      console.log(
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx get adaptive price for closePriceE30 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      );
       (_vars.closePriceE30, , , , ) = OracleMiddleware(_configStorage.oracle()).getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         _vars.isLong, // if current position is SHORT position, then we use max price
@@ -255,6 +260,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // - trading fees
     // - borrowing fees
     // - funding fees
+    console.log("_marketConfig.increasePositionFeeRateBPS", _marketConfig.increasePositionFeeRateBPS);
     TradeHelper(tradeHelper).settleAllFees(
       _vars.position,
       _absSizeDelta,
@@ -281,13 +287,15 @@ contract TradeService is ReentrancyGuard, ITradeService {
     {
       // calculate the initial margin required for the new position
       uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFractionBPS) / BPS;
-
+      console.log("absSizeDelta", _absSizeDelta);
+      console.log("_imr", _imr);
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = _calculator.getFreeCollateral(
         _vars.subAccount,
         _limitPriceE30,
         _marketConfig.assetId
       );
+      console.log("subAccountFreeCollateral", subAccountFreeCollateral);
 
       // if the free collateral is less than the initial margin required, revert the transaction with an error
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
@@ -335,6 +343,8 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // save the updated position to the storage
     _perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
+
+    console.log("================================================================");
   }
 
   // @todo - rewrite description
@@ -542,6 +552,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // - trading fees
     // - borrowing fees
     // - funding fees
+
     TradeHelper(tradeHelper).settleAllFees(
       _vars.position,
       _vars.positionSizeE30ToDecrease,

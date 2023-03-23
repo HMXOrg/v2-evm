@@ -64,7 +64,7 @@ contract TC30 is BaseIntTest_WithActions {
     // plpTotalSupply = 39780.496 => 49_773.496
 
     uint256 _lastOrderIndex = liquidityHandler.getLiquidityOrders().length - 1;
-    exeutePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
+    executePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
 
     assertEq(calculator.getAUME30(false) / plpV2.totalSupply() / 1e12, 1, "AUM");
     assertPLPTotalSupply(49_773.496 * 1e18);
@@ -142,7 +142,7 @@ contract TC30 is BaseIntTest_WithActions {
     // feetotal => 0.01292856 (wbtc)  + 160.004 (usdc)
 
     _lastOrderIndex = liquidityHandler.getLiquidityOrders().length - 1;
-    exeutePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
+    executePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
 
     nextExecutedIndex = liquidityHandler.nextExecutionOrderIndex();
 

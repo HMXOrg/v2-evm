@@ -120,8 +120,8 @@ contract TC03 is BaseIntTest_WithActions {
       // Adaptive price       = 1500 * (1 + 0.0000005)
       //                      = 1500.00075
 
-      // WETH market IMF      = 0.1%
-      // WETH market MMF      = 0.05%
+      // WETH market IMF      = 1%
+      // WETH market MMF      = 0.5%
       // Inc / Dec Fee        = 0.1%
       // Position size        = 300 USD
       // Avg price            = 1500.00075 USD
@@ -265,8 +265,8 @@ contract TC03 is BaseIntTest_WithActions {
       //    = 0.000008124373119358
       assertAssetClassSumBorrowingRate(0, 0.000008124373119358 * 1e18, 1180, "T6: ");
 
-      // WETH market IMF      = 0.1%
-      // WETH market MMF      = 0.05%
+      // WETH market IMF      = 1%
+      // WETH market MMF      = 0.5%
       // Inc / Dec Fee        = 0.1%
       // Borrowing base Rate  = 0.01%
 
@@ -430,8 +430,8 @@ contract TC03 is BaseIntTest_WithActions {
       //    Adaptive price    = 0.007346297098947275625720855402 * (1 + -0.00001)
       //                      = 0.007346223635976286152964598193
 
-      // JPY market IMF       = 0.01%
-      // JPY market MMF       = 0.005%
+      // JPY market IMF       = 0.1%
+      // JPY market MMF       = 0.05%
       // Inc / Dec Fee        = 0.03%
       // Position size        = 6000 USD
       // Avg price            = Adaptive price
@@ -571,8 +571,8 @@ contract TC03 is BaseIntTest_WithActions {
       //    = 0.000048727910765760
       assertAssetClassSumBorrowingRate(2, 0.000048727910765760 * 1e18, 1300, "T8: ");
 
-      // JPY market IMF       = 0.01%
-      // JPY market MMF       = 0.005%
+      // JPY market IMF       = 0.1%
+      // JPY market MMF       = 0.05%
       // Inc / Dec Fee        = 0.03%
 
       // Before:

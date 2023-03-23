@@ -8,7 +8,7 @@ import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { LiquidityService } from "@hmx/services/LiquidityService.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 
-contract DeployServices is ConfigJsonRepo {
+contract DeployTradeService is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
@@ -19,24 +19,12 @@ contract DeployServices is ConfigJsonRepo {
     address calculatorAddress = getJsonAddress(".calculator");
     address tradeHelperAddress = getJsonAddress(".helpers.trade");
 
-    address crossMarginServiceAddress = address(
-      new CrossMarginService(configStorageAddress, vaultStorageAddress, perpStorageAddress, calculatorAddress)
-    );
-    address liquidationServiceAddress = address(
-      new LiquidationService(perpStorageAddress, vaultStorageAddress, configStorageAddress, tradeHelperAddress)
-    );
-    address liquidityServiceAddress = address(
-      new LiquidityService(perpStorageAddress, vaultStorageAddress, configStorageAddress)
-    );
     address tradeServiceAddress = address(
       new TradeService(perpStorageAddress, vaultStorageAddress, configStorageAddress, tradeHelperAddress)
     );
 
     vm.stopBroadcast();
 
-    updateJson(".services.crossMargin", crossMarginServiceAddress);
-    updateJson(".services.liquidation", liquidationServiceAddress);
-    updateJson(".services.liquidity", liquidityServiceAddress);
     updateJson(".services.trade", tradeServiceAddress);
   }
 }

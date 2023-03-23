@@ -9,7 +9,7 @@ import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
 import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
 import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 
-contract DeployHandlers is ConfigJsonRepo {
+contract DeployLiquidityHandler is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
@@ -23,23 +23,12 @@ contract DeployHandlers is ConfigJsonRepo {
     // @todo - TBD
     uint256 minExecutionFee = 30;
 
-    address botHandlerAddress = address(new BotHandler(tradeServiceAddress, liquiditionServiceAddress, pythAddress));
-    address crossMarginHandlerAddress = address(new CrossMarginHandler(crossMarginServiceAddress, pythAddress));
     address liquidityHandlerAddress = address(
       new LiquidityHandler(liquidityServiceAddress, pythAddress, minExecutionFee)
     );
 
-    address marketTradeHandlerAddress = address(new MarketTradeHandler(tradeServiceAddress, pythAddress));
-    address limitTradeHandlerAddress = address(
-      new LimitTradeHandler(weth, tradeServiceAddress, pythAddress, minExecutionFee)
-    );
-
     vm.stopBroadcast();
 
-    updateJson(".handlers.bot", botHandlerAddress);
-    updateJson(".handlers.crossMargin", crossMarginHandlerAddress);
-    updateJson(".handlers.limitTrade", limitTradeHandlerAddress);
     updateJson(".handlers.liquidity", liquidityHandlerAddress);
-    updateJson(".handlers.marketTrade", marketTradeHandlerAddress);
   }
 }

@@ -354,7 +354,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         ethAssetId,
         true,
-        ethusdMarket.longOpenInterest.sub(ethusdMarket.shortOpenInterest),
+        ethusdMarket.longOpenInterest && ethusdMarket.shortOpenInterest
+          ? ethusdMarket.longOpenInterest.sub(ethusdMarket.shortOpenInterest)
+          : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
       ],
@@ -366,7 +368,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         wbtcAssetId,
         true,
-        ethusdMarket.longOpenInterest.sub(btcusdMarket.shortOpenInterest),
+        btcusdMarket.longOpenInterest && btcusdMarket.shortOpenInterest
+          ? btcusdMarket.longOpenInterest.sub(btcusdMarket.shortOpenInterest)
+          : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
       ],
@@ -378,7 +382,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         appleAssetId,
         true,
-        ethusdMarket.longOpenInterest.sub(applusdMarket.shortOpenInterest),
+        applusdMarket.longOpenInterest && applusdMarket.shortOpenInterest
+          ? applusdMarket.longOpenInterest.sub(applusdMarket.shortOpenInterest)
+          : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
       ],
@@ -390,7 +396,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         jpyAssetId,
         true,
-        ethusdMarket.longOpenInterest.sub(jpyusdMarket.shortOpenInterest),
+        jpyusdMarket.longOpenInterest && jpyusdMarket.shortOpenInterest
+          ? jpyusdMarket.longOpenInterest.sub(jpyusdMarket.shortOpenInterest)
+          : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
       ],
@@ -401,12 +409,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("=== Prices ===");
   console.log(ethers.utils.formatUnits(usdcPrice._price, 30));
-  console.log(ethers.utils.formatUnits(usdtPrice._price, 30));
-  console.log(ethers.utils.formatUnits(daiPrice._price, 30));
-  console.log(ethers.utils.formatUnits(wethPrice._price, 30));
-  console.log(ethers.utils.formatUnits(wbtcPrice._price, 30));
-  console.log(ethers.utils.formatUnits(applePrice._price, 30));
-  console.log(ethers.utils.formatUnits(jpyPrice._price, 30));
+  console.log(ethers.utils.formatUnits(usdtPrice?._price, 30));
+  console.log(ethers.utils.formatUnits(daiPrice?._price, 30));
+  console.log(ethers.utils.formatUnits(wethPrice?._price, 30));
+  console.log(ethers.utils.formatUnits(wbtcPrice?._price, 30));
+  console.log(ethers.utils.formatUnits(applePrice?._price, 30));
+  console.log(ethers.utils.formatUnits(jpyPrice?._price, 30));
   console.log("=== Adaptive Prices ===");
   console.log(ethers.utils.formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
   console.log(ethers.utils.formatUnits(btcusdAdaptivePrice._adaptivePrice, 30));

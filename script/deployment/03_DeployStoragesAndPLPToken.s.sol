@@ -23,7 +23,6 @@ contract DeployStoragesAndPLPToken is ConfigJsonRepo {
     updateJson(".storages.config", configStorageAddress);
     updateJson(".storages.perp", perpStorageAddress);
     updateJson(".storages.vault", vaultStorageAddress);
-
     updateJson(".tokens.plp", plpAddress);
   }
 }

@@ -61,11 +61,7 @@ contract SetMarkets is ConfigJsonRepo {
 
     // default market config
     IConfigStorage.MarketConfig memory _newMarketConfig;
-    IConfigStorage.OpenInterest memory _newOpenInterestConfig;
     IConfigStorage.FundingRate memory _newFundingRateConfig;
-
-    _newOpenInterestConfig.longMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
-    _newOpenInterestConfig.shortMaxOpenInterestUSDE30 = 10_000_000 * DOLLAR;
 
     _newFundingRateConfig.maxSkewScaleUSD = 3_000_000 * DOLLAR;
     _newFundingRateConfig.maxFundingRate = 0.00000116 * 1e18; // 10% per day
@@ -80,7 +76,6 @@ contract SetMarkets is ConfigJsonRepo {
     _newMarketConfig.assetClass = _assetClass;
     _newMarketConfig.allowIncreasePosition = true;
     _newMarketConfig.active = true;
-    _newMarketConfig.openInterest = _newOpenInterestConfig;
     _newMarketConfig.fundingRate = _newFundingRateConfig;
 
     return configStorage.addMarketConfig(_newMarketConfig);

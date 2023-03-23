@@ -15,5 +15,8 @@ contract LiquidityHandler_Base is BaseTest {
     liquidityHandler = Deployer.deployLiquidityHandler(address(mockLiquidityService), address(leanPyth), 5 ether);
     plp.setMinter(address(this), true);
     mockLiquidityService.setPlpEnabled(true);
+
+    // Whitelist price updater
+    leanPyth.setUpdater(address(liquidityHandler), true);
   }
 }

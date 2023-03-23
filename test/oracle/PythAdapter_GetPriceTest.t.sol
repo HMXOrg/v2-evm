@@ -12,6 +12,9 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     pythAdapter.setConfig(wethAssetId, wethPriceId, false);
     pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
     pythAdapter.setConfig(jpyAssetId, jpyPriceId, true);
+
+    // Whitelist price updater
+    leanPyth.setUpdater(address(this), true);
   }
 
   function updateWbtcWithConf(uint64 conf) private {

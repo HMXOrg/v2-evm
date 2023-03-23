@@ -50,7 +50,6 @@ contract BotHandler_Base is BaseTest {
     );
 
     botHandler = Deployer.deployBotHandler(address(tradeService), address(mockLiquidationService), address(leanPyth));
-    // leanPyth.setUpdater(address(botHandler), true);
 
     address[] memory _positionManagers = new address[](1);
     _positionManagers[0] = address(this);
@@ -67,6 +66,9 @@ contract BotHandler_Base is BaseTest {
     vaultStorage.setServiceExecutors(address(tradeService), true);
     vaultStorage.setServiceExecutors(address(tradeHelper), true);
     vaultStorage.setServiceExecutors(address(this), true);
+
+    // Whitelist price updater
+    leanPyth.setUpdater(address(botHandler), true);
   }
 
   function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {

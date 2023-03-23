@@ -7,6 +7,9 @@ contract OracleMiddleware_BaseTest is BaseTest {
   function setUp() public virtual {
     vm.deal(ALICE, 1 ether);
 
+    // Whitelist price updater
+    leanPyth.setUpdater(ALICE, true);
+
     // Feed wbtc
     {
       pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);

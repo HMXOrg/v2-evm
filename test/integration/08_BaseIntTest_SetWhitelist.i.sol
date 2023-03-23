@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { BaseIntTest_SetPLPTokens } from "@hmx-test/integration/07_BaseIntTest_SetPLPTokens.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { console } from "forge-std/console.sol";
+import { LeanPyth } from "@hmx/oracle/LeanPyth.sol";
 
 abstract contract BaseIntTest_SetWhitelist is BaseIntTest_SetPLPTokens {
   constructor() {
@@ -24,5 +25,14 @@ abstract contract BaseIntTest_SetWhitelist is BaseIntTest_SetPLPTokens {
     configStorage.setServiceExecutor(address(tradeService), address(limitTradeHandler), true);
     configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
     configStorage.setServiceExecutor(address(tradeService), address(botHandler), true);
+
+    // Whitelist price updater
+    {
+      LeanPyth(address(pyth)).setUpdater(address(botHandler), true);
+      LeanPyth(address(pyth)).setUpdater(address(crossMarginHandler), true);
+      LeanPyth(address(pyth)).setUpdater(address(limitTradeHandler), true);
+      LeanPyth(address(pyth)).setUpdater(address(liquidityHandler), true);
+      LeanPyth(address(pyth)).setUpdater(address(marketTradeHandler), true);
+    }
   }
 }

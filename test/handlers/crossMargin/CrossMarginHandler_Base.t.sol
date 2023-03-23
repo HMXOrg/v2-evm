@@ -106,6 +106,9 @@ contract CrossMarginHandler_Base is BaseTest {
     oracleMiddleware.setUpdater(address(this), true);
     oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // active
     oracleMiddleware.setMarketStatus(wethAssetId, uint8(2)); // active
+
+    // Whitelist price updater
+    leanPyth.setUpdater(address(crossMarginHandler), true);
   }
 
   /**

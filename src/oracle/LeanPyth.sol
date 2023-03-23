@@ -33,7 +33,7 @@ contract LeanPyth is Owned, ILeanPyth {
   /// @dev Updates the price feeds with the given price data.
   /// @notice The function must not be called with any msg.value. (Define as payable for IPyth compatability)
   /// @param updateData The array of encoded price feeds to update.
-  function updatePriceFeeds(bytes[] calldata updateData) public payable override {
+  function updatePriceFeeds(bytes[] calldata updateData) external payable onlyUpdater {
     // The function is payable (to make it IPyth compat), so there is a chance msg.value is submitted.
     // On LeanPyth, we do not collect any fee.
     if (msg.value > 0) revert LeanPyth_ExpectZeroFee();

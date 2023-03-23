@@ -25,6 +25,9 @@ contract LimitTradeHandler_Base is BaseTest {
     mockTradeService.setPerpStorage(address(mockPerpStorage));
 
     limitOrderTester = new LimitOrderTester(limitTradeHandler);
+
+    // Whitelist price updater
+    leanPyth.setUpdater(address(limitTradeHandler), true);
   }
 
   // =========================================

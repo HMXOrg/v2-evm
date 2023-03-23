@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_SetMarkets } from "@hmx-test/integration/03_BaseIntTest_SetMarkets.i.sol";
 import { PythStructs } from "pyth-sdk-solidity/MockPyth.sol";
+import { LeanPyth } from "@hmx/oracle/LeanPyth.sol";
 
 abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   error BadArgs();
@@ -140,6 +141,10 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       }
     }
     uint256 fee = pyth.getUpdateFee(initialPriceFeedDatas);
+
+    // Whitelist price updater
+    LeanPyth(address(pyth)).setUpdater(address(this), true);
+
     vm.deal(address(this), fee);
     pyth.updatePriceFeeds{ value: fee }(initialPriceFeedDatas);
     skip(1);

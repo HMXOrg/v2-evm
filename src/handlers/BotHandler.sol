@@ -12,7 +12,6 @@ import { TradeService } from "@hmx/services/TradeService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ILeanPyth } from "@hmx/oracle/interfaces/ILeanPyth.sol";
-import { console2 } from "forge-std/console2.sol";
 
 // @todo - integrate with BotHandler in another PRs
 contract BotHandler is ReentrancyGuard, IBotHandler, Owned {

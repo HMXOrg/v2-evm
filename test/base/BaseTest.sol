@@ -99,7 +99,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant jpyAssetId = "JPY";
 
   constructor() {
-    console2.log(uint(1111));
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
@@ -128,12 +127,9 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockTradeService = new MockTradeService();
     mockLiquidationService = new MockLiquidationService();
 
-    console2.log(uint(1));
     leanPyth = new LeanPyth();
-    console2.log(uint(2));
     pythAdapter = Deployer.deployPythAdapter(address(leanPyth));
     oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter));
-    console2.log(uint(3));
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),

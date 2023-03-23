@@ -14,8 +14,8 @@ import { IWNative } from "../interfaces/IWNative.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+
+import { console2 } from "forge-std/console2.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   uint64 internal constant RATE_PRECISION = 1e18;
@@ -38,7 +38,6 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     address token,
     uint256 amount
   );
-  event LogWithdrawFundingFeeSurplus(uint256 surplusValue);
 
   /**
    * STATES
@@ -170,111 +169,16 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   /// @notice Check funding fee surplus and transfer to PLP
   /// @dev Check if value on funding fee reserve have exceed balance for paying to traders
   ///      - If yes means exceed value are the surplus for platform and can be booked to PLP
-  function withdrawFundingFeeSurplus() external nonReentrant onlyOwner {
-    ConfigStorage _configStorage = ConfigStorage(CrossMarginService(crossMarginService).configStorage());
-    PerpStorage _perpStorage = PerpStorage(CrossMarginService(crossMarginService).perpStorage());
-    VaultStorage _vaultStorage = VaultStorage(CrossMarginService(crossMarginService).vaultStorage());
-    OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
+  function withdrawFundingFeeSurplus(bytes[] memory _priceData) external nonReentrant onlyOwner {
+    console2.log("");
+    console2.log("------------------------------- withdrawFundingFeeSurplus()");
 
-    // Get funding Fee LONG & SHORT to find positive values
-    // positive value mean how much protocol book funding fee value that will be paid to trader
-    PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
+    // Call update oracle price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
-    if (_globalState.accumFundingLong < 0 && _globalState.accumFundingShort < 0)
-      revert ICrossMarginHandler_NoFundingFeeSurplus();
-
-    // Focus on positive funding accrued side
-    uint256 fundingFeeBook = _globalState.accumFundingLong > _globalState.accumFundingShort
-      ? uint(_globalState.accumFundingLong)
-      : uint(_globalState.accumFundingShort);
-
-    // Calculate value of current Funding fee reserve
-    uint256 totalFundingFeeReserveValue;
-    address[] memory collateralTokens = _configStorage.getCollateralTokens();
-    uint256 collateralTokensLength = collateralTokens.length;
-    {
-      for (uint256 i; i < collateralTokensLength; ) {
-        bytes32 tokenAssetId = _configStorage.tokenAssetIds(collateralTokens[i]);
-        uint8 tokenDecimal = _configStorage.getAssetTokenDecimal(collateralTokens[i]);
-        (uint256 tokenPrice, ) = _oracle.getLatestPrice(tokenAssetId, false);
-
-        uint256 fundingFeeAmount = _vaultStorage.fundingFeeReserve(collateralTokens[i]);
-        if (fundingFeeAmount > 0) {
-          totalFundingFeeReserveValue += (fundingFeeAmount * tokenPrice) / (10 ** tokenDecimal);
-        }
-
-        unchecked {
-          ++i;
-        }
-      }
-    }
-
-    // If totalFundingFeeReserveValue > fundingFeeBook  means protocol has exceed balance of fee reserved for paying to traders
-    // Funding fee surplus = totalFundingFeeReserveValue - fundingFeeBook
-    if (fundingFeeBook < totalFundingFeeReserveValue) revert ICrossMarginHandler_NoFundingFeeSurplus();
-    uint256 fundingFeeSurplusValue = totalFundingFeeReserveValue - fundingFeeBook;
-
-    // Looping through fundingFee to transfer surplus amount to PLP
-    {
-      for (uint256 i; i < collateralTokensLength; ) {
-        uint256 _fundingFeeAmount = _vaultStorage.fundingFeeReserve(collateralTokens[i]);
-
-        if (_fundingFeeAmount > 0) {
-          (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-            _configStorage,
-            _oracle,
-            _fundingFeeAmount,
-            fundingFeeSurplusValue,
-            collateralTokens[i]
-          );
-
-          _vaultStorage.withdrawSurplusFromFundingFeeReserveToPLP(collateralTokens[i], _repayAmount);
-          fundingFeeSurplusValue -= _repayValue;
-        }
-
-        if (fundingFeeSurplusValue == 0) break;
-
-        unchecked {
-          ++i;
-        }
-      }
-    }
-
-    // If fee cannot be covered, revert.
-    if (fundingFeeSurplusValue > 0) revert ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
-
-    // Update Global state
-    if (_globalState.accumFundingLong > _globalState.accumFundingShort) {
-      _globalState.accumFundingLong -= int(fundingFeeSurplusValue);
-    } else {
-      _globalState.accumFundingShort -= int(fundingFeeSurplusValue);
-    }
-    _perpStorage.updateGlobalState(_globalState);
-
-    emit LogWithdrawFundingFeeSurplus(fundingFeeSurplusValue);
-  }
-
-  function _getRepayAmount(
-    ConfigStorage _configStorage,
-    OracleMiddleware _oracle,
-    uint256 _reserveBalance,
-    uint256 _feeSurplusValueE30,
-    address _token
-  ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
-    bytes32 tokenAssetId = _configStorage.tokenAssetIds(_token);
-    (uint256 tokenPrice, ) = _oracle.getLatestPrice(tokenAssetId, false);
-
-    uint8 tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
-    uint256 feeSurplusAmount = (_feeSurplusValueE30 * (10 ** tokenDecimal)) / tokenPrice;
-
-    if (_reserveBalance > feeSurplusAmount) {
-      // _reserveBalance can cover the rest of the surplus fee
-      return (feeSurplusAmount, _feeSurplusValueE30);
-    } else {
-      // _reserveBalance cannot cover the rest of the surplus fee, just take the amount the fee reserve have
-      uint256 _reserveBalanceValue = (_reserveBalance * tokenPrice) / (10 ** tokenDecimal);
-      return (_reserveBalance, _reserveBalanceValue);
-    }
+    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+    _crossMarginService.withdrawFundingFeeSurplus();
   }
 
   receive() external payable {

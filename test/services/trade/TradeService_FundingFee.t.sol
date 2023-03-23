@@ -143,7 +143,7 @@ contract TradeService_FundingFee is TradeService_Base {
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
       assertEq(_globalMarket.currentFundingRate, -66666666666666); // LONG PAY SHORT
       // Alice increase long position size * funding Rate = 500_000 * -0.000066666666666666 = -33.333333333333 $
-      assertEq(_globalState.accumFundingLong, -33333333333333000000);
+      assertEq(_globalState.accumFundingLong, -33333333333333000000000000000000);
       assertEq(_globalState.accumFundingShort, 0);
 
       assertEq(vaultStorage.fundingFeeReserve(address(usdt)), 0);

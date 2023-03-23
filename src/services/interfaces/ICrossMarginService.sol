@@ -9,6 +9,8 @@ interface ICrossMarginService {
   error ICrossMarginService_InvalidAddress();
   error ICrossMarginService_InsufficientBalance();
   error ICrossMarginService_WithdrawBalanceBelowIMR();
+  error ICrossMarginHandler_NoFundingFeeSurplus();
+  error ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
 
   function calculator() external returns (address);
 
@@ -31,4 +33,6 @@ interface ICrossMarginService {
     uint256 _amount,
     address _receiver
   ) external;
+
+  function withdrawFundingFeeSurplus() external;
 }

@@ -12,6 +12,8 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
@@ -86,6 +88,8 @@ contract TradeHelper is ITradeHelper {
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
   function updateFundingRate(uint256 _marketIndex) external {
+    console2.log("------------------------------- updateFundingRate()");
+
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -105,16 +109,19 @@ contract TradeHelper is ITradeHelper {
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
       int256 nextFundingRate = calculator.getNextFundingRate(_marketIndex);
-
       _globalMarket.currentFundingRate += nextFundingRate;
+      console2.log("!!! nextFundingRate", nextFundingRate);
+      console2.log("!!! currentFundingRate", _globalMarket.currentFundingRate);
 
       if (_globalMarket.longOpenInterest > 0) {
-        int256 fundingFeeLong = (_globalMarket.currentFundingRate * int(_globalMarket.longPositionSize)) / 1e30;
-        _updateAccumFundingLong(fundingFeeLong);
+        int256 fundingFeeLongE30 = (_globalMarket.currentFundingRate * int(_globalMarket.longPositionSize)) / 1e18;
+        _updateAccumFundingLong(fundingFeeLongE30);
+        console2.log("!!! longPositionSize", _globalMarket.longPositionSize);
       }
       if (_globalMarket.shortOpenInterest > 0) {
-        int256 fundingFeeShort = (_globalMarket.currentFundingRate * -int(_globalMarket.shortPositionSize)) / 1e30;
-        _updateAccumFundingLong(fundingFeeShort);
+        int256 fundingFeeShortE30 = (_globalMarket.currentFundingRate * -int(_globalMarket.shortPositionSize)) / 1e18;
+        _updateAccumFundingShort(fundingFeeShortE30);
+        console2.log("!!! shortPositionSize", _globalMarket.shortPositionSize);
       }
 
       _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
@@ -153,6 +160,8 @@ contract TradeHelper is ITradeHelper {
     uint8 _assetClassIndex,
     uint256 _marketIndex
   ) external {
+    console2.log("");
+    console2.log("------------------------------- settleAllFees()");
     SettleAllFeesVars memory _vars;
 
     // SLOAD
@@ -169,7 +178,7 @@ contract TradeHelper is ITradeHelper {
     // Calculate the trading fee
     {
       _vars.tradingFeeToBePaid = (_absSizeDelta * _positionFeeBPS) / BPS;
-
+      console2.log("_vars.tradingFeeToBePaid", _vars.tradingFeeToBePaid);
       emit LogSettleTradingFeeValue(_vars.subAccount, _vars.tradingFeeToBePaid);
     }
 
@@ -180,6 +189,7 @@ contract TradeHelper is ITradeHelper {
         _position.reserveValueE30,
         _position.entryBorrowingRate
       );
+      console2.log("_vars.borrowingFeeToBePaid", _vars.borrowingFeeToBePaid);
 
       emit LogSettleBorrowingFeeValue(_vars.subAccount, _vars.borrowingFeeToBePaid);
     }
@@ -198,6 +208,10 @@ contract TradeHelper is ITradeHelper {
       // If fundingFee is negative mean Trader receives Fee
       // If fundingFee is positive mean Trader pays Fee
       _vars.traderMustPay = (_vars.fundingFeeToBePaid > 0);
+      console2.log("_position.positionSizeE30", _position.positionSizeE30);
+      console2.log("_position.entryFundingRate", _position.entryFundingRate);
+      console2.log("_vars.fundingFeeToBePaid", _vars.fundingFeeToBePaid);
+      console2.log("_vars.traderMustPay", _vars.traderMustPay);
 
       emit LogSettleFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBePaid);
     }
@@ -254,10 +268,18 @@ contract TradeHelper is ITradeHelper {
       bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
       (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
 
+      console2.log("");
+      console2.log("\\\\\\\\\\\\ TOKEN", ERC20(_vars.collateralTokens[i]).symbol());
+      console2.logE30("*** Price", _vars.tokenPrice);
+
       // Funding fee
       if (_vars.absFundingFeeToBePaid > 0) {
+        console2.log(">>> pay absFundingFeeToBePaid");
+        console2.logE30("*** _vars.absFundingFeeToBePaid", _vars.absFundingFeeToBePaid);
+
         // If there's borrowing debts from PLP, then trader must repays to PLP first
         _vars.plpLiquidityDebtUSDE30 = _vars.vaultStorage.plpLiquidityDebtUSDE30();
+        console2.logE30("*** _vars.plpLiquidityDebtUSDE30", _vars.plpLiquidityDebtUSDE30);
         if (_vars.plpLiquidityDebtUSDE30 > 0) {
           _repayBorrowDebtFromTraderToPlp(_vars, _vars.collateralTokens[i]);
         }
@@ -341,6 +363,9 @@ contract TradeHelper is ITradeHelper {
         _collateralToken,
         _vars.tokenPrice
       );
+
+      console2.log("_repayAmount", _repayAmount);
+      console2.log("_repayValue", _repayValue);
 
       // book the balances
       _vars.vaultStorage.payFundingFeeFromTraderToFundingFeeReserve(_vars.subAccount, _collateralToken, _repayAmount);
@@ -540,18 +565,24 @@ contract TradeHelper is ITradeHelper {
   }
 
   function _updateAccumFundingLong(int256 fundingLong) internal {
+    console2.log("");
+    console2.log("------------------------------- _updateAccumFundingLong()");
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
 
     _globalState.accumFundingLong += fundingLong;
+    console2.log("_globalState.accumFundingLong", _globalState.accumFundingLong);
     _perpStorage.updateGlobalState(_globalState);
   }
 
   function _updateAccumFundingShort(int256 fundingShort) internal {
+    console2.log("");
+    console2.log("------------------------------- _updateAccumFundingShort()");
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
 
     _globalState.accumFundingShort += fundingShort;
+    console2.log("_globalState.accumFundingShort", _globalState.accumFundingShort);
     _perpStorage.updateGlobalState(_globalState);
   }
 

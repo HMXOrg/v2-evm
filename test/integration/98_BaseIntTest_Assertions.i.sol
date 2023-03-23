@@ -68,18 +68,26 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     assertVaultTokenBalance(_token, _balance, "");
   }
 
+  function assertFundingFeeReserve(address _token, uint256 _fundingFeeReserve, string memory _str) internal {
+    assertEq(
+      vaultStorage.fundingFeeReserve(_token),
+      _fundingFeeReserve,
+      string.concat(_str, "Vault's Funding fee is not matched")
+    );
+  }
+
   function assertVaultsFees(
     address _token,
     uint256 _fee,
     uint256 _devFee,
-    uint256 _fundingFee,
+    uint256 _fundingFeeReserve,
     string memory _str
   ) internal {
     assertEq(vaultStorage.protocolFees(_token), _fee, string.concat(_str, "Vault's Fee is not matched"));
     assertEq(vaultStorage.devFees(_token), _devFee, string.concat(_str, "Vault's Dev fee is not matched"));
     assertEq(
       vaultStorage.fundingFeeReserve(_token),
-      _fundingFee,
+      _fundingFeeReserve,
       string.concat(_str, "Vault's Funding fee is not matched")
     );
   }
@@ -224,6 +232,29 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       _entryFundingRate,
       ""
     );
+  }
+
+  function assertEntryFundingRate(
+    address _subAccount,
+    uint256 _marketIndex,
+    int256 _entryFundingRate,
+    string memory _str
+  ) internal {
+    bytes32 _positionId = keccak256(abi.encodePacked(_subAccount, _marketIndex));
+    IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
+
+    assertEq(
+      _position.entryFundingRate,
+      _entryFundingRate,
+      string.concat(_str, "Position's entry funding rate is not matched")
+    );
+  }
+
+  function assertGlobalAccumFunding(int256 _accumFundingLong, int256 _accumFundingShort, string memory _str) internal {
+    IPerpStorage.GlobalState memory _global = perpStorage.getGlobalState();
+
+    assertEq(_global.accumFundingLong, _accumFundingLong, string.concat(_str, "Global's accum funding Long"));
+    assertEq(_global.accumFundingShort, _accumFundingShort, string.concat(_str, "Global's accum funding Short"));
   }
 
   function assertMarketFundingRate(

@@ -42,7 +42,6 @@ abstract contract TradeService_Base is BaseTest {
 
     vaultStorage.setServiceExecutors(address(tradeService), true);
     vaultStorage.setServiceExecutors(address(tradeHelper), true);
-    vaultStorage.setServiceExecutors(address(feeCalculator), true);
     vaultStorage.setServiceExecutors(address(this), true);
   }
 

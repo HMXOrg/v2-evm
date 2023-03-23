@@ -53,7 +53,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
-    vaultStorage.setTraderBalance(_getSubAccount(ALICE, 0), address(weth), 100_000 ether);
+    vaultStorage.increaseTraderBalance(_getSubAccount(ALICE, 0), address(weth), 100_000 ether);
   }
 
   /**
@@ -112,8 +112,8 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: 90_000 * 1e30,
+      // realizedPnl: 90_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0,
@@ -168,8 +168,8 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: 90_000 * 1e30,
+      // realizedPnl: 90_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 1.049999999999999999999999999998 * 1e30,

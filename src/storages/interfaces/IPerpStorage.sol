@@ -24,11 +24,9 @@ interface IPerpStorage {
     // LONG position
     uint256 longPositionSize;
     uint256 longAvgPrice;
-    uint256 longOpenInterest;
     // SHORT position
     uint256 shortPositionSize;
     uint256 shortAvgPrice;
-    uint256 shortOpenInterest;
     // funding rate
     int256 accumFundingLong;
     int256 accumFundingShort;
@@ -44,7 +42,6 @@ interface IPerpStorage {
     uint256 entryBorrowingRate;
     uint256 reserveValueE30; // Max Profit reserved in USD (9X of position collateral)
     uint256 lastIncreaseTimestamp; // To validate position lifetime
-    uint256 openInterest;
     int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
     int256 realizedPnl;
     int256 entryFundingRate;
@@ -69,19 +66,9 @@ interface IPerpStorage {
 
   function getBadDebt(address _subAccount) external view returns (uint256 badDebt);
 
-  function updateGlobalLongMarketById(
-    uint256 _marketIndex,
-    uint256 _newPositionSize,
-    uint256 _newAvgPrice,
-    uint256 _newOpenInterest
-  ) external;
+  function updateGlobalLongMarketById(uint256 _marketIndex, uint256 _newPositionSize, uint256 _newAvgPrice) external;
 
-  function updateGlobalShortMarketById(
-    uint256 _marketIndex,
-    uint256 _newPositionSize,
-    uint256 _newAvgPrice,
-    uint256 _newOpenInterest
-  ) external;
+  function updateGlobalShortMarketById(uint256 _marketIndex, uint256 _newPositionSize, uint256 _newAvgPrice) external;
 
   function updateGlobalState(GlobalState memory _newGlobalState) external;
 

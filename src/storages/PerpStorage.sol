@@ -6,7 +6,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
 
-import { Owned } from "../base/Owned.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
@@ -143,24 +143,20 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   function updateGlobalLongMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice,
-    uint256 _newOpenInterest
+    uint256 _newAvgPrice
   ) external onlyWhitelistedExecutor {
     globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
-    globalMarkets[_marketIndex].longOpenInterest = _newOpenInterest;
   }
 
   // @todo - update funding rate
   function updateGlobalShortMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice,
-    uint256 _newOpenInterest
+    uint256 _newAvgPrice
   ) external onlyWhitelistedExecutor {
     globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
-    globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
   }
 
   function updateGlobalState(GlobalState memory _newGlobalState) external onlyWhitelistedExecutor {
@@ -213,23 +209,19 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     globalAssetClass[_assetClassIndex].reserveValueE30 -= _reserve;
   }
 
-  function increaseOpenInterest(uint256 _marketIndex, bool _isLong, uint256 _size, uint256 _openInterest) external {
+  function increasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external {
     if (_isLong) {
       globalMarkets[_marketIndex].longPositionSize += _size;
-      globalMarkets[_marketIndex].longOpenInterest += _openInterest;
     } else {
       globalMarkets[_marketIndex].shortPositionSize += _size;
-      globalMarkets[_marketIndex].shortOpenInterest += _openInterest;
     }
   }
 
-  function decreaseOpenInterest(uint256 _marketIndex, bool _isLong, uint256 _size, uint256 _openInterest) external {
+  function decreasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external {
     if (_isLong) {
       globalMarkets[_marketIndex].longPositionSize -= _size;
-      globalMarkets[_marketIndex].longOpenInterest -= _openInterest;
     } else {
       globalMarkets[_marketIndex].shortPositionSize -= _size;
-      globalMarkets[_marketIndex].shortOpenInterest -= _openInterest;
     }
   }
 

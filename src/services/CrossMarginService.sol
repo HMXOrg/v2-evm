@@ -6,6 +6,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 import { Owned } from "@hmx/base/Owned.sol";
 
 // contracts
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
@@ -19,6 +20,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
    */
   event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
+  event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
   event LogSetCalculator(address indexed oldCalculator, address newCalculator);
   event LogDepositCollateral(address indexed primaryAccount, address indexed subAccount, address token, uint256 amount);
   event LogWithdrawCollateral(
@@ -35,18 +37,21 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   address public configStorage;
   address public vaultStorage;
   address public calculator;
+  address public perpStorage;
 
-  constructor(address _configStorage, address _vaultStorage, address _calculator) {
+  constructor(address _configStorage, address _vaultStorage, address _perpStorage, address _calculator) {
     if (_configStorage == address(0) || _vaultStorage == address(0) || _calculator == address(0))
       revert ICrossMarginService_InvalidAddress();
 
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
+    perpStorage = _perpStorage;
     calculator = _calculator;
 
     // Sanity check
     ConfigStorage(_configStorage).calculator();
     VaultStorage(_vaultStorage).devFees(address(0));
+    PerpStorage(_perpStorage).getGlobalState();
     Calculator(_calculator).oracle();
   }
 
@@ -80,28 +85,17 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     address _token,
     uint256 _amount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
-    address _vaultStorage = vaultStorage;
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address
     address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
 
-    // Get current collateral token balance of trader's account
-    // and sum with new token depositing amount
-    uint256 _oldBalance = VaultStorage(_vaultStorage).traderBalances(_subAccount, _token);
-
-    uint256 _newBalance = _oldBalance + _amount;
-
-    // Set new collateral token balance
-    VaultStorage(_vaultStorage).setTraderBalance(_subAccount, _token, _newBalance);
+    // Increase collateral token balance
+    _vaultStorage.increaseTraderBalance(_subAccount, _token, _amount);
 
     // Update token balance
-    uint256 deltaBalance = VaultStorage(_vaultStorage).pullToken(_token);
+    uint256 deltaBalance = _vaultStorage.pullToken(_token);
     if (deltaBalance < _amount) revert ICrossMarginService_InvalidDepositBalance();
-
-    // If trader's account never contain this token before then register new token to the account
-    if (_oldBalance == 0 && _newBalance != 0) {
-      VaultStorage(_vaultStorage).addTraderToken(_subAccount, _token);
-    }
 
     emit LogDepositCollateral(_primaryAccount, _subAccount, _token, _amount);
   }
@@ -119,33 +113,26 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     uint256 _amount,
     address _receiver
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
-    address _vaultStorage = vaultStorage;
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address
     address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
 
     // Get current collateral token balance of trader's account
     // and deduct with new token withdrawing amount
-    uint256 _oldBalance = VaultStorage(_vaultStorage).traderBalances(_subAccount, _token);
+    uint256 _oldBalance = _vaultStorage.traderBalances(_subAccount, _token);
     if (_amount > _oldBalance) revert ICrossMarginService_InsufficientBalance();
 
-    uint256 _newBalance = _oldBalance - _amount;
-
-    // Set new collateral token balance
-    VaultStorage(_vaultStorage).setTraderBalance(_subAccount, _token, _newBalance);
+    // Decrease collateral token balance
+    _vaultStorage.decreaseTraderBalance(_subAccount, _token, _amount);
 
     // Calculate validation for if new Equity is below IMR or not
     int256 equity = Calculator(calculator).getEquity(_subAccount, 0, 0);
     if (equity < 0 || uint256(equity) < Calculator(calculator).getIMR(_subAccount))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
-    // If trader withdraws all token out, then remove token on traderTokens list
-    if (_oldBalance != 0 && _newBalance == 0) {
-      VaultStorage(_vaultStorage).removeTraderToken(_subAccount, _token);
-    }
-
     // Transfer withdrawing token from VaultStorage to destination wallet
-    VaultStorage(_vaultStorage).pushToken(_token, _receiver, _amount);
+    _vaultStorage.pushToken(_token, _receiver, _amount);
 
     emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount, _receiver);
   }
@@ -174,6 +161,18 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
     // Sanity check
     VaultStorage(_vaultStorage).devFees(address(0));
+  }
+
+  /// @notice Set new PerpStorage contract address.
+  /// @param _perpStorage New PerpStorage contract address.
+  function setPerpStorage(address _perpStorage) external nonReentrant onlyOwner {
+    if (_perpStorage == address(0)) revert ICrossMarginService_InvalidAddress();
+
+    emit LogSetPerpStorage(perpStorage, _perpStorage);
+    perpStorage = _perpStorage;
+
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
   }
 
   /// @notice Set new Calculator contract address.

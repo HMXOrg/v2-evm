@@ -68,13 +68,24 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     assertVaultTokenBalance(_token, _balance, "");
   }
 
-  function assertVaultsFees(address _token, uint256 _fee, uint256 _devFee, string memory _str) internal {
+  function assertVaultsFees(
+    address _token,
+    uint256 _fee,
+    uint256 _devFee,
+    uint256 _fundingFee,
+    string memory _str
+  ) internal {
     assertEq(vaultStorage.protocolFees(_token), _fee, string.concat(_str, "Vault's Fee is not matched"));
     assertEq(vaultStorage.devFees(_token), _devFee, string.concat(_str, "Vault's Dev fee is not matched"));
+    assertEq(
+      vaultStorage.fundingFeeReserve(_token),
+      _fundingFee,
+      string.concat(_str, "Vault's Funding fee is not matched")
+    );
   }
 
-  function assertVaultsFees(address _token, uint256 _fee, uint256 _devFee) internal {
-    assertVaultsFees(_token, _fee, _devFee, "");
+  function assertVaultsFees(address _token, uint256 _fee, uint256 _devFee, uint256 _fundingFee) internal {
+    assertVaultsFees(_token, _fee, _devFee, _fundingFee, "");
   }
 
   function assertSubAccountTokenBalance(
@@ -163,7 +174,6 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _marketIndex,
     int256 _positionSize,
     uint256 _avgPrice,
-    uint256 _openInterest,
     uint256 _reserveValue,
     int256 _realizedPnl,
     uint256 _entryBorrowingRate,
@@ -175,7 +185,6 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
 
     assertEq(_position.positionSizeE30, _positionSize, string.concat(_str, "Position's size is not matched"));
     assertEq(_position.avgEntryPriceE30, _avgPrice, string.concat(_str, "Position's average price is not matched"));
-    assertEq(_position.openInterest, _openInterest, string.concat(_str, "Position's open interest is not matched"));
     assertEq(_position.reserveValueE30, _reserveValue, string.concat(_str, "Position's reserve value is not matched"));
     assertEq(_position.realizedPnl, _realizedPnl, string.concat(_str, "Position's realized pnl is not matched"));
     assertEq(
@@ -195,7 +204,6 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _marketIndex,
     int256 _positionSize,
     uint256 _avgPrice,
-    uint256 _openInterest,
     uint256 _reserveValue,
     int256 _realizedPnl,
     uint256 _entryBorrowingRate,
@@ -206,13 +214,24 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       _marketIndex,
       _positionSize,
       _avgPrice,
-      _openInterest,
       _reserveValue,
       _realizedPnl,
       _entryBorrowingRate,
       _entryFundingRate,
       ""
     );
+  }
+
+  function assertNumberOfPosition(address _subAccount, uint256 _numberOfPosition, string memory _str) internal {
+    assertEq(
+      perpStorage.getNumberOfSubAccountPosition(_subAccount),
+      _numberOfPosition,
+      string.concat(_str, "Number of position")
+    );
+  }
+
+  function assertNumberOfPosition(address _subAccount, uint256 _numberOfPosition) internal {
+    assertEq(perpStorage.getNumberOfSubAccountPosition(_subAccount), _numberOfPosition, "");
   }
 
   function assertMarketFundingRate(
@@ -239,46 +258,32 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _marketIndex,
     uint256 _positionSize,
     uint256 _avgPrice,
-    uint256 _openInterest,
     string memory _str
   ) internal {
     IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     assertEq(_market.longPositionSize, _positionSize, string.concat(_str, "Market's Long position size"));
     assertEq(_market.longAvgPrice, _avgPrice, string.concat(_str, "Market's Long avg price size"));
-    assertEq(_market.longOpenInterest, _openInterest, string.concat(_str, "Market's Long open interest size"));
   }
 
-  function assertMarketLongPosition(
-    uint256 _marketIndex,
-    uint256 _positionSize,
-    uint256 _avgPrice,
-    uint256 _openInterest
-  ) internal {
-    assertMarketLongPosition(_marketIndex, _positionSize, _avgPrice, _openInterest, "");
+  function assertMarketLongPosition(uint256 _marketIndex, uint256 _positionSize, uint256 _avgPrice) internal {
+    assertMarketLongPosition(_marketIndex, _positionSize, _avgPrice, "");
   }
 
   function assertMarketShortPosition(
     uint256 _marketIndex,
     uint256 _positionSize,
     uint256 _avgPrice,
-    uint256 _openInterest,
     string memory _str
   ) internal {
     IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     assertEq(_market.shortPositionSize, _positionSize, string.concat(_str, "Market's Short position size"));
     assertEq(_market.shortAvgPrice, _avgPrice, string.concat(_str, "Market's Short avg price size"));
-    assertEq(_market.shortOpenInterest, _openInterest, string.concat(_str, "Market's Short open interest size"));
   }
 
-  function assertMarketShortPosition(
-    uint256 _marketIndex,
-    uint256 _positionSize,
-    uint256 _avgPrice,
-    uint256 _openInterest
-  ) internal {
-    assertMarketShortPosition(_marketIndex, _positionSize, _avgPrice, _openInterest, "");
+  function assertMarketShortPosition(uint256 _marketIndex, uint256 _positionSize, uint256 _avgPrice) internal {
+    assertMarketShortPosition(_marketIndex, _positionSize, _avgPrice, "");
   }
 
   function assertAssetClassReserve(uint8 _assetClassIndex, uint256 _reserved, string memory _str) internal {
@@ -353,12 +358,12 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   }
 
   // Calculator
-  function assertSubAccounStatus(address _subAccount, uint256 _imr, uint256 _mmr, string memory _str) internal {
+  function assertSubAccountStatus(address _subAccount, uint256 _imr, uint256 _mmr, string memory _str) internal {
     assertEq(calculator.getIMR(_subAccount), _imr, string.concat(_str, "IMR is not matched"));
     assertEq(calculator.getMMR(_subAccount), _mmr, string.concat(_str, "MMR is not matched"));
   }
 
-  function assertSubAccounStatus(address _subAccount, uint256 _imr, uint256 _mmr) internal {
-    assertSubAccounStatus(_subAccount, _imr, _mmr, "");
+  function assertSubAccountStatus(address _subAccount, uint256 _imr, uint256 _mmr) internal {
+    assertSubAccountStatus(_subAccount, _imr, _mmr, "");
   }
 }

@@ -9,11 +9,16 @@ import { Owned } from "@hmx/base/Owned.sol";
 // interfaces
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
-import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
+  uint64 internal constant RATE_PRECISION = 1e18;
   using SafeERC20 for ERC20;
 
   /**

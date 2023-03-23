@@ -40,8 +40,8 @@ contract TradeService_TradingFee is TradeService_Base {
     mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
-    vaultStorage.setTraderBalance(aliceAddress, address(weth), 10 * 1e18);
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 100 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(weth), 10 * 1e18);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 100 * 1e6);
 
     vm.warp(100);
     {
@@ -64,7 +64,7 @@ contract TradeService_TradingFee is TradeService_Base {
         assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
 
         // Ignore Borrowing, Funding, and Dev Fees
-        assertEq(vaultStorage.fundingFee(address(weth)), 0);
+        assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
         assertEq(vaultStorage.devFees(address(weth)), 0);
       }
     }
@@ -83,7 +83,7 @@ contract TradeService_TradingFee is TradeService_Base {
         assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
 
         // Ignore Borrowing, Funding, and Dev Fees
-        assertEq(vaultStorage.fundingFee(address(weth)), 0);
+        assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
         assertEq(vaultStorage.devFees(address(weth)), 0);
       }
     }
@@ -103,8 +103,8 @@ contract TradeService_TradingFee is TradeService_Base {
     mockOracle.setPrice(usdtAssetId, 1 * 1e30);
 
     address aliceAddress = getSubAccount(ALICE, 0);
-    vaultStorage.setTraderBalance(aliceAddress, address(weth), 0.01 * 1e18);
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 100_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(weth), 0.01 * 1e18);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 100_000 * 1e6);
 
     vm.warp(100);
     {
@@ -128,7 +128,7 @@ contract TradeService_TradingFee is TradeService_Base {
         assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), (100_000 - 45) * 1e6);
 
         // Ignore Borrowing, Funding, and Dev Fees
-        assertEq(vaultStorage.fundingFee(address(weth)), 0);
+        assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
         assertEq(vaultStorage.devFees(address(weth)), 0);
       }
     }
@@ -149,7 +149,7 @@ contract TradeService_TradingFee is TradeService_Base {
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
-    vaultStorage.setTraderBalance(aliceAddress, address(usdt), 100_000 * 1e6);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 100_000 * 1e6);
 
     vm.warp(100);
     {
@@ -160,7 +160,7 @@ contract TradeService_TradingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 99_900 * 1e6);
 
       // Ignore Borrowing, Funding, and Dev Fees
-      assertEq(vaultStorage.fundingFee(address(weth)), 0);
+      assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
       assertEq(vaultStorage.devFees(address(weth)), 0);
     }
 
@@ -173,7 +173,7 @@ contract TradeService_TradingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 99850 * 1e6);
 
       // Ignore Borrowing, Funding, and Dev Fees
-      assertEq(vaultStorage.fundingFee(address(weth)), 0);
+      assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
       assertEq(vaultStorage.devFees(address(usdt)), 0);
     }
 
@@ -187,7 +187,7 @@ contract TradeService_TradingFee is TradeService_Base {
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 99800 * 1e6);
 
       // Ignore Borrowing, Funding, and Dev Fees
-      assertEq(vaultStorage.fundingFee(address(weth)), 0);
+      assertEq(vaultStorage.fundingFeeReserve(address(weth)), 0);
       assertEq(vaultStorage.devFees(address(usdt)), 0);
     }
   }

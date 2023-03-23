@@ -27,16 +27,12 @@ import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
-
 import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
 
@@ -86,7 +82,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   IPerpStorage perpStorage;
   IVaultStorage vaultStorage;
   ICalculator calculator;
-  IFeeCalculator feeCalculator;
 
   // handlers
   IBotHandler botHandler;
@@ -180,9 +175,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(configStorage)
     );
 
-    // deploy fee calculator
-    feeCalculator = Deployer.deployFeeCalculator(address(vaultStorage), address(configStorage));
-
     // deploy handler and service
     tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
 
@@ -200,6 +192,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     crossMarginService = Deployer.deployCrossMarginService(
       address(configStorage),
       address(vaultStorage),
+      address(perpStorage),
       address(calculator)
     );
     tradeService = Deployer.deployTradeService(
@@ -247,7 +240,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     {
       configStorage.setOracle(address(oracleMiddleWare));
       configStorage.setCalculator(address(calculator));
-      configStorage.setFeeCalculator(address(feeCalculator));
       tradeHelper.reloadConfig(); // @TODO: refresh config storage address here, may remove later
       tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
       liquidationService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
@@ -268,7 +260,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       vaultStorage.setServiceExecutors(address(tradeHelper), true);
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(liquidationService), true);
-      vaultStorage.setServiceExecutors(address(feeCalculator), true);
     }
 
     // Setup PerpStorage

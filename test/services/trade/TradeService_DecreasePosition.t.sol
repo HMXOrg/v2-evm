@@ -5,6 +5,7 @@ import { TradeService_Base } from "./TradeService_Base.t.sol";
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { IPerpStorage } from "../../../src/storages/interfaces/IPerpStorage.sol";
 import { MockCalculatorWithRealCalculator } from "../../mocks/MockCalculatorWithRealCalculator.sol";
+import { console } from "forge-std/console.sol";
 
 // What is this test DONE
 // - pre validation
@@ -76,7 +77,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
-    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
+    vaultStorage.increaseTraderBalance(getSubAccount(ALICE, 0), address(weth), 100_000 ether);
   }
 
   /**
@@ -92,12 +93,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price change to 1.05 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(1.05 * 1e30);
 
     // BOB open LONG position
@@ -106,7 +105,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 5,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 476,190.476190476190476190 TOKENs
     // average price  - 1.05 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
@@ -118,7 +116,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                        = 1500000 * 1.05 / 1500000 + (+50000) = 1.016129032258064516129032258064 USD
     // THEN MARKET state
     // long position size - 1,500,000 USD
-    // open interest      - 1,476,190.476190476190476190 TOKENs
     // average price      - 1.016129032258064516129032258064 USD
 
     // Start test
@@ -140,8 +137,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new global long pnl = global long pnl - position relaized pnl
     //                     = +50000.000000000000000000000000787301 - (+25000)
     //                     = +25000.000000000000000000000000787301 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 500000 / 1000000 = 500000
     // new global long size = 1000000 USD (global long size - decreased position size)
     // new long average price (global) = current price * new global long size / new global long size + new global long pnl
     //                                 = 1.05 * 1000000 / (1000000 + (+25000.000000000000000000000000787301))
@@ -172,7 +167,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
       // position info
       decreasedPositionSize: 500_000 * 1e30,
       reserveValueDelta: 45_000 * 1e30,
-      openInterestDelta: 500_000 * 1e18,
       realizedPnl: 25_000 * 1e30,
       // average prices
       newPositionAveragePrice: 1 * 1e30,
@@ -200,12 +194,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30, 0);
 
     // price change to 1.05 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(1.05 * 1e30);
 
     // BOB open SHORT position
@@ -214,7 +206,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 5,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 476,190.476190476190476190 TOKENs
     // average price  - 1.05 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30, 0);
 
@@ -226,7 +217,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                        = 1500000 * 1.05 / 1500000 - (-50000) = 1.016129032258064516129032258064 USD
     // THEN MARKET state
     // short position size - 1,500,000 USD
-    // open interest       - 1,476,190.476190476190476190 TOKENs
     // average price       - 1.016129032258064516129032258064 USD
 
     // Start test
@@ -238,11 +228,16 @@ contract TradeService_DecreasePosition is TradeService_Base {
     bytes32 _positionId = getPositionId(ALICE, 0, ethMarketIndex);
     positionTester.watch(ALICE, 0, _tpToken, _positionId);
 
-    // reset collateral for ALICE sub-account 0
-    // this sub-account has weth 10000 ether
-    //                      wbtc 10000 WBTC
-    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(weth), 10_000 ether);
-    vaultStorage.setTraderBalance(getSubAccount(ALICE, 0), address(wbtc), 10_000 * 1e8);
+    // Setup collateral for ALICE sub-account 0 to be as following
+    // - weth 10000 ether
+    // - wbtc 10000 WBTC
+    // so that the loss could eat up all the WETH, and partially eat WBTC.
+    {
+      // Decrease from 100,000 WETH to 10,000 WETH
+      vaultStorage.decreaseTraderBalance(getSubAccount(ALICE, 0), address(weth), 90_000 ether);
+      // Increase from 0 WBTC to 10,000 WBTC
+      vaultStorage.increaseTraderBalance(getSubAccount(ALICE, 0), address(wbtc), 10_000 * 1e8);
+    }
 
     // and wbtc price is 100 USD
     mockOracle.setPrice(wbtcAssetId, 100 * 1e30);
@@ -258,8 +253,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new global short pnl = global short pnl - position relaized pnl
     //                     = -50000.000000000000000000000000787301 - (-25000)
     //                     = -25000.000000000000000000000000787301 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 500000 / 1000000 = 500000
     // new global short size = 1000000 USD (global short size - decreased position size)
     // new short average price (global) = current price * new global short size / new global short size - new global long pnl
     //                                 = 1.05 * 1000000 / (1000000 - (-25000.000000000000000000000000787301))
@@ -298,7 +291,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
       // position info
       decreasedPositionSize: 500_000 * 1e30,
       reserveValueDelta: 45_000 * 1e30,
-      openInterestDelta: 500_000 * 1e18,
       realizedPnl: -25_000 * 1e30,
       // average prices
       newPositionAveragePrice: 1 * 1e30,
@@ -323,12 +315,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price change to 1.05 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(1.05 * 1e30);
 
     // BOB open LONG position
@@ -337,7 +327,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 5,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 476,190.476190476190476190 TOKENs
     // average price  - 1.05 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
@@ -349,7 +338,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                        = 1500000 * 1.05 / 1500000 + (+50000) = 1.016129032258064516129032258064 USD
     // THEN MARKET state
     // long position size - 1,500,000 USD
-    // open interest      - 1,476,190.476190476190476190 TOKENs
     // average price      - 1.016129032258064516129032258064 USD
 
     // Start test
@@ -373,8 +361,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new global long pnl = global long pnl - position relaized pnl
     //                     = +50000.000000000000000000000000787301 - (+25000)
     //                     = +25000.000000000000000000000000787301 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 500000 / 1000000 = 500000
     // new global long size = 1000000 USD (global long size - decreased position size)
     // new long average price (global) = current price * new global long size / new global long size + new global long pnl
     //                                 = 1.05 * 1000000 / (1000000 + (+25000.000000000000000000000000787301))
@@ -405,7 +391,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
       // position info
       decreasedPositionSize: 500_000 * 1e30,
       reserveValueDelta: 45_000 * 1e30,
-      openInterestDelta: 500_000 * 1e18,
       realizedPnl: 25_000 * 1e30,
       // average prices
       newPositionAveragePrice: 1 * 1e30,
@@ -431,12 +416,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price change to 0.95 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
     // BOB open LONG position
@@ -445,7 +428,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 5,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 526,315.789473684210526315 TOKENs
     // average price  - 0.95 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
@@ -457,7 +439,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                        = 1500000 * 0.95 / 1500000 + (-50000) = 0.982758620689655172413793103448 USD
     // THEN MARKET state
     // long position size - 1,500,000 USD
-    // open interest       - 1,526,315.789473684210526315 TOKENs
     // average price       - 0.982758620689655172413793103448 USD
 
     // Start test
@@ -480,8 +461,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new global long pnl = global long pnl - position relaized pnl
     //                     = -49999.999999999999999999999999592983 - (-50000)
     //                     = +0.00000000000000000000000040701 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 1000000 / 1000000 = 1000000
     // new global long size = 500000 USD (global long size - decreased position size)
     // new long average price (global) = current price * new global long size / new global long size + new global long pnl
     //                                 = 0.95 * 500000 / (500000 + (+0.000000000000000000000000407018))
@@ -509,8 +488,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: -50_000 * 1e30,
+      // realizedPnl: -50_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30,
@@ -534,12 +513,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30, 0);
 
     // price change to 0.95 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
     // BOB open SHORT position
@@ -548,7 +525,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 5,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 526,315.789473684210526315 TOKENs
     // average price  - 0.95 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30, 0);
 
@@ -560,7 +536,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                        = 1500000 * 0.95 / 1500000 + (-50000) = 0.982758620689655172413793103448 USD
     // THEN MARKET state
     // short position size - 1,500,000 USD
-    // open interest       - 1,526,315.789473684210526315 TOKENs
     // average price       - 0.982758620689655172413793103448 USD
 
     // Start test
@@ -582,8 +557,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new global short pnl = global short pnl - position relaized pnl
     //                     = +49999.999999999999999999999999592983 - (+50000)
     //                     = -0.00000000000000000000000040701 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 1000000 / 1000000 = 1000000
     // new global short size = 500000 USD (global short size - decreased position size)
     // new short average price (global) = current price * new global short size / new global short size - new global long pnl
     //                                 = 0.95 * 500000 / (500000 - (-0.000000000000000000000000407018))
@@ -614,8 +587,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: 50_000 * 1e30,
+      // realizedPnl: 50_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0,
@@ -640,12 +613,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // Reserved       - 90,000 USD
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price change to 1.05 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(1.05 * 1e30);
 
     // BOB open Long position
@@ -654,7 +625,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 5,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 476,190.476190476190476190 TOKENs
     // average price  - 1.05 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
@@ -666,7 +636,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                        = 1500000 * 1.05 / 1500000 + (+50000) = 1.016129032258064516129032258064 USD
     // THEN MARKET state
     // long position size - 1,500,000 USD
-    // open interest      - 1,476,190.476190476190476190 TOKENs
     // average price      - 1.016129032258064516129032258064 USD
 
     // Start test
@@ -693,8 +662,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new global long pnl = global long pnl - position relaized pnl
     //                     = +123809.523809523809523809523810348601 - (+90000)
     //                     = +33809.523809523809523809523810348601 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 1000000 / 1000000 = 1000000
     // new global long size = 500000 USD (global long size - decreased position size)
     // new long average price (global) = current price * new global long size / new global long size + new global long pnl
     //                                 = 1.1 * 500000 / (500000 - (+33809.523809523809523809523810348601))
@@ -725,8 +692,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: 90_000 * 1e30,
+      // realizedPnl: 90_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 1.030330062444246208742194469222 * 1e30,
@@ -750,12 +717,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, -1_000_000 * 1e30, 0);
 
     // price change to 0.95 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
     // BOB open SHORT position
@@ -764,7 +729,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 5,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 526,315.789473684210526315 TOKENs
     // average price  - 0.95 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, -500_000 * 1e30, 0);
 
@@ -776,7 +740,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                        = 1500000 * 0.95 / 1500000 + (-50000) = 0.982758620689655172413793103448 USD
     // THEN MARKET state
     // short position size - 1,500,000 USD
-    // open interest       - 1,526,315.789473684210526315 TOKENs
     // average price       - 0.982758620689655172413793103448 USD
 
     // Start test
@@ -801,8 +764,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new global short pnl = global short pnl - position relaized pnl
     //                     = +49999.999999999999999999999999592983 - (+50000)
     //                     = -0.00000000000000000000000040701 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 1000000 / 1000000 = 1000000
     // new global short size = 500000 USD (global short size - decreased position size)
     // new short average price (global) = current price * new global short size / new global short size - new global long pnl
     //                                 = 0.95 * 500000 / (500000 - (-0.000000000000000000000000407018))
@@ -833,8 +794,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: 50_000 * 1e30,
+      // realizedPnl: 50_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0,
@@ -858,12 +819,10 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 10,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 1,000,000 TOKENs
     // average price  - 1 USD
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
     // price change to 0.95 USD
-    // to check open interest should calculate correctly
     mockOracle.setPrice(0.95 * 1e30);
 
     // BOB open LONG position
@@ -872,7 +831,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // IMR            - 5,000 USD (1% IMF)
     // leverage       - 100x
     // price          - 1 USD
-    // open interest  - 526,315.789473684210526315 TOKENs
     // average price  - 0.95 USD
     tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
@@ -884,7 +842,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                        = 1500000 * 0.95 / 1500000 + (-50000) = 0.982758620689655172413793103448 USD
     // THEN MARKET state
     // long position size - 1,500,000 USD
-    // open interest       - 1,526,315.789473684210526315 TOKENs
     // average price       - 0.982758620689655172413793103448 USD
 
     // Start test
@@ -910,8 +867,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // new global long pnl = global long pnl - position relaized pnl
     //                     = -49999.999999999999999999999999592983 - (-50000)
     //                     = +0.00000000000000000000000040701 USD
-    // open interest delta = position open interest * position size to decrease / position size
-    //                     = 1000000 * 1000000 / 1000000 = 1000000
     // new global long size = 500000 USD (global long size - decreased position size)
     // new long average price (global) = current price * new global long size / new global long size + new global long pnl
     //                                 = 0.95 * 500000 / (500000 + (+0.000000000000000000000000407018))
@@ -939,8 +894,8 @@ contract TradeService_DecreasePosition is TradeService_Base {
       // position info
       decreasedPositionSize: 1_000_000 * 1e30,
       reserveValueDelta: 90_000 * 1e30,
-      openInterestDelta: 1_000_000 * 1e18,
-      realizedPnl: -50_000 * 1e30,
+      // realizedPnl: -50_000 * 1e30,
+      realizedPnl: 0,
       // average prices
       newPositionAveragePrice: 0,
       newLongGlobalAveragePrice: 0.949999999999999999999999999999 * 1e30,

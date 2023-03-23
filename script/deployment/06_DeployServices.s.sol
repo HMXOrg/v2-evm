@@ -20,7 +20,7 @@ contract DeployServices is ConfigJsonRepo {
     address tradeHelperAddress = getJsonAddress(".helpers.trade");
 
     address crossMarginServiceAddress = address(
-      new CrossMarginService(configStorageAddress, vaultStorageAddress, calculatorAddress)
+      new CrossMarginService(configStorageAddress, vaultStorageAddress, calculatorAddress, perpStorageAddress)
     );
     address liquidationServiceAddress = address(
       new LiquidationService(perpStorageAddress, vaultStorageAddress, configStorageAddress, tradeHelperAddress)

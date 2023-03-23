@@ -38,11 +38,6 @@ interface IConfigStorage {
     bool accepted; // accepted to deposit as collateral
   }
 
-  struct OpenInterest {
-    uint256 longMaxOpenInterestUSDE30; // maximum to open long position
-    uint256 shortMaxOpenInterestUSDE30; // maximum to open short position
-  }
-
   struct FundingRate {
     uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
     uint256 maxFundingRate; // maximum funding rate
@@ -59,7 +54,6 @@ interface IConfigStorage {
     uint8 assetClass; // Crypto = 1, Forex = 2, Stock = 3
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
-    OpenInterest openInterest;
     FundingRate fundingRate;
   }
 
@@ -100,8 +94,6 @@ interface IConfigStorage {
    */
 
   function calculator() external view returns (address);
-
-  function feeCalculator() external view returns (address);
 
   function oracle() external view returns (address);
 
@@ -163,6 +155,8 @@ interface IConfigStorage {
 
   function getPlpAssetIds() external view returns (bytes32[] memory);
 
+  function getTradeServiceHooks() external view returns (address[] memory);
+
   /**
    * Setter
    */
@@ -174,8 +168,6 @@ interface IConfigStorage {
   function setDynamicEnabled(bool _enabled) external;
 
   function setCalculator(address _calculator) external;
-
-  function setFeeCalculator(address _feeCalculator) external;
 
   function setOracle(address _oracle) external;
 
@@ -221,6 +213,8 @@ interface IConfigStorage {
   function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);
 
   function setAssetClassConfigByIndex(uint256 _index, AssetClassConfig calldata _newConfig) external;
+
+  function setTradeServiceHooks(address[] calldata _newHooks) external;
 
   function addMarketConfig(MarketConfig calldata _newConfig) external returns (uint256 _index);
 

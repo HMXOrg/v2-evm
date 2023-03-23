@@ -6,6 +6,16 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract Calculator_FundingRate is Calculator_Base {
+  struct FundingRate {
+    int256 accumFundingLong;
+    int256 accumFundingShort;
+    int256 accumFundingRate;
+    int256 nextFundingRateLong;
+    int256 nextFundingRateShort;
+    int256 fundingFeeLong;
+    int256 fundingFeeShort;
+  }
+
   function setUp() public virtual override {
     super.setUp();
 
@@ -27,11 +37,7 @@ contract Calculator_FundingRate is Calculator_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: false,
         active: true,
-        openInterest: IConfigStorage.OpenInterest({
-          longMaxOpenInterestUSDE30: 1_000_000 * 1e30,
-          shortMaxOpenInterestUSDE30: 1_000_000 * 1e30
-        }),
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e4, maxSkewScaleUSD: 3_000_000 * 1e30 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0.0004 * 1e18, maxSkewScaleUSD: 3_000_000 * 1e30 })
       })
     );
 
@@ -48,8 +54,7 @@ contract Calculator_FundingRate is Calculator_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 5 * 10 ** 8
+        realizedPnl: 0
       })
     );
 
@@ -66,8 +71,7 @@ contract Calculator_FundingRate is Calculator_Base {
         entryFundingRate: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
-        realizedPnl: 0,
-        openInterest: 2 * 10 ** 8
+        realizedPnl: 0
       })
     );
   }
@@ -76,363 +80,349 @@ contract Calculator_FundingRate is Calculator_Base {
   // | ------- Test Correctness ------------ |
   // =========================================
 
-  // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // | Row | elapsedInterval | LongSizeUSD  | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | CurrentFundingRateXTime | LongFundingFee | ShortFundingFee | LongFundingAccrued | ShortFundingAccrued |
-  // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  // | 1   | 0              | 2,000,000.00 | 1,000,000.00 | 1,000,000.00   | -0.013333%        | -0.013333%              | 0               | 0               | 0                  | 0                   |
-  // | 2   | 5              | 2,000,000.00 | 1,000,000.00 | 1,000,000.00   | -0.026667%        | -0.133333%              | -266.6666667    | 133.3333333     | -266.6666667       | 133.3333333         |
-  // | 3   | 10             | 1,000,000.00 | 1,000,000.00 | 0.00           | -0.026667%        | -0.133333%              | -2666.666667    | 1333.333333     | -2933.333333       | 1466.666667         |
-  // | 4   | 15             | 1,000,000.00 | 1,000,000.00 | 0.00           | -0.026667%        | -0.133333%              | -1333.333333    | 1333.333333     | -4266.666667       | 2800                |
-  // | 5   | 20             | 1,000,000.00 | 3,000,000.00 | -2,000,000.00  | 0.000000%         | 0.000000%               | -1333.333333    | 1333.333333     | -5600              | 4133.333333         |
-  // | 6   | 25             | 1,000,000.00 | 3,000,000.00 | -2,000,000.00  | 0.026667%         | 0.133333%               | 0               | 0               | -5600              | 4133.333333         |
-  // | 7   | 30             | 1,000,000.00 | 3,000,000.00 | -2,000,000.00  | 0.053333%         | 0.266667%               | 1333.333333     | -4000           | -4266.666667       | 133.3333333         |
-  // | 8   | 35             | 2,000,000.00 | 3,000,000.00 | -1,000,000.00  | 0.066667%         | 0.333333%               | 2666.666667     | -8000           | -1600              | -7866.666667        |
-  // | 9   | 40             | 2,500,000.00 | 3,000,000.00 | -500,000.00    | 0.073333%         | 0.366667%               | 6666.666667     | -10000          | 5066.666667        | -17866.66667        |
-  // | 10  | 45             | 2,500,000.00 | 3,000,000.00 | -500,000.00    | 0.080000%         | 0.400000%               | 9166.666667     | -11000          | 14233.33333        | -28866.66667        |
-  // | 11  | 50             | 6,000,000.00 | 3,000,000.00 | 3,000,000.00   | 0.040000%         | 0.200000%               | 10000           | -12000          | 24233.33333        | -40866.66667        |
-  // | 12  | 55             | 6,000,000.00 | 3,000,000.00 | 3,000,000.00   | 0.000000%         | 0.000000%               | 12000           | -6000           | 36233.33333        | -46866.66667        |
-  // | 13  | 60             | 6,000,000.00 | 3,000,000.00 | 3,000,000.00   | -0.040000%        | -0.200000%              | 0               | 0               | 36233.33333        | -46866.66667        |
-  // | 14  | 65             | 6,000,000.00 | 3,000,000.00 | 3,000,000.00   | -0.080000%        | -0.400000%              | -12000          | 6000            | 24233.33333        | -40866.66667        |
-  // | 15  | 70             | 6,000,000.00 | 3,000,000.00 | 3,000,000.00   | -0.120000%        | -0.600000%              | -24000          | 12000           | 233.3333333        | -28866.66667        |
-  // | 16  | 75             | 6,000,000.00 | 3,000,000.00 | 3,000,000.00   | -0.160000%        | -0.800000%              | -36000          | 18000           | -35766.66667       | -10866.66667        |
+  // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+  // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
+  // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+  // |   1 |    0 |       2000000 |        1000000 |         1000000 |       -0.00013333 |              -0.00013333 |      -0.00013333 |
+  // |   2 |    5 |       2000000 |        1000000 |         1000000 |       -0.00013333 |              -0.00066667 |          -0.0008 |
+  // |   3 |   10 |       1000000 |        1000000 |               0 |                 0 |                        0 |          -0.0008 |
+  // |   4 |   15 |       1000000 |        1000000 |               0 |                 0 |                        0 |          -0.0008 |
+  // |   5 |   20 |       1000000 |        3000000 |        -2000000 |        0.00026667 |               0.00133333 |       0.00053333 |
+  // |   6 |   25 |       1000000 |        3000000 |        -2000000 |        0.00026667 |               0.00133333 |       0.00186667 |
+  // |   7 |   30 |       1000000 |        3000000 |        -2000000 |        0.00026667 |               0.00133333 |           0.0032 |
+  // |   8 |   35 |       2000000 |        3000000 |        -1000000 |        0.00013333 |               0.00066667 |       0.00386667 |
+  // |   9 |   40 |       2500000 |        3000000 |         -500000 |        0.00006667 |               0.00033333 |           0.0042 |
+  // |  10 |   45 |       2500000 |        3000000 |         -500000 |        0.00006667 |               0.00033333 |       0.00453333 |
+  // |  11 |   50 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |       0.00253333 |
+  // |  12 |   55 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |       0.00053333 |
+  // |  13 |   60 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |      -0.00146667 |
+  // |  14 |   65 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |      -0.00346667 |
+  // |  15 |   70 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |      -0.00546667 |
+  // |  16 |   75 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |      -0.00746667 |
 
-  // TODO: Working on this later -> (cause from fixed accum funding rate logic)
-  // function testCorrectness_getNextFundingRate_withInterval() external {
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | Row | elapsedInterval | LongSizeUSD  | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | CurrentFundingRateXTime | LongFundingFee | ShortFundingFee | LongFundingAccrued | ShortFundingAccrued |
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | 1   | 0              | 2,000,000.00 | 1,000,000.00 | 1,000,000.00   | -0.013333%        | -0.013333%              | 0               | 0               | 0                  | 0                   |
-  //   // | 2   | 5              | 2,000,000.00 | 1,000,000.00 | 1,000,000.00   | -0.026667%        | -0.133333%              | -266.6666667    | 133.3333333     | -266.6666667       | 133.3333333         |
+  function testCorrectness_getNextFundingRate_withInterval() external {
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // |   1 |    0 |       2000000 |        1000000 |         1000000 |       -0.00013333 |              -0.00013333 |      -0.00013333 |
 
-  //   // Mock global market config as table above
-  //   uint256 marketIndex = 0;
+    FundingRate memory vars;
 
-  //   uint256 longPositionSize = 2_000_000 * 1e30;
-  //   uint256 longAvgPrice = 20_000 * 1e30;
-  //   uint256 longOpenInterest = 100 * 10 ** 8;
-  //   int256 accumFundingRateLong = 0;
+    // Mock global market config as table above
+    uint256 marketIndex = 0;
 
-  //   uint256 shortPositionSize = 1_000_000 * 1e30;
-  //   uint256 shortAvgPrice = 20_000 * 1e30;
-  //   uint256 shortOpenInterest = 50 * 10 ** 8;
-  //   int256 accumFundingRateShort = 0;
+    uint256 longPositionSize = 2_000_000 * 1e30;
+    uint256 longAvgPrice = 20_000 * 1e30;
 
-  //   int256 currentFundingRate = 0;
+    uint256 shortPositionSize = 1_000_000 * 1e30;
+    uint256 shortAvgPrice = 20_000 * 1e30;
 
-  //   // Set WBTC 20,000
-  //   mockOracle.setPrice(20_000 * 1e30);
+    vars.accumFundingLong = 0;
+    vars.accumFundingShort = 0;
+    vars.accumFundingRate = 0;
+    vars.nextFundingRateLong = 0;
+    vars.nextFundingRateShort = 0;
+    vars.fundingFeeLong = 0;
+    vars.fundingFeeShort = 0;
 
-  //   mockPerpStorage.updateGlobalLongMarketById(
-  //     marketIndex,
-  //     longPositionSize,
-  //     longAvgPrice,
-  //     longOpenInterest,
-  //     accumFundingRateLong,
-  //     currentFundingRate
-  //   );
-  //   mockPerpStorage.updateGlobalShortMarketById(
-  //     marketIndex,
-  //     shortPositionSize,
-  //     shortAvgPrice,
-  //     shortOpenInterest,
-  //     accumFundingRateShort,
-  //     currentFundingRate
-  //   );
+    // Set WBTC 20,000
+    mockOracle.setPrice(20_000 * 1e30);
 
-  //   (int256 newfundingRate, int256 nextfundingRateLong, int256 nextfundingRateShort) = calculator.getNextFundingRate(
-  //     0,
-  //     0
-  //   );
-  //   currentFundingRate = newfundingRate; // -0.013333%
-  //   assertEq(newfundingRate, -133333333333333); // -0.013333%
+    mockPerpStorage.updateGlobalLongMarketById(
+      marketIndex,
+      longPositionSize,
+      longAvgPrice,
+      vars.accumFundingLong,
+      vars.accumFundingRate
+    );
+    mockPerpStorage.updateGlobalShortMarketById(
+      marketIndex,
+      shortPositionSize,
+      shortAvgPrice,
+      vars.accumFundingShort,
+      vars.accumFundingRate
+    );
 
-  //   assertEq(nextfundingRateLong, -266666666666666000000); // -266.6666667
-  //   assertEq(nextfundingRateShort, 133333333333333000000); // 133.3333333
+    int256 nextFundingRate = calculator.getNextFundingRate(0);
+    vars.accumFundingRate += nextFundingRate;
 
-  //   (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-  //   assertEq(accumFundingRateLong, 0);
-  //   assertEq(accumFundingRateShort, 0);
+    if (longPositionSize > 0) {
+      vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+    }
+    if (shortPositionSize > 0) {
+      vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+    }
 
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | Row | elapsedInterval | LongSizeUSD  | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | CurrentFundingRateXTime | LongFundingFee | ShortFundingFee | LongFundingAccrued | ShortFundingAccrued |
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | 2   | 5              | 2,000,000.00 | 1,000,000.00 | 1,000,000.00   | -0.026667%        | -0.133333%              | -266.6666667    | 133.3333333     | -266.6666667       | 133.3333333         |
-  //   // | 3   | 10             | 1,000,000.00 | 1,000,000.00 | 0.00           | -0.026667%        | -0.133333%              | -2666.666667    | 1333.333333     | -2933.333333       | 1466.666667         |
+    vars.accumFundingLong += vars.fundingFeeLong;
+    vars.accumFundingShort += vars.fundingFeeShort;
 
-  //   vm.warp(5); // make elapsed intervals to 5
+    assertEq(vars.accumFundingRate, -133333333333333);
+    assertEq(nextFundingRate, -133333333333333);
+    assertEq(vars.fundingFeeLong, -266666666666666000000);
+    assertEq(vars.fundingFeeShort, 133333333333333000000);
 
-  //   // Mock global market config as table above
-  //   longPositionSize = 2_000_000 * 1e30;
-  //   longAvgPrice = 20_000 * 1e30;
-  //   longOpenInterest = 100 * 10 ** 8;
-  //   accumFundingRateLong += nextfundingRateLong; //start accured funding rate
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // |   1 |    0 |       2000000 |        1000000 |         1000000 |       -0.00013333 |              -0.00013333 |      -0.00013333 |
+    // |   2 |    5 |       2000000 |        1000000 |         1000000 |       -0.00013333 |              -0.00066667 |          -0.0008 |
 
-  //   shortPositionSize = 1_000_000 * 1e30;
-  //   shortAvgPrice = 20_000 * 1e30;
-  //   shortOpenInterest = 50 * 10 ** 8;
-  //   accumFundingRateShort += nextfundingRateShort; //start accured funding rate
+    vm.warp(5);
+    {
+      // Mock global market config as table above
+      longPositionSize = 2_000_000 * 1e30;
+      longAvgPrice = 20_000 * 1e30;
 
-  //   mockPerpStorage.updateGlobalLongMarketById(
-  //     marketIndex,
-  //     longPositionSize,
-  //     longAvgPrice,
-  //     longOpenInterest,
-  //     accumFundingRateLong,
-  //     currentFundingRate
-  //   );
-  //   mockPerpStorage.updateGlobalShortMarketById(
-  //     marketIndex,
-  //     shortPositionSize,
-  //     shortAvgPrice,
-  //     shortOpenInterest,
-  //     accumFundingRateShort,
-  //     currentFundingRate
-  //   );
+      vars.accumFundingLong += vars.nextFundingRateLong; //start accrued funding rate
 
-  //   (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-  //   currentFundingRate = newfundingRate; // -0.026667%
-  //   assertEq(newfundingRate, -266666666666666); // -0.026667%
+      shortPositionSize = 1_000_000 * 1e30;
+      shortAvgPrice = 20_000 * 1e30;
 
-  //   assertEq(nextfundingRateLong, -2666666666666660000000); // -2666.666667
-  //   assertEq(nextfundingRateShort, 1333333333333330000000); // 1333.333333
+      vars.accumFundingShort += vars.nextFundingRateShort; //start accrued funding rate
 
-  //   (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-  //   assertEq(accumFundingRateLong, -266666666666666000000); // -266.6666667
-  //   assertEq(accumFundingRateShort, 133333333333333000000); // 133.3333333
+      mockPerpStorage.updateGlobalLongMarketById(
+        marketIndex,
+        longPositionSize,
+        longAvgPrice,
+        vars.accumFundingLong,
+        vars.accumFundingRate
+      );
+      mockPerpStorage.updateGlobalShortMarketById(
+        marketIndex,
+        shortPositionSize,
+        shortAvgPrice,
+        vars.accumFundingShort,
+        vars.accumFundingRate
+      );
 
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | Row | elapsedInterval | LongSizeUSD  | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | CurrentFundingRateXTime | LongFundingFee | ShortFundingFee | LongFundingAccrued | ShortFundingAccrued |
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | 3   | 10             | 1,000,000.00 | 1,000,000.00 | 0.00           | -0.026667%        | -0.133333%              | -2666.666667    | 1333.333333     | -2933.333333       | 1466.666667         |
-  //   // | 4   | 15             | 1,000,000.00 | 1,000,000.00 | 0.00           | -0.026667%        | -0.133333%              | -1333.333333    | 1333.333333     | -4266.666667       | 2800                |
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
 
-  //   vm.warp(5); // make elapsed intervals to 5
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
 
-  //   // Mock global market config as table above
-  //   longPositionSize = 1_000_000 * 1e30;
-  //   longAvgPrice = 20_000 * 1e30;
-  //   longOpenInterest = 50 * 10 ** 8;
-  //   accumFundingRateLong += nextfundingRateLong;
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
 
-  //   shortPositionSize = 1_000_000 * 1e30;
-  //   shortAvgPrice = 20_000 * 1e30;
-  //   shortOpenInterest = 50 * 10 ** 8;
-  //   accumFundingRateShort += nextfundingRateShort;
+      assertEq(nextFundingRate, -666666666666665);
+      assertEq(vars.accumFundingRate, -799999999999998);
+      assertEq(vars.fundingFeeLong, -1599999999999996000000);
+      assertEq(vars.fundingFeeShort, 799999999999998000000);
+    }
 
-  //   mockPerpStorage.updateGlobalLongMarketById(
-  //     marketIndex,
-  //     longPositionSize,
-  //     longAvgPrice,
-  //     longOpenInterest,
-  //     accumFundingRateLong,
-  //     currentFundingRate
-  //   );
-  //   mockPerpStorage.updateGlobalShortMarketById(
-  //     marketIndex,
-  //     shortPositionSize,
-  //     shortAvgPrice,
-  //     shortOpenInterest,
-  //     accumFundingRateShort,
-  //     currentFundingRate
-  //   );
+    vm.warp(5);
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // |   2 |    5 |       2000000 |        1000000 |         1000000 |       -0.00013333 |              -0.00066667 |          -0.0008 |
+    // |   3 |   10 |       1000000 |        1000000 |               0 |                 0 |                        0 |          -0.0008 |
 
-  //   (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-  //   currentFundingRate = newfundingRate; // -0.026667%
-  //   assertEq(newfundingRate, -266666666666666); // -0.026667%
+    {
+      // Mock global market config as table above
+      longPositionSize = 1_000_000 * 1e30;
+      longAvgPrice = 20_000 * 1e30;
 
-  //   assertEq(nextfundingRateLong, -1333333333333330000000); // -1333.333333
-  //   assertEq(nextfundingRateShort, 1333333333333330000000); // 1333.333333
+      vars.accumFundingLong += vars.nextFundingRateLong;
 
-  //   (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-  //   assertEq(accumFundingRateLong, -2933333333333326000000); // -2933.333333
-  //   assertEq(accumFundingRateShort, 1466666666666663000000); // 1466.666667
+      shortPositionSize = 1_000_000 * 1e30;
+      shortAvgPrice = 20_000 * 1e30;
 
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | Row | elapsedInterval | LongSizeUSD  | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | CurrentFundingRateXTime | LongFundingFee | ShortFundingFee | LongFundingAccrued | ShortFundingAccrued |
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | 4   | 15             | 1,000,000.00 | 1,000,000.00 | 0.00           | -0.026667%        | -0.133333%              | -1333.333333    | 1333.333333     | -4266.666667       | 2800                |
-  //   // | 5   | 20             | 1,000,000.00 | 3,000,000.00 | -2,000,000.00  | 0.000000%         | 0.000000%               | -1333.333333    | 1333.333333     | -5600              | 4133.333333         |
+      vars.accumFundingShort += vars.nextFundingRateShort;
 
-  //   vm.warp(5); // make elapsed intervals to 5
+      mockPerpStorage.updateGlobalLongMarketById(
+        marketIndex,
+        longPositionSize,
+        longAvgPrice,
+        vars.accumFundingLong,
+        vars.accumFundingRate
+      );
+      mockPerpStorage.updateGlobalShortMarketById(
+        marketIndex,
+        shortPositionSize,
+        shortAvgPrice,
+        vars.accumFundingShort,
+        vars.accumFundingRate
+      );
 
-  //   // Mock global market config as table above
-  //   longPositionSize = 1_000_000 * 1e30;
-  //   longAvgPrice = 20_000 * 1e30;
-  //   longOpenInterest = 50 * 10 ** 8;
-  //   accumFundingRateLong += nextfundingRateLong;
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
 
-  //   shortPositionSize = 1_000_000 * 1e30;
-  //   shortAvgPrice = 20_000 * 1e30;
-  //   shortOpenInterest = 50 * 10 ** 8;
-  //   accumFundingRateShort += nextfundingRateShort;
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
 
-  //   mockPerpStorage.updateGlobalLongMarketById(
-  //     marketIndex,
-  //     longPositionSize,
-  //     longAvgPrice,
-  //     longOpenInterest,
-  //     accumFundingRateLong,
-  //     currentFundingRate
-  //   );
-  //   mockPerpStorage.updateGlobalShortMarketById(
-  //     marketIndex,
-  //     shortPositionSize,
-  //     shortAvgPrice,
-  //     shortOpenInterest,
-  //     accumFundingRateShort,
-  //     currentFundingRate
-  //   );
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
 
-  //   (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-  //   currentFundingRate = newfundingRate; // -0.026667%
-  //   assertEq(newfundingRate, -266666666666666); // -0.026667%
+      assertEq(nextFundingRate, 0);
+      assertEq(vars.accumFundingRate, -799999999999998); // -0.0008
+      assertEq(vars.fundingFeeLong, -799999999999998000000);
+      assertEq(vars.fundingFeeShort, 799999999999998000000);
+    }
 
-  //   assertEq(nextfundingRateLong, -1333333333333330000000); // -1333.333333
-  //   assertEq(nextfundingRateShort, 1333333333333330000000); // 1333.333333
+    vm.warp(5);
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // |   3 |   10 |       1000000 |        1000000 |               0 |                 0 |                        0 |          -0.0008 |
+    // |   4 |   15 |       1000000 |        1000000 |               0 |                 0 |                        0 |          -0.0008 |
 
-  //   (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-  //   assertEq(accumFundingRateLong, -4266666666666656000000); // -4266.666667
-  //   assertEq(accumFundingRateShort, 2799999999999993000000); // 2800
+    {
+      // Mock global market config as table above
+      longPositionSize = 1_000_000 * 1e30;
+      longAvgPrice = 20_000 * 1e30;
 
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | Row | elapsedInterval | LongSizeUSD  | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | CurrentFundingRateXTime | LongFundingFee | ShortFundingFee | LongFundingAccrued | ShortFundingAccrued |
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | 5   | 20             | 1,000,000.00 | 3,000,000.00 | -2,000,000.00  | 0.000000%         | 0.000000%               | -1333.333333    | 1333.333333     | -5600              | 4133.333333         |
-  //   // | 6   | 25             | 1,000,000.00 | 3,000,000.00 | -2,000,000.00  | 0.026667%         | 0.133333%               | 0               | 0               | -5600              | 4133.333333         |
+      vars.accumFundingLong += vars.nextFundingRateLong;
 
-  //   vm.warp(5); // make elapsed intervals to 5
+      shortPositionSize = 1_000_000 * 1e30;
+      shortAvgPrice = 20_000 * 1e30;
 
-  //   // Mock global market config as table above
-  //   longPositionSize = 1_000_000 * 1e30;
-  //   longAvgPrice = 20_000 * 1e30;
-  //   longOpenInterest = 50 * 10 ** 8;
-  //   accumFundingRateLong += nextfundingRateLong;
+      vars.accumFundingShort += vars.nextFundingRateShort;
 
-  //   shortPositionSize = 3_000_000 * 1e30;
-  //   shortAvgPrice = 20_000 * 1e30;
-  //   shortOpenInterest = 150 * 10 ** 8;
-  //   accumFundingRateShort += nextfundingRateShort;
+      mockPerpStorage.updateGlobalLongMarketById(
+        marketIndex,
+        longPositionSize,
+        longAvgPrice,
+        vars.accumFundingLong,
+        vars.accumFundingRate
+      );
+      mockPerpStorage.updateGlobalShortMarketById(
+        marketIndex,
+        shortPositionSize,
+        shortAvgPrice,
+        vars.accumFundingShort,
+        vars.accumFundingRate
+      );
 
-  //   mockPerpStorage.updateGlobalLongMarketById(
-  //     marketIndex,
-  //     longPositionSize,
-  //     longAvgPrice,
-  //     longOpenInterest,
-  //     accumFundingRateLong,
-  //     currentFundingRate
-  //   );
-  //   mockPerpStorage.updateGlobalShortMarketById(
-  //     marketIndex,
-  //     shortPositionSize,
-  //     shortAvgPrice,
-  //     shortOpenInterest,
-  //     accumFundingRateShort,
-  //     currentFundingRate
-  //   );
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
 
-  //   (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-  //   currentFundingRate = newfundingRate; // 0%
-  //   assertEq(newfundingRate, 0); // 0%
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
 
-  //   assertEq(nextfundingRateLong, 0); // 0%
-  //   assertEq(nextfundingRateShort, 0); // 0%
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
 
-  //   (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-  //   assertEq(accumFundingRateLong, -5599999999999986000000); // -5600
-  //   assertEq(accumFundingRateShort, 4133333333333323000000); // 4133.333333
+      assertEq(nextFundingRate, 0);
+      assertEq(vars.accumFundingRate, -799999999999998); // -0.0008
+      assertEq(vars.fundingFeeLong, -799999999999998000000);
+      assertEq(vars.fundingFeeShort, 799999999999998000000);
+    }
 
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | Row | elapsedInterval | LongSizeUSD  | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | CurrentFundingRateXTime | LongFundingFee | ShortFundingFee | LongFundingAccrued | ShortFundingAccrued |
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | 6   | 25             | 1,000,000.00 | 3,000,000.00 | -2,000,000.00  | 0.026667%         | 0.133333%               | 0               | 0               | -5600              | 4133.333333         |
-  //   // | 7   | 30             | 1,000,000.00 | 3,000,000.00 | -2,000,000.00  | 0.053333%         | 0.266667%               | 1333.333333     | -4000           | -4266.666667       | 133.3333333         |
+    vm.warp(5);
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // |   4 |   15 |       1000000 |        1000000 |               0 |                 0 |                        0 |          -0.0008 |
+    // |   5 |   20 |       1000000 |        3000000 |        -2000000 |        0.00026667 |               0.00133333 |       0.00053333 |
 
-  //   vm.warp(5); // make elapsed intervals to 5
+    {
+      // Mock global market config as table above
+      longPositionSize = 1_000_000 * 1e30;
+      longAvgPrice = 20_000 * 1e30;
 
-  //   // Mock global market config as table above
-  //   longPositionSize = 1_000_000 * 1e30;
-  //   longAvgPrice = 20_000 * 1e30;
-  //   longOpenInterest = 50 * 10 ** 8;
-  //   accumFundingRateLong += nextfundingRateLong;
+      vars.accumFundingLong += vars.nextFundingRateLong;
 
-  //   shortPositionSize = 3_000_000 * 1e30;
-  //   shortAvgPrice = 20_000 * 1e30;
-  //   shortOpenInterest = 150 * 10 ** 8;
-  //   accumFundingRateShort += nextfundingRateShort;
+      shortPositionSize = 3_000_000 * 1e30;
+      shortAvgPrice = 20_000 * 1e30;
 
-  //   mockPerpStorage.updateGlobalLongMarketById(
-  //     marketIndex,
-  //     longPositionSize,
-  //     longAvgPrice,
-  //     longOpenInterest,
-  //     accumFundingRateLong,
-  //     currentFundingRate
-  //   );
-  //   mockPerpStorage.updateGlobalShortMarketById(
-  //     marketIndex,
-  //     shortPositionSize,
-  //     shortAvgPrice,
-  //     shortOpenInterest,
-  //     accumFundingRateShort,
-  //     currentFundingRate
-  //   );
+      vars.accumFundingShort += vars.nextFundingRateShort;
 
-  //   (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-  //   currentFundingRate = newfundingRate;
-  //   assertEq(newfundingRate, 266666666666666); // 0.266667%
+      mockPerpStorage.updateGlobalLongMarketById(
+        marketIndex,
+        longPositionSize,
+        longAvgPrice,
+        vars.accumFundingLong,
+        vars.accumFundingRate
+      );
+      mockPerpStorage.updateGlobalShortMarketById(
+        marketIndex,
+        shortPositionSize,
+        shortAvgPrice,
+        vars.accumFundingShort,
+        vars.accumFundingRate
+      );
 
-  //   assertEq(nextfundingRateLong, 1333333333333330000000); // 1333.333333
-  //   assertEq(nextfundingRateShort, -3999999999999990000000); // -4000
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
 
-  //   (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-  //   assertEq(accumFundingRateLong, -5599999999999986000000); // -5600
-  //   assertEq(accumFundingRateShort, 4133333333333323000000); // 4133.333333
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
 
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | Row | elapsedInterval | LongSizeUSD  | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | CurrentFundingRateXTime | LongFundingFee | ShortFundingFee | LongFundingAccrued | ShortFundingAccrued |
-  //   // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-  //   // | 7   | 30             | 1,000,000.00 | 3,000,000.00 | -2,000,000.00  | 0.053333%         | 0.266667%               | 1333.333333     | -4000           | -4266.666667       | 133.3333333         |
-  //   // | 8   | 35             | 2,000,000.00 | 3,000,000.00 | -1,000,000.00  | 0.066667%         | 0.333333%               | 2666.666667     | -8000           | -1600              | -7866.666667        |
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
 
-  //   vm.warp(5); // make elapsed intervals to 5
+      assertEq(nextFundingRate, 1333333333333330); //0.00133333
+      assertEq(vars.accumFundingRate, 533333333333332); //0.00053333
+      assertEq(vars.fundingFeeLong, 533333333333332000000);
+      assertEq(vars.fundingFeeShort, -1599999999999996000000);
+    }
 
-  //   // Mock global market config as table above
-  //   longPositionSize = 1_000_000 * 1e30;
-  //   longAvgPrice = 20_000 * 1e30;
-  //   longOpenInterest = 50 * 10 ** 8;
-  //   accumFundingRateLong += nextfundingRateLong;
+    vm.warp(5);
 
-  //   shortPositionSize = 3_000_000 * 1e30;
-  //   shortAvgPrice = 20_000 * 1e30;
-  //   shortOpenInterest = 150 * 10 ** 8;
-  //   accumFundingRateShort += nextfundingRateShort;
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
+    // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
+    // |   5 |   20 |       1000000 |        3000000 |        -2000000 |        0.00026667 |               0.00133333 |       0.00053333 |
+    // |   6 |   25 |       1000000 |        3000000 |        -2000000 |        0.00026667 |               0.00133333 |       0.00186667 |
 
-  //   mockPerpStorage.updateGlobalLongMarketById(
-  //     marketIndex,
-  //     longPositionSize,
-  //     longAvgPrice,
-  //     longOpenInterest,
-  //     accumFundingRateLong,
-  //     currentFundingRate
-  //   );
-  //   mockPerpStorage.updateGlobalShortMarketById(
-  //     marketIndex,
-  //     shortPositionSize,
-  //     shortAvgPrice,
-  //     shortOpenInterest,
-  //     accumFundingRateShort,
-  //     currentFundingRate
-  //   );
+    // Mock global market config as table above
+    {
+      longPositionSize = 1_000_000 * 1e30;
+      longAvgPrice = 20_000 * 1e30;
+      vars.accumFundingLong += vars.nextFundingRateLong;
 
-  //   (newfundingRate, nextfundingRateLong, nextfundingRateShort) = calculator.getNextFundingRate(0, 0);
-  //   currentFundingRate = newfundingRate;
-  //   assertEq(newfundingRate, 533333333333332); // 0.053333%
+      shortPositionSize = 3_000_000 * 1e30;
+      shortAvgPrice = 20_000 * 1e30;
+      vars.accumFundingShort += vars.nextFundingRateShort;
 
-  //   assertEq(nextfundingRateLong, 2666666666666660000000); // 2666.666667
-  //   assertEq(nextfundingRateShort, -7999999999999980000000); // -8000
+      mockPerpStorage.updateGlobalLongMarketById(
+        marketIndex,
+        longPositionSize,
+        longAvgPrice,
+        vars.accumFundingLong,
+        vars.accumFundingRate
+      );
+      mockPerpStorage.updateGlobalShortMarketById(
+        marketIndex,
+        shortPositionSize,
+        shortAvgPrice,
+        vars.accumFundingShort,
+        vars.accumFundingRate
+      );
 
-  //   (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getGlobalMarketInfo(marketIndex);
-  //   assertEq(accumFundingRateLong, -4266666666666656000000); // -4266.666667
-  //   assertEq(accumFundingRateShort, 133333333333333000000); // 133.3333333
-  // }
+      nextFundingRate = calculator.getNextFundingRate(0);
+      vars.accumFundingRate += nextFundingRate;
+
+      if (longPositionSize > 0) {
+        vars.fundingFeeLong = (vars.accumFundingRate * int(longPositionSize)) / 1e30;
+      }
+      if (shortPositionSize > 0) {
+        vars.fundingFeeShort = (vars.accumFundingRate * -int(shortPositionSize)) / 1e30;
+      }
+
+      vars.accumFundingLong += vars.fundingFeeLong;
+      vars.accumFundingShort += vars.fundingFeeShort;
+
+      assertEq(nextFundingRate, 1333333333333330); //0.00133333
+      assertEq(vars.accumFundingRate, 1866666666666662); //0.00186667
+      assertEq(vars.fundingFeeLong, 1866666666666662000000);
+      assertEq(vars.fundingFeeShort, -5599999999999986000000);
+    }
+  }
 }

@@ -21,7 +21,6 @@ contract ConfigStorage is IConfigStorage, Owned {
    */
   event LogSetServiceExecutor(address indexed contractAddress, address executorAddress, bool isServiceExecutor);
   event LogSetCalculator(address indexed oldCalculator, address newCalculator);
-  event LogSetFeeCalculator(address indexed oldFeeCalculator, address newFeeCalculator);
   event LogSetOracle(address indexed oldOracle, address newOracle);
   event LogSetPLP(address indexed oldPlp, address newPlp);
   event LogSetLiquidityConfig(LiquidityConfig indexed oldLiquidityConfig, LiquidityConfig newLiquidityConfig);
@@ -60,7 +59,6 @@ contract ConfigStorage is IConfigStorage, Owned {
   mapping(address => bool) public allowedLiquidators; // allowed contract to execute liquidation service
   mapping(address => mapping(address => bool)) public serviceExecutors; // service => handler => isOK, to allowed executor for service layer
 
-  address public feeCalculator;
   address public calculator;
   address public oracle;
   address public plp;
@@ -81,6 +79,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   // Trade
   MarketConfig[] public marketConfigs;
   AssetClassConfig[] public assetClassConfigs;
+  address[] public tradeServiceHooks;
 
   constructor() {}
 
@@ -203,6 +202,10 @@ contract ConfigStorage is IConfigStorage, Owned {
     return plpAssetIds;
   }
 
+  function getTradeServiceHooks() external view returns (address[] memory) {
+    return tradeServiceHooks;
+  }
+
   /**
    * Setter
    */
@@ -215,15 +218,6 @@ contract ConfigStorage is IConfigStorage, Owned {
     emit LogSetCalculator(calculator, _calculator);
     // @todo - add sanity check
     calculator = _calculator;
-  }
-
-  /// @notice Updates the fee calculator contract address.
-  /// @dev This function can be used to set the address of the fee calculator contract.
-  /// @param _feeCalculator The address of the new fee calculator contract.
-  function setFeeCalculator(address _feeCalculator) external onlyOwner {
-    emit LogSetFeeCalculator(feeCalculator, _feeCalculator);
-    // @todo - add sanity check
-    feeCalculator = _feeCalculator;
   }
 
   function setOracle(address _oracle) external onlyOwner {
@@ -440,5 +434,9 @@ contract ConfigStorage is IConfigStorage, Owned {
     delete assetPlpTokenConfigs[_assetId];
 
     emit LogRemoveUnderlying(_token);
+  }
+
+  function setTradeServiceHooks(address[] calldata _newHooks) external onlyOwner {
+    tradeServiceHooks = _newHooks;
   }
 }

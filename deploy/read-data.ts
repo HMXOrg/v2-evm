@@ -17,6 +17,10 @@ const BigNumber = ethers.BigNumber;
 const config = getConfig();
 const subAccountId = 0;
 
+const formatUnits = ethers.utils.formatUnits;
+const parseUnits = ethers.utils.parseUnits;
+const ONE_USD = parseUnits("1", 30);
+
 const ethAssetId = "0x0000000000000000000000000000000000000000000000000000000000000001";
 const wbtcAssetId = "0x0000000000000000000000000000000000000000000000000000000000000002";
 const usdcAssetId = "0x0000000000000000000000000000000000000000000000000000000000000003";
@@ -28,6 +32,7 @@ const jpyAssetId = "0x0000000000000000000000000000000000000000000000000000000000
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
   const address = BigNumber.from(deployer.address).xor(subAccountId).toHexString();
+  const calculator = Calculator__factory.connect(config.calculator, deployer);
   const provider = ethers.provider;
   const multi = new MultiCall(provider);
 
@@ -39,27 +44,27 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.table([
     {
       token: "plp",
-      balance: ethers.utils.formatUnits(balances[1][config.tokens.plp].toString(), 18),
+      balance: formatUnits(balances[1][config.tokens.plp].toString(), 18),
     },
     {
       token: "usdc",
-      balance: ethers.utils.formatUnits(balances[1][config.tokens.usdc].toString(), 6),
+      balance: formatUnits(balances[1][config.tokens.usdc].toString(), 6),
     },
     {
       token: "usdt",
-      balance: ethers.utils.formatUnits(balances[1][config.tokens.usdt].toString(), 6),
+      balance: formatUnits(balances[1][config.tokens.usdt].toString(), 6),
     },
     {
       token: "dai",
-      balance: ethers.utils.formatUnits(balances[1][config.tokens.dai].toString(), 18),
+      balance: formatUnits(balances[1][config.tokens.dai].toString(), 18),
     },
     {
       token: "wbtc",
-      balance: ethers.utils.formatUnits(balances[1][config.tokens.wbtc].toString(), 8),
+      balance: formatUnits(balances[1][config.tokens.wbtc].toString(), 8),
     },
     {
       token: "eth",
-      balance: ethers.utils.formatUnits(await provider.getBalance(deployer.address), 18),
+      balance: formatUnits(await provider.getBalance(deployer.address), 18),
     },
   ]);
 
@@ -162,6 +167,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getAUME30",
+      args: [true],
+    },
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getPLPValueE30",
       args: [true],
     },
     // PLP Liquidity
@@ -301,6 +312,57 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "globalMarkets",
       args: [3],
     },
+    // Positions
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "getPositionBySubAccount",
+      args: [deployer.address],
+    },
+    // Market Configs
+    {
+      interface: ConfigStorage__factory.abi,
+      target: config.storages.config,
+      function: "marketConfigs",
+      args: [0],
+    },
+    {
+      interface: ConfigStorage__factory.abi,
+      target: config.storages.config,
+      function: "marketConfigs",
+      args: [1],
+    },
+    {
+      interface: ConfigStorage__factory.abi,
+      target: config.storages.config,
+      function: "marketConfigs",
+      args: [2],
+    },
+    {
+      interface: ConfigStorage__factory.abi,
+      target: config.storages.config,
+      function: "marketConfigs",
+      args: [3],
+    },
+    // Global Asset Class
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "getGlobalAssetClassByIndex",
+      args: [0],
+    },
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "getGlobalAssetClassByIndex",
+      args: [1],
+    },
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "getGlobalAssetClassByIndex",
+      args: [2],
+    },
   ];
   const [
     blockNumber,
@@ -321,6 +383,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       jpyPrice,
       plpTotalSupply,
       plpAum,
+      plpTvl,
       plpLiquidityUsdc,
       plpLiquidityUsdt,
       plpLiquidityDai,
@@ -343,6 +406,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       btcusdMarket,
       applusdMarket,
       jpyusdMarket,
+      positions,
+      ethusdMarketConfig,
+      btcusdMarketConfig,
+      applusdMarketConfig,
+      jpyusdMarketConfig,
+      cryptoGlobalAssetClass,
+      equityGlobalAssetClass,
+      forexGlobalAssetClass,
     ],
   ] = await multi.multiCall(inputs);
 
@@ -408,114 +479,226 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await multi.multiCall(adaptivePriceInputs);
 
   console.log("=== Prices ===");
-  console.log(ethers.utils.formatUnits(usdcPrice._price, 30));
-  console.log(ethers.utils.formatUnits(usdtPrice?._price, 30));
-  console.log(ethers.utils.formatUnits(daiPrice?._price, 30));
-  console.log(ethers.utils.formatUnits(wethPrice?._price, 30));
-  console.log(ethers.utils.formatUnits(wbtcPrice?._price, 30));
-  console.log(ethers.utils.formatUnits(applePrice?._price, 30));
-  console.log(ethers.utils.formatUnits(jpyPrice?._price, 30));
+  console.log(formatUnits(usdcPrice._price, 30));
+  console.log(formatUnits(usdtPrice?._price, 30));
+  console.log(formatUnits(daiPrice?._price, 30));
+  console.log(formatUnits(wethPrice?._price, 30));
+  console.log(formatUnits(wbtcPrice?._price, 30));
+  console.log(formatUnits(applePrice?._price, 30));
+  console.log(formatUnits(jpyPrice?._price, 30));
   console.log("=== Adaptive Prices ===");
-  console.log(ethers.utils.formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
-  console.log(ethers.utils.formatUnits(btcusdAdaptivePrice._adaptivePrice, 30));
-  console.log(ethers.utils.formatUnits(applusdAdaptivePrice._adaptivePrice, 30));
-  console.log(ethers.utils.formatUnits(jpyusdAdaptivePrice._adaptivePrice, 30));
+  console.log(formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
+  console.log(formatUnits(btcusdAdaptivePrice._adaptivePrice, 30));
+  console.log(formatUnits(applusdAdaptivePrice._adaptivePrice, 30));
+  console.log(formatUnits(jpyusdAdaptivePrice._adaptivePrice, 30));
   console.log("=== Cross Margin Account ===");
   console.table({
-    equity: ethers.utils.formatUnits(equity, 30),
-    freeCollateral: ethers.utils.formatUnits(freeCollateral, 30),
+    equity: formatUnits(equity, 30),
+    freeCollateral: formatUnits(freeCollateral, 30),
   });
   console.log("=== Trader Balances ===");
   console.table({
-    usdc: ethers.utils.formatUnits(traderBalancesUsdc, 6),
-    usdt: ethers.utils.formatUnits(traderBalancesUsdt, 6),
-    dai: ethers.utils.formatUnits(traderBalancesDai, 18),
-    weth: ethers.utils.formatUnits(traderBalancesWeth, 18),
-    wbtc: ethers.utils.formatUnits(traderBalancesWbtc, 8),
+    usdc: formatUnits(traderBalancesUsdc, 6),
+    usdt: formatUnits(traderBalancesUsdt, 6),
+    dai: formatUnits(traderBalancesDai, 18),
+    weth: formatUnits(traderBalancesWeth, 18),
+    wbtc: formatUnits(traderBalancesWbtc, 8),
   });
   console.log("=== PLP ===");
   console.table({
-    plpTotalSupply: ethers.utils.formatUnits(plpTotalSupply, 18),
-    // plpAum: ethers.utils.formatUnits(plpAum, 30),
-    // plpPrice: plpAum.gt(0)
-    //   ? ethers.utils.formatUnits(plpAum.mul(ethers.utils.parseEther("1")).div(plpTotalSupply), 30)
-    //   : 0,
-    usdc: ethers.utils.formatUnits(plpLiquidityUsdc, 6),
-    usdt: ethers.utils.formatUnits(plpLiquidityUsdt, 6),
-    dai: ethers.utils.formatUnits(plpLiquidityDai, 18),
-    weth: ethers.utils.formatUnits(plpLiquidityWeth, 18),
-    wbtc: ethers.utils.formatUnits(plpLiquidityWbtc, 8),
+    plpTotalSupply: formatUnits(plpTotalSupply, 18),
+    plpAum: formatUnits(plpAum, 30),
+    plpPrice: plpAum.gt(0) ? formatUnits(plpAum.mul(ethers.utils.parseEther("1")).div(plpTotalSupply), 30) : 0,
+    usdc: formatUnits(plpLiquidityUsdc, 6),
+    usdt: formatUnits(plpLiquidityUsdt, 6),
+    dai: formatUnits(plpLiquidityDai, 18),
+    weth: formatUnits(plpLiquidityWeth, 18),
+    wbtc: formatUnits(plpLiquidityWbtc, 8),
   });
   console.log("=== Asset Class ====");
   console.table({
     crypto: {
-      reservedValue: ethers.utils.formatUnits(assetClassCrypto.reserveValueE30, 30),
+      reservedValue: formatUnits(assetClassCrypto.reserveValueE30, 30),
       sumBorrowingRate: assetClassCrypto.sumBorrowingRate,
       lastBorrowingTime: assetClassCrypto.lastBorrowingTime,
     },
     equity: {
-      reservedValue: ethers.utils.formatUnits(assetClassEquity.reserveValueE30, 30),
+      reservedValue: formatUnits(assetClassEquity.reserveValueE30, 30),
       sumBorrowingRate: assetClassEquity.sumBorrowingRate,
       lastBorrowingTime: assetClassEquity.lastBorrowingTime,
     },
     forex: {
-      reservedValue: ethers.utils.formatUnits(assetClassForex.reserveValueE30, 30),
+      reservedValue: formatUnits(assetClassForex.reserveValueE30, 30),
       sumBorrowingRate: assetClassForex.sumBorrowingRate,
       lastBorrowingTime: assetClassForex.lastBorrowingTime,
     },
   });
   console.log("=== Platform Fees ===");
   console.table({
-    usdc: ethers.utils.formatUnits(feeUsdc, 6),
-    usdt: ethers.utils.formatUnits(feeUsdt, 6),
-    dai: ethers.utils.formatUnits(feeDai, 18),
-    weth: ethers.utils.formatUnits(feeWeth, 18),
-    wbtc: ethers.utils.formatUnits(feeWbtc, 8),
+    usdc: formatUnits(feeUsdc, 6),
+    usdt: formatUnits(feeUsdt, 6),
+    dai: formatUnits(feeDai, 18),
+    weth: formatUnits(feeWeth, 18),
+    wbtc: formatUnits(feeWbtc, 8),
   });
   console.log("=== Dev Fees ===");
   console.table({
-    usdc: ethers.utils.formatUnits(devFeeUsdc, 6),
-    usdt: ethers.utils.formatUnits(devFeeUsdt, 6),
-    dai: ethers.utils.formatUnits(devFeeDai, 18),
-    weth: ethers.utils.formatUnits(devFeeWeth, 18),
-    wbtc: ethers.utils.formatUnits(devFeeWbtc, 8),
+    usdc: formatUnits(devFeeUsdc, 6),
+    usdt: formatUnits(devFeeUsdt, 6),
+    dai: formatUnits(devFeeDai, 18),
+    weth: formatUnits(devFeeWeth, 18),
+    wbtc: formatUnits(devFeeWbtc, 8),
   });
   console.log("=== Markets ===");
   console.table({
     ETHUSD: {
-      longPositionSize: ethers.utils.formatUnits(ethusdMarket.longPositionSize, 30),
-      longAvgPrice: ethers.utils.formatUnits(ethusdMarket.longAvgPrice, 30),
+      longPositionSize: formatUnits(ethusdMarket.longPositionSize, 30),
+      longAvgPrice: formatUnits(ethusdMarket.longAvgPrice, 30),
       longOpenInterest: ethusdMarket.longOpenInterest,
-      shortPositionSize: ethers.utils.formatUnits(ethusdMarket.shortPositionSize, 30),
-      shortAvgPrice: ethers.utils.formatUnits(ethusdMarket.shortAvgPrice, 30),
+      shortPositionSize: formatUnits(ethusdMarket.shortPositionSize, 30),
+      shortAvgPrice: formatUnits(ethusdMarket.shortAvgPrice, 30),
       shortOpenInterest: ethusdMarket.shortOpenInterest,
     },
     BTCUSD: {
-      longPositionSize: ethers.utils.formatUnits(btcusdMarket.longPositionSize, 30),
-      longAvgPrice: ethers.utils.formatUnits(btcusdMarket.longAvgPrice, 30),
+      longPositionSize: formatUnits(btcusdMarket.longPositionSize, 30),
+      longAvgPrice: formatUnits(btcusdMarket.longAvgPrice, 30),
       longOpenInterest: btcusdMarket.longOpenInterest,
-      shortPositionSize: ethers.utils.formatUnits(btcusdMarket.shortPositionSize, 30),
-      shortAvgPrice: ethers.utils.formatUnits(btcusdMarket.shortAvgPrice, 30),
+      shortPositionSize: formatUnits(btcusdMarket.shortPositionSize, 30),
+      shortAvgPrice: formatUnits(btcusdMarket.shortAvgPrice, 30),
       shortOpenInterest: btcusdMarket.shortOpenInterest,
     },
     APPLUSD: {
-      longPositionSize: ethers.utils.formatUnits(applusdMarket.longPositionSize, 30),
-      longAvgPrice: ethers.utils.formatUnits(applusdMarket.longAvgPrice, 30),
+      longPositionSize: formatUnits(applusdMarket.longPositionSize, 30),
+      longAvgPrice: formatUnits(applusdMarket.longAvgPrice, 30),
       longOpenInterest: applusdMarket.longOpenInterest,
-      shortPositionSize: ethers.utils.formatUnits(applusdMarket.shortPositionSize, 30),
-      shortAvgPrice: ethers.utils.formatUnits(applusdMarket.shortAvgPrice, 30),
+      shortPositionSize: formatUnits(applusdMarket.shortPositionSize, 30),
+      shortAvgPrice: formatUnits(applusdMarket.shortAvgPrice, 30),
       shortOpenInterest: applusdMarket.shortOpenInterest,
     },
     JPYUSD: {
-      longPositionSize: ethers.utils.formatUnits(jpyusdMarket.longPositionSize, 30),
-      longAvgPrice: ethers.utils.formatUnits(jpyusdMarket.longAvgPrice, 30),
+      longPositionSize: formatUnits(jpyusdMarket.longPositionSize, 30),
+      longAvgPrice: formatUnits(jpyusdMarket.longAvgPrice, 30),
       longOpenInterest: jpyusdMarket.longOpenInterest,
-      shortPositionSize: ethers.utils.formatUnits(jpyusdMarket.shortPositionSize, 30),
-      shortAvgPrice: ethers.utils.formatUnits(jpyusdMarket.shortAvgPrice, 30),
+      shortPositionSize: formatUnits(jpyusdMarket.shortPositionSize, 30),
+      shortAvgPrice: formatUnits(jpyusdMarket.shortAvgPrice, 30),
       shortOpenInterest: jpyusdMarket.shortOpenInterest,
     },
   });
+
+  const markets = [ethusdMarket, btcusdMarket, applusdMarket, jpyusdMarket];
+  const oraclePrices = [wethPrice._price, wbtcPrice._price, applePrice._price, jpyPrice._price];
+  const marketConfigs = [ethusdMarketConfig, btcusdMarketConfig, applusdMarketConfig, jpyusdMarketConfig];
+  const globalAssetClasses = [cryptoGlobalAssetClass, equityGlobalAssetClass, forexGlobalAssetClass];
+
+  const nextBorrowingRateInputs = [
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getNextBorrowingRate",
+      args: [0, plpTvl],
+    },
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getNextBorrowingRate",
+      args: [1, plpTvl],
+    },
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getNextBorrowingRate",
+      args: [2, plpTvl],
+    },
+  ];
+  const [, nextBorrowingRates] = await multi.multiCall(nextBorrowingRateInputs);
+  const nextFundingRateInputs = [
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getNextFundingRate",
+      args: [0],
+    },
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getNextFundingRate",
+      args: [1],
+    },
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getNextFundingRate",
+      args: [2],
+    },
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getNextFundingRate",
+      args: [3],
+    },
+  ];
+  const [, nextFundingRates] = await multi.multiCall(nextFundingRateInputs);
+
+  console.log("=== Positions ===");
+  console.table(
+    positions.map((each) => {
+      const marketIndex = each.marketIndex.toNumber();
+      const closePrice = calculateAdaptivePrice(
+        markets[marketIndex].longPositionSize.sub(markets[marketIndex].shortPositionSize),
+        marketConfigs[marketIndex].fundingRate.maxSkewScaleUSD,
+        each.positionSizeE30.mul(-1),
+        oraclePrices[marketIndex]
+      );
+
+      const borrowingFee = globalAssetClasses[marketConfigs[marketIndex].assetClass].sumBorrowingRate
+        .add(nextBorrowingRates[marketConfigs[marketIndex].assetClass])
+        .sub(each.entryBorrowingRate)
+        .mul(each.reserveValueE30)
+        .div(parseUnits("1", 18));
+
+      const fundingFee = markets[marketIndex].currentFundingRate
+        .add(nextFundingRates[marketIndex])
+        .sub(each.entryFundingRate)
+        .mul(each.positionSizeE30.abs())
+        .div(parseUnits("1", 18))
+        .mul(each.isLong ? -1 : 1);
+      return {
+        exposure: each.isLong ? "LONG" : "SHORT",
+        size: formatUnits(each.positionSizeE30, 30),
+        sizeInAsset: each.avgEntryPriceE30.gt(0)
+          ? formatUnits(each.positionSizeE30.mul(parseUnits("1", 30)).div(each.avgEntryPriceE30), 30)
+          : 0,
+        reservedProfit: formatUnits(each.reserveValueE30, 30),
+        averagePrice: formatUnits(each.avgEntryPriceE30, 30),
+        markPrice: formatUnits(closePrice, 30),
+        pnl: getPnL(closePrice, each.avgEntryPriceE30, each.positionSizeE30),
+        intervals: 0,
+        borrowingFee: formatUnits(borrowingFee, 30),
+        fundingFee: formatUnits(fundingFee, 30),
+        imr: 0,
+        mmr: 0,
+        assetClass: 0,
+        positionLeverage: equity.gt(0) ? formatUnits(each.positionSizeE30.mul(parseUnits("1", 30)).div(equity), 30) : 0,
+      };
+    })
+  );
 };
+
+function calculateAdaptivePrice(
+  marketSkew: BigNumber,
+  maxSkewScaleUSD: BigNumber,
+  sizeDelta: BigNumber,
+  price: BigNumber
+): BigNumber {
+  const premium = marketSkew.mul(ONE_USD).div(maxSkewScaleUSD);
+  const premiumAfter = marketSkew.add(sizeDelta).mul(ONE_USD).div(maxSkewScaleUSD);
+  const premiumMedian = premium.add(premiumAfter).div(2);
+  return price.mul(ONE_USD.add(premiumMedian)).div(ONE_USD);
+}
+
+function getPnL(closePrice: BigNumber, averagePrice: BigNumber, size: BigNumber): BigNumber {
+  return closePrice.sub(averagePrice).mul(ONE_USD).mul(size).div(averagePrice);
+}
 
 export default func;
 func.tags = ["ReadData"];

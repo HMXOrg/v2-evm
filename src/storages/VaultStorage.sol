@@ -228,10 +228,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     IERC20(_token).safeTransfer(_subAccount, _amount);
   }
 
-  function pullPLPLiquidity(address _token) external view returns (uint256) {
-    return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
-  }
-
   // @todo - natSpec
   function removeAllTraderTokens(address _trader) external onlyWhitelistedExecutor {
     delete traderTokens[_trader];

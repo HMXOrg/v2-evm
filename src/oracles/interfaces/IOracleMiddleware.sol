@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
+
 interface IOracleMiddleware {
   // errors
   error IOracleMiddleware_BadLength();
@@ -44,7 +46,7 @@ interface IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _price, uint256 _lastUpdate, uint8 _status);
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate, uint8 _status);
 
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
@@ -69,4 +71,6 @@ interface IOracleMiddleware {
   function setUpdater(address _updater, bool _isActive) external;
 
   function setAssetPriceConfig(bytes32 _assetId, uint32 _confidenceThresholdE6, uint32 _trustPriceAge) external;
+
+  function setOracleAdapters(bytes32[] calldata _assetIds, IOracleAdapter[] calldata _adapters) external;
 }

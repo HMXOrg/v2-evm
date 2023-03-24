@@ -12,16 +12,17 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 // Mocks
-import { MockErc20 } from "../mocks/MockErc20.sol";
-import { MockWNative } from "../mocks/MockWNative.sol";
+import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
+import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
-import { MockCalculator } from "../mocks/MockCalculator.sol";
-import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
-import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
-import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
-import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
-import { MockTradeService } from "../mocks/MockTradeService.sol";
-import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
+import { MockCalculator } from "@hmx-test/mocks/MockCalculator.sol";
+import { MockPerpStorage } from "@hmx-test/mocks/MockPerpStorage.sol";
+import { MockVaultStorage } from "@hmx-test/mocks/MockVaultStorage.sol";
+import { MockOracleMiddleware } from "@hmx-test/mocks/MockOracleMiddleware.sol";
+import { MockLiquidityService } from "@hmx-test/mocks/MockLiquidityService.sol";
+import { MockTradeService } from "@hmx-test/mocks/MockTradeService.sol";
+import { MockLiquidationService } from "@hmx-test/mocks/MockLiquidationService.sol";
+import { MockGlpManager } from "@hmx-test/mocks/MockGlpManager.sol";
 
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
@@ -29,13 +30,14 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
-abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssertions, StdCheatsSafe {
+abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -53,6 +55,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   IFeeCalculator internal feeCalculator;
 
   // oracle
+  StakedGlpOracleAdapter stakedGlpOracleAdapter;
   IPythAdapter pythAdapter;
   IOracleMiddleware oracleMiddleware;
 
@@ -72,10 +75,9 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   MockErc20 internal dai;
   MockErc20 internal usdc;
   MockErc20 internal usdt;
+  MockErc20 internal sGlp;
 
   MockErc20 internal bad;
-
-  MockErc20 internal sGlp;
 
   // market indexes
   uint256 ethMarketIndex;
@@ -93,7 +95,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
   bytes32 internal constant daiAssetId = "DAI";
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
-  bytes32 internal constant glpAssetId = "GLP";
+  bytes32 internal constant sGlpAssetId = "sGLP";
 
   // Fx
   bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
@@ -116,6 +118,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
+    sGlp = new MockErc20("Staked GLP", "sGLP", 18);
     bad = new MockErc20("Bad Coin", "BAD", 2);
 
     plp = Deployer.deployPLPv2();
@@ -136,6 +139,7 @@ abstract contract BaseTest is TestBase, Deployment, StorageDeployment, StdAssert
     mockGlpManager = new MockGlpManager();
 
     pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
+    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(address(sGlp), address(mockGlpManager), sGlpAssetId);
     oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter));
 
     mockLiquidityService = new MockLiquidityService(

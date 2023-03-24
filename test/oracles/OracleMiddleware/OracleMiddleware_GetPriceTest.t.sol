@@ -63,7 +63,7 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
   function testRevert_WhenGetLastestPriceButPriceIsStale() external {
     vm.warp(block.timestamp + 30);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
-    oracleMiddleware.getLatestPrice(address(wbtc).toBytes32(), true);
+    oracleMiddleware.getLatestPrice(wbtcAssetId, true);
   }
 
   // get latest price with market status market status is undefined
@@ -82,6 +82,6 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
 
     vm.warp(block.timestamp + 30);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
-    oracleMiddleware.getLatestPriceWithMarketStatus(address(wbtc).toBytes32(), true);
+    oracleMiddleware.getLatestPriceWithMarketStatus(wbtcAssetId, true);
   }
 }

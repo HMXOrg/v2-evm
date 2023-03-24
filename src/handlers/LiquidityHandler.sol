@@ -27,7 +27,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /**
    * Events
    */
-  event LogSetLiquidityService(LiquidityService oldValue, LiquidityService newValue);
+  event LogSetLiquidityService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
@@ -62,7 +62,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
    * States
    */
 
-  LiquidityService liquidityService; //liquidityService
+  address liquidityService; //liquidityService
   address pyth; //pyth
   uint256 public executionOrderFee; // executionOrderFee in tokenAmount unit
   bool isExecuting; // order is executing (prevent direct call executeLiquidity()

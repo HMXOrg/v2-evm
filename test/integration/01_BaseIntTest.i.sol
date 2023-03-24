@@ -228,7 +228,14 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     crossMarginTester = new CrossMarginTester(vaultStorage, perpStorage, address(crossMarginHandler));
     globalMarketTester = new GlobalMarketTester(perpStorage);
     limitOrderTester = new LimitOrderTester(limitTradeHandler);
-    liquidityTester = new LiquidityTester(plpV2, vaultStorage, perpStorage, FEEVER);
+    liquidityTester = new LiquidityTester(
+      address(plpV2),
+      address(configStorage),
+      address(perpStorage),
+      address(vaultStorage),
+      address(oracleMiddleWare),
+      FEEVER
+    );
     positionTester = new PositionTester(perpStorage, vaultStorage, oracleMiddleWare);
     positionTester02 = new PositionTester02(perpStorage);
 

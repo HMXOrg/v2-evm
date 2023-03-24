@@ -193,7 +193,7 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     mockOracle.setPriceStale(true);
 
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
-    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0));
+    botHandler.forceTakeMaxProfit(ALICE, 0, ethMarketIndex, address(0), prices);
   }
 
   // ref: testRevert_WhenExecutorTryCloseLongPositionButPositionIsAlreadyClosed

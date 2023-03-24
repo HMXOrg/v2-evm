@@ -45,13 +45,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
     vm.stopPrank();
 
     {
-      (, , uint8 marketStatus) = oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(
-        address(wbtc).toBytes32(),
-        true,
-        0,
-        0,
-        0
-      );
+      (, , , uint8 marketStatus) = oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(wbtcAssetId, true, 0, 0, 0);
 
       assertEq(marketStatus, 1);
     }
@@ -61,13 +55,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
     oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // active
     vm.stopPrank();
     {
-      (, , uint8 marketStatus) = oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(
-        address(wbtc).toBytes32(),
-        true,
-        0,
-        0,
-        0
-      );
+      (, , , uint8 marketStatus) = oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(wbtcAssetId, true, 0, 0, 0);
       assertEq(marketStatus, 2);
     }
   }
@@ -76,7 +64,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
   function testRevert_WhenGetLastestPriceButPriceIsStale() external {
     vm.warp(block.timestamp + 30);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
-    oracleMiddleware.getLatestAdaptivePrice(address(wbtc).toBytes32(), true, 0, 0, 0);
+    oracleMiddleware.getLatestAdaptivePrice(wbtcAssetId, true, 0, 0, 0);
   }
 
   // get latest price with market status market status is undefined
@@ -95,7 +83,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
 
     vm.warp(block.timestamp + 30);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
-    oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(address(wbtc).toBytes32(), true, 0, 0, 0);
+    oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(wbtcAssetId, true, 0, 0, 0);
   }
 
   function testCorrectness_getLatestPrice_premiumPrice() external {

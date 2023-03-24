@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 import { BaseTest } from "@hmx-test/base/BaseTest.sol";
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 
 contract OracleMiddleware_BaseTest is BaseTest {
   function setUp() public virtual {
@@ -29,14 +30,14 @@ contract OracleMiddleware_BaseTest is BaseTest {
 
     // Link oracle middleware to wbtc and weth oracle adapter
     bytes32[] memory marketIds = new bytes32[](2);
-    marketIds[0] = address(wbtc).toBytes32();
-    marketIds[1] = address(weth).toBytes32();
+    marketIds[0] = wbtcAssetId;
+    marketIds[1] = wethAssetId;
 
     IOracleAdapter[] memory adapters = new IOracleAdapter[](2);
-    adapters[0] = deployed.pythAdapter;
-    adapters[1] = deployed.pythAdapter;
+    adapters[0] = pythAdapter;
+    adapters[1] = pythAdapter;
 
-    deployed.oracleMiddleware.setOracleAdapters(marketIds, adapters);
-    deployed.oracleMiddleware.setOracleAdapters(marketIds, adapters);
+    oracleMiddleware.setOracleAdapters(marketIds, adapters);
+    oracleMiddleware.setOracleAdapters(marketIds, adapters);
   }
 }

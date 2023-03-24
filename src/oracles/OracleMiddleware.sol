@@ -165,7 +165,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate) {
-    (_adaptivePrice, _price, , _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _price, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -190,7 +190,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
   ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate) {
-    (_adaptivePrice, _price, , _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _price, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -246,7 +246,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_adaptivePrice, _price, , _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _price, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -298,7 +298,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD,
     bool isSafe
-  ) private view returns (uint256 _adaptivePrice, uint256 _price, int32 _exponent, uint256 _lastUpdate) {
+  ) private view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate) {
     // Get price from Pyth
     (_price, _lastUpdate) = isSafe ? _getLatestPrice(_assetId, _isMax) : _unsafeGetLatestPrice(_assetId, _isMax);
 
@@ -306,7 +306,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _adaptivePrice = _calculateAdaptivePrice(_marketSkew, _sizeDelta, _price, _maxSkewScaleUSD);
 
     // Return the price and last update
-    return (_adaptivePrice, _price, _exponent, _lastUpdate);
+    return (_adaptivePrice, _price, _lastUpdate);
   }
 
   /// @notice Calcuatate adaptive base on Market skew by position size

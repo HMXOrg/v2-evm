@@ -195,7 +195,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint8 _marketStatus;
 
       // Get Price market.
-      (_vars.priceE30, _lastPriceUpdated, _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
+      (_vars.priceE30, , _lastPriceUpdated, _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _vars.isLong, // if current position is SHORT position, then we use max price
@@ -385,7 +385,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_vars.priceE30, _lastPriceUpdated, _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
+      (_vars.priceE30, , _lastPriceUpdated, _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
@@ -455,7 +455,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     {
       uint8 _marketStatus;
 
-      (_vars.priceE30, , _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
+      (_vars.priceE30, , , _marketStatus) = OracleMiddleware(ConfigStorage(configStorage).oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price

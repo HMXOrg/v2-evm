@@ -8,6 +8,7 @@ import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IFeeCalculator } from "@hmx/contracts/interfaces/IFeeCalculator.sol";
 
+import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
@@ -57,6 +58,17 @@ library Deployer {
   /**
    * Oracles
    */
+
+  function deployStakedGlpOracleAdapter(
+    address _sGlp,
+    address _glpManager,
+    bytes32 _sGlpAssetId
+  ) internal returns (StakedGlpOracleAdapter) {
+    return
+      StakedGlpOracleAdapter(
+        deployContractWithArguments("StakedGlpOracleAdapter", abi.encode(_sGlp, _glpManager, _sGlpAssetId))
+      );
+  }
 
   function deployPythAdapter(address _pyth) internal returns (IPythAdapter) {
     return IPythAdapter(deployContractWithArguments("PythAdapter", abi.encode(_pyth)));

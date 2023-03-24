@@ -11,8 +11,7 @@ contract DeployOracleMiddleware is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    address pythAdapterAddress = getJsonAddress(".oracle.pythAdapter");
-    address oracleMiddlewareAddress = address(new OracleMiddleware(IOracleAdapter(pythAdapterAddress)));
+    address oracleMiddlewareAddress = address(new OracleMiddleware());
 
     vm.stopBroadcast();
 

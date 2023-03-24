@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 contract MockOracleMiddleware is IOracleMiddleware {
@@ -136,15 +137,11 @@ contract MockOracleMiddleware is IOracleMiddleware {
     int256 /*_marketSkew*/,
     int256 /*_sizeDelta*/,
     uint256 /*_maxSkewScaleUSD*/
-  )
-    external
-    view
-    returns (uint256 _adaptivePrice, uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status)
-  {
+  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate, uint8 _status) {
     if (isPriceStale) revert IOracleMiddleware_PriceStale();
     Price memory p = price[_assetId];
-    if (p.priceE30 == 0) return (priceE30, priceE30, exponent, lastUpdate, mockMarketStatus);
-    return (p.priceE30, p.priceE30, exponent, p.lastUpdate, mockMarketStatus);
+    if (p.priceE30 == 0) return (priceE30, priceE30, lastUpdate, mockMarketStatus);
+    return (p.priceE30, p.priceE30, p.lastUpdate, mockMarketStatus);
   }
 
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
@@ -162,6 +159,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
   function isSameAssetIdOnPyth(bytes32 _assetId1, bytes32 _assetId2) external view returns (bool) {
     return pythAssetId[_assetId1] == pythAssetId[_assetId2];
   }
+
+  function setOracleAdapters(bytes32[] calldata /*_assetIds*/, IOracleAdapter[] calldata /* _adapters */) external {}
 
   function setMarketStatus(bytes32 /*_assetId*/, uint8 /*_status*/) external {}
 

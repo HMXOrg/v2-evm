@@ -569,7 +569,7 @@ contract Calculator is Owned, ICalculator {
         _var.priceE30 = _limitPriceE30;
       } else {
         // @todo - validate price age
-        (_var.priceE30, , , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+        (_var.priceE30, , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price
           (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
@@ -897,7 +897,7 @@ contract Calculator is Owned, ICalculator {
       vars.marketPriceE30 = _limitPriceE30;
     } else {
       //@todo - validate timestamp of these
-      (vars.marketPriceE30, _exponent, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
+      (vars.marketPriceE30, ) = OracleMiddleware(ConfigStorage(configStorage).oracle()).unsafeGetLatestPrice(
         marketConfig.assetId,
         false
       );

@@ -59,9 +59,9 @@ interface ILiquidityService {
     uint256 _minAmount
   ) external returns (uint256);
 
-  function configStorage() external returns (IConfigStorage);
+  function configStorage() external returns (address);
 
-  function vaultStorage() external returns (IVaultStorage);
+  function vaultStorage() external returns (address);
 
-  function perpStorage() external returns (IPerpStorage);
+  function perpStorage() external returns (address);
 }

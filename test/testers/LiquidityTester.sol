@@ -1,22 +1,59 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+// Forge
+import { StdAssertions } from "forge-std/StdAssertions.sol";
 // HMX
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 // OZ
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract LiquidityTester {
-  ERC20 plp;
-  OracleMiddleware oracleMiddleware;
-  ConfigStorage configStorage;
+contract LiquidityTester is StdAssertions {
+  /**
+   * Structs
+   */
+  struct LiquidityExpectedData {
+    address token;
+    address who;
+    uint256 lpTotalSupply;
+    uint256 totalAmount; // totalAmount in vaultStorage
+    uint256 plpLiquidity;
+    uint256 plpAmount;
+    uint256 fee;
+    uint256 executionFee;
+  }
 
-  constructor(ERC20 _plp, OracleMiddleware _oracleMiddleware, ConfigStorage _configStorage) {
-    plp = _plp;
-    oracleMiddleware = _oracleMiddleware;
-    configStorage = _configStorage;
+  /**
+   * States
+   */
+  ERC20 plp;
+
+  OracleMiddleware oracleMiddleware;
+
+  ConfigStorage configStorage;
+  PerpStorage perpStorage;
+  VaultStorage vaultStorage;
+
+  address feeReceiver;
+
+  constructor(
+    address _plp,
+    address _configStorage,
+    address _perpStorage,
+    address _vaultStorage,
+    address _oracleMiddleware,
+    address _feeReceiver
+  ) {
+    plp = ERC20(_plp);
+    configStorage = ConfigStorage(_configStorage);
+    perpStorage = PerpStorage(_perpStorage);
+    vaultStorage = VaultStorage(_vaultStorage);
+    oracleMiddleware = OracleMiddleware(_oracleMiddleware);
+    feeReceiver = _feeReceiver;
   }
 
   function _convertDecimals(
@@ -87,6 +124,6 @@ contract LiquidityTester {
 
     // Check token balance
     // balanceOf must be equals to plpLiquidity in Vault
-    assertEq(IERC20(_token).balanceOf(address(vaultStorage)), _expectedData.totalAmount, "Vault Storage Token Balance");
+    assertEq(ERC20(_token).balanceOf(address(vaultStorage)), _expectedData.totalAmount, "Vault Storage Token Balance");
   }
 }

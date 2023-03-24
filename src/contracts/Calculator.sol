@@ -56,12 +56,8 @@ contract Calculator is Owned, ICalculator {
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
-    console.log("pendingBorrowingFeeE30", pendingBorrowingFeeE30);
     int256 pnlE30 = _getGlobalPNLE30();
-    console.log("pnlE30");
-    console.logInt(pnlE30);
     uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30;
-    console.log("PLPTVL", _getPLPValueE30(_isMaxPrice));
 
     if (pnlE30 < 0) {
       aum += uint256(-pnlE30);
@@ -72,7 +68,6 @@ contract Calculator is Owned, ICalculator {
         aum -= _pnl;
       }
     }
-    console.log("aum", aum);
 
     return aum;
   }
@@ -99,16 +94,12 @@ contract Calculator is Owned, ICalculator {
       uint256 _borrowingFeeE30 = (_getNextBorrowingRate(uint8(i), _plpTVL) * _assetClassState.reserveValueE30) /
         RATE_PRECISION;
 
-      console.log("borrowingFee", _borrowingFeeE30);
-      console.log("_assetClassState.sumBorrowingFeeE30", _assetClassState.sumBorrowingFeeE30);
-      console.log("_assetClassState.sumSettledBorrowingFeeE30", _assetClassState.sumSettledBorrowingFeeE30);
       // Formula:
       // pendingBorrowingFee = (sumBorrowingFeeE30 - sumSettledBorrowingFeeE30) + latestBorrowingFee
       _pendingBorrowingFee +=
         (_assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30) +
         _borrowingFeeE30;
 
-      console.log("_pendingBorrowingFee", _pendingBorrowingFee);
       unchecked {
         ++i;
       }
@@ -193,11 +184,6 @@ contract Calculator is Owned, ICalculator {
       int256 _pnlShortE30 = 0;
       (uint256 priceE30, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
-      console.log("priceE30", priceE30);
-      console.log("_globalMarket.longAvgPrice", _globalMarket.longAvgPrice);
-      console.log("_globalMarket.shortAvgPrice", _globalMarket.shortAvgPrice);
-      console.log("_globalMarket.longPositionSize", _globalMarket.longPositionSize);
-      console.log("_globalMarket.shortPositionSize", _globalMarket.shortPositionSize);
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
         if (priceE30 < _globalMarket.longAvgPrice) {
           uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30) * _globalMarket.longPositionSize) /
@@ -209,8 +195,6 @@ contract Calculator is Owned, ICalculator {
           _pnlLongE30 = int256(_absPNL);
         }
       }
-      console.log("_pnlLongE30");
-      console.logInt(_pnlLongE30);
 
       if (_globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0) {
         if (_globalMarket.shortAvgPrice < priceE30) {
@@ -224,8 +208,6 @@ contract Calculator is Owned, ICalculator {
           _pnlShortE30 = int256(_absPNL);
         }
       }
-      console.log("_pnlShortE30");
-      console.logInt(_pnlShortE30);
 
       {
         unchecked {
@@ -341,7 +323,6 @@ contract Calculator is Owned, ICalculator {
       midDiff = targetValue;
     }
     _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
-    console.log("_taxBPS", _taxBPS);
 
     return uint32(_feeBPS + _taxBPS);
   }
@@ -616,10 +597,9 @@ contract Calculator is Owned, ICalculator {
 
       // Get collateralFactor from ConfigStorage
       uint32 collateralFactorBPS = _collateralTokenConfig.collateralFactorBPS;
-      console.log("collateralFactorBPS", collateralFactorBPS);
+
       // Get current collateral token balance of trader's account
       uint256 _amount = VaultStorage(vaultStorage).traderBalances(_subAccount, _token);
-      console.log("traderBalance AMOUNT", _amount);
 
       // Get price from oracle
       uint256 _priceE30;
@@ -634,7 +614,6 @@ contract Calculator is Owned, ICalculator {
           _tokenAssetId,
           false // @note Collateral value always use Min price
         );
-        console.log("priceE30", _priceE30);
       }
       // Calculate accumulative value of collateral tokens
       // collateral value = (collateral amount * price) * collateralFactorBPS
@@ -742,10 +721,7 @@ contract Calculator is Owned, ICalculator {
     bytes32 _limitAssetId
   ) public view returns (uint256 _freeCollateral) {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
-    console.log("equity");
-    console.logInt(equity);
     uint256 imr = getIMR(_subAccount);
-    console.log("imr", imr);
     if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
@@ -998,15 +974,7 @@ contract Calculator is Owned, ICalculator {
 
     // Calculate the number of funding intervals that have passed since the last borrowing time.
     uint256 intervals = (block.timestamp - _assetClassState.lastBorrowingTime) / _tradingConfig.fundingInterval;
-    console.log("=================");
-    console.log("baseBorrowingRate ", _assetClassConfig.baseBorrowingRate);
-    console.log("_assetClassState.reserveValueE30", _assetClassState.reserveValueE30);
-    console.log("intervals", intervals);
-    console.log("plpTVL", _plpTVL);
-    console.log(
-      "nextBorrowingRate",
-      (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL
-    );
+
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
     return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL;
   }

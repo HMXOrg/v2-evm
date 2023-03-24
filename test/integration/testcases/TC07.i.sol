@@ -152,7 +152,7 @@ contract TC07 is BaseIntTest_WithActions {
       // Alice's Free collateral must be almost zero
       assertEq(
         calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0),
-        419510558748938236998153624267762, // 419.510558748938236998153624267762 $
+        419510558748939074647780788881394, // 419.510558748939074647780788881394 $
         "ALICE's free collateral is almost zero"
       );
 

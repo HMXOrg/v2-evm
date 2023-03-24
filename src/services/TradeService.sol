@@ -197,7 +197,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint8 _marketStatus;
 
       // Get Price market.
-      console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx get adaptive price xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+
       (_vars.adaptivePriceE30, _vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(
         _configStorage.oracle()
       ).getLatestAdaptivePriceWithMarketStatus(
@@ -208,9 +208,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
 
-      console.log(
-        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx get adaptive price for closePriceE30 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-      );
       if (_limitPriceE30 != 0) {
         _vars.adaptivePriceE30 = _limitPriceE30;
       }
@@ -262,7 +259,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // - trading fees
     // - borrowing fees
     // - funding fees
-    console.log("_marketConfig.increasePositionFeeRateBPS", _marketConfig.increasePositionFeeRateBPS);
+
     TradeHelper(tradeHelper).settleAllFees(
       _vars.position,
       _absSizeDelta,
@@ -289,15 +286,13 @@ contract TradeService is ReentrancyGuard, ITradeService {
     {
       // calculate the initial margin required for the new position
       uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFractionBPS) / BPS;
-      console.log("absSizeDelta", _absSizeDelta);
-      console.log("_imr", _imr);
+
       // get the amount of free collateral available for the sub-account
       uint256 subAccountFreeCollateral = _calculator.getFreeCollateral(
         _vars.subAccount,
         _limitPriceE30,
         _marketConfig.assetId
       );
-      console.log("subAccountFreeCollateral", subAccountFreeCollateral);
 
       // if the free collateral is less than the initial margin required, revert the transaction with an error
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();

@@ -153,6 +153,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _lpSupply
   ) internal returns (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
+
     uint256 amountAfterFee = _collectFee(
       CollectFeeRequest(
         _token,
@@ -289,9 +290,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
     uint256 plpTVL = _calculator.getPLPValueE30(false);
-    console.log("PLPTVL", plpTVL); //2093999000000000000000000000000000000 /1e30 =>2093999*8000
-    console.log("_liquidityConfig.maxPLPUtilizationBPS", _liquidityConfig.maxPLPUtilizationBPS);
-    console.log("_globalState.reserveValueE30", _globalState.reserveValueE30); // 18900*10000
+
     if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxPLPUtilizationBPS * plpTVL) {
       revert LiquidityService_MaxPLPUtilizationExceeded();
     }

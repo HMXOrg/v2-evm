@@ -425,8 +425,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         ethAssetId,
         true,
-        ethusdMarket.longOpenInterest && ethusdMarket.shortOpenInterest
-          ? ethusdMarket.longOpenInterest.sub(ethusdMarket.shortOpenInterest)
+        ethusdMarket.longPositionSize && ethusdMarket.shortPositionSize
+          ? ethusdMarket.longPositionSize.sub(ethusdMarket.shortPositionSize)
           : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
@@ -439,8 +439,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         wbtcAssetId,
         true,
-        btcusdMarket.longOpenInterest && btcusdMarket.shortOpenInterest
-          ? btcusdMarket.longOpenInterest.sub(btcusdMarket.shortOpenInterest)
+        btcusdMarket.longPositionSize && btcusdMarket.shortPositionSize
+          ? btcusdMarket.longPositionSize.sub(btcusdMarket.shortPositionSize)
           : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
@@ -453,8 +453,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         appleAssetId,
         true,
-        applusdMarket.longOpenInterest && applusdMarket.shortOpenInterest
-          ? applusdMarket.longOpenInterest.sub(applusdMarket.shortOpenInterest)
+        applusdMarket.longPositionSize && applusdMarket.shortPositionSize
+          ? applusdMarket.longPositionSize.sub(applusdMarket.shortPositionSize)
           : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
@@ -467,8 +467,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [
         jpyAssetId,
         true,
-        jpyusdMarket.longOpenInterest && jpyusdMarket.shortOpenInterest
-          ? jpyusdMarket.longOpenInterest.sub(jpyusdMarket.shortOpenInterest)
+        jpyusdMarket.longPositionSize && jpyusdMarket.shortPositionSize
+          ? jpyusdMarket.longPositionSize.sub(jpyusdMarket.shortPositionSize)
           : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
@@ -554,34 +554,26 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     ETHUSD: {
       longPositionSize: formatUnits(ethusdMarket.longPositionSize, 30),
       longAvgPrice: formatUnits(ethusdMarket.longAvgPrice, 30),
-      longOpenInterest: ethusdMarket.longOpenInterest,
       shortPositionSize: formatUnits(ethusdMarket.shortPositionSize, 30),
       shortAvgPrice: formatUnits(ethusdMarket.shortAvgPrice, 30),
-      shortOpenInterest: ethusdMarket.shortOpenInterest,
     },
     BTCUSD: {
       longPositionSize: formatUnits(btcusdMarket.longPositionSize, 30),
       longAvgPrice: formatUnits(btcusdMarket.longAvgPrice, 30),
-      longOpenInterest: btcusdMarket.longOpenInterest,
       shortPositionSize: formatUnits(btcusdMarket.shortPositionSize, 30),
       shortAvgPrice: formatUnits(btcusdMarket.shortAvgPrice, 30),
-      shortOpenInterest: btcusdMarket.shortOpenInterest,
     },
     APPLUSD: {
       longPositionSize: formatUnits(applusdMarket.longPositionSize, 30),
       longAvgPrice: formatUnits(applusdMarket.longAvgPrice, 30),
-      longOpenInterest: applusdMarket.longOpenInterest,
       shortPositionSize: formatUnits(applusdMarket.shortPositionSize, 30),
       shortAvgPrice: formatUnits(applusdMarket.shortAvgPrice, 30),
-      shortOpenInterest: applusdMarket.shortOpenInterest,
     },
     JPYUSD: {
       longPositionSize: formatUnits(jpyusdMarket.longPositionSize, 30),
       longAvgPrice: formatUnits(jpyusdMarket.longAvgPrice, 30),
-      longOpenInterest: jpyusdMarket.longOpenInterest,
       shortPositionSize: formatUnits(jpyusdMarket.shortPositionSize, 30),
       shortAvgPrice: formatUnits(jpyusdMarket.shortAvgPrice, 30),
-      shortOpenInterest: jpyusdMarket.shortOpenInterest,
     },
   });
 
@@ -671,13 +663,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         reservedProfit: formatUnits(each.reserveValueE30, 30),
         averagePrice: formatUnits(each.avgEntryPriceE30, 30),
         markPrice: formatUnits(closePrice, 30),
-        pnl: getPnL(closePrice, each.avgEntryPriceE30, each.positionSizeE30),
-        intervals: 0,
+        pnl: formatUnits(getPnL(closePrice, each.avgEntryPriceE30, each.positionSizeE30), 30),
         borrowingFee: formatUnits(borrowingFee, 30),
         fundingFee: formatUnits(fundingFee, 30),
-        imr: 0,
-        mmr: 0,
-        assetClass: 0,
+        tradingFee: formatUnits(
+          each.positionSizeE30.abs().mul(marketConfigs[marketIndex].decreasePositionFeeRateBPS).div(10000),
+          30
+        ),
         positionLeverage: equity.gt(0) ? formatUnits(each.positionSizeE30.mul(parseUnits("1", 30)).div(equity), 30) : 0,
       };
     })

@@ -15,8 +15,6 @@ import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
-import { console } from "forge-std/console.sol";
-
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {
   uint32 internal constant BPS = 1e4;
@@ -197,7 +195,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint8 _marketStatus;
 
       // Get Price market.
-
       (_vars.adaptivePriceE30, _vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(
         _configStorage.oracle()
       ).getLatestAdaptivePriceWithMarketStatus(
@@ -259,7 +256,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // - trading fees
     // - borrowing fees
     // - funding fees
-
     TradeHelper(tradeHelper).settleAllFees(
       _vars.position,
       _absSizeDelta,
@@ -547,7 +543,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // - trading fees
     // - borrowing fees
     // - funding fees
-
     TradeHelper(tradeHelper).settleAllFees(
       _vars.position,
       _vars.positionSizeE30ToDecrease,

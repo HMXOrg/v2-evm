@@ -99,12 +99,16 @@ contract Calculator is Owned, ICalculator {
       uint256 _borrowingFeeE30 = (_getNextBorrowingRate(uint8(i), _plpTVL) * _assetClassState.reserveValueE30) /
         RATE_PRECISION;
 
+      console.log("borrowingFee", _borrowingFeeE30);
+      console.log("_assetClassState.sumBorrowingFeeE30", _assetClassState.sumBorrowingFeeE30);
+      console.log("_assetClassState.sumSettledBorrowingFeeE30", _assetClassState.sumSettledBorrowingFeeE30);
       // Formula:
       // pendingBorrowingFee = (sumBorrowingFeeE30 - sumSettledBorrowingFeeE30) + latestBorrowingFee
       _pendingBorrowingFee +=
         (_assetClassState.sumBorrowingFeeE30 - _assetClassState.sumSettledBorrowingFeeE30) +
         _borrowingFeeE30;
 
+      console.log("_pendingBorrowingFee", _pendingBorrowingFee);
       unchecked {
         ++i;
       }
@@ -299,7 +303,7 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
     ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal pure returns (uint32) {
+  ) internal view returns (uint32) {
     uint32 _feeBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
@@ -337,6 +341,7 @@ contract Calculator is Owned, ICalculator {
       midDiff = targetValue;
     }
     _taxBPS = uint32((_taxBPS * midDiff) / targetValue);
+    console.log("_taxBPS", _taxBPS);
 
     return uint32(_feeBPS + _taxBPS);
   }
@@ -993,7 +998,15 @@ contract Calculator is Owned, ICalculator {
 
     // Calculate the number of funding intervals that have passed since the last borrowing time.
     uint256 intervals = (block.timestamp - _assetClassState.lastBorrowingTime) / _tradingConfig.fundingInterval;
-
+    console.log("=================");
+    console.log("baseBorrowingRate ", _assetClassConfig.baseBorrowingRate);
+    console.log("_assetClassState.reserveValueE30", _assetClassState.reserveValueE30);
+    console.log("intervals", intervals);
+    console.log("plpTVL", _plpTVL);
+    console.log(
+      "nextBorrowingRate",
+      (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL
+    );
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
     return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL;
   }

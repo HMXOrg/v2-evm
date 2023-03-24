@@ -154,16 +154,8 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   ) internal returns (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
-    uint256 amountAfterFee = _collectFee(
-      CollectFeeRequest(
-        _token,
-        _lpProvider,
-        _price,
-        _amount,
-        _getAddLiquidityFeeBPS(_token, _amount, _price),
-        LiquidityAction.ADD_LIQUIDITY
-      )
-    );
+    uint32 _feeBps = _getAddLiquidityFeeBPS(_token, _amount, _price);
+    uint256 amountAfterFee = _collectFee(_token, _lpProvider, _price, _amount, _feeBps, LiquidityAction.ADD_LIQUIDITY);
 
     // 4. Calculate mintAmount
     _tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
@@ -213,9 +205,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
 
-    _amountOut = _collectFee(
-      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY)
-    );
+    _amountOut = _collectFee(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY);
 
     if (_minAmount > _amountOut) {
       revert LiquidityService_Slippage();
@@ -245,30 +235,27 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   }
 
   // calculate fee and accounting fee
-  function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
-    uint256 _fee = _request._amount - ((_request._amount * (BPS - _request._feeBPS)) / BPS);
+  function _collectFee(
+    address _token,
+    address _account,
+    uint256 _tokenPriceUsd,
+    uint256 _amount,
+    uint32 _feeBPS,
+    LiquidityAction _action
+  ) internal returns (uint256) {
+    uint256 _fee = _amount - ((_amount * (BPS - _feeBPS)) / BPS);
 
-    VaultStorage(vaultStorage).addFee(_request._token, _fee);
-    uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_request._token);
+    VaultStorage(vaultStorage).addFee(_token, _fee);
+    uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_token);
 
-    if (_request._action == LiquidityAction.SWAP) {
-      emit CollectSwapFee(_request._account, _request._token, (_fee * _request._tokenPriceUsd) / 10 ** _decimals, _fee);
-    } else if (_request._action == LiquidityAction.ADD_LIQUIDITY) {
-      emit CollectAddLiquidityFee(
-        _request._account,
-        _request._token,
-        (_fee * _request._tokenPriceUsd) / 10 ** _decimals,
-        _fee
-      );
-    } else if (_request._action == LiquidityAction.REMOVE_LIQUIDITY) {
-      emit CollectRemoveLiquidityFee(
-        _request._account,
-        _request._token,
-        (_fee * _request._tokenPriceUsd) / 10 ** _decimals,
-        _fee
-      );
+    if (_action == LiquidityAction.SWAP) {
+      emit CollectSwapFee(_account, _token, (_fee * _tokenPriceUsd) / 10 ** _decimals, _fee);
+    } else if (_action == LiquidityAction.ADD_LIQUIDITY) {
+      emit CollectAddLiquidityFee(_account, _token, (_fee * _tokenPriceUsd) / 10 ** _decimals, _fee);
+    } else if (_action == LiquidityAction.REMOVE_LIQUIDITY) {
+      emit CollectRemoveLiquidityFee(_account, _token, (_fee * _tokenPriceUsd) / 10 ** _decimals, _fee);
     }
-    return _request._amount - _fee;
+    return _amount - _fee;
   }
 
   function _validatePLPHealthCheck(address _token) internal view {

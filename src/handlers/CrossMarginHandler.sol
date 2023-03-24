@@ -169,7 +169,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   /// @notice Check funding fee surplus and transfer to PLP
   /// @dev Check if value on funding fee reserve have exceed balance for paying to traders
   ///      - If yes means exceed value are the surplus for platform and can be booked to PLP
-  function withdrawFundingFeeSurplus(bytes[] memory _priceData) external nonReentrant onlyOwner {
+  function withdrawFundingFeeSurplus(address _stableToken, bytes[] memory _priceData) external nonReentrant onlyOwner {
     console2.log("");
     console2.log("------------------------------- withdrawFundingFeeSurplus()");
 
@@ -178,7 +178,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
-    _crossMarginService.withdrawFundingFeeSurplus();
+    _crossMarginService.withdrawFundingFeeSurplus(_stableToken);
   }
 
   receive() external payable {

@@ -26,5 +26,5 @@ interface ICrossMarginHandler {
 
   function setPyth(address _address) external;
 
-  function withdrawFundingFeeSurplus(bytes[] memory _priceData) external;
+  function withdrawFundingFeeSurplus(address _stableToken, bytes[] memory _priceData) external;
 }

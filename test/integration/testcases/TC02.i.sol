@@ -205,7 +205,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Assert Market
       assertMarketLongPosition(wethMarketIndex, 300 * 1e30, 1_500.00075 * 1e30, 0.2 * 1e8, "T4: ");
       assertMarketShortPosition(wethMarketIndex, 0, 0, 0, "T4: ");
-      assertMarketFundingRate(wethMarketIndex, 0, 1120, "T4: ");
+      assertMarketFundingRate(wethMarketIndex, 0, 1120, 0, 0, "T4: ");
 
       // Assert Asset class
       // Crypto's reserve should be increased by = 27 USD
@@ -259,7 +259,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
       //                      = -(60 * 300 / 300000000 * 0.0004)
       //                      = -0.000000024
-      assertMarketFundingRate(wethMarketIndex, -0.000000024 * 1e18, 1180, "T6: ");
+      assertMarketFundingRate(wethMarketIndex, -0.000000024 * 1e18, 1180, 0, 0, "T6: ");
 
       // Crypto Borrowing rate
       //    = reserve * interval * base rate / tvl
@@ -552,7 +552,7 @@ contract TC02 is BaseIntTest_WithActions {
         816738 * 1e3,
         "T7: "
       );
-      assertMarketFundingRate(jpyMarketIndex, 0, 1240, "T7: ");
+      assertMarketFundingRate(jpyMarketIndex, 0, 1240, 0, 0, "T7: ");
 
       // Assert Asset class
       // Forex's reserve should be increased by = 54 USD
@@ -601,7 +601,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
       //                      = -(60 * -6000 / 300000000 * 0.0004)
       //                      = 0.00000048
-      assertMarketFundingRate(jpyMarketIndex, 0.00000048 * 1e18, 1300, "T8: ");
+      assertMarketFundingRate(jpyMarketIndex, 0.00000048 * 1e18, 1300, 0, 0, "T8: ");
 
       // Forex Borrowing rate
       //    = reserve * interval * base rate / tvl

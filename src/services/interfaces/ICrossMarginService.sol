@@ -34,5 +34,5 @@ interface ICrossMarginService {
     address _receiver
   ) external;
 
-  function withdrawFundingFeeSurplus() external;
+  function withdrawFundingFeeSurplus(address _stableToken) external;
 }

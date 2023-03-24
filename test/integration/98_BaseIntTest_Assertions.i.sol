@@ -250,31 +250,53 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     );
   }
 
-  function assertGlobalAccumFunding(int256 _accumFundingLong, int256 _accumFundingShort, string memory _str) internal {
-    IPerpStorage.GlobalState memory _global = perpStorage.getGlobalState();
+  function assertMarketAccumFundingFee(
+    uint256 _marketIndex,
+    int256 _accumFundingLong,
+    int256 _accumFundingShort,
+    string memory _str
+  ) internal {
+    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
 
-    assertEq(_global.accumFundingLong, _accumFundingLong, string.concat(_str, "Global's accum funding Long"));
-    assertEq(_global.accumFundingShort, _accumFundingShort, string.concat(_str, "Global's accum funding Short"));
+    assertEq(_market.accumFundingLong, _accumFundingLong, string.concat(_str, "Market's Accum funding fee long"));
+    assertEq(_market.accumFundingShort, _accumFundingShort, string.concat(_str, "Market's Accum funding fee short"));
   }
 
   function assertMarketFundingRate(
     uint256 _marketIndex,
     int256 _currentFundingRate,
     uint256 _lastFundingTime,
+    int256 _longLastFundingRate,
+    int256 _shortLastFundingRate,
     string memory _str
   ) internal {
     IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     assertEq(_market.currentFundingRate, _currentFundingRate, string.concat(_str, "Market's Funding rate"));
     assertEq(_market.lastFundingTime, _lastFundingTime, string.concat(_str, "Market's Last funding time"));
+    assertEq(_market.longLastFundingRate, _longLastFundingRate, string.concat(_str, "Market's Last Long funding rate"));
+    assertEq(
+      _market.shortLastFundingRate,
+      _shortLastFundingRate,
+      string.concat(_str, "Market's Last Short funding rate")
+    );
   }
 
   function assertMarketFundingRate(
     uint256 _marketIndex,
     int256 _currentFundingRate,
-    uint256 _lastFundingTime
+    uint256 _lastFundingTime,
+    int256 _longLastFundingRate,
+    int256 _shortLastFundingRate
   ) internal {
-    assertMarketFundingRate(_marketIndex, _currentFundingRate, _lastFundingTime, "");
+    assertMarketFundingRate(
+      _marketIndex,
+      _currentFundingRate,
+      _lastFundingTime,
+      _longLastFundingRate,
+      _shortLastFundingRate,
+      ""
+    );
   }
 
   function assertMarketLongPosition(

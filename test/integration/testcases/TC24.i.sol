@@ -9,19 +9,13 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 import { console2 } from "forge-std/console2.sol";
 
 // Test Scenarios
-// X - LONG trader pay funding fee to funding fee reserve
+//   X LONG trader pay funding fee to funding fee reserve
 //   - LONG trader repay funding fee debts to PLP
 //   - LONG trader repay funding fee debts to PLP and pay remaining to funding fee reserve
-//   - SHORT trader receive funding fee from funding fee reserve
+//   X SHORT trader receive funding fee from funding fee reserve
 //   - SHORT trader receive funding fee from funding fee reserve and borrow fee from PLP
 //   - SHORT trader receive funding fee from PLP
-//   - Deployer call withdrawSurplus function with no surplus amount - must revert
-//   - Deployer call withdrawSurplus function with contain surplus amount - must success
-
-// Steps (market):
-// - alice deposit BTC 200_000 USD
-// - alice open weth long position with 1_500_000 USD (new position)
-// - alice open weth long position with 500_000 USD (increase existing positing)
+//   X Deployer call withdrawSurplus function with contain surplus amount - must success
 
 contract TC24 is BaseIntTest_WithActions {
   // TC24 - funding fee should be calculated correctly
@@ -32,11 +26,14 @@ contract TC24 is BaseIntTest_WithActions {
     vm.deal(BOB, 1 ether); // BOB acts as LP provider for protocol
     vm.deal(ALICE, 1 ether); // ALICE acts as trader number 1
     vm.deal(CAROL, 1 ether); // CAROL acts as trader number 2
+    vm.deal(DAVE, 1 ether); // DAVE acts as LP provider for protocol
 
     // mint BTC
     wbtc.mint(ALICE, 100 * 1e8);
     wbtc.mint(BOB, 100 * 1e8);
     wbtc.mint(CAROL, 100 * 1e8);
+    // mint USDC
+    usdc.mint(DAVE, 100_000 * 1e6);
 
     // warp to block timestamp 1000
     vm.warp(1000);
@@ -72,8 +69,10 @@ contract TC24 is BaseIntTest_WithActions {
       //    BTC - protocol fee  = 0 + 0.15 = 0.15 btc
       assertVaultsFees({ _token: address(wbtc), _fee: 0.15 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T1: " });
 
-      // Assert Global Accumulative Funding Fee
-      assertGlobalAccumFunding({ _accumFundingLong: 0, _accumFundingShort: 0, _str: "T1: " });
+      // And accum funding fee
+      // accumFundingLong = 0
+      // accumFundingShort = 0
+      assertMarketAccumFundingFee(wethMarketIndex, 0, 0, "T1: ");
 
       // Finally after Bob add liquidity Vault balance should be correct
       // note: token balance is including all liquidity, dev fee and protocol fee
@@ -81,6 +80,9 @@ contract TC24 is BaseIntTest_WithActions {
       assertVaultTokenBalance(address(wbtc), 50 * 1e8, "T1: ");
     }
 
+    console2.log(
+      "#################################################################################### T2: ALICE deposit BTC 200_000 USD at price 20,000"
+    );
     // time passed for 60 seconds
     skip(60);
 
@@ -110,11 +112,15 @@ contract TC24 is BaseIntTest_WithActions {
       // note: vault's fees should be same with T1
       assertVaultsFees({ _token: address(wbtc), _fee: 0.15 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T2: " });
 
-      // And Global Accumulative Funding Fee should still be 0
-      assertGlobalAccumFunding({ _accumFundingLong: 0, _accumFundingShort: 0, _str: "T2: " });
+      // And accum funding fee
+      // accumFundingLong = 0
+      // accumFundingShort = 0
+      assertMarketAccumFundingFee(wethMarketIndex, 0, 0, "T2: ");
     }
 
-    console2.log("#################################################################################### T3");
+    console2.log(
+      "#################################################################################### T3: ALICE market buy weth with 1_500_000 USD at price 1500 USD"
+    );
 
     // time passed for 60 seconds
     skip(60);
@@ -166,12 +172,16 @@ contract TC24 is BaseIntTest_WithActions {
         _str: "T3: "
       });
 
-      // And Global Accumulative Funding Fee should still be 0
-      assertGlobalAccumFunding({ _accumFundingLong: 0, _accumFundingShort: 0, _str: "T3: " });
+      // And accum funding fee
+      // accumFundingLong = 0
+      // accumFundingShort = 0
+      assertMarketAccumFundingFee(wethMarketIndex, 0, 0, "T3: ");
     }
 
     console2.log("");
-    console2.log("#################################################################################### T4");
+    console2.log(
+      "#################################################################################### T4: ALICE market buy weth with 500_000 USD at price 1500 USD"
+    );
 
     // time passed for 20 minutes
     skip(20 * 60);
@@ -190,7 +200,7 @@ contract TC24 is BaseIntTest_WithActions {
       //                      = -((60 * 20 / 1) * (1_500_000 / 300_000_000 * 0.0004))
       //                      = -0.0024
       // Last Funding Time    = 1000 + 60 + 60 + 1200 = 2320
-      assertMarketFundingRate(wethMarketIndex, -0.0024 * 1e18, 2320, "T4: ");
+      assertMarketFundingRate(wethMarketIndex, -0.0024 * 1e18, 2320, -0.0024 * 1e18, -0.0024 * 1e18, "T4: ");
 
       // Funding fee          = (current rate - entry rate) * position size
       //                      = (-0.0024 - 0) * 1_500_000
@@ -201,15 +211,23 @@ contract TC24 is BaseIntTest_WithActions {
       // Then Vault BTC's balance should still be the same as T2
       assertVaultTokenBalance(address(wbtc), 60 * 1e8, "T4: ");
 
-      // And according to Alice is the only 1 trader
-      // then accumFundingFee will be deducted to 0
-      // And that make Surplus occurred
-
-      // Assert Global Accumulative Funding Fee
-      assertGlobalAccumFunding({ _accumFundingLong: 0, _accumFundingShort: 0, _str: "T4: " });
+      // And accum funding fee
+      // accumFundingLong  = Long position size * (current funding rate - last long funding rate)
+      //                   = 1_500_000 * (-0.0024 - 0) = -3600
+      // After Alice pay funding fee
+      //                   = 3600 - 3600 = 0
+      // accumFundingShort = 0
+      assertMarketAccumFundingFee(wethMarketIndex, 0, 0, "T4: ");
     }
 
+    // time passed for 60 seconds
+    skip(60);
+    console2.log("");
+    console2.log(
+      "#################################################################################### T5: Deployer see the surplus on funding fee and try to withdraw surplus to PLP"
+    );
     // T5: Deployer see the surplus on funding fee and try to withdraw surplus to PLP
+    // ** deployer must converts all funding fee reserves to stable token (USDC) before called withdraw surplus
     {
       // Assert before withdraw surplus
       // PLP's liquidity = old amount + borrowing fee + trader's profit/loss
@@ -218,25 +236,57 @@ contract TC24 is BaseIntTest_WithActions {
       // new PLP's liquidity = 49.85 + 0.09322717999999952 = 49.94322718 WBTC
       assertPLPLiquidity(address(wbtc), 49.94322718 * 1e8, "T5: ");
     }
-    crossMarginHandler.withdrawFundingFeeSurplus(new bytes[](0));
+    // Add USDC liquidity first to make plp have token to convert
+    addLiquidity(DAVE, usdc, 50_000 * 1e6, executionOrderFee, new bytes[](0), true);
+    {
+      // new PLP's liquidity = 50_000 USDC
+      assertPLPLiquidity(address(usdc), 50_000 * 1e6, "T5: ");
+    }
+
+    // Convert all tokens on funding fee reserve to be stable token
+    botHandler.convertFundingFeeReserve(address(usdc));
+    {
+      // After convert WBTC to USDC
+      // WBTC = 0
+      // USDC = WBTC amount * WBTC Price / USDC Price
+      //      = 0.18 * 20_000 / 1
+      //      = 3_600 USDC
+      assertFundingFeeReserve(address(wbtc), 0 * 1e8, "T5: ");
+      assertFundingFeeReserve(address(usdc), 3_600 * 1e6, "T5: ");
+
+      // And USDC on PLP liquidity will be decreased
+      // USDC = 50_000 - 3_600 = 46_400 USDC
+      assertPLPLiquidity(address(usdc), 46_400 * 1e6, "T5: ");
+
+      // AND WBTC on PLP liquidity will be increased
+      // WBTC = 49.94322718 + 0.18 = 50.12322718
+      assertPLPLiquidity(address(wbtc), 50.12322718 * 1e8, "T5: ");
+    }
+
+    // Then deployer can call withdraw surplus
+    crossMarginHandler.withdrawFundingFeeSurplus(address(usdc), new bytes[](0));
     {
       // Assert PLP Liquidity
-      // According from T2
-      //    new BTC amount = old + surplus amount = 49.94322718 + 0.18 = 50.12322718;
-      assertPLPLiquidity(address(wbtc), 50.12322718 * 1e8, "T5: ");
-
       // When Deployer withdraw Surplus to PLP
       // all funding fee reserve will consider as surplus
       // according to Alice is the only one trader in the market
-      assertFundingFeeReserve(address(wbtc), 0, "T5: ");
+      assertFundingFeeReserve(address(usdc), 0, "T5: ");
+      // PLP USDC = old + surplus amount
+      //          = 46_400 + 3_600
+      //          = 50000
+      assertPLPLiquidity(address(usdc), 50_000 * 1e6, "T5: ");
     }
 
+    console2.log("");
+    console2.log(
+      "#################################################################################### T6: CAROL deposit BTC 100_000 USD at price 20,000"
+    );
     // time passed for 60 seconds
     skip(60);
 
-    // ==========================================================
-    // | SHORT trader receive funding fee to funding fee reserve |
-    // ==========================================================
+    // =============================================================
+    // | SHORT trader receive funding fee from funding fee reserve |
+    // =============================================================
 
     // T6: CAROL deposit BTC 100_000 USD at price 20,000
     // 100_000 / 20_000 = 5 BTC
@@ -254,121 +304,170 @@ contract TC24 is BaseIntTest_WithActions {
       // And CAROL's sub-account balances should be correct
       //    BTC - 5
       assertSubAccountTokenBalance(_carolSubAccount0, address(wbtc), true, 5 * 1e8, "T6: ");
-
-      // And PLP total supply and Liquidity must not be changed
-      // note: data from T5
-      assertPLPTotalSupply(997_000 * 1e18, "T6: ");
-      assertPLPLiquidity(address(wbtc), 50.12322718 * 1e8, "T6: ");
-
-      // And Global Accumulative Funding Fee should still be 0
-      assertGlobalAccumFunding({ _accumFundingLong: 0, _accumFundingShort: 0, _str: "T6: " });
     }
 
     console2.log("");
-    console2.log("#################################################################################### T7");
+    console2.log(
+      "#################################################################################### T7: CAROL market sell weth with 200_000 USD at price 1500 USD"
+    );
     // time passed for 60 seconds
     skip(60);
 
-    // // T7: CAROL market sell weth with 200_000 USD at price 1500 USD
-    // //     Then CAROL should has Short Position in WETH market
-    // marketSell(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(0), new bytes[](0));
-    // {
-    //   // When CAROL Sell WETH Market
-    //   // Market's Funding rate
-    //   // new Funding rate     = -(Intervals * (Skew ratio * Max funding rate))
-    //   //                      = -((120 / 1) * (2_000_000 / 300_000_000 * 0.0004))
-    //   //                      = -0.00032
-    //   // Accum Funding Rate   = old + new = -0.0024 + (-0.00032) = -0.0027199999999999998
-    //   // Last Funding Time    = 2320 + (60 + 60) = 2440
-    //   assertMarketFundingRate(wethMarketIndex, -0.00271999999999992 * 1e18, 2440, "T7: ");
+    // T7: CAROL market sell weth with 200_000 USD at price 1500 USD
+    //     Then CAROL should has Short Position in WETH market
+    marketSell(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(0), new bytes[](0));
+    {
+      // When CAROL Sell WETH Market
+      // Market's Funding rate
+      // new Funding rate     = -(Intervals * (Skew ratio * Max funding rate))
+      //                      = -((180 / 1) * (2_000_000 / 300_000_000 * 0.0004))
+      //                      = -0.00048
+      // Accum Funding Rate   = old + new = -0.0024 + (-0.00048) = -0.00288
+      // Last Funding Time    = 2320 + (60 + 60 + 60) = 2500
+      // Last Long Funding Rate = -0.002879999999999880
+      // Last Short Funding Rate = 0
+      assertMarketFundingRate(
+        wethMarketIndex,
+        -0.002879999999999880 * 1e18,
+        2500,
+        -0.002879999999999880 * 1e18,
+        -0.002879999999999880 * 1e18,
+        "T7: "
+      );
 
-    //   // Funding fee Reserve
-    //   // must still be 0 according to T6 that called withdraw surplus
-    //   assertFundingFeeReserve(address(wbtc), 0, "T7: ");
+      // Funding fee Reserve
+      // must still be 0 according to T6 that called withdraw surplus
+      assertFundingFeeReserve(address(wbtc), 0, "T7: ");
 
-    //   // Then Vault BTC's balance should still be the same as T6
-    //   assertVaultTokenBalance(address(wbtc), 65 * 1e8, "T7: ");
+      // Then Vault BTC's balance should still be the same as T6
+      assertVaultTokenBalance(address(wbtc), 65 * 1e8, "T7: ");
 
-    //   // Assert Global Accumulative Funding Fee
-    //   // accumFundingLong     = currentFundingRate * longPositionSize
-    //   //                      = -0.00271999999999992 * 2_000_000 = -5439.99999999984
-    //   assertGlobalAccumFunding({
-    //     _accumFundingLong: -5439.999999999840000000000000000000 * 1e30,
-    //     _accumFundingShort: 0,
-    //     _str: "T4: "
-    //   });
+      // And accum funding fee
+      // accumFundingLong  = Long position size * (current funding rate - last long funding rate)
+      //                   = 2_000_000 * (-0.002879999999999880 - (-0.0024))
+      //                   = -959.99999999976 USD
+      // accumFundingShort = 0
+      assertMarketAccumFundingFee(wethMarketIndex, 959.99999999976 * 1e30, 0, "T7: ");
 
-    //   // And entry funding rate of CAROL's Short position
-    //   // entryFundingRate     = currentFundingRate
-    //   //                      = -0.00271999999999992
-    //   assertEntryFundingRate(_carolSubAccount0, wethMarketIndex, -0.00271999999999992 * 1e18, "T7: ");
-    // }
+      // And entry funding rate of CAROL's Short position
+      // entryFundingRate     = currentFundingRate
+      //                      = -0.002879999999999880
+      assertEntryFundingRate(_carolSubAccount0, wethMarketIndex, -0.002879999999999880 * 1e18, "T7: ");
+    }
 
     console2.log("");
-    console2.log("#################################################################################### T8");
+    console2.log(
+      "#################################################################################### T8: ALICE market buy weth with 100_000 USD at price 1500 USD"
+    );
     // time passed for 60 seconds
-    // skip(60);
+    skip(60);
 
-    // // T8: ALICE market buy weth with 100_000 USD at price 1500 USD
-    // //     Then Alice's Long Position must be increased
-    // {
-    //   // Check Alice's sub account balance
-    //   // Ignore Trading fee, Borrowing fee, Trader's profit/loss on this test
-    //   assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 9.61032097 * 1e8, "T8: ");
-    // }
-    // marketBuy(ALICE, 0, wethMarketIndex, 100_000 * 1e30, address(0), new bytes[](0));
-    // {
-    //   // When ALICE buy more on WETH Market
-    //   // Market's Funding rate
-    //   // new Funding rate     = -(Intervals * (Skew ratio * Max funding rate))
-    //   //                      = -((60 / 1) * ((2_000_000-200_000 )/ 300_000_000 * 0.0004))
-    //   //                      = -0.000144
-    //   // Accum Funding Rate   = old + new = -0.0027199999999999998 + (-0.000144) = -0.002864
-    //   // Last Funding Time    = 2440 + 60 = 2500
-    //   assertMarketFundingRate(wethMarketIndex, -0.00286399999999992 * 1e18, 2500, "T8: ");
+    // T8: ALICE market buy weth with 100_000 USD at price 1500 USD
+    //     Then Alice's Long Position must be increased
+    {
+      // Check Alice's sub account balance
+      // Ignore Trading fee, Borrowing fee, Trader's profit/loss on this test
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 9.61032097 * 1e8, "T8: ");
+    }
+    marketBuy(ALICE, 0, wethMarketIndex, 100_000 * 1e30, address(0), new bytes[](0));
+    {
+      // When ALICE buy more on WETH Market
+      // Market's Funding rate
+      // new Funding rate     = -(Intervals * (Skew ratio * Max funding rate))
+      //                      = -((60 / 1) * ((2_000_000-200_000 )/ 300_000_000 * 0.0004))
+      //                      = -0.000144
+      // Accum Funding Rate   = old + new = -0.002879999999999880 + (-0.000144) = -0.00302399999999988
+      // Last Funding Time    = 2500 + 60 = 2560
+      // Last Long Funding Rate = -0.00302399999999988
+      // Last Short Funding Rate = -0.00302399999999988
+      assertMarketFundingRate(
+        wethMarketIndex,
+        -0.00302399999999988 * 1e18,
+        2560,
+        -0.00302399999999988 * 1e18,
+        -0.00302399999999988 * 1e18,
+        "T8: "
+      );
 
-    //   // Funding fee Reserve
-    //   // Funding fee Alice should be paid = FundingRate * Position Size
-    //   //                                  = (_sumFundingRate - _entryFundingRate) * Position Size
-    //   //                                  = (-0.00286399999999992 - (-0.0024)) * 2_000_000
-    //   //                                  = -927.9999999998404 USD
-    //   //                                  = -927.9999999998404 / 20_000 = 0.0463999 BTC
-    //   assertFundingFeeReserve(address(wbtc), 0.04639999 * 1e8, "T8: ");
+      // And accum funding fee
+      // accumFundingLong  = old value + new value
+      //                   = -959.99999999976 + Long position size * (current funding rate - last long funding rate)
+      //                   = -959.99999999976 + (2_000_000 * (-0.00302399999999988 - (-0.002879999999999880)))
+      //                   = -1247.99999999976
+      // Alice pay long funding fee
+      //                   = 1247.99999999976 - 1247.99999999976 = 0
+      // accumFundingShort = old value + new value
+      //                   = 0 + Short position size * (current funding rate - last short funding rate)
+      //                   = 200_000 * (-0.00302399999999988 - (-0.002879999999999880)) =
+      //                   = -28.8
+      assertMarketAccumFundingFee(wethMarketIndex, 0, -28.8 * 1e30, "T8: ");
 
-    //   // Then Vault BTC's balance should still be the same as T6
-    //   assertVaultTokenBalance(address(wbtc), 65 * 1e8, "T8: ");
+      // Funding fee Reserve
+      // Funding fee Alice should be paid = FundingRate * Position Size
+      //                                  = (_sumFundingRate - _entryFundingRate) * Position Size
+      //                                  = (-0.00302399999999988 - (-0.0024)) * 2_000_000
+      //                                  = -1247.99999999976 USD
+      //                                  = -1247.99999999976 / 20_000 = -0.062399999999988 BTC
+      assertFundingFeeReserve(address(wbtc), 0.06239999 * 1e8, "T8: ");
 
-    //   // And Alice's sub-account balances should be correct
-    //   //    Alice's BTC = before balance - Trading fee - Borrowing fee - Funding fee
-    //   //                = 9.61032097 - (100/20_000) - (601.158418866197/20_000) - 0.04639999
-    //   //                = 9.52886306 BTC
-    //   assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 9.52886306 * 1e8, "T8: ");
-
-    //   // Assert Global Accumulative Funding Fee
-    //   // accumFundingLong     = current accumFundingLong + (currentFundingRate * longPositionSize)
-    //   //                      = -5439.99999999984 + (-0.00286399999999992 * 2_000_000) = -5439.99999999984 + (-5727.99999999984)
-    //   //                      = -11167.99999999968 USD
-    //   // accumFundingLong After Alice paid
-    //   //                      = -11167.99999999968 + 927.9999999998404  = -10239.99999999984 USD
-    //   // accumFundingShort    = currentFundingRate * shortPositionSize
-    //   //                      = -0.00286399999999992 * -(200_000) = 572.799999999984
-    //   assertGlobalAccumFunding({
-    //     _accumFundingLong: -10239.99999999984 * 1e30,
-    //     _accumFundingShort: 572.799999999984 * 1e30,
-    //     _str: "T8: "
-    //   });
-    // }
+      // Then Vault BTC's balance should still be the same as T6
+      assertVaultTokenBalance(address(wbtc), 65 * 1e8, "T8: ");
+    }
 
     console2.log("");
-    console2.log("#################################################################################### T9");
+    console2.log(
+      "#################################################################################### T9: CAROL close sell position with 200_000 USD"
+    );
     // time passed for 60 seconds
-    // skip(60);
-    marketSell(ALICE, 0, wethMarketIndex, 2_100_000 * 1e30, address(0), new bytes[](0));
+    skip(60);
 
-    console2.log("");
-    console2.log("##########################################");
-    IPerpStorage.GlobalState memory _global = perpStorage.getGlobalState();
-    console2.log("_global.accumFundingLong", _global.accumFundingLong);
-    console2.log("_global.accumFundingShort", _global.accumFundingShort);
+    // T9: CAROL close sell position with 200_000 USD
+    //     CAROL must get funding fee from funding fee reserve
+    {
+      // check CAROL's BTC before by ignoring fee case
+      assertSubAccountTokenBalance(_carolSubAccount0, address(wbtc), true, 4.99 * 1e8, "T9: ");
+    }
+    marketBuy(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(0), new bytes[](0));
+    {
+      // When CAROL Buy WETH Market
+      // Market's Funding rate
+      // new Funding rate     = -(Intervals * (Skew ratio * Max funding rate))
+      //                      = -((60 / 1) * ((2_100_000-200_000) / 300_000_000) * 0.0004) = -0.000152
+      //                      = -0.000152
+      // Accum Funding Rate   = old + new = -0.00302399999999988 + (-0.000152) = -0.00317599999999986
+      // Last Funding Time    = 2560 + 60 = 2620
+      // Last Long Funding Rate = -0.00317599999999986
+      // Last Short Funding Rate = -0.00317599999999986
+      assertMarketFundingRate(
+        wethMarketIndex,
+        -0.00317599999999986 * 1e18,
+        2620,
+        -0.00317599999999986 * 1e18,
+        -0.00317599999999986 * 1e18,
+        "T9: "
+      );
+
+      // And accum funding fee
+      // accumFundingLong  = old value + new value
+      //                   = 0 + Long position size * (current funding rate - last long funding rate)
+      //                   = 0 + (2_100_000 * (-0.00317599999999986 - (-0.00302399999999988)))
+      //                   = -319.199999999958
+      // accumFundingShort = old value + new value
+      //                   = -28.8 + Short position size * (current funding rate - last short funding rate)
+      //                   = -28.8 + 200_000 * (-0.00317599999999986 - (-0.00302399999999988))
+      //                   = -59.199999999996
+      // CAROL get funding fee reserve
+      //                   = 59.199999999996 - 59.199999999996 = 0
+      assertMarketAccumFundingFee(wethMarketIndex, 319.199999999958 * 1e30, 0, "T9: ");
+
+      // Funding fee Reserve
+      // WBTC              = old balance - deduct amount
+      //                   = 0.06239999 - (59.199999999996 / 20_000) = 0.0594399900000002
+      //                   = 0.05944000
+      assertFundingFeeReserve(address(wbtc), 0.05944000 * 1e8, "T9: ");
+
+      // Then Vault BTC's balance should still be the same as T6
+      assertVaultTokenBalance(address(wbtc), 65 * 1e8, "T9: ");
+    }
   }
 }

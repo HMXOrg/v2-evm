@@ -3,15 +3,18 @@ pragma solidity 0.8.18;
 
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import { IBotHandler } from "./interfaces/IBotHandler.sol";
+// interfaces
+import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+
 // contracts
+import { Owned } from "@hmx/base/Owned.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
-// interfaces
-import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
+import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 // @todo - integrate with BotHandler in another PRs
 contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
@@ -32,6 +35,24 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   event LogSetPositionManager(address _address, bool _allowed);
   event LogSetLiquidationService(address _oldLiquidationService, address _newLiquidationService);
   event LogSetPyth(address _oldPyth, address _newPyth);
+
+  /**
+   * Structs
+   */
+  struct ConvertFundingFeeReserveInputs {
+    address[] collateralTokens;
+    // stable token
+    bytes32 stableTokenAssetId;
+    uint8 stableTokenDecimal;
+    uint256 stableTokenPrice;
+    // funding fee reserve
+    uint256 fundingFeeReserve;
+    bytes32 tokenAssetId;
+    uint8 tokenDecimal;
+    uint256 tokenPrice;
+    uint256 fundingFeeReserveValue;
+    uint256 stableTokenAmount;
+  }
 
   /**
    * States
@@ -153,6 +174,54 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     LiquidationService(liquidationService).liquidate(_subAccount, msg.sender);
 
     emit LogLiquidate(_subAccount);
+  }
+
+  /// @notice convert all tokens on funding fee reserve to stable token (USDC)
+  /// @param _stableToken target token that will convert all funding fee reserves to
+  function convertFundingFeeReserve(address _stableToken) external nonReentrant onlyOwner {
+    // SLOAD
+    ConfigStorage _configStorage = ConfigStorage(ITradeService(tradeService).configStorage());
+    VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
+    OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
+
+    ConvertFundingFeeReserveInputs memory _vars;
+
+    _vars.collateralTokens = _configStorage.getCollateralTokens();
+
+    // Get stable token price
+    _vars.stableTokenAssetId = _configStorage.tokenAssetIds(_stableToken);
+    _vars.stableTokenDecimal = _configStorage.getAssetTokenDecimal(_stableToken);
+    (_vars.stableTokenPrice, ) = _oracle.getLatestPrice(_vars.stableTokenAssetId, false);
+
+    // Loop through collateral lists
+    // And do accounting to swap token on funding fee reserve with plp liquidity
+    for (uint256 i; i < _vars.collateralTokens.length; ) {
+      _vars.fundingFeeReserve = _vaultStorage.fundingFeeReserve(_vars.collateralTokens[i]);
+      _vars.tokenAssetId = _configStorage.tokenAssetIds(_vars.collateralTokens[i]);
+      _vars.tokenDecimal = _configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
+      (_vars.tokenPrice, ) = _oracle.getLatestPrice(_vars.tokenAssetId, false);
+
+      if (_stableToken != _vars.collateralTokens[i] && _vars.fundingFeeReserve > 0) {
+        _vars.fundingFeeReserveValue = (_vars.fundingFeeReserve * _vars.tokenPrice) / (10 ** _vars.tokenDecimal);
+        _vars.stableTokenAmount =
+          (_vars.fundingFeeReserveValue * (10 ** _vars.stableTokenDecimal)) /
+          _vars.stableTokenPrice;
+
+        if (_vaultStorage.plpLiquidity(_stableToken) < _vars.stableTokenAmount)
+          revert IBotHandler_InsufficientLiquidity();
+
+        _vaultStorage.convertFundingFeeReserveWithPLP(
+          _vars.collateralTokens[i],
+          _stableToken,
+          _vars.fundingFeeReserve,
+          _vars.stableTokenAmount
+        );
+      }
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @notice Reset trade service

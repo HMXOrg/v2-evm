@@ -540,6 +540,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _globalMarketIndex,
     DecreasePositionVars memory _vars
   ) internal returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
+    console2.log("------------------------------- _decreasePosition()");
     // Update borrowing rate
     TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 

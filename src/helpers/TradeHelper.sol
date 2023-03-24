@@ -110,21 +110,47 @@ contract TradeHelper is ITradeHelper {
       // update funding rate
       int256 nextFundingRate = calculator.getNextFundingRate(_marketIndex);
       _globalMarket.currentFundingRate += nextFundingRate;
+
       console2.log("!!! nextFundingRate", nextFundingRate);
       console2.log("!!! currentFundingRate", _globalMarket.currentFundingRate);
 
       if (_globalMarket.longOpenInterest > 0) {
-        int256 fundingFeeLongE30 = (_globalMarket.currentFundingRate * int(_globalMarket.longPositionSize)) / 1e18;
-        _updateAccumFundingLong(fundingFeeLongE30);
+        _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
+        int256 fundingFeeLongE30 = calculator.getFundingFee(
+          _marketIndex,
+          true,
+          int(_globalMarket.longPositionSize),
+          _globalMarket.longLastFundingRate
+        );
+        console2.log("!!! longLastFundingRate", _globalMarket.longLastFundingRate);
+        // _globalMarket.longLastFundingRate = _globalMarket.currentFundingRate;
+        _globalMarket.accumFundingLong += fundingFeeLongE30;
+
         console2.log("!!! longPositionSize", _globalMarket.longPositionSize);
+        console2.log("!!! accumFundingLong", _globalMarket.accumFundingLong);
       }
+
       if (_globalMarket.shortOpenInterest > 0) {
-        int256 fundingFeeShortE30 = (_globalMarket.currentFundingRate * -int(_globalMarket.shortPositionSize)) / 1e18;
-        _updateAccumFundingShort(fundingFeeShortE30);
+        _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
+        int256 fundingFeeShortE30 = calculator.getFundingFee(
+          _marketIndex,
+          false,
+          int(_globalMarket.shortPositionSize),
+          _globalMarket.shortLastFundingRate
+        );
+
+        console2.log("");
+        console2.log("!!! shortLastFundingRate", _globalMarket.shortLastFundingRate);
+        // _globalMarket.shortLastFundingRate = _globalMarket.currentFundingRate;
+        _globalMarket.accumFundingShort += fundingFeeShortE30;
+
         console2.log("!!! shortPositionSize", _globalMarket.shortPositionSize);
+        console2.log("!!! accumFundingShort", _globalMarket.accumFundingShort);
       }
 
       _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      _globalMarket.longLastFundingRate = _globalMarket.currentFundingRate;
+      _globalMarket.shortLastFundingRate = _globalMarket.currentFundingRate;
       _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
     }
   }
@@ -197,6 +223,7 @@ contract TradeHelper is ITradeHelper {
     // Calculate the funding fee
     {
       _vars.isLong = _position.positionSizeE30 > 0;
+
       _vars.fundingFeeToBePaid = calculator.getFundingFee(
         _marketIndex,
         _vars.isLong,
@@ -371,7 +398,9 @@ contract TradeHelper is ITradeHelper {
       _vars.vaultStorage.payFundingFeeFromTraderToFundingFeeReserve(_vars.subAccount, _collateralToken, _repayAmount);
 
       // Update accum funding fee on Global storage for surplus calculation
-      _vars.isLong ? _updateAccumFundingLong(int(_repayValue)) : _updateAccumFundingShort(int(_repayValue));
+      _vars.isLong
+        ? _updateAccumFundingLong(_vars.marketIndex, -int(_repayValue))
+        : _updateAccumFundingShort(_vars.marketIndex, -int(_repayValue));
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -408,7 +437,7 @@ contract TradeHelper is ITradeHelper {
       );
 
       // Update accum funding fee on Global storage for surplus calculation
-      _vars.isLong ? _updateAccumFundingLong(int(_repayValue)) : _updateAccumFundingShort(int(_repayValue));
+      // _vars.isLong ? _updateAccumFundingLong(int(_repayValue)) : _updateAccumFundingShort(int(_repayValue));
 
       _vars.absFundingFeeToBePaid -= _repayValue;
     }
@@ -437,7 +466,9 @@ contract TradeHelper is ITradeHelper {
       _vars.vaultStorage.payFundingFeeFromFundingFeeReserveToTrader(_vars.subAccount, _collateralToken, _repayAmount);
 
       // Update accum funding fee on Global storage for surplus calculation
-      _vars.isLong ? _updateAccumFundingLong(-int(_repayValue)) : _updateAccumFundingShort(-int(_repayValue));
+      _vars.isLong
+        ? _updateAccumFundingLong(_vars.marketIndex, int(_repayValue))
+        : _updateAccumFundingShort(_vars.marketIndex, int(_repayValue));
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -464,7 +495,7 @@ contract TradeHelper is ITradeHelper {
       _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _collateralToken, _repayAmount, _repayValue);
 
       // Update accum funding fee on Global storage for surplus calculation
-      _vars.isLong ? _updateAccumFundingLong(-int(_repayValue)) : _updateAccumFundingShort(-int(_repayValue));
+      // _vars.isLong ? _updateAccumFundingLong(-int(_repayValue)) : _updateAccumFundingShort(-int(_repayValue));
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -564,26 +595,26 @@ contract TradeHelper is ITradeHelper {
     }
   }
 
-  function _updateAccumFundingLong(int256 fundingLong) internal {
+  function _updateAccumFundingLong(uint256 _marketIndex, int256 fundingLong) internal {
     console2.log("");
     console2.log("------------------------------- _updateAccumFundingLong()");
     PerpStorage _perpStorage = PerpStorage(perpStorage);
-    PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
+    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
 
-    _globalState.accumFundingLong += fundingLong;
-    console2.log("_globalState.accumFundingLong", _globalState.accumFundingLong);
-    _perpStorage.updateGlobalState(_globalState);
+    _globalMarket.accumFundingLong += fundingLong;
+    console2.log(">>> _globalMarket.accumFundingLong", _globalMarket.accumFundingLong);
+    _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
   }
 
-  function _updateAccumFundingShort(int256 fundingShort) internal {
+  function _updateAccumFundingShort(uint256 _marketIndex, int256 fundingShort) internal {
     console2.log("");
     console2.log("------------------------------- _updateAccumFundingShort()");
     PerpStorage _perpStorage = PerpStorage(perpStorage);
-    PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
+    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
 
-    _globalState.accumFundingShort += fundingShort;
-    console2.log("_globalState.accumFundingShort", _globalState.accumFundingShort);
-    _perpStorage.updateGlobalState(_globalState);
+    _globalMarket.accumFundingShort += fundingShort;
+    console2.log(">>> _globalMarket.accumFundingShort", _globalMarket.accumFundingShort);
+    _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
   }
 
   function _abs(int256 x) private pure returns (uint256) {

@@ -653,9 +653,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         .sub(each.entryFundingRate)
         .mul(each.positionSizeE30.abs())
         .div(parseUnits("1", 18))
-        .mul(each.isLong ? -1 : 1);
+        .mul(each.positionSizeE30.gt(0) ? -1 : 1);
       return {
-        exposure: each.isLong ? "LONG" : "SHORT",
+        exposure: each.positionSizeE30.gt(0) ? "LONG" : "SHORT",
         size: formatUnits(each.positionSizeE30, 30),
         sizeInAsset: each.avgEntryPriceE30.gt(0)
           ? formatUnits(each.positionSizeE30.mul(parseUnits("1", 30)).div(each.avgEntryPriceE30), 30)

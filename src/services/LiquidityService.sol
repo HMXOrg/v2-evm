@@ -96,7 +96,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _aumE30 = _calculator.getAUME30(true);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
-    (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
+    (uint256 _tokenValueUSDAfterFee, uint256 _mintAmount) = _joinPool(
       _token,
       _amount,
       _price,
@@ -107,10 +107,10 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
-    PLPv2(ConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
+    PLPv2(ConfigStorage(configStorage).plp()).mint(_lpProvider, _mintAmount);
 
-    emit AddLiquidity(_lpProvider, _token, _amount, _aumE30, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
-    return mintAmount;
+    emit AddLiquidity(_lpProvider, _token, _amount, _aumE30, _lpSupply, _tokenValueUSDAfterFee, _mintAmount);
+    return _mintAmount;
   }
 
   function removeLiquidity(

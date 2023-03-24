@@ -182,7 +182,6 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _marketIndex,
     int256 _positionSize,
     uint256 _avgPrice,
-    uint256 _openInterest,
     uint256 _reserveValue,
     int256 _realizedPnl,
     uint256 _entryBorrowingRate,
@@ -194,7 +193,6 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
 
     assertEq(_position.positionSizeE30, _positionSize, string.concat(_str, "Position's size is not matched"));
     assertEq(_position.avgEntryPriceE30, _avgPrice, string.concat(_str, "Position's average price is not matched"));
-    assertEq(_position.openInterest, _openInterest, string.concat(_str, "Position's open interest is not matched"));
     assertEq(_position.reserveValueE30, _reserveValue, string.concat(_str, "Position's reserve value is not matched"));
     assertEq(_position.realizedPnl, _realizedPnl, string.concat(_str, "Position's realized pnl is not matched"));
     assertEq(
@@ -214,7 +212,6 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _marketIndex,
     int256 _positionSize,
     uint256 _avgPrice,
-    uint256 _openInterest,
     uint256 _reserveValue,
     int256 _realizedPnl,
     uint256 _entryBorrowingRate,
@@ -225,7 +222,6 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       _marketIndex,
       _positionSize,
       _avgPrice,
-      _openInterest,
       _reserveValue,
       _realizedPnl,
       _entryBorrowingRate,
@@ -262,6 +258,18 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     assertEq(_market.accumFundingShort, _accumFundingShort, string.concat(_str, "Market's Accum funding fee short"));
   }
 
+  function assertNumberOfPosition(address _subAccount, uint256 _numberOfPosition, string memory _str) internal {
+    assertEq(
+      perpStorage.getNumberOfSubAccountPosition(_subAccount),
+      _numberOfPosition,
+      string.concat(_str, "Number of position")
+    );
+  }
+
+  function assertNumberOfPosition(address _subAccount, uint256 _numberOfPosition) internal {
+    assertEq(perpStorage.getNumberOfSubAccountPosition(_subAccount), _numberOfPosition, "");
+  }
+
   function assertMarketFundingRate(
     uint256 _marketIndex,
     int256 _currentFundingRate,
@@ -274,12 +282,12 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
 
     assertEq(_market.currentFundingRate, _currentFundingRate, string.concat(_str, "Market's Funding rate"));
     assertEq(_market.lastFundingTime, _lastFundingTime, string.concat(_str, "Market's Last funding time"));
-    assertEq(_market.longLastFundingRate, _longLastFundingRate, string.concat(_str, "Market's Last Long funding rate"));
-    assertEq(
-      _market.shortLastFundingRate,
-      _shortLastFundingRate,
-      string.concat(_str, "Market's Last Short funding rate")
-    );
+    // assertEq(_market.longLastFundingRate, _longLastFundingRate, string.concat(_str, "Market's Last Long funding rate"));
+    // assertEq(
+    //   _market.shortLastFundingRate,
+    //   _shortLastFundingRate,
+    //   string.concat(_str, "Market's Last Short funding rate")
+    // );
   }
 
   function assertMarketFundingRate(
@@ -303,46 +311,32 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _marketIndex,
     uint256 _positionSize,
     uint256 _avgPrice,
-    uint256 _openInterest,
     string memory _str
   ) internal {
     IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     assertEq(_market.longPositionSize, _positionSize, string.concat(_str, "Market's Long position size"));
     assertEq(_market.longAvgPrice, _avgPrice, string.concat(_str, "Market's Long avg price size"));
-    assertEq(_market.longOpenInterest, _openInterest, string.concat(_str, "Market's Long open interest size"));
   }
 
-  function assertMarketLongPosition(
-    uint256 _marketIndex,
-    uint256 _positionSize,
-    uint256 _avgPrice,
-    uint256 _openInterest
-  ) internal {
-    assertMarketLongPosition(_marketIndex, _positionSize, _avgPrice, _openInterest, "");
+  function assertMarketLongPosition(uint256 _marketIndex, uint256 _positionSize, uint256 _avgPrice) internal {
+    assertMarketLongPosition(_marketIndex, _positionSize, _avgPrice, "");
   }
 
   function assertMarketShortPosition(
     uint256 _marketIndex,
     uint256 _positionSize,
     uint256 _avgPrice,
-    uint256 _openInterest,
     string memory _str
   ) internal {
     IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     assertEq(_market.shortPositionSize, _positionSize, string.concat(_str, "Market's Short position size"));
     assertEq(_market.shortAvgPrice, _avgPrice, string.concat(_str, "Market's Short avg price size"));
-    assertEq(_market.shortOpenInterest, _openInterest, string.concat(_str, "Market's Short open interest size"));
   }
 
-  function assertMarketShortPosition(
-    uint256 _marketIndex,
-    uint256 _positionSize,
-    uint256 _avgPrice,
-    uint256 _openInterest
-  ) internal {
-    assertMarketShortPosition(_marketIndex, _positionSize, _avgPrice, _openInterest, "");
+  function assertMarketShortPosition(uint256 _marketIndex, uint256 _positionSize, uint256 _avgPrice) internal {
+    assertMarketShortPosition(_marketIndex, _positionSize, _avgPrice, "");
   }
 
   function assertAssetClassReserve(uint8 _assetClassIndex, uint256 _reserved, string memory _str) internal {

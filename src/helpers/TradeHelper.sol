@@ -114,7 +114,7 @@ contract TradeHelper is ITradeHelper {
       console2.log("!!! nextFundingRate", nextFundingRate);
       console2.log("!!! currentFundingRate", _globalMarket.currentFundingRate);
 
-      if (_globalMarket.longOpenInterest > 0) {
+      if (_globalMarket.longPositionSize > 0) {
         _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
         int256 fundingFeeLongE30 = calculator.getFundingFee(
           _marketIndex,
@@ -130,7 +130,7 @@ contract TradeHelper is ITradeHelper {
         console2.log("!!! accumFundingLong", _globalMarket.accumFundingLong);
       }
 
-      if (_globalMarket.shortOpenInterest > 0) {
+      if (_globalMarket.shortPositionSize > 0) {
         _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
         int256 fundingFeeShortE30 = calculator.getFundingFee(
           _marketIndex,

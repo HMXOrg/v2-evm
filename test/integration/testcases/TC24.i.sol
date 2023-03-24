@@ -164,7 +164,6 @@ contract TC24 is BaseIntTest_WithActions {
         _marketIndex: wethMarketIndex,
         _positionSize: int256(1_500_000 * 1e30),
         _avgPrice: 1503.75 * 1e30,
-        _openInterest: 1_000 * 1e8,
         _reserveValue: 135_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,

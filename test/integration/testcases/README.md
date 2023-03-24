@@ -67,12 +67,16 @@ Steps (limit):
 - execute order 3 - BOB fully close long at 22,500 USD
 
 
-TC04 - flip long and short position correctly
+TC04 - manage position, adjust and flip
 Steps (Market):
 - alice deposit BTC 100 USD
 - alice buy market WETH 100 USD -> LONG 100
-- alice sell market WETH 150 USD -> SHORT 50
-- alice buy market WETH 70 USD -> LONG 20
+- alice buy market WETH 20 USD  -> LONG 120
+
+- alice sell market WETH 150 USD -> SHORT 30 (flip)
+- alice sell limit WETH 20 USD -> SHORT 50
+
+- alice buy market WETH 70 USD -> LONG 20 (flip)
 Steps (Limit):
 
 

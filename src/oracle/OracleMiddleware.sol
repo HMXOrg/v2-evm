@@ -311,18 +311,18 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     //    If Trader manipulatate by Decrease Long position for 150,000 USD
     //    Then:
     //      Premium (before) = 300,000 / 300,000,000 = 0.001
-    int256 _premium = (_marketSkew * 1e18) / int256(_maxSkewScaleUSD);
+    int256 _premium = (_marketSkew * 1e30) / int256(_maxSkewScaleUSD);
 
     //      Premium (after)  = (300,000 - 150,000) / 300,000,000 = 0.0005
     //      ** + When user increase Long position ot Decrease Short position
     //      ** - When user increase Short position ot Decrease Long position
-    int256 _premiumAfter = ((_marketSkew + _sizeDelta) * 1e18) / int256(_maxSkewScaleUSD);
+    int256 _premiumAfter = ((_marketSkew + _sizeDelta) * 1e30) / int256(_maxSkewScaleUSD);
 
     //      Adaptive price = Price * (1 + Median of Before and After)
     //                     = 1,500 * (1 + (0.001 + 0.0005 / 2))
     //                     = 1,500 * (1 + 0.00125) = 1,501.875
     int256 _premiumMedian = (_premium + _premiumAfter) / 2;
-    return (_price * uint256(1e18 + _premiumMedian)) / 1e18;
+    return (_price * uint256(1e30 + _premiumMedian)) / 1e30;
   }
 
   /// @notice Set asset price configs

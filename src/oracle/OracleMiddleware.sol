@@ -4,7 +4,6 @@ pragma solidity 0.8.18;
 import { Owned } from "@hmx/base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
-import { console } from "forge-std/console.sol";
 
 contract OracleMiddleware is Owned, IOracleMiddleware {
   /**
@@ -296,7 +295,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _price,
     uint256 _maxSkewScaleUSD
-  ) internal view returns (uint256 _adaptivePrice) {
+  ) internal pure returns (uint256 _adaptivePrice) {
     // couldn't calculate adaptive price because max skew scale config is used to calcualte premium with market skew
     // then just return oracle price
     if (_maxSkewScaleUSD == 0) return _price;
@@ -323,7 +322,6 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     //                     = 1,500 * (1 + (0.001 + 0.0005 / 2))
     //                     = 1,500 * (1 + 0.00125) = 1,501.875
     int256 _premiumMedian = (_premium + _premiumAfter) / 2;
-
     return (_price * uint256(1e30 + _premiumMedian)) / 1e30;
   }
 

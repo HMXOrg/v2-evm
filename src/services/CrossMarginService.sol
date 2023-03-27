@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 //base
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "@hmx/base/Owned.sol";
@@ -16,8 +14,6 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
-
-import { console2 } from "forge-std/console2.sol";
 
 contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   /**
@@ -176,11 +172,6 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     for (uint256 i = 0; i < _configStorage.getMarketConfigsLength(); ) {
       PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(i);
 
-      console2.log("----------- _globalMarket", i);
-      console2.log("_globalMarket.currentFundingRate", _globalMarket.currentFundingRate);
-      console2.log("_globalMarket.accumFundingLong", _globalMarket.accumFundingLong);
-      console2.log("_globalMarket.accumFundingShort", _globalMarket.accumFundingShort);
-
       _vars.totalAccumFundingLong += _globalMarket.accumFundingLong;
       _vars.totalAccumFundingShort += _globalMarket.accumFundingShort;
 
@@ -188,9 +179,6 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
         ++i;
       }
     }
-
-    console2.log("totalAccumFundingLong", _vars.totalAccumFundingLong);
-    console2.log("totalAccumFundingShort", _vars.totalAccumFundingShort);
 
     if (_vars.totalAccumFundingLong < 0 && _vars.totalAccumFundingShort < 0)
       revert ICrossMarginHandler_NoFundingFeeSurplus();
@@ -207,9 +195,6 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     _vars.fundingFeeAmount = _vaultStorage.fundingFeeReserve(_stableToken);
     _vars.totalFundingFeeReserveValueE30 = (_vars.fundingFeeAmount * _vars.tokenPrice) / (10 ** _vars.tokenDecimal);
 
-    console2.log("fundingFeeBookValue", _vars.fundingFeeBookValue);
-    console2.log("totalFundingFeeReserveValueE30", _vars.totalFundingFeeReserveValueE30);
-
     // If fundingFeeBookValue > totalFundingFeeReserveValueE30 means protocol has exceed balance of fee reserved for paying to traders
     // Funding fee surplus = totalFundingFeeReserveValueE30 - fundingFeeBookValue
     if (_vars.fundingFeeBookValue > _vars.totalFundingFeeReserveValueE30)
@@ -225,8 +210,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
         _vars.fundingFeeSurplusValue,
         _stableToken
       );
-      console2.log("_repayAmount", _repayAmount);
-      console2.log("_repayValue", _repayValue);
+
       _vaultStorage.withdrawSurplusFromFundingFeeReserveToPLP(_stableToken, _repayAmount);
       _vars.fundingFeeSurplusValue -= _repayValue;
     }

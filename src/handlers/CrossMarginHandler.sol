@@ -15,8 +15,6 @@ import { IWNative } from "../interfaces/IWNative.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   uint64 internal constant RATE_PRECISION = 1e18;
   using SafeERC20 for ERC20;

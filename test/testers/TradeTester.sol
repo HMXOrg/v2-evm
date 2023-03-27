@@ -232,8 +232,6 @@ contract TradeTester is StdAssertions {
 
     // Check global reserve
     assertEq(_globalState.reserveValueE30, _globalStateExpectedData.reserveValueE30, "Global Reserve");
-    // assertEq(_globalState.accumFundingLong, _globalStateExpectedData.accumFundingLong, "Accum Funding Long");
-    // assertEq(_globalState.accumFundingShort, _globalStateExpectedData.accumFundingShort, "Accum Funding Short");
   }
 
   /// @notice Assert Vault info

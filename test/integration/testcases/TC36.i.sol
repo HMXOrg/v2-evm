@@ -12,7 +12,7 @@ contract TC36 is BaseIntTest_WithActions {
   function test_correctness_MaxUtilization() external {
     // T0: Initialized state
     // ALICE as liquidity provider
-    // BOB is open position
+    // BOB as trader
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -52,15 +52,47 @@ contract TC36 is BaseIntTest_WithActions {
     uint256 _pythGasFee = initialPriceFeedDatas.length;
     vm.deal(BOB, _pythGasFee);
 
-    //reserve => 16751999700
-    //maxUtilization => 16752000000
+    //reserve        => 1675199970000000000000000000000000000 => 16751999700
+    //maxUtilization => 1675200000000000000000000000000000000 => 16752000000
     marketBuy(BOB, 0, wbtcMarketIndex, 18_613_333 * 1e30, address(wbtc), initialPriceFeedDatas);
 
-    //remove 1 plp still revert
     vm.deal(ALICE, executionOrderFee);
     uint256 _plpAliceBefore = plpV2.balanceOf(ALICE);
     removeLiquidity(ALICE, address(wbtc), 1 * 1e18, executionOrderFee, initialPriceFeedDatas, true);
     uint256 _plpAliceAfter = plpV2.balanceOf(ALICE);
-    assertEq(_plpAliceBefore, _plpAliceAfter, "Alice plp should be the same");
+
+    {
+      assertEq(_plpAliceBefore, _plpAliceAfter, "Alice plp should be the same");
+      // PLP => 1_994_000.00(WBTC) + 100_000 (USDC)
+      assertPLPTotalSupply(2_094_000 * 1e18);
+      // assert PLP
+      assertTokenBalanceOf(ALICE, address(plpV2), 2_094_000 * 1e18);
+      assertPLPLiquidity(address(wbtc), 99.7 * 1e8);
+      assertPLPLiquidity(address(usdc), 100_000 * 1e6);
+    }
+
+    // add liquidity to make sure it's passed
+    vm.deal(ALICE, executionOrderFee);
+    usdc.mint(ALICE, 1_000 * 1e6);
+
+    addLiquidity(ALICE, ERC20(address(usdc)), 1_000 * 1e6, executionOrderFee, initialPriceFeedDatas, true);
+    {
+      assertPLPTotalSupply(2094786772875837506655217);
+      // assert PLP
+      assertTokenBalanceOf(ALICE, address(plpV2), 2094786772875837506655217);
+      assertPLPLiquidity(address(wbtc), 99.7 * 1e8);
+      assertPLPLiquidity(address(usdc), 100_997.2 * 1e6);
+    }
+
+    vm.deal(ALICE, executionOrderFee);
+    //alice able to remove some liquidity to not break plpMaxUtilization
+    removeLiquidity(ALICE, address(wbtc), 500 * 1e18, executionOrderFee, initialPriceFeedDatas, true);
+    {
+      assertPLPTotalSupply(2094286772875837506655217);
+      // assert PLP
+      assertTokenBalanceOf(ALICE, address(plpV2), 2094286772875837506655217);
+      assertPLPLiquidity(address(wbtc), 99.66831361 * 1e8);
+      assertPLPLiquidity(address(usdc), 100_997.2 * 1e6);
+    }
   }
 }

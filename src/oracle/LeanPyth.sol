@@ -27,6 +27,7 @@ contract LeanPyth is Owned, ILeanPyth {
 
   // events
   event LogSetUpdater(address indexed _account, bool _isActive);
+  event LogSetPyth(address _oldPyth, address _newPyth);
 
   /**
    * Modifiers
@@ -93,6 +94,17 @@ contract LeanPyth is Owned, ILeanPyth {
 
     // Emit a `LogSetUpdater` event indicating the updated status of the account
     emit LogSetUpdater(_account, _isActive);
+  }
+
+  /// @notice Set Pyth address.
+  /// @param _newPyth The Pyth address to set.
+  function setPyth(address _newPyth) external onlyOwner {
+    emit LogSetPyth(address(pyth), _newPyth);
+
+    // Sanity
+    IPyth(_newPyth).wormhole();
+
+    pyth = IPyth(_newPyth);
   }
 
   /// @dev Verifies the validity of a VAA encoded in hexadecimal format.

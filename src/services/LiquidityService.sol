@@ -172,8 +172,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
     VaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
 
-    _validatePLPHealthCheck(_token);
-
     return (_tokenValueUSDAfterFee, mintAmount);
   }
 

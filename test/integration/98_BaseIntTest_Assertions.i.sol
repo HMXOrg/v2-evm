@@ -282,12 +282,12 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
 
     assertEq(_market.currentFundingRate, _currentFundingRate, string.concat(_str, "Market's Funding rate"));
     assertEq(_market.lastFundingTime, _lastFundingTime, string.concat(_str, "Market's Last funding time"));
-    // assertEq(_market.longLastFundingRate, _longLastFundingRate, string.concat(_str, "Market's Last Long funding rate"));
-    // assertEq(
-    //   _market.shortLastFundingRate,
-    //   _shortLastFundingRate,
-    //   string.concat(_str, "Market's Last Short funding rate")
-    // );
+    assertEq(_market.longLastFundingRate, _longLastFundingRate, string.concat(_str, "Market's Last Long funding rate"));
+    assertEq(
+      _market.shortLastFundingRate,
+      _shortLastFundingRate,
+      string.concat(_str, "Market's Last Short funding rate")
+    );
   }
 
   function assertMarketFundingRate(

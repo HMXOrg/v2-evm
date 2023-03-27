@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // contracts
@@ -573,7 +572,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       );
 
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value
-      if (delta >= _vars.position.reserveValueE30) {
+      if (isProfit && delta >= _vars.position.reserveValueE30) {
         delta = _vars.position.reserveValueE30;
         _isMaxProfit = true;
       }
@@ -892,24 +891,11 @@ contract TradeService is ReentrancyGuard, ITradeService {
     if (_premium > 0) {
       _priceWithPremium = (_priceE30 * (1e30 + uint256(_premium))) / 1e30;
     } else {
-      _priceWithPremium = (_priceE30 * (1e30 + uint256(-_premium))) / 1e30;
+      _priceWithPremium = (_priceE30 * (1e30 - uint256(-_premium))) / 1e30;
     }
 
-    // note position size should always greater than
-    uint256 _remainingSize;
-    if (_positionSize > 0) {
-      // long position
-      _remainingSize = uint256(_positionSize - _sizeToDecrease);
-    } else {
-      // short position
-      _remainingSize = uint256(-(_positionSize - _sizeToDecrease));
-    }
-
-    if (_unrealizedPnl > 0) {
-      return (_priceWithPremium * _remainingSize) / (_remainingSize + uint256(_unrealizedPnl));
-    } else {
-      return (_priceWithPremium * _remainingSize) / (_remainingSize - uint256(-_unrealizedPnl));
-    }
+    int256 _remainingSize = _positionSize - _sizeToDecrease;
+    return uint256((int256(_priceWithPremium) * _remainingSize) / (_remainingSize + _unrealizedPnl));
   }
 
   /// @notice This function increases the reserve value

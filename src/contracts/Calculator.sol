@@ -457,6 +457,7 @@ contract Calculator is Owned, ICalculator {
       _limitPriceE30,
       _limitAssetId
     );
+
     // Calculate equity
     _equityValueE30 += int256(_collateralValueE30);
     _equityValueE30 += _unrealizedPnlValueE30;
@@ -1017,8 +1018,25 @@ contract Calculator is Owned, ICalculator {
       priceDelta = _averagePrice > _markPrice ? _averagePrice - _markPrice : _markPrice - _averagePrice;
     }
 
+    console2.log("_size", _size);
+    // 280000.101234381823000000000000000000
+    console2.log("_markPrice", _markPrice);
+    // 2598 786666227984345433666666668400
+    console2.log("_averagePrice", _averagePrice);
+    // 2384207950667875546269418960246238
+
     // Calculate the delta, adjusted for the size of the order.
     uint256 delta = (_size * priceDelta) / _averagePrice;
+
+    console2.log("priceDelta", priceDelta);
+    console2.log("delta", delta);
+
+    // _size 280000.981234381823000000000000000000
+    // _markPrice 2598.786662414651012100333333334200
+    // _averagePrice 1499.299997546914045442500000000500
+    // priceDelta 1099.486664867736966657833333333700
+    // delta 205334.052905213336866666666666666666
+    // pnl 25200.088311094364070000000000000000
 
     // Determine if the position is profitable or not based on the averagePrice and the mark price.
     bool isProfit;

@@ -7,7 +7,7 @@ import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredi
 import { Owned } from "@hmx/base/Owned.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-contract TraderLoyaltyCredit is Owned {
+contract TraderLoyaltyCredit is Owned, ITraderLoyaltyCredit {
   using SafeERC20 for IERC20;
   /**
    * @dev Emitted when `value` tokens are moved from one account (`from`) to

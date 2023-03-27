@@ -55,7 +55,7 @@ contract TLCHook is ITradeServiceHook, Owned {
     // Calculate mint amount which is equal to sizeDelta but convert decimal from 1e30 to 1e18
     // This is to make the TLC token composable as ERC20 with regular 18 decimals
     uint256 _mintAmount = _sizeDelta / 1e12;
-    TraderLoyaltyCredit(tlc).mint(_primaryAccount, _mintAmount);
+    TraderLoyaltyCredit(tlc).mint(address(this), _mintAmount);
     TraderLoyaltyCredit(tlc).approve(tlcStaking, _mintAmount);
     TLCStaking(tlcStaking).deposit(_primaryAccount, _mintAmount);
   }

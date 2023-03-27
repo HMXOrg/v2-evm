@@ -30,6 +30,8 @@ import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
+import { ITLCStaking } from "@hmx/staking/interfaces/ITLCStaking.sol";
+import { IEpochRewarder } from "@hmx/staking/interfaces/IEpochRewarder.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -210,12 +212,42 @@ library Deployer {
       ITradeHelper(deployContractWithArguments("TradeHelper", abi.encode(_perpStorage, _vaultStorage, _configStorage)));
   }
 
-  function deployTLCToken(address _rewardToken) internal returns (ITraderLoyaltyCredit) {
-    return ITraderLoyaltyCredit(deployContractWithArguments("TraderLoyaltyCredit", abi.encode(_rewardToken)));
+  function deployTLCToken() internal returns (ITraderLoyaltyCredit) {
+    return ITraderLoyaltyCredit(deployContract("TraderLoyaltyCredit"));
   }
 
-  function deployTLCHook(address _tradeService, address _tlc) internal returns (ITradeServiceHook) {
-    return ITradeServiceHook(deployContractWithArguments("TLCHook", abi.encode(_tradeService, _tlc)));
+  function deployTLCHook(
+    address _tradeService,
+    address _tlc,
+    address _tlcStaking
+  ) internal returns (ITradeServiceHook) {
+    return ITradeServiceHook(deployContractWithArguments("TLCHook", abi.encode(_tradeService, _tlc, _tlcStaking)));
+  }
+
+  function deployTLCStaking(address _proxyAdmin, address _stakingToken) internal returns (ITLCStaking) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/TLCStaking.sol/TLCStaking.json"));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _stakingToken);
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return ITLCStaking(payable(_proxy));
+  }
+
+  function deployEpochFeedableRewarder(
+    address _proxyAdmin,
+    string memory _name,
+    address _rewardToken,
+    address _staking
+  ) internal returns (IEpochRewarder) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/EpochFeedableRewarder.sol/EpochFeedableRewarder.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(string,address,address)")),
+      _name,
+      _rewardToken,
+      _staking
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IEpochRewarder(payable(_proxy));
   }
 
   /**
@@ -249,5 +281,32 @@ library Deployer {
         revert(0, 0)
       }
     }
+  }
+
+  function _setupUpgradeable(
+    bytes memory _logicBytecode,
+    bytes memory _initializer,
+    address _proxyAdmin
+  ) internal returns (address) {
+    bytes memory _proxyBytecode = abi.encodePacked(
+      vm.getCode("./out/TransparentUpgradeableProxy.sol/TransparentUpgradeableProxy.json")
+    );
+
+    address _logic;
+    assembly {
+      _logic := create(0, add(_logicBytecode, 0x20), mload(_logicBytecode))
+    }
+
+    _proxyBytecode = abi.encodePacked(_proxyBytecode, abi.encode(_logic, _proxyAdmin, _initializer));
+
+    address _proxy;
+    assembly {
+      _proxy := create(0, add(_proxyBytecode, 0x20), mload(_proxyBytecode))
+      if iszero(extcodesize(_proxy)) {
+        revert(0, 0)
+      }
+    }
+
+    return _proxy;
   }
 }

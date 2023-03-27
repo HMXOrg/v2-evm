@@ -6,6 +6,7 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { TLCStaking } from "./TLCStaking.sol";
 import { IRewarder } from "./interfaces/IRewarder.sol";
+import { IEpochRewarder } from "./interfaces/IEpochRewarder.sol";
 
 contract EpochFeedableRewarder is OwnableUpgradeable {
   using SafeERC20Upgradeable for ERC20Upgradeable;

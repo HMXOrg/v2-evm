@@ -9,35 +9,49 @@ import { TraderLoyaltyCredit } from "@hmx/tokens/TraderLoyaltyCredit.sol";
 
 import { EpochFeedableRewarder } from "./EpochFeedableRewarder.sol";
 
-// import { IStaking } from "./interfaces/IStaking.sol";
+import { ITLCStaking } from "./interfaces/ITLCStaking.sol";
 
-contract TLCStaking is OwnableUpgradeable {
+contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
-  error PLPStaking_UnknownStakingToken();
-  error PLPStaking_InsufficientTokenAmount();
-  error PLPStaking_NotRewarder();
-  error PLPStaking_NotCompounder();
-  error PLPStaking_BadDecimals();
-  error PLPStaking_DuplicateStakingToken();
+  error TLCStaking_UnknownStakingToken();
+  error TLCStaking_InsufficientTokenAmount();
+  error TLCStaking_NotRewarder();
+  error TLCStaking_NotCompounder();
+  error TLCStaking_BadDecimals();
+  error TLCStaking_DuplicateStakingToken();
+  error TLCStaking_Forbidden();
 
   mapping(uint256 => mapping(address => uint256)) public userTokenAmount;
   mapping(address => bool) public isRewarder;
   address public stakingToken;
   address[] public rewarders;
-
   address public compounder;
   uint256 public epochLength;
+  address public whitelistedCaller;
 
   event LogDeposit(uint256 indexed epochTimestamp, address indexed caller, address indexed user, uint256 amount);
   event LogWithdraw(uint256 indexed epochTimestamp, address indexed caller, uint256 amount);
   event LogAddRewarder(address newRewarder);
   event LogSetCompounder(address oldCompounder, address newCompounder);
+  event LogSetWhitelistedCaller(address oldAddress, address newAddress);
 
-  function initialize() external initializer {
+  function initialize(address _stakingToken) external initializer {
     OwnableUpgradeable.__Ownable_init();
 
+    stakingToken = _stakingToken;
     epochLength = 1 weeks;
+
+    // Sanity Checks
+    IERC20Upgradeable(stakingToken).totalSupply();
+  }
+
+  /**
+   * Modifiers
+   */
+  modifier onlyWhitelistedCaller() {
+    if (msg.sender != whitelistedCaller) revert TLCStaking_Forbidden();
+    _;
   }
 
   function addRewarder(address newRewarder) external onlyOwner {
@@ -80,7 +94,7 @@ contract TLCStaking is OwnableUpgradeable {
     compounder = compounder_;
   }
 
-  function deposit(address to, uint256 amount) external {
+  function deposit(address to, uint256 amount) external onlyWhitelistedCaller {
     uint256 length = rewarders.length;
     for (uint256 i = 0; i < length; ) {
       address rewarder = rewarders[i];
@@ -103,14 +117,14 @@ contract TLCStaking is OwnableUpgradeable {
     return userTokenAmount[epochTimestamp][sender];
   }
 
-  function withdraw(uint256 amount) external {
-    _withdraw(amount);
+  function withdraw(address to, uint256 amount) external onlyWhitelistedCaller {
+    _withdraw(to, amount);
     emit LogWithdraw(getCurrentEpochTimestamp(), msg.sender, amount);
   }
 
-  function _withdraw(uint256 amount) internal {
+  function _withdraw(address to, uint256 amount) internal {
     uint256 epochTimestamp = getCurrentEpochTimestamp();
-    if (userTokenAmount[getCurrentEpochTimestamp()][msg.sender] < amount) revert PLPStaking_InsufficientTokenAmount();
+    if (userTokenAmount[getCurrentEpochTimestamp()][to] < amount) revert TLCStaking_InsufficientTokenAmount();
 
     uint256 length = rewarders.length;
     for (uint256 i = 0; i < length; ) {
@@ -118,7 +132,7 @@ contract TLCStaking is OwnableUpgradeable {
 
       EpochFeedableRewarder(rewarder).onWithdraw(
         EpochFeedableRewarder(rewarder).getCurrentEpochTimestamp(),
-        msg.sender,
+        to,
         amount
       );
 
@@ -126,9 +140,9 @@ contract TLCStaking is OwnableUpgradeable {
         ++i;
       }
     }
-    userTokenAmount[epochTimestamp][msg.sender] -= amount;
-    IERC20Upgradeable(stakingToken).safeTransfer(msg.sender, amount);
-    emit LogWithdraw(epochTimestamp, msg.sender, amount);
+    userTokenAmount[epochTimestamp][to] -= amount;
+    IERC20Upgradeable(stakingToken).safeTransfer(to, amount);
+    emit LogWithdraw(epochTimestamp, to, amount);
   }
 
   function harvest(uint256 epochTimestamp, address[] memory _rewarders) external {
@@ -141,7 +155,7 @@ contract TLCStaking is OwnableUpgradeable {
     uint256 noOfEpochs,
     address[] memory _rewarders
   ) external {
-    if (compounder != msg.sender) revert PLPStaking_NotCompounder();
+    if (compounder != msg.sender) revert TLCStaking_NotCompounder();
     uint256 epochTimestamp = startEpochTimestamp;
     for (uint256 i = 0; i < noOfEpochs; ) {
       _harvestFor(epochTimestamp, user, compounder, _rewarders);
@@ -160,7 +174,7 @@ contract TLCStaking is OwnableUpgradeable {
     uint256 length = _rewarders.length;
     for (uint256 i = 0; i < length; ) {
       if (!isRewarder[_rewarders[i]]) {
-        revert PLPStaking_NotRewarder();
+        revert TLCStaking_NotRewarder();
       }
 
       EpochFeedableRewarder(_rewarders[i]).onHarvest(epochTimestamp, user, receiver);
@@ -181,6 +195,14 @@ contract TLCStaking is OwnableUpgradeable {
 
   function getCurrentEpochTimestamp() public view returns (uint256 epochTimestamp) {
     return (block.timestamp / epochLength) * epochLength;
+  }
+
+  /// @dev Set the address of an account authorized to modify balances in CrossMarginTrading.sol contract
+  /// Emits a LogSetWhitelistedCaller event.
+  /// @param _whitelistedCaller The new address allowed to perform whitelisted calls.
+  function setWhitelistedCaller(address _whitelistedCaller) external onlyOwner {
+    emit LogSetWhitelistedCaller(whitelistedCaller, _whitelistedCaller);
+    whitelistedCaller = _whitelistedCaller;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

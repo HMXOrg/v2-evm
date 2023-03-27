@@ -118,6 +118,9 @@ contract TC06 is BaseIntTest_WithActions {
       // Check states After WETH market price move from 1500 USD to 1550 USD
       // Alice's Equity must be lower IMR level
       // Equity = 2489, IMR = 2800.0098123438183
+
+      console2.log("equity -1", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log("immr -1", calculator.getIMR(SUB_ACCOUNT));
       assertTrue(
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) < calculator.getIMR(SUB_ACCOUNT),
         "ALICE's Equity < ALICE's IMR?"
@@ -154,6 +157,9 @@ contract TC06 is BaseIntTest_WithActions {
         "ALICE unrealizedPnlValueBefore < unrealizedPnlValueAfter"
       );
 
+      console2.log("equity", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log("immr", calculator.getIMR(SUB_ACCOUNT));
+
       // Alice's Equity must still be lower IMR level
       assertTrue(
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) < calculator.getIMR(SUB_ACCOUNT),
@@ -184,6 +190,9 @@ contract TC06 is BaseIntTest_WithActions {
       depositCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 100_000 * 1e6);
       // Alice's Equity must be upper IMR level
       // Equity = 102545.80392652086, IMR = 2800.0098123438183
+      console2.log("equity 2", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log("immr 2", calculator.getIMR(SUB_ACCOUNT));
+
       assertTrue(
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) > calculator.getIMR(SUB_ACCOUNT),
         "ALICE's Equity > ALICE's IMR?"

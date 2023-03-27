@@ -45,10 +45,14 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 positionSizeE30ToDecrease;
     address tpToken;
     uint256 limitPriceE30;
+    uint256 oraclePrice;
+    int256 realizedPnl;
+    int256 unrealizedPnl;
     // for SLOAD
     Calculator calculator;
     PerpStorage perpStorage;
     ConfigStorage configStorage;
+    OracleMiddleware oracle;
   }
 
   struct SettleLossVars {
@@ -379,6 +383,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     _vars.positionSizeE30ToDecrease = _positionSizeE30ToDecrease;
     _vars.tpToken = _tpToken;
     _vars.limitPriceE30 = _limitPriceE30;
+    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
     // position size to decrease is greater then position size, should be revert
     if (_positionSizeE30ToDecrease > _vars.absPositionSizeE30) revert ITradeService_DecreaseTooHighPositionSize();
@@ -388,14 +393,13 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_vars.closePrice, , , _lastPriceUpdated, _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
-        .getLatestAdaptivePriceWithMarketStatus(
-          _marketConfig.assetId,
-          !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
-          -_vars.position.positionSizeE30,
-          _marketConfig.fundingRate.maxSkewScaleUSD
-        );
+      (_vars.closePrice, , , _lastPriceUpdated, _marketStatus) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+        _marketConfig.assetId,
+        !_vars.isLongPosition, // if current position is SHORT position, then we use max price
+        (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
+        -_vars.position.positionSizeE30,
+        _marketConfig.fundingRate.maxSkewScaleUSD
+      );
 
       if (_limitPriceE30 != 0) {
         _vars.closePrice = _limitPriceE30;
@@ -559,7 +563,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     /**
      * calculate realized profit & loss
      */
-    int256 _realizedPnl;
     {
       (isProfit, delta) = calculator.getDelta(
         _vars.absPositionSizeE30,
@@ -575,10 +578,13 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _isMaxProfit = true;
       }
 
+      uint256 _toRealizedPnl = (delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30;
       if (isProfit) {
-        _realizedPnl = int256((delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
+        _vars.realizedPnl = int256(_toRealizedPnl);
+        _vars.unrealizedPnl = int256(delta - _toRealizedPnl);
       } else {
-        _realizedPnl = -int256((delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30);
+        _vars.realizedPnl = -int256(_toRealizedPnl);
+        _vars.unrealizedPnl = -int256(delta - _toRealizedPnl);
       }
     }
 
@@ -594,7 +600,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _globalMarket,
           _vars.closePrice,
           -int256(_vars.positionSizeE30ToDecrease),
-          _realizedPnl
+          _vars.realizedPnl
         );
         _vars.perpStorage.updateGlobalLongMarketById(
           _globalMarketIndex,
@@ -606,7 +612,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
           _globalMarket,
           _vars.closePrice,
           int256(_vars.positionSizeE30ToDecrease),
-          _realizedPnl
+          _vars.realizedPnl
         );
         _vars.perpStorage.updateGlobalShortMarketById(
           _globalMarketIndex,
@@ -632,6 +638,24 @@ contract TradeService is ReentrancyGuard, ITradeService {
       _vars.perpStorage.updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
 
       if (_newAbsPositionSizeE30 != 0) {
+        // @todo - remove this, make this compat with testing that have to set max skew scale
+        if (_marketConfig.fundingRate.maxSkewScaleUSD > 0) {
+          // calculate new entry price here
+          (_vars.oraclePrice, ) = _vars.oracle.getLatestPrice(
+            _marketConfig.assetId,
+            !_vars.isLongPosition // if current position is SHORT position, then we use max price
+          );
+
+          _vars.position.avgEntryPriceE30 = _getNewAvgPriceAfterDecrease(
+            (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
+            _vars.position.positionSizeE30,
+            _vars.isLongPosition ? int(_vars.positionSizeE30ToDecrease) : -int(_vars.positionSizeE30ToDecrease),
+            _vars.unrealizedPnl,
+            _vars.oraclePrice,
+            _marketConfig.fundingRate.maxSkewScaleUSD
+          );
+        }
+
         // update position info
         _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
         _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
@@ -641,10 +665,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.position.reserveValueE30 =
           ((_newAbsPositionSizeE30 * _marketConfig.initialMarginFractionBPS * _marketConfig.maxProfitRateBPS) / BPS) /
           BPS;
-        _vars.position.realizedPnl += _realizedPnl;
-
-        // calculate new entry price here
-        // _vars.position.avgEntryPriceE30 = _vars.avgEntryPriceE30;
+        _vars.position.realizedPnl += _vars.realizedPnl;
 
         _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
       } else {
@@ -656,13 +677,13 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // | ------ settle profit & loss ------- |
     // =======================================
     {
-      if (_realizedPnl != 0) {
-        if (_realizedPnl > 0) {
+      if (_vars.realizedPnl != 0) {
+        if (_vars.realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
-          _settleProfit(_vars.subAccount, _vars.tpToken, uint256(_realizedPnl));
+          _settleProfit(_vars.subAccount, _vars.tpToken, uint256(_vars.realizedPnl));
         } else {
           // loss
-          _settleLoss(_vars.subAccount, uint256(-_realizedPnl));
+          _settleLoss(_vars.subAccount, uint256(-_vars.realizedPnl));
         }
       }
     }
@@ -815,6 +836,80 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // Calculate the next average price of the position
     return (_markPrice * nextSize) / divisor;
+  }
+
+  /// @notice Calculates the next average price of a position, after decrease position
+  /// @param _marketSkew market skew of market before decrease
+  /// @param _positionSize position size. positive number for Long position and negative for Short
+  /// @param _sizeToDecrease size to decrease. positive number for Long position and negative for Short
+  /// @param _unrealizedPnl delta - realized pnl
+  /// @param _priceE30 oracle price
+  /// @param _maxSkewScale - max skew scale
+  /// @return _newAveragePrice
+  function _getNewAvgPriceAfterDecrease(
+    int256 _marketSkew,
+    int256 _positionSize,
+    int256 _sizeToDecrease,
+    int256 _unrealizedPnl,
+    uint256 _priceE30,
+    uint256 _maxSkewScale
+  ) internal view returns (uint256 _newAveragePrice) {
+    // premium before       = market skew - size delta / max scale skew
+    // premium after        = market skew - position size / max scale skew
+    // premium              = (premium after + premium after) / 2
+    // new close price      = 100 * (1 + premium)
+    // remaining size       = position size - size delta
+    // new avg price        = (new close price * remaining size) / (remaining size + unrealized pnl)
+
+    // Example:
+    // Given
+    //    - max scale       = 1000000 USD
+    //    - market skew     = 2000 USD
+    //    - price           = 100 USD
+    //    - position size   = 1000 USD
+    //    - decrease size   = 300 USD
+    //    - remaining size  = 500 USD
+    //    - entry price     = 100.05 USD
+    //    - close price     = 100.15 USD
+    //    - pnl             = 1000 * (100.15 - 100.05) / 100.05 = 0.999500249875062468765617191404 USD
+    //    - reliazed pnl    = 300 * (100.15 - 100.05) / 100.05 = 0.299850074962518740629685157421 USD
+    //    - unrealized pnl  = 0.999500249875062468765617191404 - 0.299850074962518740629685157421
+    //                      = 0.699650174912543728135932033983
+    // Then
+    //    - premium before      = 2000 - 300 = 1700 / 1000000 = 0.0017
+    //    - premium after       = 2000 - 1000 = 1000 / 1000000 = 0.001
+    //    - new premium         = 0.0017 + 0.001 = 0.0027 / 2 = 0.00135
+    //    - price with premium  = 100 * (1 + 0.00135) = 100.135 USD
+    //    - new avg price       = (100.135 * 700) / (700 + 0.699650174912543728135932033983)
+    //                          = 100.035014977533699450823764353469 USD
+
+    int256 _premiumBefore = ((_marketSkew - _sizeToDecrease) * 1e30) / int256(_maxSkewScale);
+    int256 _premiumAfter = ((_marketSkew - _positionSize) * 1e30) / int256(_maxSkewScale);
+
+    int256 _premium = (_premiumBefore + _premiumAfter) / 2;
+
+    uint256 _priceWithPremium;
+    if (_premium > 0) {
+      _priceWithPremium = (_priceE30 * (1e30 + uint256(_premium))) / 1e30;
+    } else {
+      _priceWithPremium = (_priceE30 * (1e30 + uint256(-_premium))) / 1e30;
+    }
+
+    // note position size should always greater than
+    uint256 _remainingSize;
+    if (_positionSize > 0) {
+      // long position
+      _remainingSize = uint256(_positionSize - _sizeToDecrease);
+    } else {
+      // short position
+      _remainingSize = uint256(-(_positionSize - _sizeToDecrease));
+    }
+
+    if (_unrealizedPnl > 0) {
+      return (_priceWithPremium * _remainingSize) / (_remainingSize + uint256(_unrealizedPnl));
+    } else {
+      return (_priceWithPremium * _remainingSize) / (_remainingSize - uint256(-_unrealizedPnl));
+    }
   }
 
   /// @notice This function increases the reserve value

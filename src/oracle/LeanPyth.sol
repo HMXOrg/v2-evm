@@ -5,7 +5,7 @@ import { Owned } from "@hmx/base/Owned.sol";
 import { PythStructs, IPythEvents } from "pyth-sdk-solidity/IPyth.sol";
 import { PythErrors } from "pyth-sdk-solidity/PythErrors.sol";
 import { ILeanPyth } from "./interfaces/ILeanPyth.sol";
-import { IPyth } from "./interfaces/IPyth.sol";
+import { IPyth, IPythPriceInfo, IPythDataSource } from "./interfaces/IPyth.sol";
 import { IWormHole } from "./interfaces/IWormHole.sol";
 import "./UnsafeBytesLib.sol";
 
@@ -20,7 +20,7 @@ contract LeanPyth is Owned, ILeanPyth {
   IPyth public pyth;
 
   // mapping of our asset id to Pyth's price id
-  mapping(bytes32 => IPyth.PriceInfo) priceInfos;
+  mapping(bytes32 => IPythPriceInfo) priceInfos;
 
   // whitelist mapping of price updater
   mapping(address => bool) public isUpdater;
@@ -68,7 +68,7 @@ contract LeanPyth is Owned, ILeanPyth {
   /// @param id The unique identifier of the price feed.
   /// @return price The current price.
   function getPriceUnsafe(bytes32 id) external view returns (PythStructs.Price memory price) {
-    IPyth.PriceInfo storage priceInfo = priceInfos[id];
+    IPythPriceInfo storage priceInfo = priceInfos[id];
     if (priceInfo.publishTime == 0) revert LeanPyth_PriceFeedNotFound();
 
     price.publishTime = priceInfo.publishTime;
@@ -139,7 +139,7 @@ contract LeanPyth is Owned, ILeanPyth {
 
       // Deserialize each attestation
       for (uint j = 0; j < nAttestations; j++) {
-        (IPyth.PriceInfo memory info, bytes32 priceId) = _parseSingleAttestationFromBatch(
+        (IPythPriceInfo memory info, bytes32 priceId) = _parseSingleAttestationFromBatch(
           encoded,
           index,
           attestationSize
@@ -238,7 +238,7 @@ contract LeanPyth is Owned, ILeanPyth {
     bytes memory encoded,
     uint index,
     uint attestationSize
-  ) internal pure returns (IPyth.PriceInfo memory info, bytes32 priceId) {
+  ) internal pure returns (IPythPriceInfo memory info, bytes32 priceId) {
     unchecked {
       // NOTE: We don't advance the global index immediately.
       // attestationIndex is an attestation-local offset used

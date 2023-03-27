@@ -2,8 +2,6 @@
 pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
-import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract TC06 is BaseIntTest_WithActions {
   function testIntegration_WhenTraderInteractWithCrossMargin() external {

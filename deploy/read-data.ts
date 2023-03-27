@@ -689,7 +689,7 @@ function calculateAdaptivePrice(
 }
 
 function getPnL(closePrice: BigNumber, averagePrice: BigNumber, size: BigNumber): BigNumber {
-  return closePrice.sub(averagePrice).mul(ONE_USD).mul(size).div(averagePrice);
+  return closePrice.sub(averagePrice).mul(size).div(averagePrice);
 }
 
 export default func;

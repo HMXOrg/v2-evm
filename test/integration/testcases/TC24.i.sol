@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
-// Test covert Scenarios
+// Test cover Scenarios
 //   - LONG trader pay funding fee to funding fee reserve
 //   - LONG trader repay funding fee debts to PLP and pay remaining to funding fee reserve
 //   - SHORT trader receive funding fee from funding fee reserve
@@ -111,6 +111,10 @@ contract TC24 is BaseIntTest_WithActions {
       _T5Assert3();
 
       // Then deployer can call withdraw surplus
+      crossMarginHandler.withdrawFundingFeeSurplus(address(usdc), new bytes[](0));
+
+      // After deployer call withdraw surplus and recalled again, function must be revert
+      vm.expectRevert(abi.encodeWithSignature("ICrossMarginHandler_NoFundingFeeSurplus()"));
       crossMarginHandler.withdrawFundingFeeSurplus(address(usdc), new bytes[](0));
 
       _T5Assert4();

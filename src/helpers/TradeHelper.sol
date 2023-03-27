@@ -145,6 +145,7 @@ contract TradeHelper is ITradeHelper {
     // Funding fee vars
     int256 fundingFeeToBePaid;
     uint256 absFundingFeeToBePaid;
+    uint8 tokenDecimal;
     bool isLong;
     bool traderMustPay;
   }
@@ -219,6 +220,7 @@ contract TradeHelper is ITradeHelper {
       // If all of the collaterals still cannot cover, revert.
       for (uint256 i; i < _vars.collateralTokensLength; ) {
         bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
+        _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
         (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
         _settleFundingFeeWhenTraderMustReceive(_vars, _vars.collateralTokens[i]);
 
@@ -235,6 +237,7 @@ contract TradeHelper is ITradeHelper {
         // If fee cannot be covered, borrow from PLP and book as PLP Debts
         for (uint256 i; i < _vars.collateralTokensLength; ) {
           bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
+          _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
           (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
           _settleFundingFeeWhenBorrowingFromPLP(_vars, _vars.collateralTokens[i]);
           unchecked {
@@ -255,6 +258,7 @@ contract TradeHelper is ITradeHelper {
     // If all of the collaterals still cannot cover, revert.
     for (uint256 i; i < _vars.collateralTokensLength; ) {
       bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
+      _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
       (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
 
       // Funding fee
@@ -338,11 +342,11 @@ contract TradeHelper is ITradeHelper {
     // If not skip to next token
     if (_traderBalance > 0) {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-        _vars.configStorage,
         _traderBalance,
         _vars.absFundingFeeToBePaid,
         _collateralToken,
-        _vars.tokenPrice
+        _vars.tokenPrice,
+        _vars.tokenDecimal
       );
 
       // book the balances
@@ -380,11 +384,11 @@ contract TradeHelper is ITradeHelper {
 
       // Trader repay with just enough current collateral amounts to PLP
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-        _vars.configStorage,
         _traderBalance,
         repayFundingFeeValue,
         _collateralToken,
-        _vars.tokenPrice
+        _vars.tokenPrice,
+        _vars.tokenDecimal
       );
       _vars.vaultStorage.repayFundingFeeDebtFromTraderToPlp(
         _vars.subAccount,
@@ -420,11 +424,11 @@ contract TradeHelper is ITradeHelper {
     // If not skip to next token
     if (_fundingFeeBalance > 0) {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-        _vars.configStorage,
         _fundingFeeBalance,
         _vars.absFundingFeeToBePaid,
         _collateralToken,
-        _vars.tokenPrice
+        _vars.tokenPrice,
+        _vars.tokenDecimal
       );
 
       // book the balances
@@ -455,11 +459,11 @@ contract TradeHelper is ITradeHelper {
     // If not skip to next token
     if (_plpBalance > 0) {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-        _vars.configStorage,
         _plpBalance,
         _vars.absFundingFeeToBePaid,
         _collateralToken,
-        _vars.tokenPrice
+        _vars.tokenPrice,
+        _vars.tokenDecimal
       );
 
       // book the balances
@@ -489,11 +493,11 @@ contract TradeHelper is ITradeHelper {
     if (_traderBalance > 0) {
       // protocol fee portion + dev fee portion
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-        _vars.configStorage,
         _traderBalance,
         _vars.tradingFeeToBePaid,
         _collateralToken,
-        _vars.tokenPrice
+        _vars.tokenPrice,
+        _vars.tokenDecimal
       );
 
       // devFee = tradingFee * devFeeRate
@@ -520,11 +524,11 @@ contract TradeHelper is ITradeHelper {
     if (_traderBalance > 0) {
       // plp fee portion + dev fee portion
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-        _vars.configStorage,
         _traderBalance,
         _vars.borrowingFeeToBePaid,
         _collateralToken,
-        _vars.tokenPrice
+        _vars.tokenPrice,
+        _vars.tokenDecimal
       );
 
       // devFee = tradingFee * devFeeRate
@@ -553,13 +557,12 @@ contract TradeHelper is ITradeHelper {
   }
 
   function _getRepayAmount(
-    ConfigStorage _configStorage,
     uint256 _traderBalance,
     uint256 _feeValueE30,
     address _token,
-    uint256 _tokenPrice
+    uint256 _tokenPrice,
+    uint8 _tokenDecimal
   ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
-    uint8 _tokenDecimal = _configStorage.getAssetTokenDecimal(_token);
     uint256 _feeAmount = (_feeValueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
 
     if (_traderBalance > _feeAmount) {

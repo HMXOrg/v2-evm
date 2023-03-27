@@ -36,23 +36,12 @@ contract TraderLoyaltyCredit is Owned {
   string private constant _name = "Trader Loyalty Credit";
   string private constant _symbol = "TLC";
   uint256 public constant epochLength = 1 weeks;
-  uint256 private constant PRECISION = 1e27;
 
-  address public rewardToken;
-  mapping(uint256 => uint256) rewardBalanceMapByEpochTimestamp;
-  mapping(uint256 => uint256) accumRewardPerShareMapByEpochTimestamp;
   mapping(address => bool) minter;
 
   modifier onlyMinter() {
     require(minter[msg.sender], "TLC: Not Minter");
     _;
-  }
-
-  constructor(address _rewardToken) {
-    rewardToken = _rewardToken;
-
-    // Sanity Check
-    IERC20(_rewardToken).totalSupply();
   }
 
   /**
@@ -261,10 +250,6 @@ contract TraderLoyaltyCredit is Owned {
     _totalSupply += amount;
     totalSupplyByEpoch[thisEpochTimestamp] += amount;
 
-    accumRewardPerShareMapByEpochTimestamp[thisEpochTimestamp] =
-      (rewardBalanceMapByEpochTimestamp[thisEpochTimestamp] * PRECISION) /
-      totalSupplyByEpoch[thisEpochTimestamp];
-
     unchecked {
       // Overflow not possible: balance + amount is at most totalSupply + amount, which is checked above.
       _balances[getCurrentEpochTimestamp()][account] += amount;
@@ -376,102 +361,6 @@ contract TraderLoyaltyCredit is Owned {
 
   function getCurrentEpochTimestamp() public view returns (uint256 epochTimestamp) {
     return (block.timestamp / epochLength) * epochLength;
-  }
-
-  function feedReward(uint256 epochTimestamp, uint256 amount) external {
-    // Floor down the timestamp, in case it is incorrectly formatted
-    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
-
-    // Increase the reward balance for this epoch
-    rewardBalanceMapByEpochTimestamp[epochTimestamp] += amount;
-
-    // Recalculate the accum reward per share of this epoch
-    uint256 totalSupplyOfThisEpoch = totalSupplyByEpoch[epochTimestamp];
-    if (totalSupplyOfThisEpoch > 0) {
-      accumRewardPerShareMapByEpochTimestamp[epochTimestamp] =
-        (rewardBalanceMapByEpochTimestamp[epochTimestamp] * PRECISION) /
-        totalSupplyOfThisEpoch;
-    }
-
-    // Transfer in reward token
-    IERC20(rewardToken).safeTransferFrom(msg.sender, address(this), amount);
-
-    emit FeedReward(msg.sender, epochTimestamp, amount);
-  }
-
-  function claimReward(uint256 startEpochTimestamp, uint256 noOfEpochs, address userAddress) external {
-    uint256 userShare;
-    uint256 accumRewardPerShare;
-    uint256 pendingRewardAmount;
-    uint256 totalRewardAmount;
-    uint256 epochTimestamp = startEpochTimestamp;
-    for (uint256 i = 0; i < noOfEpochs; ) {
-      // If the epoch is in the future, then break the loop
-      if (epochTimestamp + epochLength > block.timestamp) break;
-
-      // Get user balance of the epoch
-      userShare = _balances[epochTimestamp][userAddress];
-      // Get accum reward per share of the epoch
-      accumRewardPerShare = accumRewardPerShareMapByEpochTimestamp[epochTimestamp];
-
-      // If userShare is zero, then the user will not be eligible for reward in that epoch.
-      // If accumRewardPerShare is zero, then the reward might not be distributed for that epoch yet. We will skip without burning user share.
-      if (userShare > 0 && accumRewardPerShare > 0) {
-        // Calculate pending reward
-        pendingRewardAmount = (userShare * accumRewardPerShare) / PRECISION;
-        totalRewardAmount += pendingRewardAmount;
-        // Burn the user share
-        _transfer(epochTimestamp, userAddress, address(this), userShare);
-        emit Claim(userAddress, epochTimestamp, userShare, pendingRewardAmount);
-      }
-
-      // Increment epoch timestamp
-      epochTimestamp += epochLength;
-
-      unchecked {
-        ++i;
-      }
-    }
-
-    // Transfer reward token to the user
-    IERC20(rewardToken).safeTransfer(userAddress, totalRewardAmount);
-  }
-
-  function pendingReward(
-    uint256 startEpochTimestamp,
-    uint256 noOfEpochs,
-    address userAddress
-  ) external view returns (uint256) {
-    uint256 userShare;
-    uint256 accumRewardPerShare;
-    uint256 pendingRewardAmount;
-    uint256 totalRewardAmount;
-    uint256 epochTimestamp = (startEpochTimestamp / epochLength) * epochLength;
-    for (uint256 i = 0; i < noOfEpochs; ) {
-      // If the epoch is in the future, then break the loop
-      if (epochTimestamp + epochLength > block.timestamp) break;
-
-      // Get user balance of the epoch
-      userShare = _balances[epochTimestamp][userAddress];
-      // Get accum reward per share of the epoch
-      accumRewardPerShare = accumRewardPerShareMapByEpochTimestamp[epochTimestamp];
-
-      // If userShare is zero, then the user will not be eligible for reward in that epoch.
-      // If accumRewardPerShare is zero, then the reward might not be distributed for that epoch yet. We will skip without burning user share.
-      if (userShare > 0 && accumRewardPerShare > 0) {
-        // Calculate pending reward
-        pendingRewardAmount = (userShare * accumRewardPerShare) / PRECISION;
-        totalRewardAmount += pendingRewardAmount;
-      }
-
-      // Increment epoch timestamp
-      epochTimestamp += epochLength;
-
-      unchecked {
-        ++i;
-      }
-    }
-    return totalRewardAmount;
   }
 
   function setMinter(address _minter, bool _mintable) external onlyOwner {

@@ -30,20 +30,20 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   event LogSetFeeder(address oldFeeder, address newFeeder);
 
   // Error
-  error FeedableRewarderError_FeedAmountDecayed();
-  error FeedableRewarderError_NotStakingContract();
-  error FeedableRewarderError_NotFeeder();
-  error FeedableRewarderError_BadDuration();
-  error FeedableRewarderError_WithdrawalNotAllowed();
-  error FeedableRewarderError_AlreadyClaimed();
+  error EpochFeedableRewarderError_FeedAmountDecayed();
+  error EpochFeedableRewarderError_NotStakingContract();
+  error EpochFeedableRewarderError_NotFeeder();
+  error EpochFeedableRewarderError_BadDuration();
+  error EpochFeedableRewarderError_WithdrawalNotAllowed();
+  error EpochFeedableRewarderError_FutureEpoch();
 
   modifier onlyStakingContract() {
-    if (msg.sender != staking) revert FeedableRewarderError_NotStakingContract();
+    if (msg.sender != staking) revert EpochFeedableRewarderError_NotStakingContract();
     _;
   }
 
   modifier onlyFeeder() {
-    if (msg.sender != feeder) revert FeedableRewarderError_NotFeeder();
+    if (msg.sender != feeder) revert EpochFeedableRewarderError_NotFeeder();
     _;
   }
 
@@ -72,26 +72,27 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
 
   function onWithdraw(uint256 epochTimestamp, address user, uint256 shareAmount) external onlyStakingContract {
     // Withdrawal will not be allowed is the epoch has ended.
-    if (getCurrentEpochTimestamp() + epochLength > epochTimestamp) revert FeedableRewarderError_WithdrawalNotAllowed();
+    if (getCurrentEpochTimestamp() + epochLength > epochTimestamp)
+      revert EpochFeedableRewarderError_WithdrawalNotAllowed();
     _updateRewardCalculationParams(epochTimestamp);
 
     emit LogOnWithdraw(user, shareAmount);
   }
 
   function onHarvest(uint256 epochTimestamp, address user, address receiver) external onlyStakingContract {
-    if (isClaimed[epochTimestamp][user]) revert FeedableRewarderError_AlreadyClaimed();
+    if (!isClaimed[epochTimestamp][user]) {
+      _updateRewardCalculationParams(epochTimestamp);
 
-    _updateRewardCalculationParams(epochTimestamp);
+      uint256 accumulatedRewards = (_userShare(epochTimestamp, user) *
+        accRewardPerShareByEpochTimestamp[epochTimestamp]) / ACC_REWARD_PRECISION;
 
-    uint256 accumulatedRewards = (_userShare(epochTimestamp, user) *
-      accRewardPerShareByEpochTimestamp[epochTimestamp]) / ACC_REWARD_PRECISION;
+      if (accumulatedRewards != 0) {
+        isClaimed[epochTimestamp][user] = true;
+        _harvestToken(receiver, accumulatedRewards);
+      }
 
-    if (accumulatedRewards != 0) {
-      isClaimed[epochTimestamp][user] = true;
-      _harvestToken(receiver, accumulatedRewards);
+      emit LogHarvest(user, accumulatedRewards);
     }
-
-    emit LogHarvest(user, accumulatedRewards);
   }
 
   function pendingReward(
@@ -109,7 +110,7 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
       if (epochTimestamp + epochLength > block.timestamp) break;
 
       // Get user balance of the epoch
-      userShare = TLCStaking(staking).calculateShare(epochTimestamp, address(this), userAddress);
+      userShare = TLCStaking(staking).calculateShare(epochTimestamp, userAddress);
       // Get accum reward per share of the epoch
       accumRewardPerShare = accRewardPerShareByEpochTimestamp[epochTimestamp];
 
@@ -141,13 +142,18 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   }
 
   function _feed(uint256 epochTimestamp, uint256 feedAmount) internal {
+    // Floor down the timestamp, in case it is incorrectly formatted
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+
+    if (epochTimestamp > block.timestamp) revert EpochFeedableRewarderError_FutureEpoch();
+
     {
       // Transfer token, with decay check
       uint256 balanceBefore = ERC20Upgradeable(rewardToken).balanceOf(address(this));
       ERC20Upgradeable(rewardToken).safeTransferFrom(msg.sender, address(this), feedAmount);
 
       if (ERC20Upgradeable(rewardToken).balanceOf(address(this)) - balanceBefore != feedAmount)
-        revert FeedableRewarderError_FeedAmountDecayed();
+        revert EpochFeedableRewarderError_FeedAmountDecayed();
     }
 
     rewardBalanceMapByEpochTimestamp[epochTimestamp] += feedAmount;
@@ -167,11 +173,11 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   }
 
   function _totalShare(uint256 epochTimestamp) private view returns (uint256) {
-    return TLCStaking(staking).calculateTotalShare(epochTimestamp, address(this));
+    return TLCStaking(staking).calculateTotalShare(epochTimestamp);
   }
 
   function _userShare(uint256 epochTimestamp, address user) private view returns (uint256) {
-    return TLCStaking(staking).calculateShare(epochTimestamp, address(this), user);
+    return TLCStaking(staking).calculateShare(epochTimestamp, user);
   }
 
   function _harvestToken(address receiver, uint256 pendingRewardAmount) internal virtual {

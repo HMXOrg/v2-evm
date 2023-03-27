@@ -21,19 +21,17 @@ contract TLCStaking is OwnableUpgradeable {
   error PLPStaking_BadDecimals();
   error PLPStaking_DuplicateStakingToken();
 
-  mapping(address => mapping(address => uint256)) public userTokenAmount;
+  mapping(uint256 => mapping(address => uint256)) public userTokenAmount;
   mapping(address => bool) public isRewarder;
-  mapping(address => bool) public isStakingToken;
-  mapping(address => address[]) public stakingTokenRewarders;
-  mapping(address => address[]) public rewarderStakingTokens;
+  address public stakingToken;
+  address[] public rewarders;
 
   address public compounder;
   uint256 public epochLength;
 
-  event LogDeposit(address indexed caller, address indexed user, address token, uint256 amount);
-  event LogWithdraw(address indexed caller, address token, uint256 amount);
-  event LogAddStakingToken(address newToken, address[] newRewarders);
-  event LogAddRewarder(address newRewarder, address[] newTokens);
+  event LogDeposit(uint256 indexed epochTimestamp, address indexed caller, address indexed user, uint256 amount);
+  event LogWithdraw(uint256 indexed epochTimestamp, address indexed caller, uint256 amount);
+  event LogAddRewarder(address newRewarder);
   event LogSetCompounder(address oldCompounder, address newCompounder);
 
   function initialize() external initializer {
@@ -42,82 +40,32 @@ contract TLCStaking is OwnableUpgradeable {
     epochLength = 1 weeks;
   }
 
-  function addStakingToken(address newToken, address[] memory newRewarders) external onlyOwner {
-    if (ERC20Upgradeable(newToken).decimals() != 18) revert PLPStaking_BadDecimals();
+  function addRewarder(address newRewarder) external onlyOwner {
+    _updatePool(newRewarder);
 
-    uint256 length = newRewarders.length;
-    for (uint256 i = 0; i < length; ) {
-      _updatePool(newToken, newRewarders[i]);
-
-      emit LogAddStakingToken(newToken, newRewarders);
-      unchecked {
-        ++i;
-      }
-    }
+    emit LogAddRewarder(newRewarder);
   }
 
-  function addRewarder(address newRewarder, address[] memory newTokens) external onlyOwner {
-    uint256 length = newTokens.length;
-    for (uint256 i = 0; i < length; ) {
-      if (ERC20Upgradeable(newTokens[i]).decimals() != 18) revert PLPStaking_BadDecimals();
-
-      _updatePool(newTokens[i], newRewarder);
-
-      emit LogAddRewarder(newRewarder, newTokens);
-      unchecked {
-        ++i;
-      }
-    }
+  function removeRewarder(uint256 removeRewarderIndex) external onlyOwner {
+    address removedRewarder = rewarders[removeRewarderIndex];
+    rewarders[removeRewarderIndex] = rewarders[rewarders.length - 1];
+    rewarders[rewarders.length - 1] = removedRewarder;
+    rewarders.pop();
+    isRewarder[removedRewarder] = false;
   }
 
-  function removeRewarderForTokenByIndex(uint256 removeRewarderIndex, address token) external onlyOwner {
-    uint256 tokenLength = stakingTokenRewarders[token].length;
-    address removedRewarder = stakingTokenRewarders[token][removeRewarderIndex];
-    stakingTokenRewarders[token][removeRewarderIndex] = stakingTokenRewarders[token][tokenLength - 1];
-    stakingTokenRewarders[token].pop();
+  function _updatePool(address newRewarder) internal {
+    if (!isDuplicatedRewarder(newRewarder)) rewarders.push(newRewarder);
 
-    uint256 rewarderLength = rewarderStakingTokens[removedRewarder].length;
-    for (uint256 i = 0; i < rewarderLength; ) {
-      if (rewarderStakingTokens[removedRewarder][i] == token) {
-        rewarderStakingTokens[removedRewarder][i] = rewarderStakingTokens[removedRewarder][rewarderLength - 1];
-        rewarderStakingTokens[removedRewarder].pop();
-        if (rewarderLength == 1) isRewarder[removedRewarder] = false;
-
-        break;
-      }
-      unchecked {
-        ++i;
-      }
-    }
-  }
-
-  function _updatePool(address newToken, address newRewarder) internal {
-    if (!isDuplicatedRewarder(newToken, newRewarder)) stakingTokenRewarders[newToken].push(newRewarder);
-    if (!isDuplicatedStakingToken(newToken, newRewarder)) rewarderStakingTokens[newRewarder].push(newToken);
-
-    isStakingToken[newToken] = true;
     if (!isRewarder[newRewarder]) {
       isRewarder[newRewarder] = true;
     }
   }
 
-  function isDuplicatedRewarder(address stakingToken, address rewarder) internal view returns (bool) {
-    uint256 length = stakingTokenRewarders[stakingToken].length;
+  function isDuplicatedRewarder(address rewarder) internal view returns (bool) {
+    uint256 length = rewarders.length;
     for (uint256 i = 0; i < length; ) {
-      if (stakingTokenRewarders[stakingToken][i] == rewarder) {
-        return true;
-      }
-      unchecked {
-        ++i;
-      }
-    }
-    return false;
-  }
-
-  function isDuplicatedStakingToken(address stakingToken, address rewarder) internal view returns (bool) {
-    uint256 length = rewarderStakingTokens[rewarder].length;
-    for (uint256 i = 0; i < length; ) {
-      if (rewarderStakingTokens[rewarder][i] == stakingToken) {
+      if (rewarders[i] == rewarder) {
         return true;
       }
       unchecked {
@@ -132,12 +80,10 @@ contract TLCStaking is OwnableUpgradeable {
     compounder = compounder_;
   }
 
-  function deposit(address to, address token, uint256 amount) external {
-    if (!isStakingToken[token]) revert PLPStaking_UnknownStakingToken();
-
-    uint256 length = stakingTokenRewarders[token].length;
+  function deposit(address to, uint256 amount) external {
+    uint256 length = rewarders.length;
     for (uint256 i = 0; i < length; ) {
-      address rewarder = stakingTokenRewarders[token][i];
+      address rewarder = rewarders[i];
 
       EpochFeedableRewarder(rewarder).onDeposit(getCurrentEpochTimestamp(), to, amount);
 
@@ -146,32 +92,29 @@ contract TLCStaking is OwnableUpgradeable {
       }
     }
 
-    userTokenAmount[token][to] += amount;
-    IERC20Upgradeable(token).safeTransferFrom(msg.sender, address(this), amount);
+    uint256 epochTimestamp = getCurrentEpochTimestamp();
+    userTokenAmount[epochTimestamp][to] += amount;
+    IERC20Upgradeable(stakingToken).safeTransferFrom(msg.sender, address(this), amount);
 
-    emit LogDeposit(msg.sender, to, token, amount);
+    emit LogDeposit(epochTimestamp, msg.sender, to, amount);
   }
 
-  function getUserTokenAmount(address token, address sender) external view returns (uint256) {
-    return userTokenAmount[token][sender];
+  function getUserTokenAmount(uint256 epochTimestamp, address sender) external view returns (uint256) {
+    return userTokenAmount[epochTimestamp][sender];
   }
 
-  function getStakingTokenRewarders(address token) external view returns (address[] memory) {
-    return stakingTokenRewarders[token];
+  function withdraw(uint256 amount) external {
+    _withdraw(amount);
+    emit LogWithdraw(getCurrentEpochTimestamp(), msg.sender, amount);
   }
 
-  function withdraw(address token, uint256 amount) external {
-    _withdraw(token, amount);
-    emit LogWithdraw(msg.sender, token, amount);
-  }
+  function _withdraw(uint256 amount) internal {
+    uint256 epochTimestamp = getCurrentEpochTimestamp();
+    if (userTokenAmount[getCurrentEpochTimestamp()][msg.sender] < amount) revert PLPStaking_InsufficientTokenAmount();
 
-  function _withdraw(address token, uint256 amount) internal {
-    if (!isStakingToken[token]) revert PLPStaking_UnknownStakingToken();
-    if (userTokenAmount[token][msg.sender] < amount) revert PLPStaking_InsufficientTokenAmount();
-
-    uint256 length = stakingTokenRewarders[token].length;
+    uint256 length = rewarders.length;
     for (uint256 i = 0; i < length; ) {
-      address rewarder = stakingTokenRewarders[token][i];
+      address rewarder = rewarders[i];
 
       EpochFeedableRewarder(rewarder).onWithdraw(
         EpochFeedableRewarder(rewarder).getCurrentEpochTimestamp(),
@@ -183,25 +126,25 @@ contract TLCStaking is OwnableUpgradeable {
         ++i;
       }
     }
-    userTokenAmount[token][msg.sender] -= amount;
-    IERC20Upgradeable(token).safeTransfer(msg.sender, amount);
-    emit LogWithdraw(msg.sender, token, amount);
+    userTokenAmount[epochTimestamp][msg.sender] -= amount;
+    IERC20Upgradeable(stakingToken).safeTransfer(msg.sender, amount);
+    emit LogWithdraw(epochTimestamp, msg.sender, amount);
   }
 
-  function harvest(uint256 epochTimestamp, address[] memory rewarders) external {
-    _harvestFor(epochTimestamp, msg.sender, msg.sender, rewarders);
+  function harvest(uint256 epochTimestamp, address[] memory _rewarders) external {
+    _harvestFor(epochTimestamp, msg.sender, msg.sender, _rewarders);
   }
 
   function harvestToCompounder(
     address user,
     uint256 startEpochTimestamp,
     uint256 noOfEpochs,
-    address[] memory rewarders
+    address[] memory _rewarders
   ) external {
     if (compounder != msg.sender) revert PLPStaking_NotCompounder();
     uint256 epochTimestamp = startEpochTimestamp;
     for (uint256 i = 0; i < noOfEpochs; ) {
-      _harvestFor(epochTimestamp, user, compounder, rewarders);
+      _harvestFor(epochTimestamp, user, compounder, _rewarders);
 
       // Increment epoch timestamp
 
@@ -213,14 +156,14 @@ contract TLCStaking is OwnableUpgradeable {
     }
   }
 
-  function _harvestFor(uint256 epochTimestamp, address user, address receiver, address[] memory rewarders) internal {
-    uint256 length = rewarders.length;
+  function _harvestFor(uint256 epochTimestamp, address user, address receiver, address[] memory _rewarders) internal {
+    uint256 length = _rewarders.length;
     for (uint256 i = 0; i < length; ) {
-      if (!isRewarder[rewarders[i]]) {
+      if (!isRewarder[_rewarders[i]]) {
         revert PLPStaking_NotRewarder();
       }
 
-      EpochFeedableRewarder(rewarders[i]).onHarvest(epochTimestamp, user, receiver);
+      EpochFeedableRewarder(_rewarders[i]).onHarvest(epochTimestamp, user, receiver);
 
       unchecked {
         ++i;
@@ -228,32 +171,12 @@ contract TLCStaking is OwnableUpgradeable {
     }
   }
 
-  function calculateShare(uint256 epochTimestamp, address rewarder, address user) external view returns (uint256) {
-    address[] memory tokens = rewarderStakingTokens[rewarder];
-    uint256 share = 0;
-    uint256 length = tokens.length;
-    for (uint256 i = 0; i < length; ) {
-      share += TraderLoyaltyCredit(tokens[i]).balanceOf(epochTimestamp, user);
-
-      unchecked {
-        ++i;
-      }
-    }
-    return share;
+  function calculateShare(uint256 epochTimestamp, address user) external view returns (uint256) {
+    return userTokenAmount[epochTimestamp][user];
   }
 
-  function calculateTotalShare(uint256 epochTimestamp, address rewarder) external view returns (uint256) {
-    address[] memory tokens = rewarderStakingTokens[rewarder];
-    uint256 totalShare = 0;
-    uint256 length = tokens.length;
-    for (uint256 i = 0; i < length; ) {
-      totalShare += TraderLoyaltyCredit(tokens[i]).totalSupplyByEpoch(epochTimestamp);
-
-      unchecked {
-        ++i;
-      }
-    }
-    return totalShare;
+  function calculateTotalShare(uint256 epochTimestamp) external view returns (uint256) {
+    return TraderLoyaltyCredit(stakingToken).balanceOf(epochTimestamp, address(this));
   }
 
   function getCurrentEpochTimestamp() public view returns (uint256 epochTimestamp) {

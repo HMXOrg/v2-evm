@@ -7,6 +7,7 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 //   - LONG trader pay funding fee to funding fee reserve
 //   - LONG trader repay funding fee debts to PLP and pay remaining to funding fee reserve
 //   - SHORT trader receive funding fee from funding fee reserve
+//   - SHORT trader receive funding fee from PLP borrowing
 //   - SHORT trader receive funding fee from funding fee reserve and borrow fee from PLP
 //   - Deployer call withdrawSurplus function with contain surplus amount - must success
 //   - Deployer call withdrawSurplus function with no surplus amount - must revert
@@ -206,11 +207,38 @@ contract TC24 is BaseIntTest_WithActions {
     }
 
     // ======================================================================================
+    // | SHORT trader receive funding fee from PLP borrowing                                |
+    // ======================================================================================
+
+    /**
+     * T12: CAROL open LONG position
+     */
+    {
+      skip(60); // time passed for 60 seconds
+
+      marketSell(CAROL, 0, wethMarketIndex, 100_000 * 1e30, address(0), new bytes[](0));
+
+      _T12Assert();
+    }
+
+    /**
+     * T13: CAROL close LONG position
+     *      AND get funding fee from PLP borrowing
+     */
+    {
+      skip(60 * 60); // time passed for 1 hour
+
+      marketBuy(CAROL, 0, wethMarketIndex, 100_000 * 1e30, address(0), new bytes[](0));
+
+      _T13Assert();
+    }
+
+    // ======================================================================================
     // | LONG trader repay funding fee debts to PLP and pay remaining to funding fee reserve |
     // ======================================================================================
 
     /**
-     * T12: ALICE close LONG position
+     * T14: ALICE close LONG position
      *      AND pay borrowing debt from PLP
      */
     {
@@ -218,7 +246,7 @@ contract TC24 is BaseIntTest_WithActions {
 
       marketSell(ALICE, 0, wethMarketIndex, 2_100_000 * 1e30, address(0), new bytes[](0));
 
-      _T12Assert();
+      _T14Assert();
     }
   }
 
@@ -603,33 +631,93 @@ contract TC24 is BaseIntTest_WithActions {
   }
 
   function _T12Assert() internal {
+    // When CAROL Buy WETH Market
+    // Market's Funding rate
+    // new Funding rate     = -(Intervals * (Skew ratio * Max funding rate))
+    //                      = -((60 / 1) * ((2_100_000) / 300_000_000) * 0.0004)
+    //                      = -0.000168
+    // Accum Funding Rate   = old + new = -0.01198399999999986 + (-0.000168) = -0.01215199999999986
+    // Last Funding Time    = 6280 + (60) = 6340
+    assertMarketFundingRate(wethMarketIndex, -0.01215199999999986 * 1e18, 6340, "T12: ");
+
+    // And accum funding fee
+    // accumFundingLong  = old value + new value
+    //                   = -18815.999999999958 + Long position size * (current funding rate - last long funding rate)
+    //                   = -18815.999999999958 + (2_100_000 * (-0.01215199999999986 - (-0.01198399999999986)))
+    //                   = -19168.799999999958
+    // accumFundingShort = old value + new value
+    //                   = 0 + Short position size * (current funding rate - last short funding rate)
+    //                   = 0 + 0 * (-0.01215199999999986 - (-0.01198399999999986))
+    //                   = 0
+    assertMarketAccumFundingFee(wethMarketIndex, 19168.799999999958 * 1e30, 0, "T12: ");
+
+    // Funding fee Reserve must still be zero
+    assertFundingFeeReserve(address(wbtc), 0, "T12: ");
+
+    // Then Vault BTC's balance should still be the same as T6
+    assertVaultTokenBalance(address(wbtc), 65 * 1e8, "T12: ");
+  }
+
+  function _T13Assert() internal {
+    // When CAROL Close Short Position
+    // Market's Funding rate
+    // new Funding rate     = -(3600 * (Skew ratio * Max funding rate))
+    //                      = -((3600 / 1) * ((2_100_000 - 100_000) / 300_000_000 * 0.0004))
+    //                      = -0.0096000000000000000001
+    // Accum Funding Rate   = old + new = -0.0121519999999 + -0.00960000000000000 = -0.0217519999999
+    // Last Funding Time    = 6340 + (3600) = 9940
+    assertMarketFundingRate(wethMarketIndex, -0.021751999999997460 * 1e18, 9940, "T13: ");
+
+    // Funding fee Reserve must no remaining tokens
+    assertFundingFeeReserve(address(wbtc), 0, "T13: ");
+    assertFundingFeeReserve(address(usdc), 0, "T13: ");
+
+    // And accum funding fee
+    // accumFundingLong  = old + (Long position size * (current funding rate - last long funding rate))
+    //                   = -19168.799999999958 + (2_100_000 * (-0.021751999999997460 - (-0.01215199999999986)))
+    //                   = -39328.799999994918
+    // accumFundingShort = old + (Short position size * (current funding rate - last short funding rate))
+    //                   = 0 + (100_000 * (-0.021751999999997460 - (-0.01215199999999986)))
+    //                   = -959.99999999976
+    // CAROL close position and get funding fee
+    //                   = -959.99999999976 + 959.99999999976 = 0
+    assertMarketAccumFundingFee(wethMarketIndex, 39328.799999994918 * 1e30, 0, "T13: ");
+
+    // And PLP borrowing debt will be increased
+    // PLP borrowing debt = last debt value + new borrowing amount
+    //                    = 1403.2 + 959.99999999976 = 2363.19999999976
+    //                    = 2363.19999999976
+    assertPLPDebt(2363.19999999976 * 1e30, "T13: ");
+  }
+
+  function _T14Assert() internal {
     // When ALICE Close Long Position
     // Market's Funding rate
     // new Funding rate     = -(60 * (Skew ratio * Max funding rate))
     //                      = -((60 / 1) * ((2_100_000) / 300_000_000 * 0.0004))
     //                      = -0.000168
-    // Accum Funding Rate   = old + new = -0.01198399999999986 + -0.000168 = -0.01215199999999986
-    // Last Funding Time    = 6280 + 60 = 6340
-    assertMarketFundingRate(wethMarketIndex, -0.01215199999999986 * 1e18, 6340, "T12: ");
+    // Accum Funding Rate   = old + new = -0.021751999999997460 + -0.000168 = -0.02191999999999746
+    // Last Funding Time    = 9940 + 60 = 10000
+    assertMarketFundingRate(wethMarketIndex, -0.02191999999999746 * 1e18, 10000, "T14: ");
 
     // And accum funding fee
-    // accumFundingLong  = -18815.999999999958 + (Long position size * (current funding rate - last long funding rate))
-    //                   = -18815.999999999958  + (2_100_000 * (-0.01215199999999986 - (-0.01198399999999986)))
-    //                   = -19168.799999999958
+    // accumFundingLong  = -39328.799999994918  + (Long position size * (current funding rate - last long funding rate))
+    //                   = -39328.799999994918  + (2_100_000 * (-0.02191999999999746 - (-0.021751999999997460)))
+    //                   = -39681.599999994918
     // accumFundingShort = old + (Short position size * (current funding rate - last short funding rate))
-    //                   = 0 + (0 * (-0.01215199999999986 - (-0.01198399999999986)))
+    //                   = 0 + (0 * (-0.02191999999999746 - (-0.021751999999997460)))
     //                   = 0
     // ALICE close position and get paid for funding fee
-    //                   = -19168.799999999958 + 19168.799999999958 = 0
-    assertMarketAccumFundingFee(wethMarketIndex, 0, 0, "T12: ");
+    //                   = -39681.599999994918 + 39681.599999994918 = 0
+    assertMarketAccumFundingFee(wethMarketIndex, 0, 0, "T14: ");
 
     // And Funding fee Reserve must be increased
     // WBTC amount       = (funding fee value - PLP Debt) / BTC Price
-    //                   = (19168.79999999996 - 1403.2) / 20_000
-    //                   = 0.888279999999998
-    assertFundingFeeReserve(address(wbtc), 0.88827999 * 1e8, "T12: ");
+    //                   = (39681.599999994918 - 2363.19999999976) / 20_000
+    //                   = 1.8659199999997579 BTC
+    assertFundingFeeReserve(address(wbtc), 1.86591999 * 1e8, "T14: ");
 
     // And PLP borrowing debt will be zero after Alice repay debt
-    assertPLPDebt(0, "T12: ");
+    assertPLPDebt(0, "T14: ");
   }
 }

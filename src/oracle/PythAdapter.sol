@@ -19,7 +19,6 @@ contract PythAdapter is Owned, IPythAdapter {
 
   // events
   event SetConfig(bytes32 indexed _assetId, bytes32 _pythPriceId, bool _inverse);
-  event SetUpdater(address indexed _account, bool _isActive);
 
   constructor(IPyth _pyth) {
     pyth = _pyth;

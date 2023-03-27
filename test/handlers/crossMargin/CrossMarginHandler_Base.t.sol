@@ -6,7 +6,6 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
-import { console } from "forge-std/console.sol";
 
 contract CrossMarginHandler_Base is BaseTest {
   ICrossMarginHandler internal crossMarginHandler;

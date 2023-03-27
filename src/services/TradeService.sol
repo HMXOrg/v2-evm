@@ -15,6 +15,8 @@ import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {
   uint32 internal constant BPS = 1e4;
@@ -571,6 +573,9 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.avgEntryPriceE30,
         _vars.position.lastIncreaseTimestamp
       );
+      console2.log("priceE30", _vars.priceE30);
+      console2.log("avgEntryPriceE30", _vars.avgEntryPriceE30);
+      console2.log("getDelta", delta);
 
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value
       if (delta >= _vars.position.reserveValueE30) {

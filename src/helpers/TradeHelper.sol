@@ -12,6 +12,8 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
@@ -73,6 +75,9 @@ contract TradeHelper is ITradeHelper {
 
       // update borrowing rate
       uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _plpTVL);
+      // console2.log(" - block.timestamp", block.timestamp);
+      // console2.log(" - _globalAssetClass.sumBorrowingRate", _globalAssetClass.sumBorrowingRate);
+      // console2.log(" - borrowingRate", borrowingRate);
       _globalAssetClass.sumBorrowingRate += borrowingRate;
       _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
 
@@ -156,6 +161,7 @@ contract TradeHelper is ITradeHelper {
     uint8 _assetClassIndex,
     uint256 _marketIndex
   ) external {
+    console2.log("=== settleAllFees ===");
     SettleAllFeesVars memory _vars;
 
     // SLOAD
@@ -183,6 +189,7 @@ contract TradeHelper is ITradeHelper {
         _position.reserveValueE30,
         _position.entryBorrowingRate
       );
+      console2.log("-- borrowing fee", _vars.borrowingFeeToBePaid);
 
       emit LogSettleBorrowingFeeValue(_vars.subAccount, _vars.borrowingFeeToBePaid);
     }
@@ -201,7 +208,7 @@ contract TradeHelper is ITradeHelper {
       // If fundingFee is negative mean Trader receives Fee
       // If fundingFee is positive mean Trader pays Fee
       _vars.traderMustPay = (_vars.fundingFeeToBePaid > 0);
-
+      console2.log("-- funding fee", _vars.traderMustPay, _vars.absFundingFeeToBePaid);
       emit LogSettleFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBePaid);
     }
 
@@ -344,6 +351,7 @@ contract TradeHelper is ITradeHelper {
         _collateralToken,
         _vars.tokenPrice
       );
+      console2.log("- funding repay", _repayAmount);
 
       // book the balances
       _vars.vaultStorage.payFundingFeeFromTraderToFundingFeeReserve(_vars.subAccount, _collateralToken, _repayAmount);
@@ -495,7 +503,7 @@ contract TradeHelper is ITradeHelper {
         _collateralToken,
         _vars.tokenPrice
       );
-
+      console2.log("- trading repay", _repayAmount);
       // devFee = tradingFee * devFeeRate
       uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
       // the rest after dev fee deduction belongs to protocol fee portion
@@ -526,7 +534,7 @@ contract TradeHelper is ITradeHelper {
         _collateralToken,
         _vars.tokenPrice
       );
-
+      console2.log("- borrowing repay", _repayAmount);
       // devFee = tradingFee * devFeeRate
       uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
       // the rest after dev fee deduction belongs to plp liquidity

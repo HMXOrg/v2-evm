@@ -487,6 +487,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) public view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+    console2.log("=== getEquity ===");
     // Get all trader's opening positions
     PerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -508,6 +509,7 @@ contract Calculator is Owned, ICalculator {
       _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_var.position.marketIndex);
       _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_var.position.marketIndex);
 
+      console2.log("== position");
       // Check to overwrite price
       if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
         _var.priceE30 = _limitPriceE30;
@@ -536,6 +538,7 @@ contract Calculator is Owned, ICalculator {
         } else {
           _unrealizedPnlE30 -= int256(_var.delta);
         }
+        console2.log("-- pnl", _var.delta);
       }
 
       {
@@ -549,18 +552,28 @@ contract Calculator is Owned, ICalculator {
           uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate +
             _nextBorrowingRate -
             _var.position.entryBorrowingRate;
+          // console2.log(" - block.timestamp", block.timestamp);
+          // console2.log(" - _globalAssetClass.sumBorrowingRate", _globalAssetClass.sumBorrowingRate);
+          // console2.log(" - _nextBorrowingRate", _nextBorrowingRate);
+          // console2.log(" - _var.position.entryBorrowingRate", _var.position.entryBorrowingRate);
+          // console2.log(" - _borrowingRate", _borrowingRate);
           // Calculate the borrowing fee based on reserved value, borrowing rate.
           _unrealizedFeeE30 += int256((_var.position.reserveValueE30 * _borrowingRate) / 1e18);
-          // getBorrowingFee(_marketConfig.assetClass, _var.position.reserveValueE30, _var.position.entryBorrowingRate)
+          console2.log("-- borrowing", int256((_var.position.reserveValueE30 * _borrowingRate) / 1e18));
         }
         {
           // Calculate funding fee
           int256 nextFundingRate = _getNextFundingRate(_var.position.marketIndex);
           int256 fundingRate = _globalMarket.currentFundingRate + nextFundingRate;
           _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
+          console2.log(
+            "-- funding",
+            _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate)
+          );
         }
         // Calculate trading fee
         _unrealizedFeeE30 += int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
+        console2.log("-- trading", int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS));
       }
 
       unchecked {
@@ -978,9 +991,28 @@ contract Calculator is Owned, ICalculator {
 
     // Calculate the number of funding intervals that have passed since the last borrowing time.
     uint256 intervals = (block.timestamp - _assetClassState.lastBorrowingTime) / _tradingConfig.fundingInterval;
+    console2.log(" - block.timestamp", block.timestamp);
+    console2.log(" - intervals", intervals);
+    console2.log(" - _assetClassConfig.baseBorrowingRate", _assetClassConfig.baseBorrowingRate);
+    console2.log(" - _assetClassState.reserveValueE30", _assetClassState.reserveValueE30);
+    console2.log(" - _plpTVL", _plpTVL);
+    console2.log(
+      " - _nextBorrowingRate",
+      (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL
+    );
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
     return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL;
+  }
+
+  function getTradingFee(uint256 _size, uint256 _feeRateBPS) external view returns (uint256 tradingFee) {
+    // // Calculate trading fee.
+    return _getBorrowingFee(_size, _feeRateBPS);
+  }
+
+  function _getBorrowingFee(uint256 _size, uint256 _feeRateBPS) internal view returns (uint256 tradingFee) {
+    // Calculate trading fee.
+    return (_size * _feeRateBPS) / BPS;
   }
 
   function getDelta(

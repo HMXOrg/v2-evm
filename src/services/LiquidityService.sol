@@ -240,8 +240,8 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _amount,
     uint32 _feeBPS,
     LiquidityAction _action
-  ) internal returns (uint256) {
-    uint256 _fee = _amount - ((_amount * (BPS - _feeBPS)) / BPS);
+  ) internal returns (uint256 _amountAfterFee) {
+    uint256 _fee = (_amount * _feeBPS) / BPS;
 
     VaultStorage(vaultStorage).addFee(_token, _fee);
     uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_token);

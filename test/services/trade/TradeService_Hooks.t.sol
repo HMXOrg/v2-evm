@@ -64,11 +64,10 @@ contract TradeService_Hooks is TradeService_Base {
     ethMarketRewarder.feed(100 ether, 365 days);
 
     tlc.setMinter(address(tlcHook), true);
-    console.log("setMinter");
 
-    // rewardToken.mint(address(this), 300 ether);
-    // rewardToken.approve(address(tlc), 300 ether);
-    // tlc.feedReward(tlc.getCurrentEpochTimestamp(), 300 ether);
+    rewardToken.mint(address(this), 300 ether);
+    rewardToken.approve(address(tlcRewarder), 300 ether);
+    tlcRewarder.feed(tlcRewarder.getCurrentEpochTimestamp(), 300 ether);
   }
 
   function testRevert_TradingStaking_UnknownMarketIndex() external {
@@ -148,13 +147,16 @@ contract TradeService_Hooks is TradeService_Base {
     // input
     int256 sizeDelta = 1_000_000 * 1e30;
 
+    // Alice increase a position with $1,000,000
+    // TLC should be minted for 1,000,000 TLC and staked for Alice
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
     assertEq(tradingStaking.getUserTokenAmount(ethMarketIndex, ALICE), uint256(sizeDelta));
-    assertEq(IERC20(address(tlc)).balanceOf(ALICE), 1_000_000 * 1e18);
+    assertEq(tlcStaking.getUserTokenAmount(tlcRewarder.getCurrentEpochTimestamp(), ALICE), 1_000_000 * 1e18);
 
+    // Decreaseing position should not mint new TLC
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 300 * 1e30, address(wbtc), price);
     assertEq(tradingStaking.getUserTokenAmount(ethMarketIndex, ALICE), uint256(sizeDelta - 300 * 1e30));
-    assertEq(IERC20(address(tlc)).balanceOf(ALICE), 1_000_300 * 1e18);
+    assertEq(tlcStaking.getUserTokenAmount(tlcRewarder.getCurrentEpochTimestamp(), ALICE), 1_000_000 * 1e18);
   }
 
   function testCorrectness_pendingRewardAndClaim() external {
@@ -179,8 +181,8 @@ contract TradeService_Hooks is TradeService_Base {
     // because time has not passed.
     assertEq(ethMarketRewarder.pendingReward(ALICE), 0 ether);
     assertEq(ethMarketRewarder.pendingReward(BOB), 0 ether);
-    // assertEq(tlc.pendingReward(0, 1, ALICE), 0 ether);
-    // assertEq(tlc.pendingReward(0, 1, BOB), 0 ether);
+    assertEq(tlcRewarder.pendingReward(0, 1, ALICE), 0 ether);
+    assertEq(tlcRewarder.pendingReward(0, 1, BOB), 0 ether);
 
     vm.warp(block.timestamp + 3 days);
     // timePast = 60 * 60 * 24 * 3 = 259200
@@ -202,8 +204,8 @@ contract TradeService_Hooks is TradeService_Base {
     //               = 0.234833659490800000
     assertEq(ethMarketRewarder.pendingReward(BOB), 0.234833659490800000 ether);
     // TLC pending reward will remain at zero, because a week (epoch length) has not passed.
-    // assertEq(tlc.pendingReward(0, type(uint256).max, ALICE), 0 ether);
-    // assertEq(tlc.pendingReward(0, type(uint256).max, ALICE), 0 ether);
+    assertEq(tlc.pendingReward(0, type(uint256).max, ALICE), 0 ether);
+    assertEq(tlc.pendingReward(0, type(uint256).max, ALICE), 0 ether);
 
     // Forward to the end of the week
     vm.warp(block.timestamp + 4 days);
@@ -245,7 +247,7 @@ contract TradeService_Hooks is TradeService_Base {
     // This feed happened 1 day into the new week
     rewardToken.mint(address(this), 144 ether);
     rewardToken.approve(address(tlc), 144 ether);
-    // tlc.feedReward(tlc.getCurrentEpochTimestamp(), 144 ether);
+    tlcRewarder.feed(tlc.getCurrentEpochTimestamp(), 144 ether);
 
     // Forward to the next week
     vm.warp(block.timestamp + 7 days);
@@ -273,7 +275,7 @@ contract TradeService_Hooks is TradeService_Base {
     // Include last week reward = 214.28571428571428 + 144 = 358.285714285714285713
     // assertEq(tlc.pendingReward(0, type(uint256).max, ALICE), 358.285714285714285713 ether);
     // Bob's TLC pending reward should remain the same as Bob did not make any new trade this week.
-    // assertEq(tlc.pendingReward(0, type(uint256).max, BOB), 85.714285714285714285 ether);
+    assertEq(tlcRewarder.pendingReward(0, type(uint256).max, BOB), 85.714285714285714285 ether);
 
     // Claim trading staking reward
     address[] memory rewarders = new address[](1);

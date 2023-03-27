@@ -23,11 +23,10 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   uint256 private constant ACC_REWARD_PRECISION = 1e30;
 
   // Events
-  event LogOnDeposit(address indexed user, uint256 shareAmount);
-  event LogOnWithdraw(address indexed user, uint256 shareAmount);
-  event LogHarvest(address indexed user, uint256 pendingRewardAmount);
-  event LogUpdateRewardCalculationParams(uint64 lastRewardTime, uint256 accRewardPerShare);
-  event LogFeed(uint256 feedAmount);
+  event LogOnDeposit(uint256 epochTimestamp, address indexed user, uint256 shareAmount);
+  event LogOnWithdraw(uint256 epochTimestamp, address indexed user, uint256 shareAmount);
+  event LogHarvest(uint256 epochTimestamp, address indexed user, uint256 pendingRewardAmount);
+  event LogFeed(uint256 epochTimestamp, uint256 feedAmount, uint256 totalEpochReward);
   event LogSetFeeder(address oldFeeder, address newFeeder);
 
   // Error
@@ -68,7 +67,7 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   function onDeposit(uint256 epochTimestamp, address user, uint256 shareAmount) external onlyStakingContract {
     _updateRewardCalculationParams(epochTimestamp);
 
-    emit LogOnDeposit(user, shareAmount);
+    emit LogOnDeposit(epochTimestamp, user, shareAmount);
   }
 
   function onWithdraw(uint256 epochTimestamp, address user, uint256 shareAmount) external onlyStakingContract {
@@ -77,7 +76,7 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
       revert EpochFeedableRewarderError_WithdrawalNotAllowed();
     _updateRewardCalculationParams(epochTimestamp);
 
-    emit LogOnWithdraw(user, shareAmount);
+    emit LogOnWithdraw(epochTimestamp, user, shareAmount);
   }
 
   function onHarvest(uint256 epochTimestamp, address user, address receiver) external onlyStakingContract {
@@ -92,7 +91,7 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
         _harvestToken(receiver, accumulatedRewards);
       }
 
-      emit LogHarvest(user, accumulatedRewards);
+      emit LogHarvest(epochTimestamp, user, accumulatedRewards);
     }
   }
 
@@ -161,7 +160,7 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
 
     _updateRewardCalculationParams(epochTimestamp);
 
-    emit LogFeed(feedAmount);
+    emit LogFeed(epochTimestamp, feedAmount, rewardBalanceMapByEpochTimestamp[epochTimestamp]);
   }
 
   function _updateRewardCalculationParams(uint256 epochTimestamp) internal {

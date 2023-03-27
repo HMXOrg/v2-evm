@@ -19,4 +19,6 @@ interface IEpochRewarder {
   function feed(uint256 epochTimestamp, uint256 feedAmount) external;
 
   function setFeeder(address feeder_) external;
+
+  function getCurrentEpochTimestamp() external view returns (uint256 epochTimestamp);
 }

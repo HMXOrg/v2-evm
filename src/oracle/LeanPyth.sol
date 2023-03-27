@@ -20,10 +20,10 @@ contract LeanPyth is Owned, ILeanPyth {
   IPyth public pyth;
 
   // mapping of our asset id to Pyth's price id
-  mapping(bytes32 => IPythPriceInfo) priceInfos;
+  mapping(bytes32 => IPythPriceInfo) public priceInfos;
 
   // whitelist mapping of price updater
-  mapping(address => bool) public isUpdater;
+  mapping(address => bool) public isUpdaters;
 
   // events
   event LogSetUpdater(address indexed _account, bool _isActive);
@@ -33,7 +33,7 @@ contract LeanPyth is Owned, ILeanPyth {
    * Modifiers
    */
   modifier onlyUpdater() {
-    if (!isUpdater[msg.sender]) {
+    if (!isUpdaters[msg.sender]) {
       revert LeanPyth_OnlyUpdater();
     }
     _;
@@ -49,7 +49,7 @@ contract LeanPyth is Owned, ILeanPyth {
   /// @dev Updates the price feeds with the given price data.
   /// @notice The function must not be called with any msg.value. (Define as payable for IPyth compatability)
   /// @param updateData The array of encoded price feeds to update.
-  function updatePriceFeeds(bytes[] calldata updateData) public payable override onlyUpdater {
+  function updatePriceFeeds(bytes[] calldata updateData) external payable override onlyUpdater {
     // The function is payable (to make it IPyth compat), so there is a chance msg.value is submitted.
     // On LeanPyth, we do not collect any fee.
     if (msg.value > 0) revert LeanPyth_ExpectZeroFee();
@@ -90,7 +90,7 @@ contract LeanPyth is Owned, ILeanPyth {
   /// @param _isActive The new status of the account as a price updater.
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     // Set the `isActive` status of the given account
-    isUpdater[_account] = _isActive;
+    isUpdaters[_account] = _isActive;
 
     // Emit a `LogSetUpdater` event indicating the updated status of the account
     emit LogSetUpdater(_account, _isActive);
@@ -165,7 +165,7 @@ contract LeanPyth is Owned, ILeanPyth {
         }
       }
 
-      // emit BatchPriceFeedUpdate(vm.emitterChainId, vm.sequence);
+      emit BatchPriceFeedUpdate(vm.emitterChainId, vm.sequence);
     }
   }
 

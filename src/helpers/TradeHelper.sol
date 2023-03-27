@@ -344,7 +344,6 @@ contract TradeHelper is ITradeHelper {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _traderBalance,
         _vars.absFundingFeeToBePaid,
-        _collateralToken,
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
@@ -386,7 +385,6 @@ contract TradeHelper is ITradeHelper {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _traderBalance,
         repayFundingFeeValue,
-        _collateralToken,
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
@@ -426,7 +424,6 @@ contract TradeHelper is ITradeHelper {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _fundingFeeBalance,
         _vars.absFundingFeeToBePaid,
-        _collateralToken,
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
@@ -461,7 +458,6 @@ contract TradeHelper is ITradeHelper {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _plpBalance,
         _vars.absFundingFeeToBePaid,
-        _collateralToken,
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
@@ -495,7 +491,6 @@ contract TradeHelper is ITradeHelper {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _traderBalance,
         _vars.tradingFeeToBePaid,
-        _collateralToken,
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
@@ -526,7 +521,6 @@ contract TradeHelper is ITradeHelper {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _traderBalance,
         _vars.borrowingFeeToBePaid,
-        _collateralToken,
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
@@ -557,21 +551,20 @@ contract TradeHelper is ITradeHelper {
   }
 
   function _getRepayAmount(
-    uint256 _traderBalance,
-    uint256 _feeValueE30,
-    address _token,
+    uint256 _payerBalance,
+    uint256 _valueE30,
     uint256 _tokenPrice,
     uint8 _tokenDecimal
   ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
-    uint256 _feeAmount = (_feeValueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
+    uint256 _feeAmount = (_valueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
 
-    if (_traderBalance > _feeAmount) {
-      // _traderBalance can cover the rest of the fee
-      return (_feeAmount, _feeValueE30);
+    if (_payerBalance > _feeAmount) {
+      // _payerBalance can cover the rest of the fee
+      return (_feeAmount, _valueE30);
     } else {
-      // _traderBalance cannot cover the rest of the fee, just take the amount the trader have
-      uint256 _traderBalanceValue = (_traderBalance * _tokenPrice) / (10 ** _tokenDecimal);
-      return (_traderBalance, _traderBalanceValue);
+      // _payerBalance cannot cover the rest of the fee, just take the amount the trader have
+      uint256 _payerBalanceValue = (_payerBalance * _tokenPrice) / (10 ** _tokenDecimal);
+      return (_payerBalance, _payerBalanceValue);
     }
   }
 

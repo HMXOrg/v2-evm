@@ -197,7 +197,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
 
     // If fundingFeeBookValue > totalFundingFeeReserveValueE30 means protocol has exceed balance of fee reserved for paying to traders
     // Funding fee surplus = totalFundingFeeReserveValueE30 - fundingFeeBookValue
-    if (_vars.fundingFeeBookValue > _vars.totalFundingFeeReserveValueE30)
+    if (_vars.fundingFeeBookValue > _vars.totalFundingFeeReserveValueE30 || (_vars.totalFundingFeeReserveValueE30 == 0))
       revert ICrossMarginHandler_NoFundingFeeSurplus();
 
     _vars.fundingFeeSurplusValue = _vars.totalFundingFeeReserveValueE30 - _vars.fundingFeeBookValue;

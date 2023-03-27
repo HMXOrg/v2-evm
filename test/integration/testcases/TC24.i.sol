@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
 // Test Scenarios
@@ -12,6 +9,7 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 //   - SHORT trader receive funding fee from funding fee reserve
 //   - SHORT trader receive funding fee from funding fee reserve and borrow fee from PLP
 //   - Deployer call withdrawSurplus function with contain surplus amount - must success
+//   - Deployer call withdrawSurplus function with no surplus amount - must revert
 
 contract TC24 is BaseIntTest_WithActions {
   // TC24 - funding fee should be calculated correctly
@@ -32,6 +30,14 @@ contract TC24 is BaseIntTest_WithActions {
 
     // warp to block timestamp 1000
     vm.warp(1000);
+
+    /**
+     * T0: Deployer trying to withdraw surplus and revert
+     */
+
+    // Then deployer can call withdraw surplus
+    vm.expectRevert(abi.encodeWithSignature("ICrossMarginHandler_NoFundingFeeSurplus()"));
+    crossMarginHandler.withdrawFundingFeeSurplus(address(usdc), new bytes[](0));
 
     /**
      * T1: BOB provide liquidity as WBTC 50 tokens

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -11,8 +9,6 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
-
-import { console2 } from "forge-std/console2.sol";
 
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
@@ -88,8 +84,6 @@ contract TradeHelper is ITradeHelper {
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
   function updateFundingRate(uint256 _marketIndex) external {
-    console2.log("------------------------------- updateFundingRate()");
-
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -109,10 +103,8 @@ contract TradeHelper is ITradeHelper {
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
       int256 nextFundingRate = calculator.getNextFundingRate(_marketIndex);
+      int256 lastFundingRate = _globalMarket.currentFundingRate;
       _globalMarket.currentFundingRate += nextFundingRate;
-
-      console2.log("!!! nextFundingRate", nextFundingRate);
-      console2.log("!!! currentFundingRate", _globalMarket.currentFundingRate);
 
       if (_globalMarket.longPositionSize > 0) {
         _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
@@ -120,14 +112,9 @@ contract TradeHelper is ITradeHelper {
           _marketIndex,
           true,
           int(_globalMarket.longPositionSize),
-          _globalMarket.longLastFundingRate
+          lastFundingRate
         );
-        console2.log("!!! longLastFundingRate", _globalMarket.longLastFundingRate);
-        // _globalMarket.longLastFundingRate = _globalMarket.currentFundingRate;
         _globalMarket.accumFundingLong += fundingFeeLongE30;
-
-        console2.log("!!! longPositionSize", _globalMarket.longPositionSize);
-        console2.log("!!! accumFundingLong", _globalMarket.accumFundingLong);
       }
 
       if (_globalMarket.shortPositionSize > 0) {
@@ -136,21 +123,12 @@ contract TradeHelper is ITradeHelper {
           _marketIndex,
           false,
           int(_globalMarket.shortPositionSize),
-          _globalMarket.shortLastFundingRate
+          lastFundingRate
         );
-
-        console2.log("");
-        console2.log("!!! shortLastFundingRate", _globalMarket.shortLastFundingRate);
-        // _globalMarket.shortLastFundingRate = _globalMarket.currentFundingRate;
         _globalMarket.accumFundingShort += fundingFeeShortE30;
-
-        console2.log("!!! shortPositionSize", _globalMarket.shortPositionSize);
-        console2.log("!!! accumFundingShort", _globalMarket.accumFundingShort);
       }
 
       _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-      _globalMarket.longLastFundingRate = _globalMarket.currentFundingRate;
-      _globalMarket.shortLastFundingRate = _globalMarket.currentFundingRate;
       _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
     }
   }
@@ -186,8 +164,6 @@ contract TradeHelper is ITradeHelper {
     uint8 _assetClassIndex,
     uint256 _marketIndex
   ) external {
-    console2.log("");
-    console2.log("------------------------------- settleAllFees()");
     SettleAllFeesVars memory _vars;
 
     // SLOAD
@@ -204,7 +180,6 @@ contract TradeHelper is ITradeHelper {
     // Calculate the trading fee
     {
       _vars.tradingFeeToBePaid = (_absSizeDelta * _positionFeeBPS) / BPS;
-      console2.log("_vars.tradingFeeToBePaid", _vars.tradingFeeToBePaid);
       emit LogSettleTradingFeeValue(_vars.subAccount, _vars.tradingFeeToBePaid);
     }
 
@@ -215,7 +190,6 @@ contract TradeHelper is ITradeHelper {
         _position.reserveValueE30,
         _position.entryBorrowingRate
       );
-      console2.log("_vars.borrowingFeeToBePaid", _vars.borrowingFeeToBePaid);
 
       emit LogSettleBorrowingFeeValue(_vars.subAccount, _vars.borrowingFeeToBePaid);
     }
@@ -235,10 +209,6 @@ contract TradeHelper is ITradeHelper {
       // If fundingFee is negative mean Trader receives Fee
       // If fundingFee is positive mean Trader pays Fee
       _vars.traderMustPay = (_vars.fundingFeeToBePaid > 0);
-      console2.log("_position.positionSizeE30", _position.positionSizeE30);
-      console2.log("_position.entryFundingRate", _position.entryFundingRate);
-      console2.log("_vars.fundingFeeToBePaid", _vars.fundingFeeToBePaid);
-      console2.log("_vars.traderMustPay", _vars.traderMustPay);
 
       emit LogSettleFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBePaid);
     }
@@ -258,6 +228,7 @@ contract TradeHelper is ITradeHelper {
       for (uint256 i; i < _vars.collateralTokensLength; ) {
         bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
         (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
+
         _settleFundingFeeWhenTraderMustReceive(_vars, _vars.collateralTokens[i]);
 
         // stop iteration, if all fees are covered
@@ -274,7 +245,12 @@ contract TradeHelper is ITradeHelper {
         for (uint256 i; i < _vars.collateralTokensLength; ) {
           bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
           (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
+
           _settleFundingFeeWhenBorrowingFromPLP(_vars, _vars.collateralTokens[i]);
+
+          // stop iteration, if all fees are covered
+          if (_vars.absFundingFeeToBePaid == 0) break;
+
           unchecked {
             ++i;
           }
@@ -295,18 +271,10 @@ contract TradeHelper is ITradeHelper {
       bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
       (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
 
-      console2.log("");
-      console2.log("\\\\\\\\\\\\ TOKEN", ERC20(_vars.collateralTokens[i]).symbol());
-      console2.logE30("*** Price", _vars.tokenPrice);
-
       // Funding fee
       if (_vars.absFundingFeeToBePaid > 0) {
-        console2.log(">>> pay absFundingFeeToBePaid");
-        console2.logE30("*** _vars.absFundingFeeToBePaid", _vars.absFundingFeeToBePaid);
-
         // If there's borrowing debts from PLP, then trader must repays to PLP first
         _vars.plpLiquidityDebtUSDE30 = _vars.vaultStorage.plpLiquidityDebtUSDE30();
-        console2.logE30("*** _vars.plpLiquidityDebtUSDE30", _vars.plpLiquidityDebtUSDE30);
         if (_vars.plpLiquidityDebtUSDE30 > 0) {
           _repayBorrowDebtFromTraderToPlp(_vars, _vars.collateralTokens[i]);
         }
@@ -391,9 +359,6 @@ contract TradeHelper is ITradeHelper {
         _vars.tokenPrice
       );
 
-      console2.log("_repayAmount", _repayAmount);
-      console2.log("_repayValue", _repayValue);
-
       // book the balances
       _vars.vaultStorage.payFundingFeeFromTraderToFundingFeeReserve(_vars.subAccount, _collateralToken, _repayAmount);
 
@@ -437,7 +402,9 @@ contract TradeHelper is ITradeHelper {
       );
 
       // Update accum funding fee on Global storage for surplus calculation
-      // _vars.isLong ? _updateAccumFundingLong(int(_repayValue)) : _updateAccumFundingShort(int(_repayValue));
+      _vars.isLong
+        ? _updateAccumFundingLong(_vars.marketIndex, -int(_repayValue))
+        : _updateAccumFundingShort(_vars.marketIndex, -int(_repayValue));
 
       _vars.absFundingFeeToBePaid -= _repayValue;
     }
@@ -495,7 +462,9 @@ contract TradeHelper is ITradeHelper {
       _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _collateralToken, _repayAmount, _repayValue);
 
       // Update accum funding fee on Global storage for surplus calculation
-      // _vars.isLong ? _updateAccumFundingLong(-int(_repayValue)) : _updateAccumFundingShort(-int(_repayValue));
+      _vars.isLong
+        ? _updateAccumFundingLong(_vars.marketIndex, int(_repayValue))
+        : _updateAccumFundingShort(_vars.marketIndex, int(_repayValue));
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.absFundingFeeToBePaid -= _repayValue;
@@ -596,24 +565,18 @@ contract TradeHelper is ITradeHelper {
   }
 
   function _updateAccumFundingLong(uint256 _marketIndex, int256 fundingLong) internal {
-    console2.log("");
-    console2.log("------------------------------- _updateAccumFundingLong()");
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     _globalMarket.accumFundingLong += fundingLong;
-    console2.log(">>> _globalMarket.accumFundingLong", _globalMarket.accumFundingLong);
     _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
   }
 
   function _updateAccumFundingShort(uint256 _marketIndex, int256 fundingShort) internal {
-    console2.log("");
-    console2.log("------------------------------- _updateAccumFundingShort()");
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     _globalMarket.accumFundingShort += fundingShort;
-    console2.log(">>> _globalMarket.accumFundingShort", _globalMarket.accumFundingShort);
     _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
   }
 

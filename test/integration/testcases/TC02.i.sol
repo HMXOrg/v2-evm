@@ -57,7 +57,7 @@ contract TC02 is BaseIntTest_WithActions {
       assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T1: " });
 
       // Finally after Bob add liquidity Vault balance should be correct
-      // note: token balance is including all liquidity, dev fee and protocal fee
+      // note: token balance is including all liquidity, dev fee and protocol fee
       //    BTC - 1
       assertVaultTokenBalance(address(wbtc), 1 * 1e8, "T1: ");
     }
@@ -203,7 +203,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Assert Market
       assertMarketLongPosition(wethMarketIndex, 300 * 1e30, 1_500.00075 * 1e30, "T4: ");
       assertMarketShortPosition(wethMarketIndex, 0, 0, "T4: ");
-      assertMarketFundingRate(wethMarketIndex, 0, 1120, 0, 0, "T4: ");
+      assertMarketFundingRate(wethMarketIndex, 0, 1120, "T4: ");
 
       // Assert Asset class
       // Crypto's reserve should be increased by = 27 USD
@@ -240,7 +240,7 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Then Check position Info
 
-      // Time passed          = 60 seconds (60 intevals)
+      // Time passed          = 60 seconds (60 intervals)
       // TVL                  = 19,940 USD
 
       // Max Funding rate     = 0.04%
@@ -257,14 +257,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
       //                      = -(60 * 300 / 300000000 * 0.0004)
       //                      = -0.000000024
-      assertMarketFundingRate(
-        wethMarketIndex,
-        -0.000000024 * 1e18,
-        1180,
-        -0.000000024 * 1e18,
-        -0.000000024 * 1e18,
-        "T6: "
-      );
+      assertMarketFundingRate(wethMarketIndex, -0.000000024 * 1e18, 1180, "T6: ");
 
       // Crypto Borrowing rate
       //    = reserve * interval * base rate / tvl
@@ -331,7 +324,7 @@ contract TC02 is BaseIntTest_WithActions {
       // According to T4, Alice's collateral balances
       //    BTC - 0.009985
       // When Alice sell WETH with 150 USD (decrease Long position)
-      // And Funding rate is nagative so Short pay Long
+      // And Funding rate is negative so Short pay Long
       // Then Alice should receive funding fee
 
       // Then Alice has to pay
@@ -537,7 +530,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Assert Market
       assertMarketLongPosition(jpyMarketIndex, 0, 0, "T7: ");
       assertMarketShortPosition(jpyMarketIndex, 6_000 * 1e30, 0.007346223635976286152964598193 * 1e30, "T7: ");
-      assertMarketFundingRate(jpyMarketIndex, 0, 1240, 0, 0, "T7: ");
+      assertMarketFundingRate(jpyMarketIndex, 0, 1240, "T7: ");
 
       // Assert Asset class
       // Forex's reserve should be increased by = 54 USD
@@ -569,7 +562,7 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Then Check position Info
 
-      // Time passed          = 60 seconds (60 intevals)
+      // Time passed          = 60 seconds (60 intervals)
       // TVL                  = 0.99662501 * 20000 = 19932.5002
 
       // Max Funding rate     = 0.04%
@@ -586,7 +579,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
       //                      = -(60 * -6000 / 300000000 * 0.0004)
       //                      = 0.00000048
-      assertMarketFundingRate(jpyMarketIndex, 0.00000048 * 1e18, 1300, 0.00000048 * 1e18, 0.00000048 * 1e18, "T8: ");
+      assertMarketFundingRate(jpyMarketIndex, 0.00000048 * 1e18, 1300, "T8: ");
 
       // Forex Borrowing rate
       //    = reserve * interval * base rate / tvl
@@ -816,7 +809,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Market's Funding rate calculation
       // When Market skew is 0
       // Then Funding rate is 0
-      assertMarketFundingRate(wbtcMarketIndex, 0, 1420, 0, 0, "T12: ");
+      assertMarketFundingRate(wbtcMarketIndex, 0, 1420, "T12: ");
 
       // Crypto Borrowing rate calculation
       // Given Latest info
@@ -1019,7 +1012,7 @@ contract TC02 is BaseIntTest_WithActions {
       // And Time passed         = 1480 - 1420 = 60 seconds (60 intervals)
       // Then Funding rate       = -(60 * (3000 / 300000000) * 0.04%)
       //                         = -0.00000024
-      assertMarketFundingRate(wbtcMarketIndex, -0.00000024 * 1e18, 1480, 0, 0, "T15: ");
+      assertMarketFundingRate(wbtcMarketIndex, -0.00000024 * 1e18, 1480, "T15: ");
 
       // Crypto Borrowing rate calculation
       // Given Latest info
@@ -1156,8 +1149,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Assert Asset class
       // Given Crypto's reserve is 283.5
       // When Bob decrease Btc long position for 3000 USD
-      // And dereased reserve is 270 USD
-      // Then Crypto's reserve should decresed by 270 = 13.5 USD
+      // And deceased reserve is 270 USD
+      // Then Crypto's reserve should decreased by 270 = 13.5 USD
       assertAssetClassReserve(0, 13.5 * 1e30, "T15: ");
 
       // Invariant testing
@@ -1214,21 +1207,14 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Market's Funding rate calculation
       // When Market skew is 0
-      // And Funding rate fomula        = -(Intervals * (Skew ratio * Max funding rate))
+      // And Funding rate formula        = -(Intervals * (Skew ratio * Max funding rate))
       // And Time passed                = 1540 - 1480 = 60 seconds (60 intervals)
       // Then Pending Funding rate      = -(60 * (0 / 300000000) * 0.04%)
       //                                = 0
       // And Market's sum Funding rate  = -0.00000024 + 0
-      assertMarketFundingRate(
-        wbtcMarketIndex,
-        -0.00000024 * 1e18,
-        1540,
-        -0.00000024 * 1e18,
-        -0.00000024 * 1e18,
-        "T17: "
-      );
+      assertMarketFundingRate(wbtcMarketIndex, -0.00000024 * 1e18, 1540, "T17: ");
 
-      // Crypto Borrowing rate calulation
+      // Crypto Borrowing rate calculation
       // Given Latest info
       //    Reserve                 = 13.5 USD
       //    Sum borrowing rate      = 0.000117104583348508
@@ -1414,14 +1400,14 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Market's Funding rate calculation
       // When Market skew is -3000
-      // And Funding rate fomula = -(Intervals * (Skew ratio * Max funding rate))
+      // And Funding rate formula = -(Intervals * (Skew ratio * Max funding rate))
       // And Time passed         = 1600 - 1549 = 60 seconds (60 intervals)
       // Then Funding rate       = -(60 * (-3000 / 300000000) * 0.04%)
       //                         = 0.00000024
       // And Market's sum Funding rate  = -0.00000024 + 0.00000024
-      assertMarketFundingRate(wbtcMarketIndex, 0, 1600, 0, 0, "T19: ");
+      assertMarketFundingRate(wbtcMarketIndex, 0, 1600, "T19: ");
 
-      // Crypto Borrowing rate calulation
+      // Crypto Borrowing rate calculation
       // Given Latest info
       //    Reserve                 = 283.5 USD
       //    Sum borrowing rate      = 0.000026718163837437
@@ -1466,7 +1452,7 @@ contract TC02 is BaseIntTest_WithActions {
       //       short position: size delta * (avg price - adaptive price) / avg price
       // unrealized PnL = 3000 * (21000 - 18900) / 21000
       //                = 300 USD
-      // !note: but mamx profit is 270 then Bob will realized profit just 270 USD
+      // !note: but max profit is 270 then Bob will realized profit just 270 USD
 
       assertPositionInfoOf({
         _subAccount: _bobSubAccount0,
@@ -1518,7 +1504,7 @@ contract TC02 is BaseIntTest_WithActions {
       //                                            = 0.00000129 btc
       //    Funding fee - 0.00072 USD
       //      BTC - 0.00072 / 17500                 = 0.00000004 btc
-      //          - pay for fundind fee (100%)      = 0.00000004 btc
+      //          - pay for funding fee (100%)      = 0.00000004 btc
 
       // And PLP has to pay
       //    Trader profit - 270 USD
@@ -1557,8 +1543,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Assert Asset class
       // Given Crypto's reserve is 283.5
       // When Bob decrease Btc short position for 3000 USD
-      // And dereased reserve is 270 USD
-      // Then Crypto's reserve should decresed by 270 = 13.5 USD
+      // And deceased reserve is 270 USD
+      // Then Crypto's reserve should decreased by 270 = 13.5 USD
       assertAssetClassReserve(0, 13.5 * 1e30, "T19: ");
 
       // Invariant testing

@@ -274,37 +274,20 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _marketIndex,
     int256 _currentFundingRate,
     uint256 _lastFundingTime,
-    int256 _longLastFundingRate,
-    int256 _shortLastFundingRate,
     string memory _str
   ) internal {
     IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     assertEq(_market.currentFundingRate, _currentFundingRate, string.concat(_str, "Market's Funding rate"));
     assertEq(_market.lastFundingTime, _lastFundingTime, string.concat(_str, "Market's Last funding time"));
-    assertEq(_market.longLastFundingRate, _longLastFundingRate, string.concat(_str, "Market's Last Long funding rate"));
-    assertEq(
-      _market.shortLastFundingRate,
-      _shortLastFundingRate,
-      string.concat(_str, "Market's Last Short funding rate")
-    );
   }
 
   function assertMarketFundingRate(
     uint256 _marketIndex,
     int256 _currentFundingRate,
-    uint256 _lastFundingTime,
-    int256 _longLastFundingRate,
-    int256 _shortLastFundingRate
+    uint256 _lastFundingTime
   ) internal {
-    assertMarketFundingRate(
-      _marketIndex,
-      _currentFundingRate,
-      _lastFundingTime,
-      _longLastFundingRate,
-      _shortLastFundingRate,
-      ""
-    );
+    assertMarketFundingRate(_marketIndex, _currentFundingRate, _lastFundingTime, "");
   }
 
   function assertMarketLongPosition(

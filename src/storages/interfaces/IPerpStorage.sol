@@ -29,8 +29,6 @@ interface IPerpStorage {
     uint256 shortAvgPrice;
     // funding rate
     int256 currentFundingRate;
-    int256 longLastFundingRate;
-    int256 shortLastFundingRate;
     uint256 lastFundingTime;
     int256 accumFundingLong; // accumulative of funding fee value on LONG positions using for calculating surplus
     int256 accumFundingShort; // accumulative of funding fee value on SHORT positions using for calculating surplus

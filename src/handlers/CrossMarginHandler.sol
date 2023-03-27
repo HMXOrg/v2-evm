@@ -170,9 +170,6 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   /// @dev Check if value on funding fee reserve have exceed balance for paying to traders
   ///      - If yes means exceed value are the surplus for platform and can be booked to PLP
   function withdrawFundingFeeSurplus(address _stableToken, bytes[] memory _priceData) external nonReentrant onlyOwner {
-    console2.log("");
-    console2.log("------------------------------- withdrawFundingFeeSurplus()");
-
     // Call update oracle price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);

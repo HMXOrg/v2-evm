@@ -6,16 +6,12 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 // Test Scenarios
-//   X LONG trader pay funding fee to funding fee reserve
-//   - LONG trader repay funding fee debts to PLP
+//   - LONG trader pay funding fee to funding fee reserve
 //   - LONG trader repay funding fee debts to PLP and pay remaining to funding fee reserve
-//   X SHORT trader receive funding fee from funding fee reserve
+//   - SHORT trader receive funding fee from funding fee reserve
 //   - SHORT trader receive funding fee from funding fee reserve and borrow fee from PLP
-//   - SHORT trader receive funding fee from PLP
-//   X Deployer call withdrawSurplus function with contain surplus amount - must success
+//   - Deployer call withdrawSurplus function with contain surplus amount - must success
 
 contract TC24 is BaseIntTest_WithActions {
   // TC24 - funding fee should be calculated correctly
@@ -45,10 +41,6 @@ contract TC24 is BaseIntTest_WithActions {
     addLiquidity(BOB, wbtc, 50 * 1e8, executionOrderFee, new bytes[](0), true);
     _T1Assert();
 
-    console2.log(
-      "#################################################################################### T2: ALICE deposit BTC 200_000 USD at price 20,000"
-    );
-
     /**
      * T2: ALICE deposit BTC 200_000 USD at price 20,000 USD/WBTC
      *     200_000 / 20_000 = 10 BTC
@@ -59,10 +51,6 @@ contract TC24 is BaseIntTest_WithActions {
     depositCollateral(ALICE, 0, wbtc, 10 * 1e8);
     _T2Assert();
 
-    console2.log(
-      "#################################################################################### T3: ALICE market buy weth with 1_500_000 USD at price 1500 USD"
-    );
-
     /**
      * T3: ALICE market buy weth with 1_500_000 USD at price 1500 USD
      *     Then Alice should has Long Position in WETH market
@@ -72,11 +60,6 @@ contract TC24 is BaseIntTest_WithActions {
 
     marketBuy(ALICE, 0, wethMarketIndex, 1_500_000 * 1e30, address(0), new bytes[](0));
     _T3Assert();
-
-    console2.log("");
-    console2.log(
-      "#################################################################################### T4: ALICE market buy weth with 500_000 USD at price 1500 USD"
-    );
 
     // ======================================================
     // | LONG trader pay funding fee to funding fee reserve |
@@ -92,17 +75,12 @@ contract TC24 is BaseIntTest_WithActions {
     marketBuy(ALICE, 0, wethMarketIndex, 500_000 * 1e30, address(0), new bytes[](0));
     _T4Assert();
 
-    // time passed for 60 seconds
-    skip(60);
-    console2.log("");
-    console2.log(
-      "#################################################################################### T5: Deployer see the surplus on funding fee and try to withdraw surplus to PLP"
-    );
-
     /**
      * T5: Deployer see the surplus on funding fee and try to withdraw surplus to PLP
      *     @note deployer must converts all funding fee reserves to stable token (USDC) before called withdraw surplus
      */
+
+    skip(60); // time passed for 60 seconds
 
     _T5Assert1();
     // Add USDC liquidity first to make plp have token to convert
@@ -118,11 +96,6 @@ contract TC24 is BaseIntTest_WithActions {
     crossMarginHandler.withdrawFundingFeeSurplus(address(usdc), new bytes[](0));
     _T5Assert4();
 
-    console2.log("");
-    console2.log(
-      "#################################################################################### T6: CAROL deposit BTC 100_000 USD at price 20,000"
-    );
-
     // =============================================================
     // | SHORT trader receive funding fee from funding fee reserve |
     // =============================================================
@@ -137,11 +110,6 @@ contract TC24 is BaseIntTest_WithActions {
     depositCollateral(CAROL, 0, wbtc, 5 * 1e8);
     _T6Assert();
 
-    console2.log("");
-    console2.log(
-      "#################################################################################### T7: CAROL market sell weth with 200_000 USD at price 1500 USD"
-    );
-
     /**
      * T7: CAROL market sell weth with 200_000 USD at price 1500 USD
      *     Then CAROL should has Short Position in WETH market
@@ -151,11 +119,6 @@ contract TC24 is BaseIntTest_WithActions {
 
     marketSell(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(0), new bytes[](0));
     _T7Assert();
-
-    console2.log("");
-    console2.log(
-      "#################################################################################### T8: ALICE market buy weth with 100_000 USD at price 1500 USD"
-    );
 
     /**
      * T8: ALICE market buy weth with 100_000 USD at price 1500 USD
@@ -167,11 +130,6 @@ contract TC24 is BaseIntTest_WithActions {
     _T8Assert1();
     marketBuy(ALICE, 0, wethMarketIndex, 100_000 * 1e30, address(0), new bytes[](0));
     _T8Assert2();
-
-    console2.log("");
-    console2.log(
-      "#################################################################################### T9: CAROL close sell position with 200_000 USD"
-    );
 
     /**
      * T9: CAROL close sell position with 200_000 USD
@@ -196,6 +154,32 @@ contract TC24 is BaseIntTest_WithActions {
     skip(60); // time passed for 60 seconds
 
     marketSell(CAROL, 0, wethMarketIndex, 300_000 * 1e30, address(0), new bytes[](0));
+    _T10Assert();
+
+    /**
+     * T11: CAROL close sell position at price 1500 USD
+     *      Then CAROL should get funding fee from funding fee reserve
+     *      And funding fee reserve must borrow fee from PLP because reserve not enough to repay to CAROL
+     */
+
+    skip(60 * 60); // time passed for 1 hour
+
+    marketBuy(CAROL, 0, wethMarketIndex, 300_000 * 1e30, address(0), new bytes[](0));
+    _T11Assert();
+
+    // ======================================================================================
+    // | LONG trader repay funding fee debts to PLP and pay remaining to funding fee reserve |
+    // ======================================================================================
+
+    /**
+     * T12: ALICE close LONG position
+     *      AND pay borrowing debt from PLP
+     */
+
+    skip(60); // time passed for 60 seconds
+
+    marketSell(ALICE, 0, wethMarketIndex, 2_100_000 * 1e30, address(0), new bytes[](0));
+    _T12Assert();
   }
 
   function _T1Assert() internal {
@@ -321,7 +305,7 @@ contract TC24 is BaseIntTest_WithActions {
     //                      = -((60 * 20 / 1) * (1_500_000 / 300_000_000 * 0.0004))
     //                      = -0.0024
     // Last Funding Time    = 1000 + 60 + 60 + 1200 = 2320
-    assertMarketFundingRate(wethMarketIndex, -0.0024 * 1e18, 2320, -0.0024 * 1e18, -0.0024 * 1e18, "T4: ");
+    assertMarketFundingRate(wethMarketIndex, -0.0024 * 1e18, 2320, "T4: ");
 
     // Funding fee          = (current rate - entry rate) * position size
     //                      = (-0.0024 - 0) * 1_500_000
@@ -409,14 +393,7 @@ contract TC24 is BaseIntTest_WithActions {
     // Last Funding Time    = 2320 + (60 + 60 + 60) = 2500
     // Last Long Funding Rate = -0.002879999999999880
     // Last Short Funding Rate = 0
-    assertMarketFundingRate(
-      wethMarketIndex,
-      -0.002879999999999880 * 1e18,
-      2500,
-      -0.002879999999999880 * 1e18,
-      -0.002879999999999880 * 1e18,
-      "T7: "
-    );
+    assertMarketFundingRate(wethMarketIndex, -0.002879999999999880 * 1e18, 2500, "T7: ");
 
     // Funding fee Reserve
     // must still be 0 according to T6 that called withdraw surplus
@@ -454,14 +431,7 @@ contract TC24 is BaseIntTest_WithActions {
     // Last Funding Time    = 2500 + 60 = 2560
     // Last Long Funding Rate = -0.00302399999999988
     // Last Short Funding Rate = -0.00302399999999988
-    assertMarketFundingRate(
-      wethMarketIndex,
-      -0.00302399999999988 * 1e18,
-      2560,
-      -0.00302399999999988 * 1e18,
-      -0.00302399999999988 * 1e18,
-      "T8: "
-    );
+    assertMarketFundingRate(wethMarketIndex, -0.00302399999999988 * 1e18, 2560, "T8: ");
 
     // And accum funding fee
     // accumFundingLong  = old value + new value
@@ -503,14 +473,7 @@ contract TC24 is BaseIntTest_WithActions {
     // Last Funding Time    = 2560 + 60 = 2620
     // Last Long Funding Rate = -0.00317599999999986
     // Last Short Funding Rate = -0.00317599999999986
-    assertMarketFundingRate(
-      wethMarketIndex,
-      -0.00317599999999986 * 1e18,
-      2620,
-      -0.00317599999999986 * 1e18,
-      -0.00317599999999986 * 1e18,
-      "T9: "
-    );
+    assertMarketFundingRate(wethMarketIndex, -0.00317599999999986 * 1e18, 2620, "T9: ");
 
     // And accum funding fee
     // accumFundingLong  = old value + new value
@@ -543,14 +506,7 @@ contract TC24 is BaseIntTest_WithActions {
     //                      = -0.000168
     // Accum Funding Rate   = old + new = -0.00317599999999986 + -0.000168 = -0.00334399999999986
     // Last Funding Time    = 2620 + 60 = 2680
-    assertMarketFundingRate(
-      wethMarketIndex,
-      -0.00334399999999986 * 1e18,
-      2680,
-      -0.00334399999999986 * 1e18,
-      -0.00334399999999986 * 1e18,
-      "T10: "
-    );
+    assertMarketFundingRate(wethMarketIndex, -0.00334399999999986 * 1e18, 2680, "T10: ");
 
     // Funding fee Reserve
     // must still be as same as T9
@@ -571,5 +527,69 @@ contract TC24 is BaseIntTest_WithActions {
     // entryFundingRate     = currentFundingRate
     //                      = -0.00334399999999986
     assertEntryFundingRate(getSubAccount(CAROL, 0), wethMarketIndex, -0.00334399999999986 * 1e18, "T10: ");
+  }
+
+  function _T11Assert() internal {
+    // When CAROL Close Short Position
+    // Market's Funding rate
+    // new Funding rate     = -(3600 * (Skew ratio * Max funding rate))
+    //                      = -((3600 / 1) * ((2_100_000 - 300_000) / 300_000_000 * 0.0004))
+    //                      = -0.00864
+    // Accum Funding Rate   = old + new = -0.00334399999999986 + -0.00864 = -0.01198399999999986
+    // Last Funding Time    = 2680 + (3600) = 6280
+    assertMarketFundingRate(wethMarketIndex, -0.01198399999999986 * 1e18, 6280, "T11: ");
+
+    // Funding fee Reserve must no remaining tokens
+    assertFundingFeeReserve(address(wbtc), 0, "T11: ");
+    assertFundingFeeReserve(address(usdc), 0, "T11: ");
+
+    // And accum funding fee
+    // accumFundingLong  = old + (Long position size * (current funding rate - last long funding rate))
+    //                   = -671.999999999958 + (2_100_000 * (-0.01198399999999986 - (-0.00334399999999986))) =
+    //                   = -18815.999999999958
+    // accumFundingShort = old + (Short position size * (current funding rate - last short funding rate))
+    //                   = 0 + (300_000 * (-0.01198399999999986 - (-0.00334399999999986)))
+    //                   = -2592
+    // CAROL close position and get funding fee
+    //                   = -2592 + 2592 = 0
+    assertMarketAccumFundingFee(wethMarketIndex, 18815.999999999958 * 1e30, 0, "T10: ");
+
+    // And PLP borrowing debt will be increased
+    // PLP borrowing debt = 2592 - (WBTC on funding fee reserve)
+    //                    = 2592 - (0.05944 * 20_000)
+    //                    = 1403.2
+    // Borrowing amount   = 2593 - 1189.8 = 1403.2
+    assertPLPDebt(1403.2 * 1e30, "T11: ");
+  }
+
+  function _T12Assert() internal {
+    // When ALICE Close Long Position
+    // Market's Funding rate
+    // new Funding rate     = -(60 * (Skew ratio * Max funding rate))
+    //                      = -((60 / 1) * ((2_100_000) / 300_000_000 * 0.0004))
+    //                      = -0.000168
+    // Accum Funding Rate   = old + new = -0.01198399999999986 + -0.000168 = -0.01215199999999986
+    // Last Funding Time    = 6280 + 60 = 6340
+    assertMarketFundingRate(wethMarketIndex, -0.01215199999999986 * 1e18, 6340, "T12: ");
+
+    // And accum funding fee
+    // accumFundingLong  = -18815.999999999958 + (Long position size * (current funding rate - last long funding rate))
+    //                   = -18815.999999999958  + (2_100_000 * (-0.01215199999999986 - (-0.01198399999999986)))
+    //                   = -19168.799999999958
+    // accumFundingShort = old + (Short position size * (current funding rate - last short funding rate))
+    //                   = 0 + (0 * (-0.01215199999999986 - (-0.01198399999999986)))
+    //                   = 0
+    // ALICE close position and get paid for funding fee
+    //                   = -19168.799999999958 + 19168.799999999958 = 0
+    assertMarketAccumFundingFee(wethMarketIndex, 0, 0, "T12: ");
+
+    // And Funding fee Reserve must be increased
+    // WBTC amount       = (funding fee value - PLP Debt) / BTC Price
+    //                   = (19168.79999999996 - 1403.2) / 20_000
+    //                   = 0.888279999999998
+    assertFundingFeeReserve(address(wbtc), 0.88827999 * 1e8, "T11: ");
+
+    // And PLP borrowing debt will be zero after Alice repay debt
+    assertPLPDebt(0, "T11: ");
   }
 }

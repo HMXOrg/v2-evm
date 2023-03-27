@@ -15,8 +15,6 @@ import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService {
   uint32 internal constant BPS = 1e4;
@@ -140,7 +138,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     int256 _sizeDelta,
     uint256 _limitPriceE30
   ) external nonReentrant onlyWhitelistedExecutor {
-    console2.log("------------------------------- increasePosition()");
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     Calculator _calculator = calculator;
@@ -536,7 +533,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     uint256 _globalMarketIndex,
     DecreasePositionVars memory _vars
   ) internal returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
-    console2.log("------------------------------- _decreasePosition()");
     // Update borrowing rate
     TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 

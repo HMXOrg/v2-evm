@@ -344,28 +344,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "marketConfigs",
       args: [3],
     },
-    // Global Asset Class
-    {
-      interface: PerpStorage__factory.abi,
-      target: config.storages.perp,
-      function: "getGlobalAssetClassByIndex",
-      args: [0],
-    },
-    {
-      interface: PerpStorage__factory.abi,
-      target: config.storages.perp,
-      function: "getGlobalAssetClassByIndex",
-      args: [1],
-    },
-    {
-      interface: PerpStorage__factory.abi,
-      target: config.storages.perp,
-      function: "getGlobalAssetClassByIndex",
-      args: [2],
-    },
   ];
   const [
-    blockNumber,
+    ,
     [
       traderBalancesUsdc,
       traderBalancesUsdt,
@@ -411,11 +392,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       btcusdMarketConfig,
       applusdMarketConfig,
       jpyusdMarketConfig,
-      cryptoGlobalAssetClass,
-      equityGlobalAssetClass,
-      forexGlobalAssetClass,
     ],
   ] = await multi.multiCall(inputs);
+
+  const inputs2 = [
+    // Global Asset Class
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "getGlobalAssetClassByIndex",
+      args: [0],
+    },
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "getGlobalAssetClassByIndex",
+      args: [1],
+    },
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "getGlobalAssetClassByIndex",
+      args: [2],
+    },
+  ];
+  const [, [cryptoGlobalAssetClass, equityGlobalAssetClass, forexGlobalAssetClass]] = await multi.multiCall(inputs2);
 
   const adaptivePriceInputs = [
     {

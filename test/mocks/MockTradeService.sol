@@ -24,6 +24,7 @@ contract MockTradeService is ITradeService {
 
   address public configStorage;
   address public perpStorage;
+  address public vaultStorage;
 
   uint256 public increasePositionCallCount;
   uint256 public decreasePositionCallCount;
@@ -36,6 +37,10 @@ contract MockTradeService is ITradeService {
 
   function setPerpStorage(address _address) external {
     perpStorage = _address;
+  }
+
+  function setVaultStorage(address _address) external {
+    vaultStorage = _address;
   }
 
   function increasePosition(

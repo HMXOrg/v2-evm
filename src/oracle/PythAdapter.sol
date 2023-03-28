@@ -19,8 +19,8 @@ contract PythAdapter is Owned, IPythAdapter {
   mapping(bytes32 => IPythAdapter.PythPriceConfig) public configs;
 
   // events
-  event SetConfig(bytes32 indexed _assetId, bytes32 _pythPriceId, bool _inverse);
-  event SetPyth(address _oldPyth, address _newPyth);
+  event LogSetConfig(bytes32 indexed _assetId, bytes32 _pythPriceId, bool _inverse);
+  event LogSetPyth(address _oldPyth, address _newPyth);
 
   constructor(address _pyth) {
     pyth = ILeanPyth(_pyth);
@@ -37,7 +37,7 @@ contract PythAdapter is Owned, IPythAdapter {
 
     _config.pythPriceId = _pythPriceId;
     _config.inverse = _inverse;
-    emit SetConfig(_assetId, _pythPriceId, _inverse);
+    emit LogSetConfig(_assetId, _pythPriceId, _inverse);
 
     configs[_assetId] = _config;
   }
@@ -115,5 +115,19 @@ contract PythAdapter is Owned, IPythAdapter {
     _validateConfidence(_price, _confidenceThreshold);
 
     return (_convertToUint256(_price, _isMax, 30, _config.inverse), _price.expo, _price.publishTime);
+  }
+
+  /**
+   * Setter
+   */
+  /// @notice Set new Pyth contract address.
+  /// @param _newPyth New Pyth contract address.
+  function setPyth(address _newPyth) external onlyOwner {
+    pyth = ILeanPyth(_newPyth);
+
+    emit LogSetPyth(address(pyth), _newPyth);
+
+    // Sanity check
+    ILeanPyth(_newPyth).getUpdateFee(new bytes[](0));
   }
 }

@@ -6,23 +6,29 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { Owned } from "@hmx/base/Owned.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
-contract TradeHelper is ITradeHelper {
+contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
 
+  /**
+   * Events
+   */
   event LogSettleTradingFeeValue(address subAccount, uint256 feeUsd);
   event LogSettleTradingFeeAmount(address subAccount, address token, uint256 devFeeAmount, uint256 protocolFeeAmount);
-
   event LogSettleBorrowingFeeValue(address subAccount, uint256 feeUsd);
   event LogSettleBorrowingFeeAmount(address subAccount, address token, uint256 devFeeAmount, uint256 plpFeeAmount);
-
   event LogSettleFundingFeeValue(address subAccount, int256 feeUsd);
   event LogSettleFundingFeeAmountWhenTraderPays(address subAccount, address token, uint256 amount);
   event LogSettleFundingFeeAmountWhenTraderReceives(address subAccount, address token, uint256 amount);
+  event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
+  event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
+  event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
 
   address public perpStorage;
   address public vaultStorage;
@@ -31,9 +37,9 @@ contract TradeHelper is ITradeHelper {
 
   constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
     // Sanity check
-    // PerpStorage(_perpStorage).getGlobalState();
-    // VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
-    // ConfigStorage(_configStorage).getLiquidityConfig();
+    ConfigStorage(_configStorage).calculator();
+    VaultStorage(_vaultStorage).devFees(address(0));
+    PerpStorage(_perpStorage).getGlobalState();
 
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
@@ -586,5 +592,43 @@ contract TradeHelper is ITradeHelper {
   function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
+  }
+
+  /**
+   * Setter
+   */
+  /// @notice Set new ConfigStorage contract address.
+  /// @param _configStorage New ConfigStorage contract address.
+  function setConfigStorage(address _configStorage) external nonReentrant onlyOwner {
+    if (_configStorage == address(0)) revert ITradeHelper_InvalidAddress();
+    emit LogSetConfigStorage(configStorage, _configStorage);
+    configStorage = _configStorage;
+
+    // Sanity check
+    ConfigStorage(_configStorage).calculator();
+  }
+
+  /// @notice Set new VaultStorage contract address.
+  /// @param _vaultStorage New VaultStorage contract address.
+  function setVaultStorage(address _vaultStorage) external nonReentrant onlyOwner {
+    if (_vaultStorage == address(0)) revert ITradeHelper_InvalidAddress();
+
+    emit LogSetVaultStorage(vaultStorage, _vaultStorage);
+    vaultStorage = _vaultStorage;
+
+    // Sanity check
+    VaultStorage(_vaultStorage).devFees(address(0));
+  }
+
+  /// @notice Set new PerpStorage contract address.
+  /// @param _perpStorage New PerpStorage contract address.
+  function setPerpStorage(address _perpStorage) external nonReentrant onlyOwner {
+    if (_perpStorage == address(0)) revert ITradeHelper_InvalidAddress();
+
+    emit LogSetPerpStorage(perpStorage, _perpStorage);
+    perpStorage = _perpStorage;
+
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
   }
 }

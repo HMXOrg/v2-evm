@@ -116,6 +116,7 @@ contract TC06 is BaseIntTest_WithActions {
       // Check states After WETH market price move from 1500 USD to 1550 USD
       // Alice's Equity must be lower IMR level
       // Equity = 2489, IMR = 2800.0098123438183
+
       assertTrue(
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) < calculator.getIMR(SUB_ACCOUNT),
         "ALICE's Equity < ALICE's IMR?"

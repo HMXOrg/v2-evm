@@ -246,12 +246,12 @@ contract TC02 is BaseIntTest_WithActions {
       // Max Funding rate     = 0.04%
       // Max scale skew       = 300,000,000 USD
       // Market skew          = 300
-      // new Market skew      = 300 + -(150) = 150
+      // new Market skew      = 300 + -(300) = 0
       // Premium before       = 300 / 300000000 = 0.000001
-      // Premium after        = 150 / 300000000 = 0.0000005
-      // Premium median       = (0.000001 + 0.0000005) / 2 = 0.00000075
-      // Adaptive price       = 1575 * (1 + 0.00000075)
-      //                      = 1575.00118125
+      // Premium after        = 0 / 300000000 = 0.0000000
+      // Premium median       = (0.000001 + 0.0000000) / 2 = 0.0000005
+      // Adaptive price       = 1575 * (1 + 0.0000005) = 1575.0007875
+      //                      = 1575.0007875
 
       // Market's Funding rate
       // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
@@ -272,13 +272,14 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Before:
       //    Position size     = 300
+      //    Avg price         = 1500.00075 USD
       //    Reserve           = 27 USD
       //    Borrowing rate    = 0
       //    Finding rate      = 0
 
       // After:
       //    Position size     = 300 - 150 = 150
-      //    Avg price         = 1500.00075 USD (not change for decrease)
+      //    Avg price         = 1500.000375 USD
       //    IMR               = 150 * IMF = 1.5 USD
       //    MMR               = 150 * MMF = 0.75 USD
       //    Reserve           = IMR * Max profit
@@ -294,17 +295,28 @@ contract TC02 is BaseIntTest_WithActions {
       //                      = -0.0000036 USD
 
       // Profit and Loss
-      // note: long position: size delta * (adaptive price - avg price) / avg price
-      //       short position: size delta * (avg price - adaptive price) / avg price
-      // unrealized PnL = 150 * (1575.00118125 - 1500.00075) / 1500.00075 = 7.500039374980312509843745078127
+      // note: long position: position size * (adaptive price - avg price) / avg price
+      //       short position: position size * (avg price - adaptive price) / avg price
+      // to realized PnL - pnl * (size delta / position size)
+      // pnl             = 300 * (1575.0007875 - 1500.00075) / 1500.00075 = 15 USD
+      // to realized PnL = 15 * (150 / 300) = 7.5 USD
+      // Then unrealzlied PnL = 15 - 7.5 = 7.5 USD
+
+      // new average price = (new close price * remaining size) / (remaining size + unrealized pnl)
+      // premium after decrease = 300 - 150 = 150 / 300000000 = 0.0000005
+      // premium after close    = 300 - 300 = 0 / 300000000 = 0
+      // premium                = (0.0000005 + 0) / 2 = 0.00000025
+      // price with premium     = 1575 * (1 + 0.00000025) = 1575.00039375
+      // new average price      = (1575.00039375 * 150) / (150 + 7.5)
+      //                        = 1500.000375 USD
 
       assertPositionInfoOf({
         _subAccount: _aliceSubAccount0,
         _marketIndex: wethMarketIndex,
         _positionSize: int256(150 * 1e30),
-        _avgPrice: 1500.00075 * 1e30,
+        _avgPrice: 1500.000375 * 1e30,
         _reserveValue: 13.5 * 1e30,
-        _realizedPnl: 7.500039374980312509843745078127 * 1e30,
+        _realizedPnl: 7.5 * 1e30,
         _entryBorrowingRate: 0.000008124373119358 * 1e18,
         _entryFundingRate: -0.000000024 * 1e18,
         _str: "T6: "
@@ -333,7 +345,7 @@ contract TC02 is BaseIntTest_WithActions {
 
       // And Alice has to received
       //    Funding fee   - 0.0000036 USD
-      //    Profit        - 7.500039374980312509843745078127 USD
+      //    Profit        - 7.5 USD
 
       // Then Alice pay fee by Collateral
       //    BTC, (price: 20,000 USD)
@@ -344,7 +356,7 @@ contract TC02 is BaseIntTest_WithActions {
       // When PLP pay Alice by Liquidity
       //    BTC, (price: 20,000 USD)
       //      Funding fee     = 0.0000036 / 20000             = 0.00000000 (018) btc !too small
-      //      Trader's profit = 7.500039374980312509843745078127 / 20000
+      //      Trader's profit = 7.5 / 20000
       //                      = 0.000375 btc
 
       // In Summarize, Alice's collateral balances
@@ -397,16 +409,16 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Average Price Calculation
       //  Long:
-      //    Market's Avg price = 1500.00075, Current price = 1575.00118125
-      //    Market's PnL  = (300 * (1575.00118125 - 1500.00075)) / 1500.00075
-      //                  = 15.000078749960625019687490156254
-      //    Actual PnL    = Market's PnL - Realized PnL = 15.000078749960625019687490156254 - 7.500039374980312509843745078127
-      //                  = 7.500039374980312509843745078127
+      //    Market's Avg price = 1500.00075, Current price = 1575.0007875
+      //    Market's PnL  = (300 * (1575.0007875 - 1500.00075)) / 1500.00075
+      //                  = 15
+      //    Actual PnL    = Market's PnL - Realized PnL = 15 - 7.5
+      //                  = 7.5
       //    Avg Price     = Current Price * New Position size / New Position size + Actual PnL
-      //                  = (1575.00118125 * 150) / (150 + 7.500039374980312509843745078127)
-      //                  = 1500.000750000000000000000000000004
+      //                  = (1575.0007875 * 150) / (150 + 7.5)
+      //                  = 1500.00075
 
-      assertMarketLongPosition(wethMarketIndex, 150 * 1e30, 1500.000750000000000000000000000004 * 1e30, "T6: ");
+      assertMarketLongPosition(wethMarketIndex, 150 * 1e30, 1500.00075 * 1e30, "T6: ");
       assertMarketShortPosition(wethMarketIndex, 0, 0, "T6: ");
 
       // Assert Asset class

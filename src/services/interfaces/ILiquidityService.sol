@@ -18,18 +18,6 @@ interface ILiquidityService {
   error LiquidityService_InsufficientPLPReserved();
 
   /**
-   * Struct
-   */
-  struct CollectFeeRequest {
-    address _token;
-    address _account;
-    uint256 _tokenPriceUsd;
-    uint256 _amount;
-    uint32 _feeBPS;
-    LiquidityAction _action;
-  }
-
-  /**
    * Enum
    */
   enum LiquidityAction {

@@ -125,7 +125,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
 
       _vars.globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.position.marketIndex);
 
-      (uint256 _priceE30, , , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (uint256 _adaptivePrice, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _vars.marketConfig.assetId,
         _isLong,
         (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
@@ -141,7 +141,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
           (bool _isProfit, uint256 _delta) = calculator.getDelta(
             absPositionSize,
             _vars.position.positionSizeE30 > 0,
-            _priceE30,
+            _adaptivePrice,
             _vars.position.avgEntryPriceE30,
             _vars.position.lastIncreaseTimestamp
           );
@@ -152,13 +152,13 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
           uint256 _nextAvgPrice = _isLong
             ? calculator.calculateLongAveragePrice(
               _vars.globalMarket,
-              _priceE30,
+              _adaptivePrice,
               -int256(_vars.position.positionSizeE30),
               _realizedPnl
             )
             : calculator.calculateShortAveragePrice(
               _vars.globalMarket,
-              _priceE30,
+              _adaptivePrice,
               int256(_vars.position.positionSizeE30),
               _realizedPnl
             );

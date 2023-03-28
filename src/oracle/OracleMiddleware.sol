@@ -295,7 +295,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _price,
     uint256 _maxSkewScaleUSD
-  ) internal view returns (uint256 _adaptivePrice) {
+  ) internal pure returns (uint256 _adaptivePrice) {
     // couldn't calculate adaptive price because max skew scale config is used to calcualte premium with market skew
     // then just return oracle price
     if (_maxSkewScaleUSD == 0) return _price;

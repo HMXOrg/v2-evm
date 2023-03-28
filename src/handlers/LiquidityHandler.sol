@@ -35,7 +35,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogCreateAddLiquidityOrder(
     address indexed account,
-    uint256 indexed orderIndex,
+    uint256 indexed orderId,
     address indexed token,
     uint256 amountIn,
     uint256 minOut,
@@ -70,7 +70,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
   event LogRefund(
     address indexed account,
-    uint256 indexed orderIndex,
+    uint256 indexed orderId,
     address indexed token,
     uint256 amount,
     bool isNativeOut
@@ -225,9 +225,9 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   }
 
   /// @notice Cancel order
-  /// @param _orderIndex orderIndex of user order
-  function cancelLiquidityOrder(uint256 _orderIndex) external nonReentrant {
-    _cancelLiquidityOrder(msg.sender, _orderIndex);
+  /// @param _orderId orderIndex of user order
+  function cancelLiquidityOrder(uint256 _orderId) external nonReentrant {
+    _cancelLiquidityOrder(msg.sender, _orderId);
   }
 
   /// @notice Cancel order

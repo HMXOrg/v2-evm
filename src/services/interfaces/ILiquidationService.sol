@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 interface ILiquidationService {
   error ILiquidationService_AccountHealthy();
+  error ILiquidationService_InvalidAddress();
 
   function reloadConfig() external;
 

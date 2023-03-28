@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { console } from "forge-std/console.sol";
-
 import { CrossMarginHandler_Base, MockErc20 } from "./CrossMarginHandler_Base.t.sol";
 
 // What is this test DONE

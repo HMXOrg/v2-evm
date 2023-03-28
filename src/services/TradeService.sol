@@ -9,13 +9,14 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
 // interfaces
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
 // @todo - refactor, deduplicate code
-contract TradeService is ReentrancyGuard, ITradeService {
+contract TradeService is ReentrancyGuard, ITradeService, Owned {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant RATE_PRECISION = 1e18;
 
@@ -76,7 +77,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
    */
   // @todo - modify event parameters
   event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
-
   event LogForceClosePosition(
     address indexed _account,
     uint8 _subAccountId,
@@ -86,7 +86,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
     bool isProfit,
     uint256 _delta
   );
-
   event LogDeleverage(
     address indexed _account,
     uint8 _subAccountId,
@@ -94,6 +93,11 @@ contract TradeService is ReentrancyGuard, ITradeService {
     address _tpToken,
     uint256 _closedPositionSize
   );
+  event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
+  event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
+  event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
+  event LogSetCalculator(address indexed oldCalculator, address newCalculator);
+  event LogSetTradeHelper(address indexed oldTradeHelper, address newTradeHelper);
 
   /**
    * States
@@ -996,5 +1000,67 @@ contract TradeService is ReentrancyGuard, ITradeService {
    */
   function abs(int256 x) private pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
+  }
+
+  /**
+   * Setter
+   */
+  /// @notice Set new ConfigStorage contract address.
+  /// @param _configStorage New ConfigStorage contract address.
+  function setConfigStorage(address _configStorage) external nonReentrant onlyOwner {
+    if (_configStorage == address(0)) revert ITradeService_InvalidAddress();
+    emit LogSetConfigStorage(configStorage, _configStorage);
+    configStorage = _configStorage;
+
+    // Sanity check
+    ConfigStorage(_configStorage).calculator();
+  }
+
+  /// @notice Set new VaultStorage contract address.
+  /// @param _vaultStorage New VaultStorage contract address.
+  function setVaultStorage(address _vaultStorage) external nonReentrant onlyOwner {
+    if (_vaultStorage == address(0)) revert ITradeService_InvalidAddress();
+
+    emit LogSetVaultStorage(vaultStorage, _vaultStorage);
+    vaultStorage = _vaultStorage;
+
+    // Sanity check
+    VaultStorage(_vaultStorage).devFees(address(0));
+  }
+
+  /// @notice Set new PerpStorage contract address.
+  /// @param _perpStorage New PerpStorage contract address.
+  function setPerpStorage(address _perpStorage) external nonReentrant onlyOwner {
+    if (_perpStorage == address(0)) revert ITradeService_InvalidAddress();
+
+    emit LogSetPerpStorage(perpStorage, _perpStorage);
+    perpStorage = _perpStorage;
+
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
+  }
+
+  /// @notice Set new Calculator contract address.
+  /// @param _calculator New Calculator contract address.
+  function setCalculator(address _calculator) external nonReentrant onlyOwner {
+    if (_calculator == address(0)) revert ITradeService_InvalidAddress();
+
+    emit LogSetCalculator(address(calculator), _calculator);
+    calculator = Calculator(_calculator);
+
+    // Sanity check
+    Calculator(_calculator).oracle();
+  }
+
+  /// @notice Set new TradeHelper contract address.
+  /// @param _tradeHelper New TradeHelper contract address.
+  function setTradeHelper(address _tradeHelper) external nonReentrant onlyOwner {
+    if (_tradeHelper == address(0)) revert ITradeService_InvalidAddress();
+
+    emit LogSetTradeHelper(tradeHelper, _tradeHelper);
+    tradeHelper = _tradeHelper;
+
+    // Sanity check
+    TradeHelper(_tradeHelper).perpStorage();
   }
 }

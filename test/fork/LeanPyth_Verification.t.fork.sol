@@ -11,9 +11,6 @@ import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { console } from "forge-std/console.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 
-// Command:
-// forge test --fork-url https://aged-white-wind.arbitrum-mainnet.quiknode.pro/74ec5b20e4a4db94467209283c9b2ebcf9e1f95d/ --block-number 74124019 --match-contract LeanPyth_Verification
-
 contract LeanPyth_Verification is TestBase, StdAssertions, StdCheatsSafe {
   using stdJson for string;
   LeanPyth leanPyth;

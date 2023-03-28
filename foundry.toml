@@ -12,4 +12,4 @@ line_length = 80
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
 [rpc_endpoints]
-arbitrum_fork = "https://aged-white-wind.arbitrum-mainnet.quiknode.pro/74ec5b20e4a4db94467209283c9b2ebcf9e1f95d"
+arbitrum_fork = "https://rpc.ankr.com/arbitrum"

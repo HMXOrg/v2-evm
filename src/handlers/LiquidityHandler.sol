@@ -120,7 +120,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldWrap
-  ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _latestOrderIndex) {
+  ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
 
     //1. convert native to WNative (including executionFee)
@@ -137,7 +137,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
-    uint256 _orderId = liquidityOrders.length;
+    _orderId = liquidityOrders.length;
     liquidityOrders.push(
       LiquidityOrder({
         account: payable(msg.sender),
@@ -167,7 +167,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _isNativeOut
-  ) external payable nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _latestOrderIndex) {
+  ) external payable nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _orderId) {
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
 
     //convert native to WNative (including executionFee)

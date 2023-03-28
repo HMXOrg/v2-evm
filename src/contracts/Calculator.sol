@@ -536,6 +536,7 @@ contract Calculator is Owned, ICalculator {
         } else {
           _unrealizedPnlE30 -= int256(_var.delta);
         }
+        console2.log("_unrealizedPnlE30", _var.delta);
       }
 
       {
@@ -551,6 +552,7 @@ contract Calculator is Owned, ICalculator {
             _var.position.entryBorrowingRate;
           // Calculate the borrowing fee based on reserved value, borrowing rate.
           _unrealizedFeeE30 += int256((_var.position.reserveValueE30 * _borrowingRate) / 1e18);
+          console2.log("borrowing", (_var.position.reserveValueE30 * _borrowingRate) / 1e18);
           // getBorrowingFee(_marketConfig.assetClass, _var.position.reserveValueE30, _var.position.entryBorrowingRate)
         }
         {
@@ -558,6 +560,10 @@ contract Calculator is Owned, ICalculator {
           int256 nextFundingRate = _getNextFundingRate(_var.position.marketIndex);
           int256 fundingRate = _globalMarket.currentFundingRate + nextFundingRate;
           _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
+          console2.log(
+            "funding",
+            _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate)
+          );
         }
         // Calculate trading fee
         _unrealizedFeeE30 += int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
@@ -980,7 +986,22 @@ contract Calculator is Owned, ICalculator {
     uint256 intervals = (block.timestamp - _assetClassState.lastBorrowingTime) / _tradingConfig.fundingInterval;
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
+    console2.log("baseBorrowingRate", _assetClassConfig.baseBorrowingRate);
+    console2.log("reserveValueE30", _assetClassState.reserveValueE30);
+    console2.log("_plpTVL", _plpTVL);
+    console2.log(
+      "rate",
+      (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL
+    );
     return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL;
+  }
+
+  function getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) external pure returns (uint256 tradingFee) {
+    return _getTradingFee(_size, _baseFeeRateBPS);
+  }
+
+  function _getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) internal pure returns (uint256 tradingFee) {
+    return (_size * _baseFeeRateBPS) / BPS;
   }
 
   function getDelta(

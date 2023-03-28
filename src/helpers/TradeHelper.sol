@@ -11,6 +11,7 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract TradeHelper is ITradeHelper {
   uint32 internal constant BPS = 1e4;
@@ -211,121 +212,22 @@ contract TradeHelper is ITradeHelper {
       _accumSettledBorrowingFee(_assetClassIndex, _vars.borrowingFeeToBePaid);
     }
 
-    // In case trader must receive funding fee, process it first and separately from other fees
-    if (!_vars.traderMustPay) {
-      // We are now trying our best to cover
-      // - _vars.absFundingFeeToBePaid (when trader must receive)
-      //
-      // If one collateral cannot cover, try the next one and so on.
-      // If all of the collaterals still cannot cover, revert.
-      for (uint256 i; i < _vars.collateralTokensLength; ) {
-        bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
-        _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
-        (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
-        _settleFundingFeeWhenTraderMustReceive(_vars, _vars.collateralTokens[i]);
-
-        // stop iteration, if all fees are covered
-        if (_vars.absFundingFeeToBePaid == 0) break;
-
-        unchecked {
-          ++i;
-        }
-      }
-
-      if (_vars.absFundingFeeToBePaid > 0) {
-        // This could occur when funding fee does not have enough liquidity to pay funding fee to trader
-        // If fee cannot be covered, borrow from PLP and book as PLP Debts
-        for (uint256 i; i < _vars.collateralTokensLength; ) {
-          bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
-          _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
-          (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
-          _settleFundingFeeWhenBorrowingFromPLP(_vars, _vars.collateralTokens[i]);
-          unchecked {
-            ++i;
-          }
-        }
-      }
-
-      if (_vars.absFundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
-    }
-
-    // We are now trying our best to cover
-    // - _vars.tradingFeeToBePaid
-    // - _vars.borrowingFeeToBePaid
-    // - _vars.absFundingFeeToBePaid (when trader must pay)
-    //
-    // If one collateral cannot cover, try the next one and so on.
-    // If all of the collaterals still cannot cover, revert.
-    for (uint256 i; i < _vars.collateralTokensLength; ) {
-      bytes32 _tokenAssetId = _vars.configStorage.tokenAssetIds(_vars.collateralTokens[i]);
-      _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
-      (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_tokenAssetId, false);
-
-      // Funding fee
-      if (_vars.absFundingFeeToBePaid > 0) {
-        // If there's borrowing debts from PLP, then trader must repays to PLP first
-        _vars.plpLiquidityDebtUSDE30 = _vars.vaultStorage.plpLiquidityDebtUSDE30();
-        if (_vars.plpLiquidityDebtUSDE30 > 0) {
-          _repayBorrowDebtFromTraderToPlp(_vars, _vars.collateralTokens[i]);
-        }
-
-        // If no borrowing debts from PLP
-        // or
-        // If trader still must pays for funding fee reserve after repay borrowing debts
-        if (_vars.absFundingFeeToBePaid > 0) {
-          _settleFundingFeeWhenTraderMustPay(_vars, _vars.collateralTokens[i]);
-        }
-
-        // still cannot cover all, move to next iteration
-        if (_vars.absFundingFeeToBePaid > 0) {
-          unchecked {
-            ++i;
-          }
-          continue;
-        }
-      }
-
-      // Trading fee
-      if (_vars.tradingFeeToBePaid > 0) {
-        _settleTradingFee(_vars, _vars.collateralTokens[i]);
-
-        // still cannot cover all, move to next iteration
-        if (_vars.tradingFeeToBePaid > 0) {
-          unchecked {
-            ++i;
-          }
-          continue;
-        }
-      }
-
-      // Borrowing fee
-      if (_vars.borrowingFeeToBePaid > 0) {
-        _settleBorrowingFee(_vars, _vars.collateralTokens[i]);
-
-        // still cannot cover all, move to next iteration
-        if (_vars.borrowingFeeToBePaid > 0) {
-          unchecked {
-            ++i;
-          }
-          continue;
-        }
-      }
-
-      // _vars.borrowingFeeToBePaid  is the last fee to be covered
-      // simply check _vars.borrowingFeeToBePaid  == 0
-      // stop iteration, if all fees are covered
-      if (_vars.borrowingFeeToBePaid == 0) break;
-
-      unchecked {
-        ++i;
-      }
-    }
+    increaseCollateral(_vars.subAccount, 0, _vars.fundingFeeToBePaid);
+    decreaseCollateral(
+      _vars.subAccount,
+      0,
+      _vars.fundingFeeToBePaid,
+      _vars.borrowingFeeToBePaid,
+      _vars.tradingFeeToBePaid,
+      0,
+      address(0)
+    );
 
     // If fee cannot be covered, revert.
     // This shouldn't be happen unless the platform is suffering from bad debt
-    if (_vars.tradingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
-    if (_vars.borrowingFeeToBePaid > 0) revert ITradeHelper_BorrowingFeeCannotBeCovered();
-    if (_vars.absFundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
+    // if (_vars.tradingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
+    // if (_vars.borrowingFeeToBePaid > 0) revert ITradeHelper_BorrowingFeeCannotBeCovered();
+    // if (_vars.absFundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
   }
 
   function _settleFundingFeeWhenTraderMustPay(
@@ -550,12 +452,315 @@ contract TradeHelper is ITradeHelper {
     _perpStorage.updateGlobalAssetClass(uint8(_assetClassIndex), _globalAssetClass);
   }
 
+  struct IncreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    uint256 unrealizedPnlToBeReceive;
+    uint256 fundingFeeToBeReceive;
+    uint256 payerBalance;
+    // uint256 valueE30;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  function increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) public {
+    IncreaseCollateralVars memory _vars;
+
+    _vars.vaultStorage = VaultStorage(vaultStorage);
+    _vars.configStorage = ConfigStorage(configStorage);
+    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
+
+    _vars.subAccount = _subAccount;
+
+    bytes32[] memory _plpAssetIds = _vars.configStorage.getPlpAssetIds();
+    uint256 _len = _plpAssetIds.length;
+    if (_unrealizedPnl > 0) _vars.unrealizedPnlToBeReceive = uint256(_unrealizedPnl);
+    if (_fundingFee < 0) _vars.fundingFeeToBeReceive = uint256(-_fundingFee);
+    for (uint256 i = 0; i < _len; ) {
+      ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfig(_plpAssetIds[i]);
+      _vars.tokenDecimal = _assetConfig.decimals;
+      _vars.token = _assetConfig.tokenAddress;
+      (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
+
+      {
+        _vars.payerBalance = _vars.vaultStorage.plpLiquidity(_assetConfig.tokenAddress);
+        if (_vars.payerBalance > 0 && _vars.unrealizedPnlToBeReceive > 0) {
+          _increaseCollateralWithUnrealizedPnlFromPlp(_vars);
+        }
+      }
+
+      {
+        _vars.payerBalance = _vars.vaultStorage.fundingFeeReserve(_assetConfig.tokenAddress);
+        if (_vars.payerBalance > 0 && _vars.fundingFeeToBeReceive > 0) {
+          _increaseCollateralWithFundingFeeFromFeeReserve(_vars);
+        }
+      }
+
+      {
+        _vars.payerBalance = _vars.vaultStorage.plpLiquidity(_assetConfig.tokenAddress);
+        if (_vars.payerBalance > 0 && _vars.fundingFeeToBeReceive > 0) {
+          _increaseCollateralWithFundingFeeFromPlp(_vars);
+        }
+      }
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _increaseCollateralWithUnrealizedPnlFromPlp(IncreaseCollateralVars memory _vars) internal {
+    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+      _vars.payerBalance,
+      _vars.unrealizedPnlToBeReceive,
+      _vars.tokenPrice,
+      _vars.tokenDecimal
+    );
+    console2.log("+_pnl", _repayAmount);
+    _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, 0);
+
+    _vars.unrealizedPnlToBeReceive -= _repayValue;
+  }
+
+  function _increaseCollateralWithFundingFeeFromFeeReserve(IncreaseCollateralVars memory _vars) internal {
+    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+      _vars.payerBalance,
+      _vars.fundingFeeToBeReceive,
+      _vars.tokenPrice,
+      _vars.tokenDecimal
+    );
+    console2.log("+_fundingfee_1", _repayAmount);
+    _vars.vaultStorage.payFundingFeeFromFundingFeeReserveToTrader(_vars.subAccount, _vars.token, _repayAmount);
+
+    _vars.fundingFeeToBeReceive -= _repayValue;
+  }
+
+  function _increaseCollateralWithFundingFeeFromPlp(IncreaseCollateralVars memory _vars) internal {
+    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+      _vars.payerBalance,
+      _vars.fundingFeeToBeReceive,
+      _vars.tokenPrice,
+      _vars.tokenDecimal
+    );
+    console2.log("+_fundingfee_2", _repayAmount);
+    _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
+
+    _vars.fundingFeeToBeReceive -= _repayValue;
+  }
+
+  struct DecreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    ConfigStorage.TradingConfig tradingConfig;
+    uint256 unrealizedPnlToBePaid;
+    uint256 tradingFeeToBePaid;
+    uint256 borrowingFeeToBePaid;
+    uint256 fundingFeeToBePaid;
+    uint256 liquidationFeeToBePaid;
+    uint256 payerBalance;
+    uint256 plpDebt;
+    // uint256 valueE30;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  function decreaseCollateral(
+    address _subAccount,
+    int256 _unrealizedPnl,
+    int256 _fundingFee,
+    uint256 _borrowingFee,
+    uint256 _tradingFee,
+    uint256 _liquidationFee,
+    address _liquidator
+  ) public {
+    DecreaseCollateralVars memory _vars;
+
+    _vars.vaultStorage = VaultStorage(vaultStorage);
+    _vars.configStorage = ConfigStorage(configStorage);
+    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
+    _vars.tradingConfig = _vars.configStorage.getTradingConfig();
+
+    _vars.subAccount = _subAccount;
+
+    address[] memory _collateralTokens = _vars.vaultStorage.getTraderTokens(_vars.subAccount);
+    uint256 _len = _collateralTokens.length;
+    if (_unrealizedPnl < 0) _vars.unrealizedPnlToBePaid = uint256(-_unrealizedPnl);
+    if (_fundingFee > 0) _vars.fundingFeeToBePaid = uint256(_fundingFee);
+    _vars.borrowingFeeToBePaid = _borrowingFee;
+    _vars.tradingFeeToBePaid = _tradingFee;
+    _vars.liquidationFeeToBePaid = _liquidationFee;
+    for (uint256 i = 0; i < _len; ) {
+      _vars.token = _collateralTokens[i];
+      _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.token);
+      (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(
+        ConfigStorage(_vars.configStorage).tokenAssetIds(_vars.token),
+        false
+      );
+
+      {
+        _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
+        console2.log("balance 1", _vars.payerBalance);
+        if (_vars.payerBalance > 0 && _vars.liquidationFeeToBePaid > 0) {
+          _decreaseCollateralWithLiquidationFee(_vars, _liquidator);
+        }
+      }
+
+      {
+        _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
+        console2.log("balance 6", _vars.payerBalance);
+        if (_vars.payerBalance > 0 && _vars.borrowingFeeToBePaid > 0) {
+          _decreaseCollateralWithBorrowingFeeToPlp(_vars);
+        }
+      }
+
+      {
+        _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
+        console2.log("balance 5", _vars.payerBalance);
+        if (_vars.payerBalance > 0 && _vars.tradingFeeToBePaid > 0) {
+          _decreaseCollateralWithTradingFeeToProtocolFee(_vars);
+        }
+      }
+
+      {
+        _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
+        _vars.plpDebt = _vars.vaultStorage.plpLiquidityDebtUSDE30();
+        console2.log("balance 3", _vars.payerBalance);
+        if (_vars.payerBalance > 0 && _vars.fundingFeeToBePaid > 0 && _vars.plpDebt > 0) {
+          _decreaseCollateralWithFundingFeeToPlp(_vars);
+        }
+      }
+
+      {
+        _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
+        console2.log("balance 4", _vars.payerBalance);
+        if (_vars.payerBalance > 0 && _vars.fundingFeeToBePaid > 0) {
+          _decreaseCollateralWithFundingFeeToFeeReserve(_vars);
+        }
+      }
+
+      {
+        _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
+        console2.log("balance 2", _vars.payerBalance);
+        if (_vars.payerBalance > 0 && _vars.unrealizedPnlToBePaid > 0) {
+          _decreaseCollateralWithUnrealizedPnlToPlp(_vars);
+        }
+      }
+
+      unchecked {
+        ++i;
+      }
+    }
+    uint256 _badDebt = _vars.unrealizedPnlToBePaid +
+      _vars.fundingFeeToBePaid +
+      _vars.tradingFeeToBePaid +
+      _vars.borrowingFeeToBePaid;
+    if (_badDebt != 0) PerpStorage(perpStorage).addBadDebt(_vars.subAccount, _badDebt);
+  }
+
+  function _decreaseCollateralWithUnrealizedPnlToPlp(DecreaseCollateralVars memory _vars) internal {
+    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+      _vars.payerBalance,
+      _vars.unrealizedPnlToBePaid,
+      _vars.tokenPrice,
+      _vars.tokenDecimal
+    );
+    console2.log("-_pnl", _repayAmount);
+    VaultStorage(_vars.vaultStorage).payPlp(_vars.subAccount, _vars.token, _repayAmount);
+
+    _vars.unrealizedPnlToBePaid -= _repayValue;
+  }
+
+  function _decreaseCollateralWithFundingFeeToPlp(DecreaseCollateralVars memory _vars) internal {
+    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+      _vars.payerBalance,
+      _vars.fundingFeeToBePaid,
+      _vars.tokenPrice,
+      _vars.tokenDecimal
+    );
+    console2.log("-_fundingfee_1", _repayAmount);
+    _vars.vaultStorage.repayFundingFeeDebtFromTraderToPlp(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
+
+    _vars.fundingFeeToBePaid -= _repayValue;
+  }
+
+  function _decreaseCollateralWithFundingFeeToFeeReserve(DecreaseCollateralVars memory _vars) internal {
+    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+      _vars.payerBalance,
+      _vars.fundingFeeToBePaid,
+      _vars.tokenPrice,
+      _vars.tokenDecimal
+    );
+    console2.log("-_fundingfee_2", _repayAmount);
+    _vars.vaultStorage.payFundingFeeFromTraderToFundingFeeReserve(_vars.subAccount, _vars.token, _repayAmount);
+
+    _vars.fundingFeeToBePaid -= _repayValue;
+  }
+
+  function _decreaseCollateralWithTradingFeeToProtocolFee(DecreaseCollateralVars memory _vars) internal {
+    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+      _vars.payerBalance,
+      _vars.tradingFeeToBePaid,
+      _vars.tokenPrice,
+      _vars.tokenDecimal
+    );
+    console2.log("-_tradingfee", _repayAmount);
+    // devFee = tradingFee * devFeeRate
+    uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
+    // the rest after dev fee deduction belongs to protocol fee portion
+    uint256 _protocolFeeAmount = _repayAmount - _devFeeAmount;
+
+    // book those moving balances
+    _vars.vaultStorage.payTradingFee(_vars.subAccount, _vars.token, _devFeeAmount, _protocolFeeAmount);
+
+    // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+    _vars.tradingFeeToBePaid -= _repayValue;
+  }
+
+  function _decreaseCollateralWithBorrowingFeeToPlp(DecreaseCollateralVars memory _vars) internal {
+    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+      _vars.payerBalance,
+      _vars.borrowingFeeToBePaid,
+      _vars.tokenPrice,
+      _vars.tokenDecimal
+    );
+    console2.log("-_borrowing", _repayAmount);
+    // devFee = tradingFee * devFeeRate
+    uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
+    // the rest after dev fee deduction belongs to plp liquidity
+    uint256 _plpFeeAmount = _repayAmount - _devFeeAmount;
+
+    // book those moving balances
+    _vars.vaultStorage.payBorrowingFee(_vars.subAccount, _vars.token, _devFeeAmount, _plpFeeAmount);
+
+    // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+    _vars.borrowingFeeToBePaid -= _repayValue;
+  }
+
+  function _decreaseCollateralWithLiquidationFee(DecreaseCollateralVars memory _vars, address _liquidator) internal {
+    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+      _vars.payerBalance,
+      _vars.liquidationFeeToBePaid,
+      _vars.tokenPrice,
+      _vars.tokenDecimal
+    );
+    console2.log("-_liquidationfee", _repayAmount);
+    _vars.vaultStorage.transfer(_vars.token, _vars.subAccount, _liquidator, _repayAmount);
+
+    _vars.liquidationFeeToBePaid -= _repayValue;
+  }
+
   function _getRepayAmount(
     uint256 _payerBalance,
     uint256 _valueE30,
     uint256 _tokenPrice,
     uint8 _tokenDecimal
-  ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
+  ) internal pure returns (uint256 _repayAmount, uint256 _repayValueE30) {
     uint256 _feeAmount = (_valueE30 * (10 ** _tokenDecimal)) / _tokenPrice;
 
     if (_payerBalance > _feeAmount) {

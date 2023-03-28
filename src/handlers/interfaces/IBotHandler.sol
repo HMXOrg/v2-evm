@@ -6,6 +6,7 @@ interface IBotHandler {
    * Errors
    */
   error IBotHandler_UnauthorizedSender();
+  error IBotHandler_InsufficientLiquidity();
 
   /**
    * States
@@ -42,6 +43,8 @@ interface IBotHandler {
   ) external;
 
   function liquidate(address _subAccount, bytes[] memory _priceData) external;
+
+  function convertFundingFeeReserve(address _stableToken) external;
 
   function setPositionManagers(address[] calldata _addresses, bool _isAllowed) external;
 

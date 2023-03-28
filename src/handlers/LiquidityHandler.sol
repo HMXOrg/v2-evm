@@ -35,32 +35,46 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogCreateAddLiquidityOrder(
     address indexed account,
-    address token,
+    uint256 indexed orderIndex,
+    address indexed token,
     uint256 amountIn,
     uint256 minOut,
-    uint256 executionFee,
-    uint256 orderIndex
+    uint256 executionFee
   );
   event LogCreateRemoveLiquidityOrder(
     address indexed account,
-    address token,
+    uint256 indexed orderId,
+    address indexed token,
     uint256 amountIn,
     uint256 minOut,
     uint256 executionFee,
-    bool isNativeOut,
-    uint256 orderIndex
+    bool isNativeOut
   );
   event LogExecuteLiquidityOrder(
-    address payable account,
-    address token,
+    address indexed account,
+    uint256 indexed orderId,
+    address indexed token,
     uint256 amount,
     uint256 minOut,
     bool isAdd,
     uint256 actualOut
   );
-  event LogCancelLiquidityOrder(address payable account, address token, uint256 amount, uint256 minOut, bool isAdd);
+  event LogCancelLiquidityOrder(
+    address indexed account,
+    uint256 indexed orderId,
+    address indexed token,
+    uint256 amount,
+    uint256 minOut,
+    bool isAdd
+  );
 
-  event LogRefund(uint256 orderId, address payable account, address token, uint256 amount, bool isNativeOut);
+  event LogRefund(
+    address indexed account,
+    uint256 indexed orderIndex,
+    address indexed token,
+    uint256 amount,
+    bool isNativeOut
+  );
   /**
    * States
    */
@@ -151,7 +165,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       })
     );
 
-    emit LogCreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee, _orderId);
+    emit LogCreateAddLiquidityOrder(msg.sender, _orderId, _tokenIn, _amountIn, _minOut, _executionFee);
     return _orderId;
   }
 
@@ -199,12 +213,12 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
     emit LogCreateRemoveLiquidityOrder(
       msg.sender,
+      _orderId,
       _tokenOut,
       _amountIn,
       _minOut,
       _executionFee,
-      _isNativeOut,
-      _orderId
+      _isNativeOut
     );
 
     return _orderId;
@@ -235,7 +249,14 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     delete liquidityOrders[_orderIndex];
     _refund(order);
 
-    emit LogCancelLiquidityOrder(payable(_account), order.token, order.amount, order.minOut, order.isAdd);
+    emit LogCancelLiquidityOrder(
+      payable(_account),
+      order.orderId,
+      order.token,
+      order.amount,
+      order.minOut,
+      order.isAdd
+    );
   }
 
   /// @notice refund order
@@ -253,11 +274,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       } else {
         IERC20(_order.token).safeTransfer(_order.account, _order.amount);
       }
-      emit LogRefund(_order.orderId, payable(_order.account), _order.token, _order.amount, _order.isNativeOut);
+      emit LogRefund(_order.account, _order.orderId, _order.token, _order.amount, _order.isNativeOut);
     } else {
       address _plp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
       IERC20(_plp).safeTransfer(_order.account, _order.amount);
-      emit LogRefund(_order.orderId, payable(_order.account), _plp, _order.amount, false);
+      emit LogRefund(_order.account, _order.orderId, _plp, _order.amount, false);
     }
   }
 
@@ -297,14 +318,15 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       } else {
         isExecuting = true;
 
-        try this.executeLiquidity(_order) returns (uint256 result) {
+        try this.executeLiquidity(_order) returns (uint256 actualOut) {
           emit LogExecuteLiquidityOrder(
             _order.account,
+            _order.orderId,
             _order.token,
             _order.amount,
             _order.minOut,
             _order.isAdd,
-            result
+            actualOut
           );
         } catch Error(string memory) {
           //refund in case of revert as message

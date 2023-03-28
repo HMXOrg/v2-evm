@@ -13,17 +13,26 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { Owned } from "@hmx/base/Owned.sol";
 
 // interfaces
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 
-contract LiquidationService is ReentrancyGuard, ILiquidationService {
+contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
   address public tradeHelper;
+  Calculator public calculator;
 
-  Calculator calculator;
+  /**
+   * Events
+   */
+  event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
+  event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
+  event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
+  event LogSetCalculator(address indexed oldCalculator, address newCalculator);
+  event LogSetTradeHelper(address indexed oldTradeHelper, address newTradeHelper);
 
   /**
    * Modifiers
@@ -34,15 +43,16 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
   }
 
   constructor(address _perpStorage, address _vaultStorage, address _configStorage, address _tradeHelper) {
-    // Sanity check
-    PerpStorage(_perpStorage).getGlobalState();
-    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
-    ConfigStorage(_configStorage).getLiquidityConfig();
-
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
     tradeHelper = _tradeHelper;
+
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
+    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    ConfigStorage(_configStorage).getLiquidityConfig();
+    TradeHelper(_tradeHelper).perpStorage();
   }
 
   function reloadConfig() external {
@@ -283,5 +293,67 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
 
   function _min(uint256 a, uint256 b) internal pure returns (uint256) {
     return a < b ? a : b;
+  }
+
+  /**
+   * Setter
+   */
+  /// @notice Set new ConfigStorage contract address.
+  /// @param _configStorage New ConfigStorage contract address.
+  function setConfigStorage(address _configStorage) external nonReentrant onlyOwner {
+    if (_configStorage == address(0)) revert ILiquidationService_InvalidAddress();
+    emit LogSetConfigStorage(configStorage, _configStorage);
+    configStorage = _configStorage;
+
+    // Sanity check
+    ConfigStorage(_configStorage).calculator();
+  }
+
+  /// @notice Set new VaultStorage contract address.
+  /// @param _vaultStorage New VaultStorage contract address.
+  function setVaultStorage(address _vaultStorage) external nonReentrant onlyOwner {
+    if (_vaultStorage == address(0)) revert ILiquidationService_InvalidAddress();
+
+    emit LogSetVaultStorage(vaultStorage, _vaultStorage);
+    vaultStorage = _vaultStorage;
+
+    // Sanity check
+    VaultStorage(_vaultStorage).devFees(address(0));
+  }
+
+  /// @notice Set new PerpStorage contract address.
+  /// @param _perpStorage New PerpStorage contract address.
+  function setPerpStorage(address _perpStorage) external nonReentrant onlyOwner {
+    if (_perpStorage == address(0)) revert ILiquidationService_InvalidAddress();
+
+    emit LogSetPerpStorage(perpStorage, _perpStorage);
+    perpStorage = _perpStorage;
+
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
+  }
+
+  /// @notice Set new Calculator contract address.
+  /// @param _calculator New Calculator contract address.
+  function setCalculator(address _calculator) external nonReentrant onlyOwner {
+    if (_calculator == address(0)) revert ILiquidationService_InvalidAddress();
+
+    emit LogSetCalculator(address(calculator), _calculator);
+    calculator = Calculator(_calculator);
+
+    // Sanity check
+    Calculator(_calculator).oracle();
+  }
+
+  /// @notice Set new TradeHelper contract address.
+  /// @param _tradeHelper New TradeHelper contract address.
+  function setTradeHelper(address _tradeHelper) external nonReentrant onlyOwner {
+    if (_tradeHelper == address(0)) revert ILiquidationService_InvalidAddress();
+
+    emit LogSetTradeHelper(tradeHelper, _tradeHelper);
+    tradeHelper = _tradeHelper;
+
+    // Sanity check
+    TradeHelper(_tradeHelper).perpStorage();
   }
 }

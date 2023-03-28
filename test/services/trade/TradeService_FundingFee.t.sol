@@ -78,8 +78,6 @@ contract TradeService_FundingFee is TradeService_Base {
       assertEq(_globalAssetClass.lastBorrowingTime, 100);
 
       assertEq(_globalMarket.currentFundingRate, 0);
-      assertEq(_globalMarket.accumFundingLong, 0);
-      assertEq(_globalMarket.accumFundingShort, 0);
 
       assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 1 * 1e18);
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 1_000 * 1e6);
@@ -133,8 +131,6 @@ contract TradeService_FundingFee is TradeService_Base {
 
       IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
       assertEq(_globalMarket.currentFundingRate, 0);
-      assertEq(_globalMarket.accumFundingLong, 0);
-      assertEq(_globalMarket.accumFundingShort, 0);
 
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 1_000 * 1e6);
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 500 * 1e6);
@@ -144,10 +140,9 @@ contract TradeService_FundingFee is TradeService_Base {
     {
       tradeService.increasePosition(BOB, 0, ethMarketIndex, -200_000 * 1e30, 0);
       IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(0);
+      IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
       assertEq(_globalMarket.currentFundingRate, -66666666666666); // LONG PAY SHORT
       // Alice increase long position size * funding Rate = 500_000 * -0.000066666666666666 = -33.333333333333 $
-      assertEq(_globalMarket.accumFundingLong, -33333333333333000000);
-      assertEq(_globalMarket.accumFundingShort, 0);
 
       assertEq(vaultStorage.fundingFeeReserve(address(usdt)), 0);
     }

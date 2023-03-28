@@ -2,8 +2,6 @@
 pragma solidity 0.8.18;
 
 import { BaseIntTest_SetPLPTokens } from "@hmx-test/integration/07_BaseIntTest_SetPLPTokens.i.sol";
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { console } from "forge-std/console.sol";
 
 abstract contract BaseIntTest_SetWhitelist is BaseIntTest_SetPLPTokens {
   constructor() {

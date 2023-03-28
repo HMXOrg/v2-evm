@@ -240,19 +240,6 @@ contract TradeService is ReentrancyGuard, ITradeService {
       _vars.position.marketIndex = _marketIndex;
     }
 
-    // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
-    if (!_vars.isNewPosition) {
-      _vars.position.avgEntryPriceE30 = _getPositionNextAveragePrice(
-        abs(_vars.position.positionSizeE30),
-        _vars.isLong,
-        _absSizeDelta,
-        _vars.adaptivePriceE30,
-        _vars.closePriceE30,
-        _vars.position.avgEntryPriceE30,
-        _vars.position.lastIncreaseTimestamp
-      );
-    }
-
     // Settle
     // - trading fees
     // - borrowing fees
@@ -267,6 +254,33 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // update the position size by adding the new size delta
     _vars.position.positionSizeE30 += _sizeDelta;
+
+    // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
+    if (!_vars.isNewPosition) {
+      // console2.log("======== new close price ======= ");
+      (uint256 _nextClosePriceE30, , , ) = OracleMiddleware(_configStorage.oracle())
+        .getLatestAdaptivePriceWithMarketStatus(
+          _marketConfig.assetId,
+          _vars.isLong, // if current position is SHORT position, then we use max price
+          // + new position size delta to update market skew temporary
+          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)) + _sizeDelta,
+          // positionSizeE30 is new position size, when updated with sizeDelta above
+          -_vars.position.positionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD
+        );
+
+      // console2.log("_nextClosePriceE30", _nextClosePriceE30);
+
+      _vars.position.avgEntryPriceE30 = _getPositionNextAveragePrice(
+        abs(_vars.position.positionSizeE30),
+        _vars.isLong,
+        _absSizeDelta,
+        _nextClosePriceE30,
+        _vars.closePriceE30,
+        _vars.position.avgEntryPriceE30,
+        _vars.position.lastIncreaseTimestamp
+      );
+    }
 
     {
       PerpStorage.GlobalAssetClass memory _globalAssetClass = _perpStorage.getGlobalAssetClassByIndex(
@@ -852,7 +866,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     int256 _unrealizedPnl,
     uint256 _priceE30,
     uint256 _maxSkewScale
-  ) internal view returns (uint256 _newAveragePrice) {
+  ) internal pure returns (uint256 _newAveragePrice) {
     // premium before       = market skew - size delta / max scale skew
     // premium after        = market skew - position size / max scale skew
     // premium              = (premium after + premium after) / 2

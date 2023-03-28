@@ -9,7 +9,7 @@ interface ITLCStaking {
 
   function getUserTokenAmount(uint256 epochTimestamp, address sender) external view returns (uint256);
 
-  function harvest(uint256 epochTimestamp, address[] memory _rewarders) external;
+  function harvest(uint256 startEpochTimestamp, uint256 noOfEpochs, address[] memory _rewarders) external;
 
   function harvestToCompounder(
     address user,

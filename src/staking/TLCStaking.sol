@@ -23,6 +23,7 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   error TLCStaking_Forbidden();
 
   mapping(uint256 => mapping(address => uint256)) public userTokenAmount;
+  mapping(uint256 => uint256) public totalTokenAmount;
   mapping(address => bool) public isRewarder;
   address public stakingToken;
   address[] public rewarders;
@@ -95,6 +96,10 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   }
 
   function deposit(address to, uint256 amount) external onlyWhitelistedCaller {
+    uint256 epochTimestamp = getCurrentEpochTimestamp();
+    userTokenAmount[epochTimestamp][to] += amount;
+    totalTokenAmount[epochTimestamp] += amount;
+
     uint256 length = rewarders.length;
     for (uint256 i = 0; i < length; ) {
       address rewarder = rewarders[i];
@@ -106,8 +111,6 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
       }
     }
 
-    uint256 epochTimestamp = getCurrentEpochTimestamp();
-    userTokenAmount[epochTimestamp][to] += amount;
     IERC20Upgradeable(stakingToken).safeTransferFrom(msg.sender, address(this), amount);
 
     emit LogDeposit(epochTimestamp, msg.sender, to, amount);
@@ -126,6 +129,9 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     uint256 epochTimestamp = getCurrentEpochTimestamp();
     if (userTokenAmount[getCurrentEpochTimestamp()][to] < amount) revert TLCStaking_InsufficientTokenAmount();
 
+    userTokenAmount[epochTimestamp][to] -= amount;
+    totalTokenAmount[epochTimestamp] -= amount;
+
     uint256 length = rewarders.length;
     for (uint256 i = 0; i < length; ) {
       address rewarder = rewarders[i];
@@ -140,13 +146,27 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
         ++i;
       }
     }
-    userTokenAmount[epochTimestamp][to] -= amount;
+
     IERC20Upgradeable(stakingToken).safeTransfer(to, amount);
+
     emit LogWithdraw(epochTimestamp, to, amount);
   }
 
-  function harvest(uint256 epochTimestamp, address[] memory _rewarders) external {
-    _harvestFor(epochTimestamp, msg.sender, msg.sender, _rewarders);
+  function harvest(uint256 startEpochTimestamp, uint256 noOfEpochs, address[] memory _rewarders) external {
+    uint256 epochTimestamp = startEpochTimestamp;
+    for (uint256 i = 0; i < noOfEpochs; ) {
+      // If the epoch is in the future, then break the loop
+      if (epochTimestamp + epochLength > block.timestamp) break;
+
+      _harvestFor(epochTimestamp, msg.sender, msg.sender, _rewarders);
+
+      // Increment epoch timestamp
+      epochTimestamp += epochLength;
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   function harvestToCompounder(
@@ -158,10 +178,12 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     if (compounder != msg.sender) revert TLCStaking_NotCompounder();
     uint256 epochTimestamp = startEpochTimestamp;
     for (uint256 i = 0; i < noOfEpochs; ) {
+      // If the epoch is in the future, then break the loop
+      if (epochTimestamp + epochLength > block.timestamp) break;
+
       _harvestFor(epochTimestamp, user, compounder, _rewarders);
 
       // Increment epoch timestamp
-
       epochTimestamp += epochLength;
 
       unchecked {
@@ -190,7 +212,7 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   }
 
   function calculateTotalShare(uint256 epochTimestamp) external view returns (uint256) {
-    return TraderLoyaltyCredit(stakingToken).balanceOf(epochTimestamp, address(this));
+    return totalTokenAmount[epochTimestamp];
   }
 
   function getCurrentEpochTimestamp() public view returns (uint256 epochTimestamp) {

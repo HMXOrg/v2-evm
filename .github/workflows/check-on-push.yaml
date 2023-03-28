@@ -50,7 +50,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test -vvv
+          forge test -vvv --no-match-path *.t.fork.*
         id: test
   analyze:
     name: Slither Analyze

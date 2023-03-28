@@ -2,8 +2,6 @@
 pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
-import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
-import { console2 } from "forge-std/console2.sol";
 
 contract TC06 is BaseIntTest_WithActions {
   function testIntegration_WhenTraderInteractWithCrossMargin() external {
@@ -118,6 +116,7 @@ contract TC06 is BaseIntTest_WithActions {
       // Check states After WETH market price move from 1500 USD to 1550 USD
       // Alice's Equity must be lower IMR level
       // Equity = 2489, IMR = 2800.0098123438183
+
       assertTrue(
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) < calculator.getIMR(SUB_ACCOUNT),
         "ALICE's Equity < ALICE's IMR?"

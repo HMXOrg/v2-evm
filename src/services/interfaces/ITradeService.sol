@@ -23,6 +23,7 @@ interface ITradeService {
   error ITradeService_ReservedValueStillEnough();
   error ITradeService_PlpHealthy();
   error ITradeService_MarketHealthy();
+  error ITradeService_InvalidAddress();
 
   /**
    * STRUCTS
@@ -31,6 +32,8 @@ interface ITradeService {
   function configStorage() external view returns (address);
 
   function perpStorage() external view returns (address);
+
+  function vaultStorage() external view returns (address);
 
   function reloadConfig() external;
 

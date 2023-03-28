@@ -53,12 +53,11 @@ contract Calculator is Owned, ICalculator {
   /// @param _isMaxPrice Use Max or Min Price
   /// @return PLP Value in E18 format
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
-    // @todo - pendingBorrowingFeeE30
-    // @todo - pending funding fee ?
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
     int256 pnlE30 = _getGlobalPNLE30();
     uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30;
+
     if (pnlE30 < 0) {
       aum += uint256(-pnlE30);
     } else {
@@ -127,7 +126,6 @@ contract Calculator is Owned, ICalculator {
 
     for (uint256 i = 0; i < _len; ) {
       uint256 value = _getPLPUnderlyingAssetValueE30(_plpAssetIds[i], _configStorage, _isMaxPrice);
-
       unchecked {
         assetValue += value;
         ++i;
@@ -160,7 +158,7 @@ contract Calculator is Owned, ICalculator {
   /// @param _aum aum in PLP
   /// @param _plpSupply Total Supply of PLP token
   /// @return PLP Price in e18
-  function getPLPPrice(uint256 _aum, uint256 _plpSupply) public pure returns (uint256) {
+  function getPLPPrice(uint256 _aum, uint256 _plpSupply) external pure returns (uint256) {
     if (_plpSupply == 0) return 0;
     return _aum / _plpSupply;
   }
@@ -183,30 +181,28 @@ contract Calculator is Owned, ICalculator {
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
-
-      (uint256 priceE30Long, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
-      (uint256 priceE30Short, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, true);
+      (uint256 priceE30, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
-        if (priceE30Long < _globalMarket.longAvgPrice) {
-          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) * _globalMarket.longPositionSize) /
+        if (priceE30 < _globalMarket.longAvgPrice) {
+          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30) * _globalMarket.longPositionSize) /
             _globalMarket.longAvgPrice;
           _pnlLongE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((priceE30Long - _globalMarket.longAvgPrice) * _globalMarket.longPositionSize) /
+          uint256 _absPNL = ((priceE30 - _globalMarket.longAvgPrice) * _globalMarket.longPositionSize) /
             _globalMarket.longAvgPrice;
           _pnlLongE30 = int256(_absPNL);
         }
       }
 
       if (_globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0) {
-        if (_globalMarket.shortAvgPrice < priceE30Short) {
-          uint256 _absPNL = ((priceE30Short - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
+        if (_globalMarket.shortAvgPrice < priceE30) {
+          uint256 _absPNL = ((priceE30 - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
             _globalMarket.shortAvgPrice;
 
           _pnlShortE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30Short) * _globalMarket.shortPositionSize) /
+          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30) * _globalMarket.shortPositionSize) /
             _globalMarket.shortAvgPrice;
           _pnlShortE30 = int256(_absPNL);
         }
@@ -214,7 +210,7 @@ contract Calculator is Owned, ICalculator {
 
       {
         unchecked {
-          i++;
+          ++i;
           totalPnlLong += _pnlLongE30;
           totalPnlShort += _pnlShortE30;
         }
@@ -457,6 +453,7 @@ contract Calculator is Owned, ICalculator {
       _limitPriceE30,
       _limitAssetId
     );
+
     // Calculate equity
     _equityValueE30 += int256(_collateralValueE30);
     _equityValueE30 += _unrealizedPnlValueE30;
@@ -513,7 +510,7 @@ contract Calculator is Owned, ICalculator {
         _var.priceE30 = _limitPriceE30;
       } else {
         // @todo - validate price age
-        (_var.priceE30, , , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+        (_var.priceE30, , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price
           (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
@@ -731,7 +728,6 @@ contract Calculator is Owned, ICalculator {
   ) public view returns (uint256 _freeCollateral) {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = getIMR(_subAccount);
-
     if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;

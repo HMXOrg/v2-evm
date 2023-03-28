@@ -54,10 +54,10 @@ contract TC02 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  = 0 + 0.003 = 0.00309563 btc
 
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFee: 0, _str: "T1: " });
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T1: " });
 
       // Finally after Bob add liquidity Vault balance should be correct
-      // note: token balance is including all liquidity, dev fee and protocal fee
+      // note: token balance is including all liquidity, dev fee and protocol fee
       //    BTC - 1
       assertVaultTokenBalance(address(wbtc), 1 * 1e8, "T1: ");
     }
@@ -87,7 +87,7 @@ contract TC02 is BaseIntTest_WithActions {
 
       // And Alice should not pay any fee
       // note: vault's fees should be same with T1
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFee: 0, _str: "T2: " });
+      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T2: " });
     }
 
     // time passed for 60 seconds
@@ -194,7 +194,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00301275 * 1e8,
         _devFee: 0.00000225 * 1e8,
-        _fundingFee: 0,
+        _fundingFeeReserve: 0,
         _str: "T4: "
       });
 
@@ -240,7 +240,7 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Then Check position Info
 
-      // Time passed          = 60 seconds (60 intevals)
+      // Time passed          = 60 seconds (60 intervals)
       // TVL                  = 19,940 USD
 
       // Max Funding rate     = 0.04%
@@ -336,7 +336,7 @@ contract TC02 is BaseIntTest_WithActions {
       // According to T4, Alice's collateral balances
       //    BTC - 0.009985
       // When Alice sell WETH with 150 USD (decrease Long position)
-      // And Funding rate is nagative so Short pay Long
+      // And Funding rate is negative so Short pay Long
       // Then Alice should receive funding fee
 
       // Then Alice has to pay
@@ -399,7 +399,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00301913 * 1e8,
         _devFee: 0.00000337 * 1e8,
-        _fundingFee: 0,
+        _fundingFeeReserve: 0,
         _str: "T6: "
       });
 
@@ -533,7 +533,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00309563 * 1e8,
         _devFee: 0.00001687 * 1e8,
-        _fundingFee: 0,
+        _fundingFeeReserve: 0,
         _str: "T7: "
       });
 
@@ -574,7 +574,7 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Then Check position Info
 
-      // Time passed          = 60 seconds (60 intevals)
+      // Time passed          = 60 seconds (60 intervals)
       // TVL                  = 0.99662501 * 20000 = 19932.5002
 
       // Max Funding rate     = 0.04%
@@ -726,7 +726,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00317213 * 1e8,
         _devFee: 0.00003038 * 1e8,
-        _fundingFee: 0.00000014 * 1e8,
+        _fundingFeeReserve: 0.00000014 * 1e8,
         _str: "T8: "
       });
 
@@ -823,7 +823,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Then Funding rate is 0
       assertMarketFundingRate(wbtcMarketIndex, 0, 1420, "T12: ");
 
-      // Crypto Borrowing rate calulation
+      // Crypto Borrowing rate calculation
       // Given Latest info
       //    Reserve                 = 13.5 USD
       //    Sum borrowing rate      = 0.000008124373119358
@@ -925,7 +925,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00331784 * 1e8,
         _devFee: 0.00005609 * 1e8,
-        _fundingFee: 0.00000014 * 1e8,
+        _fundingFeeReserve: 0.00000014 * 1e8,
         _str: "T12: "
       });
 
@@ -1020,13 +1020,13 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Market's Funding rate calculation
       // When Market skew is 3000
-      // And Funding rate fomula = -(Intervals * (Skew ratio * Max funding rate))
+      // And Funding rate formula = -(Intervals * (Skew ratio * Max funding rate))
       // And Time passed         = 1480 - 1420 = 60 seconds (60 intervals)
       // Then Funding rate       = -(60 * (3000 / 300000000) * 0.04%)
       //                         = -0.00000024
       assertMarketFundingRate(wbtcMarketIndex, -0.00000024 * 1e18, 1480, "T15: ");
 
-      // Crypto Borrowing rate calulation
+      // Crypto Borrowing rate calculation
       // Given Latest info
       //    Reserve                 = 283.5 USD
       //    Sum borrowing rate      = 0.000026718163837437
@@ -1144,7 +1144,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00345277 * 1e8,
         _devFee: 0.00008008 * 1e8,
-        _fundingFee: 0.00000017 * 1e8,
+        _fundingFeeReserve: 0.00000017 * 1e8,
         _str: "T15: "
       });
 
@@ -1161,8 +1161,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Assert Asset class
       // Given Crypto's reserve is 283.5
       // When Bob decrease Btc long position for 3000 USD
-      // And dereased reserve is 270 USD
-      // Then Crypto's reserve should decresed by 270 = 13.5 USD
+      // And deceased reserve is 270 USD
+      // Then Crypto's reserve should decreased by 270 = 13.5 USD
       assertAssetClassReserve(0, 13.5 * 1e30, "T15: ");
 
       // Invariant testing
@@ -1219,14 +1219,14 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Market's Funding rate calculation
       // When Market skew is 0
-      // And Funding rate fomula        = -(Intervals * (Skew ratio * Max funding rate))
+      // And Funding rate formula        = -(Intervals * (Skew ratio * Max funding rate))
       // And Time passed                = 1540 - 1480 = 60 seconds (60 intervals)
       // Then Pending Funding rate      = -(60 * (0 / 300000000) * 0.04%)
       //                                = 0
       // And Market's sum Funding rate  = -0.00000024 + 0
       assertMarketFundingRate(wbtcMarketIndex, -0.00000024 * 1e18, 1540, "T17: ");
 
-      // Crypto Borrowing rate calulation
+      // Crypto Borrowing rate calculation
       // Given Latest info
       //    Reserve                 = 13.5 USD
       //    Sum borrowing rate      = 0.000117104583348508
@@ -1332,7 +1332,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00357138 * 1e8,
         _devFee: 0.00010100 * 1e8,
-        _fundingFee: 0.00000017 * 1e8,
+        _fundingFeeReserve: 0.00000017 * 1e8,
         _str: "T17: "
       });
 
@@ -1412,14 +1412,14 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Market's Funding rate calculation
       // When Market skew is -3000
-      // And Funding rate fomula = -(Intervals * (Skew ratio * Max funding rate))
+      // And Funding rate formula = -(Intervals * (Skew ratio * Max funding rate))
       // And Time passed         = 1600 - 1549 = 60 seconds (60 intervals)
       // Then Funding rate       = -(60 * (-3000 / 300000000) * 0.04%)
       //                         = 0.00000024
       // And Market's sum Funding rate  = -0.00000024 + 0.00000024
       assertMarketFundingRate(wbtcMarketIndex, 0, 1600, "T19: ");
 
-      // Crypto Borrowing rate calulation
+      // Crypto Borrowing rate calculation
       // Given Latest info
       //    Reserve                 = 283.5 USD
       //    Sum borrowing rate      = 0.000026718163837437
@@ -1464,7 +1464,7 @@ contract TC02 is BaseIntTest_WithActions {
       //       short position: size delta * (avg price - adaptive price) / avg price
       // unrealized PnL = 3000 * (21000 - 18900) / 21000
       //                = 300 USD
-      // !note: but mamx profit is 270 then Bob will realized profit just 270 USD
+      // !note: but max profit is 270 then Bob will realized profit just 270 USD
 
       assertPositionInfoOf({
         _subAccount: _bobSubAccount0,
@@ -1516,7 +1516,7 @@ contract TC02 is BaseIntTest_WithActions {
       //                                            = 0.00000129 btc
       //    Funding fee - 0.00072 USD
       //      BTC - 0.00072 / 17500                 = 0.00000004 btc
-      //          - pay for fundind fee (100%)      = 0.00000004 btc
+      //          - pay for funding fee (100%)      = 0.00000004 btc
 
       // And PLP has to pay
       //    Trader profit - 270 USD
@@ -1537,7 +1537,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00371709 * 1e8,
         _devFee: 0.00012693 * 1e8,
-        _fundingFee: 0.00000021 * 1e8,
+        _fundingFeeReserve: 0.00000021 * 1e8,
         _str: "T19: "
       });
 
@@ -1555,8 +1555,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Assert Asset class
       // Given Crypto's reserve is 283.5
       // When Bob decrease Btc short position for 3000 USD
-      // And dereased reserve is 270 USD
-      // Then Crypto's reserve should decresed by 270 = 13.5 USD
+      // And deceased reserve is 270 USD
+      // Then Crypto's reserve should decreased by 270 = 13.5 USD
       assertAssetClassReserve(0, 13.5 * 1e30, "T19: ");
 
       // Invariant testing

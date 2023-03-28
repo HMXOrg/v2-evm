@@ -6,14 +6,16 @@
   "license": "MIT",
   "scripts": {
     "compile": "hardhat compile",
-    "build": "yarn run build:cjs",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build": "yarn build:api && yarn build:react",
+    "build:api": "yarn wagmi generate --config ./wagmi/wagmi.config.api.ts",
+    "build:react": "yarn wagmi generate --config ./wagmi/wagmi.config.react.ts",
     "slither": "slither . --exclude-dependencies --exclude-optimization --exclude-informational --exclude-low --exclude-medium  --no-fail-pedantic --fail-high"
   },
   "devDependencies": {
     "@tenderly/hardhat-tenderly": "^1.3.2",
     "@typechain/ethers-v5": "^10.0.0",
     "@typechain/hardhat": "^5.0.0",
+    "@wagmi/cli": "^0.1.14",
     "dotenv": "^16.0.0",
     "hardhat": "^2.9.1",
     "hardhat-preprocessor": "^0.1.5",
@@ -22,5 +24,8 @@
     "ts-node": "^10.9.1",
     "typechain": "^8.0.0",
     "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "wagmi": "^0.12.7"
   }
 }

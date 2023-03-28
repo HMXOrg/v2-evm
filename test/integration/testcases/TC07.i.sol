@@ -5,8 +5,6 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 contract TC07 is BaseIntTest_WithActions {
   function testIntegration_WhenAdminAdjustIMF() external {
     /**

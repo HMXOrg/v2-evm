@@ -60,6 +60,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   );
   event LogCancelLiquidityOrder(address payable account, address token, uint256 amount, uint256 minOut, bool isAdd);
 
+  event LogRefund(uint256 orderId, address payable account, address token, uint256 amount, bool isNativeOut);
   /**
    * States
    */
@@ -136,9 +137,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
+    uint256 _orderId = liquidityOrders.length;
     liquidityOrders.push(
       LiquidityOrder({
         account: payable(msg.sender),
+        orderId: _orderId,
         token: _tokenIn,
         amount: _amountIn,
         minOut: _minOut,
@@ -148,9 +151,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       })
     );
 
-    _latestOrderIndex = liquidityOrders.length - 1;
-
-    emit LogCreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee, _latestOrderIndex);
+    emit LogCreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee, _orderId);
     return _latestOrderIndex;
   }
 
@@ -182,9 +183,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       _amountIn
     );
 
+    uint256 _orderId = liquidityOrders.length;
     liquidityOrders.push(
       LiquidityOrder({
         account: payable(msg.sender),
+        orderId: _orderId,
         token: _tokenOut,
         amount: _amountIn,
         minOut: _minOut,
@@ -194,8 +197,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       })
     );
 
-    _latestOrderIndex = liquidityOrders.length - 1;
-
     emit LogCreateRemoveLiquidityOrder(
       msg.sender,
       _tokenOut,
@@ -203,10 +204,10 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       _minOut,
       _executionFee,
       _isNativeOut,
-      _latestOrderIndex
+      _orderId
     );
 
-    return _latestOrderIndex;
+    return _orderId;
   }
 
   /// @notice Cancel order
@@ -245,7 +246,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     if (_order.amount == 0) {
       revert ILiquidityHandler_NoOrder();
     }
-    address _plp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
 
     if (_order.isAdd) {
       if (_order.isNativeOut) {
@@ -253,8 +253,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       } else {
         IERC20(_order.token).safeTransfer(_order.account, _order.amount);
       }
+      emit LogRefund(_order.orderId, payable(_order.account), _order.token, _order.amount, _order.isNativeOut);
     } else {
+      address _plp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
       IERC20(_plp).safeTransfer(_order.account, _order.amount);
+      emit LogRefund(_order.orderId, payable(_order.account), _plp, _order.amount, false);
     }
   }
 

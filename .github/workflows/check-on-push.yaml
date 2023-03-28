@@ -50,7 +50,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          forge test
+          forge test -vvv
         id: test
   analyze:
     name: Slither Analyze

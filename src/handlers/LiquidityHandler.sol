@@ -152,7 +152,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     );
 
     emit LogCreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee, _orderId);
-    return _latestOrderIndex;
+    return _orderId;
   }
 
   /// @notice Create a new RemoveLiquidity order
@@ -289,7 +289,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
     for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
       LiquidityOrder memory _order = liquidityOrders[i];
-
       delete liquidityOrders[i];
 
       // refund in case of order updatePythFee > executionFee

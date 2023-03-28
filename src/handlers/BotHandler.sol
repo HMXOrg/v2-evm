@@ -40,18 +40,16 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
    * Structs
    */
   struct ConvertFundingFeeReserveInputs {
-    address[] collateralTokens;
-    // stable token
-    bytes32 stableTokenAssetId;
-    uint8 stableTokenDecimal;
     uint256 stableTokenPrice;
-    // funding fee reserve
     uint256 fundingFeeReserve;
-    bytes32 tokenAssetId;
-    uint8 tokenDecimal;
     uint256 tokenPrice;
     uint256 fundingFeeReserveValue;
     uint256 stableTokenAmount;
+    address[] collateralTokens;
+    bytes32 stableTokenAssetId;
+    bytes32 tokenAssetId;
+    uint8 stableTokenDecimal;
+    uint8 tokenDecimal;
   }
 
   /**

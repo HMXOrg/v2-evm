@@ -32,6 +32,8 @@ interface ITradeService {
 
   function perpStorage() external view returns (address);
 
+  function vaultStorage() external view returns (address);
+
   function reloadConfig() external;
 
   function increasePosition(

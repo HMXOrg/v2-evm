@@ -15,7 +15,7 @@ import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 0;
+const subAccountId = 1;
 
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
@@ -104,14 +104,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getEquity",
-      args: [deployer.address, 0, ethAssetId],
+      args: [deployer.address, subAccountId, ethAssetId],
     },
     // Free Collateral
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getFreeCollateral",
-      args: [deployer.address, 0, ethAssetId],
+      args: [deployer.address, subAccountId, ethAssetId],
     },
     // Prices
     {
@@ -317,7 +317,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       interface: PerpStorage__factory.abi,
       target: config.storages.perp,
       function: "getPositionBySubAccount",
-      args: [deployer.address],
+      args: [address],
     },
     // Market Configs
     {

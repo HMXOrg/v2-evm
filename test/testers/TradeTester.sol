@@ -42,7 +42,6 @@ contract TradeTester is StdAssertions {
     bytes32 positionId;
     uint256 avgEntryPriceE30;
     uint256 reserveValueE30;
-    uint256 openInterest;
     uint256 lastIncreaseTimestamp;
     int256 positionSizeE30;
     int256 realizedPnl;
@@ -53,10 +52,8 @@ contract TradeTester is StdAssertions {
     uint256 lastFundingTime;
     uint256 longPositionSize;
     uint256 longAvgPrice;
-    uint256 longOpenInterest;
     uint256 shortPositionSize;
     uint256 shortAvgPrice;
-    uint256 shortOpenInterest;
     int256 accumFundingLong;
     int256 accumFundingShort;
     int256 currentFundingRate;
@@ -157,7 +154,6 @@ contract TradeTester is StdAssertions {
   ///       - Average entry price
   ///       - Reserve value
   ///       - Position size
-  ///       - Open interest
   ///       - Entry Borrowing rate - global asset class sum borrowing rate
   ///       - Entry funding rate - global market current funding rate
   function _assertPosition(
@@ -170,7 +166,6 @@ contract TradeTester is StdAssertions {
     assertEq(_position.positionSizeE30, _positionExpectedData.positionSizeE30, "Position size");
     assertEq(_position.avgEntryPriceE30, _positionExpectedData.avgEntryPriceE30, "Position Average Price");
     assertEq(_position.reserveValueE30, _positionExpectedData.reserveValueE30, "Position Reserve");
-    assertEq(_position.openInterest, _positionExpectedData.openInterest, "Position Open Interest");
 
     assertEq(_position.entryBorrowingRate, _globalAssetClassExpectedData.sumBorrowingRate, "Entry Borrowing rate");
     assertEq(_position.entryFundingRate, _globalMarketExpectedData.currentFundingRate, "Entry Funding rate");
@@ -184,10 +179,8 @@ contract TradeTester is StdAssertions {
   ///       - Accum funding short
   ///       - Long Position size
   ///       - Long average price
-  ///       - Long Open interest
   ///       - Short Position size
   ///       - Short average price
-  ///       - Short Open interest
   function _assertMarket(GlobalMarketExpectedData memory _globalMarketExpectedData) internal {
     IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(
       _globalMarketExpectedData.marketIndex
@@ -195,11 +188,9 @@ contract TradeTester is StdAssertions {
 
     assertEq(_globalMarket.longPositionSize, _globalMarketExpectedData.longPositionSize, "Long Position size");
     assertEq(_globalMarket.longAvgPrice, _globalMarketExpectedData.longAvgPrice, "Long Average Price");
-    assertEq(_globalMarket.longOpenInterest, _globalMarketExpectedData.longOpenInterest, "Long Open Interest");
 
     assertEq(_globalMarket.shortPositionSize, _globalMarketExpectedData.shortPositionSize, "Short Position size");
     assertEq(_globalMarket.shortAvgPrice, _globalMarketExpectedData.shortAvgPrice, "Short Average Price");
-    assertEq(_globalMarket.shortOpenInterest, _globalMarketExpectedData.shortOpenInterest, "Short Open Interest");
 
     assertEq(_globalMarket.accumFundingLong, _globalMarketExpectedData.accumFundingLong, "Accum Funding Long");
     assertEq(_globalMarket.accumFundingShort, _globalMarketExpectedData.accumFundingShort, "Accum Funding Short");
@@ -262,7 +253,7 @@ contract TradeTester is StdAssertions {
 
       assertEq(vaultStorage.plpLiquidity(_token), _expectedData.plpLiquidity[_token], "PLP Liquidity");
       assertEq(vaultStorage.protocolFees(_token), _expectedData.fees[_token], "Protocol Fee");
-      assertEq(vaultStorage.fundingFee(_token), _expectedData.fundingFee[_token], "Funding Fee");
+      assertEq(vaultStorage.fundingFeeReserve(_token), _expectedData.fundingFee[_token], "Funding Fee");
       assertEq(vaultStorage.devFees(_token), _expectedData.devFees[_token], "Dev Fee");
       assertEq(
         vaultStorage.traderBalances(_subAccount, _token),

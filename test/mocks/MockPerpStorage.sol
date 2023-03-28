@@ -66,13 +66,11 @@ contract MockPerpStorage {
     uint256 _marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
-    uint256 _newOpenInterest,
     int256 _newAccumFundingLong,
     int256 _currentFundingRate
   ) external {
     globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
-    globalMarkets[_marketIndex].longOpenInterest = _newOpenInterest;
     globalMarkets[_marketIndex].accumFundingLong = _newAccumFundingLong;
     globalMarkets[_marketIndex].currentFundingRate = _currentFundingRate;
   }
@@ -82,13 +80,11 @@ contract MockPerpStorage {
     uint256 _marketIndex,
     uint256 _newPositionSize,
     uint256 _newAvgPrice,
-    uint256 _newOpenInterest,
     int256 _newAccumFundingShort,
     int256 _currentFundingRate
   ) external {
     globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
     globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
-    globalMarkets[_marketIndex].shortOpenInterest = _newOpenInterest;
     globalMarkets[_marketIndex].accumFundingShort = _newAccumFundingShort;
     globalMarkets[_marketIndex].currentFundingRate = _currentFundingRate;
   }

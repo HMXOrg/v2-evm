@@ -12,6 +12,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { console } from "forge-std/console.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
@@ -51,12 +52,11 @@ contract Calculator is Owned, ICalculator {
   /// @param _isMaxPrice Use Max or Min Price
   /// @return PLP Value in E18 format
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
-    // @todo - pendingBorrowingFeeE30
-    // @todo - pending funding fee ?
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
     int256 pnlE30 = _getGlobalPNLE30();
     uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30;
+
     if (pnlE30 < 0) {
       aum += uint256(-pnlE30);
     } else {
@@ -125,7 +125,6 @@ contract Calculator is Owned, ICalculator {
 
     for (uint256 i = 0; i < _len; ) {
       uint256 value = _getPLPUnderlyingAssetValueE30(_plpAssetIds[i], _configStorage, _isMaxPrice);
-
       unchecked {
         assetValue += value;
         ++i;
@@ -158,7 +157,7 @@ contract Calculator is Owned, ICalculator {
   /// @param _aum aum in PLP
   /// @param _plpSupply Total Supply of PLP token
   /// @return PLP Price in e18
-  function getPLPPrice(uint256 _aum, uint256 _plpSupply) public pure returns (uint256) {
+  function getPLPPrice(uint256 _aum, uint256 _plpSupply) external pure returns (uint256) {
     if (_plpSupply == 0) return 0;
     return _aum / _plpSupply;
   }
@@ -181,30 +180,28 @@ contract Calculator is Owned, ICalculator {
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
-
-      (uint256 priceE30Long, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
-      (uint256 priceE30Short, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, true);
+      (uint256 priceE30, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
       if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
-        if (priceE30Long < _globalMarket.longAvgPrice) {
-          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30Long) * _globalMarket.longPositionSize) /
+        if (priceE30 < _globalMarket.longAvgPrice) {
+          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30) * _globalMarket.longPositionSize) /
             _globalMarket.longAvgPrice;
           _pnlLongE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((priceE30Long - _globalMarket.longAvgPrice) * _globalMarket.longPositionSize) /
+          uint256 _absPNL = ((priceE30 - _globalMarket.longAvgPrice) * _globalMarket.longPositionSize) /
             _globalMarket.longAvgPrice;
           _pnlLongE30 = int256(_absPNL);
         }
       }
 
       if (_globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0) {
-        if (_globalMarket.shortAvgPrice < priceE30Short) {
-          uint256 _absPNL = ((priceE30Short - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
+        if (_globalMarket.shortAvgPrice < priceE30) {
+          uint256 _absPNL = ((priceE30 - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
             _globalMarket.shortAvgPrice;
 
           _pnlShortE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30Short) * _globalMarket.shortPositionSize) /
+          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30) * _globalMarket.shortPositionSize) /
             _globalMarket.shortAvgPrice;
           _pnlShortE30 = int256(_absPNL);
         }
@@ -212,7 +209,7 @@ contract Calculator is Owned, ICalculator {
 
       {
         unchecked {
-          i++;
+          ++i;
           totalPnlLong += _pnlLongE30;
           totalPnlShort += _pnlShortE30;
         }
@@ -449,13 +446,12 @@ contract Calculator is Owned, ICalculator {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
 
-    // Calculate unrealized PnL and unrelized fee
+    // Calculate unrealized PnL and unrealized fee
     (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
       _subAccount,
       _limitPriceE30,
       _limitAssetId
     );
-
     // Calculate equity
     _equityValueE30 += int256(_collateralValueE30);
     _equityValueE30 += _unrealizedPnlValueE30;
@@ -512,7 +508,7 @@ contract Calculator is Owned, ICalculator {
         _var.priceE30 = _limitPriceE30;
       } else {
         // @todo - validate price age
-        (_var.priceE30, , , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+        (_var.priceE30, , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price
           (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
@@ -538,26 +534,38 @@ contract Calculator is Owned, ICalculator {
       }
 
       {
-        // Calculate borrowing fee
-        _unrealizedFeeE30 += int256(
-          getBorrowingFee(_marketConfig.assetClass, _var.position.reserveValueE30, _var.position.entryBorrowingRate)
-        );
-        // Calculate funding fee
-        _unrealizedFeeE30 += getFundingFee(
-          _var.position.marketIndex,
-          _var.position.positionSizeE30 > 0,
-          _var.position.positionSizeE30,
-          _var.position.entryFundingRate
-        );
+        {
+          // Calculate borrowing fee
+          uint256 _plpTVL = _getPLPValueE30(false);
+          PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+            _marketConfig.assetClass
+          );
+          uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);
+          uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate +
+            _nextBorrowingRate -
+            _var.position.entryBorrowingRate;
+          // Calculate the borrowing fee based on reserved value, borrowing rate.
+          _unrealizedFeeE30 += int256((_var.position.reserveValueE30 * _borrowingRate) / 1e18);
+          // getBorrowingFee(_marketConfig.assetClass, _var.position.reserveValueE30, _var.position.entryBorrowingRate)
+        }
+        {
+          // Calculate funding fee
+          int256 nextFundingRate = _getNextFundingRate(_var.position.marketIndex);
+          int256 fundingRate = _globalMarket.currentFundingRate + nextFundingRate;
+          _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
+        }
         // Calculate trading fee
         _unrealizedFeeE30 += int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
-        // Calculate liquidation fee
-        _unrealizedFeeE30 += int256(liquidationFee);
       }
 
       unchecked {
         ++i;
       }
+    }
+
+    if (_len != 0) {
+      // Calculate liquidation fee
+      _unrealizedFeeE30 += int256(liquidationFee);
     }
 
     return (_unrealizedPnlE30, _unrealizedFeeE30);
@@ -712,7 +720,6 @@ contract Calculator is Owned, ICalculator {
   ) public view returns (uint256 _freeCollateral) {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = getIMR(_subAccount);
-
     if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
@@ -822,29 +829,24 @@ contract Calculator is Owned, ICalculator {
     return _nextAveragePrice;
   }
 
+  function getNextFundingRate(uint256 _marketIndex) external view returns (int256 fundingRate) {
+    return _getNextFundingRate(_marketIndex);
+  }
+
   /// @notice Calculate next funding rate using when increase/decrease position.
   /// @param _marketIndex Market Index.
   /// @return fundingRate next funding rate using for both LONG & SHORT positions.
-  /// @return fundingRateLong next funding rate for LONG.
-  /// @return fundingRateShort next funding rate for SHORT.
-  function getNextFundingRate(
-    uint256 _marketIndex
-  ) external view returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {
+  function _getNextFundingRate(uint256 _marketIndex) internal view returns (int256 fundingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
-    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return (0, 0, 0);
+    if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return 0;
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     // If block.timestamp not pass the next funding time, return 0.
-    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return (0, 0, 0);
+    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return 0;
 
-    // Find market skew
-    (vars.marketPriceE30, , ) = OracleMiddleware(_configStorage.oracle()).unsafeGetLatestPrice(
-      marketConfig.assetId,
-      false
-    );
     vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
 
     // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
@@ -855,13 +857,7 @@ contract Calculator is Owned, ICalculator {
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
     vars.nextFundingRate = vars.nextFundingRate * vars.elapsedIntervals;
 
-    if (globalMarket.longOpenInterest > 0) {
-      fundingRateLong = (vars.nextFundingRate * int(globalMarket.longPositionSize)) / 1e30;
-    }
-    if (globalMarket.shortOpenInterest > 0) {
-      fundingRateShort = (vars.nextFundingRate * -int(globalMarket.shortPositionSize)) / 1e30;
-    }
-    return (vars.nextFundingRate, fundingRateLong, fundingRateShort);
+    return vars.nextFundingRate;
   }
 
   /**
@@ -877,23 +873,41 @@ contract Calculator is Owned, ICalculator {
     bool _isLong,
     int256 _size,
     int256 _entryFundingRate
-  ) public view returns (int256 fundingFee) {
+  ) external view returns (int256 fundingFee) {
     if (_size == 0) return 0;
     uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
 
     PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
 
-    int256 _fundingRate = _globalMarket.currentFundingRate - _entryFundingRate;
+    return _getFundingFee(_isLong, absSize, _globalMarket.currentFundingRate, _entryFundingRate);
+  }
+
+  function _getFundingFee(
+    bool _isLong,
+    uint256 _size,
+    int256 _sumFundingRate,
+    int256 _entryFundingRate
+  ) private pure returns (int256 fundingFee) {
+    int256 _fundingRate = _sumFundingRate - _entryFundingRate;
 
     // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
     // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
-    fundingFee = (int256(absSize) * _fundingRate) / int64(RATE_PRECISION);
+    fundingFee = (int256(_size) * _fundingRate) / int64(RATE_PRECISION);
 
+    // Position Exposure   | Funding Rate       | Fund Flow
+    // (isLong)            | (fundingRate > 0)  | (traderMustPay)
+    // ---------------------------------------------------------------------
+    // true                | true               | false  (fee reserve -> trader)
+    // true                | false              | true   (trader -> fee reserve)
+    // false               | true               | true   (trader -> fee reserve)
+    // false               | false              | false  (fee reserve -> trader)
+
+    // If fundingFee is negative mean Trader receives Fee
+    // If fundingFee is positive mean Trader pays Fee
     if (_isLong) {
-      return _fundingRate < 0 ? -fundingFee : fundingFee;
-    } else {
-      return _fundingRate > 0 ? -fundingFee : fundingFee;
+      return -fundingFee;
     }
+    return fundingFee;
   }
 
   /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.
@@ -905,13 +919,22 @@ contract Calculator is Owned, ICalculator {
     uint8 _assetClassIndex,
     uint256 _reservedValue,
     uint256 _entryBorrowingRate
-  ) public view returns (uint256 borrowingFee) {
+  ) external view returns (uint256 borrowingFee) {
     // Get the global asset class.
     PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
+    // // Calculate borrowing fee.
+    return _getBorrowingFee(_reservedValue, _assetClassState.sumBorrowingRate, _entryBorrowingRate);
+  }
+
+  function _getBorrowingFee(
+    uint256 _reservedValue,
+    uint256 _sumBorrowingRate,
+    uint256 _entryBorrowingRate
+  ) internal view returns (uint256 borrowingFee) {
     // Calculate borrowing rate.
-    uint256 _borrowingRate = _assetClassState.sumBorrowingRate - _entryBorrowingRate;
+    uint256 _borrowingRate = _sumBorrowingRate - _entryBorrowingRate;
     // Calculate the borrowing fee based on reserved value, borrowing rate.
     return (_reservedValue * _borrowingRate) / RATE_PRECISION;
   }
@@ -941,9 +964,9 @@ contract Calculator is Owned, ICalculator {
     PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
       _assetClassIndex
     );
-
     // If block.timestamp not pass the next funding time, return 0.
     if (_assetClassState.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
+
     // If PLP TVL is 0, return 0.
     if (_plpTVL == 0) return 0;
 
@@ -999,7 +1022,7 @@ contract Calculator is Owned, ICalculator {
       isProfit = _markPrice < _averagePrice;
     }
 
-    // In case of profit, we need to check the current timestamp againt minProfitDuration
+    // In case of profit, we need to check the current timestamp against minProfitDuration
     // in order to prevent front-run attack, or price manipulation.
     // Check `isProfit` first, to save SLOAD in loss case.
     if (isProfit) {

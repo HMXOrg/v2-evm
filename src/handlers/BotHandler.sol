@@ -150,7 +150,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
 
     // liquidate
-    LiquidationService(liquidationService).liquidate(_subAccount);
+    LiquidationService(liquidationService).liquidate(_subAccount, msg.sender);
 
     emit LogLiquidate(_subAccount);
   }

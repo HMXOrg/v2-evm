@@ -4,5 +4,5 @@ pragma solidity 0.8.18;
 contract MockLiquidationService {
   address public perpStorage;
 
-  function liquidate(address /*_subAccount*/) external {}
+  function liquidate(address /*_subAccount*/, address /*_liquidator*/) external {}
 }

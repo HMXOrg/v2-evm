@@ -38,11 +38,6 @@ interface IConfigStorage {
     bool accepted; // accepted to deposit as collateral
   }
 
-  struct OpenInterest {
-    uint256 longMaxOpenInterestUSDE30; // maximum to open long position
-    uint256 shortMaxOpenInterestUSDE30; // maximum to open short position
-  }
-
   struct FundingRate {
     uint256 maxSkewScaleUSD; // maximum skew scale for using maxFundingRate
     uint256 maxFundingRate; // maximum funding rate
@@ -59,7 +54,6 @@ interface IConfigStorage {
     uint8 assetClass; // Crypto = 1, Forex = 2, Stock = 3
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
-    OpenInterest openInterest;
     FundingRate fundingRate;
   }
 

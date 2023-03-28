@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-
+import { console } from "forge-std/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { BaseIntTest_Assertions } from "@hmx-test/integration/98_BaseIntTest_Assertions.i.sol";
@@ -38,11 +38,11 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      exeutePLPOrder(_orderIndex, _priceData);
+      executePLPOrder(_orderIndex, _priceData);
     }
   }
 
-  function exeutePLPOrder(uint256 _endIndex, bytes[] memory _priceData) internal {
+  function executePLPOrder(uint256 _endIndex, bytes[] memory _priceData) internal {
     vm.startPrank(ORDER_EXECUTOR);
     liquidityHandler.executeOrder(_endIndex, payable(FEEVER), _priceData);
     vm.stopPrank();
@@ -78,7 +78,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      exeutePLPOrder(_orderIndex, _priceData);
+      executePLPOrder(_orderIndex, _priceData);
     }
   }
 
@@ -173,6 +173,40 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
       _tpToken,
       _priceData
     );
+  }
+
+  function createLimitTradeOrder(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    int256 _sizeDelta,
+    uint256 _triggerPrice,
+    bool _triggerAboveThreshold,
+    uint256 _executionFee,
+    bool _reduceOnly,
+    address _tpToken
+  ) internal {
+    vm.prank(_account);
+    limitTradeHandler.createOrder{ value: _executionFee }(
+      _subAccountId,
+      _marketIndex,
+      _sizeDelta,
+      _triggerPrice,
+      _triggerAboveThreshold,
+      _executionFee,
+      _reduceOnly,
+      _tpToken
+    );
+  }
+
+  function executeLimitTradeOrder(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _orderIndex,
+    address payable _feeReceiver,
+    bytes[] memory _priceData
+  ) internal {
+    limitTradeHandler.executeOrder(_account, _subAccountId, _orderIndex, _feeReceiver, _priceData);
   }
 
   function liquidate(address _subAccount, bytes[] memory _priceData) internal {

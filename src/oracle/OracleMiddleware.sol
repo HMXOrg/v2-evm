@@ -138,8 +138,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate) {
-    (_adaptivePrice, _price, , _lastUpdate) = _getLatestAdaptivePrice(
+  ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate) {
+    (_adaptivePrice, , _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -147,7 +147,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _maxSkewScaleUSD,
       true
     );
-    return (_adaptivePrice, _price, _lastUpdate);
+    return (_adaptivePrice, _lastUpdate);
   }
 
   /// @notice Return the unsafe latest adaptive rice of asset, last update of the given asset id
@@ -163,8 +163,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate) {
-    (_adaptivePrice, _price, , _lastUpdate) = _getLatestAdaptivePrice(
+  ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate) {
+    (_adaptivePrice, , _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -172,7 +172,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _maxSkewScaleUSD,
       false
     );
-    return (_adaptivePrice, _price, _lastUpdate);
+    return (_adaptivePrice, _lastUpdate);
   }
 
   /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
@@ -188,15 +188,11 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  )
-    external
-    view
-    returns (uint256 _adaptivePrice, uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status)
-  {
+  ) external view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_adaptivePrice, _price, _exponent, _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _exponent, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -204,7 +200,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _maxSkewScaleUSD,
       true
     );
-    return (_adaptivePrice, _price, _exponent, _lastUpdate, _status);
+    return (_adaptivePrice, _exponent, _lastUpdate, _status);
   }
 
   /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
@@ -220,11 +216,11 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate, uint8 _status) {
+  ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_adaptivePrice, _price, , _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, , _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -232,7 +228,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _maxSkewScaleUSD,
       false
     );
-    return (_adaptivePrice, _price, _lastUpdate, _status);
+    return (_adaptivePrice, _lastUpdate, _status);
   }
 
   function _getLatestPrice(
@@ -271,8 +267,9 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD,
     bool isSafe
-  ) private view returns (uint256 _adaptivePrice, uint256 _price, int32 _exponent, uint256 _lastUpdate) {
+  ) private view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate) {
     // Get price from Pyth
+    uint256 _price;
     (_price, _exponent, _lastUpdate) = isSafe
       ? _getLatestPrice(_assetId, _isMax)
       : _unsafeGetLatestPrice(_assetId, _isMax);
@@ -281,7 +278,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _adaptivePrice = _calculateAdaptivePrice(_marketSkew, _sizeDelta, _price, _maxSkewScaleUSD);
 
     // Return the price and last update
-    return (_adaptivePrice, _price, _exponent, _lastUpdate);
+    return (_adaptivePrice, _exponent, _lastUpdate);
   }
 
   /// @notice Calcuatate adaptive base on Market skew by position size
@@ -295,7 +292,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _price,
     uint256 _maxSkewScaleUSD
-  ) internal view returns (uint256 _adaptivePrice) {
+  ) internal pure returns (uint256 _adaptivePrice) {
     // couldn't calculate adaptive price because max skew scale config is used to calcualte premium with market skew
     // then just return oracle price
     if (_maxSkewScaleUSD == 0) return _price;
@@ -311,18 +308,18 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     //    If Trader manipulatate by Decrease Long position for 150,000 USD
     //    Then:
     //      Premium (before) = 300,000 / 300,000,000 = 0.001
-    int256 _premium = (_marketSkew * 1e18) / int256(_maxSkewScaleUSD);
+    int256 _premium = (_marketSkew * 1e30) / int256(_maxSkewScaleUSD);
 
     //      Premium (after)  = (300,000 - 150,000) / 300,000,000 = 0.0005
     //      ** + When user increase Long position ot Decrease Short position
     //      ** - When user increase Short position ot Decrease Long position
-    int256 _premiumAfter = ((_marketSkew + _sizeDelta) * 1e18) / int256(_maxSkewScaleUSD);
+    int256 _premiumAfter = ((_marketSkew + _sizeDelta) * 1e30) / int256(_maxSkewScaleUSD);
 
     //      Adaptive price = Price * (1 + Median of Before and After)
     //                     = 1,500 * (1 + (0.001 + 0.0005 / 2))
     //                     = 1,500 * (1 + 0.00125) = 1,501.875
     int256 _premiumMedian = (_premium + _premiumAfter) / 2;
-    return (_price * uint256(1e18 + _premiumMedian)) / 1e18;
+    return (_price * uint256(1e30 + _premiumMedian)) / 1e30;
   }
 
   /// @notice Set asset price configs

@@ -11,16 +11,6 @@ contract TC12 is BaseIntTest_WithActions {
 
   // ## TC12 - limit number of position per sub-account
   function testCorrectness_TC12_LimitNumberOfMarketToTrade() external {
-    // note: set max position to be 2 because prepared markets has just 4
-    configStorage.setTradingConfig(
-      IConfigStorage.TradingConfig({
-        fundingInterval: 1, // second
-        devFeeRateBPS: 1500, // 15%
-        minProfitDuration: 15, // second
-        maxPosition: 2
-      })
-    );
-
     // ### Scenario: Prepare environment
     // mint native token
     vm.deal(BOB, 1 ether);
@@ -38,9 +28,19 @@ contract TC12 is BaseIntTest_WithActions {
     // And Btc price is 20,000 USD
     // And WETH price is 1,500 USD
     updatePriceData = new bytes[](2);
-    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
-    updatePriceData[1] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    updatePriceData[1] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
     addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, updatePriceData, true);
+
+    // And Max Number of position 2
+    configStorage.setTradingConfig(
+      IConfigStorage.TradingConfig({
+        fundingInterval: 1, // second
+        devFeeRateBPS: 1500, // 15%
+        minProfitDuration: 15, // second
+        maxPosition: 2
+      })
+    );
 
     address _aliceSubAccount0 = getSubAccount(ALICE, 0);
     address _aliceSubAccount1 = getSubAccount(ALICE, 1);
@@ -198,14 +198,46 @@ contract TC12 is BaseIntTest_WithActions {
       });
     }
 
-    // check asset class and market state
+    marketBuy(ALICE, 0, appleMarketIndex, 6_000 * 1e30, address(0), new bytes[](0));
+    {
+      // note: decrease size is greater than position size for 3,000 USD
+      //       this action will separated to 2 steps
+      //       1. decrease short 3,000 USD
+      //       2. increase long  3,000 USD
+      // Then Alice should has correct long position
+      // Calculation after closed short position
+      // market skew      = -6000
+      // new market skew  = -6000 + 3000 = -3000
 
-    // And asset class reservce should be corrected
+      // Calculation after open new long position
+      // market skew      = -3000
+      // new market skew  = -3000 + 3000 = 0
+      // premium before   = -3000 / 300000000 = -0.00001
+      // premium after    = 0 / 300000000 = 0
+      // premium          = (-0.00001 + 0) / 2 = -0.000005
+      // adaptive price   = 152 * (1 + -0.000005) = 151.99924
+      assertPositionInfoOf({
+        _subAccount: _aliceSubAccount0,
+        _marketIndex: appleMarketIndex,
+        _positionSize: int256(3_000 * 1e30),
+        _avgPrice: 151.99924 * 1e30,
+        _reserveValue: 1350 * 1e30,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _entryFundingRate: 0
+      });
+    }
+
+    // ### Scenario: Alice flip position direction APPLE position
+    // When Alice decrease short position at APPLE 6,000 USD
+    // Then Alice should has long position of APPLE 3,000 USD
+
+    // And Asset class's reserve and Market's state should be corrected
+
     assertAssetClassReserve({ _assetClassIndex: 0, _reserved: 2_970 * 1e30, _str: "Crypto's reserved" });
     assertAssetClassReserve({ _assetClassIndex: 1, _reserved: 2_700 * 1e30, _str: "Equity's reserved" });
     assertAssetClassReserve({ _assetClassIndex: 2, _reserved: 0, _str: "Forex's reserved" });
 
-    // And market position size shoule be corrected
     // WETH's market
     assertMarketLongPosition({
       _marketIndex: wethMarketIndex,
@@ -229,12 +261,48 @@ contract TC12 is BaseIntTest_WithActions {
     assertMarketShortPosition({ _marketIndex: wbtcMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "WBTC: " });
 
     // APPLE's market
-    assertMarketLongPosition({ _marketIndex: appleMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "APPLE: " });
-    assertMarketShortPosition({
+    assertMarketLongPosition({
       _marketIndex: appleMarketIndex,
-      _positionSize: 6000 * 1e30,
-      _avgPrice: 151.998479996199961999619996199961 * 1e30,
+      _positionSize: 3000 * 1e30,
+      _avgPrice: 151.99924 * 1e30,
       _str: "APPLE: "
     });
+    assertMarketShortPosition({
+      _marketIndex: appleMarketIndex,
+      _positionSize: 3000 * 1e30,
+      _avgPrice: 151.999239999999999999999999999997 * 1e30,
+      _str: "APPLE: "
+    });
+
+    // ### Scenario: Max position changed and Alice could close position
+    // When Admin set max position to be 1
+    configStorage.setTradingConfig(
+      IConfigStorage.TradingConfig({
+        fundingInterval: 1, // second
+        devFeeRateBPS: 1500, // 15%
+        minProfitDuration: 15, // second
+        maxPosition: 1
+      })
+    );
+
+    // Then Alice should't open more position at JPY
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_BadNumberOfPosition()"));
+    marketSell(ALICE, 0, jpyMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+
+    // And Alice could close APPLE position
+    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    {
+      // And Apple position size should be 0
+      assertPositionInfoOf({
+        _subAccount: _aliceSubAccount0,
+        _marketIndex: appleMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _reserveValue: 0,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _entryFundingRate: 0
+      });
+    }
   }
 }

@@ -49,7 +49,7 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
         fundingInterval: 1, // second
         devFeeRateBPS: 1500, // 15%
         minProfitDuration: 15, // second
-        maxPosition: 2
+        maxPosition: 10
       })
     );
   }

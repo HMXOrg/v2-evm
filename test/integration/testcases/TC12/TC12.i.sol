@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 import { console } from "forge-std/console.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
@@ -10,6 +11,16 @@ contract TC12 is BaseIntTest_WithActions {
 
   // ## TC12 - limit number of position per sub-account
   function testCorrectness_TC12_LimitNumberOfMarketToTrade() external {
+    // note: set max position to be 2 because prepared markets has just 4
+    configStorage.setTradingConfig(
+      IConfigStorage.TradingConfig({
+        fundingInterval: 1, // second
+        devFeeRateBPS: 1500, // 15%
+        minProfitDuration: 15, // second
+        maxPosition: 2
+      })
+    );
+
     // ### Scenario: Prepare environment
     // mint native token
     vm.deal(BOB, 1 ether);

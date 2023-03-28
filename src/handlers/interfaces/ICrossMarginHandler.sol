@@ -7,6 +7,7 @@ interface ICrossMarginHandler {
    */
   error ICrossMarginHandler_InvalidAddress();
   error ICrossMarginHandler_MismatchMsgValue();
+  error ICrossMarginHandler_InCorrectValueTransfer();
 
   function depositCollateral(uint8 _subAccountId, address _token, uint256 _amount, bool _shouldWrap) external payable;
 
@@ -26,5 +27,5 @@ interface ICrossMarginHandler {
 
   function setPyth(address _address) external;
 
-  function withdrawFundingFeeSurplus(address _stableToken, bytes[] memory _priceData) external;
+  function withdrawFundingFeeSurplus(address _stableToken, bytes[] memory _priceData) external payable;
 }

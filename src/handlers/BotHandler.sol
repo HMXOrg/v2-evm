@@ -197,9 +197,9 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
       _vars.fundingFeeReserve = _vaultStorage.fundingFeeReserve(_vars.collateralTokens[i]);
       _vars.tokenAssetId = _configStorage.tokenAssetIds(_vars.collateralTokens[i]);
       _vars.tokenDecimal = _configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
-      (_vars.tokenPrice, ) = _oracle.getLatestPrice(_vars.tokenAssetId, false);
 
       if (_stableToken != _vars.collateralTokens[i] && _vars.fundingFeeReserve > 0) {
+        (_vars.tokenPrice, ) = _oracle.getLatestPrice(_vars.tokenAssetId, false);
         _vars.fundingFeeReserveValue = (_vars.fundingFeeReserve * _vars.tokenPrice) / (10 ** _vars.tokenDecimal);
         _vars.stableTokenAmount =
           (_vars.fundingFeeReserveValue * (10 ** _vars.stableTokenDecimal)) /

@@ -105,9 +105,9 @@ contract TradeHelper is ITradeHelper {
       int256 nextFundingRate = calculator.getNextFundingRate(_marketIndex);
       int256 lastFundingRate = _globalMarket.currentFundingRate;
       _globalMarket.currentFundingRate += nextFundingRate;
+      _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
 
       if (_globalMarket.longPositionSize > 0) {
-        _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
         int256 fundingFeeLongE30 = calculator.getFundingFee(
           _marketIndex,
           true,
@@ -118,7 +118,6 @@ contract TradeHelper is ITradeHelper {
       }
 
       if (_globalMarket.shortPositionSize > 0) {
-        _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
         int256 fundingFeeShortE30 = calculator.getFundingFee(
           _marketIndex,
           false,

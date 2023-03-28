@@ -22,10 +22,8 @@ contract Vester is ReentrancyGuardUpgradeable {
     uint256 endTime,
     uint256 penaltyAmount
   );
-
   event Claim(address indexed owner, uint256 indexed itemIndex, uint256 vestedAmount, uint256 unusedAmount);
-
-  event Cancel(address indexed owner, uint256 indexed itemIndex, uint256 returnAmount);
+  event Abort(address indexed owner, uint256 indexed itemIndex, uint256 returnAmount);
 
   // ---------------------
   //       Errors
@@ -35,7 +33,6 @@ contract Vester is ReentrancyGuardUpgradeable {
   error Unauthorized();
   error Claimed();
   error Aborted();
-  error HasNotCompleted();
   error HasCompleted();
 
   // ---------------------
@@ -154,7 +151,7 @@ contract Vester is ReentrancyGuardUpgradeable {
 
     IERC20Upgradeable(esP88).safeTransfer(msg.sender, returnAmount);
 
-    emit Cancel(msg.sender, itemIndex, returnAmount);
+    emit Abort(msg.sender, itemIndex, returnAmount);
   }
 
   function getUnlockAmount(uint256 amount, uint256 duration) public pure returns (uint256) {

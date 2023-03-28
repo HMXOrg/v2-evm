@@ -28,6 +28,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getTradingFee");
 
       configStorage.setCalculator(address(mockCalculator));
 
@@ -92,8 +93,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
 
     address aliceAddress = getSubAccount(ALICE, 0);
 
-    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
     vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
 
     bytes32 _wethPositionId = getPositionId(ALICE, 0, ethMarketIndex);
     bytes32 _wbtcPositionId = getPositionId(ALICE, 0, ethMarketIndex);
@@ -157,8 +158,8 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     address aliceAddress = getSubAccount(ALICE, 0);
     address bobAddress = getSubAccount(BOB, 0);
 
-    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
     vaultStorage.increaseTraderBalance(aliceAddress, address(wbtc), 0.3 * 1e8);
+    vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 10_000 * 1e6);
 
     vaultStorage.increaseTraderBalance(bobAddress, address(usdt), 10_000 * 1e6);
 

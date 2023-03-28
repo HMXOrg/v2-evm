@@ -195,7 +195,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint8 _marketStatus;
 
       // Get Price market.
-      (_vars.adaptivePriceE30, _vars.priceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(
+      (_vars.adaptivePriceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = OracleMiddleware(
         _configStorage.oracle()
       ).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
@@ -209,7 +209,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
         _vars.adaptivePriceE30 = _limitPriceE30;
       }
 
-      (_vars.closePriceE30, , , , ) = OracleMiddleware(_configStorage.oracle()).getLatestAdaptivePriceWithMarketStatus(
+      (_vars.closePriceE30, , , ) = OracleMiddleware(_configStorage.oracle()).getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         _vars.isLong, // if current position is SHORT position, then we use max price
         (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
@@ -391,7 +391,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_vars.priceE30, , , _lastPriceUpdated, _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
+      (_vars.priceE30, , _lastPriceUpdated, _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
@@ -464,7 +464,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
     {
       uint8 _marketStatus;
 
-      (_vars.priceE30, , , , _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
+      (_vars.priceE30, , , _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price

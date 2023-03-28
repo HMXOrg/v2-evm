@@ -23,6 +23,7 @@ interface ITradeService {
   error ITradeService_ReservedValueStillEnough();
   error ITradeService_PlpHealthy();
   error ITradeService_MarketHealthy();
+  error ITradeService_InvalidAddress();
 
   /**
    * STRUCTS

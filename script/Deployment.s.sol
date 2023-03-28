@@ -12,13 +12,11 @@ abstract contract Deployment {
   }
 
   struct DeployLocalVars {
-    IPyth pyth;
+    address pyth;
     uint64 defaultOracleStaleTime;
   }
 
-  function deploy(
-    DeployLocalVars memory localVars
-  ) internal returns (DeployReturnVars memory) {
+  function deploy(DeployLocalVars memory localVars) internal returns (DeployReturnVars memory) {
     DeployReturnVars memory vars;
 
     vars.pythAdapter = new PythAdapter(localVars.pyth);

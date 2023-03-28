@@ -443,6 +443,15 @@ contract TradeHelper is ITradeHelper {
     // else continue, as trader does not have any of this collateral token
   }
 
+  function accumSettledBorrowingFee(uint256 _assetClassIndex, uint256 _borrowingFeeToBeSettled) external {
+    PerpStorage _perpStorage = PerpStorage(perpStorage);
+    PerpStorage.GlobalAssetClass memory _globalAssetClass = _perpStorage.getGlobalAssetClassByIndex(
+      uint8(_assetClassIndex)
+    );
+    _globalAssetClass.sumSettledBorrowingFeeE30 += _borrowingFeeToBeSettled;
+    _perpStorage.updateGlobalAssetClass(uint8(_assetClassIndex), _globalAssetClass);
+  }
+
   function _accumSettledBorrowingFee(uint256 _assetClassIndex, uint256 _borrowingFeeToBeSettled) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     PerpStorage.GlobalAssetClass memory _globalAssetClass = _perpStorage.getGlobalAssetClassByIndex(

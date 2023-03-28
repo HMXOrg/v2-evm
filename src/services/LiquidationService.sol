@@ -149,11 +149,17 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService {
       //   _vars.position.marketIndex
       // );
 
-      borrowingFee += calculator.getBorrowingFee(
-        _vars.marketConfig.assetClass,
-        _vars.position.reserveValueE30,
-        _vars.position.entryBorrowingRate
-      );
+      {
+        uint256 _borrowingFee = calculator.getBorrowingFee(
+          _vars.marketConfig.assetClass,
+          _vars.position.reserveValueE30,
+          _vars.position.entryBorrowingRate
+        );
+
+        borrowingFee += _borrowingFee;
+
+        TradeHelper(tradeHelper).accumSettledBorrowingFee(_vars.marketConfig.assetClass, _borrowingFee);
+      }
 
       fundingFee += calculator.getFundingFee(
         _vars.position.marketIndex,

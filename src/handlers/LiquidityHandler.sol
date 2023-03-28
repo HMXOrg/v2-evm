@@ -183,7 +183,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       _amountIn
     );
 
-    uint256 _orderId = liquidityOrders.length;
+    _orderId = liquidityOrders.length;
     liquidityOrders.push(
       LiquidityOrder({
         account: payable(msg.sender),

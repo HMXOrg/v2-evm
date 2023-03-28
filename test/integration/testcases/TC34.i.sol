@@ -50,7 +50,7 @@ contract TC34 is BaseIntTest_WithActions {
 
     bytes[] memory _newPrices = setPrices(_newAssetIds, _prices, _conf);
 
-    exeutePLPOrder(liquidityHandler.nextExecutionOrderIndex(), _newPrices);
+    executePLPOrder(liquidityHandler.nextExecutionOrderIndex(), _newPrices);
 
     _totalExecutionOrderFee += (executionOrderFee - 1);
     liquidityTester.assertLiquidityInfo(

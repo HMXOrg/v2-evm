@@ -27,7 +27,7 @@ interface IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate);
+  ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate);
 
   function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
@@ -35,7 +35,7 @@ interface IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate);
+  ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate);
 
   function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
@@ -43,7 +43,7 @@ interface IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _adaptivePrice, uint256 _price, int32 _exponent, uint256 _lastUpdate, uint8 _status);
+  ) external view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate, uint8 _status);
 
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
@@ -51,7 +51,7 @@ interface IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD
-  ) external view returns (uint256 _adaptivePrice, uint256 _price, uint256 _lastUpdate, uint8 _status);
+  ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate, uint8 _status);
 
   // =========================================
   // | ---------- Setter ------------------- |

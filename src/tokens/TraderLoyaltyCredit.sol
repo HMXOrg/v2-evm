@@ -281,6 +281,7 @@ contract TraderLoyaltyCredit is Owned, ITraderLoyaltyCredit {
       _balances[epochTimestamp][account] = accountBalance - amount;
       // Overflow not possible: amount <= accountBalance <= totalSupply.
       _totalSupply -= amount;
+      totalSupplyByEpoch[epochTimestamp] -= amount;
     }
 
     emit Transfer(account, address(0), amount);

@@ -21,13 +21,6 @@ contract MockPerpStorage {
     return globalState;
   }
 
-  function getGlobalMarketInfo(
-    uint256 _marketIndex
-  ) external view returns (int256 accumFundingLong, int256 accumFundingShort) {
-    IPerpStorage.GlobalMarket memory _globalMarket = globalMarkets[_marketIndex];
-    return (_globalMarket.accumFundingLong, _globalMarket.accumFundingShort);
-  }
-
   function getPositionBySubAccount(
     address _subAccount
   ) external view returns (IPerpStorage.Position[] memory traderPositions) {

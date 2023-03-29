@@ -12,7 +12,6 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { console } from "forge-std/console.sol";
 
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
@@ -452,6 +451,7 @@ contract Calculator is Owned, ICalculator {
       _limitPriceE30,
       _limitAssetId
     );
+
     // Calculate equity
     _equityValueE30 += int256(_collateralValueE30);
     _equityValueE30 += _unrealizedPnlValueE30;

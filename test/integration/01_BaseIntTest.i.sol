@@ -260,6 +260,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       vaultStorage.setServiceExecutors(address(tradeHelper), true);
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(liquidationService), true);
+      vaultStorage.setServiceExecutors(address(botHandler), true);
     }
 
     // Setup PerpStorage

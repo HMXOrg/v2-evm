@@ -12,17 +12,21 @@ import { console } from "forge-std/console.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 
 // Command:
-// forge test --fork-url https://aged-white-wind.arbitrum-mainnet.quiknode.pro/74ec5b20e4a4db94467209283c9b2ebcf9e1f95d/ --block-number 74124019 --match-contract LeanPyth_Verification
+// forge test --fork-url https://rpc.ankr.com/arbitrum --block-number 74124019 --match-contract LeanPyth_Verification
 
 contract LeanPyth_Verification is TestBase, StdAssertions, StdCheatsSafe {
   using stdJson for string;
   LeanPyth leanPyth;
+
+  uint256 arbitrumForkId;
 
   event PriceFeedUpdate(bytes32 indexed id, uint64 publishTime, int64 price, uint64 conf);
 
   event PriceFeedUpdate(bytes32 indexed id, uint64 publishTime, int64 price, uint64 conf, bytes encodedVm);
 
   function setUp() public {
+    arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
+
     // Pyth on Arbitrum
     address _pyth = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
 

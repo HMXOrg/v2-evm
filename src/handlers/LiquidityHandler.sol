@@ -20,8 +20,6 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
-import { console } from "forge-std/console.sol";
-
 /// @title LiquidityHandler
 contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   using SafeERC20 for IERC20;
@@ -35,31 +33,46 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogCreateAddLiquidityOrder(
     address indexed account,
-    address token,
+    uint256 indexed orderId,
+    address indexed token,
     uint256 amountIn,
     uint256 minOut,
-    uint256 executionFee,
-    uint256 orderIndex
+    uint256 executionFee
   );
   event LogCreateRemoveLiquidityOrder(
     address indexed account,
-    address token,
+    uint256 indexed orderId,
+    address indexed token,
     uint256 amountIn,
     uint256 minOut,
     uint256 executionFee,
-    bool isNativeOut,
-    uint256 orderIndex
+    bool isNativeOut
   );
   event LogExecuteLiquidityOrder(
-    address payable account,
-    address token,
+    address indexed account,
+    uint256 indexed orderId,
+    address indexed token,
     uint256 amount,
     uint256 minOut,
     bool isAdd,
     uint256 actualOut
   );
-  event LogCancelLiquidityOrder(address payable account, address token, uint256 amount, uint256 minOut, bool isAdd);
+  event LogCancelLiquidityOrder(
+    address indexed account,
+    uint256 indexed orderId,
+    address indexed token,
+    uint256 amount,
+    uint256 minOut,
+    bool isAdd
+  );
 
+  event LogRefund(
+    address indexed account,
+    uint256 indexed orderId,
+    address indexed token,
+    uint256 amount,
+    bool isNativeOut
+  );
   /**
    * States
    */
@@ -119,7 +132,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldWrap
-  ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _latestOrderIndex) {
+  ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
 
     //1. convert native to WNative (including executionFee)
@@ -136,9 +149,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
+    _orderId = liquidityOrders.length;
     liquidityOrders.push(
       LiquidityOrder({
         account: payable(msg.sender),
+        orderId: _orderId,
         token: _tokenIn,
         amount: _amountIn,
         minOut: _minOut,
@@ -148,10 +163,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       })
     );
 
-    _latestOrderIndex = liquidityOrders.length - 1;
-
-    emit LogCreateAddLiquidityOrder(msg.sender, _tokenIn, _amountIn, _minOut, _executionFee, _latestOrderIndex);
-    return _latestOrderIndex;
+    emit LogCreateAddLiquidityOrder(msg.sender, _orderId, _tokenIn, _amountIn, _minOut, _executionFee);
+    return _orderId;
   }
 
   /// @notice Create a new RemoveLiquidity order
@@ -166,7 +179,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     uint256 _minOut,
     uint256 _executionFee,
     bool _isNativeOut
-  ) external payable nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _latestOrderIndex) {
+  ) external payable nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _orderId) {
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
 
     //convert native to WNative (including executionFee)
@@ -182,9 +195,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       _amountIn
     );
 
+    _orderId = liquidityOrders.length;
     liquidityOrders.push(
       LiquidityOrder({
         account: payable(msg.sender),
+        orderId: _orderId,
         token: _tokenOut,
         amount: _amountIn,
         minOut: _minOut,
@@ -194,25 +209,23 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       })
     );
 
-    _latestOrderIndex = liquidityOrders.length - 1;
-
     emit LogCreateRemoveLiquidityOrder(
       msg.sender,
+      _orderId,
       _tokenOut,
       _amountIn,
       _minOut,
       _executionFee,
-      _isNativeOut,
-      _latestOrderIndex
+      _isNativeOut
     );
 
-    return _latestOrderIndex;
+    return _orderId;
   }
 
   /// @notice Cancel order
-  /// @param _orderIndex orderIndex of user order
-  function cancelLiquidityOrder(uint256 _orderIndex) external nonReentrant {
-    _cancelLiquidityOrder(msg.sender, _orderIndex);
+  /// @param _orderId orderIndex of user order
+  function cancelLiquidityOrder(uint256 _orderId) external nonReentrant {
+    _cancelLiquidityOrder(msg.sender, _orderId);
   }
 
   /// @notice Cancel order
@@ -234,7 +247,14 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     delete liquidityOrders[_orderIndex];
     _refund(order);
 
-    emit LogCancelLiquidityOrder(payable(_account), order.token, order.amount, order.minOut, order.isAdd);
+    emit LogCancelLiquidityOrder(
+      payable(_account),
+      order.orderId,
+      order.token,
+      order.amount,
+      order.minOut,
+      order.isAdd
+    );
   }
 
   /// @notice refund order
@@ -245,7 +265,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     if (_order.amount == 0) {
       revert ILiquidityHandler_NoOrder();
     }
-    address _plp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
 
     if (_order.isAdd) {
       if (_order.isNativeOut) {
@@ -253,8 +272,11 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       } else {
         IERC20(_order.token).safeTransfer(_order.account, _order.amount);
       }
+      emit LogRefund(_order.account, _order.orderId, _order.token, _order.amount, _order.isNativeOut);
     } else {
+      address _plp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
       IERC20(_plp).safeTransfer(_order.account, _order.amount);
+      emit LogRefund(_order.account, _order.orderId, _plp, _order.amount, false);
     }
   }
 
@@ -286,7 +308,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
     for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
       LiquidityOrder memory _order = liquidityOrders[i];
-
       delete liquidityOrders[i];
 
       // refund in case of order updatePythFee > executionFee
@@ -295,14 +316,15 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       } else {
         isExecuting = true;
 
-        try this.executeLiquidity(_order) returns (uint256 result) {
+        try this.executeLiquidity(_order) returns (uint256 actualOut) {
           emit LogExecuteLiquidityOrder(
             _order.account,
+            _order.orderId,
             _order.token,
             _order.amount,
             _order.minOut,
             _order.isAdd,
-            result
+            actualOut
           );
         } catch Error(string memory) {
           //refund in case of revert as message

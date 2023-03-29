@@ -4,8 +4,9 @@ pragma solidity 0.8.18;
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { IVester } from "./interfaces/IVester.sol";
 
-contract Vester is ReentrancyGuardUpgradeable {
+contract Vester is ReentrancyGuardUpgradeable, IVester {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   uint256 private constant YEAR = 365 days;
@@ -13,7 +14,6 @@ contract Vester is ReentrancyGuardUpgradeable {
   // ---------------------
   //       Events
   // ---------------------
-
   event Vest(
     address indexed owner,
     uint256 indexed itemIndex,
@@ -26,52 +26,28 @@ contract Vester is ReentrancyGuardUpgradeable {
   event Abort(address indexed owner, uint256 indexed itemIndex, uint256 returnAmount);
 
   // ---------------------
-  //       Errors
-  // ---------------------
-  error BadArgument();
-  error ExceedMaxDuration();
-  error Unauthorized();
-  error Claimed();
-  error Aborted();
-  error HasCompleted();
-
-  // ---------------------
-  //       Structs
-  // ---------------------
-  struct Item {
-    address owner;
-    bool hasClaimed;
-    bool hasAborted;
-    uint256 amount;
-    uint256 startTime;
-    uint256 endTime;
-    uint256 lastClaimTime;
-    uint256 totalUnlockedAmount;
-  }
-
-  // ---------------------
   //       States
   // ---------------------
-  address public esP88;
-  address public p88;
+  address public esHMX;
+  address public hmx;
 
-  address public vestedEsp88Destination;
-  address public unusedEsp88Destination;
+  address public vestedEsHmxDestination;
+  address public unusedEsHmxDestination;
 
-  Item[] public items;
+  Item[] public override items;
 
   function initialize(
-    address esP88Address,
-    address p88Address,
-    address vestedEsp88DestinationAddress,
-    address unusedEsp88DestinationAddress
+    address esHMXAddress,
+    address hmxAddress,
+    address vestedEsHmxDestinationAddress,
+    address unusedEsHmxDestinationAddress
   ) external initializer {
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
-    esP88 = esP88Address;
-    p88 = p88Address;
-    vestedEsp88Destination = vestedEsp88DestinationAddress;
-    unusedEsp88Destination = unusedEsp88DestinationAddress;
+    esHMX = esHMXAddress;
+    hmx = hmxAddress;
+    vestedEsHmxDestination = vestedEsHmxDestinationAddress;
+    unusedEsHmxDestination = unusedEsHmxDestinationAddress;
   }
 
   function vestFor(address account, uint256 amount, uint256 duration) external nonReentrant {
@@ -93,10 +69,10 @@ contract Vester is ReentrancyGuardUpgradeable {
 
     uint256 penaltyAmount = amount - item.totalUnlockedAmount;
 
-    IERC20Upgradeable(esP88).safeTransferFrom(msg.sender, address(this), amount);
+    IERC20Upgradeable(esHMX).safeTransferFrom(msg.sender, address(this), amount);
 
     if (penaltyAmount > 0) {
-      IERC20Upgradeable(esP88).safeTransfer(unusedEsp88Destination, penaltyAmount);
+      IERC20Upgradeable(esHMX).safeTransfer(unusedEsHmxDestination, penaltyAmount);
     }
 
     emit Vest(item.owner, items.length - 1, amount, item.startTime, item.endTime, penaltyAmount);
@@ -129,9 +105,9 @@ contract Vester is ReentrancyGuardUpgradeable {
 
     item.lastClaimTime = block.timestamp;
 
-    IERC20Upgradeable(p88).safeTransfer(account, claimable);
+    IERC20Upgradeable(hmx).safeTransfer(account, claimable);
 
-    IERC20Upgradeable(esP88).safeTransfer(vestedEsp88Destination, claimable);
+    IERC20Upgradeable(esHMX).safeTransfer(vestedEsHmxDestination, claimable);
 
     emit Claim(item.owner, itemIndex, claimable, item.amount - claimable);
   }
@@ -149,7 +125,7 @@ contract Vester is ReentrancyGuardUpgradeable {
 
     item.hasAborted = true;
 
-    IERC20Upgradeable(esP88).safeTransfer(msg.sender, returnAmount);
+    IERC20Upgradeable(esHMX).safeTransfer(msg.sender, returnAmount);
 
     emit Abort(msg.sender, itemIndex, returnAmount);
   }

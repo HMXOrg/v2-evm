@@ -73,31 +73,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
       function: "traderBalances",
-      args: [deployer.address, config.tokens.usdc],
+      args: [address, config.tokens.usdc],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
       function: "traderBalances",
-      args: [deployer.address, config.tokens.usdt],
+      args: [address, config.tokens.usdt],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
       function: "traderBalances",
-      args: [deployer.address, config.tokens.dai],
+      args: [address, config.tokens.dai],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
       function: "traderBalances",
-      args: [deployer.address, config.tokens.weth],
+      args: [address, config.tokens.weth],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
       function: "traderBalances",
-      args: [deployer.address, config.tokens.wbtc],
+      args: [address, config.tokens.wbtc],
     },
     // Equity
     {

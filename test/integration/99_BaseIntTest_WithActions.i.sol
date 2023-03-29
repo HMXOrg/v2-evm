@@ -220,6 +220,17 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     botHandler.liquidate(_subAccount, _priceData);
   }
 
+  function forceTakeMaxProfit(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) internal {
+    vm.prank(BOT);
+    botHandler.forceTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken, _priceData);
+  }
+
   function closeDelistedMarketPosition(
     address _account,
     uint8 _subAccountId,

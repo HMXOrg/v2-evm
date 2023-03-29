@@ -1,0 +1,121 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.18;
+
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
+
+import { console2 } from "forge-std/console2.sol";
+
+contract TC18 is BaseIntTest_WithActions {
+  bytes[] internal updatePriceData;
+
+  // ## TC18 - Trade with Max profit
+  function testCorrectness_TC18_TradeWithBadPrice() external {
+    // ### Scenario: Prepare environment
+    // mint native token
+    vm.deal(BOB, 1 ether);
+    vm.deal(ALICE, 1 ether);
+    vm.deal(FEEVER, 1 ether);
+    // @todo - fix function in bot handler to be payable
+    vm.deal(address(botHandler), 1 ether);
+
+    // mint BTC
+    wbtc.mint(ALICE, 100 * 1e8);
+    wbtc.mint(BOB, 100 * 1e8);
+
+    // warp to block timestamp 1000
+    vm.warp(1000);
+
+    address _aliceSubAccount0 = getSubAccount(ALICE, 0);
+
+    // Given WETH price is 1,500 USD
+    // And APPLE price is 152 USD
+    updatePriceData = new bytes[](2);
+    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_500 * 1e8, 0);
+    updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 152 * 1e8, 0);
+    // And Bob provide 1 btc as liquidity
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, updatePriceData, true);
+
+    skip(100);
+
+    // And Alice deposit 1 btc as Collateral
+    depositCollateral(ALICE, 0, wbtc, 1 * 1e8);
+
+    // ### Scenario: Alice trade on WETH's market
+    // When Alice buy WETH 12,000 USD
+    marketBuy(ALICE, 0, wethMarketIndex, 12_000 * 1e30, address(wbtc), updatePriceData);
+    {
+      // Then Alice's WETH position should be corrected
+      assertPositionInfoOf({
+        _subAccount: _aliceSubAccount0,
+        _marketIndex: wethMarketIndex,
+        _positionSize: int256(12_000 * 1e30),
+        _avgPrice: 1500.03 * 1e30,
+        _reserveValue: 1_080 * 1e30,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _entryFundingRate: 0
+      });
+    }
+
+    skip(15);
+
+    // ### Scenario: WETH Price pump up 10% and Alice take profit
+    // When Price pump to 1,650 USD
+    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_650 * 1e8, 0);
+    // And Alice partial close for 3,000 USD
+    marketSell(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(wbtc), updatePriceData);
+    {
+      // Then Alice should get profit correctly
+      assertPositionInfoOf({
+        _subAccount: _aliceSubAccount0,
+        _marketIndex: wethMarketIndex,
+        _positionSize: int256(9_000 * 1e30),
+        _avgPrice: 1513.784174311926605504587155963302 * 1e30,
+        _reserveValue: 810 * 1e30,
+        _realizedPnl: 270 * 1e30,
+        _entryBorrowingRate: 0.000081243731193580 * 1e18,
+        _entryFundingRate: -0.00000024 * 1e18
+      });
+
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 1.01274548 * 1e8);
+    }
+
+    // ### Scenario: Bot force close Alice's position, when alice position profit reached to reserve
+    // When Bot force close ALICE's WETH position
+    forceTakeMaxProfit(ALICE, 0, wethMarketIndex, address(wbtc), updatePriceData);
+    {
+      // Then Alice should get profit correctly
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 1.05279548 * 1e8);
+
+      // And Alice's WETH position should be gone
+      assertPositionInfoOf({
+        _subAccount: _aliceSubAccount0,
+        _marketIndex: wethMarketIndex,
+        _positionSize: 0,
+        _avgPrice: 0,
+        _reserveValue: 0,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _entryFundingRate: 0
+      });
+    }
+
+    // ### Scenario: Alice trade on APPLE's market, and profit reached to reserve
+    // When Alice sell APPLE 3,000 USD
+    marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), updatePriceData);
+
+    skip(15);
+    // And APPLE's price dump to 136.8 USD (reached to max reserve)
+    updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 136.8 * 1e8, 0);
+    // And Alice sell more position at APPLE 3,000 USD
+    marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), updatePriceData);
+
+    // ### Scenario: Bot couldn't force close Alice's position
+    // When Bot force close ALICE's APPLE position
+    // Then Revert ReservedValueStillEnough
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_ReservedValueStillEnough()"));
+    forceTakeMaxProfit(ALICE, 0, appleMarketIndex, address(wbtc), updatePriceData);
+  }
+}

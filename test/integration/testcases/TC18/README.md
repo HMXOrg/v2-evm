@@ -23,7 +23,7 @@ And Alice's WETH position should be gone
 ### Scenario: Alice trade on APPLE's market, and profit reached to reserve
 When Alice sell APPLE 3,000 USD 
 And APPLE's price dump to 136.8 USD (reached to max reserve)
-And Alice increase short position at APPLE 3,000 USD
+And Alice sell more position at APPLE 3,000 USD
 
 ### Scenario: Bot couldn't force close Alice's position
 When Bot force close ALICE's WETH position

@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { BaseIntTest_Assertions } from "@hmx-test/integration/98_BaseIntTest_Assertions.i.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /**
@@ -115,7 +116,13 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
-    crossMarginHandler.withdrawCollateral(_subAccountId, address(_collateralToken), _withdrawAmount, _priceData, false);
+    crossMarginHandler.withdrawCollateral{ value: _priceData.length }(
+      _subAccountId,
+      address(_collateralToken),
+      _withdrawAmount,
+      _priceData,
+      false
+    );
   }
 
   /**
@@ -213,6 +220,17 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     botHandler.liquidate(_subAccount, _priceData);
   }
 
+  function closeDelistedMarketPosition(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    bytes[] memory _priceData
+  ) internal {
+    vm.prank(BOT);
+    botHandler.closeDelistedMarketPosition(_account, _subAccountId, _marketIndex, _tpToken, _priceData);
+  }
+
   /**
    * COMMON FUNCTION
    */
@@ -228,5 +246,11 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint256 _marketIndex
   ) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(getSubAccount(_primary, _subAcountIndex), _marketIndex));
+  }
+
+  function toggleMarket(uint256 _marketIndex) internal {
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(_marketIndex);
+    _marketConfig.active = !_marketConfig.active;
+    configStorage.setMarketConfig(_marketIndex, _marketConfig);
   }
 }

@@ -13,15 +13,18 @@ Then Bob's sub-account 0 should has 0.2 btc
 Given Alice buy position at WETH for 3000 USD
 And Alice sell position at APPLE for 3000 USD
 And Bob buy position at APPLE for 3000 USD
+When Bot try force close Bob's APPLE position
+Then Revert MarketHealthy
 
 ### Scenario: Delist market & Traders try to manage position
 When APPLE's market has been delist
-And Alice try increase APPLE position for 3000 USD
+And Alice try sell more APPLE position for 3000 USD
 Then Revert MarketDelisted
 And Alice try to fully close APPLE position
 Then Still Revert MarketDelisted
-When Alice try increase WETH position for 3000 USD
-Then Alice has correct position info
+When Alice try buy more WETH position for 3000 USD
+Then Alice has corrected positions
+And Bob should has corrected position
 
 ### Scenario: Bot close all traders position in delisted market
 When Bot close all position under APPLE's market

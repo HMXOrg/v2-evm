@@ -66,12 +66,18 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   }
 
   function onDeposit(uint256 epochTimestamp, address user, uint256 shareAmount) external onlyStakingContract {
+    // Floor down the timestamp, in case it is incorrectly formatted
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+
     _updateRewardCalculationParams(epochTimestamp);
 
     emit LogOnDeposit(epochTimestamp, user, shareAmount);
   }
 
   function onWithdraw(uint256 epochTimestamp, address user, uint256 shareAmount) external onlyStakingContract {
+    // Floor down the timestamp, in case it is incorrectly formatted
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+
     // Withdrawal will not be allowed is the epoch has ended.
     if (getCurrentEpochTimestamp() + epochLength > epochTimestamp)
       revert EpochFeedableRewarderError_WithdrawalNotAllowed();
@@ -81,6 +87,9 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   }
 
   function onHarvest(uint256 epochTimestamp, address user, address receiver) external onlyStakingContract {
+    // Floor down the timestamp, in case it is incorrectly formatted
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+
     if (!isClaimed[epochTimestamp][user]) {
       _updateRewardCalculationParams(epochTimestamp);
 
@@ -166,6 +175,9 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   }
 
   function _updateRewardCalculationParams(uint256 epochTimestamp) internal {
+    // Floor down the timestamp, in case it is incorrectly formatted
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+
     uint256 totalShare = _totalShare(epochTimestamp);
     if (totalShare > 0) {
       accRewardPerShareByEpochTimestamp[epochTimestamp] =
@@ -175,10 +187,16 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   }
 
   function _totalShare(uint256 epochTimestamp) private view returns (uint256) {
+    // Floor down the timestamp, in case it is incorrectly formatted
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+
     return TLCStaking(staking).calculateTotalShare(epochTimestamp);
   }
 
   function _userShare(uint256 epochTimestamp, address user) private view returns (uint256) {
+    // Floor down the timestamp, in case it is incorrectly formatted
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+
     return TLCStaking(staking).calculateShare(epochTimestamp, user);
   }
 

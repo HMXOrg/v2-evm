@@ -117,6 +117,9 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   }
 
   function getUserTokenAmount(uint256 epochTimestamp, address sender) external view returns (uint256) {
+    // Floor down the timestamp, in case it is incorrectly formatted
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+
     return userTokenAmount[epochTimestamp][sender];
   }
 
@@ -153,7 +156,7 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   }
 
   function harvest(uint256 startEpochTimestamp, uint256 noOfEpochs, address[] memory _rewarders) external {
-    uint256 epochTimestamp = startEpochTimestamp;
+    uint256 epochTimestamp = (startEpochTimestamp / epochLength) * epochLength;
     for (uint256 i = 0; i < noOfEpochs; ) {
       // If the epoch is in the future, then break the loop
       if (epochTimestamp + epochLength > block.timestamp) break;
@@ -176,7 +179,7 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     address[] memory _rewarders
   ) external {
     if (compounder != msg.sender) revert TLCStaking_NotCompounder();
-    uint256 epochTimestamp = startEpochTimestamp;
+    uint256 epochTimestamp = (startEpochTimestamp / epochLength) * epochLength;
     for (uint256 i = 0; i < noOfEpochs; ) {
       // If the epoch is in the future, then break the loop
       if (epochTimestamp + epochLength > block.timestamp) break;
@@ -193,6 +196,9 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   }
 
   function _harvestFor(uint256 epochTimestamp, address user, address receiver, address[] memory _rewarders) internal {
+    // Floor down the timestamp, in case it is incorrectly formatted
+    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+
     uint256 length = _rewarders.length;
     for (uint256 i = 0; i < length; ) {
       if (!isRewarder[_rewarders[i]]) {

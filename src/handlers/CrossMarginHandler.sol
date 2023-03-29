@@ -49,7 +49,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
     // Sanity check
     CrossMarginService(_crossMarginService).vaultStorage();
-    IPyth(_pyth).getValidTimePeriod();
+    IPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   /**
@@ -85,7 +85,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     pyth = _pyth;
 
     // Sanity check
-    IPyth(_pyth).getValidTimePeriod();
+    IPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   /**

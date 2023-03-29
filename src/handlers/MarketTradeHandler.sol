@@ -51,7 +51,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     // Sanity check
     TradeService(_tradeService).perpStorage();
-    IPyth(_pyth).getValidTimePeriod();
+    IPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   /**
@@ -81,7 +81,7 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     pyth = _newPyth;
 
     // Sanity check
-    IPyth(_newPyth).getValidTimePeriod();
+    IPyth(_newPyth).getUpdateFee(new bytes[](0));
   }
 
   /**

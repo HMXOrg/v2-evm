@@ -53,7 +53,7 @@ contract SetOracle is ConfigJsonRepo {
 
     oracleMiddleWare = IOracleMiddleware(getJsonAddress(".oracle.middleware"));
     pythAdapter = PythAdapter(getJsonAddress(".oracle.pythAdapter"));
-    pyth = IPyth(getJsonAddress(".oracle.pyth"));
+    pyth = IPyth(getJsonAddress(".oracle.leanPyth"));
 
     assetPythPriceDatas.push(
       AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8, inverse: false })

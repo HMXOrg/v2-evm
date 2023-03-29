@@ -29,7 +29,7 @@ contract UpgradeLiquidityService is ConfigJsonRepo {
 
     LiquidityHandler liquidityHandler = new LiquidityHandler(
       liquidityServiceAddress,
-      getJsonAddress(".oracle.pyth"),
+      getJsonAddress(".oracle.leanPyth"),
       1
     );
     address liquidityHandlerAddress = address(liquidityHandler);

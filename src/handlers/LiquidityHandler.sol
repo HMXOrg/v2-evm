@@ -94,7 +94,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     // slither-disable-next-line unused-return
     LiquidityService(_liquidityService).perpStorage();
     // slither-disable-next-line unused-return
-    IPyth(_pyth).getValidTimePeriod();
+    IPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   /**
@@ -438,6 +438,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     pyth = _pyth;
 
     // Sanity check
-    IPyth(_pyth).getValidTimePeriod();
+    IPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 }

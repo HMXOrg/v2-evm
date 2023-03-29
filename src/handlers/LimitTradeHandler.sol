@@ -119,7 +119,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     // slither-disable-next-line unused-return
     TradeService(_tradeService).perpStorage();
     // slither-disable-next-line unused-return
-    IPyth(_pyth).getValidTimePeriod();
+    IPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   receive() external payable {
@@ -463,7 +463,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
   function setPyth(address _newPyth) external onlyOwner {
     if (_newPyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    IPyth(_newPyth).getValidTimePeriod();
+    IPyth(_newPyth).getUpdateFee(new bytes[](0));
     emit LogSetPyth(address(tradeService), _newPyth);
     pyth = _newPyth;
   }

@@ -4,15 +4,14 @@ pragma solidity 0.8.18;
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { console } from "forge-std/console.sol";
+import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
 
 contract GetEquity is ConfigJsonRepo {
   function run() public {
-    ICalculator calculator = ICalculator(getJsonAddress(".calculator"));
-    int256 equity = calculator.getEquity(
-      0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a,
-      0,
-      0x0000000000000000000000000000000000000000000000000000000000000001
-    );
-    console.logInt(equity);
+    uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
+    vm.startBroadcast(deployerPrivateKey);
+    address leanPyth = getJsonAddress(".oracle.leanPyth");
+    CrossMarginHandler(payable(getJsonAddress(".handlers.crossMargin"))).setPyth(leanPyth);
+    vm.stopBroadcast();
   }
 }

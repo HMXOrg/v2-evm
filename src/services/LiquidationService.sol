@@ -15,8 +15,6 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 // interfaces
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 
@@ -71,10 +69,6 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     int256 _equity = _calculator.getEquity(_subAccount, 0, 0);
-    console2.log("===========================");
-    console2.log("_equity", _equity);
-    console2.log("mmr", _calculator.getMMR(_subAccount));
-    console2.log("===========================");
     // If the equity is greater than or equal to the MMR, the account is healthy and cannot be liquidated
     if (_equity >= 0 && uint256(_equity) >= _calculator.getMMR(_subAccount))
       revert ILiquidationService_AccountHealthy();
@@ -85,12 +79,6 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     );
     // // Settles the sub-account by paying off its debt with its collateral
     // _settlePnl(_subAccount, abs(_unrealizedPnL), _liquidator);
-    console2.log("===========================");
-    console2.log("_tradingFee", _tradingFee);
-    console2.log("_borrowingFee", _borrowingFee);
-    console2.log("_fundingFee", _fundingFee);
-    console2.log("_unrealizedPnL", _unrealizedPnL);
-    console2.log("===========================");
 
     TradeHelper(tradeHelper).increaseCollateral(_subAccount, _unrealizedPnL, _fundingFee);
     TradeHelper(tradeHelper).decreaseCollateral(
@@ -100,10 +88,9 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
       _borrowingFee,
       _tradingFee,
       ConfigStorage(configStorage).getLiquidationConfig().liquidationFeeUSDE30,
-      _liquidator
+      _liquidator,
+      false
     );
-
-    // _settlePnl(_subAccount, abs(_unrealizedPnL), _liquidator);
   }
 
   struct LiquidatePositionVars {
@@ -147,41 +134,19 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
       // Update funding rate
       TradeHelper(tradeHelper).updateFundingRate(_vars.position.marketIndex);
 
-      // // Settle
-      // // - trading fees
-      // // - borrowing fees
-      // // - funding fees
-      // TradeHelper(tradeHelper).settleAllFees(
-      //   _vars.position,
-      //   abs(_vars.position.positionSizeE30),
-      //   _vars.marketConfig.decreasePositionFeeRateBPS,
-      //   _vars.marketConfig.assetClass,
-      //   _vars.position.marketIndex
-      // );
-
       {
-        uint256 _borrowingFee = calculator.getBorrowingFee(
+        (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) = TradeHelper(tradeHelper).calAllFees(
+          _subAccount,
+          _vars.position,
+          abs(_vars.position.positionSizeE30),
+          _vars.marketConfig.decreasePositionFeeRateBPS,
           _vars.marketConfig.assetClass,
-          _vars.position.reserveValueE30,
-          _vars.position.entryBorrowingRate
+          _vars.position.marketIndex
         );
-
+        tradingFee += _tradingFee;
         borrowingFee += _borrowingFee;
-
-        TradeHelper(tradeHelper).accumSettledBorrowingFee(_vars.marketConfig.assetClass, _borrowingFee);
+        fundingFee += _fundingFee;
       }
-
-      fundingFee += calculator.getFundingFee(
-        _vars.position.marketIndex,
-        _isLong,
-        _vars.position.positionSizeE30,
-        _vars.position.entryFundingRate
-      );
-
-      tradingFee += calculator.getTradingFee(
-        abs(_vars.position.positionSizeE30),
-        _vars.marketConfig.decreasePositionFeeRateBPS
-      );
 
       _vars.globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.position.marketIndex);
 
@@ -236,110 +201,6 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
       }
     }
   }
-
-  // struct SettleStruct {
-  //   address configStorage;
-  //   address vaultStorage;
-  //   uint256 traderBalance;
-  //   uint256 loss;
-  //   uint256 liquidationFee;
-  //   uint256 lossToken;
-  //   uint256 liquidationFeeToken;
-  //   uint256 repayLossToken;
-  //   uint256 repayLiquidationToken;
-  // }
-
-  // /// @notice Settles the sub-account by paying off its debt with its collateral
-  // /// @param _subAccount The sub-account to be settled
-  // function _settlePnl(
-  //   address _subAccount,
-  //   int256 _unrealizedPnL,
-  //   uint256 _borrowingFee,
-  //   int256 _fundingFee,
-  //   uint256 _tradingFee,
-  //   address _liquidator
-  // ) internal {
-  //   SettleStruct memory _vars;
-  //   // Get contract addresses from storage
-  //   _vars.configStorage = configStorage;
-  //   _vars.vaultStorage = vaultStorage;
-
-  //   // Get instances of the oracle contracts from storage
-  //   OracleMiddleware _oracle = OracleMiddleware(ConfigStorage(_vars.configStorage).oracle());
-
-  //   // Get the list of collateral tokens from storage
-  //   address[] memory _collateralTokens = ConfigStorage(_vars.configStorage).getCollateralTokens();
-
-  //   // Get the sub-account's unrealized profit/loss and add the liquidation fee
-  //   // uint256 _loss = _unrealizedPnL;
-  //   // uint256 _liquidationFee = ConfigStorage(_vars.configStorage).getLiquidationConfig().liquidationFeeUSDE30;
-  //   _vars.loss = _borrowingFee + _tradingFee;
-  //   if (_unrealizedPnL < 0) {
-  //     _vars.loss += uint256(-_unrealizedPnL);
-  //   }
-  //   if (_fundingFee > 0) {
-  //     _vars.loss += uint256(_fundingFee);
-  //   }
-  //   _vars.liquidationFee = ConfigStorage(_vars.configStorage).getLiquidationConfig().liquidationFeeUSDE30;
-
-  //   uint256 _len = _collateralTokens.length;
-  //   // Iterate over each collateral token in the list and pay off debt with its balance
-  //   for (uint256 i = 0; i < _len; ) {
-  //     address _collateralToken = _collateralTokens[i];
-
-  //     // Calculate the amount of debt tokens to repay using the collateral token's price
-  //     uint256 _collateralTokenDecimal = ERC20(_collateralToken).decimals();
-  //     (uint256 _price, ) = _oracle.getLatestPrice(
-  //       ConfigStorage(_vars.configStorage).tokenAssetIds(_collateralToken),
-  //       false
-  //     );
-
-  //     _vars.traderBalance = VaultStorage(_vars.vaultStorage).traderBalances(_subAccount, _collateralToken);
-  //     if (_vars.traderBalance <= 0) {
-  //       unchecked {
-  //         ++i;
-  //       }
-  //       continue;
-  //     }
-
-  //     if (_vars.liquidationFee > 0) {
-  //       _vars.liquidationFeeToken = (_vars.liquidationFee * (10 ** _collateralTokenDecimal)) / _price;
-  //       if (_vars.liquidationFeeToken < _vars.traderBalance) {
-  //         _vars.liquidationFee = 0;
-  //         _vars.repayLiquidationToken = _vars.liquidationFeeToken;
-  //       } else {
-  //         _vars.liquidationFee -= (_vars.traderBalance * _price) / (10 ** _collateralTokenDecimal);
-  //         _vars.repayLiquidationToken = _vars.traderBalance;
-  //       }
-  //       _vars.traderBalance -= _vars.repayLiquidationToken;
-  //       VaultStorage(_vars.vaultStorage).transfer(
-  //         _collateralToken,
-  //         _subAccount,
-  //         _liquidator,
-  //         _vars.repayLiquidationToken
-  //       );
-  //     }
-  //     _vars.lossToken = (_vars.loss * (10 ** _collateralTokenDecimal)) / _price;
-  //     if (_vars.lossToken < _vars.traderBalance) {
-  //       _vars.loss = 0;
-  //       _vars.repayLossToken = _vars.lossToken;
-  //     } else {
-  //       _vars.loss -= (_vars.traderBalance * _price) / (10 ** _collateralTokenDecimal);
-  //       _vars.repayLossToken = _vars.traderBalance;
-  //     }
-  //     VaultStorage(_vars.vaultStorage).payPlp(_subAccount, _collateralToken, _vars.repayLossToken);
-
-  //     // Exit the loop if the debt has been fully paid off
-  //     if (_vars.loss == 0) break;
-
-  //     unchecked {
-  //       ++i;
-  //     }
-  //   }
-
-  //   // If the debt has not been fully paid off, add it to the sub-account's bad debt balance in storage
-  //   if (_vars.loss != 0) PerpStorage(perpStorage).addBadDebt(_subAccount, _vars.loss);
-  // }
 
   function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address) {
     if (_subAccountId > 255) revert();

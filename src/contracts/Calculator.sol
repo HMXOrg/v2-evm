@@ -541,11 +541,13 @@ contract Calculator is Owned, ICalculator {
             _marketConfig.assetClass
           );
           uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);
-          uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate +
-            _nextBorrowingRate -
-            _var.position.entryBorrowingRate;
-          // Calculate the borrowing fee based on reserved value, borrowing rate.
-          _unrealizedFeeE30 += int256((_var.position.reserveValueE30 * _borrowingRate) / 1e18);
+          _unrealizedFeeE30 += int256(
+            _getBorrowingFee(
+              _var.position.reserveValueE30,
+              _globalAssetClass.sumBorrowingRate + _nextBorrowingRate,
+              _var.position.entryBorrowingRate
+            )
+          );
         }
         {
           // Calculate funding fee
@@ -554,7 +556,7 @@ contract Calculator is Owned, ICalculator {
           _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
         }
         // Calculate trading fee
-        _unrealizedFeeE30 += int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
+        _unrealizedFeeE30 += int256(_getTradingFee(_var.absSize, _marketConfig.decreasePositionFeeRateBPS));
       }
 
       unchecked {

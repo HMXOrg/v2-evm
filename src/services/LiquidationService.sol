@@ -77,8 +77,6 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee, int256 _unrealizedPnL) = _liquidatePosition(
       _subAccount
     );
-    // // Settles the sub-account by paying off its debt with its collateral
-    // _settlePnl(_subAccount, abs(_unrealizedPnL), _liquidator);
 
     TradeHelper(tradeHelper).increaseCollateral(_subAccount, _unrealizedPnL, _fundingFee);
     TradeHelper(tradeHelper).decreaseCollateral(

@@ -171,7 +171,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   ) external {
     address _subAccount = _getSubAccount(_position.primaryAccount, _position.subAccountId);
 
-    (uint256 _tradingFeeToBePaid, uint256 _borrowingFeeToBePaid, int256 _fundingFeeToBePaid) = _calAllFees(
+    // update fee
+    (uint256 _tradingFeeToBePaid, uint256 _borrowingFeeToBePaid, int256 _fundingFeeToBePaid) = _updateFeeStates(
       _subAccount,
       _position,
       _absSizeDelta,
@@ -180,7 +181,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _marketIndex
     );
 
+    // increase collateral
     _increaseCollateral(_subAccount, 0, _fundingFeeToBePaid);
+
+    // decrease collateral
     _decreaseCollateral(
       _subAccount,
       0,
@@ -193,7 +197,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     );
   }
 
-  function calAllFees(
+  function updateFeeStates(
     address _subAccount,
     PerpStorage.Position memory _position,
     uint256 _sizeDelta,
@@ -201,7 +205,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint8 _assetClassIndex,
     uint256 _marketIndex
   ) external returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) {
-    (_tradingFee, _borrowingFee, _fundingFee) = _calAllFees(
+    (_tradingFee, _borrowingFee, _fundingFee) = _updateFeeStates(
       _subAccount,
       _position,
       _sizeDelta,
@@ -211,7 +215,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     );
   }
 
-  function _calAllFees(
+  function _updateFeeStates(
     address _subAccount,
     PerpStorage.Position memory _position,
     uint256 _sizeDelta,
@@ -219,17 +223,21 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint8 _assetClassIndex,
     uint256 _marketIndex
   ) internal returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) {
+    // Calculate the trading fee
     _tradingFee = (_sizeDelta * _positionFeeBPS) / BPS;
     emit LogSettleTradingFeeValue(_subAccount, _tradingFee);
 
+    // Calculate the borrowing fee
     _borrowingFee = calculator.getBorrowingFee(
       _assetClassIndex,
       _position.reserveValueE30,
       _position.entryBorrowingRate
     );
+    // Update global state
     _accumSettledBorrowingFee(_assetClassIndex, _borrowingFee);
     emit LogSettleBorrowingFeeValue(_subAccount, _borrowingFee);
 
+    // Calculate the funding fee
     bool _isLong = _position.positionSizeE30 > 0;
     _fundingFee = calculator.getFundingFee(
       _marketIndex,
@@ -237,6 +245,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _position.positionSizeE30,
       _position.entryFundingRate
     );
+    // Update global state
     _isLong
       ? _updateAccumFundingLong(_marketIndex, -_fundingFee)
       : _updateAccumFundingShort(_marketIndex, -_fundingFee);
@@ -283,31 +292,31 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
     _vars.subAccount = _subAccount;
-
-    bytes32[] memory _plpAssetIds = _vars.configStorage.getPlpAssetIds();
-    uint256 _len = _plpAssetIds.length;
+    // check unrealized pnl
     if (_unrealizedPnl > 0) {
       _vars.unrealizedPnlToBeReceived = uint256(_unrealizedPnl);
       emit LogReceivedUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBeReceived);
     }
+    // check funding fee
     if (_fundingFee < 0) {
       _vars.fundingFeeToBeReceived = uint256(-_fundingFee);
       emit LogReceivedFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBeReceived);
     }
 
+    bytes32[] memory _plpAssetIds = _vars.configStorage.getPlpAssetIds();
+    uint256 _len = _plpAssetIds.length;
     {
+      // loop for get fee from fee reserve
       for (uint256 i = 0; i < _len; ) {
         ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfig(_plpAssetIds[i]);
         _vars.tokenDecimal = _assetConfig.decimals;
         _vars.token = _assetConfig.tokenAddress;
         (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
 
-        {
-          _vars.payerBalance = _vars.vaultStorage.fundingFeeReserve(_assetConfig.tokenAddress);
-          if (_vars.payerBalance > 0 && _vars.fundingFeeToBeReceived > 0) {
-            _increaseCollateralWithFundingFeeFromFeeReserve(_vars);
-          }
-        }
+        _vars.payerBalance = _vars.vaultStorage.fundingFeeReserve(_assetConfig.tokenAddress);
+
+        // get fee from fee reserve
+        _increaseCollateralWithFundingFeeFromFeeReserve(_vars);
 
         unchecked {
           ++i;
@@ -315,25 +324,19 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       }
     }
     {
+      // loop for get fee and profit from plp
       for (uint256 i = 0; i < _len; ) {
         ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfig(_plpAssetIds[i]);
         _vars.tokenDecimal = _assetConfig.decimals;
         _vars.token = _assetConfig.tokenAddress;
         (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
 
-        {
-          _vars.payerBalance = _vars.vaultStorage.plpLiquidity(_assetConfig.tokenAddress);
-          if (_vars.payerBalance > 0 && _vars.unrealizedPnlToBeReceived > 0) {
-            _increaseCollateralWithUnrealizedPnlFromPlp(_vars);
-          }
-        }
+        _vars.payerBalance = _vars.vaultStorage.plpLiquidity(_assetConfig.tokenAddress);
 
-        {
-          _vars.payerBalance = _vars.vaultStorage.plpLiquidity(_assetConfig.tokenAddress);
-          if (_vars.payerBalance > 0 && _vars.fundingFeeToBeReceived > 0) {
-            _increaseCollateralWithFundingFeeFromPlp(_vars);
-          }
-        }
+        // get profit from plp
+        _increaseCollateralWithUnrealizedPnlFromPlp(_vars);
+        // get fee from plp
+        _increaseCollateralWithFundingFeeFromPlp(_vars);
 
         unchecked {
           ++i;
@@ -343,45 +346,70 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   }
 
   function _increaseCollateralWithUnrealizedPnlFromPlp(IncreaseCollateralVars memory _vars) internal {
-    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-      _vars.payerBalance,
-      _vars.unrealizedPnlToBeReceived,
-      _vars.tokenPrice,
-      _vars.tokenDecimal
-    );
-    _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, 0);
+    if (_vars.payerBalance > 0 && _vars.unrealizedPnlToBeReceived > 0) {
+      // We are going to deduct funding fee balance,
+      // so we need to check whether funding fee has this collateral token or not.
+      // If not skip to next token
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.payerBalance,
+        _vars.unrealizedPnlToBeReceived,
+        _vars.tokenPrice,
+        _vars.tokenDecimal
+      );
+      // book the balances
+      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, 0);
 
-    _vars.unrealizedPnlToBeReceived -= _repayValue;
+      // deduct _vars.unrealizedPnlToBeReceived with _repayAmount, so that the next iteration could continue deducting the fee
+      _vars.unrealizedPnlToBeReceived -= _repayValue;
+      _vars.payerBalance -= _repayAmount;
 
-    emit LogReceivedUnRealizedPnlAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+      emit LogReceivedUnRealizedPnlAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+    }
   }
 
   function _increaseCollateralWithFundingFeeFromFeeReserve(IncreaseCollateralVars memory _vars) internal {
-    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-      _vars.payerBalance,
-      _vars.fundingFeeToBeReceived,
-      _vars.tokenPrice,
-      _vars.tokenDecimal
-    );
-    _vars.vaultStorage.payFundingFeeFromFundingFeeReserveToTrader(_vars.subAccount, _vars.token, _repayAmount);
+    if (_vars.payerBalance > 0 && _vars.fundingFeeToBeReceived > 0) {
+      // We are going to deduct funding fee balance,
+      // so we need to check whether funding fee has this collateral token or not.
+      // If not skip to next token
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.payerBalance,
+        _vars.fundingFeeToBeReceived,
+        _vars.tokenPrice,
+        _vars.tokenDecimal
+      );
 
-    _vars.fundingFeeToBeReceived -= _repayValue;
+      // book the balances
+      _vars.vaultStorage.payFundingFeeFromFundingFeeReserveToTrader(_vars.subAccount, _vars.token, _repayAmount);
 
-    emit LogReceivedFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+      // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+      _vars.fundingFeeToBeReceived -= _repayValue;
+      _vars.payerBalance -= _repayAmount;
+
+      emit LogReceivedFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+    }
   }
 
   function _increaseCollateralWithFundingFeeFromPlp(IncreaseCollateralVars memory _vars) internal {
-    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-      _vars.payerBalance,
-      _vars.fundingFeeToBeReceived,
-      _vars.tokenPrice,
-      _vars.tokenDecimal
-    );
-    _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
+    if (_vars.payerBalance > 0 && _vars.fundingFeeToBeReceived > 0) {
+      // We are going to deduct plp liquidity balance,
+      // so we need to check whether plp has this collateral token or not.
+      // If not skip to next token
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.payerBalance,
+        _vars.fundingFeeToBeReceived,
+        _vars.tokenPrice,
+        _vars.tokenDecimal
+      );
+      // book the balances
+      _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
 
-    _vars.fundingFeeToBeReceived -= _repayValue;
+      // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+      _vars.fundingFeeToBeReceived -= _repayValue;
+      _vars.payerBalance -= _repayAmount;
 
-    emit LogReceivedFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+      emit LogReceivedFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+    }
   }
 
   function decreaseCollateral(
@@ -445,26 +473,27 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
     address[] memory _collateralTokens = _vars.vaultStorage.getTraderTokens(_vars.subAccount);
     uint256 _len = _collateralTokens.length;
-
+    // check loss
     if (_unrealizedPnl < 0) {
       _vars.unrealizedPnlToBePaid = uint256(-_unrealizedPnl);
       emit LogSettleUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
     }
-
+    // check trading fee
     _vars.tradingFeeToBePaid = _tradingFee;
     emit LogSettleTradingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
-
+    // check borrowing fee
     _vars.borrowingFeeToBePaid = _borrowingFee;
     emit LogSettleBorrowingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
-
+    // check funding fee
     if (_fundingFee > 0) {
       _vars.fundingFeeToBePaid = uint256(_fundingFee);
       emit LogSettleFundingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
     }
-
+    // check liquidation fee
     _vars.liquidationFeeToBePaid = _liquidationFee;
     emit LogSettleLiquidationFeeValue(_vars.subAccount, _vars.liquidationFeeToBePaid);
 
+    // loop for settle
     for (uint256 i = 0; i < _len; ) {
       _vars.token = _collateralTokens[i];
       _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.token);
@@ -474,43 +503,19 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       );
 
       _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
-
-      {
-        if (_vars.payerBalance > 0 && _vars.liquidationFeeToBePaid > 0) {
-          _decreaseCollateralWithLiquidationFee(_vars, _liquidator);
-        }
-      }
-
-      {
-        if (_vars.payerBalance > 0 && _vars.borrowingFeeToBePaid > 0) {
-          _decreaseCollateralWithBorrowingFeeToPlp(_vars);
-        }
-      }
-
-      {
-        if (_vars.payerBalance > 0 && _vars.tradingFeeToBePaid > 0) {
-          _decreaseCollateralWithTradingFeeToProtocolFee(_vars);
-        }
-      }
-
-      {
-        _vars.plpDebt = _vars.vaultStorage.plpLiquidityDebtUSDE30();
-        if (_vars.payerBalance > 0 && _vars.fundingFeeToBePaid > 0 && _vars.plpDebt > 0) {
-          _decreaseCollateralWithFundingFeeToPlp(_vars);
-        }
-      }
-
-      {
-        if (_vars.payerBalance > 0 && _vars.fundingFeeToBePaid > 0) {
-          _decreaseCollateralWithFundingFeeToFeeReserve(_vars);
-        }
-      }
-
-      {
-        if (_vars.payerBalance > 0 && _vars.unrealizedPnlToBePaid > 0) {
-          _decreaseCollateralWithUnrealizedPnlToPlp(_vars);
-        }
-      }
+      _vars.plpDebt = _vars.vaultStorage.plpLiquidityDebtUSDE30();
+      // settle liquidation fee
+      _decreaseCollateralWithLiquidationFee(_vars, _liquidator);
+      // settle borrowing fee
+      _decreaseCollateralWithBorrowingFeeToPlp(_vars);
+      // settle trading fee
+      _decreaseCollateralWithTradingFeeToProtocolFee(_vars);
+      // settle funding fee to plp
+      _decreaseCollateralWithFundingFeeToPlp(_vars);
+      // settle funding fee to fee reserve
+      _decreaseCollateralWithFundingFeeToFeeReserve(_vars);
+      // settle loss fee
+      _decreaseCollateralWithUnrealizedPnlToPlp(_vars);
 
       unchecked {
         ++i;
@@ -526,107 +531,129 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   }
 
   function _decreaseCollateralWithUnrealizedPnlToPlp(DecreaseCollateralVars memory _vars) internal {
-    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-      _vars.payerBalance,
-      _vars.unrealizedPnlToBePaid,
-      _vars.tokenPrice,
-      _vars.tokenDecimal
-    );
-    VaultStorage(_vars.vaultStorage).payPlp(_vars.subAccount, _vars.token, _repayAmount);
+    if (_vars.payerBalance > 0 && _vars.unrealizedPnlToBePaid > 0) {
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.payerBalance,
+        _vars.unrealizedPnlToBePaid,
+        _vars.tokenPrice,
+        _vars.tokenDecimal
+      );
+      VaultStorage(_vars.vaultStorage).payPlp(_vars.subAccount, _vars.token, _repayAmount);
 
-    _vars.unrealizedPnlToBePaid -= _repayValue;
-    _vars.payerBalance -= _repayAmount;
+      _vars.unrealizedPnlToBePaid -= _repayValue;
+      _vars.payerBalance -= _repayAmount;
 
-    emit LogSettleUnRealizedPnlAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+      emit LogSettleUnRealizedPnlAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+    }
   }
 
   function _decreaseCollateralWithFundingFeeToPlp(DecreaseCollateralVars memory _vars) internal {
-    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-      _vars.payerBalance,
-      _vars.plpDebt,
-      _vars.tokenPrice,
-      _vars.tokenDecimal
-    );
-    _vars.vaultStorage.repayFundingFeeDebtFromTraderToPlp(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
+    // If absFundingFeeToBePaid is less than borrowing debts from PLP, Then Trader repay with all current collateral amounts to PLP
+    // Else Trader repay with just enough current collateral amounts to PLP
+    if (_vars.payerBalance > 0 && _vars.fundingFeeToBePaid > 0 && _vars.plpDebt > 0) {
+      // Trader repay with just enough current collateral amounts to PLP
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.payerBalance,
+        _vars.plpDebt,
+        _vars.tokenPrice,
+        _vars.tokenDecimal
+      );
+      // book the balances
+      _vars.vaultStorage.repayFundingFeeDebtFromTraderToPlp(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
 
-    _vars.fundingFeeToBePaid -= _repayValue;
-    _vars.payerBalance -= _repayAmount;
+      // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+      _vars.fundingFeeToBePaid -= _repayValue;
+      _vars.payerBalance -= _repayAmount;
 
-    emit LogSettleFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+      emit LogSettleFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+    }
   }
 
   function _decreaseCollateralWithFundingFeeToFeeReserve(DecreaseCollateralVars memory _vars) internal {
-    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-      _vars.payerBalance,
-      _vars.fundingFeeToBePaid,
-      _vars.tokenPrice,
-      _vars.tokenDecimal
-    );
-    _vars.vaultStorage.payFundingFeeFromTraderToFundingFeeReserve(_vars.subAccount, _vars.token, _repayAmount);
+    if (_vars.payerBalance > 0 && _vars.fundingFeeToBePaid > 0) {
+      // We are going to deduct trader balance,
+      // so we need to check whether trader has this collateral token or not.
+      // If not skip to next token
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.payerBalance,
+        _vars.fundingFeeToBePaid,
+        _vars.tokenPrice,
+        _vars.tokenDecimal
+      );
+      // book the balances
+      _vars.vaultStorage.payFundingFeeFromTraderToFundingFeeReserve(_vars.subAccount, _vars.token, _repayAmount);
 
-    _vars.fundingFeeToBePaid -= _repayValue;
-    _vars.payerBalance -= _repayAmount;
+      // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+      _vars.fundingFeeToBePaid -= _repayValue;
+      _vars.payerBalance -= _repayAmount;
 
-    emit LogSettleFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+      emit LogSettleFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+    }
   }
 
   function _decreaseCollateralWithTradingFeeToProtocolFee(DecreaseCollateralVars memory _vars) internal {
-    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-      _vars.payerBalance,
-      _vars.tradingFeeToBePaid,
-      _vars.tokenPrice,
-      _vars.tokenDecimal
-    );
-    // devFee = tradingFee * devFeeRate
-    uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
-    // the rest after dev fee deduction belongs to protocol fee portion
-    uint256 _protocolFeeAmount = _repayAmount - _devFeeAmount;
+    if (_vars.payerBalance > 0 && _vars.tradingFeeToBePaid > 0) {
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.payerBalance,
+        _vars.tradingFeeToBePaid,
+        _vars.tokenPrice,
+        _vars.tokenDecimal
+      );
+      // devFee = tradingFee * devFeeRate
+      uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
+      // the rest after dev fee deduction belongs to protocol fee portion
+      uint256 _protocolFeeAmount = _repayAmount - _devFeeAmount;
 
-    // book those moving balances
-    _vars.vaultStorage.payTradingFee(_vars.subAccount, _vars.token, _devFeeAmount, _protocolFeeAmount);
+      // book those moving balances
+      _vars.vaultStorage.payTradingFee(_vars.subAccount, _vars.token, _devFeeAmount, _protocolFeeAmount);
 
-    // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
-    _vars.tradingFeeToBePaid -= _repayValue;
-    _vars.payerBalance -= _repayAmount;
+      // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+      _vars.tradingFeeToBePaid -= _repayValue;
+      _vars.payerBalance -= _repayAmount;
 
-    emit LogSettleTradingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _devFeeAmount, _protocolFeeAmount);
+      emit LogSettleTradingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _devFeeAmount, _protocolFeeAmount);
+    }
   }
 
   function _decreaseCollateralWithBorrowingFeeToPlp(DecreaseCollateralVars memory _vars) internal {
-    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-      _vars.payerBalance,
-      _vars.borrowingFeeToBePaid,
-      _vars.tokenPrice,
-      _vars.tokenDecimal
-    );
-    // devFee = tradingFee * devFeeRate
-    uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
-    // the rest after dev fee deduction belongs to plp liquidity
-    uint256 _plpFeeAmount = _repayAmount - _devFeeAmount;
+    if (_vars.payerBalance > 0 && _vars.borrowingFeeToBePaid > 0) {
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.payerBalance,
+        _vars.borrowingFeeToBePaid,
+        _vars.tokenPrice,
+        _vars.tokenDecimal
+      );
+      // devFee = tradingFee * devFeeRate
+      uint256 _devFeeAmount = (_repayAmount * _vars.tradingConfig.devFeeRateBPS) / BPS;
+      // the rest after dev fee deduction belongs to plp liquidity
+      uint256 _plpFeeAmount = _repayAmount - _devFeeAmount;
 
-    // book those moving balances
-    _vars.vaultStorage.payBorrowingFee(_vars.subAccount, _vars.token, _devFeeAmount, _plpFeeAmount);
+      // book those moving balances
+      _vars.vaultStorage.payBorrowingFee(_vars.subAccount, _vars.token, _devFeeAmount, _plpFeeAmount);
 
-    // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
-    _vars.borrowingFeeToBePaid -= _repayValue;
-    _vars.payerBalance -= _repayAmount;
+      // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
+      _vars.borrowingFeeToBePaid -= _repayValue;
+      _vars.payerBalance -= _repayAmount;
 
-    emit LogSettleBorrowingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _devFeeAmount, _plpFeeAmount);
+      emit LogSettleBorrowingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _devFeeAmount, _plpFeeAmount);
+    }
   }
 
   function _decreaseCollateralWithLiquidationFee(DecreaseCollateralVars memory _vars, address _liquidator) internal {
-    (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
-      _vars.payerBalance,
-      _vars.liquidationFeeToBePaid,
-      _vars.tokenPrice,
-      _vars.tokenDecimal
-    );
-    _vars.vaultStorage.transfer(_vars.token, _vars.subAccount, _liquidator, _repayAmount);
+    if (_vars.payerBalance > 0 && _vars.liquidationFeeToBePaid > 0) {
+      (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
+        _vars.payerBalance,
+        _vars.liquidationFeeToBePaid,
+        _vars.tokenPrice,
+        _vars.tokenDecimal
+      );
+      _vars.vaultStorage.transfer(_vars.token, _vars.subAccount, _liquidator, _repayAmount);
 
-    _vars.liquidationFeeToBePaid -= _repayValue;
-    _vars.payerBalance -= _repayAmount;
+      _vars.liquidationFeeToBePaid -= _repayValue;
+      _vars.payerBalance -= _repayAmount;
 
-    emit LogSettleLiquidationFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+      emit LogSettleLiquidationFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
+    }
   }
 
   function _getRepayAmount(

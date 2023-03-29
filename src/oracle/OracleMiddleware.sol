@@ -28,6 +28,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _oldTrustPriceAge,
     uint256 _newTrustPriceAge
   );
+  event LogSetPythAdapter(address oldPythAdapter, address newPythAdapter);
 
   /**
    * States
@@ -360,5 +361,16 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     isUpdater[_account] = _isActive;
     emit LogSetUpdater(_account, _isActive);
+  }
+
+  /**
+   * Setter
+   */
+  /// @notice Set new PythAdapter contract address.
+  /// @param _newPythAdapter New PythAdapter contract address.
+  function setPythAdapter(address _newPythAdapter) external onlyOwner {
+    pythAdapter = IOracleAdapter(_newPythAdapter);
+
+    emit LogSetPythAdapter(address(pythAdapter), _newPythAdapter);
   }
 }

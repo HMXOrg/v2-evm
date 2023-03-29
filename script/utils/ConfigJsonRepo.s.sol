@@ -4,8 +4,6 @@ pragma solidity 0.8.18;
 import { Script } from "forge-std/Script.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 
-import { console } from "forge-std/console.sol";
-
 /// @title ConfigJsonRepo is abstract contract help to manage config json file for Application
 /// @notice this contract contains read/write functions JSON
 abstract contract ConfigJsonRepo is Script {

@@ -30,7 +30,7 @@ contract LeanPyth_Verification is TestBase, StdAssertions, StdCheatsSafe {
     // Pyth on Arbitrum
     address _pyth = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
 
-    leanPyth = new LeanPyth(IPyth(_pyth));
+    leanPyth = new LeanPyth(_pyth);
     leanPyth.setUpdater(address(this), true);
   }
 

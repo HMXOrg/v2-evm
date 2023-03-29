@@ -39,11 +39,11 @@ contract LeanPyth is Owned, ILeanPyth {
     _;
   }
 
-  constructor(IPyth _pyth) {
-    pyth = _pyth;
+  constructor(address _pyth) {
+    pyth = IPyth(_pyth);
 
     // Sanity
-    pyth.wormhole();
+    IPyth(pyth).wormhole();
   }
 
   /// @dev Updates the price feeds with the given price data.

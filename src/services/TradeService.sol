@@ -261,7 +261,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
     if (!_vars.isNewPosition) {
-      // console2.log("======== new close price ======= ");
       (uint256 _nextClosePriceE30, , , ) = OracleMiddleware(_configStorage.oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
@@ -272,8 +271,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           -_vars.position.positionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
-
-      // console2.log("_nextClosePriceE30", _nextClosePriceE30);
 
       _vars.position.avgEntryPriceE30 = _getPositionNextAveragePrice(
         abs(_vars.position.positionSizeE30),

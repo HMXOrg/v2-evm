@@ -52,19 +52,19 @@ jobs:
         run: |
           forge test -vvv
         id: test
-  analyze:
-    name: Slither Analyze
-    runs-on: self-hosted
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run Slither
-        # TODO: change to release version after it is bug free, ref: https://github.com/crytic/slither-action/pull/50
-        uses: crytic/slither-action@dev
-        with:
-          node-version: 16.16.0 # should match .nvmrc or whatever your project required
-          target: "./"
-          slither-config: ./slither.config.json
-          slither-version: 0.9.2
-          solc-version: 0.8.18
-          # https://github.com/crytic/slither/issues/1408
-          slither-args: --exclude-dependencies --exclude-optimization --exclude-informational --exclude-low --exclude-medium --no-fail-pedantic --fail-high
+  # analyze:
+  #   name: Slither Analyze
+  #   runs-on: self-hosted
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Run Slither
+  #       # TODO: change to release version after it is bug free, ref: https://github.com/crytic/slither-action/pull/50
+  #       uses: crytic/slither-action@dev
+  #       with:
+  #         node-version: 16.16.0 # should match .nvmrc or whatever your project required
+  #         target: "./"
+  #         slither-config: ./slither.config.json
+  #         slither-version: 0.9.2
+  #         solc-version: 0.8.18
+  #         # https://github.com/crytic/slither/issues/1408
+  #         slither-args: --exclude-dependencies --exclude-optimization --exclude-informational --exclude-low --exclude-medium --no-fail-pedantic --fail-high

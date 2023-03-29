@@ -14,8 +14,6 @@ import { IWNative } from "../interfaces/IWNative.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   uint64 internal constant RATE_PRECISION = 1e18;
@@ -164,6 +162,26 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     }
 
     emit LogWithdrawCollateral(msg.sender, _subAccountId, _token, _amount);
+  }
+
+  /// @notice Check funding fee surplus and transfer to PLP
+  /// @dev Check if value on funding fee reserve have exceed balance for paying to traders
+  ///      - If yes means exceed value are the surplus for platform and can be booked to PLP
+  function withdrawFundingFeeSurplus(
+    address _stableToken,
+    bytes[] memory _priceData
+  ) external payable nonReentrant onlyOwner {
+    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
+    if (msg.value != _updateFee) {
+      revert ICrossMarginHandler_InCorrectValueTransfer();
+    }
+
+    // Call update oracle price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+
+    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+    _crossMarginService.withdrawFundingFeeSurplus(_stableToken);
   }
 
   receive() external payable {

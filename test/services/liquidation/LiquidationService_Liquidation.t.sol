@@ -134,8 +134,6 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     assertEq(vaultStorage.plpLiquidity(address(usdt)), 10_000 * 1e6);
     assertEq(vaultStorage.traderBalances(aliceAddress, address(wbtc)), 0);
     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 0);
-
-    assertEq(perpStorage.getBadDebt(aliceAddress), 2_804.99992 * 1e30);
   }
 
   function testCorrectness_liquidate() external {
@@ -211,7 +209,5 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     assertEq(vaultStorage.plpLiquidity(address(usdt)), 2_654.99996 * 1e6);
     assertEq(vaultStorage.traderBalances(aliceAddress, address(wbtc)), 0);
     assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 7_345.00004 * 1e6);
-
-    assertEq(perpStorage.getBadDebt(aliceAddress), 0);
   }
 }

@@ -73,8 +73,29 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /**
    * Events
    */
-  // @todo - modify event parameters
-  event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
+  event LogIncreasePosition(
+    bytes32 _positionId,
+    address _primaryAccount,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    int256 _size,
+    int256 _increasedSize,
+    uint256 _avgEntryPrice,
+    uint256 _entryBorrowingRate,
+    int256 _entryFundingRate
+  );
+
+  event LogDecreasePosition(
+    bytes32 indexed _positionId,
+    uint256 _marketIndex,
+    int256 _size,
+    int256 _decreasedSize,
+    uint256 _avgEntryPrice,
+    uint256 _entryBorrowingRate,
+    int256 _entryFundingRate,
+    int256 _realizedPnl,
+    uint256 _reserveValueE30
+  );
 
   event LogForceClosePosition(
     address indexed _account,
@@ -333,6 +354,18 @@ contract TradeService is ReentrancyGuard, ITradeService {
 
     // Call Trade Service Hook
     _increasePositionHooks(_primaryAccount, _subAccountId, _marketIndex, _absSizeDelta);
+
+    emit LogIncreasePosition(
+      _vars.positionId,
+      _primaryAccount,
+      _subAccountId,
+      _marketIndex,
+      _vars.position.positionSizeE30,
+      _sizeDelta,
+      _vars.position.avgEntryPriceE30,
+      _vars.position.entryBorrowingRate,
+      _vars.position.entryFundingRate
+    );
   }
 
   // @todo - rewrite description
@@ -527,7 +560,7 @@ contract TradeService is ReentrancyGuard, ITradeService {
   /// @param _marketConfig - target market config
   /// @param _globalMarketIndex - global market index
   /// @param _vars - decrease criteria
-  /// @return _isMaxProfit - positiion is close with max profit
+  /// @return _isMaxProfit - position is close with max profit
   function _decreasePosition(
     ConfigStorage.MarketConfig memory _marketConfig,
     uint256 _globalMarketIndex,
@@ -674,7 +707,17 @@ contract TradeService is ReentrancyGuard, ITradeService {
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
 
-    emit LogDecreasePosition(_vars.positionId, _vars.positionSizeE30ToDecrease);
+    emit LogDecreasePosition(
+      _vars.positionId,
+      _globalMarketIndex,
+      _vars.position.positionSizeE30,
+      int256(_vars.positionSizeE30ToDecrease),
+      _vars.position.avgEntryPriceE30,
+      _vars.position.entryBorrowingRate,
+      _vars.position.entryFundingRate,
+      _vars.position.realizedPnl,
+      _vars.position.reserveValueE30
+    );
   }
 
   /// @notice settle profit

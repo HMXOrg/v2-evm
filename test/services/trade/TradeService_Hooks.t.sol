@@ -64,10 +64,6 @@ contract TradeService_Hooks is TradeService_Base {
     ethMarketRewarder.feed(100 ether, 365 days);
 
     tlc.setMinter(address(tlcHook), true);
-
-    rewardToken.mint(address(this), 300 ether);
-    rewardToken.approve(address(tlcRewarder), 300 ether);
-    tlcRewarder.feed(tlcRewarder.getCurrentEpochTimestamp(), 300 ether);
   }
 
   function testRevert_TradingStaking_UnknownMarketIndex() external {
@@ -213,6 +209,10 @@ contract TradeService_Hooks is TradeService_Base {
 
     // Forward to the end of the week
     vm.warp(block.timestamp + 4 days);
+    // Feed TLC reward at the end of the epoch
+    rewardToken.mint(address(this), 300 ether);
+    rewardToken.approve(address(tlcRewarder), 300 ether);
+    tlcRewarder.feed(0, 300 ether);
     // timePast = 60 * 60 * 24 * 7 = 604800
     // feedDuration = 60 * 60 * 24 * 365 = 31536000
     // Alice's share = 1,000,000 * 1e30
@@ -249,17 +249,12 @@ contract TradeService_Hooks is TradeService_Base {
     // Then increase again for $250,000
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 250_000 * 1e30, 0);
 
-    // Forward 1 day
-    vm.warp(block.timestamp + 1 days);
-
+    // Forward to the next week
+    vm.warp(block.timestamp + 8 days);
     // Feed 144 TLC reward for this week
-    // This feed happened 1 day into the new week
     rewardToken.mint(address(this), 144 ether);
     rewardToken.approve(address(tlcRewarder), 144 ether);
-    tlcRewarder.feed(tlcRewarder.getCurrentEpochTimestamp(), 144 ether);
-
-    // Forward to the next week
-    vm.warp(block.timestamp + 7 days);
+    tlcRewarder.feed(1 weeks, 144 ether);
     // timePast = 60 * 60 * 24 * 8 = 691200
     // feedDuration = 60 * 60 * 24 * 365 = 31536000
     // Alice's share = 550,000 * 1e30

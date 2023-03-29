@@ -18,6 +18,11 @@ contract TC30 is BaseIntTest_WithActions {
 
     // Alice Create Order
     addLiquidity(ALICE, ERC20(address(wbtc)), _aliceBTCAmount, executionOrderFee, initialPriceFeedDatas, false);
+    {
+      ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
+      assertEq(liquidityOrders.length, 1, "liquidityOrder size After Created");
+      assertEq(liquidityOrders[0].orderId, 0, "OrderId After Created");
+    }
     //  ALICE add 1 BTC
     //  plp Liquidity => (wbtc) 0.9970000
     // fee (wbtc) 0.003000000
@@ -29,7 +34,11 @@ contract TC30 is BaseIntTest_WithActions {
     uint256 _aliceUSDCAmount = 20_000 * 1e6;
     usdc.mint(ALICE, _aliceUSDCAmount);
     addLiquidity(ALICE, ERC20(address(usdc)), _aliceUSDCAmount, executionOrderFee, initialPriceFeedDatas, false);
-
+    {
+      ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
+      assertEq(liquidityOrders.length, 2, "liquidityOrder size After Created");
+      assertEq(liquidityOrders[1].orderId, 1, "OrderId After Created");
+    }
     // ALICE add 20000 USDC
     // plp liquidity  (wbtc) 0.9970000  => (wbtc) 0.9970000, usdc(19840.0000000)
     // fee = 160 (usdc)
@@ -42,6 +51,11 @@ contract TC30 is BaseIntTest_WithActions {
     usdc.mint(BOB, _bobUSDCAmount);
     addLiquidity(BOB, ERC20(address(usdc)), _bobUSDCAmount, executionOrderFee, initialPriceFeedDatas, false);
 
+    {
+      ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
+      assertEq(liquidityOrders.length, 3, "liquidityOrder size After Created");
+      assertEq(liquidityOrders[2].orderId, 2, "OrderId After Created");
+    }
     // BOB ADD 0.5 USDC
     // LQ After fee = 0.496
     // plp liquidity (wbtc) 0.9970000, usdc(19840.0000000) => (wbtc) 0.9970000, usdc(19840.4960000)
@@ -54,6 +68,11 @@ contract TC30 is BaseIntTest_WithActions {
     uint256 _bobBTCAmount = 0.5 * 1e8;
     wbtc.mint(BOB, _bobBTCAmount);
     addLiquidity(BOB, ERC20(address(wbtc)), _bobBTCAmount, executionOrderFee, initialPriceFeedDatas, false);
+    {
+      ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
+      assertEq(liquidityOrders.length, 4, "liquidityOrder size After Created");
+      assertEq(liquidityOrders[3].orderId, 3, "OrderId After Created");
+    }
 
     // BOB ADD 0.5 BTC
     // LQ After fee => 0.4996500
@@ -62,9 +81,8 @@ contract TC30 is BaseIntTest_WithActions {
     // feetotal => 0.003000000 (wbtc) + 160.004 (usdc) => 0.00335 (wbtc) + 160.004 (usdc)
     // BOB received PLP amount =>  9,993.0000000
     // plpTotalSupply = 39780.496 => 49_773.496
-
     uint256 _lastOrderIndex = liquidityHandler.getLiquidityOrders().length - 1;
-    exeutePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
+    executePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
 
     assertEq(calculator.getAUME30(false) / plpV2.totalSupply() / 1e12, 1, "AUM");
     assertPLPTotalSupply(49_773.496 * 1e18);
@@ -104,6 +122,11 @@ contract TC30 is BaseIntTest_WithActions {
     // BOB PLP in hand => 9,993.496
     vm.deal(ALICE, executionOrderFee);
     removeLiquidity(ALICE, address(wbtc), 29_933 * 1e18, executionOrderFee, initialPriceFeedDatas, false);
+    {
+      ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
+      assertEq(liquidityOrders.length, 5, "liquidityOrder size After Created");
+      assertEq(liquidityOrders[4].orderId, 4, "OrderId After Created");
+    }
     // ALICE REMOVE 29_933 PLP (price = 20000)
     // plpTotalSupply = 49_773.496 - 29_933(PLP) => 19840.496
     // TOKEN OUT AMOUNT BEFORE FEE => 1.49665 wbtc
@@ -115,6 +138,11 @@ contract TC30 is BaseIntTest_WithActions {
 
     vm.deal(ALICE, executionOrderFee);
     removeLiquidity(ALICE, address(usdc), 9_847 * 1e18, executionOrderFee, initialPriceFeedDatas, false);
+    {
+      ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
+      assertEq(liquidityOrders.length, 6, "liquidityOrder size After Created");
+      assertEq(liquidityOrders[5].orderId, 5, "OrderId After Created");
+    }
     // ALICE REMOVE 9_847 PLP (price =1)
     // plpTotalSupply = 19840.496 - 9_847(PLP) => 9,993.496
     // TOKEN OUT AMOUNT BEFORE FEE => 9,847 USDC
@@ -126,7 +154,11 @@ contract TC30 is BaseIntTest_WithActions {
 
     vm.deal(BOB, executionOrderFee);
     removeLiquidity(BOB, address(usdc), 9_993.496 * 1e18, executionOrderFee, initialPriceFeedDatas, false);
-
+    {
+      ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
+      assertEq(liquidityOrders.length, 7, "liquidityOrder size After Created");
+      assertEq(liquidityOrders[6].orderId, 6, "OrderId After Created");
+    }
     // BOB REMOVE 9_993.496 PLP (price =1)
     // plpTotalSupply = 9,993.496- 9,993.496(PLP) = 0
     // TOKEN OUT AMOUNT BEFORE FEE => 9_993.496
@@ -142,7 +174,7 @@ contract TC30 is BaseIntTest_WithActions {
     // feetotal => 0.01292856 (wbtc)  + 160.004 (usdc)
 
     _lastOrderIndex = liquidityHandler.getLiquidityOrders().length - 1;
-    exeutePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
+    executePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
 
     nextExecutedIndex = liquidityHandler.nextExecutionOrderIndex();
 

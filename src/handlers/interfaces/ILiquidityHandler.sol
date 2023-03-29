@@ -20,6 +20,7 @@ interface ILiquidityHandler {
    */
   struct LiquidityOrder {
     address payable account;
+    uint256 orderId;
     address token;
     uint256 amount;
     uint256 minOut;

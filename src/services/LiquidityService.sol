@@ -14,7 +14,6 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 
-import { console } from "forge-std/console.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
@@ -101,7 +100,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _aumE30 = _calculator.getAUME30(true);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
-    (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) = _joinPool(
+    (uint256 _tokenValueUSDAfterFee, uint256 _mintAmount) = _joinPool(
       _token,
       _amount,
       _price,
@@ -112,10 +111,10 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     );
 
     //7 Transfer Token from LiquidityHandler to VaultStorage and Mint PLP to user
-    PLPv2(ConfigStorage(configStorage).plp()).mint(_lpProvider, mintAmount);
+    PLPv2(ConfigStorage(configStorage).plp()).mint(_lpProvider, _mintAmount);
 
-    emit AddLiquidity(_lpProvider, _token, _amount, _aumE30, _lpSupply, _tokenValueUSDAfterFee, mintAmount);
-    return mintAmount;
+    emit AddLiquidity(_lpProvider, _token, _amount, _aumE30, _lpSupply, _tokenValueUSDAfterFee, _mintAmount);
+    return _mintAmount;
   }
 
   function removeLiquidity(
@@ -129,21 +128,21 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     validatePreAddRemoveLiquidity(_amount);
 
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
-
-    uint256 _aum = _calculator.getAUME30(false);
+    uint256 _aumE30 = _calculator.getAUME30(false);
     uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
-    uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aum) / _lpSupply : 0;
+    uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aumE30) / _lpSupply : 0;
     uint256 _amountOut = _exitPool(_tokenOut, _lpUsdValueE30, _lpProvider, _minAmount);
 
     // handler receive PLP of user then burn it from handler
     PLPv2(ConfigStorage(configStorage).plp()).burn(msg.sender, _amount);
+
     VaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOut);
 
     _validatePLPHealthCheck(_tokenOut);
 
-    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aum, _lpSupply, _lpUsdValueE30, _amountOut);
+    emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aumE30, _lpSupply, _lpUsdValueE30, _amountOut);
 
     return _amountOut;
   }
@@ -158,16 +157,9 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     uint256 _lpSupply
   ) internal returns (uint256 _tokenValueUSDAfterFee, uint256 mintAmount) {
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
-    uint256 amountAfterFee = _collectFee(
-      CollectFeeRequest(
-        _token,
-        _lpProvider,
-        _price,
-        _amount,
-        _getAddLiquidityFeeBPS(_token, _amount, _price),
-        LiquidityAction.ADD_LIQUIDITY
-      )
-    );
+
+    uint32 _feeBps = _getAddLiquidityFeeBPS(_token, _amount, _price);
+    uint256 amountAfterFee = _collectFee(_token, _lpProvider, _price, _amount, _feeBps, LiquidityAction.ADD_LIQUIDITY);
 
     // 4. Calculate mintAmount
     _tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
@@ -183,8 +175,6 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     //6 accounting PLP (plpLiquidityUSD,total, plpLiquidity)
     VaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
-
-    _validatePLPHealthCheck(_token);
 
     return (_tokenValueUSDAfterFee, mintAmount);
   }
@@ -217,9 +207,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
 
-    _amountOut = _collectFee(
-      CollectFeeRequest(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY)
-    );
+    _amountOut = _collectFee(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY);
 
     if (_minAmount > _amountOut) {
       revert LiquidityService_Slippage();
@@ -249,30 +237,27 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   }
 
   // calculate fee and accounting fee
-  function _collectFee(CollectFeeRequest memory _request) internal returns (uint256) {
-    uint256 _fee = _request._amount - ((_request._amount * (BPS - _request._feeBPS)) / BPS);
+  function _collectFee(
+    address _token,
+    address _account,
+    uint256 _tokenPriceUsd,
+    uint256 _amount,
+    uint32 _feeBPS,
+    LiquidityAction _action
+  ) internal returns (uint256 _amountAfterFee) {
+    uint256 _fee = (_amount * _feeBPS) / BPS;
 
-    VaultStorage(vaultStorage).addFee(_request._token, _fee);
-    uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_request._token);
+    VaultStorage(vaultStorage).addFee(_token, _fee);
+    uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_token);
 
-    if (_request._action == LiquidityAction.SWAP) {
-      emit CollectSwapFee(_request._account, _request._token, (_fee * _request._tokenPriceUsd) / 10 ** _decimals, _fee);
-    } else if (_request._action == LiquidityAction.ADD_LIQUIDITY) {
-      emit CollectAddLiquidityFee(
-        _request._account,
-        _request._token,
-        (_fee * _request._tokenPriceUsd) / 10 ** _decimals,
-        _fee
-      );
-    } else if (_request._action == LiquidityAction.REMOVE_LIQUIDITY) {
-      emit CollectRemoveLiquidityFee(
-        _request._account,
-        _request._token,
-        (_fee * _request._tokenPriceUsd) / 10 ** _decimals,
-        _fee
-      );
+    if (_action == LiquidityAction.SWAP) {
+      emit CollectSwapFee(_account, _token, (_fee * _tokenPriceUsd) / 10 ** _decimals, _fee);
+    } else if (_action == LiquidityAction.ADD_LIQUIDITY) {
+      emit CollectAddLiquidityFee(_account, _token, (_fee * _tokenPriceUsd) / 10 ** _decimals, _fee);
+    } else if (_action == LiquidityAction.REMOVE_LIQUIDITY) {
+      emit CollectRemoveLiquidityFee(_account, _token, (_fee * _tokenPriceUsd) / 10 ** _decimals, _fee);
     }
-    return _request._amount - _fee;
+    return _amount - _fee;
   }
 
   function _validatePLPHealthCheck(address _token) internal view {
@@ -294,6 +279,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
     // Transform to save precision:
     // reserveValue > maxPLPUtilization * PLPTVL
     uint256 plpTVL = _calculator.getPLPValueE30(false);
+
     if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxPLPUtilizationBPS * plpTVL) {
       revert LiquidityService_MaxPLPUtilizationExceeded();
     }

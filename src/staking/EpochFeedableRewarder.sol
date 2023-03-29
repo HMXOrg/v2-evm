@@ -35,7 +35,8 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
   error EpochFeedableRewarderError_NotFeeder();
   error EpochFeedableRewarderError_BadDuration();
   error EpochFeedableRewarderError_WithdrawalNotAllowed();
-  error EpochFeedableRewarderError_FutureEpoch();
+  error EpochFeedableRewarderError_EpochNotEnded();
+  error EpochFeedableRewarderError_AlreadyFeed();
 
   modifier onlyStakingContract() {
     if (msg.sender != staking) revert EpochFeedableRewarderError_NotStakingContract();
@@ -145,7 +146,8 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
     // Floor down the timestamp, in case it is incorrectly formatted
     epochTimestamp = (epochTimestamp / epochLength) * epochLength;
 
-    if (epochTimestamp > block.timestamp) revert EpochFeedableRewarderError_FutureEpoch();
+    if (epochTimestamp + epochLength > block.timestamp) revert EpochFeedableRewarderError_EpochNotEnded();
+    if (rewardBalanceMapByEpochTimestamp[epochTimestamp] > 0) revert EpochFeedableRewarderError_AlreadyFeed();
 
     {
       // Transfer token, with decay check

@@ -104,14 +104,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getEquity",
-      args: [deployer.address, subAccountId, ethAssetId],
+      args: [address, 0, ethAssetId],
     },
     // Free Collateral
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getFreeCollateral",
-      args: [deployer.address, subAccountId, ethAssetId],
+      args: [address, 0, ethAssetId],
     },
     // Prices
     {

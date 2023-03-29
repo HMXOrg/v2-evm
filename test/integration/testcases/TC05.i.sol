@@ -10,6 +10,8 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 
 contract TC05 is BaseIntTest_WithActions {
+  bytes[] internal updatePriceData;
+
   function testCorrectness_TC05() external {
     bytes[] memory priceData = new bytes[](0);
 
@@ -18,6 +20,7 @@ contract TC05 is BaseIntTest_WithActions {
       //deal with out of gas
       vm.deal(ALICE, 10 ether);
       vm.deal(BOB, 10 ether);
+      vm.deal(BOT, 10 ether);
       /*
        Alice balance
        +-------+---------+
@@ -56,43 +59,24 @@ contract TC05 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     // T1: Alice buy long JPYUSD 100,000 USD at 0.008 USD
     {
-      bytes32[] memory _assetIds = new bytes32[](3);
-      _assetIds[0] = jpyAssetId;
-      _assetIds[1] = usdcAssetId;
-      _assetIds[2] = wbtcAssetId;
-      int64[] memory _prices = new int64[](3);
-      _prices[0] = 125 * 1e3;
-      _prices[1] = 1 * 1e8;
-      _prices[2] = 20_000 * 1e8;
-      uint64[] memory _confs = new uint64[](3);
-      _confs[0] = 0;
-      _confs[1] = 0;
-      _confs[2] = 0;
-      setPrices(_assetIds, _prices, _confs);
-
+      updatePriceData = new bytes[](3);
+      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
+      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
       // buy
       bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
-      marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), priceData);
+      marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), updatePriceData);
     }
 
     // T2: Alice buy the position for 20 mins, JPYUSD dumped hard to 0.007945967421533571712355979340 USD. This makes Alice account went below her kill level
     vm.warp(block.timestamp + (20 * MINUTES));
     {
-      bytes32[] memory _assetIds = new bytes32[](3);
-      _assetIds[0] = jpyAssetId;
-      _assetIds[1] = usdcAssetId;
-      _assetIds[2] = wbtcAssetId;
-      int64[] memory _prices = new int64[](3);
-      _prices[0] = 125.85 * 1e3;
-      _prices[1] = 1 * 1e8;
-      _prices[2] = 20_000 * 1e8;
-      uint64[] memory _confs = new uint64[](3);
-      _confs[0] = 0;
-      _confs[1] = 0;
-      _confs[2] = 0;
-      setPrices(_assetIds, _prices, _confs);
+      updatePriceData = new bytes[](3);
+      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
+      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
 
-      liquidate(getSubAccount(ALICE, 0), priceData);
+      liquidate(getSubAccount(ALICE, 0), updatePriceData);
       /*
        *
        * |       loss        | trading |      borrowing     |     funding    | liquidation | unit |

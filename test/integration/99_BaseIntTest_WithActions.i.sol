@@ -210,7 +210,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
 
   function liquidate(address _subAccount, bytes[] memory _priceData) internal {
     vm.prank(BOT);
-    botHandler.liquidate(_subAccount, _priceData);
+    botHandler.liquidate{ value: _priceData.length }(_subAccount, _priceData);
   }
 
   /**

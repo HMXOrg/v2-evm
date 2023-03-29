@@ -12,7 +12,7 @@ contract DeployPythAdapter is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
     address pythAddress = getJsonAddress(".oracle.pyth");
-    address pythAdapterAddress = address(new PythAdapter(IPyth(pythAddress)));
+    address pythAdapterAddress = address(new PythAdapter(pythAddress));
 
     vm.stopBroadcast();
 

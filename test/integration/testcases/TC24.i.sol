@@ -72,7 +72,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketBuy(ALICE, 0, wethMarketIndex, 1_500_000 * 1e30, address(0), new bytes[](0));
+      marketBuy(ALICE, 0, wethMarketIndex, 1_500_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T3Assert();
     }
@@ -88,7 +88,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(20 * 60); // time passed for 20 minutes
 
-      marketBuy(ALICE, 0, wethMarketIndex, 500_000 * 1e30, address(0), new bytes[](0));
+      marketBuy(ALICE, 0, wethMarketIndex, 500_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T4Assert();
     }
@@ -144,7 +144,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketSell(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(0), new bytes[](0));
+      marketSell(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T7Assert();
     }
@@ -158,7 +158,7 @@ contract TC24 is BaseIntTest_WithActions {
 
       _T8Assert1();
 
-      marketBuy(ALICE, 0, wethMarketIndex, 100_000 * 1e30, address(0), new bytes[](0));
+      marketBuy(ALICE, 0, wethMarketIndex, 100_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T8Assert2();
     }
@@ -172,7 +172,7 @@ contract TC24 is BaseIntTest_WithActions {
 
       _T9Assert1();
 
-      marketBuy(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(0), new bytes[](0));
+      marketBuy(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T9Assert2();
     }
@@ -188,7 +188,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketSell(CAROL, 0, wethMarketIndex, 300_000 * 1e30, address(0), new bytes[](0));
+      marketSell(CAROL, 0, wethMarketIndex, 300_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T10Assert();
     }
@@ -201,7 +201,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60 * 60); // time passed for 1 hour
 
-      marketBuy(CAROL, 0, wethMarketIndex, 300_000 * 1e30, address(0), new bytes[](0));
+      marketBuy(CAROL, 0, wethMarketIndex, 300_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T11Assert();
     }
@@ -216,7 +216,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketSell(CAROL, 0, wethMarketIndex, 100_000 * 1e30, address(0), new bytes[](0));
+      marketSell(CAROL, 0, wethMarketIndex, 100_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T12Assert();
     }
@@ -228,7 +228,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60 * 60); // time passed for 1 hour
 
-      marketBuy(CAROL, 0, wethMarketIndex, 100_000 * 1e30, address(0), new bytes[](0));
+      marketBuy(CAROL, 0, wethMarketIndex, 100_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T13Assert();
     }
@@ -244,7 +244,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketSell(ALICE, 0, wethMarketIndex, 2_100_000 * 1e30, address(0), new bytes[](0));
+      marketSell(ALICE, 0, wethMarketIndex, 2_100_000 * 1e30, address(wbtc), new bytes[](0));
 
       _T14Assert();
     }

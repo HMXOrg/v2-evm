@@ -16,6 +16,8 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
   uint256 public ghost_totalUnlockedAmount;
   uint256 public ghost_amount;
   uint256 public ghost_totalPenaltyAmount;
+  uint256 public ghost_hmxToBeClaimed;
+  uint256 public ghost_esHmxReturnedToUsers;
 
   constructor(IVester _vester, MockErc20 _hmx, MockErc20 _esHmx) {
     vester = _vester;
@@ -36,8 +38,25 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
 
   function abort(uint256 itemIndex) public {
     itemIndex = bound(itemIndex, 0, vester.nextItemId());
+    (address owner, , , , , , , uint256 totalUnlockedAmount) = vester.items(itemIndex);
+    vm.prank(owner);
+    uint256 esHmxBalanceBefore = esHmx.balanceOf(owner);
     vester.abort(itemIndex);
-    (, , , , , , , uint256 totalUnlockedAmount) = vester.items(itemIndex);
+    ghost_esHmxReturnedToUsers += esHmx.balanceOf(owner) - esHmxBalanceBefore;
     ghost_totalUnlockedAmount -= totalUnlockedAmount;
+  }
+
+  function claimFor(address someone, uint256 itemIndex, uint256 duration) public {
+    itemIndex = bound(itemIndex, 0, vester.nextItemId());
+    (address owner, , , uint256 amount, , , uint256 lastClaimTime, ) = vester.items(itemIndex);
+    vm.warp(block.timestamp + duration);
+    uint256 hmxBalanceBefore = hmx.balanceOf(owner);
+    vm.prank(someone);
+    vester.claimFor(owner, itemIndex);
+    ghost_hmxToBeClaimed += hmx.balanceOf(owner) - hmxBalanceBefore;
+  }
+
+  function warp(uint256 duration) public {
+    vm.warp(block.timestamp + duration);
   }
 }

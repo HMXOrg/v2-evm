@@ -40,7 +40,9 @@ contract Invariance_Vester is Test, InvariantTest {
     assertEq(
       esHmx.balanceOf(address(vesterHandler)) +
         esHmx.balanceOf(address(vester)) +
-        esHmx.balanceOf(unusedEsHmxDestinationAddress),
+        esHmx.balanceOf(vestedEsHmxDestinationAddress) +
+        esHmx.balanceOf(unusedEsHmxDestinationAddress) +
+        vesterHandler.ghost_esHmxReturnedToUsers(),
       esHmxTotalSupply
     );
   }
@@ -50,6 +52,6 @@ contract Invariance_Vester is Test, InvariantTest {
   }
 
   function invariant_hmxSupplyShouldBeCorrect() public {
-    assertEq(hmx.balanceOf(address(vesterHandler)) + hmx.balanceOf(address(vester)), esHmxTotalSupply);
+    assertEq(hmx.balanceOf(address(vester)) + vesterHandler.ghost_hmxToBeClaimed(), esHmxTotalSupply);
   }
 }

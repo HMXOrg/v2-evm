@@ -70,8 +70,9 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
 
   function _vest(address account, uint256 amount, uint256 duration) internal {
     esHmx.approve(address(vester), type(uint256).max);
-    vester.vestFor(currentActor, amount, duration);
-    (, , , , , , , uint256 totalUnlockedAmount) = vester.items(vester.nextItemId() - 1);
+    uint256 nextItemId = vester.nextItemId();
+    vester.vestFor(account, amount, duration);
+    (, , , , , , , uint256 totalUnlockedAmount) = vester.items(nextItemId);
 
     ghost_amount += amount;
     ghost_totalUnlockedAmount += totalUnlockedAmount;

@@ -5,7 +5,7 @@ import { BaseTest, MockErc20 } from "@hmx-test/base/BaseTest.sol";
 import { Test } from "forge-std/Test.sol";
 import { InvariantTest } from "forge-std/InvariantTest.sol";
 import { Deployer, IVester } from "@hmx-test/libs/Deployer.sol";
-import { VesterHandler } from "@hmx-test/invariance/VesterHandler.t.sol";
+import { VesterHandler } from "@hmx-test/invariance/vesting/VesterHandler.t.sol";
 import { console2 } from "forge-std/console2.sol";
 
 contract Invariance_Vester is Test, InvariantTest {
@@ -91,7 +91,7 @@ contract Invariance_Vester is Test, InvariantTest {
     vesterHandler.forEachActor(this.assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance);
   }
 
-  function invariant_callSummary() external {
+  function invariant_callSummary() external view {
     vesterHandler.callSummary();
   }
 

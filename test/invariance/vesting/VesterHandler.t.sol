@@ -7,7 +7,7 @@ import { StdUtils } from "forge-std/StdUtils.sol";
 import { IVester } from "@hmx-test/libs/Deployer.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 import { Test } from "forge-std/Test.sol";
-import { console } from "forge-std/console.sol";
+import { console2 } from "forge-std/console2.sol";
 import { AddressSet, LibAddressSet } from "test/libs/AddressSet.sol";
 
 contract VesterHandler is CommonBase, StdCheats, StdUtils {
@@ -77,7 +77,10 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     ghost_amount += amount;
     ghost_totalUnlockedAmount += totalUnlockedAmount;
     ghost_totalPenaltyAmount += amount - totalUnlockedAmount;
-    ghost_maxPossibleHmxAccountBalance[currentActor] += totalUnlockedAmount;
+    ghost_maxPossibleHmxAccountBalance[account] += totalUnlockedAmount;
+
+    console2.log("hmxBalance", hmx.balanceOf(account));
+    console2.log("ghost_maxPossibleHmxAccountBalance[account]", ghost_maxPossibleHmxAccountBalance[account]);
   }
 
   function abort(uint256 itemIndex, uint256 duration) public createActor countCall("abort") {
@@ -123,6 +126,8 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     duration2 = bound(duration, 0, endTime - startTime + 1);
     vm.warp(block.timestamp + duration2);
     vester.claimFor(owner, itemIndex);
+
+    console2.log("hmxBalance", hmx.balanceOf(owner));
   }
 
   function forEachActor(function(address) external func) public {
@@ -141,12 +146,12 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
   }
 
   function callSummary() external view {
-    console.log("Call summary:");
-    console.log("-------------------");
-    console.log("vestAsNewAccount", calls["vestAsNewAccount"]);
-    console.log("vestAsExistingAccount", calls["vestAsExistingAccount"]);
-    console.log("abort", calls["abort"]);
-    console.log("claimFor", calls["claimFor"]);
-    console.log("-------------------");
+    console2.log("Call summary:");
+    console2.log("-------------------");
+    console2.log("vestAsNewAccount", calls["vestAsNewAccount"]);
+    console2.log("vestAsExistingAccount", calls["vestAsExistingAccount"]);
+    console2.log("abort", calls["abort"]);
+    console2.log("claimFor", calls["claimFor"]);
+    console2.log("-------------------");
   }
 }

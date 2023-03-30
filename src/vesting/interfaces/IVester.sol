@@ -5,12 +5,13 @@ interface IVester {
   // ---------------------
   //       Errors
   // ---------------------
-  error BadArgument();
-  error ExceedMaxDuration();
-  error Unauthorized();
-  error Claimed();
-  error Aborted();
-  error HasCompleted();
+  error IVester_BadArgument();
+  error IVester_ExceedMaxDuration();
+  error IVester_Unauthorized();
+  error IVester_Claimed();
+  error IVester_Aborted();
+  error IVester_HasCompleted();
+  error IVester_InvalidAddress();
 
   // ---------------------
   //       Structs

@@ -51,8 +51,9 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
   }
 
   function vestFor(address account, uint256 amount, uint256 duration) external nonReentrant {
-    if (amount == 0) revert BadArgument();
-    if (duration > YEAR) revert ExceedMaxDuration();
+    if (account == address(0) || account == address(this)) revert IVester_InvalidAddress();
+    if (amount == 0) revert IVester_BadArgument();
+    if (duration > YEAR) revert IVester_ExceedMaxDuration();
 
     Item memory item = Item({
       owner: account,
@@ -91,9 +92,9 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
   function _claimFor(address account, uint256 itemIndex) internal {
     Item storage item = items[itemIndex];
 
-    if (item.owner != account) revert Unauthorized();
-    if (item.hasClaimed) revert Claimed();
-    if (item.hasAborted) revert Aborted();
+    if (item.owner != account) revert IVester_Unauthorized();
+    if (item.hasClaimed) revert IVester_Claimed();
+    if (item.hasAborted) revert IVester_Aborted();
 
     uint256 elapsedDuration = block.timestamp < item.endTime
       ? block.timestamp - item.lastClaimTime
@@ -114,10 +115,10 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
 
   function abort(uint256 itemIndex) external nonReentrant {
     Item storage item = items[itemIndex];
-    if (msg.sender != item.owner) revert Unauthorized();
-    if (block.timestamp > item.endTime) revert HasCompleted();
-    if (item.hasClaimed) revert Claimed();
-    if (item.hasAborted) revert Aborted();
+    if (msg.sender != item.owner) revert IVester_Unauthorized();
+    if (block.timestamp > item.endTime) revert IVester_HasCompleted();
+    if (item.hasClaimed) revert IVester_Claimed();
+    if (item.hasAborted) revert IVester_Aborted();
 
     _claimFor(item.owner, itemIndex);
 

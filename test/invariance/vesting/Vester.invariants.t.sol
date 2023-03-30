@@ -75,6 +75,7 @@ contract Invariance_Vester is Test, InvariantTest {
   // - Vester from initial mint; for users to vest esHMX and redeem into HMX token
   // - Each user that has already claimed
   function invariant_hmxSupply() public {
+    console2.log("hmx.balanceOf(address(vester))", hmx.balanceOf(address(vester)));
     assertEq(hmx.balanceOf(address(vester)) + vesterHandler.reduceActors(0, this.accumulateHmxBalance), hmxTotalSupply);
   }
 
@@ -99,6 +100,7 @@ contract Invariance_Vester is Test, InvariantTest {
    * Internal functions
    */
   function accumulateHmxBalance(uint256 balance, address caller) external view returns (uint256) {
+    console2.log("balance", hmx.balanceOf(caller));
     return balance + hmx.balanceOf(caller);
   }
 
@@ -107,6 +109,9 @@ contract Invariance_Vester is Test, InvariantTest {
   }
 
   function assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance(address account) external {
+    console2.log("account", account);
+    console2.log("hmxBalance", hmx.balanceOf(account));
+    console2.log("maxPossible", vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
     assertLe(hmx.balanceOf(account), vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
   }
 }

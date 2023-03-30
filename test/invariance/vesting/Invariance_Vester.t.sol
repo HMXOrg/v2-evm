@@ -44,7 +44,18 @@ contract Invariance_Vester is Test, InvariantTest {
     targetContract(address(vesterHandler));
   }
 
-  function invariant_esHmxShouldBeReceivedByVester() public {
+  /**
+   * Invariances
+   */
+
+  // esHmx can be at the following addresses
+  // - VesterHandler from initial mint
+  // - Vester from vesting by users
+  // - vestedEsHmxDestinationAddress from vested esHmx
+  // - unusedEsHmxDestinationAddress from penalty
+  // - each user that has already claimed
+  // Balanced from all of these addresses should be equal to the total supply
+  function invariant_esHmxSupply() public {
     assertEq(
       esHmx.balanceOf(address(vesterHandler)) +
         esHmx.balanceOf(address(vester)) +
@@ -55,24 +66,40 @@ contract Invariance_Vester is Test, InvariantTest {
     );
   }
 
+  // All penalty amount of esHmx should go to unusedEsHmxDestinationAddress
   function invariant_penaltyAmount() public {
     assertEq(vesterHandler.ghost_totalPenaltyAmount(), esHmx.balanceOf(address(unusedEsHmxDestinationAddress)));
   }
 
+  // HMX can be at the following address
+  // - Vester from initial mint; for users to vest esHMX and redeem into HMX token
+  // - Each user that has already claimed
   function invariant_hmxSupply() public {
     assertEq(hmx.balanceOf(address(vester)) + vesterHandler.reduceActors(0, this.accumulateHmxBalance), hmxTotalSupply);
   }
 
-  function accumulateHmxBalance(uint256 balance, address caller) external view returns (uint256) {
-    return balance + hmx.balanceOf(caller);
-  }
-
+  // No one should have HMX token more than the HMX total supply
   function invariant_assertAccountHmxBalanceLteHmxTotalSupply() public {
     vesterHandler.forEachActor(this.assertAccountHmxBalanceLteHmxTotalSupply);
   }
 
+  // No one should have HMX token more than the max possible HMX balance of that account
+  // Max possible HMX balance is calculated from everytime the user called `vestFor`,
+  // we will track the `totalUnlockedAmount` which is the amount user will get if
+  // they wait until the duration of the vesting without abortion.
   function invariant_assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance() public {
     vesterHandler.forEachActor(this.assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance);
+  }
+
+  function invariant_callSummary() external {
+    vesterHandler.callSummary();
+  }
+
+  /**
+   * Internal functions
+   */
+  function accumulateHmxBalance(uint256 balance, address caller) external view returns (uint256) {
+    return balance + hmx.balanceOf(caller);
   }
 
   function assertAccountHmxBalanceLteHmxTotalSupply(address account) external {
@@ -80,13 +107,6 @@ contract Invariance_Vester is Test, InvariantTest {
   }
 
   function assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance(address account) external {
-    console2.log("account", account);
-    console2.log("balanceOf", hmx.balanceOf(account));
-    console2.log("maxPossible", vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
     assertLe(hmx.balanceOf(account), vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
-  }
-
-  function invariant_callSummary() external {
-    vesterHandler.callSummary();
   }
 }

@@ -11,9 +11,9 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
 
   uint256 private constant YEAR = 365 days;
 
-  // ---------------------
-  //       Events
-  // ---------------------
+  /**
+   * Events
+   */
   event Vest(
     address indexed owner,
     uint256 indexed itemIndex,
@@ -25,9 +25,9 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
   event Claim(address indexed owner, uint256 indexed itemIndex, uint256 vestedAmount, uint256 unusedAmount);
   event Abort(address indexed owner, uint256 indexed itemIndex, uint256 returnAmount);
 
-  // ---------------------
-  //       States
-  // ---------------------
+  /**
+   * States
+   */
   address public esHMX;
   address public hmx;
 

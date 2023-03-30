@@ -23,6 +23,14 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     actualFunction[keccak256(_funcName)] = true;
   }
 
+  function getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) public view override returns (uint256) {
+    if (actualFunction[keccak256("getTradingFee")]) {
+      return c.getTradingFee(_size, _baseFeeRateBPS);
+    } else {
+      return super.getTradingFee(_size, _baseFeeRateBPS);
+    }
+  }
+
   function getFundingFee(
     uint256 _marketIndex,
     bool _isLong,

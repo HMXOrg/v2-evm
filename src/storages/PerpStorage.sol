@@ -32,7 +32,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   mapping(bytes32 => Position) public positions;
   mapping(address => bytes32[]) public subAccountPositionIds;
   mapping(address => uint256) public subAccountBorrowingFee;
-  mapping(address => uint256) public badDebt;
   mapping(uint256 => GlobalMarket) public globalMarkets;
   mapping(uint256 => GlobalAssetClass) public globalAssetClass;
   mapping(address => bool) public serviceExecutors;
@@ -87,13 +86,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
 
   function getGlobalState() external view returns (GlobalState memory) {
     return globalState;
-  }
-
-  /// @notice Gets the bad debt associated with the given sub-account.
-  /// @param subAccount The address of the sub-account to get the bad debt for.
-  /// @return _badDebt The bad debt associated with the given sub-account.
-  function getBadDebt(address subAccount) external view returns (uint256 _badDebt) {
-    return badDebt[subAccount];
   }
 
   /**
@@ -189,14 +181,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     }
 
     subAccountBorrowingFee[_subAccount] -= _borrowingFee;
-  }
-
-  /// @notice Adds bad debt to the specified sub-account.
-  /// @param _subAccount The address of the sub-account to add bad debt to.
-  /// @param _badDebt The amount of bad debt to add to the sub-account.
-  function addBadDebt(address _subAccount, uint256 _badDebt) external onlyWhitelistedExecutor {
-    // Add the bad debt to the sub-account
-    badDebt[_subAccount] += _badDebt;
   }
 
   function increaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {

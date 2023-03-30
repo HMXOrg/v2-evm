@@ -11,13 +11,14 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { console } from "forge-std/console.sol";
 
 contract TC36 is BaseIntTest_WithActions {
-  function test_correctness_MaxUtilization() external {
+  function testCorrectness_TC36_MaxUtilization() external {
     // T0: Initialized state
     // ALICE as liquidity provider
     // BOB as trader
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wethMarketIndex);
 
     _marketConfig.maxLongPositionSize = 20_000_000 * 1e30; // adjust IMF from 100 BPS => 500 BPS
+    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30; // adjust IMF from 100 BPS => 500 BPS
 
     configStorage.setMarketConfig(wethMarketIndex, _marketConfig);
 

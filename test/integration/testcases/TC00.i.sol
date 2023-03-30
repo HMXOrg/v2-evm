@@ -9,10 +9,12 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 
-contract TC05 is BaseIntTest_WithActions {
+import { console2 } from "forge-std/console2.sol";
+
+contract TC00 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
-  function testCorrectness_TC05() external {
+  function testCorrectness_TC00() external {
     bytes[] memory priceData = new bytes[](0);
 
     // T0: Initialized state
@@ -31,7 +33,7 @@ contract TC05 is BaseIntTest_WithActions {
        +-------+---------+
        */
       usdt.mint(ALICE, 100_000 * 1e6);
-      wbtc.mint(ALICE, 0.5 * 1e8);
+      wbtc.mint(ALICE, 5 * 1e8);
 
       /*
        Alice balance
@@ -41,19 +43,20 @@ contract TC05 is BaseIntTest_WithActions {
        | WBTC  | 10      |
        +-------+---------+
        */
-      wbtc.mint(BOB, 10 * 1e8);
+      wbtc.mint(BOB, 100 * 1e8);
     }
 
     vm.warp(block.timestamp + 1);
     {
       // BOB add liquidity
-      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceData, true);
+      addLiquidity(BOB, wbtc, 50 * 1e8, executionOrderFee, priceData, true);
     }
 
     vm.warp(block.timestamp + 1);
     {
       // Alice deposits 10,000(USD) of WBTC
-      depositCollateral(ALICE, 0, wbtc, 0.05 * 1e8);
+      depositCollateral(ALICE, 0, wbtc, 0.1 * 1e8);
+      depositCollateral(ALICE, 1, wbtc, 1 * 1e8);
     }
 
     vm.warp(block.timestamp + 1);
@@ -63,41 +66,43 @@ contract TC05 is BaseIntTest_WithActions {
       updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
       updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
       updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+
       // buy
-      bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
-      marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), updatePriceData);
+      // bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
+
+      marketSell(ALICE, 1, wbtcMarketIndex, 110_000 * 1e30, address(wbtc), updatePriceData);
+      marketBuy(ALICE, 0, wbtcMarketIndex, 100_000 * 1e30, address(wbtc), updatePriceData);
     }
 
     // T2: Alice buy the position for 20 mins, JPYUSD dumped hard to 0.007945967421533571712355979340 USD. This makes Alice account went below her kill level
-    vm.warp(block.timestamp + (20 * MINUTES));
+    vm.warp(block.timestamp + (24 * HOURS));
     {
       updatePriceData = new bytes[](3);
       updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
       updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_100 * 1e8, 0);
 
       liquidate(getSubAccount(ALICE, 0), updatePriceData);
       /*
        *
-       * |       loss        | trading |      borrowing     |     funding    | liquidation | unit |
-       * |-------------------|---------|--------------------|----------------|-------------|------|
-       * | 675.4072308303536 |      30 | 1.4623871614844526 | 15.99999999996 |           5 |  USD |
-       * |        0.03377036 |  0.0015 |         0.00007311 |     0.00079999 |     0.00025 |  BTC |
+       * |       loss        |   trading   |      borrowing     |      funding     | liquidation | unit |
+       * |-------------------|-------------|--------------------|------------------|-------------|------|
+       * |            500.00 |         100 | 1466.7524962948546 | -115.19999999712 |           5 |  USD |
+       * |        0.02487562 |  0.00497512 |         0.07297276 |      -0.00573134 |  0.00024875 |  BTC |
        *
-       * total pay: 0.03377036 + 0.0015 + 0.00007311 + 0.00079999 + 0.00025 = 0.03639346
-       * trader balance = 0.04850000 - 0.03639346 = 0.01210654
-       * dev fee = (0.0015 * 15%) + (0.00007311 * 15%) = 0.00023596 | 0.000225 + 0.00023596 = 0.00046096
-       * plp liquidity = 9.97 + (0.03377036 + (0.00007311 - 0.00001096)) = 10.00383251
-       * protocol fee = 0.000225 + (0.0015 - (0.0015 * 15%)) = 0.03255
+       * total pay: 0.00497512 + 0.07297276 + 0.00024875 = 0.07819663
+       * total receive: 0.02487562 + 0.00573134 = 0.03060696
+       * trader balance = 0.095 + 0.03060696 - 0.07819663 = 0.04741033
+       * dev fee = (0.00497512 * 15%) + (0.07297276 * 15%) = 0.00074626 + 0.01094591 = 0.01169217 | 0.001575 + 0.01169217 = 0.01326717
+       * plp liquidity = 0.07297276 - 0.01094591 = 0.06202685 | 49.85 + 0.06202685 - 0.02487562 - 0.00573134 = 49.88141989
+       * protocol fee = 0.00497512 - 0.00074626 = 0.00422886 | 0.158925 + 0.00422886 = 0.16315386
        * liquidation fee = 0.00025
        */
-      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 0.01210654 * 1e8);
-      assertVaultsFees(address(wbtc), 0.032550 * 1e8, 0.00046096 * 1e8, 0.00079999 * 1e8);
-      assertPLPLiquidity(address(wbtc), 10.00383251 * 1e8);
-      assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);
+      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 0.04741033 * 1e8);
+      assertVaultsFees(address(wbtc), 0.16315386 * 1e8, 0.01326717 * 1e8, 0 * 1e8);
+      assertPLPLiquidity(address(wbtc), 49.88141989 * 1e8);
+      assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00024875 * 1e8);
       assertNumberOfPosition(ALICE, 0);
-      assertPositionInfoOf(ALICE, jpyMarketIndex, 0, 0, 0, 0, 0, 0);
-      assertMarketLongPosition(jpyMarketIndex, 0, 0);
     }
   }
 }

@@ -174,6 +174,10 @@ contract MockCalculator is ICalculator {
     return nextBorrowingRate;
   }
 
+  function getTradingFee(uint256 /*_size*/, uint256 /*_baseFeeRateBPS*/) public view virtual returns (uint256) {
+    return 0;
+  }
+
   function getFundingFee(
     uint256 /*_marketIndex*/,
     bool /*_isLong*/,

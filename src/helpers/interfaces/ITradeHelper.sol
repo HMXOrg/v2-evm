@@ -7,6 +7,7 @@ interface ITradeHelper {
   error ITradeHelper_TradingFeeCannotBeCovered();
   error ITradeHelper_BorrowingFeeCannotBeCovered();
   error ITradeHelper_FundingFeeCannotBeCovered();
+  error ITradeHelper_UnrealizedPnlCannotBeCovered();
   error ITradeHelper_InvalidAddress();
 
   function reloadConfig() external;

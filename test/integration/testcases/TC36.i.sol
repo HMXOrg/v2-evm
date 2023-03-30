@@ -15,12 +15,12 @@ contract TC36 is BaseIntTest_WithActions {
     // T0: Initialized state
     // ALICE as liquidity provider
     // BOB as trader
-    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wethMarketIndex);
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
 
-    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30; // adjust IMF from 100 BPS => 500 BPS
-    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30; // adjust IMF from 100 BPS => 500 BPS
+    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30;
+    _marketConfig.maxShortPositionSize = 20_000_000 * 1e30;
 
-    configStorage.setMarketConfig(wethMarketIndex, _marketConfig);
+    configStorage.setMarketConfig(wbtcMarketIndex, _marketConfig);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);
@@ -66,7 +66,6 @@ contract TC36 is BaseIntTest_WithActions {
 
     {
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
-      IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
       IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(
         _marketConfig.assetClass
       );

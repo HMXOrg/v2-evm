@@ -66,8 +66,11 @@ contract Invariance_Vester is Test, InvariantTest {
     return balance + hmx.balanceOf(caller);
   }
 
-  function invariant_hmxVesterBalance() public {
+  function invariant_assertAccountHmxBalanceLteHmxTotalSupply() public {
     vesterHandler.forEachActor(this.assertAccountHmxBalanceLteHmxTotalSupply);
+  }
+
+  function invariant_assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance() public {
     vesterHandler.forEachActor(this.assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance);
   }
 
@@ -77,5 +80,9 @@ contract Invariance_Vester is Test, InvariantTest {
 
   function assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance(address account) external {
     assertLe(hmx.balanceOf(account), vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
+  }
+
+  function invariant_callSummary() external {
+    vesterHandler.callSummary();
   }
 }

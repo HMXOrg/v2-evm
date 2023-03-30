@@ -62,13 +62,19 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     ghost_maxPossibleHmxAccountBalance[currentActor] += totalUnlockedAmount;
   }
 
-  function abort(uint256 itemIndex, uint256 duration) public countCall("abort") {
-    vm.warp(block.timestamp + duration);
+  function abort(uint256 itemIndex, uint256 duration) public createActor countCall("abort") {
     itemIndex = bound(itemIndex, 0, vester.nextItemId() - 1);
-    (address owner, , , , , , , uint256 totalUnlockedAmount) = vester.items(itemIndex);
+
+    (address owner, , , , uint256 startTime, uint256 endTime, , uint256 totalUnlockedAmount) = vester.items(itemIndex);
+
+    duration = bound(duration, 0, endTime - startTime + 1);
+    vm.warp(block.timestamp + duration);
+
     uint256 esHmxBalanceBefore = esHmx.balanceOf(owner);
+
     vm.prank(owner);
     vester.abort(itemIndex);
+
     ghost_esHmxReturnedToUsers += esHmx.balanceOf(owner) - esHmxBalanceBefore;
     ghost_totalUnlockedAmount -= totalUnlockedAmount;
 
@@ -78,7 +84,7 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     vester.abort(itemIndex);
   }
 
-  function claimFor(address someone, uint256 itemIndex, uint256 duration) public countCall("claimFor") {
+  function claimFor(address someone, uint256 itemIndex, uint256 duration) public createActor countCall("claimFor") {
     itemIndex = bound(itemIndex, 0, vester.nextItemId() - 1);
     (address owner, , , uint256 amount, , , uint256 lastClaimTime, ) = vester.items(itemIndex);
     vm.warp(block.timestamp + duration);
@@ -107,20 +113,12 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     return _actors.addrs;
   }
 
-  // function callSummary() external view {
-  //   console.log("Call summary:");
-  //   console.log("-------------------");
-  //   console.log("deposit", calls["deposit"]);
-  //   console.log("withdraw", calls["withdraw"]);
-  //   console.log("sendFallback", calls["sendFallback"]);
-  //   console.log("approve", calls["approve"]);
-  //   console.log("transfer", calls["transfer"]);
-  //   console.log("transferFrom", calls["transferFrom"]);
-  //   console.log("forcePush", calls["forcePush"]);
-  //   console.log("-------------------");
-
-  //   console.log("Zero withdrawals:", ghost_zeroWithdrawals);
-  //   console.log("Zero transferFroms:", ghost_zeroTransferFroms);
-  //   console.log("Zero transfers:", ghost_zeroTransfers);
-  // }
+  function callSummary() external view {
+    console.log("Call summary:");
+    console.log("-------------------");
+    console.log("vestFor", calls["vestFor"]);
+    console.log("abort", calls["abort"]);
+    console.log("claimFor", calls["claimFor"]);
+    console.log("-------------------");
+  }
 }

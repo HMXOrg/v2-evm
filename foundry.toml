@@ -15,5 +15,5 @@ line_length = 80
 arbitrum_fork = "https://rpc.ankr.com/arbitrum"
 
 [invariant]
-runs = 512
-depth = 30
+runs = 2000
+depth = 15

@@ -101,9 +101,9 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
     uint256 claimable = getUnlockAmount(item.amount, elapsedDuration);
 
     // If vest has ended, then mark this as claimed.
-    if (block.timestamp > item.endTime) item.hasClaimed = true;
+    if (block.timestamp > item.endTime) items[itemIndex].hasClaimed = true;
 
-    item.lastClaimTime = block.timestamp;
+    items[itemIndex].lastClaimTime = block.timestamp;
 
     IERC20Upgradeable(hmx).safeTransfer(account, claimable);
 
@@ -125,7 +125,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
     uint256 amountUsed = getUnlockAmount(item.amount, elapsedDurationSinceStart);
     uint256 returnAmount = item.totalUnlockedAmount - amountUsed;
 
-    item.hasAborted = true;
+    items[itemIndex].hasAborted = true;
 
     IERC20Upgradeable(esHMX).safeTransfer(msg.sender, returnAmount);
 

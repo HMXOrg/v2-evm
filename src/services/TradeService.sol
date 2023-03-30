@@ -76,44 +76,48 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
    * Events
    */
   event LogIncreasePosition(
-    bytes32 _positionId,
-    address _primaryAccount,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    int256 _size,
-    int256 _increasedSize,
-    uint256 _avgEntryPrice,
-    uint256 _entryBorrowingRate,
-    int256 _entryFundingRate
+    bytes32 positionId,
+    address primaryAccount,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    int256 size,
+    int256 increasedSize,
+    uint256 avgEntryPrice,
+    uint256 entryBorrowingRate,
+    int256 entryFundingRate,
+    int256 realizedPnl,
+    uint256 reserveValueE30
   );
 
   event LogDecreasePosition(
-    bytes32 indexed _positionId,
-    uint256 _marketIndex,
-    int256 _size,
-    int256 _decreasedSize,
-    uint256 _avgEntryPrice,
-    uint256 _entryBorrowingRate,
-    int256 _entryFundingRate,
-    int256 _realizedPnl,
-    uint256 _reserveValueE30
+    bytes32 indexed positionId,
+    uint256 marketIndex,
+    int256 size,
+    int256 decreasedSize,
+    uint256 avgEntryPrice,
+    uint256 entryBorrowingRate,
+    int256 entryFundingRate,
+    int256 realizedPnl,
+    uint256 reserveValueE30
   );
 
   event LogForceClosePosition(
-    address indexed _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken,
-    uint256 _closedPositionSize,
+    bytes32 indexed positionId,
+    address indexed account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    address tpToken,
+    uint256 closedPositionSize,
     bool isProfit,
-    uint256 _delta
+    uint256 delta
   );
+
   event LogDeleverage(
-    address indexed _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken,
-    uint256 _closedPositionSize
+    address indexed account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    address tpToken,
+    uint256 closedPositionSize
   );
   event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
@@ -384,7 +388,9 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       _sizeDelta,
       _vars.position.avgEntryPriceE30,
       _vars.position.entryBorrowingRate,
-      _vars.position.entryFundingRate
+      _vars.position.entryFundingRate,
+      _vars.position.realizedPnl,
+      _vars.position.reserveValueE30
     );
   }
 
@@ -538,6 +544,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     (_isMaxProfit, _isProfit, _delta) = _decreasePosition(_marketConfig, _marketIndex, _vars);
 
     emit LogForceClosePosition(
+      _vars.positionId,
       _account,
       _subAccountId,
       _marketIndex,

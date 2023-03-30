@@ -15,6 +15,11 @@ contract TC36 is BaseIntTest_WithActions {
     // T0: Initialized state
     // ALICE as liquidity provider
     // BOB as trader
+    IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wethMarketIndex);
+
+    _marketConfig.maxLongPositionSize = 20_000_000 * 1e30; // adjust IMF from 100 BPS => 500 BPS
+
+    configStorage.setMarketConfig(wethMarketIndex, _marketConfig);
 
     // T1: Add liquidity in pool USDC 100_000 , WBTC 100
     vm.deal(ALICE, executionOrderFee);

@@ -63,8 +63,8 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     _newFundingRateConfig.maxFundingRate = 0.0004 * 1e18; // 0.04%
 
     _newMarketConfig.assetId = _assetId;
-    _newMarketConfig.maxLongPositionSize = 20_000_000 * 1e30;
-    _newMarketConfig.maxShortPositionSize = 20_000_000 * 1e30;
+    _newMarketConfig.maxLongPositionSize = 10_000_000 * 1e30;
+    _newMarketConfig.maxShortPositionSize = 10_000_000 * 1e30;
     _newMarketConfig.increasePositionFeeRateBPS = _managePositionFee;
     _newMarketConfig.decreasePositionFeeRateBPS = _managePositionFee;
     _newMarketConfig.initialMarginFractionBPS = _imf;

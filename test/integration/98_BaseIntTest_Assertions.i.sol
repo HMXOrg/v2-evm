@@ -51,6 +51,14 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     assertPLPLiquidity(_token, _liquidity, "");
   }
 
+  function assertTVL(uint256 _tvl, bool _isMaxPrice, string memory _str) internal {
+    assertEq(calculator.getPLPValueE30(_isMaxPrice), _tvl, string.concat(_str, "TVL is not matched"));
+  }
+
+  function assertTVL(uint256 _tvl, bool _isMaxPrice) internal {
+    assertTVL(_tvl, _isMaxPrice, "");
+  }
+
   function assertVaultTokenBalance(address _token, uint256 _balance, string memory _str) internal {
     assertEq(
       vaultStorage.totalAmount(_token),
@@ -327,6 +335,19 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     assertEq(_assetClass.reserveValueE30, _reserved, string.concat(_str, "Asset class's Reserve value"));
   }
 
+  function assertAssetClassReserve(uint8 _assetClassIndex, uint256 _reserved) internal {
+    assertAssetClassReserve(_assetClassIndex, _reserved, "");
+  }
+
+  function assertGlobalReserve(uint256 _reserved, string memory _str) internal {
+    IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
+    assertEq(_globalState.reserveValueE30, _reserved, string.concat(_str, "Global's Reserve value"));
+  }
+
+  function assertGlobalReserve(uint256 _reserved) internal {
+    assertGlobalReserve(_reserved, "");
+  }
+
   function assertAssetClassSumBorrowingRate(
     uint8 _assetClassIndex,
     uint256 _sumBorrowingRate,
@@ -345,10 +366,6 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       _lastBorrowingTime,
       string.concat(_str, "Asset class's Last borrowing time")
     );
-  }
-
-  function assertAssetClassReserve(uint8 _assetClassIndex, uint256 _reserved) internal {
-    assertAssetClassReserve(_assetClassIndex, _reserved, "");
   }
 
   function assertAssetClassSumBorrowingRate(

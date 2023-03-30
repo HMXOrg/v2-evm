@@ -121,8 +121,6 @@ interface IConfigStorage {
    * Getter
    */
 
-  function getMarketConfigById(uint256 _marketIndex) external view returns (MarketConfig memory _marketConfig);
-
   function getTradingConfig() external view returns (TradingConfig memory);
 
   function getMarketConfigByIndex(uint256 _index) external view returns (MarketConfig memory _marketConfig);

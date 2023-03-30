@@ -116,6 +116,8 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
     Item storage item = items[itemIndex];
     if (msg.sender != item.owner) revert Unauthorized();
     if (block.timestamp > item.endTime) revert HasCompleted();
+    if (item.hasClaimed) revert Claimed();
+    if (item.hasAborted) revert Aborted();
 
     _claimFor(item.owner, itemIndex);
 

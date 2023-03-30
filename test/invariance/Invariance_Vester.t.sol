@@ -16,6 +16,7 @@ contract Invariance_Vester is Test, InvariantTest {
   address private constant vestedEsHmxDestinationAddress = address(888);
   address private constant unusedEsHmxDestinationAddress = address(889);
   uint256 private constant esHmxTotalSupply = 100 ether;
+  uint256 private constant hmxTotalSupply = 100 ether;
 
   function setUp() public {
     hmx = new MockErc20("HMX", "HMX", 18);
@@ -30,9 +31,15 @@ contract Invariance_Vester is Test, InvariantTest {
 
     vesterHandler = new VesterHandler(vester, hmx, esHmx);
 
-    hmx.mint(address(vester), esHmxTotalSupply);
+    hmx.mint(address(vester), hmxTotalSupply);
     esHmx.mint(address(vesterHandler), esHmxTotalSupply);
 
+    bytes4[] memory selectors = new bytes4[](3);
+    selectors[0] = VesterHandler.vestFor.selector;
+    selectors[1] = VesterHandler.claimFor.selector;
+    selectors[2] = VesterHandler.abort.selector;
+
+    targetSelector(FuzzSelector({ addr: address(vesterHandler), selectors: selectors }));
     targetContract(address(vesterHandler));
   }
 
@@ -51,7 +58,24 @@ contract Invariance_Vester is Test, InvariantTest {
     assertEq(vesterHandler.ghost_totalPenaltyAmount(), esHmx.balanceOf(address(unusedEsHmxDestinationAddress)));
   }
 
-  function invariant_hmxSupplyShouldBeCorrect() public {
-    assertEq(hmx.balanceOf(address(vester)) + vesterHandler.ghost_hmxToBeClaimed(), esHmxTotalSupply);
+  function invariant_hmxSupply() public {
+    assertEq(hmx.balanceOf(address(vester)) + vesterHandler.reduceActors(0, this.accumulateHmxBalance), hmxTotalSupply);
+  }
+
+  function accumulateHmxBalance(uint256 balance, address caller) external view returns (uint256) {
+    return balance + hmx.balanceOf(caller);
+  }
+
+  function invariant_hmxVesterBalance() public {
+    vesterHandler.forEachActor(this.assertAccountHmxBalanceLteHmxTotalSupply);
+    vesterHandler.forEachActor(this.assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance);
+  }
+
+  function assertAccountHmxBalanceLteHmxTotalSupply(address account) external {
+    assertLe(hmx.balanceOf(account), hmx.totalSupply());
+  }
+
+  function assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance(address account) external {
+    assertLe(hmx.balanceOf(account), vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
   }
 }

@@ -115,7 +115,13 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes[] memory _priceData
   ) internal {
     vm.prank(_account);
-    crossMarginHandler.withdrawCollateral(_subAccountId, address(_collateralToken), _withdrawAmount, _priceData, false);
+    crossMarginHandler.withdrawCollateral{ value: _priceData.length }(
+      _subAccountId,
+      address(_collateralToken),
+      _withdrawAmount,
+      _priceData,
+      false
+    );
   }
 
   /**

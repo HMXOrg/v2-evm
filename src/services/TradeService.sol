@@ -160,6 +160,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
     _vars.position = _perpStorage.getPositionById(_vars.positionId);
 
+    // get the global market for the given market index
+    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
     // get the market configuration for the given market index
     ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
 
@@ -171,6 +173,11 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     // determine whether the new size delta is for a long position
     _vars.isLong = _sizeDelta > 0;
+    if (
+      _vars.isLong
+        ? _globalMarket.longPositionSize + uint256(_sizeDelta) > _marketConfig.maxLongPositionSize
+        : _globalMarket.shortPositionSize + uint256(-_sizeDelta) > _marketConfig.maxShortPositionSize
+    ) revert ITradeService_PositionSizeExceed();
 
     _vars.isNewPosition = _vars.position.positionSizeE30 == 0;
 
@@ -193,8 +200,9 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // Update funding rate
     TradeHelper(tradeHelper).updateFundingRate(_marketIndex);
 
-    // get the global market for the given market index
-    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    // update global market state after update fee rate
+    _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;

@@ -24,6 +24,7 @@ interface ITradeService {
   error ITradeService_PlpHealthy();
   error ITradeService_MarketHealthy();
   error ITradeService_InvalidAddress();
+  error ITradeService_PositionSizeExceed();
 
   /**
    * STRUCTS

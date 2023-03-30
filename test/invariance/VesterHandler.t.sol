@@ -50,8 +50,25 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     esHmx = _esHmx;
   }
 
-  function vestFor(uint256 amount, uint256 duration) public createActor countCall("vestFor") {
-    amount = bound(amount, 0, esHmx.balanceOf(address(this)));
+  function vestAsNewAccount(uint256 amount, uint256 duration) public createActor countCall("vestAsNewAccount") {
+    amount = bound(amount, 1, esHmx.balanceOf(address(this)));
+    duration = bound(duration, 1, 365 days);
+
+    _vest(currentActor, amount, duration);
+  }
+
+  function vestAsExistingAccount(
+    uint256 accountIndexSeed,
+    uint256 amount,
+    uint256 duration
+  ) public useActor(accountIndexSeed) countCall("vestAsExistingAccount") {
+    amount = bound(amount, 1, esHmx.balanceOf(address(this)));
+    duration = bound(duration, 1, 365 days);
+
+    _vest(currentActor, amount, duration);
+  }
+
+  function _vest(address account, uint256 amount, uint256 duration) internal {
     esHmx.approve(address(vester), type(uint256).max);
     vester.vestFor(currentActor, amount, duration);
     (, , , , , , , uint256 totalUnlockedAmount) = vester.items(vester.nextItemId() - 1);
@@ -84,9 +101,17 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     vester.abort(itemIndex);
   }
 
-  function claimFor(address someone, uint256 itemIndex, uint256 duration) public createActor countCall("claimFor") {
+  function claimFor(
+    address someone,
+    uint256 itemIndex,
+    uint256 duration,
+    uint256 duration2
+  ) public createActor countCall("claimFor") {
     itemIndex = bound(itemIndex, 0, vester.nextItemId() - 1);
-    (address owner, , , uint256 amount, , , uint256 lastClaimTime, ) = vester.items(itemIndex);
+
+    (address owner, , , uint256 amount, uint256 startTime, uint256 endTime, , ) = vester.items(itemIndex);
+
+    duration = bound(duration, 0, endTime - startTime + 1);
     vm.warp(block.timestamp + duration);
     uint256 hmxBalanceBefore = hmx.balanceOf(owner);
     vm.prank(someone);
@@ -94,7 +119,8 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     ghost_hmxToBeClaimed += hmx.balanceOf(owner) - hmxBalanceBefore;
 
     // Double call to test double claim
-    vm.warp(block.timestamp + duration);
+    duration2 = bound(duration, 0, endTime - startTime + 1);
+    vm.warp(block.timestamp + duration2);
     vester.claimFor(owner, itemIndex);
   }
 
@@ -116,7 +142,8 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
   function callSummary() external view {
     console.log("Call summary:");
     console.log("-------------------");
-    console.log("vestFor", calls["vestFor"]);
+    console.log("vestAsNewAccount", calls["vestAsNewAccount"]);
+    console.log("vestAsExistingAccount", calls["vestAsExistingAccount"]);
     console.log("abort", calls["abort"]);
     console.log("claimFor", calls["claimFor"]);
     console.log("-------------------");

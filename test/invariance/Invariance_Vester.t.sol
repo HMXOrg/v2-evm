@@ -6,7 +6,7 @@ import { Test } from "forge-std/Test.sol";
 import { InvariantTest } from "forge-std/InvariantTest.sol";
 import { Deployer, IVester } from "@hmx-test/libs/Deployer.sol";
 import { VesterHandler } from "@hmx-test/invariance/VesterHandler.t.sol";
-import { console } from "forge-std/console.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract Invariance_Vester is Test, InvariantTest {
   IVester private vester;
@@ -34,10 +34,11 @@ contract Invariance_Vester is Test, InvariantTest {
     hmx.mint(address(vester), hmxTotalSupply);
     esHmx.mint(address(vesterHandler), esHmxTotalSupply);
 
-    bytes4[] memory selectors = new bytes4[](3);
-    selectors[0] = VesterHandler.vestFor.selector;
+    bytes4[] memory selectors = new bytes4[](4);
+    selectors[0] = VesterHandler.vestAsNewAccount.selector;
     selectors[1] = VesterHandler.claimFor.selector;
     selectors[2] = VesterHandler.abort.selector;
+    selectors[3] = VesterHandler.vestAsExistingAccount.selector;
 
     targetSelector(FuzzSelector({ addr: address(vesterHandler), selectors: selectors }));
     targetContract(address(vesterHandler));
@@ -79,6 +80,9 @@ contract Invariance_Vester is Test, InvariantTest {
   }
 
   function assertAccountHmxBalanceLteMaxPossibleHmxAccountBalance(address account) external {
+    console2.log("account", account);
+    console2.log("balanceOf", hmx.balanceOf(account));
+    console2.log("maxPossible", vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
     assertLe(hmx.balanceOf(account), vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
   }
 

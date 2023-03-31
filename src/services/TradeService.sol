@@ -75,23 +75,50 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /**
    * Events
    */
-  // @todo - modify event parameters
-  event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
-  event LogForceClosePosition(
-    address indexed _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken,
-    uint256 _closedPositionSize,
-    bool isProfit,
-    uint256 _delta
+  event LogIncreasePosition(
+    bytes32 positionId,
+    address primaryAccount,
+    uint8 subAccountId,
+    address subAccount,
+    uint256 marketIndex,
+    int256 size,
+    int256 increasedSize,
+    uint256 avgEntryPrice,
+    uint256 entryBorrowingRate,
+    int256 entryFundingRate,
+    int256 realizedPnl,
+    uint256 reserveValueE30
   );
+
+  event LogDecreasePosition(
+    bytes32 indexed positionId,
+    uint256 marketIndex,
+    int256 size,
+    int256 decreasedSize,
+    uint256 avgEntryPrice,
+    uint256 entryBorrowingRate,
+    int256 entryFundingRate,
+    int256 realizedPnl,
+    uint256 reserveValueE30
+  );
+
+  event LogForceClosePosition(
+    bytes32 indexed positionId,
+    address indexed account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    address tpToken,
+    uint256 closedPositionSize,
+    bool isProfit,
+    uint256 delta
+  );
+
   event LogDeleverage(
-    address indexed _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken,
-    uint256 _closedPositionSize
+    address indexed account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    address tpToken,
+    uint256 closedPositionSize
   );
   event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
@@ -160,6 +187,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
     _vars.position = _perpStorage.getPositionById(_vars.positionId);
 
+    // get the global market for the given market index
+    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
     // get the market configuration for the given market index
     ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
 
@@ -171,6 +200,11 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     // determine whether the new size delta is for a long position
     _vars.isLong = _sizeDelta > 0;
+    if (
+      _vars.isLong
+        ? _globalMarket.longPositionSize + uint256(_sizeDelta) > _marketConfig.maxLongPositionSize
+        : _globalMarket.shortPositionSize + uint256(-_sizeDelta) > _marketConfig.maxShortPositionSize
+    ) revert ITradeService_PositionSizeExceed();
 
     _vars.isNewPosition = _vars.position.positionSizeE30 == 0;
 
@@ -193,8 +227,9 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // Update funding rate
     TradeHelper(tradeHelper).updateFundingRate(_marketIndex);
 
-    // get the global market for the given market index
-    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    // update global market state after update fee rate
+    _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
@@ -261,7 +296,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
     if (!_vars.isNewPosition) {
-      // console2.log("======== new close price ======= ");
       (uint256 _nextClosePriceE30, , , ) = OracleMiddleware(_configStorage.oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
@@ -272,8 +306,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           -_vars.position.positionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD
         );
-
-      // console2.log("_nextClosePriceE30", _nextClosePriceE30);
 
       _vars.position.avgEntryPriceE30 = _getPositionNextAveragePrice(
         abs(_vars.position.positionSizeE30),
@@ -352,6 +384,21 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     // Call Trade Service Hook
     _increasePositionHooks(_primaryAccount, _subAccountId, _marketIndex, _absSizeDelta);
+
+    emit LogIncreasePosition(
+      _vars.positionId,
+      _primaryAccount,
+      _subAccountId,
+      _vars.subAccount,
+      _marketIndex,
+      _vars.position.positionSizeE30,
+      _sizeDelta,
+      _vars.position.avgEntryPriceE30,
+      _vars.position.entryBorrowingRate,
+      _vars.position.entryFundingRate,
+      _vars.position.realizedPnl,
+      _vars.position.reserveValueE30
+    );
   }
 
   // @todo - rewrite description
@@ -504,6 +551,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     (_isMaxProfit, _isProfit, _delta) = _decreasePosition(_marketConfig, _marketIndex, _vars);
 
     emit LogForceClosePosition(
+      _vars.positionId,
       _account,
       _subAccountId,
       _marketIndex,
@@ -546,7 +594,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /// @param _marketConfig - target market config
   /// @param _globalMarketIndex - global market index
   /// @param _vars - decrease criteria
-  /// @return _isMaxProfit - positiion is close with max profit
+  /// @return _isMaxProfit - position is close with max profit
   function _decreasePosition(
     ConfigStorage.MarketConfig memory _marketConfig,
     uint256 _globalMarketIndex,
@@ -712,7 +760,17 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
 
-    emit LogDecreasePosition(_vars.positionId, _vars.positionSizeE30ToDecrease);
+    emit LogDecreasePosition(
+      _vars.positionId,
+      _globalMarketIndex,
+      _vars.position.positionSizeE30,
+      int256(_vars.positionSizeE30ToDecrease),
+      _vars.position.avgEntryPriceE30,
+      _vars.position.entryBorrowingRate,
+      _vars.position.entryFundingRate,
+      _vars.position.realizedPnl,
+      _vars.position.reserveValueE30
+    );
   }
 
   /// @notice settle profit

@@ -107,7 +107,7 @@ contract TC24 is BaseIntTest_WithActions {
       _T5Assert2();
 
       // Convert all tokens on funding fee reserve to be stable token
-      botHandler.convertFundingFeeReserve(address(usdc));
+      botHandler.convertFundingFeeReserve(address(usdc), new bytes[](0));
 
       _T5Assert3();
 

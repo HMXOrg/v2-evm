@@ -541,12 +541,13 @@ contract Calculator is Owned, ICalculator {
             _marketConfig.assetClass
           );
           uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);
-          uint256 _borrowingRate = _globalAssetClass.sumBorrowingRate +
-            _nextBorrowingRate -
-            _var.position.entryBorrowingRate;
-          // Calculate the borrowing fee based on reserved value, borrowing rate.
-          _unrealizedFeeE30 += int256((_var.position.reserveValueE30 * _borrowingRate) / 1e18);
-          // getBorrowingFee(_marketConfig.assetClass, _var.position.reserveValueE30, _var.position.entryBorrowingRate)
+          _unrealizedFeeE30 += int256(
+            _getBorrowingFee(
+              _var.position.reserveValueE30,
+              _globalAssetClass.sumBorrowingRate + _nextBorrowingRate,
+              _var.position.entryBorrowingRate
+            )
+          );
         }
         {
           // Calculate funding fee
@@ -555,7 +556,7 @@ contract Calculator is Owned, ICalculator {
           _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
         }
         // Calculate trading fee
-        _unrealizedFeeE30 += int256((_var.absSize * _marketConfig.decreasePositionFeeRateBPS) / BPS);
+        _unrealizedFeeE30 += int256(_getTradingFee(_var.absSize, _marketConfig.decreasePositionFeeRateBPS));
       }
 
       unchecked {
@@ -975,6 +976,14 @@ contract Calculator is Owned, ICalculator {
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
     return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL;
+  }
+
+  function getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) external pure returns (uint256 tradingFee) {
+    return _getTradingFee(_size, _baseFeeRateBPS);
+  }
+
+  function _getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) internal pure returns (uint256 tradingFee) {
+    return (_size * _baseFeeRateBPS) / BPS;
   }
 
   function getDelta(

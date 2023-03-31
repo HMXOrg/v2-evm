@@ -59,6 +59,8 @@ contract CrossMarginHandler_Base is BaseTest {
       0,
       IConfigStorage.MarketConfig({
         assetId: wethAssetId,
+        maxLongPositionSize: 10_000_000 * 1e30,
+        maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
         minLeverageBPS: 1 * 1e4,

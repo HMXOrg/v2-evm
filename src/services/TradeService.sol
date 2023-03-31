@@ -75,23 +75,50 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /**
    * Events
    */
-  // @todo - modify event parameters
-  event LogDecreasePosition(bytes32 indexed _positionId, uint256 _decreasedSize);
-  event LogForceClosePosition(
-    address indexed _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken,
-    uint256 _closedPositionSize,
-    bool isProfit,
-    uint256 _delta
+  event LogIncreasePosition(
+    bytes32 positionId,
+    address primaryAccount,
+    uint8 subAccountId,
+    address subAccount,
+    uint256 marketIndex,
+    int256 size,
+    int256 increasedSize,
+    uint256 avgEntryPrice,
+    uint256 entryBorrowingRate,
+    int256 entryFundingRate,
+    int256 realizedPnl,
+    uint256 reserveValueE30
   );
+
+  event LogDecreasePosition(
+    bytes32 indexed positionId,
+    uint256 marketIndex,
+    int256 size,
+    int256 decreasedSize,
+    uint256 avgEntryPrice,
+    uint256 entryBorrowingRate,
+    int256 entryFundingRate,
+    int256 realizedPnl,
+    uint256 reserveValueE30
+  );
+
+  event LogForceClosePosition(
+    bytes32 indexed positionId,
+    address indexed account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    address tpToken,
+    uint256 closedPositionSize,
+    bool isProfit,
+    uint256 delta
+  );
+
   event LogDeleverage(
-    address indexed _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken,
-    uint256 _closedPositionSize
+    address indexed account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    address tpToken,
+    uint256 closedPositionSize
   );
   event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
@@ -357,6 +384,21 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     // Call Trade Service Hook
     _increasePositionHooks(_primaryAccount, _subAccountId, _marketIndex, _absSizeDelta);
+
+    emit LogIncreasePosition(
+      _vars.positionId,
+      _primaryAccount,
+      _subAccountId,
+      _vars.subAccount,
+      _marketIndex,
+      _vars.position.positionSizeE30,
+      _sizeDelta,
+      _vars.position.avgEntryPriceE30,
+      _vars.position.entryBorrowingRate,
+      _vars.position.entryFundingRate,
+      _vars.position.realizedPnl,
+      _vars.position.reserveValueE30
+    );
   }
 
   // @todo - rewrite description
@@ -509,6 +551,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     (_isMaxProfit, _isProfit, _delta) = _decreasePosition(_marketConfig, _marketIndex, _vars);
 
     emit LogForceClosePosition(
+      _vars.positionId,
       _account,
       _subAccountId,
       _marketIndex,
@@ -551,7 +594,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /// @param _marketConfig - target market config
   /// @param _globalMarketIndex - global market index
   /// @param _vars - decrease criteria
-  /// @return _isMaxProfit - positiion is close with max profit
+  /// @return _isMaxProfit - position is close with max profit
   function _decreasePosition(
     ConfigStorage.MarketConfig memory _marketConfig,
     uint256 _globalMarketIndex,
@@ -717,7 +760,17 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // check sub account equity is under MMR
     _subAccountHealthCheck(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
 
-    emit LogDecreasePosition(_vars.positionId, _vars.positionSizeE30ToDecrease);
+    emit LogDecreasePosition(
+      _vars.positionId,
+      _globalMarketIndex,
+      _vars.position.positionSizeE30,
+      int256(_vars.positionSizeE30ToDecrease),
+      _vars.position.avgEntryPriceE30,
+      _vars.position.entryBorrowingRate,
+      _vars.position.entryFundingRate,
+      _vars.position.realizedPnl,
+      _vars.position.reserveValueE30
+    );
   }
 
   /// @notice settle profit

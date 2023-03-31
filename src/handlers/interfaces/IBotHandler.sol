@@ -24,7 +24,7 @@ interface IBotHandler {
     uint256 _marketIndex,
     address _tpToken,
     bytes[] memory _priceData
-  ) external;
+  ) external payable;
 
   function deleverage(
     address _account,
@@ -32,7 +32,7 @@ interface IBotHandler {
     uint256 _marketIndex,
     address _tpToken,
     bytes[] memory _priceData
-  ) external;
+  ) external payable;
 
   function closeDelistedMarketPosition(
     address _account,
@@ -40,11 +40,11 @@ interface IBotHandler {
     uint256 _marketIndex,
     address _tpToken,
     bytes[] memory _priceData
-  ) external;
+  ) external payable;
 
-  function liquidate(address _subAccount, bytes[] memory _priceData) external;
+  function liquidate(address _subAccount, bytes[] memory _priceData) external payable;
 
-  function convertFundingFeeReserve(address _stableToken) external;
+  function convertFundingFeeReserve(address _stableToken, bytes[] memory _priceData) external payable;
 
   function setPositionManagers(address[] calldata _addresses, bool _isAllowed) external;
 

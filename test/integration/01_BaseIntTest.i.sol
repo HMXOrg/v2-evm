@@ -139,6 +139,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     /* DEPLOY PART */
     // deploy MOCK weth
     weth = IWNative(new MockWNative());
+    vm.label(address(weth), "WETH");
 
     pyth = new MockPyth(60, 1);
 
@@ -166,6 +167,12 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
+
+    // labels
+    vm.label(address(wbtc), "WBTC");
+    vm.label(address(dai), "DAI");
+    vm.label(address(usdc), "USDC");
+    vm.label(address(usdt), "USDT");
 
     // deploy calculator
     calculator = Deployer.deployCalculator(

@@ -95,7 +95,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint256 _marketIndex,
     address _tpToken,
     bytes[] memory _priceData
-  ) external nonReentrant onlyPositionManager {
+  ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -124,7 +124,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint256 _marketIndex,
     address _tpToken,
     bytes[] memory _priceData
-  ) external nonReentrant onlyPositionManager {
+  ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -148,7 +148,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint256 _marketIndex,
     address _tpToken,
     bytes[] memory _priceData
-  ) external nonReentrant onlyPositionManager {
+  ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -163,7 +163,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.
   /// @param _subAccount The sub-account to be liquidated.
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function liquidate(address _subAccount, bytes[] memory _priceData) external nonReentrant onlyPositionManager {
+  function liquidate(address _subAccount, bytes[] memory _priceData) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -176,7 +176,13 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
 
   /// @notice convert all tokens on funding fee reserve to stable token (USDC)
   /// @param _stableToken target token that will convert all funding fee reserves to
-  function convertFundingFeeReserve(address _stableToken) external nonReentrant onlyOwner {
+  function convertFundingFeeReserve(
+    address _stableToken,
+    bytes[] memory _priceData
+  ) external payable nonReentrant onlyOwner {
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(ITradeService(tradeService).configStorage());
     VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());

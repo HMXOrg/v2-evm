@@ -415,8 +415,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "getGlobalAssetClassByIndex",
       args: [2],
     },
+    // Trader Tokens
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "getTraderTokens",
+      args: [address],
+    },
   ];
-  const [, [cryptoGlobalAssetClass, equityGlobalAssetClass, forexGlobalAssetClass]] = await multi.multiCall(inputs2);
+  const [, [cryptoGlobalAssetClass, equityGlobalAssetClass, forexGlobalAssetClass, traderTokens]] =
+    await multi.multiCall(inputs2);
 
   const adaptivePriceInputs = [
     {
@@ -505,6 +513,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     weth: formatUnits(traderBalancesWeth, 18),
     wbtc: formatUnits(traderBalancesWbtc, 8),
   });
+  console.log("=== Trader Tokens ===");
+  console.log(traderTokens);
   console.log("=== PLP ===");
   console.table({
     plpTotalSupply: formatUnits(plpTotalSupply, 18),

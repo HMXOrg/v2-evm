@@ -29,9 +29,9 @@ interface IVester {
 
   function vestFor(address account, uint256 amount, uint256 duration) external;
 
-  function claimFor(address account, uint256 itemIndex) external;
+  function claimFor(uint256 itemIndex) external;
 
-  function claimFor(address account, uint256[] memory itemIndexes) external;
+  function claimFor(uint256[] memory itemIndexes) external;
 
   function abort(uint256 itemIndex) external;
 

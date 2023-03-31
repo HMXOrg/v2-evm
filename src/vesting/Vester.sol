@@ -79,20 +79,19 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
     emit Vest(item.owner, items.length - 1, amount, item.startTime, item.endTime, penaltyAmount);
   }
 
-  function claimFor(address account, uint256 itemIndex) external nonReentrant {
-    _claimFor(account, itemIndex);
+  function claimFor(uint256 itemIndex) external nonReentrant {
+    _claimFor(itemIndex);
   }
 
-  function claimFor(address account, uint256[] memory itemIndexes) external nonReentrant {
+  function claimFor(uint256[] memory itemIndexes) external nonReentrant {
     for (uint256 i = 0; i < itemIndexes.length; i++) {
-      _claimFor(account, itemIndexes[i]);
+      _claimFor(itemIndexes[i]);
     }
   }
 
-  function _claimFor(address account, uint256 itemIndex) internal {
+  function _claimFor(uint256 itemIndex) internal {
     Item storage item = items[itemIndex];
 
-    if (item.owner != account) revert IVester_Unauthorized();
     if (item.hasClaimed) revert IVester_Claimed();
     if (item.hasAborted) revert IVester_Aborted();
 
@@ -106,7 +105,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
 
     items[itemIndex].lastClaimTime = block.timestamp;
 
-    IERC20Upgradeable(hmx).safeTransfer(account, claimable);
+    IERC20Upgradeable(hmx).safeTransfer(item.owner, claimable);
 
     IERC20Upgradeable(esHMX).safeTransfer(vestedEsHmxDestination, claimable);
 
@@ -120,7 +119,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
     if (item.hasClaimed) revert IVester_Claimed();
     if (item.hasAborted) revert IVester_Aborted();
 
-    _claimFor(item.owner, itemIndex);
+    _claimFor(itemIndex);
 
     uint256 elapsedDurationSinceStart = block.timestamp - item.startTime;
     uint256 amountUsed = getUnlockAmount(item.amount, elapsedDurationSinceStart);

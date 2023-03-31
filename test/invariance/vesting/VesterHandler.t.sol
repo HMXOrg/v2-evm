@@ -119,13 +119,13 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     vm.warp(block.timestamp + duration);
     uint256 hmxBalanceBefore = hmx.balanceOf(owner);
     vm.prank(someone);
-    vester.claimFor(owner, itemIndex);
+    vester.claimFor(itemIndex);
     ghost_hmxToBeClaimed += hmx.balanceOf(owner) - hmxBalanceBefore;
 
     // Double call to test double claim
     duration2 = bound(duration, 0, endTime - startTime + 1);
     vm.warp(block.timestamp + duration2);
-    vester.claimFor(owner, itemIndex);
+    vester.claimFor(itemIndex);
 
     console2.log("hmxBalance", hmx.balanceOf(owner));
   }

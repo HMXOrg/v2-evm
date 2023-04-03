@@ -34,7 +34,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   event LogCreateAddLiquidityOrder(
     address indexed account,
     uint256 indexed orderId,
-    address indexed token,
+    address indexed tokenIn,
     uint256 amountIn,
     uint256 minOut,
     uint256 executionFee
@@ -42,7 +42,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   event LogCreateRemoveLiquidityOrder(
     address indexed account,
     uint256 indexed orderId,
-    address indexed token,
+    address indexed tokenOut,
     uint256 amountIn,
     uint256 minOut,
     uint256 executionFee,
@@ -57,6 +57,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     bool isAdd,
     uint256 actualOut
   );
+
   event LogCancelLiquidityOrder(
     address indexed account,
     uint256 indexed orderId,

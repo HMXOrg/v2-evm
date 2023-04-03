@@ -28,7 +28,7 @@ And Alice sell APPLE position 20,000 USD
 Then Alice should has APPLE short position
 
 ### Scenario: TVL has decreased when price changed
-When BTC price has changed back to <PRICE> USD
+When BTC price has changed back to 20,000 USD
 Then TVL should be reduced
 And Alice fully close APPLE's position
 Then Alice Apple's position should be gone

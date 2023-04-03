@@ -58,6 +58,8 @@ contract TradeService_IncreasePosition is TradeService_Base {
       0,
       IConfigStorage.MarketConfig({
         assetId: wethAssetId,
+        maxLongPositionSize: 10_000_000 * 1e30,
+        maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 0,
         maxProfitRateBPS: 9 * 1e4,
         minLeverageBPS: 1 * 1e4,
@@ -586,5 +588,13 @@ contract TradeService_IncreasePosition is TradeService_Base {
 
     (uint256 _price, , ) = mockOracle.unsafeGetLatestPriceWithMarketStatus(0, false);
     assertEq(_price, 1600 * 1e30);
+  }
+
+  function testRevert_WhenIncreasePositionExceedMaxPositionSize() external {
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionSizeExceed()"));
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 12_000_000 * 1e30, 0);
+
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionSizeExceed()"));
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, -int256(12_000_000 * 1e30), 0);
   }
 }

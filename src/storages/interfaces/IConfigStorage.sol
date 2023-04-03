@@ -45,6 +45,8 @@ interface IConfigStorage {
 
   struct MarketConfig {
     bytes32 assetId; // pyth network asset id
+    uint256 maxLongPositionSize; //
+    uint256 maxShortPositionSize; //
     uint32 increasePositionFeeRateBPS; // fee rate to increase position
     uint32 decreasePositionFeeRateBPS; // fee rate to decrease position
     uint32 initialMarginFractionBPS; // IMF

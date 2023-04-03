@@ -259,7 +259,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
 
   /// @notice Set new liquidation service contract address.
   /// @param _newLiquidationService New liquidation service contract address.
-  function setLiquidationService(address _newLiquidationService) external onlyOwner {
+  function setLiquidationService(address _newLiquidationService) external nonReentrant onlyOwner {
     // Sanity check
     LiquidationService(_newLiquidationService).perpStorage();
 
@@ -272,7 +272,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
 
   /// @notice Set new Pyth contract address.
   /// @param _newPyth New Pyth contract address.
-  function setPyth(address _newPyth) external onlyOwner {
+  function setPyth(address _newPyth) external nonReentrant onlyOwner {
     // Sanity check
     IPyth(_newPyth).getValidTimePeriod();
 

@@ -223,7 +223,7 @@ contract Calculator is Owned, ICalculator {
   /// @param _totalSupply PLP total supply
   /// @param _value value in USD e30
   /// @return mintAmount in e18 format
-  function getMintAmount(uint256 _aumE30, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
+  function getMintAmount(uint256 _aumE30, uint256 _totalSupply, uint256 _value) external pure returns (uint256) {
     return _aumE30 == 0 ? _value / 1e12 : (_value * _totalSupply) / _aumE30;
   }
 
@@ -231,7 +231,7 @@ contract Calculator is Owned, ICalculator {
     uint256 fromTokenDecimals,
     uint256 toTokenDecimals,
     uint256 amount
-  ) public pure returns (uint256) {
+  ) external pure returns (uint256) {
     return (amount * 10 ** toTokenDecimals) / 10 ** fromTokenDecimals;
   }
 
@@ -381,15 +381,15 @@ contract Calculator is Owned, ICalculator {
     uint256 totalLiquidityUSD, //e30
     uint256 tokenWeight, //e18
     uint256 totalTokenWeight // 1e18
-  ) public pure returns (uint256) {
+  ) internal pure returns (uint256) {
     if (totalLiquidityUSD == 0) return 0;
 
     return (totalLiquidityUSD * tokenWeight) / totalTokenWeight;
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTERs  ///////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * Internal functions
+   */
 
   /// @notice Set new Oracle contract address.
   /// @param _oracle New Oracle contract address.
@@ -441,12 +441,20 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (int256 _equityValueE30) {
+  ) external view returns (int256 _equityValueE30) {
+    return _getEquity(_subAccount, _limitPriceE30, _limitAssetId);
+  }
+
+  function _getEquity(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
-    uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
+    uint256 _collateralValueE30 = _getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
 
     // Calculate unrealized PnL and unrealized fee
-    (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
+    (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = _getUnrealizedPnlAndFee(
       _subAccount,
       _limitPriceE30,
       _limitAssetId
@@ -481,7 +489,15 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+  ) external view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+    return _getUnrealizedPnlAndFee(_subAccount, _limitPriceE30, _limitAssetId);
+  }
+
+  function _getUnrealizedPnlAndFee(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -581,7 +597,15 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (uint256 _collateralValueE30) {
+  ) external view returns (uint256 _collateralValueE30) {
+    return _getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
+  }
+
+  function _getCollateralValue(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (uint256 _collateralValueE30) {
     // Get list of current depositing tokens on trader's account
     address[] memory _traderTokens = VaultStorage(vaultStorage).getTraderTokens(_subAccount);
 
@@ -630,7 +654,11 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate Initial Margin Requirement from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _imrValueE30 Total imr of trader's account.
-  function getIMR(address _subAccount) public view returns (uint256 _imrValueE30) {
+  function getIMR(address _subAccount) external view returns (uint256 _imrValueE30) {
+    return _getIMR(_subAccount);
+  }
+
+  function _getIMR(address _subAccount) internal view returns (uint256 _imrValueE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -646,7 +674,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // Calculate IMR on position
-      _imrValueE30 += calculatePositionIMR(_size, _position.marketIndex);
+      _imrValueE30 += _calculatePositionIMR(_size, _position.marketIndex);
 
       unchecked {
         i++;
@@ -659,7 +687,11 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate Maintenance Margin Value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _mmrValueE30 Total mmr of trader's account
-  function getMMR(address _subAccount) public view returns (uint256 _mmrValueE30) {
+  function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30) {
+    return _getMMR(_subAccount);
+  }
+
+  function _getMMR(address _subAccount) internal view returns (uint256 _mmrValueE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -675,7 +707,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // Calculate MMR on position
-      _mmrValueE30 += calculatePositionMMR(_size, _position.marketIndex);
+      _mmrValueE30 += _calculatePositionMMR(_size, _position.marketIndex);
 
       unchecked {
         i++;
@@ -689,7 +721,17 @@ contract Calculator is Owned, ICalculator {
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return _imrE30 The IMR amount required on position size, 30 decimals.
-  function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) public view returns (uint256 _imrE30) {
+  function calculatePositionIMR(
+    uint256 _positionSizeE30,
+    uint256 _marketIndex
+  ) external view returns (uint256 _imrE30) {
+    return _calculatePositionIMR(_positionSizeE30, _marketIndex);
+  }
+
+  function _calculatePositionIMR(
+    uint256 _positionSizeE30,
+    uint256 _marketIndex
+  ) internal view returns (uint256 _imrE30) {
     // Get market config according to position
     ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
 
@@ -701,7 +743,17 @@ contract Calculator is Owned, ICalculator {
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return _mmrE30 The MMR amount required on position size, 30 decimals.
-  function calculatePositionMMR(uint256 _positionSizeE30, uint256 _marketIndex) public view returns (uint256 _mmrE30) {
+  function calculatePositionMMR(
+    uint256 _positionSizeE30,
+    uint256 _marketIndex
+  ) external view returns (uint256 _mmrE30) {
+    return _calculatePositionMMR(_positionSizeE30, _marketIndex);
+  }
+
+  function _calculatePositionMMR(
+    uint256 _positionSizeE30,
+    uint256 _marketIndex
+  ) internal view returns (uint256 _mmrE30) {
     // Get market config according to position
     ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
 
@@ -718,9 +770,17 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (uint256 _freeCollateral) {
-    int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
-    uint256 imr = getIMR(_subAccount);
+  ) external view returns (uint256 _freeCollateral) {
+    return _getFreeCollateral(_subAccount, _limitPriceE30, _limitAssetId);
+  }
+
+  function _getFreeCollateral(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (uint256 _freeCollateral) {
+    int256 equity = _getEquity(_subAccount, _limitPriceE30, _limitAssetId);
+    uint256 imr = _getIMR(_subAccount);
     if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
@@ -933,7 +993,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _reservedValue,
     uint256 _sumBorrowingRate,
     uint256 _entryBorrowingRate
-  ) internal view returns (uint256 borrowingFee) {
+  ) internal pure returns (uint256 borrowingFee) {
     // Calculate borrowing rate.
     uint256 _borrowingRate = _sumBorrowingRate - _entryBorrowingRate;
     // Calculate the borrowing fee based on reserved value, borrowing rate.

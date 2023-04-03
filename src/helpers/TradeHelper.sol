@@ -71,6 +71,16 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     calculator = Calculator(ConfigStorage(_configStorage).calculator());
   }
 
+  /**
+   * Modifiers
+   */
+
+  // NOTE: Validate only whitelisted contract be able to call this function
+  modifier onlyWhitelistedExecutor() {
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    _;
+  }
+
   function reloadConfig() external {
     // TODO: access control, sanity check, natspec
     // TODO: discuss about this pattern
@@ -80,7 +90,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
-  function updateBorrowingRate(uint8 _assetClassIndex) external {
+  function updateBorrowingRate(uint8 _assetClassIndex) external nonReentrant onlyWhitelistedExecutor {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -113,7 +123,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
-  function updateFundingRate(uint256 _marketIndex) external {
+  function updateFundingRate(uint256 _marketIndex) external nonReentrant onlyWhitelistedExecutor {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -168,7 +178,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
     uint256 _marketIndex
-  ) external {
+  ) external nonReentrant onlyWhitelistedExecutor {
     address _subAccount = _getSubAccount(_position.primaryAccount, _position.subAccountId);
 
     // update fee
@@ -204,7 +214,12 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
     uint256 _marketIndex
-  ) external returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) {
+  )
+    external
+    nonReentrant
+    onlyWhitelistedExecutor
+    returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee)
+  {
     (_tradingFee, _borrowingFee, _fundingFee) = _updateFeeStates(
       _subAccount,
       _position,
@@ -254,7 +269,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     return (_tradingFee, _borrowingFee, _fundingFee);
   }
 
-  function accumSettledBorrowingFee(uint256 _assetClassIndex, uint256 _borrowingFeeToBeSettled) external {
+  function accumSettledBorrowingFee(
+    uint256 _assetClassIndex,
+    uint256 _borrowingFeeToBeSettled
+  ) external nonReentrant onlyWhitelistedExecutor {
     _accumSettledBorrowingFee(_assetClassIndex, _borrowingFeeToBeSettled);
   }
 
@@ -267,7 +285,11 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     _perpStorage.updateGlobalAssetClass(uint8(_assetClassIndex), _globalAssetClass);
   }
 
-  function increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) external {
+  function increaseCollateral(
+    address _subAccount,
+    int256 _unrealizedPnl,
+    int256 _fundingFee
+  ) external nonReentrant onlyWhitelistedExecutor {
     _increaseCollateral(_subAccount, _unrealizedPnl, _fundingFee);
   }
 
@@ -421,7 +443,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint256 _liquidationFee,
     address _liquidator,
     bool _isRevertOnError
-  ) external {
+  ) external nonReentrant onlyWhitelistedExecutor {
     _decreaseCollateral(
       _subAccount,
       _unrealizedPnl,

@@ -21,20 +21,20 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   event LogSetTradeService(address oldMarketTradeService, address newMarketTradeService);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogBuy(
-    address _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    uint256 _buySizeE30,
-    uint256 _shortDecreasingSizeE30,
-    uint256 _longIncreasingSizeE30
+    address account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    uint256 buySizeE30,
+    uint256 shortDecreasingSizeE30,
+    uint256 longIncreasingSizeE30
   );
   event LogSell(
-    address _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    uint256 _sellSizeE30,
-    uint256 _longDecreasingSizeE30,
-    uint256 _shortIncreasingSizeE30
+    address account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    uint256 sellSizeE30,
+    uint256 longDecreasingSizeE30,
+    uint256 shortIncreasingSizeE30
   );
 
   /**

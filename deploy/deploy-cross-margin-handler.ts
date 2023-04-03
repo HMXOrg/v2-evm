@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`Deploying CrossMarginHandler Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.handlers.bot = contract.address;
+  config.handlers.crossMargin = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({

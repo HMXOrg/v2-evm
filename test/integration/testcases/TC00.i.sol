@@ -105,4 +105,80 @@ contract TC00 is BaseIntTest_WithActions {
       assertNumberOfPosition(ALICE, 0);
     }
   }
+
+  function testCorrectness_InjectPlpLiquidity() external {
+    /*
+       Plp Liquidity balance before
+       +-------+---------+
+       | Token | Balance |
+       +-------+---------+
+       | WBTC  | 0       |
+       +-------+---------+
+       */
+    assertPLPLiquidity(address(wbtc), 0);
+    assertVaultTokenBalance(address(wbtc), 0);
+
+    /*
+       Deployer's balance
+       +-------+---------+
+       | Token | Balance |
+       +-------+---------+
+       | WBTC  | 10      |
+       +-------+---------+
+       */
+    wbtc.mint(address(this), 10 * 1e8);
+
+    // Bot handler tries to inject WBTC token to PLP liquidity
+    wbtc.approve(address(botHandler), 1 * 1e8);
+    botHandler.injectTokenToPlpLiquidity(address(wbtc), 1 * 1e8);
+
+    /*
+       Plp Liquidity balance after
+       +-------+---------+
+       | Token | Balance |
+       +-------+---------+
+       | WBTC  | 1       |
+       +-------+---------+
+       */
+    assertPLPLiquidity(address(wbtc), 1 * 1e8);
+    assertVaultTokenBalance(address(wbtc), 1 * 1e8);
+  }
+
+  function testCorrectness_InjectFundingFeeReserve() external {
+    /*
+       Plp Liquidity balance before
+       +-------+---------+
+       | Token | Balance |
+       +-------+---------+
+       | WBTC  | 0       |
+       +-------+---------+
+       */
+    assertPLPLiquidity(address(wbtc), 0);
+    assertVaultTokenBalance(address(wbtc), 0);
+
+    /*
+       Deployer's balance
+       +-------+---------+
+       | Token | Balance |
+       +-------+---------+
+       | WBTC  | 10      |
+       +-------+---------+
+       */
+    wbtc.mint(address(this), 10 * 1e8);
+
+    // Bot handler tries to inject WBTC token to PLP liquidity
+    wbtc.approve(address(botHandler), 1 * 1e8);
+    botHandler.injectTokenToFundingFeeReserve(address(wbtc), 1 * 1e8);
+
+    /*
+       Plp Liquidity balance after
+       +-------+---------+
+       | Token | Balance |
+       +-------+---------+
+       | WBTC  | 1       |
+       +-------+---------+
+       */
+    assertFundingFeeReserve(address(wbtc), 1 * 1e8);
+    assertVaultTokenBalance(address(wbtc), 1 * 1e8);
+  }
 }

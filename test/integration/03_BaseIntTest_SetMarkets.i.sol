@@ -28,19 +28,19 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     // IMF = 1%, Max leverage = 100
     // MMF = 0.5%
     // Increase / Decrease position fee = 0.1%
-    wethMarketIndex = _addMarketConfig(wethAssetId, 0, 100, 50, 10);
+    wethMarketIndex = addMarketConfig(wethAssetId, 0, 100, 50, 10);
     // IMF = 1%, Max leverage = 100
     // MMF = 0.5%
     // Increase / Decrease position fee = 0.1%
-    wbtcMarketIndex = _addMarketConfig(wbtcAssetId, 0, 100, 50, 10);
+    wbtcMarketIndex = addMarketConfig(wbtcAssetId, 0, 100, 50, 10);
     // IMF = 5%, Max leverage = 20
     // MMF = 2.5%
     // Increase / Decrease position fee = 0.05%
-    appleMarketIndex = _addMarketConfig(appleAssetId, 1, 500, 250, 5);
+    appleMarketIndex = addMarketConfig(appleAssetId, 1, 500, 250, 5);
     // IMF = 0.1%, Max leverage = 1000
     // MMF = 0.05%
     // Increase / Decrease position fee = 0.03%
-    jpyMarketIndex = _addMarketConfig(jpyAssetId, 2, 10, 5, 3);
+    jpyMarketIndex = addMarketConfig(jpyAssetId, 2, 10, 5, 3);
   }
 
   /// @notice to add market config with some default value
@@ -48,13 +48,13 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
   /// @param _assetClass Crypto = 1, Stock = 2, Forex = 3
   /// @param _imf Initial Margin Fraction
   /// @param _mmf Maintenance Margin Fraction
-  function _addMarketConfig(
+  function addMarketConfig(
     bytes32 _assetId,
     uint8 _assetClass,
     uint32 _imf,
     uint32 _mmf,
     uint32 _managePositionFee
-  ) private returns (uint256 _index) {
+  ) public returns (uint256 _index) {
     // default market config
     IConfigStorage.MarketConfig memory _newMarketConfig;
     IConfigStorage.FundingRate memory _newFundingRateConfig;
@@ -63,6 +63,8 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     _newFundingRateConfig.maxFundingRate = 0.0004 * 1e18; // 0.04%
 
     _newMarketConfig.assetId = _assetId;
+    _newMarketConfig.maxLongPositionSize = 10_000_000 * 1e30;
+    _newMarketConfig.maxShortPositionSize = 10_000_000 * 1e30;
     _newMarketConfig.increasePositionFeeRateBPS = _managePositionFee;
     _newMarketConfig.decreasePositionFeeRateBPS = _managePositionFee;
     _newMarketConfig.initialMarginFractionBPS = _imf;

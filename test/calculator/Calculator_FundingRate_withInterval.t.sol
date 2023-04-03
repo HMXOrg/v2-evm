@@ -28,6 +28,8 @@ contract Calculator_FundingRate is Calculator_Base {
       0,
       IConfigStorage.MarketConfig({
         assetId: "BTC",
+        maxLongPositionSize: 10_000_000 * 1e30,
+        maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
         minLeverageBPS: 1 * 1e4,

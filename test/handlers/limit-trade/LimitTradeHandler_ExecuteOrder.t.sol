@@ -63,6 +63,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     configStorage.addMarketConfig(
       IConfigStorage.MarketConfig({
         assetId: "A",
+        maxLongPositionSize: 10_000_000 * 1e30,
+        maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
         minLeverageBPS: 1 * 1e4,
@@ -79,6 +81,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     configStorage.addMarketConfig(
       IConfigStorage.MarketConfig({
         assetId: "A",
+        maxLongPositionSize: 10_000_000 * 1e30,
+        maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
         minLeverageBPS: 1 * 1e4,
@@ -95,6 +99,8 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     configStorage.addMarketConfig(
       IConfigStorage.MarketConfig({
         assetId: "A",
+        maxLongPositionSize: 10_000_000 * 1e30,
+        maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
         minLeverageBPS: 1 * 1e4,

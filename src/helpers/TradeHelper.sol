@@ -311,7 +311,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       }
 
       // if tp token can't repayment cover then try repay with other tokens
-      _increaseCollateral(_subAccount, int256(_vars.unrealizedPnlToBeReceived), 0);
+      if (_vars.unrealizedPnlToBeReceived > 0)
+        _increaseCollateral(_subAccount, int256(_vars.unrealizedPnlToBeReceived), 0);
     }
   }
 

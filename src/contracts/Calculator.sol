@@ -388,7 +388,7 @@ contract Calculator is Owned, ICalculator {
   }
 
   /**
-   * Internal functions
+   * Setter functions
    */
 
   /// @notice Set new Oracle contract address.

@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 //base
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 
 // contracts

@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 // base
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 
 // interfaces
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";

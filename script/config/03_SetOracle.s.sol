@@ -5,7 +5,7 @@ import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 import { PythAdapter } from "@hmx/oracle/PythAdapter.sol";
 

@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 // base
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 
 // contracts
@@ -15,7 +15,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
 
 contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /**

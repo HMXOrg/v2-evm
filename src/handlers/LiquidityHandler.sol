@@ -2,10 +2,10 @@
 pragma solidity 0.8.18;
 
 // base
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Owned } from "@hmx/base/Owned.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 // contracts
 import { LiquidityService } from "@hmx/services/LiquidityService.sol";
@@ -18,7 +18,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 // interfaces
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
 
 /// @title LiquidityHandler
 contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
 // interfaces
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { LiquidationService } from "@hmx/services/LiquidationService.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
 
 // contracts
 import { Owned } from "@hmx/base/Owned.sol";

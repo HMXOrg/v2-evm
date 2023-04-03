@@ -33,7 +33,7 @@ contract TC10 is BaseIntTest_WithActions {
     }
 
     vm.warp(block.timestamp + 1);
-    // T1: Alice deposits 1000(USD) BTC as a collateral
+    // T1: Alice deposits 20,000(USD) BTC as a collateral
     {
       depositCollateral(ALICE, 0, wbtc, 0.1 * 1e8);
     }

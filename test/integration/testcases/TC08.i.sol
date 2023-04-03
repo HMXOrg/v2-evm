@@ -34,7 +34,7 @@ contract TC08 is BaseIntTest_WithActions {
     }
 
     vm.warp(block.timestamp + 1);
-    // T1: Alice deposits 1000(USD) BTC as a collateral
+    // T1: Alice deposits 10,000(USD) BTC as a collateral
     {
       depositCollateral(ALICE, 0, wbtc, 0.05 * 1e8);
     }
@@ -82,10 +82,25 @@ contract TC08 is BaseIntTest_WithActions {
       depositCollateral(ALICE, 0, wbtc, 0.005 * 1e8);
     }
 
+    {
+      vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
+      withdrawCollateral(ALICE, 0, wbtc, 0.01 * 1e8, updatePriceData);
+    }
+
+    {
+      vm.expectRevert(abi.encodeWithSignature("ILiquidationService_AccountHealthy()"));
+      liquidate(getSubAccount(ALICE, 0), updatePriceData);
+    }
+
     // T6: Alice deposit collateral 10000 USD (Equity > IMR) will not Lq
     vm.warp(block.timestamp + (1 * SECONDS));
     {
       depositCollateral(ALICE, 0, wbtc, 0.05 * 1e8);
+    }
+
+    {
+      vm.expectRevert(abi.encodeWithSignature("ILiquidationService_AccountHealthy()"));
+      liquidate(getSubAccount(ALICE, 0), updatePriceData);
     }
 
     // T7: JPYUSD dumped priced to 0.007905138339920948 (Equity < IMR))

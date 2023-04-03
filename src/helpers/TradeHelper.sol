@@ -390,7 +390,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       );
 
       // Calculate for settlement fee
-      uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_vars.token, _vars.unrealizedPnlToBeReceived);
+      uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_vars.token, _repayValue);
       uint256 _settlementFee = (_repayAmount * _settlementFeeRate) / 1e18;
 
       // book the balances

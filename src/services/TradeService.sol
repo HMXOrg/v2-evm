@@ -745,7 +745,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       if (_vars.realizedPnl != 0) {
         if (_vars.realizedPnl > 0) {
           // profit, trader should receive take profit token = Profit in USD
-          _settleProfit(_vars.subAccount, _vars.tpToken, uint256(_vars.realizedPnl));
+          _settleProfit(_vars.subAccount, _vars.tpToken, _vars.realizedPnl);
         } else {
           // loss
           _settleLoss(_vars.subAccount, uint256(-_vars.realizedPnl));
@@ -777,27 +777,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /// @param _subAccount - Sub-account of trader
   /// @param _tpToken - token that trader want to take profit as collateral
   /// @param _realizedProfitE30 - trader profit in USD
-  function _settleProfit(address _subAccount, address _tpToken, uint256 _realizedProfitE30) internal {
-    // SLOAD
-    ConfigStorage _configStorage = ConfigStorage(configStorage);
-    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
-
-    bytes32 _tpAssetId = _configStorage.tokenAssetIds(_tpToken);
-    (uint256 _tpTokenPrice, ) = OracleMiddleware(_configStorage.oracle()).getLatestPrice(_tpAssetId, false);
-
-    uint256 _decimals = _configStorage.getAssetTokenDecimal(_tpToken);
-
-    // calculate token trader should received
-    uint256 _tpTokenOut = (_realizedProfitE30 * (10 ** _decimals)) / _tpTokenPrice;
-
-    uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_tpToken, _realizedProfitE30);
-
-    uint256 _settlementFee = (_tpTokenOut * _settlementFeeRate) / 1e18;
-
-    // TODO: no more fee to protocol fee, but discount deduction amount of PLP instead
-    _vaultStorage.payTraderProfit(_subAccount, _tpToken, _tpTokenOut, _settlementFee);
-
-    // @todo - emit LogSettleProfit(trader, collateralToken, addedAmount, settlementFee)
+  function _settleProfit(address _subAccount, address _tpToken, int256 _realizedProfitE30) internal {
+    TradeHelper(tradeHelper).settleTraderProfit(_subAccount, _tpToken, _realizedProfitE30);
   }
 
   /// @notice settle loss

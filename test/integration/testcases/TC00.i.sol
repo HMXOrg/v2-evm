@@ -105,4 +105,47 @@ contract TC00 is BaseIntTest_WithActions {
       assertNumberOfPosition(ALICE, 0);
     }
   }
+
+  function testCorrectness_notRevertWhenTpTokenNotEnough() external {
+    // prepare token for wallet
+
+    // mint native token
+    vm.deal(BOB, 1 ether);
+    vm.deal(ALICE, 1 ether);
+
+    // mint BTC
+    wbtc.mint(ALICE, 100 * 1e8);
+    wbtc.mint(BOB, 100 * 1e8);
+
+    // warp to block timestamp 1000
+    vm.warp(1000);
+
+    // T1: BOB provide liquidity as WBTC 1 token
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0), true);
+
+    skip(60);
+
+    // T2: ALICE deposit BTC 200 USD at price 20,000
+    // 200 / 20000 = 0.01 BTC
+    address _aliceSubAccount0 = getSubAccount(ALICE, 0);
+    depositCollateral(ALICE, 0, wbtc, 0.01 * 1e8);
+
+    skip(60);
+
+    // T3: ALICE market buy weth with 300 USD at price 1,500 USD
+    //     Then Alice should has Long Position in WETH market
+    marketBuy(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), new bytes[](0));
+
+    skip(60);
+
+    // T4: Alice partial close Long position at WETH market for 150 USD
+    //     WETH price 1,575 USD, then Alice should take profit ~5%
+    // Expected: this transaction must not revert although no USDT on Vault storage.
+    //           TP token will be switched to WBTC instead
+    updatePriceData = new bytes[](1);
+    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_575 * 1e8, 0);
+    marketSell(ALICE, 0, wethMarketIndex, 50 * 1e30, address(usdt), updatePriceData);
+    marketSell(ALICE, 0, wethMarketIndex, 50 * 1e30, address(usdc), updatePriceData);
+    marketSell(ALICE, 0, wethMarketIndex, 50 * 1e30, address(dai), updatePriceData);
+  }
 }

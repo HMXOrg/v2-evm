@@ -15,6 +15,8 @@ import { Owned } from "@hmx/base/Owned.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 // @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService, Owned {
   uint32 internal constant BPS = 1e4;
@@ -306,6 +308,10 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         _marketConfig.assetId
       );
 
+      console2.log("=============");
+      console2.log("subAccountFreeCollateral", subAccountFreeCollateral);
+      console2.log("_imr", _imr);
+      console2.log("=============");
       // if the free collateral is less than the initial margin required, revert the transaction with an error
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
 

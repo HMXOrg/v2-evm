@@ -13,6 +13,8 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract Calculator is Owned, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
@@ -444,6 +446,7 @@ contract Calculator is Owned, ICalculator {
   ) public view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
+    console2.log("_collateralValueE30", _collateralValueE30);
 
     // Calculate unrealized PnL and unrealized fee
     (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
@@ -451,7 +454,8 @@ contract Calculator is Owned, ICalculator {
       _limitPriceE30,
       _limitAssetId
     );
-
+    console2.log("_unrealizedPnlValueE30", _unrealizedPnlValueE30);
+    console2.log("_unrealizedFeeValueE30", _unrealizedFeeValueE30);
     // Calculate equity
     _equityValueE30 += int256(_collateralValueE30);
     _equityValueE30 += _unrealizedPnlValueE30;
@@ -720,7 +724,9 @@ contract Calculator is Owned, ICalculator {
     bytes32 _limitAssetId
   ) public view returns (uint256 _freeCollateral) {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
+    console2.log("equity", equity);
     uint256 imr = getIMR(_subAccount);
+    console2.log("imr", imr);
     if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;

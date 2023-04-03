@@ -77,6 +77,8 @@ contract SetMarkets is ConfigJsonRepo {
     _newMarketConfig.allowIncreasePosition = true;
     _newMarketConfig.active = true;
     _newMarketConfig.fundingRate = _newFundingRateConfig;
+    _newMarketConfig.maxLongPositionSize = 10_000_000 * 1e30;
+    _newMarketConfig.maxShortPositionSize = 10_000_000 * 1e30;
 
     return configStorage.addMarketConfig(_newMarketConfig);
   }

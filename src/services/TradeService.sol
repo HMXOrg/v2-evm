@@ -366,8 +366,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     {
       _vars.position.lastIncreaseTimestamp = block.timestamp;
 
-      // _calculator.calculateMarketAveragePrice(_globalMarket, _vars.adaptivePriceE30, _sizeDelta, 0);
-
       // update global market state
       if (_vars.isLong) {
         uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
@@ -390,9 +388,9 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         uint256 _nextAvgPrice = _globalMarket.shortPositionSize == 0
           ? _vars.adaptivePriceE30
           : _calculator.calculateMarketAveragePrice(
-            int256(_globalMarket.shortPositionSize),
+            -int256(_globalMarket.shortPositionSize),
             _globalMarket.shortAvgPrice,
-            -_sizeDelta,
+            _sizeDelta,
             _vars.adaptivePriceE30,
             0
           );

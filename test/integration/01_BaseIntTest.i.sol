@@ -254,7 +254,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       // Set whitelists for executors
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
       configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
-      configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
+      configStorage.setServiceExecutor(address(tradeHelper), address(liquidationService), true);
+      configStorage.setServiceExecutor(address(tradeHelper), address(tradeService), true);
 
       configStorage.setWeth(address(weth));
       configStorage.setPLP(address(plpV2));

@@ -234,12 +234,12 @@ contract ConfigStorage is IConfigStorage, Owned {
     liquidityConfig = _liquidityConfig;
   }
 
-  function setLiquidityEnabled(bool _enabled) external {
+  function setLiquidityEnabled(bool _enabled) external onlyOwner {
     liquidityConfig.enabled = _enabled;
     emit LogSetLiquidityEnabled(_enabled);
   }
 
-  function setDynamicEnabled(bool _enabled) external {
+  function setDynamicEnabled(bool _enabled) external onlyOwner {
     liquidityConfig.dynamicFeeEnabled = _enabled;
     emit LogSetDynamicEnabled(_enabled);
   }

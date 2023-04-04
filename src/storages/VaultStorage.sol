@@ -56,7 +56,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
    * VALIDATION
    */
 
-  function validateAddTraderToken(address _trader, address _token) public view {
+  function validateAddTraderToken(address _trader, address _token) external view {
+    _validateAddTraderToken(_trader, _token);
+  }
+
+  function _validateAddTraderToken(address _trader, address _token) internal view {
     address[] storage traderToken = traderTokens[_trader];
 
     for (uint256 i; i < traderToken.length; ) {
@@ -67,7 +71,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     }
   }
 
-  function validateRemoveTraderToken(address _trader, address _token) public view {
+  function validateRemoveTraderToken(address _trader, address _token) external view {
+    _validateRemoveTraderToken(_trader, _token);
+  }
+
+  function _validateRemoveTraderToken(address _trader, address _token) internal view {
     if (traderBalances[_trader][_token] != 0) revert IVaultStorage_TraderBalanceRemaining();
   }
 
@@ -77,10 +85,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
   function getTraderTokens(address _subAccount) external view returns (address[] memory) {
     return traderTokens[_subAccount];
-  }
-
-  function pullPLPLiquidity(address _token) external view returns (uint256) {
-    return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
   }
 
   /**
@@ -144,13 +148,13 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     plpLiquidity[_token] -= _amount;
   }
 
-  function _addTraderToken(address _trader, address _token) internal onlyWhitelistedExecutor {
-    validateAddTraderToken(_trader, _token);
+  function _addTraderToken(address _trader, address _token) internal {
+    _validateAddTraderToken(_trader, _token);
     traderTokens[_trader].push(_token);
   }
 
   function _removeTraderToken(address _trader, address _token) internal {
-    validateRemoveTraderToken(_trader, _token);
+    _validateRemoveTraderToken(_trader, _token);
 
     address[] storage traderToken = traderTokens[_trader];
     uint256 tokenLen = traderToken.length;
@@ -173,16 +177,15 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     }
   }
 
-  // @todo - natSpec
-  function removeAllTraderTokens(address _trader) external onlyWhitelistedExecutor {
-    delete traderTokens[_trader];
-  }
-
   /// @notice increase sub-account collateral
   /// @param _subAccount - sub account
   /// @param _token - collateral token to increase
   /// @param _amount - amount to increase
-  function increaseTraderBalance(address _subAccount, address _token, uint256 _amount) public onlyWhitelistedExecutor {
+  function increaseTraderBalance(
+    address _subAccount,
+    address _token,
+    uint256 _amount
+  ) external onlyWhitelistedExecutor {
     _increaseTraderBalance(_subAccount, _token, _amount);
   }
 
@@ -190,7 +193,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   /// @param _subAccount - sub account
   /// @param _token - collateral token to increase
   /// @param _amount - amount to increase
-  function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) public onlyWhitelistedExecutor {
+  function decreaseTraderBalance(
+    address _subAccount,
+    address _token,
+    uint256 _amount
+  ) external onlyWhitelistedExecutor {
     _deductTraderBalance(_subAccount, _token, _amount);
   }
 
@@ -330,7 +337,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     uint256 _fundingFeeAmount
   ) external onlyWhitelistedExecutor {
     // Deduct amount from trader balance
-    decreaseTraderBalance(_trader, _token, _fundingFeeAmount);
+    _deductTraderBalance(_trader, _token, _fundingFeeAmount);
 
     // Increase the amount to fundingFee
     fundingFeeReserve[_token] += _fundingFeeAmount;
@@ -345,7 +352,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     fundingFeeReserve[_token] -= _fundingFeeAmount;
 
     // Increase the amount to trader
-    increaseTraderBalance(_trader, _token, _fundingFeeAmount);
+    _increaseTraderBalance(_trader, _token, _fundingFeeAmount);
   }
 
   function repayFundingFeeDebtFromTraderToPlp(
@@ -353,9 +360,9 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     address _token,
     uint256 _fundingFeeAmount,
     uint256 _fundingFeeValue
-  ) external {
+  ) external onlyWhitelistedExecutor {
     // Deduct amount from trader balance
-    decreaseTraderBalance(_trader, _token, _fundingFeeAmount);
+    _deductTraderBalance(_trader, _token, _fundingFeeAmount);
 
     // Add token amounts that PLP received
     plpLiquidity[_token] += _fundingFeeAmount;
@@ -369,12 +376,12 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     address _token,
     uint256 _fundingFeeAmount,
     uint256 _fundingFeeValue
-  ) external {
+  ) external onlyWhitelistedExecutor {
     // Deduct token amounts from PLP
     plpLiquidity[_token] -= _fundingFeeAmount;
 
     // Increase the amount to trader
-    increaseTraderBalance(_trader, _token, _fundingFeeAmount);
+    _increaseTraderBalance(_trader, _token, _fundingFeeAmount);
 
     // Add debt value on PLP
     plpLiquidityDebtUSDE30 += _fundingFeeValue;

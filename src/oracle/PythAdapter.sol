@@ -79,7 +79,7 @@ contract PythAdapter is Owned, IPythAdapter {
 
       // Formula: inverted price = 10^2N / priceEN, when N = target decimal
       //
-      // Example: Given _targetDecimals = 30, inverted quote price can be caluclated as followed.
+      // Example: Given _targetDecimals = 30, inverted quote price can be calculated as followed.
       // inverted price = 10^60 / priceE30
       return 10 ** uint32(_targetDecimals * 2) / _price256;
     }

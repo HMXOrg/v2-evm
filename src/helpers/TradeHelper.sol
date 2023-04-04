@@ -324,7 +324,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     _increaseCollateral(_subAccount, _unrealizedPnl, _fundingFee);
   }
 
-  function settleTraderProfit(address _subAccount, address tpToken, int256 _realizedProfitE30) external {
+  function settleTraderProfit(address _subAccount, address _tpToken, int256 _realizedProfitE30) external {
     IncreaseCollateralVars memory _vars;
 
     _vars.vaultStorage = VaultStorage(vaultStorage);
@@ -339,7 +339,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
       // Pay trader with selected tp token
       {
-        ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfigByToken(tpToken);
+        ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfigByToken(_tpToken);
         _vars.tokenDecimal = _assetConfig.decimals;
         _vars.token = _assetConfig.tokenAddress;
 

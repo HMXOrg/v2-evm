@@ -74,10 +74,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     return traderTokens[_subAccount];
   }
 
-  function pullPLPLiquidity(address _token) external view returns (uint256) {
-    return IERC20(_token).balanceOf(address(this)) - plpLiquidity[_token];
-  }
-
   /**
    * ERC20 interaction functions
    */

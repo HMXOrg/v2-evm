@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+// base
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // interfaces
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
@@ -18,23 +21,27 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 // @todo - integrate with BotHandler in another PRs
 contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
+  using SafeERC20 for IERC20;
+
   /**
    * Events
    */
-  event LogTakeMaxProfit(address indexed _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken);
-  event LogDeleverage(address indexed _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken);
+  event LogTakeMaxProfit(address indexed account, uint8 subAccountId, uint256 marketIndex, address tpToken);
+  event LogDeleverage(address indexed account, uint8 subAccountId, uint256 marketIndex, address tpToken);
   event LogCloseDelistedMarketPosition(
-    address indexed _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken
+    address indexed account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    address tpToken
   );
-  event LogLiquidate(address _subAccount);
+  event LogLiquidate(address subAccount);
+  event LogInjectTokenToPlpLiquidity(address indexed account, address token, uint256 amount);
+  event LogInjectTokenToFundingFeeReserve(address indexed account, address token, uint256 amount);
 
-  event LogSetTradeService(address _oldTradeService, address _newTradeService);
-  event LogSetPositionManager(address _address, bool _allowed);
-  event LogSetLiquidationService(address _oldLiquidationService, address _newLiquidationService);
-  event LogSetPyth(address _oldPyth, address _newPyth);
+  event LogSetTradeService(address oldTradeService, address newTradeService);
+  event LogSetPositionManager(address account, bool allowed);
+  event LogSetLiquidationService(address oldLiquidationService, address newLiquidationService);
+  event LogSetPyth(address oldPyth, address newPyth);
 
   /**
    * Structs
@@ -226,6 +233,38 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
         ++i;
       }
     }
+  }
+
+  /// @notice This function transfers tokens to the vault storage and performs accounting.
+  /// @param _token The address of the token to be transferred.
+  /// @param _amount The amount of tokens to be transferred.
+  function injectTokenToPlpLiquidity(address _token, uint256 _amount) external nonReentrant onlyOwner {
+    VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
+
+    // transfer token
+    IERC20(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
+
+    // do accounting on vault storage
+    _vaultStorage.addPLPLiquidity(_token, _amount);
+    _vaultStorage.pullToken(_token);
+
+    emit LogInjectTokenToPlpLiquidity(msg.sender, _token, _amount);
+  }
+
+  /// @notice This function transfers tokens to the vault storage and performs accounting.
+  /// @param _token The address of the token to be transferred.
+  /// @param _amount The amount of tokens to be transferred.
+  function injectTokenToFundingFeeReserve(address _token, uint256 _amount) external nonReentrant onlyOwner {
+    VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
+
+    // transfer token
+    IERC20(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
+
+    // do accounting on vault storage
+    _vaultStorage.addFundingFee(_token, _amount);
+    _vaultStorage.pullToken(_token);
+
+    emit LogInjectTokenToFundingFeeReserve(msg.sender, _token, _amount);
   }
 
   /// @notice Reset trade service

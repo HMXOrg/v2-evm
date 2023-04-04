@@ -46,6 +46,10 @@ interface IBotHandler {
 
   function convertFundingFeeReserve(address _stableToken, bytes[] memory _priceData) external payable;
 
+  function injectTokenToPlpLiquidity(address _token, uint256 _amount) external;
+
+  function injectTokenToFundingFeeReserve(address _token, uint256 _amount) external;
+
   function setPositionManagers(address[] calldata _addresses, bool _isAllowed) external;
 
   function setTradeService(address _newAddress) external;

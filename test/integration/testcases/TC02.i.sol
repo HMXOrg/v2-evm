@@ -765,6 +765,7 @@ contract TC02 is BaseIntTest_WithActions {
       _marketIndex: wbtcMarketIndex,
       _sizeDelta: 3000 * 1e30,
       _triggerPrice: 18_000 * 1e30,
+      _acceptablePrice: 17550 * 1e30, // 18_000 * (1 - 0.025) = 17550
       _triggerAboveThreshold: false,
       _executionFee: executionOrderFee,
       _reduceOnly: true,
@@ -964,6 +965,7 @@ contract TC02 is BaseIntTest_WithActions {
       _marketIndex: wbtcMarketIndex,
       _sizeDelta: -3000 * 1e30,
       _triggerPrice: 18_900 * 1e30,
+      _acceptablePrice: 19372.5 * 1e30, // 18_900 * (1 + 0.025) = 19372.5
       _triggerAboveThreshold: true,
       _executionFee: executionOrderFee,
       _reduceOnly: true,
@@ -1178,6 +1180,7 @@ contract TC02 is BaseIntTest_WithActions {
       _marketIndex: wbtcMarketIndex,
       _sizeDelta: -3000 * 1e30,
       _triggerPrice: 21_000 * 1e30,
+      _acceptablePrice: 21_525 * 1e30, // 21_000 * (1 + 0.025) = 21525
       _triggerAboveThreshold: true,
       _executionFee: executionOrderFee,
       _reduceOnly: true,
@@ -1371,6 +1374,7 @@ contract TC02 is BaseIntTest_WithActions {
       _marketIndex: wbtcMarketIndex,
       _sizeDelta: 3000 * 1e30,
       _triggerPrice: 18_900 * 1e30,
+      _acceptablePrice: 18427.5 * 1e30, // 18_900 * (1 - 0.025) = 18427.5
       _triggerAboveThreshold: false,
       _executionFee: executionOrderFee,
       _reduceOnly: true,

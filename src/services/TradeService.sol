@@ -239,6 +239,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       uint8 _marketStatus;
 
       // Get Price market.
+
       (_vars.adaptivePriceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = _vars
         .oracle
         .getLatestAdaptivePriceWithMarketStatus(
@@ -247,12 +248,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           _sizeDelta,
           _marketConfig.fundingRate.maxSkewScaleUSD,
-          0
+          _limitPriceE30
         );
-
-      if (_limitPriceE30 != 0) {
-        _vars.adaptivePriceE30 = _limitPriceE30;
-      }
 
       (_vars.closePriceE30, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
@@ -485,12 +482,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         (int(_market.longPositionSize) - int(_market.shortPositionSize)),
         -_vars.position.positionSizeE30,
         _marketConfig.fundingRate.maxSkewScaleUSD,
-        0
+        _limitPriceE30
       );
-
-      if (_limitPriceE30 != 0) {
-        _vars.closePrice = _limitPriceE30;
-      }
 
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
@@ -887,7 +880,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /// @param _positionSize - position's size before updated (long +, short -)
   /// @param _sizeDelta - position's size to increase or decrease
   ///                   - increase => long +, short -
-  ///                   - decreate => long -, short +
+  ///                   - decrease => long -, short +
   /// @param _unrealizedPnl - unrealized profit ans loss
   ///                   - long position => profit +, loss -
   ///                   - short position => profit -, loss +
@@ -919,7 +912,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     //    - entry price     = 100.05 USD
     //    - close price     = 100.15 USD
     //    - pnl             = 1000 * (100.15 - 100.05) / 100.05 = 0.999500249875062468765617191404 USD
-    //    - reliazed pnl    = 300 * (100.15 - 100.05) / 100.05 = 0.299850074962518740629685157421 USD
+    //    - realized pnl    = 300 * (100.15 - 100.05) / 100.05 = 0.299850074962518740629685157421 USD
     //    - unrealized pnl  = 0.999500249875062468765617191404 - 0.299850074962518740629685157421
     //                      = 0.699650174912543728135932033983
     // Then

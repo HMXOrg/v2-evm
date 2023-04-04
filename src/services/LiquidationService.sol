@@ -156,7 +156,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
         (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
         _vars.marketConfig.fundingRate.maxSkewScaleUSD,
-        0
+        0 // liquidation always has no limitedPrice
       );
 
       // Update global state

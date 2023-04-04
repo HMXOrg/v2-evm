@@ -387,19 +387,19 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     plpLiquidityDebtUSDE30 += _fundingFeeValue;
   }
 
-  function addTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external {
+  function setTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external {
     tradingFeeDebt[_trader] += _tradingFeeDebt;
   }
 
-  function addBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external {
+  function setBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external {
     borrowingFeeDebt[_trader] += _borrowingFeeDebt;
   }
 
-  function addFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external {
+  function setFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external {
     fundingFeeDebt[_trader] += _fundingFeeDebt;
   }
 
-  function addLossDebt(address _trader, uint256 _lossDebt) external {
+  function setLossDebt(address _trader, uint256 _lossDebt) external {
     lossDebt[_trader] += _lossDebt;
   }
 }

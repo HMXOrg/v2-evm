@@ -590,20 +590,13 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     }
 
     if (_canDebt && _vars.tradingFeeToBePaid > 0)
-      _vars.vaultStorage.addTradingFeeDebt(_vars.subAccount, _vars.tradingFeeToBePaid);
+      _vars.vaultStorage.setTradingFeeDebt(_vars.subAccount, _vars.tradingFeeToBePaid);
     if (_canDebt && _vars.borrowingFeeToBePaid > 0)
-      _vars.vaultStorage.addBorrowingFeeDebt(_vars.subAccount, _vars.borrowingFeeToBePaid);
+      _vars.vaultStorage.setBorrowingFeeDebt(_vars.subAccount, _vars.borrowingFeeToBePaid);
     if (_canDebt && _vars.fundingFeeToBePaid > 0)
-      _vars.vaultStorage.addFundingFeeDebt(_vars.subAccount, _vars.fundingFeeToBePaid);
+      _vars.vaultStorage.setFundingFeeDebt(_vars.subAccount, _vars.fundingFeeToBePaid);
     if (_canDebt && _vars.unrealizedPnlToBePaid > 0)
-      _vars.vaultStorage.addLossDebt(_vars.subAccount, _vars.unrealizedPnlToBePaid);
-
-    // If fee cannot be covered, revert.
-    // This shouldn't be happen unless the platform is suffering from bad debt
-    // if (_isRevertOnError && _vars.tradingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
-    // if (_isRevertOnError && _vars.borrowingFeeToBePaid > 0) revert ITradeHelper_BorrowingFeeCannotBeCovered();
-    // if (_isRevertOnError && _vars.fundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
-    // if (_isRevertOnError && _vars.unrealizedPnlToBePaid > 0) revert ITradeHelper_UnrealizedPnlCannotBeCovered();
+      _vars.vaultStorage.setLossDebt(_vars.subAccount, _vars.unrealizedPnlToBePaid);
   }
 
   function _decreaseCollateralWithUnrealizedPnlToPlp(DecreaseCollateralVars memory _vars) internal {

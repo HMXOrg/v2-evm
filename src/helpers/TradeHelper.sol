@@ -11,6 +11,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { console2 } from "forge-std/console2.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   uint32 internal constant BPS = 1e4;
@@ -460,7 +461,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint256 _tradingFee,
     uint256 _liquidationFee,
     address _liquidator,
-    bool _isRevertOnError
+    bool _canDebt
   ) internal {
     DecreaseCollateralVars memory _vars;
 
@@ -476,19 +477,27 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     // check loss
     if (_unrealizedPnl < 0) {
       _vars.unrealizedPnlToBePaid = uint256(-_unrealizedPnl);
-      emit LogSettleUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
     }
+    _vars.unrealizedPnlToBePaid += VaultStorage(vaultStorage).lossDebt(_subAccount);
+    emit LogSettleUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+
     // check trading fee
     _vars.tradingFeeToBePaid = _tradingFee;
+    _vars.tradingFeeToBePaid += VaultStorage(vaultStorage).tradingFeeDebt(_subAccount);
     emit LogSettleTradingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+
     // check borrowing fee
     _vars.borrowingFeeToBePaid = _borrowingFee;
+    _vars.borrowingFeeToBePaid += VaultStorage(vaultStorage).borrowingFeeDebt(_subAccount);
     emit LogSettleBorrowingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+
     // check funding fee
     if (_fundingFee > 0) {
       _vars.fundingFeeToBePaid = uint256(_fundingFee);
-      emit LogSettleFundingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
     }
+    _vars.fundingFeeToBePaid += VaultStorage(vaultStorage).fundingFeeDebt(_subAccount);
+    emit LogSettleFundingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+
     // check liquidation fee
     _vars.liquidationFeeToBePaid = _liquidationFee;
     emit LogSettleLiquidationFeeValue(_vars.subAccount, _vars.liquidationFeeToBePaid);
@@ -522,12 +531,21 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       }
     }
 
+    if (_canDebt && _vars.tradingFeeToBePaid > 0)
+      _vars.vaultStorage.addTradingFeeDebt(_vars.subAccount, _vars.tradingFeeToBePaid);
+    if (_canDebt && _vars.borrowingFeeToBePaid > 0)
+      _vars.vaultStorage.addBorrowingFeeDebt(_vars.subAccount, _vars.borrowingFeeToBePaid);
+    if (_canDebt && _vars.fundingFeeToBePaid > 0)
+      _vars.vaultStorage.addFundingFeeDebt(_vars.subAccount, _vars.fundingFeeToBePaid);
+    if (_canDebt && _vars.unrealizedPnlToBePaid > 0)
+      _vars.vaultStorage.addLossDebt(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+
     // If fee cannot be covered, revert.
     // This shouldn't be happen unless the platform is suffering from bad debt
-    if (_isRevertOnError && _vars.tradingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
-    if (_isRevertOnError && _vars.borrowingFeeToBePaid > 0) revert ITradeHelper_BorrowingFeeCannotBeCovered();
-    if (_isRevertOnError && _vars.fundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
-    if (_isRevertOnError && _vars.unrealizedPnlToBePaid > 0) revert ITradeHelper_UnrealizedPnlCannotBeCovered();
+    // if (_isRevertOnError && _vars.tradingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
+    // if (_isRevertOnError && _vars.borrowingFeeToBePaid > 0) revert ITradeHelper_BorrowingFeeCannotBeCovered();
+    // if (_isRevertOnError && _vars.fundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
+    // if (_isRevertOnError && _vars.unrealizedPnlToBePaid > 0) revert ITradeHelper_UnrealizedPnlCannotBeCovered();
   }
 
   function _decreaseCollateralWithUnrealizedPnlToPlp(DecreaseCollateralVars memory _vars) internal {

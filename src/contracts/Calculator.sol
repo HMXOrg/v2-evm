@@ -447,7 +447,6 @@ contract Calculator is Owned, ICalculator {
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
     console2.log("_collateralValueE30", _collateralValueE30);
-
     // Calculate unrealized PnL and unrealized fee
     (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
       _subAccount,
@@ -460,6 +459,11 @@ contract Calculator is Owned, ICalculator {
     _equityValueE30 += int256(_collateralValueE30);
     _equityValueE30 += _unrealizedPnlValueE30;
     _equityValueE30 -= _unrealizedFeeValueE30;
+
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).tradingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).borrowingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).fundingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).lossDebt(_subAccount));
 
     return _equityValueE30;
   }
@@ -535,6 +539,8 @@ contract Calculator is Owned, ICalculator {
         } else {
           _unrealizedPnlE30 -= int256(_var.delta);
         }
+        console2.log("_var.isProfit", _var.isProfit);
+        console2.log("_var.delta", _var.delta);
       }
 
       {
@@ -545,6 +551,14 @@ contract Calculator is Owned, ICalculator {
             _marketConfig.assetClass
           );
           uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);
+          console2.log(
+            "_borrowing fee",
+            _getBorrowingFee(
+              _var.position.reserveValueE30,
+              _globalAssetClass.sumBorrowingRate + _nextBorrowingRate,
+              _var.position.entryBorrowingRate
+            )
+          );
           _unrealizedFeeE30 += int256(
             _getBorrowingFee(
               _var.position.reserveValueE30,
@@ -557,6 +571,10 @@ contract Calculator is Owned, ICalculator {
           // Calculate funding fee
           int256 nextFundingRate = _getNextFundingRate(_var.position.marketIndex);
           int256 fundingRate = _globalMarket.currentFundingRate + nextFundingRate;
+          console2.log(
+            "_funding fee",
+            _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate)
+          );
           _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
         }
         // Calculate trading fee
@@ -724,9 +742,7 @@ contract Calculator is Owned, ICalculator {
     bytes32 _limitAssetId
   ) public view returns (uint256 _freeCollateral) {
     int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
-    console2.log("equity", equity);
     uint256 imr = getIMR(_subAccount);
-    console2.log("imr", imr);
     if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;

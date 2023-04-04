@@ -343,10 +343,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         _marketConfig.assetId
       );
 
-      console2.log("=============");
-      console2.log("subAccountFreeCollateral", subAccountFreeCollateral);
-      console2.log("_imr", _imr);
-      console2.log("=============");
       // if the free collateral is less than the initial margin required, revert the transaction with an error
       if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
 

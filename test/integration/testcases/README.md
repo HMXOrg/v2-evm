@@ -79,6 +79,44 @@ Steps (Market):
 - alice buy market WETH 70 USD -> LONG 20 (flip)
 Steps (Limit):
 
+TC05 - liquidation position
+- alice deposit collateral 0.05 BTC price 20,000 USD
+- alice buy JPYUSD 100,000 USD at JPY price 0.008 USD
+- JPYUSD dumped to 0.007945967422 USD (Equity < MMR)
+- liquidate alice's account
+
+TC08 - check IMR, MMR
+- alice deposit collateral 0.05 BTC price 20,000 USD
+- alice buy JPYUSD 100,000 USD at JPY price 0.008 USD
+- alice sell BTCUSD 50,000 USD at BTC price 23_000 USD
+- BTC pumped to 23,100 USD (Equity < MMR)
+- alice try to withdraw collateral
+- alice try to buy BTCUSD 50,000 USD at BTC price 23,100 USD (close position)
+- alice deposit collateral (Equity < IMR)
+- alice try to withdraw collateral
+- try to liquidate alice account
+- alice deposit collateral (Equity < IMR)
+- try to liquidate alice account
+- JPYUSD dumped to 0.00790513834 USD (Equity < MMR)
+- liquidate alice's account
+
+TC09 - liquidate user has sub account more than 1
+- alice's sub account 0 deposit collateral 0.05 BTC price 20,000 USD
+- alice's sub account 1 deposit collateral 0.05 BTC price 20,000 USD
+- alice's sub account 0 buy JPYUSD 100,000 USD at JPY price 0.008 USD
+- alice's sub account 1 buy BTCUSD 10,000 USD at JPY price 20,000 USD
+- JPYUSD dumped to 0.007945967422 USD
+- liquidate alice's sub account 0
+- try liquidate alice's sub account 1
+
+TC10 - liquidate when market close
+- alice's sub account 0 deposit collateral 0.1 BTC at price 20,000 USD
+- alice's sub account buy JPYUSD 100,000 USD at price 0.008 USD
+- alice's sub account buy BTCUSD 10,000 USD at price 23,00 USD
+- alice's sub account buy APPLE 10,000 USD at price 152 USD
+- JPYUSD dumped to 0.007874015748 USD
+- APPLE pumped to 155 USD
+- liquidate alice's sub account 0
 
 TC11 - list/delist market
 - alice deposit BTC 100 USD
@@ -93,7 +131,6 @@ TC11 - list/delist market
 - bob open position APPLE 200 USD - revert
 - list new APPLE market (diff index)
 - bob open position APPLE 200 USD
-
 
 TC12 - limit position (max 2)
 - alice deposit BTC 100 USD
@@ -130,6 +167,15 @@ Steps (trade):
 - set good price JPY
 - alice fully close short JPY position
 
+TC17 - liquidate when bad debt
+- alice's sub account 0 deposit collateral 0.1 BTC at price 20,000 USD
+- alice's sub account buy JPYUSD 100,000 USD at price 0.008 USD
+- alice's sub account buy BTCUSD 10,000 USD at price 23,000 USD
+- alice's sub account buy APPLE 10,000 USD at price 152 USD
+- JPYUSD dumped to 0.007692307692 USD
+- BTCUSD pumped to 23,500 USD
+- APPLE pumped to 155 USD
+- liquidate alice's sub account 0
 
 TC18 - react max profit, trader couldn't close position by themself, but can increase
 Prices:
@@ -193,3 +239,11 @@ Steps (Market):
   - ALICE IMR 100,000 USD
   - ALICE free collat 0 USD remaining
 - cat buy APPLE position 10,000,000 USD
+
+TC37 - liquidate when profit delta and funding fee but loss borrowing fee
+- alice's sub account 0 deposit collateral 0.1 BTC at price 20,000 USD
+- alice's sub account 1 deposit collateral 1 BTC at price 20,000 USD
+- alice's sub account 1 buy BTCUSD 110,000 USD at price 20,000 USD
+- alice's sub account 0 buy BTCUSD 100,000 USD at price 20,000 USD
+- BTCUSD pumped to 20,100 USD
+- liquidate alice's sub account 0

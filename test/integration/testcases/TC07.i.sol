@@ -140,7 +140,7 @@ contract TC07 is BaseIntTest_WithActions {
      */
     vm.warp(block.timestamp + 1);
     {
-      uint256 sellSizeE30 = 510_000 * 1e30;
+      uint256 sellSizeE30 = 1_314_600 * 1e30;
       address tpToken = address(wbtc);
       bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1550 USD
@@ -150,7 +150,7 @@ contract TC07 is BaseIntTest_WithActions {
       // Alice's Free collateral must be almost zero
       assertEq(
         calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0),
-        439799078951139219838095238095004, // 439.799078951139219838095238095004 $
+        2019923840855901124720000000000000, // 2019.923840855901124720000000000000 $
         "ALICE's free collateral is almost zero"
       );
 

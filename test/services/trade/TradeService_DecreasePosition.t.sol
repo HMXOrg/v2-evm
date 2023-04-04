@@ -54,8 +54,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
         address(perpStorage),
         address(configStorage)
       );
-      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
-      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateMarketAveragePrice");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
       configStorage.setCalculator(address(mockCalculator));
       tradeService.reloadConfig();
@@ -169,7 +168,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
       reserveValueDelta: 45_000 * 1e30,
       realizedPnl: 25_000 * 1e30,
       // average prices
-      newPositionAveragePrice: 1 * 1e30,
+      newPositionAveragePrice: 1.05 * 1e30,
       newLongGlobalAveragePrice: 1.024390243902439024390243902438 * 1e30,
       newShortGlobalAveragePrice: 0
       // collateral
@@ -293,7 +292,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
       reserveValueDelta: 45_000 * 1e30,
       realizedPnl: -25_000 * 1e30,
       // average prices
-      newPositionAveragePrice: 1 * 1e30,
+      newPositionAveragePrice: 1.05 * 1e30,
       newLongGlobalAveragePrice: 0,
       newShortGlobalAveragePrice: 1.024390243902439024390243902438 * 1e30
     });

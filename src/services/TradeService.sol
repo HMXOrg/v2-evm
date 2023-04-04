@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { console2 } from "forge-std/console2.sol";
+
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -366,11 +366,19 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     {
       _vars.position.lastIncreaseTimestamp = block.timestamp;
 
+      // _calculator.calculateMarketAveragePrice(_globalMarket, _vars.adaptivePriceE30, _sizeDelta, 0);
+
       // update global market state
       if (_vars.isLong) {
         uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
           ? _vars.adaptivePriceE30
-          : _calculator.calculateLongAveragePrice(_globalMarket, _vars.adaptivePriceE30, _sizeDelta, 0);
+          : _calculator.calculateMarketAveragePrice(
+            int256(_globalMarket.longPositionSize),
+            _globalMarket.longAvgPrice,
+            _sizeDelta,
+            _vars.adaptivePriceE30,
+            0
+          );
 
         _perpStorage.updateGlobalLongMarketById(
           _marketIndex,
@@ -381,7 +389,13 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         // to increase SHORT position sizeDelta should be negative
         uint256 _nextAvgPrice = _globalMarket.shortPositionSize == 0
           ? _vars.adaptivePriceE30
-          : _calculator.calculateShortAveragePrice(_globalMarket, _vars.adaptivePriceE30, _sizeDelta, 0);
+          : _calculator.calculateMarketAveragePrice(
+            int256(_globalMarket.shortPositionSize),
+            _globalMarket.shortAvgPrice,
+            -_sizeDelta,
+            _vars.adaptivePriceE30,
+            0
+          );
 
         _perpStorage.updateGlobalShortMarketById(
           _marketIndex,
@@ -673,24 +687,28 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_globalMarketIndex);
 
       if (_vars.isLongPosition) {
-        uint256 _nextAvgPrice = _vars.calculator.calculateLongAveragePrice(
-          _globalMarket,
-          _vars.closePrice,
+        uint256 _nextAvgPrice = _vars.calculator.calculateMarketAveragePrice(
+          int256(_globalMarket.longPositionSize),
+          _globalMarket.longAvgPrice,
           -int256(_vars.positionSizeE30ToDecrease),
+          _vars.closePrice,
           _vars.realizedPnl
         );
+
         _vars.perpStorage.updateGlobalLongMarketById(
           _globalMarketIndex,
           _globalMarket.longPositionSize - _vars.positionSizeE30ToDecrease,
           _nextAvgPrice
         );
       } else {
-        uint256 _nextAvgPrice = _vars.calculator.calculateShortAveragePrice(
-          _globalMarket,
-          _vars.closePrice,
+        uint256 _nextAvgPrice = _vars.calculator.calculateMarketAveragePrice(
+          -int256(_globalMarket.shortPositionSize),
+          _globalMarket.shortAvgPrice,
           int256(_vars.positionSizeE30ToDecrease),
-          _vars.realizedPnl
+          _vars.closePrice,
+          -_vars.realizedPnl
         );
+
         _vars.perpStorage.updateGlobalShortMarketById(
           _globalMarketIndex,
           _globalMarket.shortPositionSize - _vars.positionSizeE30ToDecrease,

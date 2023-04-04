@@ -32,8 +32,8 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   mapping(bytes32 => Position) public positions;
   mapping(address => bytes32[]) public subAccountPositionIds;
   mapping(address => uint256) public subAccountBorrowingFee;
-  mapping(uint256 => GlobalMarket) public globalMarkets;
-  mapping(uint256 => GlobalAssetClass) public globalAssetClass;
+  mapping(uint256 => GlobalMarket) public markets;
+  mapping(uint256 => GlobalAssetClass) public assetClasses;
   mapping(address => bool) public serviceExecutors;
 
   /**
@@ -77,11 +77,11 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   // todo: support to update borrowing rate
   // todo: support to update funding rate
   function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory) {
-    return globalMarkets[_marketIndex];
+    return markets[_marketIndex];
   }
 
   function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
-    return globalAssetClass[_assetClassIndex];
+    return assetClasses[_assetClassIndex];
   }
 
   function getGlobalState() external view returns (GlobalState memory) {
@@ -137,8 +137,8 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     uint256 _newPositionSize,
     uint256 _newAvgPrice
   ) external onlyWhitelistedExecutor {
-    globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
-    globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
+    markets[_marketIndex].longPositionSize = _newPositionSize;
+    markets[_marketIndex].longAvgPrice = _newAvgPrice;
   }
 
   // @todo - update funding rate
@@ -147,8 +147,8 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     uint256 _newPositionSize,
     uint256 _newAvgPrice
   ) external onlyWhitelistedExecutor {
-    globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
-    globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
+    markets[_marketIndex].shortPositionSize = _newPositionSize;
+    markets[_marketIndex].shortAvgPrice = _newAvgPrice;
   }
 
   function updateGlobalState(GlobalState memory _newGlobalState) external onlyWhitelistedExecutor {
@@ -159,14 +159,11 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     uint8 _assetClassIndex,
     GlobalAssetClass memory _newAssetClass
   ) external onlyWhitelistedExecutor {
-    globalAssetClass[_assetClassIndex] = _newAssetClass;
+    assetClasses[_assetClassIndex] = _newAssetClass;
   }
 
-  function updateGlobalMarket(
-    uint256 _marketIndex,
-    GlobalMarket memory _globalMarket
-  ) external onlyWhitelistedExecutor {
-    globalMarkets[_marketIndex] = _globalMarket;
+  function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _market) external onlyWhitelistedExecutor {
+    markets[_marketIndex] = _market;
   }
 
   function increaseSubAccountBorrowingFee(address _subAccount, uint256 _borrowingFee) external onlyWhitelistedExecutor {
@@ -185,27 +182,27 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
 
   function increaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
     globalState.reserveValueE30 += _reserve;
-    globalAssetClass[_assetClassIndex].reserveValueE30 += _reserve;
+    assetClasses[_assetClassIndex].reserveValueE30 += _reserve;
   }
 
   function decreaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
     globalState.reserveValueE30 -= _reserve;
-    globalAssetClass[_assetClassIndex].reserveValueE30 -= _reserve;
+    assetClasses[_assetClassIndex].reserveValueE30 -= _reserve;
   }
 
   function increasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external onlyWhitelistedExecutor {
     if (_isLong) {
-      globalMarkets[_marketIndex].longPositionSize += _size;
+      markets[_marketIndex].longPositionSize += _size;
     } else {
-      globalMarkets[_marketIndex].shortPositionSize += _size;
+      markets[_marketIndex].shortPositionSize += _size;
     }
   }
 
   function decreasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external onlyWhitelistedExecutor {
     if (_isLong) {
-      globalMarkets[_marketIndex].longPositionSize -= _size;
+      markets[_marketIndex].longPositionSize -= _size;
     } else {
-      globalMarkets[_marketIndex].shortPositionSize -= _size;
+      markets[_marketIndex].shortPositionSize -= _size;
     }
   }
 
@@ -215,9 +212,9 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     uint256 _price
   ) external onlyWhitelistedExecutor {
     if (_isLong) {
-      globalMarkets[_marketIndex].longAvgPrice = _price;
+      markets[_marketIndex].longAvgPrice = _price;
     } else {
-      globalMarkets[_marketIndex].shortAvgPrice = _price;
+      markets[_marketIndex].shortAvgPrice = _price;
     }
   }
 }

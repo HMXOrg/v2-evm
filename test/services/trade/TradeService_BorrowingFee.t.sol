@@ -51,9 +51,9 @@ contract TradeService_BorrowingFee is TradeService_Base {
     vm.warp(100);
     {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-      assertEq(_globalAssetClass.sumBorrowingRate, 0);
-      assertEq(_globalAssetClass.lastBorrowingTime, 100);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      assertEq(_assetClass.sumBorrowingRate, 0);
+      assertEq(_assetClass.lastBorrowingTime, 100);
 
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
 
@@ -68,10 +68,10 @@ contract TradeService_BorrowingFee is TradeService_Base {
     vm.warp(101);
     {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 90000 / 1000000 = 0.000009
-      assertEq(_globalAssetClass.sumBorrowingRate, 0.000009 * 1e18);
-      assertEq(_globalAssetClass.lastBorrowingTime, 101);
+      assertEq(_assetClass.sumBorrowingRate, 0.000009 * 1e18);
+      assertEq(_assetClass.lastBorrowingTime, 101);
 
       // Fee: 0.000009 * 90000 = 0.81
       // 1 * 100 = 100 | 100 - 0.81 = 99.19
@@ -88,10 +88,10 @@ contract TradeService_BorrowingFee is TradeService_Base {
     vm.warp(120);
     {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 180000 / 1000000.6885 * (120 - 101) = 0.000341999764533162 | 0.000009 + 0.000341999764533162 = 0.000350999764533162
-      assertEq(_globalAssetClass.sumBorrowingRate, 0.000350999764533162 * 1e18);
-      assertEq(_globalAssetClass.lastBorrowingTime, 120);
+      assertEq(_assetClass.sumBorrowingRate, 0.000350999764533162 * 1e18);
+      assertEq(_assetClass.lastBorrowingTime, 120);
 
       // Fee: (0.000350999764533162 - 0.000009) * 180000 = 61.55995761596916
       // 99.19 - 61.55995761596916 = 37.63004238403084
@@ -128,10 +128,10 @@ contract TradeService_BorrowingFee is TradeService_Base {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
       tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
 
-      assertEq(_globalAssetClass.sumBorrowingRate, 0);
-      assertEq(_globalAssetClass.lastBorrowingTime, 100);
+      assertEq(_assetClass.sumBorrowingRate, 0);
+      assertEq(_assetClass.lastBorrowingTime, 100);
 
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
       assertEq(vaultStorage.traderBalances(bobAddress, address(usdt)), 50 * 1e6);
@@ -147,10 +147,10 @@ contract TradeService_BorrowingFee is TradeService_Base {
     vm.warp(110);
     {
       tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, address(0), 0);
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 135000 / 1000000 * (110 - 100) = 0.000135
-      assertEq(_globalAssetClass.sumBorrowingRate, 0.000135 * 1e18);
-      assertEq(_globalAssetClass.lastBorrowingTime, 110);
+      assertEq(_assetClass.sumBorrowingRate, 0.000135 * 1e18);
+      assertEq(_assetClass.lastBorrowingTime, 110);
 
       // Fee: 90000 * 0.000135 = 12.15
       // Alice Balance: 100 - 12.15 = 87.85
@@ -193,10 +193,10 @@ contract TradeService_BorrowingFee is TradeService_Base {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
       tradeService.increasePosition(BOB, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
 
-      assertEq(_globalAssetClass.sumBorrowingRate, 0);
-      assertEq(_globalAssetClass.lastBorrowingTime, 100);
+      assertEq(_assetClass.sumBorrowingRate, 0);
+      assertEq(_assetClass.lastBorrowingTime, 100);
 
       assertEq(vaultStorage.traderBalances(aliceAddress, address(weth)), 1.01 * 1e18);
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 100 * 1e6);
@@ -215,10 +215,10 @@ contract TradeService_BorrowingFee is TradeService_Base {
       tradeService.increasePosition(BOB, 0, btcMarketIndex, 500_000 * 1e30, 0);
 
       {
-        IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+        IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
         // 0.0001 * 135000 / 1000000 * (110 - 100) = 0.000135
-        assertEq(_globalAssetClass.sumBorrowingRate, 0.000135 * 1e18);
-        assertEq(_globalAssetClass.lastBorrowingTime, 110);
+        assertEq(_assetClass.sumBorrowingRate, 0.000135 * 1e18);
+        assertEq(_assetClass.lastBorrowingTime, 110);
       }
 
       // 12.15 / 1600 = 0.00759375 | 1.01 - 0.00759375 = 1.00240625
@@ -242,10 +242,10 @@ contract TradeService_BorrowingFee is TradeService_Base {
       tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 2_000_000 * 1e30, address(0), 0);
       tradeService.decreasePosition(BOB, 0, btcMarketIndex, 100_000 * 1e30, address(0), 0);
 
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 270000 / 1000010.3275 * (150 - 110) = 0.001079988846415188 | 0.000135 + 0.001079988846415188 = 0.001215
-      assertEq(_globalAssetClass.sumBorrowingRate, 0.001214988846415188 * 1e18);
-      assertEq(_globalAssetClass.lastBorrowingTime, 150);
+      assertEq(_assetClass.sumBorrowingRate, 0.001214988846415188 * 1e18);
+      assertEq(_assetClass.lastBorrowingTime, 150);
 
       // 0.001079988846415188 * 180000 = 194.39799235473384
       // 194.39799235473384 / 1600 = 0.12149874522170865 | 1.00240625 - 0.12149874522170865 = 0.88090750477829135
@@ -299,12 +299,12 @@ contract TradeService_BorrowingFee is TradeService_Base {
     vm.warp(100);
     {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
-      assertEq(_globalAssetClass.reserveValueE30, 90000 * 1e30);
-      assertEq(_globalAssetClass.sumBorrowingRate, 0);
-      assertEq(_globalAssetClass.lastBorrowingTime, 100);
-      assertEq(_globalAssetClass.sumBorrowingFeeE30, 0);
-      assertEq(_globalAssetClass.sumSettledBorrowingFeeE30, 0);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      assertEq(_assetClass.reserveValueE30, 90000 * 1e30);
+      assertEq(_assetClass.sumBorrowingRate, 0);
+      assertEq(_assetClass.lastBorrowingTime, 100);
+      assertEq(_assetClass.sumBorrowingFeeE30, 0);
+      assertEq(_assetClass.sumSettledBorrowingFeeE30, 0);
 
       assertEq(mockCalculator.getPendingBorrowingFeeE30(), 0, "PendingBorrowingFee T100");
     }
@@ -314,15 +314,15 @@ contract TradeService_BorrowingFee is TradeService_Base {
       // Try again with Alice, there should be no pending borrowing fee, as there is only Alice in the game.
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
       // 0.0001 * 90000 / 1000000 = 0.000009
-      assertEq(_globalAssetClass.reserveValueE30, 135000 * 1e30);
-      assertEq(_globalAssetClass.sumBorrowingRate, 0.000009 * 1e18);
-      assertEq(_globalAssetClass.lastBorrowingTime, 101);
+      assertEq(_assetClass.reserveValueE30, 135000 * 1e30);
+      assertEq(_assetClass.sumBorrowingRate, 0.000009 * 1e18);
+      assertEq(_assetClass.lastBorrowingTime, 101);
 
       // 0.000009 * 90000 = 0.81
-      assertEq(_globalAssetClass.sumBorrowingFeeE30, 0.81 * 1e30);
-      assertEq(_globalAssetClass.sumSettledBorrowingFeeE30, 0.81 * 1e30);
+      assertEq(_assetClass.sumBorrowingFeeE30, 0.81 * 1e30);
+      assertEq(_assetClass.sumSettledBorrowingFeeE30, 0.81 * 1e30);
 
       // no pending
       assertEq(mockCalculator.getPendingBorrowingFeeE30(), 0, "PendingBorrowingFee T101");
@@ -341,20 +341,20 @@ contract TradeService_BorrowingFee is TradeService_Base {
     {
       // Bob buys on USDT
       tradeService.increasePosition(BOB, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(0);
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
 
       // 0.0001 * 135000 / 1000000.6885 * (110 - 101) = 0.000121499916347307 | 0.000009 + 0.000121499916347307 = 0.000130499916347307
-      assertEq(_globalAssetClass.reserveValueE30, 225000 * 1e30);
-      assertEq(_globalAssetClass.sumBorrowingRate, 0.000130499916347307 * 1e18);
-      assertEq(_globalAssetClass.lastBorrowingTime, 110);
+      assertEq(_assetClass.reserveValueE30, 225000 * 1e30);
+      assertEq(_assetClass.sumBorrowingRate, 0.000130499916347307 * 1e18);
+      assertEq(_assetClass.lastBorrowingTime, 110);
 
       // SumFee = 0.81 + (nextBorrowingRate * reserveValue)
       // 0.81 + (0.000121499916347307 * 135000) ~= 17.212488706886445
-      assertEq(_globalAssetClass.sumBorrowingFeeE30, 17.212488706886445 * 1e30);
+      assertEq(_assetClass.sumBorrowingFeeE30, 17.212488706886445 * 1e30);
       // SumSettledFee = Alice(T:100 to 101)
       //               = 0.81
       // So, it remains the same
-      assertEq(_globalAssetClass.sumSettledBorrowingFeeE30, 0.81 * 1e30);
+      assertEq(_assetClass.sumSettledBorrowingFeeE30, 0.81 * 1e30);
 
       // At this point, can still ignore BOB, as BOB has just joined, timeDelta = 0
       // Last fee to Plp = 0.81 * 85% = 0.6885

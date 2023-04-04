@@ -190,7 +190,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _vars.position = _perpStorage.getPositionById(_vars.positionId);
 
     // get the global market for the given market index
-    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.GlobalMarket memory _market = _perpStorage.getGlobalMarketByIndex(_marketIndex);
     // get the market configuration for the given market index
     ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
 
@@ -204,8 +204,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _vars.isLong = _sizeDelta > 0;
     if (
       _vars.isLong
-        ? _globalMarket.longPositionSize + uint256(_sizeDelta) > _marketConfig.maxLongPositionSize
-        : _globalMarket.shortPositionSize + uint256(-_sizeDelta) > _marketConfig.maxShortPositionSize
+        ? _market.longPositionSize + uint256(_sizeDelta) > _marketConfig.maxLongPositionSize
+        : _market.shortPositionSize + uint256(-_sizeDelta) > _marketConfig.maxShortPositionSize
     ) revert ITradeService_PositionSizeExceed();
 
     _vars.isNewPosition = _vars.position.positionSizeE30 == 0;
@@ -232,7 +232,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _vars.oracle = OracleMiddleware(_configStorage.oracle());
 
     // update global market state after update fee rate
-    _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    _market = _perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     {
       uint256 _lastPriceUpdated;
@@ -244,7 +244,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           _vars.isLong, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           _sizeDelta,
           _marketConfig.fundingRate.maxSkewScaleUSD,
           0
@@ -257,7 +257,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       (_vars.closePriceE30, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         _vars.isLong, // if current position is SHORT position, then we use max price
-        (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
+        (int(_market.longPositionSize) - int(_market.shortPositionSize)),
         -_vars.position.positionSizeE30,
         _marketConfig.fundingRate.maxSkewScaleUSD,
         0
@@ -320,7 +320,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       }
 
       _vars.position.avgEntryPriceE30 = _calculateEntryAveragePrice(
-        _globalMarket,
+        _market,
         _marketConfig.fundingRate.maxSkewScaleUSD,
         _vars.oraclePrice,
         _vars.position.positionSizeE30,
@@ -333,12 +333,12 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _vars.position.positionSizeE30 += _sizeDelta;
 
     {
-      PerpStorage.GlobalAssetClass memory _globalAssetClass = _perpStorage.getGlobalAssetClassByIndex(
+      PerpStorage.GlobalAssetClass memory _assetClass = _perpStorage.getGlobalAssetClassByIndex(
         _marketConfig.assetClass
       );
 
-      _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
-      _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
+      _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
+      _vars.position.entryFundingRate = _market.currentFundingRate;
     }
 
     // if the position size is zero after the update, revert the transaction with an error
@@ -370,28 +370,24 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
       // update global market state
       if (_vars.isLong) {
-        uint256 _nextAvgPrice = _globalMarket.longPositionSize == 0
+        uint256 _nextAvgPrice = _market.longPositionSize == 0
           ? _vars.adaptivePriceE30
           : _calculator.calculateMarketAveragePrice(
-            int256(_globalMarket.longPositionSize),
-            _globalMarket.longAvgPrice,
+            int256(_market.longPositionSize),
+            _market.longAvgPrice,
             _sizeDelta,
             _vars.adaptivePriceE30,
             0
           );
 
-        _perpStorage.updateGlobalLongMarketById(
-          _marketIndex,
-          _globalMarket.longPositionSize + _absSizeDelta,
-          _nextAvgPrice
-        );
+        _perpStorage.updateGlobalLongMarketById(_marketIndex, _market.longPositionSize + _absSizeDelta, _nextAvgPrice);
       } else {
         // to increase SHORT position sizeDelta should be negative
-        uint256 _nextAvgPrice = _globalMarket.shortPositionSize == 0
+        uint256 _nextAvgPrice = _market.shortPositionSize == 0
           ? _vars.adaptivePriceE30
           : _calculator.calculateMarketAveragePrice(
-            -int256(_globalMarket.shortPositionSize),
-            _globalMarket.shortAvgPrice,
+            -int256(_market.shortPositionSize),
+            _market.shortAvgPrice,
             _sizeDelta,
             _vars.adaptivePriceE30,
             0
@@ -399,7 +395,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
         _perpStorage.updateGlobalShortMarketById(
           _marketIndex,
-          _globalMarket.shortPositionSize + _absSizeDelta,
+          _market.shortPositionSize + _absSizeDelta,
           _nextAvgPrice
         );
       }
@@ -478,7 +474,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // position size to decrease is greater then position size, should be revert
     if (_positionSizeE30ToDecrease > _vars.absPositionSizeE30) revert ITradeService_DecreaseTooHighPositionSize();
 
-    PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.GlobalMarket memory _market = _vars.perpStorage.getGlobalMarketByIndex(_marketIndex);
     {
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
@@ -486,7 +482,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       (_vars.closePrice, , _lastPriceUpdated, _marketStatus) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-        (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
+        (int(_market.longPositionSize) - int(_market.shortPositionSize)),
         -_vars.position.positionSizeE30,
         _marketConfig.fundingRate.maxSkewScaleUSD,
         0
@@ -552,7 +548,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _vars.positionSizeE30ToDecrease = _vars.absPositionSizeE30;
     _vars.tpToken = _tpToken;
 
-    PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.GlobalMarket memory _market = _vars.perpStorage.getGlobalMarketByIndex(_marketIndex);
 
     {
       uint8 _marketStatus;
@@ -561,7 +557,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           -_vars.position.positionSizeE30,
           _marketConfig.fundingRate.maxSkewScaleUSD,
           0
@@ -620,19 +616,19 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
   /// @notice decrease trader position
   /// @param _marketConfig - target market config
-  /// @param _globalMarketIndex - global market index
+  /// @param _marketIndex - global market index
   /// @param _vars - decrease criteria
   /// @return _isMaxProfit - position is close with max profit
   function _decreasePosition(
     ConfigStorage.MarketConfig memory _marketConfig,
-    uint256 _globalMarketIndex,
+    uint256 _marketIndex,
     DecreasePositionVars memory _vars
   ) internal returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
     // Update borrowing rate
     TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 
     // Update funding rate
-    TradeHelper(tradeHelper).updateFundingRate(_globalMarketIndex);
+    TradeHelper(tradeHelper).updateFundingRate(_marketIndex);
 
     // Settle
     // - trading fees
@@ -643,7 +639,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       _vars.positionSizeE30ToDecrease,
       _marketConfig.increasePositionFeeRateBPS,
       _marketConfig.assetClass,
-      _globalMarketIndex
+      _marketIndex
     );
 
     uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
@@ -686,40 +682,40 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
      */
 
     {
-      PerpStorage.GlobalMarket memory _globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_globalMarketIndex);
+      PerpStorage.GlobalMarket memory _market = _vars.perpStorage.getGlobalMarketByIndex(_marketIndex);
 
       if (_vars.isLongPosition) {
         uint256 _nextAvgPrice = _vars.calculator.calculateMarketAveragePrice(
-          int256(_globalMarket.longPositionSize),
-          _globalMarket.longAvgPrice,
+          int256(_market.longPositionSize),
+          _market.longAvgPrice,
           -int256(_vars.positionSizeE30ToDecrease),
           _vars.closePrice,
           _vars.realizedPnl
         );
 
         _vars.perpStorage.updateGlobalLongMarketById(
-          _globalMarketIndex,
-          _globalMarket.longPositionSize - _vars.positionSizeE30ToDecrease,
+          _marketIndex,
+          _market.longPositionSize - _vars.positionSizeE30ToDecrease,
           _nextAvgPrice
         );
       } else {
         uint256 _nextAvgPrice = _vars.calculator.calculateMarketAveragePrice(
-          -int256(_globalMarket.shortPositionSize),
-          _globalMarket.shortAvgPrice,
+          -int256(_market.shortPositionSize),
+          _market.shortAvgPrice,
           int256(_vars.positionSizeE30ToDecrease),
           _vars.closePrice,
           -_vars.realizedPnl
         );
 
         _vars.perpStorage.updateGlobalShortMarketById(
-          _globalMarketIndex,
-          _globalMarket.shortPositionSize - _vars.positionSizeE30ToDecrease,
+          _marketIndex,
+          _market.shortPositionSize - _vars.positionSizeE30ToDecrease,
           _nextAvgPrice
         );
       }
 
       PerpStorage.GlobalState memory _globalState = _vars.perpStorage.getGlobalState();
-      PerpStorage.GlobalAssetClass memory _globalAssetClass = _vars.perpStorage.getGlobalAssetClassByIndex(
+      PerpStorage.GlobalAssetClass memory _assetClass = _vars.perpStorage.getGlobalAssetClassByIndex(
         _marketConfig.assetClass
       );
 
@@ -728,11 +724,11 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       _globalState.reserveValueE30 -=
         (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
         _vars.absPositionSizeE30;
-      _globalAssetClass.reserveValueE30 -=
+      _assetClass.reserveValueE30 -=
         (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
         _vars.absPositionSizeE30;
       _vars.perpStorage.updateGlobalState(_globalState);
-      _vars.perpStorage.updateGlobalAssetClass(_marketConfig.assetClass, _globalAssetClass);
+      _vars.perpStorage.updateGlobalAssetClass(_marketConfig.assetClass, _assetClass);
 
       if (_newAbsPositionSizeE30 != 0) {
         // calculate new entry price here
@@ -742,7 +738,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         );
 
         _vars.position.avgEntryPriceE30 = _calculateEntryAveragePrice(
-          _globalMarket,
+          _market,
           _marketConfig.fundingRate.maxSkewScaleUSD,
           _vars.oraclePrice,
           _vars.position.positionSizeE30,
@@ -751,8 +747,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         );
 
         // update position info
-        _vars.position.entryBorrowingRate = _globalAssetClass.sumBorrowingRate;
-        _vars.position.entryFundingRate = _globalMarket.currentFundingRate;
+        _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
+        _vars.position.entryFundingRate = _market.currentFundingRate;
         _vars.position.positionSizeE30 = _vars.isLongPosition
           ? int256(_newAbsPositionSizeE30)
           : -int256(_newAbsPositionSizeE30);
@@ -791,7 +787,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     emit LogDecreasePosition(
       _vars.positionId,
-      _globalMarketIndex,
+      _marketIndex,
       _vars.position.positionSizeE30,
       int256(_vars.positionSizeE30ToDecrease),
       _vars.position.avgEntryPriceE30,
@@ -967,14 +963,14 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
 
     // Retrieve the global asset class
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = _perpStorage.getGlobalAssetClassByIndex(_assetClassIndex);
+    PerpStorage.GlobalAssetClass memory _assetClass = _perpStorage.getGlobalAssetClassByIndex(_assetClassIndex);
 
     // get the liquidity configuration
     ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
 
     // Increase the reserve value by adding the reservedValue
     _globalState.reserveValueE30 += _reservedValue;
-    _globalAssetClass.reserveValueE30 += _reservedValue;
+    _assetClass.reserveValueE30 += _reservedValue;
 
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
     if ((tvl * _liquidityConfig.maxPLPUtilizationBPS) < _globalState.reserveValueE30 * BPS) {
@@ -983,7 +979,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     // Update the new reserve value in the PerpStorage contract
     _perpStorage.updateGlobalState(_globalState);
-    _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
+    _perpStorage.updateGlobalAssetClass(_assetClassIndex, _assetClass);
   }
 
   /// @notice health check for sub account that equity > margin maintenance required

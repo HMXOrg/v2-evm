@@ -96,8 +96,8 @@ contract TradeTester is StdAssertions {
   function assertAfterIncrease(
     address _subAccount,
     PositionExpectedData memory _positionExpectedData,
-    GlobalMarketExpectedData memory _globalMarketExpectedData,
-    GlobalAssetClassExpectedData memory _globalAssetClassExpectedData,
+    GlobalMarketExpectedData memory _marketExpectedData,
+    GlobalAssetClassExpectedData memory _assetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData,
     PerpStorageExpectedData memory _perpStorageExpectedData,
     VaultStorageExpectedData storage _vaultStorageExpectedData
@@ -105,18 +105,18 @@ contract TradeTester is StdAssertions {
     // Check position info
     IPerpStorage.Position memory _position = _assertPosition(
       _positionExpectedData,
-      _globalMarketExpectedData,
-      _globalAssetClassExpectedData
+      _marketExpectedData,
+      _assetClassExpectedData
     );
 
     // This assert only increase position
     assertEq(_position.lastIncreaseTimestamp, block.timestamp, "Last increase timestamp");
 
     // Check market
-    _assertMarket(_globalMarketExpectedData);
+    _assertMarket(_marketExpectedData);
 
     // Check perp storage
-    _assertPerpStorage(_subAccount, _perpStorageExpectedData, _globalAssetClassExpectedData, _globalStateExpectedData);
+    _assertPerpStorage(_subAccount, _perpStorageExpectedData, _assetClassExpectedData, _globalStateExpectedData);
     _assertVaultStorage(_subAccount, _vaultStorageExpectedData);
   }
 
@@ -130,8 +130,8 @@ contract TradeTester is StdAssertions {
   function assertAfterDecrease(
     address _subAccount,
     PositionExpectedData memory _positionExpectedData,
-    GlobalMarketExpectedData memory _globalMarketExpectedData,
-    GlobalAssetClassExpectedData memory _globalAssetClassExpectedData,
+    GlobalMarketExpectedData memory _marketExpectedData,
+    GlobalAssetClassExpectedData memory _assetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData,
     PerpStorageExpectedData memory _perpStorageExpectedData,
     VaultStorageExpectedData storage _vaultStorageExpectedData
@@ -139,16 +139,16 @@ contract TradeTester is StdAssertions {
     // Check position info
     IPerpStorage.Position memory _position = _assertPosition(
       _positionExpectedData,
-      _globalMarketExpectedData,
-      _globalAssetClassExpectedData
+      _marketExpectedData,
+      _assetClassExpectedData
     );
 
     // This assert only increase position
     assertEq(_position.realizedPnl, _positionExpectedData.realizedPnl, "Last increase timestamp");
 
     // Check market
-    _assertMarket(_globalMarketExpectedData);
-    _assertPerpStorage(_subAccount, _perpStorageExpectedData, _globalAssetClassExpectedData, _globalStateExpectedData);
+    _assertMarket(_marketExpectedData);
+    _assertPerpStorage(_subAccount, _perpStorageExpectedData, _assetClassExpectedData, _globalStateExpectedData);
     _assertVaultStorage(_subAccount, _vaultStorageExpectedData);
   }
 
@@ -161,8 +161,8 @@ contract TradeTester is StdAssertions {
   ///       - Entry funding rate - global market current funding rate
   function _assertPosition(
     PositionExpectedData memory _positionExpectedData,
-    GlobalMarketExpectedData memory _globalMarketExpectedData,
-    GlobalAssetClassExpectedData memory _globalAssetClassExpectedData
+    GlobalMarketExpectedData memory _marketExpectedData,
+    GlobalAssetClassExpectedData memory _assetClassExpectedData
   ) internal returns (IPerpStorage.Position memory _position) {
     _position = perpStorage.getPositionById(_positionExpectedData.positionId);
 
@@ -170,8 +170,8 @@ contract TradeTester is StdAssertions {
     assertEq(_position.avgEntryPriceE30, _positionExpectedData.avgEntryPriceE30, "Position Average Price");
     assertEq(_position.reserveValueE30, _positionExpectedData.reserveValueE30, "Position Reserve");
 
-    assertEq(_position.entryBorrowingRate, _globalAssetClassExpectedData.sumBorrowingRate, "Entry Borrowing rate");
-    assertEq(_position.entryFundingRate, _globalMarketExpectedData.currentFundingRate, "Entry Funding rate");
+    assertEq(_position.entryBorrowingRate, _assetClassExpectedData.sumBorrowingRate, "Entry Borrowing rate");
+    assertEq(_position.entryFundingRate, _marketExpectedData.currentFundingRate, "Entry Funding rate");
   }
 
   /// @notice Assert Market
@@ -182,19 +182,17 @@ contract TradeTester is StdAssertions {
   ///       - Long average price
   ///       - Short Position size
   ///       - Short average price
-  function _assertMarket(GlobalMarketExpectedData memory _globalMarketExpectedData) internal {
-    IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(
-      _globalMarketExpectedData.marketIndex
-    );
+  function _assertMarket(GlobalMarketExpectedData memory _marketExpectedData) internal {
+    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketExpectedData.marketIndex);
 
-    assertEq(_globalMarket.longPositionSize, _globalMarketExpectedData.longPositionSize, "Long Position size");
-    assertEq(_globalMarket.longAvgPrice, _globalMarketExpectedData.longAvgPrice, "Long Average Price");
+    assertEq(_market.longPositionSize, _marketExpectedData.longPositionSize, "Long Position size");
+    assertEq(_market.longAvgPrice, _marketExpectedData.longAvgPrice, "Long Average Price");
 
-    assertEq(_globalMarket.shortPositionSize, _globalMarketExpectedData.shortPositionSize, "Short Position size");
-    assertEq(_globalMarket.shortAvgPrice, _globalMarketExpectedData.shortAvgPrice, "Short Average Price");
+    assertEq(_market.shortPositionSize, _marketExpectedData.shortPositionSize, "Short Position size");
+    assertEq(_market.shortAvgPrice, _marketExpectedData.shortAvgPrice, "Short Average Price");
 
-    assertEq(_globalMarket.currentFundingRate, _globalMarketExpectedData.currentFundingRate, "Current Funding Rate");
-    assertEq(_globalMarket.lastFundingTime, _globalMarketExpectedData.lastFundingTime, "Last Funding Time");
+    assertEq(_market.currentFundingRate, _marketExpectedData.currentFundingRate, "Current Funding Rate");
+    assertEq(_market.lastFundingTime, _marketExpectedData.lastFundingTime, "Last Funding Time");
   }
 
   /// @notice Assert PerpStorage
@@ -209,24 +207,20 @@ contract TradeTester is StdAssertions {
   function _assertPerpStorage(
     address _subAccount,
     PerpStorageExpectedData memory _perpStorageExpectedData,
-    GlobalAssetClassExpectedData memory _globalAssetClassExpectedData,
+    GlobalAssetClassExpectedData memory _assetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData
   ) internal {
-    IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(
-      _globalAssetClassExpectedData.assetClassId
+    IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(
+      _assetClassExpectedData.assetClassId
     );
     IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
 
     // Check global asset class
-    assertEq(_globalAssetClass.reserveValueE30, _globalAssetClassExpectedData.reserveValueE30, "Global Asset Reserve");
+    assertEq(_assetClass.reserveValueE30, _assetClassExpectedData.reserveValueE30, "Global Asset Reserve");
+    assertEq(_assetClass.sumBorrowingRate, _assetClassExpectedData.sumBorrowingRate, "Global Asset Borrowing Rate");
     assertEq(
-      _globalAssetClass.sumBorrowingRate,
-      _globalAssetClassExpectedData.sumBorrowingRate,
-      "Global Asset Borrowing Rate"
-    );
-    assertEq(
-      _globalAssetClass.lastBorrowingTime,
-      _globalAssetClassExpectedData.lastBorrowingTime,
+      _assetClass.lastBorrowingTime,
+      _assetClassExpectedData.lastBorrowingTime,
       "Global Asset Last Borrowing time"
     );
 

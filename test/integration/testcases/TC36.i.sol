@@ -66,7 +66,7 @@ contract TC36 is BaseIntTest_WithActions {
 
     {
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(
         _marketConfig.assetClass
       );
       IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
@@ -81,7 +81,7 @@ contract TC36 is BaseIntTest_WithActions {
       uint256 _maxUtilizationValue = (_plpTVL * _liquidityConfig.maxPLPUtilizationBPS) / 10000;
 
       assertEq(_globalState.reserveValueE30, 1675199970000000000000000000000000000, "Global Reserve");
-      assertEq(_globalAssetClass.reserveValueE30, 1675199970000000000000000000000000000, "Global AssetClass Reserve");
+      assertEq(_assetClass.reserveValueE30, 1675199970000000000000000000000000000, "Global AssetClass Reserve");
       assertEq(_plpTVL, 2094000000000000000000000000000000000, "PLP TVL");
       assertEq(_maxUtilizationValue, 1675200000000000000000000000000000000, "MaxUtilizationValue");
     }
@@ -171,7 +171,7 @@ contract TC36 is BaseIntTest_WithActions {
       //maxUtilization = 2654416330564255462951685200733910932 * 8000 / 10000 => 1675490777760000000000000000000000000
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
       IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(
+      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(
         _marketConfig.assetClass
       );
       IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
@@ -180,7 +180,7 @@ contract TC36 is BaseIntTest_WithActions {
       uint256 _maxUtilizationValue = (_plpTVL * _liquidityConfig.maxPLPUtilizationBPS) / 10000;
 
       assertEq(_globalState.reserveValueE30, 0, "Global Reserve");
-      assertEq(_globalAssetClass.reserveValueE30, 0, "Global AssetClass Reserve");
+      assertEq(_assetClass.reserveValueE30, 0, "Global AssetClass Reserve");
       assertEq(_plpTVL, 2094363472200000000000000000000000000, "PLP TVL");
       assertEq(_maxUtilizationValue, 1675490777760000000000000000000000000, "MaxUtilizationValue");
     }

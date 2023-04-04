@@ -20,11 +20,11 @@ contract GlobalMarketTester is StdAssertions {
   }
 
   function assertGlobalMarket(uint256 _marketIndex, AssertData memory _data) external {
-    IPerpStorage.GlobalMarket memory _globalMarket = perpStorage.getGlobalMarketByIndex(_marketIndex);
+    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
 
-    assertEq(_globalMarket.longPositionSize, _data.longPositionSize);
-    assertEq(_globalMarket.longAvgPrice, _data.longAvgPrice);
-    assertEq(_globalMarket.shortPositionSize, _data.shortPositionSize);
-    assertEq(_globalMarket.shortAvgPrice, _data.shortAvgPrice);
+    assertEq(_market.longPositionSize, _data.longPositionSize);
+    assertEq(_market.longAvgPrice, _data.longAvgPrice);
+    assertEq(_market.shortPositionSize, _data.shortPositionSize);
+    assertEq(_market.shortAvgPrice, _data.shortAvgPrice);
   }
 }

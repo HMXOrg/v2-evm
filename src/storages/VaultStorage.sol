@@ -51,7 +51,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
    * VALIDATION
    */
 
-  function validateAddTraderToken(address _trader, address _token) public view {
+  function validateAddTraderToken(address _trader, address _token) external view {
+    _validateAddTraderToken(_trader, _token);
+  }
+
+  function _validateAddTraderToken(address _trader, address _token) internal view {
     address[] storage traderToken = traderTokens[_trader];
 
     for (uint256 i; i < traderToken.length; ) {
@@ -62,7 +66,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     }
   }
 
-  function validateRemoveTraderToken(address _trader, address _token) public view {
+  function validateRemoveTraderToken(address _trader, address _token) external view {
+    _validateRemoveTraderToken(_trader, _token);
+  }
+
+  function _validateRemoveTraderToken(address _trader, address _token) internal view {
     if (traderBalances[_trader][_token] != 0) revert IVaultStorage_TraderBalanceRemaining();
   }
 
@@ -140,12 +148,12 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   }
 
   function _addTraderToken(address _trader, address _token) internal {
-    validateAddTraderToken(_trader, _token);
+    _validateAddTraderToken(_trader, _token);
     traderTokens[_trader].push(_token);
   }
 
   function _removeTraderToken(address _trader, address _token) internal {
-    validateRemoveTraderToken(_trader, _token);
+    _validateRemoveTraderToken(_trader, _token);
 
     address[] storage traderToken = traderTokens[_trader];
     uint256 tokenLen = traderToken.length;

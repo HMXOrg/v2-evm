@@ -55,7 +55,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     TradeHelper(_tradeHelper).perpStorage();
   }
 
-  function reloadConfig() external {
+  function reloadConfig() external nonReentrant onlyOwner {
     // TODO: access control, sanity check, natspec
     // TODO: discuss about this pattern
 

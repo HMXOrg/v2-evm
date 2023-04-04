@@ -77,7 +77,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) returns (uint256) {
     // 1. _validate
     ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
-    validatePreAddRemoveLiquidity(_amount);
+    _validatePreAddRemoveLiquidity(_amount);
 
     if (VaultStorage(vaultStorage).pullToken(_token) != _amount) {
       revert LiquidityService_InvalidInputAmount();
@@ -120,7 +120,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_tokenOut) returns (uint256) {
     // 1. _validate
     ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
-    validatePreAddRemoveLiquidity(_amount);
+    _validatePreAddRemoveLiquidity(_amount);
 
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
     uint256 _aumE30 = _calculator.getAUME30(false);
@@ -287,7 +287,11 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
   /// @notice validatePreAddRemoveLiquidity used in Handler,Service
   /// @param _amount amountIn
-  function validatePreAddRemoveLiquidity(uint256 _amount) public view {
+  function validatePreAddRemoveLiquidity(uint256 _amount) external view {
+    _validatePreAddRemoveLiquidity(_amount);
+  }
+
+  function _validatePreAddRemoveLiquidity(uint256 _amount) internal view {
     if (!ConfigStorage(configStorage).getLiquidityConfig().enabled) {
       revert LiquidityService_CircuitBreaker();
     }

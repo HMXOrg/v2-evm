@@ -84,6 +84,10 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     );
   }
 
+  function assertFundingFeeReserve(address _token, uint256 _fundingFeeReserve) internal {
+    assertFundingFeeReserve(_token, _fundingFeeReserve, "");
+  }
+
   function assertVaultsFees(
     address _token,
     uint256 _fee,

@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import { Owned } from "@hmx/base/Owned.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
-import { ILeanPyth } from "./interfaces/ILeanPyth.sol";
+import { IReadablePyth } from "./interfaces/IReadablePyth.sol";
 
 contract PythAdapter is Owned, IPythAdapter {
   // errors
@@ -14,7 +14,7 @@ contract PythAdapter is Owned, IPythAdapter {
   error PythAdapter_UnknownAssetId();
 
   // state variables
-  ILeanPyth public pyth;
+  IReadablePyth public pyth;
   // mapping of our asset id to Pyth's price id
   mapping(bytes32 => IPythAdapter.PythPriceConfig) public configs;
 
@@ -23,10 +23,7 @@ contract PythAdapter is Owned, IPythAdapter {
   event LogSetPyth(address _oldPyth, address _newPyth);
 
   constructor(address _pyth) {
-    pyth = ILeanPyth(_pyth);
-
-    // Sanity
-    pyth.getUpdateFee(new bytes[](0));
+    pyth = IReadablePyth(_pyth);
   }
 
   /// @notice Set the Pyth price id for the given asset.
@@ -123,11 +120,8 @@ contract PythAdapter is Owned, IPythAdapter {
   /// @notice Set new Pyth contract address.
   /// @param _newPyth New Pyth contract address.
   function setPyth(address _newPyth) external onlyOwner {
-    pyth = ILeanPyth(_newPyth);
+    pyth = IReadablePyth(_newPyth);
 
     emit LogSetPyth(address(pyth), _newPyth);
-
-    // Sanity check
-    ILeanPyth(_newPyth).getUpdateFee(new bytes[](0));
   }
 }

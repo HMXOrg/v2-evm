@@ -17,6 +17,41 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   uint64 internal constant RATE_PRECISION = 1e18;
 
   /**
+   * Structs
+   */
+
+  struct IncreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    uint256 unrealizedPnlToBeReceived;
+    uint256 fundingFeeToBeReceived;
+    uint256 payerBalance;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  struct DecreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    ConfigStorage.TradingConfig tradingConfig;
+    uint256 unrealizedPnlToBePaid;
+    uint256 tradingFeeToBePaid;
+    uint256 borrowingFeeToBePaid;
+    uint256 fundingFeeToBePaid;
+    uint256 liquidationFeeToBePaid;
+    uint256 payerBalance;
+    uint256 plpDebt;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  /**
    * Events
    */
   event LogSettleTradingFeeValue(address subAccount, uint256 feeUsd);
@@ -285,27 +320,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     _perpStorage.updateGlobalAssetClass(uint8(_assetClassIndex), _globalAssetClass);
   }
 
-  function increaseCollateral(
-    address _subAccount,
-    int256 _unrealizedPnl,
-    int256 _fundingFee
-  ) external nonReentrant onlyWhitelistedExecutor {
-    _increaseCollateral(_subAccount, _unrealizedPnl, _fundingFee);
-  }
-
-  struct IncreaseCollateralVars {
-    VaultStorage vaultStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
-    uint256 unrealizedPnlToBeReceived;
-    uint256 fundingFeeToBeReceived;
-    uint256 payerBalance;
-    uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
-  }
-
   function increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) external {
     _increaseCollateral(_subAccount, _unrealizedPnl, _fundingFee);
   }
@@ -495,24 +509,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _liquidator,
       _isRevertOnError
     );
-  }
-
-  struct DecreaseCollateralVars {
-    VaultStorage vaultStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
-    ConfigStorage.TradingConfig tradingConfig;
-    uint256 unrealizedPnlToBePaid;
-    uint256 tradingFeeToBePaid;
-    uint256 borrowingFeeToBePaid;
-    uint256 fundingFeeToBePaid;
-    uint256 liquidationFeeToBePaid;
-    uint256 payerBalance;
-    uint256 plpDebt;
-    uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
   }
 
   function _decreaseCollateral(

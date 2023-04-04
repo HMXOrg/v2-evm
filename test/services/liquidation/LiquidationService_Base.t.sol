@@ -50,6 +50,8 @@ abstract contract LiquidationService_Base is BaseTest {
 
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
     configStorage.setServiceExecutor(address(liquidationService), address(this), true);
+    configStorage.setServiceExecutor(address(tradeHelper), address(tradeService), true);
+    configStorage.setServiceExecutor(address(tradeHelper), address(liquidationService), true);
 
     perpStorage.setServiceExecutors(address(tradeService), true);
     perpStorage.setServiceExecutors(address(tradeHelper), true);

@@ -55,7 +55,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     TradeHelper(_tradeHelper).perpStorage();
   }
 
-  function reloadConfig() external {
+  function reloadConfig() external nonReentrant onlyOwner {
     // TODO: access control, sanity check, natspec
     // TODO: discuss about this pattern
 
@@ -73,7 +73,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     if (_equity >= 0 && uint256(_equity) >= _calculator.getMMR(_subAccount))
       revert ILiquidationService_AccountHealthy();
 
-    // // Liquidate the positions by resetting their value in storage
+    // Liquidate the positions by resetting their value in storage
     (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee, int256 _unrealizedPnL) = _liquidatePosition(
       _subAccount
     );
@@ -155,7 +155,8 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
         _isLong,
         (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
-        _vars.marketConfig.fundingRate.maxSkewScaleUSD
+        _vars.marketConfig.fundingRate.maxSkewScaleUSD,
+        0 // liquidation always has no limitedPrice
       );
 
       // Update global state
@@ -175,18 +176,21 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
         }
         {
           uint256 _nextAvgPrice = _isLong
-            ? calculator.calculateLongAveragePrice(
-              _vars.globalMarket,
+            ? calculator.calculateMarketAveragePrice(
+              int256(_vars.globalMarket.longPositionSize),
+              _vars.globalMarket.longAvgPrice,
+              -_vars.position.positionSizeE30,
               _adaptivePrice,
-              -int256(_vars.position.positionSizeE30),
               _realizedPnl
             )
-            : calculator.calculateShortAveragePrice(
-              _vars.globalMarket,
+            : calculator.calculateMarketAveragePrice(
+              -int256(_vars.globalMarket.shortPositionSize),
+              _vars.globalMarket.shortAvgPrice,
+              -_vars.position.positionSizeE30,
               _adaptivePrice,
-              int256(_vars.position.positionSizeE30),
-              _realizedPnl
+              -_realizedPnl
             );
+
           _vars.perpStorage.updateGlobalMarketPrice(_vars.position.marketIndex, _isLong, _nextAvgPrice);
         }
         _vars.perpStorage.decreasePositionSize(_vars.position.marketIndex, _isLong, absPositionSize);

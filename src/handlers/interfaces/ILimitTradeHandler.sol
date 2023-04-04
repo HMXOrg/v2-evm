@@ -32,6 +32,7 @@ interface ILimitTradeHandler {
     uint8 subAccountId;
     uint256 marketIndex;
     uint256 triggerPrice;
+    uint256 acceptablePrice;
     uint256 executionFee;
   }
 
@@ -63,6 +64,7 @@ interface ILimitTradeHandler {
       uint8 subAccountId,
       uint256 marketIndex,
       uint256 triggerPrice,
+      uint256 acceptablePrice,
       uint256 executionFee
     );
 
@@ -83,6 +85,7 @@ interface ILimitTradeHandler {
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
+    uint256 _acceptablePrice,
     bool _triggerAboveThreshold,
     uint256 _executionFee,
     bool _reduceOnly,

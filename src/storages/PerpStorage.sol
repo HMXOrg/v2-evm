@@ -193,7 +193,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     globalAssetClass[_assetClassIndex].reserveValueE30 -= _reserve;
   }
 
-  function increasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external {
+  function increasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external onlyWhitelistedExecutor {
     if (_isLong) {
       globalMarkets[_marketIndex].longPositionSize += _size;
     } else {
@@ -201,7 +201,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     }
   }
 
-  function decreasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external {
+  function decreasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external onlyWhitelistedExecutor {
     if (_isLong) {
       globalMarkets[_marketIndex].longPositionSize -= _size;
     } else {
@@ -209,7 +209,11 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     }
   }
 
-  function updateGlobalMarketPrice(uint256 _marketIndex, bool _isLong, uint256 _price) external {
+  function updateGlobalMarketPrice(
+    uint256 _marketIndex,
+    bool _isLong,
+    uint256 _price
+  ) external onlyWhitelistedExecutor {
     if (_isLong) {
       globalMarkets[_marketIndex].longAvgPrice = _price;
     } else {

@@ -27,7 +27,7 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
         address(configStorage)
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
-      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateMarketAveragePrice");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getTradingFee");
 
       configStorage.setCalculator(address(mockCalculator));

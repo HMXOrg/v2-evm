@@ -17,6 +17,41 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   uint64 internal constant RATE_PRECISION = 1e18;
 
   /**
+   * Structs
+   */
+
+  struct IncreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    uint256 unrealizedPnlToBeReceived;
+    uint256 fundingFeeToBeReceived;
+    uint256 payerBalance;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  struct DecreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    ConfigStorage.TradingConfig tradingConfig;
+    uint256 unrealizedPnlToBePaid;
+    uint256 tradingFeeToBePaid;
+    uint256 borrowingFeeToBePaid;
+    uint256 fundingFeeToBePaid;
+    uint256 liquidationFeeToBePaid;
+    uint256 payerBalance;
+    uint256 plpDebt;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  /**
    * Events
    */
   event LogSettleTradingFeeValue(address subAccount, uint256 feeUsd);
@@ -285,25 +320,40 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     _perpStorage.updateGlobalAssetClass(uint8(_assetClassIndex), _globalAssetClass);
   }
 
-  function increaseCollateral(
-    address _subAccount,
-    int256 _unrealizedPnl,
-    int256 _fundingFee
-  ) external nonReentrant onlyWhitelistedExecutor {
+  function increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) external {
     _increaseCollateral(_subAccount, _unrealizedPnl, _fundingFee);
   }
 
-  struct IncreaseCollateralVars {
-    VaultStorage vaultStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
-    uint256 unrealizedPnlToBeReceived;
-    uint256 fundingFeeToBeReceived;
-    uint256 payerBalance;
-    uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
+  function settleTraderProfit(address _subAccount, address _tpToken, int256 _realizedProfitE30) external {
+    IncreaseCollateralVars memory _vars;
+
+    _vars.vaultStorage = VaultStorage(vaultStorage);
+    _vars.configStorage = ConfigStorage(configStorage);
+    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
+
+    _vars.subAccount = _subAccount;
+    // check unrealized pnl
+    if (_realizedProfitE30 > 0) {
+      _vars.unrealizedPnlToBeReceived = uint256(_realizedProfitE30);
+      emit LogReceivedUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBeReceived);
+
+      // Pay trader with selected tp token
+      {
+        ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfigByToken(_tpToken);
+        _vars.tokenDecimal = _assetConfig.decimals;
+        _vars.token = _assetConfig.tokenAddress;
+
+        (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
+        _vars.payerBalance = _vars.vaultStorage.plpLiquidity(_assetConfig.tokenAddress);
+
+        // get profit from plp
+        _increaseCollateralWithUnrealizedPnlFromPlp(_vars);
+      }
+
+      // if tp token can't repayment cover then try repay with other tokens
+      if (_vars.unrealizedPnlToBeReceived > 0)
+        _increaseCollateral(_subAccount, int256(_vars.unrealizedPnlToBeReceived), 0);
+    }
   }
 
   function _increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) internal {
@@ -378,8 +428,13 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
+
+      // Calculate for settlement fee
+      uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_vars.token, _repayValue);
+      uint256 _settlementFee = (_repayAmount * _settlementFeeRate) / 1e18;
+
       // book the balances
-      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, 0);
+      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, _settlementFee);
 
       // deduct _vars.unrealizedPnlToBeReceived with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.unrealizedPnlToBeReceived -= _repayValue;
@@ -454,24 +509,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _liquidator,
       _isRevertOnError
     );
-  }
-
-  struct DecreaseCollateralVars {
-    VaultStorage vaultStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
-    ConfigStorage.TradingConfig tradingConfig;
-    uint256 unrealizedPnlToBePaid;
-    uint256 tradingFeeToBePaid;
-    uint256 borrowingFeeToBePaid;
-    uint256 fundingFeeToBePaid;
-    uint256 liquidationFeeToBePaid;
-    uint256 payerBalance;
-    uint256 plpDebt;
-    uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
   }
 
   function _decreaseCollateral(

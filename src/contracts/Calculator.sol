@@ -547,7 +547,11 @@ contract Calculator is Owned, ICalculator {
           _var.position.avgEntryPriceE30,
           _var.position.lastIncreaseTimestamp
         );
+
         if (_var.isProfit) {
+          if (_var.delta >= _var.position.reserveValueE30) {
+            _var.delta = _var.position.reserveValueE30;
+          }
           _unrealizedPnlE30 += int256((pnlFactorBps * _var.delta) / BPS);
         } else {
           _unrealizedPnlE30 -= int256(_var.delta);

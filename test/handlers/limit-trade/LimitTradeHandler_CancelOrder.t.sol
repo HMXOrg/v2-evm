@@ -8,7 +8,7 @@ import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.
 // - revert
 //   - Try canceling a non existent order
 // - success
-//   - Try cancel an order, check that the order is cancelled and check if user is refunnded with the execution fee
+//   - Try cancel an order, check that the order is cancelled and check if user is refunded with the execution fee
 
 contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
   function setUp() public override {
@@ -31,6 +31,7 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1000 * 1e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -38,12 +39,12 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
     });
 
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, ALICE);
 
     limitTradeHandler.cancelOrder({ _subAccountId: 0, _orderIndex: 0 });
 
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, address(0));
 
     uint256 balanceDiff = ALICE.balance - balanceBefore;

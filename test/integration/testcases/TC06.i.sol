@@ -201,6 +201,7 @@ contract TC06 is BaseIntTest_WithActions {
         _marketIndex: 0,
         _sizeDelta: 20 * 1e30,
         _triggerPrice: 1535.4451231231 * 1e30,
+        _acceptablePrice: 1535.4451231231 * 1e30,
         _triggerAboveThreshold: false,
         _executionFee: 0.1 ether,
         _reduceOnly: false,

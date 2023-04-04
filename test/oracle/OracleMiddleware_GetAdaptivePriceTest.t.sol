@@ -25,8 +25,8 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
   function testCorrectness_WhenGetLatestPrice() external {
     // Should get price via PythAdapter successfully.
     // For more edge cases see PythAdapter_GetPriceTest.t.sol
-    (uint256 maxPrice, uint256 lastUpdate) = oracleMiddleware.getLatestAdaptivePrice(wbtcAssetId, true, 0, 0, 0);
-    (uint256 minPrice, ) = oracleMiddleware.getLatestAdaptivePrice(wbtcAssetId, false, 0, 0, 0);
+    (uint256 maxPrice, uint256 lastUpdate) = oracleMiddleware.getLatestAdaptivePrice(wbtcAssetId, true, 0, 0, 0, 0);
+    (uint256 minPrice, ) = oracleMiddleware.getLatestAdaptivePrice(wbtcAssetId, false, 0, 0, 0, 0);
 
     assertEq(maxPrice, 20_000 * 1e30);
     assertEq(minPrice, 20_000 * 1e30);
@@ -34,7 +34,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
 
     // Revert on unknown asset id
     vm.expectRevert();
-    oracleMiddleware.getLatestAdaptivePrice("168", true, 0, 0, 0);
+    oracleMiddleware.getLatestAdaptivePrice("168", true, 0, 0, 0, 0);
   }
 
   // get latest price with market status with trust price
@@ -45,7 +45,14 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
     vm.stopPrank();
 
     {
-      (, , , uint8 marketStatus) = oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(wbtcAssetId, true, 0, 0, 0);
+      (, , , uint8 marketStatus) = oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(
+        wbtcAssetId,
+        true,
+        0,
+        0,
+        0,
+        0
+      );
 
       assertEq(marketStatus, 1);
     }
@@ -55,7 +62,14 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
     oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // active
     vm.stopPrank();
     {
-      (, , , uint8 marketStatus) = oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(wbtcAssetId, true, 0, 0, 0);
+      (, , , uint8 marketStatus) = oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(
+        wbtcAssetId,
+        true,
+        0,
+        0,
+        0,
+        0
+      );
       assertEq(marketStatus, 2);
     }
   }
@@ -64,14 +78,14 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
   function testRevert_WhenGetLastestPriceButPriceIsStale() external {
     vm.warp(block.timestamp + 30);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
-    oracleMiddleware.getLatestAdaptivePrice(wbtcAssetId, true, 0, 0, 0);
+    oracleMiddleware.getLatestAdaptivePrice(wbtcAssetId, true, 0, 0, 0, 0);
   }
 
   // get latest price with market status market status is undefined
   function testRevert_WhenGetWithMarketStatusWhenMarketStatusUndefined() external {
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_MarketStatusUndefined()"));
     // Try get wbtc price which we never set its status before.
-    oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(wbtcAssetId, true, 0, 0, 0);
+    oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(wbtcAssetId, true, 0, 0, 0, 0);
   }
 
   // get latest price with market status and price is stale
@@ -83,7 +97,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
 
     vm.warp(block.timestamp + 30);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
-    oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(wbtcAssetId, true, 0, 0, 0);
+    oracleMiddleware.getLatestAdaptivePriceWithMarketStatus(wbtcAssetId, true, 0, 0, 0, 0);
   }
 
   function testCorrectness_getLatestPrice_premiumPrice() external {
@@ -92,7 +106,8 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       true,
       20_000 * 1e30, // 1 BTC Long skew
       500 * 1e30, // 500 USD sizeDelta
-      1_000_000 * 1e30 // 1M Skew Scale
+      1_000_000 * 1e30, // 1M Skew Scale
+      0
     );
 
     (uint256 minPrice, ) = oracleMiddleware.getLatestAdaptivePrice(
@@ -100,7 +115,8 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       false,
       20_000 * 1e30, // 1 BTC Long skew
       500 * 1e30, // 500 USD sizeDelta
-      1_000_000 * 1e30 // 1M Skew Scale
+      1_000_000 * 1e30, // 1M Skew Scale
+      0
     );
 
     // calculation
@@ -114,7 +130,7 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
     // adaptive price = 20000 * (1 + 0.02025) = 20405
 
     assertEq(maxPrice, 20405 * 1e30);
-    // note: unsupport min, max price logic then min & max price should be same
+    // note: unsupported min, max price logic then min & max price should be same
     assertEq(minPrice, maxPrice);
   }
 
@@ -124,7 +140,8 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       true,
       -100_000 * 1e30, // Short skew
       -7200 * 1e30, // 7200 USD sizeDelta
-      1_000_000 * 1e30 // 1M Skew Scale
+      1_000_000 * 1e30, // 1M Skew Scale
+      0
     );
 
     (uint256 minPrice, ) = oracleMiddleware.getLatestAdaptivePrice(
@@ -132,7 +149,8 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
       false,
       -100_000 * 1e30, // Short skew
       -7200 * 1e30, // 7200 USD sizeDelta
-      1_000_000 * 1e30 // 1M Skew Scale
+      1_000_000 * 1e30, // 1M Skew Scale
+      0
     );
 
     // calculation
@@ -141,12 +159,12 @@ contract OracleMiddleware_GetAdaptivePriceTest is OracleMiddleware_BaseTest {
     // size delta     = 7200
     // max scale skew = 1000000
     // premium (before) = -100000 / 1000000 = -0.1
-    // premium (affter) = (-100000 + -(7200)) / 1000000 = -0.1072
+    // premium (after) = (-100000 + -(7200)) / 1000000 = -0.1072
     // medium = (-0.1 - 0.1072) / 2 = -0.1036
     // adaptive price = 20000 * (1 + -0.1036) = 17928
 
     assertEq(maxPrice, 17928 * 1e30);
-    // note: unsupport min, max price logic then min & max price should be same
+    // note: unsupported min, max price logic then min & max price should be same
     assertEq(minPrice, maxPrice);
   }
 }

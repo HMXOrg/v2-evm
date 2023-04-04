@@ -110,7 +110,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
     bool /*_isMax*/,
     int256 /*_marketSkew*/,
     int256 /*_sizeDelta*/,
-    uint256 /*_maxSkewScaleUSD*/
+    uint256 /*_maxSkewScaleUSD*/,
+    uint256 /*_limitPriceE30*/
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     Price memory p = price[_assetId];
@@ -123,7 +124,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
     bool /*_isMax*/,
     int256 /*_marketSkew*/,
     int256 /*_sizeDelta*/,
-    uint256 /*_maxSkewScaleUSD*/
+    uint256 /*_maxSkewScaleUSD*/,
+    uint256 /*_limitPriceE30*/
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate) {
     Price memory p = price[_assetId];
     if (p.priceE30 == 0) return (priceE30, lastUpdate);
@@ -135,7 +137,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
     bool /*_isMax*/,
     int256 /*_marketSkew*/,
     int256 /*_sizeDelta*/,
-    uint256 /*_maxSkewScaleUSD*/
+    uint256 /*_maxSkewScaleUSD*/,
+    uint256 /*_limitPriceE30*/
   ) external view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate, uint8 _status) {
     if (isPriceStale) revert IOracleMiddleware_PythPriceStale();
     Price memory p = price[_assetId];
@@ -148,7 +151,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
     bool /*_isMax*/,
     int256 /*_marketSkew*/,
     int256 /*_sizeDelta*/,
-    uint256 /*_maxSkewScaleUSD*/
+    uint256 /*_maxSkewScaleUSD*/,
+    uint256 /*_limitPriceE30*/
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate, uint8 _status) {
     Price memory p = price[_assetId];
     if (p.priceE30 == 0) return (priceE30, lastUpdate, mockMarketStatus);

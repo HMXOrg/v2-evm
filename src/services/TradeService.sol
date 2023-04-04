@@ -242,7 +242,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           _vars.isLong, // if current position is SHORT position, then we use max price
           (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           _sizeDelta,
-          _marketConfig.fundingRate.maxSkewScaleUSD
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          0
         );
 
       if (_limitPriceE30 != 0) {
@@ -254,7 +255,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         _vars.isLong, // if current position is SHORT position, then we use max price
         (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
-        _marketConfig.fundingRate.maxSkewScaleUSD
+        _marketConfig.fundingRate.maxSkewScaleUSD,
+        0
       );
 
       // Market active represent the market is still listed on our protocol
@@ -304,7 +306,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)) + _sizeDelta,
           // positionSizeE30 is new position size, when updated with sizeDelta above
           -_vars.position.positionSizeE30,
-          _marketConfig.fundingRate.maxSkewScaleUSD
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          0
         );
 
       _vars.position.avgEntryPriceE30 = _getPositionNextAveragePrice(
@@ -462,7 +465,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         !_vars.isLongPosition, // if current position is SHORT position, then we use max price
         (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
-        _marketConfig.fundingRate.maxSkewScaleUSD
+        _marketConfig.fundingRate.maxSkewScaleUSD,
+        0
       );
 
       if (_limitPriceE30 != 0) {
@@ -536,7 +540,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price
           (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           -_vars.position.positionSizeE30,
-          _marketConfig.fundingRate.maxSkewScaleUSD
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          0
         );
 
       // if market status is not 2, means that the market is closed or market status has been defined yet

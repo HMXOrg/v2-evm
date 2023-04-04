@@ -73,7 +73,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     if (_equity >= 0 && uint256(_equity) >= _calculator.getMMR(_subAccount))
       revert ILiquidationService_AccountHealthy();
 
-    // // Liquidate the positions by resetting their value in storage
+    // Liquidate the positions by resetting their value in storage
     (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee, int256 _unrealizedPnL) = _liquidatePosition(
       _subAccount
     );
@@ -155,7 +155,8 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
         _isLong,
         (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
-        _vars.marketConfig.fundingRate.maxSkewScaleUSD
+        _vars.marketConfig.fundingRate.maxSkewScaleUSD,
+        0
       );
 
       // Update global state

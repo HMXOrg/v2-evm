@@ -513,7 +513,8 @@ contract Calculator is Owned, ICalculator {
           !_var.isLong, // if current position is SHORT position, then we use max price
           (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
           -_var.position.positionSizeE30,
-          _marketConfig.fundingRate.maxSkewScaleUSD
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          0
         );
       }
 

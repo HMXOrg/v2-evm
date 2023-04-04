@@ -81,7 +81,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     _;
   }
 
-  function reloadConfig() external {
+  function reloadConfig() external nonReentrant onlyOwner {
     // TODO: access control, sanity check, natspec
     // TODO: discuss about this pattern
 

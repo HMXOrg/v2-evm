@@ -55,6 +55,8 @@ contract BotHandler_Base is BaseTest {
     // set Tester as position managers
     botHandler.setPositionManagers(_positionManagers, true);
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
+    configStorage.setServiceExecutor(address(tradeHelper), address(tradeService), true);
+    configStorage.setServiceExecutor(address(tradeHelper), address(mockLiquidationService), true);
 
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(tradeService), address(botHandler), true);

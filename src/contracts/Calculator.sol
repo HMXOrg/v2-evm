@@ -223,7 +223,7 @@ contract Calculator is Owned, ICalculator {
   /// @param _totalSupply PLP total supply
   /// @param _value value in USD e30
   /// @return mintAmount in e18 format
-  function getMintAmount(uint256 _aumE30, uint256 _totalSupply, uint256 _value) public pure returns (uint256) {
+  function getMintAmount(uint256 _aumE30, uint256 _totalSupply, uint256 _value) external pure returns (uint256) {
     return _aumE30 == 0 ? _value / 1e12 : (_value * _totalSupply) / _aumE30;
   }
 
@@ -231,7 +231,7 @@ contract Calculator is Owned, ICalculator {
     uint256 fromTokenDecimals,
     uint256 toTokenDecimals,
     uint256 amount
-  ) public pure returns (uint256) {
+  ) external pure returns (uint256) {
     return (amount * 10 ** toTokenDecimals) / 10 ** fromTokenDecimals;
   }
 
@@ -381,15 +381,15 @@ contract Calculator is Owned, ICalculator {
     uint256 totalLiquidityUSD, //e30
     uint256 tokenWeight, //e18
     uint256 totalTokenWeight // 1e18
-  ) public pure returns (uint256) {
+  ) internal pure returns (uint256) {
     if (totalLiquidityUSD == 0) return 0;
 
     return (totalLiquidityUSD * tokenWeight) / totalTokenWeight;
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  //////////////////////  SETTERs  ///////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////
+  /**
+   * Setter functions
+   */
 
   /// @notice Set new Oracle contract address.
   /// @param _oracle New Oracle contract address.
@@ -441,12 +441,20 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (int256 _equityValueE30) {
+  ) external view returns (int256 _equityValueE30) {
+    return _getEquity(_subAccount, _limitPriceE30, _limitAssetId);
+  }
+
+  function _getEquity(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
-    uint256 _collateralValueE30 = getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
+    uint256 _collateralValueE30 = _getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
 
     // Calculate unrealized PnL and unrealized fee
-    (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = getUnrealizedPnlAndFee(
+    (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = _getUnrealizedPnlAndFee(
       _subAccount,
       _limitPriceE30,
       _limitAssetId
@@ -481,7 +489,15 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+  ) external view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+    return _getUnrealizedPnlAndFee(_subAccount, _limitPriceE30, _limitAssetId);
+  }
+
+  function _getUnrealizedPnlAndFee(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -581,7 +597,15 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (uint256 _collateralValueE30) {
+  ) external view returns (uint256 _collateralValueE30) {
+    return _getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
+  }
+
+  function _getCollateralValue(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (uint256 _collateralValueE30) {
     // Get list of current depositing tokens on trader's account
     address[] memory _traderTokens = VaultStorage(vaultStorage).getTraderTokens(_subAccount);
 
@@ -630,7 +654,11 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate Initial Margin Requirement from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _imrValueE30 Total imr of trader's account.
-  function getIMR(address _subAccount) public view returns (uint256 _imrValueE30) {
+  function getIMR(address _subAccount) external view returns (uint256 _imrValueE30) {
+    return _getIMR(_subAccount);
+  }
+
+  function _getIMR(address _subAccount) internal view returns (uint256 _imrValueE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -646,7 +674,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // Calculate IMR on position
-      _imrValueE30 += calculatePositionIMR(_size, _position.marketIndex);
+      _imrValueE30 += _calculatePositionIMR(_size, _position.marketIndex);
 
       unchecked {
         i++;
@@ -659,7 +687,11 @@ contract Calculator is Owned, ICalculator {
   /// @notice Calculate Maintenance Margin Value from trader's sub account.
   /// @param _subAccount Trader's address that combined between Primary account and Sub account.
   /// @return _mmrValueE30 Total mmr of trader's account
-  function getMMR(address _subAccount) public view returns (uint256 _mmrValueE30) {
+  function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30) {
+    return _getMMR(_subAccount);
+  }
+
+  function _getMMR(address _subAccount) internal view returns (uint256 _mmrValueE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
@@ -675,7 +707,7 @@ contract Calculator is Owned, ICalculator {
       }
 
       // Calculate MMR on position
-      _mmrValueE30 += calculatePositionMMR(_size, _position.marketIndex);
+      _mmrValueE30 += _calculatePositionMMR(_size, _position.marketIndex);
 
       unchecked {
         i++;
@@ -689,7 +721,17 @@ contract Calculator is Owned, ICalculator {
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return _imrE30 The IMR amount required on position size, 30 decimals.
-  function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) public view returns (uint256 _imrE30) {
+  function calculatePositionIMR(
+    uint256 _positionSizeE30,
+    uint256 _marketIndex
+  ) external view returns (uint256 _imrE30) {
+    return _calculatePositionIMR(_positionSizeE30, _marketIndex);
+  }
+
+  function _calculatePositionIMR(
+    uint256 _positionSizeE30,
+    uint256 _marketIndex
+  ) internal view returns (uint256 _imrE30) {
     // Get market config according to position
     ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
 
@@ -701,7 +743,17 @@ contract Calculator is Owned, ICalculator {
   /// @param _positionSizeE30 Size of position.
   /// @param _marketIndex Market Index from opening position.
   /// @return _mmrE30 The MMR amount required on position size, 30 decimals.
-  function calculatePositionMMR(uint256 _positionSizeE30, uint256 _marketIndex) public view returns (uint256 _mmrE30) {
+  function calculatePositionMMR(
+    uint256 _positionSizeE30,
+    uint256 _marketIndex
+  ) external view returns (uint256 _mmrE30) {
+    return _calculatePositionMMR(_positionSizeE30, _marketIndex);
+  }
+
+  function _calculatePositionMMR(
+    uint256 _positionSizeE30,
+    uint256 _marketIndex
+  ) internal view returns (uint256 _mmrE30) {
     // Get market config according to position
     ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
 
@@ -718,116 +770,81 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) public view returns (uint256 _freeCollateral) {
-    int256 equity = getEquity(_subAccount, _limitPriceE30, _limitAssetId);
-    uint256 imr = getIMR(_subAccount);
+  ) external view returns (uint256 _freeCollateral) {
+    return _getFreeCollateral(_subAccount, _limitPriceE30, _limitAssetId);
+  }
+
+  function _getFreeCollateral(
+    address _subAccount,
+    uint256 _limitPriceE30,
+    bytes32 _limitAssetId
+  ) internal view returns (uint256 _freeCollateral) {
+    int256 equity = _getEquity(_subAccount, _limitPriceE30, _limitAssetId);
+    uint256 imr = _getIMR(_subAccount);
     if (equity < int256(imr)) return 0;
     _freeCollateral = uint256(equity) - imr;
     return _freeCollateral;
   }
 
-  /// @notice get next short average price with realized PNL
-  /// @param _market - global market
-  /// @param _currentPrice - min / max price depends on position direction
-  /// @param _positionSizeDelta - position size after increase / decrease.
-  ///                           if positive is LONG position, else is SHORT
-  /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
-  /// @return _nextAveragePrice next average price
-  function calculateShortAveragePrice(
-    PerpStorage.GlobalMarket memory _market,
-    uint256 _currentPrice,
-    int256 _positionSizeDelta,
-    int256 _realizedPositionPnl
-  ) external pure returns (uint256 _nextAveragePrice) {
-    // global
-    uint256 _globalPositionSize = _market.shortPositionSize;
-    int256 _globalAveragePrice = int256(_market.shortAvgPrice);
-
-    if (_globalAveragePrice == 0) return 0;
-
-    // if positive means, has profit
-    int256 _globalPnl = (int256(_globalPositionSize) * (_globalAveragePrice - int256(_currentPrice))) /
-      _globalAveragePrice;
-    int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
-
-    uint256 _newGlobalPositionSize;
-    // position > 0 is means decrease short position
-    // else is increase short position
-    if (_positionSizeDelta > 0) {
-      _newGlobalPositionSize = _globalPositionSize - uint256(_positionSizeDelta);
+  /// @notice Calculate next market average price
+  /// @param _marketPositionSize - market's (long | short) position size
+  /// @param _marketAveragePrice - market's average price
+  /// @param _sizeDelta - position's size delta
+  //                    - increase (long +, short -)
+  //                    - decrease (long -, short +)
+  /// @param _positionClosePrice - position's close price
+  /// @param _positionRealizedPnl - position's realized PNL (profit +, loss -)
+  function calculateMarketAveragePrice(
+    int256 _marketPositionSize,
+    uint256 _marketAveragePrice,
+    int256 _sizeDelta,
+    uint256 _positionClosePrice,
+    int256 _positionRealizedPnl
+  ) external pure returns (uint256 _newAvaragePrice) {
+    if (_marketAveragePrice == 0) return 0;
+    // pnl calculation, LONG  -- position size * ((close price - average price) / average price)
+    //                  SHORT -- position size * ((average price - close price) / average price)
+    // example:
+    // LONG  -- 1000 * ((105 - 100) / 100) = 50 (profit)
+    //       -- 1000 * ((95 - 100) / 100) = -50 (loss)
+    // SHORT -- -1000 * ((100 - 95) / 100) = -50 (profit)
+    //       -- -1000 * ((100 - 105) / 100) = 50 (loss)
+    bool isLong = _marketPositionSize > 0;
+    int256 _marketPnl;
+    if (isLong) {
+      _marketPnl =
+        (_marketPositionSize * (int256(_positionClosePrice) - int256(_marketAveragePrice))) /
+        int256(_marketAveragePrice);
     } else {
-      _newGlobalPositionSize = _globalPositionSize + uint256(-_positionSizeDelta);
+      _marketPnl =
+        (_marketPositionSize * (int256(_marketAveragePrice) - int256(_positionClosePrice))) /
+        int256(_marketAveragePrice);
     }
 
-    // possible happen when trader close last short position of the market
-    if (_newGlobalPositionSize == 0) return 0;
+    // unrealized pnl = market pnl - position realized pnl
+    // example:
+    // LONG  -- market pnl = 100,   realized position pnl = 50    then market unrealized pnl = 100 - 50     = 50  [profit]
+    //       -- market pnl = -100,  realized position pnl = -50   then market unrealized pnl = -100 - (-50) = -50 [loss]
 
-    bool _isGlobalProfit = _newGlobalPnl > 0;
-    uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
+    // SHORT -- market pnl = -100,  realized position pnl = -50   then market unrealized pnl = -100 - (-50) = -50 [profit]
+    //       -- market pnl = 100,   realized position pnl = 50    then market unrealized pnl = 100 - 50     = 50  [loss]
+    int256 _unrealizedPnl = _marketPnl - _positionRealizedPnl;
 
-    // divisor = latest global position size - pnl
-    uint256 divisor = _isGlobalProfit
-      ? (_newGlobalPositionSize - _absoluteGlobalPnl)
-      : (_newGlobalPositionSize + _absoluteGlobalPnl);
+    // | action         | market position | size delta |
+    // | increase long  | +               | +          |
+    // | decrease long  | +               | -          |
+    // | increase short | -               | -          |
+    // | decrease short | -               | +          |
+    // then _marketPositionSize + _sizeDelta will work fine
+    int256 _newMarketPositionSize = _marketPositionSize + _sizeDelta;
+    int256 _divisor = isLong ? _newMarketPositionSize + _unrealizedPnl : _newMarketPositionSize - _unrealizedPnl;
 
-    if (divisor == 0) return 0;
+    if (_newMarketPositionSize == 0) return 0;
 
-    // next short average price = current price * latest global position size / latest global position size - pnl
-    _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
-
-    return _nextAveragePrice;
-  }
-
-  /// @notice get next long average price with realized PNL
-  /// @param _market - global market
-  /// @param _currentPrice - min / max price depends on position direction
-  /// @param _positionSizeDelta - position size after increase / decrease.
-  ///                           if positive is LONG position, else is SHORT
-  /// @param _realizedPositionPnl - position realized PnL if positive is profit, and negative is loss
-  /// @return _nextAveragePrice next average price
-  function calculateLongAveragePrice(
-    PerpStorage.GlobalMarket memory _market,
-    uint256 _currentPrice,
-    int256 _positionSizeDelta,
-    int256 _realizedPositionPnl
-  ) external pure returns (uint256 _nextAveragePrice) {
-    // global
-    uint256 _globalPositionSize = _market.longPositionSize;
-    int256 _globalAveragePrice = int256(_market.longAvgPrice);
-
-    if (_globalAveragePrice == 0) return 0;
-
-    // if positive means, has profit
-    int256 _globalPnl = (int256(_globalPositionSize) * (int256(_currentPrice) - _globalAveragePrice)) /
-      _globalAveragePrice;
-    int256 _newGlobalPnl = _globalPnl - _realizedPositionPnl;
-
-    uint256 _newGlobalPositionSize;
-    // position > 0 is means increase short position
-    // else is decrease short position
-    if (_positionSizeDelta > 0) {
-      _newGlobalPositionSize = _globalPositionSize + uint256(_positionSizeDelta);
-    } else {
-      _newGlobalPositionSize = _globalPositionSize - uint256(-_positionSizeDelta);
-    }
-
-    // possible happen when trader close last long position of the market
-    if (_newGlobalPositionSize == 0) return 0;
-
-    bool _isGlobalProfit = _newGlobalPnl > 0;
-    uint256 _absoluteGlobalPnl = uint256(_isGlobalProfit ? _newGlobalPnl : -_newGlobalPnl);
-
-    // divisor = latest global position size + pnl
-    uint256 divisor = _isGlobalProfit
-      ? (_newGlobalPositionSize + _absoluteGlobalPnl)
-      : (_newGlobalPositionSize - _absoluteGlobalPnl);
-
-    if (divisor == 0) return 0;
-
-    // next long average price = current price * latest global position size / latest global position size + pnl
-    _nextAveragePrice = (_currentPrice * _newGlobalPositionSize) / divisor;
-
-    return _nextAveragePrice;
+    // for long, new market position size and divisor are positive number
+    // and short, new market position size and divisor are negative number, then - / - would be +
+    // note: abs unrealized pnl should not be greater then new position size, if calculation go wrong it's fine to revert
+    return uint256((int256(_positionClosePrice) * _newMarketPositionSize) / _divisor);
   }
 
   function getNextFundingRate(uint256 _marketIndex) external view returns (int256 fundingRate) {
@@ -933,7 +950,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _reservedValue,
     uint256 _sumBorrowingRate,
     uint256 _entryBorrowingRate
-  ) internal view returns (uint256 borrowingFee) {
+  ) internal pure returns (uint256 borrowingFee) {
     // Calculate borrowing rate.
     uint256 _borrowingRate = _sumBorrowingRate - _entryBorrowingRate;
     // Calculate the borrowing fee based on reserved value, borrowing rate.

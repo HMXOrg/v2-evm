@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { console2 } from "forge-std/console2.sol";
+
 import { Owned } from "@hmx/base/Owned.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
@@ -278,6 +280,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool isSafe,
     uint256 _limitPriceE30
   ) private view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate) {
+    console2.log("---------- _getLatestAdaptivePrice()");
+
     // Get price from Pyth
     uint256 _price;
     (_price, _exponent, _lastUpdate) = isSafe
@@ -287,6 +291,9 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     if (_limitPriceE30 != 0) {
       _price = _limitPriceE30;
     }
+
+    console2.log("_limitPriceE30", _limitPriceE30);
+    console2.log("_price", _price);
 
     // Apply premium/discount
     _adaptivePrice = _calculateAdaptivePrice(_marketSkew, _sizeDelta, _price, _maxSkewScaleUSD);

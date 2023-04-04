@@ -148,7 +148,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     calculator = Calculator(ConfigStorage(_configStorage).calculator());
   }
 
-  function reloadConfig() external {
+  function reloadConfig() external nonReentrant onlyOwner {
     // TODO: access control, sanity check, natspec
     // TODO: discuss about this pattern
 

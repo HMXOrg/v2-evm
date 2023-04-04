@@ -78,10 +78,10 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
    * States
    */
 
-  address liquidityService; //liquidityService
-  address pyth; //pyth
+  address public liquidityService; //liquidityService
+  address public pyth; //pyth
   uint256 public executionOrderFee; // executionOrderFee in tokenAmount unit
-  bool isExecuting; // order is executing (prevent direct call executeLiquidity()
+  bool private isExecuting; // order is executing (prevent direct call executeLiquidity()
 
   uint256 public nextExecutionOrderIndex;
   LiquidityOrder[] public liquidityOrders; // all liquidityOrder

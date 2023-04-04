@@ -282,7 +282,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_adaptivePrice, _exponent, _lastUpdate);
   }
 
-  /// @notice Calcuatate adaptive base on Market skew by position size
+  /// @notice Calculate adaptive base on Market skew by position size
   /// @param _marketSkew Long position size - Short position size
   /// @param _sizeDelta Position size delta
   /// @param _price Oracle price

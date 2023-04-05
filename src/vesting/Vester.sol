@@ -59,6 +59,8 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
     if (amount == 0) revert IVester_BadArgument();
     if (duration > YEAR) revert IVester_ExceedMaxDuration();
 
+    uint256 totalUnlockedAmount = getUnlockAmount(amount, duration);
+
     Item memory item = Item({
       owner: account,
       amount: amount,
@@ -67,12 +69,16 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
       hasAborted: false,
       hasClaimed: false,
       lastClaimTime: block.timestamp,
-      totalUnlockedAmount: getUnlockAmount(amount, duration)
+      totalUnlockedAmount: totalUnlockedAmount
     });
 
     items.push(item);
 
-    uint256 penaltyAmount = amount - item.totalUnlockedAmount;
+    uint256 penaltyAmount;
+
+    unchecked {
+      penaltyAmount = amount - totalUnlockedAmount;
+    }
 
     esHMX.safeTransferFrom(msg.sender, address(this), amount);
 
@@ -88,8 +94,12 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
   }
 
   function claimFor(uint256[] memory itemIndexes) external nonReentrant {
-    for (uint256 i = 0; i < itemIndexes.length; i++) {
+    for (uint256 i = 0; i < itemIndexes.length; ) {
       _claimFor(itemIndexes[i]);
+
+      unchecked {
+        ++i;
+      }
     }
   }
 

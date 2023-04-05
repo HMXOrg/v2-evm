@@ -73,7 +73,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     if (_equity >= 0 && uint256(_equity) >= _calculator.getMMR(_subAccount))
       revert ILiquidationService_AccountHealthy();
 
-    // // Liquidate the positions by resetting their value in storage
+    // Liquidate the positions by resetting their value in storage
     (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee, int256 _unrealizedPnL) = _liquidatePosition(
       _subAccount
     );
@@ -107,7 +107,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     Calculator calculator;
     OracleMiddleware oracle;
     IPerpStorage.Position position;
-    PerpStorage.GlobalMarket globalMarket;
+    PerpStorage.Market globalMarket;
     ConfigStorage.MarketConfig marketConfig;
     bytes32 positionId;
   }
@@ -155,14 +155,15 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
         fundingFee += _fundingFee;
       }
 
-      _vars.globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.position.marketIndex);
+      _vars.globalMarket = _vars.perpStorage.getMarketByIndex(_vars.position.marketIndex);
 
       (uint256 _adaptivePrice, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _vars.marketConfig.assetId,
         _isLong,
         (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
-        _vars.marketConfig.fundingRate.maxSkewScaleUSD
+        _vars.marketConfig.fundingRate.maxSkewScaleUSD,
+        0 // liquidation always has no limitedPrice
       );
 
       // Update global state
@@ -197,7 +198,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
               -_realizedPnl
             );
 
-          _vars.perpStorage.updateGlobalMarketPrice(_vars.position.marketIndex, _isLong, _nextAvgPrice);
+          _vars.perpStorage.updateMarketPrice(_vars.position.marketIndex, _isLong, _nextAvgPrice);
         }
         _vars.perpStorage.decreasePositionSize(_vars.position.marketIndex, _isLong, absPositionSize);
         _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.reserveValueE30);

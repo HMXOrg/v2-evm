@@ -170,11 +170,12 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     // positive value mean how much protocol book funding fee value that will be paid to trader
     // Loop through all markets to sum funding fee on LONG and SHORT sides
     for (uint256 i = 0; i < _configStorage.getMarketConfigsLength(); ) {
-      PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(i);
+      PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
       if (_globalMarket.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_globalMarket.accumFundingLong);
 
       if (_globalMarket.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_globalMarket.accumFundingShort);
+
 
       unchecked {
         ++i;

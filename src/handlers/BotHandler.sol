@@ -44,22 +44,6 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   event LogSetPyth(address oldPyth, address newPyth);
 
   /**
-   * Structs
-   */
-  struct ConvertFundingFeeReserveInputs {
-    uint256 stableTokenPrice;
-    uint256 fundingFeeReserve;
-    uint256 tokenPrice;
-    uint256 fundingFeeReserveValue;
-    uint256 stableTokenAmount;
-    address[] collateralTokens;
-    bytes32 stableTokenAssetId;
-    bytes32 tokenAssetId;
-    uint8 stableTokenDecimal;
-    uint8 tokenDecimal;
-  }
-
-  /**
    * States
    */
 
@@ -195,42 +179,46 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
     OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
 
-    ConvertFundingFeeReserveInputs memory _vars;
-
-    _vars.collateralTokens = _configStorage.getCollateralTokens();
-
     // Get stable token price
-    _vars.stableTokenAssetId = _configStorage.tokenAssetIds(_stableToken);
-    _vars.stableTokenDecimal = _configStorage.getAssetTokenDecimal(_stableToken);
-    (_vars.stableTokenPrice, ) = _oracle.getLatestPrice(_vars.stableTokenAssetId, false);
+    (uint256 _stableTokenPrice, ) = _oracle.getLatestPrice(_configStorage.tokenAssetIds(_stableToken), false);
 
     // Loop through collateral lists
     // And do accounting to swap token on funding fee reserve with plp liquidity
-    for (uint256 i; i < _vars.collateralTokens.length; ) {
-      _vars.fundingFeeReserve = _vaultStorage.fundingFeeReserve(_vars.collateralTokens[i]);
-      _vars.tokenAssetId = _configStorage.tokenAssetIds(_vars.collateralTokens[i]);
-      _vars.tokenDecimal = _configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
 
-      if (_stableToken != _vars.collateralTokens[i] && _vars.fundingFeeReserve > 0) {
-        (_vars.tokenPrice, ) = _oracle.getLatestPrice(_vars.tokenAssetId, false);
-        _vars.fundingFeeReserveValue = (_vars.fundingFeeReserve * _vars.tokenPrice) / (10 ** _vars.tokenDecimal);
-        _vars.stableTokenAmount =
-          (_vars.fundingFeeReserveValue * (10 ** _vars.stableTokenDecimal)) /
-          _vars.stableTokenPrice;
+    address[] memory _collateralTokens = _configStorage.getCollateralTokens();
+    address _collatToken;
+    uint256 _collatTokenPrice;
+    uint256 _fundingFeeReserve;
+    uint256 _convertedStableAmount;
+    uint256 _len = _collateralTokens.length;
+    for (uint256 _i; _i < _len; ) {
+      _collatToken = _collateralTokens[_i];
+      if (_stableToken != _collatToken) {
+        _fundingFeeReserve = _vaultStorage.fundingFeeReserve(_collatToken);
 
-        if (_vaultStorage.plpLiquidity(_stableToken) < _vars.stableTokenAmount)
-          revert IBotHandler_InsufficientLiquidity();
+        if (_fundingFeeReserve > 0) {
+          (_collatTokenPrice, ) = _oracle.getLatestPrice(_configStorage.tokenAssetIds(_collatToken), false);
 
-        _vaultStorage.convertFundingFeeReserveWithPLP(
-          _vars.collateralTokens[i],
-          _stableToken,
-          _vars.fundingFeeReserve,
-          _vars.stableTokenAmount
-        );
+          // stable token amount = funding fee reserve value / stable price
+          _convertedStableAmount =
+            (_fundingFeeReserve * _collatTokenPrice * (10 ** _configStorage.getAssetTokenDecimal(_stableToken))) /
+            (_stableTokenPrice * (10 ** _configStorage.getAssetTokenDecimal(_collatToken)));
+
+          if (_vaultStorage.plpLiquidity(_stableToken) < _convertedStableAmount)
+            revert IBotHandler_InsufficientLiquidity();
+
+          // funding fee should be reduced while liquidity should be increased
+          _vaultStorage.convertFundingFeeReserveWithPLP(
+            _collatToken,
+            _stableToken,
+            _fundingFeeReserve,
+            _convertedStableAmount
+          );
+        }
       }
 
       unchecked {
-        ++i;
+        ++_i;
       }
     }
   }

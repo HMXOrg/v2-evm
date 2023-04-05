@@ -48,6 +48,10 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
     hmx = IERC20Upgradeable(hmxAddress);
     vestedEsHmxDestination = vestedEsHmxDestinationAddress;
     unusedEsHmxDestination = unusedEsHmxDestinationAddress;
+
+    // Santy checks
+    esHMX.totalSupply();
+    hmx.totalSupply();
   }
 
   function vestFor(address account, uint256 amount, uint256 duration) external nonReentrant {

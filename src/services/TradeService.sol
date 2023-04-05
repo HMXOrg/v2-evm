@@ -673,7 +673,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   }
 
   /**
-   * Private
+   * Private Functions
    */
 
   function _getSubAccount(address _primary, uint8 _subAccountId) private pure returns (address) {

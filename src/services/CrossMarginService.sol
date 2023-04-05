@@ -271,7 +271,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   }
 
   /**
-   * Private
+   * Private Functions
    */
 
   /// @notice Calculate subAccount address on trader.

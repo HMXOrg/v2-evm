@@ -174,7 +174,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
   }
 
   /**
-   * Private
+   * Private Functions
    */
   function _abs(int256 x) private pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);

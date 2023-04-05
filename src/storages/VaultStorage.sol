@@ -339,7 +339,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   }
 
   /**
-   * Private
+   * Private Functions
    */
 
   function _addTraderToken(address _trader, address _token) private {

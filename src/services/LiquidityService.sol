@@ -162,7 +162,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
   }
 
   /**
-   * Private
+   * Private Functions
    */
   function _joinPool(
     address _token,

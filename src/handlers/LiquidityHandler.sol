@@ -76,7 +76,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /**
    * States
    */
-
   address public liquidityService; //liquidityService
   address public pyth; //pyth
 

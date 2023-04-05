@@ -18,7 +18,6 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /**
    * Events
    */
-
   event LogSetTradeService(address oldMarketTradeService, address newMarketTradeService);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogBuy(
@@ -41,7 +40,6 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /**
    * States
    */
-
   address public tradeService;
   address public pyth;
 
@@ -59,7 +57,6 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /**
    * Core Functions
    */
-
   /// @notice Perform buy, in which increasing position size towards long exposure.
   /// @dev Flipping from short exposure to long exposure is possible here.
   /// @param _account Trader's primary wallet account.

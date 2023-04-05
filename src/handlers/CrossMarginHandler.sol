@@ -16,7 +16,6 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
-  uint64 internal constant RATE_PRECISION = 1e18;
   using SafeERC20 for ERC20;
 
   /**
@@ -36,6 +35,11 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   );
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
   event LogSetPyth(address indexed oldPyth, address newPyth);
+
+  /**
+   * Constants
+   */
+  uint64 internal constant RATE_PRECISION = 1e18;
 
   /**
    * States

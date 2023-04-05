@@ -104,7 +104,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
   }
 
   function _claimFor(uint256 itemIndex) internal {
-    Item storage item = items[itemIndex];
+    Item memory item = items[itemIndex];
 
     if (item.hasClaimed) revert IVester_Claimed();
     if (item.hasAborted) revert IVester_Aborted();
@@ -127,7 +127,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
   }
 
   function abort(uint256 itemIndex) external nonReentrant {
-    Item storage item = items[itemIndex];
+    Item memory item = items[itemIndex];
     if (msg.sender != item.owner) revert IVester_Unauthorized();
     if (block.timestamp > item.endTime) revert IVester_HasCompleted();
     if (item.hasClaimed) revert IVester_Claimed();

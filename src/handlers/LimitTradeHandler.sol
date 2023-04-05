@@ -86,6 +86,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool isNewPosition;
   }
 
+  struct ValidatePositionOrderPriceVars {
+    ConfigStorage.MarketConfig marketConfig;
+    OracleMiddleware oracle;
+    PerpStorage.Market globalMarket;
+    uint256 oraclePrice;
+    uint256 adaptivePrice;
+    uint8 marketStatus;
+    bool isPriceValid;
+  }
+
   /**
    * Constants
    */
@@ -471,16 +481,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
    * Internal Functions
    */
 
-  struct ValidatePositionOrderPriceVars {
-    ConfigStorage.MarketConfig marketConfig;
-    OracleMiddleware oracle;
-    PerpStorage.Market globalMarket;
-    uint256 oraclePrice;
-    uint256 adaptivePrice;
-    uint8 marketStatus;
-    bool isPriceValid;
-  }
-
   function _validatePositionOrderPrice(
     bool _triggerAboveThreshold,
     uint256 _triggerPrice,
@@ -595,10 +595,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /// @notice Derive positionId from sub-account and market index
   function _getPositionId(address _subAccount, uint256 _marketIndex) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(_subAccount, _marketIndex));
-  }
-
-  function _max(uint256 x, uint256 y) internal pure returns (uint256) {
-    return x < y ? y : x;
   }
 
   function _min(uint256 x, uint256 y) internal pure returns (uint256) {

@@ -22,11 +22,9 @@ contract EcoPyth is Owned, IEcoPyth {
   event LogSetUpdater(address indexed _account, bool _isActive);
   event LogVaas(bytes32 _encodedVaas);
 
-  // type(uint256).max is 256 bits of 1s
-  // shift the 1s by (256 - 32) to get (256 - 32) 0s followed by 32 1s
-  uint256 public constant BITMASK_32 = type(uint256).max >> (256 - 32);
-  // shift the 1s by (256 - 64) to get (256 - 64) 0s followed by 64 1s
-  uint256 public constant BITMASK_64 = type(uint256).max >> (256 - 64);
+  // type(uint128).max is 128 bits of 1s
+  // shift the 1s by (128 - 64) to get (128 - 64) 0s followed by 64 1s
+  uint128 public constant BITMASK_64 = type(uint128).max >> (128 - 64);
 
   /**
    * Modifiers
@@ -40,16 +38,17 @@ contract EcoPyth is Owned, IEcoPyth {
 
   constructor() {}
 
-  /// @dev Updates price feeds for a set of price IDs with new price data.
-  /// The function loops through each price ID in _priceIds and decodes the corresponding packed price data using the _parsePriceInfo internal function.
-  /// If the new price data is more recent than the existing price data, the function updates the price data for that price ID. Finally, the function emits
-  /// the LogVaas event with the given _encodedVaas message.
+  /// @dev Updates price feeds for a set of price IDs with new price data. Only authorized accounts can call this function.
+  /// The function loops through each price ID in _priceIds, retrieves the corresponding _newPriceInfo by calling the
+  /// _parsePriceInfo internal function on the corresponding packed price data from _packedPriceDatas. If the _newPriceInfo
+  /// has a more recent timestamp than the existing price info for that ID, the function updates the priceInfos mapping for
+  /// that ID with the new price info. Finally, the function emits the LogVaas event with the given _encodedVaas message.
   /// @param _priceIds An array of bytes32 price IDs that correspond to the price data being updated.
-  /// @param _packedPriceDatas An array of uint256 packed price data with information on the latest price updates for each price ID.
+  /// @param _packedPriceDatas An array of uint128 packed price data with information on the latest price updates for each price ID.
   /// @param _encodedVaas The encoded Vaas message for the update.
   function updatePriceFeeds(
     bytes32[] calldata _priceIds,
-    uint256[] calldata _packedPriceDatas,
+    uint128[] calldata _packedPriceDatas,
     bytes32 _encodedVaas
   ) external onlyUpdater {
     // Loop through all of the price data
@@ -83,9 +82,9 @@ contract EcoPyth is Owned, IEcoPyth {
     if (priceInfo.publishTime == 0) revert EcoPyth_PriceFeedNotFound();
 
     price.publishTime = priceInfo.publishTime;
-    price.expo = priceInfo.expo;
+    price.expo = -8;
     price.price = priceInfo.price;
-    price.conf = priceInfo.conf;
+    price.conf = 0;
     return price;
   }
 
@@ -110,7 +109,7 @@ contract EcoPyth is Owned, IEcoPyth {
   /// @dev Parses packed price data to an IEcoPythPriceInfo structure. Delegates to an internal function for parsing.
   /// @param _packedPriceData Packaged price data to be parsed
   /// @return _priceInfo Parsed price information in the IEcoPythPriceInfo structure
-  function parsePriceInfo(uint256 _packedPriceData) external pure returns (IEcoPythPriceInfo memory _priceInfo) {
+  function parsePriceInfo(uint128 _packedPriceData) external pure returns (IEcoPythPriceInfo memory _priceInfo) {
     return _parsePriceInfo(_packedPriceData);
   }
 
@@ -121,27 +120,18 @@ contract EcoPyth is Owned, IEcoPyth {
   /// to corresponding fields in _priceInfo structure. The resultant _priceInfo structure is then returned.
   /// @param _packedPriceData Packaged price data to be parsed
   /// @return _priceInfo Parsed price information in the IEcoPythPriceInfo structure
-  function _parsePriceInfo(uint256 _packedPriceData) internal pure returns (IEcoPythPriceInfo memory _priceInfo) {
-    _priceInfo.publishTime = uint64((_packedPriceData >> (256 - 64)) & BITMASK_64);
-    _priceInfo.expo = int32(uint32((_packedPriceData >> (256 - 96)) & BITMASK_32));
-    _priceInfo.price = int64(uint64((_packedPriceData >> (256 - 160)) & BITMASK_64));
-    _priceInfo.conf = uint64((_packedPriceData >> (256 - 224)) & BITMASK_64);
+  function _parsePriceInfo(uint128 _packedPriceData) internal pure returns (IEcoPythPriceInfo memory _priceInfo) {
+    _priceInfo.publishTime = uint64((_packedPriceData >> (128 - 64)) & BITMASK_64);
+    _priceInfo.price = int64(uint64((_packedPriceData >> (0)) & BITMASK_64));
     return _priceInfo;
   }
 
   /// @dev Function to construct a packed price data as a bytes32 integer.
   /// @param _publishTime Timestamp when the price was published.
-  /// @param _expo Exponent used to determine the decimal point placement in the price.
   /// @param _price Price value represented as an int64.
-  /// @param _conf Confidence percentage of the reported price.
   /// @return A bytes32 integer that represents the packed price data.
-  function buildPackedPriceData(
-    uint64 _publishTime,
-    int32 _expo,
-    int64 _price,
-    uint64 _conf
-  ) external pure returns (uint256) {
-    return _buildPackedPriceData(_publishTime, _expo, _price, _conf);
+  function buildPackedPriceData(uint64 _publishTime, int64 _price) external pure returns (uint128) {
+    return _buildPackedPriceData(_publishTime, _price);
   }
 
   /// @dev Internal function to construct a packed price data as a bytes32 integer.
@@ -149,16 +139,9 @@ contract EcoPyth is Owned, IEcoPyth {
   /// the packed price data. This packed price data is constructed by concatenating the four input variables using the abi.encodePacked function,
   /// which returns a bytes array that is then cast to bytes32.
   /// @param _publishTime Timestamp when the price was published.
-  /// @param _expo Exponent used to determine the decimal point placement in the price.
   /// @param _price Price value represented as an int64.
-  /// @param _conf Confidence percentage of the reported price.
   /// @return A bytes32 integer that represents the packed price data.
-  function _buildPackedPriceData(
-    uint64 _publishTime,
-    int32 _expo,
-    int64 _price,
-    uint64 _conf
-  ) internal pure returns (uint256) {
-    return uint256(bytes32(abi.encodePacked(_publishTime, _expo, _price, _conf)));
+  function _buildPackedPriceData(uint64 _publishTime, int64 _price) internal pure returns (uint128) {
+    return uint128(bytes16(abi.encodePacked(_publishTime, _price)));
   }
 }

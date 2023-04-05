@@ -8,7 +8,7 @@ interface IEcoPyth {
 
   function updatePriceFeeds(
     bytes32[] calldata _priceIds,
-    uint256[] calldata _packedPriceDatas,
+    uint128[] calldata _packedPriceDatas,
     bytes32 _encodedVaas
   ) external;
 }

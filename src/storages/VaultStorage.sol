@@ -46,6 +46,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   mapping(address => uint256) public fundingFeeDebt;
   mapping(address => uint256) public lossDebt;
 
+  uint256 public globalTradingFeeDebt;
+  uint256 public globalBorrowingFeeDebt;
+  uint256 public globalFundingFeeDebt;
+  uint256 public globalLossDebt;
+
   // trader address (with sub-account) => token => amount
   mapping(address => mapping(address => uint256)) public traderBalances;
   // mapping(address => address[]) public traderTokens;
@@ -387,19 +392,43 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     plpLiquidityDebtUSDE30 += _fundingFeeValue;
   }
 
-  function setTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external {
+  function addTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external {
     tradingFeeDebt[_trader] += _tradingFeeDebt;
+    globalTradingFeeDebt += _tradingFeeDebt;
   }
 
-  function setBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external {
+  function addBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external {
     borrowingFeeDebt[_trader] += _borrowingFeeDebt;
+    globalBorrowingFeeDebt += _borrowingFeeDebt;
   }
 
-  function setFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external {
+  function addFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external {
     fundingFeeDebt[_trader] += _fundingFeeDebt;
+    globalFundingFeeDebt += _fundingFeeDebt;
   }
 
-  function setLossDebt(address _trader, uint256 _lossDebt) external {
+  function addLossDebt(address _trader, uint256 _lossDebt) external {
     lossDebt[_trader] += _lossDebt;
+    globalLossDebt += _lossDebt;
+  }
+
+  function subTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external {
+    tradingFeeDebt[_trader] -= _tradingFeeDebt;
+    globalTradingFeeDebt -= _tradingFeeDebt;
+  }
+
+  function subBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external {
+    borrowingFeeDebt[_trader] -= _borrowingFeeDebt;
+    globalBorrowingFeeDebt -= _borrowingFeeDebt;
+  }
+
+  function subFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external {
+    fundingFeeDebt[_trader] -= _fundingFeeDebt;
+    globalFundingFeeDebt -= _fundingFeeDebt;
+  }
+
+  function subLossDebt(address _trader, uint256 _lossDebt) external {
+    lossDebt[_trader] -= _lossDebt;
+    globalLossDebt -= _lossDebt;
   }
 }

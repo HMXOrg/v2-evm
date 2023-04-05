@@ -79,6 +79,7 @@ contract TC29 is BaseIntTest_WithActions {
       bytes[] memory priceData = new bytes[](0);
 
       // ALICE opens SHORT position on with WETH Market Price = 1500 USD
+      vm.deal(ALICE, executionOrderFee);
       marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
 
       // Alice's Equity must be upper IMR level

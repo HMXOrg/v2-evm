@@ -192,15 +192,36 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     address _tpToken,
     bytes[] memory _priceData
   ) internal {
+    marketSell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData, "");
+  }
+
+  function marketSell(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sellSizeE30,
+    address _tpToken,
+    bytes[] memory _priceData,
+    string memory signature
+  ) internal {
     vm.prank(_account);
-    marketTradeHandler.sell{ value: _priceData.length }(
-      _account,
+    limitTradeHandler.createOrder{ value: executionOrderFee }(
       _subAccountId,
       _marketIndex,
-      _sellSizeE30,
-      _tpToken,
-      _priceData
+      -int256(_sellSizeE30),
+      0, // trigger price always be 0
+      type(uint256).max,
+      true, // trigger above threshold
+      executionOrderFee, // 0.0001 ether
+      false, // reduce only (allow flip or not)
+      _tpToken
     );
+
+    uint256 _orderIndex = limitTradeHandler.limitOrdersIndex(getSubAccount(_account, _subAccountId)) - 1;
+
+    if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
+
+    limitTradeHandler.executeOrder(_account, _subAccountId, _orderIndex, payable(FEEVER), _priceData);
   }
 
   function createLimitTradeOrder(

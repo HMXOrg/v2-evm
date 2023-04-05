@@ -10,7 +10,7 @@ import { console2 } from "forge-std/console2.sol";
 contract TC11 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
-  // TC11 - not allow trader to do trade when market has beed delisted
+  // TC11 - not allow trader to do trade when market has been delisted
   function testCorrectness_TC11_TradeWithDelistedMarket() external {
     // ### Scenario: Prepare environment
 
@@ -67,8 +67,15 @@ contract TC11 is BaseIntTest_WithActions {
 
     // And Alice sell more APPLE position for 3000 USD
     // Then Revert MarketDelisted
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketSell(
+      ALICE,
+      0,
+      appleMarketIndex,
+      3_000 * 1e30,
+      address(0),
+      updatePriceData,
+      "ITradeService_MarketIsDelisted()"
+    );
 
     // And Alice try to fully close APPLE position
     // Then Still Revert MarketDelisted

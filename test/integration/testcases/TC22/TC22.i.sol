@@ -118,8 +118,15 @@ contract TC22 is BaseIntTest_WithActions {
 
     // When Carol sell WETH 3,000,000 USD
     // And Revert ITradeService_PositionSizeExceed
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionSizeExceed()"));
-    marketSell(CAROL, 0, wethMarketIndex, 3_000_000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(
+      CAROL,
+      0,
+      wethMarketIndex,
+      3_000_000 * 1e30,
+      address(wbtc),
+      updatePriceData,
+      "ITradeService_PositionSizeExceed()"
+    );
 
     // ### Scenario: Trader trade on Stock (APPLE)
     // When Alice sell APPLE 600,000 USD

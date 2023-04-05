@@ -194,8 +194,15 @@ contract TC13 is BaseIntTest_WithActions {
 
     // And Alice try close BTC's position
     // Then Revert PythAdapter_ConfidenceRatioTooHigh because Alice's has JPY's position
-    vm.expectRevert(abi.encodeWithSignature("PythAdapter_ConfidenceRatioTooHigh()"));
-    marketSell(ALICE, 0, wbtcMarketIndex, 20 * 1e30, address(wbtc), updatePriceData);
+    marketSell(
+      ALICE,
+      0,
+      wbtcMarketIndex,
+      20 * 1e30,
+      address(wbtc),
+      updatePriceData,
+      "PythAdapter_ConfidenceRatioTooHigh()"
+    );
 
     // When Bob buy position at JPY 20000 USD
     // Then Revert PythAdapter_ConfidenceRatioTooHigh

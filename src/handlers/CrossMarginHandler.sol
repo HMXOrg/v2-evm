@@ -63,7 +63,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   }
 
   /**
-   * Features
+   * Core Functions
    */
 
   /// @notice Calculate new trader balance after deposit collateral token.

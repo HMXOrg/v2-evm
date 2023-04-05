@@ -121,7 +121,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   }
 
   /**
-   * Core Function
+   * Core Functions
    */
 
   /// @notice Create a new AddLiquidity order

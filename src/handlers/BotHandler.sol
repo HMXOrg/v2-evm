@@ -75,6 +75,10 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     pyth = _pyth;
   }
 
+  /**
+   * Core Functions
+   */
+
   /// @notice force to close position and take profit, depend on reserve value on this position
   /// @param _account position's owner
   /// @param _subAccountId sub-account that owned position

@@ -189,11 +189,11 @@ contract LiquidationService_Liquidation is LiquidationService_Base {
     positionTester02.assertPosition(_wbtcPositionId, assertData);
 
     {
-      IPerpStorage.GlobalMarket memory btcGlobalMarket = perpStorage.getGlobalMarketByIndex(btcMarketIndex);
+      IPerpStorage.Market memory btcMarket = perpStorage.getMarketByIndex(btcMarketIndex);
       // 500,000 + 100,000 = 600,000
-      assertEq(btcGlobalMarket.longPositionSize, 124_000 * 1e30);
+      assertEq(btcMarket.longPositionSize, 124_000 * 1e30);
 
-      assertEq(btcGlobalMarket.longAvgPrice, 24_800 * 1e30);
+      assertEq(btcMarket.longAvgPrice, 24_800 * 1e30);
     }
 
     // liquidation fee

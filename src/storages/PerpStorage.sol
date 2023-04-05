@@ -32,8 +32,8 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   mapping(bytes32 => Position) public positions;
   mapping(address => bytes32[]) public subAccountPositionIds;
   mapping(address => uint256) public subAccountBorrowingFee;
-  mapping(uint256 => GlobalMarket) public markets;
-  mapping(uint256 => GlobalAssetClass) public assetClasses;
+  mapping(uint256 => Market) public markets;
+  mapping(uint256 => AssetClass) public assetClasses;
   mapping(address => bool) public serviceExecutors;
 
   /**
@@ -41,23 +41,25 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
    */
 
   /// @notice Get all positions with a specific trader's sub-account
-  /// @param _trader The address of the trader whose positions to retrieve
-  /// @return traderPositions An array of Position objects representing the trader's positions
-  function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions) {
-    bytes32[] memory _positionIds = subAccountPositionIds[_trader];
-    if (_positionIds.length > 0) {
-      Position[] memory _traderPositions = new Position[](_positionIds.length);
-      uint256 _len = _positionIds.length;
-      for (uint256 i; i < _len; ) {
-        _traderPositions[i] = (positions[_positionIds[i]]);
+  /// @param _subAccount The address of the trader whose positions to retrieve
+  /// @return _subAccountPositions An array of Position objects representing the trader's positions
+  function getPositionBySubAccount(address _subAccount) external view returns (Position[] memory _subAccountPositions) {
+    bytes32[] memory _positionIds = subAccountPositionIds[_subAccount];
+    uint256 _len = _positionIds.length;
 
-        unchecked {
-          i++;
-        }
+    if (_len == 0) return _subAccountPositions;
+
+    _subAccountPositions = new Position[](_positionIds.length);
+
+    for (uint256 _i; _i < _len; ) {
+      _subAccountPositions[_i] = (positions[_positionIds[_i]]);
+
+      unchecked {
+        ++_i;
       }
-
-      return _traderPositions;
     }
+
+    return _subAccountPositions;
   }
 
   function getPositionIds(address _subAccount) external view returns (bytes32[] memory _positionIds) {
@@ -76,11 +78,11 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   // todo: add description
   // todo: support to update borrowing rate
   // todo: support to update funding rate
-  function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory) {
+  function getMarketByIndex(uint256 _marketIndex) external view returns (Market memory) {
     return markets[_marketIndex];
   }
 
-  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
+  function getAssetClassByIndex(uint256 _assetClassIndex) external view returns (AssetClass memory) {
     return assetClasses[_assetClassIndex];
   }
 
@@ -155,14 +157,11 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     globalState = _newGlobalState;
   }
 
-  function updateGlobalAssetClass(
-    uint8 _assetClassIndex,
-    GlobalAssetClass memory _newAssetClass
-  ) external onlyWhitelistedExecutor {
+  function updateAssetClass(uint8 _assetClassIndex, AssetClass memory _newAssetClass) external onlyWhitelistedExecutor {
     assetClasses[_assetClassIndex] = _newAssetClass;
   }
 
-  function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _market) external onlyWhitelistedExecutor {
+  function updateMarket(uint256 _marketIndex, Market memory _market) external onlyWhitelistedExecutor {
     markets[_marketIndex] = _market;
   }
 
@@ -206,11 +205,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     }
   }
 
-  function updateGlobalMarketPrice(
-    uint256 _marketIndex,
-    bool _isLong,
-    uint256 _price
-  ) external onlyWhitelistedExecutor {
+  function updateMarketPrice(uint256 _marketIndex, bool _isLong, uint256 _price) external onlyWhitelistedExecutor {
     if (_isLong) {
       markets[_marketIndex].longAvgPrice = _price;
     } else {

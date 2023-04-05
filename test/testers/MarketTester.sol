@@ -5,7 +5,7 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-contract GlobalMarketTester is StdAssertions {
+contract MarketTester is StdAssertions {
   struct AssertData {
     uint256 longPositionSize;
     uint256 longAvgPrice;
@@ -19,8 +19,8 @@ contract GlobalMarketTester is StdAssertions {
     perpStorage = _perpStorage;
   }
 
-  function assertGlobalMarket(uint256 _marketIndex, AssertData memory _data) external {
-    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
+  function assertMarket(uint256 _marketIndex, AssertData memory _data) external {
+    IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
     assertEq(_market.longPositionSize, _data.longPositionSize);
     assertEq(_market.longAvgPrice, _data.longAvgPrice);

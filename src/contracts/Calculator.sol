@@ -86,7 +86,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _plpTVL = _getPLPValueE30(false);
     uint256 _pendingBorrowingFee; // sum from each asset class
     for (uint256 i; i < _len; ) {
-      PerpStorage.GlobalAssetClass memory _assetClassState = _perpStorage.getGlobalAssetClassByIndex(i);
+      PerpStorage.AssetClass memory _assetClassState = _perpStorage.getAssetClassByIndex(i);
 
       uint256 _borrowingFeeE30 = (_getNextBorrowingRate(uint8(i), _plpTVL) * _assetClassState.reserveValueE30) /
         RATE_PRECISION;
@@ -175,7 +175,7 @@ contract Calculator is Owned, ICalculator {
 
     for (uint256 i = 0; i < _len; ) {
       ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(i);
-      PerpStorage.GlobalMarket memory _market = _perpStorage.getGlobalMarketByIndex(i);
+      PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
@@ -498,7 +498,7 @@ contract Calculator is Owned, ICalculator {
     PerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
     ConfigStorage.MarketConfig memory _marketConfig;
-    PerpStorage.GlobalMarket memory _market;
+    PerpStorage.Market memory _market;
     uint256 pnlFactorBps = ConfigStorage(configStorage).pnlFactorBPS();
     uint256 liquidationFee = ConfigStorage(configStorage).getLiquidationConfig().liquidationFeeUSDE30;
 
@@ -513,7 +513,7 @@ contract Calculator is Owned, ICalculator {
 
       // Get market config according to opening position
       _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_var.position.marketIndex);
-      _market = PerpStorage(perpStorage).getGlobalMarketByIndex(_var.position.marketIndex);
+      _market = PerpStorage(perpStorage).getMarketByIndex(_var.position.marketIndex);
 
       // Check to overwrite price
       if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
@@ -550,7 +550,7 @@ contract Calculator is Owned, ICalculator {
         {
           // Calculate borrowing fee
           uint256 _plpTVL = _getPLPValueE30(false);
-          PerpStorage.GlobalAssetClass memory _assetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+          PerpStorage.AssetClass memory _assetClass = PerpStorage(perpStorage).getAssetClassByIndex(
             _marketConfig.assetClass
           );
           uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);
@@ -855,7 +855,7 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
-    PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return 0;
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
@@ -892,7 +892,7 @@ contract Calculator is Owned, ICalculator {
     if (_size == 0) return 0;
     uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
 
-    PerpStorage.GlobalMarket memory _market = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory _market = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
 
     return _getFundingFee(_isLong, absSize, _market.currentFundingRate, _entryFundingRate);
   }
@@ -936,9 +936,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _entryBorrowingRate
   ) external view returns (uint256 borrowingFee) {
     // Get the global asset class.
-    PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
-      _assetClassIndex
-    );
+    PerpStorage.AssetClass memory _assetClassState = PerpStorage(perpStorage).getAssetClassByIndex(_assetClassIndex);
     // // Calculate borrowing fee.
     return _getBorrowingFee(_reservedValue, _assetClassState.sumBorrowingRate, _entryBorrowingRate);
   }
@@ -976,9 +974,7 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.AssetClassConfig memory _assetClassConfig = _configStorage.getAssetClassConfigByIndex(
       _assetClassIndex
     );
-    PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
-      _assetClassIndex
-    );
+    PerpStorage.AssetClass memory _assetClassState = PerpStorage(perpStorage).getAssetClassByIndex(_assetClassIndex);
     // If block.timestamp not pass the next funding time, return 0.
     if (_assetClassState.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
 

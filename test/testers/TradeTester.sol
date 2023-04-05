@@ -47,7 +47,7 @@ contract TradeTester is StdAssertions {
     int256 realizedPnl;
   }
 
-  struct GlobalMarketExpectedData {
+  struct MarketExpectedData {
     uint256 marketIndex;
     uint256 lastFundingTime;
     uint256 longPositionSize;
@@ -66,7 +66,7 @@ contract TradeTester is StdAssertions {
     int256 accumFundingShort;
   }
 
-  struct GlobalAssetClassExpectedData {
+  struct AssetClassExpectedData {
     uint256 reserveValueE30;
     uint256 sumBorrowingRate;
     uint256 lastBorrowingTime;
@@ -90,14 +90,14 @@ contract TradeTester is StdAssertions {
   /// @dev This function will check
   ///     - Position
   ///       - Last increase timestamp
-  ///     - Global market
+  ///     - Market
   ///     - PerpStorage
   ///     - VaultStorage
   function assertAfterIncrease(
     address _subAccount,
     PositionExpectedData memory _positionExpectedData,
-    GlobalMarketExpectedData memory _marketExpectedData,
-    GlobalAssetClassExpectedData memory _assetClassExpectedData,
+    MarketExpectedData memory _marketExpectedData,
+    AssetClassExpectedData memory _assetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData,
     PerpStorageExpectedData memory _perpStorageExpectedData,
     VaultStorageExpectedData storage _vaultStorageExpectedData
@@ -124,14 +124,14 @@ contract TradeTester is StdAssertions {
   /// @dev This function will check
   ///     - Position
   ///       - Realized PnL
-  ///     - Global market
+  ///     - Market
   ///     - PerpStorage
   ///     - VaultStorage
   function assertAfterDecrease(
     address _subAccount,
     PositionExpectedData memory _positionExpectedData,
-    GlobalMarketExpectedData memory _marketExpectedData,
-    GlobalAssetClassExpectedData memory _assetClassExpectedData,
+    MarketExpectedData memory _marketExpectedData,
+    AssetClassExpectedData memory _assetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData,
     PerpStorageExpectedData memory _perpStorageExpectedData,
     VaultStorageExpectedData storage _vaultStorageExpectedData
@@ -161,8 +161,8 @@ contract TradeTester is StdAssertions {
   ///       - Entry funding rate - global market current funding rate
   function _assertPosition(
     PositionExpectedData memory _positionExpectedData,
-    GlobalMarketExpectedData memory _marketExpectedData,
-    GlobalAssetClassExpectedData memory _assetClassExpectedData
+    MarketExpectedData memory _marketExpectedData,
+    AssetClassExpectedData memory _assetClassExpectedData
   ) internal returns (IPerpStorage.Position memory _position) {
     _position = perpStorage.getPositionById(_positionExpectedData.positionId);
 
@@ -182,8 +182,8 @@ contract TradeTester is StdAssertions {
   ///       - Long average price
   ///       - Short Position size
   ///       - Short average price
-  function _assertMarket(GlobalMarketExpectedData memory _marketExpectedData) internal {
-    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketExpectedData.marketIndex);
+  function _assertMarket(MarketExpectedData memory _marketExpectedData) internal {
+    IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketExpectedData.marketIndex);
 
     assertEq(_market.longPositionSize, _marketExpectedData.longPositionSize, "Long Position size");
     assertEq(_market.longAvgPrice, _marketExpectedData.longAvgPrice, "Long Average Price");
@@ -198,7 +198,7 @@ contract TradeTester is StdAssertions {
   /// @notice Assert PerpStorage
   /// @dev This function will check
   ///       - Sub-account fee
-  ///       - Global asset class
+  ///       - Asset class
   ///         - Last borrowing time
   ///         - Borrowing Rate Summation
   ///         - Reserve Value
@@ -207,12 +207,10 @@ contract TradeTester is StdAssertions {
   function _assertPerpStorage(
     address _subAccount,
     PerpStorageExpectedData memory _perpStorageExpectedData,
-    GlobalAssetClassExpectedData memory _assetClassExpectedData,
+    AssetClassExpectedData memory _assetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData
   ) internal {
-    IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(
-      _assetClassExpectedData.assetClassId
-    );
+    IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_assetClassExpectedData.assetClassId);
     IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
 
     // Check global asset class

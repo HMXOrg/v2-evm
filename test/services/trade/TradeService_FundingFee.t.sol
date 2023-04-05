@@ -71,8 +71,8 @@ contract TradeService_FundingFee is TradeService_Base {
     {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
-      IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(0);
-      IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(0);
+      IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(0);
+      IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(0);
 
       assertEq(_assetClass.sumBorrowingRate, 0);
       assertEq(_assetClass.lastBorrowingTime, 100);
@@ -91,7 +91,7 @@ contract TradeService_FundingFee is TradeService_Base {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
 
       {
-        IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(0);
+        IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(0);
 
         // Repay WETH Amount = 133.333333333333/1600 = 0.083333333333333125 WETH
         // Dev fee = 0.083333333333333125  * 0 = 0 WETH
@@ -129,7 +129,7 @@ contract TradeService_FundingFee is TradeService_Base {
     {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 500_000 * 1e30, 0);
 
-      IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(0);
+      IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(0);
       assertEq(_market.currentFundingRate, 0);
 
       assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 1_000 * 1e6);
@@ -139,7 +139,7 @@ contract TradeService_FundingFee is TradeService_Base {
     vm.warp(block.timestamp + 1);
     {
       tradeService.increasePosition(BOB, 0, ethMarketIndex, -200_000 * 1e30, 0);
-      IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(0);
+      IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(0);
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
       assertEq(_market.currentFundingRate, -66666666666666); // LONG PAY SHORT
       // Alice increase long position size * funding Rate = 500_000 * -0.000066666666666666 = -33.333333333333 $
@@ -154,7 +154,7 @@ contract TradeService_FundingFee is TradeService_Base {
       assertEq(vaultStorage.plpLiquidityDebtUSDE30(), 0);
 
       tradeService.decreasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30, address(0), 0);
-      IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(0);
+      IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(0);
       assertEq(_market.currentFundingRate, -106666666666666); // LONG PAY SHORT
 
       // After BOB close short position, BOB must get funding fee

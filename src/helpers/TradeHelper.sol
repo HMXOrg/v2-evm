@@ -129,14 +129,14 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
-    PerpStorage.GlobalAssetClass memory _assetClass = _perpStorage.getGlobalAssetClassByIndex(_assetClassIndex);
+    PerpStorage.AssetClass memory _assetClass = _perpStorage.getAssetClassByIndex(_assetClassIndex);
     uint256 _fundingInterval = ConfigStorage(configStorage).getTradingConfig().fundingInterval;
     uint256 _lastBorrowingTime = _assetClass.lastBorrowingTime;
 
     // If last borrowing time is 0, set it to the nearest funding interval time and return.
     if (_lastBorrowingTime == 0) {
       _assetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-      _perpStorage.updateGlobalAssetClass(_assetClassIndex, _assetClass);
+      _perpStorage.updateAssetClass(_assetClassIndex, _assetClass);
       return;
     }
 
@@ -153,7 +153,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
       _assetClass.sumBorrowingFeeE30 += borrowingFee;
     }
-    _perpStorage.updateGlobalAssetClass(_assetClassIndex, _assetClass);
+    _perpStorage.updateAssetClass(_assetClassIndex, _assetClass);
   }
 
   /// @notice This function updates the funding rate for the given market index.
@@ -162,7 +162,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
-    PerpStorage.GlobalMarket memory _market = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(_marketIndex);
 
     uint256 _fundingInterval = ConfigStorage(configStorage).getTradingConfig().fundingInterval;
     uint256 _lastFundingTime = _market.lastFundingTime;
@@ -170,7 +170,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     // If last funding time is 0, set it to the nearest funding interval time and return.
     if (_lastFundingTime == 0) {
       _market.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-      _perpStorage.updateGlobalMarket(_marketIndex, _market);
+      _perpStorage.updateMarket(_marketIndex, _market);
       return;
     }
 
@@ -180,7 +180,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       int256 nextFundingRate = calculator.getNextFundingRate(_marketIndex);
       int256 lastFundingRate = _market.currentFundingRate;
       _market.currentFundingRate += nextFundingRate;
-      _perpStorage.updateGlobalMarket(_marketIndex, _market);
+      _perpStorage.updateMarket(_marketIndex, _market);
 
       if (_market.longPositionSize > 0) {
         int256 fundingFeeLongE30 = calculator.getFundingFee(
@@ -203,7 +203,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       }
 
       _market.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-      _perpStorage.updateGlobalMarket(_marketIndex, _market);
+      _perpStorage.updateMarket(_marketIndex, _market);
     }
   }
 
@@ -313,9 +313,9 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
   function _accumSettledBorrowingFee(uint256 _assetClassIndex, uint256 _borrowingFeeToBeSettled) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
-    PerpStorage.GlobalAssetClass memory _assetClass = _perpStorage.getGlobalAssetClassByIndex(uint8(_assetClassIndex));
+    PerpStorage.AssetClass memory _assetClass = _perpStorage.getAssetClassByIndex(uint8(_assetClassIndex));
     _assetClass.sumSettledBorrowingFeeE30 += _borrowingFeeToBeSettled;
-    _perpStorage.updateGlobalAssetClass(uint8(_assetClassIndex), _assetClass);
+    _perpStorage.updateAssetClass(uint8(_assetClassIndex), _assetClass);
   }
 
   function increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) external {
@@ -733,18 +733,18 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
   function _updateAccumFundingLong(uint256 _marketIndex, int256 fundingLong) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
-    PerpStorage.GlobalMarket memory _market = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(_marketIndex);
 
     _market.accumFundingLong += fundingLong;
-    _perpStorage.updateGlobalMarket(_marketIndex, _market);
+    _perpStorage.updateMarket(_marketIndex, _market);
   }
 
   function _updateAccumFundingShort(uint256 _marketIndex, int256 fundingShort) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
-    PerpStorage.GlobalMarket memory _market = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(_marketIndex);
 
     _market.accumFundingShort += fundingShort;
-    _perpStorage.updateGlobalMarket(_marketIndex, _market);
+    _perpStorage.updateMarket(_marketIndex, _market);
   }
 
   function _abs(int256 x) private pure returns (uint256) {

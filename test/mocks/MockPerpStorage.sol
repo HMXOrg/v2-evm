@@ -5,9 +5,9 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 contract MockPerpStorage {
   mapping(address => IPerpStorage.Position[]) public positions;
-  mapping(uint256 => IPerpStorage.GlobalMarket) public markets;
+  mapping(uint256 => IPerpStorage.Market) public markets;
 
-  mapping(uint8 => IPerpStorage.GlobalAssetClass) public assetClasses;
+  mapping(uint8 => IPerpStorage.AssetClass) public assetClasses;
 
   mapping(bytes32 => IPerpStorage.Position) public positionById;
 
@@ -27,9 +27,7 @@ contract MockPerpStorage {
     return positions[_subAccount];
   }
 
-  function getGlobalAssetClassByIndex(
-    uint8 _assetClassIndex
-  ) external view returns (IPerpStorage.GlobalAssetClass memory) {
+  function getAssetClassByIndex(uint8 _assetClassIndex) external view returns (IPerpStorage.AssetClass memory) {
     return assetClasses[_assetClassIndex];
   }
 
@@ -41,7 +39,7 @@ contract MockPerpStorage {
     return keccak256(abi.encodePacked(_account, _marketIndex));
   }
 
-  function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (IPerpStorage.GlobalMarket memory) {
+  function getMarketByIndex(uint256 _marketIndex) external view returns (IPerpStorage.Market memory) {
     return markets[_marketIndex];
   }
 
@@ -82,10 +80,7 @@ contract MockPerpStorage {
     markets[_marketIndex].currentFundingRate = _currentFundingRate;
   }
 
-  function updateGlobalAssetClass(
-    uint8 _assetClassIndex,
-    IPerpStorage.GlobalAssetClass memory _newAssetClass
-  ) external {
+  function updateAssetClass(uint8 _assetClassIndex, IPerpStorage.AssetClass memory _newAssetClass) external {
     assetClasses[_assetClassIndex] = _newAssetClass;
   }
 }

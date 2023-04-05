@@ -48,10 +48,10 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     address tpToken;
     uint256 limitPriceE30;
     uint256 oraclePrice;
-    int256 realizedPnl;
-    int256 unrealizedPnl;
     uint256 tradingFee;
     uint256 borrowingFee;
+    int256 realizedPnl;
+    int256 unrealizedPnl;
     int256 fundingFee;
     // for SLOAD
     Calculator calculator;
@@ -774,8 +774,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       _vars.borrowingFee,
       _vars.tradingFee,
       0,
-      address(0),
-      true
+      address(0)
     );
 
     // =========================================

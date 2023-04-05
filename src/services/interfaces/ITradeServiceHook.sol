@@ -3,11 +3,7 @@ pragma solidity 0.8.18;
 
 interface ITradeServiceHook {
   /**
-   * Errors
-   */
-
-  /**
-   * Core Functions
+   * Functions
    */
   function onIncreasePosition(
     address primaryAccount,

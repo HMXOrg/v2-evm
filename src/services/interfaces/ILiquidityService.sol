@@ -27,6 +27,15 @@ interface ILiquidityService {
   }
 
   /**
+   * States
+   */
+  function configStorage() external returns (address);
+
+  function vaultStorage() external returns (address);
+
+  function perpStorage() external returns (address);
+
+  /**
    * Functions
    */
   function addLiquidity(
@@ -42,10 +51,4 @@ interface ILiquidityService {
     uint256 _amount,
     uint256 _minAmount
   ) external returns (uint256);
-
-  function configStorage() external returns (address);
-
-  function vaultStorage() external returns (address);
-
-  function perpStorage() external returns (address);
 }

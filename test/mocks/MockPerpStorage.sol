@@ -5,9 +5,9 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 contract MockPerpStorage {
   mapping(address => IPerpStorage.Position[]) public positions;
-  mapping(uint256 => IPerpStorage.GlobalMarket) public globalMarkets;
+  mapping(uint256 => IPerpStorage.Market) public markets;
 
-  mapping(uint8 => IPerpStorage.GlobalAssetClass) public globalAssetClass;
+  mapping(uint8 => IPerpStorage.AssetClass) public assetClasses;
 
   mapping(bytes32 => IPerpStorage.Position) public positionById;
 
@@ -27,10 +27,8 @@ contract MockPerpStorage {
     return positions[_subAccount];
   }
 
-  function getGlobalAssetClassByIndex(
-    uint8 _assetClassIndex
-  ) external view returns (IPerpStorage.GlobalAssetClass memory) {
-    return globalAssetClass[_assetClassIndex];
+  function getAssetClassByIndex(uint8 _assetClassIndex) external view returns (IPerpStorage.AssetClass memory) {
+    return assetClasses[_assetClassIndex];
   }
 
   function getPositionById(bytes32 _positionId) external view returns (IPerpStorage.Position memory) {
@@ -41,8 +39,8 @@ contract MockPerpStorage {
     return keccak256(abi.encodePacked(_account, _marketIndex));
   }
 
-  function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (IPerpStorage.GlobalMarket memory) {
-    return globalMarkets[_marketIndex];
+  function getMarketByIndex(uint256 _marketIndex) external view returns (IPerpStorage.Market memory) {
+    return markets[_marketIndex];
   }
 
   /**
@@ -62,10 +60,10 @@ contract MockPerpStorage {
     int256 _newAccumFundingLong,
     int256 _currentFundingRate
   ) external {
-    globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
-    globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
-    globalMarkets[_marketIndex].accumFundingLong = _newAccumFundingLong;
-    globalMarkets[_marketIndex].currentFundingRate = _currentFundingRate;
+    markets[_marketIndex].longPositionSize = _newPositionSize;
+    markets[_marketIndex].longAvgPrice = _newAvgPrice;
+    markets[_marketIndex].accumFundingLong = _newAccumFundingLong;
+    markets[_marketIndex].currentFundingRate = _currentFundingRate;
   }
 
   // @todo - update funding rate
@@ -76,16 +74,13 @@ contract MockPerpStorage {
     int256 _newAccumFundingShort,
     int256 _currentFundingRate
   ) external {
-    globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
-    globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
-    globalMarkets[_marketIndex].accumFundingShort = _newAccumFundingShort;
-    globalMarkets[_marketIndex].currentFundingRate = _currentFundingRate;
+    markets[_marketIndex].shortPositionSize = _newPositionSize;
+    markets[_marketIndex].shortAvgPrice = _newAvgPrice;
+    markets[_marketIndex].accumFundingShort = _newAccumFundingShort;
+    markets[_marketIndex].currentFundingRate = _currentFundingRate;
   }
 
-  function updateGlobalAssetClass(
-    uint8 _assetClassIndex,
-    IPerpStorage.GlobalAssetClass memory _newAssetClass
-  ) external {
-    globalAssetClass[_assetClassIndex] = _newAssetClass;
+  function updateAssetClass(uint8 _assetClassIndex, IPerpStorage.AssetClass memory _newAssetClass) external {
+    assetClasses[_assetClassIndex] = _newAssetClass;
   }
 }

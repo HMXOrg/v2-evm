@@ -88,7 +88,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   }
 
   /**
-   * Core functions
+   * Core Functions
    */
   /// @notice Calculate new trader balance after deposit collateral token.
   /// @dev This uses to calculate new trader balance when they deposit token as collateral.
@@ -170,10 +170,10 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     // positive value mean how much protocol book funding fee value that will be paid to trader
     // Loop through all markets to sum funding fee on LONG and SHORT sides
     for (uint256 i = 0; i < _configStorage.getMarketConfigsLength(); ) {
-      PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(i);
+      PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
-      _vars.totalAccumFundingLong += _globalMarket.accumFundingLong;
-      _vars.totalAccumFundingShort += _globalMarket.accumFundingShort;
+      _vars.totalAccumFundingLong += _market.accumFundingLong;
+      _vars.totalAccumFundingShort += _market.accumFundingShort;
 
       unchecked {
         ++i;
@@ -221,7 +221,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   }
 
   /**
-   * Setter
+   * Setters
    */
   /// @notice Set new ConfigStorage contract address.
   /// @param _configStorage New ConfigStorage contract address.
@@ -270,12 +270,16 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     Calculator(_calculator).oracle();
   }
 
+  /**
+   * Private Functions
+   */
+
   /// @notice Calculate subAccount address on trader.
   /// @dev This uses to create subAccount address combined between Primary account and SubAccount ID.
   /// @param _primary Trader's primary wallet account.
   /// @param _subAccountId Trader's sub account ID.
   /// @return _subAccount Trader's sub account address used for trading.
-  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
+  function _getSubAccount(address _primary, uint8 _subAccountId) private pure returns (address _subAccount) {
     if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
@@ -286,7 +290,7 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     uint256 _reserveBalance,
     uint256 _feeSurplusValueE30,
     address _token
-  ) internal view returns (uint256 _repayAmount, uint256 _repayValueE30) {
+  ) private view returns (uint256 _repayAmount, uint256 _repayValueE30) {
     bytes32 tokenAssetId = _configStorage.tokenAssetIds(_token);
     (uint256 tokenPrice, ) = _oracle.getLatestPrice(tokenAssetId, false);
 

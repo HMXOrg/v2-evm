@@ -86,6 +86,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool isNewPosition;
   }
 
+  struct ValidatePositionOrderPriceVars {
+    ConfigStorage.MarketConfig marketConfig;
+    OracleMiddleware oracle;
+    PerpStorage.Market globalMarket;
+    uint256 oraclePrice;
+    uint256 adaptivePrice;
+    uint8 marketStatus;
+    bool isPriceValid;
+  }
+
   /**
    * Constants
    */
@@ -105,9 +115,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
 
-  /**
-   * Constructor
-   */
   constructor(address _weth, address _tradeService, address _pyth, uint256 _minExecutionFee) {
     weth = _weth;
     tradeService = _tradeService;
@@ -468,17 +475,18 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   }
 
   /**
-   * Internal Functions
+   * Private Functions
    */
 
-  struct ValidatePositionOrderPriceVars {
-    ConfigStorage.MarketConfig marketConfig;
-    OracleMiddleware oracle;
-    PerpStorage.GlobalMarket globalMarket;
-    uint256 oraclePrice;
-    uint256 adaptivePrice;
-    uint8 marketStatus;
-    bool isPriceValid;
+  /// @notice Derive sub-account from primary account and sub-account id
+  function _getSubAccount(address primary, uint8 subAccountId) private pure returns (address) {
+    if (subAccountId > 255) revert ILimitTradeHandler_BadSubAccountId();
+    return address(uint160(primary) ^ uint160(subAccountId));
+  }
+
+  /// @notice Derive positionId from sub-account and market index
+  function _getPositionId(address _subAccount, uint256 _marketIndex) private pure returns (bytes32) {
+    return keccak256(abi.encodePacked(_subAccount, _marketIndex));
   }
 
   function _validatePositionOrderPrice(
@@ -489,13 +497,13 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     int256 _sizeDelta,
     bool _maximizePrice,
     bool _revertOnError
-  ) internal view returns (uint256, bool) {
+  ) private view returns (uint256, bool) {
     ValidatePositionOrderPriceVars memory vars;
 
     // Get price from Pyth
     vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
+    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
 
     // Validate trigger price with oracle price
     (vars.oraclePrice, ) = vars.oracle.getLatestPrice(vars.marketConfig.assetId, true);
@@ -539,13 +547,13 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 _marketIndex,
     int256 _sizeDelta,
     bool _maximizePrice
-  ) internal view returns (uint256 _currentPrice, bool _isPriceValid) {
+  ) private view returns (uint256 _currentPrice, bool _isPriceValid) {
     ValidatePositionOrderPriceVars memory vars;
 
     // Get price from Pyth
     vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
+    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
 
     (_currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
@@ -586,22 +594,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     payable(_receiver).transfer(_amountOut);
   }
 
-  /// @notice Derive sub-account from primary account and sub-account id
-  function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {
-    if (subAccountId > 255) revert ILimitTradeHandler_BadSubAccountId();
-    return address(uint160(primary) ^ uint160(subAccountId));
-  }
-
-  /// @notice Derive positionId from sub-account and market index
-  function _getPositionId(address _subAccount, uint256 _marketIndex) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(_subAccount, _marketIndex));
-  }
-
-  function _max(uint256 x, uint256 y) internal pure returns (uint256) {
-    return x < y ? y : x;
-  }
-
-  function _min(uint256 x, uint256 y) internal pure returns (uint256) {
+  function _min(uint256 x, uint256 y) private pure returns (uint256) {
     return x < y ? x : y;
   }
 }

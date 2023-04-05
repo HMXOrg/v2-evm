@@ -8,7 +8,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
-import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
+import { MarketTester } from "../../testers/MarketTester.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
@@ -22,13 +22,13 @@ abstract contract LiquidationService_Base is BaseTest {
   ILiquidationService liquidationService;
   PositionTester positionTester;
   PositionTester02 positionTester02;
-  GlobalMarketTester globalMarketTester;
+  MarketTester globalMarketTester;
 
   function setUp() public virtual {
     configStorage.setCalculator(address(mockCalculator));
     positionTester = new PositionTester(perpStorage, vaultStorage, mockOracle);
     positionTester02 = new PositionTester02(perpStorage);
-    globalMarketTester = new GlobalMarketTester(perpStorage);
+    globalMarketTester = new MarketTester(perpStorage);
 
     tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
     // deploy services

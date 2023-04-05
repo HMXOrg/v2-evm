@@ -172,21 +172,14 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     for (uint256 i = 0; i < _configStorage.getMarketConfigsLength(); ) {
       PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(i);
 
-      _vars.totalAccumFundingLong += _globalMarket.accumFundingLong;
-      _vars.totalAccumFundingShort += _globalMarket.accumFundingShort;
+      if (_globalMarket.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_globalMarket.accumFundingLong);
+
+      if (_globalMarket.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_globalMarket.accumFundingShort);
 
       unchecked {
         ++i;
       }
     }
-
-    if (_vars.totalAccumFundingLong < 0 && _vars.totalAccumFundingShort < 0)
-      revert ICrossMarginHandler_NoFundingFeeSurplus();
-
-    // Focus on positive funding accrued side
-    _vars.fundingFeeBookValue = _vars.totalAccumFundingLong > _vars.totalAccumFundingShort
-      ? uint256(_vars.totalAccumFundingLong)
-      : uint256(_vars.totalAccumFundingShort);
 
     // Calculate value of current Funding fee reserve
     _vars.tokenAssetId = _configStorage.tokenAssetIds(_stableToken);

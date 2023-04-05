@@ -13,44 +13,6 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
-  uint32 internal constant BPS = 1e4;
-  uint64 internal constant RATE_PRECISION = 1e18;
-
-  /**
-   * Structs
-   */
-
-  struct IncreaseCollateralVars {
-    VaultStorage vaultStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
-    uint256 unrealizedPnlToBeReceived;
-    uint256 fundingFeeToBeReceived;
-    uint256 payerBalance;
-    uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
-  }
-
-  struct DecreaseCollateralVars {
-    VaultStorage vaultStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
-    ConfigStorage.TradingConfig tradingConfig;
-    uint256 unrealizedPnlToBePaid;
-    uint256 tradingFeeToBePaid;
-    uint256 borrowingFeeToBePaid;
-    uint256 fundingFeeToBePaid;
-    uint256 liquidationFeeToBePaid;
-    uint256 payerBalance;
-    uint256 plpDebt;
-    uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
-  }
-
   /**
    * Events
    */
@@ -89,6 +51,49 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
 
+  /**
+   * Structs
+   */
+  struct IncreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    uint256 unrealizedPnlToBeReceived;
+    uint256 fundingFeeToBeReceived;
+    uint256 payerBalance;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  struct DecreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    ConfigStorage.TradingConfig tradingConfig;
+    uint256 unrealizedPnlToBePaid;
+    uint256 tradingFeeToBePaid;
+    uint256 borrowingFeeToBePaid;
+    uint256 fundingFeeToBePaid;
+    uint256 liquidationFeeToBePaid;
+    uint256 payerBalance;
+    uint256 plpDebt;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  /**
+   * Constants
+   */
+  uint32 internal constant BPS = 1e4;
+  uint64 internal constant RATE_PRECISION = 1e18;
+
+  /**
+   * States
+   */
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
@@ -109,20 +114,15 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   /**
    * Modifiers
    */
-
   // NOTE: Validate only whitelisted contract be able to call this function
   modifier onlyWhitelistedExecutor() {
     ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
     _;
   }
 
-  function reloadConfig() external nonReentrant onlyOwner {
-    // TODO: access control, sanity check, natspec
-    // TODO: discuss about this pattern
-
-    calculator = Calculator(ConfigStorage(configStorage).calculator());
-  }
-
+  /**
+   * Core Funtions
+   */
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
   function updateBorrowingRate(uint8 _assetClassIndex) external nonReentrant onlyWhitelistedExecutor {
@@ -254,6 +254,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _assetClassIndex,
       _marketIndex
     );
+  }
+
+  function reloadConfig() external nonReentrant onlyOwner {
+    calculator = Calculator(ConfigStorage(configStorage).calculator());
   }
 
   function _updateFeeStates(

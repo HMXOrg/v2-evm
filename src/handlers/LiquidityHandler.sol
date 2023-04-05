@@ -76,7 +76,6 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   /**
    * States
    */
-
   address public liquidityService; //liquidityService
   address public pyth; //pyth
 
@@ -121,7 +120,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   }
 
   /**
-   * Core Function
+   * Core Functions
    */
 
   /// @notice Create a new AddLiquidity order
@@ -362,10 +361,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   }
 
   /**
-   * Private
+   * Private Functions
    */
-
-  // 316145
 
   /// @notice refund order
   /// @dev this method has not be called directly

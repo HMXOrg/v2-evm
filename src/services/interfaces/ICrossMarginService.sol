@@ -12,16 +12,18 @@ interface ICrossMarginService {
   error ICrossMarginHandler_NoFundingFeeSurplus();
   error ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
 
+  /**
+   * States
+   */
   function calculator() external returns (address);
 
   function configStorage() external returns (address _configStorage);
 
   function vaultStorage() external returns (address _vaultStorage);
 
-  function setConfigStorage(address _configStorage) external;
-
-  function setVaultStorage(address _vaultStorage) external;
-
+  /**
+   * Functions
+   */
   function depositCollateral(address _primaryAccount, uint8 _subAccountId, address _token, uint256 _amount) external;
 
   function setCalculator(address _address) external;
@@ -35,4 +37,8 @@ interface ICrossMarginService {
   ) external;
 
   function withdrawFundingFeeSurplus(address _stableToken) external;
+
+  function setConfigStorage(address _configStorage) external;
+
+  function setVaultStorage(address _vaultStorage) external;
 }

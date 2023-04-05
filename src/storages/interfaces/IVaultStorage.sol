@@ -14,7 +14,6 @@ interface IVaultStorage {
   /**
    * Functions
    */
-
   function totalAmount(address _token) external returns (uint256);
 
   function plpLiquidityDebtUSDE30() external view returns (uint256);

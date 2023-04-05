@@ -27,15 +27,17 @@ interface ITradeService {
   error ITradeService_PositionSizeExceed();
 
   /**
-   * STRUCTS
+   * States
    */
-
   function configStorage() external view returns (address);
 
   function perpStorage() external view returns (address);
 
   function vaultStorage() external view returns (address);
 
+  /**
+   * Functions
+   */
   function reloadConfig() external;
 
   function increasePosition(

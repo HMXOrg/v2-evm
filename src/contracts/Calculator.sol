@@ -53,8 +53,10 @@ contract Calculator is Owned, ICalculator {
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
+    uint256 borrowingFeeDebt = VaultStorage(vaultStorage).globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
-    uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30;
+    uint256 lossDebt = VaultStorage(vaultStorage).globalLossDebt();
+    uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
     if (pnlE30 < 0) {
       aum += uint256(-pnlE30);

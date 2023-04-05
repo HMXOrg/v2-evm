@@ -172,10 +172,9 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     for (uint256 i = 0; i < _configStorage.getMarketConfigsLength(); ) {
       PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
-      if (_globalMarket.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_globalMarket.accumFundingLong);
+      if (_market.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
 
-      if (_globalMarket.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_globalMarket.accumFundingShort);
-
+      if (_market.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingShort);
 
       unchecked {
         ++i;

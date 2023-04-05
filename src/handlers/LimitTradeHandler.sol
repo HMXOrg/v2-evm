@@ -186,7 +186,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       sizeDelta: _sizeDelta,
       triggerPrice: _triggerPrice,
       acceptablePrice: _acceptablePrice,
-      triggerAboveThreshold: _triggerAboveThreshold,
+      triggerAboveThreshold: _triggerPrice == 0 ? true : _triggerAboveThreshold,
       executionFee: _executionFee,
       reduceOnly: _reduceOnly,
       tpToken: _tpToken
@@ -547,7 +547,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 _marketIndex,
     int256 _sizeDelta,
     bool _maximizePrice
-  ) private view returns (uint256 _currentPrice, bool _isPriceValid) {
+  ) private view {
     ValidatePositionOrderPriceVars memory vars;
 
     // Get price from Pyth
@@ -555,7 +555,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
     vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
 
-    (_currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (uint256 _currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),
@@ -565,7 +565,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     );
 
     if (_triggerAboveThreshold) {
-      if (_triggerPrice <= _currentPrice) {
+      if (_triggerPrice != 0 && _triggerPrice <= _currentPrice) {
         revert ILimitTradeHandler_TriggerPriceBelowCurrentPrice();
       }
     } else {
@@ -573,9 +573,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
         revert ILimitTradeHandler_TriggerPriceAboveCurrentPrice();
       }
     }
-
-    _isPriceValid = true;
-    return (_currentPrice, _isPriceValid);
   }
 
   /// @notice Transfer in ETH from user to be used as execution fee

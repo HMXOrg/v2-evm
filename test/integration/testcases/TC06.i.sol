@@ -169,8 +169,15 @@ contract TC06 is BaseIntTest_WithActions {
       bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
       // Expect Alice can't increase SHORT position because Equity < IMR
-      vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
-      marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, TP_TOKEN, priceData);
+      marketSell(
+        ALICE,
+        SUB_ACCOUNT_ID,
+        wethMarketIndex,
+        sellSizeE30,
+        TP_TOKEN,
+        priceData,
+        "ITradeService_InsufficientFreeCollateral()"
+      );
     }
 
     /**

@@ -89,8 +89,15 @@ contract TC22 is BaseIntTest_WithActions {
 
     // But Bob buy 4,000,000 USD
     // And Revert ITradeService_PositionSizeExceed
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionSizeExceed()"));
-    marketBuy(BOB, 0, wethMarketIndex, 4_000_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(
+      BOB,
+      0,
+      wethMarketIndex,
+      4_000_000 * 1e30,
+      address(wbtc),
+      updatePriceData,
+      "ITradeService_PositionSizeExceed()"
+    );
 
     // But Bob can sell WETH 8,000,000 USD
     marketSell(BOB, 0, wethMarketIndex, 8_000_000 * 1e30, address(wbtc), updatePriceData);
@@ -111,8 +118,15 @@ contract TC22 is BaseIntTest_WithActions {
 
     // When Carol sell WETH 3,000,000 USD
     // And Revert ITradeService_PositionSizeExceed
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionSizeExceed()"));
-    marketSell(CAROL, 0, wethMarketIndex, 3_000_000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(
+      CAROL,
+      0,
+      wethMarketIndex,
+      3_000_000 * 1e30,
+      address(wbtc),
+      updatePriceData,
+      "ITradeService_PositionSizeExceed()"
+    );
 
     // ### Scenario: Trader trade on Stock (APPLE)
     // When Alice sell APPLE 600,000 USD
@@ -151,7 +165,6 @@ contract TC22 is BaseIntTest_WithActions {
 
     // When Bob's buy APPLE 1 USD
     // And Revert ITradeService_PositionSizeExceed
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionSizeExceed()"));
-    marketBuy(BOB, 0, appleMarketIndex, 1 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(BOB, 0, appleMarketIndex, 1 * 1e30, address(wbtc), updatePriceData, "ITradeService_PositionSizeExceed()");
   }
 }

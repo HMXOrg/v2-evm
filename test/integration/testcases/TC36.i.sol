@@ -61,6 +61,7 @@ contract TC36 is BaseIntTest_WithActions {
 
     uint256 _pythGasFee = initialPriceFeedDatas.length;
     vm.deal(BOB, _pythGasFee);
+    vm.deal(BOB, 1 ether);
 
     marketBuy(BOB, 0, wbtcMarketIndex, 18_613_333 * 1e30, address(wbtc), initialPriceFeedDatas);
 
@@ -160,6 +161,7 @@ contract TC36 is BaseIntTest_WithActions {
     {
       _pythGasFee = initialPriceFeedDatas.length;
       vm.deal(BOB, _pythGasFee);
+      vm.deal(BOB, executionOrderFee);
       marketSell(BOB, 0, wbtcMarketIndex, 18_613_333 * 1e30, address(wbtc), initialPriceFeedDatas);
     }
 

@@ -72,8 +72,15 @@ contract TC11 is BaseIntTest_WithActions {
 
     // And Alice try to fully close APPLE position
     // Then Still Revert MarketDelisted
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    marketBuy(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketBuy(
+      ALICE,
+      0,
+      appleMarketIndex,
+      3_000 * 1e30,
+      address(0),
+      updatePriceData,
+      "ITradeService_MarketIsDelisted()"
+    );
 
     // When Alice try increase WETH position for 3000 USD
     marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
@@ -143,8 +150,7 @@ contract TC11 is BaseIntTest_WithActions {
     // ### Scenario: Traders try to trade on delist market again
     // When Bob try buy APPLE's market again
     // Then Revert MarketDelisted
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    marketBuy(BOB, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketBuy(BOB, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData, "ITradeService_MarketIsDelisted()");
 
     // ### Scenario: List new market and Trader could trade
     // When re-list APPLE's market with new ID

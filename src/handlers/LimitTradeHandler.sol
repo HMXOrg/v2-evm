@@ -557,7 +557,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     );
 
     if (_triggerAboveThreshold) {
-      if (_triggerPrice <= _currentPrice) {
+      if (_triggerPrice != 0 && _triggerPrice <= _currentPrice) {
         revert ILimitTradeHandler_TriggerPriceBelowCurrentPrice();
       }
     } else {

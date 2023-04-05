@@ -11,9 +11,12 @@ contract EcoPyth is Owned, IEcoPyth {
   error EcoPyth_ExpectZeroFee();
   error EcoPyth_OnlyUpdater();
   error EcoPyth_PriceFeedNotFound();
+  error EcoPyth_AssetHasAlreadyBeenDefined();
 
-  // mapping of our asset id to Pyth's price id
-  mapping(bytes32 => IEcoPythPriceInfo) public priceInfos;
+  // array of price data
+  uint112[65_536] public packedPriceInfos;
+  uint256 public packedPriceInfosLength;
+  mapping(bytes32 => uint256) public mapPriceIdToIndex;
 
   // whitelist mapping of price updater
   mapping(address => bool) public isUpdaters;
@@ -23,8 +26,13 @@ contract EcoPyth is Owned, IEcoPyth {
   event LogVaas(bytes32 _encodedVaas);
 
   // type(uint128).max is 128 bits of 1s
-  // shift the 1s by (128 - 64) to get (128 - 64) 0s followed by 64 1s
-  uint128 public constant BITMASK_64 = type(uint128).max >> (128 - 64);
+  // shift the 1s by (128 - n) to get (128 - n) 0s followed by n 1s
+  uint128 public constant BITMASK_64_OF_128 = type(uint128).max >> (128 - 64);
+  uint128 public constant BITMASK_48_OF_128 = type(uint128).max >> (128 - 48);
+  uint128 public constant BITMASK_16_OF_128 = type(uint128).max >> (128 - 16);
+
+  uint112 public constant BITMASK_64_OF_112 = type(uint112).max >> (112 - 64);
+  uint112 public constant BITMASK_48_OF_112 = type(uint112).max >> (112 - 48);
 
   /**
    * Modifiers
@@ -36,34 +44,24 @@ contract EcoPyth is Owned, IEcoPyth {
     _;
   }
 
-  constructor() {}
+  constructor() {
+    // Preoccupied index 0 as any of `mapPriceIdToIndex` returns default as 0
+    packedPriceInfosLength = 1;
+  }
 
-  /// @dev Updates price feeds for a set of price IDs with new price data. Only authorized accounts can call this function.
-  /// The function loops through each price ID in _priceIds, retrieves the corresponding _newPriceInfo by calling the
-  /// _parsePriceInfo internal function on the corresponding packed price data from _packedPriceDatas. If the _newPriceInfo
-  /// has a more recent timestamp than the existing price info for that ID, the function updates the priceInfos mapping for
-  /// that ID with the new price info. Finally, the function emits the LogVaas event with the given _encodedVaas message.
-  /// @param _priceIds An array of bytes32 price IDs that correspond to the price data being updated.
-  /// @param _packedPriceDatas An array of uint128 packed price data with information on the latest price updates for each price ID.
-  /// @param _encodedVaas The encoded Vaas message for the update.
-  function updatePriceFeeds(
-    bytes32[] calldata _priceIds,
-    uint128[] calldata _packedPriceDatas,
-    bytes32 _encodedVaas
-  ) external onlyUpdater {
+  function updatePriceFeeds(uint128[] calldata _updateDatas, bytes32 _encodedVaas) external onlyUpdater {
     // Loop through all of the price data
-    uint256 _len = _priceIds.length;
+    uint256 _len = _updateDatas.length;
     if (_len == 0) return;
 
     for (uint256 i = 0; i < _len; ) {
-      bytes32 _priceId = _priceIds[i];
-      IEcoPythPriceInfo memory _newPriceInfo = _parsePriceInfo(_packedPriceDatas[i]);
+      (uint16 _priceIndex, IEcoPythPriceInfo memory _newPriceInfo) = _parseUpdateData(_updateDatas[i]);
+      IEcoPythPriceInfo memory _currentPriceInfo = _parsePackedPriceInfo(packedPriceInfos[_priceIndex]);
 
       // Update the price if the new one is more fresh
-      uint256 _lastPublishTime = priceInfos[_priceId].publishTime;
-      if (_lastPublishTime < _newPriceInfo.publishTime) {
+      if (_currentPriceInfo.publishTime < _newPriceInfo.publishTime) {
         // Price information is more recent than the existing price information.
-        priceInfos[_priceId] = _newPriceInfo;
+        packedPriceInfos[_priceIndex] = _buildPackedPriceInfo(_newPriceInfo.publishTime, _newPriceInfo.price);
       }
 
       unchecked {
@@ -78,12 +76,12 @@ contract EcoPyth is Owned, IEcoPyth {
   /// @param id The unique identifier of the price feed.
   /// @return price The current price.
   function getPriceUnsafe(bytes32 id) external view returns (PythStructs.Price memory price) {
-    IEcoPythPriceInfo storage priceInfo = priceInfos[id];
-    if (priceInfo.publishTime == 0) revert EcoPyth_PriceFeedNotFound();
+    IEcoPythPriceInfo memory _priceInfo = _parsePackedPriceInfo(packedPriceInfos[mapPriceIdToIndex[id]]);
+    if (_priceInfo.publishTime == 0) revert EcoPyth_PriceFeedNotFound();
 
-    price.publishTime = priceInfo.publishTime;
+    price.publishTime = uint64(_priceInfo.publishTime);
     price.expo = -8;
-    price.price = priceInfo.price;
+    price.price = _priceInfo.price;
     price.conf = 0;
     return price;
   }
@@ -106,42 +104,71 @@ contract EcoPyth is Owned, IEcoPyth {
     emit LogSetUpdater(_account, _isActive);
   }
 
-  /// @dev Parses packed price data to an IEcoPythPriceInfo structure. Delegates to an internal function for parsing.
-  /// @param _packedPriceData Packaged price data to be parsed
-  /// @return _priceInfo Parsed price information in the IEcoPythPriceInfo structure
-  function parsePriceInfo(uint128 _packedPriceData) external pure returns (IEcoPythPriceInfo memory _priceInfo) {
-    return _parsePriceInfo(_packedPriceData);
+  function insertAssets(bytes32[] calldata _assetIds) external onlyOwner {
+    uint256 _len = _assetIds.length;
+    for (uint256 i = 0; i < _len; ) {
+      _insertAsset(_assetIds[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
-  /// @dev Internal function to parses packed price data to an IEcoPythPriceInfo structure.
-  /// The function takes in a packed price data and returns the decoded information in an IEcoPythPriceInfo structure.
-  /// The packed price data is first split into its constituent parts using bit shifting operations.
-  /// The publish time, expo, price and confidence values are extracted from the packed price data and assigned
-  /// to corresponding fields in _priceInfo structure. The resultant _priceInfo structure is then returned.
-  /// @param _packedPriceData Packaged price data to be parsed
-  /// @return _priceInfo Parsed price information in the IEcoPythPriceInfo structure
-  function _parsePriceInfo(uint128 _packedPriceData) internal pure returns (IEcoPythPriceInfo memory _priceInfo) {
-    _priceInfo.publishTime = uint64((_packedPriceData >> (128 - 64)) & BITMASK_64);
-    _priceInfo.price = int64(uint64((_packedPriceData >> (0)) & BITMASK_64));
+  function insertAsset(bytes32 _assetId) external onlyOwner {
+    _insertAsset(_assetId);
+  }
+
+  function _insertAsset(bytes32 _assetId) internal {
+    if (mapPriceIdToIndex[_assetId] != 0) revert EcoPyth_AssetHasAlreadyBeenDefined();
+    mapPriceIdToIndex[_assetId] = packedPriceInfosLength;
+    ++packedPriceInfosLength;
+  }
+
+  /// _______________uint128_____________________
+  /// __uint16__ ____uint48____ ______int64______
+  ///   index   |  publishTime |     price
+  function parseUpdateData(
+    uint128 _updateData
+  ) external pure returns (uint16 _priceIndex, IEcoPythPriceInfo memory _priceInfo) {
+    return _parseUpdateData(_updateData);
+  }
+
+  function _parseUpdateData(
+    uint128 _updateData
+  ) internal pure returns (uint16 _priceIndex, IEcoPythPriceInfo memory _priceInfo) {
+    _priceIndex = uint16((_updateData >> (128 - 16)) & BITMASK_16_OF_128);
+    _priceInfo.publishTime = uint48((_updateData >> (128 - 48 - 16)) & BITMASK_48_OF_128);
+    _priceInfo.price = int64(uint64((_updateData) & BITMASK_64_OF_128));
+    return (_priceIndex, _priceInfo);
+  }
+
+  /// __________uint112_______________
+  /// ____uint48____ ______int64______
+  ///   publishTime |     price
+  function parsePackedPriceInfo(uint112 _packedPriceInfo) external pure returns (IEcoPythPriceInfo memory _priceInfo) {
+    return _parsePackedPriceInfo(_packedPriceInfo);
+  }
+
+  function _parsePackedPriceInfo(uint112 _packedPriceInfo) internal pure returns (IEcoPythPriceInfo memory _priceInfo) {
+    _priceInfo.publishTime = uint48((_packedPriceInfo >> (112 - 48)) & BITMASK_48_OF_112);
+    _priceInfo.price = int64(uint64((_packedPriceInfo) & BITMASK_64_OF_112));
     return _priceInfo;
   }
 
-  /// @dev Function to construct a packed price data as a bytes32 integer.
-  /// @param _publishTime Timestamp when the price was published.
-  /// @param _price Price value represented as an int64.
-  /// @return A bytes32 integer that represents the packed price data.
-  function buildPackedPriceData(uint64 _publishTime, int64 _price) external pure returns (uint128) {
-    return _buildPackedPriceData(_publishTime, _price);
+  function buildUpdateData(uint16 _priceIndex, uint48 _publishTime, int64 _price) external pure returns (uint128) {
+    return _buildUpdateData(_priceIndex, _publishTime, _price);
   }
 
-  /// @dev Internal function to construct a packed price data as a bytes32 integer.
-  /// This function takes in the same four input parameters as the buildPackedPriceData function and returns a bytes32 integer that represents
-  /// the packed price data. This packed price data is constructed by concatenating the four input variables using the abi.encodePacked function,
-  /// which returns a bytes array that is then cast to bytes32.
-  /// @param _publishTime Timestamp when the price was published.
-  /// @param _price Price value represented as an int64.
-  /// @return A bytes32 integer that represents the packed price data.
-  function _buildPackedPriceData(uint64 _publishTime, int64 _price) internal pure returns (uint128) {
-    return uint128(bytes16(abi.encodePacked(_publishTime, _price)));
+  function _buildUpdateData(uint16 _priceIndex, uint48 _publishTime, int64 _price) internal pure returns (uint128) {
+    return uint128(bytes16(abi.encodePacked(_priceIndex, _publishTime, _price)));
+  }
+
+  function buildPackedPriceInfo(uint48 _publishTime, int64 _price) external pure returns (uint112) {
+    return _buildPackedPriceInfo(_publishTime, _price);
+  }
+
+  function _buildPackedPriceInfo(uint48 _publishTime, int64 _price) internal pure returns (uint112) {
+    return uint112(bytes14(abi.encodePacked(_publishTime, _price)));
   }
 }

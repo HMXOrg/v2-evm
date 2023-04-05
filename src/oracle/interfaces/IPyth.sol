@@ -21,8 +21,7 @@ struct IPythPriceInfo {
 
 // @notice avoid slither compilation bug by declaring struct outside of interface scope
 struct IEcoPythPriceInfo {
-  // 1/2 slot
-  uint64 publishTime;
+  uint48 publishTime;
   int64 price;
 }
 

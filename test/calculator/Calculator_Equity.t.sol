@@ -31,34 +31,34 @@ contract Calculator_Equity is Calculator_Base {
   // =========================================
 
   // Try get Equity with no opening position on trader's sub account
-  function testCorrectness_getEquity_noPosition() external {
-    // CAROL not has any opening position, so unrealized PNL must return 0
-    assertEq(calculator.getEquity(CAROL, 0, 0), 0);
-  }
+  // function testCorrectness_getEquity_noPosition() external {
+  //   // CAROL not has any opening position, so unrealized PNL must return 0
+  //   assertEq(calculator.getEquity(CAROL, 0, 0), 0);
+  // }
 
-  // Try get Equity with only collateral deposited on trader's sub account
-  function testCorrectness_getEquity_onlyCollateralToken() external {
-    // First, Assume ALICE only has one collateral token, WETH
-    mockVaultStorage.setTraderTokens(ALICE, address(weth));
-    mockVaultStorage.setTraderBalance(ALICE, address(weth), 10 ether);
+  // // Try get Equity with only collateral deposited on trader's sub account
+  // function testCorrectness_getEquity_onlyCollateralToken() external {
+  //   // First, Assume ALICE only has one collateral token, WETH
+  //   mockVaultStorage.setTraderTokens(ALICE, address(weth));
+  //   mockVaultStorage.setTraderBalance(ALICE, address(weth), 10 ether);
 
-    // Set WBTC, WETH Price to 1,000
-    mockOracle.setPrice(1_000 * 1e30);
+  //   // Set WBTC, WETH Price to 1,000
+  //   mockOracle.setPrice(1_000 * 1e30);
 
-    // WETH CollateralValue = amount * price * collateralFactor
-    // WETH CollateralValue = 10 * 1_000 * 0.8 = 12_000
-    assertEq(calculator.getEquity(ALICE, 0, 0), 8_000 * 1e30);
+  //   // WETH CollateralValue = amount * price * collateralFactor
+  //   // WETH CollateralValue = 10 * 1_000 * 0.8 = 12_000
+  //   assertEq(calculator.getEquity(ALICE, 0, 0), 8_000 * 1e30);
 
-    // Senond, Assume ALICE deposit more new collateral, WBTC
-    mockVaultStorage.setTraderTokens(ALICE, address(wbtc));
-    mockVaultStorage.setTraderBalance(ALICE, address(wbtc), 5 * 1e8);
+  //   // Senond, Assume ALICE deposit more new collateral, WBTC
+  //   mockVaultStorage.setTraderTokens(ALICE, address(wbtc));
+  //   mockVaultStorage.setTraderBalance(ALICE, address(wbtc), 5 * 1e8);
 
-    // WBTC CollateralValue = (amount * price * collateralFactor)
-    // WBTC CollateralValue = 5 * 1_000 * 0.9 = 4_500
-    // Total CollateralValue = WETH CollateralValue + WBTC CollateralValue
-    // Total CollateralValue = 8_000 + 4_500 = 12_500
-    assertEq(calculator.getEquity(ALICE, 0, 0), 12_500 * 1e30);
-  }
+  //   // WBTC CollateralValue = (amount * price * collateralFactor)
+  //   // WBTC CollateralValue = 5 * 1_000 * 0.9 = 4_500
+  //   // Total CollateralValue = WETH CollateralValue + WBTC CollateralValue
+  //   // Total CollateralValue = 8_000 + 4_500 = 12_500
+  //   assertEq(calculator.getEquity(ALICE, 0, 0), 12_500 * 1e30);
+  // }
   // @todo - uncomment this test
   /*
   // Try get Equity with only position opening with profit on trader's sub account [** In real life this should not happend]

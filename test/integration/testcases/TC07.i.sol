@@ -17,6 +17,7 @@ contract TC07 is BaseIntTest_WithActions {
     {
       bytes[] memory priceData = new bytes[](0);
       vm.deal(BOB, 1 ether); //deal with out of gas
+      vm.deal(ALICE, 1 ether); //deal with out of gas
       wbtc.mint(BOB, 10 * 1e8);
       addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceData, true);
     }
@@ -73,6 +74,7 @@ contract TC07 is BaseIntTest_WithActions {
       address tpToken = address(wbtc);
       bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
+
       marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
 
       // Alice's Equity must be upper IMR level

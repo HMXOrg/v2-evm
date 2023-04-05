@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
+
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { BaseIntTest_Assertions } from "@hmx-test/integration/98_BaseIntTest_Assertions.i.sol";
@@ -144,15 +145,36 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     address _tpToken,
     bytes[] memory _priceData
   ) internal {
+    marketBuy(_account, _subAccountId, _marketIndex, _buySizeE30, _tpToken, _priceData, "");
+  }
+
+  function marketBuy(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _buySizeE30,
+    address _tpToken,
+    bytes[] memory _priceData,
+    string memory signature
+  ) internal {
     vm.prank(_account);
-    marketTradeHandler.buy{ value: _priceData.length }(
-      _account,
+    limitTradeHandler.createOrder{ value: executionOrderFee }(
       _subAccountId,
       _marketIndex,
-      _buySizeE30,
-      _tpToken,
-      _priceData
+      int256(_buySizeE30),
+      0, // trigger price always be 0
+      type(uint256).max,
+      true, // trigger above threshold
+      executionOrderFee, // 0.0001 ether
+      false, // reduce only (allow flip or not)
+      _tpToken
     );
+
+    uint256 _orderIndex = limitTradeHandler.limitOrdersIndex(getSubAccount(_account, _subAccountId)) - 1;
+
+    if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
+
+    limitTradeHandler.executeOrder(_account, _subAccountId, _orderIndex, payable(FEEVER), _priceData);
   }
 
   /// @notice Helper function to call MarketHandler sell
@@ -170,15 +192,36 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     address _tpToken,
     bytes[] memory _priceData
   ) internal {
+    marketSell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData, "");
+  }
+
+  function marketSell(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sellSizeE30,
+    address _tpToken,
+    bytes[] memory _priceData,
+    string memory signature
+  ) internal {
     vm.prank(_account);
-    marketTradeHandler.sell{ value: _priceData.length }(
-      _account,
+    limitTradeHandler.createOrder{ value: executionOrderFee }(
       _subAccountId,
       _marketIndex,
-      _sellSizeE30,
-      _tpToken,
-      _priceData
+      -int256(_sellSizeE30),
+      0, // trigger price always be 0
+      type(uint256).max,
+      true, // trigger above threshold
+      executionOrderFee, // 0.0001 ether
+      false, // reduce only (allow flip or not)
+      _tpToken
     );
+
+    uint256 _orderIndex = limitTradeHandler.limitOrdersIndex(getSubAccount(_account, _subAccountId)) - 1;
+
+    if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
+
+    limitTradeHandler.executeOrder(_account, _subAccountId, _orderIndex, payable(FEEVER), _priceData);
   }
 
   function createLimitTradeOrder(
@@ -255,15 +298,20 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
 
   function getPositionId(
     address _primary,
-    uint8 _subAcountIndex,
+    uint8 _subAccountIndex,
     uint256 _marketIndex
   ) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(getSubAccount(_primary, _subAcountIndex), _marketIndex));
+    return keccak256(abi.encodePacked(getSubAccount(_primary, _subAccountIndex), _marketIndex));
   }
 
   function toggleMarket(uint256 _marketIndex) internal {
     IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(_marketIndex);
     _marketConfig.active = !_marketConfig.active;
     configStorage.setMarketConfig(_marketIndex, _marketConfig);
+  }
+
+  function isStringNotEmpty(string memory str) public pure returns (bool) {
+    bytes memory strBytes = bytes(str);
+    return strBytes.length > 0;
   }
 }

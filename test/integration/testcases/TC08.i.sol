@@ -72,8 +72,15 @@ contract TC08 is BaseIntTest_WithActions {
     // T4: Alice cannot close position
     vm.warp(block.timestamp + (1 * SECONDS));
     {
-      vm.expectRevert(abi.encodeWithSignature("ITradeService_SubAccountEquityIsUnderMMR()"));
-      marketBuy(ALICE, 0, wbtcMarketIndex, 50_000 * 1e30, address(usdt), updatePriceData);
+      marketBuy(
+        ALICE,
+        0,
+        wbtcMarketIndex,
+        50_000 * 1e30,
+        address(usdt),
+        updatePriceData,
+        "ITradeService_SubAccountEquityIsUnderMMR()"
+      );
     }
 
     // T5: Alice deposit collateral 100 USD (MMR < Equity < IMR) will not Lq

@@ -96,8 +96,15 @@ contract TC02 is BaseIntTest_WithActions {
     // T3: ALICE market buy weth with 200,000 USD (1000x) at price 20,000 USD
     // should revert InsufficientFreeCollateral
     // note: price has no changed
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
-    marketBuy(ALICE, 0, wethMarketIndex, 200_000 * 1e30, address(0), new bytes[](0));
+    marketBuy(
+      ALICE,
+      0,
+      wethMarketIndex,
+      200_000 * 1e30,
+      address(0),
+      new bytes[](0),
+      "ITradeService_InsufficientFreeCollateral()"
+    );
 
     // T4: ALICE market buy weth with 300 USD at price 20,000 USD
     //     Then Alice should has Long Position in WETH market
@@ -866,11 +873,25 @@ contract TC02 is BaseIntTest_WithActions {
       //       short position: size delta * (avg price - adaptive price) / avg price
       // unrealized PnL = 0
 
+      // Given Limit price   = 18000 USD
+      // And TVL
+      //  - BTC               = 0.99572425 * 17500 = 17425.174375
+      //  - Total             = 17425.174375 USD
+
+      // Max Funding rate     = 0.04%
+      // Max scale skew       = 300,000,000 USD
+      // Market skew          = 0
+      // new Market skew      = 0 + 3000 (long position)
+      // Premium before       = 0 / 300000000 = 0
+      // Premium after        = 3000 / 300000000 = 0.00001
+      // Premium median       = (0 + 0.00001) / 2 = 0.000005
+      // Adaptive price       = 18000 * (1 + 0.000005) = 18000.09
+
       assertPositionInfoOf({
         _subAccount: _bobSubAccount0,
         _marketIndex: wbtcMarketIndex,
         _positionSize: 3_000 * 1e30,
-        _avgPrice: 18000 * 1e30,
+        _avgPrice: 18000.09 * 1e30,
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0.000026718161223128 * 1e18,
@@ -939,7 +960,7 @@ contract TC02 is BaseIntTest_WithActions {
       assertMarketLongPosition({
         _marketIndex: wbtcMarketIndex,
         _positionSize: 3000 * 1e30,
-        _avgPrice: 18_000 * 1e30,
+        _avgPrice: 18_000.09 * 1e30,
         _str: "T12: "
       });
       // And Short side should invariant
@@ -1174,6 +1195,21 @@ contract TC02 is BaseIntTest_WithActions {
 
     // T16: Bob create limit order sell Btc for 3000 USD at price 21,000 USD
     // Order Index: 2
+
+    // Given Limit price   = 21000 USD
+    // And TVL
+    //  - BTC               = 0.99572425 * 17500 = 17425.174375
+    //  - Total             = 17425.174375 USD
+
+    // Max Funding rate     = 0.04%
+    // Max scale skew       = 300,000,000 USD
+    // Market skew          = 0
+    // new Market skew      = 0 + 3000 (long position)
+    // Premium before       = 0 / 300000000 = 0
+    // Premium after        = 3000 / 300000000 = 0.00001
+    // Premium median       = (0 + 0.00001) / 2 = 0.000005
+    // Adaptive price       = 21000 * (1 - 0.000005) = 20999.895
+
     createLimitTradeOrder({
       _account: BOB,
       _subAccountId: 0,
@@ -1276,7 +1312,7 @@ contract TC02 is BaseIntTest_WithActions {
         _subAccount: _bobSubAccount0,
         _marketIndex: wbtcMarketIndex,
         _positionSize: -3_000 * 1e30,
-        _avgPrice: 21_000 * 1e30,
+        _avgPrice: 20999.895 * 1e30,
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0.000120918598722811 * 1e18,
@@ -1350,7 +1386,7 @@ contract TC02 is BaseIntTest_WithActions {
       assertMarketShortPosition({
         _marketIndex: wbtcMarketIndex,
         _positionSize: 3000 * 1e30,
-        _avgPrice: 21_000 * 1e30,
+        _avgPrice: 20999.895 * 1e30,
         _str: "T17: "
       });
 

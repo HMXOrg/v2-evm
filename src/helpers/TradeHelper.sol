@@ -230,16 +230,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     _increaseCollateral(_subAccount, 0, _fundingFeeToBePaid);
 
     // decrease collateral
-    _decreaseCollateral(
-      _subAccount,
-      0,
-      _fundingFeeToBePaid,
-      _borrowingFeeToBePaid,
-      _tradingFeeToBePaid,
-      0,
-      address(0),
-      true
-    );
+    _decreaseCollateral(_subAccount, 0, _fundingFeeToBePaid, _borrowingFeeToBePaid, _tradingFeeToBePaid, 0, address(0));
   }
 
   function updateFeeStates(
@@ -498,8 +489,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint256 _borrowingFee,
     uint256 _tradingFee,
     uint256 _liquidationFee,
-    address _liquidator,
-    bool _isRevertOnError
+    address _liquidator
   ) external nonReentrant onlyWhitelistedExecutor {
     _decreaseCollateral(
       _subAccount,
@@ -508,8 +498,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _borrowingFee,
       _tradingFee,
       _liquidationFee,
-      _liquidator,
-      _isRevertOnError
+      _liquidator
     );
   }
 
@@ -520,8 +509,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint256 _borrowingFee,
     uint256 _tradingFee,
     uint256 _liquidationFee,
-    address _liquidator,
-    bool _isRevertOnError
+    address _liquidator
   ) internal {
     DecreaseCollateralVars memory _vars;
 
@@ -536,22 +524,31 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint256 _len = _collateralTokens.length;
     // check loss
     if (_unrealizedPnl < 0) {
-      _vars.unrealizedPnlToBePaid = uint256(-_unrealizedPnl);
-      emit LogSettleUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+      _vars.vaultStorage.addLossDebt(_subAccount, uint256(-_unrealizedPnl));
     }
+    _vars.unrealizedPnlToBePaid = _vars.vaultStorage.lossDebt(_subAccount);
+
     // check trading fee
-    _vars.tradingFeeToBePaid = _tradingFee;
-    emit LogSettleTradingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+    _vars.vaultStorage.addTradingFeeDebt(_subAccount, _tradingFee);
+    _vars.tradingFeeToBePaid = _vars.vaultStorage.tradingFeeDebt(_subAccount);
+
     // check borrowing fee
-    _vars.borrowingFeeToBePaid = _borrowingFee;
-    emit LogSettleBorrowingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+    _vars.vaultStorage.addBorrowingFeeDebt(_subAccount, _borrowingFee);
+    _vars.borrowingFeeToBePaid = _vars.vaultStorage.borrowingFeeDebt(_subAccount);
+
     // check funding fee
     if (_fundingFee > 0) {
-      _vars.fundingFeeToBePaid = uint256(_fundingFee);
-      emit LogSettleFundingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+      _vars.vaultStorage.addFundingFeeDebt(_subAccount, uint256(_fundingFee));
     }
+    _vars.fundingFeeToBePaid = _vars.vaultStorage.fundingFeeDebt(_subAccount);
+
     // check liquidation fee
     _vars.liquidationFeeToBePaid = _liquidationFee;
+
+    emit LogSettleUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+    emit LogSettleTradingFeeValue(_vars.subAccount, _vars.tradingFeeToBePaid);
+    emit LogSettleBorrowingFeeValue(_vars.subAccount, _vars.borrowingFeeToBePaid);
+    emit LogSettleFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBePaid);
     emit LogSettleLiquidationFeeValue(_vars.subAccount, _vars.liquidationFeeToBePaid);
 
     // loop for settle
@@ -582,13 +579,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
         ++i;
       }
     }
-
-    // If fee cannot be covered, revert.
-    // This shouldn't be happen unless the platform is suffering from bad debt
-    if (_isRevertOnError && _vars.tradingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
-    if (_isRevertOnError && _vars.borrowingFeeToBePaid > 0) revert ITradeHelper_BorrowingFeeCannotBeCovered();
-    if (_isRevertOnError && _vars.fundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
-    if (_isRevertOnError && _vars.unrealizedPnlToBePaid > 0) revert ITradeHelper_UnrealizedPnlCannotBeCovered();
   }
 
   function _decreaseCollateralWithUnrealizedPnlToPlp(DecreaseCollateralVars memory _vars) internal {
@@ -603,6 +593,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
       _vars.unrealizedPnlToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
+
+      _vars.vaultStorage.subLossDebt(_vars.subAccount, _repayValue);
 
       emit LogSettleUnRealizedPnlAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
     }
@@ -626,6 +618,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _vars.fundingFeeToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
 
+      _vars.vaultStorage.subFundingFeeDebt(_vars.subAccount, _repayValue);
+
       emit LogSettleFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
     }
   }
@@ -647,6 +641,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.fundingFeeToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
+
+      _vars.vaultStorage.subFundingFeeDebt(_vars.subAccount, _repayValue);
 
       emit LogSettleFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
     }
@@ -672,6 +668,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _vars.tradingFeeToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
 
+      _vars.vaultStorage.subTradingFeeDebt(_vars.subAccount, _repayValue);
+
       emit LogSettleTradingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _devFeeAmount, _protocolFeeAmount);
     }
   }
@@ -695,6 +693,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.borrowingFeeToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
+
+      _vars.vaultStorage.subBorrowingFeeDebt(_vars.subAccount, _repayValue);
 
       emit LogSettleBorrowingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _devFeeAmount, _plpFeeAmount);
     }

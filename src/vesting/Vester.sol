@@ -115,7 +115,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
     uint256 claimable = getUnlockAmount(item.amount, elapsedDuration);
 
     // If vest has ended, then mark this as claimed.
-    if (block.timestamp > item.endTime) items[itemIndex].hasClaimed = true;
+    items[itemIndex].hasClaimed = block.timestamp > item.endTime;
 
     items[itemIndex].lastClaimTime = block.timestamp;
 

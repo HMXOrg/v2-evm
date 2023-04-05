@@ -88,9 +88,16 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
       _borrowingFee,
       _tradingFee,
       ConfigStorage(configStorage).getLiquidationConfig().liquidationFeeUSDE30,
-      _liquidator,
-      false
+      _liquidator
     );
+
+    VaultStorage(vaultStorage).subLossDebt(_subAccount, VaultStorage(vaultStorage).lossDebt(_subAccount));
+    VaultStorage(vaultStorage).subTradingFeeDebt(_subAccount, VaultStorage(vaultStorage).tradingFeeDebt(_subAccount));
+    VaultStorage(vaultStorage).subBorrowingFeeDebt(
+      _subAccount,
+      VaultStorage(vaultStorage).borrowingFeeDebt(_subAccount)
+    );
+    VaultStorage(vaultStorage).subFundingFeeDebt(_subAccount, VaultStorage(vaultStorage).fundingFeeDebt(_subAccount));
   }
 
   struct LiquidatePositionVars {

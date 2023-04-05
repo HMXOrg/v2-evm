@@ -14,7 +14,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
   /**
    * Events
    */
-  event Vest(
+  event LogVest(
     address indexed owner,
     uint256 indexed itemIndex,
     uint256 amount,
@@ -22,8 +22,8 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
     uint256 endTime,
     uint256 penaltyAmount
   );
-  event Claim(address indexed owner, uint256 indexed itemIndex, uint256 vestedAmount, uint256 unusedAmount);
-  event Abort(address indexed owner, uint256 indexed itemIndex, uint256 returnAmount);
+  event LogClaim(address indexed owner, uint256 indexed itemIndex, uint256 vestedAmount, uint256 unusedAmount);
+  event LogAbort(address indexed owner, uint256 indexed itemIndex, uint256 returnAmount);
 
   /**
    * States
@@ -76,7 +76,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
       IERC20Upgradeable(esHMX).safeTransfer(unusedEsHmxDestination, penaltyAmount);
     }
 
-    emit Vest(item.owner, items.length - 1, amount, item.startTime, item.endTime, penaltyAmount);
+    emit LogVest(item.owner, items.length - 1, amount, item.startTime, item.endTime, penaltyAmount);
   }
 
   function claimFor(uint256 itemIndex) external nonReentrant {
@@ -109,7 +109,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
 
     IERC20Upgradeable(esHMX).safeTransfer(vestedEsHmxDestination, claimable);
 
-    emit Claim(item.owner, itemIndex, claimable, item.amount - claimable);
+    emit LogClaim(item.owner, itemIndex, claimable, item.amount - claimable);
   }
 
   function abort(uint256 itemIndex) external nonReentrant {
@@ -129,7 +129,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
 
     IERC20Upgradeable(esHMX).safeTransfer(msg.sender, returnAmount);
 
-    emit Abort(msg.sender, itemIndex, returnAmount);
+    emit LogAbort(msg.sender, itemIndex, returnAmount);
   }
 
   function getUnlockAmount(uint256 amount, uint256 duration) public pure returns (uint256) {

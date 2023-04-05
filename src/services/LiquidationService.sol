@@ -100,7 +100,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     Calculator calculator;
     OracleMiddleware oracle;
     IPerpStorage.Position position;
-    PerpStorage.GlobalMarket globalMarket;
+    PerpStorage.Market globalMarket;
     ConfigStorage.MarketConfig marketConfig;
     bytes32 positionId;
   }
@@ -148,7 +148,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
         fundingFee += _fundingFee;
       }
 
-      _vars.globalMarket = _vars.perpStorage.getGlobalMarketByIndex(_vars.position.marketIndex);
+      _vars.globalMarket = _vars.perpStorage.getMarketByIndex(_vars.position.marketIndex);
 
       (uint256 _adaptivePrice, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _vars.marketConfig.assetId,
@@ -191,7 +191,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
               -_realizedPnl
             );
 
-          _vars.perpStorage.updateGlobalMarketPrice(_vars.position.marketIndex, _isLong, _nextAvgPrice);
+          _vars.perpStorage.updateMarketPrice(_vars.position.marketIndex, _isLong, _nextAvgPrice);
         }
         _vars.perpStorage.decreasePositionSize(_vars.position.marketIndex, _isLong, absPositionSize);
         _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.reserveValueE30);

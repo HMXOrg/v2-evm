@@ -32,8 +32,8 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   mapping(bytes32 => Position) public positions;
   mapping(address => bytes32[]) public subAccountPositionIds;
   mapping(address => uint256) public subAccountBorrowingFee;
-  mapping(uint256 => GlobalMarket) public globalMarkets;
-  mapping(uint256 => GlobalAssetClass) public globalAssetClass;
+  mapping(uint256 => Market) public markets;
+  mapping(uint256 => AssetClass) public assetClasses;
   mapping(address => bool) public serviceExecutors;
 
   /**
@@ -41,23 +41,25 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
    */
 
   /// @notice Get all positions with a specific trader's sub-account
-  /// @param _trader The address of the trader whose positions to retrieve
-  /// @return traderPositions An array of Position objects representing the trader's positions
-  function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions) {
-    bytes32[] memory _positionIds = subAccountPositionIds[_trader];
-    if (_positionIds.length > 0) {
-      Position[] memory _traderPositions = new Position[](_positionIds.length);
-      uint256 _len = _positionIds.length;
-      for (uint256 i; i < _len; ) {
-        _traderPositions[i] = (positions[_positionIds[i]]);
+  /// @param _subAccount The address of the trader whose positions to retrieve
+  /// @return _subAccountPositions An array of Position objects representing the trader's positions
+  function getPositionBySubAccount(address _subAccount) external view returns (Position[] memory _subAccountPositions) {
+    bytes32[] memory _positionIds = subAccountPositionIds[_subAccount];
+    uint256 _len = _positionIds.length;
 
-        unchecked {
-          i++;
-        }
+    if (_len == 0) return _subAccountPositions;
+
+    _subAccountPositions = new Position[](_positionIds.length);
+
+    for (uint256 _i; _i < _len; ) {
+      _subAccountPositions[_i] = (positions[_positionIds[_i]]);
+
+      unchecked {
+        ++_i;
       }
-
-      return _traderPositions;
     }
+
+    return _subAccountPositions;
   }
 
   function getPositionIds(address _subAccount) external view returns (bytes32[] memory _positionIds) {
@@ -76,12 +78,12 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   // todo: add description
   // todo: support to update borrowing rate
   // todo: support to update funding rate
-  function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory) {
-    return globalMarkets[_marketIndex];
+  function getMarketByIndex(uint256 _marketIndex) external view returns (Market memory) {
+    return markets[_marketIndex];
   }
 
-  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory) {
-    return globalAssetClass[_assetClassIndex];
+  function getAssetClassByIndex(uint256 _assetClassIndex) external view returns (AssetClass memory) {
+    return assetClasses[_assetClassIndex];
   }
 
   function getGlobalState() external view returns (GlobalState memory) {
@@ -137,8 +139,8 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     uint256 _newPositionSize,
     uint256 _newAvgPrice
   ) external onlyWhitelistedExecutor {
-    globalMarkets[_marketIndex].longPositionSize = _newPositionSize;
-    globalMarkets[_marketIndex].longAvgPrice = _newAvgPrice;
+    markets[_marketIndex].longPositionSize = _newPositionSize;
+    markets[_marketIndex].longAvgPrice = _newAvgPrice;
   }
 
   // @todo - update funding rate
@@ -147,26 +149,20 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     uint256 _newPositionSize,
     uint256 _newAvgPrice
   ) external onlyWhitelistedExecutor {
-    globalMarkets[_marketIndex].shortPositionSize = _newPositionSize;
-    globalMarkets[_marketIndex].shortAvgPrice = _newAvgPrice;
+    markets[_marketIndex].shortPositionSize = _newPositionSize;
+    markets[_marketIndex].shortAvgPrice = _newAvgPrice;
   }
 
   function updateGlobalState(GlobalState memory _newGlobalState) external onlyWhitelistedExecutor {
     globalState = _newGlobalState;
   }
 
-  function updateGlobalAssetClass(
-    uint8 _assetClassIndex,
-    GlobalAssetClass memory _newAssetClass
-  ) external onlyWhitelistedExecutor {
-    globalAssetClass[_assetClassIndex] = _newAssetClass;
+  function updateAssetClass(uint8 _assetClassIndex, AssetClass memory _newAssetClass) external onlyWhitelistedExecutor {
+    assetClasses[_assetClassIndex] = _newAssetClass;
   }
 
-  function updateGlobalMarket(
-    uint256 _marketIndex,
-    GlobalMarket memory _globalMarket
-  ) external onlyWhitelistedExecutor {
-    globalMarkets[_marketIndex] = _globalMarket;
+  function updateMarket(uint256 _marketIndex, Market memory _market) external onlyWhitelistedExecutor {
+    markets[_marketIndex] = _market;
   }
 
   function increaseSubAccountBorrowingFee(address _subAccount, uint256 _borrowingFee) external onlyWhitelistedExecutor {
@@ -185,39 +181,35 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
 
   function increaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
     globalState.reserveValueE30 += _reserve;
-    globalAssetClass[_assetClassIndex].reserveValueE30 += _reserve;
+    assetClasses[_assetClassIndex].reserveValueE30 += _reserve;
   }
 
   function decreaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
     globalState.reserveValueE30 -= _reserve;
-    globalAssetClass[_assetClassIndex].reserveValueE30 -= _reserve;
+    assetClasses[_assetClassIndex].reserveValueE30 -= _reserve;
   }
 
   function increasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external onlyWhitelistedExecutor {
     if (_isLong) {
-      globalMarkets[_marketIndex].longPositionSize += _size;
+      markets[_marketIndex].longPositionSize += _size;
     } else {
-      globalMarkets[_marketIndex].shortPositionSize += _size;
+      markets[_marketIndex].shortPositionSize += _size;
     }
   }
 
   function decreasePositionSize(uint256 _marketIndex, bool _isLong, uint256 _size) external onlyWhitelistedExecutor {
     if (_isLong) {
-      globalMarkets[_marketIndex].longPositionSize -= _size;
+      markets[_marketIndex].longPositionSize -= _size;
     } else {
-      globalMarkets[_marketIndex].shortPositionSize -= _size;
+      markets[_marketIndex].shortPositionSize -= _size;
     }
   }
 
-  function updateGlobalMarketPrice(
-    uint256 _marketIndex,
-    bool _isLong,
-    uint256 _price
-  ) external onlyWhitelistedExecutor {
+  function updateMarketPrice(uint256 _marketIndex, bool _isLong, uint256 _price) external onlyWhitelistedExecutor {
     if (_isLong) {
-      globalMarkets[_marketIndex].longAvgPrice = _price;
+      markets[_marketIndex].longAvgPrice = _price;
     } else {
-      globalMarkets[_marketIndex].shortAvgPrice = _price;
+      markets[_marketIndex].shortAvgPrice = _price;
     }
   }
 }

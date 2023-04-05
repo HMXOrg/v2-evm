@@ -32,7 +32,7 @@ contract PositionTester is StdAssertions {
   bytes32 cachePositionId;
   IPerpStorage.Position cachePosition;
   // cache perp storage
-  IPerpStorage.GlobalMarket cacheMarketGlobal;
+  IPerpStorage.Market cacheMarket;
   IPerpStorage.GlobalState cacheGlobalState;
   // cache vault storage
   uint256 cachePlpTokenLiquidity;
@@ -49,7 +49,7 @@ contract PositionTester is StdAssertions {
     // @todo - this can access state directly
     cachePositionId = _positionId;
     cachePosition = perpStorage.getPositionById(_positionId);
-    cacheMarketGlobal = perpStorage.getGlobalMarketByIndex(cachePosition.marketIndex);
+    cacheMarket = perpStorage.getMarketByIndex(cachePosition.marketIndex);
     cacheGlobalState = perpStorage.getGlobalState();
 
     cachePlpTokenLiquidity = vaultStorage.plpLiquidity(_token);
@@ -120,31 +120,29 @@ contract PositionTester is StdAssertions {
     assertEq(_currentPosition.realizedPnl, _data.realizedPnl, "position realized pnl");
 
     // assert market global
-    IPerpStorage.GlobalMarket memory _currentMarketGlobal = perpStorage.getGlobalMarketByIndex(
-      _currentPosition.marketIndex
-    );
+    IPerpStorage.Market memory _currentMarketG = perpStorage.getMarketByIndex(_currentPosition.marketIndex);
 
     if (cachePosition.positionSizeE30 > 0) {
       // check global LONG position
       assertEq(
-        cacheMarketGlobal.longPositionSize - _currentMarketGlobal.longPositionSize,
+        cacheMarket.longPositionSize - _currentMarketG.longPositionSize,
         _data.decreasedPositionSize,
         "market long position size"
       );
-      assertEq(_currentMarketGlobal.longAvgPrice, _data.newLongGlobalAveragePrice, "global long average price");
+      assertEq(_currentMarketG.longAvgPrice, _data.newLongGlobalAveragePrice, "global long average price");
     } else {
       // check global SHORT position
       assertEq(
-        cacheMarketGlobal.shortPositionSize - _currentMarketGlobal.shortPositionSize,
+        cacheMarket.shortPositionSize - _currentMarketG.shortPositionSize,
         _data.decreasedPositionSize,
         "market short position size"
       );
-      assertEq(_currentMarketGlobal.shortAvgPrice, _data.newShortGlobalAveragePrice, "global short average price");
+      assertEq(_currentMarketG.shortAvgPrice, _data.newShortGlobalAveragePrice, "global short average price");
     }
 
     // todo: support on funding rate calculation story
-    // assertEq(cacheMarketGlobal.fundingRate - _currentMarketGlobal.fundingRate, 0);
-    // assertEq(_currentMarketGlobal.lastFundingTime, block.timestamp);
+    // assertEq(cacheMarket.fundingRate - _currentMarketG.fundingRate, 0);
+    // assertEq(_currentMarketG.lastFundingTime, block.timestamp);
 
     // assert global state
     IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();

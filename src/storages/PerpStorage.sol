@@ -22,7 +22,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   /**
    * Events
    */
-  event SetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
+  event LogSetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
 
   /**
    * States
@@ -39,7 +39,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   /**
    * Getter
    */
-
   /// @notice Get all positions with a specific trader's sub-account
   /// @param _subAccount The address of the trader whose positions to retrieve
   /// @return _subAccountPositions An array of Position objects representing the trader's positions
@@ -66,7 +65,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     return subAccountPositionIds[_subAccount];
   }
 
-  // @todo - add description
   function getPositionById(bytes32 _positionId) external view returns (Position memory) {
     return positions[_positionId];
   }
@@ -75,9 +73,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     return subAccountPositionIds[_subAccount].length;
   }
 
-  // todo: add description
-  // todo: support to update borrowing rate
-  // todo: support to update funding rate
   function getMarketByIndex(uint256 _marketIndex) external view returns (Market memory) {
     return markets[_marketIndex];
   }
@@ -91,12 +86,11 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   }
 
   /**
-   * Setter
+   * Setters
    */
-
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external onlyOwner nonReentrant {
     serviceExecutors[_executorAddress] = _isServiceExecutor;
-    emit SetServiceExecutor(_executorAddress, _isServiceExecutor);
+    emit LogSetServiceExecutor(_executorAddress, _isServiceExecutor);
   }
 
   function savePosition(
@@ -133,7 +127,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     }
   }
 
-  // @todo - update funding rate
   function updateGlobalLongMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
@@ -143,7 +136,6 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     markets[_marketIndex].longAvgPrice = _newAvgPrice;
   }
 
-  // @todo - update funding rate
   function updateGlobalShortMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,

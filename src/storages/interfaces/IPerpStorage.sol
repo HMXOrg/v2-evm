@@ -7,6 +7,9 @@ interface IPerpStorage {
    */
   error IPerpStorage_NotWhiteListed();
 
+  /**
+   * Structs
+   */
   struct GlobalState {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
   }
@@ -49,9 +52,8 @@ interface IPerpStorage {
   }
 
   /**
-   * Getter
+   * Functions
    */
-
   function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions);
 
   function getPositionById(bytes32 _positionId) external view returns (Position memory);

@@ -16,13 +16,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   using SafeERC20 for IERC20;
 
   /**
-   * Modifiers
-   */
-  modifier onlyWhitelistedExecutor() {
-    if (!serviceExecutors[msg.sender]) revert IVaultStorage_NotWhiteListed();
-    _;
-  }
-  /**
    * Events
    */
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
@@ -31,7 +24,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   /**
    * States
    */
-
   mapping(address => uint256) public totalAmount; //token => tokenAmount
   mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
   mapping(address => uint256) public protocolFees; // protocol fee in token unit
@@ -48,34 +40,27 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   mapping(address => bool) public serviceExecutors;
 
   /**
-   * VALIDATION
+   * Modifiers
+   */
+  modifier onlyWhitelistedExecutor() {
+    if (!serviceExecutors[msg.sender]) revert IVaultStorage_NotWhiteListed();
+    _;
+  }
+
+  /**
+   * Core Functions
    */
 
   function validateAddTraderToken(address _trader, address _token) external view {
     _validateAddTraderToken(_trader, _token);
   }
 
-  function _validateAddTraderToken(address _trader, address _token) internal view {
-    address[] storage traderToken = traderTokens[_trader];
-
-    for (uint256 i; i < traderToken.length; ) {
-      if (traderToken[i] == _token) revert IVaultStorage_TraderTokenAlreadyExists();
-      unchecked {
-        i++;
-      }
-    }
-  }
-
   function validateRemoveTraderToken(address _trader, address _token) external view {
     _validateRemoveTraderToken(_trader, _token);
   }
 
-  function _validateRemoveTraderToken(address _trader, address _token) internal view {
-    if (traderBalances[_trader][_token] != 0) revert IVaultStorage_TraderBalanceRemaining();
-  }
-
   /**
-   * GETTER
+   * Getters
    */
 
   function getTraderTokens(address _subAccount) external view returns (address[] memory) {
@@ -100,7 +85,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   }
 
   /**
-   * SETTER
+   * Setters
    */
 
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external nonReentrant onlyOwner {
@@ -141,35 +126,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   function removePLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
     if (plpLiquidity[_token] < _amount) revert IVaultStorage_PLPBalanceRemaining();
     plpLiquidity[_token] -= _amount;
-  }
-
-  function _addTraderToken(address _trader, address _token) internal {
-    _validateAddTraderToken(_trader, _token);
-    traderTokens[_trader].push(_token);
-  }
-
-  function _removeTraderToken(address _trader, address _token) internal {
-    _validateRemoveTraderToken(_trader, _token);
-
-    address[] storage traderToken = traderTokens[_trader];
-    uint256 tokenLen = traderToken.length;
-    uint256 lastTokenIndex = tokenLen - 1;
-
-    // find and deregister the token
-    for (uint256 i; i < tokenLen; ) {
-      if (traderToken[i] == _token) {
-        // delete the token by replacing it with the last one and then pop it from there
-        if (i != lastTokenIndex) {
-          traderToken[i] = traderToken[lastTokenIndex];
-        }
-        traderToken.pop();
-        break;
-      }
-
-      unchecked {
-        i++;
-      }
-    }
   }
 
   /// @notice increase sub-account collateral
@@ -380,5 +336,53 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
     // Add debt value on PLP
     plpLiquidityDebtUSDE30 += _fundingFeeValue;
+  }
+
+  /**
+   * Private
+   */
+
+  function _addTraderToken(address _trader, address _token) private {
+    _validateAddTraderToken(_trader, _token);
+    traderTokens[_trader].push(_token);
+  }
+
+  function _removeTraderToken(address _trader, address _token) private {
+    _validateRemoveTraderToken(_trader, _token);
+
+    address[] storage traderToken = traderTokens[_trader];
+    uint256 tokenLen = traderToken.length;
+    uint256 lastTokenIndex = tokenLen - 1;
+
+    // find and deregister the token
+    for (uint256 i; i < tokenLen; ) {
+      if (traderToken[i] == _token) {
+        // delete the token by replacing it with the last one and then pop it from there
+        if (i != lastTokenIndex) {
+          traderToken[i] = traderToken[lastTokenIndex];
+        }
+        traderToken.pop();
+        break;
+      }
+
+      unchecked {
+        i++;
+      }
+    }
+  }
+
+  function _validateRemoveTraderToken(address _trader, address _token) private view {
+    if (traderBalances[_trader][_token] != 0) revert IVaultStorage_TraderBalanceRemaining();
+  }
+
+  function _validateAddTraderToken(address _trader, address _token) private view {
+    address[] storage traderToken = traderTokens[_trader];
+
+    for (uint256 i; i < traderToken.length; ) {
+      if (traderToken[i] == _token) revert IVaultStorage_TraderTokenAlreadyExists();
+      unchecked {
+        i++;
+      }
+    }
   }
 }

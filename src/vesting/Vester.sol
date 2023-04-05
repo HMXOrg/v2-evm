@@ -28,8 +28,8 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
   /**
    * States
    */
-  address public esHMX;
-  address public hmx;
+  IERC20Upgradeable public esHMX;
+  IERC20Upgradeable public hmx;
 
   address public vestedEsHmxDestination;
   address public unusedEsHmxDestination;
@@ -44,8 +44,8 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
   ) external initializer {
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
-    esHMX = esHMXAddress;
-    hmx = hmxAddress;
+    esHMX = IERC20Upgradeable(esHMXAddress);
+    hmx = IERC20Upgradeable(hmxAddress);
     vestedEsHmxDestination = vestedEsHmxDestinationAddress;
     unusedEsHmxDestination = unusedEsHmxDestinationAddress;
   }
@@ -70,10 +70,10 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
 
     uint256 penaltyAmount = amount - item.totalUnlockedAmount;
 
-    IERC20Upgradeable(esHMX).safeTransferFrom(msg.sender, address(this), amount);
+    esHMX.safeTransferFrom(msg.sender, address(this), amount);
 
     if (penaltyAmount > 0) {
-      IERC20Upgradeable(esHMX).safeTransfer(unusedEsHmxDestination, penaltyAmount);
+      esHMX.safeTransfer(unusedEsHmxDestination, penaltyAmount);
     }
 
     emit LogVest(item.owner, items.length - 1, amount, item.startTime, item.endTime, penaltyAmount);
@@ -105,9 +105,9 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
 
     items[itemIndex].lastClaimTime = block.timestamp;
 
-    IERC20Upgradeable(hmx).safeTransfer(item.owner, claimable);
+    hmx.safeTransfer(item.owner, claimable);
 
-    IERC20Upgradeable(esHMX).safeTransfer(vestedEsHmxDestination, claimable);
+    esHMX.safeTransfer(vestedEsHmxDestination, claimable);
 
     emit LogClaim(item.owner, itemIndex, claimable, item.amount - claimable);
   }
@@ -127,7 +127,7 @@ contract Vester is ReentrancyGuardUpgradeable, IVester {
 
     items[itemIndex].hasAborted = true;
 
-    IERC20Upgradeable(esHMX).safeTransfer(msg.sender, returnAmount);
+    esHMX.safeTransfer(msg.sender, returnAmount);
 
     emit LogAbort(msg.sender, itemIndex, returnAmount);
   }

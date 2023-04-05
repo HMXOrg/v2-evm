@@ -89,13 +89,12 @@ contract PythAdapter is Owned, IPythAdapter {
   /// @dev To bypass the confidence check, the user can submit threshold = 1 ether
   /// @param _priceStruct The Pyth's price struct to convert.
   /// @param _confidenceThreshold The acceptable threshold confidence ratio. ex. _confidenceRatio = 0.01 ether means 1%
-  function _validateConfidence(PythStructs.Price memory _priceStruct, uint32 _confidenceThreshold) private view {
+  function _validateConfidence(PythStructs.Price memory _priceStruct, uint32 _confidenceThreshold) private pure {
     if (_priceStruct.price < 0) revert PythAdapter_BrokenPythPrice();
 
     // Revert if confidence ratio is too high
-    if (_priceStruct.conf * 1e6 > _confidenceThreshold * uint64(_priceStruct.price)) {
+    if (_priceStruct.conf * 1e6 > _confidenceThreshold * uint64(_priceStruct.price))
       revert PythAdapter_ConfidenceRatioTooHigh();
-    }
   }
 
   /// @notice Get the latest price of the given asset. Returned price is in 30 decimals.

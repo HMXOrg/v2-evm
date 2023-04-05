@@ -96,7 +96,6 @@ contract TC02 is BaseIntTest_WithActions {
     // T3: ALICE market buy weth with 200,000 USD (1000x) at price 20,000 USD
     // should revert InsufficientFreeCollateral
     // note: price has no changed
-    // vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
     marketBuy(
       ALICE,
       0,

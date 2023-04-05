@@ -20,6 +20,7 @@ contract SetConfig is ConfigJsonRepo {
     _setUpTradingConfig(configStorage);
     _setUpAssetClassConfigs(configStorage);
     _setUpLiquidationConfig(configStorage);
+    configStorage.setPnlFactor(0.8 * 10000);
 
     vm.stopBroadcast();
   }

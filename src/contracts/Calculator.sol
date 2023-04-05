@@ -53,8 +53,10 @@ contract Calculator is Owned, ICalculator {
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
+    uint256 borrowingFeeDebt = VaultStorage(vaultStorage).globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
-    uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30;
+    uint256 lossDebt = VaultStorage(vaultStorage).globalLossDebt();
+    uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
     if (pnlE30 < 0) {
       aum += uint256(-pnlE30);
@@ -461,6 +463,11 @@ contract Calculator is Owned, ICalculator {
     _equityValueE30 += _unrealizedPnlValueE30;
     _equityValueE30 -= _unrealizedFeeValueE30;
 
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).tradingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).borrowingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).fundingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).lossDebt(_subAccount));
+
     return _equityValueE30;
   }
 
@@ -539,7 +546,11 @@ contract Calculator is Owned, ICalculator {
           _var.position.avgEntryPriceE30,
           _var.position.lastIncreaseTimestamp
         );
+
         if (_var.isProfit) {
+          if (_var.delta >= _var.position.reserveValueE30) {
+            _var.delta = _var.position.reserveValueE30;
+          }
           _unrealizedPnlE30 += int256((pnlFactorBps * _var.delta) / BPS);
         } else {
           _unrealizedPnlE30 -= int256(_var.delta);

@@ -99,8 +99,11 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     address tpToken;
     uint256 limitPriceE30;
     uint256 oraclePrice;
+    uint256 tradingFee;
+    uint256 borrowingFee;
     int256 realizedPnl;
     int256 unrealizedPnl;
+    int256 fundingFee;
     // for SLOAD
     Calculator calculator;
     PerpStorage perpStorage;
@@ -701,11 +704,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // Update funding rate
     TradeHelper(tradeHelper).updateFundingRate(_marketIndex);
 
-    // Settle
-    // - trading fees
-    // - borrowing fees
-    // - funding fees
-    TradeHelper(tradeHelper).settleAllFees(
+    (_vars.tradingFee, _vars.borrowingFee, _vars.fundingFee) = TradeHelper(tradeHelper).updateFeeStates(
+      _vars.subAccount,
       _vars.position,
       _vars.positionSizeE30ToDecrease,
       _marketConfig.increasePositionFeeRateBPS,
@@ -835,17 +835,16 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // =======================================
     // | ------ settle profit & loss ------- |
     // =======================================
-    {
-      if (_vars.realizedPnl != 0) {
-        if (_vars.realizedPnl > 0) {
-          // profit, trader should receive take profit token = Profit in USD
-          _settleProfit(_vars.subAccount, _vars.tpToken, _vars.realizedPnl);
-        } else {
-          // loss
-          _settleLoss(_vars.subAccount, uint256(-_vars.realizedPnl));
-        }
-      }
-    }
+    TradeHelper(tradeHelper).increaseCollateral(_vars.subAccount, _vars.realizedPnl, _vars.fundingFee);
+    TradeHelper(tradeHelper).decreaseCollateral(
+      _vars.subAccount,
+      _vars.realizedPnl,
+      _vars.fundingFee,
+      _vars.borrowingFee,
+      _vars.tradingFee,
+      0,
+      address(0)
+    );
 
     // =========================================
     // | --------- post validation ----------- |

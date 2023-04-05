@@ -15,65 +15,7 @@ import { Owned } from "@hmx/base/Owned.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
-// @todo - refactor, deduplicate code
 contract TradeService is ReentrancyGuard, ITradeService, Owned {
-  uint32 internal constant BPS = 1e4;
-  uint64 internal constant RATE_PRECISION = 1e18;
-
-  /**
-   * Structs
-   */
-  struct IncreasePositionVars {
-    PerpStorage.Position position;
-    address subAccount;
-    bytes32 positionId;
-    bool isLong;
-    bool isNewPosition;
-    bool currentPositionIsLong;
-    uint256 adaptivePriceE30;
-    uint256 oraclePrice;
-    uint256 closePriceE30;
-    int256 unrealizedPnl;
-    int32 exponent;
-    OracleMiddleware oracle;
-  }
-  struct DecreasePositionVars {
-    PerpStorage.Position position;
-    address subAccount;
-    bytes32 positionId;
-    uint256 absPositionSizeE30;
-    uint256 closePrice;
-    bool isLongPosition;
-    uint256 positionSizeE30ToDecrease;
-    address tpToken;
-    uint256 limitPriceE30;
-    uint256 oraclePrice;
-    int256 realizedPnl;
-    int256 unrealizedPnl;
-    // for SLOAD
-    Calculator calculator;
-    PerpStorage perpStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
-  }
-
-  struct SettleLossVars {
-    uint256 price;
-    uint256 collateral;
-    uint256 collateralUsd;
-    uint256 collateralToRemove;
-    uint256 decimals;
-    bytes32 tokenAssetId;
-  }
-
-  /**
-   * Modifiers
-   */
-  modifier onlyWhitelistedExecutor() {
-    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
-    _;
-  }
-
   /**
    * Events
    */
@@ -129,6 +71,59 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   event LogSetTradeHelper(address indexed oldTradeHelper, address newTradeHelper);
 
   /**
+   * Structs
+   */
+  struct IncreasePositionVars {
+    PerpStorage.Position position;
+    address subAccount;
+    bytes32 positionId;
+    bool isLong;
+    bool isNewPosition;
+    bool currentPositionIsLong;
+    uint256 adaptivePriceE30;
+    uint256 oraclePrice;
+    uint256 closePriceE30;
+    int256 unrealizedPnl;
+    int32 exponent;
+    OracleMiddleware oracle;
+  }
+
+  struct DecreasePositionVars {
+    PerpStorage.Position position;
+    address subAccount;
+    bytes32 positionId;
+    uint256 absPositionSizeE30;
+    uint256 closePrice;
+    bool isLongPosition;
+    uint256 positionSizeE30ToDecrease;
+    address tpToken;
+    uint256 limitPriceE30;
+    uint256 oraclePrice;
+    int256 realizedPnl;
+    int256 unrealizedPnl;
+    // for SLOAD
+    Calculator calculator;
+    PerpStorage perpStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+  }
+
+  struct SettleLossVars {
+    uint256 price;
+    uint256 collateral;
+    uint256 collateralUsd;
+    uint256 collateralToRemove;
+    uint256 decimals;
+    bytes32 tokenAssetId;
+  }
+
+  /**
+   * Constants
+   */
+  uint32 private constant BPS = 1e4;
+  uint64 private constant RATE_PRECISION = 1e18;
+
+  /**
    * States
    */
   address public perpStorage;
@@ -150,13 +145,17 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     calculator = Calculator(ConfigStorage(_configStorage).calculator());
   }
 
-  function reloadConfig() external nonReentrant onlyOwner {
-    // TODO: access control, sanity check, natspec
-    // TODO: discuss about this pattern
-
-    calculator = Calculator(ConfigStorage(configStorage).calculator());
+  /**
+   * Modifiers
+   */
+  modifier onlyWhitelistedExecutor() {
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    _;
   }
 
+  /**
+   * Core Functions
+   */
   /// @notice This function increases a trader's position for a specific market by a given size delta.
   ///         The primary account and sub-account IDs are used to identify the trader's account.
   ///         The market index is used to identify the specific market.
@@ -272,7 +271,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
 
     // get the absolute value of the new size delta
-    uint256 _absSizeDelta = abs(_sizeDelta);
+    uint256 _absSizeDelta = _abs(_sizeDelta);
 
     // if the position size is zero, set the average price to the current price (new position)
     if (_vars.isNewPosition) {
@@ -303,7 +302,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
       // Get the delta and isProfit value from the _getDelta function
       (bool _isProfit, uint256 _delta) = calculator.getDelta(
-        abs(_vars.position.positionSizeE30),
+        _abs(_vars.position.positionSizeE30),
         _vars.isLong,
         _vars.closePriceE30,
         _vars.position.avgEntryPriceE30,
@@ -418,7 +417,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     );
   }
 
-  // @todo - rewrite description
   /// @notice decrease trader position
   /// @param _account - address
   /// @param _subAccountId - address
@@ -500,7 +498,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _decreasePositionHooks(_account, _subAccountId, _marketIndex, _positionSizeE30ToDecrease);
   }
 
-  // @todo - access control
   /// @notice force close trader position with maximum profit could take
   /// @param _account position owner
   /// @param _subAccountId sub-account id
@@ -605,6 +602,89 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     if (!_isMaxProfit) revert ITradeService_ReservedValueStillEnough();
   }
 
+  function reloadConfig() external nonReentrant onlyOwner {
+    calculator = Calculator(ConfigStorage(configStorage).calculator());
+  }
+
+  /**
+   * Setter
+   */
+  /// @notice Set new ConfigStorage contract address.
+  /// @param _configStorage New ConfigStorage contract address.
+  function setConfigStorage(address _configStorage) external nonReentrant onlyOwner {
+    if (_configStorage == address(0)) revert ITradeService_InvalidAddress();
+    emit LogSetConfigStorage(configStorage, _configStorage);
+    configStorage = _configStorage;
+
+    // Sanity check
+    ConfigStorage(_configStorage).calculator();
+  }
+
+  /// @notice Set new VaultStorage contract address.
+  /// @param _vaultStorage New VaultStorage contract address.
+  function setVaultStorage(address _vaultStorage) external nonReentrant onlyOwner {
+    if (_vaultStorage == address(0)) revert ITradeService_InvalidAddress();
+
+    emit LogSetVaultStorage(vaultStorage, _vaultStorage);
+    vaultStorage = _vaultStorage;
+
+    // Sanity check
+    VaultStorage(_vaultStorage).devFees(address(0));
+  }
+
+  /// @notice Set new PerpStorage contract address.
+  /// @param _perpStorage New PerpStorage contract address.
+  function setPerpStorage(address _perpStorage) external nonReentrant onlyOwner {
+    if (_perpStorage == address(0)) revert ITradeService_InvalidAddress();
+
+    emit LogSetPerpStorage(perpStorage, _perpStorage);
+    perpStorage = _perpStorage;
+
+    // Sanity check
+    PerpStorage(_perpStorage).getGlobalState();
+  }
+
+  /// @notice Set new Calculator contract address.
+  /// @param _calculator New Calculator contract address.
+  function setCalculator(address _calculator) external nonReentrant onlyOwner {
+    if (_calculator == address(0)) revert ITradeService_InvalidAddress();
+
+    emit LogSetCalculator(address(calculator), _calculator);
+    calculator = Calculator(_calculator);
+
+    // Sanity check
+    Calculator(_calculator).oracle();
+  }
+
+  /// @notice Set new TradeHelper contract address.
+  /// @param _tradeHelper New TradeHelper contract address.
+  function setTradeHelper(address _tradeHelper) external nonReentrant onlyOwner {
+    if (_tradeHelper == address(0)) revert ITradeService_InvalidAddress();
+
+    emit LogSetTradeHelper(tradeHelper, _tradeHelper);
+    tradeHelper = _tradeHelper;
+
+    // Sanity check
+    TradeHelper(_tradeHelper).perpStorage();
+  }
+
+  function _abs(int256 x) private pure returns (uint256) {
+    return uint256(x >= 0 ? x : -x);
+  }
+
+  /**
+   * Private
+   */
+
+  function _getSubAccount(address _primary, uint8 _subAccountId) private pure returns (address) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
+  }
+
+  function _getPositionId(address _account, uint256 _marketIndex) private pure returns (bytes32) {
+    return keccak256(abi.encodePacked(_account, _marketIndex));
+  }
+
   /// @notice decrease trader position
   /// @param _marketConfig - target market config
   /// @param _marketIndex - global market index
@@ -614,7 +694,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     ConfigStorage.MarketConfig memory _marketConfig,
     uint256 _marketIndex,
     DecreasePositionVars memory _vars
-  ) internal returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
+  ) private returns (bool _isMaxProfit, bool isProfit, uint256 delta) {
     // Update borrowing rate
     TradeHelper(tradeHelper).updateBorrowingRate(_marketConfig.assetClass);
 
@@ -791,14 +871,14 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /// @param _subAccount - Sub-account of trader
   /// @param _tpToken - token that trader want to take profit as collateral
   /// @param _realizedProfitE30 - trader profit in USD
-  function _settleProfit(address _subAccount, address _tpToken, int256 _realizedProfitE30) internal {
+  function _settleProfit(address _subAccount, address _tpToken, int256 _realizedProfitE30) private {
     TradeHelper(tradeHelper).settleTraderProfit(_subAccount, _tpToken, _realizedProfitE30);
   }
 
   /// @notice settle loss
   /// @param _subAccount - Sub-account of trader
   /// @param _debtUsd - Loss in USD
-  function _settleLoss(address _subAccount, uint256 _debtUsd) internal {
+  function _settleLoss(address _subAccount, uint256 _debtUsd) private {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
@@ -854,21 +934,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     }
   }
 
-  /**
-   * Internal functions
-   */
-
-  // @todo - add description
-  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address) {
-    if (_subAccountId > 255) revert();
-    return address(uint160(_primary) ^ uint160(_subAccountId));
-  }
-
-  // @todo - add description
-  function _getPositionId(address _account, uint256 _marketIndex) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(_account, _marketIndex));
-  }
-
   /// @notice Calculates new entry average price
   /// @param _market - buy / sell market's state before updated
   /// @param _maxSkewScale - max market skew scale from market config
@@ -887,7 +952,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     int256 _positionSize,
     int256 _sizeDelta,
     int256 _unrealizedPnl
-  ) internal pure returns (uint256 _newEntryAveragePrice) {
+  ) private pure returns (uint256 _newEntryAveragePrice) {
     if (_maxSkewScale == 0) return _oraclePrice;
 
     // premium before       = market skew - size delta / max scale skew
@@ -941,7 +1006,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /// @notice This function increases the reserve value
   /// @param _assetClassIndex The index of asset class.
   /// @param _reservedValue The amount by which to increase the reserve value.
-  function _increaseReserved(uint8 _assetClassIndex, uint256 _reservedValue) internal {
+  function _increaseReserved(uint8 _assetClassIndex, uint256 _reservedValue) private {
     // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
@@ -975,7 +1040,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /// @param _subAccount target sub account for health check
   /// @param _limitPriceE30 Price to be overwritten to a specified asset
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
-  function _subAccountHealthCheck(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) internal view {
+  function _subAccountHealthCheck(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) private view {
     // check sub account is healthy
     int256 _subAccountEquity = calculator.getEquity(_subAccount, _limitPriceE30, _limitAssetId);
 
@@ -992,7 +1057,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     uint256 _subAccountId,
     uint256 _marketIndex,
     uint256 _sizeDelta
-  ) internal {
+  ) private {
     address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
     for (uint256 i; i < _hooks.length; ) {
       ITradeServiceHook(_hooks[i]).onIncreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, "");
@@ -1007,7 +1072,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     uint256 _subAccountId,
     uint256 _marketIndex,
     uint256 _sizeDelta
-  ) internal {
+  ) private {
     address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
     for (uint256 i; i < _hooks.length; ) {
       ITradeServiceHook(_hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, "");
@@ -1015,74 +1080,5 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         ++i;
       }
     }
-  }
-
-  /**
-   * Maths
-   */
-  function abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
-  }
-
-  /**
-   * Setter
-   */
-  /// @notice Set new ConfigStorage contract address.
-  /// @param _configStorage New ConfigStorage contract address.
-  function setConfigStorage(address _configStorage) external nonReentrant onlyOwner {
-    if (_configStorage == address(0)) revert ITradeService_InvalidAddress();
-    emit LogSetConfigStorage(configStorage, _configStorage);
-    configStorage = _configStorage;
-
-    // Sanity check
-    ConfigStorage(_configStorage).calculator();
-  }
-
-  /// @notice Set new VaultStorage contract address.
-  /// @param _vaultStorage New VaultStorage contract address.
-  function setVaultStorage(address _vaultStorage) external nonReentrant onlyOwner {
-    if (_vaultStorage == address(0)) revert ITradeService_InvalidAddress();
-
-    emit LogSetVaultStorage(vaultStorage, _vaultStorage);
-    vaultStorage = _vaultStorage;
-
-    // Sanity check
-    VaultStorage(_vaultStorage).devFees(address(0));
-  }
-
-  /// @notice Set new PerpStorage contract address.
-  /// @param _perpStorage New PerpStorage contract address.
-  function setPerpStorage(address _perpStorage) external nonReentrant onlyOwner {
-    if (_perpStorage == address(0)) revert ITradeService_InvalidAddress();
-
-    emit LogSetPerpStorage(perpStorage, _perpStorage);
-    perpStorage = _perpStorage;
-
-    // Sanity check
-    PerpStorage(_perpStorage).getGlobalState();
-  }
-
-  /// @notice Set new Calculator contract address.
-  /// @param _calculator New Calculator contract address.
-  function setCalculator(address _calculator) external nonReentrant onlyOwner {
-    if (_calculator == address(0)) revert ITradeService_InvalidAddress();
-
-    emit LogSetCalculator(address(calculator), _calculator);
-    calculator = Calculator(_calculator);
-
-    // Sanity check
-    Calculator(_calculator).oracle();
-  }
-
-  /// @notice Set new TradeHelper contract address.
-  /// @param _tradeHelper New TradeHelper contract address.
-  function setTradeHelper(address _tradeHelper) external nonReentrant onlyOwner {
-    if (_tradeHelper == address(0)) revert ITradeService_InvalidAddress();
-
-    emit LogSetTradeHelper(tradeHelper, _tradeHelper);
-    tradeHelper = _tradeHelper;
-
-    // Sanity check
-    TradeHelper(_tradeHelper).perpStorage();
   }
 }

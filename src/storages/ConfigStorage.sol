@@ -82,9 +82,8 @@ contract ConfigStorage is IConfigStorage, Owned {
   constructor() {}
 
   /**
-   * Validation
+   * Validations
    */
-
   /// @notice Validate only whitelisted executor contracts to be able to call Service contracts.
   /// @param _contractAddress Service contract address to be executed.
   /// @param _executorAddress Executor contract address to call service contract.
@@ -103,7 +102,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   /**
-   * Getter
+   * Getters
    */
 
   function getTradingConfig() external view returns (TradingConfig memory) {

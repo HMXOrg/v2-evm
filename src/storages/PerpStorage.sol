@@ -37,7 +37,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   mapping(address => bool) public serviceExecutors;
 
   /**
-   * Getter
+   * Getters
    */
   /// @notice Get all positions with a specific trader's sub-account
   /// @param _subAccount The address of the trader whose positions to retrieve

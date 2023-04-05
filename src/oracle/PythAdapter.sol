@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { console2 } from "forge-std/console2.sol";
-
 import { Owned } from "@hmx/base/Owned.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
@@ -96,9 +94,6 @@ contract PythAdapter is Owned, IPythAdapter {
 
     // Revert if confidence ratio is too high
     if (_priceStruct.conf * 1e6 > _confidenceThreshold * uint64(_priceStruct.price)) {
-      console2.log("_priceStruct.conf", _priceStruct.conf * 1e6);
-      console2.log("_confidenceThreshold", _confidenceThreshold);
-      console2.log("uint64(_priceStruct.price)", uint64(_priceStruct.price));
       revert PythAdapter_ConfidenceRatioTooHigh();
     }
   }

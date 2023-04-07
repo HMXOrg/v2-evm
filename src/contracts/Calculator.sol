@@ -53,8 +53,10 @@ contract Calculator is Owned, ICalculator {
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
+    uint256 borrowingFeeDebt = VaultStorage(vaultStorage).globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
-    uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30;
+    uint256 lossDebt = VaultStorage(vaultStorage).globalLossDebt();
+    uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
     if (pnlE30 < 0) {
       aum += uint256(-pnlE30);
@@ -86,7 +88,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _plpTVL = _getPLPValueE30(false);
     uint256 _pendingBorrowingFee; // sum from each asset class
     for (uint256 i; i < _len; ) {
-      PerpStorage.GlobalAssetClass memory _assetClassState = _perpStorage.getGlobalAssetClassByIndex(i);
+      PerpStorage.AssetClass memory _assetClassState = _perpStorage.getAssetClassByIndex(i);
 
       uint256 _borrowingFeeE30 = (_getNextBorrowingRate(uint8(i), _plpTVL) * _assetClassState.reserveValueE30) /
         RATE_PRECISION;
@@ -175,33 +177,29 @@ contract Calculator is Owned, ICalculator {
 
     for (uint256 i = 0; i < _len; ) {
       ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(i);
-      PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(i);
+      PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
       (uint256 priceE30, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
-      if (_globalMarket.longAvgPrice > 0 && _globalMarket.longPositionSize > 0) {
-        if (priceE30 < _globalMarket.longAvgPrice) {
-          uint256 _absPNL = ((_globalMarket.longAvgPrice - priceE30) * _globalMarket.longPositionSize) /
-            _globalMarket.longAvgPrice;
+      if (_market.longAvgPrice > 0 && _market.longPositionSize > 0) {
+        if (priceE30 < _market.longAvgPrice) {
+          uint256 _absPNL = ((_market.longAvgPrice - priceE30) * _market.longPositionSize) / _market.longAvgPrice;
           _pnlLongE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((priceE30 - _globalMarket.longAvgPrice) * _globalMarket.longPositionSize) /
-            _globalMarket.longAvgPrice;
+          uint256 _absPNL = ((priceE30 - _market.longAvgPrice) * _market.longPositionSize) / _market.longAvgPrice;
           _pnlLongE30 = int256(_absPNL);
         }
       }
 
-      if (_globalMarket.shortAvgPrice > 0 && _globalMarket.shortPositionSize > 0) {
-        if (_globalMarket.shortAvgPrice < priceE30) {
-          uint256 _absPNL = ((priceE30 - _globalMarket.shortAvgPrice) * _globalMarket.shortPositionSize) /
-            _globalMarket.shortAvgPrice;
+      if (_market.shortAvgPrice > 0 && _market.shortPositionSize > 0) {
+        if (_market.shortAvgPrice < priceE30) {
+          uint256 _absPNL = ((priceE30 - _market.shortAvgPrice) * _market.shortPositionSize) / _market.shortAvgPrice;
 
           _pnlShortE30 = -int256(_absPNL);
         } else {
-          uint256 _absPNL = ((_globalMarket.shortAvgPrice - priceE30) * _globalMarket.shortPositionSize) /
-            _globalMarket.shortAvgPrice;
+          uint256 _absPNL = ((_market.shortAvgPrice - priceE30) * _market.shortPositionSize) / _market.shortAvgPrice;
           _pnlShortE30 = int256(_absPNL);
         }
       }
@@ -465,6 +463,11 @@ contract Calculator is Owned, ICalculator {
     _equityValueE30 += _unrealizedPnlValueE30;
     _equityValueE30 -= _unrealizedFeeValueE30;
 
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).tradingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).borrowingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).fundingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(VaultStorage(vaultStorage).lossDebt(_subAccount));
+
     return _equityValueE30;
   }
 
@@ -502,7 +505,7 @@ contract Calculator is Owned, ICalculator {
     PerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
 
     ConfigStorage.MarketConfig memory _marketConfig;
-    PerpStorage.GlobalMarket memory _globalMarket;
+    PerpStorage.Market memory _market;
     uint256 pnlFactorBps = ConfigStorage(configStorage).pnlFactorBPS();
     uint256 liquidationFee = ConfigStorage(configStorage).getLiquidationConfig().liquidationFeeUSDE30;
 
@@ -517,7 +520,7 @@ contract Calculator is Owned, ICalculator {
 
       // Get market config according to opening position
       _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_var.position.marketIndex);
-      _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_var.position.marketIndex);
+      _market = PerpStorage(perpStorage).getMarketByIndex(_var.position.marketIndex);
 
       // Check to overwrite price
       if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
@@ -527,9 +530,10 @@ contract Calculator is Owned, ICalculator {
         (_var.priceE30, , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price
-          (int(_globalMarket.longPositionSize) - int(_globalMarket.shortPositionSize)),
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           -_var.position.positionSizeE30,
-          _marketConfig.fundingRate.maxSkewScaleUSD
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          0
         );
       }
 
@@ -542,7 +546,11 @@ contract Calculator is Owned, ICalculator {
           _var.position.avgEntryPriceE30,
           _var.position.lastIncreaseTimestamp
         );
+
         if (_var.isProfit) {
+          if (_var.delta >= _var.position.reserveValueE30) {
+            _var.delta = _var.position.reserveValueE30;
+          }
           _unrealizedPnlE30 += int256((pnlFactorBps * _var.delta) / BPS);
         } else {
           _unrealizedPnlE30 -= int256(_var.delta);
@@ -553,14 +561,14 @@ contract Calculator is Owned, ICalculator {
         {
           // Calculate borrowing fee
           uint256 _plpTVL = _getPLPValueE30(false);
-          PerpStorage.GlobalAssetClass memory _globalAssetClass = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
+          PerpStorage.AssetClass memory _assetClass = PerpStorage(perpStorage).getAssetClassByIndex(
             _marketConfig.assetClass
           );
           uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);
           _unrealizedFeeE30 += int256(
             _getBorrowingFee(
               _var.position.reserveValueE30,
-              _globalAssetClass.sumBorrowingRate + _nextBorrowingRate,
+              _assetClass.sumBorrowingRate + _nextBorrowingRate,
               _var.position.entryBorrowingRate
             )
           );
@@ -568,7 +576,7 @@ contract Calculator is Owned, ICalculator {
         {
           // Calculate funding fee
           int256 nextFundingRate = _getNextFundingRate(_var.position.marketIndex);
-          int256 fundingRate = _globalMarket.currentFundingRate + nextFundingRate;
+          int256 fundingRate = _market.currentFundingRate + nextFundingRate;
           _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
         }
         // Calculate trading fee
@@ -858,7 +866,7 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
-    PerpStorage.GlobalMarket memory globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return 0;
     // Get funding interval
     vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
@@ -895,9 +903,9 @@ contract Calculator is Owned, ICalculator {
     if (_size == 0) return 0;
     uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
 
-    PerpStorage.GlobalMarket memory _globalMarket = PerpStorage(perpStorage).getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory _market = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
 
-    return _getFundingFee(_isLong, absSize, _globalMarket.currentFundingRate, _entryFundingRate);
+    return _getFundingFee(_isLong, absSize, _market.currentFundingRate, _entryFundingRate);
   }
 
   function _getFundingFee(
@@ -939,9 +947,7 @@ contract Calculator is Owned, ICalculator {
     uint256 _entryBorrowingRate
   ) external view returns (uint256 borrowingFee) {
     // Get the global asset class.
-    PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
-      _assetClassIndex
-    );
+    PerpStorage.AssetClass memory _assetClassState = PerpStorage(perpStorage).getAssetClassByIndex(_assetClassIndex);
     // // Calculate borrowing fee.
     return _getBorrowingFee(_reservedValue, _assetClassState.sumBorrowingRate, _entryBorrowingRate);
   }
@@ -979,9 +985,7 @@ contract Calculator is Owned, ICalculator {
     ConfigStorage.AssetClassConfig memory _assetClassConfig = _configStorage.getAssetClassConfigByIndex(
       _assetClassIndex
     );
-    PerpStorage.GlobalAssetClass memory _assetClassState = PerpStorage(perpStorage).getGlobalAssetClassByIndex(
-      _assetClassIndex
-    );
+    PerpStorage.AssetClass memory _assetClassState = PerpStorage(perpStorage).getAssetClassByIndex(_assetClassIndex);
     // If block.timestamp not pass the next funding time, return 0.
     if (_assetClassState.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
 

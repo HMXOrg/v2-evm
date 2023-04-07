@@ -55,6 +55,7 @@ contract TC25 is BaseIntTest_WithActions {
     // Long BTC
     // Short ETH
     // LONG JPY
+    vm.deal(BOB, 1 ether);
     marketBuy(BOB, 0, wbtcMarketIndex, 100_000 * 1e30, address(wbtc), initialPriceFeedDatas);
     marketBuy(BOB, 0, jpyMarketIndex, 100_000 * 1e30, address(usdc), initialPriceFeedDatas);
     marketSell(BOB, 0, wethMarketIndex, 100_000 * 1e30, address(usdc), initialPriceFeedDatas);

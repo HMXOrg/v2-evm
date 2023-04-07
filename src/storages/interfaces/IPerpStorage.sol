@@ -7,11 +7,14 @@ interface IPerpStorage {
    */
   error IPerpStorage_NotWhiteListed();
 
+  /**
+   * Structs
+   */
   struct GlobalState {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
   }
 
-  struct GlobalAssetClass {
+  struct AssetClass {
     uint256 reserveValueE30; // accumulative of reserve value from all opening positions
     uint256 sumBorrowingRate;
     uint256 lastBorrowingTime;
@@ -20,7 +23,7 @@ interface IPerpStorage {
   }
 
   // mapping _marketIndex => globalPosition;
-  struct GlobalMarket {
+  struct Market {
     // LONG position
     uint256 longPositionSize;
     uint256 longAvgPrice;
@@ -49,16 +52,15 @@ interface IPerpStorage {
   }
 
   /**
-   * Getter
+   * Functions
    */
-
   function getPositionBySubAccount(address _trader) external view returns (Position[] memory traderPositions);
 
   function getPositionById(bytes32 _positionId) external view returns (Position memory);
 
-  function getGlobalMarketByIndex(uint256 _marketIndex) external view returns (GlobalMarket memory);
+  function getMarketByIndex(uint256 _marketIndex) external view returns (Market memory);
 
-  function getGlobalAssetClassByIndex(uint256 _assetClassIndex) external view returns (GlobalAssetClass memory);
+  function getAssetClassByIndex(uint256 _assetClassIndex) external view returns (AssetClass memory);
 
   function getGlobalState() external view returns (GlobalState memory);
 
@@ -74,9 +76,9 @@ interface IPerpStorage {
 
   function removePositionFromSubAccount(address _subAccount, bytes32 _positionId) external;
 
-  function updateGlobalAssetClass(uint8 _assetClassIndex, GlobalAssetClass memory _newAssetClass) external;
+  function updateAssetClass(uint8 _assetClassIndex, AssetClass memory _newAssetClass) external;
 
-  function updateGlobalMarket(uint256 _marketIndex, GlobalMarket memory _globalMarket) external;
+  function updateMarket(uint256 _marketIndex, Market memory _market) external;
 
   function getPositionIds(address _subAccount) external returns (bytes32[] memory _positionIds);
 

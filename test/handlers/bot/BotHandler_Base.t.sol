@@ -14,7 +14,7 @@ import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 
 import { PositionTester } from "../../testers/PositionTester.sol";
 import { PositionTester02 } from "../../testers/PositionTester02.sol";
-import { GlobalMarketTester } from "../../testers/GlobalMarketTester.sol";
+import { MarketTester } from "../../testers/MarketTester.sol";
 
 contract BotHandler_Base is BaseTest {
   ITradeHelper tradeHelper;
@@ -23,7 +23,7 @@ contract BotHandler_Base is BaseTest {
 
   PositionTester positionTester;
   PositionTester02 positionTester02;
-  GlobalMarketTester globalMarketTester;
+  MarketTester globalMarketTester;
 
   IBotHandler botHandler;
   bytes[] prices;
@@ -35,7 +35,7 @@ contract BotHandler_Base is BaseTest {
     configStorage.setCalculator(address(mockCalculator));
     positionTester = new PositionTester(perpStorage, vaultStorage, mockOracle);
     positionTester02 = new PositionTester02(perpStorage);
-    globalMarketTester = new GlobalMarketTester(perpStorage);
+    globalMarketTester = new MarketTester(perpStorage);
 
     tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
 

@@ -239,6 +239,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     // add market config
     IConfigStorage.MarketConfig memory _ethConfig = IConfigStorage.MarketConfig({
       assetId: wethAssetId,
+      maxLongPositionSize: 10_000_000 * 1e30,
+      maxShortPositionSize: 10_000_000 * 1e30,
       assetClass: 0,
       maxProfitRateBPS: 9 * 1e4,
       minLeverageBPS: 1 * 1e4,
@@ -253,6 +255,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
       assetId: wbtcAssetId,
+      maxLongPositionSize: 10_000_000 * 1e30,
+      maxShortPositionSize: 10_000_000 * 1e30,
       assetClass: 0,
       maxProfitRateBPS: 9 * 1e4,
       minLeverageBPS: 1 * 1e4,

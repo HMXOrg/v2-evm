@@ -174,6 +174,12 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     return _newDatas;
   }
 
+  function updatePriceFeeds(bytes[] memory _priceData) internal {
+    uint256 fee = pyth.getUpdateFee(_priceData);
+    vm.deal(address(this), fee);
+    pyth.updatePriceFeeds{ value: fee }(_priceData);
+  }
+
   function _createPriceFeedUpdateData(
     bytes32 _assetId,
     int64 _price,

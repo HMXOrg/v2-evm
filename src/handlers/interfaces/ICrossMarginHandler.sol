@@ -9,6 +9,9 @@ interface ICrossMarginHandler {
   error ICrossMarginHandler_MismatchMsgValue();
   error ICrossMarginHandler_InCorrectValueTransfer();
 
+  /**
+   * Functions
+   */
   function depositCollateral(uint8 _subAccountId, address _token, uint256 _amount, bool _shouldWrap) external payable;
 
   function withdrawCollateral(

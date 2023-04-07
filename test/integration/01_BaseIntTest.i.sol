@@ -54,7 +54,7 @@ import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { CrossMarginTester } from "@hmx-test/testers/CrossMarginTester.sol";
 import { LimitOrderTester } from "@hmx-test/testers/LimitOrderTester.sol";
 import { PositionTester } from "@hmx-test/testers/PositionTester.sol";
-import { GlobalMarketTester } from "@hmx-test/testers/GlobalMarketTester.sol";
+import { MarketTester } from "@hmx-test/testers/MarketTester.sol";
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
@@ -119,7 +119,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   /* Tester */
 
   CrossMarginTester crossMarginTester;
-  GlobalMarketTester globalMarketTester;
+  MarketTester globalMarketTester;
   LimitOrderTester limitOrderTester;
   LiquidityTester liquidityTester;
   PositionTester positionTester;
@@ -139,6 +139,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     /* DEPLOY PART */
     // deploy MOCK weth
     weth = IWNative(new MockWNative());
+    vm.label(address(weth), "WETH");
 
     pyth = new MockPyth(60, 1);
 
@@ -166,6 +167,12 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
+
+    // labels
+    vm.label(address(wbtc), "WBTC");
+    vm.label(address(dai), "DAI");
+    vm.label(address(usdc), "USDC");
+    vm.label(address(usdt), "USDT");
 
     // deploy calculator
     calculator = Deployer.deployCalculator(
@@ -219,7 +226,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     // testers
 
     crossMarginTester = new CrossMarginTester(vaultStorage, perpStorage, address(crossMarginHandler));
-    globalMarketTester = new GlobalMarketTester(perpStorage);
+    globalMarketTester = new MarketTester(perpStorage);
     limitOrderTester = new LimitOrderTester(limitTradeHandler);
     liquidityTester = new LiquidityTester(plpV2, vaultStorage, perpStorage, FEEVER);
     positionTester = new PositionTester(perpStorage, vaultStorage, oracleMiddleWare);
@@ -247,7 +254,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       // Set whitelists for executors
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
       configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
-      configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
+      configStorage.setServiceExecutor(address(tradeHelper), address(liquidationService), true);
+      configStorage.setServiceExecutor(address(tradeHelper), address(tradeService), true);
 
       configStorage.setWeth(address(weth));
       configStorage.setPLP(address(plpV2));

@@ -23,6 +23,14 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     actualFunction[keccak256(_funcName)] = true;
   }
 
+  function getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) public view override returns (uint256) {
+    if (actualFunction[keccak256("getTradingFee")]) {
+      return c.getTradingFee(_size, _baseFeeRateBPS);
+    } else {
+      return super.getTradingFee(_size, _baseFeeRateBPS);
+    }
+  }
+
   function getFundingFee(
     uint256 _marketIndex,
     bool _isLong,
@@ -67,29 +75,31 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
-  function calculateShortAveragePrice(
-    PerpStorage.GlobalMarket memory _market,
-    uint256 _currentPrice,
-    int256 _positionSizeDelta,
-    int256 _realizedPositionPnl
-  ) public view override returns (uint256 _nextAveragePrice) {
-    if (actualFunction[keccak256("calculateShortAveragePrice")]) {
-      return c.calculateShortAveragePrice(_market, _currentPrice, _positionSizeDelta, _realizedPositionPnl);
+  function calculateMarketAveragePrice(
+    int256 _marketPositionSize,
+    uint256 _marketAveragePrice,
+    int256 _sizeDelta,
+    uint256 _positionClosePrice,
+    int256 _positionRealizedPnl
+  ) public view override returns (uint256 _newAvaragePrice) {
+    if (actualFunction[keccak256("calculateMarketAveragePrice")]) {
+      return
+        c.calculateMarketAveragePrice(
+          _marketPositionSize,
+          _marketAveragePrice,
+          _sizeDelta,
+          _positionClosePrice,
+          _positionRealizedPnl
+        );
     } else {
-      return super.calculateShortAveragePrice(_market, _currentPrice, _positionSizeDelta, _realizedPositionPnl);
-    }
-  }
-
-  function calculateLongAveragePrice(
-    PerpStorage.GlobalMarket memory _market,
-    uint256 _currentPrice,
-    int256 _positionSizeDelta,
-    int256 _realizedPositionPnl
-  ) public view override returns (uint256 _nextAveragePrice) {
-    if (actualFunction[keccak256("calculateLongAveragePrice")]) {
-      return c.calculateLongAveragePrice(_market, _currentPrice, _positionSizeDelta, _realizedPositionPnl);
-    } else {
-      return super.calculateLongAveragePrice(_market, _currentPrice, _positionSizeDelta, _realizedPositionPnl);
+      return
+        super.calculateMarketAveragePrice(
+          _marketPositionSize,
+          _marketAveragePrice,
+          _sizeDelta,
+          _positionClosePrice,
+          _positionRealizedPnl
+        );
     }
   }
 

@@ -14,7 +14,6 @@ interface IVaultStorage {
   /**
    * Functions
    */
-
   function totalAmount(address _token) external returns (uint256);
 
   function plpLiquidityDebtUSDE30() external view returns (uint256);
@@ -50,8 +49,6 @@ interface IVaultStorage {
   function addPlpLiquidityDebtUSDE30(uint256 _value) external;
 
   function removePlpLiquidityDebtUSDE30(uint256 _value) external;
-
-  function pullPLPLiquidity(address _token) external view returns (uint256);
 
   function increaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
 

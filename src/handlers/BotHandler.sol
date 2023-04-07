@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+// base
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // interfaces
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
@@ -18,39 +21,27 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 // @todo - integrate with BotHandler in another PRs
 contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
+  using SafeERC20 for IERC20;
+
   /**
    * Events
    */
-  event LogTakeMaxProfit(address indexed _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken);
-  event LogDeleverage(address indexed _account, uint8 _subAccountId, uint256 _marketIndex, address _tpToken);
+  event LogTakeMaxProfit(address indexed account, uint8 subAccountId, uint256 marketIndex, address tpToken);
+  event LogDeleverage(address indexed account, uint8 subAccountId, uint256 marketIndex, address tpToken);
   event LogCloseDelistedMarketPosition(
-    address indexed _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    address _tpToken
+    address indexed account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    address tpToken
   );
-  event LogLiquidate(address _subAccount);
+  event LogLiquidate(address subAccount);
+  event LogInjectTokenToPlpLiquidity(address indexed account, address token, uint256 amount);
+  event LogInjectTokenToFundingFeeReserve(address indexed account, address token, uint256 amount);
 
-  event LogSetTradeService(address _oldTradeService, address _newTradeService);
-  event LogSetPositionManager(address _address, bool _allowed);
-  event LogSetLiquidationService(address _oldLiquidationService, address _newLiquidationService);
-  event LogSetPyth(address _oldPyth, address _newPyth);
-
-  /**
-   * Structs
-   */
-  struct ConvertFundingFeeReserveInputs {
-    uint256 stableTokenPrice;
-    uint256 fundingFeeReserve;
-    uint256 tokenPrice;
-    uint256 fundingFeeReserveValue;
-    uint256 stableTokenAmount;
-    address[] collateralTokens;
-    bytes32 stableTokenAssetId;
-    bytes32 tokenAssetId;
-    uint8 stableTokenDecimal;
-    uint8 tokenDecimal;
-  }
+  event LogSetTradeService(address oldTradeService, address newTradeService);
+  event LogSetPositionManager(address account, bool allowed);
+  event LogSetLiquidationService(address oldLiquidationService, address newLiquidationService);
+  event LogSetPyth(address oldPyth, address newPyth);
 
   /**
    * States
@@ -84,6 +75,10 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     pyth = _pyth;
   }
 
+  /**
+   * Core Functions
+   */
+
   /// @notice force to close position and take profit, depend on reserve value on this position
   /// @param _account position's owner
   /// @param _subAccountId sub-account that owned position
@@ -95,7 +90,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint256 _marketIndex,
     address _tpToken,
     bytes[] memory _priceData
-  ) external nonReentrant onlyPositionManager {
+  ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -124,7 +119,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint256 _marketIndex,
     address _tpToken,
     bytes[] memory _priceData
-  ) external nonReentrant onlyPositionManager {
+  ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -148,7 +143,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint256 _marketIndex,
     address _tpToken,
     bytes[] memory _priceData
-  ) external nonReentrant onlyPositionManager {
+  ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -163,7 +158,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.
   /// @param _subAccount The sub-account to be liquidated.
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function liquidate(address _subAccount, bytes[] memory _priceData) external nonReentrant onlyPositionManager {
+  function liquidate(address _subAccount, bytes[] memory _priceData) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
@@ -176,50 +171,92 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
 
   /// @notice convert all tokens on funding fee reserve to stable token (USDC)
   /// @param _stableToken target token that will convert all funding fee reserves to
-  function convertFundingFeeReserve(address _stableToken) external nonReentrant onlyOwner {
+  function convertFundingFeeReserve(
+    address _stableToken,
+    bytes[] memory _priceData
+  ) external payable nonReentrant onlyOwner {
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(ITradeService(tradeService).configStorage());
     VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
     OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
 
-    ConvertFundingFeeReserveInputs memory _vars;
-
-    _vars.collateralTokens = _configStorage.getCollateralTokens();
-
     // Get stable token price
-    _vars.stableTokenAssetId = _configStorage.tokenAssetIds(_stableToken);
-    _vars.stableTokenDecimal = _configStorage.getAssetTokenDecimal(_stableToken);
-    (_vars.stableTokenPrice, ) = _oracle.getLatestPrice(_vars.stableTokenAssetId, false);
+    (uint256 _stableTokenPrice, ) = _oracle.getLatestPrice(_configStorage.tokenAssetIds(_stableToken), false);
 
     // Loop through collateral lists
     // And do accounting to swap token on funding fee reserve with plp liquidity
-    for (uint256 i; i < _vars.collateralTokens.length; ) {
-      _vars.fundingFeeReserve = _vaultStorage.fundingFeeReserve(_vars.collateralTokens[i]);
-      _vars.tokenAssetId = _configStorage.tokenAssetIds(_vars.collateralTokens[i]);
-      _vars.tokenDecimal = _configStorage.getAssetTokenDecimal(_vars.collateralTokens[i]);
 
-      if (_stableToken != _vars.collateralTokens[i] && _vars.fundingFeeReserve > 0) {
-        (_vars.tokenPrice, ) = _oracle.getLatestPrice(_vars.tokenAssetId, false);
-        _vars.fundingFeeReserveValue = (_vars.fundingFeeReserve * _vars.tokenPrice) / (10 ** _vars.tokenDecimal);
-        _vars.stableTokenAmount =
-          (_vars.fundingFeeReserveValue * (10 ** _vars.stableTokenDecimal)) /
-          _vars.stableTokenPrice;
+    address[] memory _collateralTokens = _configStorage.getCollateralTokens();
+    address _collatToken;
+    uint256 _collatTokenPrice;
+    uint256 _fundingFeeReserve;
+    uint256 _convertedStableAmount;
+    uint256 _len = _collateralTokens.length;
+    for (uint256 _i; _i < _len; ) {
+      _collatToken = _collateralTokens[_i];
+      if (_stableToken != _collatToken) {
+        _fundingFeeReserve = _vaultStorage.fundingFeeReserve(_collatToken);
 
-        if (_vaultStorage.plpLiquidity(_stableToken) < _vars.stableTokenAmount)
-          revert IBotHandler_InsufficientLiquidity();
+        if (_fundingFeeReserve > 0) {
+          (_collatTokenPrice, ) = _oracle.getLatestPrice(_configStorage.tokenAssetIds(_collatToken), false);
 
-        _vaultStorage.convertFundingFeeReserveWithPLP(
-          _vars.collateralTokens[i],
-          _stableToken,
-          _vars.fundingFeeReserve,
-          _vars.stableTokenAmount
-        );
+          // stable token amount = funding fee reserve value / stable price
+          _convertedStableAmount =
+            (_fundingFeeReserve * _collatTokenPrice * (10 ** _configStorage.getAssetTokenDecimal(_stableToken))) /
+            (_stableTokenPrice * (10 ** _configStorage.getAssetTokenDecimal(_collatToken)));
+
+          if (_vaultStorage.plpLiquidity(_stableToken) < _convertedStableAmount)
+            revert IBotHandler_InsufficientLiquidity();
+
+          // funding fee should be reduced while liquidity should be increased
+          _vaultStorage.convertFundingFeeReserveWithPLP(
+            _collatToken,
+            _stableToken,
+            _fundingFeeReserve,
+            _convertedStableAmount
+          );
+        }
       }
 
       unchecked {
-        ++i;
+        ++_i;
       }
     }
+  }
+
+  /// @notice This function transfers tokens to the vault storage and performs accounting.
+  /// @param _token The address of the token to be transferred.
+  /// @param _amount The amount of tokens to be transferred.
+  function injectTokenToPlpLiquidity(address _token, uint256 _amount) external nonReentrant onlyOwner {
+    VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
+
+    // transfer token
+    IERC20(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
+
+    // do accounting on vault storage
+    _vaultStorage.addPLPLiquidity(_token, _amount);
+    _vaultStorage.pullToken(_token);
+
+    emit LogInjectTokenToPlpLiquidity(msg.sender, _token, _amount);
+  }
+
+  /// @notice This function transfers tokens to the vault storage and performs accounting.
+  /// @param _token The address of the token to be transferred.
+  /// @param _amount The amount of tokens to be transferred.
+  function injectTokenToFundingFeeReserve(address _token, uint256 _amount) external nonReentrant onlyOwner {
+    VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
+
+    // transfer token
+    IERC20(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
+
+    // do accounting on vault storage
+    _vaultStorage.addFundingFee(_token, _amount);
+    _vaultStorage.pullToken(_token);
+
+    emit LogInjectTokenToFundingFeeReserve(msg.sender, _token, _amount);
   }
 
   /// @notice Reset trade service
@@ -253,7 +290,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
 
   /// @notice Set new liquidation service contract address.
   /// @param _newLiquidationService New liquidation service contract address.
-  function setLiquidationService(address _newLiquidationService) external onlyOwner {
+  function setLiquidationService(address _newLiquidationService) external nonReentrant onlyOwner {
     // Sanity check
     LiquidationService(_newLiquidationService).perpStorage();
 
@@ -266,7 +303,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
 
   /// @notice Set new Pyth contract address.
   /// @param _newPyth New Pyth contract address.
-  function setPyth(address _newPyth) external onlyOwner {
+  function setPyth(address _newPyth) external nonReentrant onlyOwner {
     // Sanity check
     IPyth(_newPyth).getValidTimePeriod();
 

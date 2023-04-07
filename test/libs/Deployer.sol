@@ -255,7 +255,7 @@ library Deployer {
   }
 
   /**
-   * Private function
+   * Private Functions
    */
 
   function deployContract(string memory _name) internal returns (address _deployedAddress) {

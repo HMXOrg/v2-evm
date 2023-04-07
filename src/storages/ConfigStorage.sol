@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 //base
 import { Owned } from "@hmx/base/Owned.sol";
-import { IteratableAddressList } from "@hmx/libraries/IteratableAddressList.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -13,7 +12,6 @@ import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
 contract ConfigStorage is IConfigStorage, Owned {
-  using IteratableAddressList for IteratableAddressList.List;
   using SafeERC20 for ERC20;
 
   /**
@@ -84,9 +82,8 @@ contract ConfigStorage is IConfigStorage, Owned {
   constructor() {}
 
   /**
-   * Validation
+   * Validations
    */
-
   /// @notice Validate only whitelisted executor contracts to be able to call Service contracts.
   /// @param _contractAddress Service contract address to be executed.
   /// @param _executorAddress Executor contract address to call service contract.
@@ -105,12 +102,8 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   /**
-   * Getter
+   * Getters
    */
-
-  function getMarketConfigById(uint256 _marketIndex) external view returns (MarketConfig memory _marketConfig) {
-    return marketConfigs[_marketIndex];
-  }
 
   function getTradingConfig() external view returns (TradingConfig memory) {
     return tradingConfig;
@@ -238,12 +231,12 @@ contract ConfigStorage is IConfigStorage, Owned {
     liquidityConfig = _liquidityConfig;
   }
 
-  function setLiquidityEnabled(bool _enabled) external {
+  function setLiquidityEnabled(bool _enabled) external onlyOwner {
     liquidityConfig.enabled = _enabled;
     emit LogSetLiquidityEnabled(_enabled);
   }
 
-  function setDynamicEnabled(bool _enabled) external {
+  function setDynamicEnabled(bool _enabled) external onlyOwner {
     liquidityConfig.dynamicFeeEnabled = _enabled;
     emit LogSetDynamicEnabled(_enabled);
   }

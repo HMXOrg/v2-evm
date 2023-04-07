@@ -16,29 +16,29 @@ import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandle
 
 contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   /**
-   * EVENT
+   * Events
    */
   event LogSetTradeService(address oldMarketTradeService, address newMarketTradeService);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogBuy(
-    address _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    uint256 _buySizeE30,
-    uint256 _shortDecreasingSizeE30,
-    uint256 _longIncreasingSizeE30
+    address account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    uint256 buySizeE30,
+    uint256 shortDecreasingSizeE30,
+    uint256 longIncreasingSizeE30
   );
   event LogSell(
-    address _account,
-    uint8 _subAccountId,
-    uint256 _marketIndex,
-    uint256 _sellSizeE30,
-    uint256 _longDecreasingSizeE30,
-    uint256 _shortIncreasingSizeE30
+    address account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    uint256 sellSizeE30,
+    uint256 longDecreasingSizeE30,
+    uint256 shortIncreasingSizeE30
   );
 
   /**
-   * STATES
+   * States
    */
   address public tradeService;
   address public pyth;
@@ -55,39 +55,8 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   }
 
   /**
-   * MODIFIER
+   * Core Functions
    */
-
-  /**
-   * SETTER
-   */
-
-  /// @notice Set new trader service contract address.
-  /// @param _newTradeService New trader service contract address.
-  function setTradeService(address _newTradeService) external nonReentrant onlyOwner {
-    if (_newTradeService == address(0)) revert IMarketTradeHandler_InvalidAddress();
-    emit LogSetTradeService(address(tradeService), _newTradeService);
-    tradeService = _newTradeService;
-
-    // Sanity check
-    TradeService(_newTradeService).perpStorage();
-  }
-
-  /// @notice Set new Pyth contract address.
-  /// @param _newPyth New Pyth contract address.
-  function setPyth(address _newPyth) external nonReentrant onlyOwner {
-    if (_newPyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
-    emit LogSetPyth(pyth, _newPyth);
-    pyth = _newPyth;
-
-    // Sanity check
-    IPyth(_newPyth).getValidTimePeriod();
-  }
-
-  /**
-   * CALCULATION
-   */
-
   /// @notice Perform buy, in which increasing position size towards long exposure.
   /// @dev Flipping from short exposure to long exposure is possible here.
   /// @param _account Trader's primary wallet account.
@@ -259,6 +228,36 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
 
     emit LogSell(_account, _subAccountId, _marketIndex, _sellSizeE30, _longDecreasingSizeE30, _shortIncreasingSizeE30);
   }
+
+  /**
+   * Setters
+   */
+
+  /// @notice Set new trader service contract address.
+  /// @param _newTradeService New trader service contract address.
+  function setTradeService(address _newTradeService) external nonReentrant onlyOwner {
+    if (_newTradeService == address(0)) revert IMarketTradeHandler_InvalidAddress();
+    emit LogSetTradeService(address(tradeService), _newTradeService);
+    tradeService = _newTradeService;
+
+    // Sanity check
+    TradeService(_newTradeService).perpStorage();
+  }
+
+  /// @notice Set new Pyth contract address.
+  /// @param _newPyth New Pyth contract address.
+  function setPyth(address _newPyth) external nonReentrant onlyOwner {
+    if (_newPyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
+    emit LogSetPyth(pyth, _newPyth);
+    pyth = _newPyth;
+
+    // Sanity check
+    IPyth(_newPyth).getValidTimePeriod();
+  }
+
+  /**
+   * Internal
+   */
 
   /// @notice Calculate subAccount address on trader.
   /// @dev This uses to create subAccount address combined between Primary account and SubAccount ID.

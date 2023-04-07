@@ -37,6 +37,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 100,
       _triggerPrice: 2e30,
+      _acceptablePrice: 2e30,
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -55,6 +56,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
         subAccountId: 0,
         marketIndex: 1,
         triggerPrice: 2e30,
+        acceptablePrice: 2e30,
         executionFee: 0.1 ether
       })
     });
@@ -81,6 +83,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
         subAccountId: 0,
         marketIndex: 1,
         triggerPrice: 3e30,
+        acceptablePrice: 3e30,
         executionFee: 0.1 ether
       })
     });

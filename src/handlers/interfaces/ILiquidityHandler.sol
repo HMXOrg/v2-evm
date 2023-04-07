@@ -16,7 +16,7 @@ interface ILiquidityHandler {
   error ILiquidityHandler_NotOrderOwner();
 
   /**
-   * Struct
+   * Structs
    */
   struct LiquidityOrder {
     address payable account;
@@ -30,7 +30,7 @@ interface ILiquidityHandler {
   }
 
   /**
-   * Core functions
+   * Functions
    */
   function createAddLiquidityOrder(
     address _tokenBuy,

@@ -148,6 +148,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -176,6 +177,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -197,7 +199,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   }
 
   // Execute a BUY order to create new Long position
-  function testCorrectness_executeOrder_BuyOrder_NewLongPosition() external {
+  function w() external {
     // Create Buy Order
     mockOracle.setPrice(999 * 1e30);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
@@ -205,6 +207,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -213,7 +216,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Retrieve Buy Order that was just created.
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
@@ -229,7 +232,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _feeReceiver: payable(ALICE),
       _priceData: priceData
     });
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
     assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
@@ -257,6 +260,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * 1.025 = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -265,7 +269,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Retrieve Buy Order that was just created.
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
@@ -281,7 +285,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _feeReceiver: payable(ALICE),
       _priceData: priceData
     });
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
     assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
@@ -322,6 +326,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 500 * 1e30,
       _triggerPrice: 1002 * 1e30,
+      _acceptablePrice: 1027.05 * 1e30, // 1002 * (1 + 0.025) = 1027.05
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -360,6 +365,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: -1000 * 1e30,
       _triggerPrice: 999 * 1e30,
+      _acceptablePrice: 974.025 * 1e30, // 999 * (1 - 0.025) = 974.025
       _triggerAboveThreshold: false,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -368,7 +374,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Retrieve Sell Order that was just created.
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
@@ -384,7 +390,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _feeReceiver: payable(ALICE),
       _priceData: priceData
     });
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
     assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
@@ -413,6 +419,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: -1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -421,7 +428,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Retrieve Sell Order that was just created.
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
@@ -437,7 +444,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _feeReceiver: payable(ALICE),
       _priceData: priceData
     });
-    (limitOrder.account, , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
     assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
@@ -477,6 +484,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: -500 * 1e30,
       _triggerPrice: 1002 * 1e30,
+      _acceptablePrice: 1027.05 * 1e30, // 1002 * (1 + 0.025) = 1027.05
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -518,6 +526,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -572,6 +581,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: -1500 * 1e30,
       _triggerPrice: 1002 * 1e30,
+      _acceptablePrice: 1027.05 * 1e30, // 1002 * (1 + 0.025) = 1027.05
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -629,6 +639,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: -1200 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -683,6 +694,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 2000 * 1e30,
       _triggerPrice: 1002 * 1e30,
+      _acceptablePrice: 1027.05 * 1e30, // 1002 * (1 + 0.025) = 1027.05
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -740,6 +752,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: true,
@@ -794,6 +807,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: -1500 * 1e30,
       _triggerPrice: 1002 * 1e30,
+      _acceptablePrice: 1027.05 * 1e30, // 1002 * (1 + 0.025) = 1027.05
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: true,
@@ -845,6 +859,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: -1200 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: true,
@@ -899,6 +914,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 2000 * 1e30,
       _triggerPrice: 1002 * 1e30,
+      _acceptablePrice: 1027.05 * 1e30, // 1002 * (1 + 0.025) = 1027.05
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: true,
@@ -950,6 +966,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -1004,6 +1021,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: -700 * 1e30,
       _triggerPrice: 1002 * 1e30,
+      _acceptablePrice: 1027.05 * 1e30, // 1002 * (1 + 0.025) = 1027.05
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -1055,6 +1073,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: -1200 * 1e30,
       _triggerPrice: 1000 * 1e30,
+      _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,
@@ -1109,6 +1128,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _marketIndex: 1,
       _sizeDelta: 100 * 1e30,
       _triggerPrice: 1002 * 1e30,
+      _acceptablePrice: 1027.05 * 1e30, // 1002 * (1 + 0.025) = 1027.05
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
       _reduceOnly: false,

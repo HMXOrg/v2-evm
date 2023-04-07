@@ -8,7 +8,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { PositionTester } from "@hmx-test/testers/PositionTester.sol";
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
-import { GlobalMarketTester } from "@hmx-test/testers/GlobalMarketTester.sol";
+import { MarketTester } from "@hmx-test/testers/MarketTester.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
@@ -20,13 +20,13 @@ abstract contract TradeService_Base is BaseTest {
 
   PositionTester positionTester;
   PositionTester02 positionTester02;
-  GlobalMarketTester globalMarketTester;
+  MarketTester globalMarketTester;
 
   function setUp() public virtual {
     configStorage.setCalculator(address(mockCalculator));
     positionTester = new PositionTester(perpStorage, vaultStorage, mockOracle);
     positionTester02 = new PositionTester02(perpStorage);
-    globalMarketTester = new GlobalMarketTester(perpStorage);
+    globalMarketTester = new MarketTester(perpStorage);
 
     tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
     // deploy services
@@ -37,6 +37,8 @@ abstract contract TradeService_Base is BaseTest {
       address(tradeHelper)
     );
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
+    configStorage.setServiceExecutor(address(tradeHelper), address(tradeService), true);
+
     perpStorage.setServiceExecutors(address(tradeService), true);
     perpStorage.setServiceExecutors(address(tradeHelper), true);
 

@@ -32,13 +32,13 @@ interface ILimitTradeHandler {
     uint8 subAccountId;
     uint256 marketIndex;
     uint256 triggerPrice;
+    uint256 acceptablePrice;
     uint256 executionFee;
   }
 
   /**
    * States
    */
-
   function pyth() external returns (address);
 
   function tradeService() external returns (address);
@@ -63,17 +63,9 @@ interface ILimitTradeHandler {
       uint8 subAccountId,
       uint256 marketIndex,
       uint256 triggerPrice,
+      uint256 acceptablePrice,
       uint256 executionFee
     );
-
-  /**
-   * Setters
-   */
-  function setTradeService(address _newTradeService) external;
-
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external;
-
-  function setOrderExecutor(address _executor, bool _isAllow) external;
 
   /**
    * Functions
@@ -83,6 +75,7 @@ interface ILimitTradeHandler {
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
+    uint256 _acceptablePrice,
     bool _triggerAboveThreshold,
     uint256 _executionFee,
     bool _reduceOnly,
@@ -110,4 +103,10 @@ interface ILimitTradeHandler {
   ) external;
 
   function setPyth(address _pyth) external;
+
+  function setTradeService(address _newTradeService) external;
+
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external;
+
+  function setOrderExecutor(address _executor, bool _isAllow) external;
 }

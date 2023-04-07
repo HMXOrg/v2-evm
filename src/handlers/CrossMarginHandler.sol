@@ -16,14 +16,11 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
-  uint64 internal constant RATE_PRECISION = 1e18;
   using SafeERC20 for ERC20;
 
   /**
-   * EVENTS
+   * Events
    */
-  event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
-  event LogSetPyth(address indexed oldPyth, address newPyth);
   event LogDepositCollateral(
     address indexed primaryAccount,
     uint256 indexed subAccountId,
@@ -36,9 +33,16 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     address token,
     uint256 amount
   );
+  event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
+  event LogSetPyth(address indexed oldPyth, address newPyth);
 
   /**
-   * STATES
+   * Constants
+   */
+  uint64 internal constant RATE_PRECISION = 1e18;
+
+  /**
+   * States
    */
   address public crossMarginService;
   address public pyth;
@@ -53,39 +57,13 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   }
 
   /**
-   * MODIFIER
+   * Modifiers
    */
 
   // NOTE: Validate only accepted collateral token to be deposited
   modifier onlyAcceptedToken(address _token) {
     ConfigStorage(CrossMarginService(crossMarginService).configStorage()).validateAcceptedCollateral(_token);
     _;
-  }
-
-  /**
-   * SETTER
-   */
-
-  /// @notice Set new CrossMarginService contract address.
-  /// @param _crossMarginService New CrossMarginService contract address.
-  function setCrossMarginService(address _crossMarginService) external nonReentrant onlyOwner {
-    if (_crossMarginService == address(0)) revert ICrossMarginHandler_InvalidAddress();
-    emit LogSetCrossMarginService(crossMarginService, _crossMarginService);
-    crossMarginService = _crossMarginService;
-
-    // Sanity check
-    CrossMarginService(_crossMarginService).vaultStorage();
-  }
-
-  /// @notice Set new Pyth contract address.
-  /// @param _pyth New Pyth contract address.
-  function setPyth(address _pyth) external nonReentrant onlyOwner {
-    if (_pyth == address(0)) revert ICrossMarginHandler_InvalidAddress();
-    emit LogSetPyth(pyth, _pyth);
-    pyth = _pyth;
-
-    // Sanity check
-    IPyth(_pyth).getUpdateFee(new bytes[](0));
   }
 
   /**
@@ -171,17 +149,39 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     address _stableToken,
     bytes[] memory _priceData
   ) external payable nonReentrant onlyOwner {
-    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
-    if (msg.value != _updateFee) {
-      revert ICrossMarginHandler_InCorrectValueTransfer();
-    }
+    if (msg.value != IPyth(pyth).getUpdateFee(_priceData)) revert ICrossMarginHandler_InCorrectValueTransfer();
 
     // Call update oracle price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    IPyth(pyth).updatePriceFeeds{ value: msg.value }(_priceData);
 
-    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
-    _crossMarginService.withdrawFundingFeeSurplus(_stableToken);
+    CrossMarginService(crossMarginService).withdrawFundingFeeSurplus(_stableToken);
+  }
+
+  /**
+   * Setters
+   */
+
+  /// @notice Set new CrossMarginService contract address.
+  /// @param _crossMarginService New CrossMarginService contract address.
+  function setCrossMarginService(address _crossMarginService) external nonReentrant onlyOwner {
+    if (_crossMarginService == address(0)) revert ICrossMarginHandler_InvalidAddress();
+    emit LogSetCrossMarginService(crossMarginService, _crossMarginService);
+    crossMarginService = _crossMarginService;
+
+    // Sanity check
+    CrossMarginService(_crossMarginService).vaultStorage();
+  }
+
+  /// @notice Set new Pyth contract address.
+  /// @param _pyth New Pyth contract address.
+  function setPyth(address _pyth) external nonReentrant onlyOwner {
+    if (_pyth == address(0)) revert ICrossMarginHandler_InvalidAddress();
+    emit LogSetPyth(pyth, _pyth);
+    pyth = _pyth;
+
+    // Sanity check
+    IPyth(_pyth).getValidTimePeriod();
   }
 
   receive() external payable {

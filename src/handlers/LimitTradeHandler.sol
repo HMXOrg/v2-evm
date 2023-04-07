@@ -32,6 +32,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 marketIndex,
     int256 sizeDelta,
     uint256 triggerPrice,
+    uint256 acceptablePrice,
     bool triggerAboveThreshold,
     uint256 executionFee,
     bool reduceOnly,
@@ -85,6 +86,16 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     bool isNewPosition;
   }
 
+  struct ValidatePositionOrderPriceVars {
+    ConfigStorage.MarketConfig marketConfig;
+    OracleMiddleware oracle;
+    PerpStorage.Market globalMarket;
+    uint256 oraclePrice;
+    uint256 adaptivePrice;
+    uint8 marketStatus;
+    bool isPriceValid;
+  }
+
   /**
    * Constants
    */
@@ -104,9 +115,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
 
-  /**
-   * Constructor
-   */
   constructor(address _weth, address _tradeService, address _pyth, uint256 _minExecutionFee) {
     weth = _weth;
     tradeService = _tradeService;
@@ -153,6 +161,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 _marketIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
+    uint256 _acceptablePrice,
     bool _triggerAboveThreshold,
     uint256 _executionFee,
     bool _reduceOnly,
@@ -176,7 +185,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       marketIndex: _marketIndex,
       sizeDelta: _sizeDelta,
       triggerPrice: _triggerPrice,
-      triggerAboveThreshold: _triggerAboveThreshold,
+      acceptablePrice: _acceptablePrice,
+      triggerAboveThreshold: _triggerPrice == 0 ? true : _triggerAboveThreshold,
       executionFee: _executionFee,
       reduceOnly: _reduceOnly,
       tpToken: _tpToken
@@ -193,6 +203,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _marketIndex,
       _sizeDelta,
       _triggerPrice,
+      _acceptablePrice,
       _triggerAboveThreshold,
       _executionFee,
       _reduceOnly,
@@ -234,6 +245,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
       vars.order.triggerAboveThreshold,
       vars.order.triggerPrice,
+      vars.order.acceptablePrice,
       vars.order.marketIndex,
       vars.order.sizeDelta,
       vars.order.sizeDelta > 0,
@@ -434,12 +446,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     );
   }
 
-  struct ValidatePositionOrderPriceVars {
-    ConfigStorage.MarketConfig marketConfig;
-    OracleMiddleware oracle;
-    PerpStorage.GlobalMarket globalMarket;
-  }
-
   /**
    * Setters
    */
@@ -469,45 +475,70 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   }
 
   /**
-   * Internal Functions
+   * Private Functions
    */
+
+  /// @notice Derive sub-account from primary account and sub-account id
+  function _getSubAccount(address primary, uint8 subAccountId) private pure returns (address) {
+    if (subAccountId > 255) revert ILimitTradeHandler_BadSubAccountId();
+    return address(uint160(primary) ^ uint160(subAccountId));
+  }
+
+  /// @notice Derive positionId from sub-account and market index
+  function _getPositionId(address _subAccount, uint256 _marketIndex) private pure returns (bytes32) {
+    return keccak256(abi.encodePacked(_subAccount, _marketIndex));
+  }
 
   function _validatePositionOrderPrice(
     bool _triggerAboveThreshold,
     uint256 _triggerPrice,
+    uint256 _acceptablePrice,
     uint256 _marketIndex,
     int256 _sizeDelta,
     bool _maximizePrice,
     bool _revertOnError
-  ) internal view returns (uint256, bool) {
+  ) private view returns (uint256, bool) {
     ValidatePositionOrderPriceVars memory vars;
 
     // Get price from Pyth
     vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
+    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
 
-    (uint256 _currentPrice, , , uint8 _marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    // Validate trigger price with oracle price
+    (vars.oraclePrice, ) = vars.oracle.getLatestPrice(vars.marketConfig.assetId, true);
+    vars.isPriceValid = _triggerAboveThreshold ? vars.oraclePrice > _triggerPrice : vars.oraclePrice < _triggerPrice;
+
+    if (_revertOnError) {
+      if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
+    }
+
+    // Validate acceptable price with adaptive price
+    (vars.adaptivePrice, , , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),
       _sizeDelta,
-      vars.marketConfig.fundingRate.maxSkewScaleUSD
+      vars.marketConfig.fundingRate.maxSkewScaleUSD,
+      _triggerPrice
     );
 
     // Validate market status
-    if (_marketStatus != 2) {
+    if (vars.marketStatus != 2) {
       if (_revertOnError) revert ILimitTradeHandler_MarketIsClosed();
-      else return (_currentPrice, false);
+      else return (vars.adaptivePrice, false);
     }
 
     // Validate price is executable
-    bool isPriceValid = _triggerAboveThreshold ? _currentPrice > _triggerPrice : _currentPrice < _triggerPrice;
+    vars.isPriceValid = _triggerAboveThreshold
+      ? vars.adaptivePrice < _acceptablePrice
+      : vars.adaptivePrice > _acceptablePrice;
+
     if (_revertOnError) {
-      if (!isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
+      if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
     }
 
-    return (_currentPrice, isPriceValid);
+    return (vars.adaptivePrice, vars.isPriceValid);
   }
 
   function _validateCreateOrderPrice(
@@ -516,24 +547,25 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint256 _marketIndex,
     int256 _sizeDelta,
     bool _maximizePrice
-  ) internal view returns (uint256 _currentPrice, bool _isPriceValid) {
+  ) private view {
     ValidatePositionOrderPriceVars memory vars;
 
     // Get price from Pyth
     vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getGlobalMarketByIndex(_marketIndex);
+    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
 
-    (_currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (uint256 _currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),
       _sizeDelta,
-      vars.marketConfig.fundingRate.maxSkewScaleUSD
+      vars.marketConfig.fundingRate.maxSkewScaleUSD,
+      0
     );
 
     if (_triggerAboveThreshold) {
-      if (_triggerPrice <= _currentPrice) {
+      if (_triggerPrice != 0 && _triggerPrice <= _currentPrice) {
         revert ILimitTradeHandler_TriggerPriceBelowCurrentPrice();
       }
     } else {
@@ -541,9 +573,6 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
         revert ILimitTradeHandler_TriggerPriceAboveCurrentPrice();
       }
     }
-
-    _isPriceValid = true;
-    return (_currentPrice, _isPriceValid);
   }
 
   /// @notice Transfer in ETH from user to be used as execution fee
@@ -562,22 +591,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     payable(_receiver).transfer(_amountOut);
   }
 
-  /// @notice Derive sub-account from primary account and sub-account id
-  function _getSubAccount(address primary, uint8 subAccountId) internal pure returns (address) {
-    if (subAccountId > 255) revert ILimitTradeHandler_BadSubAccountId();
-    return address(uint160(primary) ^ uint160(subAccountId));
-  }
-
-  /// @notice Derive positionId from sub-account and market index
-  function _getPositionId(address _subAccount, uint256 _marketIndex) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(_subAccount, _marketIndex));
-  }
-
-  function _max(uint256 x, uint256 y) internal pure returns (uint256) {
-    return x < y ? y : x;
-  }
-
-  function _min(uint256 x, uint256 y) internal pure returns (uint256) {
+  function _min(uint256 x, uint256 y) private pure returns (uint256) {
     return x < y ? x : y;
   }
 }

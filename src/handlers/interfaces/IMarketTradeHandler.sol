@@ -9,10 +9,6 @@ interface IMarketTradeHandler {
   error IMarketTradeHandler_PositionNotFullyClosed();
   error IMarketTradeHandler_ZeroSizeInput();
 
-  function setTradeService(address _newTradeService) external;
-
-  function setPyth(address _newPyth) external;
-
   function buy(
     address _account,
     uint8 _subAccountId,
@@ -30,4 +26,8 @@ interface IMarketTradeHandler {
     address _tpToken,
     bytes[] memory _priceData
   ) external payable;
+
+  function setTradeService(address _newTradeService) external;
+
+  function setPyth(address _newPyth) external;
 }

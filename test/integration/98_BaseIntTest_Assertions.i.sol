@@ -84,6 +84,10 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     );
   }
 
+  function assertFundingFeeReserve(address _token, uint256 _fundingFeeReserve) internal {
+    assertFundingFeeReserve(_token, _fundingFeeReserve, "");
+  }
+
   function assertVaultsFees(
     address _token,
     uint256 _fee,
@@ -260,7 +264,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     int256 _accumFundingShort,
     string memory _str
   ) internal {
-    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
+    IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
     assertEq(_market.accumFundingLong, _accumFundingLong, string.concat(_str, "Market's Accum funding fee long"));
     assertEq(_market.accumFundingShort, _accumFundingShort, string.concat(_str, "Market's Accum funding fee short"));
@@ -284,7 +288,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _lastFundingTime,
     string memory _str
   ) internal {
-    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
+    IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
     assertEq(_market.currentFundingRate, _currentFundingRate, string.concat(_str, "Market's Funding rate"));
     assertEq(_market.lastFundingTime, _lastFundingTime, string.concat(_str, "Market's Last funding time"));
@@ -304,7 +308,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _avgPrice,
     string memory _str
   ) internal {
-    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
+    IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
     assertEq(_market.longPositionSize, _positionSize, string.concat(_str, "Market's Long position size"));
     assertEq(_market.longAvgPrice, _avgPrice, string.concat(_str, "Market's Long avg price size"));
@@ -320,7 +324,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _avgPrice,
     string memory _str
   ) internal {
-    IPerpStorage.GlobalMarket memory _market = perpStorage.getGlobalMarketByIndex(_marketIndex);
+    IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
     assertEq(_market.shortPositionSize, _positionSize, string.concat(_str, "Market's Short position size"));
     assertEq(_market.shortAvgPrice, _avgPrice, string.concat(_str, "Market's Short avg price size"));
@@ -331,7 +335,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   }
 
   function assertAssetClassReserve(uint8 _assetClassIndex, uint256 _reserved, string memory _str) internal {
-    IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(_assetClassIndex);
+    IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_assetClassIndex);
     assertEq(_assetClass.reserveValueE30, _reserved, string.concat(_str, "Asset class's Reserve value"));
   }
 
@@ -354,7 +358,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _lastBorrowingTime,
     string memory _str
   ) internal {
-    IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(_assetClassIndex);
+    IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_assetClassIndex);
     assertEq(
       _assetClass.sumBorrowingRate,
       _sumBorrowingRate,
@@ -384,7 +388,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _lastBorrowingTime,
     string memory _str
   ) internal {
-    IPerpStorage.GlobalAssetClass memory _assetClass = perpStorage.getGlobalAssetClassByIndex(_assetClassIndex);
+    IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_assetClassIndex);
     assertEq(_assetClass.reserveValueE30, _reserved, string.concat(_str, "Asset class's Reserve value"));
 
     assertEq(

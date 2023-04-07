@@ -8,7 +8,7 @@ import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 
 contract TC01 is BaseIntTest_WithActions {
-  function testCorrectness_AddAndRemoveLiquiditySuccess() external {
+  function testCorrectness_TC01_AddAndRemoveLiquiditySuccess() external {
     // T0: Initialized state
     uint256 _totalExecutionOrderFee = executionOrderFee - initialPriceFeedDatas.length;
     // WBTC = 20k

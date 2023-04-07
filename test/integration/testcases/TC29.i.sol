@@ -79,6 +79,7 @@ contract TC29 is BaseIntTest_WithActions {
       bytes[] memory priceData = new bytes[](0);
 
       // ALICE opens SHORT position on with WETH Market Price = 1500 USD
+      vm.deal(ALICE, executionOrderFee);
       marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
 
       // Alice's Equity must be upper IMR level
@@ -161,6 +162,7 @@ contract TC29 is BaseIntTest_WithActions {
       uint256 buySizeE30 = 3_000 * 1e30;
       address tpToken = address(wbtc); // @note settle with WBTC that be treated as GLP token
       bytes[] memory priceData = new bytes[](0);
+      vm.deal(ALICE, 1 ether);
       marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceData);
 
       // ALICE's position after open new position

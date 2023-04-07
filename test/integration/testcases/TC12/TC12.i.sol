@@ -62,8 +62,15 @@ contract TC12 is BaseIntTest_WithActions {
     marketBuy(ALICE, 0, jpyMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
     // And Alice open short position at APPLE 3,000 USD
     // Then Revert because reach limit 2 position per sub-account
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_BadNumberOfPosition()"));
-    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    marketSell(
+      ALICE,
+      0,
+      appleMarketIndex,
+      3_000 * 1e30,
+      address(0),
+      new bytes[](0),
+      "ITradeService_BadNumberOfPosition()"
+    );
     // And Alice should has only 2 positions
     {
       assertPositionInfoOf({
@@ -157,7 +164,7 @@ contract TC12 is BaseIntTest_WithActions {
       // premium before   = 0
       // premium after    = -3000 / 300000000 = -0.00001
       // premium          = (0 - 0.00001) / 2 = -0.000005
-      // adative price    = 152 * (1 + (-0.000005)) = 151.99924
+      // adaptive price    = 152 * (1 + (-0.000005)) = 151.99924
       // Then Alice should has corrected position
       assertPositionInfoOf({
         _subAccount: _aliceSubAccount1,
@@ -184,7 +191,7 @@ contract TC12 is BaseIntTest_WithActions {
       // premium before   = -3000 / 300000000 = -0.00001
       // premium after    = -6000 / 300000000 = -0.00002
       // premium          = (-0.00001 - 0.00002) / 2 = -0.000015
-      // adative price    = 152 * (1 + (-0.000015)) = 151.99772
+      // adaptive price    = 152 * (1 + (-0.000015)) = 151.99772
       // Then Alice should has corrected position
       assertPositionInfoOf({
         _subAccount: _aliceSubAccount0,
@@ -286,8 +293,15 @@ contract TC12 is BaseIntTest_WithActions {
     );
 
     // Then Alice should't open more position at JPY
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_BadNumberOfPosition()"));
-    marketSell(ALICE, 0, jpyMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    marketSell(
+      ALICE,
+      0,
+      jpyMarketIndex,
+      3_000 * 1e30,
+      address(0),
+      new bytes[](0),
+      "ITradeService_BadNumberOfPosition()"
+    );
 
     // And Alice could close APPLE position
     marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));

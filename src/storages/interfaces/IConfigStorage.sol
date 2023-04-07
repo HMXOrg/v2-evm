@@ -92,7 +92,7 @@ interface IConfigStorage {
   }
 
   /**
-   * State Getter
+   * States
    */
 
   function calculator() external view returns (address);
@@ -110,18 +110,13 @@ interface IConfigStorage {
   function tokenAssetIds(address _token) external view returns (bytes32);
 
   /**
-   * Validation
+   * Functions
    */
-
   function validateServiceExecutor(address _contractAddress, address _executorAddress) external view;
 
   function validateAcceptedLiquidityToken(address _token) external view;
 
   function validateAcceptedCollateral(address _token) external view;
-
-  /**
-   * Getter
-   */
 
   function getTradingConfig() external view returns (TradingConfig memory);
 
@@ -157,10 +152,6 @@ interface IConfigStorage {
 
   function getTradeServiceHooks() external view returns (address[] memory);
 
-  /**
-   * Setter
-   */
-
   function setPlpAssetId(bytes32[] memory _plpAssetIds) external;
 
   function setLiquidityEnabled(bool _enabled) external;
@@ -175,7 +166,6 @@ interface IConfigStorage {
 
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external;
 
-  // @todo - Add Description
   function setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) external;
 
   function setPnlFactor(uint32 _pnlFactor) external;

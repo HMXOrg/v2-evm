@@ -85,8 +85,15 @@ contract TC20 is BaseIntTest_WithActions {
 
     // When Bob buy APPLE 100,000 USD
     // Then Revert ITradeService_InsufficientLiquidity
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientLiquidity()"));
-    marketBuy(BOB, 0, appleMarketIndex, 100_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(
+      BOB,
+      0,
+      appleMarketIndex,
+      100_000 * 1e30,
+      address(wbtc),
+      updatePriceData,
+      "ITradeService_InsufficientLiquidity()"
+    );
 
     // When Bob buy APPLE 20,000 USD
     marketBuy(BOB, 0, appleMarketIndex, 20_000 * 1e30, address(wbtc), updatePriceData);
@@ -142,10 +149,17 @@ contract TC20 is BaseIntTest_WithActions {
 
     // When Alice buy APPLE position 20,000 USD
     // Then Revert ITradeService_InsufficientLiquidity
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientLiquidity()"));
-    marketBuy(ALICE, 0, appleMarketIndex, 20_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(
+      ALICE,
+      0,
+      appleMarketIndex,
+      20_000 * 1e30,
+      address(wbtc),
+      updatePriceData,
+      "ITradeService_InsufficientLiquidity()"
+    );
 
-    // timepassed for 15 seconds
+    // time passed for 15 seconds
     skip(15);
 
     // ### Scenario: TVL has increased when price changed

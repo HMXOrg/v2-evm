@@ -10,7 +10,7 @@ import { console2 } from "forge-std/console2.sol";
 contract TC11 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
-  // TC11 - not allow trader to do trade when market has beed delisted
+  // TC11 - not allow trader to do trade when market has been delisted
   function testCorrectness_TC11_TradeWithDelistedMarket() external {
     // ### Scenario: Prepare environment
 
@@ -67,13 +67,27 @@ contract TC11 is BaseIntTest_WithActions {
 
     // And Alice sell more APPLE position for 3000 USD
     // Then Revert MarketDelisted
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketSell(
+      ALICE,
+      0,
+      appleMarketIndex,
+      3_000 * 1e30,
+      address(0),
+      updatePriceData,
+      "ITradeService_MarketIsDelisted()"
+    );
 
     // And Alice try to fully close APPLE position
     // Then Still Revert MarketDelisted
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    marketBuy(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketBuy(
+      ALICE,
+      0,
+      appleMarketIndex,
+      3_000 * 1e30,
+      address(0),
+      updatePriceData,
+      "ITradeService_MarketIsDelisted()"
+    );
 
     // When Alice try increase WETH position for 3000 USD
     marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
@@ -143,8 +157,7 @@ contract TC11 is BaseIntTest_WithActions {
     // ### Scenario: Traders try to trade on delist market again
     // When Bob try buy APPLE's market again
     // Then Revert MarketDelisted
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketIsDelisted()"));
-    marketBuy(BOB, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketBuy(BOB, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData, "ITradeService_MarketIsDelisted()");
 
     // ### Scenario: List new market and Trader could trade
     // When re-list APPLE's market with new ID

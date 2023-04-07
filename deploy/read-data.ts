@@ -113,6 +113,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "getFreeCollateral",
       args: [address, 0, ethAssetId],
     },
+    // IMR
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getIMR",
+      args: [address],
+    },
+    // MMR
+    {
+      interface: Calculator__factory.abi,
+      target: config.calculator,
+      function: "getMMR",
+      args: [address],
+    },
     // Prices
     {
       interface: OracleMiddleware__factory.abi,
@@ -355,6 +369,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       traderBalancesWbtc,
       equity,
       freeCollateral,
+      imr,
+      mmr,
       usdcPrice,
       usdtPrice,
       daiPrice,
@@ -504,6 +520,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.table({
     equity: formatUnits(equity, 30),
     freeCollateral: formatUnits(freeCollateral, 30),
+    imr: formatUnits(imr, 30),
+    mmr: formatUnits(mmr, 30),
   });
   console.log("=== Trader Balances ===");
   console.table({

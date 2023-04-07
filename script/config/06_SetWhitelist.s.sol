@@ -46,6 +46,7 @@ contract SetWhitelist is ConfigJsonRepo {
     configStorage.setServiceExecutor(getJsonAddress(".services.trade"), getJsonAddress(".handlers.limitTrade"), true);
     configStorage.setServiceExecutor(getJsonAddress(".services.trade"), getJsonAddress(".handlers.marketTrade"), true);
     configStorage.setServiceExecutor(getJsonAddress(".services.trade"), getJsonAddress(".handlers.bot"), true);
+    configStorage.setServiceExecutor(getJsonAddress(".helpers.trade"), getJsonAddress(".services.trade"), true);
 
     vaultStorage.setServiceExecutors(getJsonAddress(".services.liquidity"), true);
     vaultStorage.setServiceExecutors(getJsonAddress(".services.crossMargin"), true);

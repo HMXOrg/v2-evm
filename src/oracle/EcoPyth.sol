@@ -5,6 +5,7 @@ import { Owned } from "@hmx/base/Owned.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythPriceInfo, IEcoPythPriceInfo } from "./interfaces/IPyth.sol";
 import { IEcoPyth } from "./interfaces/IEcoPyth.sol";
+import { console } from "forge-std/console.sol";
 
 contract EcoPyth is Owned, IEcoPyth {
   // errors
@@ -15,6 +16,8 @@ contract EcoPyth is Owned, IEcoPyth {
 
   // array of price data
   uint112[65_536] public packedPriceInfos;
+  bytes32[] public prices;
+  bytes32[] public publishTimes;
   uint256 public packedPriceInfosLength;
   mapping(bytes32 => uint256) public mapPriceIdToIndex;
 
@@ -34,6 +37,19 @@ contract EcoPyth is Owned, IEcoPyth {
   uint112 public constant BITMASK_64_OF_112 = type(uint112).max >> (112 - 64);
   uint112 public constant BITMASK_48_OF_112 = type(uint112).max >> (112 - 48);
 
+  uint256 public constant BITMASK_24_OF_256 = type(uint256).max >> (256 - 24);
+  uint256 public constant BITMASK_48_OF_256 = type(uint256).max >> (256 - 48);
+  uint256 public constant BITMASK_72_OF_256 = type(uint256).max >> (256 - 72);
+  uint256 public constant BITMASK_96_OF_256 = type(uint256).max >> (256 - 96);
+  uint256 public constant BITMASK_120_OF_256 = type(uint256).max >> (256 - 120);
+  uint256 public constant BITMASK_144_OF_256 = type(uint256).max >> (256 - 144);
+  uint256 public constant BITMASK_168_OF_256 = type(uint256).max >> (256 - 168);
+  uint256 public constant BITMASK_192_OF_256 = type(uint256).max >> (256 - 192);
+  uint256 public constant BITMASK_216_OF_256 = type(uint256).max >> (256 - 216);
+  uint256 public constant BITMASK_240_OF_256 = type(uint256).max >> 24;
+
+  uint256[10] public BITMASKS;
+
   /**
    * Modifiers
    */
@@ -47,6 +63,17 @@ contract EcoPyth is Owned, IEcoPyth {
   constructor() {
     // Preoccupied index 0 as any of `mapPriceIdToIndex` returns default as 0
     packedPriceInfosLength = 1;
+
+    BITMASKS[9] = BITMASK_24_OF_256;
+    BITMASKS[8] = BITMASK_48_OF_256;
+    BITMASKS[7] = BITMASK_72_OF_256;
+    BITMASKS[6] = BITMASK_96_OF_256;
+    BITMASKS[5] = BITMASK_120_OF_256;
+    BITMASKS[4] = BITMASK_144_OF_256;
+    BITMASKS[3] = BITMASK_168_OF_256;
+    BITMASKS[2] = BITMASK_192_OF_256;
+    BITMASKS[1] = BITMASK_216_OF_256;
+    BITMASKS[0] = BITMASK_240_OF_256;
   }
 
   function updatePriceFeeds(uint128[] calldata _updateDatas, bytes32 _encodedVaas) external onlyUpdater {
@@ -72,17 +99,25 @@ contract EcoPyth is Owned, IEcoPyth {
     emit LogVaas(_encodedVaas);
   }
 
+  function updatePriceFeeds(bytes32[] calldata _prices, bytes32 _encodedVaas) external onlyUpdater {
+    prices = _prices;
+
+    emit LogVaas(_encodedVaas);
+  }
+
   /// @dev Returns the current price for the given price feed ID. Revert if price never got fed.
   /// @param id The unique identifier of the price feed.
   /// @return price The current price.
   function getPriceUnsafe(bytes32 id) external view returns (PythStructs.Price memory price) {
-    IEcoPythPriceInfo memory _priceInfo = _parsePackedPriceInfo(packedPriceInfos[mapPriceIdToIndex[id]]);
-    if (_priceInfo.publishTime == 0) revert EcoPyth_PriceFeedNotFound();
+    uint256 index = mapPriceIdToIndex[id] - 1;
+    uint256 internalIndex = index % 10;
+    uint256 word = uint256(prices[index / 10]);
+    int256 priceBit = int256((word >> (256 - (24 * (internalIndex + 1)))));
 
-    price.publishTime = uint64(_priceInfo.publishTime);
-    price.expo = -8;
-    price.price = _priceInfo.price;
-    price.conf = 0;
+    // price.publishTime = uint64(_priceInfo.publishTime);
+    // price.expo = -8;
+    price.price = 1 ** priceBit;
+    // price.conf = 0;
     return price;
   }
 

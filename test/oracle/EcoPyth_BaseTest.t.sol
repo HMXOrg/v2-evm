@@ -12,6 +12,6 @@ contract EcoPyth_BaseTest is BaseTest {
 
     ecoPyth.setUpdater(address(this), true);
 
-    ecoPyth.insertAsset("ETH");
+    // ecoPyth.insertAsset("ETH");
   }
 }

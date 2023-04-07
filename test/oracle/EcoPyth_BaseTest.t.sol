@@ -9,5 +9,7 @@ contract EcoPyth_BaseTest is BaseTest {
 
   function setUp() public virtual {
     ecoPyth = new EcoPyth();
+
+    ecoPyth.setUpdater(address(this), true);
   }
 }

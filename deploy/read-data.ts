@@ -220,25 +220,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "plpLiquidity",
       args: [config.tokens.wbtc],
     },
-    // Asset Class
-    {
-      interface: PerpStorage__factory.abi,
-      target: config.storages.perp,
-      function: "globalAssetClass",
-      args: [0],
-    },
-    {
-      interface: PerpStorage__factory.abi,
-      target: config.storages.perp,
-      function: "globalAssetClass",
-      args: [1],
-    },
-    {
-      interface: PerpStorage__factory.abi,
-      target: config.storages.perp,
-      function: "globalAssetClass",
-      args: [2],
-    },
     // Fees
     {
       interface: VaultStorage__factory.abi,
@@ -305,25 +286,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: PerpStorage__factory.abi,
       target: config.storages.perp,
-      function: "globalMarkets",
+      function: "markets",
       args: [0],
     },
     {
       interface: PerpStorage__factory.abi,
       target: config.storages.perp,
-      function: "globalMarkets",
+      function: "markets",
       args: [1],
     },
     {
       interface: PerpStorage__factory.abi,
       target: config.storages.perp,
-      function: "globalMarkets",
+      function: "markets",
       args: [2],
     },
     {
       interface: PerpStorage__factory.abi,
       target: config.storages.perp,
-      function: "globalMarkets",
+      function: "markets",
       args: [3],
     },
     // Positions
@@ -386,9 +367,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       plpLiquidityDai,
       plpLiquidityWeth,
       plpLiquidityWbtc,
-      assetClassCrypto,
-      assetClassEquity,
-      assetClassForex,
       feeUsdc,
       feeUsdt,
       feeDai,
@@ -416,19 +394,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: PerpStorage__factory.abi,
       target: config.storages.perp,
-      function: "getGlobalAssetClassByIndex",
+      function: "getAssetClassByIndex",
       args: [0],
     },
     {
       interface: PerpStorage__factory.abi,
       target: config.storages.perp,
-      function: "getGlobalAssetClassByIndex",
+      function: "getAssetClassByIndex",
       args: [1],
     },
     {
       interface: PerpStorage__factory.abi,
       target: config.storages.perp,
-      function: "getGlobalAssetClassByIndex",
+      function: "getAssetClassByIndex",
       args: [2],
     },
     // Trader Tokens
@@ -455,6 +433,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
+        0,
       ],
     },
     {
@@ -469,6 +448,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
+        0,
       ],
     },
     {
@@ -483,6 +463,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
+        0,
       ],
     },
     {
@@ -497,6 +478,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           : 0,
         0,
         ethers.utils.parseUnits("3000000", 30),
+        0,
       ],
     },
   ];
@@ -547,19 +529,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("=== Asset Class ====");
   console.table({
     crypto: {
-      reservedValue: formatUnits(assetClassCrypto.reserveValueE30, 30),
-      sumBorrowingRate: assetClassCrypto.sumBorrowingRate,
-      lastBorrowingTime: assetClassCrypto.lastBorrowingTime,
+      reservedValue: formatUnits(cryptoGlobalAssetClass.reserveValueE30, 30),
+      sumBorrowingRate: cryptoGlobalAssetClass.sumBorrowingRate,
+      lastBorrowingTime: cryptoGlobalAssetClass.lastBorrowingTime,
     },
     equity: {
-      reservedValue: formatUnits(assetClassEquity.reserveValueE30, 30),
-      sumBorrowingRate: assetClassEquity.sumBorrowingRate,
-      lastBorrowingTime: assetClassEquity.lastBorrowingTime,
+      reservedValue: formatUnits(equityGlobalAssetClass.reserveValueE30, 30),
+      sumBorrowingRate: equityGlobalAssetClass.sumBorrowingRate,
+      lastBorrowingTime: equityGlobalAssetClass.lastBorrowingTime,
     },
     forex: {
-      reservedValue: formatUnits(assetClassForex.reserveValueE30, 30),
-      sumBorrowingRate: assetClassForex.sumBorrowingRate,
-      lastBorrowingTime: assetClassForex.lastBorrowingTime,
+      reservedValue: formatUnits(forexGlobalAssetClass.reserveValueE30, 30),
+      sumBorrowingRate: forexGlobalAssetClass.sumBorrowingRate,
+      lastBorrowingTime: forexGlobalAssetClass.lastBorrowingTime,
     },
   });
   console.log("=== Platform Fees ===");

@@ -25,9 +25,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const priceIds = [
     // wethPriceId,
-    // wbtcPriceId,
-    // usdcPriceId,
-    // usdtPriceId,
+    wbtcPriceId,
+    usdcPriceId,
+    usdtPriceId,
     daiPriceId,
     applePriceId,
     jpyPriceId,

@@ -22,7 +22,7 @@
   },
   "oracle": {
     "pyth": "0x939C0e902FF5B3F7BA666Cc8F6aC75EE76d3f900",
-    "leanPyth": "0x239088Eb1d4c581A0Afc611651Eb5039053EDBFB",
+    "leanPyth": "0xCC2239588e85cC1B342229cfaC2e3Aba539c79c6",
     "pythAdapter": "0xaFefd85e3803CeD051200867eAAf1AA1BbDcBE16",
     "middleware": "0x38934bDf2462768388829194fD40a43eD9916B4C"
   },

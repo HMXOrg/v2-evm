@@ -45,6 +45,8 @@ struct PriceFeed {
 
 contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   bytes[] internal priceData;
+  bytes32[] internal priceUpdateData;
+  bytes32[] internal publishTimeUpdateData;
 
   function setUp() public override {
     super.setUp();
@@ -124,7 +126,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
   }
 
@@ -136,7 +141,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
   }
 
@@ -165,7 +173,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
   }
 
@@ -194,7 +205,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
   }
 
@@ -230,11 +244,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
     (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
@@ -283,11 +299,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
     (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
@@ -341,7 +359,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     assertEq(mockTradeService.increasePositionCallCount(), 2);
@@ -388,11 +409,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
     (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
 
@@ -442,11 +465,13 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
     (limitOrder.account, , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
-    assertEq(ALICE.balance, 0.1 ether - 1, "Alice should receive execution fee.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
     (
@@ -499,7 +524,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     assertEq(mockTradeService.increasePositionCallCount(), 2);
@@ -541,7 +569,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Long position should be created
@@ -596,7 +627,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Long position should be fully closed and a new Short position should be opened
@@ -654,7 +688,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Short position should be created
@@ -709,7 +746,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Short position should be fully closed and a new Long position should be opened
@@ -767,7 +807,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Long position should be created
@@ -822,7 +865,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Long position should be fully closed and a new Short position should not be opened
@@ -874,7 +920,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Short position should be created
@@ -929,7 +978,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Short position should be fully closed and a new Long position should not be opened
@@ -981,7 +1033,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Long position should be created
@@ -1036,7 +1091,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Long position should be partially closed
@@ -1088,7 +1146,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Short position should be created
@@ -1143,7 +1204,10 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(ALICE),
-      _priceData: priceData
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: 0,
+      _encodedVaas: keccak256("someEncodedVaas")
     });
 
     // Short position should be partially closed

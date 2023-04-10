@@ -74,7 +74,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       publishTime: (new Date().valueOf() / 1000).toFixed(),
     },
     {
-      id: usdcPriceId,
+      id: applePriceId,
       price: parseUnits("164.640", 8),
       conf: parseUnits("0", 8),
       expo: -8,
@@ -94,21 +94,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   ];
 
   const pyth = MockPyth__factory.connect(config.oracle.leanPyth, deployer);
-  // const pythAdapter = PythAdapter__factory.connect(config.oracle.pythAdapter, deployer);
-  // (await pythAdapter.setPyth(config.oracle.leanPyth)).wait();
-  const updateFee = 0;
-  const updateData = await priceUpdates.map(async (each) => {
-    return await pyth.createPriceFeedUpdateData(
-      each.id,
-      each.price,
-      each.conf,
-      each.expo,
-      each.emaPrice,
-      each.emaConf,
-      each.publishTime
-    );
-  });
-  await (await pyth.updatePriceFeeds(updateData, { value: updateFee })).wait();
+  // const updateFee = 0;
+  // const updateData = await priceUpdates.map(async (each) => {
+  //   return await pyth.createPriceFeedUpdateData(
+  //     each.id,
+  //     each.price,
+  //     each.conf,
+  //     each.expo,
+  //     each.emaPrice,
+  //     each.emaConf,
+  //     each.publishTime
+  //   );
+  // });
+  // await (await pyth.updatePriceFeeds(updateData, { value: updateFee })).wait();
   console.log("> Feed Mock Price success!");
 };
 export default func;

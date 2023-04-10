@@ -491,9 +491,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(formatUnits(daiPrice?._price, 30));
   console.log(formatUnits(wethPrice?._price, 30));
   console.log(formatUnits(wbtcPrice?._price, 30));
+  console.log(applePrice);
   console.log(formatUnits(applePrice?._price, 30));
   console.log(formatUnits(jpyPrice?._price, 30));
   console.log("=== Adaptive Prices ===");
+
   console.log(formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
   console.log(formatUnits(btcusdAdaptivePrice._adaptivePrice, 30));
   console.log(formatUnits(applusdAdaptivePrice._adaptivePrice, 30));

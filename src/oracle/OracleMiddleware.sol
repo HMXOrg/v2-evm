@@ -381,12 +381,12 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   }
 
   /// @notice Set market status for the given assets.
-  /// @param _assetId The asset addresses to set.
-  /// @param _status Status enum, see `marketStatus` comment section.
-  function setMultipleMarketStatus(bytes32[] memory _assetId, uint8[] memory _status) external onlyUpdater {
-    uint256 len = _assetId.length;
-    for (uint256 _i = 0; _i < len; ) {
-      _setMarketStatus(_assetId[_i], _status[_i]);
+  /// @param _assetIds The asset addresses to set.
+  /// @param _statuses Status enum, see `marketStatus` comment section.
+  function setMultipleMarketStatus(bytes32[] memory _assetIds, uint8[] memory _statuses) external onlyUpdater {
+    uint256 _len = _assetIds.length;
+    for (uint256 _i = 0; _i < _len; ) {
+      _setMarketStatus(_assetIds[_i], _statuses[_i]);
       unchecked {
         ++_i;
       }

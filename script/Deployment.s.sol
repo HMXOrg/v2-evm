@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { OracleMiddleware } from "../src/oracle/OracleMiddleware.sol";
-import { PythAdapter } from "../src/oracle/PythAdapter.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
+import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 
 abstract contract Deployment {
   struct DeployReturnVars {

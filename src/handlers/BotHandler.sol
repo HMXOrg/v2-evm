@@ -15,7 +15,7 @@ import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 // contracts
 import { Owned } from "@hmx/base/Owned.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 

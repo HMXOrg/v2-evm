@@ -7,8 +7,8 @@ import { Vm } from "forge-std/Vm.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
-import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
-import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";

@@ -27,14 +27,14 @@ import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
-import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
-import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
+import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";

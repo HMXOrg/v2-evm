@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
-import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 

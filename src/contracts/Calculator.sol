@@ -5,7 +5,7 @@ pragma solidity 0.8.18;
 import { Owned } from "@hmx/base/Owned.sol";
 
 //contracts
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";

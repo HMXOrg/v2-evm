@@ -4,8 +4,8 @@ import { TestBase } from "forge-std/Base.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { LeanPyth } from "@hmx/oracle/LeanPyth.sol";
-import { IPyth } from "@hmx/oracle/interfaces/IPyth.sol";
+import { LeanPyth } from "@hmx/oracles/LeanPyth.sol";
+import { IPyth } from "@hmx/oracles/interfaces/IPyth.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 
 import { console } from "forge-std/console.sol";

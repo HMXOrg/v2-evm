@@ -79,9 +79,9 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
   uint256 public nextExecutionOrderIndex;
   uint256 public executionOrderFee; // executionOrderFee in tokenAmount unit
-  bool private isExecuting; // order is executing (prevent direct call executeLiquidity()
+  bool private isExecuting; // order is executing (prevent direct call executeWithdrawOrder()
 
-  WithdrawOrder[] public withdrawOrders; // all liquidityOrder
+  WithdrawOrder[] public withdrawOrders; // all withdrawOrder
   mapping(address => bool) public orderExecutors; //address -> flag to execute
 
   constructor(address _crossMarginService, address _pyth, uint256 _executionOrderFee) {
@@ -262,7 +262,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
       isExecuting = false;
       _totalFeeReceiver += _executionFee;
 
-      // clear executed liquidity order
+      // clear executed withdraw order
       delete withdrawOrders[i];
 
       unchecked {

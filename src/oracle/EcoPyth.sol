@@ -6,7 +6,6 @@ import { TickMath } from "@hmx/libraries/TickMath.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythPriceInfo, IEcoPythPriceInfo } from "./interfaces/IPyth.sol";
 import { IEcoPyth } from "./interfaces/IEcoPyth.sol";
-import { console } from "forge-std/console.sol";
 
 contract EcoPyth is Owned, IEcoPyth {
   // errors
@@ -16,10 +15,23 @@ contract EcoPyth is Owned, IEcoPyth {
   error EcoPyth_AssetHasAlreadyBeenDefined();
 
   // array of price data
+  // it is stored as `tick` from the Uniswap tick price math
+  // https://docs.uniswap.org/contracts/v3/reference/core/libraries/TickMath
   bytes32[] public prices;
-  uint256 public publishTime;
+  // this is the minimum publish time of every markets from the latest round of price feed
+  // when we feed the prices, we will feed the diff from this `minPublishTime`.
+  // the diff will be positive only
+  uint256 public minPublishTime;
+  // this is the array of differences value from the `minPublishTime` for each market
+  // we don't store actual publish time of each price for gas optimization
+  bytes32[] public publishTimeDiff;
+  // map Pyth Price Id to index in the `prices` which is the array of tick price
   mapping(bytes32 => uint256) public mapPriceIdToIndex;
   uint256 public indexCount;
+  // each price and each pubish time diff will occupy 24 bits
+  // price will be in int24, where publish time diff will be in uint24
+  // multiple prices/publish time diffs will be fitted into a single uint256 (or word)
+  // uint256 will be able to contain 10 (10 * 24 = 240 bits) entries
   uint256 public constant MAX_PRICE_PER_WORD = 10;
 
   // whitelist mapping of price updater
@@ -44,9 +56,15 @@ contract EcoPyth is Owned, IEcoPyth {
     indexCount = 1;
   }
 
-  function updatePriceFeeds(bytes32[] calldata _prices, bytes32 _encodedVaas) external onlyUpdater {
+  function updatePriceFeeds(
+    bytes32[] calldata _prices,
+    bytes32[] calldata _publishTimeDiff,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external onlyUpdater {
     prices = _prices;
-    publishTime = block.timestamp;
+    publishTimeDiff = _publishTimeDiff;
+    minPublishTime = _minPublishTime;
 
     emit LogVaas(_encodedVaas);
   }
@@ -56,17 +74,16 @@ contract EcoPyth is Owned, IEcoPyth {
   /// @return price The current price.
   function getPriceUnsafe(bytes32 id) external view returns (PythStructs.Price memory price) {
     uint256 index = mapPriceIdToIndex[id] - 1;
-    console.log("realIndex", mapPriceIdToIndex[id]);
-    console.log("index", index);
     uint256 internalIndex = index % 10;
-    uint256 word = uint256(prices[index / 10]);
-    int24 tick = int24(int256((word >> (256 - (24 * (internalIndex + 1))))));
+    uint256 wordPrice = uint256(prices[index / 10]);
+    int24 tick = int24(int256((wordPrice >> (256 - (24 * (internalIndex + 1))))));
     uint160 sqrtPriceX96 = TickMath.getSqrtRatioAtTick(tick);
-    console.log("sqrtPriceX96", sqrtPriceX96);
     uint256 spotPrice = (uint256(sqrtPriceX96) * (uint256(sqrtPriceX96)) * (1e8)) >> (96 * 2);
-    console.log("spotPrice", spotPrice);
 
-    price.publishTime = publishTime;
+    uint256 wordPublishTimeDiff = uint256(publishTimeDiff[index / 10]);
+    uint256 diff = uint24(uint256((wordPublishTimeDiff >> (256 - (24 * (internalIndex + 1))))));
+
+    price.publishTime = minPublishTime + diff;
     price.expo = -8;
     price.price = int64(int256(spotPrice));
     price.conf = 0;
@@ -112,7 +129,7 @@ contract EcoPyth is Owned, IEcoPyth {
     ++indexCount;
   }
 
-  function buildUpdateData(int24[] calldata _prices) external pure returns (bytes32[] memory _updateData) {
+  function buildPriceUpdateData(int24[] calldata _prices) external pure returns (bytes32[] memory _updateData) {
     _updateData = new bytes32[](_prices.length / MAX_PRICE_PER_WORD + 1);
     _updateData[0] = bytes32(uint256(0));
     for (uint256 i; i < _prices.length; i++) {
@@ -131,6 +148,35 @@ contract EcoPyth is Owned, IEcoPyth {
           innerIndex == 7 ? _prices[i] : int24(0),
           innerIndex == 8 ? _prices[i] : int24(0),
           innerIndex == 9 ? _prices[i] : int24(0)
+        )
+      );
+      bytes32 previousWord = _updateData[outerIndex];
+
+      _updateData[outerIndex] = previousWord | partialWord;
+    }
+  }
+
+  function buildPublishTimeUpdateData(
+    uint24[] calldata _publishTimeDiff
+  ) external pure returns (bytes32[] memory _updateData) {
+    _updateData = new bytes32[](_publishTimeDiff.length / MAX_PRICE_PER_WORD + 1);
+    _updateData[0] = bytes32(uint256(0));
+    for (uint256 i; i < _publishTimeDiff.length; i++) {
+      uint256 outerIndex = i / MAX_PRICE_PER_WORD;
+      uint256 innerIndex = i % MAX_PRICE_PER_WORD;
+
+      bytes32 partialWord = bytes32(
+        abi.encodePacked(
+          innerIndex == 0 ? _publishTimeDiff[i] : uint24(0),
+          innerIndex == 1 ? _publishTimeDiff[i] : uint24(0),
+          innerIndex == 2 ? _publishTimeDiff[i] : uint24(0),
+          innerIndex == 3 ? _publishTimeDiff[i] : uint24(0),
+          innerIndex == 4 ? _publishTimeDiff[i] : uint24(0),
+          innerIndex == 5 ? _publishTimeDiff[i] : uint24(0),
+          innerIndex == 6 ? _publishTimeDiff[i] : uint24(0),
+          innerIndex == 7 ? _publishTimeDiff[i] : uint24(0),
+          innerIndex == 8 ? _publishTimeDiff[i] : uint24(0),
+          innerIndex == 9 ? _publishTimeDiff[i] : uint24(0)
         )
       );
       bytes32 previousWord = _updateData[outerIndex];

@@ -94,19 +94,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   ];
 
   const pyth = MockPyth__factory.connect(config.oracle.leanPyth, deployer);
-  // const updateFee = 0;
-  // const updateData = await priceUpdates.map(async (each) => {
-  //   return await pyth.createPriceFeedUpdateData(
-  //     each.id,
-  //     each.price,
-  //     each.conf,
-  //     each.expo,
-  //     each.emaPrice,
-  //     each.emaConf,
-  //     each.publishTime
-  //   );
-  // });
-  // await (await pyth.updatePriceFeeds(updateData, { value: updateFee })).wait();
+  const updateFee = 0;
+  const updateData = await priceUpdates.map(async (each) => {
+    return await pyth.createPriceFeedUpdateData(
+      each.id,
+      each.price,
+      each.conf,
+      each.expo,
+      each.emaPrice,
+      each.emaConf,
+      each.publishTime
+    );
+  });
+  await (await pyth.updatePriceFeeds(updateData, { value: updateFee })).wait();
   console.log("> Feed Mock Price success!");
 };
 export default func;

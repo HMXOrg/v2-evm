@@ -4,16 +4,10 @@ import {
   GetContractArgs,
   readContract,
   ReadContractConfig,
-  writeContract,
-  WriteContractArgs,
-  WriteContractPreparedArgs,
-  WriteContractUnpreparedArgs,
-  prepareWriteContract,
-  PrepareWriteContractConfig,
   watchContractEvent,
   WatchContractEventConfig,
   WatchContractEventCallback,
-} from "wagmi/actions"
+} from "@wagmi/core"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BotHandler
@@ -4163,30 +4157,6 @@ export function readBotHandler<
 }
 
 /**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link botHandlerABI}__.
- */
-export function writeBotHandler<TFunctionName extends string>(
-  config:
-    | Omit<WriteContractPreparedArgs<typeof botHandlerABI, TFunctionName>, "abi">
-    | Omit<WriteContractUnpreparedArgs<typeof botHandlerABI, TFunctionName>, "abi">,
-) {
-  return writeContract({ abi: botHandlerABI, ...config } as WriteContractArgs<typeof botHandlerABI, TFunctionName>)
-}
-
-/**
- * Wraps __{@link prepareWriteContract}__ with `abi` set to __{@link botHandlerABI}__.
- */
-export function prepareWriteBotHandler<
-  TAbi extends readonly unknown[] = typeof botHandlerABI,
-  TFunctionName extends string = string,
->(config: Omit<PrepareWriteContractConfig<TAbi, TFunctionName>, "abi">) {
-  return prepareWriteContract({ abi: botHandlerABI, ...config } as unknown as PrepareWriteContractConfig<
-    TAbi,
-    TFunctionName
-  >)
-}
-
-/**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link botHandlerABI}__.
  */
 export function watchBotHandlerEvent<
@@ -4214,33 +4184,6 @@ export function readConfigStorage<
   TFunctionName extends string = string,
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
   return readContract({ abi: configStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
-}
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link configStorageABI}__.
- */
-export function writeConfigStorage<TFunctionName extends string>(
-  config:
-    | Omit<WriteContractPreparedArgs<typeof configStorageABI, TFunctionName>, "abi">
-    | Omit<WriteContractUnpreparedArgs<typeof configStorageABI, TFunctionName>, "abi">,
-) {
-  return writeContract({ abi: configStorageABI, ...config } as WriteContractArgs<
-    typeof configStorageABI,
-    TFunctionName
-  >)
-}
-
-/**
- * Wraps __{@link prepareWriteContract}__ with `abi` set to __{@link configStorageABI}__.
- */
-export function prepareWriteConfigStorage<
-  TAbi extends readonly unknown[] = typeof configStorageABI,
-  TFunctionName extends string = string,
->(config: Omit<PrepareWriteContractConfig<TAbi, TFunctionName>, "abi">) {
-  return prepareWriteContract({ abi: configStorageABI, ...config } as unknown as PrepareWriteContractConfig<
-    TAbi,
-    TFunctionName
-  >)
 }
 
 /**
@@ -4277,33 +4220,6 @@ export function readCrossMarginHandler<
 }
 
 /**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link crossMarginHandlerABI}__.
- */
-export function writeCrossMarginHandler<TFunctionName extends string>(
-  config:
-    | Omit<WriteContractPreparedArgs<typeof crossMarginHandlerABI, TFunctionName>, "abi">
-    | Omit<WriteContractUnpreparedArgs<typeof crossMarginHandlerABI, TFunctionName>, "abi">,
-) {
-  return writeContract({ abi: crossMarginHandlerABI, ...config } as WriteContractArgs<
-    typeof crossMarginHandlerABI,
-    TFunctionName
-  >)
-}
-
-/**
- * Wraps __{@link prepareWriteContract}__ with `abi` set to __{@link crossMarginHandlerABI}__.
- */
-export function prepareWriteCrossMarginHandler<
-  TAbi extends readonly unknown[] = typeof crossMarginHandlerABI,
-  TFunctionName extends string = string,
->(config: Omit<PrepareWriteContractConfig<TAbi, TFunctionName>, "abi">) {
-  return prepareWriteContract({ abi: crossMarginHandlerABI, ...config } as unknown as PrepareWriteContractConfig<
-    TAbi,
-    TFunctionName
-  >)
-}
-
-/**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link crossMarginHandlerABI}__.
  */
 export function watchCrossMarginHandlerEvent<
@@ -4334,33 +4250,6 @@ export function readLimitTradeHandler<
   TFunctionName extends string = string,
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
   return readContract({ abi: limitTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
-}
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link limitTradeHandlerABI}__.
- */
-export function writeLimitTradeHandler<TFunctionName extends string>(
-  config:
-    | Omit<WriteContractPreparedArgs<typeof limitTradeHandlerABI, TFunctionName>, "abi">
-    | Omit<WriteContractUnpreparedArgs<typeof limitTradeHandlerABI, TFunctionName>, "abi">,
-) {
-  return writeContract({ abi: limitTradeHandlerABI, ...config } as WriteContractArgs<
-    typeof limitTradeHandlerABI,
-    TFunctionName
-  >)
-}
-
-/**
- * Wraps __{@link prepareWriteContract}__ with `abi` set to __{@link limitTradeHandlerABI}__.
- */
-export function prepareWriteLimitTradeHandler<
-  TAbi extends readonly unknown[] = typeof limitTradeHandlerABI,
-  TFunctionName extends string = string,
->(config: Omit<PrepareWriteContractConfig<TAbi, TFunctionName>, "abi">) {
-  return prepareWriteContract({ abi: limitTradeHandlerABI, ...config } as unknown as PrepareWriteContractConfig<
-    TAbi,
-    TFunctionName
-  >)
 }
 
 /**
@@ -4397,33 +4286,6 @@ export function readLiquidityHandler<
 }
 
 /**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link liquidityHandlerABI}__.
- */
-export function writeLiquidityHandler<TFunctionName extends string>(
-  config:
-    | Omit<WriteContractPreparedArgs<typeof liquidityHandlerABI, TFunctionName>, "abi">
-    | Omit<WriteContractUnpreparedArgs<typeof liquidityHandlerABI, TFunctionName>, "abi">,
-) {
-  return writeContract({ abi: liquidityHandlerABI, ...config } as WriteContractArgs<
-    typeof liquidityHandlerABI,
-    TFunctionName
-  >)
-}
-
-/**
- * Wraps __{@link prepareWriteContract}__ with `abi` set to __{@link liquidityHandlerABI}__.
- */
-export function prepareWriteLiquidityHandler<
-  TAbi extends readonly unknown[] = typeof liquidityHandlerABI,
-  TFunctionName extends string = string,
->(config: Omit<PrepareWriteContractConfig<TAbi, TFunctionName>, "abi">) {
-  return prepareWriteContract({ abi: liquidityHandlerABI, ...config } as unknown as PrepareWriteContractConfig<
-    TAbi,
-    TFunctionName
-  >)
-}
-
-/**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link liquidityHandlerABI}__.
  */
 export function watchLiquidityHandlerEvent<
@@ -4454,33 +4316,6 @@ export function readMarketTradeHandler<
   TFunctionName extends string = string,
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
   return readContract({ abi: marketTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
-}
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link marketTradeHandlerABI}__.
- */
-export function writeMarketTradeHandler<TFunctionName extends string>(
-  config:
-    | Omit<WriteContractPreparedArgs<typeof marketTradeHandlerABI, TFunctionName>, "abi">
-    | Omit<WriteContractUnpreparedArgs<typeof marketTradeHandlerABI, TFunctionName>, "abi">,
-) {
-  return writeContract({ abi: marketTradeHandlerABI, ...config } as WriteContractArgs<
-    typeof marketTradeHandlerABI,
-    TFunctionName
-  >)
-}
-
-/**
- * Wraps __{@link prepareWriteContract}__ with `abi` set to __{@link marketTradeHandlerABI}__.
- */
-export function prepareWriteMarketTradeHandler<
-  TAbi extends readonly unknown[] = typeof marketTradeHandlerABI,
-  TFunctionName extends string = string,
->(config: Omit<PrepareWriteContractConfig<TAbi, TFunctionName>, "abi">) {
-  return prepareWriteContract({ abi: marketTradeHandlerABI, ...config } as unknown as PrepareWriteContractConfig<
-    TAbi,
-    TFunctionName
-  >)
 }
 
 /**
@@ -4577,30 +4412,6 @@ export function readPerpStorage<
 }
 
 /**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link perpStorageABI}__.
- */
-export function writePerpStorage<TFunctionName extends string>(
-  config:
-    | Omit<WriteContractPreparedArgs<typeof perpStorageABI, TFunctionName>, "abi">
-    | Omit<WriteContractUnpreparedArgs<typeof perpStorageABI, TFunctionName>, "abi">,
-) {
-  return writeContract({ abi: perpStorageABI, ...config } as WriteContractArgs<typeof perpStorageABI, TFunctionName>)
-}
-
-/**
- * Wraps __{@link prepareWriteContract}__ with `abi` set to __{@link perpStorageABI}__.
- */
-export function prepareWritePerpStorage<
-  TAbi extends readonly unknown[] = typeof perpStorageABI,
-  TFunctionName extends string = string,
->(config: Omit<PrepareWriteContractConfig<TAbi, TFunctionName>, "abi">) {
-  return prepareWriteContract({ abi: perpStorageABI, ...config } as unknown as PrepareWriteContractConfig<
-    TAbi,
-    TFunctionName
-  >)
-}
-
-/**
  * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link perpStorageABI}__.
  */
 export function watchPerpStorageEvent<
@@ -4682,30 +4493,6 @@ export function readVaultStorage<
   TFunctionName extends string = string,
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
   return readContract({ abi: vaultStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
-}
-
-/**
- * Wraps __{@link writeContract}__ with `abi` set to __{@link vaultStorageABI}__.
- */
-export function writeVaultStorage<TFunctionName extends string>(
-  config:
-    | Omit<WriteContractPreparedArgs<typeof vaultStorageABI, TFunctionName>, "abi">
-    | Omit<WriteContractUnpreparedArgs<typeof vaultStorageABI, TFunctionName>, "abi">,
-) {
-  return writeContract({ abi: vaultStorageABI, ...config } as WriteContractArgs<typeof vaultStorageABI, TFunctionName>)
-}
-
-/**
- * Wraps __{@link prepareWriteContract}__ with `abi` set to __{@link vaultStorageABI}__.
- */
-export function prepareWriteVaultStorage<
-  TAbi extends readonly unknown[] = typeof vaultStorageABI,
-  TFunctionName extends string = string,
->(config: Omit<PrepareWriteContractConfig<TAbi, TFunctionName>, "abi">) {
-  return prepareWriteContract({ abi: vaultStorageABI, ...config } as unknown as PrepareWriteContractConfig<
-    TAbi,
-    TFunctionName
-  >)
 }
 
 /**

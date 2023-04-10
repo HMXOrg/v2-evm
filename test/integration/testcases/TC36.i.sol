@@ -61,14 +61,13 @@ contract TC36 is BaseIntTest_WithActions {
 
     uint256 _pythGasFee = initialPriceFeedDatas.length;
     vm.deal(BOB, _pythGasFee);
+    vm.deal(BOB, 1 ether);
 
     marketBuy(BOB, 0, wbtcMarketIndex, 18_613_333 * 1e30, address(wbtc), initialPriceFeedDatas);
 
     {
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(
-        _marketConfig.assetClass
-      );
+      IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
       IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
       // from above input reserve have to nearly with 80% of utilzation
       // imr = positionSize * IMF_BPS / BPS
@@ -81,7 +80,7 @@ contract TC36 is BaseIntTest_WithActions {
       uint256 _maxUtilizationValue = (_plpTVL * _liquidityConfig.maxPLPUtilizationBPS) / 10000;
 
       assertEq(_globalState.reserveValueE30, 1675199970000000000000000000000000000, "Global Reserve");
-      assertEq(_globalAssetClass.reserveValueE30, 1675199970000000000000000000000000000, "Global AssetClass Reserve");
+      assertEq(_assetClass.reserveValueE30, 1675199970000000000000000000000000000, "AssetClass's Reserve");
       assertEq(_plpTVL, 2094000000000000000000000000000000000, "PLP TVL");
       assertEq(_maxUtilizationValue, 1675200000000000000000000000000000000, "MaxUtilizationValue");
     }
@@ -162,6 +161,7 @@ contract TC36 is BaseIntTest_WithActions {
     {
       _pythGasFee = initialPriceFeedDatas.length;
       vm.deal(BOB, _pythGasFee);
+      vm.deal(BOB, executionOrderFee);
       marketSell(BOB, 0, wbtcMarketIndex, 18_613_333 * 1e30, address(wbtc), initialPriceFeedDatas);
     }
 
@@ -171,16 +171,14 @@ contract TC36 is BaseIntTest_WithActions {
       //maxUtilization = 2654416330564255462951685200733910932 * 8000 / 10000 => 1675490777760000000000000000000000000
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
       IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
-      IPerpStorage.GlobalAssetClass memory _globalAssetClass = perpStorage.getGlobalAssetClassByIndex(
-        _marketConfig.assetClass
-      );
+      IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
       IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
       uint256 _plpTVL = calculator.getPLPValueE30(false);
 
       uint256 _maxUtilizationValue = (_plpTVL * _liquidityConfig.maxPLPUtilizationBPS) / 10000;
 
       assertEq(_globalState.reserveValueE30, 0, "Global Reserve");
-      assertEq(_globalAssetClass.reserveValueE30, 0, "Global AssetClass Reserve");
+      assertEq(_assetClass.reserveValueE30, 0, "Global AssetClass Reserve");
       assertEq(_plpTVL, 2094363472200000000000000000000000000, "PLP TVL");
       assertEq(_maxUtilizationValue, 1675490777760000000000000000000000000, "MaxUtilizationValue");
     }

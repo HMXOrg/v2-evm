@@ -169,8 +169,15 @@ contract TC13 is BaseIntTest_WithActions {
     updatePriceData[2] = _createPriceFeedUpdateData(jpyAssetId, 136.123 * 1e3, type(uint64).max / 1e6);
     // And Alice try to close JPY's position
     // Then Revert PythAdapter_ConfidenceRatioTooHigh
-    vm.expectRevert(abi.encodeWithSignature("PythAdapter_ConfidenceRatioTooHigh()"));
-    marketBuy(ALICE, 0, jpyMarketIndex, 10_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(
+      ALICE,
+      0,
+      jpyMarketIndex,
+      10_000 * 1e30,
+      address(wbtc),
+      updatePriceData,
+      "PythAdapter_ConfidenceRatioTooHigh()"
+    );
     {
       // And Alice's JPY position and balance should not be affected
       assertPositionInfoOf({
@@ -187,13 +194,27 @@ contract TC13 is BaseIntTest_WithActions {
 
     // And Alice try close BTC's position
     // Then Revert PythAdapter_ConfidenceRatioTooHigh because Alice's has JPY's position
-    vm.expectRevert(abi.encodeWithSignature("PythAdapter_ConfidenceRatioTooHigh()"));
-    marketSell(ALICE, 0, wbtcMarketIndex, 20 * 1e30, address(wbtc), updatePriceData);
+    marketSell(
+      ALICE,
+      0,
+      wbtcMarketIndex,
+      20 * 1e30,
+      address(wbtc),
+      updatePriceData,
+      "PythAdapter_ConfidenceRatioTooHigh()"
+    );
 
     // When Bob buy position at JPY 20000 USD
     // Then Revert PythAdapter_ConfidenceRatioTooHigh
-    vm.expectRevert(abi.encodeWithSignature("PythAdapter_ConfidenceRatioTooHigh()"));
-    marketBuy(BOB, 0, jpyMarketIndex, 20_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(
+      BOB,
+      0,
+      jpyMarketIndex,
+      20_000 * 1e30,
+      address(wbtc),
+      updatePriceData,
+      "PythAdapter_ConfidenceRatioTooHigh()"
+    );
 
     // But Bob try buy BTC 300 USD
     marketBuy(BOB, 0, wbtcMarketIndex, 300 * 1e30, address(wbtc), updatePriceData);
@@ -211,12 +232,14 @@ contract TC13 is BaseIntTest_WithActions {
       });
     }
 
-    // timepassed 15 seconds
+    // time passed 15 seconds
     skip(15);
 
     // ### Scenario: JPY price comeback
     // When JPY price is healthy
     updatePriceData[2] = _createPriceFeedUpdateData(jpyAssetId, 136.123 * 1e3, 0);
+    updatePriceFeeds(updatePriceData);
+
     // And Alice close JPY position
     marketBuy(ALICE, 0, jpyMarketIndex, 10_000 * 1e30, address(wbtc), updatePriceData);
     {

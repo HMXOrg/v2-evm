@@ -26,7 +26,8 @@ interface IOracleMiddleware {
     bool _isMax,
     int256 _marketSkew,
     int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    uint256 _maxSkewScaleUSD,
+    uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate);
 
   function unsafeGetLatestAdaptivePrice(
@@ -34,7 +35,8 @@ interface IOracleMiddleware {
     bool _isMax,
     int256 _marketSkew,
     int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    uint256 _maxSkewScaleUSD,
+    uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate);
 
   function getLatestAdaptivePriceWithMarketStatus(
@@ -42,7 +44,8 @@ interface IOracleMiddleware {
     bool _isMax,
     int256 _marketSkew,
     int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    uint256 _maxSkewScaleUSD,
+    uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate, uint8 _status);
 
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
@@ -50,7 +53,8 @@ interface IOracleMiddleware {
     bool _isMax,
     int256 _marketSkew,
     int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    uint256 _maxSkewScaleUSD,
+    uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate, uint8 _status);
 
   // =========================================

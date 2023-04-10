@@ -30,8 +30,7 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
         address(perpStorage),
         address(configStorage)
       );
-      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateLongAveragePrice");
-      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateShortAveragePrice");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateMarketAveragePrice");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
       configStorage.setCalculator(address(mockCalculator));
       tradeService.reloadConfig();

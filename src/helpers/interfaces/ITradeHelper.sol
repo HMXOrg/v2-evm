@@ -4,12 +4,18 @@ pragma solidity 0.8.18;
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 interface ITradeHelper {
+  /**
+   * Errors
+   */
   error ITradeHelper_TradingFeeCannotBeCovered();
   error ITradeHelper_BorrowingFeeCannotBeCovered();
   error ITradeHelper_FundingFeeCannotBeCovered();
   error ITradeHelper_UnrealizedPnlCannotBeCovered();
   error ITradeHelper_InvalidAddress();
 
+  /**
+   * Functions
+   */
   function reloadConfig() external;
 
   function updateBorrowingRate(uint8 _assetClassIndex) external;

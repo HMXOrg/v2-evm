@@ -138,7 +138,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     int256 _marketSkew,
     int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    uint256 _maxSkewScaleUSD,
+    uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate) {
     (_adaptivePrice, , _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
@@ -146,7 +147,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _marketSkew,
       _sizeDelta,
       _maxSkewScaleUSD,
-      true
+      true,
+      _limitPriceE30
     );
     return (_adaptivePrice, _lastUpdate);
   }
@@ -163,7 +165,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     int256 _marketSkew,
     int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    uint256 _maxSkewScaleUSD,
+    uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate) {
     (_adaptivePrice, , _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
@@ -171,7 +174,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _marketSkew,
       _sizeDelta,
       _maxSkewScaleUSD,
-      false
+      false,
+      _limitPriceE30
     );
     return (_adaptivePrice, _lastUpdate);
   }
@@ -188,7 +192,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     int256 _marketSkew,
     int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    uint256 _maxSkewScaleUSD,
+    uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
@@ -199,7 +204,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _marketSkew,
       _sizeDelta,
       _maxSkewScaleUSD,
-      true
+      true,
+      _limitPriceE30
     );
     return (_adaptivePrice, _exponent, _lastUpdate, _status);
   }
@@ -216,7 +222,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     bool _isMax,
     int256 _marketSkew,
     int256 _sizeDelta,
-    uint256 _maxSkewScaleUSD
+    uint256 _maxSkewScaleUSD,
+    uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
@@ -227,7 +234,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _marketSkew,
       _sizeDelta,
       _maxSkewScaleUSD,
-      false
+      false,
+      _limitPriceE30
     );
     return (_adaptivePrice, _lastUpdate, _status);
   }
@@ -267,13 +275,18 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _marketSkew,
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD,
-    bool isSafe
+    bool isSafe,
+    uint256 _limitPriceE30
   ) private view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate) {
     // Get price from Pyth
     uint256 _price;
     (_price, _exponent, _lastUpdate) = isSafe
       ? _getLatestPrice(_assetId, _isMax)
       : _unsafeGetLatestPrice(_assetId, _isMax);
+
+    if (_limitPriceE30 != 0) {
+      _price = _limitPriceE30;
+    }
 
     // Apply premium/discount
     _adaptivePrice = _calculateAdaptivePrice(_marketSkew, _sizeDelta, _price, _maxSkewScaleUSD);
@@ -282,7 +295,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_adaptivePrice, _exponent, _lastUpdate);
   }
 
-  /// @notice Calcuatate adaptive base on Market skew by position size
+  /// @notice Calculate adaptive base on Market skew by position size
   /// @param _marketSkew Long position size - Short position size
   /// @param _sizeDelta Position size delta
   /// @param _price Oracle price
@@ -294,7 +307,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _price,
     uint256 _maxSkewScaleUSD
   ) internal pure returns (uint256 _adaptivePrice) {
-    // couldn't calculate adaptive price because max skew scale config is used to calcualte premium with market skew
+    // couldn't calculate adaptive price because max skew scale config is used to calculate premium with market skew
     // then just return oracle price
     if (_maxSkewScaleUSD == 0) return _price;
 
@@ -306,7 +319,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     //      Short Position size  =   700,000 USD
     //      then Market skew     = Long - Short = 300,000 USD
     //
-    //    If Trader manipulatate by Decrease Long position for 150,000 USD
+    //    If Trader manipulate by Decrease Long position for 150,000 USD
     //    Then:
     //      Premium (before) = 300,000 / 300,000,000 = 0.001
     int256 _premium = (_marketSkew * 1e30) / int256(_maxSkewScaleUSD);

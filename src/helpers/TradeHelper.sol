@@ -13,9 +13,6 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
-  uint32 internal constant BPS = 1e4;
-  uint64 internal constant RATE_PRECISION = 1e18;
-
   /**
    * Events
    */
@@ -54,6 +51,49 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
 
+  /**
+   * Structs
+   */
+  struct IncreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    uint256 unrealizedPnlToBeReceived;
+    uint256 fundingFeeToBeReceived;
+    uint256 payerBalance;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  struct DecreaseCollateralVars {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    ConfigStorage.TradingConfig tradingConfig;
+    uint256 unrealizedPnlToBePaid;
+    uint256 tradingFeeToBePaid;
+    uint256 borrowingFeeToBePaid;
+    uint256 fundingFeeToBePaid;
+    uint256 liquidationFeeToBePaid;
+    uint256 payerBalance;
+    uint256 plpDebt;
+    uint256 tokenPrice;
+    address subAccount;
+    address token;
+    uint8 tokenDecimal;
+  }
+
+  /**
+   * Constants
+   */
+  uint32 internal constant BPS = 1e4;
+  uint64 internal constant RATE_PRECISION = 1e18;
+
+  /**
+   * States
+   */
   address public perpStorage;
   address public vaultStorage;
   address public configStorage;
@@ -71,27 +111,32 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     calculator = Calculator(ConfigStorage(_configStorage).calculator());
   }
 
-  function reloadConfig() external {
-    // TODO: access control, sanity check, natspec
-    // TODO: discuss about this pattern
-
-    calculator = Calculator(ConfigStorage(configStorage).calculator());
+  /**
+   * Modifiers
+   */
+  // NOTE: Validate only whitelisted contract be able to call this function
+  modifier onlyWhitelistedExecutor() {
+    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    _;
   }
 
+  /**
+   * Core Funtions
+   */
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
-  function updateBorrowingRate(uint8 _assetClassIndex) external {
+  function updateBorrowingRate(uint8 _assetClassIndex) external nonReentrant onlyWhitelistedExecutor {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = _perpStorage.getGlobalAssetClassByIndex(_assetClassIndex);
+    PerpStorage.AssetClass memory _assetClass = _perpStorage.getAssetClassByIndex(_assetClassIndex);
     uint256 _fundingInterval = ConfigStorage(configStorage).getTradingConfig().fundingInterval;
-    uint256 _lastBorrowingTime = _globalAssetClass.lastBorrowingTime;
+    uint256 _lastBorrowingTime = _assetClass.lastBorrowingTime;
 
     // If last borrowing time is 0, set it to the nearest funding interval time and return.
     if (_lastBorrowingTime == 0) {
-      _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-      _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
+      _assetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      _perpStorage.updateAssetClass(_assetClassIndex, _assetClass);
       return;
     }
 
@@ -101,31 +146,31 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
       // update borrowing rate
       uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _plpTVL);
-      _globalAssetClass.sumBorrowingRate += borrowingRate;
-      _globalAssetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      _assetClass.sumBorrowingRate += borrowingRate;
+      _assetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
 
-      uint256 borrowingFee = (_globalAssetClass.reserveValueE30 * borrowingRate) / RATE_PRECISION;
+      uint256 borrowingFee = (_assetClass.reserveValueE30 * borrowingRate) / RATE_PRECISION;
 
-      _globalAssetClass.sumBorrowingFeeE30 += borrowingFee;
+      _assetClass.sumBorrowingFeeE30 += borrowingFee;
     }
-    _perpStorage.updateGlobalAssetClass(_assetClassIndex, _globalAssetClass);
+    _perpStorage.updateAssetClass(_assetClassIndex, _assetClass);
   }
 
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
-  function updateFundingRate(uint256 _marketIndex) external {
+  function updateFundingRate(uint256 _marketIndex) external nonReentrant onlyWhitelistedExecutor {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
-    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(_marketIndex);
 
     uint256 _fundingInterval = ConfigStorage(configStorage).getTradingConfig().fundingInterval;
-    uint256 _lastFundingTime = _globalMarket.lastFundingTime;
+    uint256 _lastFundingTime = _market.lastFundingTime;
 
     // If last funding time is 0, set it to the nearest funding interval time and return.
     if (_lastFundingTime == 0) {
-      _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-      _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
+      _market.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      _perpStorage.updateMarket(_marketIndex, _market);
       return;
     }
 
@@ -133,32 +178,32 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
       int256 nextFundingRate = calculator.getNextFundingRate(_marketIndex);
-      int256 lastFundingRate = _globalMarket.currentFundingRate;
-      _globalMarket.currentFundingRate += nextFundingRate;
-      _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
+      int256 lastFundingRate = _market.currentFundingRate;
+      _market.currentFundingRate += nextFundingRate;
+      _perpStorage.updateMarket(_marketIndex, _market);
 
-      if (_globalMarket.longPositionSize > 0) {
+      if (_market.longPositionSize > 0) {
         int256 fundingFeeLongE30 = calculator.getFundingFee(
           _marketIndex,
           true,
-          int(_globalMarket.longPositionSize),
+          int(_market.longPositionSize),
           lastFundingRate
         );
-        _globalMarket.accumFundingLong += fundingFeeLongE30;
+        _market.accumFundingLong += fundingFeeLongE30;
       }
 
-      if (_globalMarket.shortPositionSize > 0) {
+      if (_market.shortPositionSize > 0) {
         int256 fundingFeeShortE30 = calculator.getFundingFee(
           _marketIndex,
           false,
-          int(_globalMarket.shortPositionSize),
+          int(_market.shortPositionSize),
           lastFundingRate
         );
-        _globalMarket.accumFundingShort += fundingFeeShortE30;
+        _market.accumFundingShort += fundingFeeShortE30;
       }
 
-      _globalMarket.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
-      _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
+      _market.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
+      _perpStorage.updateMarket(_marketIndex, _market);
     }
   }
 
@@ -168,7 +213,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
     uint256 _marketIndex
-  ) external {
+  ) external nonReentrant onlyWhitelistedExecutor {
     address _subAccount = _getSubAccount(_position.primaryAccount, _position.subAccountId);
 
     // update fee
@@ -185,16 +230,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     _increaseCollateral(_subAccount, 0, _fundingFeeToBePaid);
 
     // decrease collateral
-    _decreaseCollateral(
-      _subAccount,
-      0,
-      _fundingFeeToBePaid,
-      _borrowingFeeToBePaid,
-      _tradingFeeToBePaid,
-      0,
-      address(0),
-      true
-    );
+    _decreaseCollateral(_subAccount, 0, _fundingFeeToBePaid, _borrowingFeeToBePaid, _tradingFeeToBePaid, 0, address(0));
   }
 
   function updateFeeStates(
@@ -204,7 +240,12 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex,
     uint256 _marketIndex
-  ) external returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) {
+  )
+    external
+    nonReentrant
+    onlyWhitelistedExecutor
+    returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee)
+  {
     (_tradingFee, _borrowingFee, _fundingFee) = _updateFeeStates(
       _subAccount,
       _position,
@@ -213,6 +254,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _assetClassIndex,
       _marketIndex
     );
+  }
+
+  function reloadConfig() external nonReentrant onlyOwner {
+    calculator = Calculator(ConfigStorage(configStorage).calculator());
   }
 
   function _updateFeeStates(
@@ -254,34 +299,54 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     return (_tradingFee, _borrowingFee, _fundingFee);
   }
 
-  function accumSettledBorrowingFee(uint256 _assetClassIndex, uint256 _borrowingFeeToBeSettled) external {
+  function accumSettledBorrowingFee(
+    uint256 _assetClassIndex,
+    uint256 _borrowingFeeToBeSettled
+  ) external nonReentrant onlyWhitelistedExecutor {
     _accumSettledBorrowingFee(_assetClassIndex, _borrowingFeeToBeSettled);
   }
 
   function _accumSettledBorrowingFee(uint256 _assetClassIndex, uint256 _borrowingFeeToBeSettled) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
-    PerpStorage.GlobalAssetClass memory _globalAssetClass = _perpStorage.getGlobalAssetClassByIndex(
-      uint8(_assetClassIndex)
-    );
-    _globalAssetClass.sumSettledBorrowingFeeE30 += _borrowingFeeToBeSettled;
-    _perpStorage.updateGlobalAssetClass(uint8(_assetClassIndex), _globalAssetClass);
+    PerpStorage.AssetClass memory _assetClass = _perpStorage.getAssetClassByIndex(uint8(_assetClassIndex));
+    _assetClass.sumSettledBorrowingFeeE30 += _borrowingFeeToBeSettled;
+    _perpStorage.updateAssetClass(uint8(_assetClassIndex), _assetClass);
   }
 
   function increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) external {
     _increaseCollateral(_subAccount, _unrealizedPnl, _fundingFee);
   }
 
-  struct IncreaseCollateralVars {
-    VaultStorage vaultStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
-    uint256 unrealizedPnlToBeReceived;
-    uint256 fundingFeeToBeReceived;
-    uint256 payerBalance;
-    uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
+  function settleTraderProfit(address _subAccount, address _tpToken, int256 _realizedProfitE30) external {
+    IncreaseCollateralVars memory _vars;
+
+    _vars.vaultStorage = VaultStorage(vaultStorage);
+    _vars.configStorage = ConfigStorage(configStorage);
+    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
+
+    _vars.subAccount = _subAccount;
+    // check unrealized pnl
+    if (_realizedProfitE30 > 0) {
+      _vars.unrealizedPnlToBeReceived = uint256(_realizedProfitE30);
+      emit LogReceivedUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBeReceived);
+
+      // Pay trader with selected tp token
+      {
+        ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfigByToken(_tpToken);
+        _vars.tokenDecimal = _assetConfig.decimals;
+        _vars.token = _assetConfig.tokenAddress;
+
+        (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
+        _vars.payerBalance = _vars.vaultStorage.plpLiquidity(_assetConfig.tokenAddress);
+
+        // get profit from plp
+        _increaseCollateralWithUnrealizedPnlFromPlp(_vars);
+      }
+
+      // if tp token can't repayment cover then try repay with other tokens
+      if (_vars.unrealizedPnlToBeReceived > 0)
+        _increaseCollateral(_subAccount, int256(_vars.unrealizedPnlToBeReceived), 0);
+    }
   }
 
   function _increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) internal {
@@ -356,8 +421,13 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
+
+      // Calculate for settlement fee
+      uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_vars.token, _repayValue);
+      uint256 _settlementFee = (_repayAmount * _settlementFeeRate) / 1e18;
+
       // book the balances
-      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, 0);
+      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, _settlementFee);
 
       // deduct _vars.unrealizedPnlToBeReceived with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.unrealizedPnlToBeReceived -= _repayValue;
@@ -419,9 +489,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint256 _borrowingFee,
     uint256 _tradingFee,
     uint256 _liquidationFee,
-    address _liquidator,
-    bool _isRevertOnError
-  ) external {
+    address _liquidator
+  ) external nonReentrant onlyWhitelistedExecutor {
     _decreaseCollateral(
       _subAccount,
       _unrealizedPnl,
@@ -429,27 +498,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _borrowingFee,
       _tradingFee,
       _liquidationFee,
-      _liquidator,
-      _isRevertOnError
+      _liquidator
     );
-  }
-
-  struct DecreaseCollateralVars {
-    VaultStorage vaultStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
-    ConfigStorage.TradingConfig tradingConfig;
-    uint256 unrealizedPnlToBePaid;
-    uint256 tradingFeeToBePaid;
-    uint256 borrowingFeeToBePaid;
-    uint256 fundingFeeToBePaid;
-    uint256 liquidationFeeToBePaid;
-    uint256 payerBalance;
-    uint256 plpDebt;
-    uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
   }
 
   function _decreaseCollateral(
@@ -459,8 +509,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint256 _borrowingFee,
     uint256 _tradingFee,
     uint256 _liquidationFee,
-    address _liquidator,
-    bool _isRevertOnError
+    address _liquidator
   ) internal {
     DecreaseCollateralVars memory _vars;
 
@@ -475,22 +524,31 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     uint256 _len = _collateralTokens.length;
     // check loss
     if (_unrealizedPnl < 0) {
-      _vars.unrealizedPnlToBePaid = uint256(-_unrealizedPnl);
-      emit LogSettleUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+      _vars.vaultStorage.addLossDebt(_subAccount, uint256(-_unrealizedPnl));
     }
+    _vars.unrealizedPnlToBePaid = _vars.vaultStorage.lossDebt(_subAccount);
+
     // check trading fee
-    _vars.tradingFeeToBePaid = _tradingFee;
-    emit LogSettleTradingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+    _vars.vaultStorage.addTradingFeeDebt(_subAccount, _tradingFee);
+    _vars.tradingFeeToBePaid = _vars.vaultStorage.tradingFeeDebt(_subAccount);
+
     // check borrowing fee
-    _vars.borrowingFeeToBePaid = _borrowingFee;
-    emit LogSettleBorrowingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+    _vars.vaultStorage.addBorrowingFeeDebt(_subAccount, _borrowingFee);
+    _vars.borrowingFeeToBePaid = _vars.vaultStorage.borrowingFeeDebt(_subAccount);
+
     // check funding fee
     if (_fundingFee > 0) {
-      _vars.fundingFeeToBePaid = uint256(_fundingFee);
-      emit LogSettleFundingFeeValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+      _vars.vaultStorage.addFundingFeeDebt(_subAccount, uint256(_fundingFee));
     }
+    _vars.fundingFeeToBePaid = _vars.vaultStorage.fundingFeeDebt(_subAccount);
+
     // check liquidation fee
     _vars.liquidationFeeToBePaid = _liquidationFee;
+
+    emit LogSettleUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBePaid);
+    emit LogSettleTradingFeeValue(_vars.subAccount, _vars.tradingFeeToBePaid);
+    emit LogSettleBorrowingFeeValue(_vars.subAccount, _vars.borrowingFeeToBePaid);
+    emit LogSettleFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBePaid);
     emit LogSettleLiquidationFeeValue(_vars.subAccount, _vars.liquidationFeeToBePaid);
 
     // loop for settle
@@ -521,13 +579,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
         ++i;
       }
     }
-
-    // If fee cannot be covered, revert.
-    // This shouldn't be happen unless the platform is suffering from bad debt
-    if (_isRevertOnError && _vars.tradingFeeToBePaid > 0) revert ITradeHelper_TradingFeeCannotBeCovered();
-    if (_isRevertOnError && _vars.borrowingFeeToBePaid > 0) revert ITradeHelper_BorrowingFeeCannotBeCovered();
-    if (_isRevertOnError && _vars.fundingFeeToBePaid > 0) revert ITradeHelper_FundingFeeCannotBeCovered();
-    if (_isRevertOnError && _vars.unrealizedPnlToBePaid > 0) revert ITradeHelper_UnrealizedPnlCannotBeCovered();
   }
 
   function _decreaseCollateralWithUnrealizedPnlToPlp(DecreaseCollateralVars memory _vars) internal {
@@ -542,6 +593,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
       _vars.unrealizedPnlToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
+
+      _vars.vaultStorage.subLossDebt(_vars.subAccount, _repayValue);
 
       emit LogSettleUnRealizedPnlAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
     }
@@ -565,6 +618,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _vars.fundingFeeToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
 
+      _vars.vaultStorage.subFundingFeeDebt(_vars.subAccount, _repayValue);
+
       emit LogSettleFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
     }
   }
@@ -586,6 +641,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.fundingFeeToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
+
+      _vars.vaultStorage.subFundingFeeDebt(_vars.subAccount, _repayValue);
 
       emit LogSettleFundingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _repayAmount);
     }
@@ -611,6 +668,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _vars.tradingFeeToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
 
+      _vars.vaultStorage.subTradingFeeDebt(_vars.subAccount, _repayValue);
+
       emit LogSettleTradingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _devFeeAmount, _protocolFeeAmount);
     }
   }
@@ -634,6 +693,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       // deduct _vars.tradingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.borrowingFeeToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
+
+      _vars.vaultStorage.subBorrowingFeeDebt(_vars.subAccount, _repayValue);
 
       emit LogSettleBorrowingFeeAmount(_vars.subAccount, _vars.token, _repayValue, _devFeeAmount, _plpFeeAmount);
     }
@@ -676,18 +737,18 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
   function _updateAccumFundingLong(uint256 _marketIndex, int256 fundingLong) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
-    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(_marketIndex);
 
-    _globalMarket.accumFundingLong += fundingLong;
-    _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
+    _market.accumFundingLong += fundingLong;
+    _perpStorage.updateMarket(_marketIndex, _market);
   }
 
   function _updateAccumFundingShort(uint256 _marketIndex, int256 fundingShort) internal {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
-    PerpStorage.GlobalMarket memory _globalMarket = _perpStorage.getGlobalMarketByIndex(_marketIndex);
+    PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(_marketIndex);
 
-    _globalMarket.accumFundingShort += fundingShort;
-    _perpStorage.updateGlobalMarket(_marketIndex, _globalMarket);
+    _market.accumFundingShort += fundingShort;
+    _perpStorage.updateMarket(_marketIndex, _market);
   }
 
   function _abs(int256 x) private pure returns (uint256) {

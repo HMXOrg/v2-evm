@@ -37,10 +37,10 @@ export const botHandlerABI = [
     type: "event",
     anonymous: false,
     inputs: [
-      { name: "_account", internalType: "address", type: "address", indexed: true },
-      { name: "_subAccountId", internalType: "uint8", type: "uint8", indexed: false },
-      { name: "_marketIndex", internalType: "uint256", type: "uint256", indexed: false },
-      { name: "_tpToken", internalType: "address", type: "address", indexed: false },
+      { name: "account", internalType: "address", type: "address", indexed: true },
+      { name: "subAccountId", internalType: "uint8", type: "uint8", indexed: false },
+      { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "tpToken", internalType: "address", type: "address", indexed: false },
     ],
     name: "LogCloseDelistedMarketPosition",
   },
@@ -48,25 +48,45 @@ export const botHandlerABI = [
     type: "event",
     anonymous: false,
     inputs: [
-      { name: "_account", internalType: "address", type: "address", indexed: true },
-      { name: "_subAccountId", internalType: "uint8", type: "uint8", indexed: false },
-      { name: "_marketIndex", internalType: "uint256", type: "uint256", indexed: false },
-      { name: "_tpToken", internalType: "address", type: "address", indexed: false },
+      { name: "account", internalType: "address", type: "address", indexed: true },
+      { name: "subAccountId", internalType: "uint8", type: "uint8", indexed: false },
+      { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "tpToken", internalType: "address", type: "address", indexed: false },
     ],
     name: "LogDeleverage",
   },
   {
     type: "event",
     anonymous: false,
-    inputs: [{ name: "_subAccount", internalType: "address", type: "address", indexed: false }],
+    inputs: [
+      { name: "account", internalType: "address", type: "address", indexed: true },
+      { name: "token", internalType: "address", type: "address", indexed: false },
+      { name: "amount", internalType: "uint256", type: "uint256", indexed: false },
+    ],
+    name: "LogInjectTokenToFundingFeeReserve",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "account", internalType: "address", type: "address", indexed: true },
+      { name: "token", internalType: "address", type: "address", indexed: false },
+      { name: "amount", internalType: "uint256", type: "uint256", indexed: false },
+    ],
+    name: "LogInjectTokenToPlpLiquidity",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [{ name: "subAccount", internalType: "address", type: "address", indexed: false }],
     name: "LogLiquidate",
   },
   {
     type: "event",
     anonymous: false,
     inputs: [
-      { name: "_oldLiquidationService", internalType: "address", type: "address", indexed: false },
-      { name: "_newLiquidationService", internalType: "address", type: "address", indexed: false },
+      { name: "oldLiquidationService", internalType: "address", type: "address", indexed: false },
+      { name: "newLiquidationService", internalType: "address", type: "address", indexed: false },
     ],
     name: "LogSetLiquidationService",
   },
@@ -74,8 +94,8 @@ export const botHandlerABI = [
     type: "event",
     anonymous: false,
     inputs: [
-      { name: "_address", internalType: "address", type: "address", indexed: false },
-      { name: "_allowed", internalType: "bool", type: "bool", indexed: false },
+      { name: "account", internalType: "address", type: "address", indexed: false },
+      { name: "allowed", internalType: "bool", type: "bool", indexed: false },
     ],
     name: "LogSetPositionManager",
   },
@@ -83,8 +103,8 @@ export const botHandlerABI = [
     type: "event",
     anonymous: false,
     inputs: [
-      { name: "_oldPyth", internalType: "address", type: "address", indexed: false },
-      { name: "_newPyth", internalType: "address", type: "address", indexed: false },
+      { name: "oldPyth", internalType: "address", type: "address", indexed: false },
+      { name: "newPyth", internalType: "address", type: "address", indexed: false },
     ],
     name: "LogSetPyth",
   },
@@ -92,8 +112,8 @@ export const botHandlerABI = [
     type: "event",
     anonymous: false,
     inputs: [
-      { name: "_oldTradeService", internalType: "address", type: "address", indexed: false },
-      { name: "_newTradeService", internalType: "address", type: "address", indexed: false },
+      { name: "oldTradeService", internalType: "address", type: "address", indexed: false },
+      { name: "newTradeService", internalType: "address", type: "address", indexed: false },
     ],
     name: "LogSetTradeService",
   },
@@ -101,10 +121,10 @@ export const botHandlerABI = [
     type: "event",
     anonymous: false,
     inputs: [
-      { name: "_account", internalType: "address", type: "address", indexed: true },
-      { name: "_subAccountId", internalType: "uint8", type: "uint8", indexed: false },
-      { name: "_marketIndex", internalType: "uint256", type: "uint256", indexed: false },
-      { name: "_tpToken", internalType: "address", type: "address", indexed: false },
+      { name: "account", internalType: "address", type: "address", indexed: true },
+      { name: "subAccountId", internalType: "uint8", type: "uint8", indexed: false },
+      { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "tpToken", internalType: "address", type: "address", indexed: false },
     ],
     name: "LogTakeMaxProfit",
   },
@@ -168,7 +188,7 @@ export const botHandlerABI = [
     outputs: [],
   },
   {
-    stateMutability: "payable",
+    stateMutability: "nonpayable",
     type: "function",
     inputs: [
       { name: "_subAccount", internalType: "address", type: "address" },
@@ -1072,8 +1092,8 @@ export const configStorageABI = [
   {
     stateMutability: "view",
     type: "function",
-    inputs: [{ name: "_index", internalType: "uint256", type: "uint256" }],
-    name: "getMarketConfigByIndex",
+    inputs: [{ name: "_marketIndex", internalType: "uint256", type: "uint256" }],
+    name: "getMarketConfigById",
     outputs: [
       {
         name: "_marketConfig",
@@ -1081,8 +1101,6 @@ export const configStorageABI = [
         type: "tuple",
         components: [
           { name: "assetId", internalType: "bytes32", type: "bytes32" },
-          { name: "maxLongPositionSize", internalType: "uint256", type: "uint256" },
-          { name: "maxShortPositionSize", internalType: "uint256", type: "uint256" },
           { name: "increasePositionFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "decreasePositionFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "initialMarginFractionBPS", internalType: "uint32", type: "uint32" },
@@ -1919,6 +1937,7 @@ export const limitTradeHandlerABI = [
       { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
       { name: "sizeDelta", internalType: "int256", type: "int256", indexed: false },
       { name: "triggerPrice", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "acceptablePrice", internalType: "uint256", type: "uint256", indexed: false },
       { name: "triggerAboveThreshold", internalType: "bool", type: "bool", indexed: false },
       { name: "executionFee", internalType: "uint256", type: "uint256", indexed: false },
       { name: "reduceOnly", internalType: "bool", type: "bool", indexed: false },
@@ -2023,6 +2042,7 @@ export const limitTradeHandlerABI = [
       { name: "_marketIndex", internalType: "uint256", type: "uint256" },
       { name: "_sizeDelta", internalType: "int256", type: "int256" },
       { name: "_triggerPrice", internalType: "uint256", type: "uint256" },
+      { name: "_acceptablePrice", internalType: "uint256", type: "uint256" },
       { name: "_triggerAboveThreshold", internalType: "bool", type: "bool" },
       { name: "_executionFee", internalType: "uint256", type: "uint256" },
       { name: "_reduceOnly", internalType: "bool", type: "bool" },
@@ -2068,6 +2088,7 @@ export const limitTradeHandlerABI = [
       { name: "subAccountId", internalType: "uint8", type: "uint8" },
       { name: "marketIndex", internalType: "uint256", type: "uint256" },
       { name: "triggerPrice", internalType: "uint256", type: "uint256" },
+      { name: "acceptablePrice", internalType: "uint256", type: "uint256" },
       { name: "executionFee", internalType: "uint256", type: "uint256" },
     ],
   },
@@ -2437,6 +2458,13 @@ export const liquidityHandlerABI = [
     stateMutability: "view",
     type: "function",
     inputs: [],
+    name: "liquidityService",
+    outputs: [{ name: "", internalType: "address", type: "address" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
     name: "nextExecutionOrderIndex",
     outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
@@ -2459,6 +2487,13 @@ export const liquidityHandlerABI = [
     type: "function",
     inputs: [],
     name: "pendingOwner",
+    outputs: [{ name: "", internalType: "address", type: "address" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "pyth",
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
   {
@@ -2673,49 +2708,19 @@ export const oracleMiddlewareABI = [
     type: "event",
     anonymous: false,
     inputs: [
-      { name: "_assetId", internalType: "bytes32", type: "bytes32", indexed: true },
-      { name: "_oldConfidenceThresholdE6", internalType: "uint32", type: "uint32", indexed: false },
-      { name: "_newConfidenceThresholdE6", internalType: "uint32", type: "uint32", indexed: false },
-      { name: "_oldTrustPriceAge", internalType: "uint256", type: "uint256", indexed: false },
-      { name: "_newTrustPriceAge", internalType: "uint256", type: "uint256", indexed: false },
-    ],
-    name: "LogSetAssetPriceConfig",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "_assetId", internalType: "bytes32", type: "bytes32", indexed: true },
-      { name: "_status", internalType: "uint8", type: "uint8", indexed: false },
-    ],
-    name: "LogSetMarketStatus",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "oldPythAdapter", internalType: "address", type: "address", indexed: false },
-      { name: "newPythAdapter", internalType: "address", type: "address", indexed: false },
-    ],
-    name: "LogSetPythAdapter",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "_account", internalType: "address", type: "address", indexed: true },
-      { name: "_isActive", internalType: "bool", type: "bool", indexed: false },
-    ],
-    name: "LogSetUpdater",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
       { name: "_previousOwner", internalType: "address", type: "address", indexed: true },
       { name: "_newOwner", internalType: "address", type: "address", indexed: true },
     ],
     name: "OwnershipTransferred",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "executorAddress", internalType: "address", type: "address", indexed: true },
+      { name: "isServiceExecutor", internalType: "bool", type: "bool", indexed: false },
+    ],
+    name: "SetServiceExecutor",
   },
   { stateMutability: "nonpayable", type: "function", inputs: [], name: "acceptOwnership", outputs: [] },
   {
@@ -2825,150 +2830,22 @@ export const oracleMiddlewareABI = [
     outputs: [{ name: "", internalType: "contract IOracleAdapter", type: "address" }],
   },
   {
-    stateMutability: "nonpayable",
+    stateMutability: "view",
     type: "function",
     inputs: [
-      { name: "_assetId", internalType: "bytes32", type: "bytes32" },
-      { name: "_confidenceThresholdE6", internalType: "uint32", type: "uint32" },
-      { name: "_trustPriceAge", internalType: "uint32", type: "uint32" },
+      { name: "_subAccount", internalType: "address", type: "address" },
+      { name: "_badDebt", internalType: "uint256", type: "uint256" },
     ],
-    name: "setAssetPriceConfig",
-    outputs: [],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [
-      { name: "_assetId", internalType: "bytes32", type: "bytes32" },
-      { name: "_status", internalType: "uint8", type: "uint8" },
-    ],
-    name: "setMarketStatus",
-    outputs: [],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [
-      { name: "_assetId", internalType: "bytes32[]", type: "bytes32[]" },
-      { name: "_status", internalType: "uint8[]", type: "uint8[]" },
-    ],
-    name: "setMultipleMarketStatus",
-    outputs: [],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [{ name: "_newPythAdapter", internalType: "address", type: "address" }],
-    name: "setPythAdapter",
-    outputs: [],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [
-      { name: "_account", internalType: "address", type: "address" },
-      { name: "_isActive", internalType: "bool", type: "bool" },
-    ],
-    name: "setUpdater",
-    outputs: [],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [{ name: "_newOwner", internalType: "address", type: "address" }],
-    name: "transferOwnership",
+    name: "addBadDebt",
     outputs: [],
   },
   {
     stateMutability: "view",
     type: "function",
-    inputs: [
-      { name: "_assetId", internalType: "bytes32", type: "bytes32" },
-      { name: "_isMax", internalType: "bool", type: "bool" },
-      { name: "_marketSkew", internalType: "int256", type: "int256" },
-      { name: "_sizeDelta", internalType: "int256", type: "int256" },
-      { name: "_maxSkewScaleUSD", internalType: "uint256", type: "uint256" },
-    ],
-    name: "unsafeGetLatestAdaptivePrice",
-    outputs: [
-      { name: "_adaptivePrice", internalType: "uint256", type: "uint256" },
-      { name: "_lastUpdate", internalType: "uint256", type: "uint256" },
-    ],
+    inputs: [{ name: "", internalType: "address", type: "address" }],
+    name: "badDebt",
+    outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [
-      { name: "_assetId", internalType: "bytes32", type: "bytes32" },
-      { name: "_isMax", internalType: "bool", type: "bool" },
-      { name: "_marketSkew", internalType: "int256", type: "int256" },
-      { name: "_sizeDelta", internalType: "int256", type: "int256" },
-      { name: "_maxSkewScaleUSD", internalType: "uint256", type: "uint256" },
-    ],
-    name: "unsafeGetLatestAdaptivePriceWithMarketStatus",
-    outputs: [
-      { name: "_adaptivePrice", internalType: "uint256", type: "uint256" },
-      { name: "_lastUpdate", internalType: "uint256", type: "uint256" },
-      { name: "_status", internalType: "uint8", type: "uint8" },
-    ],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [
-      { name: "_assetId", internalType: "bytes32", type: "bytes32" },
-      { name: "_isMax", internalType: "bool", type: "bool" },
-    ],
-    name: "unsafeGetLatestPrice",
-    outputs: [
-      { name: "_price", internalType: "uint256", type: "uint256" },
-      { name: "_exponent", internalType: "int32", type: "int32" },
-      { name: "_lastUpdate", internalType: "uint256", type: "uint256" },
-    ],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [
-      { name: "_assetId", internalType: "bytes32", type: "bytes32" },
-      { name: "_isMax", internalType: "bool", type: "bool" },
-    ],
-    name: "unsafeGetLatestPriceWithMarketStatus",
-    outputs: [
-      { name: "_price", internalType: "uint256", type: "uint256" },
-      { name: "_lastUpdate", internalType: "uint256", type: "uint256" },
-      { name: "_status", internalType: "uint8", type: "uint8" },
-    ],
-  },
-] as const
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PerpStorage
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export const perpStorageABI = [
-  { type: "error", inputs: [], name: "IPerpStorage_NotWhiteListed" },
-  { type: "error", inputs: [], name: "Owned_NotOwner" },
-  { type: "error", inputs: [], name: "Owned_NotPendingOwner" },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "_previousOwner", internalType: "address", type: "address", indexed: true },
-      { name: "_newOwner", internalType: "address", type: "address", indexed: true },
-    ],
-    name: "OwnershipTransferred",
-  },
-  {
-    type: "event",
-    anonymous: false,
-    inputs: [
-      { name: "executorAddress", internalType: "address", type: "address", indexed: true },
-      { name: "isServiceExecutor", internalType: "bool", type: "bool", indexed: false },
-    ],
-    name: "SetServiceExecutor",
-  },
-  { stateMutability: "nonpayable", type: "function", inputs: [], name: "acceptOwnership", outputs: [] },
   {
     stateMutability: "nonpayable",
     type: "function",
@@ -3004,11 +2881,11 @@ export const perpStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "_assetClassIndex", internalType: "uint256", type: "uint256" }],
-    name: "getGlobalAssetClassByIndex",
+    name: "getAssetClassByIndex",
     outputs: [
       {
         name: "",
-        internalType: "struct IPerpStorage.GlobalAssetClass",
+        internalType: "struct IPerpStorage.AssetClass",
         type: "tuple",
         components: [
           { name: "reserveValueE30", internalType: "uint256", type: "uint256" },
@@ -3023,12 +2900,35 @@ export const perpStorageABI = [
   {
     stateMutability: "view",
     type: "function",
-    inputs: [{ name: "_marketIndex", internalType: "uint256", type: "uint256" }],
-    name: "getGlobalMarketByIndex",
+    inputs: [],
+    name: "getGlobalState",
     outputs: [
       {
         name: "",
-        internalType: "struct IPerpStorage.GlobalMarket",
+        internalType: "struct IPerpStorage.GlobalState",
+        type: "tuple",
+        components: [
+          { name: "longPositionSize", internalType: "uint256", type: "uint256" },
+          { name: "longAvgPrice", internalType: "uint256", type: "uint256" },
+          { name: "shortPositionSize", internalType: "uint256", type: "uint256" },
+          { name: "shortAvgPrice", internalType: "uint256", type: "uint256" },
+          { name: "accumFundingLong", internalType: "int256", type: "int256" },
+          { name: "accumFundingShort", internalType: "int256", type: "int256" },
+          { name: "currentFundingRate", internalType: "int256", type: "int256" },
+          { name: "lastFundingTime", internalType: "uint256", type: "uint256" },
+        ],
+      },
+    ],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [{ name: "_marketIndex", internalType: "uint256", type: "uint256" }],
+    name: "getMarketByIndex",
+    outputs: [
+      {
+        name: "",
+        internalType: "struct IPerpStorage.Market",
         type: "tuple",
         components: [
           { name: "longPositionSize", internalType: "uint256", type: "uint256" },
@@ -3040,20 +2940,6 @@ export const perpStorageABI = [
           { name: "accumFundingLong", internalType: "int256", type: "int256" },
           { name: "accumFundingShort", internalType: "int256", type: "int256" },
         ],
-      },
-    ],
-  },
-  {
-    stateMutability: "view",
-    type: "function",
-    inputs: [],
-    name: "getGlobalState",
-    outputs: [
-      {
-        name: "",
-        internalType: "struct IPerpStorage.GlobalState",
-        type: "tuple",
-        components: [{ name: "reserveValueE30", internalType: "uint256", type: "uint256" }],
       },
     ],
   },
@@ -3092,11 +2978,11 @@ export const perpStorageABI = [
   {
     stateMutability: "view",
     type: "function",
-    inputs: [{ name: "_trader", internalType: "address", type: "address" }],
+    inputs: [{ name: "_subAccount", internalType: "address", type: "address" }],
     name: "getPositionBySubAccount",
     outputs: [
       {
-        name: "traderPositions",
+        name: "_subAccountPositions",
         internalType: "struct IPerpStorage.Position[]",
         type: "tuple[]",
         components: [
@@ -3144,10 +3030,10 @@ export const perpStorageABI = [
       { name: "longAvgPrice", internalType: "uint256", type: "uint256" },
       { name: "shortPositionSize", internalType: "uint256", type: "uint256" },
       { name: "shortAvgPrice", internalType: "uint256", type: "uint256" },
-      { name: "currentFundingRate", internalType: "int256", type: "int256" },
-      { name: "lastFundingTime", internalType: "uint256", type: "uint256" },
       { name: "accumFundingLong", internalType: "int256", type: "int256" },
       { name: "accumFundingShort", internalType: "int256", type: "int256" },
+      { name: "currentFundingRate", internalType: "int256", type: "int256" },
+      { name: "lastFundingTime", internalType: "uint256", type: "uint256" },
     ],
   },
   {
@@ -3187,6 +3073,22 @@ export const perpStorageABI = [
     ],
     name: "increaseSubAccountBorrowingFee",
     outputs: [],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [{ name: "", internalType: "uint256", type: "uint256" }],
+    name: "markets",
+    outputs: [
+      { name: "longPositionSize", internalType: "uint256", type: "uint256" },
+      { name: "longAvgPrice", internalType: "uint256", type: "uint256" },
+      { name: "shortPositionSize", internalType: "uint256", type: "uint256" },
+      { name: "shortAvgPrice", internalType: "uint256", type: "uint256" },
+      { name: "currentFundingRate", internalType: "int256", type: "int256" },
+      { name: "lastFundingTime", internalType: "uint256", type: "uint256" },
+      { name: "accumFundingLong", internalType: "int256", type: "int256" },
+      { name: "accumFundingShort", internalType: "int256", type: "int256" },
+    ],
   },
   {
     stateMutability: "view",
@@ -3305,7 +3207,7 @@ export const perpStorageABI = [
       { name: "_assetClassIndex", internalType: "uint8", type: "uint8" },
       {
         name: "_newAssetClass",
-        internalType: "struct IPerpStorage.GlobalAssetClass",
+        internalType: "struct IPerpStorage.AssetClass",
         type: "tuple",
         components: [
           { name: "reserveValueE30", internalType: "uint256", type: "uint256" },
@@ -3316,7 +3218,7 @@ export const perpStorageABI = [
         ],
       },
     ],
-    name: "updateGlobalAssetClass",
+    name: "updateAssetClass",
     outputs: [],
   },
   {
@@ -3344,36 +3246,14 @@ export const perpStorageABI = [
           { name: "longAvgPrice", internalType: "uint256", type: "uint256" },
           { name: "shortPositionSize", internalType: "uint256", type: "uint256" },
           { name: "shortAvgPrice", internalType: "uint256", type: "uint256" },
-          { name: "currentFundingRate", internalType: "int256", type: "int256" },
-          { name: "lastFundingTime", internalType: "uint256", type: "uint256" },
           { name: "accumFundingLong", internalType: "int256", type: "int256" },
           { name: "accumFundingShort", internalType: "int256", type: "int256" },
+          { name: "currentFundingRate", internalType: "int256", type: "int256" },
+          { name: "lastFundingTime", internalType: "uint256", type: "uint256" },
         ],
       },
     ],
     name: "updateGlobalMarket",
-    outputs: [],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [
-      { name: "_marketIndex", internalType: "uint256", type: "uint256" },
-      { name: "_isLong", internalType: "bool", type: "bool" },
-      { name: "_price", internalType: "uint256", type: "uint256" },
-    ],
-    name: "updateGlobalMarketPrice",
-    outputs: [],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [
-      { name: "_marketIndex", internalType: "uint256", type: "uint256" },
-      { name: "_newPositionSize", internalType: "uint256", type: "uint256" },
-      { name: "_newAvgPrice", internalType: "uint256", type: "uint256" },
-    ],
-    name: "updateGlobalShortMarketById",
     outputs: [],
   },
   {
@@ -3388,6 +3268,41 @@ export const perpStorageABI = [
       },
     ],
     name: "updateGlobalState",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [
+      { name: "_marketIndex", internalType: "uint256", type: "uint256" },
+      {
+        name: "_market",
+        internalType: "struct IPerpStorage.Market",
+        type: "tuple",
+        components: [
+          { name: "longPositionSize", internalType: "uint256", type: "uint256" },
+          { name: "longAvgPrice", internalType: "uint256", type: "uint256" },
+          { name: "shortPositionSize", internalType: "uint256", type: "uint256" },
+          { name: "shortAvgPrice", internalType: "uint256", type: "uint256" },
+          { name: "currentFundingRate", internalType: "int256", type: "int256" },
+          { name: "lastFundingTime", internalType: "uint256", type: "uint256" },
+          { name: "accumFundingLong", internalType: "int256", type: "int256" },
+          { name: "accumFundingShort", internalType: "int256", type: "int256" },
+        ],
+      },
+    ],
+    name: "updateMarket",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [
+      { name: "_marketIndex", internalType: "uint256", type: "uint256" },
+      { name: "_isLong", internalType: "bool", type: "bool" },
+      { name: "_price", internalType: "uint256", type: "uint256" },
+    ],
+    name: "updateMarketPrice",
     outputs: [],
   },
 ] as const
@@ -3782,13 +3697,6 @@ export const vaultStorageABI = [
     outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
   {
-    stateMutability: "view",
-    type: "function",
-    inputs: [{ name: "_token", internalType: "address", type: "address" }],
-    name: "pullPLPLiquidity",
-    outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
-  },
-  {
     stateMutability: "nonpayable",
     type: "function",
     inputs: [{ name: "_token", internalType: "address", type: "address" }],
@@ -3804,13 +3712,6 @@ export const vaultStorageABI = [
       { name: "_amount", internalType: "uint256", type: "uint256" },
     ],
     name: "pushToken",
-    outputs: [],
-  },
-  {
-    stateMutability: "nonpayable",
-    type: "function",
-    inputs: [{ name: "_trader", internalType: "address", type: "address" }],
-    name: "removeAllTraderTokens",
     outputs: [],
   },
   {

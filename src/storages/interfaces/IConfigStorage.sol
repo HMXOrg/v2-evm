@@ -125,6 +125,8 @@ interface IConfigStorage {
 
   function getTradingConfig() external view returns (TradingConfig memory);
 
+  function getMarketConfigs() external view returns (MarketConfig[] memory);
+
   function getMarketConfigByIndex(uint256 _index) external view returns (MarketConfig memory _marketConfig);
 
   function getAssetClassConfigByIndex(uint256 _index) external view returns (AssetClassConfig memory _assetClassConfig);

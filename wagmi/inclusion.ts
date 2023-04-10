@@ -9,4 +9,7 @@ export default [
   "ConfigStorage.json",
   "PerpStorage.json",
   "VaultStorage.json",
+  // Oracle
+  "OracleMiddleware.json",
+  "PythAdapter.json"
 ];

@@ -801,12 +801,14 @@ contract Calculator is Owned, ICalculator {
   //                    - increase (long +, short -)
   //                    - decrease (long -, short +)
   /// @param _positionClosePrice - position's close price
+  /// @param _positionNextClosePrice - position's close price after updated
   /// @param _positionRealizedPnl - position's realized PNL (profit +, loss -)
   function calculateMarketAveragePrice(
     int256 _marketPositionSize,
     uint256 _marketAveragePrice,
     int256 _sizeDelta,
     uint256 _positionClosePrice,
+    uint256 _positionNextClosePrice,
     int256 _positionRealizedPnl
   ) external pure returns (uint256 _newAvaragePrice) {
     if (_marketAveragePrice == 0) return 0;
@@ -852,7 +854,7 @@ contract Calculator is Owned, ICalculator {
     // for long, new market position size and divisor are positive number
     // and short, new market position size and divisor are negative number, then - / - would be +
     // note: abs unrealized pnl should not be greater then new position size, if calculation go wrong it's fine to revert
-    return uint256((int256(_positionClosePrice) * _newMarketPositionSize) / _divisor);
+    return uint256((int256(_positionNextClosePrice) * _newMarketPositionSize) / _divisor);
   }
 
   function getNextFundingRate(uint256 _marketIndex) external view returns (int256 fundingRate) {

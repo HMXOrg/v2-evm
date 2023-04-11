@@ -83,6 +83,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     uint256 adaptivePriceE30;
     uint256 oraclePrice;
     uint256 closePriceE30;
+    uint256 nextClosePrice;
     int256 unrealizedPnl;
     int32 exponent;
     OracleMiddleware oracle;
@@ -99,6 +100,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     address tpToken;
     uint256 limitPriceE30;
     uint256 oraclePrice;
+    uint256 nextClosePrice;
     uint256 tradingFee;
     uint256 borrowingFee;
     int256 realizedPnl;
@@ -241,6 +243,10 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       uint8 _marketStatus;
 
       // Get Price market.
+      (_vars.oraclePrice, ) = _vars.oracle.getLatestPrice(
+        _marketConfig.assetId,
+        !_vars.isLong // if current position is SHORT position, then we use max price
+      );
 
       (_vars.adaptivePriceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = _vars
         .oracle
@@ -256,7 +262,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       (_vars.closePriceE30, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         _vars.isLong, // if current position is SHORT position, then we use max price
-        (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+        (int(_market.longPositionSize) - int(_market.shortPositionSize)), // 0
         -_vars.position.positionSizeE30,
         _marketConfig.fundingRate.maxSkewScaleUSD,
         0
@@ -296,13 +302,16 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       _marketIndex
     );
 
+    _vars.nextClosePrice = _calculateNextClosePrice(
+      _market,
+      _marketConfig.fundingRate.maxSkewScaleUSD,
+      _vars.oraclePrice,
+      _vars.position.positionSizeE30,
+      _sizeDelta
+    );
+
     // if the position size is not zero and the new size delta is not zero, calculate the new average price (adjust position)
     if (!_vars.isNewPosition) {
-      (_vars.oraclePrice, ) = _vars.oracle.getLatestPrice(
-        _marketConfig.assetId,
-        !_vars.isLong // if current position is SHORT position, then we use max price
-      );
-
       // Get the delta and isProfit value from the _getDelta function
       (bool _isProfit, uint256 _delta) = calculator.getDelta(
         _abs(_vars.position.positionSizeE30),
@@ -319,11 +328,9 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       }
 
       _vars.position.avgEntryPriceE30 = _calculateEntryAveragePrice(
-        _market,
-        _marketConfig.fundingRate.maxSkewScaleUSD,
-        _vars.oraclePrice,
         _vars.position.positionSizeE30,
         _sizeDelta,
+        _vars.nextClosePrice,
         _vars.unrealizedPnl
       );
     }
@@ -373,7 +380,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
             int256(_market.longPositionSize),
             _market.longAvgPrice,
             _sizeDelta,
-            _vars.adaptivePriceE30,
+            _vars.closePriceE30,
+            _vars.nextClosePrice,
             0
           );
 
@@ -386,7 +394,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
             -int256(_market.shortPositionSize),
             _market.shortAvgPrice,
             _sizeDelta,
-            _vars.adaptivePriceE30,
+            _vars.closePriceE30,
+            _vars.nextClosePrice,
             0
           );
 
@@ -761,6 +770,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           _market.longAvgPrice,
           -int256(_vars.positionSizeE30ToDecrease),
           _vars.closePrice,
+          _vars.nextClosePrice,
           _vars.realizedPnl
         );
 
@@ -775,6 +785,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           _market.shortAvgPrice,
           int256(_vars.positionSizeE30ToDecrease),
           _vars.closePrice,
+          _vars.nextClosePrice,
           -_vars.realizedPnl
         );
 
@@ -806,12 +817,18 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           !_vars.isLongPosition // if current position is SHORT position, then we use max price
         );
 
-        _vars.position.avgEntryPriceE30 = _calculateEntryAveragePrice(
+        _vars.nextClosePrice = _calculateNextClosePrice(
           _market,
           _marketConfig.fundingRate.maxSkewScaleUSD,
           _vars.oraclePrice,
           _vars.position.positionSizeE30,
+          _vars.isLongPosition ? -int(_vars.positionSizeE30ToDecrease) : int(_vars.positionSizeE30ToDecrease)
+        );
+
+        _vars.position.avgEntryPriceE30 = _calculateEntryAveragePrice(
+          _vars.position.positionSizeE30,
           _vars.isLongPosition ? -int(_vars.positionSizeE30ToDecrease) : int(_vars.positionSizeE30ToDecrease),
+          _vars.nextClosePrice,
           _vars.unrealizedPnl
         );
 
@@ -934,6 +951,29 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   }
 
   /// @notice Calculates new entry average price
+  /// @param _positionSize - position's size before updated (long +, short -)
+  /// @param _sizeDelta - position's size to increase or decrease
+  ///                   - increase => long +, short -
+  ///                   - decrease => long -, short +
+  /// @param _nextClosePrice - close price after position has been updated
+  /// @param _unrealizedPnl - unrealized profit ans loss
+  ///                   - long position => profit +, loss -
+  ///                   - short position => profit -, loss +
+  function _calculateEntryAveragePrice(
+    int256 _positionSize,
+    int256 _sizeDelta,
+    uint256 _nextClosePrice,
+    int256 _unrealizedPnl
+  ) private pure returns (uint256 _newEntryAveragePrice) {
+    int256 _newPositionSize = _positionSize + _sizeDelta;
+    if (_positionSize > 0) {
+      return uint256((int256(_nextClosePrice) * _newPositionSize) / (_newPositionSize + _unrealizedPnl));
+    } else {
+      return uint256((int256(_nextClosePrice) * _newPositionSize) / (_newPositionSize - _unrealizedPnl));
+    }
+  }
+
+  /// @notice Calculates new close price after position has been updated
   /// @param _market - buy / sell market's state before updated
   /// @param _maxSkewScale - max market skew scale from market config
   /// @param _oraclePrice - price from oracle
@@ -941,25 +981,21 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   /// @param _sizeDelta - position's size to increase or decrease
   ///                   - increase => long +, short -
   ///                   - decrease => long -, short +
-  /// @param _unrealizedPnl - unrealized profit ans loss
-  ///                   - long position => profit +, loss -
-  ///                   - short position => profit -, loss +
-  function _calculateEntryAveragePrice(
+  function _calculateNextClosePrice(
     PerpStorage.Market memory _market,
     uint256 _maxSkewScale,
     uint256 _oraclePrice,
     int256 _positionSize,
-    int256 _sizeDelta,
-    int256 _unrealizedPnl
-  ) private pure returns (uint256 _newEntryAveragePrice) {
+    int256 _sizeDelta
+  ) private pure returns (uint256 _nextClosePrice) {
     if (_maxSkewScale == 0) return _oraclePrice;
 
     // premium before       = market skew - size delta / max scale skew
     // premium after        = market skew - position size / max scale skew
     // premium              = (premium after + premium after) / 2
-    // new close price      = 100 * (1 + premium)
+    // next close price     = 100 * (1 + premium)
     // remaining size       = position size - size delta
-    // new avg price        = (new close price * remaining size) / (remaining size + unrealized pnl)
+    // next avg price       = (next close price * remaining size) / (remaining size + unrealized pnl)
 
     // Example:
     // Given
@@ -979,9 +1015,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     //    - premium before      = 2000 - 300 = 1700 / 1000000 = 0.0017
     //    - premium after       = 2000 - 1000 = 1000 / 1000000 = 0.001
     //    - new premium         = 0.0017 + 0.001 = 0.0027 / 2 = 0.00135
-    //    - price with premium  = 100 * (1 + 0.00135) = 100.135 USD
-    //    - new avg price       = (100.135 * 700) / (700 + 0.699650174912543728135932033983)
-    //                          = 100.035014977533699450823764353469 USD
+    //    - next close price    = 100 * (1 + 0.00135) = 100.135 USD
 
     int256 _newPositionSize = _positionSize + _sizeDelta;
 
@@ -992,14 +1026,11 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     int256 _premium = (_premiumBefore + _premiumAfter) / 2;
 
-    uint256 _nextClosePrice;
     if (_premium > 0) {
-      _nextClosePrice = (_oraclePrice * (1e30 + uint256(_premium))) / 1e30;
+      return (_oraclePrice * (1e30 + uint256(_premium))) / 1e30;
     } else {
-      _nextClosePrice = (_oraclePrice * (1e30 - uint256(-_premium))) / 1e30;
+      return (_oraclePrice * (1e30 - uint256(-_premium))) / 1e30;
     }
-
-    return uint256((int256(_nextClosePrice) * _newPositionSize) / (_newPositionSize + _unrealizedPnl));
   }
 
   /// @notice This function increases the reserve value

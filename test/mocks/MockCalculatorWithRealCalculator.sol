@@ -80,6 +80,7 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     uint256 _marketAveragePrice,
     int256 _sizeDelta,
     uint256 _positionClosePrice,
+    uint256 _positionNextClosePrice,
     int256 _positionRealizedPnl
   ) public view override returns (uint256 _newAvaragePrice) {
     if (actualFunction[keccak256("calculateMarketAveragePrice")]) {
@@ -89,6 +90,7 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
           _marketAveragePrice,
           _sizeDelta,
           _positionClosePrice,
+          _positionNextClosePrice,
           _positionRealizedPnl
         );
     } else {
@@ -98,6 +100,7 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
           _marketAveragePrice,
           _sizeDelta,
           _positionClosePrice,
+          _positionNextClosePrice,
           _positionRealizedPnl
         );
     }

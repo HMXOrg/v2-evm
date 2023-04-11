@@ -20,7 +20,7 @@ contract EcoPyth_GasUsedTest is EcoPyth_BaseTest {
     _publishTimeDiff = new uint24[](50);
 
     for (uint i = 0; i < _size; i++) {
-      ecoPyth.insertAsset(bytes32(type(uint256).max - i));
+      ecoPyth.insertPriceId(bytes32(type(uint256).max - i));
       _prices[i] = int24(int256(i));
       _publishTimeDiff[i] = uint24(i);
     }

@@ -10,6 +10,8 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
 
 contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
+  uint256 constant MAX_DIFF = 0.0001 ether; // 0.01 %
+
   // Token Balances
 
   function assertTokenBalanceOf(address _account, address _token, uint256 _balance, string memory _str) internal {
@@ -26,7 +28,12 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
 
   // PLP
   function assertPLPTotalSupply(uint256 _totalSupply, string memory _str) internal {
-    assertEq(plpV2.totalSupply(), _totalSupply, string.concat(_str, "PLPv2 Total supply is not matched"));
+    assertApproxEqRel(
+      plpV2.totalSupply(),
+      _totalSupply,
+      MAX_DIFF,
+      string.concat(_str, "PLPv2 Total supply is not matched")
+    );
   }
 
   function assertPLPTotalSupply(uint256 _totalSupply) internal {

@@ -33,7 +33,7 @@ import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol"
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { ProxyAdmin } from "lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
 
 abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;

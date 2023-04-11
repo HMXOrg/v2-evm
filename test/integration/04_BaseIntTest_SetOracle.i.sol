@@ -167,10 +167,6 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     int24[] memory _prices,
     uint64[] memory _conf
   ) public returns (bytes[] memory _newDatas) {
-    if (_assetIds.length != _prices.length || _assetIds.length != _conf.length) {
-      revert BadArgs();
-    }
-
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_prices);
     uint24[] memory _publishTimeDiff = new uint24[](_assetIds.length);
     for (uint256 i = 0; i < _assetIds.length; i++) {

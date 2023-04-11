@@ -286,11 +286,10 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     );
 
     uint256 _orderIndex = limitTradeHandler.limitOrdersIndex(getSubAccount(_account, _subAccountId)) - 1;
-
-    if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
-
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+
+    if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
     limitTradeHandler.executeOrder(
       _account,
       _subAccountId,

@@ -9,6 +9,6 @@ export default defineConfig({
     foundry({
       include: inclusion,
     }),
-    actions(),
+    actions({ overridePackageName: "@wagmi/core", prepareWriteContract: false, writeContract: false }),
   ],
 });

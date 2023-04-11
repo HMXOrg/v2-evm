@@ -16,13 +16,14 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /// @param _tokenIn liquidity token to add
   /// @param _amountIn amount of token to provide
   /// @param _executionFee execution fee
-  /// @param _priceData Pyth's price data
   function addLiquidity(
     address _liquidityProvider,
     ERC20 _tokenIn,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
     bool executeNow
   ) internal {
     vm.startPrank(_liquidityProvider);
@@ -39,13 +40,28 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      executePLPOrder(_orderIndex, _priceData);
+      executePLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
     }
   }
 
-  function executePLPOrder(uint256 _endIndex, bytes[] memory _priceData) internal {
+  function executePLPOrder(
+    uint256 _endIndex,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime
+  ) internal {
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+
     vm.startPrank(ORDER_EXECUTOR);
-    liquidityHandler.executeOrder(_endIndex, payable(FEEVER), _priceData);
+    liquidityHandler.executeOrder(
+      _endIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
     vm.stopPrank();
   }
 
@@ -54,13 +70,14 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /// @param _tokenOut liquidity token to remove
   /// @param _amountIn PLP amount to remove
   /// @param _executionFee execution fee
-  /// @param _priceData Pyth's price data
   function removeLiquidity(
     address _liquidityProvider,
     address _tokenOut,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
     bool executeNow
   ) internal {
     vm.startPrank(_liquidityProvider);
@@ -79,7 +96,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      executePLPOrder(_orderIndex, _priceData);
+      executePLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
     }
   }
 
@@ -136,16 +153,28 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /// @param _marketIndex Market index.
   /// @param _buySizeE30 Buying size in e30 format.
   /// @param _tpToken Take profit token
-  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
+  /// @param _tickPrices Pyth price feed data, can be derived from Pyth client SDK compressed in the form of Uniswap's tick prices
   function marketBuy(
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _buySizeE30,
     address _tpToken,
-    bytes[] memory _priceData
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime
   ) internal {
-    marketBuy(_account, _subAccountId, _marketIndex, _buySizeE30, _tpToken, _priceData, "");
+    marketBuy(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _buySizeE30,
+      _tpToken,
+      _tickPrices,
+      _publishTimeDiffs,
+      _minPublishTime,
+      ""
+    );
   }
 
   function marketBuy(
@@ -154,7 +183,9 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint256 _marketIndex,
     uint256 _buySizeE30,
     address _tpToken,
-    bytes[] memory _priceData,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
     string memory signature
   ) internal {
     vm.prank(_account);
@@ -174,7 +205,18 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
 
     if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
 
-    limitTradeHandler.executeOrder(_account, _subAccountId, _orderIndex, payable(FEEVER), _priceData);
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    limitTradeHandler.executeOrder(
+      _account,
+      _subAccountId,
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      _minPublishTime,
+      keccak256("someEncodedVaas")
+    );
   }
 
   /// @notice Helper function to call MarketHandler sell
@@ -183,16 +225,28 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /// @param _marketIndex Market index.
   /// @param _sellSizeE30 Buying size in e30 format.
   /// @param _tpToken Take profit token
-  /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
+  /// @param _tickPrices Pyth price feed data, can be derived from Pyth client SDK compressed in the form of Uniswap's tick prices
   function marketSell(
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,
     uint256 _sellSizeE30,
     address _tpToken,
-    bytes[] memory _priceData
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime
   ) internal {
-    marketSell(_account, _subAccountId, _marketIndex, _sellSizeE30, _tpToken, _priceData, "");
+    marketSell(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _sellSizeE30,
+      _tpToken,
+      _tickPrices,
+      _publishTimeDiffs,
+      _minPublishTime,
+      ""
+    );
   }
 
   function marketSell(
@@ -201,7 +255,9 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint256 _marketIndex,
     uint256 _sellSizeE30,
     address _tpToken,
-    bytes[] memory _priceData,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
     string memory signature
   ) internal {
     vm.prank(_account);
@@ -221,7 +277,18 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
 
     if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
 
-    limitTradeHandler.executeOrder(_account, _subAccountId, _orderIndex, payable(FEEVER), _priceData);
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    limitTradeHandler.executeOrder(
+      _account,
+      _subAccountId,
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      _minPublishTime,
+      keccak256("someEncodedVaas")
+    );
   }
 
   function createLimitTradeOrder(
@@ -255,9 +322,22 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint8 _subAccountId,
     uint256 _orderIndex,
     address payable _feeReceiver,
-    bytes[] memory _priceData
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime
   ) internal {
-    limitTradeHandler.executeOrder(_account, _subAccountId, _orderIndex, _feeReceiver, _priceData);
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    limitTradeHandler.executeOrder(
+      _account,
+      _subAccountId,
+      _orderIndex,
+      _feeReceiver,
+      priceUpdateData,
+      publishTimeUpdateData,
+      _minPublishTime,
+      keccak256("someEncodedVaas")
+    );
   }
 
   function liquidate(address _subAccount, bytes[] memory _priceData) internal {

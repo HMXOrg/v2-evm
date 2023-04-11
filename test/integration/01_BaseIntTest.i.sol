@@ -10,6 +10,7 @@ import { StdCheats } from "forge-std/StdCheats.sol";
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { EcoPyth } from "@hmx/oracle/EcoPyth.sol";
 
 // Openzepline
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -113,7 +114,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   IWNative weth; //for native
 
   /* PYTH */
-  MockPyth internal pyth;
+  EcoPyth internal pyth;
   IPythAdapter internal pythAdapter;
 
   /* Tester */
@@ -141,7 +142,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     weth = IWNative(new MockWNative());
     vm.label(address(weth), "WETH");
 
-    pyth = new MockPyth(60, 1);
+    pyth = new EcoPyth();
 
     pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
 

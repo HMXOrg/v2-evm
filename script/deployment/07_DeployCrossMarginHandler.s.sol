@@ -20,10 +20,11 @@ contract DeployCrossMarginHandler is ConfigJsonRepo {
     address liquidityServiceAddress = getJsonAddress(".services.liquidity");
     address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
     address weth = getJsonAddress(".tokens.weth");
-    // @todo - TBD
     uint256 minExecutionFee = 30;
 
-    address crossMarginHandlerAddress = address(new CrossMarginHandler(crossMarginServiceAddress, pythAddress));
+    address crossMarginHandlerAddress = address(
+      new CrossMarginHandler(crossMarginServiceAddress, pythAddress, minExecutionFee)
+    );
 
     vm.stopBroadcast();
 

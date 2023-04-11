@@ -131,16 +131,19 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint8 _subAccountId,
     ERC20 _collateralToken,
     uint256 _withdrawAmount,
-    bytes[] memory _priceData
+    bytes[] memory _priceData,
+    uint256 _executionFee
   ) internal {
     vm.prank(_account);
-    crossMarginHandler.withdrawCollateral{ value: _priceData.length }(
+    uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: _executionFee }(
       _subAccountId,
       address(_collateralToken),
       _withdrawAmount,
-      _priceData,
+      _executionFee,
       false
     );
+
+    crossMarginHandler.executeOrder({ _endIndex: orderIndex, _feeReceiver: payable(ALICE), _priceData: _priceData });
   }
 
   /**

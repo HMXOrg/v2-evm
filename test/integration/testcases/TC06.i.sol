@@ -123,17 +123,17 @@
 //       );
 //     }
 
-//     /**
-//      * T4: Alice try withdrawing collateral when Equity < IMR but Alice can't withdraw (Equity < IMR)
-//      */
-//     vm.warp(block.timestamp + 1);
-//     {
-//       // Alice withdraw 1(USD) of USDC
-//       // Expect Alice can't withdraw collateral because Equity < IMR
-//       vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-//       bytes[] memory priceData = new bytes[](0);
-//       withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 1 * 1e6, priceData);
-//     }
+    /**
+     * T4: Alice try withdrawing collateral when Equity < IMR but Alice can't withdraw (Equity < IMR)
+     */
+    // vm.warp(block.timestamp + 1);
+    // {
+    //   // Alice withdraw 1(USD) of USDC
+    //   // Expect Alice can't withdraw collateral because Equity < IMR
+    //   // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
+    //   bytes[] memory priceData = new bytes[](0);
+    //   withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 1 * 1e6, priceData, executionOrderFee);
+    // }
 
 //     /**
 //      * T5: Alice partial close SHORT position 0.88 USD ETHUSD position and choose to settle with WBTC (Equity < IMR)
@@ -257,6 +257,7 @@
 //       marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, TP_TOKEN, priceData);
 //     }
 
+
 //     /**
 //      * T12: Alice can withdraw collateral successfully
 //      */
@@ -268,3 +269,4 @@
 //     }
 //   }
 // }
+

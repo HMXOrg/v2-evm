@@ -380,8 +380,19 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint24[] memory _publishTimeDiffs,
     uint256 _minPublishTime
   ) internal {
+    liquidate(_subAccount, _tickPrices, _publishTimeDiffs, _minPublishTime, "");
+  }
+
+  function liquidate(
+    address _subAccount,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
+    string memory signature
+  ) internal {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
     vm.prank(BOT);
     botHandler.liquidate(
       _subAccount,

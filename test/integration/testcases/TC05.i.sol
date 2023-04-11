@@ -63,9 +63,9 @@ contract TC05 is BaseIntTest_WithActions {
       // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
       // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
       // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
-      tickPrices[1] = 99039;
-      tickPrices[2] = 0;
-      tickPrices[6] = 48285;
+      tickPrices[1] = 99039; // WBTC tick price $125
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[6] = 48285; // JOY tick price $20,000
       // buy
       bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
       marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);

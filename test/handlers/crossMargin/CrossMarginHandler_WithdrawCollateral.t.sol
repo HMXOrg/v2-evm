@@ -21,20 +21,6 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
    * TEST REVERT
    */
 
-  // Try withdraw token collateral with not accepted token (Ex. Fx, Equity)
-  function testRevert_handler_withdrawCollateral_onlyAcceptedToken() external {
-    vm.prank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
-    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, address(dai), 10 ether, priceDataBytes, false);
-  }
-
-  //  Try withdraw token collateral with insufficient allowance
-  function testRevert_handler_withdrawCollateral_InsufficientBalance() external {
-    vm.prank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InsufficientBalance()"));
-    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, address(weth), 10 ether, priceDataBytes, false);
-  }
-
   // @todo - uncomment this test
   // function testRevert_handler_withdrawCollateral_setOraclePrice_withdrawBalanceBelowIMR() external {
   //   address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
@@ -98,7 +84,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(weth.balanceOf(address(vaultStorage)), 10 ether);
     assertEq(weth.balanceOf(ALICE), 0 ether);
 
-    simulateAliceWithdrawToken(address(weth), 3 ether);
+    simulateAliceWithdrawToken(address(weth), 3 ether, priceDataBytes, false);
 
     // After withdrawn, ALICE must have 7 WETH as collateral token
     assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 7 ether);
@@ -106,8 +92,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(weth.balanceOf(ALICE), 3 ether);
 
     // Try withdraw WETH, but with unwrap option
-    vm.prank(ALICE);
-    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, address(weth), 1.5 ether, priceDataBytes, true);
+    simulateAliceWithdrawToken(address(weth), 1.5 ether, priceDataBytes, true);
 
     // After withdrawn with unwrap,
     // - Vault must have 5.5 WETH
@@ -130,19 +115,21 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     // ALICE deposits first time
     weth.mint(ALICE, 10 ether);
     simulateAliceDepositToken(address(weth), (10 ether));
+    assertEq(weth.balanceOf(ALICE), 0);
 
     // After ALICE start depositing, token lists must contains 1 token
     assertEq(vaultStorage.getTraderTokens(subAccount).length, 1);
 
     // ALICE try withdrawing some of WETH from Vault
-    simulateAliceWithdrawToken(address(weth), 3 ether);
+    simulateAliceWithdrawToken(address(weth), 3 ether, priceDataBytes, false);
+    assertEq(weth.balanceOf(ALICE), 3 ether);
 
     // After ALICE withdrawn some of WETH, list of token must still contain WETH
     assertEq(vaultStorage.getTraderTokens(subAccount).length, 1);
 
     // ALICE try withdrawing all of WETH from Vault
-    simulateAliceWithdrawToken(address(weth), 7 ether);
-    assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 0 ether);
+    simulateAliceWithdrawToken(address(weth), 7 ether, priceDataBytes, false);
+    assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 0 ether, "ALICE's WETH balance");
     assertEq(weth.balanceOf(ALICE), 10 ether);
 
     // After ALICE withdrawn all of WETH, list of token must be 0

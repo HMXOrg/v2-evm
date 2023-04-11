@@ -87,9 +87,15 @@ library Deployer {
    * Handlers
    */
 
-  function deployCrossMarginHandler(address _crossMarginService, address _pyth) internal returns (ICrossMarginHandler) {
+  function deployCrossMarginHandler(
+    address _crossMarginService,
+    address _pyth,
+    uint256 _minExecutionFee
+  ) internal returns (ICrossMarginHandler) {
     return
-      ICrossMarginHandler(deployContractWithArguments("CrossMarginHandler", abi.encode(_crossMarginService, _pyth)));
+      ICrossMarginHandler(
+        deployContractWithArguments("CrossMarginHandler", abi.encode(_crossMarginService, _pyth, _minExecutionFee))
+      );
   }
 
   function deployLiquidityHandler(

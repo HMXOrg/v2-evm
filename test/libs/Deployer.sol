@@ -67,7 +67,7 @@ library Deployer {
     return IPythAdapter(deployContractWithArguments("PythAdapter", abi.encode(_pyth)));
   }
 
-  function deployStakedGlpAdapter(
+  function deployStakedGlpOracleAdapter(
     IERC20 _sGlp,
     IGmxGlpManager _glpManager,
     bytes32 _sGlpAssetId

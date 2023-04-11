@@ -57,7 +57,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
   // oracle
   IPythAdapter pythAdapter;
-  IOracleAdapter stakedGlpAdapter;
+  IOracleAdapter stakedGlpOracleAdapter;
   IOracleMiddleware oracleMiddleware;
 
   // mock
@@ -76,7 +76,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockErc20 internal dai;
   MockErc20 internal usdc;
   MockErc20 internal usdt;
-  MockErc20 internal sglp;
+  MockErc20 internal sGlp;
 
   MockErc20 internal bad;
 
@@ -98,7 +98,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant daiAssetId = "DAI";
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
-  bytes32 internal constant sglpAssetId = "SGLP";
+  bytes32 internal constant sGlpAssetId = "SGLP";
 
   // Fx
   bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
@@ -122,7 +122,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
     bad = new MockErc20("Bad Coin", "BAD", 2);
-    sglp = new MockErc20("SGLP", "SGLP", 18);
+    sGlp = new MockErc20("Staked GLP", "sGLP", 18);
 
     plp = Deployer.deployPLPv2();
 
@@ -141,8 +141,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockGlpManager = new MockGlpManager();
 
     pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
-    stakedGlpAdapter = Deployer.deployStakedGlpAdapter(sglp, mockGlpManager, sglpAssetId);
-    oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter), address(stakedGlpAdapter));
+    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(sGlp, mockGlpManager, sGlpAssetId);
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter), address(stakedGlpOracleAdapter));
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -429,12 +429,12 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     configStorage.setAssetConfig(daiAssetId, _assetConfigDai);
 
     IConfigStorage.AssetConfig memory _assetConfigSGLP = IConfigStorage.AssetConfig({
-      tokenAddress: address(sglp),
-      assetId: sglpAssetId,
+      tokenAddress: address(sGlp),
+      assetId: sGlpAssetId,
       decimals: 18,
       isStableCoin: false
     });
-    configStorage.setAssetConfig(sglpAssetId, _assetConfigSGLP);
+    configStorage.setAssetConfig(sGlpAssetId, _assetConfigSGLP);
   }
 
   function abs(int256 x) external pure returns (uint256) {

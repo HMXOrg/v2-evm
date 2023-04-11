@@ -160,7 +160,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     // deploy stakedGLPOracleAdapter
     sglp = new MockErc20("StakedGlp", "sGLP", 18);
 
-    stakedGlpAdapter = Deployer.deployStakedGlpAdapter(sglp, glpManager, sglpAssetId);
+    stakedGlpAdapter = Deployer.deployStakedGlpOracleAdapter(sglp, glpManager, sglpAssetId);
 
     // deploy oracleMiddleWare
     oracleMiddleWare = Deployer.deployOracleMiddleware(address(pythAdapter), address(stakedGlpAdapter));

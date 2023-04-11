@@ -34,7 +34,7 @@ contract TradingStakingHook is ITradeServiceHook, Owned {
     uint256 _sizeDelta,
     bytes32
   ) external onlyTradeService {
-    ITradingStaking(tradingStaking).deposit(_primaryAccount, _marketIndex, _sizeDelta);
+    ITradingStaking(tradingStaking).deposit(_primaryAccount, _marketIndex, _sizeDelta / 1e12);
   }
 
   function onDecreasePosition(
@@ -44,6 +44,6 @@ contract TradingStakingHook is ITradeServiceHook, Owned {
     uint256 _sizeDelta,
     bytes32
   ) external onlyTradeService {
-    ITradingStaking(tradingStaking).withdraw(_primaryAccount, _marketIndex, _sizeDelta);
+    ITradingStaking(tradingStaking).withdraw(_primaryAccount, _marketIndex, _sizeDelta / 1e12);
   }
 }

@@ -27,5 +27,6 @@ abstract contract BaseIntTest_SetWhitelist is BaseIntTest_SetPLPTokens {
     pyth.setUpdater(address(liquidityHandler), true);
     pyth.setUpdater(address(limitTradeHandler), true);
     pyth.setUpdater(address(marketTradeHandler), true);
+    pyth.setUpdater(address(botHandler), true);
   }
 }

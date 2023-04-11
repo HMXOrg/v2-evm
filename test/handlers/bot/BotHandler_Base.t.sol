@@ -28,9 +28,17 @@ contract BotHandler_Base is BaseTest {
   IBotHandler botHandler;
   bytes[] prices;
 
+  int24[] internal tickPrices;
+  uint24[] internal publishTimeDiffs;
+  bytes32[] internal priceUpdateData;
+  bytes32[] internal publishTimeUpdateData;
+
   function setUp() public virtual {
     // setup for trade service
     prices = new bytes[](0);
+
+    priceUpdateData = ecoPyth.buildPriceUpdateData(tickPrices);
+    publishTimeUpdateData = ecoPyth.buildPublishTimeUpdateData(publishTimeDiffs);
 
     configStorage.setCalculator(address(mockCalculator));
     positionTester = new PositionTester(perpStorage, vaultStorage, mockOracle);
@@ -47,7 +55,8 @@ contract BotHandler_Base is BaseTest {
       address(tradeHelper)
     );
 
-    botHandler = Deployer.deployBotHandler(address(tradeService), address(mockLiquidationService), address(mockPyth));
+    botHandler = Deployer.deployBotHandler(address(tradeService), address(mockLiquidationService), address(ecoPyth));
+    ecoPyth.setUpdater(address(botHandler), true);
 
     address[] memory _positionManagers = new address[](1);
     _positionManagers[0] = address(this);

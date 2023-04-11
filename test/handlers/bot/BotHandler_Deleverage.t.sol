@@ -23,7 +23,16 @@ contract BotHandler_Deleverage is BotHandler_Base {
   function testRevert_deleverage_WhenSomeoneCallBotHandler() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IBotHandler_UnauthorizedSender()"));
-    botHandler.deleverage(ALICE, 0, ethMarketIndex, address(usdt), prices);
+    botHandler.deleverage(
+      ALICE,
+      0,
+      ethMarketIndex,
+      address(usdt),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
   }
 
   function testRevert_deleverage_WhenValidateError() external {
@@ -55,7 +64,16 @@ contract BotHandler_Deleverage is BotHandler_Base {
     // PLP safety buffer = 1 + ((80,000 - 120,000) / 120,000) = 0.6666666666666667
 
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PlpHealthy()"));
-    botHandler.deleverage(ALICE, 0, ethMarketIndex, address(usdt), prices);
+    botHandler.deleverage(
+      ALICE,
+      0,
+      ethMarketIndex,
+      address(usdt),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
   }
 
   function testRevert_deleverage_WhenValidatePass() external {
@@ -85,7 +103,16 @@ contract BotHandler_Deleverage is BotHandler_Base {
     mockCalculator.setAUM((40_000) * 1e30);
 
     // PLP safety buffer = 1 + ((40,000 - 120,000) / 120,000) = 0.33333333333333337
-    botHandler.deleverage(ALICE, 0, ethMarketIndex, address(usdt), prices);
+    botHandler.deleverage(
+      ALICE,
+      0,
+      ethMarketIndex,
+      address(usdt),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
   }
 
   function testRevert_deleverage_WhenOverDeleverage() external {
@@ -119,13 +146,31 @@ contract BotHandler_Deleverage is BotHandler_Base {
     mockCalculator.setAUM((80_000) * 1e30);
 
     // PLP safety buffer = 1 + ((80,000 - 160,000) / 160,000) = 0.5
-    botHandler.deleverage(ALICE, 0, ethMarketIndex, address(usdt), prices);
+    botHandler.deleverage(
+      ALICE,
+      0,
+      ethMarketIndex,
+      address(usdt),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
     // After deleverage settle profit to ALICE
     // TVL = 160,000 - 80,000 = 80,000
     mockCalculator.setPLPValue(80_000 * 1e30);
 
     // PLP safety buffer = 1 + ((80,000 - 80,000) / 80,000) = 1
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PlpHealthy()"));
-    botHandler.deleverage(ALICE, 0, btcMarketIndex, address(usdt), prices);
+    botHandler.deleverage(
+      ALICE,
+      0,
+      btcMarketIndex,
+      address(usdt),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
   }
 }

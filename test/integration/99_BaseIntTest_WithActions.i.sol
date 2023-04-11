@@ -375,9 +375,22 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     );
   }
 
-  function liquidate(address _subAccount, bytes[] memory _priceData) internal {
+  function liquidate(
+    address _subAccount,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime
+  ) internal {
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
     vm.prank(BOT);
-    botHandler.liquidate{ value: _priceData.length }(_subAccount, _priceData);
+    botHandler.liquidate(
+      _subAccount,
+      priceUpdateData,
+      publishTimeUpdateData,
+      _minPublishTime,
+      keccak256("someEncodedVaas")
+    );
   }
 
   function forceTakeMaxProfit(
@@ -385,10 +398,22 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) internal {
     vm.prank(BOT);
-    botHandler.forceTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken, _priceData);
+    botHandler.forceTakeMaxProfit(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _tpToken,
+      _priceData,
+      _publishTimeData,
+      _minPublishTime,
+      _encodedVaas
+    );
   }
 
   function closeDelistedMarketPosition(
@@ -396,10 +421,22 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) internal {
     vm.prank(BOT);
-    botHandler.closeDelistedMarketPosition(_account, _subAccountId, _marketIndex, _tpToken, _priceData);
+    botHandler.closeDelistedMarketPosition(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _tpToken,
+      _priceData,
+      _publishTimeData,
+      _minPublishTime,
+      _encodedVaas
+    );
   }
 
   /**

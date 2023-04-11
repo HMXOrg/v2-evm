@@ -62,7 +62,16 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
   function testRevert_WhenSomeoneCallBotHandler() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IBotHandler_UnauthorizedSender()"));
-    botHandler.closeDelistedMarketPosition(ALICE, 0, ethMarketIndex, address(0), prices);
+    botHandler.closeDelistedMarketPosition(
+      ALICE,
+      0,
+      ethMarketIndex,
+      address(0),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
   }
 
   /**
@@ -94,7 +103,16 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     configStorage.delistMarket(ethMarketIndex);
 
     // Bot force take max profit ALICE position
-    botHandler.closeDelistedMarketPosition(ALICE, 0, ethMarketIndex, _tpToken, prices);
+    botHandler.closeDelistedMarketPosition(
+      ALICE,
+      0,
+      ethMarketIndex,
+      _tpToken,
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     // all calculation is same with testCorrectness_WhenExecutorCloseShortPositionForAlice_AndProfitIsGreaterThenReserved
     address[] memory _checkPlpTokens = new address[](1);
@@ -152,7 +170,16 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     configStorage.delistMarket(ethMarketIndex);
 
     // Tester close ALICE position
-    botHandler.closeDelistedMarketPosition(ALICE, 0, ethMarketIndex, _tpToken, prices);
+    botHandler.closeDelistedMarketPosition(
+      ALICE,
+      0,
+      ethMarketIndex,
+      _tpToken,
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     // all calculation is same with testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved
     address[] memory _checkPlpTokens = new address[](1);
@@ -198,7 +225,16 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     mockOracle.setPriceStale(true);
 
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
-    botHandler.closeDelistedMarketPosition(ALICE, 0, ethMarketIndex, address(0), prices);
+    botHandler.closeDelistedMarketPosition(
+      ALICE,
+      0,
+      ethMarketIndex,
+      address(0),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
   }
 
   // ref: testRevert_WhenExecutorTryCloseLongPositionButPositionIsAlreadyClosed
@@ -213,7 +249,16 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
 
     // Somehow Tester close ALICE position again
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PositionAlreadyClosed()"));
-    botHandler.closeDelistedMarketPosition(ALICE, 0, ethMarketIndex, address(0), prices);
+    botHandler.closeDelistedMarketPosition(
+      ALICE,
+      0,
+      ethMarketIndex,
+      address(0),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
   }
 
   function testRevert_closeDelistedMarketPosition_ButMarketHealthy() external {
@@ -225,6 +270,15 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
 
     // Somehow Tester close ALICE position again
     vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketHealthy()"));
-    botHandler.closeDelistedMarketPosition(ALICE, 0, ethMarketIndex, address(0), prices);
+    botHandler.closeDelistedMarketPosition(
+      ALICE,
+      0,
+      ethMarketIndex,
+      address(0),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
   }
 }

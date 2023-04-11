@@ -5,12 +5,15 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract StakedGlpOracleAdapter is IOracleAdapter {
+import { Owned } from "@hmx/base/Owned.sol";
+
+contract StakedGlpOracleAdapter is Owned, IOracleAdapter {
+  event LogSetSGLPAssetId(bytes32 oldSglpAssetId, bytes32 newSglpAssetId);
   error StakedGlpOracleAdapter_BadAssetId();
 
   IERC20 public immutable sGlp;
   IGmxGlpManager public immutable glpManager;
-  bytes32 public immutable sGlpAssetId;
+  bytes32 public sGlpAssetId;
 
   constructor(IERC20 _sGlp, IGmxGlpManager _glpManager, bytes32 _sGlpAssetId) {
     sGlp = _sGlp;
@@ -34,5 +37,10 @@ contract StakedGlpOracleAdapter is IOracleAdapter {
     }
 
     return ((1e18 * glpManager.getAum(_isMax)) / sGlp.totalSupply(), block.timestamp);
+  }
+
+  function setSGlpAssetId(bytes32 _newSglpAssetId) external onlyOwner {
+    emit LogSetSGLPAssetId(sGlpAssetId, _newSglpAssetId);
+    sGlpAssetId = _newSglpAssetId;
   }
 }

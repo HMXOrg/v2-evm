@@ -106,7 +106,7 @@ contract PythAdapter is Owned, IPythAdapter {
     bytes32 _assetId,
     bool _isMax,
     uint32 _confidenceThreshold
-  ) external view returns (uint256, int32, uint256) {
+  ) external view returns (uint256, uint256) {
     // SLOAD
     IPythAdapter.PythPriceConfig memory _config = configs[_assetId];
 
@@ -114,7 +114,7 @@ contract PythAdapter is Owned, IPythAdapter {
     PythStructs.Price memory _price = pyth.getPriceUnsafe(_config.pythPriceId);
     _validateConfidence(_price, _confidenceThreshold);
 
-    return (_convertToUint256(_price, _isMax, 30, _config.inverse), _price.expo, _price.publishTime);
+    return (_convertToUint256(_price, _isMax, 30, _config.inverse), _price.publishTime);
   }
 
   /**

@@ -23,7 +23,6 @@ interface ICalculator {
     int256 elapsedIntervals;
   }
 
-  //@todo - will be use in _getFeeRate
   enum LiquidityDirection {
     ADD,
     REMOVE

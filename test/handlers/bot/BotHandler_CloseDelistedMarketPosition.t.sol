@@ -197,7 +197,7 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     // make price stale in mock oracle middleware
     mockOracle.setPriceStale(true);
 
-    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
     botHandler.closeDelistedMarketPosition(ALICE, 0, ethMarketIndex, address(0), prices);
   }
 

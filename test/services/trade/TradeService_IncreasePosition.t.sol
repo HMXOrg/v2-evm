@@ -310,7 +310,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // BTC price 25000 USD
     uint256 price = 25_000 * 1e30;
     mockOracle.setPrice(price);
-    mockOracle.setExponent(-8);
 
     // input
     int256 sizeDelta = -800_000 * 1e30;
@@ -451,7 +450,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // BTC price 25,000 USD
     uint256 price = 25_000 * 1e30;
     mockOracle.setPrice(price);
-    mockOracle.setExponent(-8);
+    // mockOracle.setExponent(-8);
 
     vm.warp(100);
     // BOB Increase position Short BTC size 250,000

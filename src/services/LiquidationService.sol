@@ -232,7 +232,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
 
       _vars.globalMarket = _vars.perpStorage.getMarketByIndex(_vars.position.marketIndex);
 
-      (uint256 _adaptivePrice, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (uint256 _adaptivePrice, , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _vars.marketConfig.assetId,
         _isLong,
         (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),

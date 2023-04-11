@@ -2,8 +2,9 @@
 pragma solidity 0.8.18;
 
 import { Owned } from "@hmx/base/Owned.sol";
-import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
+import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
+import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 
 contract OracleMiddleware is Owned, IOracleMiddleware {
   /**
@@ -14,6 +15,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint32 trustPriceAge;
     /// @dev The acceptable threshold confidence ratio. ex. _confidenceRatio = 0.01 ether means 1%
     uint32 confidenceThresholdE6;
+    /// @dev asset oracle adapter (ex. StakedGLPOracleAdapter, PythAdapter)
+    address adapter;
   }
 
   /**
@@ -26,14 +29,14 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint32 _oldConfidenceThresholdE6,
     uint32 _newConfidenceThresholdE6,
     uint256 _oldTrustPriceAge,
-    uint256 _newTrustPriceAge
+    uint256 _newTrustPriceAge,
+    address _oldAdapter,
+    address _newAdapter
   );
-  event LogSetPythAdapter(address oldPythAdapter, address newPythAdapter);
-
+  event LogSetAdapter(address oldPythAdapter, address newPythAdapter);
   /**
    * States
    */
-  IOracleAdapter public pythAdapter;
 
   // whitelist mapping of market status updater
   mapping(address => bool) public isUpdater;
@@ -50,10 +53,6 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   // 2 = Active, equivalent to `trading` from Pyth
   // assetId => marketStatus
   mapping(bytes32 => uint8) public marketStatus;
-
-  constructor(IOracleAdapter _pythAdapter) {
-    pythAdapter = _pythAdapter;
-  }
 
   /**
    * Modifiers
@@ -73,7 +72,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @param _assetId The asset id to get the price. This can be address or generic id.
   /// @param _isMax Whether to get the max price or min price.
   function getLatestPrice(bytes32 _assetId, bool _isMax) external view returns (uint256 _price, uint256 _lastUpdate) {
-    (_price, , _lastUpdate) = _getLatestPrice(_assetId, _isMax);
+    (_price, _lastUpdate) = _getLatestPrice(_assetId, _isMax);
 
     return (_price, _lastUpdate);
   }
@@ -88,10 +87,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   function unsafeGetLatestPrice(
     bytes32 _assetId,
     bool _isMax
-  ) external view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate) {
-    (_price, _exponent, _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax);
+  ) external view returns (uint256 _price, uint256 _lastUpdate) {
+    (_price, _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax);
 
-    return (_price, _exponent, _lastUpdate);
+    return (_price, _lastUpdate);
   }
 
   /// @notice Return the latest price of asset, last update of the given asset id, along with market status.
@@ -105,7 +104,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, , _lastUpdate) = _getLatestPrice(_assetId, _isMax);
+    (_price, _lastUpdate) = _getLatestPrice(_assetId, _isMax);
 
     return (_price, _lastUpdate, _status);
   }
@@ -121,7 +120,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_price, , _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax);
+    (_price, _lastUpdate) = _unsafeGetLatestPrice(_assetId, _isMax);
 
     return (_price, _lastUpdate, _status);
   }
@@ -141,7 +140,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _maxSkewScaleUSD,
     uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate) {
-    (_adaptivePrice, , _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -168,7 +167,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _maxSkewScaleUSD,
     uint256 _limitPriceE30
   ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate) {
-    (_adaptivePrice, , _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -194,11 +193,11 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD,
     uint256 _limitPriceE30
-  ) external view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate, uint8 _status) {
+  ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate, uint8 _status) {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_adaptivePrice, _exponent, _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -207,7 +206,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       true,
       _limitPriceE30
     );
-    return (_adaptivePrice, _exponent, _lastUpdate, _status);
+    return (_adaptivePrice, _lastUpdate, _status);
   }
 
   /// @notice Return the latest adaptive rice of asset, last update of the given asset id, along with market status.
@@ -228,7 +227,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _status = marketStatus[_assetId];
     if (_status == 0) revert IOracleMiddleware_MarketStatusUndefined();
 
-    (_adaptivePrice, , _lastUpdate) = _getLatestAdaptivePrice(
+    (_adaptivePrice, _lastUpdate) = _getLatestAdaptivePrice(
       _assetId,
       _isMax,
       _marketSkew,
@@ -240,33 +239,38 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     return (_adaptivePrice, _lastUpdate, _status);
   }
 
-  function _getLatestPrice(
-    bytes32 _assetId,
-    bool _isMax
-  ) private view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate) {
+  function _getLatestPrice(bytes32 _assetId, bool _isMax) private view returns (uint256 _price, uint256 _lastUpdate) {
     AssetPriceConfig memory _assetConfig = assetPriceConfigs[_assetId];
 
-    // 1. get price from Pyth
-    (_price, _exponent, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _assetConfig.confidenceThresholdE6);
+    // 1. get price from Pyth or chianlink depends on confidenceThresholdE6
+    (_price, _lastUpdate) = IOracleAdapter(_assetConfig.adapter).getLatestPrice(
+      _assetId,
+      _isMax,
+      _assetConfig.confidenceThresholdE6
+    );
 
     // check price age
-    if (block.timestamp - _lastUpdate > _assetConfig.trustPriceAge) revert IOracleMiddleware_PythPriceStale();
+    if (block.timestamp - _lastUpdate > _assetConfig.trustPriceAge) revert IOracleMiddleware_PriceStale();
 
     // 2. Return the price and last update
-    return (_price, _exponent, _lastUpdate);
+    return (_price, _lastUpdate);
   }
 
   function _unsafeGetLatestPrice(
     bytes32 _assetId,
     bool _isMax
-  ) private view returns (uint256 _price, int32 _exponent, uint256 _lastUpdate) {
+  ) private view returns (uint256 _price, uint256 _lastUpdate) {
     AssetPriceConfig memory _assetConfig = assetPriceConfigs[_assetId];
 
     // 1. get price from Pyth
-    (_price, _exponent, _lastUpdate) = pythAdapter.getLatestPrice(_assetId, _isMax, _assetConfig.confidenceThresholdE6);
+    (_price, _lastUpdate) = IOracleAdapter(_assetConfig.adapter).getLatestPrice(
+      _assetId,
+      _isMax,
+      _assetConfig.confidenceThresholdE6
+    );
 
     // 2. Return the price and last update
-    return (_price, _exponent, _lastUpdate);
+    return (_price, _lastUpdate);
   }
 
   function _getLatestAdaptivePrice(
@@ -277,12 +281,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     uint256 _maxSkewScaleUSD,
     bool isSafe,
     uint256 _limitPriceE30
-  ) private view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate) {
+  ) private view returns (uint256 _adaptivePrice, uint256 _lastUpdate) {
     // Get price from Pyth
     uint256 _price;
-    (_price, _exponent, _lastUpdate) = isSafe
-      ? _getLatestPrice(_assetId, _isMax)
-      : _unsafeGetLatestPrice(_assetId, _isMax);
+    (_price, _lastUpdate) = isSafe ? _getLatestPrice(_assetId, _isMax) : _unsafeGetLatestPrice(_assetId, _isMax);
 
     if (_limitPriceE30 != 0) {
       _price = _limitPriceE30;
@@ -292,7 +294,7 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _adaptivePrice = _calculateAdaptivePrice(_marketSkew, _sizeDelta, _price, _maxSkewScaleUSD);
 
     // Return the price and last update
-    return (_adaptivePrice, _exponent, _lastUpdate);
+    return (_adaptivePrice, _lastUpdate);
   }
 
   /// @notice Calculate adaptive base on Market skew by position size
@@ -340,10 +342,12 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   /// @param _assetId Asset's to set price config
   /// @param _confidenceThresholdE6 New price confidence threshold
   /// @param _trustPriceAge valid price age
+  /// @param _adapter adapter of price Config (StakedGLPAdapter, PythAdapter)
   function setAssetPriceConfig(
     bytes32 _assetId,
     uint32 _confidenceThresholdE6,
-    uint32 _trustPriceAge
+    uint32 _trustPriceAge,
+    address _adapter
   ) external onlyOwner {
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
 
@@ -352,10 +356,17 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       _config.confidenceThresholdE6,
       _confidenceThresholdE6,
       _config.trustPriceAge,
-      _trustPriceAge
+      _trustPriceAge,
+      _config.adapter,
+      _adapter
     );
+
     _config.confidenceThresholdE6 = _confidenceThresholdE6;
     _config.trustPriceAge = _trustPriceAge;
+    _config.adapter = _adapter;
+
+    //sanity
+    IOracleAdapter(_config.adapter).getLatestPrice(_assetId, false, _confidenceThresholdE6);
 
     assetPriceConfigs[_assetId] = _config;
   }
@@ -374,16 +385,5 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     isUpdater[_account] = _isActive;
     emit LogSetUpdater(_account, _isActive);
-  }
-
-  /**
-   * Setter
-   */
-  /// @notice Set new PythAdapter contract address.
-  /// @param _newPythAdapter New PythAdapter contract address.
-  function setPythAdapter(address _newPythAdapter) external onlyOwner {
-    pythAdapter = IOracleAdapter(_newPythAdapter);
-
-    emit LogSetPythAdapter(address(pythAdapter), _newPythAdapter);
   }
 }

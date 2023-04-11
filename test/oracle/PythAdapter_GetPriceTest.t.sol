@@ -81,8 +81,8 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
   function testCorrectness_GetWhenNoConf() external {
     updateWbtcWithConf(0);
 
-    (uint256 maxPrice, , uint256 lastUpdate) = pythAdapter.getLatestPrice(wbtcAssetId, true, 1e6);
-    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(wbtcAssetId, false, 1e6);
+    (uint256 maxPrice, uint256 lastUpdate) = pythAdapter.getLatestPrice(wbtcAssetId, true, 1e6);
+    (uint256 minPrice, ) = pythAdapter.getLatestPrice(wbtcAssetId, false, 1e6);
     assertEq(maxPrice, 20_000 * 1e30);
     assertEq(minPrice, 20_000 * 1e30);
     assertEq(lastUpdate, uint64(block.timestamp));
@@ -108,12 +108,12 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
     updateWbtcWithConf(1_000 * 1e8);
 
     // And get price with 6% conf threshold
-    (uint256 maxPrice, , ) = pythAdapter.getLatestPrice(
+    (uint256 maxPrice, ) = pythAdapter.getLatestPrice(
       wbtcAssetId,
       true,
       0.06 * 1e6 // 6% conf
     );
-    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(
+    (uint256 minPrice, ) = pythAdapter.getLatestPrice(
       wbtcAssetId,
       false,
       0.051 * 1e6 // 5.1% conf
@@ -130,8 +130,8 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
 
     // USD/JPY => 136.123
     // So, JPY/USD should be 1/136.123 ~= 0.00734629...
-    (uint256 maxPrice, , uint256 lastUpdate) = pythAdapter.getLatestPrice(jpyAssetId, true, 1e6);
-    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(jpyAssetId, false, 1e6);
+    (uint256 maxPrice, uint256 lastUpdate) = pythAdapter.getLatestPrice(jpyAssetId, true, 1e6);
+    (uint256 minPrice, ) = pythAdapter.getLatestPrice(jpyAssetId, false, 1e6);
     assertEq(maxPrice, 0.007346297098947275625720855402 * 1e30);
     assertEq(minPrice, 0.007346297098947275625720855402 * 1e30);
     assertEq(lastUpdate, uint64(block.timestamp));
@@ -143,8 +143,8 @@ contract PythAdapter_GetPriceTest is PythAdapter_BaseTest {
 
     // USD/JPY => 136.123
     // after inversion => 1/136.123 = 0.0073463
-    (uint256 maxPrice, , uint256 lastUpdate) = pythAdapter.getLatestPrice(jpyAssetId, true, 1e6);
-    (uint256 minPrice, , ) = pythAdapter.getLatestPrice(jpyAssetId, false, 1e6);
+    (uint256 maxPrice, uint256 lastUpdate) = pythAdapter.getLatestPrice(jpyAssetId, true, 1e6);
+    (uint256 minPrice, ) = pythAdapter.getLatestPrice(jpyAssetId, false, 1e6);
     assertEq(maxPrice, 0.007346297098947275625720855402 * 1e30, "Max price");
     assertEq(minPrice, 0.007346297098947275625720855402 * 1e30, "Min price");
     assertEq(lastUpdate, uint64(block.timestamp), "Timestamp");

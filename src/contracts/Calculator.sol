@@ -147,7 +147,7 @@ contract Calculator is Owned, ICalculator {
   ) internal view returns (uint256) {
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
-    (uint256 _priceE30, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
+    (uint256 _priceE30, ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
     uint256 value = (VaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
       (10 ** _assetConfig.decimals);
 
@@ -181,7 +181,7 @@ contract Calculator is Owned, ICalculator {
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
-      (uint256 priceE30, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
+      (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
       if (_market.longAvgPrice > 0 && _market.longPositionSize > 0) {
         if (priceE30 < _market.longAvgPrice) {
@@ -527,7 +527,7 @@ contract Calculator is Owned, ICalculator {
         _var.priceE30 = _limitPriceE30;
       } else {
         // @todo - validate price age
-        (_var.priceE30, , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+        (_var.priceE30, , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),

@@ -22,18 +22,21 @@ import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
+import { MockGlpManager } from "../mocks/MockGlpManager.sol";
 
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { console } from "forge-std/console.sol";
 
 abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;
@@ -54,6 +57,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
   // oracle
   IPythAdapter pythAdapter;
+  IOracleAdapter stakedGlpAdapter;
   IOracleMiddleware oracleMiddleware;
 
   // mock
@@ -65,12 +69,14 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockLiquidityService internal mockLiquidityService;
   MockTradeService internal mockTradeService;
   MockLiquidationService internal mockLiquidationService;
+  MockGlpManager internal mockGlpManager;
 
   MockWNative internal weth;
   MockErc20 internal wbtc;
   MockErc20 internal dai;
   MockErc20 internal usdc;
   MockErc20 internal usdt;
+  MockErc20 internal sglp;
 
   MockErc20 internal bad;
 
@@ -92,6 +98,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant daiAssetId = "DAI";
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
+  bytes32 internal constant sglpAssetId = "SGLP";
 
   // Fx
   bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
@@ -115,6 +122,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
     bad = new MockErc20("Bad Coin", "BAD", 2);
+    sglp = new MockErc20("SGLP", "SGLP", 18);
 
     plp = Deployer.deployPLPv2();
 
@@ -130,9 +138,11 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockOracle = new MockOracleMiddleware();
     mockTradeService = new MockTradeService();
     mockLiquidationService = new MockLiquidationService();
+    mockGlpManager = new MockGlpManager();
 
     pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
-    oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter));
+    stakedGlpAdapter = Deployer.deployStakedGlpAdapter(sglp, mockGlpManager, sglpAssetId);
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter), address(stakedGlpAdapter));
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -316,6 +326,14 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       accepted: true
     });
 
+    // // SGLP
+    // _plpTokenConfig[5] = IConfigStorage.PLPTokenConfig({
+    //   targetWeight: 2e17,
+    //   bufferLiquidity: 0,
+    //   maxWeightDiff: 0,
+    //   accepted: true
+    // });
+
     address[] memory _tokens = new address[](5);
     _tokens[0] = address(weth);
     _tokens[1] = address(wbtc);
@@ -409,6 +427,14 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       isStableCoin: true
     });
     configStorage.setAssetConfig(daiAssetId, _assetConfigDai);
+
+    IConfigStorage.AssetConfig memory _assetConfigSGLP = IConfigStorage.AssetConfig({
+      tokenAddress: address(sglp),
+      assetId: sglpAssetId,
+      decimals: 18,
+      isStableCoin: false
+    });
+    configStorage.setAssetConfig(sglpAssetId, _assetConfigSGLP);
   }
 
   function abs(int256 x) external pure returns (uint256) {

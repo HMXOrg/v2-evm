@@ -639,7 +639,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // make price stale in mock oracle middleware
     mockOracle.setPriceStale(true);
 
-    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
     tradeService.decreasePosition(ALICE, 0, ethMarketIndex, 10 * 1e30, address(weth), 0);
   }
 

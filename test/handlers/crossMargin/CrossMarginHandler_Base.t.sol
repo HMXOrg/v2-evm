@@ -16,8 +16,35 @@ contract CrossMarginHandler_Base is BaseTest {
   bytes[] internal priceDataBytes;
 
   function setUp() public virtual {
-    oracleMiddleware.setAssetPriceConfig(wethAssetId, 1e6, 60);
-    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60);
+    // Set Oracle data for Price feeding
+    {
+      pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
+      pythAdapter.setConfig(wethAssetId, wethPriceId, false);
+
+      priceDataBytes = new bytes[](2);
+      priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
+        wbtcPriceId,
+        20_000 * 1e8,
+        500 * 1e8,
+        -8,
+        20_000 * 1e8,
+        500 * 1e8,
+        uint64(block.timestamp)
+      );
+      priceDataBytes[1] = mockPyth.createPriceFeedUpdateData(
+        wethPriceId,
+        1_500 * 1e8,
+        50 * 1e8,
+        -8,
+        1_500 * 1e8,
+        50 * 1e8,
+        uint64(block.timestamp)
+      );
+      mockPyth.updatePriceFeeds{ value: mockPyth.getUpdateFee(priceDataBytes) }(priceDataBytes);
+    }
+
+    oracleMiddleware.setAssetPriceConfig(wethAssetId, 1e6, 60, address(pythAdapter));
+    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60, address(pythAdapter));
 
     calculator = Deployer.deployCalculator(
       address(oracleMiddleware),
@@ -76,32 +103,6 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Mock gas for handler used for update Pyth's prices
     vm.deal(address(crossMarginHandler), 1 ether);
-
-    // Set Oracle data for Price feeding
-    {
-      pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
-      pythAdapter.setConfig(wethAssetId, wethPriceId, false);
-
-      priceDataBytes = new bytes[](2);
-      priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
-        wbtcPriceId,
-        20_000 * 1e8,
-        500 * 1e8,
-        -8,
-        20_000 * 1e8,
-        500 * 1e8,
-        uint64(block.timestamp)
-      );
-      priceDataBytes[1] = mockPyth.createPriceFeedUpdateData(
-        wethPriceId,
-        1_500 * 1e8,
-        50 * 1e8,
-        -8,
-        1_500 * 1e8,
-        50 * 1e8,
-        uint64(block.timestamp)
-      );
-    }
 
     // Set market status
     oracleMiddleware.setUpdater(address(this), true);

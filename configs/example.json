@@ -23,11 +23,13 @@
   "oracle": {
     "pyth": "",
     "pythAdapter": "",
+    "sglpStakedAdapter": "",
     "middleware": ""
   },
   "tokens": {
     "plp": "",
-    "weth": ""
+    "weth": "",
+    "sglp": ""
   },
   "calculator": ""
 }

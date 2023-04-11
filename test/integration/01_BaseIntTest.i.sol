@@ -11,6 +11,9 @@ import { StdCheats } from "forge-std/StdCheats.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 
+// GLP
+import { MockGlpManager } from "@hmx-test/mocks/MockGlpManager.sol";
+
 // Openzepline
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -58,6 +61,8 @@ import { MarketTester } from "@hmx-test/testers/MarketTester.sol";
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
+import { console } from "forge-std/console.sol";
+
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
   uint256 internal constant executionOrderFee = 0.0001 ether;
@@ -66,6 +71,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   uint256 internal constant MINUTES = SECONDS * 60;
   uint256 internal constant HOURS = MINUTES * 60;
   uint256 internal constant DAYS = HOURS * 24;
+
+  bytes32 internal constant sglpAssetId = "SGLPUSD";
 
   address internal ALICE;
   address internal BOB;
@@ -109,12 +116,15 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   MockErc20 usdc; // decimals 6
   MockErc20 usdt; // decimals 6
   MockErc20 dai; // decimals 18
+  MockErc20 sglp; //decimals 18
 
   IWNative weth; //for native
 
   /* PYTH */
   MockPyth internal pyth;
+  MockGlpManager internal glpManager;
   IPythAdapter internal pythAdapter;
+  IOracleAdapter internal stakedGlpAdapter;
 
   /* Tester */
 
@@ -142,13 +152,18 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     vm.label(address(weth), "WETH");
 
     pyth = new MockPyth(60, 1);
+    //FIXME  use not mock?
+    glpManager = new MockGlpManager();
 
     pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
-
+    console.log("pythAdapter deployAddress", address(pythAdapter));
     // deploy stakedGLPOracleAdapter
+    sglp = new MockErc20("StakedGlp", "sGLP", 18);
+
+    stakedGlpAdapter = Deployer.deployStakedGlpAdapter(sglp, glpManager, sglpAssetId);
 
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware(address(pythAdapter));
+    oracleMiddleWare = Deployer.deployOracleMiddleware(address(pythAdapter), address(stakedGlpAdapter));
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage();

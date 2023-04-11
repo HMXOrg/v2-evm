@@ -33,6 +33,10 @@ import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredi
 import { ITLCStaking } from "@hmx/staking/interfaces/ITLCStaking.sol";
 import { IEpochRewarder } from "@hmx/staking/interfaces/IEpochRewarder.sol";
 
+import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -62,8 +66,25 @@ library Deployer {
     return IPythAdapter(deployContractWithArguments("PythAdapter", abi.encode(_pyth)));
   }
 
-  function deployOracleMiddleware(address _pythAdapter) internal returns (IOracleMiddleware) {
-    return IOracleMiddleware(deployContractWithArguments("OracleMiddleware", abi.encode(_pythAdapter)));
+  function deployStakedGlpAdapter(
+    IERC20 _sGlp,
+    IGmxGlpManager _glpManager,
+    bytes32 _sGlpAssetId
+  ) internal returns (IOracleAdapter) {
+    return
+      IOracleAdapter(
+        deployContractWithArguments("StakedGlpOracleAdapter", abi.encode(_sGlp, _glpManager, _sGlpAssetId))
+      );
+  }
+
+  function deployOracleMiddleware(
+    address _pythAdapter,
+    address _stakedGlpOracleAdapter
+  ) internal returns (IOracleMiddleware) {
+    return
+      IOracleMiddleware(
+        deployContractWithArguments("OracleMiddleware", abi.encode(_pythAdapter, _stakedGlpOracleAdapter))
+      );
   }
 
   /**

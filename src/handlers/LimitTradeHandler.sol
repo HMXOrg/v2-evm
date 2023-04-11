@@ -514,7 +514,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     }
 
     // Validate acceptable price with adaptive price
-    (vars.adaptivePrice, , , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (vars.adaptivePrice, , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),
@@ -555,7 +555,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
     vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
 
-    (uint256 _currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (uint256 _currentPrice, , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),

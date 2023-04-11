@@ -381,6 +381,29 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     emit LogSetMarketStatus(_assetId, _status);
   }
 
+  /// @notice Set market status for the given asset.
+  /// @param _assetId The asset address to set.
+  /// @param _status Status enum, see `marketStatus` comment section.
+  function _setMarketStatus(bytes32 _assetId, uint8 _status) internal onlyUpdater {
+    if (_status > 2) revert IOracleMiddleware_InvalidMarketStatus();
+
+    marketStatus[_assetId] = _status;
+    emit LogSetMarketStatus(_assetId, _status);
+  }
+
+  /// @notice Set market status for the given assets.
+  /// @param _assetIds The asset addresses to set.
+  /// @param _statuses Status enum, see `marketStatus` comment section.
+  function setMultipleMarketStatus(bytes32[] memory _assetIds, uint8[] memory _statuses) external onlyUpdater {
+    uint256 _len = _assetIds.length;
+    for (uint256 _i = 0; _i < _len; ) {
+      _setMarketStatus(_assetIds[_i], _statuses[_i]);
+      unchecked {
+        ++_i;
+      }
+    }
+  }
+
   /// @notice A function for setting updater who is able to setMarketStatus
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     isUpdater[_account] = _isActive;

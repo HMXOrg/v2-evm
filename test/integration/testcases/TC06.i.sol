@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-
+import { console2 } from "forge-std/console2.sol";
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
 contract TC06 is BaseIntTest_WithActions {
@@ -102,7 +102,7 @@ contract TC06 is BaseIntTest_WithActions {
       _assetIds[2] = daiAssetId;
       _assetIds[3] = wbtcAssetId;
       int64[] memory _prices = new int64[](4);
-      _prices[0] = 2600 * 1e8;
+      _prices[0] = 2 * 1e8;
       _prices[1] = 1 * 1e8;
       _prices[2] = 1 * 1e8;
       _prices[3] = 20_000 * 1e8;

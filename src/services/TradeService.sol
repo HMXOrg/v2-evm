@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
+import { console2 } from "forge-std/console2.sol";
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -262,7 +262,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       (_vars.closePriceE30, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         _vars.isLong, // if current position is SHORT position, then we use max price
-        (int(_market.longPositionSize) - int(_market.shortPositionSize)), // 0
+        (int(_market.longPositionSize) - int(_market.shortPositionSize)),
         -_vars.position.positionSizeE30,
         _marketConfig.fundingRate.maxSkewScaleUSD,
         0
@@ -534,6 +534,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     _vars.subAccount = _getSubAccount(_account, _subAccountId);
     _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
     _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
+    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
     // Pre validation
     // if position size is 0 means this position is already closed
@@ -729,6 +730,25 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     //       due to we has problem stack too deep in MarketConfig now
     if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30) revert ITradeService_TooTinyPosition();
 
+    PerpStorage.Market memory _market = _vars.perpStorage.getMarketByIndex(_marketIndex);
+
+    // calculate next close price
+    (_vars.oraclePrice, ) = _vars.oracle.getLatestPrice(
+      _marketConfig.assetId,
+      !_vars.isLongPosition // if current position is SHORT position, then we use max price
+    );
+
+    _vars.nextClosePrice = _calculateNextClosePrice(
+      _market,
+      _marketConfig.fundingRate.maxSkewScaleUSD,
+      _vars.oraclePrice,
+      _vars.position.positionSizeE30,
+      _vars.isLongPosition ? -int(_vars.positionSizeE30ToDecrease) : int(_vars.positionSizeE30ToDecrease)
+    );
+
+    console2.log("oracle price", _vars.oraclePrice);
+    console2.log("next close price", _vars.nextClosePrice);
+
     /**
      * calculate realized profit & loss
      */
@@ -762,8 +782,49 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
      */
 
     {
-      PerpStorage.Market memory _market = _vars.perpStorage.getMarketByIndex(_marketIndex);
+      // update global & asset class state
+      PerpStorage.GlobalState memory _globalState = _vars.perpStorage.getGlobalState();
+      PerpStorage.AssetClass memory _assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
 
+      // update global storage
+      // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
+      _globalState.reserveValueE30 -=
+        (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
+        _vars.absPositionSizeE30;
+      _assetClass.reserveValueE30 -=
+        (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
+        _vars.absPositionSizeE30;
+      _vars.perpStorage.updateGlobalState(_globalState);
+      _vars.perpStorage.updateAssetClass(_marketConfig.assetClass, _assetClass);
+
+      // partial close position
+      if (_newAbsPositionSizeE30 != 0) {
+        _vars.position.avgEntryPriceE30 = _calculateEntryAveragePrice(
+          _vars.position.positionSizeE30,
+          _vars.isLongPosition ? -int(_vars.positionSizeE30ToDecrease) : int(_vars.positionSizeE30ToDecrease),
+          _vars.nextClosePrice,
+          _vars.unrealizedPnl
+        );
+
+        console2.log("average price __ ", _vars.position.avgEntryPriceE30);
+
+        // update position info
+        _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
+        _vars.position.entryFundingRate = _market.currentFundingRate;
+        _vars.position.positionSizeE30 = _vars.isLongPosition
+          ? int256(_newAbsPositionSizeE30)
+          : -int256(_newAbsPositionSizeE30);
+        _vars.position.reserveValueE30 =
+          ((_newAbsPositionSizeE30 * _marketConfig.initialMarginFractionBPS * _marketConfig.maxProfitRateBPS) / BPS) /
+          BPS;
+        _vars.position.realizedPnl += _vars.realizedPnl;
+
+        _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
+      } else {
+        _vars.perpStorage.removePositionFromSubAccount(_vars.subAccount, _vars.positionId);
+      }
+
+      // update market's state
       if (_vars.isLongPosition) {
         uint256 _nextAvgPrice = _vars.calculator.calculateMarketAveragePrice(
           int256(_market.longPositionSize),
@@ -794,58 +855,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           _market.shortPositionSize - _vars.positionSizeE30ToDecrease,
           _nextAvgPrice
         );
-      }
-
-      PerpStorage.GlobalState memory _globalState = _vars.perpStorage.getGlobalState();
-      PerpStorage.AssetClass memory _assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
-
-      // update global storage
-      // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
-      _globalState.reserveValueE30 -=
-        (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
-        _vars.absPositionSizeE30;
-      _assetClass.reserveValueE30 -=
-        (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
-        _vars.absPositionSizeE30;
-      _vars.perpStorage.updateGlobalState(_globalState);
-      _vars.perpStorage.updateAssetClass(_marketConfig.assetClass, _assetClass);
-
-      if (_newAbsPositionSizeE30 != 0) {
-        // calculate new entry price here
-        (_vars.oraclePrice, ) = _vars.oracle.getLatestPrice(
-          _marketConfig.assetId,
-          !_vars.isLongPosition // if current position is SHORT position, then we use max price
-        );
-
-        _vars.nextClosePrice = _calculateNextClosePrice(
-          _market,
-          _marketConfig.fundingRate.maxSkewScaleUSD,
-          _vars.oraclePrice,
-          _vars.position.positionSizeE30,
-          _vars.isLongPosition ? -int(_vars.positionSizeE30ToDecrease) : int(_vars.positionSizeE30ToDecrease)
-        );
-
-        _vars.position.avgEntryPriceE30 = _calculateEntryAveragePrice(
-          _vars.position.positionSizeE30,
-          _vars.isLongPosition ? -int(_vars.positionSizeE30ToDecrease) : int(_vars.positionSizeE30ToDecrease),
-          _vars.nextClosePrice,
-          _vars.unrealizedPnl
-        );
-
-        // update position info
-        _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
-        _vars.position.entryFundingRate = _market.currentFundingRate;
-        _vars.position.positionSizeE30 = _vars.isLongPosition
-          ? int256(_newAbsPositionSizeE30)
-          : -int256(_newAbsPositionSizeE30);
-        _vars.position.reserveValueE30 =
-          ((_newAbsPositionSizeE30 * _marketConfig.initialMarginFractionBPS * _marketConfig.maxProfitRateBPS) / BPS) /
-          BPS;
-        _vars.position.realizedPnl += _vars.realizedPnl;
-
-        _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
-      } else {
-        _vars.perpStorage.removePositionFromSubAccount(_vars.subAccount, _vars.positionId);
       }
     }
 
@@ -964,8 +973,13 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     int256 _sizeDelta,
     uint256 _nextClosePrice,
     int256 _unrealizedPnl
-  ) private pure returns (uint256 _newEntryAveragePrice) {
+  ) private view returns (uint256 _newEntryAveragePrice) {
     int256 _newPositionSize = _positionSize + _sizeDelta;
+
+    console2.log("new position size", _newPositionSize);
+    console2.log("next close price", _nextClosePrice);
+    console2.log("unrealized pnl", _unrealizedPnl);
+
     if (_positionSize > 0) {
       return uint256((int256(_nextClosePrice) * _newPositionSize) / (_newPositionSize + _unrealizedPnl));
     } else {

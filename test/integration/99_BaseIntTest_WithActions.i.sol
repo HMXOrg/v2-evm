@@ -125,13 +125,14 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /// @param _subAccountId Trader's sub-account ID
   /// @param _collateralToken Collateral token to withdraw
   /// @param _withdrawAmount amount to withdraw
-  /// @param _priceData Pyth's price data
   function withdrawCollateral(
     address _account,
     uint8 _subAccountId,
     ERC20 _collateralToken,
     uint256 _withdrawAmount,
-    bytes[] memory _priceData,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
     uint256 _executionFee
   ) internal {
     vm.prank(_account);
@@ -143,7 +144,16 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
       false
     );
 
-    crossMarginHandler.executeOrder({ _endIndex: orderIndex, _feeReceiver: payable(ALICE), _priceData: _priceData });
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    crossMarginHandler.executeOrder({
+      _endIndex: orderIndex,
+      _feeReceiver: payable(ALICE),
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: block.timestamp,
+      _encodedVaas: keccak256("someEncodedVaas")
+    });
   }
 
   /**
@@ -328,8 +338,31 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint24[] memory _publishTimeDiffs,
     uint256 _minPublishTime
   ) internal {
+    executeLimitTradeOrder(
+      _account,
+      _subAccountId,
+      _orderIndex,
+      _feeReceiver,
+      _tickPrices,
+      _publishTimeDiffs,
+      _minPublishTime,
+      ""
+    );
+  }
+
+  function executeLimitTradeOrder(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _orderIndex,
+    address payable _feeReceiver,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
+    string memory signature
+  ) internal {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
     limitTradeHandler.executeOrder(
       _account,
       _subAccountId,

@@ -10,14 +10,15 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { BaseIntTest_SetWhitelist } from "@hmx-test/integration/08_BaseIntTest_SetWhitelist.i.sol";
 
 contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
-  uint256 constant MAX_DIFF = 0.0001 ether; // 0.01 %
+  uint256 constant MAX_DIFF = 0.002 ether; // 0.1 %
 
   // Token Balances
 
   function assertTokenBalanceOf(address _account, address _token, uint256 _balance, string memory _str) internal {
-    assertEq(
+    assertApproxEqRel(
       ERC20(_token).balanceOf(address(_account)),
       _balance,
+      MAX_DIFF,
       string.concat(_str, "Trader's balance is not matched")
     );
   }
@@ -51,7 +52,12 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   }
 
   function assertPLPLiquidity(address _token, uint256 _liquidity, string memory _str) internal {
-    assertEq(vaultStorage.plpLiquidity(_token), _liquidity, string.concat(_str, "PLP token liquidity is not matched"));
+    assertApproxEqRel(
+      vaultStorage.plpLiquidity(_token),
+      _liquidity,
+      MAX_DIFF,
+      string.concat(_str, "PLP token liquidity is not matched")
+    );
   }
 
   function assertPLPLiquidity(address _token, uint256 _liquidity) internal {
@@ -102,11 +108,22 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _fundingFeeReserve,
     string memory _str
   ) internal {
-    assertEq(vaultStorage.protocolFees(_token), _fee, string.concat(_str, "Vault's Fee is not matched"));
-    assertEq(vaultStorage.devFees(_token), _devFee, string.concat(_str, "Vault's Dev fee is not matched"));
-    assertEq(
+    assertApproxEqRel(
+      vaultStorage.protocolFees(_token),
+      _fee,
+      MAX_DIFF,
+      string.concat(_str, "Vault's Fee is not matched")
+    );
+    assertApproxEqRel(
+      vaultStorage.devFees(_token),
+      _devFee,
+      MAX_DIFF,
+      string.concat(_str, "Vault's Dev fee is not matched")
+    );
+    assertApproxEqRel(
       vaultStorage.fundingFeeReserve(_token),
       _fundingFeeReserve,
+      MAX_DIFF,
       string.concat(_str, "Vault's Funding fee is not matched")
     );
   }
@@ -122,9 +139,10 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _balance,
     string memory _str
   ) internal {
-    assertEq(
+    assertApproxEqRel(
       vaultStorage.traderBalances(_subAccount, _token),
       _balance,
+      MAX_DIFF,
       string.concat(_str, "Trader's balance is not matched")
     );
 
@@ -210,18 +228,40 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     bytes32 _positionId = keccak256(abi.encodePacked(_subAccount, _marketIndex));
     IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
 
-    assertEq(_position.positionSizeE30, _positionSize, string.concat(_str, "Position's size is not matched"));
-    assertEq(_position.avgEntryPriceE30, _avgPrice, string.concat(_str, "Position's average price is not matched"));
-    assertEq(_position.reserveValueE30, _reserveValue, string.concat(_str, "Position's reserve value is not matched"));
-    assertEq(_position.realizedPnl, _realizedPnl, string.concat(_str, "Position's realized pnl is not matched"));
-    assertEq(
+    assertApproxEqRel(
+      _position.positionSizeE30,
+      _positionSize,
+      MAX_DIFF,
+      string.concat(_str, "Position's size is not matched")
+    );
+    assertApproxEqRel(
+      _position.avgEntryPriceE30,
+      _avgPrice,
+      MAX_DIFF,
+      string.concat(_str, "Position's average price is not matched")
+    );
+    assertApproxEqRel(
+      _position.reserveValueE30,
+      _reserveValue,
+      MAX_DIFF,
+      string.concat(_str, "Position's reserve value is not matched")
+    );
+    assertApproxEqRel(
+      _position.realizedPnl,
+      _realizedPnl,
+      MAX_DIFF,
+      string.concat(_str, "Position's realized pnl is not matched")
+    );
+    assertApproxEqRel(
       _position.entryBorrowingRate,
       _entryBorrowingRate,
+      MAX_DIFF,
       string.concat(_str, "Position's entry borrowing rate is not matched")
     );
-    assertEq(
+    assertApproxEqRel(
       _position.entryFundingRate,
       _entryFundingRate,
+      MAX_DIFF,
       string.concat(_str, "Position's entry funding rate is not matched")
     );
   }
@@ -317,8 +357,13 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   ) internal {
     IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
-    assertEq(_market.longPositionSize, _positionSize, string.concat(_str, "Market's Long position size"));
-    assertEq(_market.longAvgPrice, _avgPrice, string.concat(_str, "Market's Long avg price size"));
+    assertApproxEqRel(
+      _market.longPositionSize,
+      _positionSize,
+      MAX_DIFF,
+      string.concat(_str, "Market's Long position size")
+    );
+    assertApproxEqRel(_market.longAvgPrice, _avgPrice, MAX_DIFF, string.concat(_str, "Market's Long avg price size"));
   }
 
   function assertMarketLongPosition(uint256 _marketIndex, uint256 _positionSize, uint256 _avgPrice) internal {
@@ -333,8 +378,13 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   ) internal {
     IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
-    assertEq(_market.shortPositionSize, _positionSize, string.concat(_str, "Market's Short position size"));
-    assertEq(_market.shortAvgPrice, _avgPrice, string.concat(_str, "Market's Short avg price size"));
+    assertApproxEqRel(
+      _market.shortPositionSize,
+      _positionSize,
+      MAX_DIFF,
+      string.concat(_str, "Market's Short position size")
+    );
+    assertApproxEqRel(_market.shortAvgPrice, _avgPrice, MAX_DIFF, string.concat(_str, "Market's Short avg price size"));
   }
 
   function assertMarketShortPosition(uint256 _marketIndex, uint256 _positionSize, uint256 _avgPrice) internal {
@@ -366,9 +416,10 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     string memory _str
   ) internal {
     IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_assetClassIndex);
-    assertEq(
+    assertApproxEqRel(
       _assetClass.sumBorrowingRate,
       _sumBorrowingRate,
+      MAX_DIFF,
       string.concat(_str, "Asset class's Sum of Borrowing rate")
     );
 

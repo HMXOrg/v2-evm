@@ -140,7 +140,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
       // set PythId
       pythAdapter.setConfig(_data.assetId, _data.priceId, _data.inverse);
-      pyth.insertAsset(_data.priceId);
+      pyth.insertPriceId(_data.priceId);
 
       tickPrices.push(_data.tickPrice);
       publishTimeDiff.push(0);

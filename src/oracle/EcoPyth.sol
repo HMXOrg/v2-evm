@@ -13,7 +13,7 @@ contract EcoPyth is Owned, IEcoPyth {
   error EcoPyth_ExpectZeroFee();
   error EcoPyth_OnlyUpdater();
   error EcoPyth_PriceFeedNotFound();
-  error EcoPyth_AssetHasAlreadyBeenDefined();
+  error EcoPyth_PriceIdHasAlreadyBeenDefined();
 
   // array of price data
   // it is stored as `tick` from the Uniswap tick price math
@@ -109,10 +109,10 @@ contract EcoPyth is Owned, IEcoPyth {
     emit LogSetUpdater(_account, _isActive);
   }
 
-  function insertAssets(bytes32[] calldata _assetIds) external onlyOwner {
+  function insertPriceIds(bytes32[] calldata _assetIds) external onlyOwner {
     uint256 _len = _assetIds.length;
     for (uint256 i = 0; i < _len; ) {
-      _insertAsset(_assetIds[i]);
+      _insertPriceId(_assetIds[i]);
 
       unchecked {
         ++i;
@@ -120,12 +120,12 @@ contract EcoPyth is Owned, IEcoPyth {
     }
   }
 
-  function insertAsset(bytes32 _assetId) external onlyOwner {
-    _insertAsset(_assetId);
+  function insertPriceId(bytes32 _assetId) external onlyOwner {
+    _insertPriceId(_assetId);
   }
 
-  function _insertAsset(bytes32 _assetId) internal {
-    if (mapPriceIdToIndex[_assetId] != 0) revert EcoPyth_AssetHasAlreadyBeenDefined();
+  function _insertPriceId(bytes32 _assetId) internal {
+    if (mapPriceIdToIndex[_assetId] != 0) revert EcoPyth_PriceIdHasAlreadyBeenDefined();
     mapPriceIdToIndex[_assetId] = indexCount;
     ++indexCount;
   }

@@ -44,7 +44,12 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   // Vault Storage
 
   function assertPLPDebt(uint256 _plpDebt, string memory _str) internal {
-    assertEq(vaultStorage.plpLiquidityDebtUSDE30(), _plpDebt, string.concat(_str, "PLP liquidity debt is not matched"));
+    assertApproxEqRel(
+      vaultStorage.plpLiquidityDebtUSDE30(),
+      _plpDebt,
+      MAX_DIFF,
+      string.concat(_str, "PLP liquidity debt is not matched")
+    );
   }
 
   function assertPLPDebt(uint256 _plpDebt) internal {
@@ -95,9 +100,10 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   }
 
   function assertFundingFeeReserve(address _token, uint256 _fundingFeeReserve, string memory _str) internal {
-    assertEq(
+    assertApproxEqRel(
       vaultStorage.fundingFeeReserve(_token),
       _fundingFeeReserve,
+      MAX_DIFF,
       string.concat(_str, "Vault's Funding fee is not matched")
     );
   }

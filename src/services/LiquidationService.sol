@@ -93,7 +93,7 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
     );
 
     // get profit and fee
-    TradeHelper(tradeHelper).increaseCollateral(_subAccount, _unrealizedPnL, _fundingFee);
+    TradeHelper(tradeHelper).increaseCollateral(_subAccount, _unrealizedPnL, _fundingFee, address(0));
     // settle fee and loss
     TradeHelper(tradeHelper).decreaseCollateral(
       _subAccount,

@@ -412,8 +412,31 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint24[] memory _publishTimeDiffs,
     uint256 _minPublishTime
   ) internal {
+    forceTakeMaxProfit(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _tpToken,
+      _tickPrices,
+      _publishTimeDiffs,
+      _minPublishTime,
+      ""
+    );
+  }
+
+  function forceTakeMaxProfit(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
+    string memory signature
+  ) internal {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
     vm.prank(BOT);
     botHandler.forceTakeMaxProfit(
       _account,

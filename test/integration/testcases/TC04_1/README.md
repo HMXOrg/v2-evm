@@ -1,4 +1,4 @@
-## TC04.5 - manage position, adjust with profit and loss
+## TC04.1 - manage position, adjust with profit and loss
 
 ### Scenario: Prepare environment
 Given Bob provide 1 btc as liquidity
@@ -27,6 +27,7 @@ And Bob increase long position for 100 USD
 Then Bob should has correct long position
 And market's state should be corrected
 
+
 ### Scenario: Alice open & update short position with loss (JPY)
 When Alice open short position 1,000 USD
 Then Alice should has correct short position
@@ -44,3 +45,5 @@ When JPY price is dump to 0.007346297098947275625720855402 USD (136.123 USDJPY)
 And Bob increase short position for 100 USD
 Then Bob should has correct short position
 And market's state should be corrected
+
+

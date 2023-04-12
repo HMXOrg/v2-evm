@@ -7,11 +7,11 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 
 import { console2 } from "forge-std/console2.sol";
 
-contract TC04 is BaseIntTest_WithActions {
+contract TC04_1 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
-  // TC04 - manage position, adjust and flip
-  function testCorrectness_TC04_5_AdjustPositionWithProfitAndLoss() external {
+  // ## TC04.1 - manage position, adjust with profit and loss
+  function testCorrectness_TC04_1_AveragePriceCalculationWithIncreasePosition() external {
     // prepare token for wallet
 
     // mint native token

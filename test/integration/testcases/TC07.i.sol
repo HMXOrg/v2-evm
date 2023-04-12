@@ -100,26 +100,21 @@ contract TC07 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       //  Set Price for ETHUSD to 1,550 USD
-      bytes32[] memory _assetIds = new bytes32[](4);
-      _assetIds[0] = wethAssetId;
-      _assetIds[1] = usdcAssetId;
-      _assetIds[2] = daiAssetId;
-      _assetIds[3] = wbtcAssetId;
-      int64[] memory _prices = new int64[](4);
+      // bytes32[] memory _assetIds = new bytes32[](4);
+      // _assetIds[0] = wethAssetId;
+      // _assetIds[1] = usdcAssetId;
+      // _assetIds[2] = daiAssetId;
+      // _assetIds[3] = wbtcAssetId;
+      // int64[] memory _prices = new int64[](4);
       // _prices[0] = 1_550 * 1e8;
       // _prices[1] = 1 * 1e8;
       // _prices[2] = 1 * 1e8;
       // _prices[3] = 20_000 * 1e8;
-      tickPrices[0] = 73463;
-      tickPrices[2] = 0;
-      tickPrices[4] = 0;
-      tickPrices[1] = 99039;
-      uint64[] memory _confs = new uint64[](4);
-      _confs[0] = 1000;
-      _confs[1] = 1000;
-      _confs[2] = 1000;
-      _confs[3] = 1000;
-      setPrices(_assetIds, tickPrices, _confs);
+      tickPrices[0] = 73463; // ETH tick price $2,600
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[4] = 0; // DAI tick price $1
+      tickPrices[1] = 99039; // WBTC tick price $20,000
+      setPrices(tickPrices, publishTimeDiff);
 
       // Alice's Equity must be upper IMR level
       // Equity = 16200.148339534511, IMR = 1000

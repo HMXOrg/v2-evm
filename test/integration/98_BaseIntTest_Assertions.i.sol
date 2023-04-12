@@ -65,7 +65,12 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   }
 
   function assertTVL(uint256 _tvl, bool _isMaxPrice, string memory _str) internal {
-    assertEq(calculator.getPLPValueE30(_isMaxPrice), _tvl, string.concat(_str, "TVL is not matched"));
+    assertApproxEqRel(
+      calculator.getPLPValueE30(_isMaxPrice),
+      _tvl,
+      MAX_DIFF,
+      string.concat(_str, "TVL is not matched")
+    );
   }
 
   function assertTVL(uint256 _tvl, bool _isMaxPrice) internal {

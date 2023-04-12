@@ -179,7 +179,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     return _newDatas;
   }
 
-  function updatePriceFeeds(int24[] calldata _tickPrices, uint256 publishTime) internal {
+  function updatePriceFeeds(int24[] memory _tickPrices, uint256 publishTime) internal {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     uint24[] memory _publishTimeDiff = new uint24[](_tickPrices.length);
     for (uint256 i = 0; i < _tickPrices.length; i++) {

@@ -408,21 +408,22 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime
   ) internal {
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
     vm.prank(BOT);
     botHandler.forceTakeMaxProfit(
       _account,
       _subAccountId,
       _marketIndex,
       _tpToken,
-      _priceData,
-      _publishTimeData,
+      priceUpdateData,
+      publishTimeUpdateData,
       _minPublishTime,
-      _encodedVaas
+      keccak256("someEncodedVaas")
     );
   }
 
@@ -431,21 +432,45 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime
   ) internal {
+    closeDelistedMarketPosition(
+      _account,
+      _subAccountId,
+      _marketIndex,
+      _tpToken,
+      _tickPrices,
+      _publishTimeDiffs,
+      _minPublishTime,
+      ""
+    );
+  }
+
+  function closeDelistedMarketPosition(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    address _tpToken,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
+    string memory signature
+  ) internal {
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
     vm.prank(BOT);
     botHandler.closeDelistedMarketPosition(
       _account,
       _subAccountId,
       _marketIndex,
       _tpToken,
-      _priceData,
-      _publishTimeData,
+      priceUpdateData,
+      publishTimeUpdateData,
       _minPublishTime,
-      _encodedVaas
+      keccak256("someEncodedVaas")
     );
   }
 

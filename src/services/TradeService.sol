@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { console2 } from "forge-std/console2.sol";
+
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -746,9 +746,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       _vars.isLongPosition ? -int(_vars.positionSizeE30ToDecrease) : int(_vars.positionSizeE30ToDecrease)
     );
 
-    console2.log("oracle price", _vars.oraclePrice);
-    console2.log("next close price", _vars.nextClosePrice);
-
     /**
      * calculate realized profit & loss
      */
@@ -803,10 +800,8 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
           _vars.position.positionSizeE30,
           _vars.isLongPosition ? -int(_vars.positionSizeE30ToDecrease) : int(_vars.positionSizeE30ToDecrease),
           _vars.nextClosePrice,
-          _vars.unrealizedPnl
+          _vars.isLongPosition ? _vars.unrealizedPnl : -_vars.unrealizedPnl
         );
-
-        console2.log("average price __ ", _vars.position.avgEntryPriceE30);
 
         // update position info
         _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
@@ -965,7 +960,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   ///                   - increase => long +, short -
   ///                   - decrease => long -, short +
   /// @param _nextClosePrice - close price after position has been updated
-  /// @param _unrealizedPnl - unrealized profit ans loss
+  /// @param _unrealizedPnl - unrealized profit and loss
   ///                   - long position => profit +, loss -
   ///                   - short position => profit -, loss +
   function _calculateEntryAveragePrice(
@@ -975,10 +970,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     int256 _unrealizedPnl
   ) private view returns (uint256 _newEntryAveragePrice) {
     int256 _newPositionSize = _positionSize + _sizeDelta;
-
-    console2.log("new position size", _newPositionSize);
-    console2.log("next close price", _nextClosePrice);
-    console2.log("unrealized pnl", _unrealizedPnl);
 
     if (_positionSize > 0) {
       return uint256((int256(_nextClosePrice) * _newPositionSize) / (_newPositionSize + _unrealizedPnl));

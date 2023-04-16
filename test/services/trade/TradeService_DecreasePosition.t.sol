@@ -284,14 +284,6 @@ contract TradeService_DecreasePosition is TradeService_Base {
     _expectedPlpLiquidities[1] = 10_145 * 1e8;
     _expectedFees[1] = 0; // when trader loss, should not has fee
 
-    // next close price = 1.050000000000000000000000000000
-    // position size = -1000000
-    // delta = 500000
-    // new position size = -500000
-    // unrealized pnl = -25000
-    // new average price = (1.05 * -500000) / (-500000 - (-25000))
-    //                   = 1.105263157894736842105263157894
-
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
       primaryAccount: ALICE,
       subAccountId: 0,
@@ -300,7 +292,7 @@ contract TradeService_DecreasePosition is TradeService_Base {
       reserveValueDelta: 45_000 * 1e30,
       realizedPnl: -25_000 * 1e30,
       // average prices
-      newPositionAveragePrice: 1.105263157894736842105263157894 * 1e30,
+      newPositionAveragePrice: 1 * 1e30,
       newLongGlobalAveragePrice: 0,
       newShortGlobalAveragePrice: 1.024390243902439024390243902438 * 1e30
     });

@@ -526,7 +526,6 @@ contract Calculator is Owned, ICalculator {
       if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
         _var.priceE30 = _limitPriceE30;
       } else {
-        // @todo - validate price age
         (_var.priceE30, , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price

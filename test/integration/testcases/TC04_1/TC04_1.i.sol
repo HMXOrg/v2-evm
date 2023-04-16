@@ -507,7 +507,7 @@ contract TC04_1 is BaseIntTest_WithActions {
       //                    position size * (average price - close price) / average price [SHORT]
       // position pnl             = -1000 * (0.007346284855118777380261479200 - 0.007419761330612749644469177022) / 0.007346284855118777380261479200
       //                          = 10.001854943424225561120385826666 (loss)
-      // divisor                  = new position size + pnl = -1100 - (10.001854943424225561120385826666)
+      // divisor                  = new position size - pnl = -1100 - (10.001854943424225561120385826666)
       //                          = -1110.001854943424225561120385826666
       // new entry average price  = next close price * new position size / divisor
       //                          = 0.007419760093983800160761763431 * -1100 / -1110.001854943424225561120385826666

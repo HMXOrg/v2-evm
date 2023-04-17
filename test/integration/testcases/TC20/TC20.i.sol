@@ -248,7 +248,7 @@ contract TC20 is BaseIntTest_WithActions {
     assertMarketShortPosition({
       _marketIndex: wethMarketIndex,
       _positionSize: 750_000 * 1e30,
-      _avgPrice: 1_498.124624248496993987975951903807 * 1e30,
+      _avgPrice: 1498.125 * 1e30,
       _str: "WETH:  "
     });
   }

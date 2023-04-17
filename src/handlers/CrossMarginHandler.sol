@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
+
 // base
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -35,6 +36,35 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   );
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
   event LogSetPyth(address indexed oldPyth, address newPyth);
+  event LogSetOrderExecutor(address executor, bool isAllow);
+  event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogCreateWithdrawOrder(
+    address indexed account,
+    uint8 indexed subAccountId,
+    uint256 indexed orderId,
+    address token,
+    uint256 amount,
+    uint256 executionFee,
+    bool shouldUnwrap
+  );
+  event LogCancelWithdrawOrder(
+    address indexed account,
+    uint8 indexed subAccountId,
+    uint256 indexed orderId,
+    address token,
+    uint256 amount,
+    uint256 executionFee,
+    bool shouldUnwrap
+  );
+  event LogExecuteWithdrawOrder(
+    address indexed account,
+    uint8 indexed subAccountId,
+    uint256 indexed orderId,
+    address token,
+    uint256 amount,
+    bool shouldUnwrap,
+    bool isSuccess
+  );
 
   /**
    * Constants
@@ -47,13 +77,30 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   address public crossMarginService;
   address public pyth;
 
-  constructor(address _crossMarginService, address _pyth) {
+  uint256 public nextExecutionOrderIndex;
+  uint256 public executionOrderFee; // executionOrderFee in tokenAmount unit
+  bool private isExecuting; // order is executing (prevent direct call executeWithdrawOrder()
+
+  WithdrawOrder[] public withdrawOrders; // all withdrawOrder
+  mapping(address => bool) public orderExecutors; //address -> flag to execute
+
+  constructor(address _crossMarginService, address _pyth, uint256 _executionOrderFee) {
     crossMarginService = _crossMarginService;
     pyth = _pyth;
+    executionOrderFee = _executionOrderFee;
 
     // Sanity check
     CrossMarginService(_crossMarginService).vaultStorage();
     IPyth(_pyth).getValidTimePeriod();
+  }
+
+  /**
+   * GETTER
+   */
+
+  /// @notice get withdraw orders
+  function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrder) {
+    return withdrawOrders;
   }
 
   /**
@@ -63,6 +110,11 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   // NOTE: Validate only accepted collateral token to be deposited
   modifier onlyAcceptedToken(address _token) {
     ConfigStorage(CrossMarginService(crossMarginService).configStorage()).validateAcceptedCollateral(_token);
+    _;
+  }
+
+  modifier onlyOrderExecutor() {
+    if (!orderExecutors[msg.sender]) revert ICrossMarginHandler_NotWhitelisted();
     _;
   }
 
@@ -111,35 +163,178 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   /// @param _subAccountId Trader's sub account ID.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
-  /// @param _priceData Price update data
-  function withdrawCollateral(
+  /// @param _executionFee The execution fee of order.
+  function createWithdrawCollateralOrder(
     uint8 _subAccountId,
     address _token,
     uint256 _amount,
-    bytes[] memory _priceData,
+    uint256 _executionFee,
     bool _shouldUnwrap
-  ) external payable nonReentrant onlyAcceptedToken(_token) {
-    // Call update oracle price
-    // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+  ) external payable nonReentrant onlyAcceptedToken(_token) returns (uint256 _orderId) {
+    if (_executionFee < executionOrderFee) revert ICrossMarginHandler_InsufficientExecutionFee();
+    if (msg.value != executionOrderFee) revert ICrossMarginHandler_InCorrectValueTransfer();
 
+    // convert native to WNative (including executionFee)
+    _transferInETH();
+
+    _orderId = withdrawOrders.length;
+
+    withdrawOrders.push(
+      WithdrawOrder({
+        account: payable(msg.sender),
+        orderId: _orderId,
+        token: _token,
+        amount: _amount,
+        executionFee: _executionFee,
+        shouldUnwrap: _shouldUnwrap,
+        subAccountId: _subAccountId,
+        crossMarginService: CrossMarginService(crossMarginService)
+      })
+    );
+
+    emit LogCreateWithdrawOrder(msg.sender, _subAccountId, _orderId, _token, _amount, _executionFee, _shouldUnwrap);
+    return _orderId;
+  }
+
+  /// @notice orderExecutor pending order
+  /// @param _feeReceiver ExecutionFee Receiver Address
+  /// @param _priceData Price data from Pyth to be used for updating the market prices
+  // slither-disable-next-line reentrancy-eth
+  function executeOrder(
+    uint256 _endIndex,
+    address payable _feeReceiver,
+    bytes[] memory _priceData
+  ) external nonReentrant onlyOrderExecutor {
+    // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
 
-    // Call service to withdraw collateral
-    if (_shouldUnwrap) {
-      // Withdraw wNative straight to this contract first.
-      _crossMarginService.withdrawCollateral(msg.sender, _subAccountId, _token, _amount, address(this));
-      // Then we unwrap the wNative token. The receiving amount should be the exact same as _amount. (No fee deducted when withdraw)
-      IWNative(_token).withdraw(_amount);
-      // Finally, transfer those native token right to user.
-      // slither-disable-next-line arbitrary-send-eth
-      payable(msg.sender).transfer(_amount);
-    } else {
-      // Withdraw _token straight to the user
-      _crossMarginService.withdrawCollateral(msg.sender, _subAccountId, _token, _amount, msg.sender);
+    uint256 _orderLength = withdrawOrders.length;
+
+    if (nextExecutionOrderIndex == _orderLength) revert ICrossMarginHandler_NoOrder();
+
+    uint256 _latestOrderIndex = _orderLength - 1;
+
+    if (_endIndex > _latestOrderIndex) {
+      _endIndex = _latestOrderIndex;
     }
 
-    emit LogWithdrawCollateral(msg.sender, _subAccountId, _token, _amount);
+    // Call update oracle price
+    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
+    IWNative(ConfigStorage(_crossMarginService.configStorage()).weth()).withdraw(_updateFee);
+
+    // slither-disable-next-line arbitrary-send-eth
+    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+
+    WithdrawOrder memory _order;
+    uint256 _totalFeeReceiver;
+    uint256 _executionFee;
+
+    for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
+      _order = withdrawOrders[i];
+      _executionFee = _order.executionFee;
+
+      isExecuting = true;
+
+      try this.executeWithdrawOrder(_order) {
+        emit LogExecuteWithdrawOrder(
+          _order.account,
+          _order.subAccountId,
+          _order.orderId,
+          _order.token,
+          _order.amount,
+          _order.shouldUnwrap,
+          true
+        );
+      } catch Error(string memory) {
+        // Do nothing
+      } catch (bytes memory) {
+        emit LogExecuteWithdrawOrder(
+          _order.account,
+          _order.subAccountId,
+          _order.orderId,
+          _order.token,
+          _order.amount,
+          _order.shouldUnwrap,
+          false
+        );
+      }
+
+      isExecuting = false;
+      _totalFeeReceiver += _executionFee;
+
+      // clear executed withdraw order
+      delete withdrawOrders[i];
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    nextExecutionOrderIndex = _endIndex + 1;
+    // Pay the executor
+    _transferOutETH(_totalFeeReceiver - _updateFee, _feeReceiver);
+  }
+
+  function executeWithdrawOrder(WithdrawOrder memory _order) external {
+    // if not in executing state, then revert
+    if (!isExecuting) revert ICrossMarginHandler_NotExecutionState();
+
+    // Call service to withdraw collateral
+    if (_order.shouldUnwrap) {
+      // Withdraw wNative straight to this contract first.
+      _order.crossMarginService.withdrawCollateral(
+        _order.account,
+        _order.subAccountId,
+        _order.token,
+        _order.amount,
+        address(this)
+      );
+      // Then we unwrap the wNative token. The receiving amount should be the exact same as _amount. (No fee deducted when withdraw)
+      IWNative(_order.token).withdraw(_order.amount);
+
+      // slither-disable-next-line arbitrary-send-eth
+      payable(_order.account).transfer(_order.amount);
+    } else {
+      // Withdraw _token straight to the user
+      _order.crossMarginService.withdrawCollateral(
+        _order.account,
+        _order.subAccountId,
+        _order.token,
+        _order.amount,
+        _order.account
+      );
+    }
+
+    emit LogWithdrawCollateral(_order.account, _order.subAccountId, _order.token, _order.amount);
+  }
+
+  /// @notice Cancel order
+  /// @param _orderIndex orderIndex of user order
+  function cancelWithdrawOrder(uint256 _orderIndex) external nonReentrant {
+    address _account = msg.sender;
+
+    // if order index >= liquidity order's length, then out of bound
+    // if order index < next execute index, means order index outdate
+    if (_orderIndex >= withdrawOrders.length || _orderIndex < nextExecutionOrderIndex) {
+      revert ICrossMarginHandler_NoOrder();
+    }
+
+    // _account is not owned this order
+    if (_account != withdrawOrders[_orderIndex].account) revert ICrossMarginHandler_NotOrderOwner();
+
+    // load _order
+    WithdrawOrder memory _order = withdrawOrders[_orderIndex];
+    delete withdrawOrders[_orderIndex];
+
+    emit LogCreateWithdrawOrder(
+      payable(_account),
+      _order.subAccountId,
+      _order.orderId,
+      _order.token,
+      _order.amount,
+      _order.executionFee,
+      _order.shouldUnwrap
+    );
   }
 
   /// @notice Check funding fee surplus and transfer to PLP
@@ -182,6 +377,45 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
     // Sanity check
     IPyth(_pyth).getValidTimePeriod();
+  }
+
+  /// @notice setMinExecutionFee
+  /// @param _newMinExecutionFee minExecutionFee in ethers
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
+    emit LogSetMinExecutionFee(executionOrderFee, _newMinExecutionFee);
+
+    executionOrderFee = _newMinExecutionFee;
+  }
+
+  /// @notice setOrderExecutor
+  /// @param _executor address who will be executor
+  /// @param _isAllow flag to allow to execute
+  function setOrderExecutor(address _executor, bool _isAllow) external nonReentrant onlyOwner {
+    orderExecutors[_executor] = _isAllow;
+
+    emit LogSetOrderExecutor(_executor, _isAllow);
+  }
+
+  /**
+   * Private Functions
+   */
+
+  /// @notice Transfer in ETH from user to be used as execution fee
+  /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.
+  function _transferInETH() private {
+    IWNative(ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()).deposit{
+      value: msg.value
+    }();
+  }
+
+  /// @notice Transfer out ETH to the receiver
+  /// @dev The stored WETH will be unwrapped and transfer as native token
+  /// @param _amountOut Amount of ETH to be transferred
+  /// @param _receiver The receiver of ETH in its native form. The receiver must be able to accept native token.
+  function _transferOutETH(uint256 _amountOut, address _receiver) private {
+    IWNative(ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()).withdraw(_amountOut);
+    // slither-disable-next-line arbitrary-send-eth
+    payable(_receiver).transfer(_amountOut);
   }
 
   receive() external payable {

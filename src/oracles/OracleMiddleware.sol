@@ -350,7 +350,8 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     address _adapter
   ) external onlyOwner {
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
-
+    uint32 _confidenceThresholdE6 = 2500; // 2.5% for test only
+    uint32 _trustPriceAge = type(uint32).max; // set max for test only
     emit LogSetAssetPriceConfig(
       _assetId,
       _config.confidenceThresholdE6,

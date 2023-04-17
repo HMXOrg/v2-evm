@@ -12,7 +12,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract StakedGlpStrategy is Owned, IStrategy {
   error StakedGlpStrategy_OnlyKeeper();
 
-  IERC20 public sGlp;
+  IERC20 public sglp;
   IERC20 public weth;
   IGmxRewardRouterV2 public gmxRewardRouter;
   IGmxRewardTracker public glpFeeTracker;
@@ -30,7 +30,7 @@ contract StakedGlpStrategy is Owned, IStrategy {
   event SetTreasury(address _oldTreasury, address _newTreasury);
 
   constructor(
-    IERC20 _sGlp,
+    IERC20 _sglp,
     IGmxRewardRouterV2 _gmxRewardRouter,
     IGmxRewardTracker _glpFeeTracker,
     IOracleMiddleware _oracleMiddleware,
@@ -39,7 +39,7 @@ contract StakedGlpStrategy is Owned, IStrategy {
     address _treasury,
     uint16 _strategyBps
   ) {
-    sGlp = _sGlp;
+    sglp = _sglp;
     gmxRewardRouter = _gmxRewardRouter;
     glpFeeTracker = _glpFeeTracker;
     weth = IERC20(_glpFeeTracker.rewardToken());
@@ -80,7 +80,7 @@ contract StakedGlpStrategy is Owned, IStrategy {
 
     // 3. Cook
     uint256 wethBefore = weth.balanceOf(address(this));
-    vaultStorage.cook(address(sGlp), address(glpFeeTracker), _callData);
+    vaultStorage.cook(address(sglp), address(glpFeeTracker), _callData);
     uint256 yields = weth.balanceOf(address(this)) - wethBefore;
 
     // 4. Deduct strategy fee.
@@ -91,12 +91,12 @@ contract StakedGlpStrategy is Owned, IStrategy {
 
     // 6. Settle
     // SLOAD
-    uint256 sGlpBalance = sGlp.balanceOf(address(this)) - strategyFee;
-    sGlp.transfer(address(vaultStorage), sGlpBalance);
+    uint256 sGlpBalance = sglp.balanceOf(address(this)) - strategyFee;
+    sglp.transfer(address(vaultStorage), sGlpBalance);
     weth.transfer(treasury, strategyFee);
 
     // 7. Update accounting.
-    vaultStorage.pullToken(address(sGlp));
-    vaultStorage.addPLPLiquidity(address(sGlp), sGlpBalance);
+    vaultStorage.pullToken(address(sglp));
+    vaultStorage.addPLPLiquidity(address(sglp), sGlpBalance);
   }
 }

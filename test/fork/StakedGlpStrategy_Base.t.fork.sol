@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 // Forge
 import { TestBase } from "forge-std/Base.sol";
 import { console2 } from "forge-std/console2.sol";
-import { StdCheatsSafe } from "forge-std/StdCheats.sol";
+import { StdCheats } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
 // interfaces
@@ -37,6 +37,7 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
 // OZ
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 //tester
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
@@ -50,18 +51,30 @@ import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 //Deployer
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, StdCheatsSafe {
+abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, StdCheats {
+  // ACTOR
+  address internal constant ALICE = 0xBB0Ba69f99B18E255912c197C8a2bD48293D5797;
+
+  // GMX
   address internal constant glpManagerAddress = 0x3963FfC9dff443c2A94f21b129D429891E32ec18;
   address internal constant glpAddress = 0x4277f8F2c384827B5273592FF7CeBd9f2C1ac258;
   address internal constant sGlpAddress = 0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf;
   address internal constant gmxRewardRouterV2Address = 0xB95DB5B167D75e6d04227CfFFA61069348d271F5;
-  address internal constant glpFeeTrackerAddress = 0x4e971a87900b931fF39d1Aad67697F49835400b6;
-  address internal constant pythAddress = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
-  //FIXME use native instead?
-  address internal constant wethAddress = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+  address internal constant fglpAddress = 0x4e971a87900b931fF39d1Aad67697F49835400b6;
+  address internal constant fsGlpAddress = 0x1aDDD80E6039594eE970E5872D247bf0414C8903;
 
+  // PYTH
+  address internal constant pythAddress = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
+  bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
+
+  // TOKENS
+  address internal constant wethAddress = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+  address internal constant usdcAddress = 0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8;
+
+  // HLP
   uint256 internal constant executionOrderFee = 0.0001 ether;
-  bytes32 constant sGlpAssetId = "sGLP";
+  bytes32 constant sGlpAssetId = "SGLP";
+  bytes32 constant usdcAssetId = "USDC";
 
   // handlers
   ILiquidityHandler liquidityHandler;
@@ -70,11 +83,13 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
   ILiquidityService liquidityService;
 
   // TOKENS
-  IERC20 sGlp;
+  IERC20 sglp;
+  IERC20 glp;
   IERC20 hlp;
   IPLPv2 plpV2;
+  IERC20 usdc;
+
   IWNative weth; //for native
-  MockErc20 usdc; // decimals 6
 
   // ORACLES
   IGmxGlpManager internal glpManager;
@@ -111,12 +126,13 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
       configStorage.setCalculator(address(calculator));
       configStorage.setWeth(address(weth));
       configStorage.setPLP(address(plpV2));
+      configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
     }
 
     // Setup Storage
     {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
-      vaultStorage.setStrategyAllowanceOf(address(sGlp), address(stakedGlpStrategy), address(glpFeeTracker));
+      vaultStorage.setStrategyAllowanceOf(address(glp), address(stakedGlpStrategy), address(glpFeeTracker));
       perpStorage.setServiceExecutors(address(liquidityService), true);
     }
 
@@ -126,6 +142,7 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
     }
 
     _setupAssetConfig();
+    _setupAssetPriceConfig();
     _setupLiquidityWithConfig();
 
     // Deploy LiquidityTester
@@ -137,25 +154,25 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
     treasury = makeAddr("GlpStrategyTreasury");
     FEEVER = makeAddr("FEEVER");
 
-    sGlp = IERC20(sGlpAddress);
+    glp = IERC20(glpAddress);
     gmxRewardRouterV2 = IGmxRewardRouterV2(gmxRewardRouterV2Address);
     glpManager = IGmxGlpManager(glpManagerAddress);
-    glpFeeTracker = IGmxRewardTracker(glpFeeTrackerAddress);
+    glpFeeTracker = IGmxRewardTracker(fglpAddress);
+    sglp = IERC20(sGlpAddress);
 
     // Tokens
     plpV2 = Deployer.deployPLPv2();
-    // weth = IWNative(new MockWNative());
 
-    usdc = new MockErc20("USD Coin", "USDC", 6);
+    weth = IWNative(wethAddress);
+    usdc = IERC20(usdcAddress);
 
     vm.label(address(usdc), "USDC");
-    vm.label(address(sGlp), "SGLP");
     vm.label(address(weth), "WETH");
 
     //deploy pythAdapter
     pythAdapter = Deployer.deployPythAdapter(pythAddress);
     //deploy stakedglpOracle
-    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(sGlp, glpManager, sGlpAssetId);
+    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(glp, glpManager, sGlpAssetId);
 
     //deploy oracleMiddleWare
     oracleMiddleware = Deployer.deployOracleMiddleware();
@@ -187,7 +204,7 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
 
     // Deploy GlpStrategy
     stakedGlpStrategy = Deployer.deployStakedGlpStrategy(
-      sGlp,
+      glp,
       gmxRewardRouterV2,
       glpFeeTracker,
       oracleMiddleware,
@@ -215,7 +232,7 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
       })
     );
 
-    // Add sGLP as a liquidity token
+    // Add glp as a liquidity token
     address[] memory _tokens = new address[](2);
     _tokens[0] = address(sGlpAddress);
     _tokens[1] = address(usdc);
@@ -237,18 +254,41 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
   }
 
   function _setupAssetConfig() private {
-    // Set AssetConfig for sGlp
+    // Set AssetConfig for glp
     IConfigStorage.AssetConfig memory _assetConfig = IConfigStorage.AssetConfig({
       tokenAddress: sGlpAddress,
       assetId: sGlpAssetId,
       decimals: 18,
       isStableCoin: false
     });
+
+    _assetConfig = IConfigStorage.AssetConfig({
+      tokenAddress: usdcAddress,
+      assetId: usdcAssetId,
+      decimals: 6,
+      isStableCoin: true
+    });
+
     configStorage.setAssetConfig(sGlpAssetId, _assetConfig);
-    // Set oracle adapter for sGLP
-    // Prepare assetIds
-    bytes32[] memory _assetIds = new bytes32[](1);
-    _assetIds[0] = sGlpAssetId;
+    configStorage.setAssetConfig(usdcAssetId, _assetConfig);
+  }
+
+  function _setupPythConfig() private {
+    pythAdapter.setConfig(usdcAssetId, usdcPriceId, false);
+  }
+
+  function _setupAssetPriceConfig() private {
+    uint32 _confidenceThresholdE6 = 2500; // 2.5% for test only
+    uint32 _trustPriceAge = type(uint32).max; // set max for test only
+
+    oracleMiddleware.setAssetPriceConfig(
+      sGlpAssetId,
+      _confidenceThresholdE6,
+      _trustPriceAge,
+      address(stakedGlpOracleAdapter)
+    );
+
+    oracleMiddleware.setAssetPriceConfig(usdcAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
   }
 
   function _buildAcceptedPLPTokenConfig(
@@ -261,5 +301,43 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
     _config.maxWeightDiff = _maxWeightDiff;
     _config.accepted = true;
     return _config;
+  }
+
+  /// @notice Helper function to create liquidity and execute order via handler
+  /// @param _liquidityProvider liquidity provider address
+  /// @param _tokenIn liquidity token to add
+  /// @param _amountIn amount of token to provide
+  /// @param _executionFee execution fee
+  /// @param _priceData Pyth's price data
+  function addLiquidity(
+    address _liquidityProvider,
+    ERC20 _tokenIn,
+    uint256 _amountIn,
+    uint256 _executionFee,
+    bytes[] memory _priceData,
+    bool executeNow
+  ) internal {
+    vm.startPrank(_liquidityProvider);
+    _tokenIn.approve(address(liquidityHandler), _amountIn);
+    /// note: minOut always 0 to make test passed
+    /// note: shouldWrap treat as false when only GLP could be liquidity
+    uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: _executionFee }(
+      address(_tokenIn),
+      _amountIn,
+      0,
+      _executionFee,
+      false
+    );
+    vm.stopPrank();
+
+    if (executeNow) {
+      executePLPOrder(_orderIndex, _priceData);
+    }
+  }
+
+  function executePLPOrder(uint256 _endIndex, bytes[] memory _priceData) internal {
+    vm.startPrank(keeper);
+    liquidityHandler.executeOrder(_endIndex, payable(FEEVER), _priceData);
+    vm.stopPrank();
   }
 }

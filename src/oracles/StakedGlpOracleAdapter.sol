@@ -21,10 +21,10 @@ contract StakedGlpOracleAdapter is Owned, IOracleAdapter {
     sGlpAssetId = _sGlpAssetId;
   }
 
-  /// @notice Get the latest price of GLP.
-  /// @return The latest price of GLP in e30.
+  /// @notice Get the latest price of SGLP.
+  /// @return The latest price of SGLP in e30.
   /// @return The timestamp of the latest price.
-  /// @param _assetId The asset ID of GLP.
+  /// @param _assetId The asset ID of SGLP.
   /// @param _isMax Whether to get the max price.
   function getLatestPrice(
     bytes32 _assetId,

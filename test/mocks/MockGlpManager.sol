@@ -21,4 +21,15 @@ contract MockGlpManager is IGmxGlpManager {
   function getAumInUsdg(bool _isMax) external view returns (uint256) {
     return _isMax ? maxAum / 1e12 : minAum / 1e12;
   }
+
+  function addLiquidityForAccount(
+    address _fundingAccount,
+    address _account,
+    address _token,
+    uint256 _amount,
+    uint256 _minUsdg,
+    uint256 _minGlp
+  ) external returns (uint256) {
+    return 0;
+  }
 }

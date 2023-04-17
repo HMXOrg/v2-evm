@@ -777,7 +777,7 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) external view returns (uint256 _freeCollateral) {
+  ) external view returns (int256 _freeCollateral) {
     return _getFreeCollateral(_subAccount, _limitPriceE30, _limitAssetId);
   }
 
@@ -785,11 +785,10 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) internal view returns (uint256 _freeCollateral) {
+  ) internal view returns (int256 _freeCollateral) {
     int256 equity = _getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = _getIMR(_subAccount);
-    if (equity < int256(imr)) return 0;
-    _freeCollateral = uint256(equity) - imr;
+    _freeCollateral = equity - int256(imr);
     return _freeCollateral;
   }
 

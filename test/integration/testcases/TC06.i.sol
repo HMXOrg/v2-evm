@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-import { console2 } from "forge-std/console2.sol";
+
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
 contract TC06 is BaseIntTest_WithActions {
@@ -163,7 +163,6 @@ contract TC06 is BaseIntTest_WithActions {
       // (-280000.101234381823000000000000000000 * (2595.788062419557184009448333334199 - 9661.742181991900188620775434249620)) / 9661.742181991900188620775434249620
 
       // 204773.40747979523677312798554944600112909
-
       marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, TP_TOKEN, priceData);
       (int256 unrealizedPnlValueAfter, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
 

@@ -352,16 +352,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       // calculate the initial margin required for the new position
       uint256 _imr = (_absSizeDelta * _marketConfig.initialMarginFractionBPS) / BPS;
 
-      // get the amount of free collateral available for the sub-account
-      uint256 subAccountFreeCollateral = _calculator.getFreeCollateral(
-        _vars.subAccount,
-        _limitPriceE30,
-        _marketConfig.assetId
-      );
-
-      // if the free collateral is less than the initial margin required, revert the transaction with an error
-      if (subAccountFreeCollateral < _imr) revert ITradeService_InsufficientFreeCollateral();
-
       // calculate the maximum amount of reserve required for the new position
       uint256 _maxReserve = (_imr * _marketConfig.maxProfitRateBPS) / BPS;
       // increase the reserved amount by the maximum reserve required for the new position
@@ -409,6 +399,18 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
 
     // save the updated position to the storage
     _perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
+
+    {
+      // get the amount of free collateral available for the sub-account
+      int256 subAccountFreeCollateral = _calculator.getFreeCollateral(
+        _vars.subAccount,
+        _limitPriceE30,
+        _marketConfig.assetId
+      );
+
+      // if the free collateral is less than the initial margin required, revert the transaction with an error
+      if (subAccountFreeCollateral < 0) revert ITradeService_InsufficientFreeCollateral();
+    }
 
     // Call Trade Service Hook
     _increasePositionHooks(_primaryAccount, _subAccountId, _marketIndex, _absSizeDelta);

@@ -17,7 +17,7 @@ contract MockCalculator is ICalculator {
   address public vaultStorage;
 
   uint256 collateralValue;
-  uint256 freeCollateral;
+  int256 freeCollateral;
   uint256 aum;
   uint256 plpValue;
   uint256 nextBorrowingRate;
@@ -56,7 +56,7 @@ contract MockCalculator is ICalculator {
     aum = _aum;
   }
 
-  function setFreeCollateral(uint256 _mockFreeCollateral) external {
+  function setFreeCollateral(int256 _mockFreeCollateral) external {
     freeCollateral = _mockFreeCollateral;
   }
 
@@ -166,7 +166,7 @@ contract MockCalculator is ICalculator {
     address /*_subAccount*/,
     uint256 /*_price*/,
     bytes32 /*_assetId*/
-  ) public view virtual returns (uint256) {
+  ) public view virtual returns (int256) {
     return freeCollateral;
   }
 

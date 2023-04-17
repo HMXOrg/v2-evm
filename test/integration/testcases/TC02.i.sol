@@ -100,7 +100,7 @@ contract TC02 is BaseIntTest_WithActions {
       ALICE,
       0,
       wethMarketIndex,
-      200_000 * 1e30,
+      100_000 * 1e30,
       address(0),
       tickPrices,
       publishTimeDiff,
@@ -418,16 +418,17 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Average Price Calculation
       //  Long:
-      //    Market's Avg price = 1500.00075, Current price = 1575.0007875
+      //    Market's Avg price = 1500.00075, close price = 1575.0007875
+      //                                     new close price = 1575.00039375
       //    Market's PnL  = (300 * (1575.0007875 - 1500.00075)) / 1500.00075
       //                  = 15
       //    Actual PnL    = Market's PnL - Realized PnL = 15 - 7.5
       //                  = 7.5
-      //    Avg Price     = Current Price * New Position size / New Position size + Actual PnL
-      //                  = (1575.0007875 * 150) / (150 + 7.5)
-      //                  = 1500.00075
+      //    Avg Price     = new Close price * New Position size / New Position size + Actual PnL
+      //                  = (1575.00039375 * 150) / (150 + 7.5)
+      //                  = 1500.000375
 
-      assertMarketLongPosition(wethMarketIndex, 150 * 1e30, 1500.00075 * 1e30, "T6: ");
+      assertMarketLongPosition(wethMarketIndex, 150 * 1e30, 1500.000375 * 1e30, "T6: ");
       assertMarketShortPosition(wethMarketIndex, 0, 0, "T6: ");
 
       // Assert Asset class

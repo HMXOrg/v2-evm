@@ -120,8 +120,7 @@ contract PythAdapter is Owned, IPythAdapter {
   /// @notice Set new Pyth contract address.
   /// @param _newPyth New Pyth contract address.
   function setPyth(address _newPyth) external onlyOwner {
-    pyth = IReadablePyth(_newPyth);
-
     emit LogSetPyth(address(pyth), _newPyth);
+    pyth = IReadablePyth(_newPyth);
   }
 }

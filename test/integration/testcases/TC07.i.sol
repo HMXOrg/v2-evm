@@ -110,7 +110,7 @@ contract TC07 is BaseIntTest_WithActions {
       // _prices[1] = 1 * 1e8;
       // _prices[2] = 1 * 1e8;
       // _prices[3] = 20_000 * 1e8;
-      tickPrices[0] = 73463; // ETH tick price $2,600
+      tickPrices[0] = 73463; // ETH tick price $1,550
       tickPrices[2] = 0; // USDC tick price $1
       tickPrices[4] = 0; // DAI tick price $1
       tickPrices[1] = 99039; // WBTC tick price $20,000

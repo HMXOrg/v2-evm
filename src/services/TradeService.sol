@@ -856,7 +856,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // =======================================
     // | ------ settle profit & loss ------- |
     // =======================================
-    TradeHelper(tradeHelper).increaseCollateral(_vars.subAccount, _vars.realizedPnl, _vars.fundingFee);
+    TradeHelper(tradeHelper).increaseCollateral(_vars.subAccount, _vars.realizedPnl, _vars.fundingFee, _vars.tpToken);
     TradeHelper(tradeHelper).decreaseCollateral(
       _vars.subAccount,
       _vars.realizedPnl,
@@ -885,73 +885,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       _vars.position.realizedPnl,
       _vars.position.reserveValueE30
     );
-  }
-
-  /// @notice settle profit
-  /// @param _subAccount - Sub-account of trader
-  /// @param _tpToken - token that trader want to take profit as collateral
-  /// @param _realizedProfitE30 - trader profit in USD
-  function _settleProfit(address _subAccount, address _tpToken, int256 _realizedProfitE30) private {
-    TradeHelper(tradeHelper).settleTraderProfit(_subAccount, _tpToken, _realizedProfitE30);
-  }
-
-  /// @notice settle loss
-  /// @param _subAccount - Sub-account of trader
-  /// @param _debtUsd - Loss in USD
-  function _settleLoss(address _subAccount, uint256 _debtUsd) private {
-    // SLOAD
-    ConfigStorage _configStorage = ConfigStorage(configStorage);
-    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
-    OracleMiddleware _oracleMiddleware = OracleMiddleware(_configStorage.oracle());
-    address[] memory _plpTokens = _configStorage.getPlpTokens();
-
-    uint256 _len = _plpTokens.length;
-
-    SettleLossVars memory _vars;
-
-    // Loop through all the plp tokens for the sub-account
-    for (uint256 _i; _i < _len; ) {
-      address _token = _plpTokens[_i];
-
-      _vars.decimals = _configStorage.getAssetTokenDecimal(_token);
-
-      // Sub-account plp collateral
-      _vars.collateral = _vaultStorage.traderBalances(_subAccount, _token);
-
-      // continue settle when sub-account has collateral, else go to check next token
-      if (_vars.collateral != 0) {
-        _vars.tokenAssetId = _configStorage.tokenAssetIds(_token);
-
-        // Retrieve the latest price and confident threshold of the plp underlying token
-        (_vars.price, ) = _oracleMiddleware.getLatestPrice(_vars.tokenAssetId, false);
-
-        _vars.collateralUsd = (_vars.collateral * _vars.price) / (10 ** _vars.decimals);
-
-        if (_vars.collateralUsd >= _debtUsd) {
-          // When this collateral token can cover all the debt, use this token to pay it all
-          _vars.collateralToRemove = (_debtUsd * (10 ** _vars.decimals)) / _vars.price;
-
-          _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
-          // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
-          // In this case, all debt are paid. We can break the loop right away.
-          break;
-        } else {
-          // When this collateral token cannot cover all the debt, use this token to pay debt as much as possible
-          _vars.collateralToRemove = (_vars.collateralUsd * (10 ** _vars.decimals)) / _vars.price;
-
-          _vaultStorage.payPlp(_subAccount, _token, _vars.collateralToRemove);
-          // @todo - emit LogSettleLoss(trader, collateralToken, deductedAmount)
-          // update debtUsd
-          unchecked {
-            _debtUsd = _debtUsd - _vars.collateralUsd;
-          }
-        }
-      }
-
-      unchecked {
-        ++_i;
-      }
-    }
   }
 
   /// @notice Calculates new entry average price

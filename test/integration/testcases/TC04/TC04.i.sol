@@ -129,7 +129,7 @@ contract TC04 is BaseIntTest_WithActions {
       assertMarketLongPosition({
         _marketIndex: wethMarketIndex,
         _positionSize: 18000 * 1e30, // 15000 + 3000
-        _avgPrice: 1500.044999812509374531273436328183 * 1e30, // @todo - recheck market average price calculation
+        _avgPrice: 1500.045 * 1e30,
         _str: "T2: "
       });
       assertMarketShortPosition({ _marketIndex: wethMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "T2: " });

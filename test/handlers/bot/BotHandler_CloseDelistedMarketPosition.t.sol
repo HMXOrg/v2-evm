@@ -32,6 +32,7 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
       );
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("calculateMarketAveragePrice");
       MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getDelta");
+      MockCalculatorWithRealCalculator(address(mockCalculator)).useActualFunction("getLatestPrice");
       configStorage.setCalculator(address(mockCalculator));
       tradeService.reloadConfig();
     }

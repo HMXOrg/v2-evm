@@ -33,6 +33,7 @@ import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol"
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { EcoPyth } from "@hmx/oracle/EcoPyth.sol";
 
 abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
@@ -74,6 +75,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockErc20 internal usdt;
 
   MockErc20 internal bad;
+
+  ProxyAdmin internal proxyAdmin;
 
   // market indexes
   uint256 ethMarketIndex;
@@ -155,6 +158,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
     configStorage.setWeth(address(weth));
+
+    proxyAdmin = new ProxyAdmin();
   }
 
   /**

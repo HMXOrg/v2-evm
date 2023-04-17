@@ -100,7 +100,7 @@ contract TC02 is BaseIntTest_WithActions {
       ALICE,
       0,
       wethMarketIndex,
-      200_000 * 1e30,
+      100_000 * 1e30,
       address(0),
       new bytes[](0),
       "ITradeService_InsufficientFreeCollateral()"

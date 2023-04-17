@@ -3,6 +3,8 @@ pragma solidity 0.8.18;
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract TC06 is BaseIntTest_WithActions {
   function testIntegration_WhenTraderInteractWithCrossMargin() external {
     vm.deal(ALICE, 1 ether);
@@ -83,6 +85,14 @@ contract TC06 is BaseIntTest_WithActions {
       bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
       marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, TP_TOKEN, priceData);
+      console2.log("1 =================================");
+      console2.log("free collateral", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
+      console2.log("equity", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log(
+        "size",
+        perpStorage.getPositionById(getPositionId(ALICE, SUB_ACCOUNT_ID, wethMarketIndex)).positionSizeE30
+      );
+      console2.log("=================================");
       // Check states After Alice opened SHORT position
       // Alice's Equity must be upper IMR level
       assertTrue(
@@ -143,8 +153,23 @@ contract TC06 is BaseIntTest_WithActions {
       (int256 unrealizedPnlValueBefore, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
       uint256 buySizeE30 = 0.88 * 1e30;
       bytes[] memory priceData = new bytes[](0);
-
+      console2.log("2 =================================");
+      console2.log("free collateral", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
+      console2.log("equity", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log(
+        "size",
+        perpStorage.getPositionById(getPositionId(ALICE, SUB_ACCOUNT_ID, wethMarketIndex)).positionSizeE30
+      );
+      console2.log("=================================");
       marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, TP_TOKEN, priceData);
+      console2.log("2 =================================");
+      console2.log("free collateral", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
+      console2.log("equity", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log(
+        "size",
+        perpStorage.getPositionById(getPositionId(ALICE, SUB_ACCOUNT_ID, wethMarketIndex)).positionSizeE30
+      );
+      console2.log("=================================");
       (int256 unrealizedPnlValueAfter, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
 
       // Expect Unrealized Pnl value will be decreased after ALICE partials close on SHORT position
@@ -169,6 +194,14 @@ contract TC06 is BaseIntTest_WithActions {
       bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
       // Expect Alice can't increase SHORT position because Equity < IMR
+      console2.log("3 =================================");
+      console2.log("free collateral", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
+      console2.log("equity", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log(
+        "size",
+        perpStorage.getPositionById(getPositionId(ALICE, SUB_ACCOUNT_ID, wethMarketIndex)).positionSizeE30
+      );
+      console2.log("=================================");
       marketSell(
         ALICE,
         SUB_ACCOUNT_ID,
@@ -176,8 +209,17 @@ contract TC06 is BaseIntTest_WithActions {
         sellSizeE30,
         TP_TOKEN,
         priceData,
+        // ""
         "ITradeService_InsufficientFreeCollateral()"
       );
+      console2.log("3 =================================");
+      console2.log("free collateral", calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0));
+      console2.log("equity", calculator.getEquity(SUB_ACCOUNT, 0, 0));
+      console2.log(
+        "size",
+        perpStorage.getPositionById(getPositionId(ALICE, SUB_ACCOUNT_ID, wethMarketIndex)).positionSizeE30
+      );
+      console2.log("=================================");
     }
 
     /**

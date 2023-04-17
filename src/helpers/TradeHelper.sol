@@ -7,12 +7,16 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { Owned } from "@hmx/base/Owned.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
-contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
+contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, Owned {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
+
   /**
    * Events
    */

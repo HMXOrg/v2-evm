@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -15,7 +15,7 @@ import { Owned } from "@hmx/base/Owned.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
-contract TradeService is ReentrancyGuard, ITradeService, Owned {
+contract TradeService is ReentrancyGuardUpgradeable, ITradeService, Owned {
   /**
    * Events
    */

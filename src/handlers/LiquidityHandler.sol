@@ -2,10 +2,10 @@
 pragma solidity 0.8.18;
 
 // base
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Owned } from "@hmx/base/Owned.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
 import { LiquidityService } from "@hmx/services/LiquidityService.sol";
@@ -21,8 +21,8 @@ import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 /// @title LiquidityHandler
-contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
-  using SafeERC20 for IERC20;
+contract LiquidityHandler is Owned, ReentrancyGuardUpgradeable, ILiquidityHandler {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
    * Events
@@ -146,7 +146,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       }
     } else {
       if (msg.value != executionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
-      IERC20(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
+      IERC20Upgradeable(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
     //1. convert native to WNative (including executionFee)
@@ -192,7 +192,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     // convert native to WNative (including executionFee)
     _transferInETH();
 
-    IERC20(ConfigStorage(LiquidityService(liquidityService).configStorage()).plp()).safeTransferFrom(
+    IERC20Upgradeable(ConfigStorage(LiquidityService(liquidityService).configStorage()).plp()).safeTransferFrom(
       msg.sender,
       address(this),
       _amountIn
@@ -308,7 +308,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     if (!isExecuting) revert ILiquidityHandler_NotExecutionState();
 
     if (_order.isAdd) {
-      IERC20(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
+      IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
       return
         LiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut);
     } else {
@@ -324,7 +324,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       if (_order.isNativeOut) {
         _transferOutETH(_amountOut, payable(_account));
       } else {
-        IERC20(_token).safeTransfer(_account, _amountOut);
+        IERC20Upgradeable(_token).safeTransfer(_account, _amountOut);
       }
       return _amountOut;
     }
@@ -380,12 +380,12 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       if (_order.isNativeOut) {
         _transferOutETH(_amount, _account);
       } else {
-        IERC20(_token).safeTransfer(_account, _amount);
+        IERC20Upgradeable(_token).safeTransfer(_account, _amount);
       }
       emit LogRefund(_account, _order.orderId, _token, _amount, _order.isNativeOut);
     } else {
       address _plp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
-      IERC20(_plp).safeTransfer(_account, _amount);
+      IERC20Upgradeable(_plp).safeTransfer(_account, _amount);
       emit LogRefund(_account, _order.orderId, _plp, _amount, false);
     }
   }

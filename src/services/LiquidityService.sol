@@ -2,9 +2,9 @@
 pragma solidity 0.8.18;
 
 // base
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 // contracts
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -17,7 +17,8 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
-contract LiquidityService is ReentrancyGuard, ILiquidityService {
+contract LiquidityService is ReentrancyGuardUpgradeable, ILiquidityService {
+
   /**
    * Events
    */
@@ -106,7 +107,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     // 3. get aum and lpSupply before deduction fee
     uint256 _aumE30 = _calculator.getAUME30(true);
-    uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
+    uint256 _lpSupply = ERC20Upgradeable(ConfigStorage(configStorage).plp()).totalSupply();
 
     (uint256 _tokenValueUSDAfterFee, uint256 _mintAmount) = _joinPool(
       _token,
@@ -137,7 +138,7 @@ contract LiquidityService is ReentrancyGuard, ILiquidityService {
 
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
     uint256 _aumE30 = _calculator.getAUME30(false);
-    uint256 _lpSupply = ERC20(ConfigStorage(configStorage).plp()).totalSupply();
+    uint256 _lpSupply = ERC20Upgradeable(ConfigStorage(configStorage).plp()).totalSupply();
 
     // lp value to remove
     uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aumE30) / _lpSupply : 0;

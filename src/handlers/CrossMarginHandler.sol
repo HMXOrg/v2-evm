@@ -15,8 +15,11 @@ import { IWNative } from "../interfaces/IWNative.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
-contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
-  using SafeERC20 for ERC20;
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+contract CrossMarginHandler is Owned, ReentrancyGuardUpgradeable, ICrossMarginHandler {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
    * Events
@@ -94,10 +97,10 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
       // slither-disable-next-line arbitrary-send-eth
       IWNative(_token).deposit{ value: _amount }();
       // Transfer those wNative token from this contract to VaultStorage
-      ERC20(_token).safeTransfer(_crossMarginService.vaultStorage(), _amount);
+      IERC20Upgradeable(_token).safeTransfer(_crossMarginService.vaultStorage(), _amount);
     } else {
       // Transfer depositing token from trader's wallet to VaultStorage
-      ERC20(_token).safeTransferFrom(msg.sender, _crossMarginService.vaultStorage(), _amount);
+      IERC20Upgradeable(_token).safeTransferFrom(msg.sender, _crossMarginService.vaultStorage(), _amount);
     }
 
     // Call service to deposit collateral

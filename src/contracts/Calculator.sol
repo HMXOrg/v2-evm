@@ -13,7 +13,13 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-contract Calculator is Owned, ICalculator {
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+
+contract Calculator is Owned, ReentrancyGuardUpgradeable, ICalculator {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
+
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
   uint64 internal constant RATE_PRECISION = 1e18;

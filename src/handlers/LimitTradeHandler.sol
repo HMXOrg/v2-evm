@@ -2,9 +2,10 @@
 pragma solidity 0.8.18;
 
 // base
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "@hmx/base/Owned.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
@@ -12,12 +13,15 @@ import { TradeService } from "@hmx/services/TradeService.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
+
 // interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
-contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
+contract LimitTradeHandler is Owned, ReentrancyGuardUpgradeable, ILimitTradeHandler {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
+
   /**
    * Events
    */

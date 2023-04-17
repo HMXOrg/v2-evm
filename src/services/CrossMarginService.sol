@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 //base
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import { Owned } from "@hmx/base/Owned.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -15,7 +15,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
 
-contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
+contract CrossMarginService is Owned, ReentrancyGuardUpgradeable, ICrossMarginService {
   /**
    * Events
    */

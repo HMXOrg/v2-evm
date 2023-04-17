@@ -19,9 +19,13 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+
 // @todo - integrate with BotHandler in another PRs
-contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
-  using SafeERC20 for IERC20;
+contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, Owned {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
    * Events
@@ -234,7 +238,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
 
     // transfer token
-    IERC20(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
+    IERC20Upgradeable(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
 
     // do accounting on vault storage
     _vaultStorage.addPLPLiquidity(_token, _amount);
@@ -250,7 +254,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
 
     // transfer token
-    IERC20(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
+    IERC20Upgradeable(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
 
     // do accounting on vault storage
     _vaultStorage.addFundingFee(_token, _amount);

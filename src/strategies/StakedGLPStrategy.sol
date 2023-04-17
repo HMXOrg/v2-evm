@@ -7,13 +7,13 @@ import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract StakedGlpStrategy is Owned, IStrategy {
   error StakedGlpStrategy_OnlyKeeper();
 
-  ERC20 public sGlp;
-  ERC20 public weth;
+  IERC20 public sGlp;
+  IERC20 public weth;
   IGmxRewardRouterV2 public gmxRewardRouter;
   IGmxRewardTracker public glpFeeTracker;
 
@@ -30,7 +30,7 @@ contract StakedGlpStrategy is Owned, IStrategy {
   event SetTreasury(address _oldTreasury, address _newTreasury);
 
   constructor(
-    ERC20 _sGlp,
+    IERC20 _sGlp,
     IGmxRewardRouterV2 _gmxRewardRouter,
     IGmxRewardTracker _glpFeeTracker,
     IOracleMiddleware _oracleMiddleware,
@@ -42,7 +42,7 @@ contract StakedGlpStrategy is Owned, IStrategy {
     sGlp = _sGlp;
     gmxRewardRouter = _gmxRewardRouter;
     glpFeeTracker = _glpFeeTracker;
-    weth = ERC20(_glpFeeTracker.rewardToken());
+    weth = IERC20(_glpFeeTracker.rewardToken());
 
     oracleMiddleware = _oracleMiddleware;
     vaultStorage = _vaultStorage;
@@ -91,8 +91,8 @@ contract StakedGlpStrategy is Owned, IStrategy {
 
     // 6. Settle
     // SLOAD
-    uint256 sGlpBalance = sGlp.balanceOf(address(this));
-    sGlp.transfer(address(vaultStorage), sGlp.balanceOf(address(this)));
+    uint256 sGlpBalance = sGlp.balanceOf(address(this)) - strategyFee;
+    sGlp.transfer(address(vaultStorage), sGlpBalance);
     weth.transfer(treasury, strategyFee);
 
     // 7. Update accounting.

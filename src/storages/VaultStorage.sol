@@ -417,7 +417,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     return abi.decode(_returnData, (string)); // All that remains is the revert string
   }
 
-  function cook(address _target, address _token, bytes calldata _callData) external returns (bytes memory) {
+  function cook(address _token, address _target, bytes calldata _callData) external returns (bytes memory) {
     // Check
     // 1. Only strategy for specific token can call this function
     if (strategyAllowance[_token][msg.sender] != _target) revert IVaultStorage_Forbidden();

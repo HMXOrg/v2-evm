@@ -36,7 +36,10 @@ import { IVester } from "@hmx/vesting/interfaces/IVester.sol";
 
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
+import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -78,14 +81,8 @@ library Deployer {
       );
   }
 
-  function deployOracleMiddleware(
-    address _pythAdapter,
-    address _stakedGlpOracleAdapter
-  ) internal returns (IOracleMiddleware) {
-    return
-      IOracleMiddleware(
-        deployContractWithArguments("OracleMiddleware", abi.encode(_pythAdapter, _stakedGlpOracleAdapter))
-      );
+  function deployOracleMiddleware() internal returns (IOracleMiddleware) {
+    return IOracleMiddleware(deployContract("OracleMiddleware"));
   }
 
   /**
@@ -293,6 +290,34 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IVester(payable(_proxy));
+  }
+
+  function deployStakedGlpStrategy(
+    IERC20 _sGlp,
+    IGmxRewardRouterV2 _gmxRewardRouter,
+    IGmxRewardTracker _glpFeeTracker,
+    IOracleMiddleware _oracleMiddleware,
+    IVaultStorage _vaultStorage,
+    address _keeper,
+    address _treasury,
+    uint16 _strategyBps
+  ) internal returns (IStrategy) {
+    return
+      IStrategy(
+        deployContractWithArguments(
+          "StakedGlpStrategy",
+          abi.encode(
+            _sGlp,
+            _gmxRewardRouter,
+            _glpFeeTracker,
+            _oracleMiddleware,
+            _vaultStorage,
+            _keeper,
+            _treasury,
+            _strategyBps
+          )
+        )
+      );
   }
 
   /**

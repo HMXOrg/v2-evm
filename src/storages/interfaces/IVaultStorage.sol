@@ -74,5 +74,7 @@ interface IVaultStorage {
     uint256 _fundingFeeValue
   ) external;
 
-  function cook(address _target, address _token, bytes calldata _callData) external returns (bytes memory);
+  function cook(address _token, address _target, bytes calldata _callData) external returns (bytes memory);
+
+  function setStrategyAllowanceOf(address _token, address _strategy, address _target) external;
 }

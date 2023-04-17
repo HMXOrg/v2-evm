@@ -120,7 +120,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
   IWNative weth; //for native
 
-  /* PYTH */
+  /* ORACLES */
   MockPyth internal pyth;
   MockGlpManager internal glpManager;
   IPythAdapter internal pythAdapter;
@@ -163,7 +163,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     stakedGlpAdapter = Deployer.deployStakedGlpOracleAdapter(sglp, glpManager, sglpAssetId);
 
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware(address(pythAdapter), address(stakedGlpAdapter));
+    oracleMiddleWare = Deployer.deployOracleMiddleware();
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage();

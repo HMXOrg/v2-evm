@@ -228,6 +228,7 @@ contract MockCalculator is ICalculator {
     uint256 /* _marketAveragePrice */,
     int256 /* _sizeDelta */,
     uint256 /* _positionClosePrice */,
+    uint256 /* _positionNextClosePrice */,
     int256 /* _positionRealizedPnl */
   ) public view virtual returns (uint256 _newAvaragePrice) {}
 

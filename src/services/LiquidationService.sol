@@ -263,12 +263,14 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
               _vars.globalMarket.longAvgPrice,
               -_vars.position.positionSizeE30,
               _adaptivePrice,
+              _adaptivePrice,
               _realizedPnl
             )
             : calculator.calculateMarketAveragePrice(
               -int256(_vars.globalMarket.shortPositionSize),
               _vars.globalMarket.shortAvgPrice,
               -_vars.position.positionSizeE30,
+              _adaptivePrice,
               _adaptivePrice,
               -_realizedPnl
             );

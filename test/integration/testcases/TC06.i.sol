@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-
+import { console2 } from "forge-std/console2.sol";
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 
 contract TC06 is BaseIntTest_WithActions {
@@ -102,7 +102,7 @@ contract TC06 is BaseIntTest_WithActions {
       _assetIds[2] = daiAssetId;
       _assetIds[3] = wbtcAssetId;
       int64[] memory _prices = new int64[](4);
-      _prices[0] = 2600 * 1e8;
+      _prices[0] = 2597 * 1e8;
       _prices[1] = 1 * 1e8;
       _prices[2] = 1 * 1e8;
       _prices[3] = 20_000 * 1e8;
@@ -115,7 +115,7 @@ contract TC06 is BaseIntTest_WithActions {
 
       // Check states After WETH market price move from 1500 USD to 1550 USD
       // Alice's Equity must be lower IMR level
-      // Equity = 2489, IMR = 2800.0098123438183
+      // Equity = ~2658.40902, IMR = 2800.0098123438183
 
       assertTrue(
         uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) < calculator.getIMR(SUB_ACCOUNT),
@@ -143,6 +143,26 @@ contract TC06 is BaseIntTest_WithActions {
       (int256 unrealizedPnlValueBefore, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
       uint256 buySizeE30 = 0.88 * 1e30;
       bytes[] memory priceData = new bytes[](0);
+
+      // oracle price 2597000000000000000000000000000000
+      // next close price 2595788066228490517342781666668398
+      // close with price 2595788062419557184009448333334199
+      // averaage price 1499299997546914045442500000000500
+
+      // 2595.788066228490517342781666668398
+
+      // 9661.742181991900188620775434249620
+
+      // new position size -280000101234381823000000000000000000
+      // unrealized pnl     204773.407369411239887333333333333333
+      // next close price   2595788066228490517342781666668398
+      // new average price -- 9661742181991900188620775434249620
+
+      // 2595788066228490517342781666668398 * -280000101234381823000000000000000000 / -280000101234381823000000000000000000 + 204773407369411239887333333333333333
+
+      // (-280000.101234381823000000000000000000 * (2595.788062419557184009448333334199 - 9661.742181991900188620775434249620)) / 9661.742181991900188620775434249620
+
+      // 204773.40747979523677312798554944600112909
 
       marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, TP_TOKEN, priceData);
       (int256 unrealizedPnlValueAfter, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);

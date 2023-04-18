@@ -34,12 +34,12 @@ contract CrossMarginHandler_Base is BaseTest {
     oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60);
 
     pythAdapter = Deployer.deployPythAdapter(address(ecoPyth));
-    pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
-    pythAdapter.setConfig(wethAssetId, wethPriceId, false);
-    pythAdapter.setConfig(usdcAssetId, usdcPriceId, false);
+    pythAdapter.setConfig(wbtcAssetId, wbtcAssetId, false);
+    pythAdapter.setConfig(wethAssetId, wethAssetId, false);
+    pythAdapter.setConfig(usdcAssetId, usdcAssetId, false);
 
-    ecoPyth.insertPriceId(wbtcPriceId);
-    ecoPyth.insertPriceId(wethPriceId);
+    ecoPyth.insertAssetId(wbtcAssetId);
+    ecoPyth.insertAssetId(wethAssetId);
 
     oracleMiddleware.setPythAdapter(address(pythAdapter));
 
@@ -110,8 +110,8 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Set Oracle data for Price feeding
     {
-      pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
-      pythAdapter.setConfig(wethAssetId, wethPriceId, false);
+      pythAdapter.setConfig(wbtcAssetId, wbtcAssetId, false);
+      pythAdapter.setConfig(wethAssetId, wethAssetId, false);
 
       priceDataBytes = new bytes[](2);
       priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(

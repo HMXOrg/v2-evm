@@ -15,7 +15,7 @@ contract TC01 is BaseIntTest_WithActions {
     // WBTC = 19998.34577790
     // ALICE NEED 10k in terms of WBTC = 10000 /19998.34577790 * 10**8  = 0.50004136
     uint256 _amount = 0.50004136 * 1e8;
-    pyth.getPriceUnsafe(wbtcPriceId);
+    pyth.getPriceUnsafe(wbtcAssetId);
 
     // mint 0.5 btc and give 0.0001 gas
     vm.deal(ALICE, executionOrderFee);

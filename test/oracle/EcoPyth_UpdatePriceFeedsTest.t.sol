@@ -9,10 +9,10 @@ contract EcoPyth_UpdatePriceFeedsTest is EcoPyth_BaseTest {
   function setUp() public override {
     super.setUp();
 
-    ecoPyth.insertPriceId("1");
-    ecoPyth.insertPriceId("2");
-    ecoPyth.insertPriceId("3");
-    ecoPyth.insertPriceId("4");
+    ecoPyth.insertAssetId("1");
+    ecoPyth.insertAssetId("2");
+    ecoPyth.insertAssetId("3");
+    ecoPyth.insertAssetId("4");
   }
 
   function testRevert_OnlyUpdater() external {

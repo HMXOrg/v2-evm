@@ -13,7 +13,7 @@ contract EcoPyth is Owned, IEcoPyth {
   error EcoPyth_ExpectZeroFee();
   error EcoPyth_OnlyUpdater();
   error EcoPyth_PriceFeedNotFound();
-  error EcoPyth_PriceIdHasAlreadyBeenDefined();
+  error EcoPyth_AssetIdHasAlreadyBeenDefined();
 
   // array of price data
   // it is stored as `tick` from the Uniswap tick price math
@@ -27,7 +27,7 @@ contract EcoPyth is Owned, IEcoPyth {
   // we don't store actual publish time of each price for gas optimization
   bytes32[] public publishTimeDiff;
   // map Pyth Price Id to index in the `prices` which is the array of tick price
-  mapping(bytes32 => uint256) public mapPriceIdToIndex;
+  mapping(bytes32 => uint256) public mapAssetIdToIndex;
   uint256 public indexCount;
   // each price and each pubish time diff will occupy 24 bits
   // price will be in int24, where publish time diff will be in uint24
@@ -53,7 +53,7 @@ contract EcoPyth is Owned, IEcoPyth {
   }
 
   constructor() {
-    // Preoccupied index 0 as any of `mapPriceIdToIndex` returns default as 0
+    // Preoccupied index 0 as any of `mapAssetIdToIndex` returns default as 0
     indexCount = 1;
   }
 
@@ -74,7 +74,7 @@ contract EcoPyth is Owned, IEcoPyth {
   /// @param id The unique identifier of the price feed.
   /// @return price The current price.
   function getPriceUnsafe(bytes32 id) external view returns (PythStructs.Price memory price) {
-    uint256 index = mapPriceIdToIndex[id] - 1;
+    uint256 index = mapAssetIdToIndex[id] - 1;
     uint256 internalIndex = index % 10;
     uint256 wordPrice = uint256(prices[index / 10]);
     int24 tick = int24(int256((wordPrice >> (256 - (24 * (internalIndex + 1))))));
@@ -109,10 +109,10 @@ contract EcoPyth is Owned, IEcoPyth {
     emit LogSetUpdater(_account, _isActive);
   }
 
-  function insertPriceIds(bytes32[] calldata _assetIds) external onlyOwner {
+  function insertAssetIds(bytes32[] calldata _assetIds) external onlyOwner {
     uint256 _len = _assetIds.length;
     for (uint256 i = 0; i < _len; ) {
-      _insertPriceId(_assetIds[i]);
+      _insertAssetId(_assetIds[i]);
 
       unchecked {
         ++i;
@@ -120,13 +120,13 @@ contract EcoPyth is Owned, IEcoPyth {
     }
   }
 
-  function insertPriceId(bytes32 _assetId) external onlyOwner {
-    _insertPriceId(_assetId);
+  function insertAssetId(bytes32 _assetId) external onlyOwner {
+    _insertAssetId(_assetId);
   }
 
-  function _insertPriceId(bytes32 _assetId) internal {
-    if (mapPriceIdToIndex[_assetId] != 0) revert EcoPyth_PriceIdHasAlreadyBeenDefined();
-    mapPriceIdToIndex[_assetId] = indexCount;
+  function _insertAssetId(bytes32 _assetId) internal {
+    if (mapAssetIdToIndex[_assetId] != 0) revert EcoPyth_AssetIdHasAlreadyBeenDefined();
+    mapAssetIdToIndex[_assetId] = indexCount;
     ++indexCount;
   }
 

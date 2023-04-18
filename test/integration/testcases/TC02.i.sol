@@ -100,7 +100,7 @@ contract TC02 is BaseIntTest_WithActions {
       ALICE,
       0,
       wethMarketIndex,
-      200_000 * 1e30,
+      100_000 * 1e30,
       address(0),
       new bytes[](0),
       "ITradeService_InsufficientFreeCollateral()"
@@ -230,8 +230,7 @@ contract TC02 is BaseIntTest_WithActions {
 
     // T5: Alice withdraw BTC 200 USD (200 / 20000 = 0.01 BTC)
     // should revert ICrossMarginService_InsufficientBalance
-    vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InsufficientBalance()"));
-    withdrawCollateral(ALICE, 0, wbtc, 0.1 * 1e8, new bytes[](0));
+    withdrawCollateral(ALICE, 0, wbtc, 0.1 * 1e8, new bytes[](0), executionOrderFee);
 
     // T6: Alice partial close Long position at WETH market for 150 USD
     //     WETH price 1,575 USD, then Alice should take profit ~5%
@@ -416,16 +415,17 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Average Price Calculation
       //  Long:
-      //    Market's Avg price = 1500.00075, Current price = 1575.0007875
+      //    Market's Avg price = 1500.00075, close price = 1575.0007875
+      //                                     new close price = 1575.00039375
       //    Market's PnL  = (300 * (1575.0007875 - 1500.00075)) / 1500.00075
       //                  = 15
       //    Actual PnL    = Market's PnL - Realized PnL = 15 - 7.5
       //                  = 7.5
-      //    Avg Price     = Current Price * New Position size / New Position size + Actual PnL
-      //                  = (1575.0007875 * 150) / (150 + 7.5)
-      //                  = 1500.00075
+      //    Avg Price     = new Close price * New Position size / New Position size + Actual PnL
+      //                  = (1575.00039375 * 150) / (150 + 7.5)
+      //                  = 1500.000375
 
-      assertMarketLongPosition(wethMarketIndex, 150 * 1e30, 1500.00075 * 1e30, "T6: ");
+      assertMarketLongPosition(wethMarketIndex, 150 * 1e30, 1500.000375 * 1e30, "T6: ");
       assertMarketShortPosition(wethMarketIndex, 0, 0, "T6: ");
 
       // Assert Asset class

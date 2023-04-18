@@ -6,7 +6,6 @@ import { TickMath } from "@hmx/libraries/TickMath.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythPriceInfo, IEcoPythPriceInfo } from "./interfaces/IPyth.sol";
 import { IEcoPyth } from "./interfaces/IEcoPyth.sol";
-import { console } from "forge-std/console.sol";
 
 contract EcoPyth is Owned, IEcoPyth {
   // errors

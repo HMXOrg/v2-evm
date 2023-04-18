@@ -101,7 +101,8 @@ contract Invariance_Vester is Test, InvariantTest {
    */
   function accumulateHmxBalance(uint256 balance, address caller) external view returns (uint256) {
     console2.log("balance", hmx.balanceOf(caller));
-    return balance + hmx.balanceOf(caller);
+    if (caller != address(vester)) return balance + hmx.balanceOf(caller);
+    else return balance + 0;
   }
 
   function assertAccountHmxBalanceLteHmxTotalSupply(address account) external {

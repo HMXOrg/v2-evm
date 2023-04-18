@@ -74,6 +74,7 @@ contract EcoPyth is Owned, IEcoPyth {
   /// @param id The unique identifier of the price feed.
   /// @return price The current price.
   function getPriceUnsafe(bytes32 id) external view returns (PythStructs.Price memory price) {
+    if (mapAssetIdToIndex[id] == 0) revert EcoPyth_PriceFeedNotFound();
     uint256 index = mapAssetIdToIndex[id] - 1;
     uint256 internalIndex = index % 10;
     uint256 wordPrice = uint256(prices[index / 10]);

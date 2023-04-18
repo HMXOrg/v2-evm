@@ -16,7 +16,7 @@ contract DeployLimitTradeHandler is ConfigJsonRepo {
 
     address pythAddress = getJsonAddress(".oracle.leanPyth");
     address tradeServiceAddress = getJsonAddress(".services.trade");
-    address liquidationServiceAddress = getJsonAddress(".services.liquidation");
+    address liquiditionServiceAddress = getJsonAddress(".services.liquidation");
     address liquidityServiceAddress = getJsonAddress(".services.liquidity");
     address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
     address weth = getJsonAddress(".tokens.weth");

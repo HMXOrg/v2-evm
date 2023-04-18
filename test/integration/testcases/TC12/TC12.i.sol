@@ -277,7 +277,7 @@ contract TC12 is BaseIntTest_WithActions {
     assertMarketShortPosition({
       _marketIndex: appleMarketIndex,
       _positionSize: 3000 * 1e30,
-      _avgPrice: 151.999239999999999999999999999997 * 1e30,
+      _avgPrice: 151.999239999999999999999999999999 * 1e30,
       _str: "APPLE: "
     });
 

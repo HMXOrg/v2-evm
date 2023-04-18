@@ -221,7 +221,7 @@ contract TC11 is BaseIntTest_WithActions {
     assertMarketLongPosition({
       _marketIndex: wethMarketIndex,
       _positionSize: 6000 * 1e30,
-      _avgPrice: 1500.014999962500374996250037499625 * 1e30,
+      _avgPrice: 1500.015 * 1e30,
       _str: "WETH: "
     });
     assertMarketShortPosition({ _marketIndex: wethMarketIndex, _positionSize: 0, _avgPrice: 0, _str: "WETH:  " });

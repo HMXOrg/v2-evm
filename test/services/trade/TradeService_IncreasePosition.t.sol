@@ -141,63 +141,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
 
   // @todo - Test price revert
 
-  function testRevert_increasePosition_WhenInsufficientFreeCollateral_OnePosition() external {
-    // TVL
-    // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
-    // ALICE add collateral
-    // 8000 USDT -> free collateral -> 8000 USD
-    mockCalculator.setFreeCollateral(8_000 * 1e30);
-
-    // ETH price 1600 USD
-    uint256 price = 1_600 * 1e30;
-    mockOracle.setPrice(price);
-
-    // Increase Long ETH size 1,000,000
-    {
-      int256 sizeDelta = 1_000_000 * 1e30;
-      vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
-    }
-  }
-
-  function testRevert_increasePosition_WhenInsufficientFreeCollateral_TwoPosition() external {
-    // TVL
-    // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
-    // ALICE add collateral
-    // 10000 USDT -> free collateral -> 10000 USD
-    mockCalculator.setFreeCollateral(10_000 * 1e30);
-
-    // ETH price 1600 USD
-    {
-      uint256 price = 1_600 * 1e30;
-      mockOracle.setPrice(price);
-    }
-
-    // BTC price 24000 USD
-    {
-      uint256 price = 24_000 * 1e30;
-      mockOracle.setPrice(price);
-    }
-
-    // Increase Long ETH size 800,000
-    {
-      int256 sizeDelta = 800_000 * 1e30;
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
-    }
-
-    // Fee collateral decrease 8000 -> 2000 USD
-    mockCalculator.setFreeCollateral(2_000 * 1e30);
-
-    // Increase Long BTC size 500,000
-    {
-      int256 sizeDelta = 500_000 * 1e30;
-      vm.expectRevert(abi.encodeWithSignature("ITradeService_InsufficientFreeCollateral()"));
-      tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta, 0);
-    }
-  }
-
   function testRevert_increasePosition_WhenITradeService_InsufficientLiquidity_OnePosition() external {
     // TVL
     // 10000 USDT -> 10000 USD

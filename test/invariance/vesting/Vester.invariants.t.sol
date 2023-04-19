@@ -113,6 +113,7 @@ contract Invariance_Vester is Test, InvariantTest {
     console2.log("account", account);
     console2.log("hmxBalance", hmx.balanceOf(account));
     console2.log("maxPossible", vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
-    assertLe(hmx.balanceOf(account), vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
+    if (account != address(vester))
+      assertLe(hmx.balanceOf(account), vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
   }
 }

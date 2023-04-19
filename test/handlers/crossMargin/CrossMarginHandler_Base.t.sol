@@ -12,6 +12,7 @@ contract CrossMarginHandler_Base is BaseTest {
   ICrossMarginService internal crossMarginService;
 
   uint8 internal SUB_ACCOUNT_NO = 1;
+  uint256 internal constant executionOrderFee = 0.0001 ether;
 
   bytes[] internal priceDataBytes;
 
@@ -59,11 +60,17 @@ contract CrossMarginHandler_Base is BaseTest {
       address(perpStorage),
       address(calculator)
     );
-    crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), address(pythAdapter.pyth()));
+    crossMarginHandler = Deployer.deployCrossMarginHandler(
+      address(crossMarginService),
+      address(pythAdapter.pyth()),
+      executionOrderFee
+    );
 
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
     vaultStorage.setServiceExecutors(address(crossMarginService), true);
+
+    crossMarginHandler.setOrderExecutor(address(this), true);
 
     // Set accepted token deposit/withdraw as WETH and USDC
     IConfigStorage.CollateralTokenConfig memory _collateralConfigWETH = IConfigStorage.CollateralTokenConfig({
@@ -126,9 +133,23 @@ contract CrossMarginHandler_Base is BaseTest {
     vm.stopPrank();
   }
 
-  function simulateAliceWithdrawToken(address _token, uint256 _withdrawAmount) internal {
-    vm.startPrank(ALICE);
-    crossMarginHandler.withdrawCollateral(SUB_ACCOUNT_NO, _token, _withdrawAmount, priceDataBytes, false);
-    vm.stopPrank();
+  function simulateAliceWithdrawToken(
+    address _token,
+    uint256 _withdrawAmount,
+    bytes[] memory _priceData,
+    bool _shouldUnwrap
+  ) internal {
+    vm.deal(ALICE, executionOrderFee);
+
+    vm.prank(ALICE);
+    uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: executionOrderFee }(
+      SUB_ACCOUNT_NO,
+      _token,
+      _withdrawAmount,
+      executionOrderFee,
+      _shouldUnwrap
+    );
+
+    crossMarginHandler.executeOrder({ _endIndex: orderIndex, _feeReceiver: payable(FEEVER), _priceData: _priceData });
   }
 }

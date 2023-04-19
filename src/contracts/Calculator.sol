@@ -526,7 +526,6 @@ contract Calculator is Owned, ICalculator {
       if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
         _var.priceE30 = _limitPriceE30;
       } else {
-        // @todo - validate price age
         (_var.priceE30, , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price
@@ -778,7 +777,7 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) external view returns (uint256 _freeCollateral) {
+  ) external view returns (int256 _freeCollateral) {
     return _getFreeCollateral(_subAccount, _limitPriceE30, _limitAssetId);
   }
 
@@ -786,11 +785,10 @@ contract Calculator is Owned, ICalculator {
     address _subAccount,
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
-  ) internal view returns (uint256 _freeCollateral) {
+  ) internal view returns (int256 _freeCollateral) {
     int256 equity = _getEquity(_subAccount, _limitPriceE30, _limitAssetId);
     uint256 imr = _getIMR(_subAccount);
-    if (equity < int256(imr)) return 0;
-    _freeCollateral = uint256(equity) - imr;
+    _freeCollateral = equity - int256(imr);
     return _freeCollateral;
   }
 
@@ -801,12 +799,14 @@ contract Calculator is Owned, ICalculator {
   //                    - increase (long +, short -)
   //                    - decrease (long -, short +)
   /// @param _positionClosePrice - position's close price
+  /// @param _positionNextClosePrice - position's close price after updated
   /// @param _positionRealizedPnl - position's realized PNL (profit +, loss -)
   function calculateMarketAveragePrice(
     int256 _marketPositionSize,
     uint256 _marketAveragePrice,
     int256 _sizeDelta,
     uint256 _positionClosePrice,
+    uint256 _positionNextClosePrice,
     int256 _positionRealizedPnl
   ) external pure returns (uint256 _newAvaragePrice) {
     if (_marketAveragePrice == 0) return 0;
@@ -852,7 +852,7 @@ contract Calculator is Owned, ICalculator {
     // for long, new market position size and divisor are positive number
     // and short, new market position size and divisor are negative number, then - / - would be +
     // note: abs unrealized pnl should not be greater then new position size, if calculation go wrong it's fine to revert
-    return uint256((int256(_positionClosePrice) * _newMarketPositionSize) / _divisor);
+    return uint256((int256(_positionNextClosePrice) * _newMarketPositionSize) / _divisor);
   }
 
   function getNextFundingRate(uint256 _marketIndex) external view returns (int256 fundingRate) {

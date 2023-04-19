@@ -225,7 +225,11 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     );
 
     botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), address(pyth));
-    crossMarginHandler = Deployer.deployCrossMarginHandler(address(crossMarginService), address(pyth));
+    crossMarginHandler = Deployer.deployCrossMarginHandler(
+      address(crossMarginService),
+      address(pyth),
+      executionOrderFee
+    );
 
     limitTradeHandler = Deployer.deployLimitTradeHandler(
       address(weth),
@@ -308,6 +312,11 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     // Setup Limit Trade Handler
     {
       limitTradeHandler.setOrderExecutor(address(this), true);
+    }
+
+    // Setup Cross Margin Handler
+    {
+      crossMarginHandler.setOrderExecutor(address(this), true);
     }
   }
 }

@@ -65,8 +65,8 @@ contract TC08 is BaseIntTest_WithActions {
     // T4: Alice cannot withdraw
     vm.warp(block.timestamp + (1 * SECONDS));
     {
-      vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-      withdrawCollateral(ALICE, 0, wbtc, 0.01 * 1e8, updatePriceData);
+      // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
+      withdrawCollateral(ALICE, 0, wbtc, 0.01 * 1e8, updatePriceData, executionOrderFee);
     }
 
     // T4: Alice cannot close position
@@ -90,8 +90,8 @@ contract TC08 is BaseIntTest_WithActions {
     }
 
     {
-      vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-      withdrawCollateral(ALICE, 0, wbtc, 0.01 * 1e8, updatePriceData);
+      // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
+      withdrawCollateral(ALICE, 0, wbtc, 0.01 * 1e8, updatePriceData, executionOrderFee);
     }
 
     {

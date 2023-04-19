@@ -364,10 +364,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
     _config.trustPriceAge = _trustPriceAge;
     _config.adapter = _adapter;
 
+    assetPriceConfigs[_assetId] = _config;
+
     //sanity
     IOracleAdapter(_config.adapter).getLatestPrice(_assetId, false, _confidenceThresholdE6);
-
-    assetPriceConfigs[_assetId] = _config;
   }
 
   /// @notice Set market status for the given asset.

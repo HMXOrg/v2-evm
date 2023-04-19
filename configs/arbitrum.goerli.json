@@ -20,12 +20,22 @@
   "oracle": {
     "pyth": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
     "pythAdapter": "",
-    "middleware": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    "glpManager": ""
+    "sglpStakedAdapter": "",
+    "middleware": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
   },
   "tokens": {
     "plp": "",
-    "weth": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1"
+    "weth": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+    "sglp": ""
+  },
+  "yieldSources": {
+    "gmx": {
+      "glpManager": "",
+      "rewardRouterV2": ""
+    }
+  },
+  "strategies": {
+    "stakedGLPStrategy": ""
   },
   "calculator": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
 }

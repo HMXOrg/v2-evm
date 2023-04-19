@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 // Forge
 import { TestBase } from "forge-std/Base.sol";
-import { console2 } from "forge-std/console2.sol";
 import { StdCheats } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
@@ -121,8 +120,8 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   // calculator
   ICalculator calculator;
 
-  IGmxRewardRouterV2 gmxRewardRouterV2;
-  IGmxRewardTracker glpFeeTracker;
+  IGmxRewardRouterV2 rewardRouter;
+  IGmxRewardTracker rewardTracker; //fglp contract
 
   IStrategy stakedGlpStrategy;
 
@@ -154,7 +153,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(stakedGlpStrategy), true);
 
-      vaultStorage.setStrategyAllowanceOf(address(sglp), address(stakedGlpStrategy), address(glpFeeTracker));
+      vaultStorage.setStrategyAllowanceOf(address(sglp), address(stakedGlpStrategy), address(rewardTracker));
 
       perpStorage.setServiceExecutors(address(liquidityService), true);
     }
@@ -178,9 +177,9 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     FEEVER = makeAddr("FEEVER");
 
     glp = IERC20(glpAddress);
-    gmxRewardRouterV2 = IGmxRewardRouterV2(gmxRewardRouterV2Address);
+    rewardRouter = IGmxRewardRouterV2(gmxRewardRouterV2Address);
     glpManager = IGmxGlpManager(glpManagerAddress);
-    glpFeeTracker = IGmxRewardTracker(fglpAddress);
+    rewardTracker = IGmxRewardTracker(fglpAddress);
     sglp = IERC20(sGlpAddress);
 
     pyth = new EcoPyth();
@@ -196,7 +195,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
     //deploy pythAdapter
     pythAdapter = Deployer.deployPythAdapter(address(pyth));
-    console.log("pythAdapter ADDR", address(pythAdapter));
+
     //deploy stakedglpOracle
     stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(sglp, glpManager, sGlpAssetId);
 
@@ -232,15 +231,15 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
     stakedGlpStrategy = Deployer.deployStakedGlpStrategy(
       sglp,
-      gmxRewardRouterV2,
-      glpFeeTracker,
+      rewardRouter,
+      rewardTracker,
+      glpManager,
       oracleMiddleware,
       vaultStorage,
       keeper,
       treasury,
       1000 // 10% of reinvest
     );
-    console.log("stakedGLPStrategy", address(stakedGlpStrategy));
   }
 
   function _setupLiquidityWithConfig() private {

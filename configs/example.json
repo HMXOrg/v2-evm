@@ -31,5 +31,14 @@
     "weth": "",
     "sglp": ""
   },
+  "yieldSources": {
+    "gmx": {
+      "glpManager": "",
+      "rewardRouterV2": ""
+    }
+  },
+  "strategies": {
+    "stakedGLPStrategy": ""
+  },
   "calculator": ""
 }

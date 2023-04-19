@@ -78,11 +78,10 @@ library Deployer {
     IGmxGlpManager _glpManager,
     bytes32 _sGlpAssetId
   ) internal returns (IOracleAdapter) {
-    // return
-    // IOracleAdapter(
-    //   deployContractWithArguments("StakedGlpOracleAdapter", abi.encode(_sGlp, _glpManager, _sGlpAssetId))
-    // );
-    return IOracleAdapter(new StakedGlpOracleAdapter(_sGlp, _glpManager, _sGlpAssetId));
+    return
+      IOracleAdapter(
+        deployContractWithArguments("StakedGlpOracleAdapter", abi.encode(_sGlp, _glpManager, _sGlpAssetId))
+      );
   }
 
   function deployOracleMiddleware() internal returns (IOracleMiddleware) {
@@ -304,42 +303,30 @@ library Deployer {
 
   function deployStakedGlpStrategy(
     IERC20 _sGlp,
-    IGmxRewardRouterV2 _gmxRewardRouter,
-    IGmxRewardTracker _glpFeeTracker,
+    IGmxRewardRouterV2 _rewardRouter,
+    IGmxRewardTracker _rewardTracker,
+    IGmxGlpManager _glpManager,
     IOracleMiddleware _oracleMiddleware,
     IVaultStorage _vaultStorage,
     address _keeper,
     address _treasury,
     uint16 _strategyBps
   ) internal returns (IStrategy) {
-    // return
-    //   IStrategy(
-    //     deployContractWithArguments(
-    //       "StakedGlpStrategy",
-    //       abi.encode(
-    //         _sGlp,
-    //         _gmxRewardRouter,
-    //         _glpFeeTracker,
-    //         _oracleMiddleware,
-    //         _vaultStorage,
-    //         _keeper,
-    //         _treasury,
-    //         _strategyBps
-    //       )
-    //     )
-    //   );
-
     return
       IStrategy(
-        new StakedGlpStrategy(
-          _sGlp,
-          _gmxRewardRouter,
-          _glpFeeTracker,
-          _oracleMiddleware,
-          _vaultStorage,
-          _keeper,
-          _treasury,
-          _strategyBps
+        deployContractWithArguments(
+          "StakedGlpStrategy",
+          abi.encode(
+            _sGlp,
+            _rewardRouter,
+            _rewardTracker,
+            _glpManager,
+            _oracleMiddleware,
+            _vaultStorage,
+            _keeper,
+            _treasury,
+            _strategyBps
+          )
         )
       );
   }

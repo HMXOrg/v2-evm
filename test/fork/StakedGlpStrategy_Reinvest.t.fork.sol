@@ -4,7 +4,6 @@ pragma solidity 0.8.18;
 import { StakedGlpStrategy_Base } from "./StakedGlpStrategy_Base.t.fork.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { console } from "forge-std/console.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 
 contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
@@ -19,11 +18,10 @@ contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
   function testCorrectness_ClaimSuccess_ReinvestSuccess() external {
     //set up alice add Liquidity
     vm.prank(ALICE);
-    gmxRewardRouterV2.mintAndStakeGlpETH{ value: 100e18 }(0, 0);
+    rewardRouter.mintAndStakeGlpETH{ value: 100e18 }(0, 0);
 
-    //alice bring sglp to deposit at hlp liquidity
+    //alice bring sglp to deposit at plp liquidity
     uint256 sglpAmount = sglp.balanceOf(ALICE);
-    console.log("sglpAmount", sglpAmount);
 
     addLiquidity(
       ALICE,
@@ -51,11 +49,11 @@ contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
 
     assertEq(0, sglp.balanceOf(ALICE), "Alice GLP after Add LQ");
 
-    uint256 reward = glpFeeTracker.claimable(address(vaultStorage));
+    uint256 reward = rewardTracker.claimable(address(vaultStorage));
     assertEq(0, reward, "pending reward must be 0");
 
     skip(10);
-    reward = glpFeeTracker.claimable(address(vaultStorage));
+    reward = rewardTracker.claimable(address(vaultStorage));
     assertEq(reward > 0, true, "pending reward must > 0");
 
     vm.prank(keeper);

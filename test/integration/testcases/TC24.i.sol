@@ -39,8 +39,16 @@ contract TC24 is BaseIntTest_WithActions {
      */
     {
       // Then deployer can call withdraw surplus
+      bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
+      bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
       vm.expectRevert(abi.encodeWithSignature("ICrossMarginHandler_NoFundingFeeSurplus()"));
-      crossMarginHandler.withdrawFundingFeeSurplus(address(usdc), new bytes[](0));
+      crossMarginHandler.withdrawFundingFeeSurplus(
+        address(usdc),
+        priceUpdateData,
+        publishTimeUpdateData,
+        block.timestamp,
+        keccak256("someEncodedVaas")
+      );
     }
 
     /**
@@ -48,7 +56,7 @@ contract TC24 is BaseIntTest_WithActions {
      */
     {
       // note: price has no changed0
-      addLiquidity(BOB, wbtc, 50 * 1e8, executionOrderFee, new bytes[](0), true);
+      addLiquidity(BOB, wbtc, 50 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
       _T1Assert();
     }
@@ -72,7 +80,16 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketBuy(ALICE, 0, wethMarketIndex, 1_500_000 * 1e30, address(wbtc), new bytes[](0));
+      marketBuy(
+        ALICE,
+        0,
+        wethMarketIndex,
+        1_500_000 * 1e30,
+        address(wbtc),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
       _T3Assert();
     }
@@ -88,7 +105,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(20 * 60); // time passed for 20 minutes
 
-      marketBuy(ALICE, 0, wethMarketIndex, 500_000 * 1e30, address(wbtc), new bytes[](0));
+      marketBuy(ALICE, 0, wethMarketIndex, 500_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
       _T4Assert();
     }
@@ -102,21 +119,41 @@ contract TC24 is BaseIntTest_WithActions {
 
       _T5Assert1();
       // Add USDC liquidity first to make plp have token to convert
-      addLiquidity(DAVE, usdc, 50_000 * 1e6, executionOrderFee, new bytes[](0), true);
+      addLiquidity(DAVE, usdc, 50_000 * 1e6, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
       _T5Assert2();
 
       // Convert all tokens on funding fee reserve to be stable token
-      botHandler.convertFundingFeeReserve(address(usdc), new bytes[](0));
+      bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
+      bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+      botHandler.convertFundingFeeReserve(
+        address(usdc),
+        priceUpdateData,
+        publishTimeUpdateData,
+        block.timestamp,
+        keccak256("someEncodedVaas")
+      );
 
       _T5Assert3();
 
       // Then deployer can call withdraw surplus
-      crossMarginHandler.withdrawFundingFeeSurplus(address(usdc), new bytes[](0));
+      crossMarginHandler.withdrawFundingFeeSurplus(
+        address(usdc),
+        priceUpdateData,
+        publishTimeUpdateData,
+        block.timestamp,
+        keccak256("someEncodedVaas")
+      );
 
       // After deployer call withdraw surplus and recalled again, function must be revert
       vm.expectRevert(abi.encodeWithSignature("ICrossMarginHandler_NoFundingFeeSurplus()"));
-      crossMarginHandler.withdrawFundingFeeSurplus(address(usdc), new bytes[](0));
+      crossMarginHandler.withdrawFundingFeeSurplus(
+        address(usdc),
+        priceUpdateData,
+        publishTimeUpdateData,
+        block.timestamp,
+        keccak256("someEncodedVaas")
+      );
 
       _T5Assert4();
     }
@@ -144,7 +181,16 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketSell(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(wbtc), new bytes[](0));
+      marketSell(
+        CAROL,
+        0,
+        wethMarketIndex,
+        200_000 * 1e30,
+        address(wbtc),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
       _T7Assert();
     }
@@ -158,7 +204,7 @@ contract TC24 is BaseIntTest_WithActions {
 
       _T8Assert1();
 
-      marketBuy(ALICE, 0, wethMarketIndex, 100_000 * 1e30, address(wbtc), new bytes[](0));
+      marketBuy(ALICE, 0, wethMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
       _T8Assert2();
     }
@@ -172,7 +218,7 @@ contract TC24 is BaseIntTest_WithActions {
 
       _T9Assert1();
 
-      marketBuy(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(wbtc), new bytes[](0));
+      marketBuy(CAROL, 0, wethMarketIndex, 200_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
       _T9Assert2();
     }
@@ -188,7 +234,16 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketSell(CAROL, 0, wethMarketIndex, 300_000 * 1e30, address(wbtc), new bytes[](0));
+      marketSell(
+        CAROL,
+        0,
+        wethMarketIndex,
+        300_000 * 1e30,
+        address(wbtc),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
       _T10Assert();
     }
@@ -201,7 +256,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60 * 60); // time passed for 1 hour
 
-      marketBuy(CAROL, 0, wethMarketIndex, 300_000 * 1e30, address(wbtc), new bytes[](0));
+      marketBuy(CAROL, 0, wethMarketIndex, 300_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
       _T11Assert();
     }
@@ -216,7 +271,16 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketSell(CAROL, 0, wethMarketIndex, 100_000 * 1e30, address(wbtc), new bytes[](0));
+      marketSell(
+        CAROL,
+        0,
+        wethMarketIndex,
+        100_000 * 1e30,
+        address(wbtc),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
       _T12Assert();
     }
@@ -228,7 +292,7 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60 * 60); // time passed for 1 hour
 
-      marketBuy(CAROL, 0, wethMarketIndex, 100_000 * 1e30, address(wbtc), new bytes[](0));
+      marketBuy(CAROL, 0, wethMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
       _T13Assert();
     }
@@ -244,7 +308,16 @@ contract TC24 is BaseIntTest_WithActions {
     {
       skip(60); // time passed for 60 seconds
 
-      marketSell(ALICE, 0, wethMarketIndex, 2_100_000 * 1e30, address(wbtc), new bytes[](0));
+      marketSell(
+        ALICE,
+        0,
+        wethMarketIndex,
+        2_100_000 * 1e30,
+        address(wbtc),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
       _T14Assert();
     }

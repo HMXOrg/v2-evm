@@ -35,9 +35,11 @@ contract TC11 is BaseIntTest_WithActions {
     // And Btc price is 20,000 USD
     // And WETH price is 1,500 USD
     updatePriceData = new bytes[](2);
-    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
-    updatePriceData[1] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, updatePriceData, true);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    tickPrices[0] = 73135; // ETH tick price $1500
+    tickPrices[1] = 99039; // WBTC tick price $20,000
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
     // When Alice deposit collateral 0.1 btc for sub-account 0
     depositCollateral(ALICE, 0, wbtc, 0.1 * 1e8);
@@ -50,16 +52,24 @@ contract TC11 is BaseIntTest_WithActions {
 
     // ### Scenario: Traders trade normally
     // Given Alice buy position at WETH for 3000 USD
-    marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     // And Alice sell position at APPLE for 3000 USD
-    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     // And Bob buy position at APPLE for 3000 USD
-    marketBuy(BOB, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketBuy(BOB, 0, appleMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
 
     // When Bot try force close Bob's APPLE position
     // Then Revert MarketHealthy
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_MarketHealthy()"));
-    closeDelistedMarketPosition(ALICE, 0, appleMarketIndex, address(wbtc), updatePriceData);
+    closeDelistedMarketPosition(
+      ALICE,
+      0,
+      appleMarketIndex,
+      address(wbtc),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      "ITradeService_MarketHealthy()"
+    );
 
     // ### Scenario: Delist market & Traders try to manage position
     // When APPLE's market has been delist
@@ -73,7 +83,9 @@ contract TC11 is BaseIntTest_WithActions {
       appleMarketIndex,
       3_000 * 1e30,
       address(0),
-      updatePriceData,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
       "ITradeService_MarketIsDelisted()"
     );
 
@@ -85,12 +97,14 @@ contract TC11 is BaseIntTest_WithActions {
       appleMarketIndex,
       3_000 * 1e30,
       address(0),
-      updatePriceData,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
       "ITradeService_MarketIsDelisted()"
     );
 
     // When Alice try increase WETH position for 3000 USD
-    marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice has corrected positions
       assertPositionInfoOf({
@@ -128,8 +142,16 @@ contract TC11 is BaseIntTest_WithActions {
 
     // ### Scenario: Bot close all traders position in delisted market
     // When Bot close all position under APPLE's market
-    closeDelistedMarketPosition(ALICE, 0, appleMarketIndex, address(wbtc), updatePriceData);
-    closeDelistedMarketPosition(BOB, 0, appleMarketIndex, address(wbtc), updatePriceData);
+    closeDelistedMarketPosition(
+      ALICE,
+      0,
+      appleMarketIndex,
+      address(wbtc),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp
+    );
+    closeDelistedMarketPosition(BOB, 0, appleMarketIndex, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then all positions should be closed
       assertPositionInfoOf({
@@ -157,7 +179,17 @@ contract TC11 is BaseIntTest_WithActions {
     // ### Scenario: Traders try to trade on delist market again
     // When Bob try buy APPLE's market again
     // Then Revert MarketDelisted
-    marketBuy(BOB, 0, appleMarketIndex, 3_000 * 1e30, address(0), updatePriceData, "ITradeService_MarketIsDelisted()");
+    marketBuy(
+      BOB,
+      0,
+      appleMarketIndex,
+      3_000 * 1e30,
+      address(0),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      "ITradeService_MarketIsDelisted()"
+    );
 
     // ### Scenario: List new market and Trader could trade
     // When re-list APPLE's market with new ID
@@ -167,7 +199,7 @@ contract TC11 is BaseIntTest_WithActions {
     // Increase / Decrease position fee = 0.05%
     uint256 _newAppleMarketIndex = addMarketConfig(appleAssetId, 1, 500, 250, 5);
     // And Bob try buy APPLE's market 3,000 USD again
-    marketBuy(BOB, 0, _newAppleMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketBuy(BOB, 0, _newAppleMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Bob APPLE's position shoule be corrected
       assertPositionInfoOf({

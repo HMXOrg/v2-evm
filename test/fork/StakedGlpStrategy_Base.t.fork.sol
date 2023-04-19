@@ -30,6 +30,7 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
 // HMX
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
@@ -50,8 +51,19 @@ import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 
 //Deployer
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
+import { console } from "forge-std/console.sol";
 
-abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, StdCheats {
+abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
+  struct AssetPythPriceData {
+    bytes32 assetId;
+    bytes32 priceId;
+    int64 price;
+    int64 exponent;
+    uint64 conf;
+    bool inverse;
+    int24 tickPrice;
+  }
+
   // ACTOR
   address internal constant ALICE = 0xBB0Ba69f99B18E255912c197C8a2bD48293D5797;
 
@@ -64,8 +76,13 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
   address internal constant fsGlpAddress = 0x1aDDD80E6039594eE970E5872D247bf0414C8903;
 
   // PYTH
-  address internal constant pythAddress = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
+  EcoPyth internal pyth;
+  // address internal constant pythAddress = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
   bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
+  AssetPythPriceData[] assetPythPriceDatas;
+  bytes[] initialPriceFeedDatas;
+  int24[] tickPrices;
+  uint24[] publishTimeDiff;
 
   // TOKENS
   address internal constant wethAddress = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
@@ -85,7 +102,6 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
   // TOKENS
   IERC20 sglp;
   IERC20 glp;
-  IERC20 hlp;
   IPLPv2 plpV2;
   IERC20 usdc;
 
@@ -95,7 +111,7 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
   IGmxGlpManager internal glpManager;
   IPythAdapter internal pythAdapter;
   IOracleAdapter internal stakedGlpOracleAdapter;
-  IOracleMiddleware oracleMiddleware;
+  IOracleMiddleware internal oracleMiddleware;
 
   // storages
   IConfigStorage configStorage;
@@ -119,6 +135,10 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
 
   function setUp() public virtual {
     _deployContracts();
+    //setup plp
+    {
+      plpV2.setMinter(address(liquidityService), true);
+    }
 
     // Config
     {
@@ -129,18 +149,21 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
     }
 
-    // Setup Storage
+    // Setup Storages
     {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
-      vaultStorage.setStrategyAllowanceOf(address(glp), address(stakedGlpStrategy), address(glpFeeTracker));
+      vaultStorage.setServiceExecutors(address(stakedGlpStrategy), true);
+
+      vaultStorage.setStrategyAllowanceOf(address(sglp), address(stakedGlpStrategy), address(glpFeeTracker));
+
       perpStorage.setServiceExecutors(address(liquidityService), true);
     }
 
-    // Set OrderExecutor
+    // Set OrderExecutors
     {
       liquidityHandler.setOrderExecutor(keeper, true);
     }
-
+    _setupPythConfig();
     _setupAssetConfig();
     _setupAssetPriceConfig();
     _setupLiquidityWithConfig();
@@ -160,6 +183,8 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
     glpFeeTracker = IGmxRewardTracker(fglpAddress);
     sglp = IERC20(sGlpAddress);
 
+    pyth = new EcoPyth();
+
     // Tokens
     plpV2 = Deployer.deployPLPv2();
 
@@ -170,9 +195,10 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
     vm.label(address(weth), "WETH");
 
     //deploy pythAdapter
-    pythAdapter = Deployer.deployPythAdapter(pythAddress);
+    pythAdapter = Deployer.deployPythAdapter(address(pyth));
+    console.log("pythAdapter ADDR", address(pythAdapter));
     //deploy stakedglpOracle
-    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(glp, glpManager, sGlpAssetId);
+    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(sglp, glpManager, sGlpAssetId);
 
     //deploy oracleMiddleWare
     oracleMiddleware = Deployer.deployOracleMiddleware();
@@ -200,11 +226,12 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
       address(configStorage)
     );
     //deploy liquidityHandler
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), pythAddress, executionOrderFee);
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), executionOrderFee);
 
     // Deploy GlpStrategy
+
     stakedGlpStrategy = Deployer.deployStakedGlpStrategy(
-      glp,
+      sglp,
       gmxRewardRouterV2,
       glpFeeTracker,
       oracleMiddleware,
@@ -213,6 +240,7 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
       treasury,
       1000 // 10% of reinvest
     );
+    console.log("stakedGLPStrategy", address(stakedGlpStrategy));
   }
 
   function _setupLiquidityWithConfig() private {
@@ -261,6 +289,7 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
       decimals: 18,
       isStableCoin: false
     });
+    configStorage.setAssetConfig(sGlpAssetId, _assetConfig);
 
     _assetConfig = IConfigStorage.AssetConfig({
       tokenAddress: usdcAddress,
@@ -269,12 +298,43 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
       isStableCoin: true
     });
 
-    configStorage.setAssetConfig(sGlpAssetId, _assetConfig);
     configStorage.setAssetConfig(usdcAssetId, _assetConfig);
   }
 
   function _setupPythConfig() private {
-    pythAdapter.setConfig(usdcAssetId, usdcPriceId, false);
+    assetPythPriceDatas.push(
+      AssetPythPriceData({
+        assetId: usdcAssetId,
+        priceId: usdcPriceId,
+        price: 1 * 1e8,
+        exponent: -8,
+        inverse: false,
+        conf: 0,
+        tickPrice: 0
+      })
+    );
+    AssetPythPriceData memory _data;
+    for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
+      _data = assetPythPriceDatas[i];
+
+      // set PythId
+      pythAdapter.setConfig(_data.assetId, _data.assetId, _data.inverse);
+      pyth.insertAssetId(_data.assetId);
+
+      tickPrices.push(_data.tickPrice);
+      publishTimeDiff.push(0);
+      unchecked {
+        ++i;
+      }
+    }
+    // set UpdatePriceFeed
+    pyth.setUpdater(address(this), true);
+    // pyth.setUpdater(address(keeper), true);
+    pyth.setUpdater(address(liquidityHandler), true);
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+    pyth.updatePriceFeeds(priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));
+    skip(1);
   }
 
   function _setupAssetPriceConfig() private {
@@ -303,18 +363,14 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
     return _config;
   }
 
-  /// @notice Helper function to create liquidity and execute order via handler
-  /// @param _liquidityProvider liquidity provider address
-  /// @param _tokenIn liquidity token to add
-  /// @param _amountIn amount of token to provide
-  /// @param _executionFee execution fee
-  /// @param _priceData Pyth's price data
   function addLiquidity(
     address _liquidityProvider,
     ERC20 _tokenIn,
     uint256 _amountIn,
     uint256 _executionFee,
-    bytes[] memory _priceData,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
     bool executeNow
   ) internal {
     vm.startPrank(_liquidityProvider);
@@ -331,13 +387,28 @@ abstract contract StakedGlpStrategy_BaseForkTest is TestBase, StdAssertions, Std
     vm.stopPrank();
 
     if (executeNow) {
-      executePLPOrder(_orderIndex, _priceData);
+      executePLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
     }
   }
 
-  function executePLPOrder(uint256 _endIndex, bytes[] memory _priceData) internal {
+  function executePLPOrder(
+    uint256 _endIndex,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime
+  ) internal {
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+
     vm.startPrank(keeper);
-    liquidityHandler.executeOrder(_endIndex, payable(FEEVER), _priceData);
+    liquidityHandler.executeOrder(
+      _endIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
     vm.stopPrank();
   }
 }

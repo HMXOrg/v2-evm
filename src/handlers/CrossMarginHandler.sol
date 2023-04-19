@@ -10,7 +10,7 @@ import { Owned } from "@hmx/base/Owned.sol";
 // interfaces
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
@@ -91,7 +91,8 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
     // Sanity check
     CrossMarginService(_crossMarginService).vaultStorage();
-    IPyth(_pyth).getValidTimePeriod();
+    // @todo
+    // IPyth(_pyth).getValidTimePeriod();
   }
 
   /**
@@ -203,7 +204,10 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   function executeOrder(
     uint256 _endIndex,
     address payable _feeReceiver,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
     // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
@@ -218,12 +222,8 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
       _endIndex = _latestOrderIndex;
     }
 
-    // Call update oracle price
-    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
-    IWNative(ConfigStorage(_crossMarginService.configStorage()).weth()).withdraw(_updateFee);
-
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     WithdrawOrder memory _order;
     uint256 _totalFeeReceiver;
@@ -272,7 +272,7 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
 
     nextExecutionOrderIndex = _endIndex + 1;
     // Pay the executor
-    _transferOutETH(_totalFeeReceiver - _updateFee, _feeReceiver);
+    _transferOutETH(_totalFeeReceiver, _feeReceiver);
   }
 
   function executeWithdrawOrder(WithdrawOrder memory _order) external {
@@ -342,13 +342,14 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
   ///      - If yes means exceed value are the surplus for platform and can be booked to PLP
   function withdrawFundingFeeSurplus(
     address _stableToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external payable nonReentrant onlyOwner {
-    if (msg.value != IPyth(pyth).getUpdateFee(_priceData)) revert ICrossMarginHandler_InCorrectValueTransfer();
-
     // Call update oracle price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: msg.value }(_priceData);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     CrossMarginService(crossMarginService).withdrawFundingFeeSurplus(_stableToken);
   }
@@ -376,7 +377,8 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     pyth = _pyth;
 
     // Sanity check
-    IPyth(_pyth).getValidTimePeriod();
+    // @todo
+    // IPyth(_pyth).getValidTimePeriod();
   }
 
   /// @notice setMinExecutionFee

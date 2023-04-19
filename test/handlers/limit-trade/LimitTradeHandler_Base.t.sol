@@ -17,7 +17,7 @@ contract LimitTradeHandler_Base is BaseTest {
     limitTradeHandler = Deployer.deployLimitTradeHandler(
       address(weth),
       address(mockTradeService),
-      address(mockPyth),
+      address(ecoPyth),
       0.1 ether
     );
 
@@ -25,6 +25,8 @@ contract LimitTradeHandler_Base is BaseTest {
     mockTradeService.setPerpStorage(address(mockPerpStorage));
 
     limitOrderTester = new LimitOrderTester(limitTradeHandler);
+
+    ecoPyth.setUpdater(address(limitTradeHandler), true);
   }
 
   // =========================================

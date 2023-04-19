@@ -11,10 +11,10 @@ contract BotHandler_Liquidate is BotHandler_Base {
   function testRevert_liquidate_WhenSomeoneCallBotHandler() external {
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IBotHandler_UnauthorizedSender()"));
-    botHandler.liquidate(ALICE, prices);
+    botHandler.liquidate(ALICE, priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));
   }
 
   function testCorrectness_liquidate() external {
-    botHandler.liquidate(ALICE, prices);
+    botHandler.liquidate(ALICE, priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));
   }
 }

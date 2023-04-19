@@ -10,6 +10,7 @@ import { StdCheats } from "forge-std/StdCheats.sol";
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
 // GLP
 import { MockGlpManager } from "@hmx-test/mocks/MockGlpManager.sol";
@@ -120,8 +121,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
   IWNative weth; //for native
 
-  /* ORACLES */
-  MockPyth internal pyth;
+  /* PYTH */
+  EcoPyth internal pyth;
   MockGlpManager internal glpManager;
   IPythAdapter internal pythAdapter;
   IOracleAdapter internal stakedGlpAdapter;
@@ -151,8 +152,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     weth = IWNative(new MockWNative());
     vm.label(address(weth), "WETH");
 
-    pyth = new MockPyth(60, 1);
-    //FIXME  use not mock?
+    pyth = new EcoPyth();
     glpManager = new MockGlpManager();
 
     pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));

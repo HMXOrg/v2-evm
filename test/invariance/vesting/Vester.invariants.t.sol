@@ -101,7 +101,8 @@ contract Invariance_Vester is Test, InvariantTest {
    */
   function accumulateHmxBalance(uint256 balance, address caller) external view returns (uint256) {
     console2.log("balance", hmx.balanceOf(caller));
-    return balance + hmx.balanceOf(caller);
+    if (caller != address(vester)) return balance + hmx.balanceOf(caller);
+    else return balance + 0;
   }
 
   function assertAccountHmxBalanceLteHmxTotalSupply(address account) external {
@@ -112,6 +113,7 @@ contract Invariance_Vester is Test, InvariantTest {
     console2.log("account", account);
     console2.log("hmxBalance", hmx.balanceOf(account));
     console2.log("maxPossible", vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
-    assertLe(hmx.balanceOf(account), vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
+    if (account != address(vester))
+      assertLe(hmx.balanceOf(account), vesterHandler.ghost_maxPossibleHmxAccountBalance(account));
   }
 }

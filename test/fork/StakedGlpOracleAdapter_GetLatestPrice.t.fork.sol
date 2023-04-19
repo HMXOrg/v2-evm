@@ -12,7 +12,7 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { console } from "forge-std/console.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 
-contract StakedGlpOracleAdapter_GetLatestPriceForkTest is TestBase, StdAssertions, StdCheatsSafe {
+contract StakedGlpOracleAdapter_GetLatestPrice is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 public constant sGlpAssetId = "sGLP";
   StakedGlpOracleAdapter stakedGlpOracleAdapter;
 

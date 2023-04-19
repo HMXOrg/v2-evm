@@ -8,6 +8,7 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { console } from "forge-std/console.sol";
 
 contract StakedGlpStrategy is Owned, IStrategy {
   error StakedGlpStrategy_OnlyKeeper();
@@ -74,12 +75,14 @@ contract StakedGlpStrategy is Owned, IStrategy {
     if (msg.sender != keeper) {
       revert StakedGlpStrategy_OnlyKeeper();
     }
+    console.log("before claim");
 
     // 2. Build calldata.
     bytes memory _callData = abi.encodeWithSelector(IGmxRewardTracker.claim.selector, address(this));
 
     // 3. Cook
     uint256 wethBefore = weth.balanceOf(address(this));
+    console.log("wethBefore", wethBefore);
     vaultStorage.cook(address(sglp), address(glpFeeTracker), _callData);
     uint256 yields = weth.balanceOf(address(this)) - wethBefore;
 
@@ -87,16 +90,25 @@ contract StakedGlpStrategy is Owned, IStrategy {
     uint256 strategyFee = (yields * strategyBps) / 10000;
 
     // 5. Reinvest what left to GLP.
-    gmxRewardRouter.mintAndStakeGlp(address(weth), weth.balanceOf(address(this)), 0, 0);
+    address glpManager = 0x3963FfC9dff443c2A94f21b129D429891E32ec18;
+    uint256 stakeAmount = yields - strategyFee;
+    weth.approve(glpManager, stakeAmount);
+    uint256 glpAmount = gmxRewardRouter.mintAndStakeGlp(address(weth), stakeAmount, 0, 0);
+    console.log("glpAmount", glpAmount);
 
     // 6. Settle
     // SLOAD
-    uint256 sGlpBalance = sglp.balanceOf(address(this)) - strategyFee;
+    uint256 sGlpBalance = sglp.balanceOf(address(this));
+    uint256 _testBalanceSGLP = sglp.balanceOf(address(vaultStorage));
+    console.log("BEFORE balance SGLP", _testBalanceSGLP);
     sglp.transfer(address(vaultStorage), sGlpBalance);
     weth.transfer(treasury, strategyFee);
 
     // 7. Update accounting.
     vaultStorage.pullToken(address(sglp));
+    uint256 _testBalanceSGLPAfter = sglp.balanceOf(address(vaultStorage));
+    console.log("AFTER balance SGLP", _testBalanceSGLP);
+    console.log("diff", _testBalanceSGLPAfter - _testBalanceSGLP);
     vaultStorage.addPLPLiquidity(address(sglp), sGlpBalance);
   }
 }

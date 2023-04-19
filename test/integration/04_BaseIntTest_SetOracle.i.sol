@@ -21,11 +21,14 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     int64 exponent;
     uint64 conf;
     bool inverse;
+    int24 tickPrice;
   }
 
   AssetPythPriceData[] assetPythPriceDatas;
   /// @notice will change when a function called "setPrices" is used or when an object is created through a function called "constructor"
   bytes[] initialPriceFeedDatas;
+  int24[] tickPrices;
+  uint24[] publishTimeDiff;
 
   constructor() {
     assetPythPriceDatas.push(
@@ -35,7 +38,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
         price: 1500 * 1e8,
         exponent: -8,
         inverse: false,
-        conf: 0
+        conf: 0,
+        tickPrice: 73135
       })
     );
     assetPythPriceDatas.push(
@@ -45,7 +49,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
         price: 20000 * 1e8,
         exponent: -8,
         inverse: false,
-        conf: 0
+        conf: 0,
+        tickPrice: 99039
       })
     );
     assetPythPriceDatas.push(
@@ -55,7 +60,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
         price: 1 * 1e8,
         exponent: -8,
         inverse: false,
-        conf: 0
+        conf: 0,
+        tickPrice: 0
       })
     );
     assetPythPriceDatas.push(
@@ -65,7 +71,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
         price: 1 * 1e8,
         exponent: -8,
         inverse: false,
-        conf: 0
+        conf: 0,
+        tickPrice: 0
       })
     );
     assetPythPriceDatas.push(
@@ -75,7 +82,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
         price: 1 * 1e8,
         exponent: -8,
         inverse: false,
-        conf: 0
+        conf: 0,
+        tickPrice: 0
       })
     );
     assetPythPriceDatas.push(
@@ -85,7 +93,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
         price: 152 * 1e5,
         exponent: -5,
         inverse: false,
-        conf: 0
+        conf: 0,
+        tickPrice: 50241
       })
     );
     assetPythPriceDatas.push(
@@ -95,7 +104,8 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
         price: 136.123 * 1e3,
         exponent: -3,
         inverse: true,
-        conf: 0
+        conf: 0,
+        tickPrice: 49138
       })
     );
 
@@ -119,18 +129,22 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
       _data = assetPythPriceDatas[i];
 
       // set PythId
-      pythAdapter.setConfig(_data.assetId, _data.priceId, _data.inverse);
+      pythAdapter.setConfig(_data.assetId, _data.assetId, _data.inverse);
+      pyth.insertAssetId(_data.assetId);
 
-      // set UpdatePriceFeed
-      initialPriceFeedDatas.push(_createPriceFeedUpdateData(_data.assetId, _data.price, _data.conf));
+      tickPrices.push(_data.tickPrice);
+      publishTimeDiff.push(0);
 
       unchecked {
         ++i;
       }
     }
-    uint256 fee = pyth.getUpdateFee(initialPriceFeedDatas);
-    vm.deal(address(this), fee);
-    pyth.updatePriceFeeds{ value: fee }(initialPriceFeedDatas);
+
+    // set UpdatePriceFeed
+    pyth.setUpdater(address(this), true);
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+    pyth.updatePriceFeeds(priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));
     skip(1);
 
     // Set AssetPriceConfig
@@ -146,70 +160,51 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
   }
 
   /// @notice setPrices of pyth
-  /// @param _assetIds assetIds array
-  /// @param _prices price of each asset
-  /// @return _newDatas bytes[] of setting
-  function setPrices(
-    bytes32[] memory _assetIds,
-    int64[] memory _prices,
-    uint64[] memory _conf
-  ) public returns (bytes[] memory _newDatas) {
-    if (_assetIds.length != _prices.length || _assetIds.length != _conf.length) {
-      revert BadArgs();
-    }
-
-    _newDatas = new bytes[](_assetIds.length);
-
-    for (uint256 i = 0; i < _assetIds.length; ) {
-      _newDatas[i] = (_createPriceFeedUpdateData(_assetIds[i], _prices[i], _conf[i]));
-
-      unchecked {
-        ++i;
-      }
-    }
-
-    uint256 fee = pyth.getUpdateFee(_newDatas);
-    vm.deal(address(this), fee);
-    pyth.updatePriceFeeds{ value: fee }(_newDatas);
-
-    return _newDatas;
+  function setPrices(int24[] memory _tickPrices, uint24[] memory _publishTimeDiff) public {
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+    pyth.updatePriceFeeds(priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));
   }
 
-  function updatePriceFeeds(bytes[] memory _priceData) internal {
-    uint256 fee = pyth.getUpdateFee(_priceData);
-    vm.deal(address(this), fee);
-    pyth.updatePriceFeeds{ value: fee }(_priceData);
-  }
-
-  function _createPriceFeedUpdateData(
-    bytes32 _assetId,
-    int64 _price,
-    uint64 _conf
-  ) internal view returns (bytes memory) {
-    int64 pythDecimals;
-
-    for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
-      if (assetPythPriceDatas[i].assetId == _assetId) {
-        pythDecimals = assetPythPriceDatas[i].exponent;
-        break;
-      }
-      unchecked {
-        ++i;
-      }
+  function updatePriceFeeds(int24[] memory _tickPrices, uint256 publishTime) internal {
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    uint24[] memory _publishTimeDiff = new uint24[](_tickPrices.length);
+    for (uint256 i = 0; i < _tickPrices.length; i++) {
+      _publishTimeDiff[i] = 0;
     }
-
-    (bytes32 _pythPriceId, ) = pythAdapter.configs(_assetId);
-
-    bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
-      _pythPriceId,
-      _price,
-      _conf,
-      int8(pythDecimals),
-      _price,
-      0,
-      uint64(block.timestamp)
-    );
-
-    return priceFeedData;
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiff);
+    pyth.updatePriceFeeds(priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));
   }
+
+  // function _createPriceFeedUpdateData(
+  //   bytes32 _assetId,
+  //   int64 _price,
+  //   uint64 _conf
+  // ) internal view returns (bytes memory) {
+  //   int64 pythDecimals;
+
+  //   for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
+  //     if (assetPythPriceDatas[i].assetId == _assetId) {
+  //       pythDecimals = assetPythPriceDatas[i].exponent;
+  //       break;
+  //     }
+  //     unchecked {
+  //       ++i;
+  //     }
+  //   }
+
+  //   (bytes32 _pythPriceId, ) = pythAdapter.configs(_assetId);
+
+  //   bytes memory priceFeedData = pyth.createPriceFeedUpdateData(
+  //     _pythPriceId,
+  //     _price,
+  //     _conf,
+  //     int8(pythDecimals),
+  //     _price,
+  //     0,
+  //     uint64(block.timestamp)
+  //   );
+
+  //   return priceFeedData;
+  // }
 }

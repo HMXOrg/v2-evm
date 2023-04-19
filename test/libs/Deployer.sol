@@ -41,6 +41,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
 
+import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
+import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
+
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -75,10 +78,11 @@ library Deployer {
     IGmxGlpManager _glpManager,
     bytes32 _sGlpAssetId
   ) internal returns (IOracleAdapter) {
-    return
-      IOracleAdapter(
-        deployContractWithArguments("StakedGlpOracleAdapter", abi.encode(_sGlp, _glpManager, _sGlpAssetId))
-      );
+    // return
+    // IOracleAdapter(
+    //   deployContractWithArguments("StakedGlpOracleAdapter", abi.encode(_sGlp, _glpManager, _sGlpAssetId))
+    // );
+    return IOracleAdapter(new StakedGlpOracleAdapter(_sGlp, _glpManager, _sGlpAssetId));
   }
 
   function deployOracleMiddleware() internal returns (IOracleMiddleware) {
@@ -308,20 +312,34 @@ library Deployer {
     address _treasury,
     uint16 _strategyBps
   ) internal returns (IStrategy) {
+    // return
+    //   IStrategy(
+    //     deployContractWithArguments(
+    //       "StakedGlpStrategy",
+    //       abi.encode(
+    //         _sGlp,
+    //         _gmxRewardRouter,
+    //         _glpFeeTracker,
+    //         _oracleMiddleware,
+    //         _vaultStorage,
+    //         _keeper,
+    //         _treasury,
+    //         _strategyBps
+    //       )
+    //     )
+    //   );
+
     return
       IStrategy(
-        deployContractWithArguments(
-          "StakedGlpStrategy",
-          abi.encode(
-            _sGlp,
-            _gmxRewardRouter,
-            _glpFeeTracker,
-            _oracleMiddleware,
-            _vaultStorage,
-            _keeper,
-            _treasury,
-            _strategyBps
-          )
+        new StakedGlpStrategy(
+          _sGlp,
+          _gmxRewardRouter,
+          _glpFeeTracker,
+          _oracleMiddleware,
+          _vaultStorage,
+          _keeper,
+          _treasury,
+          _strategyBps
         )
       );
   }

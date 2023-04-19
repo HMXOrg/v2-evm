@@ -45,7 +45,7 @@ contract TC37 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       // BOB add liquidity
-      addLiquidity(BOB, wbtc, 50 * 1e8, executionOrderFee, updatePriceData, true);
+      addLiquidity(BOB, wbtc, 50 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     }
 
     vm.warp(block.timestamp + 1);
@@ -59,30 +59,45 @@ contract TC37 is BaseIntTest_WithActions {
     // T1: Alice buy long BTC 110,000 USD at 20,000 USD
     //     Alice buy short BTC 100,000 USD at 20,000 USD
     {
-      updatePriceData = new bytes[](3);
-      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
-      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+      // updatePriceData = new bytes[](3);
+      // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
+      // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+      tickPrices[1] = 99039; // WBTC tick price $20,000
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[6] = 48285; // JPY tick price $125
 
       // buy
-      marketSell(ALICE, 1, wbtcMarketIndex, 110_000 * 1e30, address(wbtc), updatePriceData);
-      marketBuy(ALICE, 0, wbtcMarketIndex, 100_000 * 1e30, address(wbtc), updatePriceData);
+      marketSell(
+        ALICE,
+        1,
+        wbtcMarketIndex,
+        110_000 * 1e30,
+        address(wbtc),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
+      marketBuy(ALICE, 0, wbtcMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     }
 
     // T2: Alice buy the position for 24 hours, and BTC dump 20,100
     vm.warp(block.timestamp + (24 * HOURS));
     {
       updatePriceData = new bytes[](3);
-      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
-      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_100 * 1e8, 0);
+      // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
+      // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_100 * 1e8, 0);
+      tickPrices[1] = 99089; // WBTC tick price $20,100
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[6] = 48353; // JPY tick price $125.85
 
       uint256 traderBalanceBefore = vaultStorage.traderBalances(ALICE, address(wbtc));
       uint256 protocolFeesBefore = vaultStorage.protocolFees(address(wbtc));
       uint256 devFeesBefore = vaultStorage.devFees(address(wbtc));
       uint256 plpLiquidityBefore = vaultStorage.plpLiquidity(address(wbtc));
 
-      liquidate(getSubAccount(ALICE, 0), updatePriceData);
+      liquidate(getSubAccount(ALICE, 0), tickPrices, publishTimeDiff, block.timestamp);
 
       /*
        * |        |     loss     |   trading   |        borrowing     |       funding    | liquidation |     Total   | unit |

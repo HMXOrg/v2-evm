@@ -37,6 +37,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { console } from "forge-std/console.sol";
+import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
 abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;
@@ -62,6 +63,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
   // mock
   MockPyth internal mockPyth;
+  EcoPyth internal ecoPyth;
   MockCalculator internal mockCalculator;
   MockPerpStorage internal mockPerpStorage;
   MockVaultStorage internal mockVaultStorage;
@@ -109,6 +111,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     // Creating a mock Pyth instance with 60 seconds valid time period
     // and 1 wei for updating price.
     mockPyth = new MockPyth(60, 1);
+    ecoPyth = new EcoPyth();
 
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");

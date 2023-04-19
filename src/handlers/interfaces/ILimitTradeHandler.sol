@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
+import { IEcoPyth } from "@hmx/oracle/interfaces/IEcoPyth.sol";
+
 interface ILimitTradeHandler {
   /**
    * Errors
@@ -39,7 +41,7 @@ interface ILimitTradeHandler {
   /**
    * States
    */
-  function pyth() external returns (address);
+  function pyth() external returns (IEcoPyth);
 
   function tradeService() external returns (address);
 
@@ -87,7 +89,10 @@ interface ILimitTradeHandler {
     uint8 _subAccountId,
     uint256 _orderIndex,
     address payable _feeReceiver,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external;
 
   function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external;

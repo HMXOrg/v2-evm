@@ -68,7 +68,8 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     // Sanity check
     ITradeService(_tradeService).configStorage();
     LiquidationService(_liquidationService).perpStorage();
-    IPyth(_pyth).getValidTimePeriod();
+    // @todo
+    // IPyth(_pyth).getValidTimePeriod();
 
     tradeService = _tradeService;
     liquidationService = _liquidationService;
@@ -304,8 +305,8 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   /// @notice Set new Pyth contract address.
   /// @param _newPyth New Pyth contract address.
   function setPyth(address _newPyth) external nonReentrant onlyOwner {
-    // Sanity check
-    IPyth(_newPyth).getValidTimePeriod();
+    // @todo Sanity check
+    // IPyth(_newPyth).getValidTimePeriod();
 
     pyth = _newPyth;
 

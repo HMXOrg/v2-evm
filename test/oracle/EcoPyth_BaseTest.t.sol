@@ -5,11 +5,7 @@ import { BaseTest } from "@hmx-test/base/BaseTest.sol";
 import { EcoPyth } from "@hmx/oracle/EcoPyth.sol";
 
 contract EcoPyth_BaseTest is BaseTest {
-  EcoPyth ecoPyth;
-
   function setUp() public virtual {
-    ecoPyth = new EcoPyth();
-
     ecoPyth.setUpdater(address(this), true);
   }
 }

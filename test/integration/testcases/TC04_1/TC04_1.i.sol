@@ -31,9 +31,11 @@ contract TC04_1 is BaseIntTest_WithActions {
     // And Btc price is 20,000 USD
     // And JPY price is 0.007346297098947275625720855402 USD (136.123 USDJPY)
     updatePriceData = new bytes[](2);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
-    updatePriceData[1] = _createPriceFeedUpdateData(jpyAssetId, 136.123 * 1e3, 0);
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, updatePriceData, true);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(jpyAssetId, 136.123 * 1e3, 0);
+    tickPrices[1] = 99039; // WBTC tick price $20,000
+    tickPrices[6] = 49138; // JPY tick price $136.123
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
     address _aliceSubAccount0 = getSubAccount(ALICE, 0);
     address _bobSubAccount0 = getSubAccount(BOB, 0);
@@ -49,7 +51,7 @@ contract TC04_1 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice open & update long position with profit (BTC)
     // When Alice open long position 1,000 USD
-    marketBuy(ALICE, 0, wbtcMarketIndex, 1_000 * 1e30, address(0), updatePriceData);
+    marketBuy(ALICE, 0, wbtcMarketIndex, 1_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // market skew              = 0
       // position size            = 0
@@ -125,9 +127,10 @@ contract TC04_1 is BaseIntTest_WithActions {
 
     // When BTC price is pump to 22,000 USD
     skip(60);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 22_000 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 22_000 * 1e8, 0);
+    tickPrices[1] = 99993; // WBTC tick price $22,000
     // And Alice increase long position for 100 USD
-    marketBuy(ALICE, 0, wbtcMarketIndex, 100 * 1e30, address(0), updatePriceData);
+    marketBuy(ALICE, 0, wbtcMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // market skew              = 1000
       // position size            = 1000
@@ -208,7 +211,7 @@ contract TC04_1 is BaseIntTest_WithActions {
 
     // ### Scenario: Bob open & update long position with loss (BTC)
     // When Bob open long position 1,000 USD
-    marketBuy(BOB, 0, wbtcMarketIndex, 1_000 * 1e30, address(0), updatePriceData);
+    marketBuy(BOB, 0, wbtcMarketIndex, 1_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // market skew              = 1100
       // position size            = 0
@@ -294,9 +297,10 @@ contract TC04_1 is BaseIntTest_WithActions {
 
     // When BTC price is dump to 20,000 USD
     skip(60);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+    tickPrices[1] = 99039; // WBTC tick price $20,000
     // And Bob increase long position for 100 USD
-    marketBuy(BOB, 0, wbtcMarketIndex, 100 * 1e30, address(0), updatePriceData);
+    marketBuy(BOB, 0, wbtcMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // market skew              = 2100
       // position size            = 1000
@@ -383,7 +387,7 @@ contract TC04_1 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice open & update short position with loss (JPY)
     // When Alice open short position 1,000 USD
-    marketSell(ALICE, 0, jpyMarketIndex, 1_000 * 1e30, address(0), updatePriceData);
+    marketSell(ALICE, 0, jpyMarketIndex, 1_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // oracle price             = 0.007346297098947275625720855402 USD
       // market skew              = 0
@@ -463,10 +467,11 @@ contract TC04_1 is BaseIntTest_WithActions {
     }
 
     skip(60);
-    updatePriceData[1] = _createPriceFeedUpdateData(jpyAssetId, 134.775 * 1e3, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(jpyAssetId, 134.775 * 1e3, 0);
+    tickPrices[6] = 49038; // JPY tick price $134.775
     // When JPY price is pump to 0.007419773696902244481543312928 USD (134.775 USDJPY)
     // And Alice increase short position for 100 USD
-    marketSell(ALICE, 0, jpyMarketIndex, 100 * 1e30, address(0), updatePriceData);
+    marketSell(ALICE, 0, jpyMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // oracle price             = 0.007419773696902244481543312928 USD
       // market skew              = -1000
@@ -552,7 +557,7 @@ contract TC04_1 is BaseIntTest_WithActions {
 
     // ### Scenario: Bob open & update short position with profit (JPY)
     // When Bob open short position 1,000 USD
-    marketSell(BOB, 0, jpyMarketIndex, 1_000 * 1e30, address(0), updatePriceData);
+    marketSell(BOB, 0, jpyMarketIndex, 1_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // oracle price             = 0.007419773696902244481543312928 USD
       // market skew              = -1100
@@ -636,10 +641,11 @@ contract TC04_1 is BaseIntTest_WithActions {
     }
 
     skip(60);
-    updatePriceData[1] = _createPriceFeedUpdateData(jpyAssetId, 136.123 * 1e3, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(jpyAssetId, 136.123 * 1e3, 0);
+    tickPrices[6] = 49138; // JPY tick price $136.123
     // When JPY price is dump to 0.007346297098947275625720855402 USD (136.123 USDJPY)
     // And Bob increase short position for 100 USD
-    marketSell(BOB, 0, jpyMarketIndex, 100 * 1e30, address(0), updatePriceData);
+    marketSell(BOB, 0, jpyMarketIndex, 100 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // oracle price             = 0.007346297098947275625720855402 USD
       // market skew              = -2100

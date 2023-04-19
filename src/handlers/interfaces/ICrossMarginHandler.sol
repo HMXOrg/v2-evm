@@ -45,7 +45,13 @@ interface ICrossMarginHandler {
 
   function setOrderExecutor(address _executor, bool _isAllow) external;
 
-  function withdrawFundingFeeSurplus(address _stableToken, bytes[] memory _priceData) external payable;
+  function withdrawFundingFeeSurplus(
+    address _stableToken,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable;
 
   function createWithdrawCollateralOrder(
     uint8 _subAccountId,
@@ -55,5 +61,12 @@ interface ICrossMarginHandler {
     bool _shouldUnwrap
   ) external payable returns (uint256 _orderId);
 
-  function executeOrder(uint256 _endIndex, address payable _feeReceiver, bytes[] memory _priceData) external;
+  function executeOrder(
+    uint256 _endIndex,
+    address payable _feeReceiver,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external;
 }

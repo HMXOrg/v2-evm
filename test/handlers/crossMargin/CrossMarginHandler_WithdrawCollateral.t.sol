@@ -84,7 +84,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(weth.balanceOf(address(vaultStorage)), 10 ether);
     assertEq(weth.balanceOf(ALICE), 0 ether);
 
-    simulateAliceWithdrawToken(address(weth), 3 ether, priceDataBytes, false);
+    simulateAliceWithdrawToken(address(weth), 3 ether, tickPrices, publishTimeDiffs, block.timestamp, false);
 
     // After withdrawn, ALICE must have 7 WETH as collateral token
     assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 7 ether);
@@ -92,7 +92,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(weth.balanceOf(ALICE), 3 ether);
 
     // Try withdraw WETH, but with unwrap option
-    simulateAliceWithdrawToken(address(weth), 1.5 ether, priceDataBytes, true);
+    simulateAliceWithdrawToken(address(weth), 1.5 ether, tickPrices, publishTimeDiffs, block.timestamp, true);
 
     // After withdrawn with unwrap,
     // - Vault must have 5.5 WETH
@@ -121,14 +121,14 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
     assertEq(vaultStorage.getTraderTokens(subAccount).length, 1);
 
     // ALICE try withdrawing some of WETH from Vault
-    simulateAliceWithdrawToken(address(weth), 3 ether, priceDataBytes, false);
+    simulateAliceWithdrawToken(address(weth), 3 ether, tickPrices, publishTimeDiffs, block.timestamp, false);
     assertEq(weth.balanceOf(ALICE), 3 ether);
 
     // After ALICE withdrawn some of WETH, list of token must still contain WETH
     assertEq(vaultStorage.getTraderTokens(subAccount).length, 1);
 
     // ALICE try withdrawing all of WETH from Vault
-    simulateAliceWithdrawToken(address(weth), 7 ether, priceDataBytes, false);
+    simulateAliceWithdrawToken(address(weth), 7 ether, tickPrices, publishTimeDiffs, block.timestamp, false);
     assertEq(vaultStorage.traderBalances(subAccount, address(weth)), 0 ether, "ALICE's WETH balance");
     assertEq(weth.balanceOf(ALICE), 10 ether);
 

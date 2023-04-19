@@ -31,9 +31,11 @@ contract TC04 is BaseIntTest_WithActions {
     // And Btc price is 20,000 USD
     // And WETH price is 1,500 USD
     updatePriceData = new bytes[](2);
-    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
-    updatePriceData[1] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, updatePriceData, true);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    tickPrices[0] = 73135;
+    tickPrices[1] = 99039;
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
     address _aliceSubAccount0 = getSubAccount(ALICE, 0);
 
@@ -46,7 +48,7 @@ contract TC04 is BaseIntTest_WithActions {
 
     // Scenario: Alice open long position and increase long position
     // When Alice open long position 15,000 USD
-    marketBuy(ALICE, 0, wethMarketIndex, 15_000 * 1e30, address(0), new bytes[](0));
+    marketBuy(ALICE, 0, wethMarketIndex, 15_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice should has correct long position
       // premium before = 0
@@ -73,7 +75,7 @@ contract TC04 is BaseIntTest_WithActions {
     }
 
     // And Alice increase long position for 3,000 USD
-    marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice should has correct long position
       // market skew          = 15000
@@ -137,7 +139,7 @@ contract TC04 is BaseIntTest_WithActions {
 
     // Scenario: Alice decrease long position and flip to short position
     // When Alice decrease long position 21,000 USD
-    marketSell(ALICE, 0, wethMarketIndex, 21_000 * 1e30, address(0), new bytes[](0));
+    marketSell(ALICE, 0, wethMarketIndex, 21_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // note: decrease size is greater than position size for 3,000 USD
       //       this action will separated to 2 steps
@@ -189,7 +191,7 @@ contract TC04 is BaseIntTest_WithActions {
 
     // Scenario: Alice increase short position
     // When Alice increase short position for 3,000 USD
-    marketSell(ALICE, 0, wethMarketIndex, 3000 * 1e30, address(0), new bytes[](0));
+    marketSell(ALICE, 0, wethMarketIndex, 3000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice should has correct position
       // market skew          = -3000
@@ -238,7 +240,7 @@ contract TC04 is BaseIntTest_WithActions {
     }
 
     // When Alice decrease short position for 30,000 USD
-    marketBuy(ALICE, 0, wethMarketIndex, 30_000 * 1e30, address(0), new bytes[](0));
+    marketBuy(ALICE, 0, wethMarketIndex, 30_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // note: decrease size is greater than position size for 30_000 - 6000 = 24000 USD
       //       this action will separated to 2 steps

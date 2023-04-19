@@ -20,6 +20,12 @@ struct IPythPriceInfo {
 }
 
 // @notice avoid slither compilation bug by declaring struct outside of interface scope
+struct IEcoPythPriceInfo {
+  uint48 publishTime;
+  int64 price;
+}
+
+// @notice avoid slither compilation bug by declaring struct outside of interface scope
 struct IPythDataSource {
   uint16 chainId;
   bytes32 emitterAddress;

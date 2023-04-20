@@ -12,9 +12,6 @@ import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
-// GLP
-import { MockGlpManager } from "@hmx-test/mocks/MockGlpManager.sol";
-
 // Openzepline
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -117,15 +114,12 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   MockErc20 usdc; // decimals 6
   MockErc20 usdt; // decimals 6
   MockErc20 dai; // decimals 18
-  MockErc20 sglp; //decimals 18
 
   IWNative weth; //for native
 
   /* PYTH */
   EcoPyth internal pyth;
-  MockGlpManager internal glpManager;
   IPythAdapter internal pythAdapter;
-  IOracleAdapter internal stakedGlpAdapter;
 
   /* Tester */
 
@@ -156,11 +150,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     glpManager = new MockGlpManager();
 
     pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
-    console.log("pythAdapter deployAddress", address(pythAdapter));
-    // deploy stakedGLPOracleAdapter
-    sglp = new MockErc20("StakedGlp", "sGLP", 18);
-
-    stakedGlpAdapter = Deployer.deployStakedGlpOracleAdapter(sglp, glpManager, sglpAssetId);
 
     // deploy oracleMiddleWare
     oracleMiddleWare = Deployer.deployOracleMiddleware();

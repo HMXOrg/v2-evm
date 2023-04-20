@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
-import { StakedGlpStrategy } from "@hmx/strategies/StakedGLPStrategy.sol";
+import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
 
 // interfaces
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";

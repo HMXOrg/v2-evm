@@ -20,7 +20,7 @@
     "liquidation": "",
     "trade": ""
   },
-  "oracle": {
+  "oracles": {
     "pyth": "",
     "pythAdapter": "",
     "sglpStakedAdapter": "",
@@ -34,7 +34,8 @@
   "yieldSources": {
     "gmx": {
       "glpManager": "",
-      "rewardRouterV2": ""
+      "rewardRouterV2": "",
+      "rewardTracker": ""
     }
   },
   "strategies": {

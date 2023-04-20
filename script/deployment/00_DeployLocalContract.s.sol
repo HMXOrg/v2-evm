@@ -19,7 +19,7 @@ contract DeployLocalContract is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".oracle.pyth", pythAddress);
+    updateJson(".oracles.pyth", pythAddress);
     updateJson(".tokens.weth", nativeAddress);
   }
 }

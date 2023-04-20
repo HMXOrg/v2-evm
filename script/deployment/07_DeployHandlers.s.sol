@@ -14,7 +14,7 @@ contract DeployHandlers is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
-    address pythAddress = getJsonAddress(".oracle.pyth");
+    address pythAddress = getJsonAddress(".oracles.pyth");
     address tradeServiceAddress = getJsonAddress(".services.trade");
     address liquidationServiceAddress = getJsonAddress(".services.liquidation");
     address liquidityServiceAddress = getJsonAddress(".services.liquidity");

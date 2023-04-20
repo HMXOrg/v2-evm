@@ -19,7 +19,7 @@ contract DeploySGlpStakedAdapter is ConfigJsonRepo {
     vm.startBroadcast(deployerPrivateKey);
 
     address sglpAddress = getJsonAddress(".tokens.sglp");
-    address glpManager = getJsonAddress(".oracle.glpManager");
+    address glpManager = getJsonAddress(".oracles.glpManager");
 
     address sglpStakedAdapter = address(
       new StakedGlpOracleAdapter(IERC20(sglpAddress), IGmxGlpManager(glpManager), sglpAssetId)
@@ -27,6 +27,6 @@ contract DeploySGlpStakedAdapter is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".oracle.sglpStakedAdapter", sglpStakedAdapter);
+    updateJson(".oracles.sglpStakedAdapter", sglpStakedAdapter);
   }
 }

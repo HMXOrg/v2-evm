@@ -15,6 +15,6 @@ contract DeployOracleMiddleware is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".oracle.middleware", oracleMiddlewareAddress);
+    updateJson(".oracles.middleware", oracleMiddlewareAddress);
   }
 }

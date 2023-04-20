@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 // interfaces
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
 import { Owned } from "@hmx/base/Owned.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
-contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
-  using SafeERC20 for IERC20;
+contract VaultStorage is Owned, ReentrancyGuardUpgradeable, IVaultStorage {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
    * Events
@@ -83,15 +83,15 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
   function pullToken(address _token) external returns (uint256) {
     uint256 prevBalance = totalAmount[_token];
-    uint256 nextBalance = IERC20(_token).balanceOf(address(this));
+    uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this));
 
     totalAmount[_token] = nextBalance;
     return nextBalance - prevBalance;
   }
 
   function pushToken(address _token, address _to, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {
-    IERC20(_token).safeTransfer(_to, _amount);
-    totalAmount[_token] = IERC20(_token).balanceOf(address(this));
+    IERC20Upgradeable(_token).safeTransfer(_to, _amount);
+    totalAmount[_token] = IERC20Upgradeable(_token).balanceOf(address(this));
   }
 
   /**
@@ -130,7 +130,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   function withdrawFee(address _token, uint256 _amount, address _receiver) external onlyWhitelistedExecutor {
     if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
     protocolFees[_token] -= _amount;
-    IERC20(_token).safeTransfer(_receiver, _amount);
+    IERC20Upgradeable(_token).safeTransfer(_receiver, _amount);
   }
 
   function removePLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {

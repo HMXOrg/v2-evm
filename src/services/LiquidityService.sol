@@ -4,7 +4,6 @@ pragma solidity 0.8.18;
 // base
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 // contracts
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -18,7 +17,6 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
 
 contract LiquidityService is ReentrancyGuardUpgradeable, ILiquidityService {
-
   /**
    * Events
    */

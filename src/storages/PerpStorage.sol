@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
@@ -10,7 +10,7 @@ import { Owned } from "@hmx/base/Owned.sol";
 
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
-contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
+contract PerpStorage is Owned, ReentrancyGuardUpgradeable, IPerpStorage {
   /**
    * Modifiers
    */

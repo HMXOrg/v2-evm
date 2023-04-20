@@ -3,8 +3,8 @@ pragma solidity 0.8.18;
 
 //base
 import { Owned } from "@hmx/base/Owned.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
@@ -12,7 +12,7 @@ import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
 contract ConfigStorage is IConfigStorage, Owned {
-  using SafeERC20 for ERC20;
+  using SafeERC20Upgradeable for ERC20Upgradeable;
 
   /**
    * Events
@@ -316,7 +316,7 @@ contract ConfigStorage is IConfigStorage, Owned {
       tokenAssetIds[_token] = _assetId;
 
       // sanity check
-      ERC20(_token).decimals();
+      ERC20Upgradeable(_token).decimals();
     }
 
     return assetConfigs[_assetId];

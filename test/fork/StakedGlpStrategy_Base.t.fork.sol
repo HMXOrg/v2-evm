@@ -153,7 +153,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(stakedGlpStrategy), true);
 
-      vaultStorage.setStrategyAllowanceOf(address(sglp), address(stakedGlpStrategy), address(rewardTracker));
+      vaultStorage.setStrategyAllowance(address(sglp), address(stakedGlpStrategy), address(rewardTracker));
 
       perpStorage.setServiceExecutors(address(liquidityService), true);
     }

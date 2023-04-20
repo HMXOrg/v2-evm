@@ -58,7 +58,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
   // oracle
   IPythAdapter pythAdapter;
-  IOracleAdapter stakedGlpOracleAdapter;
   IOracleMiddleware oracleMiddleware;
 
   // mock
@@ -78,7 +77,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockErc20 internal dai;
   MockErc20 internal usdc;
   MockErc20 internal usdt;
-  MockErc20 internal sGlp;
+  MockErc20 internal sglp;
 
   MockErc20 internal bad;
 
@@ -100,7 +99,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant daiAssetId = "DAI";
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
-  bytes32 internal constant sGlpAssetId = "SGLP";
+  bytes32 internal constant sglpAssetId = "SGLP";
 
   // Fx
   bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
@@ -124,8 +123,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
+    sglp = new MockErc20("Staked GLP", "sGLP", 18);
     bad = new MockErc20("Bad Coin", "BAD", 2);
-    sGlp = new MockErc20("Staked GLP", "sGLP", 18);
 
     plp = Deployer.deployPLPv2();
 
@@ -144,7 +143,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockGlpManager = new MockGlpManager();
 
     pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
-    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(sGlp, mockGlpManager, sGlpAssetId);
     oracleMiddleware = Deployer.deployOracleMiddleware();
 
     mockLiquidityService = new MockLiquidityService(
@@ -171,35 +169,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
     proxyAdmin = new ProxyAdmin();
   }
-
-  /**
-   * TEST HELPERS
-   */
-
-  /// @notice Helper function to create a price feed update data.
-  /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
-  /// @param priceData The price data to create the update data.
-  function buildPythUpdateData(int64[] memory priceData) internal view returns (bytes[] memory) {
-    require(priceData.length == 4, "invalid price data length");
-    bytes[] memory priceDataBytes = new bytes[](4);
-    for (uint256 i = 1; i <= priceData.length; ) {
-      priceDataBytes[i - 1] = mockPyth.createPriceFeedUpdateData(
-        bytes32(uint256(i)),
-        priceData[i - 1] * 1e8,
-        0,
-        -8,
-        priceData[i - 1] * 1e8,
-        0,
-        uint64(block.timestamp)
-      );
-      unchecked {
-        ++i;
-      }
-    }
-    return priceDataBytes;
-  }
-
-  /// --------- Setup helper ------------
 
   /// @notice set up liquidity config
   function _setUpLiquidityConfig() private {
@@ -329,14 +298,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       accepted: true
     });
 
-    // // SGLP
-    // _plpTokenConfig[5] = IConfigStorage.PLPTokenConfig({
-    //   targetWeight: 2e17,
-    //   bufferLiquidity: 0,
-    //   maxWeightDiff: 0,
-    //   accepted: true
-    // });
-
     address[] memory _tokens = new address[](5);
     _tokens[0] = address(weth);
     _tokens[1] = address(wbtc);
@@ -430,14 +391,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       isStableCoin: true
     });
     configStorage.setAssetConfig(daiAssetId, _assetConfigDai);
-
-    IConfigStorage.AssetConfig memory _assetConfigSGLP = IConfigStorage.AssetConfig({
-      tokenAddress: address(sGlp),
-      assetId: sGlpAssetId,
-      decimals: 18,
-      isStableCoin: false
-    });
-    configStorage.setAssetConfig(sGlpAssetId, _assetConfigSGLP);
   }
 
   function abs(int256 x) external pure returns (uint256) {

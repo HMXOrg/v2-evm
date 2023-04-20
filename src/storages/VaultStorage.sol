@@ -22,7 +22,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
    */
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
   event SetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
-  event LogSetStrategyAllowanceOf(address indexed token, address strategy, address prevTarget, address newTarget);
+  event LogSetStrategyAllowance(address indexed token, address strategy, address prevTarget, address newTarget);
 
   /**
    * States
@@ -402,8 +402,8 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   /// @param _token The token to set the strategy for
   /// @param _strategy The strategy to set
   /// @param _target The target to set
-  function setStrategyAllowanceOf(address _token, address _strategy, address _target) external onlyOwner {
-    emit LogSetStrategyAllowanceOf(_token, _strategy, strategyAllowance[_token][_strategy], _target);
+  function setStrategyAllowance(address _token, address _strategy, address _target) external onlyOwner {
+    emit LogSetStrategyAllowance(_token, _strategy, strategyAllowance[_token][_strategy], _target);
     strategyAllowance[_token][_strategy] = _target;
   }
 
@@ -431,11 +431,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
     return _returnData;
   }
-
-  // FIXME remove when unused
-  // function transferToken(address _subAccount, address _token, uint256 _amount) external {
-  //   IERC20(_token).safeTransfer(_subAccount, _amount);
-  // }
 
   /**
    * Private Functions

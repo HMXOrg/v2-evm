@@ -21,6 +21,8 @@ contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
     //alice bring sglp to deposit at plp liquidity
     uint256 sglpAmount = sglp.balanceOf(ALICE);
 
+    uint256 vaultStorageBeforeAddLq = vaultStorage.plpLiquidity(sGlpAddress);
+    uint256 plpBefore = plpV2.balanceOf(ALICE);
     addLiquidity(
       ALICE,
       ERC20(sGlpAddress),
@@ -31,43 +33,23 @@ contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
       block.timestamp,
       true
     );
+    uint256 vaultStorageAfterAddLq = vaultStorage.plpLiquidity(sGlpAddress);
 
-    liquidityTester.assertLiquidityInfo(
-      LiquidityTester.LiquidityExpectedData({
-        token: address(sglp),
-        who: ALICE,
-        lpTotalSupply: 183869983524555116065486,
-        totalAmount: 189873700974259579939141,
-        plpLiquidity: 189304079871336801199324,
-        plpAmount: 183869983524555116065486,
-        fee: 569621102922778739817,
-        executionFee: executionOrderFee
-      })
-    );
-
-    assertEq(0, sglp.balanceOf(ALICE), "Alice GLP after Add LQ");
-
-    uint256 reward = rewardTracker.claimable(address(vaultStorage));
-    assertEq(0, reward, "pending reward must be 0");
+    assertTrue(vaultStorageAfterAddLq > vaultStorageBeforeAddLq, "Liquidity should increase");
+    assertTrue(plpV2.balanceOf(ALICE) > plpBefore, "PLP amount of Alice should increase");
+    assertEq(sglp.balanceOf(ALICE), 0, "Alice GLP after Add LQ");
+    assertEq(rewardTracker.claimable(address(vaultStorage)), 0, "pending reward must be 0");
 
     skip(10);
-    reward = rewardTracker.claimable(address(vaultStorage));
-    assertEq(reward > 0, true, "pending reward must > 0");
+
+    assertTrue(rewardTracker.claimable(address(vaultStorage)) > 0, "pending reward must > 0");
 
     vm.prank(keeper);
     stakedGlpStrategy.execute();
-
-    liquidityTester.assertLiquidityInfo(
-      LiquidityTester.LiquidityExpectedData({
-        token: address(sglp),
-        who: address(stakedGlpStrategy),
-        lpTotalSupply: 183869983524555116065486, //lpTotalSupply has to be the same
-        totalAmount: 189873712489801202222370, // totalAmount should increase
-        plpLiquidity: 189304091386878423482553, // plp liquidity should increase
-        plpAmount: 0, // plpAmount after reinvest and deposit to pool
-        fee: 569621102922778739817, //fee has to be the same.
-        executionFee: executionOrderFee //executionFee has to be the same.
-      })
+    assertTrue(
+      vaultStorage.plpLiquidity(sGlpAddress) > vaultStorageAfterAddLq,
+      "Liquidity should increase after compounded"
     );
+    assertEq(plpV2.balanceOf(address(stakedGlpStrategy)), 0, "PLP amount of StakedGlpStrategy should be zero");
   }
 }

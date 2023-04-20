@@ -9,8 +9,6 @@ import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
   uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
 
-  // address usdcOwner = 0x98e4db7e07e584f89a2f6043e7b7c89dc27769ed;
-
   function setUp() public override {
     super.setUp();
   }

@@ -9,20 +9,20 @@ const config = getConfig();
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
-  const Contract = await ethers.getContractFactory("BotHandler", deployer);
-  const contract = await Contract.deploy(config.services.trade, config.services.liquidation, config.oracle.ecoPyth);
+  const Contract = await ethers.getContractFactory("EcoPyth", deployer);
+  const contract = await Contract.deploy();
   await contract.deployed();
-  console.log(`Deploying BotHandler Contract`);
+  console.log(`Deploying EcoPyth Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.handlers.bot = contract.address;
+  config.oracle.ecoPyth = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({
     address: contract.address,
-    name: "BotHandler",
+    name: "EcoPyth",
   });
 };
 
 export default func;
-func.tags = ["DeployBotHandler"];
+func.tags = ["DeployEcoPyth"];

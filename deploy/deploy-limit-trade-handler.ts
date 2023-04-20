@@ -10,7 +10,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const Contract = await ethers.getContractFactory("LimitTradeHandler", deployer);
-  const contract = await Contract.deploy(config.tokens.weth, config.services.trade, config.oracle.leanPyth, 30);
+  const contract = await Contract.deploy(config.tokens.weth, config.services.trade, config.oracle.ecoPyth, 30);
   await contract.deployed();
   console.log(`Deploying LimitTradeHandler Contract`);
   console.log(`Deployed at: ${contract.address}`);

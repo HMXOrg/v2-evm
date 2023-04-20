@@ -15,6 +15,6 @@ contract DeployLeanPyth is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".oracle.leanPyth", leanPythAddress);
+    updateJson(".oracle.ecoPyth", leanPythAddress);
   }
 }

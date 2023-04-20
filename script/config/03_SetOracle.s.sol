@@ -5,7 +5,7 @@ import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
+import { EcoPyth } from "@hmx/oracle/EcoPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
 import { PythAdapter } from "@hmx/oracle/PythAdapter.sol";
 
@@ -45,7 +45,7 @@ contract SetOracle is ConfigJsonRepo {
 
   IOracleMiddleware oracleMiddleWare;
   PythAdapter pythAdapter;
-  IPyth pyth;
+  EcoPyth ecoPyth;
 
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
@@ -53,7 +53,7 @@ contract SetOracle is ConfigJsonRepo {
 
     oracleMiddleWare = IOracleMiddleware(getJsonAddress(".oracle.middleware"));
     pythAdapter = PythAdapter(getJsonAddress(".oracle.pythAdapter"));
-    pyth = IPyth(getJsonAddress(".oracle.leanPyth"));
+    ecoPyth = EcoPyth(getJsonAddress(".oracle.ecoPyth"));
 
     assetPythPriceDatas.push(
       AssetPythPriceData({ assetId: wethAssetId, priceId: wethPriceId, price: 1500, exponent: -8, inverse: false })
@@ -109,7 +109,8 @@ contract SetOracle is ConfigJsonRepo {
       _data = assetPythPriceDatas[i];
 
       // set PythId
-      pythAdapter.setConfig(_data.assetId, _data.priceId, _data.inverse);
+      pythAdapter.setConfig(_data.assetId, _data.assetId, _data.inverse);
+      ecoPyth.insertAssetId(_data.assetId);
 
       unchecked {
         ++i;

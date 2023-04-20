@@ -14,7 +14,7 @@ contract DeployCrossMarginHandler is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
-    address pythAddress = getJsonAddress(".oracle.leanPyth");
+    address pythAddress = getJsonAddress(".oracle.ecoPyth");
     address tradeServiceAddress = getJsonAddress(".services.trade");
     address liquiditionServiceAddress = getJsonAddress(".services.liquidation");
     address liquidityServiceAddress = getJsonAddress(".services.liquidity");

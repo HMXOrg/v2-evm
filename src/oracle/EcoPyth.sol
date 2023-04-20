@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { Owned } from "@hmx/base/Owned.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
-import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
+import { PythStructs } from "lib/pyth-sdk-solidity/IPyth.sol";
 import { IPythPriceInfo, IEcoPythPriceInfo } from "./interfaces/IPyth.sol";
 import { IEcoPyth } from "./interfaces/IEcoPyth.sol";
 

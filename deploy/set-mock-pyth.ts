@@ -29,7 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await Promise.all(
     addresses.map(async (each) => {
       const pythAdapter = PythAdapter__factory.connect(each, deployer);
-      return pythAdapter.setPyth(config.oracle.leanPyth);
+      return pythAdapter.setPyth(config.oracle.ecoPyth);
     })
   );
   console.log("> Set Mock Pyth success!");

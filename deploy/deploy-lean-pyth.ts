@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`Deploying LeanPyth Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.oracle.leanPyth = contract.address;
+  config.oracle.ecoPyth = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({

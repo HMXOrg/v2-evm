@@ -29,7 +29,7 @@ contract TC17 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       // BOB add liquidity
-      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, updatePriceData, true);
+      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     }
 
     vm.warp(block.timestamp + 1);
@@ -42,26 +42,34 @@ contract TC17 is BaseIntTest_WithActions {
     //T1: Alice buy 3 positions
     {
       updatePriceData = new bytes[](4);
-      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
-      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_000 * 1e8, 0);
-      updatePriceData[3] = _createPriceFeedUpdateData(appleAssetId, 152 * 1e5, 0);
+      // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
+      // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_000 * 1e8, 0);
+      // updatePriceData[3] = _createPriceFeedUpdateData(appleAssetId, 152 * 1e5, 0);
+      tickPrices[1] = 100438; // WBTC tick price $23,000
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[5] = 50241; // APPL tick price $152
+      tickPrices[6] = 48285; // JPY tick price $125
 
       // buy
       bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
-      marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(usdt), updatePriceData);
-      marketBuy(ALICE, 0, wbtcMarketIndex, 10_000 * 1e30, address(usdt), updatePriceData);
-      marketBuy(ALICE, 0, appleMarketIndex, 10_000 * 1e30, address(usdt), updatePriceData);
+      marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
+      marketBuy(ALICE, 0, wbtcMarketIndex, 10_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
+      marketBuy(ALICE, 0, appleMarketIndex, 10_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
     }
 
     // T2: Alice has 2 positions at Profit and 1 positions at Loss
     vm.warp(block.timestamp + (1 * HOURS));
     {
       updatePriceData = new bytes[](4);
-      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 130 * 1e3, 0);
-      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_500 * 1e8, 0);
-      updatePriceData[3] = _createPriceFeedUpdateData(appleAssetId, 155 * 1e5, 0);
+      // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 130 * 1e3, 0);
+      // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_500 * 1e8, 0);
+      // updatePriceData[3] = _createPriceFeedUpdateData(appleAssetId, 155 * 1e5, 0);
+      tickPrices[1] = 100653; // WBTC tick price $23,500
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[5] = 50436; // APPL tick price $155
+      tickPrices[6] = 48677; // JPY tick price $130
     }
 
     {
@@ -71,7 +79,7 @@ contract TC17 is BaseIntTest_WithActions {
       uint256 devFeesBefore = vaultStorage.devFees(address(wbtc));
       uint256 plpLiquidityBefore = vaultStorage.plpLiquidity(address(wbtc));
 
-      liquidate(getSubAccount(ALICE, 0), updatePriceData);
+      liquidate(getSubAccount(ALICE, 0), tickPrices, publishTimeDiff, block.timestamp);
       /*
        * |        |                 loss                 |   trading   |        borrowing     |       funding    | liquidation |     Total   | unit |
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|

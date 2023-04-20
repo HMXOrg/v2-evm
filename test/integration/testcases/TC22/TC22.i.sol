@@ -36,12 +36,15 @@ contract TC22 is BaseIntTest_WithActions {
     // And WETH price is 1,500 USD
     // And APPLE price is 152 USD
     updatePriceData = new bytes[](3);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
-    updatePriceData[1] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
-    updatePriceData[2] = _createPriceFeedUpdateData(jpyAssetId, 152 * 1e3, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
+    // updatePriceData[2] = _createPriceFeedUpdateData(jpyAssetId, 152 * 1e3, 0);
+    tickPrices[0] = 73135; // ETH tick price $1500
+    tickPrices[1] = 99039; // WBTC tick price $20,000
+    tickPrices[6] = 50241; // JPY tick price $152
 
     // And Bob provide liquidity 500 btc
-    addLiquidity(BOB, wbtc, 500 * 1e8, executionOrderFee, updatePriceData, true);
+    addLiquidity(BOB, wbtc, 500 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     {
       // PLP liquidity and total supply should be corrected
       // 500 * 0.997 = 498.5
@@ -71,7 +74,7 @@ contract TC22 is BaseIntTest_WithActions {
 
     // ### Scenario: Trader trade normally, and someone reach max position size
     // When Alice buy WETH 7,000,000 USD
-    marketBuy(ALICE, 0, wethMarketIndex, 7_000_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(ALICE, 0, wethMarketIndex, 7_000_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice's position should be corrected
       assertPositionInfoOf({
@@ -95,12 +98,14 @@ contract TC22 is BaseIntTest_WithActions {
       wethMarketIndex,
       4_000_000 * 1e30,
       address(wbtc),
-      updatePriceData,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
       "ITradeService_PositionSizeExceed()"
     );
 
     // But Bob can sell WETH 8,000,000 USD
-    marketSell(BOB, 0, wethMarketIndex, 8_000_000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(BOB, 0, wethMarketIndex, 8_000_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Bob's position should be corrected
       assertPositionInfoOf({
@@ -124,13 +129,15 @@ contract TC22 is BaseIntTest_WithActions {
       wethMarketIndex,
       3_000_000 * 1e30,
       address(wbtc),
-      updatePriceData,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
       "ITradeService_PositionSizeExceed()"
     );
 
     // ### Scenario: Trader trade on Stock (APPLE)
     // When Alice sell APPLE 600,000 USD
-    marketSell(ALICE, 0, appleMarketIndex, 600_000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(ALICE, 0, appleMarketIndex, 600_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice's position should be corrected
       assertPositionInfoOf({
@@ -147,7 +154,16 @@ contract TC22 is BaseIntTest_WithActions {
     }
 
     // When Carol buy APPLE 10,000,000 USD
-    marketBuy(CAROL, 0, appleMarketIndex, 10_000_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(
+      CAROL,
+      0,
+      appleMarketIndex,
+      10_000_000 * 1e30,
+      address(wbtc),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp
+    );
     {
       // Then Carol's position should be corrected
       assertPositionInfoOf({
@@ -165,6 +181,16 @@ contract TC22 is BaseIntTest_WithActions {
 
     // When Bob's buy APPLE 1 USD
     // And Revert ITradeService_PositionSizeExceed
-    marketBuy(BOB, 0, appleMarketIndex, 1 * 1e30, address(wbtc), updatePriceData, "ITradeService_PositionSizeExceed()");
+    marketBuy(
+      BOB,
+      0,
+      appleMarketIndex,
+      1 * 1e30,
+      address(wbtc),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      "ITradeService_PositionSizeExceed()"
+    );
   }
 }

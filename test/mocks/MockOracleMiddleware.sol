@@ -172,4 +172,6 @@ contract MockOracleMiddleware is IOracleMiddleware {
     uint32 /*_confidenceThresholdE6*/,
     uint32 /*_trustPriceAge*/
   ) external {}
+
+  function setPythAdapter(address _newPythAdapter) external {}
 }

@@ -44,20 +44,11 @@ struct PriceFeed {
 }
 
 contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
-  bytes[] internal priceData;
+  bytes32[] internal priceUpdateData;
+  bytes32[] internal publishTimeUpdateData;
 
   function setUp() public override {
     super.setUp();
-
-    priceData.push(
-      abi.encode(
-        PriceFeed({
-          id: "1234",
-          price: Price({ price: 0, conf: 0, expo: 0, publishTime: block.timestamp }),
-          emaPrice: Price({ price: 0, conf: 0, expo: 0, publishTime: block.timestamp })
-        })
-      )
-    );
 
     liquidityHandler.setOrderExecutor(address(this), true);
   }
@@ -79,7 +70,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NotWhitelisted()"));
-    liquidityHandler.executeOrder(_orders.length - 1, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _orders.length - 1,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
   }
 
   function test_revert_cancelOrder_notOwnerOrder() external {
@@ -105,7 +103,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     // Handler executor
     assertEq(_nextExecutionOrderIndex, 0, "nextExecutionOrderIndex");
-    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     // Assertion after Executed Order
     _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
@@ -125,7 +130,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     // Handler executor
     assertEq(_nextExecutionOrderIndex, 0, "nextExecutionOrderIndex");
-    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     // Assertion after Executed Order
     _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
@@ -144,7 +156,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     // Handler executor
     ILiquidityHandler.LiquidityOrder[] memory _ordersBefore = liquidityHandler.getLiquidityOrders();
-    liquidityHandler.executeOrder(_ordersBefore.length - 1, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _ordersBefore.length - 1,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     // Assertion after ExecuteOrder
     ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
@@ -164,7 +183,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     // Handler executor
     ILiquidityHandler.LiquidityOrder[] memory _ordersBefore = liquidityHandler.getLiquidityOrders();
-    liquidityHandler.executeOrder(_ordersBefore.length - 1, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _ordersBefore.length - 1,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     // Assertion after ExecuteOrder
     ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
@@ -186,7 +212,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     // Handler executor
     assertEq(_nextExecutionOrderIndex, 0, "LastExecutedOrderIndex Before Execute");
-    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     // Assertion after Executed Order
     _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
@@ -202,7 +235,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
     // Handler executor
     ILiquidityHandler.LiquidityOrder[] memory _ordersBefore = liquidityHandler.getLiquidityOrders();
-    liquidityHandler.executeOrder(_ordersBefore.length - 1, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _ordersBefore.length - 1,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
     // Assertion after ExecuteOrder
     ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
     uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
@@ -220,7 +260,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     // Handler executor
     ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders();
 
-    liquidityHandler.executeOrder(_orders.length - 1, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _orders.length - 1,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     assertEq(_orders.length, 2, "Order Amount After Executed Order");
     assertEq(liquidityHandler.nextExecutionOrderIndex(), 2, "Order Index After Executed Order");
@@ -257,7 +304,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
 
     // 3 execute create native order
-    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     // 4 Assertion after ExecuteOrder
     ILiquidityHandler.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders();
@@ -269,7 +323,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     // 5 Create remove Liquidity order
     _orderIndex = _createRemoveLiquidityNativeOrder();
     // 6 execute liquidity order
-    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     _aliceOrdersAfter = liquidityHandler.getLiquidityOrders();
 
@@ -311,7 +372,14 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
 
     // 3 execute create native order
-    liquidityHandler.executeOrder(_orderIndex, payable(FEEVER), priceData);
+    liquidityHandler.executeOrder(
+      _orderIndex,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
 
     // Assertion after Executed Order
     ILiquidityHandler.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();

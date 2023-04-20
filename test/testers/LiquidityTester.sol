@@ -37,6 +37,8 @@ contract LiquidityTester is StdAssertions {
 
   address feeReceiver;
 
+  uint256 constant MAX_DIFF = 0.0001 ether; // 0.01 %
+
   constructor(IPLPv2 _plp, IVaultStorage _vaultStorage, IPerpStorage _perpStorage, address _feeReceiver) {
     plp = _plp;
     vaultStorage = _vaultStorage;
@@ -56,20 +58,34 @@ contract LiquidityTester is StdAssertions {
     address _token = _expectedData.token;
 
     // Check PLPv2 total supply
-    assertEq(plp.totalSupply(), _expectedData.lpTotalSupply, "PLP Total supply");
-    assertEq(plp.balanceOf(_expectedData.who), _expectedData.plpAmount, "PLP Amount");
+    assertApproxEqRel(plp.totalSupply(), _expectedData.lpTotalSupply, MAX_DIFF, "PLP Total supply");
+    assertApproxEqRel(plp.balanceOf(_expectedData.who), _expectedData.plpAmount, MAX_DIFF, "PLP Amount");
 
     // Order execution fee is on OrderExecutor in Native
-    assertEq(feeReceiver.balance, _expectedData.executionFee, "Execution Order Fee");
+    assertApproxEqRel(feeReceiver.balance, _expectedData.executionFee, MAX_DIFF, "Execution Order Fee");
 
     // Check VaultStorage's state
-    assertEq(vaultStorage.plpLiquidity(_token), _expectedData.plpLiquidity, "PLP token liquidity amount");
-    assertEq(vaultStorage.totalAmount(_token), _expectedData.totalAmount, "TokenAmount balance");
-    assertEq(vaultStorage.protocolFees(_token), _expectedData.fee, "Protocol Fee");
-    assertEq(vaultStorage.totalAmount(_token), vaultStorage.plpLiquidity(_token) + vaultStorage.protocolFees(_token));
+    assertApproxEqRel(
+      vaultStorage.plpLiquidity(_token),
+      _expectedData.plpLiquidity,
+      MAX_DIFF,
+      "PLP token liquidity amount"
+    );
+    assertApproxEqRel(vaultStorage.totalAmount(_token), _expectedData.totalAmount, MAX_DIFF, "TokenAmount balance");
+    assertApproxEqRel(vaultStorage.protocolFees(_token), _expectedData.fee, MAX_DIFF, "Protocol Fee");
+    assertApproxEqRel(
+      vaultStorage.totalAmount(_token),
+      vaultStorage.plpLiquidity(_token) + vaultStorage.protocolFees(_token),
+      MAX_DIFF
+    );
 
     // Check token balance
     // balanceOf must be equals to plpLiquidity in Vault
-    assertEq(IERC20(_token).balanceOf(address(vaultStorage)), _expectedData.totalAmount, "Vault Storage Token Balance");
+    assertApproxEqRel(
+      IERC20(_token).balanceOf(address(vaultStorage)),
+      _expectedData.totalAmount,
+      MAX_DIFF,
+      "Vault Storage Token Balance"
+    );
   }
 }

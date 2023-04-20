@@ -20,7 +20,16 @@ contract TC34 is BaseIntTest_WithActions {
     wbtc.mint(ALICE, _amount);
 
     // Alice Create Order And Executor Execute Order
-    addLiquidity(ALICE, ERC20(address(wbtc)), _amount, executionOrderFee, initialPriceFeedDatas, true);
+    addLiquidity(
+      ALICE,
+      ERC20(address(wbtc)),
+      _amount,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
     liquidityTester.assertLiquidityInfo(
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
@@ -37,20 +46,29 @@ contract TC34 is BaseIntTest_WithActions {
     vm.deal(ALICE, executionOrderFee);
     uint256 _balanceAll = plpV2.balanceOf(ALICE);
 
-    removeLiquidity(ALICE, address(wbtc), _balanceAll, executionOrderFee, new bytes[](0), false);
+    removeLiquidity(
+      ALICE,
+      address(wbtc),
+      _balanceAll,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      false
+    );
 
     // setup for remove liquidity feed only 1 token
     skip(10);
-    bytes32[] memory _newAssetIds = new bytes32[](1);
-    int64[] memory _prices = new int64[](1);
-    uint64[] memory _conf = new uint64[](1);
-    _newAssetIds[0] = wbtcAssetId;
-    _prices[0] = 21_000 * 1e8;
-    _conf[0] = 2;
+    // bytes32[] memory _newAssetIds = new bytes32[](1);
+    // int64[] memory _prices = new int64[](1);
+    // uint64[] memory _conf = new uint64[](1);
+    // _newAssetIds[0] = wbtcAssetId;
+    // _prices[0] = 21_000 * 1e8;
+    // _conf[0] = 2;
 
-    bytes[] memory _newPrices = setPrices(_newAssetIds, _prices, _conf);
+    tickPrices[1] = 99527; // WBTC tick price $21,000
 
-    executePLPOrder(liquidityHandler.nextExecutionOrderIndex(), _newPrices);
+    executePLPOrder(liquidityHandler.nextExecutionOrderIndex(), tickPrices, publishTimeDiff, block.timestamp);
 
     _totalExecutionOrderFee += (executionOrderFee - 1);
     liquidityTester.assertLiquidityInfo(

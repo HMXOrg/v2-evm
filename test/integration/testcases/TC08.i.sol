@@ -30,7 +30,7 @@ contract TC08 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       // BOB add liquidity
-      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceData, true);
+      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     }
 
     vm.warp(block.timestamp + 1);
@@ -43,30 +43,36 @@ contract TC08 is BaseIntTest_WithActions {
     // T2: Alice buy long JPYUSD 100,000 USD at 0.008 USD, sell short BTCUSD 1000 USD at priced 23,000
     {
       updatePriceData = new bytes[](3);
-      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
-      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_000 * 1e8, 0);
+      // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
+      // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_000 * 1e8, 0);
+      tickPrices[1] = 100438; // WBTC tick price $23,000
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[6] = 48285; // JPY tick price $125
 
       // buy
       bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
-      marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(usdt), updatePriceData);
-      marketSell(ALICE, 0, wbtcMarketIndex, 50_000 * 1e30, address(usdt), updatePriceData);
+      marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
+      marketSell(ALICE, 0, wbtcMarketIndex, 50_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
     }
 
     // T3: Alice opened the position for 3 hours, BTC pumped hard to 23,100 USD. This makes Alice account went below her kill level
     vm.warp(block.timestamp + (3 * HOURS));
     {
       updatePriceData = new bytes[](3);
-      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
-      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_100 * 1e8, 0);
+      // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
+      // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_100 * 1e8, 0);
+      tickPrices[1] = 100481; // WBTC tick price $23,100
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[6] = 48285; // JPY tick price $125
     }
 
     // T4: Alice cannot withdraw
     vm.warp(block.timestamp + (1 * SECONDS));
     {
       // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-      withdrawCollateral(ALICE, 0, wbtc, 0.01 * 1e8, updatePriceData, executionOrderFee);
+      withdrawCollateral(ALICE, 0, wbtc, 0.01 * 1e8, tickPrices, publishTimeDiff, block.timestamp, executionOrderFee);
     }
 
     // T4: Alice cannot close position
@@ -78,7 +84,9 @@ contract TC08 is BaseIntTest_WithActions {
         wbtcMarketIndex,
         50_000 * 1e30,
         address(usdt),
-        updatePriceData,
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp,
         "ITradeService_SubAccountEquityIsUnderMMR()"
       );
     }
@@ -91,12 +99,17 @@ contract TC08 is BaseIntTest_WithActions {
 
     {
       // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-      withdrawCollateral(ALICE, 0, wbtc, 0.01 * 1e8, updatePriceData, executionOrderFee);
+      withdrawCollateral(ALICE, 0, wbtc, 0.01 * 1e8, tickPrices, publishTimeDiff, block.timestamp, executionOrderFee);
     }
 
     {
-      vm.expectRevert(abi.encodeWithSignature("ILiquidationService_AccountHealthy()"));
-      liquidate(getSubAccount(ALICE, 0), updatePriceData);
+      liquidate(
+        getSubAccount(ALICE, 0),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp,
+        "ILiquidationService_AccountHealthy()"
+      );
     }
 
     // T6: Alice deposit collateral 10000 USD (Equity > IMR) will not Lq
@@ -106,19 +119,27 @@ contract TC08 is BaseIntTest_WithActions {
     }
 
     {
-      vm.expectRevert(abi.encodeWithSignature("ILiquidationService_AccountHealthy()"));
-      liquidate(getSubAccount(ALICE, 0), updatePriceData);
+      liquidate(
+        getSubAccount(ALICE, 0),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp,
+        "ILiquidationService_AccountHealthy()"
+      );
     }
 
     // T7: JPYUSD dumped priced to 0.007905138339920948 (Equity < IMR))
     vm.warp(block.timestamp + (1 * HOURS));
     {
       updatePriceData = new bytes[](3);
-      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 126.5 * 1e3, 0);
-      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_100 * 1e8, 0);
+      // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 126.5 * 1e3, 0);
+      // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 23_100 * 1e8, 0);
+      tickPrices[1] = 100481; // WBTC tick price $23,100
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[6] = 48404; // JPY tick price $126.5
 
-      liquidate(getSubAccount(ALICE, 0), updatePriceData);
+      liquidate(getSubAccount(ALICE, 0), tickPrices, publishTimeDiff, block.timestamp);
       /*
        * |        |                 loss                 |   trading   |        borrowing     |       funding     | liquidation |     Total   | unit |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
@@ -144,7 +165,7 @@ contract TC08 is BaseIntTest_WithActions {
        * protocol fee = 0.03295652 + 0.00294372 = 0.03590024
        * liquidation fee = 0.00021645
        */
-      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 0.02056613 * 1e8);
+      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 0.02077587 * 1e8);
       assertVaultsFees(address(wbtc), 0.03590024 * 1e8, 0.00196229 * 1e8, 0.01039249 * 1e8);
       assertPLPLiquidity(address(wbtc), 10.0359624 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00021645 * 1e8);

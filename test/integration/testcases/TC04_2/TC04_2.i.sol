@@ -31,9 +31,11 @@ contract TC04_2 is BaseIntTest_WithActions {
     // And Btc price is 20,000 USD
     // And APPLE price is 150 USD
     updatePriceData = new bytes[](2);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
-    updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 150 * 1e5, 0);
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, updatePriceData, true);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 150 * 1e5, 0);
+    tickPrices[1] = 99039; // WBTC tick price $20,000
+    tickPrices[5] = 50108; // APPL tick price $150
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
     address _aliceSubAccount0 = getSubAccount(ALICE, 0);
     address _bobSubAccount0 = getSubAccount(BOB, 0);
@@ -49,7 +51,7 @@ contract TC04_2 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice & Bob open BTC position at different price
     // When Alice open long position 1,500 USD
-    marketBuy(ALICE, 0, wbtcMarketIndex, 1_500 * 1e30, address(0), updatePriceData);
+    marketBuy(ALICE, 0, wbtcMarketIndex, 1_500 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice should has correct long position
 
@@ -120,9 +122,10 @@ contract TC04_2 is BaseIntTest_WithActions {
 
     // When BTC price is pump to 22,000 USD
     skip(60);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 21_000 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 21_000 * 1e8, 0);
+    tickPrices[1] = 99527; // WBTC tick price $20,000
     // When Bob open long position 3,000 USD
-    marketBuy(BOB, 0, wbtcMarketIndex, 3000 * 1e30, address(0), updatePriceData);
+    marketBuy(BOB, 0, wbtcMarketIndex, 3000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then BOB should has correct long position
 
@@ -197,7 +200,7 @@ contract TC04_2 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice partail close & Bob fully close BTC positions
     // When Alice partially close BTC 300 USD (profit)
-    marketSell(ALICE, 0, wbtcMarketIndex, 300 * 1e30, address(0), updatePriceData);
+    marketSell(ALICE, 0, wbtcMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice should has correct long position
 
@@ -277,9 +280,10 @@ contract TC04_2 is BaseIntTest_WithActions {
 
     // When BTC price is dump to 20,000 USD
     skip(60);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+    tickPrices[1] = 99039; // WBTC tick price $20,000
     // When Bob fully close (loss)
-    marketSell(BOB, 0, wbtcMarketIndex, 3_000 * 1e30, address(0), updatePriceData);
+    marketSell(BOB, 0, wbtcMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then BOB should has correct long position
 
@@ -348,7 +352,7 @@ contract TC04_2 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice & Bob open APPLE position at different price
     // When Alice open short position 1,500 USD
-    marketSell(ALICE, 0, appleMarketIndex, 1_500 * 1e30, address(0), updatePriceData);
+    marketSell(ALICE, 0, appleMarketIndex, 1_500 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice should has correct short position
 
@@ -419,9 +423,10 @@ contract TC04_2 is BaseIntTest_WithActions {
 
     // When APPLE price is pump to 165 USD
     skip(60);
-    updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 165 * 1e5, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 165 * 1e5, 0);
+    tickPrices[5] = 51062; // APPL tick price $152
     // When Bob open short position 6,000 USD
-    marketSell(BOB, 0, appleMarketIndex, 6_000 * 1e30, address(0), updatePriceData);
+    marketSell(BOB, 0, appleMarketIndex, 6_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then BOB should has correct long position
 
@@ -496,7 +501,7 @@ contract TC04_2 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice partail close & Bob fully close APPLE positions
     // When Alice partially close APPLE 600 USD (loss)
-    marketBuy(ALICE, 0, appleMarketIndex, 600 * 1e30, address(0), updatePriceData);
+    marketBuy(ALICE, 0, appleMarketIndex, 600 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice should has correct short position
 
@@ -578,9 +583,10 @@ contract TC04_2 is BaseIntTest_WithActions {
 
     // When APPLE price is dump to 150 USD
     skip(60);
-    updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 150 * 1e5, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 150 * 1e5, 0);
+    tickPrices[5] = 50108; // APPL tick price $150
     // When Bob fully close (profit)
-    marketBuy(BOB, 0, appleMarketIndex, 6_000 * 1e30, address(0), updatePriceData);
+    marketBuy(BOB, 0, appleMarketIndex, 6_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then BOB should has correct long position
 

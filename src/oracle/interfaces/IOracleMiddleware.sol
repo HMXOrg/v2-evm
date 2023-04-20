@@ -76,4 +76,6 @@ interface IOracleMiddleware {
   function setUpdater(address _updater, bool _isActive) external;
 
   function setAssetPriceConfig(bytes32 _assetId, uint32 _confidenceThresholdE6, uint32 _trustPriceAge) external;
+
+  function setPythAdapter(address _newPythAdapter) external;
 }

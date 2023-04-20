@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ILeanPyth } from "./ILeanPyth.sol";
+import { IReadablePyth } from "./IReadablePyth.sol";
 import { IOracleAdapter } from "./IOracleAdapter.sol";
 
 interface IPythAdapter is IOracleAdapter {
@@ -12,7 +12,7 @@ interface IPythAdapter is IOracleAdapter {
     bool inverse;
   }
 
-  function pyth() external returns (ILeanPyth);
+  function pyth() external returns (IReadablePyth);
 
   function setConfig(bytes32 _assetId, bytes32 _pythPriceId, bool _inverse) external;
 

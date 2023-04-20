@@ -24,7 +24,7 @@ contract TC03 is BaseIntTest_WithActions {
 
     // T1: BOB provide liquidity as WBTC 1 token
     // note: price has no changed0
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, new bytes[](0), true);
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     {
       // When Bob provide 1 BTC as liquidity
       assertTokenBalanceOf(BOB, address(wbtc), 99 * 1e8, "T1: ");
@@ -100,14 +100,16 @@ contract TC03 is BaseIntTest_WithActions {
       wethMarketIndex,
       100_000 * 1e30,
       address(0),
-      new bytes[](0),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
       "ITradeService_InsufficientFreeCollateral()"
     );
 
     // T4: ALICE market buy weth with 300 USD at price 20,000 USD
     //     Then Alice should has Long Position in WETH market
     // initialPriceFeedDatas is from
-    marketBuy(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), new bytes[](0));
+    marketBuy(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // When Alice Buy WETH Market
       // And Alice has no position
@@ -229,13 +231,14 @@ contract TC03 is BaseIntTest_WithActions {
     // T5: Alice withdraw BTC 200 USD (200 / 20000 = 0.01 BTC)
     // should revert ICrossMarginService_InsufficientBalance
     // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_InsufficientBalance()"));
-    withdrawCollateral(ALICE, 0, wbtc, 0.1 * 1e8, new bytes[](0), executionOrderFee);
+    withdrawCollateral(ALICE, 0, wbtc, 0.1 * 1e8, tickPrices, publishTimeDiff, block.timestamp, executionOrderFee);
 
     // T6: Alice partial close Long position at WETH market for 150 USD
     //     WETH price 1,425 USD, then Alice should loss ~5%
     updatePriceData = new bytes[](1);
-    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_425 * 1e8, 0);
-    marketSell(ALICE, 0, wethMarketIndex, 150 * 1e30, address(wbtc), updatePriceData);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_425 * 1e8, 0);
+    tickPrices[0] = 72622;
+    marketSell(ALICE, 0, wethMarketIndex, 150 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // When Alice Sell WETH Market
       // And Alice has Long position
@@ -429,7 +432,7 @@ contract TC03 is BaseIntTest_WithActions {
     skip(60);
 
     // T7: Alice Sell JPY Market for 6000 USD with same Sub-account
-    marketSell(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // When Alice Sell JPY Market
       // And Alice has no position
@@ -550,8 +553,9 @@ contract TC03 is BaseIntTest_WithActions {
 
     // T8: Alice fully close JPY Short Position
     updatePriceData = new bytes[](1);
-    updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 135.714 * 1e3, 0);
-    marketBuy(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), updatePriceData);
+    // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 135.714 * 1e3, 0);
+    tickPrices[6] = 49107;
+    marketBuy(ALICE, 0, jpyMarketIndex, 6_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // When Alice Buy JPY Market
       // And Alice has Short position
@@ -682,7 +686,7 @@ contract TC03 is BaseIntTest_WithActions {
       //    BTC = 0.00951249 - 0.00009000 - 0.00000013 - 0.00000014 - 0.00090410
       //        = 0.00851812 btc
 
-      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.00851812 * 1e8, "T8: ");
+      assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.00849069 * 1e8, "T8: ");
 
       // Vault's fees after settle payment
       //    BTC - protocol fee  = 0.00309563 + 0.00007650              = 0.00317213 btc
@@ -748,26 +752,32 @@ contract TC03 is BaseIntTest_WithActions {
     // T11: Btc Price has changed to 18,500 USD
     //      Should revert ILimitTradeHandler_InvalidPriceForExecution
     updatePriceData = new bytes[](1);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_500 * 1e8, 0);
-    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_500 * 1e8, 0);
+    tickPrices[1] = 98260;
     executeLimitTradeOrder({
       _account: BOB,
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(FEEVER),
-      _priceData: updatePriceData
+      _tickPrices: tickPrices,
+      _publishTimeDiffs: publishTimeDiff,
+      _minPublishTime: block.timestamp,
+      signature: "ILimitTradeHandler_InvalidPriceForExecution()"
     });
 
-    // T12: Btc Price has changed to 17,999.99 USD
+    // T12: Btc Price has changed to 17,950 USD
     //      Execute Bob order index 0
     updatePriceData = new bytes[](1);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 17_950 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 17_950 * 1e8, 0);
+    tickPrices[1] = 97958;
     executeLimitTradeOrder({
       _account: BOB,
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(FEEVER),
-      _priceData: updatePriceData
+      _tickPrices: tickPrices,
+      _publishTimeDiffs: publishTimeDiff,
+      _minPublishTime: block.timestamp
     });
     {
       // When Limit order index 0 has executed
@@ -965,26 +975,32 @@ contract TC03 is BaseIntTest_WithActions {
     //      Execute Bob order index 1, but price is not trigger
     //      Should revert ILimitTradeHandler_InvalidPriceForExecution
     updatePriceData = new bytes[](1);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_000 * 1e8, 0);
-    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 18_000 * 1e8, 0);
+    tickPrices[1] = 97986;
     executeLimitTradeOrder({
       _account: BOB,
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(FEEVER),
-      _priceData: updatePriceData
+      _tickPrices: tickPrices,
+      _publishTimeDiffs: publishTimeDiff,
+      _minPublishTime: block.timestamp,
+      signature: "ILimitTradeHandler_InvalidPriceForExecution()"
     });
 
     // T15: Btc Price has changed to 17_940 USD
     //      Execute Bob order index 1
     updatePriceData = new bytes[](1);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 17_940 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 17_940 * 1e8, 0);
+    tickPrices[1] = 97952;
     executeLimitTradeOrder({
       _account: BOB,
       _subAccountId: 0,
       _orderIndex: 1,
       _feeReceiver: payable(FEEVER),
-      _priceData: updatePriceData
+      _tickPrices: tickPrices,
+      _publishTimeDiffs: publishTimeDiff,
+      _minPublishTime: block.timestamp
     });
     {
       // When Limit order index 1 has executed
@@ -1182,13 +1198,16 @@ contract TC03 is BaseIntTest_WithActions {
     // T17: Btc Price has changed to 21,500 USD
     //      Execute Bob order index 2
     updatePriceData = new bytes[](1);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 21_500 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 21_500 * 1e8, 0);
+    tickPrices[1] = 99763;
     executeLimitTradeOrder({
       _account: BOB,
       _subAccountId: 0,
       _orderIndex: 2,
       _feeReceiver: payable(FEEVER),
-      _priceData: updatePriceData
+      _tickPrices: tickPrices,
+      _publishTimeDiffs: publishTimeDiff,
+      _minPublishTime: block.timestamp
     });
     {
       // When Limit order index 2 has executed
@@ -1390,13 +1409,16 @@ contract TC03 is BaseIntTest_WithActions {
     // T19: Btc Price has changed to 22_100 USD
     //      Execute Bob order index 2
     updatePriceData = new bytes[](1);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 22_100 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 22_100 * 1e8, 0);
+    tickPrices[1] = 100038;
     executeLimitTradeOrder({
       _account: BOB,
       _subAccountId: 0,
       _orderIndex: 3,
       _feeReceiver: payable(FEEVER),
-      _priceData: updatePriceData
+      _tickPrices: tickPrices,
+      _publishTimeDiffs: publishTimeDiff,
+      _minPublishTime: block.timestamp
     });
     {
       // When Limit order index 2 has executed

@@ -147,7 +147,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     vm.label(address(weth), "WETH");
 
     pyth = new EcoPyth();
-    glpManager = new MockGlpManager();
 
     pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
 

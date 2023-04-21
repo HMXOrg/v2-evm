@@ -27,6 +27,7 @@ contract EcoPyth is Owned, IEcoPyth {
   bytes32[] public publishTimeDiff;
   // map Asset Id to index in the `prices` which is the array of tick price
   mapping(bytes32 => uint256) public mapAssetIdToIndex;
+  bytes32[] public assetIds;
   uint256 public indexCount;
   // each price and each publish time diff will occupy 24 bits
   // price will be in int24, where publish time diff will be in uint24
@@ -54,6 +55,7 @@ contract EcoPyth is Owned, IEcoPyth {
   constructor() {
     // Preoccupied index 0 as any of `mapAssetIdToIndex` returns default as 0
     indexCount = 1;
+    assetIds.push("0"); // First index is not used
   }
 
   function updatePriceFeeds(
@@ -127,6 +129,7 @@ contract EcoPyth is Owned, IEcoPyth {
   function _insertAssetId(bytes32 _assetId) internal {
     if (mapAssetIdToIndex[_assetId] != 0) revert EcoPyth_AssetIdHasAlreadyBeenDefined();
     mapAssetIdToIndex[_assetId] = indexCount;
+    assetIds.push(_assetId);
     ++indexCount;
   }
 

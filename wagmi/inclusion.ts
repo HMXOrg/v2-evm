@@ -11,5 +11,6 @@ export default [
   "VaultStorage.json",
   // Oracle
   "OracleMiddleware.json",
-  "PythAdapter.json"
+  "PythAdapter.json",
+  "EcoPyth.json",
 ];

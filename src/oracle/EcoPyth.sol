@@ -58,6 +58,10 @@ contract EcoPyth is Owned, IEcoPyth {
     assetIds.push("0"); // First index is not used
   }
 
+  function getAssetIds() external view returns (bytes32[] memory) {
+    return assetIds;
+  }
+
   function updatePriceFeeds(
     bytes32[] calldata _prices,
     bytes32[] calldata _publishTimeDiff,

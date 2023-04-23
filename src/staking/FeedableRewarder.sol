@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { TradingStaking } from "./TradingStaking.sol";
 import { IRewarder } from "./interfaces/IRewarder.sol";
 
-contract FeedableRewarder is Owned, IRewarder {
+contract FeedableRewarder is OwnableUpgradeable, IRewarder {
   using SafeCast for uint256;
   using SafeCast for uint128;
   using SafeCast for int256;
@@ -56,7 +56,9 @@ contract FeedableRewarder is Owned, IRewarder {
     _;
   }
 
-  constructor(string memory name_, address rewardToken_, address staking_) {
+  function initialize(string memory name_, address rewardToken_, address staking_) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+
     // Sanity check
     ERC20Upgradeable(rewardToken_).totalSupply();
     TradingStaking(staking_).isRewarder(address(this));
@@ -67,7 +69,7 @@ contract FeedableRewarder is Owned, IRewarder {
     lastRewardTime = block.timestamp.toUint64();
 
     // At initialization, assume the feeder to be the contract owner
-    feeder = owner;
+    feeder = owner();
   }
 
   function onDeposit(address user, uint256 shareAmount) external onlyStakingContract {
@@ -195,5 +197,10 @@ contract FeedableRewarder is Owned, IRewarder {
 
   function _harvestToken(address receiver, uint256 pendingRewardAmount) internal virtual {
     ERC20Upgradeable(rewardToken).safeTransfer(receiver, pendingRewardAmount);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 //base
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
@@ -11,7 +11,7 @@ import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
-contract ConfigStorage is IConfigStorage, Owned {
+contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   using SafeERC20Upgradeable for ERC20Upgradeable;
 
   /**
@@ -79,7 +79,9 @@ contract ConfigStorage is IConfigStorage, Owned {
   AssetClassConfig[] public assetClassConfigs;
   address[] public tradeServiceHooks;
 
-  constructor() {}
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
+  }
 
   /**
    * Validations
@@ -435,5 +437,10 @@ contract ConfigStorage is IConfigStorage, Owned {
 
   function setTradeServiceHooks(address[] calldata _newHooks) external onlyOwner {
     tradeServiceHooks = _newHooks;
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

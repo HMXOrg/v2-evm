@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
 import { ILeanPyth } from "./interfaces/ILeanPyth.sol";
 
-contract PythAdapter is Owned, IPythAdapter {
+contract PythAdapter is OwnableUpgradeable, IPythAdapter {
   // errors
   error PythAdapter_BrokenPythPrice();
   error PythAdapter_ConfidenceRatioTooHigh();
@@ -22,7 +22,9 @@ contract PythAdapter is Owned, IPythAdapter {
   event LogSetConfig(bytes32 indexed _assetId, bytes32 _pythPriceId, bool _inverse);
   event LogSetPyth(address _oldPyth, address _newPyth);
 
-  constructor(address _pyth) {
+  function initialize(address _pyth) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+
     pyth = ILeanPyth(_pyth);
 
     // Sanity
@@ -129,5 +131,10 @@ contract PythAdapter is Owned, IPythAdapter {
 
     // Sanity check
     ILeanPyth(_newPyth).getUpdateFee(new bytes[](0));
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

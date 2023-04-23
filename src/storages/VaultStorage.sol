@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
@@ -8,11 +9,9 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
-import { Owned } from "@hmx/base/Owned.sol";
-
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
-contract VaultStorage is Owned, ReentrancyGuardUpgradeable, IVaultStorage {
+contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultStorage {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
@@ -55,6 +54,11 @@ contract VaultStorage is Owned, ReentrancyGuardUpgradeable, IVaultStorage {
   modifier onlyWhitelistedExecutor() {
     if (!serviceExecutors[msg.sender]) revert IVaultStorage_NotWhiteListed();
     _;
+  }
+
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
   }
 
   /**
@@ -434,5 +438,10 @@ contract VaultStorage is Owned, ReentrancyGuardUpgradeable, IVaultStorage {
         i++;
       }
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

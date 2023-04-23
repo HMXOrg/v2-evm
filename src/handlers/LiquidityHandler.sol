@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 // base
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
@@ -21,7 +21,7 @@ import { IWNative } from "../interfaces/IWNative.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 /// @title LiquidityHandler
-contract LiquidityHandler is Owned, ReentrancyGuardUpgradeable, ILiquidityHandler {
+contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILiquidityHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
@@ -88,7 +88,10 @@ contract LiquidityHandler is Owned, ReentrancyGuardUpgradeable, ILiquidityHandle
 
   mapping(address => bool) public orderExecutors; //address -> flag to execute
 
-  constructor(address _liquidityService, address _pyth, uint256 _executionOrderFee) {
+  function initialize(address _liquidityService, address _pyth, uint256 _executionOrderFee) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     liquidityService = _liquidityService;
     pyth = _pyth;
     executionOrderFee = _executionOrderFee;
@@ -456,5 +459,10 @@ contract LiquidityHandler is Owned, ReentrancyGuardUpgradeable, ILiquidityHandle
 
     // Sanity check
     IPyth(_pyth).getValidTimePeriod();
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

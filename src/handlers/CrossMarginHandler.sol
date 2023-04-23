@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 // interfaces
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
@@ -15,7 +15,7 @@ import { IWNative } from "../interfaces/IWNative.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
-contract CrossMarginHandler is Owned, ReentrancyGuardUpgradeable, ICrossMarginHandler {
+contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
@@ -47,7 +47,10 @@ contract CrossMarginHandler is Owned, ReentrancyGuardUpgradeable, ICrossMarginHa
   address public crossMarginService;
   address public pyth;
 
-  constructor(address _crossMarginService, address _pyth) {
+  function initialize(address _crossMarginService, address _pyth) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     crossMarginService = _crossMarginService;
     pyth = _pyth;
 
@@ -188,5 +191,10 @@ contract CrossMarginHandler is Owned, ReentrancyGuardUpgradeable, ICrossMarginHa
     // @dev Cannot enable this check due to Solidity Fallback Function Gas Limit introduced in 0.8.17.
     // ref - https://stackoverflow.com/questions/74930609/solidity-fallback-function-gas-limit
     // require(msg.sender == ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth());
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

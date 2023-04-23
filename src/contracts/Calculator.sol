@@ -2,7 +2,8 @@
 pragma solidity 0.8.18;
 
 // base
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 //contracts
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
@@ -12,9 +13,8 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
-contract Calculator is Owned, ReentrancyGuardUpgradeable, ICalculator {
+contract Calculator is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
   uint64 internal constant RATE_PRECISION = 1e18;
@@ -32,7 +32,15 @@ contract Calculator is Owned, ReentrancyGuardUpgradeable, ICalculator {
   address public configStorage;
   address public perpStorage;
 
-  constructor(address _oracle, address _vaultStorage, address _perpStorage, address _configStorage) {
+  function initialize(
+    address _oracle,
+    address _vaultStorage,
+    address _perpStorage,
+    address _configStorage
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     // Sanity check
     if (
       _oracle == address(0) || _vaultStorage == address(0) || _perpStorage == address(0) || _configStorage == address(0)
@@ -1077,5 +1085,10 @@ contract Calculator is Owned, ReentrancyGuardUpgradeable, ICalculator {
 
   function _abs(int256 x) private pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

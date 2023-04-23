@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 // base
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
@@ -13,14 +14,13 @@ import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 // contracts
-import { Owned } from "@hmx/base/Owned.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 // @todo - integrate with BotHandler in another PRs
-contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, Owned {
+contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeable {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
@@ -64,7 +64,10 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, Owned {
     _;
   }
 
-  constructor(address _tradeService, address _liquidationService, address _pyth) {
+  function initialize(address _tradeService, address _liquidationService, address _pyth) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     // Sanity check
     ITradeService(_tradeService).configStorage();
     LiquidationService(_liquidationService).perpStorage();
@@ -310,5 +313,10 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, Owned {
     pyth = _newPyth;
 
     emit LogSetPyth(pyth, _newPyth);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

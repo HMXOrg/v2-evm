@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { IRewarder } from "./interfaces/IRewarder.sol";
 import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
 
-contract TradingStaking is Owned, ITradingStaking {
+contract TradingStaking is OwnableUpgradeable, ITradingStaking {
   /**
    * Errors
    */
@@ -45,6 +45,10 @@ contract TradingStaking is Owned, ITradingStaking {
   modifier onlyWhitelistedCaller() {
     if (msg.sender != whitelistedCaller) revert TradingStaking_Forbidden();
     _;
+  }
+
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
   }
 
   /// @dev Add a new Market Pool for multiple rewarding addresses. Only the owner of the contract can call this function.
@@ -327,5 +331,10 @@ contract TradingStaking is Owned, ITradingStaking {
       }
     }
     return totalShare;
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

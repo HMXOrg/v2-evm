@@ -4,10 +4,10 @@ pragma solidity 0.8.18;
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-contract TraderLoyaltyCredit is Owned, ITraderLoyaltyCredit {
+contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
   using SafeERC20Upgradeable for IERC20Upgradeable;
   /**
    * @dev Emitted when `value` tokens are moved from one account (`from`) to
@@ -42,6 +42,10 @@ contract TraderLoyaltyCredit is Owned, ITraderLoyaltyCredit {
   modifier onlyMinter() {
     require(minter[msg.sender], "TLC: Not Minter");
     _;
+  }
+
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
   }
 
   /**
@@ -368,5 +372,10 @@ contract TraderLoyaltyCredit is Owned, ITraderLoyaltyCredit {
     minter[_minter] = _mintable;
 
     emit SetMinter(_minter, _mintable);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

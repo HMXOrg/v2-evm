@@ -25,7 +25,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const handler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  const pyth = IPyth__factory.connect(config.oracle.pyth, deployer);
+  const pyth = IPyth__factory.connect(config.oracles.pyth, deployer);
   const priceData = await getPriceData(priceIds);
   // const storage = VaultStorage__factory.connect(config.storages.vault, deployer);
   // await (await storage.setServiceExecutors(config.services.trade, true)).wait();

@@ -1,13 +1,14 @@
 import { network } from "hardhat";
 import * as fs from "fs";
 import ArbitrumGoerliConfig from "../../configs/arbitrum.goerli.json";
+import ArbitrumMainnetConfig from "../../configs/arbitrum.mainnet.json";
 
 export function getConfig() {
   if (network.name === "matic") {
     return ArbitrumGoerliConfig;
   }
   if (network.name === "tenderly") {
-    return ArbitrumGoerliConfig;
+    return ArbitrumMainnetConfig;
   }
   if (network.name === "mumbai") {
     return ArbitrumGoerliConfig;
@@ -26,7 +27,7 @@ export function writeConfigFile(config: any) {
       filePath = "./configs/arbitrum.goerli.json";
       break;
     case "tenderly":
-      filePath = "./configs/arbitrum.goerli.json";
+      filePath = "./configs/arbitrum.mainnet.json";
       break;
     case "mumbai":
       filePath = "./configs/arbitrum.goerli.json";

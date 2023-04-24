@@ -1,50 +1,49 @@
 {
   "storages": {
-    "config": "0x20E58fC5E1ee3C596fb3ebD6de6040e7800e82E6",
-    "perp": "0x4c08D11Bc95075AD992Bd7A5776D0D9813E264d5",
-    "vault": "0x7AAF085e43f059105F7e1ECc525E8142fF962159"
+    "config": "",
+    "perp": "",
+    "vault": ""
   },
   "handlers": {
-    "bot": "0xf944690f3B7436161BA27B47799Bd06EA4154C0e",
-    "crossMargin": "0xfc51C8c673C27e1b3D89688ef46D706A77CA28DB",
-    "limitTrade": "0x1e4D635cbae9D06CbFdd2fb9a0c47b247E15f60C",
-    "liquidity": "0x8b0D385b260a2532205CB0012F1550F9310d1d77",
-    "marketTrade": "0x597b571Ee58892C044f4292703C5BF5e4783CA85"
+    "bot": "",
+    "crossMargin": "",
+    "limitTrade": "",
+    "liquidity": "",
+    "marketTrade": ""
   },
   "helpers": {
-    "trade": "0x995F553c6EF760ACB6EED102b376c3f159014e3c"
+    "trade": ""
   },
   "services": {
-    "crossMargin": "0xCB1EaA1E9Fd640c3900a4325440c80FEF4b1b16d",
-    "liquidity": "0x3f78cEc168AdF9242a3d2F04A0ab1E312c26b3Ec",
-    "liquidation": "0x28826219ffb76aa41a56a40e875709391795e512",
-    "trade": "0x68DaEB1C169d16395Bd03C2d0776A3e54015323e"
+    "crossMargin": "",
+    "liquidity": "",
+    "liquidation": "",
+    "trade": ""
   },
   "oracles": {
-    "ecoPyth": "0x66B7b19E1A8D2DdED0566ce386c9bCEB7F4177ec",
-    "pythAdapter": "0xB853c09b6d03098b841300daD57701ABcFA80228",
+    "ecoPyth": "",
+    "pythAdapter": "",
     "sglpStakedAdapter": "",
-    "middleware": "0xEB27B05178515c7E6E51dEE159c8487A011ac030"
+    "middleware": ""
   },
   "tokens": {
-    "plp": "0x8D715a015aC0e064a3Cfb88DA755d346Aee65433",
+    "hlp": "",
     "weth": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
-    "glp": "0x2f546ad4edd93b956c8999be404cdcafde3e89ae",
     "wbtc": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
     "usdt": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
     "usdc": "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
     "dai": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
-    "sglp": ""
+    "sglp": "0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf"
   },
   "yieldSources": {
     "gmx": {
-      "glpManager": "",
-      "rewardRouterV2": "",
-      "rewardTracker": ""
+      "glpManager": "0x3963FfC9dff443c2A94f21b129D429891E32ec18",
+      "rewardRouterV2": "0xB95DB5B167D75e6d04227CfFFA61069348d271F5",
+      "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6"
     }
   },
   "strategies": {
     "stakedGLPStrategy": ""
   },
-  "calculator": "0x4Dc3c929DDa7451012F408d1f376221621dD2a56"
+  "calculator": ""
 }

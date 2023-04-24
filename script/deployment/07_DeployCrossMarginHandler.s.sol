@@ -14,16 +14,17 @@ contract DeployCrossMarginHandler is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
-    address pythAddress = getJsonAddress(".oracle.leanPyth");
+    address pythAddress = getJsonAddress(".oracle.ecoPyth");
     address tradeServiceAddress = getJsonAddress(".services.trade");
     address liquiditionServiceAddress = getJsonAddress(".services.liquidation");
     address liquidityServiceAddress = getJsonAddress(".services.liquidity");
     address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
     address weth = getJsonAddress(".tokens.weth");
-    // @todo - TBD
     uint256 minExecutionFee = 30;
 
-    address crossMarginHandlerAddress = address(new CrossMarginHandler(crossMarginServiceAddress, pythAddress));
+    address crossMarginHandlerAddress = address(
+      new CrossMarginHandler(crossMarginServiceAddress, pythAddress, minExecutionFee)
+    );
 
     vm.stopBroadcast();
 

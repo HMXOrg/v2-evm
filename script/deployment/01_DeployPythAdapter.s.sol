@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
 
 import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 
@@ -11,7 +11,7 @@ contract DeployPythAdapter is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    address pythAddress = getJsonAddress(".oracle.leanPyth");
+    address pythAddress = getJsonAddress(".oracle.ecoPyth");
     address pythAdapterAddress = address(new PythAdapter(pythAddress));
 
     vm.stopBroadcast();

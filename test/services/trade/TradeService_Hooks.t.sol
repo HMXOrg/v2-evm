@@ -13,7 +13,7 @@ import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import { ITLCStaking } from "@hmx/staking/interfaces/ITLCStaking.sol";
 import { IEpochRewarder } from "@hmx/staking/interfaces/IEpochRewarder.sol";
 import { console } from "forge-std/console.sol";

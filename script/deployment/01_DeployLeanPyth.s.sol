@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
 
 import { LeanPyth } from "@hmx/oracles/LeanPyth.sol";
 
@@ -15,6 +15,6 @@ contract DeployLeanPyth is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".oracle.leanPyth", leanPythAddress);
+    updateJson(".oracle.ecoPyth", leanPythAddress);
   }
 }

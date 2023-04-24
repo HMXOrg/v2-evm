@@ -18,7 +18,7 @@ const priceIds = [
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
-  const subAccountId = 0;
+  const subAccountId = 2;
 
   const pyth = IPyth__factory.connect(config.oracle.pyth, deployer);
   const priceData = await getPriceData(priceIds);
@@ -26,14 +26,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const crossMarginHandler = CrossMarginHandler__factory.connect(config.handlers.crossMargin, deployer);
   const token = ERC20__factory.connect(config.tokens.bad, deployer);
 
-  const withdrawAmount = ethers.utils.parseUnits("500.9999", 6);
+  const withdrawAmount = ethers.utils.parseUnits("1", 6);
   const shouldUnwrap = token.address === config.tokens.weth;
 
   await (
-    await crossMarginHandler.withdrawCollateral(subAccountId, token.address, withdrawAmount, priceData, shouldUnwrap, {
-      gasLimit: 20000000,
-      value: updateFee,
-    })
+    await crossMarginHandler.createWithdrawCollateralOrder(
+      subAccountId,
+      token.address,
+      withdrawAmount,
+      await crossMarginHandler.executionOrderFee(),
+      shouldUnwrap,
+      { value: await crossMarginHandler.executionOrderFee(), gasLimit: 20000000 }
+    )
   ).wait();
 };
 

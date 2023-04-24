@@ -15,7 +15,7 @@ import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 1;
+const subAccountId = 2;
 
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
@@ -485,15 +485,45 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const [blockNumber2, [ethusdAdaptivePrice, btcusdAdaptivePrice, applusdAdaptivePrice, jpyusdAdaptivePrice]] =
     await multi.multiCall(adaptivePriceInputs);
 
+  const accountDebtRequests = [
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "tradingFeeDebt",
+      args: [address],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "borrowingFeeDebt",
+      args: [address],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "fundingFeeDebt",
+      args: [address],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "lossDebt",
+      args: [address],
+    },
+  ];
+  const [, [tradingFeeDebt, borrowingFeeDebt, fundingFeeDebt, lossDebt]] = await multi.multiCall(accountDebtRequests);
+
   console.log("=== Prices ===");
   console.log(formatUnits(usdcPrice._price, 30));
   console.log(formatUnits(usdtPrice?._price, 30));
   console.log(formatUnits(daiPrice?._price, 30));
   console.log(formatUnits(wethPrice?._price, 30));
   console.log(formatUnits(wbtcPrice?._price, 30));
+  console.log(applePrice);
   console.log(formatUnits(applePrice?._price, 30));
   console.log(formatUnits(jpyPrice?._price, 30));
   console.log("=== Adaptive Prices ===");
+
   console.log(formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
   console.log(formatUnits(btcusdAdaptivePrice._adaptivePrice, 30));
   console.log(formatUnits(applusdAdaptivePrice._adaptivePrice, 30));
@@ -512,6 +542,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: formatUnits(traderBalancesDai, 18),
     weth: formatUnits(traderBalancesWeth, 18),
     wbtc: formatUnits(traderBalancesWbtc, 8),
+  });
+  console.log("=== Trader Debts ===");
+  console.table({
+    tradingFeeDebt: formatUnits(tradingFeeDebt, 30),
+    borrowingFeeDebt: formatUnits(borrowingFeeDebt, 30),
+    fundingFeeDebt: formatUnits(fundingFeeDebt, 30),
+    lossDebt: formatUnits(lossDebt, 30),
   });
   console.log("=== Trader Tokens ===");
   console.log(traderTokens);

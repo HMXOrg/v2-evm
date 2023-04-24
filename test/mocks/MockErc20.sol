@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.18;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 /// @title Mock Erc20 token - for testing purposes ONLY.
 contract MockErc20 is ERC20 {
   uint8 internal _decimals;
 
-  constructor(
-    string memory name,
-    string memory symbol,
-    uint8 __decimals
-  ) ERC20(name, symbol) {
+  constructor(string memory name, string memory symbol, uint8 __decimals) ERC20(name, symbol) {
     _decimals = __decimals;
   }
 

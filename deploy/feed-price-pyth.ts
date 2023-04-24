@@ -23,21 +23,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     logger: console, // Providing logger will allow the connection to log its events.
   });
 
-  const priceIds = [wethPriceId, wbtcPriceId, usdcPriceId, usdtPriceId, daiPriceId, applePriceId, jpyPriceId];
+  const priceIds = [
+    // wethPriceId,
+    wbtcPriceId,
+    usdcPriceId,
+    usdtPriceId,
+    daiPriceId,
+    applePriceId,
+    jpyPriceId,
+  ];
   // console.log(priceIds);
   const priceFeeds = await connection.getLatestPriceFeeds(priceIds);
   // console.log(priceFeeds);
   // console.log(priceFeeds?.at(0)?.getPriceNoOlderThan(60));
 
   const updateData = await connection.getPriceFeedsUpdateData(priceIds);
-  // console.log(updateData);
+  console.log(updateData);
 
-  const pyth = LeanPyth__factory.connect(config.oracle.leanPyth, deployer);
+  const pyth = LeanPyth__factory.connect(config.oracle.ecoPyth, deployer);
   // console.log(await pyth.getPriceUnsafe(priceIds[0]));
   const updateFee = await pyth.getUpdateFee(updateData);
-  // console.log("updateFee", updateFee);
-  await (await pyth.setUpdater(deployer.address, true)).wait();
-  await (await pyth.updatePriceFeeds(updateData, { value: updateFee, gasLimit: 10000000 })).wait();
+  console.log("updateFee", updateFee);
+  // await (await pyth.setUpdater(deployer.address, true)).wait();
+  await (await pyth.updatePriceFeeds(updateData, { value: updateFee })).wait();
 };
 export default func;
 func.tags = ["FeedPricePyth"];

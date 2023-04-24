@@ -68,6 +68,8 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     // Sanity check
     ITradeService(_tradeService).configStorage();
     LiquidationService(_liquidationService).perpStorage();
+    // @todo
+    // IPyth(_pyth).getValidTimePeriod();
 
     tradeService = _tradeService;
     liquidationService = _liquidationService;

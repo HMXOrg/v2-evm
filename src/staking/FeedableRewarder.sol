@@ -2,9 +2,9 @@
 pragma solidity 0.8.18;
 
 import { Owned } from "@hmx/base/Owned.sol";
-import { SafeCast } from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeCast } from "lib/openzeppelin-contracts/contracts/utils/math/SafeCast.sol";
+import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import { TradingStaking } from "./TradingStaking.sol";
 import { IRewarder } from "./interfaces/IRewarder.sol";
 

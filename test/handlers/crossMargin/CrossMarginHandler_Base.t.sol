@@ -30,18 +30,24 @@ contract CrossMarginHandler_Base is BaseTest {
     publishTimeDiffs[1] = 0;
     publishTimeDiffs[2] = 0;
 
-    oracleMiddleware.setAssetPriceConfig(wethAssetId, 1e6, 60);
-    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60);
-
     pythAdapter = Deployer.deployPythAdapter(address(ecoPyth));
     pythAdapter.setConfig(wbtcAssetId, wbtcAssetId, false);
     pythAdapter.setConfig(wethAssetId, wethAssetId, false);
     pythAdapter.setConfig(usdcAssetId, usdcAssetId, false);
 
+    ecoPyth.setUpdater(address(this), true);
+
     ecoPyth.insertAssetId(wbtcAssetId);
     ecoPyth.insertAssetId(wethAssetId);
 
-    oracleMiddleware.setPythAdapter(address(pythAdapter));
+    // have to updatePriceFeed first, before oracleMiddleware.setAssetPriceConfig sanity check price
+    bytes32[] memory priceUpdateDatas = ecoPyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory publishTimeUpdateDatas = ecoPyth.buildPublishTimeUpdateData(publishTimeDiffs);
+
+    ecoPyth.updatePriceFeeds(priceUpdateDatas, publishTimeUpdateDatas, 1600, keccak256("pyth"));
+
+    oracleMiddleware.setAssetPriceConfig(wethAssetId, 1e6, 60, address(pythAdapter));
+    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60, address(pythAdapter));
 
     calculator = Deployer.deployCalculator(
       address(oracleMiddleware),
@@ -61,8 +67,8 @@ contract CrossMarginHandler_Base is BaseTest {
       address(ecoPyth),
       executionOrderFee
     );
-    ecoPyth.setUpdater(address(crossMarginHandler), true);
 
+    ecoPyth.setUpdater(address(crossMarginHandler), true);
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
     vaultStorage.setServiceExecutors(address(crossMarginService), true);
@@ -107,32 +113,6 @@ contract CrossMarginHandler_Base is BaseTest {
 
     // Mock gas for handler used for update Pyth's prices
     vm.deal(address(crossMarginHandler), 1 ether);
-
-    // Set Oracle data for Price feeding
-    {
-      pythAdapter.setConfig(wbtcAssetId, wbtcAssetId, false);
-      pythAdapter.setConfig(wethAssetId, wethAssetId, false);
-
-      priceDataBytes = new bytes[](2);
-      priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
-        wbtcPriceId,
-        20_000 * 1e8,
-        500 * 1e8,
-        -8,
-        20_000 * 1e8,
-        500 * 1e8,
-        uint64(block.timestamp)
-      );
-      priceDataBytes[1] = mockPyth.createPriceFeedUpdateData(
-        wethPriceId,
-        1_500 * 1e8,
-        50 * 1e8,
-        -8,
-        1_500 * 1e8,
-        50 * 1e8,
-        uint64(block.timestamp)
-      );
-    }
 
     // Set market status
     oracleMiddleware.setUpdater(address(this), true);

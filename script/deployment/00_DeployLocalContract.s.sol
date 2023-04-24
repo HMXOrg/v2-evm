@@ -5,7 +5,7 @@ import { MockPyth } from "lib/pyth-sdk-solidity/MockPyth.sol";
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 
-import { PythAdapter } from "@hmx/oracle/PythAdapter.sol";
+import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
@@ -24,7 +24,7 @@ contract DeployLocalContract is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".oracle.pyth", pythAddress);
+    updateJson(".oracles.pyth", pythAddress);
     updateJson(".tokens.weth", nativeAddress);
     updateJson(".tokens.wbtc", wbtc);
     updateJson(".tokens.dai", dai);

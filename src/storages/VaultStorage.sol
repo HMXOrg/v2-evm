@@ -6,6 +6,7 @@ import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.
 
 // interfaces
 import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import { Address } from "lib/openzeppelin-contracts/contracts/utils/Address.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
 import { Owned } from "@hmx/base/Owned.sol";
@@ -14,12 +15,14 @@ import { Owned } from "@hmx/base/Owned.sol";
 /// @notice storage contract to do accounting for token, and also hold physical tokens
 contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   using SafeERC20 for IERC20;
+  using Address for address;
 
   /**
    * Events
    */
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
   event SetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
+  event LogSetStrategyAllowance(address indexed token, address strategy, address prevTarget, address newTarget);
 
   /**
    * States
@@ -47,6 +50,9 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   mapping(address => mapping(address => uint256)) public traderBalances;
   // mapping(address => address[]) public traderTokens;
   mapping(address => address[]) public traderTokens;
+  // mapping(token => strategy => target)
+  mapping(address => mapping(address => address)) public strategyAllowances;
+  // mapping(service executor address => allow)
   mapping(address => bool) public serviceExecutors;
 
   /**
@@ -386,6 +392,48 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   function subLossDebt(address _trader, uint256 _lossDebt) external {
     lossDebt[_trader] -= _lossDebt;
     globalLossDebt -= _lossDebt;
+  }
+
+  /**
+   * Strategy
+   */
+
+  /// @notice Set the strategy for a token
+  /// @param _token The token to set the strategy for
+  /// @param _strategy The strategy to set
+  /// @param _target The target to set
+  function setStrategyAllowance(address _token, address _strategy, address _target) external onlyOwner {
+    emit LogSetStrategyAllowance(_token, _strategy, strategyAllowances[_token][_strategy], _target);
+    strategyAllowances[_token][_strategy] = _target;
+  }
+
+  function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
+    // If the _res length is less than 68, then the transaction failed silently (without a revert message)
+    if (_returnData.length < 68) return "Transaction reverted silently";
+    assembly {
+      // Slice the sighash.
+      _returnData := add(_returnData, 0x04)
+    }
+    return abi.decode(_returnData, (string)); // All that remains is the revert string
+  }
+
+  /// @notice invoking the target contract using call data.
+  /// @param _token The token to cook
+  /// @param _target target to execute callData
+  /// @param _callData call data signature
+  function cook(address _token, address _target, bytes calldata _callData) external returns (bytes memory) {
+    // Check
+    // 1. Only strategy for specific token can call this function
+    if (strategyAllowances[_token][msg.sender] != _target) revert IVaultStorage_Forbidden();
+    // 2. Target must be a contract. This to prevent strategy calling to EOA.
+    if (!_target.isContract()) revert IVaultStorage_TargetNotContract();
+
+    // 3. Execute the call as what the strategy wants
+    (bool _success, bytes memory _returnData) = _target.call(_callData);
+    // 4. Revert if not success
+    require(_success, _getRevertMsg(_returnData));
+
+    return _returnData;
   }
 
   /**

@@ -8,3 +8,4 @@ typechain
 broadcast/
 
 .env
+.DS_Store

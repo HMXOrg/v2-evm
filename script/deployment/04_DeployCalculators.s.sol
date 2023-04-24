@@ -10,7 +10,7 @@ contract DeployCalculators is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
-    address oracleMiddlewareAddress = getJsonAddress(".oracle.middleware");
+    address oracleMiddlewareAddress = getJsonAddress(".oracles.middleware");
     address vaultStorageAddress = getJsonAddress(".storages.vault");
     address perpStorageAddress = getJsonAddress(".storages.perp");
     address configStorageAddress = getJsonAddress(".storages.config");

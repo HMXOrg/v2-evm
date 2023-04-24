@@ -299,7 +299,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     // make price stale in mock oracle middleware
     mockOracle.setPriceStale(true);
 
-    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
     tradeService.forceClosePosition(ALICE, 0, ethMarketIndex, address(0));
   }
 

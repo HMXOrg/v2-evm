@@ -9,7 +9,7 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { Owned } from "@hmx/base/Owned.sol";
 import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
 
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {

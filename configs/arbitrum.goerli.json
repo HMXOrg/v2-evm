@@ -20,9 +20,10 @@
     "liquidation": "0x28826219ffb76aa41a56a40e875709391795e512",
     "trade": "0x68DaEB1C169d16395Bd03C2d0776A3e54015323e"
   },
-  "oracle": {
+  "oracles": {
     "ecoPyth": "0x66B7b19E1A8D2DdED0566ce386c9bCEB7F4177ec",
     "pythAdapter": "0xB853c09b6d03098b841300daD57701ABcFA80228",
+    "sglpStakedAdapter": "",
     "middleware": "0xEB27B05178515c7E6E51dEE159c8487A011ac030"
   },
   "tokens": {
@@ -33,7 +34,17 @@
     "usdt": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
     "usdc": "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
     "dai": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
-    "bad": "0xaF53F8f42EE96C136DC680f70CE57166de60632A"
+    "sglp": ""
+  },
+  "yieldSources": {
+    "gmx": {
+      "glpManager": "",
+      "rewardRouterV2": "",
+      "rewardTracker": ""
+    }
+  },
+  "strategies": {
+    "stakedGLPStrategy": ""
   },
   "calculator": "0x4Dc3c929DDa7451012F408d1f376221621dD2a56"
 }

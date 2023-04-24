@@ -7,7 +7,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
@@ -85,7 +85,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     uint256 closePriceE30;
     uint256 nextClosePrice;
     int256 unrealizedPnl;
-    int32 exponent;
     OracleMiddleware oracle;
   }
 
@@ -256,18 +255,16 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         !_vars.isLong // if current position is SHORT position, then we use max price
       );
 
-      (_vars.adaptivePriceE30, _vars.exponent, _lastPriceUpdated, _marketStatus) = _vars
-        .oracle
-        .getLatestAdaptivePriceWithMarketStatus(
-          _marketConfig.assetId,
-          _vars.isLong, // if current position is SHORT position, then we use max price
-          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
-          _sizeDelta,
-          _marketConfig.fundingRate.maxSkewScaleUSD,
-          _limitPriceE30
-        );
+      (_vars.adaptivePriceE30, _lastPriceUpdated, _marketStatus) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+        _marketConfig.assetId,
+        _vars.isLong, // if current position is SHORT position, then we use max price
+        (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+        _sizeDelta,
+        _marketConfig.fundingRate.maxSkewScaleUSD,
+        _limitPriceE30
+      );
 
-      (_vars.closePriceE30, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (_vars.closePriceE30, , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         _vars.isLong, // if current position is SHORT position, then we use max price
         (int(_market.longPositionSize) - int(_market.shortPositionSize)),
@@ -494,7 +491,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_vars.closePrice, , _lastPriceUpdated, _marketStatus) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (_vars.closePrice, _lastPriceUpdated, _marketStatus) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         !_vars.isLongPosition, // if current position is SHORT position, then we use max price
         (int(_market.longPositionSize) - int(_market.shortPositionSize)),
@@ -564,7 +561,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     {
       uint8 _marketStatus;
 
-      (_vars.closePrice, , , _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
+      (_vars.closePrice, , _marketStatus) = OracleMiddleware(_vars.configStorage.oracle())
         .getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_vars.isLongPosition, // if current position is SHORT position, then we use max price

@@ -6,7 +6,7 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -14,7 +14,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IEcoPyth } from "@hmx/oracle/interfaces/IEcoPyth.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILimitTradeHandler {
   /**
@@ -521,7 +521,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     }
 
     // Validate acceptable price with adaptive price
-    (vars.adaptivePrice, , , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (vars.adaptivePrice, , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),
@@ -562,7 +562,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
     vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
 
-    (uint256 _currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (uint256 _currentPrice, , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),

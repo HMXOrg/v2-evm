@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { PythAdapter_BaseTest } from "./PythAdapter_BaseTest.t.sol";
-import { PythAdapter } from "@hmx/oracle/PythAdapter.sol";
+import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 
 contract PythAdapter_SetterTest is PythAdapter_BaseTest {
   function setUp() public override {

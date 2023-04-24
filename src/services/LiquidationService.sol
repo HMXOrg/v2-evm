@@ -8,7 +8,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -239,7 +239,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
       _vars.globalMarket = _vars.perpStorage.getMarketByIndex(_vars.position.marketIndex);
 
-      (uint256 _adaptivePrice, , , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (uint256 _adaptivePrice, , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _vars.marketConfig.assetId,
         _isLong,
         (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),

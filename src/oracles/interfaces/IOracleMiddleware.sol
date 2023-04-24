@@ -3,14 +3,14 @@ pragma solidity 0.8.18;
 
 interface IOracleMiddleware {
   // errors
-  error IOracleMiddleware_PythPriceStale();
+  error IOracleMiddleware_PriceStale();
   error IOracleMiddleware_MarketStatusUndefined();
   error IOracleMiddleware_OnlyUpdater();
   error IOracleMiddleware_InvalidMarketStatus();
 
   function isUpdater(address _updater) external returns (bool);
 
-  function assetPriceConfigs(bytes32 _assetId) external returns (uint32, uint32);
+  function assetPriceConfigs(bytes32 _assetId) external returns (uint32, uint32, address);
 
   function marketStatus(bytes32 _assetId) external returns (uint8);
 
@@ -46,7 +46,7 @@ interface IOracleMiddleware {
     int256 _sizeDelta,
     uint256 _maxSkewScaleUSD,
     uint256 _limitPriceE30
-  ) external view returns (uint256 _adaptivePrice, int32 _exponent, uint256 _lastUpdate, uint8 _status);
+  ) external view returns (uint256 _adaptivePrice, uint256 _lastUpdate, uint8 _status);
 
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
@@ -64,7 +64,7 @@ interface IOracleMiddleware {
   function unsafeGetLatestPrice(
     bytes32 _assetId,
     bool _isMax
-  ) external view returns (uint256 _price, int32 _exponent, uint256 _lastUpdated);
+  ) external view returns (uint256 _price, uint256 _lastUpdated);
 
   function unsafeGetLatestPriceWithMarketStatus(
     bytes32 _assetId,
@@ -75,7 +75,10 @@ interface IOracleMiddleware {
 
   function setUpdater(address _updater, bool _isActive) external;
 
-  function setAssetPriceConfig(bytes32 _assetId, uint32 _confidenceThresholdE6, uint32 _trustPriceAge) external;
-
-  function setPythAdapter(address _newPythAdapter) external;
+  function setAssetPriceConfig(
+    bytes32 _assetId,
+    uint32 _confidenceThresholdE6,
+    uint32 _trustPriceAge,
+    address _adapter
+  ) external;
 }

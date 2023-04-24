@@ -11,11 +11,11 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { LiquidationService } from "@hmx/services/LiquidationService.sol";
-import { IEcoPyth } from "@hmx/oracle/interfaces/IEcoPyth.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // contracts
 import { TradeService } from "@hmx/services/TradeService.sol";
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 

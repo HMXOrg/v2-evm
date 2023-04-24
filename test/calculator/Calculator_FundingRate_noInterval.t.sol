@@ -12,8 +12,6 @@ contract Calculator_FundingRate is Calculator_Base {
   function setUp() public virtual override {
     super.setUp();
 
-    mockOracle.setExponent(-8);
-
     // Set market config
     // maxFundingRate = 0.04%
     // maxSkewScaleUSD = 3m USD

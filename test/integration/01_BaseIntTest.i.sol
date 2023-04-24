@@ -203,7 +203,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(configStorage),
       address(vaultStorage),
       address(perpStorage),
-      address(calculator)
+      address(calculator),
+      address(0) //FIXME
     );
     tradeService = Deployer.deployTradeService(
       address(perpStorage),

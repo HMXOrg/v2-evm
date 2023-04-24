@@ -69,4 +69,10 @@ interface ICrossMarginHandler {
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external;
+
+  function convertSGlpCollateral(
+    uint8 _subAccountId,
+    address _tokenOut,
+    uint256 _amountIn
+  ) external returns (uint256 _amountOut);
 }

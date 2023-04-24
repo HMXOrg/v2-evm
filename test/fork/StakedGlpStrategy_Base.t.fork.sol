@@ -10,7 +10,10 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
@@ -35,6 +38,8 @@ import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
+import { UnstakedGlpStrategy } from "@hmx/strategies/UnstakedGlpStrategy.sol";
+
 // OZ
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -76,7 +81,6 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   // PYTH
   EcoPyth internal pyth;
-  // address internal constant pythAddress = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
   bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
   AssetPythPriceData[] assetPythPriceDatas;
   bytes[] initialPriceFeedDatas;
@@ -94,9 +98,11 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   // handlers
   ILiquidityHandler liquidityHandler;
+  ICrossMarginHandler crossMarginHandler;
 
   // services
   ILiquidityService liquidityService;
+  ICrossMarginService crossMarginService;
 
   // TOKENS
   IERC20 sglp;
@@ -124,6 +130,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   IGmxRewardTracker rewardTracker; //fglp contract
 
   IStrategy stakedGlpStrategy;
+  UnstakedGlpStrategy unstakedGlpStrategy;
 
   /* Testers */
   LiquidityTester liquidityTester;
@@ -218,17 +225,9 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(perpStorage),
       address(configStorage)
     );
-    //deploy liquidityService
-    liquidityService = Deployer.deployLiquidityService(
-      address(perpStorage),
-      address(vaultStorage),
-      address(configStorage)
-    );
-    //deploy liquidityHandler
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), executionOrderFee);
 
-    // Deploy GlpStrategy
-
+    // deploy Strategy
+    // stakedGlp
     stakedGlpStrategy = Deployer.deployStakedGlpStrategy(
       sglp,
       rewardRouter,
@@ -239,6 +238,42 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       keeper,
       treasury,
       1000 // 10% of reinvest
+    );
+
+    // unstakedGlp
+    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
+      sglp,
+      rewardRouter,
+      rewardTracker,
+      glpManager,
+      oracleMiddleware,
+      vaultStorage,
+      keeper,
+      treasury,
+      1000 // 10% of reinvest
+    );
+
+    //deploy liquidityService
+    liquidityService = Deployer.deployLiquidityService(
+      address(perpStorage),
+      address(vaultStorage),
+      address(configStorage)
+    );
+
+    crossMarginService = Deployer.deployCrossMarginService(
+      address(configStorage),
+      address(vaultStorage),
+      address(perpStorage),
+      address(calculator),
+      address(unstakedGlpStrategy)
+    );
+
+    //deploy liquidityHandler
+    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), executionOrderFee);
+    crossMarginHandler = Deployer.deployCrossMarginHandler(
+      address(crossMarginService),
+      address(pyth),
+      executionOrderFee
     );
   }
 

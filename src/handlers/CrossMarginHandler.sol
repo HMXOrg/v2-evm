@@ -398,6 +398,16 @@ contract CrossMarginHandler is Owned, ReentrancyGuard, ICrossMarginHandler {
     emit LogSetOrderExecutor(_executor, _isAllow);
   }
 
+  /// @notice convert collateral
+  function convertSGlpCollateral(
+    uint8 _subAccountId,
+    address _tokenOut,
+    uint256 _amountIn
+  ) external nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _amountOut) {
+    return
+      CrossMarginService(crossMarginService).convertSGlpCollateral(msg.sender, _subAccountId, _tokenOut, _amountIn);
+  }
+
   /**
    * Private Functions
    */

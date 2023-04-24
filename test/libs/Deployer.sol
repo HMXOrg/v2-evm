@@ -42,6 +42,7 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
 
 import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
+import { UnstakedGlpStrategy } from "@hmx/strategies/UnstakedGlpStrategy.sol";
 import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
 
 library Deployer {
@@ -183,13 +184,14 @@ library Deployer {
     address _configStorage,
     address _vaultStorage,
     address _perpStorage,
-    address _calculator
+    address _calculator,
+    address _unstakeGlpStrategy
   ) internal returns (ICrossMarginService) {
     return
       ICrossMarginService(
         deployContractWithArguments(
           "CrossMarginService",
-          abi.encode(_configStorage, _vaultStorage, _perpStorage, _calculator)
+          abi.encode(_configStorage, _vaultStorage, _perpStorage, _calculator, _unstakeGlpStrategy)
         )
       );
   }
@@ -316,6 +318,37 @@ library Deployer {
       IStrategy(
         deployContractWithArguments(
           "StakedGlpStrategy",
+          abi.encode(
+            _sGlp,
+            _rewardRouter,
+            _rewardTracker,
+            _glpManager,
+            _oracleMiddleware,
+            _vaultStorage,
+            _keeper,
+            _treasury,
+            _strategyBps
+          )
+        )
+      );
+  }
+
+  // FIXME use interface to cast out, adjust params
+  function deployUnstakedGlpStrategy(
+    IERC20 _sGlp,
+    IGmxRewardRouterV2 _rewardRouter,
+    IGmxRewardTracker _rewardTracker,
+    IGmxGlpManager _glpManager,
+    IOracleMiddleware _oracleMiddleware,
+    IVaultStorage _vaultStorage,
+    address _keeper,
+    address _treasury,
+    uint16 _strategyBps
+  ) internal returns (UnstakedGlpStrategy) {
+    return
+      UnstakedGlpStrategy(
+        deployContractWithArguments(
+          "UnstakedGlpStrategy",
           abi.encode(
             _sGlp,
             _rewardRouter,

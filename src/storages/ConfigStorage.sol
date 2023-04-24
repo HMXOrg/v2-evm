@@ -31,7 +31,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   event LogSetPlpTokenConfig(address token, PLPTokenConfig oldConfig, PLPTokenConfig newConfig);
   event LogSetCollateralTokenConfig(bytes32 assetId, CollateralTokenConfig oldConfig, CollateralTokenConfig newConfig);
   event LogSetAssetConfig(bytes32 assetId, AssetConfig oldConfig, AssetConfig newConfig);
-  event LogSetWeth(address indexed oldWeth, address newWeth);
+  event LogSetToken(address indexed oldToken, address newToken);
   event LogSetAssetClassConfigByIndex(uint256 index, AssetClassConfig oldConfig, AssetClassConfig newConfig);
   event LogAddAssetClassConfig(uint256 index, AssetClassConfig newConfig);
   event LogAddMarketConfig(uint256 index, MarketConfig newConfig);
@@ -63,6 +63,7 @@ contract ConfigStorage is IConfigStorage, Owned {
   address public treasury;
   uint32 public pnlFactorBPS; // factor that calculate unrealized PnL after collateral factor
   address public weth;
+  address public sglp;
 
   // Token's address => Asset ID
   mapping(address => bytes32) public tokenAssetIds;
@@ -323,8 +324,13 @@ contract ConfigStorage is IConfigStorage, Owned {
   }
 
   function setWeth(address _weth) external onlyOwner {
-    emit LogSetWeth(weth, _weth);
+    emit LogSetToken(weth, _weth);
     weth = _weth;
+  }
+
+  function setSglp(address _sglp) external onlyOwner {
+    emit LogSetToken(sglp, _sglp);
+    sglp = _sglp;
   }
 
   /// @notice add or update AcceptedToken

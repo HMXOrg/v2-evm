@@ -8,9 +8,11 @@ import { Owned } from "@hmx/base/Owned.sol";
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
+import { UnstakedGlpStrategy } from "@hmx/strategies/UnstakedGlpStrategy.sol";
 
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
@@ -56,20 +58,35 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   address public calculator;
   address public perpStorage;
 
-  constructor(address _configStorage, address _vaultStorage, address _perpStorage, address _calculator) {
-    if (_configStorage == address(0) || _vaultStorage == address(0) || _calculator == address(0))
-      revert ICrossMarginService_InvalidAddress();
+  address public unstakeGlpStrategy;
+
+  constructor(
+    address _configStorage,
+    address _vaultStorage,
+    address _perpStorage,
+    address _calculator,
+    address _unstakeGlpStrategy
+  ) {
+    if (
+      _configStorage == address(0) ||
+      _vaultStorage == address(0) ||
+      _calculator == address(0) ||
+      _unstakeGlpStrategy == address(0)
+    ) revert ICrossMarginService_InvalidAddress();
 
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
     calculator = _calculator;
 
+    unstakeGlpStrategy = _unstakeGlpStrategy;
+
     // Sanity check
     ConfigStorage(_configStorage).calculator();
     VaultStorage(_vaultStorage).devFees(address(0));
     PerpStorage(_perpStorage).getGlobalState();
     Calculator(_calculator).oracle();
+    UnstakedGlpStrategy(unstakeGlpStrategy).sglp();
   }
 
   /**
@@ -211,6 +228,39 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     if (_vars.fundingFeeSurplusValue > 0) revert ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
 
     emit LogWithdrawFundingFeeSurplus(_vars.fundingFeeSurplusValue);
+  }
+
+  function convertSGlpCollateral(
+    address _primaryAccount,
+    uint8 _subAccountId,
+    address _tokenOut,
+    uint256 _amountIn
+  ) external nonReentrant onlyWhitelistedExecutor returns (uint256) {
+    // Get trader's sub-account address
+    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+
+    // ConfigStorage _configStorage = ConfigStorage(configStorage);
+    // OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
+
+    // IConfigStorage.AssetConfig memory _assetFrom = _configStorage.getAssetConfigByToken(_tokenIn);
+    // IConfigStorage.AssetConfig memory _assetTo = _configStorage.getAssetConfigByToken(_tokenOut);
+
+    // get Token price
+    // (uint256 tokenPriceFrom, ) = _oracle.getLatestPrice(_assetFrom.assetId, false);
+    // (uint256 tokenPriceTo, ) = _oracle.getLatestPrice(_assetTo.assetId, false);
+
+    //convert amountIn to USD
+    // uint256 _convertValue = ((_amountIn * tokenPriceFrom) / 10 ** _assetFrom.decimals);
+
+    //convert to amountOut
+    // uint256 _amountOut = (_convertValue * 10 ** _assetTo.decimals) / tokenPriceTo;
+    uint256 _amountOut = 0;
+    _vaultStorage.decreaseTraderBalance(_subAccount, _configStorage.sglp(), _amountIn);
+    _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _amountOut);
+
+    return _amountOut;
   }
 
   /**

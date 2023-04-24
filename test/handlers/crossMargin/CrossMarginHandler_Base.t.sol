@@ -16,9 +16,38 @@ contract CrossMarginHandler_Base is BaseTest {
 
   bytes[] internal priceDataBytes;
 
+  int24[] internal tickPrices;
+  uint24[] internal publishTimeDiffs;
+
   function setUp() public virtual {
-    oracleMiddleware.setAssetPriceConfig(wethAssetId, 1e6, 60);
-    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60);
+    tickPrices = new int24[](3);
+    tickPrices[0] = 99039;
+    tickPrices[1] = 73135;
+    tickPrices[2] = 73135;
+
+    publishTimeDiffs = new uint24[](3);
+    publishTimeDiffs[0] = 0;
+    publishTimeDiffs[1] = 0;
+    publishTimeDiffs[2] = 0;
+
+    pythAdapter = Deployer.deployPythAdapter(address(ecoPyth));
+    pythAdapter.setConfig(wbtcAssetId, wbtcAssetId, false);
+    pythAdapter.setConfig(wethAssetId, wethAssetId, false);
+    pythAdapter.setConfig(usdcAssetId, usdcAssetId, false);
+
+    ecoPyth.setUpdater(address(this), true);
+
+    ecoPyth.insertAssetId(wbtcAssetId);
+    ecoPyth.insertAssetId(wethAssetId);
+
+    // have to updatePriceFeed first, before oracleMiddleware.setAssetPriceConfig sanity check price
+    bytes32[] memory priceUpdateDatas = ecoPyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory publishTimeUpdateDatas = ecoPyth.buildPublishTimeUpdateData(publishTimeDiffs);
+
+    ecoPyth.updatePriceFeeds(priceUpdateDatas, publishTimeUpdateDatas, 1600, keccak256("pyth"));
+
+    oracleMiddleware.setAssetPriceConfig(wethAssetId, 1e6, 60, address(pythAdapter));
+    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60, address(pythAdapter));
 
     calculator = Deployer.deployCalculator(
       address(oracleMiddleware),
@@ -35,10 +64,11 @@ contract CrossMarginHandler_Base is BaseTest {
     );
     crossMarginHandler = Deployer.deployCrossMarginHandler(
       address(crossMarginService),
-      address(pythAdapter.pyth()),
+      address(ecoPyth),
       executionOrderFee
     );
 
+    ecoPyth.setUpdater(address(crossMarginHandler), true);
     // Set whitelist for service executor
     configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
     vaultStorage.setServiceExecutors(address(crossMarginService), true);
@@ -84,32 +114,6 @@ contract CrossMarginHandler_Base is BaseTest {
     // Mock gas for handler used for update Pyth's prices
     vm.deal(address(crossMarginHandler), 1 ether);
 
-    // Set Oracle data for Price feeding
-    {
-      pythAdapter.setConfig(wbtcAssetId, wbtcPriceId, false);
-      pythAdapter.setConfig(wethAssetId, wethPriceId, false);
-
-      priceDataBytes = new bytes[](2);
-      priceDataBytes[0] = mockPyth.createPriceFeedUpdateData(
-        wbtcPriceId,
-        20_000 * 1e8,
-        500 * 1e8,
-        -8,
-        20_000 * 1e8,
-        500 * 1e8,
-        uint64(block.timestamp)
-      );
-      priceDataBytes[1] = mockPyth.createPriceFeedUpdateData(
-        wethPriceId,
-        1_500 * 1e8,
-        50 * 1e8,
-        -8,
-        1_500 * 1e8,
-        50 * 1e8,
-        uint64(block.timestamp)
-      );
-    }
-
     // Set market status
     oracleMiddleware.setUpdater(address(this), true);
     oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // active
@@ -135,7 +139,9 @@ contract CrossMarginHandler_Base is BaseTest {
   function simulateAliceWithdrawToken(
     address _token,
     uint256 _withdrawAmount,
-    bytes[] memory _priceData,
+    int24[] memory _tickPrices,
+    uint24[] memory _publishTimeDiffs,
+    uint256 _minPublishTime,
     bool _shouldUnwrap
   ) internal {
     vm.deal(ALICE, executionOrderFee);
@@ -149,6 +155,15 @@ contract CrossMarginHandler_Base is BaseTest {
       _shouldUnwrap
     );
 
-    crossMarginHandler.executeOrder({ _endIndex: orderIndex, _feeReceiver: payable(FEEVER), _priceData: _priceData });
+    bytes32[] memory priceUpdateData = ecoPyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = ecoPyth.buildPublishTimeUpdateData(_publishTimeDiffs);
+    crossMarginHandler.executeOrder({
+      _endIndex: orderIndex,
+      _feeReceiver: payable(FEEVER),
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: block.timestamp,
+      _encodedVaas: keccak256("someEncodedVaas")
+    });
   }
 }

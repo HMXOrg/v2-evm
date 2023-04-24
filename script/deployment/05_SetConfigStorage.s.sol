@@ -14,7 +14,7 @@ contract SetConfigStorage is ConfigJsonRepo {
     address calculatorAddress = getJsonAddress(".calculator");
     address plpAddress = getJsonAddress(".tokens.plp");
     address wethAddress = getJsonAddress(".tokens.weth");
-    address oracleMiddlewareAddress = getJsonAddress(".oracle.middleware");
+    address oracleMiddlewareAddress = getJsonAddress(".oracles.middleware");
 
     configStorage.setCalculator(calculatorAddress);
     configStorage.setPLP(plpAddress);

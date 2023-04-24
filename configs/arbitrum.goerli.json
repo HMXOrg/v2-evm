@@ -14,17 +14,20 @@
   "helpers": {
     "trade": "0x4A98dd2737E1a0f2E3105820BCfd100f85bB3593"
   },
+  "helpers": {
+    "trade": ""
+  },
   "services": {
     "crossMargin": "0xd307aD3e32eB881113bB317F10758f5334772206",
     "liquidity": "0xea7aF4b3D3B0B703B16D1abF13D945798971Ba7c",
     "liquidation": "0xB32620392fE450E4f5c7483bF6842004CA775a8E",
     "trade": "0x36C2FA0f401cBED335C85f45B221ad08b1E48034"
   },
-  "oracle": {
-    "pyth": "0x939C0e902FF5B3F7BA666Cc8F6aC75EE76d3f900",
-    "leanPyth": "0x239088Eb1d4c581A0Afc611651Eb5039053EDBFB",
-    "pythAdapter": "0xaFefd85e3803CeD051200867eAAf1AA1BbDcBE16",
-    "middleware": "0x38934bDf2462768388829194fD40a43eD9916B4C"
+  "oracles": {
+    "pyth": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
+    "pythAdapter": "",
+    "sglpStakedAdapter": "",
+    "middleware": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
   },
   "tokens": {
     "plp": "0xd798DA60958B9446abcB278e992b49303D575B36",
@@ -34,7 +37,17 @@
     "usdt": "0xa0F61D4d1f069eCA065e9a63974E81E0a8FFf2b2",
     "usdc": "0xC285a535403bfa849cdDA96EE85bc39D470f3416",
     "dai": "0xf65C34cf5b1e4Fd74E148f31299166AD9AA8819B",
-    "bad": "0xaF53F8f42EE96C136DC680f70CE57166de60632A"
+    "sglp": ""
+  },
+  "yieldSources": {
+    "gmx": {
+      "glpManager": "",
+      "rewardRouterV2": "",
+      "rewardTracker": ""
+    }
+  },
+  "strategies": {
+    "stakedGLPStrategy": ""
   },
   "calculator": "0x85894c1FbFDd882485BeB25704935f3695ceD07d"
 }

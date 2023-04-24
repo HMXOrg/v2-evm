@@ -5,7 +5,7 @@ pragma solidity 0.8.18;
 import { Owned } from "@hmx/base/Owned.sol";
 
 //contracts
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -147,7 +147,7 @@ contract Calculator is Owned, ICalculator {
   ) internal view returns (uint256) {
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
-    (uint256 _priceE30, , ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
+    (uint256 _priceE30, ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
     uint256 value = (VaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
       (10 ** _assetConfig.decimals);
 
@@ -181,7 +181,7 @@ contract Calculator is Owned, ICalculator {
 
       int256 _pnlLongE30 = 0;
       int256 _pnlShortE30 = 0;
-      (uint256 priceE30, , ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
+      (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
       if (_market.longAvgPrice > 0 && _market.longPositionSize > 0) {
         if (priceE30 < _market.longAvgPrice) {
@@ -526,7 +526,7 @@ contract Calculator is Owned, ICalculator {
       if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
         _var.priceE30 = _limitPriceE30;
       } else {
-        (_var.priceE30, , , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+        (_var.priceE30, , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
           _marketConfig.assetId,
           !_var.isLong, // if current position is SHORT position, then we use max price
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),

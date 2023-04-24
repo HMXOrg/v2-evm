@@ -23,7 +23,10 @@ interface IBotHandler {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external payable;
 
   function deleverage(
@@ -31,7 +34,10 @@ interface IBotHandler {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external payable;
 
   function closeDelistedMarketPosition(
@@ -39,12 +45,27 @@ interface IBotHandler {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external payable;
 
-  function liquidate(address _subAccount, bytes[] memory _priceData) external payable;
+  function liquidate(
+    address _subAccount,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable;
 
-  function convertFundingFeeReserve(address _stableToken, bytes[] memory _priceData) external payable;
+  function convertFundingFeeReserve(
+    address _stableToken,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable;
 
   function injectTokenToPlpLiquidity(address _token, uint256 _amount) external;
 

@@ -18,7 +18,7 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
     oracleMiddleware.setUpdater(ALICE, true);
 
     // set confident as 1e18 and trust price age 20 seconds
-    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 20);
+    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 20, address(pythAdapter));
   }
 
   // get latest price with trust price
@@ -63,7 +63,7 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
   // get latest price but price is stale
   function testRevert_WhenGetLastestPriceButPriceIsStale() external {
     vm.warp(block.timestamp + 30);
-    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
     oracleMiddleware.getLatestPrice(wbtcAssetId, true);
   }
 
@@ -82,7 +82,7 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
     vm.stopPrank();
 
     vm.warp(block.timestamp + 30);
-    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PythPriceStale()"));
+    vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
     oracleMiddleware.getLatestPriceWithMarketStatus(wbtcAssetId, true);
   }
 }

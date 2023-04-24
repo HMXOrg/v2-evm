@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
-import { PythAdapter } from "@hmx/oracle/PythAdapter.sol";
+import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 
@@ -16,6 +16,6 @@ contract DeployPythAdapter is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".oracle.pythAdapter", pythAdapterAddress);
+    updateJson(".oracles.pythAdapter", pythAdapterAddress);
   }
 }

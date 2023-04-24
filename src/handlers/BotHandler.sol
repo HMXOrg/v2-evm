@@ -10,12 +10,12 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { LiquidationService } from "@hmx/services/LiquidationService.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // contracts
 import { Owned } from "@hmx/base/Owned.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
@@ -68,7 +68,6 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     // Sanity check
     ITradeService(_tradeService).configStorage();
     LiquidationService(_liquidationService).perpStorage();
-    // IPyth(_pyth).getUpdateFee(new bytes[](0));
 
     tradeService = _tradeService;
     liquidationService = _liquidationService;
@@ -89,11 +88,14 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     (bool _isMaxProfit, , ) = TradeService(tradeService).forceClosePosition(
       _account,
@@ -118,11 +120,14 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     TradeService(tradeService).validateDeleverage();
 
@@ -142,11 +147,14 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     TradeService(tradeService).validateMarketDelisted(_marketIndex);
 
@@ -158,10 +166,16 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.
   /// @param _subAccount The sub-account to be liquidated.
   /// @param _priceData Pyth price feed data, can be derived from Pyth client SDK.
-  function liquidate(address _subAccount, bytes[] memory _priceData) external payable nonReentrant onlyPositionManager {
+  function liquidate(
+    address _subAccount,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable nonReentrant onlyPositionManager {
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     // liquidate
     LiquidationService(liquidationService).liquidate(_subAccount, msg.sender);
@@ -171,13 +185,25 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
 
   /// @notice convert all tokens on funding fee reserve to stable token (USDC)
   /// @param _stableToken target token that will convert all funding fee reserves to
+  struct ConvertFundingFeeReserveLocalVars {
+    address[] collateralTokens;
+    address collatToken;
+    uint256 collatTokenPrice;
+    uint256 fundingFeeReserve;
+    uint256 convertedStableAmount;
+  }
+
   function convertFundingFeeReserve(
     address _stableToken,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external payable nonReentrant onlyOwner {
+    ConvertFundingFeeReserveLocalVars memory vars;
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: IPyth(pyth).getUpdateFee(_priceData) }(_priceData);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(ITradeService(tradeService).configStorage());
     VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
@@ -189,34 +215,32 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     // Loop through collateral lists
     // And do accounting to swap token on funding fee reserve with plp liquidity
 
-    address[] memory _collateralTokens = _configStorage.getCollateralTokens();
-    address _collatToken;
-    uint256 _collatTokenPrice;
-    uint256 _fundingFeeReserve;
-    uint256 _convertedStableAmount;
-    uint256 _len = _collateralTokens.length;
+    vars.collateralTokens = _configStorage.getCollateralTokens();
+    uint256 _len = vars.collateralTokens.length;
     for (uint256 _i; _i < _len; ) {
-      _collatToken = _collateralTokens[_i];
-      if (_stableToken != _collatToken) {
-        _fundingFeeReserve = _vaultStorage.fundingFeeReserve(_collatToken);
+      vars.collatToken = vars.collateralTokens[_i];
+      if (_stableToken != vars.collatToken) {
+        vars.fundingFeeReserve = _vaultStorage.fundingFeeReserve(vars.collatToken);
 
-        if (_fundingFeeReserve > 0) {
-          (_collatTokenPrice, ) = _oracle.getLatestPrice(_configStorage.tokenAssetIds(_collatToken), false);
+        if (vars.fundingFeeReserve > 0) {
+          (vars.collatTokenPrice, ) = _oracle.getLatestPrice(_configStorage.tokenAssetIds(vars.collatToken), false);
 
           // stable token amount = funding fee reserve value / stable price
-          _convertedStableAmount =
-            (_fundingFeeReserve * _collatTokenPrice * (10 ** _configStorage.getAssetTokenDecimal(_stableToken))) /
-            (_stableTokenPrice * (10 ** _configStorage.getAssetTokenDecimal(_collatToken)));
+          vars.convertedStableAmount =
+            (vars.fundingFeeReserve *
+              vars.collatTokenPrice *
+              (10 ** _configStorage.getAssetTokenDecimal(_stableToken))) /
+            (_stableTokenPrice * (10 ** _configStorage.getAssetTokenDecimal(vars.collatToken)));
 
-          if (_vaultStorage.plpLiquidity(_stableToken) < _convertedStableAmount)
+          if (_vaultStorage.plpLiquidity(_stableToken) < vars.convertedStableAmount)
             revert IBotHandler_InsufficientLiquidity();
 
           // funding fee should be reduced while liquidity should be increased
           _vaultStorage.convertFundingFeeReserveWithPLP(
-            _collatToken,
+            vars.collatToken,
             _stableToken,
-            _fundingFeeReserve,
-            _convertedStableAmount
+            vars.fundingFeeReserve,
+            vars.convertedStableAmount
           );
         }
       }
@@ -304,8 +328,8 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
   /// @notice Set new Pyth contract address.
   /// @param _newPyth New Pyth contract address.
   function setPyth(address _newPyth) external nonReentrant onlyOwner {
-    // Sanity check
-    IPyth(_newPyth).getUpdateFee(new bytes[](0));
+    // @todo Sanity check
+    // IPyth(_newPyth).getValidTimePeriod();
 
     pyth = _newPyth;
 

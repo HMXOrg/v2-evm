@@ -22,18 +22,22 @@ import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
+import { MockGlpManager } from "../mocks/MockGlpManager.sol";
 
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
-import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
-import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { console } from "forge-std/console.sol";
+import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
 abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;
@@ -58,6 +62,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
   // mock
   MockPyth internal mockPyth;
+  EcoPyth internal ecoPyth;
   MockCalculator internal mockCalculator;
   MockPerpStorage internal mockPerpStorage;
   MockVaultStorage internal mockVaultStorage;
@@ -65,12 +70,14 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockLiquidityService internal mockLiquidityService;
   MockTradeService internal mockTradeService;
   MockLiquidationService internal mockLiquidationService;
+  MockGlpManager internal mockGlpManager;
 
   MockWNative internal weth;
   MockErc20 internal wbtc;
   MockErc20 internal dai;
   MockErc20 internal usdc;
   MockErc20 internal usdt;
+  MockErc20 internal sglp;
 
   MockErc20 internal bad;
 
@@ -92,6 +99,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant daiAssetId = "DAI";
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
+  bytes32 internal constant sglpAssetId = "SGLP";
 
   // Fx
   bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
@@ -102,6 +110,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     // Creating a mock Pyth instance with 60 seconds valid time period
     // and 1 wei for updating price.
     mockPyth = new MockPyth(60, 1);
+    ecoPyth = new EcoPyth();
 
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
@@ -114,6 +123,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
+    sglp = new MockErc20("Staked GLP", "sGLP", 18);
     bad = new MockErc20("Bad Coin", "BAD", 2);
 
     plp = Deployer.deployPLPv2();
@@ -130,9 +140,10 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockOracle = new MockOracleMiddleware();
     mockTradeService = new MockTradeService();
     mockLiquidationService = new MockLiquidationService();
+    mockGlpManager = new MockGlpManager();
 
     pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
-    oracleMiddleware = Deployer.deployOracleMiddleware(address(pythAdapter));
+    oracleMiddleware = Deployer.deployOracleMiddleware();
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -158,35 +169,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
     proxyAdmin = new ProxyAdmin();
   }
-
-  /**
-   * TEST HELPERS
-   */
-
-  /// @notice Helper function to create a price feed update data.
-  /// @dev The price data is in the format of [wethPrice, wbtcPrice, daiPrice, usdcPrice] and in 8 decimals.
-  /// @param priceData The price data to create the update data.
-  function buildPythUpdateData(int64[] memory priceData) internal view returns (bytes[] memory) {
-    require(priceData.length == 4, "invalid price data length");
-    bytes[] memory priceDataBytes = new bytes[](4);
-    for (uint256 i = 1; i <= priceData.length; ) {
-      priceDataBytes[i - 1] = mockPyth.createPriceFeedUpdateData(
-        bytes32(uint256(i)),
-        priceData[i - 1] * 1e8,
-        0,
-        -8,
-        priceData[i - 1] * 1e8,
-        0,
-        uint64(block.timestamp)
-      );
-      unchecked {
-        ++i;
-      }
-    }
-    return priceDataBytes;
-  }
-
-  /// --------- Setup helper ------------
 
   /// @notice set up liquidity config
   function _setUpLiquidityConfig() private {

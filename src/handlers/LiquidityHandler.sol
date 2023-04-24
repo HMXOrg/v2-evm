@@ -13,12 +13,12 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 
 // interfaces
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 /// @title LiquidityHandler
 contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
@@ -97,7 +97,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     // slither-disable-next-line unused-return
     LiquidityService(_liquidityService).perpStorage();
     // slither-disable-next-line unused-return
-    IPyth(_pyth).getUpdateFee(new bytes[](0));
+    // @todo
+    // IPyth(_pyth).getValidTimePeriod();
   }
 
   /**
@@ -232,7 +233,10 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
   function executeOrder(
     uint256 _endIndex,
     address payable _feeReceiver,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
     uint256 _orderLength = liquidityOrders.length;
 
@@ -244,11 +248,8 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       _endIndex = _latestOrderIndex;
     }
 
-    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
-    IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_updateFee);
-
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     LiquidityOrder memory _order;
     uint256 _totalFeeReceiver;
@@ -258,32 +259,27 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
       _order = liquidityOrders[i];
       _executionFee = _order.executionFee;
 
-      // refund in case of order updatePythFee > executionFee
-      if (_updateFee > _executionFee) {
+      isExecuting = true;
+
+      try this.executeLiquidity(_order) returns (uint256 actualOut) {
+        emit LogExecuteLiquidityOrder(
+          _order.account,
+          _order.orderId,
+          _order.token,
+          _order.amount,
+          _order.minOut,
+          _order.isAdd,
+          actualOut
+        );
+      } catch Error(string memory) {
+        //refund in case of revert as message
         _refund(_order);
-      } else {
-        isExecuting = true;
-
-        try this.executeLiquidity(_order) returns (uint256 actualOut) {
-          emit LogExecuteLiquidityOrder(
-            _order.account,
-            _order.orderId,
-            _order.token,
-            _order.amount,
-            _order.minOut,
-            _order.isAdd,
-            actualOut
-          );
-        } catch Error(string memory) {
-          //refund in case of revert as message
-          _refund(_order);
-        } catch (bytes memory) {
-          //refund in case of revert as bytes
-          _refund(_order);
-        }
-
-        isExecuting = false;
+      } catch (bytes memory) {
+        //refund in case of revert as bytes
+        _refund(_order);
       }
+
+      isExecuting = false;
 
       _totalFeeReceiver += _executionFee;
 
@@ -297,7 +293,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
 
     nextExecutionOrderIndex = _endIndex + 1;
     // Pay the executor
-    _transferOutETH(_totalFeeReceiver - _updateFee, _feeReceiver);
+    _transferOutETH(_totalFeeReceiver, _feeReceiver);
   }
 
   /// @notice execute either addLiquidity or removeLiquidity
@@ -455,6 +451,7 @@ contract LiquidityHandler is Owned, ReentrancyGuard, ILiquidityHandler {
     pyth = _pyth;
 
     // Sanity check
-    IPyth(_pyth).getUpdateFee(new bytes[](0));
+    // @todo
+    // IPyth(_pyth).getValidTimePeriod();
   }
 }

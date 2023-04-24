@@ -26,12 +26,30 @@ contract TC36 is BaseIntTest_WithActions {
     vm.deal(ALICE, executionOrderFee);
     wbtc.mint(ALICE, 100 * 1e8);
 
-    addLiquidity(ALICE, ERC20(address(wbtc)), 100 * 1e8, executionOrderFee, initialPriceFeedDatas, true);
+    addLiquidity(
+      ALICE,
+      ERC20(address(wbtc)),
+      100 * 1e8,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
 
     vm.deal(ALICE, executionOrderFee);
     usdc.mint(ALICE, 100_000 * 1e6);
 
-    addLiquidity(ALICE, ERC20(address(usdc)), 100_000 * 1e6, executionOrderFee, initialPriceFeedDatas, true);
+    addLiquidity(
+      ALICE,
+      ERC20(address(usdc)),
+      100_000 * 1e6,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
     {
       // PLP => 1_994_000.00(WBTC) + 100_000 (USDC)
       assertPLPTotalSupply(2_094_000 * 1e18);
@@ -44,14 +62,14 @@ contract TC36 is BaseIntTest_WithActions {
     // Retrieve the global state
 
     //  Calculation for Deposit Collateral and Open Position
-    //  total usd debt => (99.7*20_000) + 100_000 => 2_094_000
-    //  max utilization = 80% = 2_094_000 *0.8 = 1_675_200
+    //  total usd debt => (99.7*20_000) + 100_000 => 2093835.07405663
+    //  max utilization = 80% = 2093835.07405663 *0.8 = 1675068.0592453
 
     // - reserveValue = imr * maxProfit/BPS
     // - imr = reserveValue /maxProfit * BPS
-    // - imr = 1_675_200 / 90000 * 10000 =>  1_675_200 /9 => 186_133.33333333334
+    // - imr = 1675068.0592453 / 90000 * 10000 =>  1675068.0592453 /9 => 186118.67324948
     // - open position Size = imr * IMF / BPS
-    // - open position Size = imr * 100 => 186133.33333333334 * 100 => 18_613_333.333333334 => 18_613_333
+    // - open position Size = imr * 100 => 186118.67324948 * 100 => 18611867.324948 => 18_611_867.324948
     // - deposit collateral = sizeDelta + (sizeDelta * tradingFeeBPS / BPS)
     // - deposit collateral = 18_613_333 + (18_613_333 * 10/10000)
     // - deposit collateral = 18631946.333
@@ -62,8 +80,8 @@ contract TC36 is BaseIntTest_WithActions {
     uint256 _pythGasFee = initialPriceFeedDatas.length;
     vm.deal(BOB, _pythGasFee);
     vm.deal(BOB, 1 ether);
-
-    marketBuy(BOB, 0, wbtcMarketIndex, 18_613_333 * 1e30, address(wbtc), initialPriceFeedDatas);
+    console.log("tvl", calculator.getPLPValueE30(true));
+    marketBuy(BOB, 0, wbtcMarketIndex, 18_611_867 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
     {
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
@@ -79,17 +97,36 @@ contract TC36 is BaseIntTest_WithActions {
       uint256 _plpTVL = calculator.getPLPValueE30(false);
       uint256 _maxUtilizationValue = (_plpTVL * _liquidityConfig.maxPLPUtilizationBPS) / 10000;
 
-      assertEq(_globalState.reserveValueE30, 1675199970000000000000000000000000000, "Global Reserve");
-      assertEq(_assetClass.reserveValueE30, 1675199970000000000000000000000000000, "AssetClass's Reserve");
-      assertEq(_plpTVL, 2094000000000000000000000000000000000, "PLP TVL");
-      assertEq(_maxUtilizationValue, 1675200000000000000000000000000000000, "MaxUtilizationValue");
+      assertApproxEqRel(
+        _globalState.reserveValueE30,
+        1675199970000000000000000000000000000,
+        MAX_DIFF,
+        "Global Reserve"
+      );
+      assertApproxEqRel(
+        _assetClass.reserveValueE30,
+        1675199970000000000000000000000000000,
+        MAX_DIFF,
+        "AssetClass's Reserve"
+      );
+      assertApproxEqRel(_plpTVL, 2094000000000000000000000000000000000, MAX_DIFF, "PLP TVL");
+      assertApproxEqRel(_maxUtilizationValue, 1675200000000000000000000000000000000, MAX_DIFF, "MaxUtilizationValue");
     }
 
     vm.deal(ALICE, executionOrderFee);
     uint256 _plpAliceBefore = plpV2.balanceOf(ALICE);
 
     // Alice try to remove liquidity, but refund due to reach max utilization
-    removeLiquidity(ALICE, address(wbtc), 1 * 1e18, executionOrderFee, initialPriceFeedDatas, true);
+    removeLiquidity(
+      ALICE,
+      address(wbtc),
+      1 * 1e18,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
     uint256 _plpAliceAfter = plpV2.balanceOf(ALICE);
 
     {
@@ -106,7 +143,16 @@ contract TC36 is BaseIntTest_WithActions {
     // Alice able to add 1000 USDC liquidity to help reserve % better
     vm.deal(ALICE, executionOrderFee);
     usdc.mint(ALICE, 1_000 * 1e6);
-    addLiquidity(ALICE, ERC20(address(usdc)), 1_000 * 1e6, executionOrderFee, initialPriceFeedDatas, true);
+    addLiquidity(
+      ALICE,
+      ERC20(address(usdc)),
+      1_000 * 1e6,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
     {
       // wbtc 99.7 * 1e30 * 20000 => 1994000000000000000000000000000000000
       // usdc 100_997.2  * 1e30 * 1 => 100997200000000000000000000000000000
@@ -118,11 +164,11 @@ contract TC36 is BaseIntTest_WithActions {
       // AUM = plpValueE30 -PNL + Pending Borrowing Fee;
       // AUM = 2094997200000000000000000000000000000 - (-560052858364255462951685200733910932) + 0
       // AUM = 2655050058364255462951685200733910932
-      assertEq(calculator.getPLPValueE30(false), 2094997200000000000000000000000000000, "plp TVL");
+      assertApproxEqRel(calculator.getPLPValueE30(false), 2094997200000000000000000000000000000, MAX_DIFF, "plp TVL");
 
-      assertEq(calculator.getPendingBorrowingFeeE30(), 0, "pending Borrowing Fee");
+      assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
-      assertEq(calculator.getAUME30(false), 2655050058364255462951685200733910932, "AUM");
+      assertApproxEqRel(calculator.getAUME30(false), 2655050058364255462951685200733910932, MAX_DIFF, "AUM");
 
       assertPLPTotalSupply(2094786772875837506655217);
 
@@ -132,7 +178,16 @@ contract TC36 is BaseIntTest_WithActions {
     }
 
     vm.deal(ALICE, executionOrderFee);
-    removeLiquidity(ALICE, address(wbtc), 500 * 1e18, executionOrderFee, initialPriceFeedDatas, true);
+    removeLiquidity(
+      ALICE,
+      address(wbtc),
+      500 * 1e18,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
     {
       //fee => 0.3%, liquidityRemove = 3_168_639
       // wbtc 99.66831361 * 1e30 * 20000 => 1993366272200000000000000000000000000
@@ -144,11 +199,11 @@ contract TC36 is BaseIntTest_WithActions {
 
       //  AUM =  2094363472200000000000000000000000000 - ( -560052858364255462951685200733910932) + 0
 
-      assertEq(calculator.getPLPValueE30(false), 2094363472200000000000000000000000000, "plp TVL");
+      assertApproxEqRel(calculator.getPLPValueE30(false), 2094363472200000000000000000000000000, MAX_DIFF, "plp TVL");
 
-      assertEq(calculator.getPendingBorrowingFeeE30(), 0, "pending Borrowing Fee");
+      assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
-      assertEq(calculator.getAUME30(false), 2654416330564255462951685200733910932, "AUM");
+      assertApproxEqRel(calculator.getAUME30(false), 2654416330564255462951685200733910932, MAX_DIFF, "AUM");
 
       assertPLPTotalSupply(2094286772875837506655217);
       // assert PLP
@@ -162,7 +217,16 @@ contract TC36 is BaseIntTest_WithActions {
       _pythGasFee = initialPriceFeedDatas.length;
       vm.deal(BOB, _pythGasFee);
       vm.deal(BOB, executionOrderFee);
-      marketSell(BOB, 0, wbtcMarketIndex, 18_613_333 * 1e30, address(wbtc), initialPriceFeedDatas);
+      marketSell(
+        BOB,
+        0,
+        wbtcMarketIndex,
+        18_611_867 * 1e30,
+        address(wbtc),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
     }
 
     {
@@ -177,22 +241,42 @@ contract TC36 is BaseIntTest_WithActions {
 
       uint256 _maxUtilizationValue = (_plpTVL * _liquidityConfig.maxPLPUtilizationBPS) / 10000;
 
-      assertEq(_globalState.reserveValueE30, 0, "Global Reserve");
-      assertEq(_assetClass.reserveValueE30, 0, "Global AssetClass Reserve");
-      assertEq(_plpTVL, 2094363472200000000000000000000000000, "PLP TVL");
-      assertEq(_maxUtilizationValue, 1675490777760000000000000000000000000, "MaxUtilizationValue");
+      assertApproxEqRel(_globalState.reserveValueE30, 0, MAX_DIFF, "Global Reserve");
+      assertApproxEqRel(_assetClass.reserveValueE30, 0, MAX_DIFF, "Global AssetClass Reserve");
+      assertApproxEqRel(_plpTVL, 2094363472200000000000000000000000000, MAX_DIFF, "PLP TVL");
+      assertApproxEqRel(_maxUtilizationValue, 1675490777760000000000000000000000000, MAX_DIFF, "MaxUtilizationValue");
     }
 
     // Try to remove All liquidity in PLP should be success
     vm.deal(ALICE, executionOrderFee * 2);
-    removeLiquidity(ALICE, address(usdc), 100_993.50130248 * 1e18, executionOrderFee, initialPriceFeedDatas, true);
-    removeLiquidity(ALICE, address(wbtc), plpV2.balanceOf(ALICE), executionOrderFee, initialPriceFeedDatas, true);
+    console.log("aum", calculator.getAUME30(false));
+    console.log("totalSupply", plpV2.totalSupply());
+    removeLiquidity(
+      ALICE,
+      address(usdc),
+      100993501139639264702996,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
+    removeLiquidity(
+      ALICE,
+      address(wbtc),
+      plpV2.balanceOf(ALICE),
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
     {
-      assertEq(calculator.getPLPValueE30(false), 0, "plp TVL");
+      assertApproxEqRel(calculator.getPLPValueE30(false), 0, MAX_DIFF, "plp TVL");
 
-      assertEq(calculator.getPendingBorrowingFeeE30(), 0, "pending Borrowing Fee");
+      assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
-      assertEq(calculator.getAUME30(false), 0, "AUM");
+      assertApproxEqRel(calculator.getAUME30(false), 0, MAX_DIFF, "AUM");
 
       assertPLPTotalSupply(0);
 

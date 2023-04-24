@@ -7,7 +7,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuar
 import { Owned } from "@hmx/base/Owned.sol";
 
 // contracts
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -15,7 +15,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   /**
@@ -108,7 +108,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
    */
   address public weth;
   address public tradeService;
-  address public pyth;
+  IEcoPyth public pyth;
   uint256 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
@@ -118,7 +118,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   constructor(address _weth, address _tradeService, address _pyth, uint256 _minExecutionFee) {
     weth = _weth;
     tradeService = _tradeService;
-    pyth = _pyth;
+    pyth = IEcoPyth(_pyth);
     isAllowAllExecutor = false;
 
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
@@ -126,8 +126,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
     // slither-disable-next-line unused-return
     TradeService(_tradeService).perpStorage();
-    // slither-disable-next-line unused-return
-    IPyth(_pyth).getUpdateFee(new bytes[](0));
+    // @todo sanity check ecopyth
   }
 
   receive() external payable {
@@ -222,7 +221,10 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     uint8 _subAccountId,
     uint256 _orderIndex,
     address payable _feeReceiver,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
     ExecuteOrderVars memory vars;
 
@@ -236,10 +238,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
-    // slither-disable-next-line arbitrary-send-eth
-    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
-    IWNative(weth).withdraw(_updateFee);
-    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+    pyth.updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
@@ -359,7 +358,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     }
 
     // Pay the executor
-    _transferOutETH(vars.order.executionFee - _updateFee, _feeReceiver);
+    _transferOutETH(vars.order.executionFee, _feeReceiver);
 
     emit LogExecuteLimitOrder(
       _account,
@@ -469,9 +468,11 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
   function setPyth(address _newPyth) external onlyOwner {
     if (_newPyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    IPyth(_newPyth).getUpdateFee(new bytes[](0));
+    // @todo sanity check
+    // IPyth(_newPyth).getValidTimePeriod();
+
     emit LogSetPyth(address(tradeService), _newPyth);
-    pyth = _newPyth;
+    pyth = IEcoPyth(_newPyth);
   }
 
   /**
@@ -514,7 +515,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     }
 
     // Validate acceptable price with adaptive price
-    (vars.adaptivePrice, , , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (vars.adaptivePrice, , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),
@@ -555,7 +556,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
     vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
 
-    (uint256 _currentPrice, , , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (uint256 _currentPrice, , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),

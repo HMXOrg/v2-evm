@@ -9,13 +9,13 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 // interfaces
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
-contract TradeService is ReentrancyGuardUpgradeable, ITradeService, Owned {
+contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgradeable {
   /**
    * Events
    */
@@ -135,7 +135,15 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, Owned {
   address public tradeHelper;
   Calculator public calculator; // cache this from configStorage
 
-  constructor(address _perpStorage, address _vaultStorage, address _configStorage, address _tradeHelper) {
+  function initialize(
+    address _perpStorage,
+    address _vaultStorage,
+    address _configStorage,
+    address _tradeHelper
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
     VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
@@ -1079,5 +1087,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, Owned {
         ++i;
       }
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

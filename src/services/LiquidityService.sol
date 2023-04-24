@@ -54,7 +54,9 @@ contract LiquidityService is ReentrancyGuardUpgradeable, ILiquidityService {
   uint32 internal constant BPS = 1e4;
   uint8 internal constant USD_DECIMALS = 30;
 
-  constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
+  function initialize(address _perpStorage, address _vaultStorage, address _configStorage) external initializer {
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
@@ -314,5 +316,10 @@ contract LiquidityService is ReentrancyGuardUpgradeable, ILiquidityService {
     if (_amount == 0) {
       revert LiquidityService_BadAmount();
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

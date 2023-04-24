@@ -21,13 +21,13 @@ const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
 const ONE_USD = parseUnits("1", 30);
 
-const ethAssetId = "0x0000000000000000000000000000000000000000000000000000000000000001";
-const wbtcAssetId = "0x0000000000000000000000000000000000000000000000000000000000000002";
-const usdcAssetId = "0x0000000000000000000000000000000000000000000000000000000000000003";
-const usdtAssetId = "0x0000000000000000000000000000000000000000000000000000000000000004";
-const daiAssetId = "0x0000000000000000000000000000000000000000000000000000000000000005";
-const appleAssetId = "0x0000000000000000000000000000000000000000000000000000000000000006";
-const jpyAssetId = "0x0000000000000000000000000000000000000000000000000000000000000007";
+const ethAssetId = ethers.utils.formatBytes32String("ETH");
+const wbtcAssetId = ethers.utils.formatBytes32String("BTC");
+const usdcAssetId = ethers.utils.formatBytes32String("USDC");
+const usdtAssetId = ethers.utils.formatBytes32String("USDT");
+const daiAssetId = ethers.utils.formatBytes32String("DAI");
+const appleAssetId = ethers.utils.formatBytes32String("AAPL");
+const jpyAssetId = ethers.utils.formatBytes32String("JPY");
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
@@ -37,14 +37,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const multi = new MultiCall(provider);
 
   const balances = await multi.getBalances(
-    [config.tokens.usdc, config.tokens.usdt, config.tokens.dai, config.tokens.wbtc, config.tokens.plp],
+    [config.tokens.usdc, config.tokens.usdt, config.tokens.dai, config.tokens.wbtc, config.tokens.hlp],
     deployer.address
   );
   console.log("=== Wallet Balances ===");
   console.table([
     {
       token: "plp",
-      balance: formatUnits(balances[1][config.tokens.plp].toString(), 18),
+      balance: formatUnits(balances[1][config.tokens.hlp].toString(), 18),
     },
     {
       token: "usdc",
@@ -173,7 +173,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // PLP
     {
       interface: PLPv2__factory.abi,
-      target: config.tokens.plp,
+      target: config.tokens.hlp,
       function: "totalSupply",
       args: [],
     },
@@ -555,8 +555,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("=== PLP ===");
   console.table({
     plpTotalSupply: formatUnits(plpTotalSupply, 18),
-    plpAum: formatUnits(plpAum, 30),
-    plpPrice: plpAum.gt(0) ? formatUnits(plpAum.mul(ethers.utils.parseEther("1")).div(plpTotalSupply), 30) : 0,
+    plpAum: plpAum ? formatUnits(plpAum, 30) : 0,
+    plpPrice:
+      plpAum && plpAum.gt(0) ? formatUnits(plpAum.mul(ethers.utils.parseEther("1")).div(plpTotalSupply), 30) : 0,
     usdc: formatUnits(plpLiquidityUsdc, 6),
     usdt: formatUnits(plpLiquidityUsdt, 6),
     dai: formatUnits(plpLiquidityDai, 18),
@@ -635,19 +636,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getNextBorrowingRate",
-      args: [0, plpTvl],
+      args: [0, plpTvl || 0],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getNextBorrowingRate",
-      args: [1, plpTvl],
+      args: [1, plpTvl || 0],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getNextBorrowingRate",
-      args: [2, plpTvl],
+      args: [2, plpTvl || 0],
     },
   ];
   const [, nextBorrowingRates] = await multi.multiCall(nextBorrowingRateInputs);

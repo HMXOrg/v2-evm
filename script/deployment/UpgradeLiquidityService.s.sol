@@ -29,14 +29,14 @@ contract UpgradeLiquidityService is ConfigJsonRepo {
 
     LiquidityHandler liquidityHandler = new LiquidityHandler(
       liquidityServiceAddress,
-      getJsonAddress(".oracle.ecoPyth"),
+      getJsonAddress(".oracles.ecoPyth"),
       1
     );
     address liquidityHandlerAddress = address(liquidityHandler);
 
     liquidityHandler.setOrderExecutor(ORDER_EXECUTOR, true);
 
-    PLPv2 plpV2 = PLPv2(getJsonAddress(".tokens.plp"));
+    PLPv2 plpV2 = PLPv2(getJsonAddress(".tokens.hlp"));
     plpV2.setMinter(getJsonAddress(".services.liquidity"), true);
 
     IConfigStorage(configStorageAddress).setServiceExecutor(liquidityServiceAddress, liquidityHandlerAddress, true);

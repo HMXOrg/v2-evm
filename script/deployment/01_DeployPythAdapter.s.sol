@@ -11,7 +11,7 @@ contract DeployPythAdapter is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    address pythAddress = getJsonAddress(".oracle.ecoPyth");
+    address pythAddress = getJsonAddress(".oracles.ecoPyth");
     address pythAdapterAddress = address(new PythAdapter(pythAddress));
 
     vm.stopBroadcast();

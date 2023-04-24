@@ -20,20 +20,21 @@ contract SetPLP is ConfigJsonRepo {
   function _setupAcceptedToken() private {
     IConfigStorage configStorage = IConfigStorage(getJsonAddress(".storages.config"));
 
-    address[] memory _tokens = new address[](5);
-    _tokens[0] = getJsonAddress(".tokens.weth");
-    _tokens[1] = getJsonAddress(".tokens.wbtc");
-    _tokens[2] = getJsonAddress(".tokens.dai");
-    _tokens[3] = getJsonAddress(".tokens.usdc");
-    _tokens[4] = getJsonAddress(".tokens.usdt");
+    address[] memory _tokens = new address[](6);
+    _tokens[0] = getJsonAddress(".tokens.sglp");
+    _tokens[1] = getJsonAddress(".tokens.usdc");
+    _tokens[2] = getJsonAddress(".tokens.usdt");
+    _tokens[3] = getJsonAddress(".tokens.dai");
+    _tokens[4] = getJsonAddress(".tokens.weth");
+    _tokens[5] = getJsonAddress(".tokens.wbtc");
 
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](_tokens.length);
-    // TODO need to set real maxWeightDiff
-    _plpTokenConfig[0] = _getPLPTokenConfigStruct(2e17, 0, 1000e18, true);
-    _plpTokenConfig[1] = _getPLPTokenConfigStruct(2e17, 0, 1000e18, true);
-    _plpTokenConfig[2] = _getPLPTokenConfigStruct(1e17, 0, 1000e18, true);
-    _plpTokenConfig[3] = _getPLPTokenConfigStruct(3e17, 0, 1000e18, true);
-    _plpTokenConfig[4] = _getPLPTokenConfigStruct(2e17, 0, 1000e18, true);
+    _plpTokenConfig[0] = _getPLPTokenConfigStruct(0.95 ether, 0, 1000e18, true);
+    _plpTokenConfig[1] = _getPLPTokenConfigStruct(0.05 ether, 0, 1000e18, true);
+    _plpTokenConfig[2] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
+    _plpTokenConfig[3] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
+    _plpTokenConfig[4] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
+    _plpTokenConfig[5] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
 
     configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
   }

@@ -17,7 +17,7 @@ contract ReloadConfig is ConfigJsonRepo {
     tradeHelper.reloadConfig();
     liquidationService.reloadConfig();
     tradeService.reloadConfig();
-    calculator.setOracle(getJsonAddress(".oracle.middleware"));
+    calculator.setOracle(getJsonAddress(".oracles.middleware"));
 
     vm.stopBroadcast();
   }

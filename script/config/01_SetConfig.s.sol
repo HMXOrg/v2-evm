@@ -10,7 +10,7 @@ contract SetConfig is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    PLPv2 plpV2 = PLPv2(getJsonAddress(".tokens.plp"));
+    PLPv2 plpV2 = PLPv2(getJsonAddress(".tokens.hlp"));
     plpV2.setMinter(getJsonAddress(".services.liquidity"), true);
 
     IConfigStorage configStorage = IConfigStorage(getJsonAddress(".storages.config"));

@@ -9,7 +9,7 @@ contract SetEcoPythUpdater is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
-    EcoPyth ecoPyth = EcoPyth(getJsonAddress(".oracle.ecoPyth"));
+    EcoPyth ecoPyth = EcoPyth(getJsonAddress(".oracles.ecoPyth"));
 
     ecoPyth.setUpdater(getJsonAddress(".handlers.bot"), true);
     ecoPyth.setUpdater(getJsonAddress(".handlers.crossMargin"), true);

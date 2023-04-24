@@ -10,7 +10,7 @@ contract GetEquity is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    address leanPyth = getJsonAddress(".oracle.ecoPyth");
+    address leanPyth = getJsonAddress(".oracles.ecoPyth");
     CrossMarginHandler(payable(getJsonAddress(".handlers.crossMargin"))).setPyth(leanPyth);
     vm.stopBroadcast();
   }

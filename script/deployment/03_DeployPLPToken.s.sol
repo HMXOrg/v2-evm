@@ -17,6 +17,6 @@ contract DeployPLPToken is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".tokens.plp", plpAddress);
+    updateJson(".tokens.hlp", plpAddress);
   }
 }

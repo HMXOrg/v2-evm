@@ -13,8 +13,8 @@ import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
 // Openzepline
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 // Libs
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
@@ -59,6 +59,7 @@ import { MarketTester } from "@hmx-test/testers/MarketTester.sol";
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { console } from "forge-std/console.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
@@ -107,7 +108,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   /* TOKENS */
 
   //LP tokens
-  ERC20 glp;
+  ERC20Upgradeable glp;
   IPLPv2 plpV2;
 
   MockErc20 wbtc; // decimals 8
@@ -131,6 +132,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   PositionTester02 positionTester02;
   TradeTester tradeTester;
 
+  ProxyAdmin proxyAdmin;
+
   constructor() {
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
@@ -142,29 +145,32 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     BOT = makeAddr("BOT");
 
     /* DEPLOY PART */
+
+    proxyAdmin = new ProxyAdmin();
+
     // deploy MOCK weth
     weth = IWNative(new MockWNative());
     vm.label(address(weth), "WETH");
 
     pyth = new EcoPyth();
 
-    pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
+    pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(pyth));
 
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware();
+    oracleMiddleWare = Deployer.deployOracleMiddleware(address(proxyAdmin), address(pythAdapter));
 
     // deploy configStorage
-    configStorage = Deployer.deployConfigStorage();
+    configStorage = Deployer.deployConfigStorage(address(proxyAdmin));
 
     // deploy perpStorage
-    perpStorage = Deployer.deployPerpStorage();
+    perpStorage = Deployer.deployPerpStorage(address(proxyAdmin));
 
     // deploy vaultStorage
-    vaultStorage = Deployer.deployVaultStorage();
+    vaultStorage = Deployer.deployVaultStorage(address(proxyAdmin));
 
     // Tokens
     // deploy plp
-    plpV2 = Deployer.deployPLPv2();
+    plpV2 = Deployer.deployPLPv2(address(proxyAdmin));
 
     wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
@@ -179,6 +185,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
     // deploy calculator
     calculator = Deployer.deployCalculator(
+      address(proxyAdmin),
       address(oracleMiddleWare),
       address(vaultStorage),
       address(perpStorage),
@@ -186,49 +193,70 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     );
 
     // deploy handler and service
-    tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
+    tradeHelper = Deployer.deployTradeHelper(
+      address(proxyAdmin),
+      address(perpStorage),
+      address(vaultStorage),
+      address(configStorage)
+    );
 
     liquidityService = Deployer.deployLiquidityService(
+      address(proxyAdmin),
       address(perpStorage),
       address(vaultStorage),
       address(configStorage)
     );
     liquidationService = Deployer.deployLiquidationService(
+      address(proxyAdmin),
       address(perpStorage),
       address(vaultStorage),
       address(configStorage),
       address(tradeHelper)
     );
     crossMarginService = Deployer.deployCrossMarginService(
+      address(proxyAdmin),
       address(configStorage),
       address(vaultStorage),
       address(perpStorage),
       address(calculator)
     );
     tradeService = Deployer.deployTradeService(
+      address(proxyAdmin),
       address(perpStorage),
       address(vaultStorage),
       address(configStorage),
       address(tradeHelper)
     );
 
-    botHandler = Deployer.deployBotHandler(address(tradeService), address(liquidationService), address(pyth));
+    botHandler = Deployer.deployBotHandler(
+      address(proxyAdmin),
+      address(tradeService),
+      address(liquidationService),
+      address(pyth)
+    );
     crossMarginHandler = Deployer.deployCrossMarginHandler(
+      address(proxyAdmin),
       address(crossMarginService),
       address(pyth),
       executionOrderFee
     );
 
     limitTradeHandler = Deployer.deployLimitTradeHandler(
+      address(proxyAdmin),
       address(weth),
       address(tradeService),
       address(pyth),
       executionOrderFee
     );
 
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), executionOrderFee);
+    liquidityHandler = Deployer.deployLiquidityHandler(
+      address(proxyAdmin),
+      address(liquidityService),
+      address(pyth),
+      executionOrderFee
+    );
 
-    marketTradeHandler = Deployer.deployMarketTradeHandler(address(tradeService), address(pyth));
+    marketTradeHandler = Deployer.deployMarketTradeHandler(address(proxyAdmin), address(tradeService), address(pyth));
 
     // testers
 

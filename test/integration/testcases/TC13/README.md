@@ -1,5 +1,7 @@
 ## TC13 - Collateral & Trade management with bad price
 
+## This case is obsoleted due to the new EcoPyth which removed the confidence from the price feeds.
+
 ### Scenario: Prepare environment
 Given Btc price is 20,000 USD
 And WETH price is 1,500 USD

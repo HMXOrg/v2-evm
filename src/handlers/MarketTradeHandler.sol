@@ -54,7 +54,8 @@ contract MarketTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Sanity check
     TradeService(_tradeService).perpStorage();
-    IPyth(_pyth).getValidTimePeriod();
+    // @todo
+    // IPyth(_pyth).getValidTimePeriod();
   }
 
   /**
@@ -255,7 +256,8 @@ contract MarketTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     pyth = _newPyth;
 
     // Sanity check
-    IPyth(_newPyth).getValidTimePeriod();
+    // @todo
+    // IPyth(_newPyth).getValidTimePeriod();
   }
 
   /**

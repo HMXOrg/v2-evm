@@ -30,10 +30,13 @@ contract TC18 is BaseIntTest_WithActions {
     // Given WETH price is 1,500 USD
     // And APPLE price is 152 USD
     updatePriceData = new bytes[](2);
-    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_500 * 1e8, 0);
-    updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 152 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_500 * 1e8, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 152 * 1e8, 0);
+    tickPrices[0] = 73135; // ETH tick price $1500
+    tickPrices[5] = 50241; // APPL tick price $152
+
     // And Bob provide 1 btc as liquidity
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, updatePriceData, true);
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
     skip(100);
 
@@ -42,7 +45,7 @@ contract TC18 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice trade on WETH's market
     // When Alice buy WETH 12,000 USD
-    marketBuy(ALICE, 0, wethMarketIndex, 12_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(ALICE, 0, wethMarketIndex, 12_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice's WETH position should be corrected
       assertPositionInfoOf({
@@ -61,9 +64,10 @@ contract TC18 is BaseIntTest_WithActions {
 
     // ### Scenario: WETH Price pump up 10% and Alice take profit
     // When Price pump to 1,650 USD
-    updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_650 * 1e8, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wethAssetId, 1_650 * 1e8, 0);
+    tickPrices[0] = 74089; // ETH tick price $1650
     // And Alice partial close for 3,000 USD
-    marketSell(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice should get profit correctly
       assertPositionInfoOf({
@@ -82,7 +86,7 @@ contract TC18 is BaseIntTest_WithActions {
 
     // ### Scenario: Bot force close Alice's position, when alice position profit reached to reserve
     // When Bot force close ALICE's WETH position
-    forceTakeMaxProfit(ALICE, 0, wethMarketIndex, address(wbtc), updatePriceData);
+    forceTakeMaxProfit(ALICE, 0, wethMarketIndex, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice should get profit correctly
       assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 1.05279548 * 1e8);
@@ -102,18 +106,27 @@ contract TC18 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice trade on APPLE's market, and profit reached to reserve
     // When Alice sell APPLE 3,000 USD
-    marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
     skip(15);
     // And APPLE's price dump to 136.8 USD (reached to max reserve)
-    updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 136.8 * 1e8, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 136.8 * 1e8, 0);
+    tickPrices[5] = 49187; // APPL tick price $136.8
     // And Alice sell more position at APPLE 3,000 USD
-    marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
     // ### Scenario: Bot couldn't force close Alice's position
     // When Bot force close ALICE's APPLE position
     // Then Revert ReservedValueStillEnough
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_ReservedValueStillEnough()"));
-    forceTakeMaxProfit(ALICE, 0, appleMarketIndex, address(wbtc), updatePriceData);
+    forceTakeMaxProfit(
+      ALICE,
+      0,
+      appleMarketIndex,
+      address(wbtc),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      "ITradeService_ReservedValueStillEnough()"
+    );
   }
 }

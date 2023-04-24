@@ -47,7 +47,7 @@ contract TC05 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       // BOB add liquidity
-      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceData, true);
+      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     }
 
     vm.warp(block.timestamp + 1);
@@ -60,23 +60,29 @@ contract TC05 is BaseIntTest_WithActions {
     // T1: Alice buy long JPYUSD 100,000 USD at 0.008 USD
     {
       updatePriceData = new bytes[](3);
-      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
-      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+      // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125 * 1e3, 0);
+      // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+      tickPrices[1] = 99039; // WBTC tick price $20,000
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[6] = 48285; // JPY tick price $125
       // buy
       bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
-      marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), updatePriceData);
+      marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     }
 
     // T2: Alice buy the position for 20 mins, JPYUSD dumped hard to 0.007945967421533571712355979340 USD. This makes Alice account went below her kill level
     vm.warp(block.timestamp + (20 * MINUTES));
     {
       updatePriceData = new bytes[](3);
-      updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
-      updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
-      updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+      // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
+      // updatePriceData[1] = _createPriceFeedUpdateData(usdcAssetId, 1 * 1e8, 0);
+      // updatePriceData[2] = _createPriceFeedUpdateData(wbtcAssetId, 20_000 * 1e8, 0);
+      tickPrices[1] = 99039;
+      tickPrices[2] = 0;
+      tickPrices[6] = 48353;
 
-      liquidate(getSubAccount(ALICE, 0), updatePriceData);
+      liquidate(getSubAccount(ALICE, 0), tickPrices, publishTimeDiff, block.timestamp);
       /*
        *
        * |       loss        | trading |      borrowing     |     funding    | liquidation | unit |
@@ -91,7 +97,7 @@ contract TC05 is BaseIntTest_WithActions {
        * protocol fee = 0.000225 + (0.0015 - (0.0015 * 15%)) = 0.03255
        * liquidation fee = 0.00025
        */
-      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 0.01210654 * 1e8);
+      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 0.01199078 * 1e8);
       assertVaultsFees(address(wbtc), 0.032550 * 1e8, 0.00046096 * 1e8, 0.00079999 * 1e8);
       assertPLPLiquidity(address(wbtc), 10.00383251 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);

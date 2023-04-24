@@ -14,7 +14,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // interfaces
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IEcoPyth } from "@hmx/oracle/interfaces/IEcoPyth.sol";
 
 contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILimitTradeHandler {
   /**
@@ -107,7 +107,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
    */
   address public weth;
   address public tradeService;
-  address public pyth;
+  IEcoPyth public pyth;
   uint256 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
@@ -125,7 +125,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     weth = _weth;
     tradeService = _tradeService;
-    pyth = _pyth;
+    pyth = IEcoPyth(_pyth);
     isAllowAllExecutor = false;
 
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
@@ -133,8 +133,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // slither-disable-next-line unused-return
     TradeService(_tradeService).perpStorage();
-    // slither-disable-next-line unused-return
-    IPyth(_pyth).getValidTimePeriod();
+    // @todo sanity check ecopyth
   }
 
   receive() external payable {
@@ -229,7 +228,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint8 _subAccountId,
     uint256 _orderIndex,
     address payable _feeReceiver,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
     ExecuteOrderVars memory vars;
 
@@ -243,10 +245,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
-    // slither-disable-next-line arbitrary-send-eth
-    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
-    IWNative(weth).withdraw(_updateFee);
-    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+    pyth.updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
@@ -366,7 +365,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     }
 
     // Pay the executor
-    _transferOutETH(vars.order.executionFee - _updateFee, _feeReceiver);
+    _transferOutETH(vars.order.executionFee, _feeReceiver);
 
     emit LogExecuteLimitOrder(
       _account,
@@ -476,9 +475,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   function setPyth(address _newPyth) external onlyOwner {
     if (_newPyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    IPyth(_newPyth).getValidTimePeriod();
+    // @todo sanity check
+    // IPyth(_newPyth).getValidTimePeriod();
     emit LogSetPyth(address(tradeService), _newPyth);
-    pyth = _newPyth;
+    pyth = IEcoPyth(_newPyth);
   }
 
   /**

@@ -42,7 +42,7 @@ interface ICalculator {
     address _subAccount,
     uint256 _price,
     bytes32 _assetId
-  ) external view returns (uint256 _freeCollateral);
+  ) external view returns (int256 _freeCollateral);
 
   function getPLPPrice(uint256 aum, uint256 supply) external returns (uint256);
 

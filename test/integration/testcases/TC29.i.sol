@@ -20,7 +20,7 @@ contract TC29 is BaseIntTest_WithActions {
       bytes[] memory priceData = new bytes[](0);
       vm.deal(BOB, 1 ether); //deal with out of gas
       wbtc.mint(BOB, 100 * 1e8);
-      addLiquidity(BOB, wbtc, 100 * 1e8, executionOrderFee, priceData, true);
+      addLiquidity(BOB, wbtc, 100 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     }
 
     // Mint tokens to Alice
@@ -80,7 +80,16 @@ contract TC29 is BaseIntTest_WithActions {
 
       // ALICE opens SHORT position on with WETH Market Price = 1500 USD
       vm.deal(ALICE, executionOrderFee);
-      marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
+      marketSell(
+        ALICE,
+        SUB_ACCOUNT_ID,
+        wethMarketIndex,
+        sellSizeE30,
+        tpToken,
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
       // Alice's Equity must be upper IMR level
       // Equity = 27_194.999999966614, IMR = 10_000
@@ -96,14 +105,14 @@ contract TC29 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       //  Set Price for BTCUSD expected make Alice's Equity < MMR
-      bytes32[] memory _assetIds = new bytes32[](1);
-      int64[] memory _prices = new int64[](1);
-      uint64[] memory _confs = new uint64[](1);
-      _assetIds[0] = wethAssetId;
-      _prices[0] = 2000 * 1e8;
-      _confs[0] = 2;
-
-      setPrices(_assetIds, _prices, _confs);
+      // bytes32[] memory _assetIds = new bytes32[](1);
+      // int64[] memory _prices = new int64[](1);
+      // uint64[] memory _confs = new uint64[](1);
+      // _assetIds[0] = wethAssetId;
+      // _prices[0] = 2000 * 1e8;
+      // _confs[0] = 2;
+      tickPrices[0] = 76012; // ETH tick price $2,000
+      setPrices(tickPrices, publishTimeDiff);
 
       // Alice's Equity must be lower MMR level
       assertTrue(
@@ -122,7 +131,15 @@ contract TC29 is BaseIntTest_WithActions {
       assertEq(traderPositionBefore.length, 1);
       bytes[] memory prices = new bytes[](0);
 
-      botHandler.liquidate(SUB_ACCOUNT, prices);
+      bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
+      bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+      botHandler.liquidate(
+        SUB_ACCOUNT,
+        priceUpdateData,
+        publishTimeUpdateData,
+        block.timestamp,
+        keccak256("someEncodedVaas")
+      );
 
       // ALICE's position before liquidate must contain 0 position
       IPerpStorage.Position[] memory traderPositionAfter = perpStorage.getPositionBySubAccount(SUB_ACCOUNT);
@@ -163,7 +180,16 @@ contract TC29 is BaseIntTest_WithActions {
       address tpToken = address(wbtc); // @note settle with WBTC that be treated as GLP token
       bytes[] memory priceData = new bytes[](0);
       vm.deal(ALICE, 1 ether);
-      marketBuy(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, buySizeE30, tpToken, priceData);
+      marketBuy(
+        ALICE,
+        SUB_ACCOUNT_ID,
+        wethMarketIndex,
+        buySizeE30,
+        tpToken,
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
       // ALICE's position after open new position
       IPerpStorage.Position[] memory traderPositionAfter = perpStorage.getPositionBySubAccount(SUB_ACCOUNT);

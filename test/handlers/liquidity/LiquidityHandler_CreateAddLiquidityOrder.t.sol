@@ -7,7 +7,7 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 // - revert
 //   - Try notAcceptedToken
 //   - Try _executionFee < minExecutionFee
-//   - Try shoulWrap Error
+//   - Try shouldWrap Error
 //   - Try msg.value != minExecutionFee
 //   - Try cancelOrder not owner
 //   - Try cancelOrder with uncreated order

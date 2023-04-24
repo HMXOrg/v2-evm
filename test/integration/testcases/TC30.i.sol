@@ -6,6 +6,7 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { console } from "forge-std/console.sol";
 
 contract TC30 is BaseIntTest_WithActions {
   function test_correctness_executeMultipleOrders() external {
@@ -17,7 +18,16 @@ contract TC30 is BaseIntTest_WithActions {
     wbtc.mint(ALICE, _aliceBTCAmount);
 
     // Alice Create Order
-    addLiquidity(ALICE, ERC20(address(wbtc)), _aliceBTCAmount, executionOrderFee, initialPriceFeedDatas, false);
+    addLiquidity(
+      ALICE,
+      ERC20(address(wbtc)),
+      _aliceBTCAmount,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      false
+    );
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
       assertEq(liquidityOrders.length, 1, "liquidityOrder size After Created");
@@ -33,7 +43,16 @@ contract TC30 is BaseIntTest_WithActions {
     vm.deal(ALICE, executionOrderFee);
     uint256 _aliceUSDCAmount = 20_000 * 1e6;
     usdc.mint(ALICE, _aliceUSDCAmount);
-    addLiquidity(ALICE, ERC20(address(usdc)), _aliceUSDCAmount, executionOrderFee, initialPriceFeedDatas, false);
+    addLiquidity(
+      ALICE,
+      ERC20(address(usdc)),
+      _aliceUSDCAmount,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      false
+    );
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
       assertEq(liquidityOrders.length, 2, "liquidityOrder size After Created");
@@ -49,7 +68,16 @@ contract TC30 is BaseIntTest_WithActions {
     uint256 _bobUSDCAmount = 0.5 * 1e6;
     vm.deal(BOB, executionOrderFee);
     usdc.mint(BOB, _bobUSDCAmount);
-    addLiquidity(BOB, ERC20(address(usdc)), _bobUSDCAmount, executionOrderFee, initialPriceFeedDatas, false);
+    addLiquidity(
+      BOB,
+      ERC20(address(usdc)),
+      _bobUSDCAmount,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      false
+    );
 
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
@@ -67,7 +95,16 @@ contract TC30 is BaseIntTest_WithActions {
     vm.deal(BOB, executionOrderFee);
     uint256 _bobBTCAmount = 0.5 * 1e8;
     wbtc.mint(BOB, _bobBTCAmount);
-    addLiquidity(BOB, ERC20(address(wbtc)), _bobBTCAmount, executionOrderFee, initialPriceFeedDatas, false);
+    addLiquidity(
+      BOB,
+      ERC20(address(wbtc)),
+      _bobBTCAmount,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      false
+    );
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
       assertEq(liquidityOrders.length, 4, "liquidityOrder size After Created");
@@ -82,7 +119,7 @@ contract TC30 is BaseIntTest_WithActions {
     // BOB received PLP amount =>  9,993.0000000
     // plpTotalSupply = 39780.496 => 49_773.496
     uint256 _lastOrderIndex = liquidityHandler.getLiquidityOrders().length - 1;
-    executePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
+    executePLPOrder(_lastOrderIndex, tickPrices, publishTimeDiff, block.timestamp);
 
     assertEq(calculator.getAUME30(false) / plpV2.totalSupply() / 1e12, 1, "AUM");
     assertPLPTotalSupply(49_773.496 * 1e18);
@@ -121,7 +158,20 @@ contract TC30 is BaseIntTest_WithActions {
     // ALICE PLP in hand => 39,780
     // BOB PLP in hand => 9,993.496
     vm.deal(ALICE, executionOrderFee);
-    removeLiquidity(ALICE, address(wbtc), 29_933 * 1e18, executionOrderFee, initialPriceFeedDatas, false);
+    console.log("A", plpV2.balanceOf(ALICE));
+    console.log(plpV2.totalSupply());
+    removeLiquidity(
+      ALICE,
+      address(wbtc),
+      29930.52420849 * 1e18,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      false
+    );
+    console.log("B", plpV2.balanceOf(ALICE));
+    console.log(plpV2.totalSupply());
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
       assertEq(liquidityOrders.length, 5, "liquidityOrder size After Created");
@@ -137,7 +187,20 @@ contract TC30 is BaseIntTest_WithActions {
     // ALICE received WBTC amount => 1.49665 - 0.009578560 =>  1.48707144 (wbtc)
 
     vm.deal(ALICE, executionOrderFee);
-    removeLiquidity(ALICE, address(usdc), 9_847 * 1e18, executionOrderFee, initialPriceFeedDatas, false);
+    console.log("C", plpV2.balanceOf(ALICE));
+    console.log(plpV2.totalSupply());
+    removeLiquidity(
+      ALICE,
+      address(usdc),
+      plpV2.balanceOf(ALICE),
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      false
+    );
+    console.log("D", plpV2.balanceOf(ALICE));
+    console.log(plpV2.totalSupply());
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
       assertEq(liquidityOrders.length, 6, "liquidityOrder size After Created");
@@ -153,7 +216,20 @@ contract TC30 is BaseIntTest_WithActions {
     // ALICE received USDC amount 9_847
 
     vm.deal(BOB, executionOrderFee);
-    removeLiquidity(BOB, address(usdc), 9_993.496 * 1e18, executionOrderFee, initialPriceFeedDatas, false);
+    console.log("E", plpV2.balanceOf(BOB));
+    console.log(plpV2.totalSupply());
+    removeLiquidity(
+      BOB,
+      address(usdc),
+      plpV2.balanceOf(BOB),
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      false
+    );
+    console.log("F", plpV2.balanceOf(BOB));
+    console.log(plpV2.totalSupply());
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
       assertEq(liquidityOrders.length, 7, "liquidityOrder size After Created");
@@ -174,7 +250,8 @@ contract TC30 is BaseIntTest_WithActions {
     // feetotal => 0.01292856 (wbtc)  + 160.004 (usdc)
 
     _lastOrderIndex = liquidityHandler.getLiquidityOrders().length - 1;
-    executePLPOrder(_lastOrderIndex, initialPriceFeedDatas);
+    executePLPOrder(_lastOrderIndex, tickPrices, publishTimeDiff, block.timestamp);
+    console.log(plpV2.totalSupply());
 
     nextExecutedIndex = liquidityHandler.nextExecutionOrderIndex();
 

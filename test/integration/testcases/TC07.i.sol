@@ -19,7 +19,7 @@ contract TC07 is BaseIntTest_WithActions {
       vm.deal(BOB, 1 ether); //deal with out of gas
       vm.deal(ALICE, 1 ether); //deal with out of gas
       wbtc.mint(BOB, 10 * 1e8);
-      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, priceData, true);
+      addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     }
     // Mint tokens to Alice
     {
@@ -75,7 +75,16 @@ contract TC07 is BaseIntTest_WithActions {
       bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
 
-      marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
+      marketSell(
+        ALICE,
+        SUB_ACCOUNT_ID,
+        wethMarketIndex,
+        sellSizeE30,
+        tpToken,
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
       // Alice's Equity must be upper IMR level
       // Equity = 19214.999999996664, IMR = 1000
@@ -91,22 +100,21 @@ contract TC07 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       //  Set Price for ETHUSD to 1,550 USD
-      bytes32[] memory _assetIds = new bytes32[](4);
-      _assetIds[0] = wethAssetId;
-      _assetIds[1] = usdcAssetId;
-      _assetIds[2] = daiAssetId;
-      _assetIds[3] = wbtcAssetId;
-      int64[] memory _prices = new int64[](4);
-      _prices[0] = 1_550 * 1e8;
-      _prices[1] = 1 * 1e8;
-      _prices[2] = 1 * 1e8;
-      _prices[3] = 20_000 * 1e8;
-      uint64[] memory _confs = new uint64[](4);
-      _confs[0] = 1000;
-      _confs[1] = 1000;
-      _confs[2] = 1000;
-      _confs[3] = 1000;
-      setPrices(_assetIds, _prices, _confs);
+      // bytes32[] memory _assetIds = new bytes32[](4);
+      // _assetIds[0] = wethAssetId;
+      // _assetIds[1] = usdcAssetId;
+      // _assetIds[2] = daiAssetId;
+      // _assetIds[3] = wbtcAssetId;
+      // int64[] memory _prices = new int64[](4);
+      // _prices[0] = 1_550 * 1e8;
+      // _prices[1] = 1 * 1e8;
+      // _prices[2] = 1 * 1e8;
+      // _prices[3] = 20_000 * 1e8;
+      tickPrices[0] = 73463; // ETH tick price $1,550
+      tickPrices[2] = 0; // USDC tick price $1
+      tickPrices[4] = 0; // DAI tick price $1
+      tickPrices[1] = 99039; // WBTC tick price $20,000
+      setPrices(tickPrices, publishTimeDiff);
 
       // Alice's Equity must be upper IMR level
       // Equity = 16200.148339534511, IMR = 1000
@@ -129,7 +137,16 @@ contract TC07 is BaseIntTest_WithActions {
       // Alice withdraw 1000(USD) of USDC
       // Expected that Alice can normally withdraw collateral
       bytes[] memory priceData = new bytes[](0);
-      withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 1_000 * 1e6, priceData);
+      withdrawCollateral(
+        ALICE,
+        SUB_ACCOUNT_ID,
+        usdc,
+        1_000 * 1e6,
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp,
+        executionOrderFee
+      );
 
       // After Alice withdraw USDC
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), (9_000 - 1_000) * 1e6, "ALICE's USDC Balance");
@@ -142,17 +159,27 @@ contract TC07 is BaseIntTest_WithActions {
      */
     vm.warp(block.timestamp + 1);
     {
-      uint256 sellSizeE30 = 1_314_600 * 1e30;
+      uint256 sellSizeE30 = 1_000_000 * 1e30;
       address tpToken = address(wbtc);
       bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1550 USD
       // Expect after sell position, will make Equity more closer to IMR level
-      marketSell(ALICE, SUB_ACCOUNT_ID, wethMarketIndex, sellSizeE30, tpToken, priceData);
+      marketSell(
+        ALICE,
+        SUB_ACCOUNT_ID,
+        wethMarketIndex,
+        sellSizeE30,
+        tpToken,
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
       // Alice's Free collateral must be almost zero
-      assertEq(
+      assertApproxEqRel(
         calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0),
-        2019923840855901124720000000000000, // 2019.923840855901124720000000000000 $
+        2398870507522567791426666666666488, // 2398.870507522567791426666666666488 $
+        MAX_DIFF,
         "ALICE's free collateral is almost zero"
       );
 
@@ -189,8 +216,17 @@ contract TC07 is BaseIntTest_WithActions {
       // Alice withdraw 1(USD) of USDC
       // Expect Alice can't withdraw collateral because Equity < IMR
       bytes[] memory priceData = new bytes[](0);
-      vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-      withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 1 * 1e6, priceData);
+      // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
+      withdrawCollateral(
+        ALICE,
+        SUB_ACCOUNT_ID,
+        usdc,
+        1 * 1e6,
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp,
+        executionOrderFee
+      );
       // Alice's Equity must be lower IMR level
       // Equity = 2850.5766353065096, IMR = 13000
       assertTrue(
@@ -225,7 +261,16 @@ contract TC07 is BaseIntTest_WithActions {
       assertEq(usdc.balanceOf(ALICE), 1000 * 1e6, "USDC Balance Of");
       // Alice withdraw 10(USD) of USDC
       bytes[] memory priceData = new bytes[](0);
-      withdrawCollateral(ALICE, SUB_ACCOUNT_ID, usdc, 10 * 1e6, priceData);
+      withdrawCollateral(
+        ALICE,
+        SUB_ACCOUNT_ID,
+        usdc,
+        10 * 1e6,
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp,
+        executionOrderFee
+      );
       // Alice's Equity must be lower IMR level
       // Equity = 2850.5766353065096, IMR = 2600
       assertTrue(

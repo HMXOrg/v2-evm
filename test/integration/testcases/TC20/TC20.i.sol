@@ -35,12 +35,15 @@ contract TC20 is BaseIntTest_WithActions {
     // And WETH price is 1,500 USD
     // And APPLE price is 152 USD
     updatePriceData = new bytes[](3);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
-    updatePriceData[1] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
-    updatePriceData[2] = _createPriceFeedUpdateData(jpyAssetId, 152 * 1e3, 0);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
+    // updatePriceData[2] = _createPriceFeedUpdateData(jpyAssetId, 152 * 1e3, 0);
+    tickPrices[0] = 73135; // ETH tick price $23,000
+    tickPrices[1] = 99039; // WBTC tick price $20,000
+    tickPrices[6] = 50241; // JPY tick price $152
 
     // And Bob provide liquidity 5 btc
-    addLiquidity(BOB, wbtc, 5 * 1e8, executionOrderFee, updatePriceData, true);
+    addLiquidity(BOB, wbtc, 5 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     {
       // PLP liquidity and total supply should be corrected
       // 5 * 0.997 = 4.985
@@ -63,7 +66,7 @@ contract TC20 is BaseIntTest_WithActions {
 
     // ### Scenario: Traders buy / sell
     // When Alice sell WETH 600,000 USD
-    marketSell(ALICE, 0, wethMarketIndex, 600_000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(ALICE, 0, wethMarketIndex, 600_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // avg price = 1500 * (1 + ((0 - 600000) / 300000000 / 2)) = 1498.5
       assertPositionInfoOf({
@@ -91,12 +94,14 @@ contract TC20 is BaseIntTest_WithActions {
       appleMarketIndex,
       100_000 * 1e30,
       address(wbtc),
-      updatePriceData,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
       "ITradeService_InsufficientLiquidity()"
     );
 
     // When Bob buy APPLE 20,000 USD
-    marketBuy(BOB, 0, appleMarketIndex, 20_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(BOB, 0, appleMarketIndex, 20_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // premium before = 0 / 300000000 = 0
       // premium after  = 20000 / 300000000 = 0.000066666666666666666666666666
@@ -123,7 +128,7 @@ contract TC20 is BaseIntTest_WithActions {
     }
 
     // When Alice sell more WETH position 150,000 USD
-    marketSell(ALICE, 0, wethMarketIndex, 150_000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(ALICE, 0, wethMarketIndex, 150_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice's WETH position should be corrected
       // new close price = 1500 * (1 + ((-750000 + 0) / 300000000 / 2)) = 1498.125
@@ -155,7 +160,9 @@ contract TC20 is BaseIntTest_WithActions {
       appleMarketIndex,
       20_000 * 1e30,
       address(wbtc),
-      updatePriceData,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
       "ITradeService_InsufficientLiquidity()"
     );
 
@@ -164,8 +171,9 @@ contract TC20 is BaseIntTest_WithActions {
 
     // ### Scenario: TVL has increased when price changed
     // When BTC price pump to 22,000 USD
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 22000 * 1e8, 0);
-    updatePriceFeeds(updatePriceData);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 22000 * 1e8, 0);
+    tickPrices[1] = 99993; // WBTC tick price $22,000
+    updatePriceFeeds(tickPrices, block.timestamp);
     {
       // Then TVL should be increased
       // 4.985 * 22000 = 109670
@@ -174,7 +182,7 @@ contract TC20 is BaseIntTest_WithActions {
     }
 
     // And Alice buy APPLE position 20,000 USD again
-    marketSell(ALICE, 0, appleMarketIndex, 20_000 * 1e30, address(wbtc), updatePriceData);
+    marketSell(ALICE, 0, appleMarketIndex, 20_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // premium before = 20000 / 300000000 = 0.000066666666666666666666666666
       // premium after  = 0 / 300000000 = 0
@@ -203,8 +211,9 @@ contract TC20 is BaseIntTest_WithActions {
     skip(15);
     // ### Scenario: TVL has decreased when price changed
     // When BTC price has changed back to 20,000 USD
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
-    updatePriceFeeds(updatePriceData);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    tickPrices[1] = 99039; // WBTC tick price $20,000
+    updatePriceFeeds(tickPrices, block.timestamp);
     {
       // Then TVL should be reduced
       // 4.985 * 20000 = 99700
@@ -214,7 +223,7 @@ contract TC20 is BaseIntTest_WithActions {
     }
 
     // And Alice fully close APPLE's position
-    marketBuy(ALICE, 0, appleMarketIndex, 20_000 * 1e30, address(wbtc), updatePriceData);
+    marketBuy(ALICE, 0, appleMarketIndex, 20_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     {
       // Then Alice Apple's position should be gone
       assertPositionInfoOf({
@@ -248,7 +257,7 @@ contract TC20 is BaseIntTest_WithActions {
     assertMarketShortPosition({
       _marketIndex: wethMarketIndex,
       _positionSize: 750_000 * 1e30,
-      _avgPrice: 1_498.124624248496993987975951903807 * 1e30,
+      _avgPrice: 1498.125 * 1e30,
       _str: "WETH:  "
     });
   }

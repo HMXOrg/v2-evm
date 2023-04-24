@@ -18,12 +18,30 @@ contract TC25 is BaseIntTest_WithActions {
     vm.deal(ALICE, executionOrderFee);
     wbtc.mint(ALICE, 100 * 1e8);
 
-    addLiquidity(ALICE, ERC20(address(wbtc)), 100 * 1e8, executionOrderFee, initialPriceFeedDatas, true);
+    addLiquidity(
+      ALICE,
+      ERC20(address(wbtc)),
+      100 * 1e8,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
 
     vm.deal(ALICE, executionOrderFee);
     usdc.mint(ALICE, 100_000 * 1e6);
 
-    addLiquidity(ALICE, ERC20(address(usdc)), 100_000 * 1e6, executionOrderFee, initialPriceFeedDatas, true);
+    addLiquidity(
+      ALICE,
+      ERC20(address(usdc)),
+      100_000 * 1e6,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
     {
       // PLP => 1_994_000.00(WBTC) + 100_000 (USDC)
       assertPLPTotalSupply(2_094_000 * 1e18);
@@ -56,9 +74,9 @@ contract TC25 is BaseIntTest_WithActions {
     // Short ETH
     // LONG JPY
     vm.deal(BOB, 1 ether);
-    marketBuy(BOB, 0, wbtcMarketIndex, 100_000 * 1e30, address(wbtc), initialPriceFeedDatas);
-    marketBuy(BOB, 0, jpyMarketIndex, 100_000 * 1e30, address(usdc), initialPriceFeedDatas);
-    marketSell(BOB, 0, wethMarketIndex, 100_000 * 1e30, address(usdc), initialPriceFeedDatas);
+    marketBuy(BOB, 0, wbtcMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    marketBuy(BOB, 0, jpyMarketIndex, 100_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
+    marketSell(BOB, 0, wethMarketIndex, 100_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
 
     // PLP LIQUIDITY 99.7 WBTC, 100_000 usdc
 
@@ -91,12 +109,13 @@ contract TC25 is BaseIntTest_WithActions {
       uint256 plpValueBefore = calculator.getPLPValueE30(false);
       uint256 pendingBorrowingFeeBefore = calculator.getPendingBorrowingFeeE30();
       uint256 aumBefore = calculator.getAUME30(false);
-      assertEq(plpValueBefore, 2094000000000000000000000000000000000, "PLP TVL Before Feed Price");
-      assertEq(pendingBorrowingFeeBefore, 0, "Pending Borrowing Fee Before Feed Price");
-      assertEq(aumBefore, 2094049997223611033989195388580911857, "AUM Before Feed Price");
-      assertEq(
+      assertApproxEqRel(plpValueBefore, 2094000000000000000000000000000000000, MAX_DIFF, "PLP TVL Before Feed Price");
+      assertApproxEqRel(pendingBorrowingFeeBefore, 0, MAX_DIFF, "Pending Borrowing Fee Before Feed Price");
+      assertApproxEqRel(aumBefore, 2094049997223611033989195388580911857, MAX_DIFF, "AUM Before Feed Price");
+      assertApproxEqRel(
         -int256(aumBefore - plpValueBefore - pendingBorrowingFeeBefore),
         -49997223611033989195388580911857,
+        MAX_DIFF,
         "GLOBAL PNLE30"
       );
     }
@@ -105,18 +124,9 @@ contract TC25 is BaseIntTest_WithActions {
     // - BTC 20,000 => 21,000
     // - ETH 1,500 => 1,800
     {
-      bytes32[] memory _newAssetIds = new bytes32[](2);
-      int64[] memory _prices = new int64[](2);
-      uint64[] memory _conf = new uint64[](2);
-      _newAssetIds[0] = wbtcAssetId;
-      _prices[0] = 21_000 * 1e8;
-      _conf[0] = 0;
-
-      _newAssetIds[1] = wethAssetId;
-      _prices[1] = 1_800 * 1e8;
-      _conf[1] = 0;
-
-      bytes[] memory _newPrices = setPrices(_newAssetIds, _prices, _conf);
+      tickPrices[0] = 74959; // ETH tick price $1,800
+      tickPrices[1] = 99527; // WBTC tick price $21,000
+      setPrices(tickPrices, publishTimeDiff);
     }
 
     //  ASSERT AFTER T2
@@ -148,26 +158,19 @@ contract TC25 is BaseIntTest_WithActions {
       uint256 plpValueAfter = calculator.getPLPValueE30(false);
       uint256 pendingBorrowingFeeAfter = calculator.getPendingBorrowingFeeE30();
       uint256 aumAfter = calculator.getAUME30(false);
-      assertEq(aumAfter, 2208754164307060119640558878896547697, "AUM After T2");
-      assertEq(plpValueAfter, 2193700000000000000000000000000000000, "PLP TVL After T2");
-      assertEq(pendingBorrowingFeeAfter, 0, "Pending Borrowing Fee After T2");
+      assertApproxEqRel(aumAfter, 2208754164307060119640558878896547697, MAX_DIFF, "AUM After T2");
+      assertApproxEqRel(plpValueAfter, 2193700000000000000000000000000000000, MAX_DIFF, "PLP TVL After T2");
+      assertApproxEqRel(pendingBorrowingFeeAfter, 0, MAX_DIFF, "Pending Borrowing Fee After T2");
       int256 pnlAfter = int256(plpValueAfter) - int256(aumAfter) + int256(pendingBorrowingFeeAfter);
-      assertEq(pnlAfter, -15054164307060119640558878896547697, "GLOBAL PNLE30 After T2");
+      assertApproxEqRel(pnlAfter, -15054164307060119640558878896547697, MAX_DIFF, "GLOBAL PNLE30 After T2");
     }
 
     // T3: FEED PRICE
     // - ETH 1,800->1,000
     {
       skip(1);
-      bytes32[] memory _newAssetIds = new bytes32[](1);
-      int64[] memory _prices = new int64[](1);
-      uint64[] memory _conf = new uint64[](1);
-
-      _newAssetIds[0] = wethAssetId;
-      _prices[0] = 1_000 * 1e8;
-      _conf[0] = 0;
-
-      bytes[] memory _newPrices = setPrices(_newAssetIds, _prices, _conf);
+      tickPrices[0] = 69081; // ETH tick price $1,000
+      setPrices(tickPrices, publishTimeDiff);
     }
 
     // ASSERT AFTER T3
@@ -215,17 +218,31 @@ contract TC25 is BaseIntTest_WithActions {
       uint256 pendingBorrowingFeeAfter = calculator.getPendingBorrowingFeeE30();
       uint256 aumAfter = calculator.getAUME30(false);
       int256 pnlAfter = int256(plpValueAfter) - int256(aumAfter) + int256(pendingBorrowingFeeAfter);
-      assertEq(aumAfter, 2155411955483448614208285033255643109, "AUM After Feed Price T3");
-      assertEq(plpValueAfter, 2193700000000000000000000000000000000, "PLP TVL After Feed Price T3");
-      assertEq(pendingBorrowingFeeAfter, 14880339153010800000000000000, "Pending Borrowing Fee After Feed Price T3");
-      assertEq(pnlAfter, 38288059396890538802514966744356891, "GLOBAL PNLE30 After Feed Price T3");
+      assertApproxEqRel(aumAfter, 2155411955483448614208285033255643109, MAX_DIFF, "AUM After Feed Price T3");
+      assertApproxEqRel(plpValueAfter, 2193700000000000000000000000000000000, MAX_DIFF, "PLP TVL After Feed Price T3");
+      assertApproxEqRel(
+        pendingBorrowingFeeAfter,
+        14880339153010800000000000000,
+        MAX_DIFF,
+        "Pending Borrowing Fee After Feed Price T3"
+      );
+      assertApproxEqRel(pnlAfter, 38288059396890538802514966744356891, MAX_DIFF, "GLOBAL PNLE30 After Feed Price T3");
     }
 
     // T4: Add BTC in plp
     vm.deal(ALICE, executionOrderFee);
     wbtc.mint(ALICE, 5 * 1e8);
 
-    addLiquidity(ALICE, ERC20(address(wbtc)), 5 * 1e8, executionOrderFee, new bytes[](0), true);
+    addLiquidity(
+      ALICE,
+      ERC20(address(wbtc)),
+      5 * 1e8,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
 
     // ASSERT AFTER T4 (Add Liquidity)
     {
@@ -284,24 +301,22 @@ contract TC25 is BaseIntTest_WithActions {
       uint256 pendingBorrowingFeeAfter = calculator.getPendingBorrowingFeeE30();
       uint256 aumAfter = calculator.getAUME30(false);
       int256 pnlAfter = int256(plpValueAfter) - int256(aumAfter) + int256(pendingBorrowingFeeAfter);
-      assertEq(aumAfter, 2260086454805755722714285033255643109, "AUM After T4");
-      assertEq(plpValueAfter, 2298374500000000000000000000000000000, "PLP TVL After T4");
-      assertEq(pendingBorrowingFeeAfter, 14202646261516800000000000000, "Pending Borrowing Fee After T4");
-      assertEq(pnlAfter, 38288059396890538802514966744356891, "GLOBAL PNLE30  After T4");
+      assertApproxEqRel(aumAfter, 2260086454805755722714285033255643109, MAX_DIFF, "AUM After T4");
+      assertApproxEqRel(plpValueAfter, 2298374500000000000000000000000000000, MAX_DIFF, "PLP TVL After T4");
+      assertApproxEqRel(
+        pendingBorrowingFeeAfter,
+        14202646261516800000000000000,
+        MAX_DIFF,
+        "Pending Borrowing Fee After T4"
+      );
+      assertApproxEqRel(pnlAfter, 38288059396890538802514966744356891, MAX_DIFF, "GLOBAL PNLE30  After T4");
     }
 
     // T5: BTC price changed to 18,000 (check AUM)
     {
       skip(1);
-      bytes32[] memory _newAssetIds = new bytes32[](1);
-      int64[] memory _prices = new int64[](1);
-      uint64[] memory _conf = new uint64[](1);
-
-      _newAssetIds[0] = wbtcAssetId;
-      _prices[0] = 18_000 * 1e8;
-      _conf[0] = 0;
-
-      bytes[] memory _newPrices = setPrices(_newAssetIds, _prices, _conf);
+      tickPrices[1] = 97986; // WBTC tick price $18,000
+      setPrices(tickPrices, publishTimeDiff);
     }
 
     // ASSERT AFTER T5
@@ -349,10 +364,15 @@ contract TC25 is BaseIntTest_WithActions {
       uint256 pendingBorrowingFeeAfter = calculator.getPendingBorrowingFeeE30();
       uint256 aumAfter = calculator.getAUME30(false);
       int256 pnlAfter = int256(plpValueAfter) - int256(aumAfter) + int256(pendingBorrowingFeeAfter);
-      assertEq(aumAfter, 1961030473920633510755052638654753255, "AUM After T5");
-      assertEq(plpValueAfter, 1984321000000000000000000000000000000, "PLP TVL After T5");
-      assertEq(pendingBorrowingFeeAfter, 32900926815763200000000000000, "Pending Borrowing Fee After T5");
-      assertEq(pnlAfter, 23290558980293305008147361345246745, "GLOBAL PNLE30 After T5");
+      assertApproxEqRel(aumAfter, 1961030473920633510755052638654753255, MAX_DIFF, "AUM After T5");
+      assertApproxEqRel(plpValueAfter, 1984321000000000000000000000000000000, MAX_DIFF, "PLP TVL After T5");
+      assertApproxEqRel(
+        pendingBorrowingFeeAfter,
+        32900926815763200000000000000,
+        MAX_DIFF,
+        "Pending Borrowing Fee After T5"
+      );
+      assertApproxEqRel(pnlAfter, 23290558980293305008147361345246745, MAX_DIFF, "GLOBAL PNLE30 After T5");
     }
   }
 }

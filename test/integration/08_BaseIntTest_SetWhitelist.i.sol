@@ -22,5 +22,11 @@ abstract contract BaseIntTest_SetWhitelist is BaseIntTest_SetPLPTokens {
     configStorage.setServiceExecutor(address(tradeService), address(limitTradeHandler), true);
     configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
     configStorage.setServiceExecutor(address(tradeService), address(botHandler), true);
+
+    pyth.setUpdater(address(crossMarginHandler), true);
+    pyth.setUpdater(address(liquidityHandler), true);
+    pyth.setUpdater(address(limitTradeHandler), true);
+    pyth.setUpdater(address(marketTradeHandler), true);
+    pyth.setUpdater(address(botHandler), true);
   }
 }

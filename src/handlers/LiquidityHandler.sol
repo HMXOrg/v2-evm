@@ -18,7 +18,7 @@ import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
 // interfaces
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IEcoPyth } from "@hmx/oracle/interfaces/IEcoPyth.sol";
 
 /// @title LiquidityHandler
 contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILiquidityHandler {
@@ -100,7 +100,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     // slither-disable-next-line unused-return
     LiquidityService(_liquidityService).perpStorage();
     // slither-disable-next-line unused-return
-    IPyth(_pyth).getValidTimePeriod();
+    // @todo
+    // IPyth(_pyth).getValidTimePeriod();
   }
 
   /**
@@ -235,7 +236,10 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function executeOrder(
     uint256 _endIndex,
     address payable _feeReceiver,
-    bytes[] memory _priceData
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
     uint256 _orderLength = liquidityOrders.length;
 
@@ -247,11 +251,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _endIndex = _latestOrderIndex;
     }
 
-    uint256 _updateFee = IPyth(pyth).getUpdateFee(_priceData);
-    IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_updateFee);
-
     // slither-disable-next-line arbitrary-send-eth
-    IPyth(pyth).updatePriceFeeds{ value: _updateFee }(_priceData);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     LiquidityOrder memory _order;
     uint256 _totalFeeReceiver;
@@ -261,32 +262,27 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _order = liquidityOrders[i];
       _executionFee = _order.executionFee;
 
-      // refund in case of order updatePythFee > executionFee
-      if (_updateFee > _executionFee) {
+      isExecuting = true;
+
+      try this.executeLiquidity(_order) returns (uint256 actualOut) {
+        emit LogExecuteLiquidityOrder(
+          _order.account,
+          _order.orderId,
+          _order.token,
+          _order.amount,
+          _order.minOut,
+          _order.isAdd,
+          actualOut
+        );
+      } catch Error(string memory) {
+        //refund in case of revert as message
         _refund(_order);
-      } else {
-        isExecuting = true;
-
-        try this.executeLiquidity(_order) returns (uint256 actualOut) {
-          emit LogExecuteLiquidityOrder(
-            _order.account,
-            _order.orderId,
-            _order.token,
-            _order.amount,
-            _order.minOut,
-            _order.isAdd,
-            actualOut
-          );
-        } catch Error(string memory) {
-          //refund in case of revert as message
-          _refund(_order);
-        } catch (bytes memory) {
-          //refund in case of revert as bytes
-          _refund(_order);
-        }
-
-        isExecuting = false;
+      } catch (bytes memory) {
+        //refund in case of revert as bytes
+        _refund(_order);
       }
+
+      isExecuting = false;
 
       _totalFeeReceiver += _executionFee;
 
@@ -300,7 +296,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     nextExecutionOrderIndex = _endIndex + 1;
     // Pay the executor
-    _transferOutETH(_totalFeeReceiver - _updateFee, _feeReceiver);
+    _transferOutETH(_totalFeeReceiver, _feeReceiver);
   }
 
   /// @notice execute either addLiquidity or removeLiquidity
@@ -458,7 +454,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     pyth = _pyth;
 
     // Sanity check
-    IPyth(_pyth).getValidTimePeriod();
+    // @todo
+    // IPyth(_pyth).getValidTimePeriod();
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

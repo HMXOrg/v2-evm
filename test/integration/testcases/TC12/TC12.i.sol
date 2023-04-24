@@ -28,9 +28,11 @@ contract TC12 is BaseIntTest_WithActions {
     // And Btc price is 20,000 USD
     // And WETH price is 1,500 USD
     updatePriceData = new bytes[](2);
-    updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
-    updatePriceData[1] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
-    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, updatePriceData, true);
+    // updatePriceData[0] = _createPriceFeedUpdateData(wbtcAssetId, 20000 * 1e8, 0);
+    // updatePriceData[1] = _createPriceFeedUpdateData(wethAssetId, 1500 * 1e8, 0);
+    tickPrices[0] = 73135; // ETH tick price $1500
+    tickPrices[1] = 99039; // WBTC tick price $20,000
+    addLiquidity(BOB, wbtc, 1 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
     // And Max Number of position 2
     configStorage.setTradingConfig(
@@ -57,9 +59,9 @@ contract TC12 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice open multiple position in sub-account 0
     // When Alice open long position at WETH 3,000 USD
-    marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    marketBuy(ALICE, 0, wethMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     // And Alice open long position at JPY 3,000 USD
-    marketBuy(ALICE, 0, jpyMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    marketBuy(ALICE, 0, jpyMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     // And Alice open short position at APPLE 3,000 USD
     // Then Revert because reach limit 2 position per sub-account
     marketSell(
@@ -68,7 +70,9 @@ contract TC12 is BaseIntTest_WithActions {
       appleMarketIndex,
       3_000 * 1e30,
       address(0),
-      new bytes[](0),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
       "ITradeService_BadNumberOfPosition()"
     );
     // And Alice should has only 2 positions
@@ -115,7 +119,7 @@ contract TC12 is BaseIntTest_WithActions {
     }
 
     // When Bob open long position at WBTC 30,0000 USD
-    marketBuy(BOB, 0, wbtcMarketIndex, 30_000 * 1e30, address(0), new bytes[](0));
+    marketBuy(BOB, 0, wbtcMarketIndex, 30_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     // Then Bob should has corrected position
     {
       // WBTC's market
@@ -156,7 +160,7 @@ contract TC12 is BaseIntTest_WithActions {
     }
 
     // When alice open short position at APPLE 3,000 USD again with sub-account 1
-    marketSell(ALICE, 1, appleMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    marketSell(ALICE, 1, appleMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // APPLE's market
       // market skew      = 0
@@ -180,10 +184,10 @@ contract TC12 is BaseIntTest_WithActions {
 
     // ### Scenario: Alice fully close position and open another position
     // When Alice close position at JPY
-    marketSell(ALICE, 0, jpyMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    marketSell(ALICE, 0, jpyMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
 
     // Then Alice should able to open long position at APPLE 3,000 USD
-    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // APPLE's market
       // market skew      = -3000
@@ -205,7 +209,7 @@ contract TC12 is BaseIntTest_WithActions {
       });
     }
 
-    marketBuy(ALICE, 0, appleMarketIndex, 6_000 * 1e30, address(0), new bytes[](0));
+    marketBuy(ALICE, 0, appleMarketIndex, 6_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // note: decrease size is greater than position size for 3,000 USD
       //       this action will separated to 2 steps
@@ -277,7 +281,7 @@ contract TC12 is BaseIntTest_WithActions {
     assertMarketShortPosition({
       _marketIndex: appleMarketIndex,
       _positionSize: 3000 * 1e30,
-      _avgPrice: 151.999239999999999999999999999997 * 1e30,
+      _avgPrice: 151.999239999999999999999999999999 * 1e30,
       _str: "APPLE: "
     });
 
@@ -299,12 +303,14 @@ contract TC12 is BaseIntTest_WithActions {
       jpyMarketIndex,
       3_000 * 1e30,
       address(0),
-      new bytes[](0),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
       "ITradeService_BadNumberOfPosition()"
     );
 
     // And Alice could close APPLE position
-    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), new bytes[](0));
+    marketSell(ALICE, 0, appleMarketIndex, 3_000 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
     {
       // And Apple position size should be 0
       assertPositionInfoOf({

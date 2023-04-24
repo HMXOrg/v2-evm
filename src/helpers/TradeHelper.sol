@@ -230,7 +230,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     );
 
     // increase collateral
-    _increaseCollateral(_subAccount, 0, _fundingFeeToBePaid);
+    _increaseCollateral(_subAccount, 0, _fundingFeeToBePaid, address(0));
 
     // decrease collateral
     _decreaseCollateral(_subAccount, 0, _fundingFeeToBePaid, _borrowingFeeToBePaid, _tradingFeeToBePaid, 0, address(0));
@@ -316,43 +316,21 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     _perpStorage.updateAssetClass(uint8(_assetClassIndex), _assetClass);
   }
 
-  function increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) external {
-    _increaseCollateral(_subAccount, _unrealizedPnl, _fundingFee);
+  function increaseCollateral(
+    address _subAccount,
+    int256 _unrealizedPnl,
+    int256 _fundingFee,
+    address _tpToken
+  ) external {
+    _increaseCollateral(_subAccount, _unrealizedPnl, _fundingFee, _tpToken);
   }
 
-  function settleTraderProfit(address _subAccount, address _tpToken, int256 _realizedProfitE30) external {
-    IncreaseCollateralVars memory _vars;
-
-    _vars.vaultStorage = VaultStorage(vaultStorage);
-    _vars.configStorage = ConfigStorage(configStorage);
-    _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
-
-    _vars.subAccount = _subAccount;
-    // check unrealized pnl
-    if (_realizedProfitE30 > 0) {
-      _vars.unrealizedPnlToBeReceived = uint256(_realizedProfitE30);
-      emit LogReceivedUnRealizedPnlValue(_vars.subAccount, _vars.unrealizedPnlToBeReceived);
-
-      // Pay trader with selected tp token
-      {
-        ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfigByToken(_tpToken);
-        _vars.tokenDecimal = _assetConfig.decimals;
-        _vars.token = _assetConfig.tokenAddress;
-
-        (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
-        _vars.payerBalance = _vars.vaultStorage.plpLiquidity(_assetConfig.tokenAddress);
-
-        // get profit from plp
-        _increaseCollateralWithUnrealizedPnlFromPlp(_vars);
-      }
-
-      // if tp token can't repayment cover then try repay with other tokens
-      if (_vars.unrealizedPnlToBeReceived > 0)
-        _increaseCollateral(_subAccount, int256(_vars.unrealizedPnlToBeReceived), 0);
-    }
-  }
-
-  function _increaseCollateral(address _subAccount, int256 _unrealizedPnl, int256 _fundingFee) internal {
+  function _increaseCollateral(
+    address _subAccount,
+    int256 _unrealizedPnl,
+    int256 _fundingFee,
+    address _tpToken
+  ) internal {
     IncreaseCollateralVars memory _vars;
 
     _vars.vaultStorage = VaultStorage(vaultStorage);
@@ -369,6 +347,21 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     if (_fundingFee < 0) {
       _vars.fundingFeeToBeReceived = uint256(-_fundingFee);
       emit LogReceivedFundingFeeValue(_vars.subAccount, _vars.fundingFeeToBeReceived);
+    }
+
+    // Pay trader with selected tp token
+    {
+      if (_tpToken != address(0)) {
+        ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfigByToken(_tpToken);
+        _vars.tokenDecimal = _assetConfig.decimals;
+        _vars.token = _assetConfig.tokenAddress;
+
+        (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
+        _vars.payerBalance = _vars.vaultStorage.plpLiquidity(_assetConfig.tokenAddress);
+
+        // get profit from plp
+        _increaseCollateralWithUnrealizedPnlFromPlp(_vars);
+      }
     }
 
     bytes32[] memory _plpAssetIds = _vars.configStorage.getPlpAssetIds();

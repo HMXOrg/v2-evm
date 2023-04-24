@@ -16,15 +16,17 @@ contract DeployHandlers is ConfigJsonRepo {
 
     address pythAddress = getJsonAddress(".oracle.pyth");
     address tradeServiceAddress = getJsonAddress(".services.trade");
-    address liquiditionServiceAddress = getJsonAddress(".services.liquidation");
+    address liquidationServiceAddress = getJsonAddress(".services.liquidation");
     address liquidityServiceAddress = getJsonAddress(".services.liquidity");
     address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
     address weth = getJsonAddress(".tokens.weth");
     // @todo - TBD
     uint256 minExecutionFee = 0;
 
-    address botHandlerAddress = address(new BotHandler(tradeServiceAddress, liquiditionServiceAddress, pythAddress));
-    address crossMarginHandlerAddress = address(new CrossMarginHandler(crossMarginServiceAddress, pythAddress));
+    address botHandlerAddress = address(new BotHandler(tradeServiceAddress, liquidationServiceAddress, pythAddress));
+    address crossMarginHandlerAddress = address(
+      new CrossMarginHandler(crossMarginServiceAddress, pythAddress, minExecutionFee)
+    );
     address liquidityHandlerAddress = address(
       new LiquidityHandler(liquidityServiceAddress, pythAddress, minExecutionFee)
     );

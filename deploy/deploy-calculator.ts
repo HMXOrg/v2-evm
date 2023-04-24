@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const Contract = await ethers.getContractFactory("Calculator", deployer);
   const contract = await Contract.deploy(
-    config.oracle.middleware,
+    config.oracles.middleware,
     config.storages.vault,
     config.storages.perp,
     config.storages.config

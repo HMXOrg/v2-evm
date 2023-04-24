@@ -40,7 +40,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const updateData = await connection.getPriceFeedsUpdateData(priceIds);
   console.log(updateData);
 
-  const pyth = LeanPyth__factory.connect(config.oracle.ecoPyth, deployer);
+  const pyth = LeanPyth__factory.connect(config.oracles.ecoPyth, deployer);
   // console.log(await pyth.getPriceUnsafe(priceIds[0]));
   const updateFee = await pyth.getUpdateFee(updateData);
   console.log("updateFee", updateFee);

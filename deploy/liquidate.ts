@@ -27,7 +27,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const positionManager = (await ethers.getSigners())[1];
 
   const handler = BotHandler__factory.connect(config.handlers.bot, positionManager);
-  const pyth = IPyth__factory.connect(config.oracle.pyth, positionManager);
+  const pyth = IPyth__factory.connect(config.oracles.pyth, positionManager);
   const priceData = await getPriceData(priceIds);
   const updateFee = await pyth.getUpdateFee(priceData);
   console.log("Liquidate...");

@@ -20,7 +20,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
   const subAccountId = 2;
 
-  const pyth = IPyth__factory.connect(config.oracle.pyth, deployer);
+  const pyth = IPyth__factory.connect(config.oracles.pyth, deployer);
   const priceData = await getPriceData(priceIds);
   const updateFee = await pyth.getUpdateFee(priceData);
   const crossMarginHandler = CrossMarginHandler__factory.connect(config.handlers.crossMargin, deployer);

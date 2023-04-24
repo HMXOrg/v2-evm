@@ -15,7 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`Deploying PLPv2 Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.tokens.plp = contract.address;
+  config.tokens.hlp = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({

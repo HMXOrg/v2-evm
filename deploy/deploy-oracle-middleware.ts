@@ -10,12 +10,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const OracleMiddleware = await ethers.getContractFactory("OracleMiddleware", deployer);
-  const oracleMiddleware = await OracleMiddleware.deploy(config.oracle.pythAdapter);
+  const oracleMiddleware = await OracleMiddleware.deploy();
   await oracleMiddleware.deployed();
   console.log(`Deploying OracleMiddleware Contract`);
   console.log(`Deployed at: ${oracleMiddleware.address}`);
 
-  config.oracle.middleware = oracleMiddleware.address;
+  config.oracles.middleware = oracleMiddleware.address;
   writeConfigFile(config);
 
   await tenderly.verify({

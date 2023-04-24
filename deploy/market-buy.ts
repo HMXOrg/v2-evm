@@ -26,7 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const handler = MarketTradeHandler__factory.connect(config.handlers.marketTrade, deployer);
-  const pyth = IPyth__factory.connect(config.oracle.pyth, deployer);
+  const pyth = IPyth__factory.connect(config.oracles.pyth, deployer);
   const priceData = await getPriceData(priceIds);
   const updateFee = await pyth.getUpdateFee(priceData);
   console.log("Market Buy...");

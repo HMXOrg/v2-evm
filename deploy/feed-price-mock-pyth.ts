@@ -93,7 +93,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
   ];
 
-  const pyth = MockPyth__factory.connect(config.oracle.ecoPyth, deployer);
+  const pyth = MockPyth__factory.connect(config.oracles.ecoPyth, deployer);
   const updateFee = 0;
   const updateData = await priceUpdates.map(async (each) => {
     return await pyth.createPriceFeedUpdateData(

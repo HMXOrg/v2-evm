@@ -130,43 +130,43 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // Prices
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestPrice",
       args: [usdcAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestPrice",
       args: [usdtAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestPrice",
       args: [daiAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestPrice",
       args: [ethAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestPrice",
       args: [wbtcAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestPrice",
       args: [appleAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestPrice",
       args: [jpyAssetId, false],
     },
@@ -423,7 +423,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const adaptivePriceInputs = [
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestAdaptivePrice",
       args: [
         ethAssetId,
@@ -438,7 +438,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestAdaptivePrice",
       args: [
         wbtcAssetId,
@@ -453,7 +453,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestAdaptivePrice",
       args: [
         appleAssetId,
@@ -468,7 +468,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
     {
       interface: OracleMiddleware__factory.abi,
-      target: config.oracle.middleware,
+      target: config.oracles.middleware,
       function: "getLatestAdaptivePrice",
       args: [
         jpyAssetId,

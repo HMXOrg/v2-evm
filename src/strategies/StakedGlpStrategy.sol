@@ -84,30 +84,30 @@ contract StakedGlpStrategy is Owned, IStrategy {
   }
 
   function execute() external onlyKepper {
-    // 2. Build calldata.
+    // 1. Build calldata.
     bytes memory _callData = abi.encodeWithSelector(IGmxRewardTracker.claim.selector, address(this));
 
-    // 3. Cook
+    // 2. Cook
     uint256 rewardAmountBefore = rewardToken.balanceOf(address(this));
     vaultStorage.cook(address(sglp), address(rewardTracker), _callData);
     uint256 yields = rewardToken.balanceOf(address(this)) - rewardAmountBefore;
 
-    // 4. Deduct strategy fee.
+    // 3. Deduct strategy fee.
     uint256 strategyFee = (yields * strategyBps) / 10000;
 
-    // 5. Reinvest what left to GLP.
+    // 4. Reinvest what left to GLP.
     uint256 stakeAmount = yields - strategyFee;
     rewardToken.approve(address(glpManager), stakeAmount);
     rewardRouter.mintAndStakeGlp(address(rewardToken), stakeAmount, 0, 0);
 
-    // 6. Settle
+    // 5. Settle
     // SLOAD
     uint256 sGlpBalance = sglp.balanceOf(address(this));
 
     sglp.transfer(address(vaultStorage), sGlpBalance);
     rewardToken.transfer(treasury, strategyFee);
 
-    // 7. Update accounting.
+    // 6. Update accounting.
     vaultStorage.pullToken(address(sglp));
     vaultStorage.addPLPLiquidity(address(sglp), sGlpBalance);
   }

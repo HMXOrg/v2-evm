@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 // base
-import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
@@ -17,7 +17,7 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginHandler {
-  using SafeERC20Upgradeable for IERC20Upgradeable;
+  using SafeERC20Upgradeable for ERC20Upgradeable;
 
   /**
    * Events
@@ -150,10 +150,10 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       // slither-disable-next-line arbitrary-send-eth
       IWNative(_token).deposit{ value: _amount }();
       // Transfer those wNative token from this contract to VaultStorage
-      IERC20Upgradeable(_token).safeTransfer(_crossMarginService.vaultStorage(), _amount);
+      ERC20Upgradeable(_token).safeTransfer(_crossMarginService.vaultStorage(), _amount);
     } else {
       // Transfer depositing token from trader's wallet to VaultStorage
-      IERC20Upgradeable(_token).safeTransferFrom(msg.sender, _crossMarginService.vaultStorage(), _amount);
+      ERC20Upgradeable(_token).safeTransferFrom(msg.sender, _crossMarginService.vaultStorage(), _amount);
     }
 
     // Call service to deposit collateral

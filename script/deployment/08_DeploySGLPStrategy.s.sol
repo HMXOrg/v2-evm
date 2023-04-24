@@ -25,8 +25,8 @@ contract DeploySglpStrategy is ConfigJsonRepo {
     address oracleMiddleware = getJsonAddress(".oracles.middleware");
     address vaultStorage = getJsonAddress(".storages.vault");
 
-    address keeper = 0xBB0Ba69f99B18E255912c197C8a2bD48293D5797; // who can execute strategy
-    address treasury = 0xBB0Ba69f99B18E255912c197C8a2bD48293D5797; // who can receive treasury reward
+    address keeper = 0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a; // who can execute strategy
+    address treasury = 0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a; // who can receive treasury reward
     uint16 strategyBPS = 1000; //10%
     address strategiesAddress = address(
       new StakedGlpStrategy(

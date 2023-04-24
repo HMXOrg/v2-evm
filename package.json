@@ -31,6 +31,7 @@
     "arbitrum:mainnet:deploy:limit-trade-handler": "dotenv -- bash -c 'forge script ./script/deployment/07_DeployLimitTradeHandler.s.sol --rpc-url $ARBITRUM_MAINNET_RPC --broadcast'",
     "arbitrum:mainnet:deploy:liquidity-handler": "dotenv -- bash -c 'forge script ./script/deployment/07_DeployLiquidityHandler.s.sol --rpc-url $ARBITRUM_MAINNET_RPC --broadcast'",
     "arbitrum:mainnet:deploy:market-trade-handler": "dotenv -- bash -c 'forge script ./script/deployment/07_DeployMarketTradeHandler.s.sol --rpc-url $ARBITRUM_MAINNET_RPC --broadcast'",
+    "arbitrum:mainnet:deploy:sglp-strategy": "dotenv -- bash -c 'forge script ./script/deployment/08_DeploySGLPStrategy.s.sol --rpc-url $ARBITRUM_MAINNET_RPC --broadcast'",
     "arbitrum:mainnet:config:mint-token": "dotenv -- bash -c 'forge script ./script/config/0_MintToken.s.sol --rpc-url $ARBITRUM_MAINNET_RPC --broadcast'",
     "arbitrum:mainnet:config:set-configs": "dotenv -- bash -c 'forge script ./script/config/01_SetConfig.s.sol --rpc-url $ARBITRUM_MAINNET_RPC --broadcast'",
     "arbitrum:mainnet:config:set-markets": "dotenv -- bash -c 'forge script ./script/config/02_SetMarkets.s.sol --rpc-url $ARBITRUM_MAINNET_RPC --broadcast'",

@@ -51,7 +51,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   // mapping(address => address[]) public traderTokens;
   mapping(address => address[]) public traderTokens;
   // mapping(token => strategy => target)
-  mapping(address => mapping(address => address)) public strategyAllowance;
+  mapping(address => mapping(address => address)) public strategyAllowances;
   // mapping(service executor address => allow)
   mapping(address => bool) public serviceExecutors;
 
@@ -403,8 +403,8 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   /// @param _strategy The strategy to set
   /// @param _target The target to set
   function setStrategyAllowance(address _token, address _strategy, address _target) external onlyOwner {
-    emit LogSetStrategyAllowance(_token, _strategy, strategyAllowance[_token][_strategy], _target);
-    strategyAllowance[_token][_strategy] = _target;
+    emit LogSetStrategyAllowance(_token, _strategy, strategyAllowances[_token][_strategy], _target);
+    strategyAllowances[_token][_strategy] = _target;
   }
 
   function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
@@ -417,10 +417,14 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     return abi.decode(_returnData, (string)); // All that remains is the revert string
   }
 
+  /// @notice invoking the target contract using call data.
+  /// @param _token The token to cook
+  /// @param _target target to execute callData
+  /// @param _callData call data signature
   function cook(address _token, address _target, bytes calldata _callData) external returns (bytes memory) {
     // Check
     // 1. Only strategy for specific token can call this function
-    if (strategyAllowance[_token][msg.sender] != _target) revert IVaultStorage_Forbidden();
+    if (strategyAllowances[_token][msg.sender] != _target) revert IVaultStorage_Forbidden();
     // 2. Target must be a contract. This to prevent strategy calling to EOA.
     if (!_target.isContract()) revert IVaultStorage_TargetNotContract();
 

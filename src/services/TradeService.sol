@@ -85,7 +85,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     uint256 closePriceE30;
     uint256 nextClosePrice;
     int256 unrealizedPnl;
-    int32 exponent;
     OracleMiddleware oracle;
   }
 
@@ -184,7 +183,6 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // validate service should be called from handler ONLY
     _configStorage.validateServiceExecutor(address(this), msg.sender);
 
-    // FIXME remove _var.exponent?
     IncreasePositionVars memory _vars;
 
     // get the sub-account from the primary account and sub-account ID

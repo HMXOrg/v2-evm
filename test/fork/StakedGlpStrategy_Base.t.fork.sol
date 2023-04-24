@@ -28,7 +28,7 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 
 // Pyth
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
 // HMX
@@ -36,8 +36,8 @@ import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
 // OZ
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { ERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 //tester
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";

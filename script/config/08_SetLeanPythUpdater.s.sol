@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
-import { LeanPyth } from "@hmx/oracle/LeanPyth.sol";
+import { LeanPyth } from "@hmx/oracles/LeanPyth.sol";
 
 contract SetLeanPythUpdater is ConfigJsonRepo {
   function run() public {

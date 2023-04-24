@@ -6,8 +6,8 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
-import { PythAdapter } from "@hmx/oracle/PythAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
+import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 
 contract SetOracle is ConfigJsonRepo {
   error BadArgs();

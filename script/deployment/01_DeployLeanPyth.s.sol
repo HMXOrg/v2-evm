@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
-import { LeanPyth } from "@hmx/oracle/LeanPyth.sol";
+import { LeanPyth } from "@hmx/oracles/LeanPyth.sol";
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 

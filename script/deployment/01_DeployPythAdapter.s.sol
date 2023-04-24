@@ -7,12 +7,17 @@ import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+
 contract DeployPythAdapter is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
+    ProxyAdmin proxyAdmin = new ProxyAdmin();
+
     address pythAddress = getJsonAddress(".oracles.pyth");
-    address pythAdapterAddress = address(new PythAdapter(pythAddress));
+    address pythAdapterAddress = address(Deployer.deployPythAdapter(address(proxyAdmin), pythAddress));
 
     vm.stopBroadcast();
 

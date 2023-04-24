@@ -13,7 +13,7 @@ line_length = 80
 
 [rpc_endpoints]
 arbitrum_fork = "https://arb-mainnet.g.alchemy.com/v2/demo"
-arbitrum_one_fork= "${arbitrum_one_fork}"
+arbitrum_one_fork= "https://arb-mainnet.g.alchemy.com/v2/demo"
 
 [invariant]
 runs = 2000

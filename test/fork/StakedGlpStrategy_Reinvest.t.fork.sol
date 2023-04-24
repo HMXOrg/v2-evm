@@ -15,6 +15,7 @@ contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
 
   function testCorrectness_ClaimSuccess_ReinvestSuccess() external {
     //set up alice add Liquidity
+    vm.deal(ALICE, 1000e18);
     vm.prank(ALICE);
     rewardRouter.mintAndStakeGlpETH{ value: 100e18 }(0, 0);
 

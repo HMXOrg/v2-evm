@@ -7,8 +7,8 @@ import { Vm } from "forge-std/Vm.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
-import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
-import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
@@ -33,6 +33,16 @@ import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredi
 import { ITLCStaking } from "@hmx/staking/interfaces/ITLCStaking.sol";
 import { IEpochRewarder } from "@hmx/staking/interfaces/IEpochRewarder.sol";
 import { IVester } from "@hmx/vesting/interfaces/IVester.sol";
+
+import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
+import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
+
+import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
+import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -63,8 +73,19 @@ library Deployer {
     return IPythAdapter(deployContractWithArguments("PythAdapter", abi.encode(_pyth)));
   }
 
-  function deployOracleMiddleware(address _pythAdapter) internal returns (IOracleMiddleware) {
-    return IOracleMiddleware(deployContractWithArguments("OracleMiddleware", abi.encode(_pythAdapter)));
+  function deployStakedGlpOracleAdapter(
+    IERC20 _sGlp,
+    IGmxGlpManager _glpManager,
+    bytes32 _sGlpAssetId
+  ) internal returns (IOracleAdapter) {
+    return
+      IOracleAdapter(
+        deployContractWithArguments("StakedGlpOracleAdapter", abi.encode(_sGlp, _glpManager, _sGlpAssetId))
+      );
+  }
+
+  function deployOracleMiddleware() internal returns (IOracleMiddleware) {
+    return IOracleMiddleware(deployContract("OracleMiddleware"));
   }
 
   /**
@@ -278,6 +299,36 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IVester(payable(_proxy));
+  }
+
+  function deployStakedGlpStrategy(
+    IERC20 _sGlp,
+    IGmxRewardRouterV2 _rewardRouter,
+    IGmxRewardTracker _rewardTracker,
+    IGmxGlpManager _glpManager,
+    IOracleMiddleware _oracleMiddleware,
+    IVaultStorage _vaultStorage,
+    address _keeper,
+    address _treasury,
+    uint16 _strategyBps
+  ) internal returns (IStrategy) {
+    return
+      IStrategy(
+        deployContractWithArguments(
+          "StakedGlpStrategy",
+          abi.encode(
+            _sGlp,
+            _rewardRouter,
+            _rewardTracker,
+            _glpManager,
+            _oracleMiddleware,
+            _vaultStorage,
+            _keeper,
+            _treasury,
+            _strategyBps
+          )
+        )
+      );
   }
 
   /**

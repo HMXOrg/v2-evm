@@ -3,19 +3,18 @@ pragma solidity 0.8.18;
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 
-import { OracleMiddleware } from "@hmx/oracle/OracleMiddleware.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 
 contract DeployOracleMiddleware is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    address pythAdapterAddress = getJsonAddress(".oracle.pythAdapter");
-    address oracleMiddlewareAddress = address(new OracleMiddleware(IOracleAdapter(pythAdapterAddress)));
+    address oracleMiddlewareAddress = address(new OracleMiddleware());
 
     vm.stopBroadcast();
 
-    updateJson(".oracle.middleware", oracleMiddlewareAddress);
+    updateJson(".oracles.middleware", oracleMiddlewareAddress);
   }
 }

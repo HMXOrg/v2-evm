@@ -6,5 +6,5 @@ interface IOracleAdapter {
     bytes32 _assetId,
     bool _isMax,
     uint32 _confidenceThreshold
-  ) external view returns (uint256, int32, uint256);
+  ) external view returns (uint256, uint256);
 }

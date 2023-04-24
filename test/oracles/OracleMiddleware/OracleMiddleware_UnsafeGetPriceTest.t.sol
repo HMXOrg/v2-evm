@@ -18,15 +18,15 @@ contract OracleMiddleware_UnsafeGetPriceTest is OracleMiddleware_BaseTest {
     oracleMiddleware.setUpdater(ALICE, true);
 
     // set confident as 1e18 and trust price age 20 seconds
-    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 20);
+    oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 20, address(pythAdapter));
   }
 
   // unsafe get latest price
   function testCorrectness_WhenUnsafeGetLatestPrice() external {
     // Should get price via PythAdapter successfully.
     // For more edge cases see PythAdapter_GetPriceTest.t.sol
-    (uint maxPrice, , uint lastUpdate) = oracleMiddleware.unsafeGetLatestPrice(wbtcAssetId, true);
-    (uint minPrice, , ) = oracleMiddleware.unsafeGetLatestPrice(wbtcAssetId, false);
+    (uint maxPrice, uint lastUpdate) = oracleMiddleware.unsafeGetLatestPrice(wbtcAssetId, true);
+    (uint minPrice, ) = oracleMiddleware.unsafeGetLatestPrice(wbtcAssetId, false);
     assertEq(maxPrice, 20_000 * 1e30);
     assertEq(minPrice, 20_000 * 1e30);
     assertEq(lastUpdate, uint64(block.timestamp));

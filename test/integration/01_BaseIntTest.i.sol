@@ -10,7 +10,7 @@ import { StdCheats } from "forge-std/StdCheats.sol";
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
-import { EcoPyth } from "@hmx/oracle/EcoPyth.sol";
+import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
 // Openzepline
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -28,14 +28,14 @@ import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IOracleAdapter } from "@hmx/oracle/interfaces/IOracleAdapter.sol";
-import { IOracleMiddleware } from "@hmx/oracle/interfaces/IOracleMiddleware.sol";
+import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
-import { IPythAdapter } from "@hmx/oracle/interfaces/IPythAdapter.sol";
+import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
@@ -59,6 +59,8 @@ import { MarketTester } from "@hmx-test/testers/MarketTester.sol";
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
+import { console } from "forge-std/console.sol";
+
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
   uint256 internal constant executionOrderFee = 0.0001 ether;
@@ -67,6 +69,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   uint256 internal constant MINUTES = SECONDS * 60;
   uint256 internal constant HOURS = MINUTES * 60;
   uint256 internal constant DAYS = HOURS * 24;
+
+  bytes32 internal constant sglpAssetId = "SGLPUSD";
 
   address internal ALICE;
   address internal BOB;
@@ -146,10 +150,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
     pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
 
-    // deploy stakedGLPOracleAdapter
-
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware(address(pythAdapter));
+    oracleMiddleWare = Deployer.deployOracleMiddleware();
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage();

@@ -123,17 +123,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     // forex
     oracleMiddleWare.setMarketStatus(jpyAssetId, _marketActiveStatus); // active
 
-    // Set AssetPriceConfig
-    uint32 _confidenceThresholdE6 = 2500; // 2.5% for test only
-    uint32 _trustPriceAge = type(uint32).max; // set max for test only
-    oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge);
-    oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge);
-    oracleMiddleWare.setAssetPriceConfig(daiAssetId, _confidenceThresholdE6, _trustPriceAge);
-    oracleMiddleWare.setAssetPriceConfig(usdcAssetId, _confidenceThresholdE6, _trustPriceAge);
-    oracleMiddleWare.setAssetPriceConfig(usdtAssetId, _confidenceThresholdE6, _trustPriceAge);
-    oracleMiddleWare.setAssetPriceConfig(appleAssetId, _confidenceThresholdE6, _trustPriceAge);
-    oracleMiddleWare.setAssetPriceConfig(jpyAssetId, _confidenceThresholdE6, _trustPriceAge);
-
+    //Setup pyth
     AssetPythPriceData memory _data;
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
       _data = assetPythPriceDatas[i];
@@ -156,6 +146,17 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
     pyth.updatePriceFeeds(priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));
     skip(1);
+
+    // Set AssetPriceConfig
+    uint32 _confidenceThresholdE6 = 2500; // 2.5% for test only
+    uint32 _trustPriceAge = type(uint32).max; // set max for test only
+    oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(daiAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(usdcAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(usdtAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(appleAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(jpyAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
   }
 
   /// @notice setPrices of pyth

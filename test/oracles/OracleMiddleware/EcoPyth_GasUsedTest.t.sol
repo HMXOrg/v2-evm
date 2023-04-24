@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { EcoPyth_BaseTest } from "./EcoPyth_BaseTest.t.sol";
-import { EcoPyth, IEcoPythPriceInfo } from "@hmx/oracle/EcoPyth.sol";
+import { EcoPyth, IEcoPythPriceInfo } from "@hmx/oracles/EcoPyth.sol";
 import { console2 } from "forge-std/console2.sol";
 
 contract EcoPyth_GasUsedTest is EcoPyth_BaseTest {

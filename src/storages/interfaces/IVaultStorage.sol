@@ -10,6 +10,8 @@ interface IVaultStorage {
   error IVaultStorage_TraderBalanceRemaining();
   error IVaultStorage_ZeroAddress();
   error IVaultStorage_PLPBalanceRemaining();
+  error IVaultStorage_Forbidden();
+  error IVaultStorage_TargetNotContract();
 
   /**
    * Functions
@@ -71,4 +73,8 @@ interface IVaultStorage {
     uint256 _fundingFeeAmount,
     uint256 _fundingFeeValue
   ) external;
+
+  function cook(address _token, address _target, bytes calldata _callData) external returns (bytes memory);
+
+  function setStrategyAllowance(address _token, address _strategy, address _target) external;
 }

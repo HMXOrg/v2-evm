@@ -7,7 +7,9 @@ import { Vm } from "forge-std/Vm.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
+import { IPyth } from "@hmx/oracles/interfaces/IPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { ILeanPyth } from "@hmx/oracles/interfaces/ILeanPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
@@ -110,6 +112,13 @@ library Deployer {
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _pythAdapter);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IOracleMiddleware(payable(_proxy));
+  }
+
+  function deployLeanPyth(address _proxyAdmin, IPyth _pyth) internal returns (ILeanPyth) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LeanPyth.sol/LeanPyth.json"));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(IPyth)")), _pyth);
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return ILeanPyth(payable(_proxy));
   }
 
   /**

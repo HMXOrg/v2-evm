@@ -7,6 +7,7 @@ import { InvariantTest } from "forge-std/InvariantTest.sol";
 import { Deployer, IVester } from "@hmx-test/libs/Deployer.sol";
 import { VesterHandler } from "@hmx-test/invariance/vesting/VesterHandler.t.sol";
 import { console2 } from "forge-std/console2.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract Invariance_Vester is Test, InvariantTest {
   IVester private vester;
@@ -17,12 +18,15 @@ contract Invariance_Vester is Test, InvariantTest {
   address private constant unusedEsHmxDestinationAddress = address(889);
   uint256 private constant esHmxTotalSupply = 100 ether;
   uint256 private constant hmxTotalSupply = 100 ether;
+  ProxyAdmin proxyAdmin;
 
   function setUp() public {
+    proxyAdmin = new ProxyAdmin();
+
     hmx = new MockErc20("HMX", "HMX", 18);
     esHmx = new MockErc20("esHMX", "esHMX", 18);
     vester = Deployer.deployVester(
-      address(this),
+      address(proxyAdmin),
       address(esHmx),
       address(hmx),
       vestedEsHmxDestinationAddress,

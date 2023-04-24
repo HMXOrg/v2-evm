@@ -7,6 +7,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 contract Calculator_BaseWithStorage is BaseTest {
   function setUp() public virtual {
     calculator = Deployer.deployCalculator(
+      address(proxyAdmin),
       address(mockOracle),
       address(vaultStorage),
       address(perpStorage),

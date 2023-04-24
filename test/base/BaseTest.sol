@@ -126,11 +126,13 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     sglp = new MockErc20("Staked GLP", "sGLP", 18);
     bad = new MockErc20("Bad Coin", "BAD", 2);
 
-    plp = Deployer.deployPLPv2();
+    proxyAdmin = new ProxyAdmin();
 
-    configStorage = Deployer.deployConfigStorage();
-    perpStorage = Deployer.deployPerpStorage();
-    vaultStorage = Deployer.deployVaultStorage();
+    plp = Deployer.deployPLPv2(address(proxyAdmin));
+
+    configStorage = Deployer.deployConfigStorage(address(proxyAdmin));
+    perpStorage = Deployer.deployPerpStorage(address(proxyAdmin));
+    vaultStorage = Deployer.deployVaultStorage(address(proxyAdmin));
 
     mockOracle = new MockOracleMiddleware();
     mockCalculator = new MockCalculator(address(mockOracle));
@@ -142,8 +144,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockLiquidationService = new MockLiquidationService();
     mockGlpManager = new MockGlpManager();
 
-    pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
-    oracleMiddleware = Deployer.deployOracleMiddleware();
+    pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin), address(pythAdapter));
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
@@ -166,8 +168,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
     configStorage.setWeth(address(weth));
-
-    proxyAdmin = new ProxyAdmin();
   }
 
   /// @notice set up liquidity config

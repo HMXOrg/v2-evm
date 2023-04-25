@@ -37,7 +37,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const multi = new MultiCall(provider);
 
   const balances = await multi.getBalances(
-    [config.tokens.usdc, config.tokens.usdt, config.tokens.dai, config.tokens.wbtc, config.tokens.hlp],
+    [
+      config.tokens.usdc,
+      config.tokens.usdt,
+      config.tokens.dai,
+      config.tokens.wbtc,
+      config.tokens.hlp,
+      config.tokens.sglp,
+    ],
     deployer.address
   );
   console.log("=== Wallet Balances ===");
@@ -65,6 +72,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       token: "eth",
       balance: formatUnits(await provider.getBalance(deployer.address), 18),
+    },
+    {
+      token: "sglp",
+      balance: formatUnits(balances[1][config.tokens.sglp].toString(), 18),
     },
   ]);
 

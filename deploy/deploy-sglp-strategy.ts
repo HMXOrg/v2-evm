@@ -29,7 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`Deploying StakedGlpStrategy Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.oracles.sglpStakedAdapter = contract.address;
+  config.strategies.stakedGLPStrategy = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({

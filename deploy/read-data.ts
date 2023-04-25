@@ -28,6 +28,7 @@ const usdtAssetId = ethers.utils.formatBytes32String("USDT");
 const daiAssetId = ethers.utils.formatBytes32String("DAI");
 const appleAssetId = ethers.utils.formatBytes32String("AAPL");
 const jpyAssetId = ethers.utils.formatBytes32String("JPY");
+const glpAssetId = ethers.utils.formatBytes32String("GLP");
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
@@ -110,6 +111,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "traderBalances",
       args: [address, config.tokens.wbtc],
     },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "traderBalances",
+      args: [address, config.tokens.sglp],
+    },
     // Equity
     {
       interface: Calculator__factory.abi,
@@ -180,6 +187,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       target: config.oracles.middleware,
       function: "getLatestPrice",
       args: [jpyAssetId, false],
+    },
+    {
+      interface: OracleMiddleware__factory.abi,
+      target: config.oracles.middleware,
+      function: "getLatestPrice",
+      args: [glpAssetId, false],
     },
     // PLP
     {
@@ -268,6 +281,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "protocolFees",
       args: [config.tokens.wbtc],
     },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.sglp],
+    },
     // Dev Fees
     {
       interface: VaultStorage__factory.abi,
@@ -292,6 +311,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       target: config.storages.vault,
       function: "devFees",
       args: [config.tokens.weth],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.sglp],
     },
     {
       interface: VaultStorage__factory.abi,
@@ -365,6 +390,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       traderBalancesDai,
       traderBalancesWeth,
       traderBalancesWbtc,
+      traderBalancesSglp,
       equity,
       freeCollateral,
       imr,
@@ -376,6 +402,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       wbtcPrice,
       applePrice,
       jpyPrice,
+      sglpPrice,
       plpTotalSupply,
       plpAum,
       plpTvl,
@@ -390,11 +417,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       feeDai,
       feeWeth,
       feeWbtc,
+      feeSglp,
       devFeeUsdc,
       devFeeUsdt,
       devFeeDai,
       devFeeWeth,
       devFeeWbtc,
+      devFeeSglp,
       ethusdMarket,
       btcusdMarket,
       applusdMarket,
@@ -537,9 +566,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(formatUnits(daiPrice?._price, 30));
   console.log(formatUnits(wethPrice?._price, 30));
   console.log(formatUnits(wbtcPrice?._price, 30));
-  console.log(applePrice);
   console.log(formatUnits(applePrice?._price, 30));
   console.log(formatUnits(jpyPrice?._price, 30));
+  console.log(formatUnits(sglpPrice?._price, 30));
   console.log("=== Adaptive Prices ===");
 
   console.log(formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
@@ -608,6 +637,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: formatUnits(feeDai, 18),
     weth: formatUnits(feeWeth, 18),
     wbtc: formatUnits(feeWbtc, 8),
+    sglp: formatUnits(feeSglp, 18),
   });
   console.log("=== Dev Fees ===");
   console.table({
@@ -616,6 +646,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: formatUnits(devFeeDai, 18),
     weth: formatUnits(devFeeWeth, 18),
     wbtc: formatUnits(devFeeWbtc, 8),
+    sglp: formatUnits(devFeeSglp, 18),
   });
   console.log("=== Markets ===");
   console.table({

@@ -231,6 +231,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "plpLiquidity",
       args: [config.tokens.wbtc],
     },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "plpLiquidity",
+      args: [config.tokens.sglp],
+    },
     // Fees
     {
       interface: VaultStorage__factory.abi,
@@ -378,6 +384,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       plpLiquidityDai,
       plpLiquidityWeth,
       plpLiquidityWbtc,
+      plpLiquiditySglp,
       feeUsdc,
       feeUsdt,
       feeDai,
@@ -574,6 +581,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: formatUnits(plpLiquidityDai, 18),
     weth: formatUnits(plpLiquidityWeth, 18),
     wbtc: formatUnits(plpLiquidityWbtc, 8),
+    sglp: formatUnits(plpLiquiditySglp, 18),
   });
   console.log("=== Asset Class ====");
   console.table({

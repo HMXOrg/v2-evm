@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { MockPyth } from "lib/pyth-sdk-solidity/MockPyth.sol";
+import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IPyth, PythStructs, IPythEvents } from "lib/pyth-sdk-solidity/IPyth.sol";
+import { IPyth, PythStructs, IPythEvents } from "pyth-sdk-solidity/IPyth.sol";
 
 interface ILeanPyth {
   /// @dev Emitted when the price feed with `id` has received a fresh update.

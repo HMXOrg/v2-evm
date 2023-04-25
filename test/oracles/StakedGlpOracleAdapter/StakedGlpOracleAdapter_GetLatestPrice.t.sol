@@ -10,24 +10,24 @@ contract StakedGlpOracleAdapter_GetLatestPrice is StakedGlpOracleAdapter_BaseTes
   }
 
   function testCorrectness_WhenGetStakedGlpLatestMaxPrice() external {
-    // Assuming GLP's max price is 1.1 USD
     sglp.mint(address(this), 1 ether);
     mockGlpManager.setMaxAum(11e29);
+    mockGlpManager.setMinAum(9e29);
 
     (uint256 price, uint256 timestamp) = stakedGlpOracleAdapter.getLatestPrice(sglpAssetId, true, 0);
 
-    assertEq(price, 11e29);
+    assertEq(price, 10e29);
     assertEq(timestamp, block.timestamp);
   }
 
   function testCorrectness_WhenGetGlpLatestMinPrice() external {
-    // Assuming GLP's min price is 0.9 USD
     sglp.mint(address(this), 1 ether);
+    mockGlpManager.setMaxAum(11e29);
     mockGlpManager.setMinAum(9e29);
 
     (uint256 price, uint256 timestamp) = stakedGlpOracleAdapter.getLatestPrice(sglpAssetId, false, 0);
 
-    assertEq(price, 9e29);
+    assertEq(price, 10e29);
     assertEq(timestamp, block.timestamp);
   }
 }

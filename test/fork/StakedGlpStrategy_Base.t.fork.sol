@@ -242,15 +242,18 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     );
 
     // Deploy GlpStrategy
-
-    stakedGlpStrategy = Deployer.deployStakedGlpStrategy(
-      address(proxyAdmin),
-      sglp,
+    IStrategy.StakedGlpStrategyConfig memory stakedGlpStrategyConfig = IStrategy.StakedGlpStrategyConfig(
       rewardRouter,
       rewardTracker,
       glpManager,
       oracleMiddleware,
-      vaultStorage,
+      vaultStorage
+    );
+
+    stakedGlpStrategy = Deployer.deployStakedGlpStrategy(
+      address(proxyAdmin),
+      sglp,
+      stakedGlpStrategyConfig,
       keeper,
       treasury,
       1000 // 10% of reinvest

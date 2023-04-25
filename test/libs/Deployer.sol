@@ -463,28 +463,16 @@ library Deployer {
   function deployStakedGlpStrategy(
     address _proxyAdmin,
     IERC20Upgradeable _sGlp,
-    IGmxRewardRouterV2 _rewardRouter,
-    IGmxRewardTracker _rewardTracker,
-    IGmxGlpManager _glpManager,
-    IOracleMiddleware _oracleMiddleware,
-    IVaultStorage _vaultStorage,
+    IStrategy.StakedGlpStrategyConfig memory _stakedGlpStrategyConfig,
     address _keeper,
     address _treasury,
     uint16 _strategyBps
   ) internal returns (IStrategy) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/StakedGlpStrategy.sol/StakedGlpStrategy.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(
-        keccak256(
-          "initialize(IERC20Upgradeable,IGmxRewardRouterV2,IGmxRewardTracker,IGmxGlpManager,IOracleMiddleware,IVaultStorage,address,address,uint16)"
-        )
-      ),
+      bytes4(keccak256("initialize(IERC20Upgradeable,IStrategy.StakedGlpStrategyConfig,address,address,uint16)")),
       _sGlp,
-      _rewardRouter,
-      _rewardTracker,
-      _glpManager,
-      _oracleMiddleware,
-      _vaultStorage,
+      _stakedGlpStrategyConfig,
       _keeper,
       _treasury,
       _strategyBps

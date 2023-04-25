@@ -44,11 +44,7 @@ contract StakedGlpStrategy is OwnableUpgradeable, IStrategy {
 
   function initialize(
     IERC20Upgradeable _sglp,
-    IGmxRewardRouterV2 _rewardRouter,
-    IGmxRewardTracker _rewardTracker,
-    IGmxGlpManager _glpManager,
-    IOracleMiddleware _oracleMiddleware,
-    IVaultStorage _vaultStorage,
+    IStrategy.StakedGlpStrategyConfig memory _stakedGlpStrategyConfig,
     address _keeper,
     address _treasury,
     uint16 _strategyBps
@@ -56,13 +52,13 @@ contract StakedGlpStrategy is OwnableUpgradeable, IStrategy {
     OwnableUpgradeable.__Ownable_init();
 
     sglp = _sglp;
-    rewardRouter = _rewardRouter;
-    rewardTracker = _rewardTracker;
-    glpManager = _glpManager;
-    rewardToken = IERC20Upgradeable(_rewardTracker.rewardToken());
+    rewardRouter = _stakedGlpStrategyConfig.rewardRouter;
+    rewardTracker = _stakedGlpStrategyConfig.rewardTracker;
+    glpManager = _stakedGlpStrategyConfig.glpManager;
+    rewardToken = IERC20Upgradeable(_stakedGlpStrategyConfig.rewardTracker.rewardToken());
 
-    oracleMiddleware = _oracleMiddleware;
-    vaultStorage = _vaultStorage;
+    oracleMiddleware = _stakedGlpStrategyConfig.oracleMiddleware;
+    vaultStorage = _stakedGlpStrategyConfig.vaultStorage;
 
     keeper = _keeper;
 

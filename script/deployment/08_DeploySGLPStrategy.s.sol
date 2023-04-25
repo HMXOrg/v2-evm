@@ -22,11 +22,14 @@ contract DeploySglpStrategy is ConfigJsonRepo {
     ProxyAdmin proxyAdmin = new ProxyAdmin();
 
     address sglp = getJsonAddress(".tokens.sglp");
-    address rewardRouter = getJsonAddress(".yieldSources.gmx.rewardRouterV2");
-    address rewardTracker = getJsonAddress(".yieldSources.gmx.rewardTracker");
-    address glpManager = getJsonAddress(".yieldSources.gmx.glpManager");
-    address oracleMiddleware = getJsonAddress(".oracles.middleware");
-    address vaultStorage = getJsonAddress(".storages.vault");
+
+    IStrategy.StakedGlpStrategyConfig memory stakedGlpStrategyConfig = IStrategy.StakedGlpStrategyConfig(
+      IGmxRewardRouterV2(getJsonAddress(".yieldSources.gmx.rewardRouterV2")),
+      IGmxRewardTracker(getJsonAddress(".yieldSources.gmx.rewardTracker")),
+      IGmxGlpManager(getJsonAddress(".yieldSources.gmx.glpManager")),
+      IOracleMiddleware(getJsonAddress(".oracles.middleware")),
+      IVaultStorage(getJsonAddress(".storages.vault"))
+    );
 
     address keeper = 0xBB0Ba69f99B18E255912c197C8a2bD48293D5797; // who can execute strategy
     address treasury = 0xBB0Ba69f99B18E255912c197C8a2bD48293D5797; // who can receive treasury reward
@@ -36,11 +39,7 @@ contract DeploySglpStrategy is ConfigJsonRepo {
       Deployer.deployStakedGlpStrategy(
         address(proxyAdmin),
         IERC20Upgradeable(sglp),
-        IGmxRewardRouterV2(rewardRouter),
-        IGmxRewardTracker(rewardTracker),
-        IGmxGlpManager(glpManager),
-        IOracleMiddleware(oracleMiddleware),
-        IVaultStorage(vaultStorage),
+        stakedGlpStrategyConfig,
         keeper,
         treasury,
         strategyBPS

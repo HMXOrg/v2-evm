@@ -1,1 +1,1 @@
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { MockPyth } from "lib/pyth-sdk-solidity/MockPyth.sol";

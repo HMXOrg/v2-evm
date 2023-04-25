@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { Owned } from "@hmx/base/Owned.sol";
-import { PythStructs } from "lib/pyth-sdk-solidity/IPyth.sol";
+import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
 import { IReadablePyth } from "./interfaces/IReadablePyth.sol";
 

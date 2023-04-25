@@ -29,13 +29,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // await (await service.reloadConfig()).wait();
 
   const handler = MarketTradeHandler__factory.connect(config.handlers.marketTrade, deployer);
-  const pyth = IPyth__factory.connect(config.oracles.pyth, deployer);
-  const priceData = await getPriceData(priceIds);
-  const updateFee = await pyth.getUpdateFee(priceData);
+
   console.log("Market Sell...");
   await (
-    await handler.sell(deployer.address, 0, 0, ethers.utils.parseUnits("1", 30), config.tokens.usdc, priceData, {
-      value: updateFee,
+    await handler.sell(deployer.address, 0, 0, ethers.utils.parseUnits("1", 30), config.tokens.usdc, [], {
       gasLimit: 210000000,
     })
   ).wait();

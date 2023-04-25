@@ -24,14 +24,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("Limit Order...");
   await (
     await handler.createOrder(
-      0,
-      0,
-      ethers.utils.parseUnits("10", 30),
-      ethers.utils.parseUnits("1550", 30),
-      true,
+      0, // subAccountId
+      0, // marketIndex
+      ethers.utils.parseUnits("10", 30), // sizeDelta
+      ethers.utils.parseUnits("1550", 30), // triggerPrice
+      ethers.utils.parseUnits("0", 30), // acceptablePrice
+      true, // triggerAboveThreshold
       executionFee,
-      true,
-      config.tokens.usdc,
+      true, // reduceOnly (true to not flip position)
+      config.tokens.usdc, // tpToken
       { value: executionFee }
     )
   ).wait();

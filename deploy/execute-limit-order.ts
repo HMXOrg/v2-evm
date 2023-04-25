@@ -13,25 +13,50 @@ import {
 } from "../typechain";
 import { getConfig } from "./utils/config";
 import { getPriceData } from "./utils/pyth";
+import { getUpdatePriceData } from "./utils/price";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const priceIds = [
-  "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6", // ETH/USD
+const priceUpdates = [
+  1900.02, // ETH
+  20000.29, // ETH
+  1, // USDC
+  1, // USDT
+  1, // DAI
+  137.3, // AAPL
+  198.2, // JPY
+];
+const minPublishTime = Math.floor(new Date().valueOf() / 1000);
+const publishTimeDiff = [
+  0, // ETH
+  0, // ETH
+  0, // USDC
+  0, // USDT
+  0, // DAI
+  0, // AAPL
+  0, // JPY
 ];
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const handler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  const pyth = IPyth__factory.connect(config.oracles.pyth, deployer);
-  const priceData = await getPriceData(priceIds);
-  // const storage = VaultStorage__factory.connect(config.storages.vault, deployer);
-  // await (await storage.setServiceExecutors(config.services.trade, true)).wait();
+  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(priceUpdates, publishTimeDiff);
+
   console.log("Execute Limit Order...");
   await (
-    await handler.executeOrder(deployer.address, 0, 2, deployer.address, priceData, { gasLimit: 10000000 })
+    await handler.executeOrder(
+      deployer.address,
+      0,
+      2,
+      deployer.address,
+      priceUpdateData,
+      publishTimeDiffUpdateData,
+      minPublishTime,
+      ethers.utils.formatBytes32String(""),
+      { gasLimit: 10000000 }
+    )
   ).wait();
   console.log("Execute Limit Order Success!");
 };

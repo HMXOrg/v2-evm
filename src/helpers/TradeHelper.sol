@@ -513,8 +513,9 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
     _vars.subAccount = _subAccount;
 
-    address[] memory _collateralTokens = _vars.vaultStorage.getTraderTokens(_vars.subAccount);
-    uint256 _len = _collateralTokens.length;
+    bytes32[] memory _plpAssetIds = _vars.configStorage.getPlpAssetIds();
+    uint256 _len = _plpAssetIds.length;
+
     // check loss
     if (_unrealizedPnl < 0) {
       _vars.vaultStorage.addLossDebt(_subAccount, uint256(-_unrealizedPnl));
@@ -546,12 +547,16 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
     // loop for settle
     for (uint256 i = 0; i < _len; ) {
-      _vars.token = _collateralTokens[i];
-      _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.token);
-      (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(
-        ConfigStorage(_vars.configStorage).tokenAssetIds(_vars.token),
-        false
-      );
+      ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfig(_plpAssetIds[i]);
+      _vars.tokenDecimal = _assetConfig.decimals;
+      _vars.token = _assetConfig.tokenAddress;
+      (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
+      // _vars.token = _collateralTokens[i];
+      // _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.token);
+      // (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(
+      //   ConfigStorage(_vars.configStorage).tokenAssetIds(_vars.token),
+      //   false
+      // );
 
       _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
       _vars.plpDebt = _vars.vaultStorage.plpLiquidityDebtUSDE30();

@@ -287,17 +287,19 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       _vars.position.marketIndex = _marketIndex;
     }
 
-    // Settle
-    // - trading fees
-    // - borrowing fees
-    // - funding fees
-    TradeHelper(tradeHelper).settleAllFees(
-      _vars.position,
-      _absSizeDelta,
-      _marketConfig.increasePositionFeeRateBPS,
-      _marketConfig.assetClass,
-      _marketIndex
-    );
+    {
+      // Settle
+      // - trading fees
+      // - borrowing fees
+      // - funding fees
+      TradeHelper(tradeHelper).settleAllFees(
+        _vars.positionId,
+        _vars.position,
+        _absSizeDelta,
+        _marketConfig.increasePositionFeeRateBPS,
+        _marketConfig.assetClass
+      );
+    }
 
     _vars.nextClosePrice = _calculateNextClosePrice(
       _market,
@@ -714,6 +716,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     TradeHelper(tradeHelper).updateFundingRate(_marketIndex);
 
     (_vars.tradingFee, _vars.borrowingFee, _vars.fundingFee) = TradeHelper(tradeHelper).updateFeeStates(
+      _vars.positionId,
       _vars.subAccount,
       _vars.position,
       _vars.positionSizeE30ToDecrease,
@@ -855,8 +858,15 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // =======================================
     // | ------ settle profit & loss ------- |
     // =======================================
-    TradeHelper(tradeHelper).increaseCollateral(_vars.subAccount, _vars.realizedPnl, _vars.fundingFee, _vars.tpToken);
+    TradeHelper(tradeHelper).increaseCollateral(
+      _vars.positionId,
+      _vars.subAccount,
+      _vars.realizedPnl,
+      _vars.fundingFee,
+      _vars.tpToken
+    );
     TradeHelper(tradeHelper).decreaseCollateral(
+      _vars.positionId,
       _vars.subAccount,
       _vars.realizedPnl,
       _vars.fundingFee,
@@ -900,7 +910,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     int256 _sizeDelta,
     uint256 _nextClosePrice,
     int256 _unrealizedPnl
-  ) private view returns (uint256 _newEntryAveragePrice) {
+  ) private pure returns (uint256 _newEntryAveragePrice) {
     int256 _newPositionSize = _positionSize + _sizeDelta;
 
     if (_positionSize > 0) {

@@ -11,6 +11,7 @@ import { StdCheats } from "forge-std/StdCheats.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // Openzepline
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
@@ -119,7 +120,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   IWNative weth; //for native
 
   /* PYTH */
-  EcoPyth internal pyth;
+  IEcoPyth internal pyth;
   IPythAdapter internal pythAdapter;
 
   /* Tester */
@@ -152,7 +153,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     weth = IWNative(new MockWNative());
     vm.label(address(weth), "WETH");
 
-    pyth = new EcoPyth();
+    pyth = Deployer.deployEcoPyth(address(proxyAdmin));
 
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(pyth));
 

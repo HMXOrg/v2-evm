@@ -7,6 +7,7 @@ import { Vm } from "forge-std/Vm.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IPyth } from "@hmx/oracles/interfaces/IPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 import { ILeanPyth } from "@hmx/oracles/interfaces/ILeanPyth.sol";
@@ -80,6 +81,13 @@ library Deployer {
   /**
    * Oracles
    */
+
+  function deployEcoPyth(address _proxyAdmin) internal returns (IEcoPyth) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/EcoPyth.sol/EcoPyth.json"));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IEcoPyth(payable(_proxy));
+  }
 
   function deployPythAdapter(address _proxyAdmin, address _pyth) internal returns (IPythAdapter) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/PythAdapter.sol/PythAdapter.json"));

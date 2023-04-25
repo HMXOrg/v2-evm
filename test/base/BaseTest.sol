@@ -28,6 +28,7 @@ import { MockGlpManager } from "../mocks/MockGlpManager.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
@@ -59,10 +60,10 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   // oracle
   IPythAdapter pythAdapter;
   IOracleMiddleware oracleMiddleware;
+  IEcoPyth internal ecoPyth;
 
   // mock
   MockPyth internal mockPyth;
-  EcoPyth internal ecoPyth;
   MockCalculator internal mockCalculator;
   MockPerpStorage internal mockPerpStorage;
   MockVaultStorage internal mockVaultStorage;
@@ -107,11 +108,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant jpyAssetId = "JPY";
 
   constructor() {
-    // Creating a mock Pyth instance with 60 seconds valid time period
-    // and 1 wei for updating price.
-    mockPyth = new MockPyth(60, 1);
-    ecoPyth = new EcoPyth();
-
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
@@ -127,6 +123,11 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     bad = new MockErc20("Bad Coin", "BAD", 2);
 
     proxyAdmin = new ProxyAdmin();
+
+    // Creating a mock Pyth instance with 60 seconds valid time period
+    // and 1 wei for updating price.
+    mockPyth = new MockPyth(60, 1);
+    ecoPyth = Deployer.deployEcoPyth(address(proxyAdmin));
 
     plp = Deployer.deployPLPv2(address(proxyAdmin));
 

@@ -98,7 +98,6 @@ contract SetOracle is ConfigJsonRepo {
     oracleMiddleWare.setAssetPriceConfig(jpyAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
 
     // GLP
-    ecoPyth.insertAssetId(glpAssetId);
     oracleMiddleWare.setAssetPriceConfig(
       glpAssetId,
       _confidenceThresholdE6,

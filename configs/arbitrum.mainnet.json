@@ -23,7 +23,7 @@
   "oracles": {
     "ecoPyth": "0x832a59773e7a0896cF348C5EA72670D7CD37572D",
     "pythAdapter": "0x2f6d48e937704fD74454070C07F24F3E0d831F90",
-    "sglpStakedAdapter": "0xf1A5509BaC7FeD77647507B4840003608CFAb025",
+    "sglpStakedAdapter": "0x70C5B01dab75589D3a298916982e4dF995b94bEC",
     "middleware": "0x1f86FFC5751f494CE9463cC0aEeBEacCa459030b"
   },
   "tokens": {

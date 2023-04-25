@@ -551,12 +551,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
       _vars.tokenDecimal = _assetConfig.decimals;
       _vars.token = _assetConfig.tokenAddress;
       (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
-      // _vars.token = _collateralTokens[i];
-      // _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.token);
-      // (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(
-      //   ConfigStorage(_vars.configStorage).tokenAssetIds(_vars.token),
-      //   false
-      // );
 
       _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
       _vars.plpDebt = _vars.vaultStorage.plpLiquidityDebtUSDE30();

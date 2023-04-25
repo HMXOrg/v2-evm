@@ -145,7 +145,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockGlpManager = new MockGlpManager();
 
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
-    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin), address(pythAdapter));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),

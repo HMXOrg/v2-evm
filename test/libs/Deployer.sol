@@ -107,9 +107,9 @@ library Deployer {
     return IOracleAdapter(payable(_proxy));
   }
 
-  function deployOracleMiddleware(address _proxyAdmin, address _pythAdapter) internal returns (IOracleMiddleware) {
+  function deployOracleMiddleware(address _proxyAdmin) internal returns (IOracleMiddleware) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/OracleMiddleware.sol/OracleMiddleware.json"));
-    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _pythAdapter);
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IOracleMiddleware(payable(_proxy));
   }
@@ -134,14 +134,14 @@ library Deployer {
 
   function deployPerpStorage(address _proxyAdmin) internal returns (IPerpStorage) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/PerpStorage.sol/PerpStorage.json"));
-    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize())")));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IPerpStorage(payable(_proxy));
   }
 
   function deployVaultStorage(address _proxyAdmin) internal returns (IVaultStorage) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/VaultStorage.sol/VaultStorage.json"));
-    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize())")));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IVaultStorage(payable(_proxy));
   }

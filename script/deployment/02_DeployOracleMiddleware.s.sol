@@ -16,9 +16,7 @@ contract DeployOracleMiddleware is ConfigJsonRepo {
     vm.startBroadcast(deployerPrivateKey);
     ProxyAdmin proxyAdmin = new ProxyAdmin();
 
-    address pythAdapterAddress = getJsonAddress(".oracles.pythAdapter");
-
-    address oracleMiddlewareAddress = address(Deployer.deployOracleMiddleware(address(proxyAdmin), pythAdapterAddress));
+    address oracleMiddlewareAddress = address(Deployer.deployOracleMiddleware(address(proxyAdmin)));
 
     vm.stopBroadcast();
 

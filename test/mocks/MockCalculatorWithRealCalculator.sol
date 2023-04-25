@@ -14,13 +14,14 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
   ProxyAdmin proxyAdmin;
 
   constructor(
+    address _proxyAdmin,
     address _oracle,
     address _vaultStorage,
     address _perpStorage,
     address _configStorage
   ) MockCalculator(_oracle) {
     c = Calculator(
-      address(Deployer.deployCalculator(address(proxyAdmin), _oracle, _vaultStorage, _perpStorage, _configStorage))
+      address(Deployer.deployCalculator(_proxyAdmin, _oracle, _vaultStorage, _perpStorage, _configStorage))
     );
   }
 

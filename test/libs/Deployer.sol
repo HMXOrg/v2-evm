@@ -43,6 +43,7 @@ import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
 
 import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
 import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
+import { DragonPoint } from "@hmx/tokens/DragonPoint.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -329,6 +330,13 @@ library Deployer {
           )
         )
       );
+  }
+
+  function deployDragonPoint(address _proxyAdmin) internal returns (DragonPoint) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/DragonPoint.sol/DragonPoint.json"));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return DragonPoint(payable(_proxy));
   }
 
   /**

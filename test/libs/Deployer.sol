@@ -98,7 +98,7 @@ library Deployer {
       vm.getCode("./out/StakedGlpOracleAdapter.sol/StakedGlpOracleAdapter.json")
     );
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,IERC20Upgradeable,IGmxGlpManager,bytes32)")),
+      bytes4(keccak256("initialize(address,address,bytes32)")),
       _sGlp,
       _glpManager,
       _sGlpAssetId
@@ -116,7 +116,7 @@ library Deployer {
 
   function deployLeanPyth(address _proxyAdmin, IPyth _pyth) internal returns (ILeanPyth) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LeanPyth.sol/LeanPyth.json"));
-    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(IPyth)")), _pyth);
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(address)")), _pyth);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ILeanPyth(payable(_proxy));
   }
@@ -241,7 +241,7 @@ library Deployer {
 
   function deployTradingStaking(address _proxyAdmin) internal returns (ITradingStaking) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/TradingStaking.sol/TradingStaking.json"));
-    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize())")));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ITradingStaking(payable(_proxy));
   }
@@ -390,7 +390,7 @@ library Deployer {
   ) internal returns (ILiquidityService) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LiquidityService.sol/LiquidityService.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address)")),
+      bytes4(keccak256("initialize(address,address,address)")),
       _perpStorage,
       _vaultStorage,
       _configStorage
@@ -411,7 +411,7 @@ library Deployer {
   ) internal returns (ITradeHelper) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/TradeHelper.sol/TradeHelper.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address)")),
+      bytes4(keccak256("initialize(address,address,address)")),
       _perpStorage,
       _vaultStorage,
       _configStorage
@@ -470,7 +470,7 @@ library Deployer {
   ) internal returns (IStrategy) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/StakedGlpStrategy.sol/StakedGlpStrategy.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(IERC20Upgradeable,IStrategy.StakedGlpStrategyConfig,address,address,uint16)")),
+      bytes4(keccak256("initialize(address,(address,address,address,address,address),address,address,uint16)")),
       _sGlp,
       _stakedGlpStrategyConfig,
       _keeper,

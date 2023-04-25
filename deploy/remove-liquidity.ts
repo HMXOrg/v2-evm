@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const liquidityHandler = LiquidityHandler__factory.connect(config.handlers.liquidity, deployer);
-  const plp = PLPv2__factory.connect(config.tokens.plp, deployer);
+  const plp = PLPv2__factory.connect(config.tokens.hlp, deployer);
   const allowance = await plp.allowance(deployer.address, liquidityHandler.address);
   if (allowance.eq(0)) await (await plp.approve(liquidityHandler.address, ethers.constants.MaxUint256)).wait();
 

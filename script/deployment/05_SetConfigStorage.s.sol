@@ -16,10 +16,10 @@ contract SetConfigStorage is ConfigJsonRepo {
     address wethAddress = getJsonAddress(".tokens.weth");
     address oracleMiddlewareAddress = getJsonAddress(".oracles.middleware");
 
-    // configStorage.setCalculator(calculatorAddress);
+    configStorage.setCalculator(calculatorAddress);
     configStorage.setPLP(plpAddress);
-    // configStorage.setOracle(oracleMiddlewareAddress);
-    // configStorage.setWeth(wethAddress);
+    configStorage.setOracle(oracleMiddlewareAddress);
+    configStorage.setWeth(wethAddress);
 
     vm.stopBroadcast();
   }

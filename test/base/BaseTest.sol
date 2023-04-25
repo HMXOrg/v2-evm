@@ -35,7 +35,7 @@ import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { ProxyAdmin } from "lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
 import { console } from "forge-std/console.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 

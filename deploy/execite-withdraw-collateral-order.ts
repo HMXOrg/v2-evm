@@ -33,7 +33,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const crossMarginHandler = CrossMarginHandler__factory.connect(config.handlers.crossMargin, deployer);
-  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(priceUpdates, publishTimeDiff);
+  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(
+    deployer,
+    priceUpdates,
+    publishTimeDiff
+  );
   await (
     await crossMarginHandler.executeOrder(
       ethers.constants.MaxUint256,

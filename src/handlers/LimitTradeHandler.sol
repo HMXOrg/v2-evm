@@ -115,6 +115,10 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
 
+  OrderPointer[] public activeOrderPointers;
+  OrderPointer[] public activeMarketOrderPointers;
+  OrderPointer[] public activeLimitOrderPointers;
+
   constructor(address _weth, address _tradeService, address _pyth, uint256 _minExecutionFee) {
     weth = _weth;
     tradeService = _tradeService;
@@ -192,8 +196,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     });
 
     // Insert the limit order into the list
-    limitOrdersIndex[_subAccount] = _orderIndex + 1;
-    limitOrders[_subAccount][_orderIndex] = _order;
+    _addOrder(_order, _subAccount, _orderIndex);
 
     emit LogCreateLimitOrder(
       msg.sender,
@@ -231,8 +234,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     vars.subAccount = _getSubAccount(_account, _subAccountId);
     vars.order = limitOrders[vars.subAccount][_orderIndex];
 
-    // Delete this executed order from the list
-    delete limitOrders[vars.subAccount][_orderIndex];
+    // Remove this executed order from the list
+    _removeOrder(vars.order, vars.subAccount, _orderIndex);
 
     // Check if this order still exists
     if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
@@ -384,8 +387,8 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
-    // Delete this order from the list
-    delete limitOrders[subAccount][_orderIndex];
+    // Remove this order from the list
+    _removeOrder(_order, subAccount, _orderIndex);
 
     // Refund the execution fee to the creator of this order
     _transferOutETH(_order.executionFee, _order.account);
@@ -426,6 +429,17 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
+    if (_order.triggerPrice == 0) {
+      // Market
+      revert ILimitTradeHandler_MarketOrderNoUpdate();
+    } else {
+      // Limit
+      // if trying to update to Market, revert
+      if (_triggerPrice == 0) {
+        revert ILimitTradeHandler_LimitOrderCovnertToMarketOrder();
+      }
+    }
+
     // Update order
     _order.triggerPrice = _triggerPrice;
     _order.triggerAboveThreshold = _triggerAboveThreshold;
@@ -443,6 +457,127 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
       _order.reduceOnly,
       _order.tpToken
     );
+  }
+
+  function _addOrder(LimitOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
+    limitOrdersIndex[_subAccount] = _orderIndex + 1;
+    limitOrders[_subAccount][_orderIndex] = _order;
+
+    OrderPointer memory _pointer = OrderPointer({ account: _subAccount, index: _orderIndex });
+
+    activeOrderPointers.push(_pointer);
+
+    if (_order.triggerPrice == 0) {
+      // Market
+      activeMarketOrderPointers.push(_pointer);
+    } else {
+      // Limit
+      activeLimitOrderPointers.push(_pointer);
+    }
+  }
+
+  function _removeOrder(LimitOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
+    delete limitOrders[_subAccount][_orderIndex];
+
+    {
+      uint256 _len = activeOrderPointers.length;
+
+      for (uint256 i; i < _len; ) {
+        if (activeOrderPointers[i].account == _subAccount && activeOrderPointers[i].index == _orderIndex) {
+          // delete the object by replacing it with the last one and then pop it from there
+          if (i != _len - 1) {
+            activeOrderPointers[i] = activeOrderPointers[_len - 1];
+          }
+          activeOrderPointers.pop();
+          break;
+        }
+
+        unchecked {
+          i++;
+        }
+      }
+    }
+
+    if (_order.triggerPrice == 0) {
+      // Market
+      uint256 _len = activeMarketOrderPointers.length;
+
+      for (uint256 i; i < _len; ) {
+        if (activeMarketOrderPointers[i].account == _subAccount && activeMarketOrderPointers[i].index == _orderIndex) {
+          // delete the object by replacing it with the last one and then pop it from there
+          if (i != _len - 1) {
+            activeMarketOrderPointers[i] = activeMarketOrderPointers[_len - 1];
+          }
+          activeMarketOrderPointers.pop();
+          break;
+        }
+
+        unchecked {
+          i++;
+        }
+      }
+    } else {
+      // Limit
+      uint256 _len = activeLimitOrderPointers.length;
+
+      for (uint256 i; i < _len; ) {
+        if (activeLimitOrderPointers[i].account == _subAccount && activeLimitOrderPointers[i].index == _orderIndex) {
+          // delete the object by replacing it with the last one and then pop it from there
+          if (i != _len - 1) {
+            activeLimitOrderPointers[i] = activeLimitOrderPointers[_len - 1];
+          }
+          activeLimitOrderPointers.pop();
+          break;
+        }
+
+        unchecked {
+          i++;
+        }
+      }
+    }
+  }
+
+  /**
+   * Getters
+   */
+
+  function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(activeOrderPointers, _limit, _offset);
+  }
+
+  function getMarketActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(activeMarketOrderPointers, _limit, _offset);
+  }
+
+  function getLimitActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(activeLimitOrderPointers, _limit, _offset);
+  }
+
+  function _getOrders(
+    OrderPointer[] memory _pointers,
+    uint256 _limit,
+    uint256 _offset
+  ) internal view returns (LimitOrder[] memory _orders) {
+    uint256 _len = _pointers.length;
+    uint256 _startIndex = _offset;
+    uint256 _endIndex = _offset + _limit;
+    if (_startIndex > _len) return _orders;
+    if (_endIndex > _len) {
+      _endIndex = _len;
+    }
+
+    _orders = new LimitOrder[](_endIndex - _startIndex);
+
+    for (uint256 i = _startIndex; i < _endIndex; ) {
+      LimitOrder memory _order = limitOrders[_pointers[i].account][_pointers[i].index];
+      // _orders.push(_order);
+      _orders[i - _offset] = _order;
+      unchecked {
+        ++i;
+      }
+    }
+
+    return _orders;
   }
 
   /**

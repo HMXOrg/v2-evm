@@ -100,7 +100,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
    */
   uint8 internal constant BUY = 0;
   uint8 internal constant SELL = 1;
-  uint256 internal MAX_EXECUTION_FEE = 5 ether;
+  uint256 internal constant MAX_EXECUTION_FEE = 5 ether;
 
   /**
    * States

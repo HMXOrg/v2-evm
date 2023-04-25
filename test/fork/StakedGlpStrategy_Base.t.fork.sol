@@ -30,6 +30,7 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // HMX
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
@@ -78,7 +79,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   address internal constant fsGlpAddress = 0x1aDDD80E6039594eE970E5872D247bf0414C8903;
 
   // PYTH
-  EcoPyth internal pyth;
+  IEcoPyth internal pyth;
   // address internal constant pythAddress = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
   bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
   AssetPythPriceData[] assetPythPriceDatas;
@@ -189,7 +190,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     rewardTracker = IGmxRewardTracker(fglpAddress);
     sglp = IERC20Upgradeable(sGlpAddress);
 
-    pyth = new EcoPyth();
+    pyth = Deployer.deployEcoPyth(address(proxyAdmin));
 
     // Tokens
     plpV2 = Deployer.deployPLPv2(address(proxyAdmin));

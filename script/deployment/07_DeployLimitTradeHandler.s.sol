@@ -36,44 +36,15 @@ contract DeployHandlers is ConfigJsonRepo {
     );
 
     // @todo - TBD
-    uint256 minExecutionFee = 0;
     uint256 executionOrderFee = 0.0001 ether;
 
-    address botHandlerAddress = address(
-      Deployer.deployBotHandler(
-        address(proxyAdmin),
-        vars.tradeServiceAddress,
-        vars.liquidationServiceAddress,
-        vars.pythAddress
-      )
-    );
-    address crossMarginHandlerAddress = address(
-      Deployer.deployCrossMarginHandler(
-        address(proxyAdmin),
-        vars.crossMarginServiceAddress,
-        vars.pythAddress,
-        executionOrderFee
-      )
-    );
-    address liquidityHandlerAddress = address(
-      Deployer.deployLiquidityHandler(
-        address(proxyAdmin),
-        vars.liquidityServiceAddress,
-        vars.pythAddress,
-        executionOrderFee
-      )
-    );
-
-    address marketTradeHandlerAddress = address(
-      Deployer.deployMarketTradeHandler(address(proxyAdmin), vars.tradeServiceAddress, vars.pythAddress)
-    );
     address limitTradeHandlerAddress = address(
       Deployer.deployLimitTradeHandler(
         address(proxyAdmin),
         vars.weth,
         vars.tradeServiceAddress,
         vars.pythAddress,
-        minExecutionFee
+        executionOrderFee
       )
     );
 

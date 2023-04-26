@@ -372,6 +372,15 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     });
 
     configStorage.setAssetConfig(usdcAssetId, _assetConfig);
+
+    _assetConfig = IConfigStorage.AssetConfig({
+      tokenAddress: wethAddress,
+      assetId: ethAssetId,
+      decimals: 18,
+      isStableCoin: false
+    });
+
+    configStorage.setAssetConfig(ethAssetId, _assetConfig);
   }
 
   function _setupPythConfig() private {

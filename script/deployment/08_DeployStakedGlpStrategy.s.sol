@@ -12,7 +12,7 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 
-contract DeploySglpStrategy is ConfigJsonRepo {
+contract DeployStakedGlpStrategy is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
@@ -41,6 +41,6 @@ contract DeploySglpStrategy is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".strategies.stakedGLPStrategy", strategiesAddress);
+    updateJson(".strategies.stakedGlpStrategy", strategiesAddress);
   }
 }

@@ -17,62 +17,50 @@ contract UnstakedGlpStrategy_ConvertCollateral is StakedGlpStrategy_Base {
   }
 
   function testCorrectness_ConvertTokenSuccess() external {
-    console.log("vaultStorage", address(vaultStorage));
-    //set up alice add Liquidity
+    //set up alice add Liquidity at GMX
     vm.deal(ALICE, 1000e18);
     vm.startPrank(ALICE);
     rewardRouter.mintAndStakeGlpETH{ value: 100e18 }(0, 0);
 
-    //manual transfer fsglp
-    //alice bring sglp to deposit at plp liquidity
     uint256 sglpAmount = sglp.balanceOf(ALICE);
-    console.log("sglpAmount", sglpAmount);
     vm.stopPrank();
 
     depositCollateral(ALICE, 0, ERC20(address(sglp)), sglpAmount);
 
-    console.log("VAULT STORAGE");
-    uint256 vaultglpStakeAmount = IGmxRewardTracker(fglpAddress).stakedAmounts(address(vaultStorage));
-    uint256 vaultfglpStakeAmount = IGmxRewardTracker(fsGlpAddress).stakedAmounts(address(vaultStorage));
+    uint256 glpStakeAmount = IGmxRewardTracker(fglpAddress).stakedAmounts(address(vaultStorage));
+    uint256 fglpStakeAmount = IGmxRewardTracker(fsGlpAddress).stakedAmounts(address(vaultStorage));
 
-    uint256 fsglpinPocket = ERC20(fsGlpAddress).balanceOf(address(vaultStorage));
-    uint256 fglpinPocket = ERC20(fglpAddress).balanceOf(address(vaultStorage));
-
-    console.log("GLP stake Amount", vaultglpStakeAmount);
-    console.log("FGLP stake amount", vaultfglpStakeAmount);
-    console.log("POCKET FSGLP", fsglpinPocket);
-    console.log("POCKET FGLP", fglpinPocket);
+    assertEq(glpStakeAmount, sglpAmount, "glp stake amount");
+    assertEq(fglpStakeAmount, sglpAmount, "fglp stake amount");
 
     vm.prank(ALICE);
-    crossMarginHandler.convertSGlpCollateral(0, usdcAddress, sglpAmount);
+    uint256 amountOut = crossMarginHandler.convertSGlpCollateral(0, usdcAddress, sglpAmount);
+
+    assertEq(vaultStorage.traderBalances(ALICE, address(sglp)), 0, "trader balance sglp should be 0");
+    assertEq(vaultStorage.traderBalances(ALICE, address(usdc)), amountOut, "trader balance sglp should be 0");
   }
 
   function testCorrectness_ConvertNativeTokenSuccess() external {
-    //set up alice add Liquidity
+    //set up alice add Liquidity at GMX
     vm.deal(ALICE, 1000e18);
     vm.startPrank(ALICE);
     rewardRouter.mintAndStakeGlpETH{ value: 100e18 }(0, 0);
 
-    //manual transfer fsglp
-    //alice bring sglp to deposit at plp liquidity
     uint256 sglpAmount = sglp.balanceOf(ALICE);
     vm.stopPrank();
 
     depositCollateral(ALICE, 0, ERC20(address(sglp)), sglpAmount);
 
-    console.log("VAULT STORAGE");
-    uint256 vaultglpStakeAmount = IGmxRewardTracker(fglpAddress).stakedAmounts(address(vaultStorage));
-    uint256 vaultfglpStakeAmount = IGmxRewardTracker(fsGlpAddress).stakedAmounts(address(vaultStorage));
+    uint256 glpStakeAmount = IGmxRewardTracker(fglpAddress).stakedAmounts(address(vaultStorage));
+    uint256 fglpStakeAmount = IGmxRewardTracker(fsGlpAddress).stakedAmounts(address(vaultStorage));
 
-    uint256 fsglpinPocket = ERC20(fsGlpAddress).balanceOf(address(vaultStorage));
-    uint256 fglpinPocket = ERC20(fglpAddress).balanceOf(address(vaultStorage));
-
-    console.log("GLP stake Amount", vaultglpStakeAmount);
-    console.log("FGLP stake amount", vaultfglpStakeAmount);
-    console.log("POCKET FSGLP", fsglpinPocket);
-    console.log("POCKET FGLP", fglpinPocket);
+    assertEq(glpStakeAmount, sglpAmount, "glp stake amount");
+    assertEq(fglpStakeAmount, sglpAmount, "fglp stake amount");
 
     vm.prank(ALICE);
-    crossMarginHandler.convertSGlpCollateral(0, usdcAddress, sglpAmount);
+    uint256 amountOut = crossMarginHandler.convertSGlpCollateral(0, wethAddress, sglpAmount);
+
+    assertEq(vaultStorage.traderBalances(ALICE, address(sglp)), 0, "trader balance sglp should be 0");
+    assertEq(vaultStorage.traderBalances(ALICE, address(weth)), amountOut, "trader balance sglp should be 0");
   }
 }

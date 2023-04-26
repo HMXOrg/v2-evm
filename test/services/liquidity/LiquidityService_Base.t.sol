@@ -12,6 +12,7 @@ abstract contract LiquidityService_Base is BaseTest {
   function setUp() public virtual {
     // deploy liquidity service
     liquidityService = Deployer.deployLiquidityService(
+      address(proxyAdmin),
       address(perpStorage),
       address(vaultStorage),
       address(configStorage)

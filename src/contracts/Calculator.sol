@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 // base
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 //contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
@@ -13,7 +13,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-contract Calculator is Owned, ICalculator {
+contract Calculator is OwnableUpgradeable, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
   uint64 internal constant RATE_PRECISION = 1e18;
@@ -31,7 +31,14 @@ contract Calculator is Owned, ICalculator {
   address public configStorage;
   address public perpStorage;
 
-  constructor(address _oracle, address _vaultStorage, address _perpStorage, address _configStorage) {
+  function initialize(
+    address _oracle,
+    address _vaultStorage,
+    address _perpStorage,
+    address _configStorage
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+
     // Sanity check
     if (
       _oracle == address(0) || _vaultStorage == address(0) || _perpStorage == address(0) || _configStorage == address(0)
@@ -1076,5 +1083,10 @@ contract Calculator is Owned, ICalculator {
 
   function _abs(int256 x) private pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

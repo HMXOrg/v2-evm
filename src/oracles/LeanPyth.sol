@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { PythStructs, IPythEvents } from "pyth-sdk-solidity/IPyth.sol";
 import { PythErrors } from "pyth-sdk-solidity/PythErrors.sol";
 import { ILeanPyth } from "./interfaces/ILeanPyth.sol";
@@ -9,7 +9,7 @@ import { IPyth, IPythPriceInfo, IPythDataSource } from "./interfaces/IPyth.sol";
 import { IWormHole } from "./interfaces/IWormHole.sol";
 import "./UnsafeBytesLib.sol";
 
-contract LeanPyth is Owned, ILeanPyth {
+contract LeanPyth is OwnableUpgradeable, ILeanPyth {
   // errors
   error LeanPyth_ExpectZeroFee();
   error LeanPyth_OnlyUpdater();
@@ -39,8 +39,10 @@ contract LeanPyth is Owned, ILeanPyth {
     _;
   }
 
-  constructor(address _pyth) {
-    pyth = IPyth(_pyth);
+  function initialize(IPyth _pyth) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+
+    pyth = _pyth;
 
     // Sanity
     IPyth(pyth).wormhole();
@@ -310,5 +312,10 @@ contract LeanPyth is Owned, ILeanPyth {
 
       if (attestationIndex > attestationSize) revert PythErrors.InvalidUpdateData();
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

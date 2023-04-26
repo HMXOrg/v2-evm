@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythPriceInfo, IEcoPythPriceInfo } from "./interfaces/IPyth.sol";
 import { IEcoPyth } from "./interfaces/IEcoPyth.sol";
 
-contract EcoPyth is Owned, IEcoPyth {
+contract EcoPyth is OwnableUpgradeable, IEcoPyth {
   // errors
   error EcoPyth_ExpectZeroFee();
   error EcoPyth_OnlyUpdater();
@@ -52,7 +52,9 @@ contract EcoPyth is Owned, IEcoPyth {
     _;
   }
 
-  constructor() {
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
+
     // Preoccupied index 0 as any of `mapAssetIdToIndex` returns default as 0
     indexCount = 1;
     assetIds.push("0"); // First index is not used
@@ -191,5 +193,10 @@ contract EcoPyth is Owned, IEcoPyth {
 
       _updateData[outerIndex] = previousWord | partialWord;
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

@@ -32,18 +32,27 @@ contract TradeService_Hooks is TradeService_Base {
     super.setUp();
 
     rewardToken = new MockErc20("Reward Token", "RWD", 18);
-    tradingStaking = Deployer.deployTradingStaking();
-    tradingStakingHook = Deployer.deployTradingStakingHook(address(tradingStaking), address(tradeService));
-    tlc = Deployer.deployTLCToken();
+    tradingStaking = Deployer.deployTradingStaking(address(proxyAdmin));
+    tradingStakingHook = Deployer.deployTradingStakingHook(
+      address(proxyAdmin),
+      address(tradingStaking),
+      address(tradeService)
+    );
+    tlc = Deployer.deployTLCToken(address(proxyAdmin));
     tlcStaking = Deployer.deployTLCStaking(address(proxyAdmin), address(tlc));
-    tlcHook = Deployer.deployTLCHook(address(tradeService), address(tlc), address(tlcStaking));
+    tlcHook = Deployer.deployTLCHook(address(proxyAdmin), address(tradeService), address(tlc), address(tlcStaking));
 
     address[] memory _hooks = new address[](2);
     _hooks[0] = address(tradingStakingHook);
     _hooks[1] = address(tlcHook);
     configStorage.setTradeServiceHooks(_hooks);
 
-    ethMarketRewarder = Deployer.deployFeedableRewarder("Gov", address(rewardToken), address(tradingStaking));
+    ethMarketRewarder = Deployer.deployFeedableRewarder(
+      address(proxyAdmin),
+      "Gov",
+      address(rewardToken),
+      address(tradingStaking)
+    );
     tlcRewarder = Deployer.deployEpochFeedableRewarder(
       address(proxyAdmin),
       "TLC",

@@ -6,10 +6,10 @@
     "vault": "0x69F493e47C2793AbA58AbC5c1aaaA1d6DB60b608"
   },
   "handlers": {
-    "bot": "",
-    "crossMargin": "",
-    "limitTrade": "",
-    "liquidity": "",
+    "bot": "0xe90F360721d1e425D16B757F4B40addBeaEBCe2a",
+    "crossMargin": "0x2fDE86903B987CA4FB3Ccfe9bc97CED9E297D361",
+    "limitTrade": "0x2176EB2983C4a36570e82B519E7eB19959119a68",
+    "liquidity": "0x45d88ed405800BABd3D81135a89388706e0787B6",
     "marketTrade": ""
   },
   "helpers": {
@@ -44,7 +44,7 @@
     }
   },
   "strategies": {
-    "stakedGLPStrategy": ""
+    "stakedGLPStrategy": "0x0555886918E7862b9D500E35bDE3a3A14CcD29DE"
   },
   "calculator": "0xC44b8fb84B61AcEa1D46665999f4b0543AA1aF3B"
 }

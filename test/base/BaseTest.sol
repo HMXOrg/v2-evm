@@ -11,6 +11,8 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
  */
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 // Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockWNative } from "../mocks/MockWNative.sol";
@@ -43,7 +45,6 @@ import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
 import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;
@@ -103,6 +104,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
   bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000004;
   bytes32 internal constant usdtPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
+  // Fx
+  bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
 
   bytes32 internal constant wethAssetId = "WETH";
   bytes32 internal constant wbtcAssetId = "WBTC";
@@ -110,10 +113,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
   bytes32 internal constant sglpAssetId = "SGLP";
-
-  // Fx
-  bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
-
   bytes32 internal constant jpyAssetId = "JPY";
 
   constructor() {
@@ -152,6 +151,12 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockOracle = new MockOracleMiddleware();
     mockTradeService = new MockTradeService();
     mockLiquidationService = new MockLiquidationService();
+    mockLiquidityService = new MockLiquidityService(
+      address(configStorage),
+      address(perpStorage),
+      address(vaultStorage)
+    );
+
     mockGlpManager = new MockGlpManager();
     mockGmxRewardRouterv2 = new MockGmxRewardRouterV2();
 
@@ -159,15 +164,10 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
 
     unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
-      IERC20(sglp),
+      address(proxyAdmin),
+      ERC20(sglp),
       IGmxRewardRouterV2(mockGmxRewardRouterv2),
       IVaultStorage(vaultStorage)
-    );
-
-    mockLiquidityService = new MockLiquidityService(
-      address(configStorage),
-      address(perpStorage),
-      address(vaultStorage)
     );
 
     // configStorage setup

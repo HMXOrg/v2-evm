@@ -8,12 +8,13 @@ import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
-import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract DeployStakedGlpStrategy is ConfigJsonRepo {
   function run() public {
@@ -36,13 +37,7 @@ contract DeployStakedGlpStrategy is ConfigJsonRepo {
     uint16 strategyBPS = 1000; //10%
 
     address strategiesAddress = address(
-      Deployer.deployStakedGlpStrategy(
-        address(proxyAdmin),
-        IERC20Upgradeable(sglp),
-        stakedGlpStrategyConfig,
-        treasury,
-        strategyBPS
-      )
+      Deployer.deployStakedGlpStrategy(address(proxyAdmin), ERC20(sglp), stakedGlpStrategyConfig, treasury, strategyBPS)
     );
 
     vm.stopBroadcast();

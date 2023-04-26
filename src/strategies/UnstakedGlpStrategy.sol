@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
@@ -13,7 +14,7 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 
 import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
 
-contract UnstakedGlpStrategy is Owned, IUnstakedGlpStrategy {
+contract UnstakedGlpStrategy is OwnableUpgradeable, IUnstakedGlpStrategy {
   error UnstakedGlpStrategy_OnlyWhitelisted();
 
   IERC20 public sglp;
@@ -22,7 +23,6 @@ contract UnstakedGlpStrategy is Owned, IUnstakedGlpStrategy {
   IVaultStorage public vaultStorage;
 
   mapping(address => bool) public whitelistExecutors;
-
   event SetWhitelistExecutor(address indexed _account, bool _active);
 
   /**
@@ -35,7 +35,12 @@ contract UnstakedGlpStrategy is Owned, IUnstakedGlpStrategy {
     _;
   }
 
-  constructor(IERC20 _sglp, IGmxRewardRouterV2 _rewardRouter, IVaultStorage _vaultStorage) {
+  function initialize(
+    IERC20 _sglp,
+    IGmxRewardRouterV2 _rewardRouter,
+    IVaultStorage _vaultStorage
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
     sglp = _sglp;
     rewardRouter = _rewardRouter;
     vaultStorage = _vaultStorage;
@@ -65,5 +70,10 @@ contract UnstakedGlpStrategy is Owned, IUnstakedGlpStrategy {
     vaultStorage.pullToken(_tokenOut);
 
     return _amountOut;
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

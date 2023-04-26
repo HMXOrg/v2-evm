@@ -11,6 +11,7 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract DeploySGlpStakedAdapter is ConfigJsonRepo {
   bytes32 internal constant sglpAssetId = 0x0000000000000000000000000000000000000000000000000000000000000010;
@@ -26,7 +27,7 @@ contract DeploySGlpStakedAdapter is ConfigJsonRepo {
     address sglpStakedAdapterAddress = address(
       Deployer.deployStakedGlpOracleAdapter(
         address(proxyAdmin),
-        IERC20Upgradeable(sglpAddress),
+        ERC20(sglpAddress),
         IGmxGlpManager(glpManager),
         sglpAssetId
       )

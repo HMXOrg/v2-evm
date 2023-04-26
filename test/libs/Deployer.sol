@@ -44,7 +44,8 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
-import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -99,7 +100,7 @@ library Deployer {
 
   function deployStakedGlpOracleAdapter(
     address _proxyAdmin,
-    IERC20Upgradeable _sGlp,
+    ERC20 _sGlp,
     IGmxGlpManager _glpManager,
     bytes32 _sGlpAssetId
   ) internal returns (IOracleAdapter) {
@@ -270,22 +271,6 @@ library Deployer {
     return ITradeServiceHook(payable(_proxy));
   }
 
-  function deployCrossMarginService(
-    address _configStorage,
-    address _vaultStorage,
-    address _perpStorage,
-    address _calculator,
-    address _unstakeGlpStrategy
-  ) internal returns (ICrossMarginService) {
-    return
-      ICrossMarginService(
-        deployContractWithArguments(
-          "CrossMarginService",
-          abi.encode(_configStorage, _vaultStorage, _perpStorage, _calculator, _unstakeGlpStrategy)
-        )
-      );
-  }
-
   function deployFeedableRewarder(
     address _proxyAdmin,
     string memory _name,
@@ -355,15 +340,17 @@ library Deployer {
     address _configStorage,
     address _vaultStorage,
     address _perpStorage,
-    address _calculator
+    address _calculator,
+    address _unstakeGlpStrategy
   ) internal returns (ICrossMarginService) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/CrossMarginService.sol/CrossMarginService.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address)")),
+      bytes4(keccak256("initialize(address,address,address,address,address)")),
       _configStorage,
       _vaultStorage,
       _perpStorage,
-      _calculator
+      _calculator,
+      _unstakeGlpStrategy
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ICrossMarginService(payable(_proxy));
@@ -487,34 +474,40 @@ library Deployer {
 
   function deployStakedGlpStrategy(
     address _proxyAdmin,
-    IERC20Upgradeable _sGlp,
-    IStrategy.StakedGlpStrategyConfig memory _stakedGlpStrategyConfig,
-    address _keeper,
+    ERC20 _sGlp,
+    IStakedGlpStrategy.StakedGlpStrategyConfig memory _stakedGlpStrategyConfig,
     address _treasury,
     uint16 _strategyBps
-  ) internal returns (IStrategy) {
+  ) internal returns (IStakedGlpStrategy) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/StakedGlpStrategy.sol/StakedGlpStrategy.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,(address,address,address,address,address),address,address,uint16)")),
+      bytes4(keccak256("initialize(address,(address,address,address,address,address),address,uint16)")),
       _sGlp,
       _stakedGlpStrategyConfig,
-      _keeper,
       _treasury,
       _strategyBps
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IStrategy(payable(_proxy));
+    return IStakedGlpStrategy(payable(_proxy));
   }
 
   function deployUnstakedGlpStrategy(
-    IERC20 _sGlp,
+    address _proxyAdmin,
+    ERC20 _sGlp,
     IGmxRewardRouterV2 _rewardRouter,
     IVaultStorage _vaultStorage
   ) internal returns (IUnstakedGlpStrategy) {
-    return
-      IUnstakedGlpStrategy(
-        deployContractWithArguments("UnstakedGlpStrategy", abi.encode(_sGlp, _rewardRouter, _vaultStorage))
-      );
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/UnstakedGlpStrategy.sol/UnstakedGlpStrategy.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address)")),
+      _sGlp,
+      _rewardRouter,
+      _vaultStorage
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IUnstakedGlpStrategy(payable(_proxy));
   }
 
   /**

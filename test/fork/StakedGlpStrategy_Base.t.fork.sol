@@ -44,7 +44,7 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 // OZ
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
-
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 //tester
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 //deployment
@@ -117,10 +117,10 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   ICrossMarginService crossMarginService;
 
   // TOKENS
-  IERC20Upgradeable sglp;
-  IERC20Upgradeable glp;
+  ERC20 sglp;
+  ERC20 glp;
   IPLPv2 plpV2;
-  IERC20Upgradeable usdc;
+  ERC20 usdc;
 
   IWNative weth; //for native
 
@@ -213,11 +213,11 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     treasury = makeAddr("GlpStrategyTreasury");
     FEEVER = makeAddr("FEEVER");
 
-    glp = IERC20Upgradeable(glpAddress);
+    glp = ERC20(glpAddress);
     rewardRouter = IGmxRewardRouterV2(gmxRewardRouterV2Address);
     glpManager = IGmxGlpManager(glpManagerAddress);
     rewardTracker = IGmxRewardTracker(fglpAddress);
-    sglp = IERC20Upgradeable(sGlpAddress);
+    sglp = ERC20(sGlpAddress);
 
     pyth = Deployer.deployEcoPyth(address(proxyAdmin));
 
@@ -225,7 +225,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     plpV2 = Deployer.deployPLPv2(address(proxyAdmin));
 
     weth = IWNative(wethAddress);
-    usdc = IERC20Upgradeable(usdcAddress);
+    usdc = ERC20(usdcAddress);
 
     vm.label(address(usdc), "USDC");
     vm.label(address(weth), "WETH");
@@ -536,7 +536,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   function depositCollateral(
     address _account,
     uint8 _subAccountId,
-    IERC20Upgradeable _collateralToken,
+    ERC20 _collateralToken,
     uint256 _depositAmount
   ) internal {
     vm.startPrank(_account);

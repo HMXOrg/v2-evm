@@ -25,6 +25,7 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     // Override the mock calculator
     {
       mockCalculator = new MockCalculatorWithRealCalculator(
+        address(proxyAdmin),
         address(mockOracle),
         address(vaultStorage),
         address(perpStorage),

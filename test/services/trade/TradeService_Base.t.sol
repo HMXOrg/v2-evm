@@ -28,9 +28,15 @@ abstract contract TradeService_Base is BaseTest {
     positionTester02 = new PositionTester02(perpStorage);
     globalMarketTester = new MarketTester(perpStorage);
 
-    tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
+    tradeHelper = Deployer.deployTradeHelper(
+      address(proxyAdmin),
+      address(perpStorage),
+      address(vaultStorage),
+      address(configStorage)
+    );
     // deploy services
     tradeService = Deployer.deployTradeService(
+      address(proxyAdmin),
       address(perpStorage),
       address(vaultStorage),
       address(configStorage),

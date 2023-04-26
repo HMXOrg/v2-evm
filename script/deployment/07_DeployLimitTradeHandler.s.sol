@@ -8,23 +8,44 @@ import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
 import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
 import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
 import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-contract DeployLimitTradeHandler is ConfigJsonRepo {
+contract DeployHandlers is ConfigJsonRepo {
+  struct ContractAddress {
+    address pythAddress;
+    address tradeServiceAddress;
+    address liquidationServiceAddress;
+    address liquidityServiceAddress;
+    address crossMarginServiceAddress;
+    address weth;
+  }
+
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
+    ProxyAdmin proxyAdmin = new ProxyAdmin();
 
-    address pythAddress = getJsonAddress(".oracles.ecoPyth");
-    address tradeServiceAddress = getJsonAddress(".services.trade");
-    address liquiditionServiceAddress = getJsonAddress(".services.liquidation");
-    address liquidityServiceAddress = getJsonAddress(".services.liquidity");
-    address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
-    address weth = getJsonAddress(".tokens.weth");
+    ContractAddress memory vars = ContractAddress(
+      getJsonAddress(".oracles.pyth"),
+      getJsonAddress(".services.trade"),
+      getJsonAddress(".services.liquidation"),
+      getJsonAddress(".services.liquidity"),
+      getJsonAddress(".services.crossMargin"),
+      getJsonAddress(".tokens.weth")
+    );
+
     // @todo - TBD
-    uint256 minExecutionFee = 30;
+    uint256 executionOrderFee = 0.0001 ether;
 
     address limitTradeHandlerAddress = address(
-      new LimitTradeHandler(weth, tradeServiceAddress, pythAddress, minExecutionFee)
+      Deployer.deployLimitTradeHandler(
+        address(proxyAdmin),
+        vars.weth,
+        vars.tradeServiceAddress,
+        vars.pythAddress,
+        executionOrderFee
+      )
     );
 
     vm.stopBroadcast();

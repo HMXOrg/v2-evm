@@ -8,22 +8,20 @@ import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
 import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
 import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
 import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 contract DeployBotHandler is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-
+    address proxyAdmin = getJsonAddress(".proxyAdmin");
     address pythAddress = getJsonAddress(".oracles.ecoPyth");
     address tradeServiceAddress = getJsonAddress(".services.trade");
-    address liquiditionServiceAddress = getJsonAddress(".services.liquidation");
-    address liquidityServiceAddress = getJsonAddress(".services.liquidity");
-    address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
-    address weth = getJsonAddress(".tokens.weth");
-    // @todo - TBD
-    uint256 minExecutionFee = 30;
+    address liquidationServiceAddress = getJsonAddress(".services.liquidation");
 
-    address botHandlerAddress = address(new BotHandler(tradeServiceAddress, liquiditionServiceAddress, pythAddress));
+    address botHandlerAddress = address(
+      Deployer.deployBotHandler(address(proxyAdmin), tradeServiceAddress, liquidationServiceAddress, pythAddress)
+    );
 
     vm.stopBroadcast();
 

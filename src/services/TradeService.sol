@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -9,13 +9,13 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 // interfaces
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
-contract TradeService is ReentrancyGuard, ITradeService, Owned {
+contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgradeable {
   /**
    * Events
    */
@@ -136,7 +136,15 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   address public tradeHelper;
   Calculator public calculator; // cache this from configStorage
 
-  constructor(address _perpStorage, address _vaultStorage, address _configStorage, address _tradeHelper) {
+  function initialize(
+    address _perpStorage,
+    address _vaultStorage,
+    address _configStorage,
+    address _tradeHelper
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
     VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
@@ -287,17 +295,19 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
       _vars.position.marketIndex = _marketIndex;
     }
 
-    // Settle
-    // - trading fees
-    // - borrowing fees
-    // - funding fees
-    TradeHelper(tradeHelper).settleAllFees(
-      _vars.position,
-      _absSizeDelta,
-      _marketConfig.increasePositionFeeRateBPS,
-      _marketConfig.assetClass,
-      _marketIndex
-    );
+    {
+      // Settle
+      // - trading fees
+      // - borrowing fees
+      // - funding fees
+      TradeHelper(tradeHelper).settleAllFees(
+        _vars.positionId,
+        _vars.position,
+        _absSizeDelta,
+        _marketConfig.increasePositionFeeRateBPS,
+        _marketConfig.assetClass
+      );
+    }
 
     _vars.nextClosePrice = _calculateNextClosePrice(
       _market,
@@ -714,6 +724,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     TradeHelper(tradeHelper).updateFundingRate(_marketIndex);
 
     (_vars.tradingFee, _vars.borrowingFee, _vars.fundingFee) = TradeHelper(tradeHelper).updateFeeStates(
+      _vars.positionId,
       _vars.subAccount,
       _vars.position,
       _vars.positionSizeE30ToDecrease,
@@ -855,8 +866,15 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     // =======================================
     // | ------ settle profit & loss ------- |
     // =======================================
-    TradeHelper(tradeHelper).increaseCollateral(_vars.subAccount, _vars.realizedPnl, _vars.fundingFee, _vars.tpToken);
+    TradeHelper(tradeHelper).increaseCollateral(
+      _vars.positionId,
+      _vars.subAccount,
+      _vars.realizedPnl,
+      _vars.fundingFee,
+      _vars.tpToken
+    );
     TradeHelper(tradeHelper).decreaseCollateral(
+      _vars.positionId,
       _vars.subAccount,
       _vars.realizedPnl,
       _vars.fundingFee,
@@ -900,7 +918,7 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
     int256 _sizeDelta,
     uint256 _nextClosePrice,
     int256 _unrealizedPnl
-  ) private view returns (uint256 _newEntryAveragePrice) {
+  ) private pure returns (uint256 _newEntryAveragePrice) {
     int256 _newPositionSize = _positionSize + _sizeDelta;
 
     if (_positionSize > 0) {
@@ -1047,5 +1065,10 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         ++i;
       }
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

@@ -7,13 +7,16 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract DeployConfigStorage is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
+    address proxyAdmin = getJsonAddress(".proxyAdmin");
 
-    address configStorageAddress = address(new ConfigStorage());
+    address configStorageAddress = address(Deployer.deployConfigStorage(address(proxyAdmin)));
 
     vm.stopBroadcast();
 

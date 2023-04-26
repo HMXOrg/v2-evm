@@ -7,6 +7,7 @@ import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { LiquidityService } from "@hmx/services/LiquidityService.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 contract DeployCrossMarginService is ConfigJsonRepo {
   function run() public {
@@ -17,10 +18,16 @@ contract DeployCrossMarginService is ConfigJsonRepo {
     address vaultStorageAddress = getJsonAddress(".storages.vault");
     address perpStorageAddress = getJsonAddress(".storages.perp");
     address calculatorAddress = getJsonAddress(".calculator");
-    address tradeHelperAddress = getJsonAddress(".helpers.trade");
+    address proxyAdmin = getJsonAddress(".proxyAdmin");
 
     address crossMarginServiceAddress = address(
-      new CrossMarginService(configStorageAddress, vaultStorageAddress, perpStorageAddress, calculatorAddress)
+      Deployer.deployCrossMarginService(
+        proxyAdmin,
+        configStorageAddress,
+        vaultStorageAddress,
+        perpStorageAddress,
+        calculatorAddress
+      )
     );
 
     vm.stopBroadcast();

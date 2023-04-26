@@ -12,7 +12,7 @@ contract OracleMiddleware_SetterTest is OracleMiddleware_BaseTest {
     assertFalse(oracleMiddleware.isUpdater(ALICE));
 
     // Only owner could setUpdater()
-    vm.expectRevert(abi.encodeWithSignature("Owned_NotOwner()"));
+    vm.expectRevert("Ownable: caller is not the owner");
     vm.startPrank(ALICE);
     oracleMiddleware.setUpdater(ALICE, true);
     vm.stopPrank();

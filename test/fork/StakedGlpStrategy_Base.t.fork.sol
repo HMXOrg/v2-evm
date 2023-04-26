@@ -37,8 +37,8 @@ import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
 // OZ
-import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
-import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
+import { IERC20Upgradeable } from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { ERC20Upgradeable } from "lib/openzeppelin-contracts-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 
 //tester
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
@@ -54,7 +54,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { console } from "forge-std/console.sol";
 
 // Openzeppelin
-import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { ProxyAdmin } from "lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
 
 abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   struct AssetPythPriceData {

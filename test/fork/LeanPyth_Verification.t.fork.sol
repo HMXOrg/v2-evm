@@ -13,7 +13,7 @@ import { stdJson } from "forge-std/StdJson.sol";
 
 //Deployer
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
-import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { ProxyAdmin } from "lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract LeanPyth_Verification is TestBase, StdAssertions, StdCheatsSafe {
   using stdJson for string;

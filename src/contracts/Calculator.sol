@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 // base
-import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { OwnableUpgradeable } from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 //contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";

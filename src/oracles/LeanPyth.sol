@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { OwnableUpgradeable } from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { PythStructs, IPythEvents } from "pyth-sdk-solidity/IPyth.sol";
 import { PythErrors } from "pyth-sdk-solidity/PythErrors.sol";
 import { ILeanPyth } from "./interfaces/ILeanPyth.sol";

@@ -7,7 +7,7 @@ import { InvariantTest } from "forge-std/InvariantTest.sol";
 import { Deployer, IVester } from "@hmx-test/libs/Deployer.sol";
 import { VesterHandler } from "@hmx-test/invariance/vesting/VesterHandler.t.sol";
 import { console2 } from "forge-std/console2.sol";
-import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { ProxyAdmin } from "lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract Invariance_Vester is Test, InvariantTest {
   IVester private vester;

@@ -6,7 +6,7 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { console } from "forge-std/console.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
-import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { ProxyAdmin } from "lib/openzeppelin-contracts/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract MockCalculatorWithRealCalculator is MockCalculator {
   Calculator public c;

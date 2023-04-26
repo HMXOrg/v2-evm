@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.18;
 
-import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { OwnableUpgradeable } from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";

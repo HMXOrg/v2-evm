@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { OwnableUpgradeable } from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";

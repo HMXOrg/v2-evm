@@ -235,28 +235,14 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
     uint8 _subAccountId,
     address _tokenOut,
     uint256 _amountIn
-  ) external nonReentrant onlyWhitelistedExecutor returns (uint256) {
+  ) external nonReentrant onlyWhitelistedExecutor returns (uint256 _amountOut) {
     // Get trader's sub-account address
-    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     ConfigStorage _configStorage = ConfigStorage(configStorage);
+    _amountOut = UnstakedGlpStrategy(unstakeGlpStrategy).execute(_tokenOut, _amountIn);
 
-    // ConfigStorage _configStorage = ConfigStorage(configStorage);
-    // OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
-
-    // IConfigStorage.AssetConfig memory _assetFrom = _configStorage.getAssetConfigByToken(_tokenIn);
-    // IConfigStorage.AssetConfig memory _assetTo = _configStorage.getAssetConfigByToken(_tokenOut);
-
-    // get Token price
-    // (uint256 tokenPriceFrom, ) = _oracle.getLatestPrice(_assetFrom.assetId, false);
-    // (uint256 tokenPriceTo, ) = _oracle.getLatestPrice(_assetTo.assetId, false);
-
-    //convert amountIn to USD
-    // uint256 _convertValue = ((_amountIn * tokenPriceFrom) / 10 ** _assetFrom.decimals);
-
-    //convert to amountOut
-    // uint256 _amountOut = (_convertValue * 10 ** _assetTo.decimals) / tokenPriceTo;
-    uint256 _amountOut = 0;
+    // Adjusting trader balance
+    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
     _vaultStorage.decreaseTraderBalance(_subAccount, _configStorage.sglp(), _amountIn);
     _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _amountOut);
 

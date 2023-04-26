@@ -10,6 +10,7 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
 
 import { Owned } from "@hmx/base/Owned.sol";
+import { console } from "forge-std/console.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
@@ -261,7 +262,6 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
   function _deductTraderBalance(address _trader, address _token, uint256 _amount) internal {
     if (_amount == 0) return;
-
     traderBalances[_trader][_token] -= _amount;
     if (traderBalances[_trader][_token] == 0) {
       _removeTraderToken(_trader, _token);

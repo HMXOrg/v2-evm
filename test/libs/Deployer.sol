@@ -39,11 +39,9 @@ import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
-import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
 
-import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
-import { UnstakedGlpStrategy } from "@hmx/strategies/UnstakedGlpStrategy.sol";
-import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
+import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
+import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -310,12 +308,11 @@ library Deployer {
     IGmxGlpManager _glpManager,
     IOracleMiddleware _oracleMiddleware,
     IVaultStorage _vaultStorage,
-    address _keeper,
     address _treasury,
     uint16 _strategyBps
-  ) internal returns (IStrategy) {
+  ) internal returns (IStakedGlpStrategy) {
     return
-      IStrategy(
+      IStakedGlpStrategy(
         deployContractWithArguments(
           "StakedGlpStrategy",
           abi.encode(
@@ -325,7 +322,6 @@ library Deployer {
             _glpManager,
             _oracleMiddleware,
             _vaultStorage,
-            _keeper,
             _treasury,
             _strategyBps
           )
@@ -333,34 +329,14 @@ library Deployer {
       );
   }
 
-  // FIXME use interface to cast out, adjust params
   function deployUnstakedGlpStrategy(
     IERC20 _sGlp,
     IGmxRewardRouterV2 _rewardRouter,
-    IGmxRewardTracker _rewardTracker,
-    IGmxGlpManager _glpManager,
-    IOracleMiddleware _oracleMiddleware,
-    IVaultStorage _vaultStorage,
-    address _keeper,
-    address _treasury,
-    uint16 _strategyBps
-  ) internal returns (UnstakedGlpStrategy) {
+    IVaultStorage _vaultStorage
+  ) internal returns (IUnstakedGlpStrategy) {
     return
-      UnstakedGlpStrategy(
-        deployContractWithArguments(
-          "UnstakedGlpStrategy",
-          abi.encode(
-            _sGlp,
-            _rewardRouter,
-            _rewardTracker,
-            _glpManager,
-            _oracleMiddleware,
-            _vaultStorage,
-            _keeper,
-            _treasury,
-            _strategyBps
-          )
-        )
+      IUnstakedGlpStrategy(
+        deployContractWithArguments("UnstakedGlpStrategy", abi.encode(_sGlp, _rewardRouter, _vaultStorage))
       );
   }
 

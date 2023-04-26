@@ -328,7 +328,7 @@ contract ConfigStorage is IConfigStorage, Owned {
     weth = _weth;
   }
 
-  function setSglp(address _sglp) external onlyOwner {
+  function setSGlp(address _sglp) external onlyOwner {
     emit LogSetToken(sglp, _sglp);
     sglp = _sglp;
   }

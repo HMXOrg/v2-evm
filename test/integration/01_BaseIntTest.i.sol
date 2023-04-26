@@ -15,6 +15,10 @@ import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 // Openzepline
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// GMX
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 
 // Libs
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
@@ -22,6 +26,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 // Mock
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
+import { MockGmxRewardRouterV2 } from "@hmx-test/mocks/MockGmxRewardRouterV2.sol";
 
 // Interfaces
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
@@ -43,6 +48,9 @@ import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
+import { UnstakedGlpStrategy } from "@hmx/strategies/UnstakedGlpStrategy.sol";
+import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
+
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
@@ -58,8 +66,6 @@ import { PositionTester } from "@hmx-test/testers/PositionTester.sol";
 import { MarketTester } from "@hmx-test/testers/MarketTester.sol";
 import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
-
-import { console } from "forge-std/console.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
@@ -101,6 +107,12 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   ILiquidationService liquidationService;
   ITradeService tradeService;
 
+  //GMX
+  IGmxRewardRouterV2 gmxRewardRouterV2;
+
+  //strategies
+  IUnstakedGlpStrategy unstakedGlpStrategy;
+
   // helpers
   ITradeHelper tradeHelper;
 
@@ -114,6 +126,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   MockErc20 usdc; // decimals 6
   MockErc20 usdt; // decimals 6
   MockErc20 dai; // decimals 18
+  MockErc20 sglp; //decimals 18
 
   IWNative weth; //for native
 
@@ -148,6 +161,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
     pyth = new EcoPyth();
 
+    gmxRewardRouterV2 = new MockGmxRewardRouterV2();
+
     pythAdapter = IPythAdapter(Deployer.deployContractWithArguments("PythAdapter", abi.encode(pyth)));
 
     // deploy oracleMiddleWare
@@ -170,12 +185,14 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
+    sglp = new MockErc20("StakedGlp", "sGLP", 18);
 
     // labels
     vm.label(address(wbtc), "WBTC");
     vm.label(address(dai), "DAI");
     vm.label(address(usdc), "USDC");
     vm.label(address(usdt), "USDT");
+    vm.label(address(sglp), "SGLP");
 
     // deploy calculator
     calculator = Deployer.deployCalculator(
@@ -185,9 +202,16 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(configStorage)
     );
 
-    // deploy handler and service
     tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
 
+    // deploy Strategies
+    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
+      IERC20(address(sglp)),
+      IGmxRewardRouterV2(gmxRewardRouterV2),
+      IVaultStorage(vaultStorage)
+    );
+
+    // deploy Services
     liquidityService = Deployer.deployLiquidityService(
       address(perpStorage),
       address(vaultStorage),
@@ -204,7 +228,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(vaultStorage),
       address(perpStorage),
       address(calculator),
-      address(0) //FIXME
+      address(unstakedGlpStrategy)
     );
     tradeService = Deployer.deployTradeService(
       address(perpStorage),

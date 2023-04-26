@@ -22,7 +22,9 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
-import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
+
+import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
+import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
 
 // GMX
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
@@ -37,8 +39,6 @@ import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 // HMX
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
-import { UnstakedGlpStrategy } from "@hmx/strategies/UnstakedGlpStrategy.sol";
 
 // OZ
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -93,8 +93,15 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   // HLP
   uint256 internal constant executionOrderFee = 0.0001 ether;
+
   bytes32 constant sGlpAssetId = "SGLP";
+
   bytes32 constant usdcAssetId = "USDC";
+  bytes32 constant usdtAssetId = "USDT";
+  bytes32 constant daiAssetId = "DAI";
+
+  bytes32 constant ethAssetId = "ETH";
+  bytes32 constant btcAssetId = "BTC";
 
   // handlers
   ILiquidityHandler liquidityHandler;
@@ -129,8 +136,8 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   IGmxRewardRouterV2 rewardRouter;
   IGmxRewardTracker rewardTracker; //fglp contract
 
-  IStrategy stakedGlpStrategy;
-  UnstakedGlpStrategy unstakedGlpStrategy;
+  IStakedGlpStrategy stakedGlpStrategy;
+  IUnstakedGlpStrategy unstakedGlpStrategy;
 
   /* Testers */
   LiquidityTester liquidityTester;
@@ -146,21 +153,33 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       plpV2.setMinter(address(liquidityService), true);
     }
 
+    //setup Strategy
+    {
+      stakedGlpStrategy.setWhiteListExecutor(address(keeper), true);
+      unstakedGlpStrategy.setWhiteListExecutor(address(crossMarginService), true);
+    }
+
     // Config
     {
+      configStorage.setSGlp(address(sglp));
       configStorage.setOracle(address(oracleMiddleware));
       configStorage.setCalculator(address(calculator));
       configStorage.setWeth(address(weth));
       configStorage.setPLP(address(plpV2));
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
+      configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
     }
 
     // Setup Storages
     {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
+      vaultStorage.setServiceExecutors(address(crossMarginService), true);
       vaultStorage.setServiceExecutors(address(stakedGlpStrategy), true);
+      vaultStorage.setServiceExecutors(address(unstakedGlpStrategy), true);
 
       vaultStorage.setStrategyAllowance(address(sglp), address(stakedGlpStrategy), address(rewardTracker));
+
+      vaultStorage.setStrategyAllowance(address(sglp), address(unstakedGlpStrategy), address(rewardRouter));
 
       perpStorage.setServiceExecutors(address(liquidityService), true);
     }
@@ -169,8 +188,10 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     {
       liquidityHandler.setOrderExecutor(keeper, true);
     }
+
     _setupPythConfig();
     _setupAssetConfig();
+    _setupCollateralTokenConfig();
     _setupAssetPriceConfig();
     _setupLiquidityWithConfig();
 
@@ -235,23 +256,12 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       glpManager,
       oracleMiddleware,
       vaultStorage,
-      keeper,
       treasury,
       1000 // 10% of reinvest
     );
 
     // unstakedGlp
-    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
-      sglp,
-      rewardRouter,
-      rewardTracker,
-      glpManager,
-      oracleMiddleware,
-      vaultStorage,
-      keeper,
-      treasury,
-      1000 // 10% of reinvest
-    );
+    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(sglp, rewardRouter, vaultStorage);
 
     //deploy liquidityService
     liquidityService = Deployer.deployLiquidityService(
@@ -313,6 +323,35 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     });
 
     configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
+  }
+
+  function _setupCollateralTokenConfig() private {
+    _addCollateralConfig(sGlpAssetId, 8000, true, address(0));
+    _addCollateralConfig(usdcAssetId, 10000, true, address(0));
+    _addCollateralConfig(usdtAssetId, 10000, true, address(0));
+    _addCollateralConfig(daiAssetId, 10000, true, address(0));
+    _addCollateralConfig(ethAssetId, 8000, true, address(0));
+    _addCollateralConfig(btcAssetId, 8000, true, address(0));
+  }
+
+  /// @notice to add collateral config with some default value
+  /// @param _assetId Asset's ID
+  /// @param _collateralFactorBPS token reliability factor to calculate buying power, 1e4 = 100%
+  /// @param _isAccepted accepted to deposit as collateral
+  /// @param _settleStrategy determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+  function _addCollateralConfig(
+    bytes32 _assetId,
+    uint32 _collateralFactorBPS,
+    bool _isAccepted,
+    address _settleStrategy
+  ) private {
+    IConfigStorage.CollateralTokenConfig memory _collatTokenConfig;
+
+    _collatTokenConfig.collateralFactorBPS = _collateralFactorBPS;
+    _collatTokenConfig.accepted = _isAccepted;
+    _collatTokenConfig.settleStrategy = _settleStrategy;
+
+    configStorage.setCollateralTokenConfig(_assetId, _collatTokenConfig);
   }
 
   function _setupAssetConfig() private {
@@ -429,7 +468,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     uint256 _endIndex,
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
-    uint256 _minPublishTime
+    uint256 /*_minPublishTime*/
   ) internal {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
@@ -443,6 +482,26 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       block.timestamp,
       keccak256("someEncodedVaas")
     );
+    vm.stopPrank();
+  }
+
+  /**
+   * Cross Margin
+   */
+  /// @notice Helper function to deposit collateral via handler
+  /// @param _account Trader's address
+  /// @param _subAccountId Trader's sub-account ID
+  /// @param _collateralToken Collateral token to deposit
+  /// @param _depositAmount amount to deposit
+  function depositCollateral(
+    address _account,
+    uint8 _subAccountId,
+    ERC20 _collateralToken,
+    uint256 _depositAmount
+  ) internal {
+    vm.startPrank(_account);
+    _collateralToken.approve(address(crossMarginHandler), _depositAmount);
+    crossMarginHandler.depositCollateral(_subAccountId, address(_collateralToken), _depositAmount, false);
     vm.stopPrank();
   }
 }

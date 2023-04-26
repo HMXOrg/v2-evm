@@ -61,7 +61,7 @@ contract CrossMarginHandler_Base is BaseTest {
       address(vaultStorage),
       address(perpStorage),
       address(calculator),
-      address(0) // FIXME
+      address(unstakedGlpStrategy)
     );
     crossMarginHandler = Deployer.deployCrossMarginHandler(
       address(crossMarginService),

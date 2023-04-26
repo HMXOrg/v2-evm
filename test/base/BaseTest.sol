@@ -23,6 +23,7 @@ import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 import { MockGlpManager } from "../mocks/MockGlpManager.sol";
+import { MockGmxRewardRouterV2 } from "../mocks/MockGmxRewardRouterV2.sol";
 
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
@@ -38,6 +39,10 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { console } from "forge-std/console.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
+
+import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;
@@ -71,6 +76,10 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockTradeService internal mockTradeService;
   MockLiquidationService internal mockLiquidationService;
   MockGlpManager internal mockGlpManager;
+  MockGmxRewardRouterV2 internal mockGmxRewardRouterv2;
+
+  // strategy
+  IUnstakedGlpStrategy unstakedGlpStrategy;
 
   MockWNative internal weth;
   MockErc20 internal wbtc;
@@ -141,9 +150,16 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockTradeService = new MockTradeService();
     mockLiquidationService = new MockLiquidationService();
     mockGlpManager = new MockGlpManager();
+    mockGmxRewardRouterv2 = new MockGmxRewardRouterV2();
 
     pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
     oracleMiddleware = Deployer.deployOracleMiddleware();
+
+    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
+      IERC20(sglp),
+      IGmxRewardRouterV2(mockGmxRewardRouterv2),
+      IVaultStorage(vaultStorage)
+    );
 
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),

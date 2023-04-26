@@ -13,7 +13,7 @@ abstract contract PerpStorage_Base is BaseTest {
   PerpStorage internal pStorage;
 
   function setUp() public virtual {
-    pStorage = new PerpStorage();
+    pStorage = PerpStorage(address(Deployer.deployPerpStorage(address(proxyAdmin))));
     pStorage.setServiceExecutors(address(this), true);
   }
 

@@ -1,4 +1,5 @@
 {
+  "proxyAdmin": "",
   "storages": {
     "config": "0x1C62144c922816Ed9d6DB9F9e6e4e00132030275",
     "perp": "0x7E6bbd356f3E7852c063FC1A34C4A7bB1119CAD3",

@@ -2,14 +2,14 @@
 
 pragma solidity 0.8.18;
 
-import { Owned } from "../base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ITradeServiceHook } from "../services/interfaces/ITradeServiceHook.sol";
 import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
 import { TraderLoyaltyCredit } from "@hmx/tokens/TraderLoyaltyCredit.sol";
 import { TLCStaking } from "@hmx/staking/TLCStaking.sol";
 
-contract TLCHook is ITradeServiceHook, Owned {
+contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   error TradingStakingHook_Forbidden();
 
   address public tradeService;
@@ -21,7 +21,9 @@ contract TLCHook is ITradeServiceHook, Owned {
     _;
   }
 
-  constructor(address _tradeService, address _tlc, address _tlcStaking) {
+  function initialize(address _tradeService, address _tlc, address _tlcStaking) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+
     tradeService = _tradeService;
     tlc = _tlc;
     tlcStaking = _tlcStaking;
@@ -58,5 +60,10 @@ contract TLCHook is ITradeServiceHook, Owned {
     TraderLoyaltyCredit(tlc).mint(address(this), _mintAmount);
     TraderLoyaltyCredit(tlc).approve(tlcStaking, _mintAmount);
     TLCStaking(tlcStaking).deposit(_primaryAccount, _mintAmount);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

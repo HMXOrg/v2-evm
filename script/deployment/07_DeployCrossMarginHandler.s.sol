@@ -8,6 +8,7 @@ import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
 import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
 import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
 import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 contract DeployCrossMarginHandler is ConfigJsonRepo {
   function run() public {
@@ -15,15 +16,12 @@ contract DeployCrossMarginHandler is ConfigJsonRepo {
     vm.startBroadcast(deployerPrivateKey);
 
     address pythAddress = getJsonAddress(".oracles.ecoPyth");
-    address tradeServiceAddress = getJsonAddress(".services.trade");
-    address liquiditionServiceAddress = getJsonAddress(".services.liquidation");
-    address liquidityServiceAddress = getJsonAddress(".services.liquidity");
     address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
-    address weth = getJsonAddress(".tokens.weth");
     uint256 minExecutionFee = 30;
+    address proxyAdmin = getJsonAddress(".proxyAdmin");
 
     address crossMarginHandlerAddress = address(
-      new CrossMarginHandler(crossMarginServiceAddress, pythAddress, minExecutionFee)
+      Deployer.deployCrossMarginHandler(address(proxyAdmin), crossMarginServiceAddress, pythAddress, minExecutionFee)
     );
 
     vm.stopBroadcast();

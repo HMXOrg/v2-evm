@@ -2,9 +2,10 @@
 pragma solidity 0.8.18;
 
 // base
-import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
-import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // interfaces
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
@@ -13,15 +14,14 @@ import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // contracts
-import { Owned } from "@hmx/base/Owned.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 // @todo - integrate with BotHandler in another PRs
-contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
-  using SafeERC20 for IERC20;
+contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeable {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
    * Events
@@ -64,7 +64,10 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     _;
   }
 
-  constructor(address _tradeService, address _liquidationService, address _pyth) {
+  function initialize(address _tradeService, address _liquidationService, address _pyth) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     // Sanity check
     ITradeService(_tradeService).configStorage();
     LiquidationService(_liquidationService).perpStorage();
@@ -260,7 +263,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
 
     // transfer token
-    IERC20(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
+    IERC20Upgradeable(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
 
     // do accounting on vault storage
     _vaultStorage.addPLPLiquidity(_token, _amount);
@@ -276,7 +279,7 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
 
     // transfer token
-    IERC20(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
+    IERC20Upgradeable(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
 
     // do accounting on vault storage
     _vaultStorage.addFundingFee(_token, _amount);
@@ -336,5 +339,10 @@ contract BotHandler is ReentrancyGuard, IBotHandler, Owned {
     pyth = _newPyth;
 
     emit LogSetPyth(pyth, _newPyth);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

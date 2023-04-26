@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -9,13 +9,13 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 // interfaces
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
-contract TradeService is ReentrancyGuard, ITradeService, Owned {
+contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgradeable {
   /**
    * Events
    */
@@ -136,7 +136,15 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
   address public tradeHelper;
   Calculator public calculator; // cache this from configStorage
 
-  constructor(address _perpStorage, address _vaultStorage, address _configStorage, address _tradeHelper) {
+  function initialize(
+    address _perpStorage,
+    address _vaultStorage,
+    address _configStorage,
+    address _tradeHelper
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
     VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
@@ -1057,5 +1065,10 @@ contract TradeService is ReentrancyGuard, ITradeService, Owned {
         ++i;
       }
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

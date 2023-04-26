@@ -2,9 +2,8 @@
 pragma solidity 0.8.18;
 
 import { StakedGlpStrategy_Base } from "./StakedGlpStrategy_Base.t.fork.sol";
-import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import { ERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 
 contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
   uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_one_fork"));
@@ -26,7 +25,7 @@ contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
     uint256 plpBefore = plpV2.balanceOf(ALICE);
     addLiquidity(
       ALICE,
-      ERC20(sGlpAddress),
+      ERC20Upgradeable(sGlpAddress),
       sglpAmount,
       executionOrderFee,
       tickPrices,

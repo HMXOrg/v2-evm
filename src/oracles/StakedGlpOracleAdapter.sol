@@ -3,19 +3,21 @@ pragma solidity 0.8.18;
 
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
-import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
-contract StakedGlpOracleAdapter is Owned, IOracleAdapter {
+contract StakedGlpOracleAdapter is OwnableUpgradeable, IOracleAdapter {
   event LogSetSGLPAssetId(bytes32 oldSglpAssetId, bytes32 newSglpAssetId);
   error StakedGlpOracleAdapter_BadAssetId();
 
-  IERC20 public immutable sGlp;
-  IGmxGlpManager public immutable glpManager;
+  IERC20Upgradeable public sGlp;
+  IGmxGlpManager public glpManager;
   bytes32 public sGlpAssetId;
 
-  constructor(IERC20 _sGlp, IGmxGlpManager _glpManager, bytes32 _sGlpAssetId) {
+  function initialize(IERC20Upgradeable _sGlp, IGmxGlpManager _glpManager, bytes32 _sGlpAssetId) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+
     sGlp = _sGlp;
     glpManager = _glpManager;
     sGlpAssetId = _sGlpAssetId;
@@ -42,5 +44,10 @@ contract StakedGlpOracleAdapter is Owned, IOracleAdapter {
   function setSGlpAssetId(bytes32 _newSglpAssetId) external onlyOwner {
     emit LogSetSGLPAssetId(sGlpAssetId, _newSglpAssetId);
     sGlpAssetId = _newSglpAssetId;
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

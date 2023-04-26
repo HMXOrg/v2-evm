@@ -6,13 +6,13 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { Owned } from "@hmx/base/Owned.sol";
-import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
-contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
+contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /**
    * Events
    */
@@ -133,7 +133,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   address public configStorage;
   Calculator public calculator; // cache this from configStorage
 
-  constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
+  function initialize(address _perpStorage, address _vaultStorage, address _configStorage) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     // Sanity check
     ConfigStorage(_configStorage).calculator();
     VaultStorage(_vaultStorage).devFees(address(0));
@@ -856,5 +859,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

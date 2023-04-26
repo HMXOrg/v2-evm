@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ReentrancyGuard } from "lib/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
-import { IERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 // interfaces
-import { SafeERC20 } from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Address } from "lib/openzeppelin-contracts/contracts/utils/Address.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
-
-import { Owned } from "@hmx/base/Owned.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
-contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
-  using SafeERC20 for IERC20;
+contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultStorage {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
   using Address for address;
 
   /**
@@ -63,6 +62,11 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
     _;
   }
 
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+  }
+
   /**
    * Core Functions
    */
@@ -89,15 +93,15 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
 
   function pullToken(address _token) external returns (uint256) {
     uint256 prevBalance = totalAmount[_token];
-    uint256 nextBalance = IERC20(_token).balanceOf(address(this));
+    uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this));
 
     totalAmount[_token] = nextBalance;
     return nextBalance - prevBalance;
   }
 
   function pushToken(address _token, address _to, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {
-    IERC20(_token).safeTransfer(_to, _amount);
-    totalAmount[_token] = IERC20(_token).balanceOf(address(this));
+    IERC20Upgradeable(_token).safeTransfer(_to, _amount);
+    totalAmount[_token] = IERC20Upgradeable(_token).balanceOf(address(this));
   }
 
   /**
@@ -136,7 +140,7 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
   function withdrawFee(address _token, uint256 _amount, address _receiver) external onlyWhitelistedExecutor {
     if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
     protocolFees[_token] -= _amount;
-    IERC20(_token).safeTransfer(_receiver, _amount);
+    IERC20Upgradeable(_token).safeTransfer(_receiver, _amount);
   }
 
   function removePLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
@@ -482,5 +486,10 @@ contract VaultStorage is Owned, ReentrancyGuard, IVaultStorage {
         i++;
       }
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

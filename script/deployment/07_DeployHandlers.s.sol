@@ -26,13 +26,14 @@ contract DeployHandlers is ConfigJsonRepo {
     vm.startBroadcast(deployerPrivateKey);
     ProxyAdmin proxyAdmin = new ProxyAdmin();
 
-    ContractAddress memory vars;
-    vars.pythAddress = getJsonAddress(".oracles.pyth");
-    vars.tradeServiceAddress = getJsonAddress(".services.trade");
-    vars.liquidationServiceAddress = getJsonAddress(".services.liquidation");
-    vars.liquidityServiceAddress = getJsonAddress(".services.liquidity");
-    vars.crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
-    vars.weth = getJsonAddress(".tokens.weth");
+    ContractAddress memory vars = ContractAddress(
+      getJsonAddress(".oracles.pyth"),
+      getJsonAddress(".services.trade"),
+      getJsonAddress(".services.liquidation"),
+      getJsonAddress(".services.liquidity"),
+      getJsonAddress(".services.crossMargin"),
+      getJsonAddress(".tokens.weth")
+    );
 
     // @todo - TBD
     uint256 minExecutionFee = 0;

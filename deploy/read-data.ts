@@ -589,6 +589,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: formatUnits(traderBalancesDai, 18),
     weth: formatUnits(traderBalancesWeth, 18),
     wbtc: formatUnits(traderBalancesWbtc, 8),
+    sglp: formatUnits(traderBalancesSglp, 18),
   });
   console.log("=== Trader Debts ===");
   console.table({

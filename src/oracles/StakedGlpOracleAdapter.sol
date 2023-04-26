@@ -27,10 +27,9 @@ contract StakedGlpOracleAdapter is OwnableUpgradeable, IOracleAdapter {
   /// @return The latest price of SGLP in e30.
   /// @return The timestamp of the latest price.
   /// @param _assetId The asset ID of SGLP.
-  /// @param _isMax Whether to get the max price.
   function getLatestPrice(
     bytes32 _assetId,
-    bool _isMax,
+    bool /*_isMax*/,
     uint32 /* _confidenceThreshold */
   ) external view override returns (uint256, uint256) {
     // Check
@@ -38,7 +37,8 @@ contract StakedGlpOracleAdapter is OwnableUpgradeable, IOracleAdapter {
       revert StakedGlpOracleAdapter_BadAssetId();
     }
 
-    return ((1e18 * glpManager.getAum(_isMax)) / sGlp.totalSupply(), block.timestamp);
+    uint256 midPrice = (glpManager.getAum(true) + glpManager.getAum(false)) / 2;
+    return ((1e18 * midPrice) / sGlp.totalSupply(), block.timestamp);
   }
 
   function setSGlpAssetId(bytes32 _newSglpAssetId) external onlyOwner {

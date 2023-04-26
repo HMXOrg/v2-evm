@@ -36,21 +36,21 @@ contract StakedGlpOracleAdapter_GetLatestPrice is TestBase, StdAssertions, StdCh
     );
   }
 
-  function testCorrectness_WhenGetGlpLatestMaxPrice() external {
+  function testCorrectnesss_WhenGetGlpLatestPriceMaxPrice() external {
     (uint256 price, uint256 timestamp) = stakedGlpOracleAdapter.getLatestPrice(sGlpAssetId, true, 0);
-    assertEq(
-      price,
-      (1e18 * IGmxGlpManager(glpManagerAddress).getAum(true)) / IERC20Upgradeable(glpAddress).totalSupply()
-    );
+    uint256 maxPrice = IGmxGlpManager(glpManagerAddress).getAum(true);
+    uint256 minPrice = IGmxGlpManager(glpManagerAddress).getAum(false);
+    uint256 avgPrice = (((maxPrice + minPrice) / 2) * 1e18) / IERC20Upgradeable(glpAddress).totalSupply();
+    assertEq(price, avgPrice);
     assertEq(timestamp, block.timestamp);
   }
 
-  function testCorrectness_WhenGetGlpLatestMinPrice() external {
+  function testCorrectnesss_WhenGetGlpLatestPriceMinPrice() external {
     (uint256 price, uint256 timestamp) = stakedGlpOracleAdapter.getLatestPrice(sGlpAssetId, false, 0);
-    assertEq(
-      price,
-      (1e18 * IGmxGlpManager(glpManagerAddress).getAum(false)) / IERC20Upgradeable(glpAddress).totalSupply()
-    );
+    uint256 maxPrice = IGmxGlpManager(glpManagerAddress).getAum(true);
+    uint256 minPrice = IGmxGlpManager(glpManagerAddress).getAum(false);
+    uint256 avgPrice = (((maxPrice + minPrice) / 2) * 1e18) / IERC20Upgradeable(glpAddress).totalSupply();
+    assertEq(price, avgPrice);
     assertEq(timestamp, block.timestamp);
   }
 }

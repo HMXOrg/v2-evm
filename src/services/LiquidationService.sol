@@ -100,9 +100,10 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     );
 
     // get profit and fee
-    TradeHelper(tradeHelper).increaseCollateral(_subAccount, _unrealizedPnL, _fundingFee, address(0));
+    TradeHelper(tradeHelper).increaseCollateral(bytes32(0), _subAccount, _unrealizedPnL, _fundingFee, address(0));
     // settle fee and loss
     TradeHelper(tradeHelper).decreaseCollateral(
+      bytes32(0),
       _subAccount,
       _unrealizedPnL,
       _fundingFee,
@@ -225,6 +226,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
       {
         (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) = TradeHelper(tradeHelper).updateFeeStates(
+          _vars.positionId,
           _subAccount,
           _vars.position,
           _abs(_vars.position.positionSizeE30),

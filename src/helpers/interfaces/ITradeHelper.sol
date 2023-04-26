@@ -23,10 +23,10 @@ interface ITradeHelper {
   function updateFundingRate(uint256 _marketIndex) external;
 
   function settleAllFees(
+    bytes32 _positionId,
     PerpStorage.Position memory position,
     uint256 _absSizeDelta,
     uint32 _positionFeeBPS,
-    uint8 _assetClassIndex,
-    uint256 _marketIndex
+    uint8 _assetClassIndex
   ) external;
 }

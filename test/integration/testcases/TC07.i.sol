@@ -130,7 +130,8 @@ contract TC07 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       // Before Alice withdraw USDC
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 9_000 * 1e6, "ALICE's USDC Balance");
+      // trading Fee 100,000 * 0.1% = 100 | 9,000 - 100 = 8,900
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), 8_900 * 1e6, "ALICE's USDC Balance");
       assertEq(usdc.balanceOf(address(vaultStorage)), 9_000 * 1e6, "Vault's USDC Balance");
       assertEq(usdc.balanceOf(ALICE), 0, "USDC Balance Of");
 
@@ -149,7 +150,7 @@ contract TC07 is BaseIntTest_WithActions {
       );
 
       // After Alice withdraw USDC
-      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), (9_000 - 1_000) * 1e6, "ALICE's USDC Balance");
+      assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdc)), (8_900 - 1_000) * 1e6, "ALICE's USDC Balance");
       assertEq(usdc.balanceOf(address(vaultStorage)), (9_000 - 1_000) * 1e6, "Vault's WBTC Balance");
       assertEq(usdc.balanceOf(ALICE), 1_000 * 1e6, "USDC Balance Of");
     }
@@ -178,7 +179,7 @@ contract TC07 is BaseIntTest_WithActions {
       // Alice's Free collateral must be almost zero
       assertApproxEqRel(
         calculator.getFreeCollateral(SUB_ACCOUNT, 0, 0),
-        2398870507522567791426666666666488, // 2398.870507522567791426666666666488 $
+        2179787659375880922060900333126669, // 2179.787659375880922060900333126669 $
         MAX_DIFF,
         "ALICE's free collateral is almost zero"
       );

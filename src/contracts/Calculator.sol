@@ -3,7 +3,6 @@ pragma solidity 0.8.18;
 
 // base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 //contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
@@ -14,7 +13,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-contract Calculator is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICalculator {
+contract Calculator is OwnableUpgradeable, ICalculator {
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
   uint64 internal constant RATE_PRECISION = 1e18;
@@ -39,7 +38,6 @@ contract Calculator is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICalculat
     address _configStorage
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
-    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
     // Sanity check
     if (

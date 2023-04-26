@@ -6,6 +6,7 @@ dotEnvConfig();
 import * as tdly from "@tenderly/hardhat-tenderly";
 tdly.setup({ automaticVerifications: false });
 
+import "@openzeppelin/hardhat-upgrades";
 import "hardhat-preprocessor";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";

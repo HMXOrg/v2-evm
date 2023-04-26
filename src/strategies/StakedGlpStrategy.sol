@@ -9,8 +9,11 @@ import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 contract StakedGlpStrategy is OwnableUpgradeable, IStrategy {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
+
   error StakedGlpStrategy_OnlyKeeper();
 
   IERC20Upgradeable public sglp;
@@ -102,8 +105,8 @@ contract StakedGlpStrategy is OwnableUpgradeable, IStrategy {
     // SLOAD
     uint256 sGlpBalance = sglp.balanceOf(address(this));
 
-    sglp.transfer(address(vaultStorage), sGlpBalance);
-    rewardToken.transfer(treasury, strategyFee);
+    sglp.safeTransfer(address(vaultStorage), sGlpBalance);
+    rewardToken.safeTransfer(treasury, strategyFee);
 
     // 6. Update accounting.
     vaultStorage.pullToken(address(sglp));

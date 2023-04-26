@@ -37,7 +37,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     address indexed tokenIn,
     uint256 amountIn,
     uint256 minOut,
-    uint256 executionFee
+    uint256 executionFee,
+    uint256 orderTimestamp
   );
   event LogCreateRemoveLiquidityOrder(
     address indexed account,
@@ -46,7 +47,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 amountIn,
     uint256 minOut,
     uint256 executionFee,
-    bool isNativeOut
+    bool isNativeOut,
+    uint256 orderTimestamp
   );
   event LogExecuteLiquidityOrder(
     address indexed account,
@@ -140,6 +142,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _executionFee,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
+    uint256 _orderTimestamp = block.timestamp;
+
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
 
     if (_executionFee < executionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
@@ -166,11 +170,12 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         minOut: _minOut,
         isAdd: true,
         executionFee: _executionFee,
-        isNativeOut: _shouldWrap
+        isNativeOut: _shouldWrap,
+        orderTimestamp: _orderTimestamp
       })
     );
 
-    emit LogCreateAddLiquidityOrder(msg.sender, _orderId, _tokenIn, _amountIn, _minOut, _executionFee);
+    emit LogCreateAddLiquidityOrder(msg.sender, _orderId, _tokenIn, _amountIn, _minOut, _executionFee, _orderTimestamp);
     return _orderId;
   }
 
@@ -187,6 +192,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _executionFee,
     bool _isNativeOut
   ) external payable nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _orderId) {
+    uint256 _orderTimestamp = block.timestamp;
+
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
 
     if (_executionFee < executionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
@@ -212,7 +219,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         minOut: _minOut,
         isAdd: false,
         executionFee: _executionFee,
-        isNativeOut: _isNativeOut
+        isNativeOut: _isNativeOut,
+        orderTimestamp: _orderTimestamp
       })
     );
 
@@ -223,7 +231,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _amountIn,
       _minOut,
       _executionFee,
-      _isNativeOut
+      _isNativeOut,
+      _orderTimestamp
     );
 
     return _orderId;

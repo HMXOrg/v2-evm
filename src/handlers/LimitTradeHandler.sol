@@ -445,7 +445,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       // Limit
       // if trying to update to Market, revert
       if (_triggerPrice == 0) {
-        revert ILimitTradeHandler_LimitOrderCovnertToMarketOrder();
+        revert ILimitTradeHandler_LimitOrderConvertToMarketOrder();
       }
     }
 

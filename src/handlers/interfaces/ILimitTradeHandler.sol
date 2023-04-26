@@ -22,7 +22,7 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_TriggerPriceBelowCurrentPrice();
   error ILimitTradeHandler_TriggerPriceAboveCurrentPrice();
   error ILimitTradeHandler_MarketOrderNoUpdate();
-  error ILimitTradeHandler_LimitOrderCovnertToMarketOrder();
+  error ILimitTradeHandler_LimitOrderConvertToMarketOrder();
 
   /**
    * Structs

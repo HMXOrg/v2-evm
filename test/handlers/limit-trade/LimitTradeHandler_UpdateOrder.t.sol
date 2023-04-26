@@ -70,7 +70,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _tpToken: address(weth)
     });
 
-    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_LimitOrderCovnertToMarketOrder()"));
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_LimitOrderConvertToMarketOrder()"));
     limitTradeHandler.updateOrder({
       _subAccountId: 0,
       _orderIndex: 0,

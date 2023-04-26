@@ -35,6 +35,7 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     // Override the mock calculator
     {
       mockCalculator = new MockCalculatorWithRealCalculator(
+        address(proxyAdmin),
         address(mockOracle),
         address(vaultStorage),
         address(perpStorage),

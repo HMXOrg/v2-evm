@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 //base
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -15,7 +15,7 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
 
-contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
+contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginService {
   /**
    * Events
    */
@@ -56,7 +56,15 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
   address public calculator;
   address public perpStorage;
 
-  constructor(address _configStorage, address _vaultStorage, address _perpStorage, address _calculator) {
+  function initialize(
+    address _configStorage,
+    address _vaultStorage,
+    address _perpStorage,
+    address _calculator
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     if (_configStorage == address(0) || _vaultStorage == address(0) || _calculator == address(0))
       revert ICrossMarginService_InvalidAddress();
 
@@ -298,5 +306,10 @@ contract CrossMarginService is Owned, ReentrancyGuard, ICrossMarginService {
       uint256 _reserveBalanceValue = (_reserveBalance * tokenPrice) / (10 ** tokenDecimal);
       return (_reserveBalance, _reserveBalanceValue);
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

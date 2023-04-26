@@ -30,14 +30,15 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 // Pyth
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // HMX
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { StakedGlpStrategy } from "@hmx/strategies/StakedGlpStrategy.sol";
 // OZ
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 
 //tester
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
@@ -51,6 +52,9 @@ import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
 //Deployer
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { console } from "forge-std/console.sol";
+
+// Openzeppelin
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   struct AssetPythPriceData {
@@ -75,7 +79,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   address internal constant fsGlpAddress = 0x1aDDD80E6039594eE970E5872D247bf0414C8903;
 
   // PYTH
-  EcoPyth internal pyth;
+  IEcoPyth internal pyth;
   // address internal constant pythAddress = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
   bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
   AssetPythPriceData[] assetPythPriceDatas;
@@ -99,10 +103,10 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   ILiquidityService liquidityService;
 
   // TOKENS
-  IERC20 sglp;
-  IERC20 glp;
+  IERC20Upgradeable sglp;
+  IERC20Upgradeable glp;
   IPLPv2 plpV2;
-  IERC20 usdc;
+  IERC20Upgradeable usdc;
 
   IWNative weth; //for native
 
@@ -127,6 +131,8 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   /* Testers */
   LiquidityTester liquidityTester;
+
+  ProxyAdmin proxyAdmin;
 
   address keeper;
   address treasury;
@@ -172,47 +178,50 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   }
 
   function _deployContracts() private {
+    proxyAdmin = new ProxyAdmin();
+
     keeper = makeAddr("GlpStrategyKeeper");
     treasury = makeAddr("GlpStrategyTreasury");
     FEEVER = makeAddr("FEEVER");
 
-    glp = IERC20(glpAddress);
+    glp = IERC20Upgradeable(glpAddress);
     rewardRouter = IGmxRewardRouterV2(gmxRewardRouterV2Address);
     glpManager = IGmxGlpManager(glpManagerAddress);
     rewardTracker = IGmxRewardTracker(fglpAddress);
-    sglp = IERC20(sGlpAddress);
+    sglp = IERC20Upgradeable(sGlpAddress);
 
-    pyth = new EcoPyth();
+    pyth = Deployer.deployEcoPyth(address(proxyAdmin));
 
     // Tokens
-    plpV2 = Deployer.deployPLPv2();
+    plpV2 = Deployer.deployPLPv2(address(proxyAdmin));
 
     weth = IWNative(wethAddress);
-    usdc = IERC20(usdcAddress);
+    usdc = IERC20Upgradeable(usdcAddress);
 
     vm.label(address(usdc), "USDC");
     vm.label(address(weth), "WETH");
 
     //deploy pythAdapter
-    pythAdapter = Deployer.deployPythAdapter(address(pyth));
+    pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(pyth));
 
     //deploy stakedglpOracle
-    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(sglp, glpManager, sGlpAssetId);
+    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(address(proxyAdmin), sglp, glpManager, sGlpAssetId);
 
     //deploy oracleMiddleWare
-    oracleMiddleware = Deployer.deployOracleMiddleware();
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
 
     // deploy configStorage
-    configStorage = Deployer.deployConfigStorage();
+    configStorage = Deployer.deployConfigStorage(address(proxyAdmin));
 
     // deploy perpStorage
-    perpStorage = Deployer.deployPerpStorage();
+    perpStorage = Deployer.deployPerpStorage(address(proxyAdmin));
 
     // deploy vaultStorage
-    vaultStorage = Deployer.deployVaultStorage();
+    vaultStorage = Deployer.deployVaultStorage(address(proxyAdmin));
 
     //deploy calculator
     calculator = Deployer.deployCalculator(
+      address(proxyAdmin),
       address(oracleMiddleware),
       address(vaultStorage),
       address(perpStorage),
@@ -220,22 +229,32 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     );
     //deploy liquidityService
     liquidityService = Deployer.deployLiquidityService(
+      address(proxyAdmin),
       address(perpStorage),
       address(vaultStorage),
       address(configStorage)
     );
     //deploy liquidityHandler
-    liquidityHandler = Deployer.deployLiquidityHandler(address(liquidityService), address(pyth), executionOrderFee);
+    liquidityHandler = Deployer.deployLiquidityHandler(
+      address(proxyAdmin),
+      address(liquidityService),
+      address(pyth),
+      executionOrderFee
+    );
 
     // Deploy GlpStrategy
-
-    stakedGlpStrategy = Deployer.deployStakedGlpStrategy(
-      sglp,
+    IStrategy.StakedGlpStrategyConfig memory stakedGlpStrategyConfig = IStrategy.StakedGlpStrategyConfig(
       rewardRouter,
       rewardTracker,
       glpManager,
       oracleMiddleware,
-      vaultStorage,
+      vaultStorage
+    );
+
+    stakedGlpStrategy = Deployer.deployStakedGlpStrategy(
+      address(proxyAdmin),
+      sglp,
+      stakedGlpStrategyConfig,
       keeper,
       treasury,
       1000 // 10% of reinvest
@@ -364,7 +383,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   function addLiquidity(
     address _liquidityProvider,
-    ERC20 _tokenIn,
+    ERC20Upgradeable _tokenIn,
     uint256 _amountIn,
     uint256 _executionFee,
     int24[] memory _tickPrices,

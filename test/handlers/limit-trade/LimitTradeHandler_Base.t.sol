@@ -15,6 +15,7 @@ contract LimitTradeHandler_Base is BaseTest {
 
   function setUp() public virtual {
     limitTradeHandler = Deployer.deployLimitTradeHandler(
+      address(proxyAdmin),
       address(weth),
       address(mockTradeService),
       address(ecoPyth),

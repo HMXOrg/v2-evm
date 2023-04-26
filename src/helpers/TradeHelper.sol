@@ -6,13 +6,13 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { Owned } from "@hmx/base/Owned.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
-contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
+contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /**
    * Events
    */
@@ -133,7 +133,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
   address public configStorage;
   Calculator public calculator; // cache this from configStorage
 
-  constructor(address _perpStorage, address _vaultStorage, address _configStorage) {
+  function initialize(address _perpStorage, address _vaultStorage, address _configStorage) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     // Sanity check
     ConfigStorage(_configStorage).calculator();
     VaultStorage(_vaultStorage).devFees(address(0));
@@ -567,8 +570,9 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
     _vars.positionId = _positionId;
     _vars.subAccount = _subAccount;
 
-    address[] memory _collateralTokens = _vars.vaultStorage.getTraderTokens(_vars.subAccount);
-    uint256 _len = _collateralTokens.length;
+    bytes32[] memory _plpAssetIds = _vars.configStorage.getPlpAssetIds();
+    uint256 _len = _plpAssetIds.length;
+
     // check loss
     if (_unrealizedPnl < 0) {
       _vars.vaultStorage.addLossDebt(_subAccount, uint256(-_unrealizedPnl));
@@ -600,12 +604,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
     // loop for settle
     for (uint256 i = 0; i < _len; ) {
-      _vars.token = _collateralTokens[i];
-      _vars.tokenDecimal = _vars.configStorage.getAssetTokenDecimal(_vars.token);
-      (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(
-        ConfigStorage(_vars.configStorage).tokenAssetIds(_vars.token),
-        false
-      );
+      ConfigStorage.AssetConfig memory _assetConfig = _vars.configStorage.getAssetConfig(_plpAssetIds[i]);
+      _vars.tokenDecimal = _assetConfig.decimals;
+      _vars.token = _assetConfig.tokenAddress;
+      (_vars.tokenPrice, ) = _vars.oracle.getLatestPrice(_assetConfig.assetId, false);
 
       _vars.payerBalance = _vars.vaultStorage.traderBalances(_vars.subAccount, _vars.token);
       _vars.plpDebt = _vars.vaultStorage.plpLiquidityDebtUSDE30();
@@ -857,5 +859,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuard, Owned {
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

@@ -14,6 +14,13 @@ contract MockGlpManager is IGmxGlpManager {
     maxAum = _maxAum;
   }
 
+  function getAums() external view returns (uint256[] memory) {
+    uint256[] memory amounts = new uint256[](2);
+    amounts[0] = minAum;
+    amounts[1] = maxAum;
+    return amounts;
+  }
+
   function getAum(bool _isMax) external view returns (uint256) {
     return _isMax ? maxAum : minAum;
   }

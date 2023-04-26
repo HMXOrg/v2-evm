@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -13,12 +12,12 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 // interfaces
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 
-contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
+contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, OwnableUpgradeable {
   /**
    * Events
    */
@@ -52,7 +51,15 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
   address public tradeHelper;
   Calculator public calculator;
 
-  constructor(address _perpStorage, address _vaultStorage, address _configStorage, address _tradeHelper) {
+  function initialize(
+    address _perpStorage,
+    address _vaultStorage,
+    address _configStorage,
+    address _tradeHelper
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     perpStorage = _perpStorage;
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
@@ -290,5 +297,10 @@ contract LiquidationService is ReentrancyGuard, ILiquidationService, Owned {
         ++i;
       }
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

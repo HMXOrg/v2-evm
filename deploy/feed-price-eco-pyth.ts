@@ -41,7 +41,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const publishTimeDiffUpdateData = await pyth.buildPublishTimeUpdateData(Array(tickPrices.length).fill(0));
   const blockTimestamp = Math.floor(new Date().valueOf() / 1000);
 
-  // await (await pyth.setUpdater(deployer.address, true)).wait();
+  await (await pyth.setUpdater(deployer.address, true)).wait();
   await (
     await pyth.updatePriceFeeds(
       priceUpdateData,

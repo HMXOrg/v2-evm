@@ -537,6 +537,18 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
     return _orders;
   }
 
+  function activeOrdersCount() external view returns (uint256) {
+    return activeOrderPointers.length();
+  }
+
+  function activeLimitOrdersCount() external view returns (uint256) {
+    return activeLimitOrderPointers.length();
+  }
+
+  function activeMarketOrdersCount() external view returns (uint256) {
+    return activeMarketOrderPointers.length();
+  }
+
   /**
    * Setters
    */

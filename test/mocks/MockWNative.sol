@@ -44,7 +44,8 @@ contract MockWNative is IWNative {
   function withdraw(uint256 wad) public override {
     require(balanceOf[msg.sender] >= wad);
     balanceOf[msg.sender] -= wad;
-    payable(msg.sender).transfer(wad);
+    // payable(msg.sender).transfer(wad);
+    msg.sender.call{ value: wad }("");
     emit Withdrawal(msg.sender, wad);
   }
 

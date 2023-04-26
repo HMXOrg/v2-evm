@@ -316,13 +316,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
       function: "devFees",
-      args: [config.tokens.sglp],
+      args: [config.tokens.wbtc],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
       function: "devFees",
-      args: [config.tokens.wbtc],
+      args: [config.tokens.sglp],
     },
     // Global Markets
     {

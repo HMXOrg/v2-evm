@@ -45,17 +45,28 @@ contract BotHandler_Base is BaseTest {
     positionTester02 = new PositionTester02(perpStorage);
     globalMarketTester = new MarketTester(perpStorage);
 
-    tradeHelper = Deployer.deployTradeHelper(address(perpStorage), address(vaultStorage), address(configStorage));
+    tradeHelper = Deployer.deployTradeHelper(
+      address(proxyAdmin),
+      address(perpStorage),
+      address(vaultStorage),
+      address(configStorage)
+    );
 
     // deploy services
     tradeService = Deployer.deployTradeService(
+      address(proxyAdmin),
       address(perpStorage),
       address(vaultStorage),
       address(configStorage),
       address(tradeHelper)
     );
 
-    botHandler = Deployer.deployBotHandler(address(tradeService), address(mockLiquidationService), address(ecoPyth));
+    botHandler = Deployer.deployBotHandler(
+      address(proxyAdmin),
+      address(tradeService),
+      address(mockLiquidationService),
+      address(ecoPyth)
+    );
     ecoPyth.setUpdater(address(botHandler), true);
 
     address[] memory _positionManagers = new address[](1);

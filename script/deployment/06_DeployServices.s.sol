@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
@@ -8,34 +10,51 @@ import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { LiquidityService } from "@hmx/services/LiquidityService.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+
 contract DeployServices is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
+    ProxyAdmin proxyAdmin = new ProxyAdmin();
     address configStorageAddress = getJsonAddress(".storages.config");
     address vaultStorageAddress = getJsonAddress(".storages.vault");
     address perpStorageAddress = getJsonAddress(".storages.perp");
     address calculatorAddress = getJsonAddress(".calculator");
     address tradeHelperAddress = getJsonAddress(".helpers.trade");
-
+    address unstakedGlpAddress = getJsonAddress(".strategies.unstakedGlpStrategy");
+    address proxyAdminAddress = address(proxyAdmin);
     address crossMarginServiceAddress = address(
-      new CrossMarginService(
+      Deployer.deployCrossMarginService(
+        proxyAdminAddress,
         configStorageAddress,
         vaultStorageAddress,
         calculatorAddress,
         perpStorageAddress,
-        address(0) //FIXME
+        unstakedGlpAddress
       )
     );
     address liquidationServiceAddress = address(
-      new LiquidationService(perpStorageAddress, vaultStorageAddress, configStorageAddress, tradeHelperAddress)
+      Deployer.deployLiquidationService(
+        proxyAdminAddress,
+        perpStorageAddress,
+        vaultStorageAddress,
+        configStorageAddress,
+        tradeHelperAddress
+      )
     );
     address liquidityServiceAddress = address(
-      new LiquidityService(configStorageAddress, vaultStorageAddress, perpStorageAddress)
+      Deployer.deployLiquidityService(proxyAdminAddress, configStorageAddress, vaultStorageAddress, perpStorageAddress)
     );
     address tradeServiceAddress = address(
-      new TradeService(perpStorageAddress, vaultStorageAddress, configStorageAddress, tradeHelperAddress)
+      Deployer.deployTradeService(
+        proxyAdminAddress,
+        perpStorageAddress,
+        vaultStorageAddress,
+        configStorageAddress,
+        tradeHelperAddress
+      )
     );
 
     vm.stopBroadcast();

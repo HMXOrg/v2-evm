@@ -2,9 +2,8 @@
 pragma solidity 0.8.18;
 
 // base
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
@@ -17,7 +16,7 @@ import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
-contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
+contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILimitTradeHandler {
   /**
    * Events
    */
@@ -101,7 +100,7 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
    */
   uint8 internal constant BUY = 0;
   uint8 internal constant SELL = 1;
-  uint256 internal MAX_EXECUTION_FEE = 5 ether;
+  uint256 internal constant MAX_EXECUTION_FEE = 5 ether;
 
   /**
    * States
@@ -115,7 +114,15 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
 
-  constructor(address _weth, address _tradeService, address _pyth, uint256 _minExecutionFee) {
+  function initialize(
+    address _weth,
+    address _tradeService,
+    address _pyth,
+    uint256 _minExecutionFee
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     weth = _weth;
     tradeService = _tradeService;
     pyth = IEcoPyth(_pyth);
@@ -593,5 +600,10 @@ contract LimitTradeHandler is Owned, ReentrancyGuard, ILimitTradeHandler {
 
   function _min(uint256 x, uint256 y) private pure returns (uint256) {
     return x < y ? x : y;
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

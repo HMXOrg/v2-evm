@@ -5,18 +5,24 @@ import { MockCalculator } from "./MockCalculator.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { console } from "forge-std/console.sol";
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract MockCalculatorWithRealCalculator is MockCalculator {
   Calculator public c;
   mapping(bytes32 => bool) public actualFunction;
+  ProxyAdmin proxyAdmin;
 
   constructor(
+    address _proxyAdmin,
     address _oracle,
     address _vaultStorage,
     address _perpStorage,
     address _configStorage
   ) MockCalculator(_oracle) {
-    c = new Calculator(_oracle, _vaultStorage, _perpStorage, _configStorage);
+    c = Calculator(
+      address(Deployer.deployCalculator(_proxyAdmin, _oracle, _vaultStorage, _perpStorage, _configStorage))
+    );
   }
 
   function useActualFunction(bytes memory _funcName) external {

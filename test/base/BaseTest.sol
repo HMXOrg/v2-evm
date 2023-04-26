@@ -29,6 +29,7 @@ import { MockGmxRewardRouterV2 } from "../mocks/MockGmxRewardRouterV2.sol";
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
@@ -64,10 +65,10 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   // oracle
   IPythAdapter pythAdapter;
   IOracleMiddleware oracleMiddleware;
+  IEcoPyth internal ecoPyth;
 
   // mock
   MockPyth internal mockPyth;
-  EcoPyth internal ecoPyth;
   MockCalculator internal mockCalculator;
   MockPerpStorage internal mockPerpStorage;
   MockVaultStorage internal mockVaultStorage;
@@ -116,11 +117,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant jpyAssetId = "JPY";
 
   constructor() {
-    // Creating a mock Pyth instance with 60 seconds valid time period
-    // and 1 wei for updating price.
-    mockPyth = new MockPyth(60, 1);
-    ecoPyth = new EcoPyth();
-
     ALICE = makeAddr("Alice");
     BOB = makeAddr("BOB");
     CAROL = makeAddr("CAROL");
@@ -135,11 +131,18 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     sglp = new MockErc20("Staked GLP", "sGLP", 18);
     bad = new MockErc20("Bad Coin", "BAD", 2);
 
-    plp = Deployer.deployPLPv2();
+    proxyAdmin = new ProxyAdmin();
 
-    configStorage = Deployer.deployConfigStorage();
-    perpStorage = Deployer.deployPerpStorage();
-    vaultStorage = Deployer.deployVaultStorage();
+    // Creating a mock Pyth instance with 60 seconds valid time period
+    // and 1 wei for updating price.
+    mockPyth = new MockPyth(60, 1);
+    ecoPyth = Deployer.deployEcoPyth(address(proxyAdmin));
+
+    plp = Deployer.deployPLPv2(address(proxyAdmin));
+
+    configStorage = Deployer.deployConfigStorage(address(proxyAdmin));
+    perpStorage = Deployer.deployPerpStorage(address(proxyAdmin));
+    vaultStorage = Deployer.deployVaultStorage(address(proxyAdmin));
 
     mockOracle = new MockOracleMiddleware();
     mockCalculator = new MockCalculator(address(mockOracle));
@@ -152,8 +155,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockGlpManager = new MockGlpManager();
     mockGmxRewardRouterv2 = new MockGmxRewardRouterV2();
 
-    pythAdapter = Deployer.deployPythAdapter(address(mockPyth));
-    oracleMiddleware = Deployer.deployOracleMiddleware();
+    pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
 
     unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
       IERC20(sglp),
@@ -182,8 +185,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     configStorage.setCalculator(address(mockCalculator));
     configStorage.setOracle(address(mockOracle));
     configStorage.setWeth(address(weth));
-
-    proxyAdmin = new ProxyAdmin();
   }
 
   /// @notice set up liquidity config

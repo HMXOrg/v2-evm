@@ -32,6 +32,7 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
 
   function testCorrectness_crossMarginHandler_setCrossMarginService() external {
     ICrossMarginService newCrossMarginService = Deployer.deployCrossMarginService(
+      address(proxyAdmin),
       address(configStorage),
       address(vaultStorage),
       address(perpStorage),

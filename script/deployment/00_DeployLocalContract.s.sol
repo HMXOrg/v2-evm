@@ -5,8 +5,6 @@ import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 
-import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
-
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 
 // for local only

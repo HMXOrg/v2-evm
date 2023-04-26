@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
 
-import { Owned } from "@hmx/base/Owned.sol";
-
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
-contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
+contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpStorage {
   /**
    * Modifiers
    */
@@ -35,6 +34,11 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   mapping(uint256 => Market) public markets;
   mapping(uint256 => AssetClass) public assetClasses;
   mapping(address => bool) public serviceExecutors;
+
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+  }
 
   /**
    * Getters
@@ -203,5 +207,10 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     } else {
       markets[_marketIndex].shortAvgPrice = _price;
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

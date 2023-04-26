@@ -30,7 +30,7 @@ contract CrossMarginHandler_Base is BaseTest {
     publishTimeDiffs[1] = 0;
     publishTimeDiffs[2] = 0;
 
-    pythAdapter = Deployer.deployPythAdapter(address(ecoPyth));
+    pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(ecoPyth));
     pythAdapter.setConfig(wbtcAssetId, wbtcAssetId, false);
     pythAdapter.setConfig(wethAssetId, wethAssetId, false);
     pythAdapter.setConfig(usdcAssetId, usdcAssetId, false);
@@ -50,6 +50,7 @@ contract CrossMarginHandler_Base is BaseTest {
     oracleMiddleware.setAssetPriceConfig(wbtcAssetId, 1e6, 60, address(pythAdapter));
 
     calculator = Deployer.deployCalculator(
+      address(proxyAdmin),
       address(oracleMiddleware),
       address(vaultStorage),
       address(mockPerpStorage),
@@ -57,6 +58,7 @@ contract CrossMarginHandler_Base is BaseTest {
     );
 
     crossMarginService = Deployer.deployCrossMarginService(
+      address(proxyAdmin),
       address(configStorage),
       address(vaultStorage),
       address(perpStorage),
@@ -64,6 +66,7 @@ contract CrossMarginHandler_Base is BaseTest {
       address(unstakedGlpStrategy)
     );
     crossMarginHandler = Deployer.deployCrossMarginHandler(
+      address(proxyAdmin),
       address(crossMarginService),
       address(ecoPyth),
       executionOrderFee

@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 
-contract StakedGlpStrategy is Owned, IStakedGlpStrategy {
+contract StakedGlpStrategy is OwnableUpgradeable, IStakedGlpStrategy {
   error StakedGlpStrategy_OnlyWhitelist();
 
-  IERC20 public sglp;
-  IERC20 public rewardToken;
+  IERC20Upgradeable public sglp;
+  IERC20Upgradeable public rewardToken;
 
   IGmxRewardRouterV2 public rewardRouter;
   IGmxRewardTracker public rewardTracker;
@@ -42,24 +42,22 @@ contract StakedGlpStrategy is Owned, IStakedGlpStrategy {
     _;
   }
 
-  constructor(
-    IERC20 _sglp,
-    IGmxRewardRouterV2 _rewardRouter,
-    IGmxRewardTracker _rewardTracker,
-    IGmxGlpManager _glpManager,
-    IOracleMiddleware _oracleMiddleware,
-    IVaultStorage _vaultStorage,
+  function initialize(
+    IERC20Upgradeable _sglp,
+    IStakedGlpStrategy.StakedGlpStrategyConfig memory _stakedGlpStrategyConfig,
     address _treasury,
     uint16 _strategyBps
-  ) {
-    sglp = _sglp;
-    rewardRouter = _rewardRouter;
-    rewardTracker = _rewardTracker;
-    glpManager = _glpManager;
-    rewardToken = IERC20(_rewardTracker.rewardToken());
+  ) external initializer {
+    OwnableUpgradeable.__Ownable_init();
 
-    oracleMiddleware = _oracleMiddleware;
-    vaultStorage = _vaultStorage;
+    sglp = _sglp;
+    rewardRouter = _stakedGlpStrategyConfig.rewardRouter;
+    rewardTracker = _stakedGlpStrategyConfig.rewardTracker;
+    glpManager = _stakedGlpStrategyConfig.glpManager;
+    rewardToken = IERC20Upgradeable(_stakedGlpStrategyConfig.rewardTracker.rewardToken());
+
+    oracleMiddleware = _stakedGlpStrategyConfig.oracleMiddleware;
+    vaultStorage = _stakedGlpStrategyConfig.vaultStorage;
 
     treasury = _treasury;
     strategyBps = _strategyBps;
@@ -107,5 +105,10 @@ contract StakedGlpStrategy is Owned, IStakedGlpStrategy {
     // 6. Update accounting.
     vaultStorage.pullToken(address(sglp));
     vaultStorage.addPLPLiquidity(address(sglp), sGlpBalance);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

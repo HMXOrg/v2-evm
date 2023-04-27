@@ -21,7 +21,6 @@ contract TradingStaking_RemoveRewarder is TradingStaking_Base {
 
     // Mint 604800 rewardToken2 to Feeder
     rewardToken2.mint(DAVE, 604800 ether);
-    vm.stopPrank();
 
     // Alice deposits 100 size
     tradingStaking.deposit(ALICE, ethMarketIndex, 100 * 1e30);

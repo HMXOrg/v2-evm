@@ -26,7 +26,7 @@ contract DeploySGlpStakedAdapter is ConfigJsonRepo {
     address sglpStakedAdapterAddress = address(
       Deployer.deployStakedGlpOracleAdapter(
         address(proxyAdmin),
-        IERC20Upgradeable(address(sglpAddress)),
+        IERC20Upgradeable(sglpAddress),
         IGmxGlpManager(glpManager),
         sglpAssetId
       )

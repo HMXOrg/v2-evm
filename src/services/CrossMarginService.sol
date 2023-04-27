@@ -98,6 +98,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /**
    * Core Functions
    */
+
   /// @notice Calculate new trader balance after deposit collateral token.
   /// @dev This uses to calculate new trader balance when they deposit token as collateral.
   /// @param _primaryAccount Trader's primary address from trader's wallet.
@@ -110,6 +111,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     address _token,
     uint256 _amount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
+    // SLOAD
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address

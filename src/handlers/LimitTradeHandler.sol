@@ -16,12 +16,15 @@ import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
+/// @title LimitTradeHandler
+/// @notice This contract handles the create, update, and cancel for the Trading module.
 contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILimitTradeHandler {
   /**
    * Events
    */
   event LogSetTradeService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogSetIsAllowAllExecutor(bool oldValue, bool newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogSetPyth(address oldValue, address newValue);
   event LogCreateLimitOrder(
@@ -114,6 +117,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
 
+  /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
+  /// @param _weth Address of WETH.
+  /// @param _tradeService Address of the TradeService contract.
+  /// @param _pyth Address of the Pyth contract.
+  /// @param _minExecutionFee Minimum execution fee for a trading order.
   function initialize(
     address _weth,
     address _tradeService,
@@ -158,6 +166,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /// @param _marketIndex Market Index
   /// @param _sizeDelta How much the position size will change in USD (1e30), can be negative for INCREASE order
   /// @param _triggerPrice The price that this limit order will be triggered
+  /// @param _acceptablePrice The acceptable price for the order
   /// @param _triggerAboveThreshold The current price must go above/below the trigger price for the order to be executed
   /// @param _executionFee The execution fee of this limit order
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
@@ -178,13 +187,17 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     // The attached native token must be equal to _executionFee
     if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
 
+    // Validate the order price
     _validateCreateOrderPrice(_triggerAboveThreshold, _triggerPrice, _marketIndex, _sizeDelta, _sizeDelta > 0);
 
     // Transfer in the native token to be used as execution fee
     _transferInETH();
 
+    // Get the sub-account and order index for the limit order
     address _subAccount = _getSubAccount(msg.sender, _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
+
+    // Create the limit order
     LimitOrder memory _order = LimitOrder({
       account: msg.sender,
       subAccountId: _subAccountId,
@@ -222,7 +235,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /// @param _subAccountId Sub-account Id
   /// @param _orderIndex Order Index which could be retrieved from the emitted event from `createOrder()`
   /// @param _feeReceiver Which address will receive the execution fee for this transaction
-  /// @param _priceData Price data from Pyth to be used for updating the market prices
+  /// @param _priceData Price data from the Pyth oracle.
+  /// @param _publishTimeData Publish time data from the Pyth oracle.
+  /// @param _minPublishTime Minimum publish time for the Pyth oracle data.
+  /// @param _encodedVaas Encoded VaaS data for the Pyth oracle.
   function executeOrder(
     address _account,
     uint8 _subAccountId,
@@ -235,13 +251,14 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   ) external nonReentrant onlyOrderExecutor {
     ExecuteOrderVars memory vars;
 
+    // Get the sub-account and order index for the limit order
     vars.subAccount = _getSubAccount(_account, _subAccountId);
     vars.order = limitOrders[vars.subAccount][_orderIndex];
 
     // Delete this executed order from the list
     delete limitOrders[vars.subAccount][_orderIndex];
 
-    // Check if this order still exists
+    // Update the price and publish time data using the Pyth oracle
     if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Update price to Pyth
@@ -432,6 +449,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+    if (_sizeDelta == 0) revert ILimitTradeHandler_BadSizeDelta();
 
     // Update order
     _order.triggerPrice = _triggerPrice;
@@ -455,30 +473,45 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /**
    * Setters
    */
-  function setTradeService(address _newTradeService) external onlyOwner {
-    if (_newTradeService == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    TradeService(_newTradeService).perpStorage();
-    emit LogSetTradeService(address(tradeService), _newTradeService);
-    tradeService = _newTradeService;
+  /// @notice Sets a new TradeService contract address.
+  /// @param _tradeService The new TradeService contract address.
+  function setTradeService(address _tradeService) external onlyOwner {
+    if (_tradeService == address(0)) revert ILimitTradeHandler_InvalidAddress();
+    TradeService(_tradeService).perpStorage();
+    emit LogSetTradeService(address(tradeService), _tradeService);
+    tradeService = _tradeService;
   }
 
+  /// @notice setMinExecutionFee
+  /// @param _newMinExecutionFee minExecutionFee in ethers
   function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
     if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;
   }
 
+  function setIsAllowAllExecutor(bool _isAllow) external onlyOwner {
+    emit LogSetIsAllowAllExecutor(isAllowAllExecutor, _isAllow);
+    isAllowAllExecutor = _isAllow;
+  }
+
+  /// @notice setOrderExecutor
+  /// @param _executor address who will be executor
+  /// @param _isAllow flag to allow to execute
   function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
     orderExecutors[_executor] = _isAllow;
     emit LogSetOrderExecutor(_executor, _isAllow);
   }
 
-  function setPyth(address _newPyth) external onlyOwner {
-    if (_newPyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    // @todo sanity check
-    // IPyth(_newPyth).getValidTimePeriod();
-    emit LogSetPyth(address(tradeService), _newPyth);
-    pyth = IEcoPyth(_newPyth);
+  /// @notice Sets a new Pyth contract address.
+  /// @param _pyth The new Pyth contract address.
+  function setPyth(address _pyth) external onlyOwner {
+    if (_pyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
+    emit LogSetPyth(address(tradeService), _pyth);
+    pyth = IEcoPyth(_pyth);
+
+    // Sanity check
+    IEcoPyth(_pyth).getAssetIds();
   }
 
   /**
@@ -555,6 +588,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     int256 _sizeDelta,
     bool _maximizePrice
   ) private view {
+    if (_sizeDelta == 0) revert ILimitTradeHandler_BadSizeDelta();
+
     ValidatePositionOrderPriceVars memory vars;
 
     // Get price from Pyth

@@ -15,7 +15,7 @@ import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 2;
+const subAccountId = 1;
 
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
@@ -250,80 +250,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "plpLiquidity",
       args: [config.tokens.sglp],
     },
-    // Fees
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.usdc],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.usdt],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.dai],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.weth],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.wbtc],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.sglp],
-    },
-    // Dev Fees
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.usdc],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.usdt],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.dai],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.weth],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.wbtc],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.sglp],
-    },
     // Global Markets
     {
       interface: PerpStorage__factory.abi,
@@ -412,6 +338,97 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       plpLiquidityWeth,
       plpLiquidityWbtc,
       plpLiquiditySglp,
+      ethusdMarket,
+      btcusdMarket,
+      applusdMarket,
+      jpyusdMarket,
+      positions,
+      ethusdMarketConfig,
+      btcusdMarketConfig,
+      applusdMarketConfig,
+      jpyusdMarketConfig,
+    ],
+  ] = await multi.multiCall(inputs);
+
+  const feeInputs = [
+    // Fees
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.usdc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.usdt],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.dai],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.weth],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.wbtc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.sglp],
+    },
+    // Dev Fees
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.usdc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.usdt],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.dai],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.weth],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.wbtc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.sglp],
+    },
+  ];
+  const [
+    ,
+    [
       feeUsdc,
       feeUsdt,
       feeDai,
@@ -424,17 +441,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       devFeeWeth,
       devFeeWbtc,
       devFeeSglp,
-      ethusdMarket,
-      btcusdMarket,
-      applusdMarket,
-      jpyusdMarket,
-      positions,
-      ethusdMarketConfig,
-      btcusdMarketConfig,
-      applusdMarketConfig,
-      jpyusdMarketConfig,
     ],
-  ] = await multi.multiCall(inputs);
+  ] = await multi.multiCall(feeInputs);
 
   const inputs2 = [
     // Global Asset Class

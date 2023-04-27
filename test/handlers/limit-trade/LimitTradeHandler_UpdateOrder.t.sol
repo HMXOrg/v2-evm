@@ -30,6 +30,58 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
     });
   }
 
+  function testRevert_WhenUpdateMarketOrder() external {
+    // create a market order (trigger price = 0)
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 100,
+      _triggerPrice: 0,
+      _acceptablePrice: 2e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false,
+      _tpToken: address(weth)
+    });
+
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MarketOrderNoUpdate()"));
+    limitTradeHandler.updateOrder({
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _sizeDelta: 100,
+      _triggerPrice: 2e30,
+      _triggerAboveThreshold: true,
+      _reduceOnly: false,
+      _tpToken: address(0)
+    });
+  }
+
+  function testRevert_WhenConvertLimitOrderToMarketOrder() external {
+    // create a limit order (trigger price > 0)
+    limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _subAccountId: 0,
+      _marketIndex: 1,
+      _sizeDelta: 100,
+      _triggerPrice: 2e30,
+      _acceptablePrice: 2e30,
+      _triggerAboveThreshold: true,
+      _executionFee: 0.1 ether,
+      _reduceOnly: false,
+      _tpToken: address(weth)
+    });
+
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_LimitOrderConvertToMarketOrder()"));
+    limitTradeHandler.updateOrder({
+      _subAccountId: 0,
+      _orderIndex: 0,
+      _sizeDelta: 100,
+      _triggerPrice: 0,
+      _triggerAboveThreshold: true,
+      _reduceOnly: false,
+      _tpToken: address(0)
+    });
+  }
+
   // Update an order
   function testCorrectness_updateOrder() external {
     limitTradeHandler.createOrder{ value: 0.1 ether }({

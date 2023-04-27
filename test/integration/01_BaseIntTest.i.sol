@@ -8,8 +8,8 @@ import { console2 } from "forge-std/console2.sol";
 import { StdCheats } from "forge-std/StdCheats.sol";
 
 // Pyth
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
+import { MockPyth } from "lib/pyth-sdk-solidity/MockPyth.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
@@ -51,7 +51,7 @@ import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
-import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IPyth } from "lib/pyth-sdk-solidity/IPyth.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { CrossMarginTester } from "@hmx-test/testers/CrossMarginTester.sol";
 import { LimitOrderTester } from "@hmx-test/testers/LimitOrderTester.sol";

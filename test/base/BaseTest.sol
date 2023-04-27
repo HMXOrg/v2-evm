@@ -14,7 +14,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 // Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockWNative } from "../mocks/MockWNative.sol";
-import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
+import { MockPyth } from "lib/pyth-sdk-solidity/MockPyth.sol";
 import { MockCalculator } from "../mocks/MockCalculator.sol";
 import { MockPerpStorage } from "../mocks/MockPerpStorage.sol";
 import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";

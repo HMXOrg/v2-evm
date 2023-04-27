@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 import { OwnableUpgradeable } from "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import { PythStructs, IPythEvents } from "pyth-sdk-solidity/IPyth.sol";
-import { PythErrors } from "pyth-sdk-solidity/PythErrors.sol";
+import { PythStructs, IPythEvents } from "lib/pyth-sdk-solidity/IPyth.sol";
+import { PythErrors } from "lib/pyth-sdk-solidity/PythErrors.sol";
 import { ILeanPyth } from "./interfaces/ILeanPyth.sol";
 import { IPyth, IPythPriceInfo, IPythDataSource } from "./interfaces/IPyth.sol";
 import { IWormHole } from "./interfaces/IWormHole.sol";

@@ -14,6 +14,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 contract DeployUnstakedGlpStrategy is ConfigJsonRepo {
   function run() public {
@@ -28,7 +29,7 @@ contract DeployUnstakedGlpStrategy is ConfigJsonRepo {
     address strategiesAddress = address(
       Deployer.deployUnstakedGlpStrategy(
         address(proxyAdmin),
-        ERC20(sglp),
+        IERC20Upgradeable(address(sglp)),
         IGmxRewardRouterV2(rewardRouter),
         IVaultStorage(vaultStorage)
       )

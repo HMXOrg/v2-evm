@@ -5,7 +5,7 @@ import { BaseTest } from "@hmx-test/base/BaseTest.sol";
 import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 contract StakedGlpOracleAdapter_BaseTest is BaseTest {
   IOracleAdapter internal stakedGlpOracleAdapter;
@@ -13,7 +13,7 @@ contract StakedGlpOracleAdapter_BaseTest is BaseTest {
   function setUp() public virtual {
     stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(
       address(proxyAdmin),
-      ERC20(address(sglp)),
+      IERC20Upgradeable(address(sglp)),
       mockGlpManager,
       sglpAssetId
     );

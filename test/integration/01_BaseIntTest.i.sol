@@ -16,7 +16,7 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 // Openzepline
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 // Libs
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
@@ -222,7 +222,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     // deploy Strategies
     unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
       address(proxyAdmin),
-      ERC20(sglp),
+      IERC20Upgradeable(address(sglp)),
       IGmxRewardRouterV2(gmxRewardRouterV2),
       IVaultStorage(vaultStorage)
     );

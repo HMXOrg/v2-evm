@@ -12,6 +12,7 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 // Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
@@ -165,7 +166,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
 
     unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
       address(proxyAdmin),
-      ERC20(sglp),
+      IERC20Upgradeable(address(sglp)),
       IGmxRewardRouterV2(mockGmxRewardRouterv2),
       IVaultStorage(vaultStorage)
     );

@@ -14,6 +14,7 @@ import { stdJson } from "forge-std/StdJson.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract StakedGlpOracleAdapter_GetLatestPrice is TestBase, StdAssertions, StdCheatsSafe {
@@ -31,7 +32,7 @@ contract StakedGlpOracleAdapter_GetLatestPrice is TestBase, StdAssertions, StdCh
 
     stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(
       address(proxyAdmin),
-      ERC20(glpAddress),
+      IERC20Upgradeable(address(glpAddress)),
       IGmxGlpManager(glpManagerAddress),
       sGlpAssetId
     );

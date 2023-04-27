@@ -15,6 +15,7 @@ import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 contract DeployStakedGlpStrategy is ConfigJsonRepo {
   function run() public {
@@ -37,7 +38,13 @@ contract DeployStakedGlpStrategy is ConfigJsonRepo {
     uint16 strategyBPS = 1000; //10%
 
     address strategiesAddress = address(
-      Deployer.deployStakedGlpStrategy(address(proxyAdmin), ERC20(sglp), stakedGlpStrategyConfig, treasury, strategyBPS)
+      Deployer.deployStakedGlpStrategy(
+        address(proxyAdmin),
+        IERC20Upgradeable(sglp),
+        stakedGlpStrategyConfig,
+        treasury,
+        strategyBPS
+      )
     );
 
     vm.stopBroadcast();

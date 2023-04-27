@@ -45,7 +45,7 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -100,7 +100,7 @@ library Deployer {
 
   function deployStakedGlpOracleAdapter(
     address _proxyAdmin,
-    ERC20 _sGlp,
+    IERC20Upgradeable _sGlp,
     IGmxGlpManager _glpManager,
     bytes32 _sGlpAssetId
   ) internal returns (IOracleAdapter) {
@@ -474,7 +474,7 @@ library Deployer {
 
   function deployStakedGlpStrategy(
     address _proxyAdmin,
-    ERC20 _sGlp,
+    IERC20Upgradeable _sGlp,
     IStakedGlpStrategy.StakedGlpStrategyConfig memory _stakedGlpStrategyConfig,
     address _treasury,
     uint16 _strategyBps
@@ -493,7 +493,7 @@ library Deployer {
 
   function deployUnstakedGlpStrategy(
     address _proxyAdmin,
-    ERC20 _sGlp,
+    IERC20Upgradeable _sGlp,
     IGmxRewardRouterV2 _rewardRouter,
     IVaultStorage _vaultStorage
   ) internal returns (IUnstakedGlpStrategy) {

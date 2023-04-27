@@ -45,6 +45,7 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
 //tester
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 //deployment
@@ -234,7 +235,12 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(pyth));
 
     //deploy stakedglpOracle
-    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(address(proxyAdmin), sglp, glpManager, sGlpAssetId);
+    stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(
+      address(proxyAdmin),
+      IERC20Upgradeable(address(sglp)),
+      glpManager,
+      sGlpAssetId
+    );
 
     //deploy oracleMiddleWare
     oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
@@ -277,14 +283,19 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
     stakedGlpStrategy = Deployer.deployStakedGlpStrategy(
       address(proxyAdmin),
-      sglp,
+      IERC20Upgradeable(address(sglp)),
       stakedGlpStrategyConfig,
       treasury,
       1000 // 10% of reinvest
     );
 
     // unstakedGlp
-    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(address(proxyAdmin), sglp, rewardRouter, vaultStorage);
+    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
+      address(proxyAdmin),
+      IERC20Upgradeable(address(sglp)),
+      rewardRouter,
+      vaultStorage
+    );
 
     //deploy liquidityService
     liquidityService = Deployer.deployLiquidityService(

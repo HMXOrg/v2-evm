@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
-
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
-import { console } from "forge-std/console.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 
 import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
 
 contract UnstakedGlpStrategy is OwnableUpgradeable, IUnstakedGlpStrategy {
+  using SafeERC20Upgradeable for IERC20Upgradeable;
   error UnstakedGlpStrategy_OnlyWhitelisted();
 
-  IERC20 public sglp;
+  IERC20Upgradeable public sglp;
 
   IGmxRewardRouterV2 public rewardRouter;
   IVaultStorage public vaultStorage;
@@ -36,7 +36,7 @@ contract UnstakedGlpStrategy is OwnableUpgradeable, IUnstakedGlpStrategy {
   }
 
   function initialize(
-    IERC20 _sglp,
+    IERC20Upgradeable _sglp,
     IGmxRewardRouterV2 _rewardRouter,
     IVaultStorage _vaultStorage
   ) external initializer {
@@ -66,7 +66,7 @@ contract UnstakedGlpStrategy is OwnableUpgradeable, IUnstakedGlpStrategy {
     _amountOut = abi.decode(_cookResult, (uint256));
 
     // 3. Transfer token to vaultStorage
-    IERC20(_tokenOut).transfer(address(vaultStorage), _amountOut);
+    IERC20Upgradeable(_tokenOut).safeTransfer(address(vaultStorage), _amountOut);
     vaultStorage.pullToken(_tokenOut);
 
     return _amountOut;

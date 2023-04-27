@@ -22,6 +22,8 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_TriggerPriceBelowCurrentPrice();
   error ILimitTradeHandler_TriggerPriceAboveCurrentPrice();
   error ILimitTradeHandler_BadSizeDelta();
+  error ILimitTradeHandler_MarketOrderNoUpdate();
+  error ILimitTradeHandler_LimitOrderConvertToMarketOrder();
 
   /**
    * Structs
@@ -37,6 +39,11 @@ interface ILimitTradeHandler {
     uint256 triggerPrice;
     uint256 acceptablePrice;
     uint256 executionFee;
+  }
+
+  struct OrderPointer {
+    address account;
+    uint256 index;
   }
 
   /**
@@ -115,4 +122,10 @@ interface ILimitTradeHandler {
   function setMinExecutionFee(uint256 _newMinExecutionFee) external;
 
   function setOrderExecutor(address _executor, bool _isAllow) external;
+
+  function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders);
+
+  function getMarketActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders);
+
+  function getLimitActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders);
 }

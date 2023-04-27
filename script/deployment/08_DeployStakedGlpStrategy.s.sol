@@ -14,7 +14,6 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 contract DeployStakedGlpStrategy is ConfigJsonRepo {

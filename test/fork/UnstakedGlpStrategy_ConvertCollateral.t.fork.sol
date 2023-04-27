@@ -6,6 +6,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 contract UnstakedGlpStrategy_ConvertCollateral is StakedGlpStrategy_Base {
   uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_one_fork"));
@@ -23,7 +24,7 @@ contract UnstakedGlpStrategy_ConvertCollateral is StakedGlpStrategy_Base {
     uint256 sglpAmount = sglp.balanceOf(ALICE);
     vm.stopPrank();
 
-    depositCollateral(ALICE, 0, ERC20(address(sglp)), sglpAmount);
+    depositCollateral(ALICE, 0, sglp, sglpAmount);
 
     uint256 glpStakeAmount = IGmxRewardTracker(fglpAddress).stakedAmounts(address(vaultStorage));
     uint256 fglpStakeAmount = IGmxRewardTracker(fsGlpAddress).stakedAmounts(address(vaultStorage));
@@ -47,7 +48,7 @@ contract UnstakedGlpStrategy_ConvertCollateral is StakedGlpStrategy_Base {
     uint256 sglpAmount = sglp.balanceOf(ALICE);
     vm.stopPrank();
 
-    depositCollateral(ALICE, 0, ERC20(address(sglp)), sglpAmount);
+    depositCollateral(ALICE, 0, sglp, sglpAmount);
 
     uint256 glpStakeAmount = IGmxRewardTracker(fglpAddress).stakedAmounts(address(vaultStorage));
     uint256 fglpStakeAmount = IGmxRewardTracker(fsGlpAddress).stakedAmounts(address(vaultStorage));

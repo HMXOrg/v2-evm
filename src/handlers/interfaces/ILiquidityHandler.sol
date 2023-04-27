@@ -27,6 +27,7 @@ interface ILiquidityHandler {
     bool isAdd;
     uint256 executionFee;
     bool isNativeOut; // token Out for remove liquidity(!unwrap) and refund addLiquidity (shoulWrap) flag
+    uint256 orderTimestamp;
   }
 
   /**

@@ -44,7 +44,7 @@ import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 import { console } from "forge-std/console.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 
-import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
+import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 
 abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
@@ -82,7 +82,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockGmxRewardRouterV2 internal mockGmxRewardRouterv2;
 
   // strategy
-  IUnstakedGlpStrategy unstakedGlpStrategy;
+  IConvertedGlpStrategy convertedGlpStrategy;
 
   MockWNative internal weth;
   MockErc20 internal wbtc;
@@ -164,7 +164,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
     oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
 
-    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
+    convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(
       address(proxyAdmin),
       IERC20Upgradeable(address(sglp)),
       IGmxRewardRouterV2(mockGmxRewardRouterv2),

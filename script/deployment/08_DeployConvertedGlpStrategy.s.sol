@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
-import { UnstakedGlpStrategy } from "@hmx/strategies/UnstakedGlpStrategy.sol";
+import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 
 // interfaces
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
@@ -15,7 +15,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
-contract DeployUnstakedGlpStrategy is ConfigJsonRepo {
+contract DeployConvertedGlpStrategy is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
@@ -26,7 +26,7 @@ contract DeployUnstakedGlpStrategy is ConfigJsonRepo {
     address vaultStorage = getJsonAddress(".storages.vault");
 
     address strategiesAddress = address(
-      Deployer.deployUnstakedGlpStrategy(
+      Deployer.deployConvertedGlpStrategy(
         address(proxyAdmin),
         IERC20Upgradeable(address(sglp)),
         IGmxRewardRouterV2(rewardRouter),
@@ -36,6 +36,6 @@ contract DeployUnstakedGlpStrategy is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".strategies.unstakedGlpStrategy", strategiesAddress);
+    updateJson(".strategies.convertedGlpStrategy", strategiesAddress);
   }
 }

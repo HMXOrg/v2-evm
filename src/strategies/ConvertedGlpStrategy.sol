@@ -11,11 +11,11 @@ import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 
-import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
+import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
 
-contract UnstakedGlpStrategy is OwnableUpgradeable, IUnstakedGlpStrategy {
+contract ConvertedGlpStrategy is OwnableUpgradeable, IConvertedGlpStrategy {
   using SafeERC20Upgradeable for IERC20Upgradeable;
-  error UnstakedGlpStrategy_OnlyWhitelisted();
+  error ConvertedGlpStrategy_OnlyWhitelisted();
 
   IERC20Upgradeable public sglp;
 
@@ -30,7 +30,7 @@ contract UnstakedGlpStrategy is OwnableUpgradeable, IUnstakedGlpStrategy {
    */
   modifier onlyWhitelist() {
     if (!whitelistExecutors[msg.sender]) {
-      revert UnstakedGlpStrategy_OnlyWhitelisted();
+      revert ConvertedGlpStrategy_OnlyWhitelisted();
     }
     _;
   }
@@ -61,7 +61,7 @@ contract UnstakedGlpStrategy is OwnableUpgradeable, IUnstakedGlpStrategy {
       address(this)
     );
 
-    // 2. Unstake sglp from GMX
+    // 2. withdraw sglp from GMX
     bytes memory _cookResult = vaultStorage.cook(address(sglp), address(rewardRouter), _callData);
     _amountOut = abi.decode(_cookResult, (uint256));
 

@@ -23,7 +23,7 @@ contract DeployServices is ConfigJsonRepo {
     address perpStorageAddress = getJsonAddress(".storages.perp");
     address calculatorAddress = getJsonAddress(".calculator");
     address tradeHelperAddress = getJsonAddress(".helpers.trade");
-    address unstakedGlpAddress = getJsonAddress(".strategies.unstakedGlpStrategy");
+    address convertedGlpStrategyAddress = getJsonAddress(".strategies.convertedGlpStrategy");
     address proxyAdminAddress = address(proxyAdmin);
     address crossMarginServiceAddress = address(
       Deployer.deployCrossMarginService(
@@ -32,7 +32,7 @@ contract DeployServices is ConfigJsonRepo {
         vaultStorageAddress,
         calculatorAddress,
         perpStorageAddress,
-        unstakedGlpAddress
+        convertedGlpStrategyAddress
       )
     );
     address liquidationServiceAddress = address(

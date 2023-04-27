@@ -24,7 +24,7 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
-import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
+import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
 
 // GMX
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
@@ -61,7 +61,7 @@ import { console } from "forge-std/console.sol";
 // Openzeppelin
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
+abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   struct AssetPythPriceData {
     bytes32 assetId;
     bytes32 priceId;
@@ -142,7 +142,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   IGmxRewardTracker rewardTracker; //fglp contract
 
   IStakedGlpStrategy stakedGlpStrategy;
-  IUnstakedGlpStrategy unstakedGlpStrategy;
+  IConvertedGlpStrategy convertedGlpStrategy;
 
   /* Testers */
   LiquidityTester liquidityTester;
@@ -163,7 +163,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     //setup Strategy
     {
       stakedGlpStrategy.setWhiteListExecutor(address(keeper), true);
-      unstakedGlpStrategy.setWhiteListExecutor(address(crossMarginService), true);
+      convertedGlpStrategy.setWhiteListExecutor(address(crossMarginService), true);
     }
 
     // Config
@@ -182,11 +182,11 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(crossMarginService), true);
       vaultStorage.setServiceExecutors(address(stakedGlpStrategy), true);
-      vaultStorage.setServiceExecutors(address(unstakedGlpStrategy), true);
+      vaultStorage.setServiceExecutors(address(convertedGlpStrategy), true);
 
       vaultStorage.setStrategyAllowance(address(sglp), address(stakedGlpStrategy), address(rewardTracker));
 
-      vaultStorage.setStrategyAllowance(address(sglp), address(unstakedGlpStrategy), address(rewardRouter));
+      vaultStorage.setStrategyAllowance(address(sglp), address(convertedGlpStrategy), address(rewardRouter));
 
       perpStorage.setServiceExecutors(address(liquidityService), true);
     }
@@ -283,8 +283,8 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       1000 // 10% of reinvest
     );
 
-    // unstakedGlp
-    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(address(proxyAdmin), sglp, rewardRouter, vaultStorage);
+    // convertedGlp strategy
+    convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(address(proxyAdmin), sglp, rewardRouter, vaultStorage);
 
     //deploy liquidityService
     liquidityService = Deployer.deployLiquidityService(
@@ -300,7 +300,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(vaultStorage),
       address(perpStorage),
       address(calculator),
-      address(unstakedGlpStrategy)
+      address(convertedGlpStrategy)
     );
 
     //deploy liquidityHandler

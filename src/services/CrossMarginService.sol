@@ -12,7 +12,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
-import { UnstakedGlpStrategy } from "@hmx/strategies/UnstakedGlpStrategy.sol";
+import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
@@ -58,14 +58,14 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public calculator;
   address public perpStorage;
 
-  address public unstakeGlpStrategy;
+  address public convertedSglpStrategy;
 
   function initialize(
     address _configStorage,
     address _vaultStorage,
     address _perpStorage,
     address _calculator,
-    address _unstakeGlpStrategy
+    address _convertedSglpStrategy
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -74,7 +74,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       _configStorage == address(0) ||
       _vaultStorage == address(0) ||
       _calculator == address(0) ||
-      _unstakeGlpStrategy == address(0)
+      _convertedSglpStrategy == address(0)
     ) revert ICrossMarginService_InvalidAddress();
 
     configStorage = _configStorage;
@@ -82,14 +82,14 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     perpStorage = _perpStorage;
     calculator = _calculator;
 
-    unstakeGlpStrategy = _unstakeGlpStrategy;
+    convertedSglpStrategy = _convertedSglpStrategy;
 
     // Sanity check
     ConfigStorage(_configStorage).calculator();
     VaultStorage(_vaultStorage).devFees(address(0));
     PerpStorage(_perpStorage).getGlobalState();
     Calculator(_calculator).oracle();
-    UnstakedGlpStrategy(unstakeGlpStrategy).sglp();
+    ConvertedGlpStrategy(convertedSglpStrategy).sglp();
   }
 
   /**
@@ -242,7 +242,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Get trader's sub-account address
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     ConfigStorage _configStorage = ConfigStorage(configStorage);
-    _amountOut = UnstakedGlpStrategy(unstakeGlpStrategy).execute(_tokenOut, _amountIn);
+    _amountOut = ConvertedGlpStrategy(convertedSglpStrategy).execute(_tokenOut, _amountIn);
 
     // Adjusting trader balance
     address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);

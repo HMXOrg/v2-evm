@@ -45,8 +45,8 @@ import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
-import { UnstakedGlpStrategy } from "@hmx/strategies/UnstakedGlpStrategy.sol";
-import { IUnstakedGlpStrategy } from "@hmx/strategies/interfaces/IUnstakedGlpStrategy.sol";
+import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
+import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
@@ -115,7 +115,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   IGmxRewardRouterV2 gmxRewardRouterV2;
 
   //strategies
-  IUnstakedGlpStrategy unstakedGlpStrategy;
+  IConvertedGlpStrategy convertedGlpStrategy;
 
   // helpers
   ITradeHelper tradeHelper;
@@ -220,7 +220,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     );
 
     // deploy Strategies
-    unstakedGlpStrategy = Deployer.deployUnstakedGlpStrategy(
+    convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(
       address(proxyAdmin),
       IERC20Upgradeable(address(sglp)),
       IGmxRewardRouterV2(gmxRewardRouterV2),
@@ -247,7 +247,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(vaultStorage),
       address(perpStorage),
       address(calculator),
-      address(unstakedGlpStrategy)
+      address(convertedGlpStrategy)
     );
     tradeService = Deployer.deployTradeService(
       address(proxyAdmin),

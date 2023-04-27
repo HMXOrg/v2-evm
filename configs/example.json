@@ -40,7 +40,7 @@
   },
   "strategies": {
     "stakedGlpStrategy": "",
-    "unstakedGlpStrategy": ""
+    "convertedGlpStrategy": ""
   },
   "calculator": ""
 }

@@ -37,7 +37,7 @@ contract CrossMarginHandler_Initialization is CrossMarginHandler_Base {
       address(vaultStorage),
       address(perpStorage),
       address(calculator),
-      address(unstakedGlpStrategy)
+      address(convertedGlpStrategy)
     );
     assertEq(crossMarginHandler.crossMarginService(), address(crossMarginService));
     crossMarginHandler.setCrossMarginService(address(newCrossMarginService));

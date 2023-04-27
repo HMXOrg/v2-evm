@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 // base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
@@ -17,6 +18,7 @@ import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILimitTradeHandler {
+  using EnumerableSet for EnumerableSet.UintSet;
   /**
    * Events
    */
@@ -114,6 +116,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
 
+  EnumerableSet.UintSet private activeOrderPointers;
+  EnumerableSet.UintSet private activeMarketOrderPointers;
+  EnumerableSet.UintSet private activeLimitOrderPointers;
+
   function initialize(
     address _weth,
     address _tradeService,
@@ -199,8 +205,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     });
 
     // Insert the limit order into the list
-    limitOrdersIndex[_subAccount] = _orderIndex + 1;
-    limitOrders[_subAccount][_orderIndex] = _order;
+    _addOrder(_order, _subAccount, _orderIndex);
 
     emit LogCreateLimitOrder(
       msg.sender,
@@ -238,8 +243,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     vars.subAccount = _getSubAccount(_account, _subAccountId);
     vars.order = limitOrders[vars.subAccount][_orderIndex];
 
-    // Delete this executed order from the list
-    delete limitOrders[vars.subAccount][_orderIndex];
+    // Remove this executed order from the list
+    _removeOrder(vars.order, vars.subAccount, _orderIndex);
 
     // Check if this order still exists
     if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
@@ -391,8 +396,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
-    // Delete this order from the list
-    delete limitOrders[subAccount][_orderIndex];
+    // Remove this order from the list
+    _removeOrder(_order, subAccount, _orderIndex);
 
     // Refund the execution fee to the creator of this order
     _transferOutETH(_order.executionFee, _order.account);
@@ -433,6 +438,17 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
+    if (_order.triggerPrice == 0) {
+      // Market
+      revert ILimitTradeHandler_MarketOrderNoUpdate();
+    } else {
+      // Limit
+      // if trying to update to Market, revert
+      if (_triggerPrice == 0) {
+        revert ILimitTradeHandler_LimitOrderConvertToMarketOrder();
+      }
+    }
+
     // Update order
     _order.triggerPrice = _triggerPrice;
     _order.triggerAboveThreshold = _triggerAboveThreshold;
@@ -450,6 +466,93 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       _order.reduceOnly,
       _order.tpToken
     );
+  }
+
+  function _addOrder(LimitOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
+    limitOrdersIndex[_subAccount] = _orderIndex + 1;
+    limitOrders[_subAccount][_orderIndex] = _order;
+
+    uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
+    activeOrderPointers.add(_pointer);
+
+    if (_order.triggerPrice == 0) {
+      // Market
+      activeMarketOrderPointers.add(_pointer);
+    } else {
+      // Limit
+      activeLimitOrderPointers.add(_pointer);
+    }
+  }
+
+  function _removeOrder(LimitOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
+    delete limitOrders[_subAccount][_orderIndex];
+
+    uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
+    activeOrderPointers.remove(_pointer);
+
+    if (_order.triggerPrice == 0) {
+      // Market
+      activeMarketOrderPointers.remove(_pointer);
+    } else {
+      // Limit
+      activeLimitOrderPointers.remove(_pointer);
+    }
+  }
+
+  /**
+   * Getters
+   */
+
+  function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(activeOrderPointers, _limit, _offset);
+  }
+
+  function getMarketActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(activeMarketOrderPointers, _limit, _offset);
+  }
+
+  function getLimitActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(activeLimitOrderPointers, _limit, _offset);
+  }
+
+  function _getOrders(
+    EnumerableSet.UintSet storage _pointers,
+    uint256 _limit,
+    uint256 _offset
+  ) internal view returns (LimitOrder[] memory _orders) {
+    uint256 _len = _pointers.length();
+    uint256 _startIndex = _offset;
+    uint256 _endIndex = _offset + _limit;
+    if (_startIndex > _len) return _orders;
+    if (_endIndex > _len) {
+      _endIndex = _len;
+    }
+
+    _orders = new LimitOrder[](_endIndex - _startIndex);
+
+    for (uint256 i = _startIndex; i < _endIndex; ) {
+      (address _account, uint96 _index) = _decodePointer(_pointers.at(i));
+      LimitOrder memory _order = limitOrders[_account][_index];
+
+      _orders[i - _offset] = _order;
+      unchecked {
+        ++i;
+      }
+    }
+
+    return _orders;
+  }
+
+  function activeOrdersCount() external view returns (uint256) {
+    return activeOrderPointers.length();
+  }
+
+  function activeLimitOrdersCount() external view returns (uint256) {
+    return activeLimitOrderPointers.length();
+  }
+
+  function activeMarketOrdersCount() external view returns (uint256) {
+    return activeMarketOrderPointers.length();
   }
 
   /**
@@ -600,6 +703,14 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   function _min(uint256 x, uint256 y) private pure returns (uint256) {
     return x < y ? x : y;
+  }
+
+  function _encodePointer(address _account, uint96 _index) internal pure returns (uint256 _pointer) {
+    return uint256(bytes32(abi.encodePacked(_account, _index)));
+  }
+
+  function _decodePointer(uint256 _pointer) internal pure returns (address _account, uint96 _index) {
+    return (address(uint160(_pointer >> 96)), uint96(_pointer));
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

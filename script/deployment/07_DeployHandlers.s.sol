@@ -35,8 +35,6 @@ contract DeployHandlers is ConfigJsonRepo {
       getJsonAddress(".tokens.weth")
     );
 
-    // @todo - TBD
-    uint256 minExecutionFee = 0;
     uint256 executionOrderFee = 0.0001 ether;
 
     address botHandlerAddress = address(
@@ -73,7 +71,7 @@ contract DeployHandlers is ConfigJsonRepo {
         vars.weth,
         vars.tradeServiceAddress,
         vars.pythAddress,
-        minExecutionFee
+        executionOrderFee
       )
     );
 

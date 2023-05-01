@@ -8,6 +8,8 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
+import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
+import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -37,7 +39,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogAddMarketConfig(uint256 index, MarketConfig newConfig);
   event LogRemoveUnderlying(address token);
   event LogDelistMarket(uint256 marketIndex);
-  event LogSetLiquidityEnabled(bool _enabled);
+  event LogSetLiquidityEnabled(bool oldValue, bool newValue);
   event LogAddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
 
   /**
@@ -215,31 +217,35 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function setCalculator(address _calculator) external onlyOwner {
     emit LogSetCalculator(calculator, _calculator);
-    // @todo - add sanity check
     calculator = _calculator;
+
+    // Sanity check
+    ICalculator(_calculator).getPendingBorrowingFeeE30();
   }
 
   function setOracle(address _oracle) external onlyOwner {
     emit LogSetOracle(oracle, _oracle);
-    // @todo - sanity check
     oracle = _oracle;
+
+    // Sanity check
+    IOracleMiddleware(_oracle).isUpdater(_oracle);
   }
 
   function setPLP(address _plp) external onlyOwner {
+    if (_plp == address(0)) revert IConfigStorage_InvalidAddress();
     emit LogSetPLP(plp, _plp);
-    // @todo - sanity check
+
     plp = _plp;
   }
 
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external onlyOwner {
     emit LogSetLiquidityConfig(liquidityConfig, _liquidityConfig);
-    // @todo - sanity check
     liquidityConfig = _liquidityConfig;
   }
 
   function setLiquidityEnabled(bool _enabled) external onlyOwner {
+    emit LogSetLiquidityEnabled(liquidityConfig.enabled, _enabled);
     liquidityConfig.enabled = _enabled;
-    emit LogSetLiquidityEnabled(_enabled);
   }
 
   function setDynamicEnabled(bool _enabled) external onlyOwner {
@@ -247,14 +253,13 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     emit LogSetDynamicEnabled(_enabled);
   }
 
-  // @todo - Add Description
   function setServiceExecutor(
     address _contractAddress,
     address _executorAddress,
     bool _isServiceExecutor
   ) external onlyOwner {
+    if (_contractAddress == address(0) || _executorAddress == address(0)) revert IConfigStorage_InvalidAddress();
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
-
     emit LogSetServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
   }
 

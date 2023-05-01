@@ -93,13 +93,13 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
-    crossMarginService = _crossMarginService;
-    pyth = _pyth;
-    minExecutionOrderFee = _minExecutionOrderFee;
-
     // Sanity check
     CrossMarginService(_crossMarginService).vaultStorage();
     IEcoPyth(_pyth).getAssetIds();
+
+    crossMarginService = _crossMarginService;
+    pyth = _pyth;
+    minExecutionOrderFee = _minExecutionOrderFee;
   }
 
   /**

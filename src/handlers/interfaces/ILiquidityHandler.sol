@@ -31,6 +31,11 @@ interface ILiquidityHandler {
   }
 
   /**
+   * States
+   */
+  function nextExecutionOrderIndex() external view returns (uint256);
+
+  /**
    * Functions
    */
   function createAddLiquidityOrder(
@@ -61,8 +66,6 @@ interface ILiquidityHandler {
   function cancelLiquidityOrder(uint256 _orderIndex) external;
 
   function getLiquidityOrders() external view returns (LiquidityOrder[] memory);
-
-  function nextExecutionOrderIndex() external view returns (uint256);
 
   function setOrderExecutor(address _executor, bool _isOk) external;
 

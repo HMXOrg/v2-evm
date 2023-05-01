@@ -15,6 +15,10 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
 
+/**
+ * @title CrossMarginService
+ * @dev A cross-margin trading service that allows traders to deposit and withdraw collateral tokens.
+ */
 contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginService {
   /**
    * Events
@@ -56,6 +60,11 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public calculator;
   address public perpStorage;
 
+  /// @dev Initializes the CrossMarginService contract.
+  /// @param _configStorage The address of the ConfigStorage contract.
+  /// @param _vaultStorage The address of the VaultStorage contract.
+  /// @param _perpStorage The address of the PerpStorage contract.
+  /// @param _calculator The address of the Calculator contract.
   function initialize(
     address _configStorage,
     address _vaultStorage,
@@ -83,13 +92,15 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /**
    * Modifiers
    */
-  // NOTE: Validate only whitelisted contract be able to call this function
+
+  /// @dev Modifier to allow only whitelisted executor to call a function.
   modifier onlyWhitelistedExecutor() {
     ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
     _;
   }
 
-  // NOTE: Validate only accepted collateral token to be deposited
+  /// @dev Modifier to allow only accepted collateral token to be deposited or withdrawn.
+  /// @param _token The address of the collateral token.
   modifier onlyAcceptedToken(address _token) {
     ConfigStorage(configStorage).validateAcceptedCollateral(_token);
     _;
@@ -183,7 +194,6 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
       if (_market.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
-
       if (_market.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingShort);
 
       unchecked {

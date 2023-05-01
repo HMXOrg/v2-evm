@@ -31,19 +31,18 @@ interface ICrossMarginHandler {
   }
 
   /**
-   * Functions
+   * States
    */
+
   function crossMarginService() external returns (address);
 
   function pyth() external returns (address);
 
+  /**
+   * Functions
+   */
+
   function depositCollateral(uint8 _subAccountId, address _token, uint256 _amount, bool _shouldWrap) external payable;
-
-  function setCrossMarginService(address _address) external;
-
-  function setPyth(address _address) external;
-
-  function setOrderExecutor(address _executor, bool _isAllow) external;
 
   function withdrawFundingFeeSurplus(
     address _stableToken,
@@ -69,4 +68,10 @@ interface ICrossMarginHandler {
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external;
+
+  function setCrossMarginService(address _address) external;
+
+  function setPyth(address _address) external;
+
+  function setOrderExecutor(address _executor, bool _isAllow) external;
 }

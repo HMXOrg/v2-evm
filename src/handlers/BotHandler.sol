@@ -19,7 +19,7 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
-// @todo - integrate with BotHandler in another PRs
+/// @title BotHandler
 contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeable {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -64,6 +64,10 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     _;
   }
 
+  /// @notice Initializes the BotHandler contract with the provided configuration parameters.
+  /// @param _tradeService Address of the TradeService contract.
+  /// @param _liquidationService Address of the LiquidationService contract.
+  /// @param _pyth Address of the Pyth contract.
   function initialize(address _tradeService, address _liquidationService, address _pyth) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -71,8 +75,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     // Sanity check
     ITradeService(_tradeService).configStorage();
     LiquidationService(_liquidationService).perpStorage();
-    // @todo
-    // IPyth(_pyth).getValidTimePeriod();
+    IEcoPyth(_pyth).getAssetIds();
 
     tradeService = _tradeService;
     liquidationService = _liquidationService;
@@ -322,23 +325,17 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
   function setLiquidationService(address _newLiquidationService) external nonReentrant onlyOwner {
     // Sanity check
     LiquidationService(_newLiquidationService).perpStorage();
-
-    address _liquidationService = liquidationService;
-
+    emit LogSetLiquidationService(address(liquidationService), _newLiquidationService);
     liquidationService = _newLiquidationService;
-
-    emit LogSetLiquidationService(address(_liquidationService), _newLiquidationService);
   }
 
   /// @notice Set new Pyth contract address.
-  /// @param _newPyth New Pyth contract address.
-  function setPyth(address _newPyth) external nonReentrant onlyOwner {
-    // @todo Sanity check
-    // IPyth(_newPyth).getValidTimePeriod();
-
-    pyth = _newPyth;
-
-    emit LogSetPyth(pyth, _newPyth);
+  /// @param _pyth New Pyth contract address.
+  function setPyth(address _pyth) external nonReentrant onlyOwner {
+    // Sanity check
+    IEcoPyth(_pyth).getAssetIds();
+    emit LogSetPyth(pyth, _pyth);
+    pyth = _pyth;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

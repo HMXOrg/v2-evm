@@ -13,7 +13,7 @@ import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
-// Openzepline
+// Openzeppelin
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 

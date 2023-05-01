@@ -137,17 +137,16 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
+    // Sanity check
+    TradeService(_tradeService).perpStorage();
+    IEcoPyth(_pyth).getAssetIds();
+    if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
+
+    minExecutionFee = _minExecutionFee;
     weth = _weth;
     tradeService = _tradeService;
     pyth = IEcoPyth(_pyth);
     isAllowAllExecutor = false;
-
-    if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
-    minExecutionFee = _minExecutionFee;
-
-    // slither-disable-next-line unused-return
-    TradeService(_tradeService).perpStorage();
-    // @todo sanity check ecopyth
   }
 
   receive() external payable {
@@ -587,13 +586,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external onlyOwner {
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
     if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;
   }
 
-  function setIsAllowAllExecutor(bool _isAllow) external onlyOwner {
+  function setIsAllowAllExecutor(bool _isAllow) external nonReentrant onlyOwner {
     emit LogSetIsAllowAllExecutor(isAllowAllExecutor, _isAllow);
     isAllowAllExecutor = _isAllow;
   }
@@ -601,16 +600,17 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /// @notice setOrderExecutor
   /// @param _executor address who will be executor
   /// @param _isAllow flag to allow to execute
-  function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
+  function setOrderExecutor(address _executor, bool _isAllow) external nonReentrant onlyOwner {
+    if (_executor == address(0)) revert ILimitTradeHandler_InvalidAddress();
     orderExecutors[_executor] = _isAllow;
     emit LogSetOrderExecutor(_executor, _isAllow);
   }
 
   /// @notice Sets a new Pyth contract address.
   /// @param _pyth The new Pyth contract address.
-  function setPyth(address _pyth) external onlyOwner {
+  function setPyth(address _pyth) external nonReentrant onlyOwner {
     if (_pyth == address(0)) revert ILimitTradeHandler_InvalidAddress();
-    emit LogSetPyth(address(tradeService), _pyth);
+    emit LogSetPyth(address(pyth), _pyth);
     pyth = IEcoPyth(_pyth);
 
     // Sanity check

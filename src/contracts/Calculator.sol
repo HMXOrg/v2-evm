@@ -4,12 +4,13 @@ pragma solidity 0.8.18;
 // base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
-//contracts
+// contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
-// Interfaces
+
+// interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
@@ -18,14 +19,17 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   uint64 internal constant ETH_PRECISION = 1e18;
   uint64 internal constant RATE_PRECISION = 1e18;
 
-  // EVENTS
+  /**
+   * Events
+   */
   event LogSetOracle(address indexed oldOracle, address indexed newOracle);
   event LogSetVaultStorage(address indexed oldVaultStorage, address indexed vaultStorage);
   event LogSetConfigStorage(address indexed oldConfigStorage, address indexed configStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address indexed perpStorage);
 
-  // STATES
-  // @todo - move oracle config to storage
+  /**
+   * States
+   */
   address public oracle;
   address public vaultStorage;
   address public configStorage;
@@ -39,11 +43,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
 
-    // Sanity check
     if (
       _oracle == address(0) || _vaultStorage == address(0) || _perpStorage == address(0) || _configStorage == address(0)
     ) revert ICalculator_InvalidAddress();
 
+    // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
     VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
     ConfigStorage(_configStorage).getLiquidityConfig();
@@ -399,8 +403,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @notice Set new Oracle contract address.
   /// @param _oracle New Oracle contract address.
   function setOracle(address _oracle) external onlyOwner {
-    // @todo - Sanity check
     if (_oracle == address(0)) revert ICalculator_InvalidAddress();
+    OracleMiddleware(_oracle).isUpdater(address(this));
     emit LogSetOracle(oracle, _oracle);
     oracle = _oracle;
   }
@@ -408,8 +412,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @notice Set new VaultStorage contract address.
   /// @param _vaultStorage New VaultStorage contract address.
   function setVaultStorage(address _vaultStorage) external onlyOwner {
-    // @todo - Sanity check
     if (_vaultStorage == address(0)) revert ICalculator_InvalidAddress();
+    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
     emit LogSetVaultStorage(vaultStorage, _vaultStorage);
     vaultStorage = _vaultStorage;
   }
@@ -417,8 +421,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @notice Set new ConfigStorage contract address.
   /// @param _configStorage New ConfigStorage contract address.
   function setConfigStorage(address _configStorage) external onlyOwner {
-    // @todo - Sanity check
     if (_configStorage == address(0)) revert ICalculator_InvalidAddress();
+    ConfigStorage(_configStorage).getLiquidityConfig();
     emit LogSetConfigStorage(configStorage, _configStorage);
     configStorage = _configStorage;
   }
@@ -426,8 +430,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @notice Set new PerpStorage contract address.
   /// @param _perpStorage New PerpStorage contract address.
   function setPerpStorage(address _perpStorage) external onlyOwner {
-    // @todo - Sanity check
     if (_perpStorage == address(0)) revert ICalculator_InvalidAddress();
+    PerpStorage(_perpStorage).getGlobalState();
     emit LogSetPerpStorage(perpStorage, _perpStorage);
     perpStorage = _perpStorage;
   }
@@ -486,8 +490,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bool isProfit;
     uint256 delta;
   }
-
-  // @todo integrate realizedPnl Value
 
   /// @notice Calculate unrealized PnL from trader's sub account.
   /// @dev This unrealized pnl deducted by collateral factor.
@@ -646,7 +648,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
         _priceE30 = _limitPriceE30;
       } else {
-        // @todo - validate price age
         (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
           _tokenAssetId,
           false // @note Collateral value always use Min price
@@ -1024,7 +1025,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return _getDelta(_size, _isLong, _markPrice, _averagePrice, _lastIncreaseTimestamp);
   }
 
-  // @todo - pass current price here
   /// @notice Calculates the delta between average price and mark price, based on the size of position and whether the position is profitable.
   /// @param _size The size of the position.
   /// @param _isLong position direction

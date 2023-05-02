@@ -18,40 +18,6 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
   }
 
   /**
-   * TEST REVERT
-   */
-
-  // @todo - uncomment this test
-  // function testRevert_handler_withdrawCollateral_setOraclePrice_withdrawBalanceBelowIMR() external {
-  //   address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);
-
-  //   // ALICE deposits WETH
-  //   weth.mint(ALICE, 100 ether);
-  //   simulateAliceDepositToken(address(weth), 100 ether);
-
-  //   // ALICE opens LONG position on ETH market
-  //   // Simulate ALICE contains 1 opening LONG position
-  //   mockPerpStorage.setPositionBySubAccount(
-  //     subAccount,
-  //     IPerpStorage.Position({
-  //       primaryAccount: address(1),
-  //       subAccountId: SUB_ACCOUNT_NO,
-  //       marketIndex: 0,
-  //       positionSizeE30: 100_000 * 1e30,
-  //       avgEntryPriceE30: 1_400 * 1e30,
-  //       entryBorrowingRate: 0,
-  //       entryFundingRate: 0,
-  //       reserveValueE30: 9_000 * 1e30,
-  //       lastIncreaseTimestamp: block.timestamp,
-  //       realizedPnl: 0
-  //     })
-  //   );
-
-  //   vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-  //   simulateAliceWithdrawToken(address(weth), 92 ether);
-  // }
-
-  /**
    * TEST CORRECTNESS
    */
 

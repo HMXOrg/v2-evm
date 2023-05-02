@@ -44,14 +44,6 @@ interface ICrossMarginHandler {
 
   function depositCollateral(uint8 _subAccountId, address _token, uint256 _amount, bool _shouldWrap) external payable;
 
-  function withdrawFundingFeeSurplus(
-    address _stableToken,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
-  ) external payable;
-
   function createWithdrawCollateralOrder(
     uint8 _subAccountId,
     address _token,

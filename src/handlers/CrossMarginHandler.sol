@@ -344,25 +344,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     );
   }
 
-  /// @notice Withdraws the funding fee surplus from the vault.
-  /// @param _stableToken Address of the stable token to withdraw.
-  /// @param _priceData Price data from the Pyth oracle.
-  /// @param _publishTimeData Publish time data from the Pyth oracle.
-  /// @param _minPublishTime Minimum publish time for the Pyth oracle data.
-  /// @param _encodedVaas Encoded VaaS data for the Pyth oracle.
-  function withdrawFundingFeeSurplus(
-    address _stableToken,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
-  ) external payable nonReentrant onlyOwner {
-    // Call update oracle price
-    // slither-disable-next-line arbitrary-send-eth
-    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
-    CrossMarginService(crossMarginService).withdrawFundingFeeSurplus(_stableToken);
-  }
-
   /**
    * GETTER
    */

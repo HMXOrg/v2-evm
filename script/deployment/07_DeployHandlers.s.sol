@@ -42,6 +42,7 @@ contract DeployHandlers is ConfigJsonRepo {
         address(proxyAdmin),
         vars.tradeServiceAddress,
         vars.liquidationServiceAddress,
+        vars.crossMarginServiceAddress,
         vars.pythAddress
       )
     );

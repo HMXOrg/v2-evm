@@ -230,13 +230,15 @@ library Deployer {
     address _proxyAdmin,
     address _tradeService,
     address _liquidationService,
+    address _crossMarginService,
     address _pyth
   ) internal returns (IBotHandler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/BotHandler.sol/BotHandler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address)")),
+      bytes4(keccak256("initialize(address,address,address,address)")),
       _tradeService,
       _liquidationService,
+      _crossMarginService,
       _pyth
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);

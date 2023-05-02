@@ -15,12 +15,13 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // contracts
 import { TradeService } from "@hmx/services/TradeService.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 /// @title BotHandler
-contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeable {
+contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
@@ -52,6 +53,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
   mapping(address => bool) public positionManagers;
   address public tradeService;
   address public liquidationService;
+  address public crossMarginService;
   address public pyth;
 
   /**
@@ -68,7 +70,12 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
   /// @param _tradeService Address of the TradeService contract.
   /// @param _liquidationService Address of the LiquidationService contract.
   /// @param _pyth Address of the Pyth contract.
-  function initialize(address _tradeService, address _liquidationService, address _pyth) external initializer {
+  function initialize(
+    address _tradeService,
+    address _liquidationService,
+    address _crossMarginService,
+    address _pyth
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
@@ -79,6 +86,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
 
     tradeService = _tradeService;
     liquidationService = _liquidationService;
+    crossMarginService = _crossMarginService;
     pyth = _pyth;
   }
 
@@ -200,6 +208,25 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     uint256 collatTokenPrice;
     uint256 fundingFeeReserve;
     uint256 convertedStableAmount;
+  }
+
+  /// @notice Withdraws the funding fee surplus from the vault.
+  /// @param _stableToken Address of the stable token to withdraw.
+  /// @param _priceData Price data from the Pyth oracle.
+  /// @param _publishTimeData Publish time data from the Pyth oracle.
+  /// @param _minPublishTime Minimum publish time for the Pyth oracle data.
+  /// @param _encodedVaas Encoded VaaS data for the Pyth oracle.
+  function withdrawFundingFeeSurplus(
+    address _stableToken,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable nonReentrant onlyOwner {
+    // Call update oracle price
+    // slither-disable-next-line arbitrary-send-eth
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+    CrossMarginService(crossMarginService).withdrawFundingFeeSurplus(_stableToken);
   }
 
   function convertFundingFeeReserve(

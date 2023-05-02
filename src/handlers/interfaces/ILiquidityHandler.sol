@@ -19,15 +19,15 @@ interface ILiquidityHandler {
    * Structs
    */
   struct LiquidityOrder {
-    address payable account;
     uint256 orderId;
-    address token;
     uint256 amount;
     uint256 minOut;
-    bool isAdd;
     uint256 executionFee;
-    bool isNativeOut; // token Out for remove liquidity(!unwrap) and refund addLiquidity (shoulWrap) flag
     uint256 orderTimestamp;
+    address payable account;
+    address token;
+    bool isAdd;
+    bool isNativeOut;
   }
 
   /**

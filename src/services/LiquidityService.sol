@@ -245,6 +245,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _aumE30,
     uint256 _lpSupply
   ) private returns (uint256 _tokenValueUSDAfterFee, uint256 _mintAmount) {
+    // SLOAD
     Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
 
     // 1. Calculate and collect fees
@@ -265,7 +266,6 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     // 4. Accounting LP
     VaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
-
     return (_tokenValueUSDAfterFee, _mintAmount);
   }
 
@@ -282,25 +282,26 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _minTokenAmount
   ) private returns (uint256) {
     // SLOAD
-    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+    Calculator _calculator = Calculator(_configStorage.calculator());
 
     // 1. get price from oracle
     (uint256 _maxPrice, ) = OracleMiddleware(_calculator.oracle()).getLatestPrice(
-      ConfigStorage(configStorage).tokenAssetIds(_tokenOut),
+      _configStorage.tokenAssetIds(_tokenOut),
       false
     );
 
     // 2. Calculate token amount out
     uint256 _amountOut = _calculator.convertTokenDecimals(
       USD_DECIMALS,
-      ConfigStorage(configStorage).getAssetTokenDecimal(_tokenOut),
+      _configStorage.getAssetTokenDecimal(_tokenOut),
       (_lpUsdValueE30 * PRICE_PRECISION) / _maxPrice
     );
 
     if (_amountOut == 0) revert LiquidityService_BadAmountOut();
 
     // 3. Calculate and collect fees
-    uint32 _feeBps = _calculator.getRemoveLiquidityFeeBPS(_tokenOut, _lpUsdValueE30, ConfigStorage(configStorage));
+    uint32 _feeBps = _calculator.getRemoveLiquidityFeeBPS(_tokenOut, _lpUsdValueE30, _configStorage);
     VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
     _amountOut = _collectFee(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY);
 
@@ -417,10 +418,12 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   }
 
   function _validatePreAddRemoveLiquidity(uint256 _amount) private view {
-    ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
+    // SLOAD
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+    _configStorage.validateServiceExecutor(address(this), msg.sender);
 
     // Check if service is available for now
-    if (!ConfigStorage(configStorage).getLiquidityConfig().enabled) {
+    if (!_configStorage.getLiquidityConfig().enabled) {
       revert LiquidityService_CircuitBreaker();
     }
 

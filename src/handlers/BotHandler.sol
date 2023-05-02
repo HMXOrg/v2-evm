@@ -101,18 +101,15 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external payable nonReentrant onlyPositionManager {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
-    (bool _isMaxProfit, , ) = TradeService(tradeService).forceClosePosition(
-      _account,
-      _subAccountId,
-      _marketIndex,
-      _tpToken
-    );
-
-    TradeService(tradeService).validateMaxProfit(_isMaxProfit);
+    (bool _isMaxProfit, , ) = _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+    _tradeService.validateMaxProfit(_isMaxProfit);
 
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }
@@ -133,13 +130,15 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external payable nonReentrant onlyPositionManager {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
-    TradeService(tradeService).validateDeleverage();
-
-    TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+    _tradeService.validateDeleverage();
+    _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
 
     emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken);
   }
@@ -160,13 +159,15 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external payable nonReentrant onlyPositionManager {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
-    TradeService(tradeService).validateMarketDelisted(_marketIndex);
-
-    TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+    _tradeService.validateMarketDelisted(_marketIndex);
+    _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
 
     emit LogCloseDelistedMarketPosition(_account, _subAccountId, _marketIndex, _tpToken);
   }
@@ -209,12 +210,15 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     bytes32 _encodedVaas
   ) external payable nonReentrant onlyOwner {
     ConvertFundingFeeReserveLocalVars memory vars;
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
     // SLOAD
-    ConfigStorage _configStorage = ConfigStorage(ITradeService(tradeService).configStorage());
-    VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
+    ConfigStorage _configStorage = ConfigStorage(_tradeService.configStorage());
+    VaultStorage _vaultStorage = VaultStorage(_tradeService.vaultStorage());
     OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
 
     // Get stable token price

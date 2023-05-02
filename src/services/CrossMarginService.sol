@@ -151,6 +151,9 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _amount,
     address _receiver
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
+    // SLOAD
+    Calculator _calculator = Calculator(calculator);
+
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address
@@ -165,8 +168,8 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     _vaultStorage.decreaseTraderBalance(_subAccount, _token, _amount);
 
     // Calculate validation for if new Equity is below IMR or not
-    int256 equity = Calculator(calculator).getEquity(_subAccount, 0, 0);
-    if (equity < 0 || uint256(equity) < Calculator(calculator).getIMR(_subAccount))
+    int256 equity = _calculator.getEquity(_subAccount, 0, 0);
+    if (equity < 0 || uint256(equity) < _calculator.getIMR(_subAccount))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
     // Transfer withdrawing token from VaultStorage to destination wallet

@@ -20,13 +20,13 @@ interface ICrossMarginHandler {
    * Structs
    */
   struct WithdrawOrder {
-    address payable account;
     uint256 orderId;
-    address token;
     uint256 amount;
     uint256 executionFee;
-    bool shouldUnwrap;
+    address payable account;
+    address token;
     uint8 subAccountId;
+    bool shouldUnwrap;
     CrossMarginService crossMarginService;
   }
 

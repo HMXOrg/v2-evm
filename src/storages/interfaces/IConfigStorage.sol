@@ -155,6 +155,8 @@ interface IConfigStorage {
 
   function getTradeServiceHooks() external view returns (address[] memory);
 
+  function setMinimumPositionSize(uint256 _minimumPositionSize) external;
+
   function setPlpAssetId(bytes32[] memory _plpAssetIds) external;
 
   function setLiquidityEnabled(bool _enabled) external;

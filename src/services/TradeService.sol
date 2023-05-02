@@ -735,10 +735,9 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
-    // check position is too tiny
-    // @todo - now validate this at 1 USD, design where to keep this config
-    //       due to we has problem stack too deep in MarketConfig now
-    if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < 1e30) revert ITradeService_TooTinyPosition();
+    // Ensure that the new absolute position size is greater than zero, but not smaller than the minimum allowed position size
+    if (_newAbsPositionSizeE30 > 0 && _newAbsPositionSizeE30 < ConfigStorage(configStorage).minimumPositionSize())
+      revert ITradeService_TooTinyPosition();
 
     PerpStorage.Market memory _market = _vars.perpStorage.getMarketByIndex(_marketIndex);
 

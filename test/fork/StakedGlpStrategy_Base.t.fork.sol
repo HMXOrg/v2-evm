@@ -272,7 +272,7 @@ abstract contract StakedGlpStrategy_Base is TestBase, StdAssertions, StdCheats {
         plpTotalTokenWeight: 0,
         plpSafetyBufferBPS: 2000, // 20%
         taxFeeRateBPS: 50, // 0.5%
-        flashLoanFeeRateBPS: 0, //
+        flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: true,
         enabled: true
       })

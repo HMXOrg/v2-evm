@@ -35,11 +35,12 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetAssetConfig(bytes32 assetId, AssetConfig oldConfig, AssetConfig newConfig);
   event LogSetWeth(address indexed oldWeth, address newWeth);
   event LogSetAssetClassConfigByIndex(uint256 index, AssetClassConfig oldConfig, AssetClassConfig newConfig);
+  event LogSetLiquidityEnabled(bool oldValue, bool newValue);
+  event LogSetMinimumPositionSize(uint256 oldValue, uint256 newValue);
   event LogAddAssetClassConfig(uint256 index, AssetClassConfig newConfig);
   event LogAddMarketConfig(uint256 index, MarketConfig newConfig);
   event LogRemoveUnderlying(address token);
   event LogDelistMarket(uint256 marketIndex);
-  event LogSetLiquidityEnabled(bool oldValue, bool newValue);
   event LogAddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
 
   /**
@@ -64,6 +65,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   address public plp;
   address public treasury;
   uint32 public pnlFactorBPS; // factor that calculate unrealized PnL after collateral factor
+  uint256 public minimumPositionSize;
   address public weth;
 
   // Token's address => Asset ID
@@ -210,6 +212,11 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   /**
    * Setter
    */
+
+  function setMinimumPositionSize(uint256 _minimumPositionSize) external onlyOwner {
+    emit LogSetMinimumPositionSize(minimumPositionSize, _minimumPositionSize);
+    minimumPositionSize = _minimumPositionSize;
+  }
 
   function setPlpAssetId(bytes32[] memory _plpAssetIds) external onlyOwner {
     plpAssetIds = _plpAssetIds;

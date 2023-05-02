@@ -72,8 +72,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   uint256 internal constant HOURS = MINUTES * 60;
   uint256 internal constant DAYS = HOURS * 24;
 
-  bytes32 internal constant sglpAssetId = "SGLPUSD";
-
   address internal ALICE;
   address internal BOB;
   address internal CAROL;
@@ -269,7 +267,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     positionTester02 = new PositionTester02(perpStorage);
 
     address[] memory interestTokens = new address[](1);
-    // TODO fix this
     interestTokens[0] = address(0);
     tradeTester = new TradeTester(
       vaultStorage,
@@ -283,9 +280,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     {
       configStorage.setOracle(address(oracleMiddleWare));
       configStorage.setCalculator(address(calculator));
-      tradeHelper.reloadConfig(); // @TODO: refresh config storage address here, may remove later
-      tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
-      liquidationService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
 
       // Set whitelists for executors
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
@@ -295,6 +289,13 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
       configStorage.setWeth(address(weth));
       configStorage.setPLP(address(plpV2));
+    }
+
+    {
+      // Reload config after calculator was set on ConfigStorage
+      tradeHelper.reloadConfig();
+      tradeService.reloadConfig();
+      liquidationService.reloadConfig();
     }
 
     // Setup VaultStorage

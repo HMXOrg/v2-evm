@@ -21,6 +21,7 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     _setUpLiquidationConfig();
 
     _setUpPnlFactor();
+    _setMinimumPositionSize();
   }
 
   function _setLiquidityConfig() private {
@@ -32,7 +33,7 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
         plpTotalTokenWeight: 0,
         plpSafetyBufferBPS: 2000, // 20%
         taxFeeRateBPS: 50, // 0.5%
-        flashLoanFeeRateBPS: 0, // @todo - TBD
+        flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: true,
         enabled: true
       })
@@ -80,5 +81,9 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
 
   function _setUpPnlFactor() private {
     configStorage.setPnlFactor(0.8 * 1e4);
+  }
+
+  function _setMinimumPositionSize() private {
+    configStorage.setMinimumPositionSize(1e30);
   }
 }

@@ -15,7 +15,7 @@ import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 2;
+const subAccountId = 0;
 
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;

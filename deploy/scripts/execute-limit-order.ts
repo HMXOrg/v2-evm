@@ -42,14 +42,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const handler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(priceUpdates, publishTimeDiff);
+  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(
+    deployer,
+    priceUpdates,
+    publishTimeDiff
+  );
 
   console.log("Execute Limit Order...");
   await (
     await handler.executeOrder(
       deployer.address,
       0,
-      2,
+      0,
       deployer.address,
       priceUpdateData,
       publishTimeDiffUpdateData,

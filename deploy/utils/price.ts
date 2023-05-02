@@ -1,13 +1,15 @@
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { EcoPyth__factory } from "../../typechain";
 import { getConfig } from "./config";
 import { ethers } from "hardhat";
 
 export async function getUpdatePriceData(
+  signer: SignerWithAddress,
   priceUpdates: number[],
   publishTimeDiff: number[]
 ): Promise<[string[], string[]]> {
   const config = getConfig();
-  const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, ethers.getDefaultProvider());
+  const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, signer);
   const tickPrices = priceUpdates.map((each) => priceToClosestTick(each));
   const priceUpdateData = await pyth.buildPriceUpdateData(tickPrices);
   const publishTimeDiffUpdateData = await pyth.buildPublishTimeUpdateData(publishTimeDiff);

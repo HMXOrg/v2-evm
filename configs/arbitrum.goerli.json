@@ -1,4 +1,5 @@
 {
+  "proxyAdmin": "",
   "storages": {
     "config": "",
     "perp": "",
@@ -27,23 +28,43 @@
     "middleware": ""
   },
   "tokens": {
+    "hmx": "",
+    "esHmx": "",
     "hlp": "",
-    "weth": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
-    "wbtc": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
-    "usdt": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
-    "usdc": "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
-    "dai": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
-    "sglp": "0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf"
+    "weth": "",
+    "wbtc": "",
+    "usdt": "",
+    "usdc": "",
+    "dai": "",
+    "sglp": "",
+    "tlc": "",
+    "hmx_eth": "",
+    "esHmx_eth": ""
   },
   "yieldSources": {
     "gmx": {
-      "glpManager": "0x3963FfC9dff443c2A94f21b129D429891E32ec18",
-      "rewardRouterV2": "0xB95DB5B167D75e6d04227CfFFA61069348d271F5",
-      "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6"
+      "glpManager": "",
+      "rewardRouterV2": "",
+      "rewardTracker": ""
     }
   },
   "strategies": {
     "stakedGLPStrategy": ""
+  },
+  "staking": {
+    "trading": ""
+  },
+  "rewarders": {
+    "tradingStaking": {
+      "ETHUSD": "",
+      "BTCUSD": "",
+      "AAPLUSD": "",
+      "JPYUSD": ""
+    }
+  },
+  "hooks": {
+    "tradingStaking": "",
+    "tlcStaking": ""
   },
   "calculator": ""
 }

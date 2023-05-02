@@ -36,7 +36,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(
     deployer,
     priceUpdates,
-    publishTimeDiff
+    publishTimeDiff,
+    false
   );
   await (
     await crossMarginHandler.executeOrder(

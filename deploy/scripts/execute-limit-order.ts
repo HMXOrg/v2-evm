@@ -20,7 +20,7 @@ const config = getConfig();
 
 const priceUpdates = [
   1900.02, // ETH
-  20000.29, // ETH
+  20000.29, // BTC
   1, // USDC
   1, // USDT
   1, // DAI
@@ -30,7 +30,7 @@ const priceUpdates = [
 const minPublishTime = Math.floor(new Date().valueOf() / 1000);
 const publishTimeDiff = [
   0, // ETH
-  0, // ETH
+  0, // BTC
   0, // USDC
   0, // USDT
   0, // DAI
@@ -49,7 +49,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(
     deployer,
     priceUpdates,
-    publishTimeDiff
+    publishTimeDiff,
+    false
   );
 
   console.log("Execute Limit Order...");

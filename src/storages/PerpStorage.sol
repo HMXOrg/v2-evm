@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // interfaces
 import { IPerpStorage } from "./interfaces/IPerpStorage.sol";
 
-import { Owned } from "@hmx/base/Owned.sol";
-
 /// @title PerpStorage
 /// @notice storage contract to keep core feature state
-contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
+contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpStorage {
+  using EnumerableSet for EnumerableSet.Bytes32Set;
+  using EnumerableSet for EnumerableSet.AddressSet;
   /**
    * Modifiers
    */
@@ -35,6 +37,14 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
   mapping(uint256 => Market) public markets;
   mapping(uint256 => AssetClass) public assetClasses;
   mapping(address => bool) public serviceExecutors;
+
+  EnumerableSet.Bytes32Set private activePositionIds;
+  EnumerableSet.AddressSet private activeSubAccounts;
+
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+  }
 
   /**
    * Getters
@@ -85,6 +95,69 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     return globalState;
   }
 
+  function getActivePositionIds(uint256 _limit, uint256 _offset) external view returns (bytes32[] memory _ids) {
+    uint256 _len = activePositionIds.length();
+    uint256 _startIndex = _offset;
+    uint256 _endIndex = _offset + _limit;
+    if (_startIndex > _len) return _ids;
+    if (_endIndex > _len) {
+      _endIndex = _len;
+    }
+
+    _ids = new bytes32[](_endIndex - _startIndex);
+
+    for (uint256 i = _startIndex; i < _endIndex; ) {
+      _ids[i - _offset] = activePositionIds.at(i);
+      unchecked {
+        ++i;
+      }
+    }
+
+    return _ids;
+  }
+
+  function getActivePositions(uint256 _limit, uint256 _offset) external view returns (Position[] memory _positions) {
+    uint256 _len = activePositionIds.length();
+    uint256 _startIndex = _offset;
+    uint256 _endIndex = _offset + _limit;
+    if (_startIndex > _len) return _positions;
+    if (_endIndex > _len) {
+      _endIndex = _len;
+    }
+
+    _positions = new Position[](_endIndex - _startIndex);
+
+    for (uint256 i = _startIndex; i < _endIndex; ) {
+      _positions[i - _offset] = positions[activePositionIds.at(i)];
+      unchecked {
+        ++i;
+      }
+    }
+
+    return _positions;
+  }
+
+  function getActiveSubAccounts(uint256 _limit, uint256 _offset) external view returns (address[] memory _subAccounts) {
+    uint256 _len = activeSubAccounts.length();
+    uint256 _startIndex = _offset;
+    uint256 _endIndex = _offset + _limit;
+    if (_startIndex > _len) return _subAccounts;
+    if (_endIndex > _len) {
+      _endIndex = _len;
+    }
+
+    _subAccounts = new address[](_endIndex - _startIndex);
+
+    for (uint256 i = _startIndex; i < _endIndex; ) {
+      _subAccounts[i - _offset] = activeSubAccounts.at(i);
+      unchecked {
+        ++i;
+      }
+    }
+
+    return _subAccounts;
+  }
+
   /**
    * Setters
    */
@@ -102,6 +175,8 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     // register new position for trader's sub-account
     if (_position.positionSizeE30 == 0) {
       subAccountPositionIds[_subAccount].push(_positionId);
+      activePositionIds.add(_positionId);
+      activeSubAccounts.add(_subAccount);
     }
     positions[_positionId] = position;
   }
@@ -117,6 +192,7 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
         _positionIds[_i] = _positionIds[_len - 1];
         _positionIds.pop();
         delete positions[_positionId];
+        activePositionIds.remove(_positionId);
 
         break;
       }
@@ -124,6 +200,11 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
       unchecked {
         ++_i;
       }
+    }
+
+    // Clear out active sub account if all position's gone
+    if (_positionIds.length == 0) {
+      activeSubAccounts.remove(_subAccount);
     }
   }
 
@@ -203,5 +284,10 @@ contract PerpStorage is Owned, ReentrancyGuard, IPerpStorage {
     } else {
       markets[_marketIndex].shortAvgPrice = _price;
     }
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

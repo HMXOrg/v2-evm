@@ -11,9 +11,14 @@ import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { console } from "forge-std/console.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 
+//Deployer
+import { Deployer } from "@hmx-test/libs/Deployer.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+
 contract LeanPyth_Verification is TestBase, StdAssertions, StdCheatsSafe {
   using stdJson for string;
   LeanPyth leanPyth;
+  ProxyAdmin proxyAdmin;
 
   uint256 arbitrumForkId;
 
@@ -22,12 +27,13 @@ contract LeanPyth_Verification is TestBase, StdAssertions, StdCheatsSafe {
   event PriceFeedUpdate(bytes32 indexed id, uint64 publishTime, int64 price, uint64 conf, bytes encodedVm);
 
   function setUp() public {
+    proxyAdmin = new ProxyAdmin();
     arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
 
     // Pyth on Arbitrum
     address _pyth = 0xff1a0f4744e8582DF1aE09D5611b887B6a12925C;
 
-    leanPyth = new LeanPyth(IPyth(_pyth));
+    leanPyth = LeanPyth(address(Deployer.deployLeanPyth(address(proxyAdmin), IPyth(_pyth))));
     leanPyth.setUpdater(address(this), true);
   }
 

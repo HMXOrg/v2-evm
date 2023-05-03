@@ -24,16 +24,28 @@ abstract contract TradingStaking_Base is BaseTest {
     rewardToken3 = new MockErc20("Reward Token 3", "RWD3", 18);
     rewardToken4 = new MockErc20("Reward Token 4", "RWD4", 18);
 
-    tradingStaking = Deployer.deployTradingStaking();
+    tradingStaking = Deployer.deployTradingStaking(address(proxyAdmin));
 
-    ethMarketRewarder = Deployer.deployFeedableRewarder("Gov", address(rewardToken1), address(tradingStaking));
-    ethMarketRewarder2 = Deployer.deployFeedableRewarder("Something", address(rewardToken2), address(tradingStaking));
+    ethMarketRewarder = Deployer.deployFeedableRewarder(
+      address(proxyAdmin),
+      "Gov",
+      address(rewardToken1),
+      address(tradingStaking)
+    );
+    ethMarketRewarder2 = Deployer.deployFeedableRewarder(
+      address(proxyAdmin),
+      "Something",
+      address(rewardToken2),
+      address(tradingStaking)
+    );
     ethMarketRewarder3 = Deployer.deployFeedableRewarder(
+      address(proxyAdmin),
       "SomethingElse",
       address(rewardToken3),
       address(tradingStaking)
     );
     ethMarketRewarder4 = Deployer.deployFeedableRewarder(
+      address(proxyAdmin),
       "SomethingElse",
       address(rewardToken4),
       address(tradingStaking)

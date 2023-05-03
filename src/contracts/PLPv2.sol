@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 
 // Interfaces
 import { IPLPv2 } from "./interfaces/IPLPv2.sol";
 
-contract PLPv2 is ReentrancyGuard, Ownable, ERC20("PLPv2", "Perp88 LP v2") {
+contract PLPv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable, ERC20Upgradeable {
   mapping(address => bool) public minters;
 
   event SetMinter(address indexed minter, bool isMinter);
@@ -24,6 +24,12 @@ contract PLPv2 is ReentrancyGuard, Ownable, ERC20("PLPv2", "Perp88 LP v2") {
     _;
   }
 
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+    ERC20Upgradeable.__ERC20_init("PLPv2", "Perp88 LP v2");
+  }
+
   function setMinter(address minter, bool isMinter) external onlyOwner nonReentrant {
     minters[minter] = isMinter;
     emit SetMinter(minter, isMinter);
@@ -35,5 +41,10 @@ contract PLPv2 is ReentrancyGuard, Ownable, ERC20("PLPv2", "Perp88 LP v2") {
 
   function burn(address from, uint256 amount) external onlyMinter nonReentrant {
     _burn(from, amount);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

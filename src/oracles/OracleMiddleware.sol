@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 
-contract OracleMiddleware is Owned, IOracleMiddleware {
+contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /**
    * Structs
    */
@@ -63,6 +63,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
       revert IOracleMiddleware_OnlyUpdater();
     }
     _;
+  }
+
+  function initialize() external initializer {
+    OwnableUpgradeable.__Ownable_init();
   }
 
   /// @notice Return the latest price and last update of the given asset id.
@@ -407,5 +411,10 @@ contract OracleMiddleware is Owned, IOracleMiddleware {
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     isUpdater[_account] = _isActive;
     emit LogSetUpdater(_account, _isActive);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

@@ -2,8 +2,8 @@
 pragma solidity 0.8.18;
 
 // base
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import { Owned } from "@hmx/base/Owned.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 // contracts
@@ -14,7 +14,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 // interfaces
 import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
-contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
+contract MarketTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IMarketTradeHandler {
   /**
    * Events
    */
@@ -43,7 +43,10 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
   address public tradeService;
   address public pyth;
 
-  constructor(address _tradeService, address _pyth) {
+  function initialize(address _tradeService, address _pyth) external initializer {
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
+
     if (_tradeService == address(0) || _pyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
 
     tradeService = _tradeService;
@@ -294,5 +297,10 @@ contract MarketTradeHandler is Owned, ReentrancyGuard, IMarketTradeHandler {
     bytes32 _positionId = _getPositionId(_subAccount, _marketIndex);
 
     return PerpStorage(_perpStorage).getPositionById(_positionId);
+  }
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
   }
 }

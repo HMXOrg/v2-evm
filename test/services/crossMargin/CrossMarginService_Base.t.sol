@@ -16,6 +16,7 @@ contract CrossMarginService_Base is BaseTest {
     CROSS_MARGIN_HANDLER = makeAddr("CROSS_MARGIN_HANDLER");
 
     crossMarginService = Deployer.deployCrossMarginService(
+      address(proxyAdmin),
       address(configStorage),
       address(vaultStorage),
       address(perpStorage),

@@ -14,7 +14,7 @@ contract PythAdapter_SetterTest is PythAdapter_BaseTest {
 
   function testCorrectness_AccessControlWhenSetConfig() external {
     // Revert if not owner
-    vm.expectRevert(abi.encodeWithSignature("Owned_NotOwner()"));
+    vm.expectRevert("Ownable: caller is not the owner");
     vm.startPrank(address(ALICE));
     pythAdapter.setConfig(wethAssetId, wethPriceId, false);
     vm.stopPrank();

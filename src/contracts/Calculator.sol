@@ -3,17 +3,24 @@ pragma solidity 0.8.18;
 
 // base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 
 //contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
+import { FullMath } from "@hmx/libraries/FullMath.sol";
+
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract Calculator is OwnableUpgradeable, ICalculator {
+  using SafeCastUpgradeable for int256;
+  using SafeCastUpgradeable for uint256;
+  using FullMath for uint256;
+
   uint32 internal constant BPS = 1e4;
   uint64 internal constant ETH_PRECISION = 1e18;
   uint64 internal constant RATE_PRECISION = 1e18;
@@ -62,6 +69,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
     uint256 borrowingFeeDebt = VaultStorage(vaultStorage).globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
+
     uint256 lossDebt = VaultStorage(vaultStorage).globalLossDebt();
     uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
@@ -76,6 +84,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     }
 
     return aum;
+  }
+
+  function getGlobalPNLE30() external view returns (int256) {
+    return _getGlobalPNLE30();
   }
 
   /// @notice getPendingBorrowingFeeE30 This function calculates the total pending borrowing fee from all asset classes.
@@ -170,8 +182,62 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return _aum / _plpSupply;
   }
 
-  /// @notice get all PNL in e30 format
-  /// @return pnl value
+  // TODO: remove
+  // /// @notice get all PNL in e30 format
+  // /// @return pnl value
+  // function _getOldGlobalPNLE30() internal view returns (int256) {
+  //   // SLOAD
+  //   ConfigStorage _configStorage = ConfigStorage(configStorage);
+  //   PerpStorage _perpStorage = PerpStorage(perpStorage);
+  //   OracleMiddleware _oracle = OracleMiddleware(oracle);
+
+  //   int256 totalPnlLong = 0;
+  //   int256 totalPnlShort = 0;
+  //   uint256 _len = _configStorage.getMarketConfigsLength();
+
+  //   for (uint256 i = 0; i < _len; ) {
+  //     ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(i);
+  //     PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
+
+  //     int256 _pnlLongE30 = 0;
+  //     int256 _pnlShortE30 = 0;
+  //     (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
+
+  //     if (_market.longAvgPrice > 0 && _market.longPositionSize > 0) {
+  //       if (priceE30 < _market.longAvgPrice) {
+  //         uint256 _absPNL = ((_market.longAvgPrice - priceE30) * _market.longPositionSize) / _market.longAvgPrice;
+  //         _pnlLongE30 = -int256(_absPNL);
+  //       } else {
+  //         uint256 _absPNL = ((priceE30 - _market.longAvgPrice) * _market.longPositionSize) / _market.longAvgPrice;
+  //         _pnlLongE30 = int256(_absPNL);
+  //       }
+  //     }
+
+  //     if (_market.shortAvgPrice > 0 && _market.shortPositionSize > 0) {
+  //       if (_market.shortAvgPrice < priceE30) {
+  //         uint256 _absPNL = ((priceE30 - _market.shortAvgPrice) * _market.shortPositionSize) / _market.shortAvgPrice;
+
+  //         _pnlShortE30 = -int256(_absPNL);
+  //       } else {
+  //         uint256 _absPNL = ((_market.shortAvgPrice - priceE30) * _market.shortPositionSize) / _market.shortAvgPrice;
+  //         _pnlShortE30 = int256(_absPNL);
+  //       }
+  //     }
+
+  //     {
+  //       unchecked {
+  //         ++i;
+  //         totalPnlLong += _pnlLongE30;
+  //         totalPnlShort += _pnlShortE30;
+  //       }
+  //     }
+  //   }
+
+  //   return totalPnlLong + totalPnlShort;
+  // }
+
+  /// @dev Computes the global market PnL in E30 format by iterating through all the markets.
+  /// @return The total PnL in E30 format, which is the sum of long and short positions' PnLs.
   function _getGlobalPNLE30() internal view returns (int256) {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
@@ -191,24 +257,26 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
       if (_market.longAvgPrice > 0 && _market.longPositionSize > 0) {
-        if (priceE30 < _market.longAvgPrice) {
-          uint256 _absPNL = ((_market.longAvgPrice - priceE30) * _market.longPositionSize) / _market.longAvgPrice;
-          _pnlLongE30 = -int256(_absPNL);
-        } else {
-          uint256 _absPNL = ((priceE30 - _market.longAvgPrice) * _market.longPositionSize) / _market.longAvgPrice;
-          _pnlLongE30 = int256(_absPNL);
-        }
+        _pnlLongE30 = _getGlobalMarketPnl(
+          priceE30,
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          int(_market.longAccumSE),
+          _market.longAccumS2E,
+          _market.longPositionSize,
+          true
+        );
       }
-
       if (_market.shortAvgPrice > 0 && _market.shortPositionSize > 0) {
-        if (_market.shortAvgPrice < priceE30) {
-          uint256 _absPNL = ((priceE30 - _market.shortAvgPrice) * _market.shortPositionSize) / _market.shortAvgPrice;
-
-          _pnlShortE30 = -int256(_absPNL);
-        } else {
-          uint256 _absPNL = ((_market.shortAvgPrice - priceE30) * _market.shortPositionSize) / _market.shortAvgPrice;
-          _pnlShortE30 = int256(_absPNL);
-        }
+        _pnlShortE30 = _getGlobalMarketPnl(
+          priceE30,
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          int(_market.shortAccumSE),
+          _market.shortAccumS2E,
+          _market.shortPositionSize,
+          false
+        );
       }
 
       {
@@ -1083,6 +1151,24 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   function _abs(int256 x) private pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
+  }
+
+  function _getGlobalMarketPnl(
+    uint256 price,
+    int256 skew,
+    uint256 maxSkew,
+    int256 sumSE, // SUM(positionSize / entryPrice)
+    uint256 sumS2E, // SUM(positionSize^2 / entryPrice)
+    uint256 sumSize, // longSize or shortSize
+    bool isLong
+  ) public pure returns (int256) {
+    sumSE = isLong ? -sumSE : sumSE;
+    int256 a = (price.toInt256() * sumSE) / 1e30;
+    int256 b = ((((price.toInt256() * skew) / (maxSkew.toInt256())) * sumSE) / 1e30);
+    uint256 c = price.mulDiv(sumS2E, 2 * maxSkew);
+    int256 d = isLong ? -(sumSize.toInt256()) : sumSize.toInt256();
+    int256 result = a + b + c.toInt256() - d;
+    return isLong ? result : -result;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

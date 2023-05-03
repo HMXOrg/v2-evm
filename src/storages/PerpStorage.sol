@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
+import { console2 } from "forge-std/console2.sol";
+
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -211,19 +213,29 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
   function updateGlobalLongMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice
+    uint256 _newAvgPrice,
+    uint256 _newAccumSE,
+    uint256 _newAccumS2E
   ) external onlyWhitelistedExecutor {
+    console2.log("longAccumSE", _newAccumSE);
+    console2.log("longAccumS2E", _newAccumS2E);
     markets[_marketIndex].longPositionSize = _newPositionSize;
     markets[_marketIndex].longAvgPrice = _newAvgPrice;
+    markets[_marketIndex].longAccumSE = _newAccumSE;
+    markets[_marketIndex].longAccumS2E = _newAccumS2E;
   }
 
   function updateGlobalShortMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice
+    uint256 _newAvgPrice,
+    uint256 _newAccumSE,
+    uint256 _newAccumS2E
   ) external onlyWhitelistedExecutor {
     markets[_marketIndex].shortPositionSize = _newPositionSize;
     markets[_marketIndex].shortAvgPrice = _newAvgPrice;
+    markets[_marketIndex].shortAccumSE = _newAccumSE;
+    markets[_marketIndex].shortAccumS2E = _newAccumS2E;
   }
 
   function updateGlobalState(GlobalState memory _newGlobalState) external onlyWhitelistedExecutor {

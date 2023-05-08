@@ -4,6 +4,7 @@ import { ethers } from "hardhat";
 import { EvmPriceServiceConnection } from "@pythnetwork/pyth-evm-js";
 import { EcoPyth__factory } from "../../typechain";
 import { getConfig } from "../utils/config";
+import { getUpdatePriceData } from "../utils/price";
 
 const wethPriceId = "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6";
 const wbtcPriceId = "0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b";
@@ -36,10 +37,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   ];
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
-  const tickPrices = priceUpdates.map((each) => priceToClosestTick(each));
-  const priceUpdateData = await pyth.buildPriceUpdateData(tickPrices);
-  const publishTimeDiffUpdateData = await pyth.buildPublishTimeUpdateData(Array(tickPrices.length).fill(0));
   const blockTimestamp = Math.floor(new Date().valueOf() / 1000);
+
+  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(
+    deployer,
+    priceUpdates,
+    Array(priceUpdates.length).fill(0),
+    false
+  );
 
   // await (await pyth.setUpdater(deployer.address, true)).wait();
   await (
@@ -54,14 +59,3 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 };
 export default func;
 func.tags = ["FeedPriceEcoPyth"];
-
-function priceToClosestTick(price: number): number {
-  const result = Math.log(price) / Math.log(1.0001);
-  const closestUpperTick = Math.ceil(result);
-  const closestLowerTick = Math.floor(result);
-
-  const closetPriceUpper = Math.pow(1.0001, closestUpperTick);
-  const closetPriceLower = Math.pow(1.0001, closestLowerTick);
-
-  return Math.abs(price - closetPriceUpper) < Math.abs(price - closetPriceLower) ? closestUpperTick : closestLowerTick;
-}

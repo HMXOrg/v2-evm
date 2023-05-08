@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { StakedGlpOracleAdapter } from "@hmx/oracles/StakedGlpOracleAdapter.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
@@ -14,6 +13,9 @@ import { console } from "forge-std/console.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract StakedGlpOracleAdapter_GetLatestPrice is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 public constant sGlpAssetId = "sGLP";
@@ -30,7 +32,7 @@ contract StakedGlpOracleAdapter_GetLatestPrice is TestBase, StdAssertions, StdCh
 
     stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(
       address(proxyAdmin),
-      IERC20Upgradeable(glpAddress),
+      IERC20Upgradeable(address(glpAddress)),
       IGmxGlpManager(glpManagerAddress),
       sGlpAssetId
     );
@@ -40,7 +42,7 @@ contract StakedGlpOracleAdapter_GetLatestPrice is TestBase, StdAssertions, StdCh
     (uint256 price, uint256 timestamp) = stakedGlpOracleAdapter.getLatestPrice(sGlpAssetId, true, 0);
     uint256 maxPrice = IGmxGlpManager(glpManagerAddress).getAum(true);
     uint256 minPrice = IGmxGlpManager(glpManagerAddress).getAum(false);
-    uint256 avgPrice = (((maxPrice + minPrice) / 2) * 1e18) / IERC20Upgradeable(glpAddress).totalSupply();
+    uint256 avgPrice = (((maxPrice + minPrice) / 2) * 1e18) / ERC20(glpAddress).totalSupply();
     assertEq(price, avgPrice);
     assertEq(timestamp, block.timestamp);
   }
@@ -49,7 +51,7 @@ contract StakedGlpOracleAdapter_GetLatestPrice is TestBase, StdAssertions, StdCh
     (uint256 price, uint256 timestamp) = stakedGlpOracleAdapter.getLatestPrice(sGlpAssetId, false, 0);
     uint256 maxPrice = IGmxGlpManager(glpManagerAddress).getAum(true);
     uint256 minPrice = IGmxGlpManager(glpManagerAddress).getAum(false);
-    uint256 avgPrice = (((maxPrice + minPrice) / 2) * 1e18) / IERC20Upgradeable(glpAddress).totalSupply();
+    uint256 avgPrice = (((maxPrice + minPrice) / 2) * 1e18) / ERC20(glpAddress).totalSupply();
     assertEq(price, avgPrice);
     assertEq(timestamp, block.timestamp);
   }

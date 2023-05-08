@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { StakedGlpStrategy_Base } from "./StakedGlpStrategy_Base.t.fork.sol";
+import { GlpStrategy_Base } from "./GlpStrategy_Base.t.fork.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 
-contract StakedGlpStrategy_Reinvest is StakedGlpStrategy_Base {
+contract StakedGlpStrategy_Reinvest is GlpStrategy_Base {
   uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_one_fork"));
 
   function setUp() public override {

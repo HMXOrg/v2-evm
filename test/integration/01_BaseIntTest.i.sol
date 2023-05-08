@@ -14,15 +14,16 @@ import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // Openzepline
-import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
-
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 // Libs
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 // Mock
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
 import { MockErc20 } from "@hmx-test/mocks/MockErc20.sol";
+import { MockGmxRewardRouterV2 } from "@hmx-test/mocks/MockGmxRewardRouterV2.sol";
 
 // Interfaces
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
@@ -44,10 +45,15 @@ import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
+import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
+import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
+
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
+
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
@@ -61,6 +67,8 @@ import { PositionTester02 } from "@hmx-test/testers/PositionTester02.sol";
 import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { console } from "forge-std/console.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
@@ -103,6 +111,12 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   ILiquidationService liquidationService;
   ITradeService tradeService;
 
+  //GMX
+  IGmxRewardRouterV2 gmxRewardRouterV2;
+
+  //strategies
+  IConvertedGlpStrategy convertedGlpStrategy;
+
   // helpers
   ITradeHelper tradeHelper;
 
@@ -116,6 +130,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   MockErc20 usdc; // decimals 6
   MockErc20 usdt; // decimals 6
   MockErc20 dai; // decimals 18
+  MockErc20 sglp; //decimals 18
 
   IWNative weth; //for native
 
@@ -155,6 +170,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
     pyth = Deployer.deployEcoPyth(address(proxyAdmin));
 
+    gmxRewardRouterV2 = new MockGmxRewardRouterV2();
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(pyth));
 
     // deploy oracleMiddleWare
@@ -177,12 +193,14 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
     usdc = new MockErc20("USD Coin", "USDC", 6);
     usdt = new MockErc20("USD Tether", "USDT", 6);
+    sglp = new MockErc20("StakedGlp", "sGLP", 18);
 
     // labels
     vm.label(address(wbtc), "WBTC");
     vm.label(address(dai), "DAI");
     vm.label(address(usdc), "USDC");
     vm.label(address(usdt), "USDT");
+    vm.label(address(sglp), "SGLP");
 
     // deploy calculator
     calculator = Deployer.deployCalculator(
@@ -201,6 +219,15 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(configStorage)
     );
 
+    // deploy Strategies
+    convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(
+      address(proxyAdmin),
+      IERC20Upgradeable(address(sglp)),
+      IGmxRewardRouterV2(gmxRewardRouterV2),
+      IVaultStorage(vaultStorage)
+    );
+
+    // deploy Services
     liquidityService = Deployer.deployLiquidityService(
       address(proxyAdmin),
       address(perpStorage),
@@ -219,7 +246,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(configStorage),
       address(vaultStorage),
       address(perpStorage),
-      address(calculator)
+      address(calculator),
+      address(convertedGlpStrategy)
     );
     tradeService = Deployer.deployTradeService(
       address(proxyAdmin),

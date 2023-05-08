@@ -170,4 +170,30 @@ contract CrossMarginHandler_Base is BaseTest {
       _encodedVaas: keccak256("someEncodedVaas")
     });
   }
+
+  function simulateAliceCreateWithdrawOrder() internal {
+    vm.deal(ALICE, 0.0001 ether);
+
+    vm.prank(ALICE);
+    uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: executionOrderFee }(
+      0,
+      address(weth),
+      0.001 ether,
+      0.0001 ether,
+      false
+    );
+  }
+
+  function simulateExecuteWithdrawOrder() internal {
+    bytes32[] memory priceUpdateData = ecoPyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory publishTimeUpdateData = ecoPyth.buildPublishTimeUpdateData(publishTimeDiffs);
+    crossMarginHandler.executeOrder({
+      _endIndex: crossMarginHandler.getWithdrawOrderLength(),
+      _feeReceiver: payable(FEEVER),
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: block.timestamp,
+      _encodedVaas: keccak256("someEncodedVaas")
+    });
+  }
 }

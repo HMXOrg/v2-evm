@@ -116,4 +116,92 @@ contract PerpStorage_GetActivePositions is PerpStorage_Base {
       assertEq(_subAccounts.length, 3);
     }
   }
+
+  function testX() external {
+    AStorage aStorage = new AStorage();
+
+    assertEq(aStorage.getStorageAt(0), 1);
+    assertEq(aStorage.getStorageAt(1), 2);
+    assertEq(aStorage.getStorageAt(2), 4);
+    assertEq(aStorage.getStorageAt(3), 8);
+    assertEq(aStorage.getStorageAt(4), 257);
+    assertEq(aStorage.getStorageAt(5), 0);
+    assertEq(aStorage.answer(), 261);
+
+    BStorage bStorage = new BStorage();
+    assertEq(bStorage.answer(), 4);
+    // assertEq(bStorage.getStorageAt(1), 4);
+    // assertEq(bStorage.getStorageAt(2), 8);
+    // assertEq(bStorage.getStorageAt(3), 0);
+
+    CStorage cStorage = new CStorage();
+
+    assertEq(cStorage.getStorageAt(0), 10);
+    assertEq(cStorage.getStorageAt(1), 18);
+    assertEq(cStorage.getStorageAt(2), 1);
+    assertEq(cStorage.getStorageAt(3), 20);
+    assertEq(cStorage.getStorageAt(4), 28);
+    assertEq(cStorage.getStorageAt(5), 0);
+    assertEq(cStorage.answer(), 39);
+    // assertEq(bStorage.getStorageAt(1), 4);
+  }
+}
+
+contract AStorage {
+  uint storage1 = 1;
+  uint storage2 = 2;
+  uint storage3 = 4;
+  uint storage4 = 8;
+  bool storage5 = true;
+  bool storage6 = true;
+
+  function getStorageAt(uint index) public view returns (uint256 r) {
+    assembly {
+      r := sload(index)
+    }
+  }
+
+  function answer() public view returns (uint256) {
+    return getStorageAt(2) + getStorageAt(4) + getStorageAt(5);
+  }
+}
+
+contract BStorage {
+  uint8 storage1 = 1;
+  uint64 storage2 = 2;
+  uint256 storage3 = 4;
+  uint128 storage4 = 2;
+  uint128 storage5 = 1;
+
+  function getStorageAt(uint index) public view returns (uint8 r) {
+    assembly {
+      r := sload(index)
+    }
+  }
+
+  function answer() public view returns (uint256) {
+    return getStorageAt(1) + getStorageAt(3);
+  }
+}
+
+contract CStorage {
+  struct Account {
+    uint128 balance;
+    uint256 age;
+    bool isActive;
+    address accountAddr;
+  }
+
+  Account public acc1 = Account(10, 18, true, address(1));
+  Account public acc2 = Account(20, 28, false, address(2));
+
+  function getStorageAt(uint index) public view returns (uint8 r) {
+    assembly {
+      r := sload(index)
+    }
+  }
+
+  function answer() public view returns (uint8) {
+    return getStorageAt(0) + getStorageAt(2) + getStorageAt(4) + getStorageAt(5);
+  }
 }

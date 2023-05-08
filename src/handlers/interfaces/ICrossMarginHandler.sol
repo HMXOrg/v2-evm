@@ -75,4 +75,21 @@ interface ICrossMarginHandler {
     address _tokenOut,
     uint256 _amountIn
   ) external returns (uint256 _amountOut);
+
+  function nextExecutionOrderIndex() external view returns (uint256);
+
+  function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrder);
+
+  function getWithdrawOrderLength() external view returns (uint256);
+
+  function getActiveWithdrawOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder);
+
+  function getExecutedWithdrawOrders(
+    address _account,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder);
 }

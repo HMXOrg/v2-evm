@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
+import { console2 } from "forge-std/console2.sol";
 
 // base
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
@@ -82,6 +83,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   bool private isExecuting; // order is executing (prevent direct call executeWithdrawOrder()
 
   WithdrawOrder[] public withdrawOrders; // all withdrawOrder
+  mapping(address => WithdrawOrder[]) public userExecutedWithdrawOrders; // address -> executed orders
   mapping(address => bool) public orderExecutors; //address -> flag to execute
 
   function initialize(address _crossMarginService, address _pyth, uint256 _executionOrderFee) external initializer {
@@ -105,6 +107,72 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @notice get withdraw orders
   function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrder) {
     return withdrawOrders;
+  }
+
+  function getWithdrawOrderLength() external view returns (uint256) {
+    return withdrawOrders.length;
+  }
+
+  function getActiveWithdrawOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder) {
+    // Find the _returnCount
+    uint256 _returnCount;
+    {
+      uint256 _activeOrderCount = withdrawOrders.length - nextExecutionOrderIndex;
+
+      uint256 _afterOffsetCount = _activeOrderCount > _offset ? (_activeOrderCount - _offset) : 0;
+      _returnCount = _afterOffsetCount > _limit ? _limit : _afterOffsetCount;
+
+      if (_returnCount == 0) return _withdrawOrder;
+    }
+
+    // Initialize order array
+    _withdrawOrder = new WithdrawOrder[](_returnCount);
+
+    // Build the array
+    {
+      for (uint i = 0; i < _returnCount; ) {
+        _withdrawOrder[i] = withdrawOrders[nextExecutionOrderIndex + _offset + i];
+        unchecked {
+          ++i;
+        }
+      }
+
+      return _withdrawOrder;
+    }
+  }
+
+  function getExecutedWithdrawOrders(
+    address _account,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder) {
+    // Find the _returnCount and
+    uint256 _returnCount;
+
+    {
+      uint256 _exeuctedOrderCount = userExecutedWithdrawOrders[_account].length;
+      uint256 _afterOffsetCount = _exeuctedOrderCount > _offset ? (_exeuctedOrderCount - _offset) : 0;
+      _returnCount = _afterOffsetCount > _limit ? _limit : _afterOffsetCount;
+
+      if (_returnCount == 0) return _withdrawOrder;
+    }
+
+    // Initialize order array
+    _withdrawOrder = new WithdrawOrder[](_returnCount);
+
+    // Build the array
+    {
+      for (uint i = 0; i < _returnCount; ) {
+        _withdrawOrder[i] = userExecutedWithdrawOrders[_account][_offset + i];
+        unchecked {
+          ++i;
+        }
+      }
+      return _withdrawOrder;
+    }
   }
 
   /**
@@ -265,6 +333,8 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       isExecuting = false;
       _totalFeeReceiver += _executionFee;
 
+      // save to executed order first
+      userExecutedWithdrawOrders[_order.account].push(withdrawOrders[i]);
       // clear executed withdraw order
       delete withdrawOrders[i];
 

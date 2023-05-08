@@ -22,12 +22,17 @@ interface ICrossMarginHandler {
   struct WithdrawOrder {
     address payable account;
     uint256 orderId;
-    address token;
     uint256 amount;
     uint256 executionFee;
-    bool shouldUnwrap;
-    uint8 subAccountId;
+    // slot
+    address token;
+    uint48 createdTimestamp;
+    uint48 executedTimestamp;
+    // slot
     CrossMarginService crossMarginService;
+    uint8 subAccountId;
+    bool shouldUnwrap;
+    uint8 status; // 0 = pending, 1 = execution success, 2 = execution fail
   }
 
   /**
@@ -75,4 +80,21 @@ interface ICrossMarginHandler {
     address _tokenOut,
     uint256 _amountIn
   ) external returns (uint256 _amountOut);
+
+  function nextExecutionOrderIndex() external view returns (uint256);
+
+  function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrder);
+
+  function getWithdrawOrderLength() external view returns (uint256);
+
+  function getActiveWithdrawOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder);
+
+  function getExecutedWithdrawOrders(
+    address _account,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder);
 }

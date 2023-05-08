@@ -129,8 +129,6 @@ contract PositionTester is StdAssertions {
         _data.decreasedPositionSize,
         "market long position size"
       );
-      // note: ignore unused avg price on market level after applied new global pnl calculation logic
-      // assertEq(_currentMarket.longAvgPrice, _data.newLongGlobalAveragePrice, "global long average price");
     } else {
       // check global SHORT position
       assertEq(
@@ -138,8 +136,6 @@ contract PositionTester is StdAssertions {
         _data.decreasedPositionSize,
         "market short position size"
       );
-      // note: ignore unused avg price on market level after applied new global pnl calculation logic
-      // assertEq(_currentMarket.shortAvgPrice, _data.newShortGlobalAveragePrice, "global short average price");
     }
 
     // todo: support on funding rate calculation story

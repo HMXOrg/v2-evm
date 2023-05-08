@@ -384,45 +384,17 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     // update counter trade states
     {
-      // TODO: consider remove this later
-      uint256 _nextAvgPrice = 0;
-      // if (_vars.isLong) {
-      //   _nextAvgPrice = _market.longPositionSize == 0
-      //     ? _vars.adaptivePriceE30
-      //     : _calculator.calculateMarketAveragePrice(
-      //       int256(_market.longPositionSize),
-      //       _market.longAvgPrice,
-      //       _sizeDelta,
-      //       _vars.closePriceE30,
-      //       _vars.nextClosePrice,
-      //       0
-      //     );
-      // } else {
-      //   _nextAvgPrice = _market.shortPositionSize == 0
-      //     ? _vars.adaptivePriceE30
-      //     : _calculator.calculateMarketAveragePrice(
-      //       -int256(_market.shortPositionSize),
-      //       _market.shortAvgPrice,
-      //       _sizeDelta,
-      //       _vars.closePriceE30,
-      //       _vars.nextClosePrice,
-      //       0
-      //     );
-      // }
-
       if (_vars.isNewPosition) {
         _vars.isLong
           ? _perpStorage.updateGlobalLongMarketById(
             _marketIndex,
             _market.longPositionSize + _absSizeDelta,
-            _nextAvgPrice,
             _market.longAccumSE + _absSizeDelta.mulDiv(1e30, _vars.position.avgEntryPriceE30),
             _market.longAccumS2E + _absSizeDelta.mulDiv(_absSizeDelta, _vars.position.avgEntryPriceE30)
           )
           : _perpStorage.updateGlobalShortMarketById(
             _marketIndex,
             _market.shortPositionSize + _absSizeDelta,
-            _nextAvgPrice,
             _market.shortAccumSE + ((_absSizeDelta * 1e30) / _vars.position.avgEntryPriceE30),
             _market.shortAccumS2E + _absSizeDelta.mulDiv(_absSizeDelta, _vars.position.avgEntryPriceE30)
           );
@@ -432,7 +404,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
           ? _perpStorage.updateGlobalLongMarketById(
             _marketIndex,
             _market.longPositionSize + _absSizeDelta,
-            _nextAvgPrice,
             (_market.longAccumSE - _vars.oldSumSe) +
               absNewPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30),
             (_market.longAccumS2E - _vars.oldSumS2e) +
@@ -441,7 +412,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
           : _perpStorage.updateGlobalShortMarketById(
             _marketIndex,
             _market.shortPositionSize + _absSizeDelta,
-            _nextAvgPrice,
             (_market.shortAccumSE - _vars.oldSumSe) +
               absNewPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30),
             (_market.shortAccumS2E - _vars.oldSumS2e) +
@@ -880,13 +850,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
       // update counter trade states
       {
-        _vars.nextAvgPrice = 0;
-
         _vars.isLongPosition
           ? _vars.perpStorage.updateGlobalLongMarketById(
             _marketIndex,
             _market.longPositionSize - _vars.positionSizeE30ToDecrease,
-            _vars.nextAvgPrice,
             _vars.position.avgEntryPriceE30 > 0
               ? (_market.longAccumSE - _vars.oldSumSe) +
                 _newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)
@@ -899,7 +866,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
           : _vars.perpStorage.updateGlobalShortMarketById(
             _marketIndex,
             _market.shortPositionSize - _vars.positionSizeE30ToDecrease,
-            _vars.nextAvgPrice,
             _vars.position.avgEntryPriceE30 > 0
               ? (_market.shortAccumSE - _vars.oldSumSe) +
                 _newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)

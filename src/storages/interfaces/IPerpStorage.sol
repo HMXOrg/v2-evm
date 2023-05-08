@@ -26,12 +26,10 @@ interface IPerpStorage {
   struct Market {
     // LONG position
     uint256 longPositionSize;
-    uint256 longAvgPrice;
     uint256 longAccumSE; // SUM(positionSize / entryPrice)
     uint256 longAccumS2E; // SUM(positionSize^2 / entryPrice)
     // SHORT position
     uint256 shortPositionSize;
-    uint256 shortAvgPrice;
     uint256 shortAccumSE; // SUM(positionSize / entryPrice)
     uint256 shortAccumS2E; // SUM(positionSize^2 / entryPrice)
     // funding rate
@@ -73,7 +71,6 @@ interface IPerpStorage {
   function updateGlobalLongMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice,
     uint256 _newAccumSE,
     uint256 _newAccumS2E
   ) external;
@@ -81,7 +78,6 @@ interface IPerpStorage {
   function updateGlobalShortMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice,
     uint256 _newAccumSE,
     uint256 _newAccumS2E
   ) external;

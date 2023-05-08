@@ -186,10 +186,8 @@ contract TradeTester is StdAssertions {
     IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketExpectedData.marketIndex);
 
     assertEq(_market.longPositionSize, _marketExpectedData.longPositionSize, "Long Position size");
-    assertEq(_market.longAvgPrice, _marketExpectedData.longAvgPrice, "Long Average Price");
 
     assertEq(_market.shortPositionSize, _marketExpectedData.shortPositionSize, "Short Position size");
-    assertEq(_market.shortAvgPrice, _marketExpectedData.shortAvgPrice, "Short Average Price");
 
     assertEq(_market.currentFundingRate, _marketExpectedData.currentFundingRate, "Current Funding Rate");
     assertEq(_market.lastFundingTime, _marketExpectedData.lastFundingTime, "Last Funding Time");

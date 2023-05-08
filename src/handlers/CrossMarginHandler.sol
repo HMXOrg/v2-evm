@@ -83,7 +83,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   bool private isExecuting; // order is executing (prevent direct call executeWithdrawOrder()
 
   WithdrawOrder[] public withdrawOrders; // all withdrawOrder
-  mapping(address => WithdrawOrder[]) public userExecutedWithdrawOrders; // address -> executed orders
+  mapping(address => WithdrawOrder[]) public subAccountExecutedWithdrawOrders; // subAccount -> executed orders
   mapping(address => bool) public orderExecutors; //address -> flag to execute
 
   function initialize(address _crossMarginService, address _pyth, uint256 _executionOrderFee) external initializer {
@@ -145,15 +145,14 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   }
 
   function getExecutedWithdrawOrders(
-    address _account,
+    address _subAccount,
     uint256 _limit,
     uint256 _offset
   ) external view returns (WithdrawOrder[] memory _withdrawOrder) {
     // Find the _returnCount and
     uint256 _returnCount;
-
     {
-      uint256 _exeuctedOrderCount = userExecutedWithdrawOrders[_account].length;
+      uint256 _exeuctedOrderCount = subAccountExecutedWithdrawOrders[_subAccount].length;
       uint256 _afterOffsetCount = _exeuctedOrderCount > _offset ? (_exeuctedOrderCount - _offset) : 0;
       _returnCount = _afterOffsetCount > _limit ? _limit : _afterOffsetCount;
 
@@ -166,7 +165,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Build the array
     {
       for (uint i = 0; i < _returnCount; ) {
-        _withdrawOrder[i] = userExecutedWithdrawOrders[_account][_offset + i];
+        _withdrawOrder[i] = subAccountExecutedWithdrawOrders[_subAccount][_offset + i];
         unchecked {
           ++i;
         }
@@ -260,7 +259,10 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         executionFee: _executionFee,
         shouldUnwrap: _shouldUnwrap,
         subAccountId: _subAccountId,
-        crossMarginService: CrossMarginService(crossMarginService)
+        crossMarginService: CrossMarginService(crossMarginService),
+        createdTimestamp: uint48(block.timestamp),
+        executedTimestamp: 0,
+        status: 0 // pending
       })
     );
 
@@ -280,9 +282,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
-    // SLOAD
-    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
-
     uint256 _orderLength = withdrawOrders.length;
 
     if (nextExecutionOrderIndex == _orderLength) revert ICrossMarginHandler_NoOrder();
@@ -316,6 +315,9 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
           _order.shouldUnwrap,
           true
         );
+
+        // update order status
+        _order.status = 1; // success
       } catch Error(string memory) {
         // Do nothing
       } catch (bytes memory) {
@@ -328,13 +330,19 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
           _order.shouldUnwrap,
           false
         );
+
+        // update order status
+        _order.status = 2; // fail
       }
+
+      // assign exec time
+      _order.executedTimestamp = uint48(block.timestamp);
 
       isExecuting = false;
       _totalFeeReceiver += _executionFee;
 
       // save to executed order first
-      userExecutedWithdrawOrders[_order.account].push(withdrawOrders[i]);
+      subAccountExecutedWithdrawOrders[_getSubAccount(_order.account, _order.subAccountId)].push(_order);
       // clear executed withdraw order
       delete withdrawOrders[i];
 
@@ -501,6 +509,11 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     IWNative(ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
     payable(_receiver).transfer(_amountOut);
+  }
+
+  function _getSubAccount(address _primary, uint8 _subAccountId) private pure returns (address) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 
   receive() external payable {

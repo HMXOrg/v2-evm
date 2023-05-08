@@ -22,12 +22,17 @@ interface ICrossMarginHandler {
   struct WithdrawOrder {
     address payable account;
     uint256 orderId;
-    address token;
     uint256 amount;
     uint256 executionFee;
-    bool shouldUnwrap;
-    uint8 subAccountId;
+    // slot
+    address token;
+    uint48 createdTimestamp;
+    uint48 executedTimestamp;
+    // slot
     CrossMarginService crossMarginService;
+    uint8 subAccountId;
+    bool shouldUnwrap;
+    uint8 status; // 0 = pending, 1 = execution success, 2 = execution fail
   }
 
   /**

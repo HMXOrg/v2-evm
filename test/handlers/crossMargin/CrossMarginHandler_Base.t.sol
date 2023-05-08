@@ -176,9 +176,9 @@ contract CrossMarginHandler_Base is BaseTest {
 
     vm.prank(ALICE);
     uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: executionOrderFee }(
-      0,
+      SUB_ACCOUNT_NO,
       address(weth),
-      0.001 ether,
+      1 ether,
       0.0001 ether,
       false
     );

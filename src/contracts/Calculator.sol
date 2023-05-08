@@ -1109,11 +1109,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bool isLong
   ) public pure returns (int256) {
     sumSE = isLong ? -sumSE : sumSE;
-    int256 a = (price.toInt256() * sumSE) / 1e30;
-    int256 b = ((((price.toInt256() * skew) / (maxSkew.toInt256())) * sumSE) / 1e30);
-    uint256 c = price.mulDiv(sumS2E, 2 * maxSkew);
-    int256 d = isLong ? -(sumSize.toInt256()) : sumSize.toInt256();
-    int256 result = a + b + c.toInt256() - d;
+    int256 pnlFromPositions = (price.toInt256() * sumSE) / 1e30;
+    int256 pnlFromSkew = ((((price.toInt256() * skew) / (maxSkew.toInt256())) * sumSE) / 1e30);
+    uint256 pnlFromVolatility = price.mulDiv(sumS2E, 2 * maxSkew);
+    int256 pnlFromDirection = isLong ? -(sumSize.toInt256()) : sumSize.toInt256();
+    int256 result = pnlFromPositions + pnlFromSkew + pnlFromVolatility.toInt256() - pnlFromDirection;
     return isLong ? result : -result;
   }
 

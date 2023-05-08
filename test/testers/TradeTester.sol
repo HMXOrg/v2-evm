@@ -51,9 +51,7 @@ contract TradeTester is StdAssertions {
     uint256 marketIndex;
     uint256 lastFundingTime;
     uint256 longPositionSize;
-    uint256 longAvgPrice;
     uint256 shortPositionSize;
-    uint256 shortAvgPrice;
     uint256 shortOpenInterest;
     int256 accumFundingLong;
     int256 accumFundingShort;

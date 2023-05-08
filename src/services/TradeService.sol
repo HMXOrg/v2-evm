@@ -386,29 +386,29 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     {
       // TODO: consider remove this later
       uint256 _nextAvgPrice = 0;
-      if (_vars.isLong) {
-        _nextAvgPrice = _market.longPositionSize == 0
-          ? _vars.adaptivePriceE30
-          : _calculator.calculateMarketAveragePrice(
-            int256(_market.longPositionSize),
-            _market.longAvgPrice,
-            _sizeDelta,
-            _vars.closePriceE30,
-            _vars.nextClosePrice,
-            0
-          );
-      } else {
-        _nextAvgPrice = _market.shortPositionSize == 0
-          ? _vars.adaptivePriceE30
-          : _calculator.calculateMarketAveragePrice(
-            -int256(_market.shortPositionSize),
-            _market.shortAvgPrice,
-            _sizeDelta,
-            _vars.closePriceE30,
-            _vars.nextClosePrice,
-            0
-          );
-      }
+      // if (_vars.isLong) {
+      //   _nextAvgPrice = _market.longPositionSize == 0
+      //     ? _vars.adaptivePriceE30
+      //     : _calculator.calculateMarketAveragePrice(
+      //       int256(_market.longPositionSize),
+      //       _market.longAvgPrice,
+      //       _sizeDelta,
+      //       _vars.closePriceE30,
+      //       _vars.nextClosePrice,
+      //       0
+      //     );
+      // } else {
+      //   _nextAvgPrice = _market.shortPositionSize == 0
+      //     ? _vars.adaptivePriceE30
+      //     : _calculator.calculateMarketAveragePrice(
+      //       -int256(_market.shortPositionSize),
+      //       _market.shortAvgPrice,
+      //       _sizeDelta,
+      //       _vars.closePriceE30,
+      //       _vars.nextClosePrice,
+      //       0
+      //     );
+      // }
 
       if (_vars.isNewPosition) {
         _vars.isLong
@@ -449,51 +449,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
           );
       }
     }
-
-    // TODO: remove
-    // {
-    //   // update global market state
-    //   if (_vars.isLong) {
-    //     uint256 _nextAvgPrice = _market.longPositionSize == 0
-    //       ? _vars.adaptivePriceE30
-    //       : _calculator.calculateMarketAveragePrice(
-    //         int256(_market.longPositionSize),
-    //         _market.longAvgPrice,
-    //         _sizeDelta,
-    //         _vars.closePriceE30,
-    //         _vars.nextClosePrice,
-    //         0
-    //       );
-
-    //     _perpStorage.updateGlobalLongMarketById(
-    //       _marketIndex,
-    //       _market.longPositionSize + _absSizeDelta,
-    //       _nextAvgPrice,
-    //       0,
-    //       0
-    //     );
-    //   } else {
-    //     // to increase SHORT position sizeDelta should be negative
-    //     uint256 _nextAvgPrice = _market.shortPositionSize == 0
-    //       ? _vars.adaptivePriceE30
-    //       : _calculator.calculateMarketAveragePrice(
-    //         -int256(_market.shortPositionSize),
-    //         _market.shortAvgPrice,
-    //         _sizeDelta,
-    //         _vars.closePriceE30,
-    //         _vars.nextClosePrice,
-    //         0
-    //       );
-
-    //     _perpStorage.updateGlobalShortMarketById(
-    //       _marketIndex,
-    //       _market.shortPositionSize + _absSizeDelta,
-    //       _nextAvgPrice,
-    //       0,
-    //       0
-    //     );
-    //   }
-    // }
 
     // save the updated position to the storage
     _vars.position.lastIncreaseTimestamp = block.timestamp;
@@ -925,24 +880,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
       // update counter trade states
       {
-        // TODO: consider remove later
-        _vars.nextAvgPrice = _vars.isLongPosition
-          ? _vars.calculator.calculateMarketAveragePrice(
-            int256(_market.longPositionSize),
-            _market.longAvgPrice,
-            -int256(_vars.positionSizeE30ToDecrease),
-            _vars.closePrice,
-            _vars.nextClosePrice,
-            _vars.realizedPnl
-          )
-          : _vars.calculator.calculateMarketAveragePrice(
-            -int256(_market.shortPositionSize),
-            _market.shortAvgPrice,
-            int256(_vars.positionSizeE30ToDecrease),
-            _vars.closePrice,
-            _vars.nextClosePrice,
-            -_vars.realizedPnl
-          );
+        _vars.nextAvgPrice = 0;
 
         _vars.isLongPosition
           ? _vars.perpStorage.updateGlobalLongMarketById(

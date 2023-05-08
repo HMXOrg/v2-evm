@@ -182,60 +182,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return _aum / _plpSupply;
   }
 
-  // TODO: remove
-  // /// @notice get all PNL in e30 format
-  // /// @return pnl value
-  // function _getOldGlobalPNLE30() internal view returns (int256) {
-  //   // SLOAD
-  //   ConfigStorage _configStorage = ConfigStorage(configStorage);
-  //   PerpStorage _perpStorage = PerpStorage(perpStorage);
-  //   OracleMiddleware _oracle = OracleMiddleware(oracle);
-
-  //   int256 totalPnlLong = 0;
-  //   int256 totalPnlShort = 0;
-  //   uint256 _len = _configStorage.getMarketConfigsLength();
-
-  //   for (uint256 i = 0; i < _len; ) {
-  //     ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(i);
-  //     PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
-
-  //     int256 _pnlLongE30 = 0;
-  //     int256 _pnlShortE30 = 0;
-  //     (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
-
-  //     if (_market.longAvgPrice > 0 && _market.longPositionSize > 0) {
-  //       if (priceE30 < _market.longAvgPrice) {
-  //         uint256 _absPNL = ((_market.longAvgPrice - priceE30) * _market.longPositionSize) / _market.longAvgPrice;
-  //         _pnlLongE30 = -int256(_absPNL);
-  //       } else {
-  //         uint256 _absPNL = ((priceE30 - _market.longAvgPrice) * _market.longPositionSize) / _market.longAvgPrice;
-  //         _pnlLongE30 = int256(_absPNL);
-  //       }
-  //     }
-
-  //     if (_market.shortAvgPrice > 0 && _market.shortPositionSize > 0) {
-  //       if (_market.shortAvgPrice < priceE30) {
-  //         uint256 _absPNL = ((priceE30 - _market.shortAvgPrice) * _market.shortPositionSize) / _market.shortAvgPrice;
-
-  //         _pnlShortE30 = -int256(_absPNL);
-  //       } else {
-  //         uint256 _absPNL = ((_market.shortAvgPrice - priceE30) * _market.shortPositionSize) / _market.shortAvgPrice;
-  //         _pnlShortE30 = int256(_absPNL);
-  //       }
-  //     }
-
-  //     {
-  //       unchecked {
-  //         ++i;
-  //         totalPnlLong += _pnlLongE30;
-  //         totalPnlShort += _pnlShortE30;
-  //       }
-  //     }
-  //   }
-
-  //   return totalPnlLong + totalPnlShort;
-  // }
-
   /// @dev Computes the global market PnL in E30 format by iterating through all the markets.
   /// @return The total PnL in E30 format, which is the sum of long and short positions' PnLs.
   function _getGlobalPNLE30() internal view returns (int256) {
@@ -256,7 +202,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       int256 _pnlShortE30 = 0;
       (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
-      if (_market.longAvgPrice > 0 && _market.longPositionSize > 0) {
+      if (_market.longPositionSize > 0) {
         _pnlLongE30 = _getGlobalMarketPnl(
           priceE30,
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),
@@ -267,7 +213,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
           true
         );
       }
-      if (_market.shortAvgPrice > 0 && _market.shortPositionSize > 0) {
+      if (_market.shortPositionSize > 0) {
         _pnlShortE30 = _getGlobalMarketPnl(
           priceE30,
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),

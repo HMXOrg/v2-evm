@@ -374,7 +374,8 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       MAX_DIFF,
       string.concat(_str, "Market's Long position size")
     );
-    assertApproxEqRel(_market.longAvgPrice, _avgPrice, MAX_DIFF, string.concat(_str, "Market's Long avg price size"));
+    // note: ignore unused avg price on market level after applied new global pnl calculation logic
+    // assertApproxEqRel(_market.longAvgPrice, _avgPrice, MAX_DIFF, string.concat(_str, "Market's Long avg price size"));
   }
 
   function assertMarketLongPosition(uint256 _marketIndex, uint256 _positionSize, uint256 _avgPrice) internal {
@@ -395,7 +396,8 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       MAX_DIFF,
       string.concat(_str, "Market's Short position size")
     );
-    assertApproxEqRel(_market.shortAvgPrice, _avgPrice, MAX_DIFF, string.concat(_str, "Market's Short avg price size"));
+    // note: ignore unused avg price on market level after applied new global pnl calculation logic
+    // assertApproxEqRel(_market.shortAvgPrice, _avgPrice, MAX_DIFF, string.concat(_str, "Market's Short avg price size"));
   }
 
   function assertMarketShortPosition(uint256 _marketIndex, uint256 _positionSize, uint256 _avgPrice) internal {

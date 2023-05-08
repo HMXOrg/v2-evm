@@ -23,8 +23,6 @@ contract MarketTester is StdAssertions {
     IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
     assertEq(_market.longPositionSize, _data.longPositionSize);
-    assertEq(_market.longAvgPrice, _data.longAvgPrice);
     assertEq(_market.shortPositionSize, _data.shortPositionSize);
-    assertEq(_market.shortAvgPrice, _data.shortAvgPrice);
   }
 }

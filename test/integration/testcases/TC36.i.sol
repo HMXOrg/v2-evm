@@ -50,6 +50,7 @@ contract TC36 is BaseIntTest_WithActions {
       block.timestamp,
       true
     );
+
     {
       // PLP => 1_994_000.00(WBTC) + 100_000 (USDC)
       assertPLPTotalSupply(2_094_000 * 1e18);
@@ -250,18 +251,18 @@ contract TC36 is BaseIntTest_WithActions {
 
     // Try to remove All liquidity in PLP should be success
     vm.deal(ALICE, executionOrderFee * 2);
-    console.log("aum", calculator.getAUME30(false));
-    console.log("totalSupply", plpV2.totalSupply());
+
     removeLiquidity(
       ALICE,
       address(usdc),
-      100993501139639264702996,
+      100997199992639264702996,
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
       block.timestamp,
-      true
+      true // execute now
     );
+
     removeLiquidity(
       ALICE,
       address(wbtc),
@@ -270,20 +271,21 @@ contract TC36 is BaseIntTest_WithActions {
       tickPrices,
       publishTimeDiff,
       block.timestamp,
-      true
+      true // execute now
     );
+
     {
       assertApproxEqRel(calculator.getPLPValueE30(false), 0, MAX_DIFF, "plp TVL");
 
-      // assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
+      assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
-      // assertApproxEqRel(calculator.getAUME30(false), 0, MAX_DIFF, "AUM");
+      assertApproxEqRel(calculator.getAUME30(false), 0, MAX_DIFF, "AUM");
 
-      // assertPLPTotalSupply(0);
+      assertPLPTotalSupply(0);
 
-      // assertTokenBalanceOf(ALICE, address(plpV2), 0);
-      // assertPLPLiquidity(address(wbtc), 0);
-      // assertPLPLiquidity(address(usdc), 0);
+      assertTokenBalanceOf(ALICE, address(plpV2), 0);
+      assertPLPLiquidity(address(wbtc), 0);
+      assertPLPLiquidity(address(usdc), 0);
     }
   }
 }

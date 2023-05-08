@@ -20,6 +20,8 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 /// @title LiquidityHandler
 contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILiquidityHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;

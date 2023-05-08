@@ -120,29 +120,31 @@ contract PositionTester is StdAssertions {
     assertEq(_currentPosition.realizedPnl, _data.realizedPnl, "position realized pnl");
 
     // assert market global
-    IPerpStorage.Market memory _currentMarketG = perpStorage.getMarketByIndex(_currentPosition.marketIndex);
+    IPerpStorage.Market memory _currentMarket = perpStorage.getMarketByIndex(_currentPosition.marketIndex);
 
     if (cachePosition.positionSizeE30 > 0) {
       // check global LONG position
       assertEq(
-        cacheMarket.longPositionSize - _currentMarketG.longPositionSize,
+        cacheMarket.longPositionSize - _currentMarket.longPositionSize,
         _data.decreasedPositionSize,
         "market long position size"
       );
-      assertEq(_currentMarketG.longAvgPrice, _data.newLongGlobalAveragePrice, "global long average price");
+      // note: ignore unused avg price on market level after applied new global pnl calculation logic
+      // assertEq(_currentMarket.longAvgPrice, _data.newLongGlobalAveragePrice, "global long average price");
     } else {
       // check global SHORT position
       assertEq(
-        cacheMarket.shortPositionSize - _currentMarketG.shortPositionSize,
+        cacheMarket.shortPositionSize - _currentMarket.shortPositionSize,
         _data.decreasedPositionSize,
         "market short position size"
       );
-      assertEq(_currentMarketG.shortAvgPrice, _data.newShortGlobalAveragePrice, "global short average price");
+      // note: ignore unused avg price on market level after applied new global pnl calculation logic
+      // assertEq(_currentMarket.shortAvgPrice, _data.newShortGlobalAveragePrice, "global short average price");
     }
 
     // todo: support on funding rate calculation story
-    // assertEq(cacheMarket.fundingRate - _currentMarketG.fundingRate, 0);
-    // assertEq(_currentMarketG.lastFundingTime, block.timestamp);
+    // assertEq(cacheMarket.fundingRate - _currentMarket.fundingRate, 0);
+    // assertEq(_currentMarket.lastFundingTime, block.timestamp);
 
     // assert global state
     IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();

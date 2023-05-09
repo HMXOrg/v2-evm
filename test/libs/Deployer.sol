@@ -199,15 +199,17 @@ library Deployer {
     address _weth,
     address _tradeService,
     address _pyth,
-    uint256 _minExecutionFee
+    uint256 _minExecutionFee,
+    uint256 _minExecutionTimestamp
   ) internal returns (ILimitTradeHandler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LimitTradeHandler.sol/LimitTradeHandler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,uint256)")),
+      bytes4(keccak256("initialize(address,address,address,uint256,uint256)")),
       _weth,
       _tradeService,
       _pyth,
-      _minExecutionFee
+      _minExecutionFee,
+      _minExecutionTimestamp
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ILimitTradeHandler(payable(_proxy));

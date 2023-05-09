@@ -282,45 +282,47 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = liquidityOrders[i];
-      _executionFee = _order.executionFee;
+      if (_order.amount > 0) {
+        _executionFee = _order.executionFee;
 
-      isExecuting = true;
+        isExecuting = true;
 
-      try this.executeLiquidity(_order) returns (uint256 actualOut) {
-        emit LogExecuteLiquidityOrder(
-          _order.account,
-          _order.orderId,
-          _order.token,
-          _order.amount,
-          _order.minOut,
-          _order.isAdd,
-          actualOut
-        );
+        try this.executeLiquidity(_order) returns (uint256 actualOut) {
+          emit LogExecuteLiquidityOrder(
+            _order.account,
+            _order.orderId,
+            _order.token,
+            _order.amount,
+            _order.minOut,
+            _order.isAdd,
+            actualOut
+          );
 
-        // update order status
-        _order.status = 1; // success
-      } catch Error(string memory) {
-        //refund in case of revert as message
-        _refund(_order);
-        _order.status = 2; // fail
-      } catch (bytes memory) {
-        //refund in case of revert as bytes
-        _refund(_order);
-        _order.status = 2; // fail
+          // update order status
+          _order.status = 1; // success
+        } catch Error(string memory) {
+          //refund in case of revert as message
+          _refund(_order);
+          _order.status = 2; // fail
+        } catch (bytes memory) {
+          //refund in case of revert as bytes
+          _refund(_order);
+          _order.status = 2; // fail
+        }
+
+        // assign exec time
+        _order.executedTimestamp = uint48(block.timestamp);
+
+        isExecuting = false;
+
+        _totalFeeReceiver += _executionFee;
+
+        // save to executed order first
+        accountExecutedLiquidityOrders[_order.account].push(_order);
+
+        // clear executed liquidity order
+        delete liquidityOrders[i];
       }
-
-      // assign exec time
-      _order.executedTimestamp = uint48(block.timestamp);
-
-      isExecuting = false;
-
-      _totalFeeReceiver += _executionFee;
-
-      // save to executed order first
-      accountExecutedLiquidityOrders[_order.account].push(_order);
-
-      // clear executed liquidity order
-      delete liquidityOrders[i];
 
       unchecked {
         ++i;
@@ -403,7 +405,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function _refund(LiquidityOrder memory _order) private {
     // if found order with amount 0. means order has been executed or canceled
     uint256 _amount = _order.amount;
-    if (_amount == 0) revert ILiquidityHandler_NoOrder();
+    if (_amount == 0) return;
 
     address _account = _order.account;
 

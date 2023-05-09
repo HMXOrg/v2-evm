@@ -393,12 +393,25 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
 
   function test_correctness_cancelOrder() external {
     uint256 _orderIndex = _createAddLiquidityWBTCOrder();
+    _createAddLiquidityWBTCOrder();
+    _createAddLiquidityWBTCOrder();
 
     vm.prank(ALICE);
     liquidityHandler.cancelLiquidityOrder(_orderIndex);
 
     ILiquidityHandler.LiquidityOrder[] memory aliceOrders = liquidityHandler.getLiquidityOrders();
     assertEq(aliceOrders[0].account, address(0), "Alice account address");
+
+    liquidityHandler.executeOrder(
+      type(uint256).max,
+      payable(FEEVER),
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    );
+
+    assertEq(liquidityHandler.nextExecutionOrderIndex(), 3);
   }
 
   function _createAddLiquidityWBTCOrder() internal returns (uint256) {
@@ -408,6 +421,8 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     vm.startPrank(ALICE);
 
     wbtc.approve(address(liquidityHandler), type(uint256).max);
+
+    ILiquidityHandler.LiquidityOrder[] memory _beforeCreateOrders = liquidityHandler.getLiquidityOrders();
 
     uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
       address(wbtc),
@@ -425,7 +440,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     ILiquidityHandler.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders();
     vm.stopPrank();
 
-    assertEq(_beforeExecuteOrders.length, 1, "Order Amount After Created Order");
+    assertEq(_beforeExecuteOrders.length, _beforeCreateOrders.length + 1, "Order Amount After Created Order");
     assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Created Order");
 
     assertEq(_beforeExecuteOrders[_orderIndex].account, ALICE, "Alice Order.account");

@@ -74,6 +74,7 @@ import { console } from "forge-std/console.sol";
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
   uint256 internal constant executionOrderFee = 0.0001 ether;
+  uint256 internal constant minExecutionTimestamp = 60 * 5; // 5 minutes
 
   uint256 internal constant SECONDS = 1;
   uint256 internal constant MINUTES = SECONDS * 60;
@@ -275,7 +276,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(weth),
       address(tradeService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      minExecutionTimestamp
     );
 
     liquidityHandler = Deployer.deployLiquidityHandler(

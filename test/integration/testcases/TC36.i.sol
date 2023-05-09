@@ -234,7 +234,7 @@ contract TC36 is BaseIntTest_WithActions {
       //plpValueE30 = 2654416330564255462951685200733910932
       //maxUtilization = 2654416330564255462951685200733910932 * 8000 / 10000 => 1675490777760000000000000000000000000
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
-      IConfigStorage.MarketConfig memory _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
+      _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
       IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
       IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
       uint256 _plpTVL = calculator.getPLPValueE30(false);

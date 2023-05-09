@@ -51,7 +51,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 executionFee,
     bool reduceOnly,
     address tpToken,
-    bytes errMsg
+    string errMsg
   );
   event LogExecuteLimitOrder(
     address indexed account,
@@ -132,7 +132,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   address public tradeService;
   IEcoPyth public pyth;
   uint256 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
-  uint256 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on price stale
+  uint256 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on order stale
   bool private isExecuting; // order is executing (prevent direct call executeLimitOrder()
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
@@ -290,33 +290,41 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     try this.executeLimitOrder(vars) {
       // Execution succeeded
       isExecuting = false;
+    } catch Error(string memory errMsg) {
+      _handleOrderFail(vars, errMsg);
+    } catch Panic(uint /*errorCode*/) {
+      _handleOrderFail(vars, "Panic occurred while executing the limit order");
     } catch (bytes memory errMsg) {
-      // Execution failed
-      isExecuting = false;
+      _handleOrderFail(vars, string(errMsg));
+    }
+  }
 
-      // Handle the error depending on the type of order
-      if (vars.isMarketOrder) {
-        // Cancel market order and transfer execution fee to executor
-        _removeOrder(vars.order, vars.subAccount, vars.orderIndex);
-        _transferOutETH(vars.order.executionFee, vars.feeReceiver);
+  function _handleOrderFail(ExecuteOrderVars memory vars, string memory errMsg) internal {
+    // Execution failed
+    isExecuting = false;
 
-        emit LogExecuteMarketOrderFail(
-          vars.order.account,
-          vars.order.subAccountId,
-          vars.orderIndex,
-          vars.order.marketIndex,
-          vars.order.sizeDelta,
-          vars.order.triggerPrice,
-          vars.order.triggerAboveThreshold,
-          vars.order.executionFee,
-          vars.order.reduceOnly,
-          vars.order.tpToken,
-          errMsg
-        );
-      } else {
-        // Revert with the error message
-        require(false, string(errMsg));
-      }
+    // Handle the error depending on the type of order
+    if (vars.isMarketOrder) {
+      // Cancel market order and transfer execution fee to executor
+      _removeOrder(vars.order, vars.subAccount, vars.orderIndex);
+      _transferOutETH(vars.order.executionFee, vars.feeReceiver);
+
+      emit LogExecuteMarketOrderFail(
+        vars.order.account,
+        vars.order.subAccountId,
+        vars.orderIndex,
+        vars.order.marketIndex,
+        vars.order.sizeDelta,
+        vars.order.triggerPrice,
+        vars.order.triggerAboveThreshold,
+        vars.order.executionFee,
+        vars.order.reduceOnly,
+        vars.order.tpToken,
+        errMsg
+      );
+    } else {
+      // Revert with the error message
+      require(false, errMsg);
     }
   }
 

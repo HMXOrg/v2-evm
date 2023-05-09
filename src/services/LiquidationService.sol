@@ -265,27 +265,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           _realizedPnl = _isProfit ? int256(_delta) : -int256(_delta);
           _unrealizedPnL += _realizedPnl;
         }
-        {
-          uint256 _nextAvgPrice = _isLong
-            ? calculator.calculateMarketAveragePrice(
-              int256(_vars.globalMarket.longPositionSize),
-              _vars.globalMarket.longAvgPrice,
-              -_vars.position.positionSizeE30,
-              _adaptivePrice,
-              _adaptivePrice,
-              _realizedPnl
-            )
-            : calculator.calculateMarketAveragePrice(
-              -int256(_vars.globalMarket.shortPositionSize),
-              _vars.globalMarket.shortAvgPrice,
-              -_vars.position.positionSizeE30,
-              _adaptivePrice,
-              _adaptivePrice,
-              -_realizedPnl
-            );
 
-          _vars.perpStorage.updateMarketPrice(_vars.position.marketIndex, _isLong, _nextAvgPrice);
-        }
         _vars.perpStorage.decreasePositionSize(_vars.position.marketIndex, _isLong, absPositionSize);
         _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.reserveValueE30);
 

@@ -56,12 +56,10 @@ contract MockPerpStorage {
   function updateGlobalLongMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice,
     int256 _newAccumFundingLong,
     int256 _currentFundingRate
   ) external {
     markets[_marketIndex].longPositionSize = _newPositionSize;
-    markets[_marketIndex].longAvgPrice = _newAvgPrice;
     markets[_marketIndex].accumFundingLong = _newAccumFundingLong;
     markets[_marketIndex].currentFundingRate = _currentFundingRate;
   }
@@ -70,12 +68,10 @@ contract MockPerpStorage {
   function updateGlobalShortMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice,
     int256 _newAccumFundingShort,
     int256 _currentFundingRate
   ) external {
     markets[_marketIndex].shortPositionSize = _newPositionSize;
-    markets[_marketIndex].shortAvgPrice = _newAvgPrice;
     markets[_marketIndex].accumFundingShort = _newAccumFundingShort;
     markets[_marketIndex].currentFundingRate = _currentFundingRate;
   }

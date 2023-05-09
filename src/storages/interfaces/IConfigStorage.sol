@@ -200,6 +200,8 @@ interface IConfigStorage {
 
   function setWeth(address _weth) external;
 
+  function setSGlp(address _sglp) external;
+
   function addOrUpdateAcceptedToken(address[] calldata _tokens, PLPTokenConfig[] calldata _configs) external;
 
   function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);

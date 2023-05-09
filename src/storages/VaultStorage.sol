@@ -265,7 +265,6 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
   function _deductTraderBalance(address _trader, address _token, uint256 _amount) internal {
     if (_amount == 0) return;
-
     traderBalances[_trader][_token] -= _amount;
     if (traderBalances[_trader][_token] == 0) {
       _removeTraderToken(_trader, _token);

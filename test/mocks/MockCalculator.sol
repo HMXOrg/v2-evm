@@ -25,6 +25,7 @@ contract MockCalculator is ICalculator {
   int256 fundingRate;
   int256 fundingRateLong;
   int256 fundingRateShort;
+  int256 globalPnlE30;
 
   address public oracle;
 
@@ -119,6 +120,10 @@ contract MockCalculator is ICalculator {
 
   function calculatePositionMMR(uint256, uint256) external pure returns (uint256) {
     return 0;
+  }
+
+  function getGlobalPNLE30() external view returns (int256) {
+    return globalPnlE30;
   }
 
   function getAUME30(bool /* isMaxPrice */) external view returns (uint256) {

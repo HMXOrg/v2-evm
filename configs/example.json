@@ -39,7 +39,8 @@
     }
   },
   "strategies": {
-    "stakedGLPStrategy": ""
+    "stakedGlpStrategy": "",
+    "convertedGlpStrategy": ""
   },
   "calculator": ""
 }

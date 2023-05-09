@@ -8,9 +8,11 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
+import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
@@ -56,28 +58,38 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public calculator;
   address public perpStorage;
 
+  address public convertedSglpStrategy;
+
   function initialize(
     address _configStorage,
     address _vaultStorage,
     address _perpStorage,
-    address _calculator
+    address _calculator,
+    address _convertedSglpStrategy
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
-    if (_configStorage == address(0) || _vaultStorage == address(0) || _calculator == address(0))
-      revert ICrossMarginService_InvalidAddress();
+    if (
+      _configStorage == address(0) ||
+      _vaultStorage == address(0) ||
+      _calculator == address(0) ||
+      _convertedSglpStrategy == address(0)
+    ) revert ICrossMarginService_InvalidAddress();
 
     configStorage = _configStorage;
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
     calculator = _calculator;
 
+    convertedSglpStrategy = _convertedSglpStrategy;
+
     // Sanity check
     ConfigStorage(_configStorage).calculator();
     VaultStorage(_vaultStorage).devFees(address(0));
     PerpStorage(_perpStorage).getGlobalState();
     Calculator(_calculator).oracle();
+    ConvertedGlpStrategy(convertedSglpStrategy).sglp();
   }
 
   /**
@@ -219,6 +231,25 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     if (_vars.fundingFeeSurplusValue > 0) revert ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
 
     emit LogWithdrawFundingFeeSurplus(_vars.fundingFeeSurplusValue);
+  }
+
+  function convertSGlpCollateral(
+    address _primaryAccount,
+    uint8 _subAccountId,
+    address _tokenOut,
+    uint256 _amountIn
+  ) external nonReentrant onlyWhitelistedExecutor returns (uint256 _amountOut) {
+    // Get trader's sub-account address
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+    _amountOut = ConvertedGlpStrategy(convertedSglpStrategy).execute(_tokenOut, _amountIn);
+
+    // Adjusting trader balance
+    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    _vaultStorage.decreaseTraderBalance(_subAccount, _configStorage.sglp(), _amountIn);
+    _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _amountOut);
+
+    return _amountOut;
   }
 
   /**

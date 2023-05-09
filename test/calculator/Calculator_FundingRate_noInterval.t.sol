@@ -105,12 +105,10 @@ contract Calculator_FundingRate is Calculator_Base {
     uint256 marketIndex = 0;
 
     uint256 longPositionSize = 2_000_000 * 1e30;
-    uint256 longAvgPrice = 20_000 * 1e30;
 
     int256 accumFundingRateLong = 0;
 
     uint256 shortPositionSize = 1_000_000 * 1e30;
-    uint256 shortAvgPrice = 20_000 * 1e30;
 
     int256 accumFundingRateShort = 0;
 
@@ -121,17 +119,10 @@ contract Calculator_FundingRate is Calculator_Base {
     // Set WBTC 20,000
     mockOracle.setPrice(20_000 * 1e30);
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -157,26 +148,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 2_000_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong; //start accrued funding rate
 
     shortPositionSize = 1_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort; //start accrued funding rate
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -202,26 +184,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 1_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -247,26 +220,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 1_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -292,26 +256,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -337,26 +292,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -382,26 +328,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -427,26 +364,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 2_000_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -472,26 +400,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 2_500_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -517,26 +436,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 2_500_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -562,26 +472,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 6_000_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );
@@ -607,26 +508,17 @@ contract Calculator_FundingRate is Calculator_Base {
 
     // Mock global market config as table above
     longPositionSize = 6_000_000 * 1e30;
-    longAvgPrice = 20_000 * 1e30;
 
     accumFundingRateLong += nextFundingRateLong;
 
     shortPositionSize = 3_000_000 * 1e30;
-    shortAvgPrice = 20_000 * 1e30;
 
     accumFundingRateShort += nextFundingRateShort;
 
-    mockPerpStorage.updateGlobalLongMarketById(
-      marketIndex,
-      longPositionSize,
-      longAvgPrice,
-      accumFundingRateLong,
-      currentFundingRate
-    );
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
     mockPerpStorage.updateGlobalShortMarketById(
       marketIndex,
       shortPositionSize,
-      shortAvgPrice,
       accumFundingRateShort,
       currentFundingRate
     );

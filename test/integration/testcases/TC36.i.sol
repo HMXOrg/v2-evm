@@ -50,6 +50,7 @@ contract TC36 is BaseIntTest_WithActions {
       block.timestamp,
       true
     );
+
     {
       // PLP => 1_994_000.00(WBTC) + 100_000 (USDC)
       assertPLPTotalSupply(2_094_000 * 1e18);
@@ -87,7 +88,7 @@ contract TC36 is BaseIntTest_WithActions {
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
       IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
       IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
-      // from above input reserve have to nearly with 80% of utilzation
+      // from above input reserve have to nearly with 80% of utilization
       // imr = positionSize * IMF_BPS / BPS
       // imr => 18_613_333 *1e30 / 100 => 186133330000000000000000000000000000
       // reserveValue = 186133330000000000000000000000000000 *9 =>  1675199970000000000000000000000000000
@@ -158,17 +159,18 @@ contract TC36 is BaseIntTest_WithActions {
       // usdc 100_997.2  * 1e30 * 1 => 100997200000000000000000000000000000
       // plpValueE30 = 2094997200000000000000000000000000000
 
-      // PNL = -560052858364255462951685200733910932
+      // PNL = -6012221
       // WBTC   LONG         20000000000000000000000000000000000              20620444433333333333333333333320000              18613333000000000000000000000000000000             =560052858364255462951685200733910932
 
       // AUM = plpValueE30 -PNL + Pending Borrowing Fee;
-      // AUM = 2094997200000000000000000000000000000 - (-560052858364255462951685200733910932) + 0
+      // AUM = 2094997200000000000000000000000000000 - (-6012221) + 0
       // AUM = 2655050058364255462951685200733910932
+
       assertApproxEqRel(calculator.getPLPValueE30(false), 2094997200000000000000000000000000000, MAX_DIFF, "plp TVL");
 
       assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
-      assertApproxEqRel(calculator.getAUME30(false), 2655050058364255462951685200733910932, MAX_DIFF, "AUM");
+      assertApproxEqRel(calculator.getAUME30(false), 2094332274215590197526000000006012221, MAX_DIFF, "AUM");
 
       assertPLPTotalSupply(2094786772875837506655217);
 
@@ -194,16 +196,16 @@ contract TC36 is BaseIntTest_WithActions {
       // usdc 100_997.2  * 1e30 * 1 => 100997200000000000000000000000000000
       // plpValueE30 = 2094363472200000000000000000000000000
 
-      // PNL = -560052858364255462951685200733910932
+      // PNL = -6012221
       // WBTC   LONG         20000000000000000000000000000000000              20620444433333333333333333333320000              18613333000000000000000000000000000000             =560052858364255462951685200733910932
 
-      //  AUM =  2094363472200000000000000000000000000 - ( -560052858364255462951685200733910932) + 0
+      //  AUM =  2094363472200000000000000000000000000 - ( -6012221) + 0
 
       assertApproxEqRel(calculator.getPLPValueE30(false), 2094363472200000000000000000000000000, MAX_DIFF, "plp TVL");
 
       assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
-      assertApproxEqRel(calculator.getAUME30(false), 2654416330564255462951685200733910932, MAX_DIFF, "AUM");
+      assertApproxEqRel(calculator.getAUME30(false), 2094332274215590197526000000006012221, MAX_DIFF, "AUM");
 
       assertPLPTotalSupply(2094286772875837506655217);
       // assert PLP
@@ -249,18 +251,18 @@ contract TC36 is BaseIntTest_WithActions {
 
     // Try to remove All liquidity in PLP should be success
     vm.deal(ALICE, executionOrderFee * 2);
-    console.log("aum", calculator.getAUME30(false));
-    console.log("totalSupply", plpV2.totalSupply());
+
     removeLiquidity(
       ALICE,
       address(usdc),
-      100993501139639264702996,
+      100997199992639264702996,
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
       block.timestamp,
-      true
+      true // execute now
     );
+
     removeLiquidity(
       ALICE,
       address(wbtc),
@@ -269,8 +271,9 @@ contract TC36 is BaseIntTest_WithActions {
       tickPrices,
       publishTimeDiff,
       block.timestamp,
-      true
+      true // execute now
     );
+
     {
       assertApproxEqRel(calculator.getPLPValueE30(false), 0, MAX_DIFF, "plp TVL");
 

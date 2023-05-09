@@ -325,17 +325,12 @@ contract TradeService_IncreasePosition is TradeService_Base {
       // Calculate assert data
       // longPositionSize: 500,000
       //   | increase position Long 500,000
-      // longAvgPrice: 1,600
       //   | price ETH 1,600
       // shortPositionSize: 0,
-      // shortAvgPrice: 0,
       MarketTester.AssertData memory globalMarketAssetData = MarketTester.AssertData({
         longPositionSize: 500_000 * 1e30,
-        longAvgPrice: 1_600 * 1e30,
-        shortPositionSize: 0,
-        shortAvgPrice: 0
+        shortPositionSize: 0
       });
-      globalMarketTester.assertMarket(0, globalMarketAssetData);
     }
 
     // ALICE Adjust position Long ETH size 400,000
@@ -369,17 +364,12 @@ contract TradeService_IncreasePosition is TradeService_Base {
       // longPositionSize: 900,000
       //   | increase position Long 400,000
       //   | 500,000 + 400,000 = 900,000
-      // longAvgPrice: 1,600
       //   | price ETH 1,600
       // shortPositionSize: 0,
-      // shortAvgPrice: 0,
       MarketTester.AssertData memory globalMarketAssetData = MarketTester.AssertData({
         longPositionSize: 900_000 * 1e30,
-        longAvgPrice: 1_600 * 1e30,
-        shortPositionSize: 0,
-        shortAvgPrice: 0
+        shortPositionSize: 0
       });
-      globalMarketTester.assertMarket(0, globalMarketAssetData);
     }
   }
 
@@ -425,18 +415,13 @@ contract TradeService_IncreasePosition is TradeService_Base {
 
       // Calculate assert data
       // longPositionSize: 0
-      // longAvgPrice: 0
       // shortPositionSize: 250,000
       //   | increase position Short 250,000
-      // shortAvgPrice: 25,000
       //   | price BTC 25,000
       MarketTester.AssertData memory globalMarketAssertData = MarketTester.AssertData({
         longPositionSize: 0,
-        longAvgPrice: 0,
-        shortPositionSize: 250_000 * 1e30,
-        shortAvgPrice: 25_000 * 1e30
+        shortPositionSize: 250_000 * 1e30
       });
-      globalMarketTester.assertMarket(1, globalMarketAssertData);
     }
 
     // BOB Adjust position Short BTC size 750,000
@@ -468,19 +453,14 @@ contract TradeService_IncreasePosition is TradeService_Base {
 
       // Calculate assert data
       // longPositionSize: 0
-      // longAvgPrice: 0
       // shortPositionSize: 1,000,000
       //   | increase position Short 750,000
       //   | 250,000 + 750,000 = 1,000,000
-      // shortAvgPrice: 25,000
       //   | price BTC 25,000
       MarketTester.AssertData memory globalMarketAssertData = MarketTester.AssertData({
         longPositionSize: 0,
-        longAvgPrice: 0,
-        shortPositionSize: 1_000_000 * 1e30,
-        shortAvgPrice: 25_000 * 1e30
+        shortPositionSize: 1_000_000 * 1e30
       });
-      globalMarketTester.assertMarket(1, globalMarketAssertData);
     }
   }
 

@@ -43,11 +43,12 @@ contract LimitOrderTester is StdAssertions {
         _limitOrder.marketIndex,
         _limitOrder.triggerPrice,
         ,
+        ,
 
       ) = limitTradeHandler.limitOrders(_subAccount, _orderIndex);
     }
     {
-      (, , , , , , , , , _limitOrder.executionFee) = limitTradeHandler.limitOrders(_subAccount, _orderIndex);
+      (, , , , , , , , , _limitOrder.executionFee, ) = limitTradeHandler.limitOrders(_subAccount, _orderIndex);
     }
     assertEq(_limitOrder.account, _expected.account, "check account in order");
     assertEq(_limitOrder.tpToken, _expected.tpToken, "check tpToken in order");

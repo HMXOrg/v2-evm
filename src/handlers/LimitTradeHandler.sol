@@ -24,6 +24,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
    */
   event LogSetTradeService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogSetMinExecutionTimestamp(uint256 oldValue, uint256 newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogSetPyth(address oldValue, address newValue);
   event LogCreateLimitOrder(
@@ -38,6 +39,19 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 executionFee,
     bool reduceOnly,
     address tpToken
+  );
+  event LogExecuteMarketOrderFail(
+    address indexed account,
+    uint256 indexed subAccountId,
+    uint256 orderIndex,
+    uint256 marketIndex,
+    int256 sizeDelta,
+    uint256 triggerPrice,
+    bool triggerAboveThreshold,
+    uint256 executionFee,
+    bool reduceOnly,
+    address tpToken,
+    string errMsg
   );
   event LogExecuteLimitOrder(
     address indexed account,
@@ -83,8 +97,15 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     LimitOrder order;
     address subAccount;
     bytes32 positionId;
+    bytes32 encodedVaas;
+    bytes32[] priceData;
+    bytes32[] publishTimeData;
+    address payable feeReceiver;
+    uint256 orderIndex;
+    uint256 minPublishTime;
     bool positionIsLong;
     bool isNewPosition;
+    bool isMarketOrder;
   }
 
   struct ValidatePositionOrderPriceVars {
@@ -111,6 +132,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   address public tradeService;
   IEcoPyth public pyth;
   uint256 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
+  uint256 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on order stale
+  bool private isExecuting; // order is executing (prevent direct call executeLimitOrder()
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
@@ -124,7 +147,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address _weth,
     address _tradeService,
     address _pyth,
-    uint256 _minExecutionFee
+    uint256 _minExecutionFee,
+    uint256 _minExecutionTimestamp
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -136,6 +160,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     minExecutionFee = _minExecutionFee;
+    minExecutionTimestamp = _minExecutionTimestamp;
 
     // slither-disable-next-line unused-return
     TradeService(_tradeService).perpStorage();
@@ -201,7 +226,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       triggerAboveThreshold: _triggerPrice == 0 ? true : _triggerAboveThreshold,
       executionFee: _executionFee,
       reduceOnly: _reduceOnly,
-      tpToken: _tpToken
+      tpToken: _tpToken,
+      createdTimestamp: block.timestamp
     });
 
     // Insert the limit order into the list
@@ -239,18 +265,78 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
     ExecuteOrderVars memory vars;
-
     vars.subAccount = _getSubAccount(_account, _subAccountId);
     vars.order = limitOrders[vars.subAccount][_orderIndex];
-
-    // Remove this executed order from the list
-    _removeOrder(vars.order, vars.subAccount, _orderIndex);
 
     // Check if this order still exists
     if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
+    vars.orderIndex = _orderIndex;
+    vars.feeReceiver = _feeReceiver;
+    vars.priceData = _priceData;
+    vars.publishTimeData = _publishTimeData;
+    vars.minPublishTime = _minPublishTime;
+    vars.encodedVaas = _encodedVaas;
+    vars.isMarketOrder = vars.order.triggerAboveThreshold && vars.order.triggerPrice == 0;
+
+    // Check if the order is a market order and is stale
+    if (vars.isMarketOrder && block.timestamp > vars.order.createdTimestamp + minExecutionTimestamp) {
+      _cancelOrder(vars.order, vars.subAccount, vars.orderIndex);
+      return;
+    }
+
+    // try executing order
+    isExecuting = true;
+    try this.executeLimitOrder(vars) {
+      // Execution succeeded
+      isExecuting = false;
+    } catch Error(string memory errMsg) {
+      _handleOrderFail(vars, errMsg);
+    } catch Panic(uint /*errorCode*/) {
+      _handleOrderFail(vars, "Panic occurred while executing the limit order");
+    } catch (bytes memory errMsg) {
+      _handleOrderFail(vars, string(errMsg));
+    }
+  }
+
+  function _handleOrderFail(ExecuteOrderVars memory vars, string memory errMsg) internal {
+    // Execution failed
+    isExecuting = false;
+
+    // Handle the error depending on the type of order
+    if (vars.isMarketOrder) {
+      // Cancel market order and transfer execution fee to executor
+      _removeOrder(vars.order, vars.subAccount, vars.orderIndex);
+      _transferOutETH(vars.order.executionFee, vars.feeReceiver);
+
+      emit LogExecuteMarketOrderFail(
+        vars.order.account,
+        vars.order.subAccountId,
+        vars.orderIndex,
+        vars.order.marketIndex,
+        vars.order.sizeDelta,
+        vars.order.triggerPrice,
+        vars.order.triggerAboveThreshold,
+        vars.order.executionFee,
+        vars.order.reduceOnly,
+        vars.order.tpToken,
+        errMsg
+      );
+    } else {
+      // Revert with the error message
+      require(false, errMsg);
+    }
+  }
+
+  function executeLimitOrder(ExecuteOrderVars memory vars) external {
+    // if not in executing state, then revert
+    if (!isExecuting) revert ILimitTradeHandler_NotExecutionState();
+
+    // Remove this executed order from the list
+    _removeOrder(vars.order, vars.subAccount, vars.orderIndex);
+
     // Update price to Pyth
-    pyth.updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+    pyth.updatePriceFeeds(vars.priceData, vars.publishTimeData, vars.minPublishTime, vars.encodedVaas);
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
@@ -277,8 +363,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         // New position and Long position
         // just increase position when BUY
         TradeService(tradeService).increasePosition({
-          _primaryAccount: _account,
-          _subAccountId: _subAccountId,
+          _primaryAccount: vars.order.account,
+          _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
           _limitPriceE30: vars.order.triggerPrice
@@ -289,8 +375,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
           // Flip the position
           // Fully close Short position
           TradeService(tradeService).decreasePosition({
-            _account: _account,
-            _subAccountId: _subAccountId,
+            _account: vars.order.account,
+            _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
@@ -298,8 +384,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
           });
           // Flip it to Long position
           TradeService(tradeService).increasePosition({
-            _primaryAccount: _account,
-            _subAccountId: _subAccountId,
+            _primaryAccount: vars.order.account,
+            _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
             _limitPriceE30: vars.order.triggerPrice
@@ -307,8 +393,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         } else {
           // Not flip
           TradeService(tradeService).decreasePosition({
-            _account: _account,
-            _subAccountId: _subAccountId,
+            _account: vars.order.account,
+            _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: _min(
               uint256(vars.order.sizeDelta),
@@ -325,8 +411,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         // New position and Short position
         // just increase position when SELL
         TradeService(tradeService).increasePosition({
-          _primaryAccount: _account,
-          _subAccountId: _subAccountId,
+          _primaryAccount: vars.order.account,
+          _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
           _limitPriceE30: vars.order.triggerPrice
@@ -337,8 +423,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
           // Flip the position
           // Fully close Long position
           TradeService(tradeService).decreasePosition({
-            _account: _account,
-            _subAccountId: _subAccountId,
+            _account: vars.order.account,
+            _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
@@ -346,8 +432,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
           });
           // Flip it to Short position
           TradeService(tradeService).increasePosition({
-            _primaryAccount: _account,
-            _subAccountId: _subAccountId,
+            _primaryAccount: vars.order.account,
+            _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
             _limitPriceE30: vars.order.triggerPrice
@@ -355,8 +441,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         } else {
           // Not flip
           TradeService(tradeService).decreasePosition({
-            _account: _account,
-            _subAccountId: _subAccountId,
+            _account: vars.order.account,
+            _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: _min(
               uint256(-vars.order.sizeDelta),
@@ -370,12 +456,12 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     }
 
     // Pay the executor
-    _transferOutETH(vars.order.executionFee, _feeReceiver);
+    _transferOutETH(vars.order.executionFee, vars.feeReceiver);
 
     emit LogExecuteLimitOrder(
-      _account,
-      _subAccountId,
-      _orderIndex,
+      vars.order.account,
+      vars.order.subAccountId,
+      vars.orderIndex,
       vars.order.marketIndex,
       vars.order.sizeDelta,
       vars.order.triggerPrice,
@@ -396,15 +482,19 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
+    _cancelOrder(_order, subAccount, _orderIndex);
+  }
+
+  function _cancelOrder(LimitOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
     // Remove this order from the list
-    _removeOrder(_order, subAccount, _orderIndex);
+    _removeOrder(_order, _subAccount, _orderIndex);
 
     // Refund the execution fee to the creator of this order
     _transferOutETH(_order.executionFee, _order.account);
 
     emit LogCancelLimitOrder(
       _order.account,
-      _subAccountId,
+      _order.subAccountId,
       _orderIndex,
       _order.marketIndex,
       _order.sizeDelta,
@@ -569,6 +659,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;
+  }
+
+  function setMinExecutionTimestamp(uint256 _newMinExecutionTimestamp) external onlyOwner {
+    emit LogSetMinExecutionTimestamp(minExecutionTimestamp, _newMinExecutionTimestamp);
+    minExecutionTimestamp = _newMinExecutionTimestamp;
   }
 
   function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {

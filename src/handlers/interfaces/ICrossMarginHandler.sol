@@ -23,16 +23,21 @@ interface ICrossMarginHandler {
     uint256 orderId;
     uint256 amount;
     uint256 executionFee;
+    uint48 createdTimestamp;
+    uint48 executedTimestamp;
     address payable account;
     address token;
-    uint8 subAccountId;
-    bool shouldUnwrap;
     CrossMarginService crossMarginService;
+    uint8 subAccountId;
+    uint8 status; // 0 = pending, 1 = execution success, 2 = execution fail
+    bool shouldUnwrap;
   }
 
   /**
    * States
    */
+
+  function nextExecutionOrderIndex() external view returns (uint256);
 
   function crossMarginService() external returns (address);
 
@@ -66,4 +71,25 @@ interface ICrossMarginHandler {
   function setPyth(address _address) external;
 
   function setOrderExecutor(address _executor, bool _isAllow) external;
+
+  function convertSGlpCollateral(
+    uint8 _subAccountId,
+    address _tokenOut,
+    uint256 _amountIn
+  ) external returns (uint256 _amountOut);
+
+  function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrder);
+
+  function getWithdrawOrderLength() external view returns (uint256);
+
+  function getActiveWithdrawOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder);
+
+  function getExecutedWithdrawOrders(
+    address _account,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder);
 }

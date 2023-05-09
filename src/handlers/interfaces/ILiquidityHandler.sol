@@ -23,11 +23,13 @@ interface ILiquidityHandler {
     uint256 amount;
     uint256 minOut;
     uint256 executionFee;
-    uint256 orderTimestamp;
     address payable account;
+    uint48 createdTimestamp;
+    uint48 executedTimestamp;
     address token;
     bool isAdd;
-    bool isNativeOut;
+    bool isNativeOut; // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
+    uint8 status; // 0 = pending, 1 = execution success, 2 = execution fail
   }
 
   /**
@@ -67,7 +69,20 @@ interface ILiquidityHandler {
 
   function getLiquidityOrders() external view returns (LiquidityOrder[] memory);
 
+  function getLiquidityOrderLength() external view returns (uint256);
+
   function setOrderExecutor(address _executor, bool _isOk) external;
 
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256);
+
+  function getActiveLiquidityOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LiquidityOrder[] memory _liquidityOrders);
+
+  function getExecutedLiquidityOrders(
+    address _account,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LiquidityOrder[] memory _liquidityOrders);
 }

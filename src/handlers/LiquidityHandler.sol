@@ -39,7 +39,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 amountIn,
     uint256 minOut,
     uint256 executionFee,
-    uint256 orderTimestamp
+    uint48 createdTimestamp
   );
   event LogCreateRemoveLiquidityOrder(
     address indexed account,
@@ -49,7 +49,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 minOut,
     uint256 executionFee,
     bool isNativeOut,
-    uint256 orderTimestamp
+    uint48 createdTimestamp
   );
   event LogExecuteLiquidityOrder(
     address indexed account,
@@ -85,8 +85,9 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
   bool private isExecuting; // order is executing (prevent direct call executeLiquidity()
 
-  LiquidityOrder[] public liquidityOrders; // all pending liquidity orders
+  LiquidityOrder[] public liquidityOrders; // all liquidityOrder
   mapping(address => bool) public orderExecutors; // address -> whitelist executors
+  mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // account -> executed orders
 
   /// @notice Initializes the LiquidityHandler contract with the provided configuration parameters.
   /// @param _liquidityService Address of the LiquidityService contract.
@@ -142,7 +143,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _executionFee,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
-    uint256 _orderTimestamp = block.timestamp;
+    uint48 _createdTimestamp = uint48(block.timestamp);
 
     // pre validate
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
@@ -170,11 +171,21 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         isAdd: true,
         executionFee: _executionFee,
         isNativeOut: _shouldWrap,
-        orderTimestamp: _orderTimestamp
+        createdTimestamp: _createdTimestamp,
+        executedTimestamp: 0,
+        status: 0
       })
     );
 
-    emit LogCreateAddLiquidityOrder(msg.sender, _orderId, _tokenIn, _amountIn, _minOut, _executionFee, _orderTimestamp);
+    emit LogCreateAddLiquidityOrder(
+      msg.sender,
+      _orderId,
+      _tokenIn,
+      _amountIn,
+      _minOut,
+      _executionFee,
+      _createdTimestamp
+    );
     return _orderId;
   }
 
@@ -191,7 +202,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _executionFee,
     bool _isNativeOut
   ) external payable nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _orderId) {
-    uint256 _orderTimestamp = block.timestamp;
+    uint48 _createdTimestamp = uint48(block.timestamp);
 
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
     if (_executionFee < minExecutionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
@@ -218,7 +229,9 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         isAdd: false,
         executionFee: _executionFee,
         isNativeOut: _isNativeOut,
-        orderTimestamp: _orderTimestamp
+        createdTimestamp: _createdTimestamp,
+        executedTimestamp: 0,
+        status: 0
       })
     );
 
@@ -230,7 +243,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _minOut,
       _executionFee,
       _isNativeOut,
-      _orderTimestamp
+      _createdTimestamp
     );
     return _orderId;
   }
@@ -273,33 +286,47 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = liquidityOrders[i];
-      _executionFee = _order.executionFee;
-      // Set the flag to indicate that orders are currently being executed
-      isExecuting = true;
+      if (_order.amount > 0) {
+        _executionFee = _order.executionFee;
+        // Set the flag to indicate that orders are currently being executed
+        isExecuting = true;
 
-      try this.executeLiquidity(_order) returns (uint256 actualOut) {
-        emit LogExecuteLiquidityOrder(
-          _order.account,
-          _order.orderId,
-          _order.token,
-          _order.amount,
-          _order.minOut,
-          _order.isAdd,
-          actualOut
-        );
-      } catch Error(string memory) {
-        //refund in case of revert as message
-        _refund(_order);
-      } catch (bytes memory) {
-        //refund in case of revert as bytes
-        _refund(_order);
+        try this.executeLiquidity(_order) returns (uint256 actualOut) {
+          emit LogExecuteLiquidityOrder(
+            _order.account,
+            _order.orderId,
+            _order.token,
+            _order.amount,
+            _order.minOut,
+            _order.isAdd,
+            actualOut
+          );
+
+          // update order status
+          _order.status = 1; // success
+        } catch Error(string memory) {
+          //refund in case of revert as message
+          _refund(_order);
+          _order.status = 2; // fail
+        } catch (bytes memory) {
+          //refund in case of revert as bytes
+          _refund(_order);
+          _order.status = 2; // fail
+        }
+
+        // assign exec time
+        _order.executedTimestamp = uint48(block.timestamp);
+
+        isExecuting = false;
+
+        _totalFeeReceiver += _executionFee;
+
+        // save to executed order first
+        accountExecutedLiquidityOrders[_order.account].push(_order);
+
+        // clear executed liquidity order
+        delete liquidityOrders[i];
       }
-
-      isExecuting = false;
-      _totalFeeReceiver += _executionFee;
-
-      // clear executed liquidity order
-      delete liquidityOrders[i];
 
       unchecked {
         ++i;
@@ -377,7 +404,10 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   // slither-disable-next-line
   function _refund(LiquidityOrder memory _order) private {
     // if found order with amount 0. means order has been executed or canceled
-    if (_order.amount == 0) revert ILiquidityHandler_NoOrder();
+    uint256 _amount = _order.amount;
+    if (_amount == 0) return;
+
+    address _account = _order.account;
 
     if (_order.isAdd) {
       if (_order.isNativeOut) {
@@ -421,6 +451,67 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @notice get liquidity orders length
   function getLiquidityOrderLength() external view returns (uint256) {
     return liquidityOrders.length;
+  }
+
+  function getActiveLiquidityOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LiquidityOrder[] memory _liquidityOrders) {
+    // Find the _returnCount
+    uint256 _returnCount;
+    {
+      uint256 _activeOrderCount = liquidityOrders.length - nextExecutionOrderIndex;
+
+      uint256 _afterOffsetCount = _activeOrderCount > _offset ? (_activeOrderCount - _offset) : 0;
+      _returnCount = _afterOffsetCount > _limit ? _limit : _afterOffsetCount;
+
+      if (_returnCount == 0) return _liquidityOrders;
+    }
+
+    // Initialize order array
+    _liquidityOrders = new LiquidityOrder[](_returnCount);
+
+    // Build the array
+    {
+      for (uint i = 0; i < _returnCount; ) {
+        _liquidityOrders[i] = liquidityOrders[nextExecutionOrderIndex + _offset + i];
+        unchecked {
+          ++i;
+        }
+      }
+
+      return _liquidityOrders;
+    }
+  }
+
+  function getExecutedLiquidityOrders(
+    address _account,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LiquidityOrder[] memory _liquidityOrders) {
+    // Find the _returnCount and
+    uint256 _returnCount;
+    {
+      uint256 _exeuctedOrderCount = accountExecutedLiquidityOrders[_account].length;
+      uint256 _afterOffsetCount = _exeuctedOrderCount > _offset ? (_exeuctedOrderCount - _offset) : 0;
+      _returnCount = _afterOffsetCount > _limit ? _limit : _afterOffsetCount;
+
+      if (_returnCount == 0) return _liquidityOrders;
+    }
+
+    // Initialize order array
+    _liquidityOrders = new LiquidityOrder[](_returnCount);
+
+    // Build the array
+    {
+      for (uint i = 0; i < _returnCount; ) {
+        _liquidityOrders[i] = accountExecutedLiquidityOrders[_account][_offset + i];
+        unchecked {
+          ++i;
+        }
+      }
+      return _liquidityOrders;
+    }
   }
 
   /**

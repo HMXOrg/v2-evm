@@ -7,4 +7,6 @@ interface IGmxRewardTracker {
   function claimable(address _account) external view returns (uint256);
 
   function claim(address _receiver) external returns (uint256);
+
+  function stakedAmounts(address _account) external returns (uint256);
 }

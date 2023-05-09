@@ -211,19 +211,23 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
   function updateGlobalLongMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice
+    uint256 _newAccumSE,
+    uint256 _newAccumS2E
   ) external onlyWhitelistedExecutor {
     markets[_marketIndex].longPositionSize = _newPositionSize;
-    markets[_marketIndex].longAvgPrice = _newAvgPrice;
+    markets[_marketIndex].longAccumSE = _newAccumSE;
+    markets[_marketIndex].longAccumS2E = _newAccumS2E;
   }
 
   function updateGlobalShortMarketById(
     uint256 _marketIndex,
     uint256 _newPositionSize,
-    uint256 _newAvgPrice
+    uint256 _newAccumSE,
+    uint256 _newAccumS2E
   ) external onlyWhitelistedExecutor {
     markets[_marketIndex].shortPositionSize = _newPositionSize;
-    markets[_marketIndex].shortAvgPrice = _newAvgPrice;
+    markets[_marketIndex].shortAccumSE = _newAccumSE;
+    markets[_marketIndex].shortAccumS2E = _newAccumS2E;
   }
 
   function updateGlobalState(GlobalState memory _newGlobalState) external onlyWhitelistedExecutor {
@@ -275,14 +279,6 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
       markets[_marketIndex].longPositionSize -= _size;
     } else {
       markets[_marketIndex].shortPositionSize -= _size;
-    }
-  }
-
-  function updateMarketPrice(uint256 _marketIndex, bool _isLong, uint256 _price) external onlyWhitelistedExecutor {
-    if (_isLong) {
-      markets[_marketIndex].longAvgPrice = _price;
-    } else {
-      markets[_marketIndex].shortAvgPrice = _price;
     }
   }
 

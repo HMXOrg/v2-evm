@@ -41,4 +41,11 @@ interface ICrossMarginService {
   function setConfigStorage(address _configStorage) external;
 
   function setVaultStorage(address _vaultStorage) external;
+
+  function convertSGlpCollateral(
+    address _primaryAccount,
+    uint8 _subAccountId,
+    address _tokenOut,
+    uint256 _amountIn
+  ) external returns (uint256);
 }

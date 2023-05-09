@@ -41,7 +41,9 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
-import { IStrategy } from "@hmx/strategies/interfaces/IStrategy.sol";
+
+import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
+import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
@@ -340,15 +342,17 @@ library Deployer {
     address _configStorage,
     address _vaultStorage,
     address _perpStorage,
-    address _calculator
+    address _calculator,
+    address _convertedGlpStrategy
   ) internal returns (ICrossMarginService) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/CrossMarginService.sol/CrossMarginService.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address)")),
+      bytes4(keccak256("initialize(address,address,address,address,address)")),
       _configStorage,
       _vaultStorage,
       _perpStorage,
-      _calculator
+      _calculator,
+      _convertedGlpStrategy
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ICrossMarginService(payable(_proxy));
@@ -473,22 +477,39 @@ library Deployer {
   function deployStakedGlpStrategy(
     address _proxyAdmin,
     IERC20Upgradeable _sGlp,
-    IStrategy.StakedGlpStrategyConfig memory _stakedGlpStrategyConfig,
-    address _keeper,
+    IStakedGlpStrategy.StakedGlpStrategyConfig memory _stakedGlpStrategyConfig,
     address _treasury,
     uint16 _strategyBps
-  ) internal returns (IStrategy) {
+  ) internal returns (IStakedGlpStrategy) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/StakedGlpStrategy.sol/StakedGlpStrategy.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,(address,address,address,address,address),address,address,uint16)")),
+      bytes4(keccak256("initialize(address,(address,address,address,address,address),address,uint16)")),
       _sGlp,
       _stakedGlpStrategyConfig,
-      _keeper,
       _treasury,
       _strategyBps
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IStrategy(payable(_proxy));
+    return IStakedGlpStrategy(payable(_proxy));
+  }
+
+  function deployConvertedGlpStrategy(
+    address _proxyAdmin,
+    IERC20Upgradeable _sGlp,
+    IGmxRewardRouterV2 _rewardRouter,
+    IVaultStorage _vaultStorage
+  ) internal returns (IConvertedGlpStrategy) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/ConvertedGlpStrategy.sol/ConvertedGlpStrategy.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address)")),
+      _sGlp,
+      _rewardRouter,
+      _vaultStorage
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IConvertedGlpStrategy(payable(_proxy));
   }
 
   /**

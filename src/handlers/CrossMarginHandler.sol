@@ -82,8 +82,9 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
   bool private isExecuting; // order is executing (prevent direct call executeWithdrawOrder()
 
-  WithdrawOrder[] public withdrawOrders; // all pending withdraw orders
-  mapping(address => bool) public orderExecutors; // address -> whitelist executors
+  WithdrawOrder[] public withdrawOrders; // all withdrawOrder
+  mapping(address => WithdrawOrder[]) public subAccountExecutedWithdrawOrders; // subAccount -> executed orders
+  mapping(address => bool) public orderExecutors; //address -> flag to execute
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _crossMarginService Address of the CrossMarginService contract.
@@ -100,6 +101,67 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     crossMarginService = _crossMarginService;
     pyth = _pyth;
     minExecutionOrderFee = _minExecutionOrderFee;
+  }
+
+  function getActiveWithdrawOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder) {
+    // Find the _returnCount
+    uint256 _returnCount;
+    {
+      uint256 _activeOrderCount = withdrawOrders.length - nextExecutionOrderIndex;
+
+      uint256 _afterOffsetCount = _activeOrderCount > _offset ? (_activeOrderCount - _offset) : 0;
+      _returnCount = _afterOffsetCount > _limit ? _limit : _afterOffsetCount;
+
+      if (_returnCount == 0) return _withdrawOrder;
+    }
+
+    // Initialize order array
+    _withdrawOrder = new WithdrawOrder[](_returnCount);
+
+    // Build the array
+    {
+      for (uint i = 0; i < _returnCount; ) {
+        _withdrawOrder[i] = withdrawOrders[nextExecutionOrderIndex + _offset + i];
+        unchecked {
+          ++i;
+        }
+      }
+
+      return _withdrawOrder;
+    }
+  }
+
+  function getExecutedWithdrawOrders(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _withdrawOrder) {
+    // Find the _returnCount and
+    uint256 _returnCount;
+    {
+      uint256 _exeuctedOrderCount = subAccountExecutedWithdrawOrders[_subAccount].length;
+      uint256 _afterOffsetCount = _exeuctedOrderCount > _offset ? (_exeuctedOrderCount - _offset) : 0;
+      _returnCount = _afterOffsetCount > _limit ? _limit : _afterOffsetCount;
+
+      if (_returnCount == 0) return _withdrawOrder;
+    }
+
+    // Initialize order array
+    _withdrawOrder = new WithdrawOrder[](_returnCount);
+
+    // Build the array
+    {
+      for (uint i = 0; i < _returnCount; ) {
+        _withdrawOrder[i] = subAccountExecutedWithdrawOrders[_subAccount][_offset + i];
+        unchecked {
+          ++i;
+        }
+      }
+      return _withdrawOrder;
+    }
   }
 
   /**
@@ -190,7 +252,10 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         executionFee: _executionFee,
         shouldUnwrap: _shouldUnwrap,
         subAccountId: _subAccountId,
-        crossMarginService: CrossMarginService(crossMarginService)
+        crossMarginService: CrossMarginService(crossMarginService),
+        createdTimestamp: uint48(block.timestamp),
+        executedTimestamp: 0,
+        status: 0 // pending
       })
     );
 
@@ -251,6 +316,9 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
           _order.shouldUnwrap,
           true
         );
+
+        // update order status
+        _order.status = 1; // success
       } catch Error(string memory) {
         // Do nothing
       } catch (bytes memory) {
@@ -263,11 +331,19 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
           _order.shouldUnwrap,
           false
         );
+
+        // update order status
+        _order.status = 2; // fail
       }
+
+      // assign exec time
+      _order.executedTimestamp = uint48(block.timestamp);
 
       isExecuting = false;
       _totalFeeReceiver += _executionFee;
 
+      // save to executed order first
+      subAccountExecutedWithdrawOrders[_getSubAccount(_order.account, _order.subAccountId)].push(_order);
       // clear executed withdraw order
       delete withdrawOrders[i];
 
@@ -400,6 +476,20 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     emit LogSetOrderExecutor(_executor, _isAllow);
   }
 
+  /// @notice convert collateral
+  function convertSGlpCollateral(
+    uint8 _subAccountId,
+    address _tokenOut,
+    uint256 _amountIn
+  ) external nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _amountOut) {
+    return
+      CrossMarginService(crossMarginService).convertSGlpCollateral(msg.sender, _subAccountId, _tokenOut, _amountIn);
+  }
+
+  /**
+   * Private Functions
+   */
+
   /// @notice Transfer in ETH from user to be used as execution fee
   /// @dev The received ETH will be wrapped into WETH and store in this contract for later use.
   function _transferInETH() private {
@@ -416,6 +506,11 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     IWNative(ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
     payable(_receiver).transfer(_amountOut);
+  }
+
+  function _getSubAccount(address _primary, uint8 _subAccountId) private pure returns (address) {
+    if (_subAccountId > 255) revert();
+    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 
   receive() external payable {

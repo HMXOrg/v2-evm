@@ -11,6 +11,9 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
  */
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+
 // Mocks
 import { MockErc20 } from "../mocks/MockErc20.sol";
 import { MockWNative } from "../mocks/MockWNative.sol";
@@ -24,6 +27,7 @@ import { MockTradeService } from "../mocks/MockTradeService.sol";
 import { MockCrossMarginService } from "../mocks/MockCrossMarginService.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 import { MockGlpManager } from "../mocks/MockGlpManager.sol";
+import { MockGmxRewardRouterV2 } from "../mocks/MockGmxRewardRouterV2.sol";
 
 // Interfaces
 import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
@@ -40,6 +44,9 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { console } from "forge-std/console.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
+
+import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 
 abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   address internal ALICE;
@@ -74,6 +81,10 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockLiquidationService internal mockLiquidationService;
   MockCrossMarginService internal mockCrossMarginService;
   MockGlpManager internal mockGlpManager;
+  MockGmxRewardRouterV2 internal mockGmxRewardRouterv2;
+
+  // strategy
+  IConvertedGlpStrategy convertedGlpStrategy;
 
   MockWNative internal weth;
   MockErc20 internal wbtc;
@@ -96,6 +107,8 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant daiPriceId = 0x0000000000000000000000000000000000000000000000000000000000000003;
   bytes32 internal constant usdcPriceId = 0x0000000000000000000000000000000000000000000000000000000000000004;
   bytes32 internal constant usdtPriceId = 0x0000000000000000000000000000000000000000000000000000000000000005;
+  // Fx
+  bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
 
   bytes32 internal constant wethAssetId = "WETH";
   bytes32 internal constant wbtcAssetId = "WBTC";
@@ -103,10 +116,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   bytes32 internal constant usdcAssetId = "USDC";
   bytes32 internal constant usdtAssetId = "USDT";
   bytes32 internal constant sglpAssetId = "SGLP";
-
-  // Fx
-  bytes32 internal constant jpyPriceId = 0x0000000000000000000000000000000000000000000000000000000000000101;
-
   bytes32 internal constant jpyAssetId = "JPY";
 
   constructor() {
@@ -145,15 +154,23 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockOracle = new MockOracleMiddleware();
     mockTradeService = new MockTradeService();
     mockLiquidationService = new MockLiquidationService();
-    mockGlpManager = new MockGlpManager();
-
-    pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
-    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
-
     mockLiquidityService = new MockLiquidityService(
       address(configStorage),
       address(perpStorage),
       address(vaultStorage)
+    );
+
+    mockGlpManager = new MockGlpManager();
+    mockGmxRewardRouterv2 = new MockGmxRewardRouterV2();
+
+    pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
+
+    convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(
+      address(proxyAdmin),
+      IERC20Upgradeable(address(sglp)),
+      IGmxRewardRouterV2(mockGmxRewardRouterv2),
+      IVaultStorage(vaultStorage)
     );
 
     // configStorage setup

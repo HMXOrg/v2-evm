@@ -62,7 +62,8 @@ contract CrossMarginHandler_Base is BaseTest {
       address(configStorage),
       address(vaultStorage),
       address(perpStorage),
-      address(calculator)
+      address(calculator),
+      address(convertedGlpStrategy)
     );
     crossMarginHandler = Deployer.deployCrossMarginHandler(
       address(proxyAdmin),
@@ -162,6 +163,32 @@ contract CrossMarginHandler_Base is BaseTest {
     bytes32[] memory publishTimeUpdateData = ecoPyth.buildPublishTimeUpdateData(_publishTimeDiffs);
     crossMarginHandler.executeOrder({
       _endIndex: orderIndex,
+      _feeReceiver: payable(FEEVER),
+      _priceData: priceUpdateData,
+      _publishTimeData: publishTimeUpdateData,
+      _minPublishTime: block.timestamp,
+      _encodedVaas: keccak256("someEncodedVaas")
+    });
+  }
+
+  function simulateAliceCreateWithdrawOrder() internal {
+    vm.deal(ALICE, 0.0001 ether);
+
+    vm.prank(ALICE);
+    uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: executionOrderFee }(
+      SUB_ACCOUNT_NO,
+      address(weth),
+      1 ether,
+      0.0001 ether,
+      false
+    );
+  }
+
+  function simulateExecuteWithdrawOrder() internal {
+    bytes32[] memory priceUpdateData = ecoPyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory publishTimeUpdateData = ecoPyth.buildPublishTimeUpdateData(publishTimeDiffs);
+    crossMarginHandler.executeOrder({
+      _endIndex: crossMarginHandler.getWithdrawOrderLength(),
       _feeReceiver: payable(FEEVER),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,

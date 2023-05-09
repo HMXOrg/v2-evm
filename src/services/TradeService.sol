@@ -1,21 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
+
+// bases
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 // contracts
+import { FullMath } from "@hmx/libraries/FullMath.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
-import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 // interfaces
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
-contract TradeService is ReentrancyGuardUpgradeable, OwnableUpgradeable, ITradeService {
+contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgradeable {
+  using FullMath for uint256;
+
   /**
    * Events
    */
@@ -85,6 +90,8 @@ contract TradeService is ReentrancyGuardUpgradeable, OwnableUpgradeable, ITradeS
     bool isLong;
     bool isNewPosition;
     bool currentPositionIsLong;
+    uint256 oldSumSe;
+    uint256 oldSumS2e;
     // for SLOAD
     PerpStorage.Position position;
     OracleMiddleware oracle;
@@ -110,6 +117,9 @@ contract TradeService is ReentrancyGuardUpgradeable, OwnableUpgradeable, ITradeS
     address tpToken;
     bytes32 positionId;
     uint256 nextClosePrice;
+    uint256 oldSumSe;
+    uint256 oldSumS2e;
+    uint256 nextAvgPrice;
     // for SLOAD
     Calculator calculator;
     PerpStorage perpStorage;
@@ -299,6 +309,8 @@ contract TradeService is ReentrancyGuardUpgradeable, OwnableUpgradeable, ITradeS
 
     // get the absolute value of the new size delta
     _vars.absSizeDelta = _abs(_sizeDelta);
+    _vars.oldSumSe = 0;
+    _vars.oldSumS2e = 0;
 
     // if new position, set the average price to the current price
     if (_vars.isNewPosition) {
@@ -343,6 +355,10 @@ contract TradeService is ReentrancyGuardUpgradeable, OwnableUpgradeable, ITradeS
       int256 deltaPnl = _vars.isLong ? int256(_delta) : -int256(_delta);
       _vars.unrealizedPnl = _isProfit ? deltaPnl : -deltaPnl;
 
+      uint256 absPositionSizeE30 = _abs(_vars.position.positionSizeE30);
+      _vars.oldSumSe = absPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30);
+      _vars.oldSumS2e = absPositionSizeE30.mulDiv(absPositionSizeE30, _vars.position.avgEntryPriceE30);
+
       _vars.position.avgEntryPriceE30 = _calculateEntryAveragePrice(
         _vars.position.positionSizeE30,
         _sizeDelta,
@@ -376,47 +392,46 @@ contract TradeService is ReentrancyGuardUpgradeable, OwnableUpgradeable, ITradeS
       _vars.position.reserveValueE30 += _maxReserve;
     }
 
-    // update global market states
+    // update counter trade states
     {
-      if (_vars.isLong) {
-        uint256 _nextAvgPrice = _market.longPositionSize == 0
-          ? _vars.adaptivePriceE30
-          : _vars.calculator.calculateMarketAveragePrice(
-            int256(_market.longPositionSize),
-            _market.longAvgPrice,
-            _sizeDelta,
-            _vars.closePriceE30,
-            _vars.nextClosePrice,
-            0
+      if (_vars.isNewPosition) {
+        _vars.isLong
+          ? _vars.perpStorage.updateGlobalLongMarketById(
+            _marketIndex,
+            _market.longPositionSize + _vars.absSizeDelta,
+            _market.longAccumSE + _vars.absSizeDelta.mulDiv(1e30, _vars.position.avgEntryPriceE30),
+            _market.longAccumS2E + _vars.absSizeDelta.mulDiv(_vars.absSizeDelta, _vars.position.avgEntryPriceE30)
+          )
+          : _vars.perpStorage.updateGlobalShortMarketById(
+            _marketIndex,
+            _market.shortPositionSize + _vars.absSizeDelta,
+            _market.shortAccumSE + ((_vars.absSizeDelta * 1e30) / _vars.position.avgEntryPriceE30),
+            _market.shortAccumS2E + _vars.absSizeDelta.mulDiv(_vars.absSizeDelta, _vars.position.avgEntryPriceE30)
           );
-
-        _vars.perpStorage.updateGlobalLongMarketById(
-          _marketIndex,
-          _market.longPositionSize + _vars.absSizeDelta,
-          _nextAvgPrice
-        );
       } else {
-        // to increase SHORT position sizeDelta should be negative
-        uint256 _nextAvgPrice = _market.shortPositionSize == 0
-          ? _vars.adaptivePriceE30
-          : _vars.calculator.calculateMarketAveragePrice(
-            -int256(_market.shortPositionSize),
-            _market.shortAvgPrice,
-            _sizeDelta,
-            _vars.closePriceE30,
-            _vars.nextClosePrice,
-            0
+        uint256 absNewPositionSizeE30 = _abs(_vars.position.positionSizeE30);
+        _vars.isLong
+          ? _vars.perpStorage.updateGlobalLongMarketById(
+            _marketIndex,
+            _market.longPositionSize + _vars.absSizeDelta,
+            (_market.longAccumSE - _vars.oldSumSe) +
+              absNewPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30),
+            (_market.longAccumS2E - _vars.oldSumS2e) +
+              absNewPositionSizeE30.mulDiv(absNewPositionSizeE30, _vars.position.avgEntryPriceE30)
+          )
+          : _vars.perpStorage.updateGlobalShortMarketById(
+            _marketIndex,
+            _market.shortPositionSize + _vars.absSizeDelta,
+            (_market.shortAccumSE - _vars.oldSumSe) +
+              absNewPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30),
+            (_market.shortAccumS2E - _vars.oldSumS2e) +
+              absNewPositionSizeE30.mulDiv(absNewPositionSizeE30, _vars.position.avgEntryPriceE30)
           );
-
-        _vars.perpStorage.updateGlobalShortMarketById(
-          _marketIndex,
-          _market.shortPositionSize + _vars.absSizeDelta,
-          _nextAvgPrice
-        );
       }
     }
 
     // save the updated position to the storage
+    _vars.position.lastIncreaseTimestamp = block.timestamp;
     _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
 
     {
@@ -745,6 +760,9 @@ contract TradeService is ReentrancyGuardUpgradeable, OwnableUpgradeable, ITradeS
         _marketIndex
       );
     }
+    _vars.oldSumSe = _vars.absPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30);
+    _vars.oldSumS2e = _vars.absPositionSizeE30.mulDiv(_vars.absPositionSizeE30, _vars.position.avgEntryPriceE30);
+    uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
     _temp.newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
@@ -845,37 +863,33 @@ contract TradeService is ReentrancyGuardUpgradeable, OwnableUpgradeable, ITradeS
         _vars.perpStorage.removePositionFromSubAccount(_vars.subAccount, _vars.positionId);
       }
 
-      // update market's state
-      if (_vars.isLongPosition) {
-        uint256 _nextAvgPrice = _vars.calculator.calculateMarketAveragePrice(
-          int256(_market.longPositionSize),
-          _market.longAvgPrice,
-          -int256(_vars.positionSizeE30ToDecrease),
-          _vars.closePrice,
-          _vars.nextClosePrice,
-          _vars.realizedPnl
-        );
-
-        _vars.perpStorage.updateGlobalLongMarketById(
-          _marketIndex,
-          _market.longPositionSize - _vars.positionSizeE30ToDecrease,
-          _nextAvgPrice
-        );
-      } else {
-        uint256 _nextAvgPrice = _vars.calculator.calculateMarketAveragePrice(
-          -int256(_market.shortPositionSize),
-          _market.shortAvgPrice,
-          int256(_vars.positionSizeE30ToDecrease),
-          _vars.closePrice,
-          _vars.nextClosePrice,
-          -_vars.realizedPnl
-        );
-
-        _vars.perpStorage.updateGlobalShortMarketById(
-          _marketIndex,
-          _market.shortPositionSize - _vars.positionSizeE30ToDecrease,
-          _nextAvgPrice
-        );
+      // update counter trade states
+      {
+        _vars.isLongPosition
+          ? _vars.perpStorage.updateGlobalLongMarketById(
+            _marketIndex,
+            _market.longPositionSize - _vars.positionSizeE30ToDecrease,
+            _vars.position.avgEntryPriceE30 > 0
+              ? (_market.longAccumSE - _vars.oldSumSe) +
+                _newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)
+              : 0,
+            _vars.position.avgEntryPriceE30 > 0
+              ? (_market.longAccumS2E - _vars.oldSumS2e) +
+                _newAbsPositionSizeE30.mulDiv(_newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
+              : 0
+          )
+          : _vars.perpStorage.updateGlobalShortMarketById(
+            _marketIndex,
+            _market.shortPositionSize - _vars.positionSizeE30ToDecrease,
+            _vars.position.avgEntryPriceE30 > 0
+              ? (_market.shortAccumSE - _vars.oldSumSe) +
+                _newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)
+              : 0,
+            _vars.position.avgEntryPriceE30 > 0
+              ? (_market.shortAccumS2E - _vars.oldSumS2e) +
+                _newAbsPositionSizeE30.mulDiv(_newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
+              : 0
+          );
       }
     }
 

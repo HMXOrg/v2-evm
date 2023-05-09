@@ -25,7 +25,6 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base {
   function testCorrectness_handler_withdrawCollateral() external {
     vm.startPrank(BOB, BOB);
     vm.deal(BOB, 20 ether);
-    address(crossMarginHandler).call{ value: 19 ether }("");
     vm.stopPrank();
 
     address subAccount = getSubAccount(ALICE, SUB_ACCOUNT_NO);

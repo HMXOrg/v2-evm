@@ -7,7 +7,7 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 
-interface IStrategy {
+interface IStakedGlpStrategy {
   struct StakedGlpStrategyConfig {
     IGmxRewardRouterV2 rewardRouter;
     IGmxRewardTracker rewardTracker;
@@ -17,4 +17,6 @@ interface IStrategy {
   }
 
   function execute() external;
+
+  function setWhiteListExecutor(address _executor, bool _active) external;
 }

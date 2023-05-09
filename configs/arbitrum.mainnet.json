@@ -1,34 +1,34 @@
 {
   "proxyAdmin": "",
   "storages": {
-    "config": "0x22eF364C9e06f934d6F5334bc6faC2321De2Ac1b",
-    "perp": "0xC138582ed381480856712A9607aB5537a2D5ee11",
-    "vault": "0x69F493e47C2793AbA58AbC5c1aaaA1d6DB60b608"
+    "config": "0x417B34E90990657BF6adC1Ecc2ac4B36069cc927",
+    "perp": "0x995F553c6EF760ACB6EED102b376c3f159014e3c",
+    "vault": "0x68DaEB1C169d16395Bd03C2d0776A3e54015323e"
   },
   "handlers": {
-    "bot": "0xe90F360721d1e425D16B757F4B40addBeaEBCe2a",
-    "crossMargin": "0x2fDE86903B987CA4FB3Ccfe9bc97CED9E297D361",
-    "limitTrade": "0x2176EB2983C4a36570e82B519E7eB19959119a68",
-    "liquidity": "0x45d88ed405800BABd3D81135a89388706e0787B6",
+    "bot": "0x230764c6c192C0313bea5E5fa7118Fb46268443c",
+    "crossMargin": "0x74eb4E1c2D836e10E0F89cbf9D3C9C38C491c7eF",
+    "limitTrade": "0x2f035c75bE06cdDCA5E23649d9635f649Cb279E5",
+    "liquidity": "0xFc99D238c7A20895ba3756Ee04FD8BfD442c18fD",
     "marketTrade": ""
   },
   "helpers": {
-    "trade": "0x23aD59C8a7595dBa1F3D6225587F2707C4962563"
+    "trade": "0x8a30913D47FeD617778058201846f5326bC9e65D"
   },
   "services": {
-    "crossMargin": "0x951711a021DC9Bb99b0873CcBfF2518414C2021F",
-    "liquidity": "0xF738a396c235Ab83bbfE114BdfFD7fC3689215fE",
-    "liquidation": "0x814F2114688B445a8D3b74b1ed638c1354B2732c",
-    "trade": "0x15572397121B9838DCcEc6aaEd889934eC02af4C"
+    "crossMargin": "0xEf06f7a07400dcb66deC083568E6De341Fd3E642",
+    "liquidity": "0x9abDC95bfc8A3Ca274e8a9B9a31297023a061bE8",
+    "liquidation": "0xAaDc4f7C113679ba1e997D45cd6524599F0bB6AE",
+    "trade": "0xC9C61E8b1695c816Ac5C398639d7a459df5aE000"
   },
   "oracles": {
-    "ecoPyth": "0xC5132016A4376f018C3B6321d2b3eB35Ceb1145f",
-    "pythAdapter": "0x55C3C96D346f87F65B6a500bb7b62Df023BaC726",
-    "sglpStakedAdapter": "0x7D023383E8AD624445655fD5732786a602c8B82D",
-    "middleware": "0xE0F6A9D50420e4415D4d378b2976685Dc7c6a9b3"
+    "ecoPyth": "0xEB27B05178515c7E6E51dEE159c8487A011ac030",
+    "pythAdapter": "0x4c08D11Bc95075AD992Bd7A5776D0D9813E264d5",
+    "sglpStakedAdapter": "0x7AAF085e43f059105F7e1ECc525E8142fF962159",
+    "middleware": "0xFc41505F4e24345E3797b6730a948a2B03a5eC5e"
   },
   "tokens": {
-    "hlp": "0xF15b286430987c2AD302e974C33AB99c68787b86",
+    "hlp": "0x28826219ffb76aa41a56a40e875709391795e512",
     "weth": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
     "wbtc": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
     "usdt": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
@@ -44,7 +44,8 @@
     }
   },
   "strategies": {
-    "stakedGLPStrategy": "0x0555886918E7862b9D500E35bDE3a3A14CcD29DE"
+    "stakedGLPStrategy": "0xDaCFEaAB00C8F008cA253e371659E8b470114AB3",
+    "convertedGlpStrategy": "0xDfc82d68Bb9B715a7DDFE80F2074E86958129B18"
   },
-  "calculator": "0xC44b8fb84B61AcEa1D46665999f4b0543AA1aF3B"
+  "calculator": "0xC98966b9A3236e4d82FBcDe94f0Df257b5033c4C"
 }

@@ -15,7 +15,7 @@ import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 2;
+const subAccountId = 0;
 
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
@@ -28,6 +28,7 @@ const usdtAssetId = ethers.utils.formatBytes32String("USDT");
 const daiAssetId = ethers.utils.formatBytes32String("DAI");
 const appleAssetId = ethers.utils.formatBytes32String("AAPL");
 const jpyAssetId = ethers.utils.formatBytes32String("JPY");
+const glpAssetId = ethers.utils.formatBytes32String("GLP");
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
@@ -37,7 +38,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const multi = new MultiCall(provider);
 
   const balances = await multi.getBalances(
-    [config.tokens.usdc, config.tokens.usdt, config.tokens.dai, config.tokens.wbtc, config.tokens.hlp],
+    [
+      config.tokens.usdc,
+      config.tokens.usdt,
+      config.tokens.dai,
+      config.tokens.wbtc,
+      config.tokens.hlp,
+      config.tokens.sglp,
+    ],
     deployer.address
   );
   console.log("=== Wallet Balances ===");
@@ -65,6 +73,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       token: "eth",
       balance: formatUnits(await provider.getBalance(deployer.address), 18),
+    },
+    {
+      token: "sglp",
+      balance: formatUnits(balances[1][config.tokens.sglp].toString(), 18),
     },
   ]);
 
@@ -98,6 +110,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       target: config.storages.vault,
       function: "traderBalances",
       args: [address, config.tokens.wbtc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "traderBalances",
+      args: [address, config.tokens.sglp],
     },
     // Equity
     {
@@ -170,6 +188,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "getLatestPrice",
       args: [jpyAssetId, false],
     },
+    {
+      interface: OracleMiddleware__factory.abi,
+      target: config.oracles.middleware,
+      function: "getLatestPrice",
+      args: [glpAssetId, false],
+    },
     // PLP
     {
       interface: PLPv2__factory.abi,
@@ -220,67 +244,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "plpLiquidity",
       args: [config.tokens.wbtc],
     },
-    // Fees
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.usdc],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.usdt],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.dai],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.weth],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "protocolFees",
-      args: [config.tokens.wbtc],
-    },
-    // Dev Fees
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.usdc],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.usdt],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.dai],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.weth],
-    },
-    {
-      interface: VaultStorage__factory.abi,
-      target: config.storages.vault,
-      function: "devFees",
-      args: [config.tokens.wbtc],
+      function: "plpLiquidity",
+      args: [config.tokens.sglp],
     },
     // Global Markets
     {
@@ -348,6 +316,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       traderBalancesDai,
       traderBalancesWeth,
       traderBalancesWbtc,
+      traderBalancesSglp,
       equity,
       freeCollateral,
       imr,
@@ -359,6 +328,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       wbtcPrice,
       applePrice,
       jpyPrice,
+      sglpPrice,
       plpTotalSupply,
       plpAum,
       plpTvl,
@@ -367,16 +337,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       plpLiquidityDai,
       plpLiquidityWeth,
       plpLiquidityWbtc,
-      feeUsdc,
-      feeUsdt,
-      feeDai,
-      feeWeth,
-      feeWbtc,
-      devFeeUsdc,
-      devFeeUsdt,
-      devFeeDai,
-      devFeeWeth,
-      devFeeWbtc,
+      plpLiquiditySglp,
       ethusdMarket,
       btcusdMarket,
       applusdMarket,
@@ -388,6 +349,100 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       jpyusdMarketConfig,
     ],
   ] = await multi.multiCall(inputs);
+
+  const feeInputs = [
+    // Fees
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.usdc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.usdt],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.dai],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.weth],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.wbtc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "protocolFees",
+      args: [config.tokens.sglp],
+    },
+    // Dev Fees
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.usdc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.usdt],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.dai],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.weth],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.wbtc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "devFees",
+      args: [config.tokens.sglp],
+    },
+  ];
+  const [
+    ,
+    [
+      feeUsdc,
+      feeUsdt,
+      feeDai,
+      feeWeth,
+      feeWbtc,
+      feeSglp,
+      devFeeUsdc,
+      devFeeUsdt,
+      devFeeDai,
+      devFeeWeth,
+      devFeeWbtc,
+      devFeeSglp,
+    ],
+  ] = await multi.multiCall(feeInputs);
 
   const inputs2 = [
     // Global Asset Class
@@ -519,9 +574,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(formatUnits(daiPrice?._price, 30));
   console.log(formatUnits(wethPrice?._price, 30));
   console.log(formatUnits(wbtcPrice?._price, 30));
-  console.log(applePrice);
   console.log(formatUnits(applePrice?._price, 30));
   console.log(formatUnits(jpyPrice?._price, 30));
+  console.log(formatUnits(sglpPrice?._price, 30));
   console.log("=== Adaptive Prices ===");
 
   console.log(formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
@@ -542,6 +597,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: formatUnits(traderBalancesDai, 18),
     weth: formatUnits(traderBalancesWeth, 18),
     wbtc: formatUnits(traderBalancesWbtc, 8),
+    sglp: formatUnits(traderBalancesSglp, 18),
   });
   console.log("=== Trader Debts ===");
   console.table({
@@ -563,6 +619,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: formatUnits(plpLiquidityDai, 18),
     weth: formatUnits(plpLiquidityWeth, 18),
     wbtc: formatUnits(plpLiquidityWbtc, 8),
+    sglp: formatUnits(plpLiquiditySglp, 18),
   });
   console.log("=== Asset Class ====");
   console.table({
@@ -589,6 +646,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: formatUnits(feeDai, 18),
     weth: formatUnits(feeWeth, 18),
     wbtc: formatUnits(feeWbtc, 8),
+    sglp: formatUnits(feeSglp, 18),
   });
   console.log("=== Dev Fees ===");
   console.table({
@@ -597,32 +655,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dai: formatUnits(devFeeDai, 18),
     weth: formatUnits(devFeeWeth, 18),
     wbtc: formatUnits(devFeeWbtc, 8),
+    sglp: formatUnits(devFeeSglp, 18),
   });
   console.log("=== Markets ===");
   console.table({
     ETHUSD: {
       longPositionSize: formatUnits(ethusdMarket.longPositionSize, 30),
-      longAvgPrice: formatUnits(ethusdMarket.longAvgPrice, 30),
       shortPositionSize: formatUnits(ethusdMarket.shortPositionSize, 30),
-      shortAvgPrice: formatUnits(ethusdMarket.shortAvgPrice, 30),
     },
     BTCUSD: {
       longPositionSize: formatUnits(btcusdMarket.longPositionSize, 30),
-      longAvgPrice: formatUnits(btcusdMarket.longAvgPrice, 30),
       shortPositionSize: formatUnits(btcusdMarket.shortPositionSize, 30),
-      shortAvgPrice: formatUnits(btcusdMarket.shortAvgPrice, 30),
     },
     APPLUSD: {
       longPositionSize: formatUnits(applusdMarket.longPositionSize, 30),
-      longAvgPrice: formatUnits(applusdMarket.longAvgPrice, 30),
       shortPositionSize: formatUnits(applusdMarket.shortPositionSize, 30),
-      shortAvgPrice: formatUnits(applusdMarket.shortAvgPrice, 30),
     },
     JPYUSD: {
       longPositionSize: formatUnits(jpyusdMarket.longPositionSize, 30),
-      longAvgPrice: formatUnits(jpyusdMarket.longAvgPrice, 30),
       shortPositionSize: formatUnits(jpyusdMarket.shortPositionSize, 30),
-      shortAvgPrice: formatUnits(jpyusdMarket.shortAvgPrice, 30),
     },
   });
 

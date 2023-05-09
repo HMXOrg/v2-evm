@@ -40,7 +40,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const positionManager = (await ethers.getSigners())[1];
 
   const handler = BotHandler__factory.connect(config.handlers.bot, positionManager);
-  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(priceUpdates, publishTimeDiff);
+  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(
+    deployer,
+    priceUpdates,
+    publishTimeDiff,
+    false
+  );
   console.log("Liquidate...");
   await (
     await handler.liquidate(

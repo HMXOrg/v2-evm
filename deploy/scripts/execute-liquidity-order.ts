@@ -39,7 +39,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const liquidityHandler = LiquidityHandler__factory.connect(config.handlers.liquidity, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
-  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(priceUpdates, publishTimeDiff);
+  const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(
+    deployer,
+    priceUpdates,
+    publishTimeDiff,
+    true
+  );
   console.log(`Execute Liquidity Order...`);
   await (
     await liquidityHandler.executeOrder(

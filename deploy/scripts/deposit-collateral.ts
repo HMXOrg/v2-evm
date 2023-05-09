@@ -19,7 +19,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await (
     await crossMarginHandler.depositCollateral(0, token.address, ethers.utils.parseUnits("100", decimals), false, {
       gasLimit: 20000000,
-      value: ethers.utils.parseUnits("0.1", decimals),
     })
   ).wait();
 };

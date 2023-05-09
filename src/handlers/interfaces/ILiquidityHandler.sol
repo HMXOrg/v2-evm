@@ -66,9 +66,22 @@ interface ILiquidityHandler {
 
   function getLiquidityOrders() external view returns (LiquidityOrder[] memory);
 
+  function getLiquidityOrderLength() external view returns (uint256);
+
   function nextExecutionOrderIndex() external view returns (uint256);
 
   function setOrderExecutor(address _executor, bool _isOk) external;
 
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256);
+
+  function getActiveLiquidityOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LiquidityOrder[] memory _liquidityOrders);
+
+  function getExecutedLiquidityOrders(
+    address _account,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LiquidityOrder[] memory _liquidityOrders);
 }

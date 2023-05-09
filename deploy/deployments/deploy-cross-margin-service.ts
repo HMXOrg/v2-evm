@@ -16,6 +16,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     config.storages.vault,
     config.storages.perp,
     config.calculator,
+    config.strategies.convertedGlpStrategy,
   ]);
   await contract.deployed();
   console.log(`Deploying CrossMarginService Contract`);

@@ -7,39 +7,28 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const keeper = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
-const treasury = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
-const strategyBPS = 1000; // 10%
-
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
-  const Contract = await ethers.getContractFactory("StakedGlpStrategy", deployer);
+  const Contract = await ethers.getContractFactory("ConvertedGlpStrategy", deployer);
 
   const contract = await upgrades.deployProxy(Contract, [
     config.tokens.sglp,
-    {
-      rewardRouter: config.yieldSources.gmx.rewardRouterV2,
-      rewardTracker: config.yieldSources.gmx.rewardTracker,
-      glpManager: config.yieldSources.gmx.glpManager,
-      oracleMiddleware: config.oracles.middleware,
-      vaultStorage: config.storages.vault,
-    },
-    treasury,
-    strategyBPS,
+    config.yieldSources.gmx.rewardRouterV2,
+    config.storages.vault,
   ]);
   await contract.deployed();
-  console.log(`Deploying StakedGlpStrategy Contract`);
+  console.log(`Deploying ConvertedGlpStrategy Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.strategies.stakedGLPStrategy = contract.address;
+  config.strategies.convertedGlpStrategy = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "StakedGlpStrategy",
+    name: "ConvertedGlpStrategy",
   });
 };
 
 export default func;
-func.tags = ["DeployStakedGlpStrategy"];
+func.tags = ["DeployConvertedGlpStrategy"];

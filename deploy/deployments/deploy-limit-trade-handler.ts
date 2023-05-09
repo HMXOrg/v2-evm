@@ -7,6 +7,9 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
+const minExecutionFee = 30; // 30 wei
+const minExecutionTimestamp = 60 * 60 * 5; // 5 minutes
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
@@ -15,7 +18,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     config.tokens.weth,
     config.services.trade,
     config.oracles.ecoPyth,
-    30,
+    minExecutionFee,
+    minExecutionTimestamp,
   ]);
   await contract.deployed();
   console.log(`Deploying LimitTradeHandler Contract`);

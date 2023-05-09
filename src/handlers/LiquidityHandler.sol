@@ -87,7 +87,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   bool private isExecuting; // order is executing (prevent direct call executeLiquidity()
 
   LiquidityOrder[] public liquidityOrders; // all liquidityOrder
-  mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // subAccount -> executed orders
+  mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // account -> executed orders
 
   mapping(address => bool) public orderExecutors; //address -> flag to execute
 

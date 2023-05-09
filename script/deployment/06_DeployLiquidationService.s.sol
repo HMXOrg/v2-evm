@@ -16,9 +16,8 @@ contract DeployLiquidationService is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    address proxyAdmin = getJsonAddress(".proxyAdmin");
 
-    ProxyAdmin proxyAdmin = new ProxyAdmin();
+    address proxyAdminAddress = getJsonAddress(".proxyAdmin");
     address configStorageAddress = getJsonAddress(".storages.config");
     address vaultStorageAddress = getJsonAddress(".storages.vault");
     address perpStorageAddress = getJsonAddress(".storages.perp");

@@ -19,6 +19,7 @@ contract DeployCrossMarginService is ConfigJsonRepo {
     address perpStorageAddress = getJsonAddress(".storages.perp");
     address calculatorAddress = getJsonAddress(".calculator");
     address proxyAdmin = getJsonAddress(".proxyAdmin");
+    address stakedGLPStrategy = getJsonAddress(".strategies.stakedGLPStrategy");
 
     address crossMarginServiceAddress = address(
       Deployer.deployCrossMarginService(
@@ -26,7 +27,8 @@ contract DeployCrossMarginService is ConfigJsonRepo {
         configStorageAddress,
         vaultStorageAddress,
         perpStorageAddress,
-        calculatorAddress
+        calculatorAddress,
+        stakedGLPStrategy
       )
     );
 

@@ -6,20 +6,20 @@
     "vault": "0x68DaEB1C169d16395Bd03C2d0776A3e54015323e"
   },
   "handlers": {
-    "bot": "0x230764c6c192C0313bea5E5fa7118Fb46268443c",
-    "crossMargin": "0x74eb4E1c2D836e10E0F89cbf9D3C9C38C491c7eF",
-    "limitTrade": "0x782f1b700620C3DE8cc0fd9CE1de6a459E97612C",
-    "liquidity": "0xFc99D238c7A20895ba3756Ee04FD8BfD442c18fD",
+    "bot": "0xb4D3b20c2AF9dB32ef86f301F1CD4B5E92b1D1e1",
+    "crossMargin": "0x2BBFD6845156845f1f6BB37D91519C2c1c2E2C85",
+    "limitTrade": "0x6c099BFD7fD91DbA514dc1169A85fD9D6659Ad03",
+    "liquidity": "0x2859751c033E64b1050f5E9642C4848293D3caE1",
     "marketTrade": ""
   },
   "helpers": {
-    "trade": "0x8a30913D47FeD617778058201846f5326bC9e65D"
+    "trade": "0x35A301796949f5235f8fc3311E6013450aaf2354"
   },
   "services": {
-    "crossMargin": "0xEf06f7a07400dcb66deC083568E6De341Fd3E642",
-    "liquidity": "0x9abDC95bfc8A3Ca274e8a9B9a31297023a061bE8",
-    "liquidation": "0xAaDc4f7C113679ba1e997D45cd6524599F0bB6AE",
-    "trade": "0xC9C61E8b1695c816Ac5C398639d7a459df5aE000"
+    "crossMargin": "0xb88771661eFE5a1577Ce0366540dCe33279aD8Cd",
+    "liquidity": "0xFd89a05652492D748a94cD24c636e33054E9F4c2",
+    "liquidation": "0xC98966b9A3236e4d82FBcDe94f0Df257b5033c4C",
+    "trade": "0x34eFfFEdbD326796256B4C253dC3F8F1dfe23D63"
   },
   "oracles": {
     "ecoPyth": "0xEB27B05178515c7E6E51dEE159c8487A011ac030",
@@ -44,8 +44,8 @@
     }
   },
   "strategies": {
-    "stakedGLPStrategy": "0xDaCFEaAB00C8F008cA253e371659E8b470114AB3",
-    "convertedGlpStrategy": "0xDfc82d68Bb9B715a7DDFE80F2074E86958129B18"
+    "stakedGLPStrategy": "0x7FeC31e5966C84E8A81C574a0504ff637E3CC569",
+    "convertedGlpStrategy": "0x4D9DF83C94c54F75aC2870514C2AD72047f96BB8"
   },
-  "calculator": "0xC98966b9A3236e4d82FBcDe94f0Df257b5033c4C"
+  "calculator": "0xfc51C8c673C27e1b3D89688ef46D706A77CA28DB"
 }

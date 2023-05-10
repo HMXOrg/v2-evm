@@ -14,6 +14,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const contract = await upgrades.deployProxy(Contract, [
     config.services.trade,
     config.services.liquidation,
+    config.services.crossMargin,
     config.oracles.ecoPyth,
   ]);
   await contract.deployed();

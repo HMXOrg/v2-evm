@@ -19,7 +19,8 @@ contract LimitTradeHandler_Base is BaseTest {
       address(weth),
       address(mockTradeService),
       address(ecoPyth),
-      0.1 ether
+      0.1 ether,
+      5 * 60
     );
 
     mockTradeService.setConfigStorage(address(configStorage));

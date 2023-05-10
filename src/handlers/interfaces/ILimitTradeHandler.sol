@@ -24,6 +24,7 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_BadSizeDelta();
   error ILimitTradeHandler_MarketOrderNoUpdate();
   error ILimitTradeHandler_LimitOrderConvertToMarketOrder();
+  error ILimitTradeHandler_NotExecutionState();
 
   /**
    * Structs
@@ -39,6 +40,7 @@ interface ILimitTradeHandler {
     uint256 triggerPrice;
     uint256 acceptablePrice;
     uint256 executionFee;
+    uint256 createdTimestamp;
   }
 
   struct OrderPointer {
@@ -74,7 +76,8 @@ interface ILimitTradeHandler {
       uint256 marketIndex,
       uint256 triggerPrice,
       uint256 acceptablePrice,
-      uint256 executionFee
+      uint256 executionFee,
+      uint256 createdTimestamp
     );
 
   /**

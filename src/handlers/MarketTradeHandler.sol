@@ -13,6 +13,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 // interfaces
 import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 contract MarketTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IMarketTradeHandler {
   /**
@@ -54,8 +55,8 @@ contract MarketTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Sanity check
     TradeService(_tradeService).perpStorage();
-    // @todo
-    // IPyth(_pyth).getValidTimePeriod();
+    // TODO: if unit test still implementing using pyth-sdk
+    // IEcoPyth(_pyth).getAssetIds();
   }
 
   /**
@@ -252,16 +253,15 @@ contract MarketTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     TradeService(_newTradeService).perpStorage();
   }
 
-  /// @notice Set new Pyth contract address.
-  /// @param _newPyth New Pyth contract address.
-  function setPyth(address _newPyth) external nonReentrant onlyOwner {
-    if (_newPyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
-    emit LogSetPyth(pyth, _newPyth);
-    pyth = _newPyth;
+  /// @notice Sets a new Pyth contract address.
+  /// @param _pyth The new Pyth contract address.
+  function setPyth(address _pyth) external nonReentrant onlyOwner {
+    if (_pyth == address(0)) revert IMarketTradeHandler_InvalidAddress();
+    emit LogSetPyth(address(pyth), _pyth);
+    pyth = _pyth;
 
     // Sanity check
-    // @todo
-    // IPyth(_newPyth).getValidTimePeriod();
+    IEcoPyth(_pyth).getAssetIds();
   }
 
   /**

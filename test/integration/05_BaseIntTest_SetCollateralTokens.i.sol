@@ -5,9 +5,9 @@ import { BaseIntTest_SetOracle } from "./04_BaseIntTest_SetOracle.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 abstract contract BaseIntTest_SetCollateralTokens is BaseIntTest_SetOracle {
-  // @todo - setting discuss
   constructor() {
-    // @todo - GLP
+    // collateralFactorBPS = 80%
+    _addCollateralConfig(sglpAssetId, 8000, true, address(0));
     // collateralFactorBPS = 80%
     _addCollateralConfig(wethAssetId, 8000, true, address(0));
     // collateralFactorBPS = 80%

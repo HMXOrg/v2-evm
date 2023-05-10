@@ -45,25 +45,25 @@ contract Calculator_Initialization is Calculator_Base {
 
   function testCorrectness_calculator_setOracle() external {
     assertEq(calculator.oracle(), address(mockOracle));
+    vm.expectRevert(); // revert in case sanity check
     calculator.setOracle(address(1));
-    assertEq(calculator.oracle(), address(1));
   }
 
   function testCorrectness_calculator_setVaultStorage() external {
     assertEq(calculator.vaultStorage(), address(mockVaultStorage));
+    vm.expectRevert(); // revert in case sanity check
     calculator.setVaultStorage(address(1));
-    assertEq(calculator.vaultStorage(), address(1));
   }
 
   function testCorrectness_calculator_setConfigStorage() external {
     assertEq(calculator.configStorage(), address(configStorage));
+    vm.expectRevert(); // revert in case sanity check
     calculator.setConfigStorage(address(1));
-    assertEq(calculator.configStorage(), address(1));
   }
 
   function testCorrectness_calculator_setPerpStorage() external {
     assertEq(calculator.perpStorage(), address(mockPerpStorage));
+    vm.expectRevert(); // revert in case sanity check
     calculator.setPerpStorage(address(1));
-    assertEq(calculator.perpStorage(), address(1));
   }
 }

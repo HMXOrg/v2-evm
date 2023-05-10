@@ -24,6 +24,7 @@ import { MockVaultStorage } from "../mocks/MockVaultStorage.sol";
 import { MockOracleMiddleware } from "../mocks/MockOracleMiddleware.sol";
 import { MockLiquidityService } from "../mocks/MockLiquidityService.sol";
 import { MockTradeService } from "../mocks/MockTradeService.sol";
+import { MockCrossMarginService } from "../mocks/MockCrossMarginService.sol";
 import { MockLiquidationService } from "../mocks/MockLiquidationService.sol";
 import { MockGlpManager } from "../mocks/MockGlpManager.sol";
 import { MockGmxRewardRouterV2 } from "../mocks/MockGmxRewardRouterV2.sol";
@@ -78,6 +79,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   MockLiquidityService internal mockLiquidityService;
   MockTradeService internal mockTradeService;
   MockLiquidationService internal mockLiquidationService;
+  MockCrossMarginService internal mockCrossMarginService;
   MockGlpManager internal mockGlpManager;
   MockGmxRewardRouterV2 internal mockGmxRewardRouterv2;
 

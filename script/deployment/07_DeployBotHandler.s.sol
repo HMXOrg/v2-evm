@@ -17,10 +17,17 @@ contract DeployBotHandler is ConfigJsonRepo {
     address proxyAdmin = getJsonAddress(".proxyAdmin");
     address pythAddress = getJsonAddress(".oracles.ecoPyth");
     address tradeServiceAddress = getJsonAddress(".services.trade");
+    address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
     address liquidationServiceAddress = getJsonAddress(".services.liquidation");
 
     address botHandlerAddress = address(
-      Deployer.deployBotHandler(address(proxyAdmin), tradeServiceAddress, liquidationServiceAddress, pythAddress)
+      Deployer.deployBotHandler(
+        address(proxyAdmin),
+        tradeServiceAddress,
+        liquidationServiceAddress,
+        crossMarginServiceAddress,
+        pythAddress
+      )
     );
 
     vm.stopBroadcast();

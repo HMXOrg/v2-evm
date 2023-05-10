@@ -9,6 +9,9 @@ interface IMarketTradeHandler {
   error IMarketTradeHandler_PositionNotFullyClosed();
   error IMarketTradeHandler_ZeroSizeInput();
 
+  /**
+   * Functions
+   */
   function buy(
     address _account,
     uint8 _subAccountId,

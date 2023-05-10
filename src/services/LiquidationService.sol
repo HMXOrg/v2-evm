@@ -17,6 +17,8 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 // interfaces
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 
+/// @title LiquidationService
+/// @dev This contract implements the ILiquidationService interface and provides functionality for liquidating sub-accounts by resetting their positions' value in storage.
 contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, OwnableUpgradeable {
   /**
    * Events
@@ -31,15 +33,16 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
    * Structs
    */
   struct LiquidatePositionVars {
-    TradeHelper tradeHelper;
-    PerpStorage perpStorage;
-    ConfigStorage configStorage;
-    Calculator calculator;
-    OracleMiddleware oracle;
+    bytes32 positionId;
     IPerpStorage.Position position;
     PerpStorage.Market globalMarket;
     ConfigStorage.MarketConfig marketConfig;
-    bytes32 positionId;
+    VaultStorage vaultStorage;
+    TradeHelper tradeHelper;
+    PerpStorage perpStorage;
+    OracleMiddleware oracle;
+    Calculator calculator;
+    ConfigStorage configStorage;
   }
 
   /**
@@ -51,6 +54,12 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   address public tradeHelper;
   Calculator public calculator;
 
+  /// @notice Initializes the LiquidationService contract by setting the initial values for the contracts used by this service.
+  /// @dev This function should be called only once during contract deployment.
+  /// @param _perpStorage The address of the PerpStorage contract.
+  /// @param _vaultStorage The address of the VaultStorage contract.
+  /// @param _configStorage The address of the ConfigStorage contract.
+  /// @param _tradeHelper The address of the TradeHelper contract.
   function initialize(
     address _perpStorage,
     address _vaultStorage,
@@ -83,15 +92,20 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /**
    * Core Functions
    */
+
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage
   /// @param _subAccount The sub-account to be liquidated
   function liquidate(address _subAccount, address _liquidator) external onlyWhitelistedExecutor {
-    // Get the calculator contract from storage
-    Calculator _calculator = Calculator(ConfigStorage(configStorage).calculator());
+    LiquidatePositionVars memory _vars;
+    // SLOAD
+    _vars.tradeHelper = TradeHelper(tradeHelper);
+    _vars.vaultStorage = VaultStorage(vaultStorage);
+    _vars.configStorage = ConfigStorage(configStorage);
+    _vars.calculator = Calculator(_vars.configStorage.calculator());
 
-    int256 _equity = _calculator.getEquity(_subAccount, 0, 0);
     // If the equity is greater than or equal to the MMR, the account is healthy and cannot be liquidated
-    if (_equity >= 0 && uint256(_equity) >= _calculator.getMMR(_subAccount))
+    int256 _equity = _vars.calculator.getEquity(_subAccount, 0, 0);
+    if (_equity >= 0 && uint256(_equity) >= _vars.calculator.getMMR(_subAccount))
       revert ILiquidationService_AccountHealthy();
 
     // Liquidate the positions by resetting their value in storage
@@ -100,26 +114,24 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     );
 
     // get profit and fee
-    TradeHelper(tradeHelper).increaseCollateral(bytes32(0), _subAccount, _unrealizedPnL, _fundingFee, address(0));
+    _vars.tradeHelper.increaseCollateral(bytes32(0), _subAccount, _unrealizedPnL, _fundingFee, address(0));
     // settle fee and loss
-    TradeHelper(tradeHelper).decreaseCollateral(
+    _vars.tradeHelper.decreaseCollateral(
       bytes32(0),
       _subAccount,
       _unrealizedPnL,
       _fundingFee,
       _borrowingFee,
       _tradingFee,
-      ConfigStorage(configStorage).getLiquidationConfig().liquidationFeeUSDE30,
+      _vars.configStorage.getLiquidationConfig().liquidationFeeUSDE30,
       _liquidator
     );
 
-    VaultStorage(vaultStorage).subLossDebt(_subAccount, VaultStorage(vaultStorage).lossDebt(_subAccount));
-    VaultStorage(vaultStorage).subTradingFeeDebt(_subAccount, VaultStorage(vaultStorage).tradingFeeDebt(_subAccount));
-    VaultStorage(vaultStorage).subBorrowingFeeDebt(
-      _subAccount,
-      VaultStorage(vaultStorage).borrowingFeeDebt(_subAccount)
-    );
-    VaultStorage(vaultStorage).subFundingFeeDebt(_subAccount, VaultStorage(vaultStorage).fundingFeeDebt(_subAccount));
+    // do accounting on sub account
+    _vars.vaultStorage.subLossDebt(_subAccount, _vars.vaultStorage.lossDebt(_subAccount));
+    _vars.vaultStorage.subTradingFeeDebt(_subAccount, _vars.vaultStorage.tradingFeeDebt(_subAccount));
+    _vars.vaultStorage.subBorrowingFeeDebt(_subAccount, _vars.vaultStorage.borrowingFeeDebt(_subAccount));
+    _vars.vaultStorage.subFundingFeeDebt(_subAccount, _vars.vaultStorage.fundingFeeDebt(_subAccount));
   }
 
   function reloadConfig() external nonReentrant onlyOwner {
@@ -144,7 +156,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /// @param _vaultStorage New VaultStorage contract address.
   function setVaultStorage(address _vaultStorage) external nonReentrant onlyOwner {
     if (_vaultStorage == address(0)) revert ILiquidationService_InvalidAddress();
-
     emit LogSetVaultStorage(vaultStorage, _vaultStorage);
     vaultStorage = _vaultStorage;
 
@@ -156,7 +167,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /// @param _perpStorage New PerpStorage contract address.
   function setPerpStorage(address _perpStorage) external nonReentrant onlyOwner {
     if (_perpStorage == address(0)) revert ILiquidationService_InvalidAddress();
-
     emit LogSetPerpStorage(perpStorage, _perpStorage);
     perpStorage = _perpStorage;
 
@@ -168,7 +178,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /// @param _calculator New Calculator contract address.
   function setCalculator(address _calculator) external nonReentrant onlyOwner {
     if (_calculator == address(0)) revert ILiquidationService_InvalidAddress();
-
     emit LogSetCalculator(address(calculator), _calculator);
     calculator = Calculator(_calculator);
 
@@ -180,7 +189,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /// @param _tradeHelper New TradeHelper contract address.
   function setTradeHelper(address _tradeHelper) external nonReentrant onlyOwner {
     if (_tradeHelper == address(0)) revert ILiquidationService_InvalidAddress();
-
     emit LogSetTradeHelper(tradeHelper, _tradeHelper);
     tradeHelper = _tradeHelper;
 
@@ -195,20 +203,29 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     return uint256(x >= 0 ? x : -x);
   }
 
-  /// @notice Liquidates a list of positions by resetting their value in storage
-  /// @param _subAccount The sub account of positions
+  /// @dev Liquidates positions associated with a given sub-account.
+  /// It iterates over the list of position IDs and updates borrowing rate,
+  /// funding rate, fee states, global state, and market price for each position.
+  /// It also calculates realized and unrealized P&L for each position and
+  /// decreases the position size, reserved value, and removes the position from storage.
+  /// @param _subAccount The address of the sub-account to liquidate.
+  /// @return tradingFee The total trading fee incurred for all liquidated positions.
+  /// @return borrowingFee The total borrowing fee incurred for all liquidated positions.
+  /// @return fundingFee The total funding fee incurred for all liquidated positions.
+  /// @return _unrealizedPnL The total unrealized P&L for all liquidated positions.
   function _liquidatePosition(
     address _subAccount
   ) private returns (uint256 tradingFee, uint256 borrowingFee, int256 fundingFee, int256 _unrealizedPnL) {
     LiquidatePositionVars memory _vars;
-    // Get the list of position ids associated with the sub-account
-    bytes32[] memory positionIds = PerpStorage(perpStorage).getPositionIds(_subAccount);
-
+    // SLOAD
     _vars.tradeHelper = TradeHelper(tradeHelper);
     _vars.perpStorage = PerpStorage(perpStorage);
     _vars.configStorage = ConfigStorage(configStorage);
     _vars.calculator = Calculator(calculator);
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
+
+    // Get the list of position ids associated with the sub-account
+    bytes32[] memory positionIds = _vars.perpStorage.getPositionIds(_subAccount);
 
     uint256 _len = positionIds.length;
     for (uint256 i; i < _len; ) {
@@ -220,12 +237,13 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
       _vars.marketConfig = _vars.configStorage.getMarketConfigByIndex(_vars.position.marketIndex);
 
       // Update borrowing rate
-      TradeHelper(tradeHelper).updateBorrowingRate(_vars.marketConfig.assetClass);
+      _vars.tradeHelper.updateBorrowingRate(_vars.marketConfig.assetClass);
       // Update funding rate
-      TradeHelper(tradeHelper).updateFundingRate(_vars.position.marketIndex);
+      _vars.tradeHelper.updateFundingRate(_vars.position.marketIndex);
 
+      // Update fees
       {
-        (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) = TradeHelper(tradeHelper).updateFeeStates(
+        (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) = _vars.tradeHelper.updateFeeStates(
           _vars.positionId,
           _subAccount,
           _vars.position,
@@ -255,7 +273,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
         int256 _realizedPnl;
         uint256 absPositionSize = _abs(_vars.position.positionSizeE30);
         {
-          (bool _isProfit, uint256 _delta) = calculator.getDelta(
+          (bool _isProfit, uint256 _delta) = _vars.calculator.getDelta(
             absPositionSize,
             _vars.position.positionSizeE30 > 0,
             _adaptivePrice,

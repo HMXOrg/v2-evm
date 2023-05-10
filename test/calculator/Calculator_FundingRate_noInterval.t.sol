@@ -132,14 +132,6 @@ contract Calculator_FundingRate is Calculator_Base {
     assertEq(nextFundingRate, -133333333333333); // -0.013333%
     assertEq(currentFundingRate, -133333333333333); // -0.013333%
 
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, -266666666666666000000); // -266.6666667
-    // assertEq(nextFundingRateShort, 133333333333333000000); // 133.3333333
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, 0);
-    // assertEq(accumFundingRateShort, 0);
-
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -167,14 +159,6 @@ contract Calculator_FundingRate is Calculator_Base {
     currentFundingRate += nextFundingRate; // -0.026667%
     assertEq(nextFundingRate, -133333333333333); // -0.026667%
     assertEq(currentFundingRate, -266666666666666); // -0.026667%
-
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, -266666666666666000000); // -266.6666667
-    // assertEq(nextFundingRateShort, 133333333333333000000); // 133.3333333
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, -266666666666666000000); // -266.6666667
-    // assertEq(accumFundingRateShort, 133333333333333000000); // 133.3333333
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -204,14 +188,6 @@ contract Calculator_FundingRate is Calculator_Base {
     assertEq(nextFundingRate, 0); // -0.026667%
     assertEq(currentFundingRate, -266666666666666); // -0.026667%
 
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, 0);
-    // assertEq(nextFundingRateShort, 0);
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, -799999999999998000000); // ~ -800
-    // assertEq(accumFundingRateShort, 399999999999999000000); // ~ 400
-
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -239,14 +215,6 @@ contract Calculator_FundingRate is Calculator_Base {
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 0); // 0%
     assertEq(currentFundingRate, -266666666666666); // -0.026667%
-
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, -266666666666666000000); // 266.6666667
-    // assertEq(nextFundingRateShort, 266666666666666000000); // 266.6666667
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, -1066666666666664000000); // -1066.666667
-    // assertEq(accumFundingRateShort, 666666666666665000000); // 666.6666667
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -276,14 +244,6 @@ contract Calculator_FundingRate is Calculator_Base {
     assertEq(nextFundingRate, 266666666666666); // 0.026667%
     assertEq(currentFundingRate, 0); // 0%
 
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, 0); // 0
-    // assertEq(nextFundingRateShort, 0); // 0
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, -1333333333333330000000); // -1333.333333
-    // assertEq(accumFundingRateShort, 933333333333331000000); // 933.3333333
-
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -311,14 +271,6 @@ contract Calculator_FundingRate is Calculator_Base {
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 266666666666666); // 0.026667%
     assertEq(currentFundingRate, 266666666666666); // 0.026667%
-
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, 266666666666666000000); // 266.6666667
-    // assertEq(nextFundingRateShort, -799999999999998000000); // -800
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, -1333333333333330000000); // -1333.333333
-    // assertEq(accumFundingRateShort, 933333333333331000000); // 933.3333333
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -348,14 +300,6 @@ contract Calculator_FundingRate is Calculator_Base {
     assertEq(nextFundingRate, 266666666666666); // 0.026667%
     assertEq(currentFundingRate, 533333333333332); // 0.053333%
 
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, 533333333333332000000); // 533.3333333
-    // assertEq(nextFundingRateShort, -1599999999999996000000); // -1600
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, -1066666666666664000000); // -1066.666667
-    // assertEq(accumFundingRateShort, 133333333333333000000); // 133.3333333
-
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -383,14 +327,6 @@ contract Calculator_FundingRate is Calculator_Base {
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 133333333333333); // 0.013333%
     assertEq(currentFundingRate, 666666666666665); // 0.066667%
-
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, 1333333333333330000000); // 1333.333333
-    // assertEq(nextFundingRateShort, -1999999999999995000000); // -2000
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, -533333333333332000000); // -533.3333333
-    // assertEq(accumFundingRateShort, -1466666666666663000000); // -1466.666667
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -420,14 +356,6 @@ contract Calculator_FundingRate is Calculator_Base {
     assertEq(nextFundingRate, 66666666666666); // 0.00666667%
     assertEq(currentFundingRate, 733333333333331); // 0.073333%
 
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, 1833333333333327500000); // 1833.333333
-    // assertEq(nextFundingRateShort, -2199999999999993000000); // -2200
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, 799999999999998000000); // 800
-    // assertEq(accumFundingRateShort, -3466666666666658000000); // -3466.666667
-
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -455,14 +383,6 @@ contract Calculator_FundingRate is Calculator_Base {
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 66666666666666); // 0.00666667%
     assertEq(currentFundingRate, 799999999999997); // 0.080000%
-
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, 1999999999999992500000); // 2000
-    // assertEq(nextFundingRateShort, -2399999999999991000000); // -2400
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, 2633333333333325500000); // 2633.333333
-    // assertEq(accumFundingRateShort, -5666666666666651000000); // -5666.666667
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
@@ -492,14 +412,6 @@ contract Calculator_FundingRate is Calculator_Base {
     assertEq(nextFundingRate, -400000000000000); // -0.040000%
     assertEq(currentFundingRate, 399999999999997); // 0.040000%
 
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, 2399999999999982000000); // 2400
-    // assertEq(nextFundingRateShort, -1199999999999991000000); // -1200
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, 4633333333333318000000); // 4633.333333
-    // assertEq(accumFundingRateShort, -8066666666666642000000); // -8066.666667
-
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -527,13 +439,5 @@ contract Calculator_FundingRate is Calculator_Base {
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, -400000000000000); // -0.040000%
     assertEq(currentFundingRate, -3); // 0.000000%
-
-    // @todo come back to fix this after dealing with excessive funding fee to plp
-    // assertEq(nextFundingRateLong, -18000000); // 0
-    // assertEq(nextFundingRateShort, 9000000); // 0
-
-    // (accumFundingRateLong, accumFundingRateShort) = mockPerpStorage.getMarketInfo(marketIndex);
-    // assertEq(accumFundingRateLong, 7033333333333300000000); // 7033.333333
-    // assertEq(accumFundingRateShort, -9266666666666633000000); // -9266.666667
   }
 }

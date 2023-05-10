@@ -23,16 +23,19 @@ interface ILiquidityHandler {
     uint256 amount;
     uint256 minOut;
     uint256 executionFee;
-    // slot
     address payable account;
     uint48 createdTimestamp;
     uint48 executedTimestamp;
-    // slot
     address token;
     bool isAdd;
-    bool isNativeOut; // token Out for remove liquidity(!unwrap) and refund addLiquidity (shoulWrap) flag
+    bool isNativeOut; // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
     uint8 status; // 0 = pending, 1 = execution success, 2 = execution fail
   }
+
+  /**
+   * States
+   */
+  function nextExecutionOrderIndex() external view returns (uint256);
 
   /**
    * Functions
@@ -68,13 +71,9 @@ interface ILiquidityHandler {
 
   function getLiquidityOrderLength() external view returns (uint256);
 
-  function nextExecutionOrderIndex() external view returns (uint256);
-
   function setOrderExecutor(address _executor, bool _isOk) external;
 
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256);
-
-  function executionOrderFee() external view returns (uint256);
 
   function getActiveLiquidityOrders(
     uint256 _limit,

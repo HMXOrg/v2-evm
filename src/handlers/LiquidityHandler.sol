@@ -21,6 +21,7 @@ import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 /// @title LiquidityHandler
+/// @notice This contract handles liquidity orders for adding or removing liquidity from a pool
 contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILiquidityHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -80,31 +81,30 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
    */
   address public liquidityService; //liquidityService
   address public pyth; //pyth
-
-  uint256 public nextExecutionOrderIndex;
-  uint256 public executionOrderFee; // executionOrderFee in tokenAmount unit
-
+  uint256 public nextExecutionOrderIndex; // the index of the next liquidity order that should be executed
+  uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
   bool private isExecuting; // order is executing (prevent direct call executeLiquidity()
 
   LiquidityOrder[] public liquidityOrders; // all liquidityOrder
+  mapping(address => bool) public orderExecutors; // address -> whitelist executors
   mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // account -> executed orders
 
-  mapping(address => bool) public orderExecutors; //address -> flag to execute
-
-  function initialize(address _liquidityService, address _pyth, uint256 _executionOrderFee) external initializer {
+  /// @notice Initializes the LiquidityHandler contract with the provided configuration parameters.
+  /// @param _liquidityService Address of the LiquidityService contract.
+  /// @param _pyth Address of the Pyth contract.
+  /// @param _minExecutionOrderFee Minimum execution fee for execute order.
+  function initialize(address _liquidityService, address _pyth, uint256 _minExecutionOrderFee) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
     liquidityService = _liquidityService;
     pyth = _pyth;
-    executionOrderFee = _executionOrderFee;
+    minExecutionOrderFee = _minExecutionOrderFee;
 
     // Sanity check
     // slither-disable-next-line unused-return
     LiquidityService(_liquidityService).perpStorage();
-    // slither-disable-next-line unused-return
-    // @todo
-    // IPyth(_pyth).getValidTimePeriod();
+    IEcoPyth(_pyth).getAssetIds();
   }
 
   /**
@@ -145,16 +145,14 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
     uint48 _createdTimestamp = uint48(block.timestamp);
 
+    // pre validate
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
-
-    if (_executionFee < executionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
+    if (_executionFee < minExecutionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
 
     if (_shouldWrap) {
-      if (msg.value != _amountIn + executionOrderFee) {
-        revert ILiquidityHandler_InCorrectValueTransfer();
-      }
+      if (msg.value != _amountIn + _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
     } else {
-      if (msg.value != executionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
+      if (msg.value != minExecutionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
       IERC20Upgradeable(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
@@ -162,6 +160,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     _transferInETH();
 
     _orderId = liquidityOrders.length;
+
     liquidityOrders.push(
       LiquidityOrder({
         account: payable(msg.sender),
@@ -206,10 +205,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint48 _createdTimestamp = uint48(block.timestamp);
 
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
-
-    if (_executionFee < executionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
-
-    if (msg.value != executionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
+    if (_executionFee < minExecutionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
+    if (msg.value != _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
 
     // convert native to WNative (including executionFee)
     _transferInETH();
@@ -221,6 +218,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     );
 
     _orderId = liquidityOrders.length;
+
     liquidityOrders.push(
       LiquidityOrder({
         account: payable(msg.sender),
@@ -247,13 +245,16 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _isNativeOut,
       _createdTimestamp
     );
-
     return _orderId;
   }
 
-  /// @notice orderExecutor pending order
-  /// @param _feeReceiver ExecutionFee Receiver Address
-  /// @param _priceData Price data from Pyth to be used for updating the market prices
+  /// @notice Executes liquidity orders within the given range, updating price data and publishing time data as necessary.
+  /// @param _endIndex The index of the last liquidity order to execute.
+  /// @param _feeReceiver The address to receive the total execution fee for all executed liquidity orders.
+  /// @param _priceData Price data from the Pyth oracle.
+  /// @param _publishTimeData Publish time data from the Pyth oracle.
+  /// @param _minPublishTime Minimum publish time for the Pyth oracle data.
+  /// @param _encodedVaas Encoded VaaS data for the Pyth oracle.
   // slither-disable-next-line reentrancy-eth
   function executeOrder(
     uint256 _endIndex,
@@ -263,12 +264,14 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
+    // Get the number of liquidity orders
     uint256 _orderLength = liquidityOrders.length;
 
+    // Ensure there are orders to execute
     if (nextExecutionOrderIndex == _orderLength) revert ILiquidityHandler_NoOrder();
 
+    // Set the end index to the latest order index if it exceeds the number of orders
     uint256 _latestOrderIndex = _orderLength - 1;
-
     if (_endIndex > _latestOrderIndex) {
       _endIndex = _latestOrderIndex;
     }
@@ -276,6 +279,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
+    // Initialize variables for the execution loop
     LiquidityOrder memory _order;
     uint256 _totalFeeReceiver;
     uint256 _executionFee;
@@ -284,7 +288,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _order = liquidityOrders[i];
       if (_order.amount > 0) {
         _executionFee = _order.executionFee;
-
+        // Set the flag to indicate that orders are currently being executed
         isExecuting = true;
 
         try this.executeLiquidity(_order) returns (uint256 actualOut) {
@@ -330,14 +334,13 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     }
 
     nextExecutionOrderIndex = _endIndex + 1;
-    // Pay the executor
+    // Pay total collected fees to the executor
     _transferOutETH(_totalFeeReceiver, _feeReceiver);
   }
 
   /// @notice execute either addLiquidity or removeLiquidity
-  /// @param _order order of executing
-  // slither-disable-next-line
-  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256) {
+  /// @param _order LiquidityOrder struct representing the order to execute.
+  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256 _amount) {
     // if not in executing state, then revert
     if (!isExecuting) revert ILiquidityHandler_NotExecutionState();
 
@@ -346,46 +349,43 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       return
         LiquidityService(liquidityService).addLiquidity(_order.account, _order.token, _order.amount, _order.minOut);
     } else {
-      address _account = _order.account;
-      address _token = _order.token;
       uint256 _amountOut = LiquidityService(liquidityService).removeLiquidity(
-        _account,
-        _token,
+        _order.account,
+        _order.token,
         _order.amount,
         _order.minOut
       );
 
       if (_order.isNativeOut) {
-        _transferOutETH(_amountOut, payable(_account));
+        _transferOutETH(_amountOut, payable(_order.account));
       } else {
-        IERC20Upgradeable(_token).safeTransfer(_account, _amountOut);
+        IERC20Upgradeable(_order.token).safeTransfer(_order.account, _amountOut);
       }
       return _amountOut;
     }
   }
 
-  /// @notice Cancel order
-  /// @param _orderIndex orderIndex of user order
+  /// @notice Cancels the specified add/remove liquidity order and refunds the execution fee.
+  /// @param _orderIndex Index of the order to cancel.
   function cancelLiquidityOrder(uint256 _orderIndex) external nonReentrant {
-    address _account = msg.sender;
-
     // if order index >= liquidity order's length, then out of bound
     // if order index < next execute index, means order index outdate
     if (_orderIndex >= liquidityOrders.length || _orderIndex < nextExecutionOrderIndex) {
       revert ILiquidityHandler_NoOrder();
     }
 
-    // _account is not owned this order
-    if (_account != liquidityOrders[_orderIndex].account) revert ILiquidityHandler_NotOrderOwner();
-
-    // load _order
+    // SLOAD
     LiquidityOrder memory _order = liquidityOrders[_orderIndex];
+
+    // validate if msg.sender is not owned the order, then revert
+    if (msg.sender != liquidityOrders[_orderIndex].account) revert ILiquidityHandler_NotOrderOwner();
+
     delete liquidityOrders[_orderIndex];
 
     _refund(_order);
 
     emit LogCancelLiquidityOrder(
-      payable(_account),
+      payable(msg.sender),
       _order.orderId,
       _order.token,
       _order.amount,
@@ -410,17 +410,16 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     address _account = _order.account;
 
     if (_order.isAdd) {
-      address _token = _order.token;
       if (_order.isNativeOut) {
-        _transferOutETH(_amount, _account);
+        _transferOutETH(_order.amount, _order.account);
       } else {
-        IERC20Upgradeable(_token).safeTransfer(_account, _amount);
+        IERC20Upgradeable(_order.token).safeTransfer(_order.account, _order.amount);
       }
-      emit LogRefund(_account, _order.orderId, _token, _amount, _order.isNativeOut);
+      emit LogRefund(_order.account, _order.orderId, _order.token, _order.amount, _order.isNativeOut);
     } else {
-      address _plp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
-      IERC20Upgradeable(_plp).safeTransfer(_account, _amount);
-      emit LogRefund(_account, _order.orderId, _plp, _amount, false);
+      address hlp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
+      IERC20Upgradeable(hlp).safeTransfer(_order.account, _order.amount);
+      emit LogRefund(_order.account, _order.orderId, hlp, _order.amount, false);
     }
   }
 
@@ -445,10 +444,11 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
    */
 
   /// @notice get liquidity orders
-  function getLiquidityOrders() external view returns (LiquidityOrder[] memory _liquidityOrder) {
+  function getLiquidityOrders() external view returns (LiquidityOrder[] memory _liquidityOrders) {
     return liquidityOrders;
   }
 
+  /// @notice get liquidity orders length
   function getLiquidityOrderLength() external view returns (uint256) {
     return liquidityOrders.length;
   }
@@ -532,9 +532,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
   function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
-    emit LogSetMinExecutionFee(executionOrderFee, _newMinExecutionFee);
-
-    executionOrderFee = _newMinExecutionFee;
+    emit LogSetMinExecutionFee(minExecutionOrderFee, _newMinExecutionFee);
+    minExecutionOrderFee = _newMinExecutionFee;
   }
 
   /// @notice setOrderExecutor
@@ -554,8 +553,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     pyth = _pyth;
 
     // Sanity check
-    // @todo
-    // IPyth(_pyth).getValidTimePeriod();
+    IEcoPyth(_pyth).getAssetIds();
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

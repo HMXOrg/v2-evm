@@ -277,7 +277,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
       _marketIndex,
       -int256(_sellSizeE30),
       0, // trigger price always be 0
-      type(uint256).max,
+      0,
       true, // trigger above threshold
       executionOrderFee, // 0.0001 ether
       false, // reduce only (allow flip or not)

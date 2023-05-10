@@ -4,6 +4,8 @@ pragma solidity 0.8.18;
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 
 interface IEcoPyth {
+  function getAssetIds() external view returns (bytes32[] memory);
+
   function getPriceUnsafe(bytes32 id) external view returns (PythStructs.Price memory price);
 
   function updatePriceFeeds(

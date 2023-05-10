@@ -5,6 +5,7 @@ interface IConfigStorage {
   /**
    * Errors
    */
+  error IConfigStorage_InvalidAddress();
   error IConfigStorage_NotWhiteListed();
   error IConfigStorage_ExceedLimitSetting();
   error IConfigStorage_BadLen();
@@ -153,6 +154,8 @@ interface IConfigStorage {
   function getPlpAssetIds() external view returns (bytes32[] memory);
 
   function getTradeServiceHooks() external view returns (address[] memory);
+
+  function setMinimumPositionSize(uint256 _minimumPositionSize) external;
 
   function setPlpAssetId(bytes32[] memory _plpAssetIds) external;
 

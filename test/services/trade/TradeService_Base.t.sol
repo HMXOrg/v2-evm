@@ -44,6 +44,7 @@ abstract contract TradeService_Base is BaseTest {
     );
     configStorage.setServiceExecutor(address(tradeService), address(this), true);
     configStorage.setServiceExecutor(address(tradeHelper), address(tradeService), true);
+    configStorage.setMinimumPositionSize(1e30);
 
     perpStorage.setServiceExecutors(address(tradeService), true);
     perpStorage.setServiceExecutors(address(tradeHelper), true);

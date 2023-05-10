@@ -6,14 +6,14 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 interface ICalculator {
   /**
-   * ERRORS
+   * Errors
    */
   error ICalculator_InvalidAddress();
   error ICalculator_InvalidAveragePrice();
   error ICalculator_PoolImbalance();
 
   /**
-   * STRUCTS
+   * Structs
    */
   struct GetFundingRateVar {
     uint256 fundingInterval;
@@ -33,6 +33,21 @@ interface ICalculator {
     SHORT
   }
 
+  /**
+   * States
+   */
+  function oracle() external returns (address _address);
+
+  function vaultStorage() external returns (address _address);
+
+  function configStorage() external returns (address _address);
+
+  function perpStorage() external returns (address _address);
+
+  /**
+   * Functions
+   */
+
   function getAUME30(bool isMaxPrice) external returns (uint256);
 
   function getGlobalPNLE30() external view returns (int256);
@@ -49,12 +64,6 @@ interface ICalculator {
 
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _amount) external view returns (uint256);
 
-  function convertTokenDecimals(
-    uint256 _fromTokenDecimals,
-    uint256 _toTokenDecimals,
-    uint256 _amount
-  ) external pure returns (uint256);
-
   function getAddLiquidityFeeBPS(
     address _token,
     uint256 _tokenValue,
@@ -66,10 +75,6 @@ interface ICalculator {
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
   ) external returns (uint32);
-
-  function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _imrE30);
-
-  function calculatePositionMMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _mmrE30);
 
   function getEquity(
     address _subAccount,
@@ -102,8 +107,20 @@ interface ICalculator {
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice,
-    uint256 _lastincreaseTimestamp
+    uint256 _lastIncreaseTimestamp
   ) external view returns (bool, uint256);
+
+  function getPendingBorrowingFeeE30() external view returns (uint256);
+
+  function convertTokenDecimals(
+    uint256 _fromTokenDecimals,
+    uint256 _toTokenDecimals,
+    uint256 _amount
+  ) external pure returns (uint256);
+
+  function calculatePositionIMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _imrE30);
+
+  function calculatePositionMMR(uint256 _positionSizeE30, uint256 _marketIndex) external view returns (uint256 _mmrE30);
 
   function setOracle(address _oracle) external;
 
@@ -112,14 +129,4 @@ interface ICalculator {
   function setConfigStorage(address _address) external;
 
   function setPerpStorage(address _address) external;
-
-  function oracle() external returns (address _address);
-
-  function vaultStorage() external returns (address _address);
-
-  function configStorage() external returns (address _address);
-
-  function perpStorage() external returns (address _address);
-
-  function getPendingBorrowingFeeE30() external view returns (uint256);
 }

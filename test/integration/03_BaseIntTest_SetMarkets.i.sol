@@ -6,6 +6,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
   // crypto
+  bytes32 internal constant sglpAssetId = "SGLPUSD";
   bytes32 internal constant wethAssetId = "WETHUSD";
   bytes32 internal constant wbtcAssetId = "WBTCUSD";
   bytes32 internal constant usdcAssetId = "USDCUSD";
@@ -23,7 +24,6 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
   uint256 appleMarketIndex;
   uint256 jpyMarketIndex;
 
-  // @todo - setting discuss
   constructor() {
     // IMF = 1%, Max leverage = 100
     // MMF = 0.5%

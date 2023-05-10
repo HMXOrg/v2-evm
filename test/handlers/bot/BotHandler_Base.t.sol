@@ -65,6 +65,7 @@ contract BotHandler_Base is BaseTest {
       address(proxyAdmin),
       address(tradeService),
       address(mockLiquidationService),
+      address(mockCrossMarginService),
       address(ecoPyth)
     );
     ecoPyth.setUpdater(address(botHandler), true);

@@ -17,6 +17,10 @@ import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
 
+/**
+ * @title CrossMarginService
+ * @dev A cross-margin trading service that allows traders to deposit and withdraw collateral tokens.
+ */
 contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginService {
   /**
    * Events
@@ -57,9 +61,13 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public vaultStorage;
   address public calculator;
   address public perpStorage;
-
   address public convertedSglpStrategy;
 
+  /// @dev Initializes the CrossMarginService contract.
+  /// @param _configStorage The address of the ConfigStorage contract.
+  /// @param _vaultStorage The address of the VaultStorage contract.
+  /// @param _perpStorage The address of the PerpStorage contract.
+  /// @param _calculator The address of the Calculator contract.
   function initialize(
     address _configStorage,
     address _vaultStorage,
@@ -95,13 +103,15 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /**
    * Modifiers
    */
-  // NOTE: Validate only whitelisted contract be able to call this function
+
+  /// @dev Modifier to allow only whitelisted executor to call a function.
   modifier onlyWhitelistedExecutor() {
     ConfigStorage(configStorage).validateServiceExecutor(address(this), msg.sender);
     _;
   }
 
-  // NOTE: Validate only accepted collateral token to be deposited
+  /// @dev Modifier to allow only accepted collateral token to be deposited or withdrawn.
+  /// @param _token The address of the collateral token.
   modifier onlyAcceptedToken(address _token) {
     ConfigStorage(configStorage).validateAcceptedCollateral(_token);
     _;
@@ -110,6 +120,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /**
    * Core Functions
    */
+
   /// @notice Calculate new trader balance after deposit collateral token.
   /// @dev This uses to calculate new trader balance when they deposit token as collateral.
   /// @param _primaryAccount Trader's primary address from trader's wallet.
@@ -122,6 +133,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     address _token,
     uint256 _amount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
+    // SLOAD
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address
@@ -150,6 +162,9 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _amount,
     address _receiver
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) {
+    // SLOAD
+    Calculator _calculator = Calculator(calculator);
+
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address
@@ -164,8 +179,8 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     _vaultStorage.decreaseTraderBalance(_subAccount, _token, _amount);
 
     // Calculate validation for if new Equity is below IMR or not
-    int256 equity = Calculator(calculator).getEquity(_subAccount, 0, 0);
-    if (equity < 0 || uint256(equity) < Calculator(calculator).getIMR(_subAccount))
+    int256 equity = _calculator.getEquity(_subAccount, 0, 0);
+    if (equity < 0 || uint256(equity) < _calculator.getIMR(_subAccount))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
     // Transfer withdrawing token from VaultStorage to destination wallet
@@ -193,7 +208,6 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
       if (_market.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
-
       if (_market.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingShort);
 
       unchecked {

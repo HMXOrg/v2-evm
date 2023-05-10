@@ -87,25 +87,24 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
    * Structs
    */
   struct IncreaseCollateralVars {
-    VaultStorage vaultStorage;
-    ConfigStorage configStorage;
-    OracleMiddleware oracle;
     bytes32 positionId;
+    address token;
+    address subAccount;
+    uint8 tokenDecimal;
     uint256 unrealizedPnlToBeReceived;
     uint256 fundingFeeToBeReceived;
     uint256 payerBalance;
     uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
-  }
-
-  struct DecreaseCollateralVars {
     VaultStorage vaultStorage;
     ConfigStorage configStorage;
     OracleMiddleware oracle;
-    ConfigStorage.TradingConfig tradingConfig;
+  }
+
+  struct DecreaseCollateralVars {
     bytes32 positionId;
+    address token;
+    address subAccount;
+    uint8 tokenDecimal;
     uint256 unrealizedPnlToBePaid;
     uint256 tradingFeeToBePaid;
     uint256 borrowingFeeToBePaid;
@@ -114,9 +113,10 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     uint256 payerBalance;
     uint256 plpDebt;
     uint256 tokenPrice;
-    address subAccount;
-    address token;
-    uint8 tokenDecimal;
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    ConfigStorage.TradingConfig tradingConfig;
   }
 
   /**
@@ -132,6 +132,13 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   address public vaultStorage;
   address public configStorage;
   Calculator public calculator; // cache this from configStorage
+
+  /// @notice Initializes the contract by setting the addresses for PerpStorage, VaultStorage, and ConfigStorage.
+  /// @dev This function must be called after the contract is deployed and before it can be used.
+  /// @param _perpStorage The address of the PerpStorage contract.
+  /// @param _vaultStorage The address of the VaultStorage contract.
+  /// @param _configStorage The address of the ConfigStorage contract.
+  /// @dev This function initializes the contract by performing a sanity check on the ConfigStorage calculator, setting the VaultStorage devFees to address(0), and getting the global state from the PerpStorage contract. It also sets the perpStorage, vaultStorage, configStorage, and calculator variables to the provided addresses.
 
   function initialize(address _perpStorage, address _vaultStorage, address _configStorage) external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -158,11 +165,13 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   }
 
   /**
-   * Core Funtions
+   * Core Functions
    */
   /// @notice This function updates the borrowing rate for the given asset class index.
   /// @param _assetClassIndex The index of the asset class.
   function updateBorrowingRate(uint8 _assetClassIndex) external nonReentrant onlyWhitelistedExecutor {
+    // SLOAD
+    Calculator _calculator = calculator;
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -179,23 +188,25 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastBorrowingTime + _fundingInterval <= block.timestamp) {
-      uint256 _plpTVL = calculator.getPLPValueE30(false);
+      uint256 _plpTVL = _calculator.getPLPValueE30(false);
 
       // update borrowing rate
-      uint256 borrowingRate = calculator.getNextBorrowingRate(_assetClassIndex, _plpTVL);
+      uint256 borrowingRate = _calculator.getNextBorrowingRate(_assetClassIndex, _plpTVL);
       _assetClass.sumBorrowingRate += borrowingRate;
       _assetClass.lastBorrowingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
 
       uint256 borrowingFee = (_assetClass.reserveValueE30 * borrowingRate) / RATE_PRECISION;
-
       _assetClass.sumBorrowingFeeE30 += borrowingFee;
+
+      _perpStorage.updateAssetClass(_assetClassIndex, _assetClass);
     }
-    _perpStorage.updateAssetClass(_assetClassIndex, _assetClass);
   }
 
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
   function updateFundingRate(uint256 _marketIndex) external nonReentrant onlyWhitelistedExecutor {
+    // SLOAD
+    Calculator _calculator = calculator;
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the funding interval, asset class config, and global asset class for the given asset class index.
@@ -214,13 +225,13 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     // If block.timestamp is not passed the next funding interval, skip updating
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
-      int256 nextFundingRate = calculator.getNextFundingRate(_marketIndex);
+      int256 nextFundingRate = _calculator.getNextFundingRate(_marketIndex);
       int256 lastFundingRate = _market.currentFundingRate;
       _market.currentFundingRate += nextFundingRate;
       _perpStorage.updateMarket(_marketIndex, _market);
 
       if (_market.longPositionSize > 0) {
-        int256 fundingFeeLongE30 = calculator.getFundingFee(
+        int256 fundingFeeLongE30 = _calculator.getFundingFee(
           _marketIndex,
           true,
           int(_market.longPositionSize),
@@ -230,7 +241,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       }
 
       if (_market.shortPositionSize > 0) {
-        int256 fundingFeeShortE30 = calculator.getFundingFee(
+        int256 fundingFeeShortE30 = _calculator.getFundingFee(
           _marketIndex,
           false,
           int(_market.shortPositionSize),
@@ -244,6 +255,12 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     }
   }
 
+  /// @notice Settles all fees for a given position and updates the fee states.
+  /// @param _positionId The ID of the position to settle fees for.
+  /// @param _position The Position object for the position to settle fees for.
+  /// @param _absSizeDelta The absolute value of the size delta for the position.
+  /// @param _positionFeeBPS The position fee basis points for the position.
+  /// @param _assetClassIndex The index of the asset class for the position.
   function settleAllFees(
     bytes32 _positionId,
     PerpStorage.Position memory _position,
@@ -305,9 +322,52 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     );
   }
 
+  function accumSettledBorrowingFee(
+    uint256 _assetClassIndex,
+    uint256 _borrowingFeeToBeSettled
+  ) external nonReentrant onlyWhitelistedExecutor {
+    _accumSettledBorrowingFee(_assetClassIndex, _borrowingFeeToBeSettled);
+  }
+
+  function increaseCollateral(
+    bytes32 _positionId,
+    address _subAccount,
+    int256 _unrealizedPnl,
+    int256 _fundingFee,
+    address _tpToken
+  ) external {
+    _increaseCollateral(_positionId, _subAccount, _unrealizedPnl, _fundingFee, _tpToken);
+  }
+
+  function decreaseCollateral(
+    bytes32 _positionId,
+    address _subAccount,
+    int256 _unrealizedPnl,
+    int256 _fundingFee,
+    uint256 _borrowingFee,
+    uint256 _tradingFee,
+    uint256 _liquidationFee,
+    address _liquidator
+  ) external nonReentrant onlyWhitelistedExecutor {
+    _decreaseCollateral(
+      _positionId,
+      _subAccount,
+      _unrealizedPnl,
+      _fundingFee,
+      _borrowingFee,
+      _tradingFee,
+      _liquidationFee,
+      _liquidator
+    );
+  }
+
   function reloadConfig() external nonReentrant onlyOwner {
     calculator = Calculator(ConfigStorage(configStorage).calculator());
   }
+
+  /**
+   * Private Functions
+   */
 
   function _updateFeeStates(
     bytes32 _positionId,
@@ -318,12 +378,15 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     uint8 _assetClassIndex,
     uint256 _marketIndex
   ) internal returns (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) {
+    // SLOAD
+    Calculator _calculator = calculator;
+
     // Calculate the trading fee
     _tradingFee = (_sizeDelta * _positionFeeBPS) / BPS;
     emit LogSettleTradingFeeValue(_positionId, _subAccount, _tradingFee);
 
     // Calculate the borrowing fee
-    _borrowingFee = calculator.getBorrowingFee(
+    _borrowingFee = _calculator.getBorrowingFee(
       _assetClassIndex,
       _position.reserveValueE30,
       _position.entryBorrowingRate
@@ -334,7 +397,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // Calculate the funding fee
     bool _isLong = _position.positionSizeE30 > 0;
-    _fundingFee = calculator.getFundingFee(
+    _fundingFee = _calculator.getFundingFee(
       _marketIndex,
       _isLong,
       _position.positionSizeE30,
@@ -349,28 +412,13 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     return (_tradingFee, _borrowingFee, _fundingFee);
   }
 
-  function accumSettledBorrowingFee(
-    uint256 _assetClassIndex,
-    uint256 _borrowingFeeToBeSettled
-  ) external nonReentrant onlyWhitelistedExecutor {
-    _accumSettledBorrowingFee(_assetClassIndex, _borrowingFeeToBeSettled);
-  }
-
   function _accumSettledBorrowingFee(uint256 _assetClassIndex, uint256 _borrowingFeeToBeSettled) internal {
+    // SLOAD
     PerpStorage _perpStorage = PerpStorage(perpStorage);
+
     PerpStorage.AssetClass memory _assetClass = _perpStorage.getAssetClassByIndex(uint8(_assetClassIndex));
     _assetClass.sumSettledBorrowingFeeE30 += _borrowingFeeToBeSettled;
     _perpStorage.updateAssetClass(uint8(_assetClassIndex), _assetClass);
-  }
-
-  function increaseCollateral(
-    bytes32 _positionId,
-    address _subAccount,
-    int256 _unrealizedPnl,
-    int256 _fundingFee,
-    address _tpToken
-  ) external {
-    _increaseCollateral(_positionId, _subAccount, _unrealizedPnl, _fundingFee, _tpToken);
   }
 
   function _increaseCollateral(
@@ -381,13 +429,14 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     address _tpToken
   ) internal {
     IncreaseCollateralVars memory _vars;
-
+    // SLOAD
     _vars.vaultStorage = VaultStorage(vaultStorage);
     _vars.configStorage = ConfigStorage(configStorage);
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
     _vars.positionId = _positionId;
     _vars.subAccount = _subAccount;
+
     // check unrealized pnl
     if (_unrealizedPnl > 0) {
       _vars.unrealizedPnlToBeReceived = uint256(_unrealizedPnl);
@@ -526,28 +575,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
       emit LogReceivedFundingFeeAmount(_vars.positionId, _vars.subAccount, _vars.token, _repayValue, _repayAmount);
     }
-  }
-
-  function decreaseCollateral(
-    bytes32 _positionId,
-    address _subAccount,
-    int256 _unrealizedPnl,
-    int256 _fundingFee,
-    uint256 _borrowingFee,
-    uint256 _tradingFee,
-    uint256 _liquidationFee,
-    address _liquidator
-  ) external nonReentrant onlyWhitelistedExecutor {
-    _decreaseCollateral(
-      _positionId,
-      _subAccount,
-      _unrealizedPnl,
-      _fundingFee,
-      _borrowingFee,
-      _tradingFee,
-      _liquidationFee,
-      _liquidator
-    );
   }
 
   function _decreaseCollateral(

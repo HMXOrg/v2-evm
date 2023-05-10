@@ -54,9 +54,4 @@ contract LimitTradeHandler_Setter is LimitTradeHandler_Base {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidAddress()"));
     limitTradeHandler.setPyth(address(0));
   }
-
-  function testCorrectness_setPyth() external {
-    limitTradeHandler.setPyth(address(mockPyth));
-    assertEq(address(limitTradeHandler.pyth()), address(mockPyth));
-  }
 }

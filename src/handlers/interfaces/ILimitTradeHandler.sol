@@ -21,6 +21,7 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_MaxExecutionFee();
   error ILimitTradeHandler_TriggerPriceBelowCurrentPrice();
   error ILimitTradeHandler_TriggerPriceAboveCurrentPrice();
+  error ILimitTradeHandler_BadSizeDelta();
   error ILimitTradeHandler_MarketOrderNoUpdate();
   error ILimitTradeHandler_LimitOrderConvertToMarketOrder();
   error ILimitTradeHandler_NotExecutionState();
@@ -82,6 +83,7 @@ interface ILimitTradeHandler {
   /**
    * Functions
    */
+
   function createOrder(
     uint8 _subAccountId,
     uint256 _marketIndex,

@@ -119,6 +119,8 @@ interface ILimitTradeHandler {
 
   function setPyth(address _pyth) external;
 
+  function setGuaranteeLimitPrice(bool isActive) external;
+
   function setTradeService(address _newTradeService) external;
 
   function setMinExecutionFee(uint256 _newMinExecutionFee) external;

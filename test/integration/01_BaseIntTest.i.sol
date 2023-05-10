@@ -279,6 +279,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       executionOrderFee,
       minExecutionTimestamp
     );
+    limitTradeHandler.setGuaranteeLimitPrice(true);
 
     liquidityHandler = Deployer.deployLiquidityHandler(
       address(proxyAdmin),

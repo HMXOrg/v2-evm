@@ -42,7 +42,7 @@ contract TC24 is BaseIntTest_WithActions {
       bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
       bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
       vm.expectRevert(abi.encodeWithSignature("ICrossMarginHandler_NoFundingFeeSurplus()"));
-      crossMarginHandler.withdrawFundingFeeSurplus(
+      botHandler.withdrawFundingFeeSurplus(
         address(usdc),
         priceUpdateData,
         publishTimeUpdateData,
@@ -137,7 +137,7 @@ contract TC24 is BaseIntTest_WithActions {
       _T5Assert3();
 
       // Then deployer can call withdraw surplus
-      crossMarginHandler.withdrawFundingFeeSurplus(
+      botHandler.withdrawFundingFeeSurplus(
         address(usdc),
         priceUpdateData,
         publishTimeUpdateData,
@@ -147,7 +147,7 @@ contract TC24 is BaseIntTest_WithActions {
 
       // After deployer call withdraw surplus and recalled again, function must be revert
       vm.expectRevert(abi.encodeWithSignature("ICrossMarginHandler_NoFundingFeeSurplus()"));
-      crossMarginHandler.withdrawFundingFeeSurplus(
+      botHandler.withdrawFundingFeeSurplus(
         address(usdc),
         priceUpdateData,
         publishTimeUpdateData,

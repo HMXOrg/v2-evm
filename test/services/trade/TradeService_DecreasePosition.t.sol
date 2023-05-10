@@ -37,8 +37,8 @@ import { console } from "forge-std/console.sol";
 //   - borrowing fee
 //   - funding fee
 //   - trading fee
-//   - protocol curcuit break
-//   - trading curcuit break
+//   - protocol circuit break
+//   - trading circuit break
 // - post validation
 //   - sub account is unhealthy (equity < MMR) after decreased position
 

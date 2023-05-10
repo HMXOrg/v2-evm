@@ -13,9 +13,11 @@ import { MockPyth } from "pyth-sdk-solidity/MockPyth.sol";
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
-// Openzepline
+// Openzeppelin
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 // Libs
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
@@ -68,8 +70,6 @@ import { TradeTester } from "@hmx-test/testers/TradeTester.sol";
 
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
-import { console } from "forge-std/console.sol";
 
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
@@ -80,8 +80,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   uint256 internal constant MINUTES = SECONDS * 60;
   uint256 internal constant HOURS = MINUTES * 60;
   uint256 internal constant DAYS = HOURS * 24;
-
-  bytes32 internal constant sglpAssetId = "SGLPUSD";
 
   address internal ALICE;
   address internal BOB;
@@ -262,6 +260,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(proxyAdmin),
       address(tradeService),
       address(liquidationService),
+      address(crossMarginService),
       address(pyth)
     );
     crossMarginHandler = Deployer.deployCrossMarginHandler(
@@ -299,7 +298,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     positionTester02 = new PositionTester02(perpStorage);
 
     address[] memory interestTokens = new address[](1);
-    // TODO fix this
     interestTokens[0] = address(0);
     tradeTester = new TradeTester(
       vaultStorage,
@@ -313,18 +311,23 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     {
       configStorage.setOracle(address(oracleMiddleWare));
       configStorage.setCalculator(address(calculator));
-      tradeHelper.reloadConfig(); // @TODO: refresh config storage address here, may remove later
-      tradeService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
-      liquidationService.reloadConfig(); // @TODO: refresh config storage address here, may remove later
 
       // Set whitelists for executors
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
+      configStorage.setServiceExecutor(address(crossMarginService), address(botHandler), true);
       configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
       configStorage.setServiceExecutor(address(tradeHelper), address(liquidationService), true);
       configStorage.setServiceExecutor(address(tradeHelper), address(tradeService), true);
 
       configStorage.setWeth(address(weth));
       configStorage.setPLP(address(plpV2));
+    }
+
+    {
+      // Reload config after calculator was set on ConfigStorage
+      tradeHelper.reloadConfig();
+      tradeService.reloadConfig();
+      liquidationService.reloadConfig();
     }
 
     // Setup VaultStorage

@@ -15,12 +15,13 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 // contracts
 import { TradeService } from "@hmx/services/TradeService.sol";
+import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
-// @todo - integrate with BotHandler in another PRs
-contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeable {
+/// @title BotHandler
+contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   /**
@@ -52,6 +53,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
   mapping(address => bool) public positionManagers;
   address public tradeService;
   address public liquidationService;
+  address public crossMarginService;
   address public pyth;
 
   /**
@@ -64,18 +66,27 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     _;
   }
 
-  function initialize(address _tradeService, address _liquidationService, address _pyth) external initializer {
+  /// @notice Initializes the BotHandler contract with the provided configuration parameters.
+  /// @param _tradeService Address of the TradeService contract.
+  /// @param _liquidationService Address of the LiquidationService contract.
+  /// @param _pyth Address of the Pyth contract.
+  function initialize(
+    address _tradeService,
+    address _liquidationService,
+    address _crossMarginService,
+    address _pyth
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
     // Sanity check
     ITradeService(_tradeService).configStorage();
     LiquidationService(_liquidationService).perpStorage();
-    // @todo
-    // IPyth(_pyth).getValidTimePeriod();
+    IEcoPyth(_pyth).getAssetIds();
 
     tradeService = _tradeService;
     liquidationService = _liquidationService;
+    crossMarginService = _crossMarginService;
     pyth = _pyth;
   }
 
@@ -98,18 +109,15 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external payable nonReentrant onlyPositionManager {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
-    (bool _isMaxProfit, , ) = TradeService(tradeService).forceClosePosition(
-      _account,
-      _subAccountId,
-      _marketIndex,
-      _tpToken
-    );
-
-    TradeService(tradeService).validateMaxProfit(_isMaxProfit);
+    (bool _isMaxProfit, , ) = _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+    _tradeService.validateMaxProfit(_isMaxProfit);
 
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }
@@ -130,13 +138,15 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external payable nonReentrant onlyPositionManager {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
-    TradeService(tradeService).validateDeleverage();
-
-    TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+    _tradeService.validateDeleverage();
+    _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
 
     emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken);
   }
@@ -157,13 +167,15 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external payable nonReentrant onlyPositionManager {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
-    TradeService(tradeService).validateMarketDelisted(_marketIndex);
-
-    TradeService(tradeService).forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
+    _tradeService.validateMarketDelisted(_marketIndex);
+    _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
 
     emit LogCloseDelistedMarketPosition(_account, _subAccountId, _marketIndex, _tpToken);
   }
@@ -198,6 +210,25 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     uint256 convertedStableAmount;
   }
 
+  /// @notice Withdraws the funding fee surplus from the vault.
+  /// @param _stableToken Address of the stable token to withdraw.
+  /// @param _priceData Price data from the Pyth oracle.
+  /// @param _publishTimeData Publish time data from the Pyth oracle.
+  /// @param _minPublishTime Minimum publish time for the Pyth oracle data.
+  /// @param _encodedVaas Encoded VaaS data for the Pyth oracle.
+  function withdrawFundingFeeSurplus(
+    address _stableToken,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable nonReentrant onlyOwner {
+    // Call update oracle price
+    // slither-disable-next-line arbitrary-send-eth
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+    CrossMarginService(crossMarginService).withdrawFundingFeeSurplus(_stableToken);
+  }
+
   function convertFundingFeeReserve(
     address _stableToken,
     bytes32[] memory _priceData,
@@ -206,12 +237,15 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
     bytes32 _encodedVaas
   ) external payable nonReentrant onlyOwner {
     ConvertFundingFeeReserveLocalVars memory vars;
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
     // Feed Price
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
     // SLOAD
-    ConfigStorage _configStorage = ConfigStorage(ITradeService(tradeService).configStorage());
-    VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
+    ConfigStorage _configStorage = ConfigStorage(_tradeService.configStorage());
+    VaultStorage _vaultStorage = VaultStorage(_tradeService.vaultStorage());
     OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
 
     // Get stable token price
@@ -322,23 +356,17 @@ contract BotHandler is ReentrancyGuardUpgradeable, IBotHandler, OwnableUpgradeab
   function setLiquidationService(address _newLiquidationService) external nonReentrant onlyOwner {
     // Sanity check
     LiquidationService(_newLiquidationService).perpStorage();
-
-    address _liquidationService = liquidationService;
-
+    emit LogSetLiquidationService(address(liquidationService), _newLiquidationService);
     liquidationService = _newLiquidationService;
-
-    emit LogSetLiquidationService(address(_liquidationService), _newLiquidationService);
   }
 
   /// @notice Set new Pyth contract address.
-  /// @param _newPyth New Pyth contract address.
-  function setPyth(address _newPyth) external nonReentrant onlyOwner {
-    // @todo Sanity check
-    // IPyth(_newPyth).getValidTimePeriod();
-
-    pyth = _newPyth;
-
-    emit LogSetPyth(pyth, _newPyth);
+  /// @param _pyth New Pyth contract address.
+  function setPyth(address _pyth) external nonReentrant onlyOwner {
+    // Sanity check
+    IEcoPyth(_pyth).getAssetIds();
+    emit LogSetPyth(pyth, _pyth);
+    pyth = _pyth;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

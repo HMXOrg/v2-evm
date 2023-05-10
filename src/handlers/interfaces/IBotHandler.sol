@@ -59,6 +59,14 @@ interface IBotHandler {
     bytes32 _encodedVaas
   ) external payable;
 
+  function withdrawFundingFeeSurplus(
+    address _stableToken,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable;
+
   function convertFundingFeeReserve(
     address _stableToken,
     bytes32[] memory _priceData,

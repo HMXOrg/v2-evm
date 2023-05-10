@@ -20,43 +20,34 @@ interface ICrossMarginHandler {
    * Structs
    */
   struct WithdrawOrder {
-    address payable account;
     uint256 orderId;
     uint256 amount;
     uint256 executionFee;
-    // slot
-    address token;
     uint48 createdTimestamp;
     uint48 executedTimestamp;
-    // slot
+    address payable account;
+    address token;
     CrossMarginService crossMarginService;
     uint8 subAccountId;
-    bool shouldUnwrap;
     uint8 status; // 0 = pending, 1 = execution success, 2 = execution fail
+    bool shouldUnwrap;
   }
 
   /**
-   * Functions
+   * States
    */
+
+  function nextExecutionOrderIndex() external view returns (uint256);
+
   function crossMarginService() external returns (address);
 
   function pyth() external returns (address);
 
+  /**
+   * Functions
+   */
+
   function depositCollateral(uint8 _subAccountId, address _token, uint256 _amount, bool _shouldWrap) external payable;
-
-  function setCrossMarginService(address _address) external;
-
-  function setPyth(address _address) external;
-
-  function setOrderExecutor(address _executor, bool _isAllow) external;
-
-  function withdrawFundingFeeSurplus(
-    address _stableToken,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
-  ) external payable;
 
   function createWithdrawCollateralOrder(
     uint8 _subAccountId,
@@ -75,13 +66,17 @@ interface ICrossMarginHandler {
     bytes32 _encodedVaas
   ) external;
 
+  function setCrossMarginService(address _address) external;
+
+  function setPyth(address _address) external;
+
+  function setOrderExecutor(address _executor, bool _isAllow) external;
+
   function convertSGlpCollateral(
     uint8 _subAccountId,
     address _tokenOut,
     uint256 _amountIn
   ) external returns (uint256 _amountOut);
-
-  function nextExecutionOrderIndex() external view returns (uint256);
 
   function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrder);
 

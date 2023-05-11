@@ -22,6 +22,7 @@ interface ILiquidityHandler {
     uint256 orderId;
     uint256 amount;
     uint256 minOut;
+    uint256 actualAmountOut;
     uint256 executionFee;
     address payable account;
     uint48 createdTimestamp;

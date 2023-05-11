@@ -110,6 +110,8 @@ contract LiquidityHandler_Getter is LiquidityHandler_Base {
       _orders = liquidityHandler.getExecutedLiquidityOrders(ALICE, 20, 0);
       for (uint256 i = 0; i < _orders.length; i++) {
         assertEq(_orders[i].orderId, i);
+        assertEq(_orders[i].status, 1);
+        assertEq(_orders[i].actualAmountOut > 0, true);
       }
     }
   }

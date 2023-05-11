@@ -213,6 +213,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     _validatePLPHealthCheck(_tokenOut);
 
     emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aumE30, _lpSupply, _lpUsdValueE30, _amountOutToken);
+
     return _amountOutToken;
   }
 

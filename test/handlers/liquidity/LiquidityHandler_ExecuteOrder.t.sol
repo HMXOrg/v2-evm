@@ -299,6 +299,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[_orderIndex].token, address(weth), "Alice Order.token");
     assertEq(_beforeExecuteOrders[_orderIndex].amount, 5 ether, "Alice Order.amount");
     assertEq(_beforeExecuteOrders[_orderIndex].minOut, 0, "Alice Order.minOut");
+    assertEq(_beforeExecuteOrders[_orderIndex].actualAmountOut, 0, "Alice Order.actualAmountOut");
     assertEq(_beforeExecuteOrders[_orderIndex].isAdd, true, "Alice Order.isAdd");
     assertEq(_beforeExecuteOrders[_orderIndex].executionFee, 5 ether, "Alice Order.executionFee");
     assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
@@ -367,6 +368,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[_orderIndex].token, address(weth), "Alice Order.token");
     assertEq(_beforeExecuteOrders[_orderIndex].amount, 5 ether, "Alice Order.amount");
     assertEq(_beforeExecuteOrders[_orderIndex].minOut, 0, "Alice Order.minOut");
+    assertEq(_beforeExecuteOrders[_orderIndex].actualAmountOut, 0, "Alice Order.actualAmountOut");
     assertEq(_beforeExecuteOrders[_orderIndex].isAdd, true, "Alice Order.isAdd");
     assertEq(_beforeExecuteOrders[_orderIndex].executionFee, 5 ether, "Alice Order.executionFee");
     assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
@@ -447,6 +449,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_beforeExecuteOrders[_orderIndex].token, address(wbtc), "Alice Order.token");
     assertEq(_beforeExecuteOrders[_orderIndex].amount, 1 ether, "Alice Order.amount");
     assertEq(_beforeExecuteOrders[_orderIndex].minOut, 1 ether, "Alice Order.minOut");
+    assertEq(_beforeExecuteOrders[_orderIndex].actualAmountOut, 0, "Alice Order.actualAmountOut");
     assertEq(_beforeExecuteOrders[_orderIndex].isAdd, true, "Alice Order.isAdd");
     assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, false, "Alice Order.isNativeOut");
 
@@ -478,6 +481,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_orders[_index].token, address(wbtc), "Alice Order.token");
     assertEq(_orders[_index].amount, 5 ether, "Alice PLP Order.amount");
     assertEq(_orders[_index].minOut, 0, "Alice WBTC Order.minOut");
+    assertEq(_orders[_index].actualAmountOut, 0, "Alice Order.actualAmountOut");
     assertEq(_orders[_index].isAdd, false, "Alice Order.isAdd");
     assertEq(_orders[_index].isNativeOut, false, "Alice Order.isNativeOut");
 
@@ -515,6 +519,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(_orders[_orderIndex].token, address(weth), "Alice Order.token");
     assertEq(_orders[_orderIndex].amount, _amount, "Alice PLP Order.amount");
     assertEq(_orders[_orderIndex].minOut, 0, "Alice WBTC Order.minOut");
+    assertEq(_orders[_orderIndex].actualAmountOut, 0, "Alice Order.actualAmountOut");
     assertEq(_orders[_orderIndex].isAdd, false, "Alice Order.isAdd");
     assertEq(_orders[_orderIndex].executionFee, 5 ether, "Alice Execute fee");
     assertEq(_orders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");

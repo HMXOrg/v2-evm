@@ -39,6 +39,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     publishTimeDiff,
     false
   );
+  // await crossMarginHandler.setOrderExecutor(deployer.address, true);
   await (
     await crossMarginHandler.executeOrder(
       ethers.constants.MaxUint256,

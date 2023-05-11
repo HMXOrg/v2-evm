@@ -60,6 +60,8 @@ contract MockLiquidityService {
         revert LiquidityService_RevertAsBytes();
       }
     }
+
+    return 1;
   }
 
   function removeLiquidity(

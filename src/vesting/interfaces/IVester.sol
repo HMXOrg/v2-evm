@@ -37,9 +37,10 @@ interface IVester {
 
   function getUnlockAmount(uint256 amount, uint256 duration) external returns (uint256);
 
-  function nextItemId() external view returns (uint256);
+  function itemLastIndex(address) external returns (uint256);
 
   function items(
+    address user,
     uint256 index
   )
     external

@@ -29,6 +29,8 @@ contract LimitTradeHandler_Base is BaseTest {
     limitOrderTester = new LimitOrderTester(limitTradeHandler);
 
     ecoPyth.setUpdater(address(limitTradeHandler), true);
+
+    limitTradeHandler.setGuaranteeLimitPrice(true);
   }
 
   // =========================================

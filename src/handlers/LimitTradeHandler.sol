@@ -91,6 +91,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool reduceOnly,
     address tpToken
   );
+  event LogSetGuaranteeLimitPrice(bool isActive);
 
   /**
    * Structs
@@ -141,6 +142,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
+  bool public isGuaranteeLimitPrice;
 
   EnumerableSet.UintSet private activeOrderPointers;
   EnumerableSet.UintSet private activeMarketOrderPointers;
@@ -171,6 +173,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     tradeService = _tradeService;
     pyth = IEcoPyth(_pyth);
     isAllowAllExecutor = false;
+    isGuaranteeLimitPrice = false;
 
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     minExecutionFee = _minExecutionFee;
@@ -389,7 +392,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-          _limitPriceE30: vars.order.triggerPrice
+          _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
         });
       } else if (!vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
@@ -402,7 +405,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: vars.order.triggerPrice
+            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
           // Flip it to Long position
           TradeService(tradeService).increasePosition({
@@ -410,7 +413,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-            _limitPriceE30: vars.order.triggerPrice
+            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         } else {
           // Not flip
@@ -423,7 +426,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               uint256(-_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: vars.order.triggerPrice
+            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         }
       }
@@ -437,7 +440,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-          _limitPriceE30: vars.order.triggerPrice
+          _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
         });
       } else if (vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
@@ -450,7 +453,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: vars.order.triggerPrice
+            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
           // Flip it to Short position
           TradeService(tradeService).increasePosition({
@@ -458,7 +461,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-            _limitPriceE30: vars.order.triggerPrice
+            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         } else {
           // Not flip
@@ -471,7 +474,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               uint256(_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: vars.order.triggerPrice
+            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         }
       }
@@ -671,6 +674,12 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /**
    * Setters
    */
+  function setGuaranteeLimitPrice(bool isActive) external onlyOwner {
+    isGuaranteeLimitPrice = isActive;
+
+    emit LogSetGuaranteeLimitPrice(isActive);
+  }
+
   /// @notice Sets a new TradeService contract address.
   /// @param _tradeService The new TradeService contract address.
   function setTradeService(address _tradeService) external onlyOwner {
@@ -774,9 +783,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     }
 
     // Validate price is executable
-    vars.isPriceValid = _triggerAboveThreshold
-      ? vars.adaptivePrice < _acceptablePrice
-      : vars.adaptivePrice > _acceptablePrice;
+    bool isBuy = _sizeDelta > 0;
+    vars.isPriceValid = isBuy ? vars.adaptivePrice < _acceptablePrice : vars.adaptivePrice > _acceptablePrice;
 
     if (_revertOnError) {
       if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();

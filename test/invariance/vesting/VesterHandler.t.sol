@@ -70,9 +70,9 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
 
   function _vest(address account, uint256 amount, uint256 duration) internal {
     esHmx.approve(address(vester), type(uint256).max);
-    uint256 nextItemId = vester.nextItemId();
+    uint256 nextItemId = vester.itemLastIndex(account);
     vester.vestFor(account, amount, duration);
-    (, , , , , , , uint256 totalUnlockedAmount) = vester.items(nextItemId);
+    (, , , , , , , uint256 totalUnlockedAmount) = vester.items(account, nextItemId);
 
     ghost_amount += amount;
     ghost_totalUnlockedAmount += totalUnlockedAmount;
@@ -83,10 +83,17 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
     console2.log("ghost_maxPossibleHmxAccountBalance[account]", ghost_maxPossibleHmxAccountBalance[account]);
   }
 
-  function abort(uint256 itemIndex, uint256 duration) public createActor countCall("abort") {
-    itemIndex = bound(itemIndex, 0, vester.nextItemId() - 1);
+  function abort(
+    uint256 actorIndexSeed,
+    uint256 itemIndex,
+    uint256 duration
+  ) public useActor(actorIndexSeed) countCall("abort") {
+    itemIndex = bound(itemIndex, 0, vester.itemLastIndex(currentActor) - 1);
 
-    (address owner, , , , uint256 startTime, uint256 endTime, , uint256 totalUnlockedAmount) = vester.items(itemIndex);
+    (address owner, , , , uint256 startTime, uint256 endTime, , uint256 totalUnlockedAmount) = vester.items(
+      currentActor,
+      itemIndex
+    );
 
     duration = bound(duration, 0, endTime - startTime + 1);
     vm.warp(block.timestamp + duration);
@@ -106,14 +113,15 @@ contract VesterHandler is CommonBase, StdCheats, StdUtils {
   }
 
   function claimFor(
+    uint256 actorIndexSeed,
     address someone,
     uint256 itemIndex,
     uint256 duration,
     uint256 duration2
-  ) public createActor countCall("claimFor") {
-    itemIndex = bound(itemIndex, 0, vester.nextItemId() - 1);
+  ) public useActor(actorIndexSeed) countCall("claimFor") {
+    itemIndex = bound(itemIndex, 0, vester.itemLastIndex(currentActor) - 1);
 
-    (address owner, , , uint256 amount, uint256 startTime, uint256 endTime, , ) = vester.items(itemIndex);
+    (address owner, , , uint256 amount, uint256 startTime, uint256 endTime, , ) = vester.items(currentActor, itemIndex);
 
     duration = bound(duration, 0, endTime - startTime + 1);
     vm.warp(block.timestamp + duration);

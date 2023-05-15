@@ -13,6 +13,15 @@ abstract contract ConfigJsonRepo is Script {
   string internal fileName = vm.envString("DEPLOYMENT_CONFIG_FILENAME");
   string internal configFilePath = string.concat(directory, fileName);
 
+  bytes32 constant wethAssetId = "ETH";
+  bytes32 constant wbtcAssetId = "BTC";
+  bytes32 constant usdcAssetId = "USDC";
+  bytes32 constant usdtAssetId = "USDT";
+  bytes32 constant daiAssetId = "DAI";
+  bytes32 constant appleAssetId = "AAPL";
+  bytes32 constant jpyAssetId = "JPY";
+  bytes32 constant glpAssetId = "GLP";
+
   function getJsonAddress(string memory _key) internal view returns (address _value) {
     string memory json = vm.readFile(configFilePath);
 

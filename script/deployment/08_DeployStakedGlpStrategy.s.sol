@@ -20,7 +20,7 @@ contract DeployStakedGlpStrategy is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    ProxyAdmin proxyAdmin = new ProxyAdmin();
+    address proxyAdmin = getJsonAddress(".proxyAdmin");
 
     address sglp = getJsonAddress(".tokens.sglp");
 
@@ -33,7 +33,8 @@ contract DeployStakedGlpStrategy is ConfigJsonRepo {
         IVaultStorage(getJsonAddress(".storages.vault"))
       );
 
-    address treasury = 0xBB0Ba69f99B18E255912c197C8a2bD48293D5797; // who can receive treasury reward
+    address keeper = 0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a; // who can execute strategy
+    address treasury = 0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a; // who can receive treasury reward
     uint16 strategyBPS = 1000; //10%
 
     address strategiesAddress = address(

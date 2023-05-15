@@ -369,9 +369,6 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     _config.adapter = _adapter;
 
     assetPriceConfigs[_assetId] = _config;
-
-    //sanity
-    IOracleAdapter(_config.adapter).getLatestPrice(_assetId, false, _confidenceThresholdE6);
   }
 
   /// @notice Set market status for the given asset.

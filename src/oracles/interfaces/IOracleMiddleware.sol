@@ -81,4 +81,6 @@ interface IOracleMiddleware {
     uint32 _trustPriceAge,
     address _adapter
   ) external;
+
+  function setMultipleMarketStatus(bytes32[] memory _assetIds, uint8[] memory _statuses) external;
 }

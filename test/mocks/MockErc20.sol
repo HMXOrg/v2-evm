@@ -7,11 +7,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract MockErc20 is ERC20 {
   uint8 internal _decimals;
 
-  constructor(
-    string memory name,
-    string memory symbol,
-    uint8 __decimals
-  ) ERC20(name, symbol) {
+  constructor(string memory name, string memory symbol, uint8 __decimals) ERC20(name, symbol) {
     _decimals = __decimals;
   }
 

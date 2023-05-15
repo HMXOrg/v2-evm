@@ -60,7 +60,11 @@ contract MarketTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   }
 
   /**
-   * Core Functions
+   * MODIFIER
+   */
+
+  /**
+   * CALCULATION
    */
   /// @notice Perform buy, in which increasing position size towards long exposure.
   /// @dev Flipping from short exposure to long exposure is possible here.

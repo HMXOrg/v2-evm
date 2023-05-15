@@ -24,7 +24,7 @@ contract DeployHandlers is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    ProxyAdmin proxyAdmin = new ProxyAdmin();
+    address proxyAdmin = getJsonAddress(".proxyAdmin");
 
     ContractAddress memory vars = ContractAddress(
       getJsonAddress(".oracles.pyth"),
@@ -40,35 +40,6 @@ contract DeployHandlers is ConfigJsonRepo {
     uint256 minExecutionTimestamp = 5 * 60;
     uint256 executionOrderFee = 0.0001 ether;
 
-    address botHandlerAddress = address(
-      Deployer.deployBotHandler(
-        address(proxyAdmin),
-        vars.tradeServiceAddress,
-        vars.liquidationServiceAddress,
-        vars.crossMarginServiceAddress,
-        vars.pythAddress
-      )
-    );
-    address crossMarginHandlerAddress = address(
-      Deployer.deployCrossMarginHandler(
-        address(proxyAdmin),
-        vars.crossMarginServiceAddress,
-        vars.pythAddress,
-        executionOrderFee
-      )
-    );
-    address liquidityHandlerAddress = address(
-      Deployer.deployLiquidityHandler(
-        address(proxyAdmin),
-        vars.liquidityServiceAddress,
-        vars.pythAddress,
-        executionOrderFee
-      )
-    );
-
-    address marketTradeHandlerAddress = address(
-      Deployer.deployMarketTradeHandler(address(proxyAdmin), vars.tradeServiceAddress, vars.pythAddress)
-    );
     address limitTradeHandlerAddress = address(
       Deployer.deployLimitTradeHandler(
         address(proxyAdmin),
@@ -82,10 +53,6 @@ contract DeployHandlers is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".handlers.bot", botHandlerAddress);
-    updateJson(".handlers.crossMargin", crossMarginHandlerAddress);
     updateJson(".handlers.limitTrade", limitTradeHandlerAddress);
-    updateJson(".handlers.liquidity", liquidityHandlerAddress);
-    updateJson(".handlers.marketTrade", marketTradeHandlerAddress);
   }
 }

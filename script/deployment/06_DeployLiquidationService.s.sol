@@ -12,43 +12,19 @@ import { TradeService } from "@hmx/services/TradeService.sol";
 
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
-contract DeployServices is ConfigJsonRepo {
+contract DeployLiquidationService is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
 
-    ProxyAdmin proxyAdmin = new ProxyAdmin();
+    address proxyAdminAddress = getJsonAddress(".proxyAdmin");
     address configStorageAddress = getJsonAddress(".storages.config");
     address vaultStorageAddress = getJsonAddress(".storages.vault");
     address perpStorageAddress = getJsonAddress(".storages.perp");
     address calculatorAddress = getJsonAddress(".calculator");
     address tradeHelperAddress = getJsonAddress(".helpers.trade");
-    address convertedGlpStrategyAddress = getJsonAddress(".strategies.convertedGlpStrategy");
-    address proxyAdminAddress = address(proxyAdmin);
-    address crossMarginServiceAddress = address(
-      Deployer.deployCrossMarginService(
-        proxyAdminAddress,
-        configStorageAddress,
-        vaultStorageAddress,
-        calculatorAddress,
-        perpStorageAddress,
-        convertedGlpStrategyAddress
-      )
-    );
     address liquidationServiceAddress = address(
       Deployer.deployLiquidationService(
-        proxyAdminAddress,
-        perpStorageAddress,
-        vaultStorageAddress,
-        configStorageAddress,
-        tradeHelperAddress
-      )
-    );
-    address liquidityServiceAddress = address(
-      Deployer.deployLiquidityService(proxyAdminAddress, configStorageAddress, vaultStorageAddress, perpStorageAddress)
-    );
-    address tradeServiceAddress = address(
-      Deployer.deployTradeService(
         proxyAdminAddress,
         perpStorageAddress,
         vaultStorageAddress,
@@ -59,9 +35,6 @@ contract DeployServices is ConfigJsonRepo {
 
     vm.stopBroadcast();
 
-    updateJson(".services.crossMargin", crossMarginServiceAddress);
     updateJson(".services.liquidation", liquidationServiceAddress);
-    updateJson(".services.liquidity", liquidityServiceAddress);
-    updateJson(".services.trade", tradeServiceAddress);
   }
 }

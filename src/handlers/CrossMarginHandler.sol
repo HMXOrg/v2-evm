@@ -181,7 +181,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   }
 
   /**
-   * Core Functions
+   * CALCULATION
    */
 
   /// @notice Deposits the specified amount of collateral token into the user's sub-account.

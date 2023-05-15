@@ -6,8 +6,11 @@ dotEnvConfig();
 import * as tdly from "@tenderly/hardhat-tenderly";
 tdly.setup({ automaticVerifications: false });
 
+import "@openzeppelin/hardhat-upgrades";
 import "hardhat-preprocessor";
 import "@typechain/hardhat";
+import "@nomiclabs/hardhat-ethers";
+import "hardhat-deploy";
 
 function getRemappings() {
   return fs
@@ -30,7 +33,17 @@ const config: HardhatUserConfig = {
     },
     tenderly: {
       url: process.env.POLYGON_TENDERLY_RPC || "",
-      accounts: process.env.POLYGON_MAINNET_PRIVATE_KEY !== undefined ? [process.env.POLYGON_MAINNET_PRIVATE_KEY] : [],
+      accounts:
+        process.env.POLYGON_MAINNET_PRIVATE_KEY !== undefined
+          ? [process.env.POLYGON_MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]
+          : [],
+    },
+    arb_goerli: {
+      url: process.env.ARBITRUM_GOERLI_RPC || "",
+      accounts:
+        process.env.POLYGON_MAINNET_PRIVATE_KEY !== undefined
+          ? [process.env.POLYGON_MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]
+          : [],
     },
   },
   solidity: {

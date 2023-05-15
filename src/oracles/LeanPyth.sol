@@ -45,7 +45,7 @@ contract LeanPyth is OwnableUpgradeable, ILeanPyth {
     pyth = _pyth;
 
     // Sanity
-    pyth.wormhole();
+    IPyth(pyth).wormhole();
   }
 
   /// @dev Updates the price feeds with the given price data.

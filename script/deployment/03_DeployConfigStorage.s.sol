@@ -10,23 +10,16 @@ import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-contract DeployStoragesAndPLPToken is ConfigJsonRepo {
+contract DeployConfigStorage is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    ProxyAdmin proxyAdmin = new ProxyAdmin();
+    address proxyAdmin = getJsonAddress(".proxyAdmin");
 
     address configStorageAddress = address(Deployer.deployConfigStorage(address(proxyAdmin)));
-    address perpStorageAddress = address(Deployer.deployPerpStorage(address(proxyAdmin)));
-    address vaultStorageAddress = address(Deployer.deployVaultStorage(address(proxyAdmin)));
-    address plpAddress = address(Deployer.deployPLPv2(address(proxyAdmin)));
 
     vm.stopBroadcast();
 
     updateJson(".storages.config", configStorageAddress);
-    updateJson(".storages.perp", perpStorageAddress);
-    updateJson(".storages.vault", vaultStorageAddress);
-
-    updateJson(".tokens.plp", plpAddress);
   }
 }

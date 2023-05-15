@@ -168,4 +168,6 @@ contract MockOracleMiddleware is IOracleMiddleware {
     uint32 /*_trustPriceAge*/,
     address /* adapter */
   ) external {}
+
+  function setMultipleMarketStatus(bytes32[] memory _assetIds, uint8[] memory _statuses) external {}
 }

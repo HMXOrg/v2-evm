@@ -39,12 +39,12 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
     });
 
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, ALICE);
 
     limitTradeHandler.cancelOrder({ _subAccountId: 0, _orderIndex: 0 });
 
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, address(0));
 
     uint256 balanceDiff = ALICE.balance - balanceBefore;

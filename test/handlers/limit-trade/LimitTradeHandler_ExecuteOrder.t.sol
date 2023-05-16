@@ -230,7 +230,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Retrieve Buy Order that was just created.
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
@@ -249,7 +249,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _minPublishTime: 0,
       _encodedVaas: keccak256("someEncodedVaas")
     });
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
@@ -285,7 +285,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Retrieve Buy Order that was just created.
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
@@ -304,7 +304,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _minPublishTime: 0,
       _encodedVaas: keccak256("someEncodedVaas")
     });
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
@@ -395,7 +395,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Retrieve Sell Order that was just created.
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
@@ -414,7 +414,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _minPublishTime: 0,
       _encodedVaas: keccak256("someEncodedVaas")
     });
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
@@ -451,7 +451,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
 
     // Retrieve Sell Order that was just created.
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(this), "Order should be created.");
 
     // Mock price to make the order executable
@@ -470,7 +470,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _minPublishTime: 0,
       _encodedVaas: keccak256("someEncodedVaas")
     });
-    (limitOrder.account, , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);

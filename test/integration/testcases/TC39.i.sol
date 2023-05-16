@@ -144,7 +144,7 @@ contract TC39 is BaseIntTest_WithActions {
 
       // last position must be deleted
       uint256 orderIndex = limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0));
-      (address account, , , , , , , , , , ) = limitTradeHandler.limitOrders(getSubAccount(BOB, 0), orderIndex);
+      (address account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(getSubAccount(BOB, 0), orderIndex);
       assertEq(account, address(0));
     }
   }

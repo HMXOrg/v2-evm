@@ -36,6 +36,7 @@ interface ILimitTradeHandler {
     bool reduceOnly;
     int256 sizeDelta;
     uint8 subAccountId;
+    uint256 orderIndex;
     uint256 marketIndex;
     uint256 triggerPrice;
     uint256 acceptablePrice;
@@ -74,6 +75,7 @@ interface ILimitTradeHandler {
       int256 sizeDelta,
       uint8 subAccountId,
       uint256 marketIndex,
+      uint256 orderIndex,
       uint256 triggerPrice,
       uint256 acceptablePrice,
       uint256 executionFee,

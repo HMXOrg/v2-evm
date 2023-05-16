@@ -241,6 +241,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     LimitOrder memory _order = LimitOrder({
       account: msg.sender,
       subAccountId: _subAccountId,
+      orderIndex: _orderIndex,
       marketIndex: _marketIndex,
       sizeDelta: _sizeDelta,
       triggerPrice: _triggerPrice,

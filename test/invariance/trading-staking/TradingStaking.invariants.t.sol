@@ -9,7 +9,7 @@ import { console2 } from "forge-std/console2.sol";
 import { TradeService_Base } from "@hmx-test/services/trade/TradeService_Base.t.sol";
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
-import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
+import { MintableTokenInterface } from "@hmx/staking/interfaces/MintableTokenInterface.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ITLCStaking } from "@hmx/staking/interfaces/ITLCStaking.sol";
 import { IEpochRewarder } from "@hmx/staking/interfaces/IEpochRewarder.sol";
@@ -17,7 +17,7 @@ import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 
 contract TradingStakingInvariants is InvariantTest, TradeService_Base {
   MockErc20 internal rewardToken;
-  ITraderLoyaltyCredit internal tlc;
+  MockErc20 internal tlc;
   ITradingStaking internal tradingStaking;
   ITradeServiceHook internal tradingStakingHook;
   ITradeServiceHook internal tlcHook;
@@ -35,7 +35,7 @@ contract TradingStakingInvariants is InvariantTest, TradeService_Base {
       address(tradingStaking),
       address(tradeService)
     );
-    tlc = Deployer.deployTLCToken(address(proxyAdmin));
+    tlc = new MockErc20("Trader Loyalty Credit", "TLC", 18);
     tlcStaking = Deployer.deployTLCStaking(address(proxyAdmin), address(tlc));
     tlcHook = Deployer.deployTLCHook(address(proxyAdmin), address(tradeService), address(tlc), address(tlcStaking));
 
@@ -68,8 +68,6 @@ contract TradingStakingInvariants is InvariantTest, TradeService_Base {
     rewardToken.mint(address(this), 100 ether);
     rewardToken.approve(address(ethMarketRewarder), 100 ether);
     ethMarketRewarder.feed(100 ether, 365 days);
-
-    tlc.setMinter(address(tlcHook), true);
   }
 
   /**

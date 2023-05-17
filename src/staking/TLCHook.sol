@@ -6,8 +6,8 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { ITradeServiceHook } from "../services/interfaces/ITradeServiceHook.sol";
 import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
-import { TraderLoyaltyCredit } from "@hmx/tokens/TraderLoyaltyCredit.sol";
-import { TLCStaking } from "@hmx/staking/TLCStaking.sol";
+import { MintableTokenInterface } from "@hmx/staking/interfaces/MintableTokenInterface.sol";
+import { ITLCStaking } from "@hmx/staking/interfaces/ITLCStaking.sol";
 
 contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   error TradingStakingHook_Forbidden();
@@ -30,7 +30,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
 
     // Sanity checks
     ITradeService(tradeService).configStorage();
-    TraderLoyaltyCredit(tlc).symbol();
+    MintableTokenInterface(tlc).symbol();
   }
 
   function onIncreasePosition(
@@ -57,9 +57,9 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
     // Calculate mint amount which is equal to sizeDelta but convert decimal from 1e30 to 1e18
     // This is to make the TLC token composable as ERC20 with regular 18 decimals
     uint256 _mintAmount = _sizeDelta / 1e12;
-    TraderLoyaltyCredit(tlc).mint(address(this), _mintAmount);
-    TraderLoyaltyCredit(tlc).approve(tlcStaking, _mintAmount);
-    TLCStaking(tlcStaking).deposit(_primaryAccount, _mintAmount);
+    MintableTokenInterface(tlc).mint(address(this), _mintAmount);
+    MintableTokenInterface(tlc).approve(tlcStaking, _mintAmount);
+    ITLCStaking(tlcStaking).deposit(_primaryAccount, _mintAmount);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

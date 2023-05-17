@@ -32,10 +32,8 @@ import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.so
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
 
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
-import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
 import { ITLCStaking } from "@hmx/staking/interfaces/ITLCStaking.sol";
 import { IEpochRewarder } from "@hmx/staking/interfaces/IEpochRewarder.sol";
-import { IVester } from "@hmx/vesting/interfaces/IVester.sol";
 
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
@@ -434,42 +432,6 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ITradeHelper(payable(_proxy));
-  }
-
-  /**
-   * Tokens
-   */
-
-  function deployTLCToken(address _proxyAdmin) internal returns (ITraderLoyaltyCredit) {
-    bytes memory _logicBytecode = abi.encodePacked(
-      vm.getCode("./out/TraderLoyaltyCredit.sol/TraderLoyaltyCredit.json")
-    );
-    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
-    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return ITraderLoyaltyCredit(payable(_proxy));
-  }
-
-  /*
-   * Vesting
-   */
-
-  function deployVester(
-    address _proxyAdmin,
-    address esHMXAddress,
-    address hmxAddress,
-    address vestedEsHmxDestinationAddress,
-    address unusedEsHmxDestinationAddress
-  ) internal returns (IVester) {
-    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/Vester.sol/Vester.json"));
-    bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address)")),
-      esHMXAddress,
-      hmxAddress,
-      vestedEsHmxDestinationAddress,
-      unusedEsHmxDestinationAddress
-    );
-    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IVester(payable(_proxy));
   }
 
   /*

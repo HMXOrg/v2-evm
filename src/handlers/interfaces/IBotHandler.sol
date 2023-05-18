@@ -51,6 +51,12 @@ interface IBotHandler {
     bytes32 _encodedVaas
   ) external payable;
 
+  function checkLiquidation(
+    address _subAccount,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
+  ) external view returns (bool);
+
   function liquidate(
     address _subAccount,
     bytes32[] memory _priceData,

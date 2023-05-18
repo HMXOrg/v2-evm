@@ -449,10 +449,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     perpStorage = _perpStorage;
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////// CALCULATOR
-  ////////////////////////////////////////////////////////////////////////////////////
-
   /// @notice Calculate for value on trader's account including Equity, IMR and MMR.
   /// @dev Equity = Sum(collateral tokens' Values) + Sum(unrealized PnL) - Unrealized Borrowing Fee - Unrealized Funding Fee
   /// @param _subAccount Trader account's address.
@@ -464,22 +460,41 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) external view returns (int256 _equityValueE30) {
-    return _getEquity(_subAccount, _limitPriceE30, _limitAssetId);
+    return _getEquity(_subAccount, _limitPriceE30, _limitAssetId, new bytes32[](0), new uint256[](0));
+  }
+
+  function getEquityWithInjectedPrices(
+    address _subAccount,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
+  ) external view returns (int256 _equityValueE30) {
+    if (_injectedAssetIds.length != _injectedPrices.length) revert ICalculator_InvalidArray();
+    return _getEquity(_subAccount, 0, 0, _injectedAssetIds, _injectedPrices);
   }
 
   function _getEquity(
     address _subAccount,
     uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    bytes32 _limitAssetId,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
   ) internal view returns (int256 _equityValueE30) {
     // Calculate collateral tokens' value on trader's sub account
-    uint256 _collateralValueE30 = _getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
+    uint256 _collateralValueE30 = _getCollateralValue(
+      _subAccount,
+      _limitPriceE30,
+      _limitAssetId,
+      _injectedAssetIds,
+      _injectedPrices
+    );
 
     // Calculate unrealized PnL and unrealized fee
     (int256 _unrealizedPnlValueE30, int256 _unrealizedFeeValueE30) = _getUnrealizedPnlAndFee(
       _subAccount,
       _limitPriceE30,
-      _limitAssetId
+      _limitAssetId,
+      _injectedAssetIds,
+      _injectedPrices
     );
 
     // Calculate equity
@@ -515,13 +530,15 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) external view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
-    return _getUnrealizedPnlAndFee(_subAccount, _limitPriceE30, _limitAssetId);
+    return _getUnrealizedPnlAndFee(_subAccount, _limitPriceE30, _limitAssetId, new bytes32[](0), new uint256[](0));
   }
 
   function _getUnrealizedPnlAndFee(
     address _subAccount,
     uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    bytes32 _limitAssetId,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
   ) internal view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
@@ -544,18 +561,31 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_var.position.marketIndex);
       _market = PerpStorage(perpStorage).getMarketByIndex(_var.position.marketIndex);
 
-      // Check to overwrite price
-      if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
-        _var.priceE30 = _limitPriceE30;
+      if (_injectedAssetIds.length > 0) {
+        for (uint256 j; j < _injectedAssetIds.length; ) {
+          if (_injectedAssetIds[j] == _marketConfig.assetId) {
+            _var.priceE30 = _injectedPrices[j];
+            // stop inside looping after found price
+            break;
+          }
+          unchecked {
+            j++;
+          }
+        }
       } else {
-        (_var.priceE30, , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
-          _marketConfig.assetId,
-          !_var.isLong, // if current position is SHORT position, then we use max price
-          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
-          -_var.position.positionSizeE30,
-          _marketConfig.fundingRate.maxSkewScaleUSD,
-          0
-        );
+        // Check to overwrite price
+        if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
+          _var.priceE30 = _limitPriceE30;
+        } else {
+          (_var.priceE30, , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+            _marketConfig.assetId,
+            !_var.isLong, // if current position is SHORT position, then we use max price
+            (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+            -_var.position.positionSizeE30,
+            _marketConfig.fundingRate.maxSkewScaleUSD,
+            0
+          );
+        }
       }
 
       {
@@ -627,13 +657,15 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) external view returns (uint256 _collateralValueE30) {
-    return _getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId);
+    return _getCollateralValue(_subAccount, _limitPriceE30, _limitAssetId, new bytes32[](0), new uint256[](0));
   }
 
   function _getCollateralValue(
     address _subAccount,
     uint256 _limitPriceE30,
-    bytes32 _limitAssetId
+    bytes32 _limitAssetId,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
   ) internal view returns (uint256 _collateralValueE30) {
     // Get list of current depositing tokens on trader's account
     address[] memory _traderTokens = VaultStorage(vaultStorage).getTraderTokens(_subAccount);
@@ -655,16 +687,29 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
       // Get price from oracle
       uint256 _priceE30;
-
-      // Get token asset id from ConfigStorage
       bytes32 _tokenAssetId = ConfigStorage(configStorage).tokenAssetIds(_token);
-      if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
-        _priceE30 = _limitPriceE30;
+
+      if (_injectedAssetIds.length > 0) {
+        for (uint256 j; j < _injectedAssetIds.length; ) {
+          if (_injectedAssetIds[j] == _tokenAssetId) {
+            _priceE30 = _injectedPrices[j];
+            // stop inside looping after found price
+            break;
+          }
+          unchecked {
+            j++;
+          }
+        }
       } else {
-        (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
-          _tokenAssetId,
-          false // @note Collateral value always use Min price
-        );
+        // Get token asset id from ConfigStorage
+        if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
+          _priceE30 = _limitPriceE30;
+        } else {
+          (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
+            _tokenAssetId,
+            false // @note Collateral value always use Min price
+          );
+        }
       }
       // Calculate accumulative value of collateral tokens
       // collateral value = (collateral amount * price) * collateralFactorBPS
@@ -807,7 +852,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) internal view returns (int256 _freeCollateral) {
-    int256 equity = _getEquity(_subAccount, _limitPriceE30, _limitAssetId);
+    int256 equity = _getEquity(_subAccount, _limitPriceE30, _limitAssetId, new bytes32[](0), new uint256[](0));
     uint256 imr = _getIMR(_subAccount);
     _freeCollateral = equity - int256(imr);
     return _freeCollateral;

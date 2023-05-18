@@ -9,6 +9,7 @@ interface ICalculator {
    * Errors
    */
   error ICalculator_InvalidAddress();
+  error ICalculator_InvalidArray();
   error ICalculator_InvalidAveragePrice();
   error ICalculator_PoolImbalance();
 

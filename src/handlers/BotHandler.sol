@@ -19,6 +19,7 @@ import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { Calculator } from "@hmx/contracts/Calculator.sol";
 
 /// @title BotHandler
 contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandler {
@@ -178,6 +179,24 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
 
     emit LogCloseDelistedMarketPosition(_account, _subAccountId, _marketIndex, _tpToken);
+  }
+
+  function checkLiquidation(
+    address _subAccount,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
+  ) external view returns (bool) {
+    Calculator calculator = TradeService(tradeService).calculator();
+
+    // Get sub-account's equity
+    int256 _equityValueE30 = calculator.getEquityWithInjectedPrices(_subAccount, _injectedAssetIds, _injectedPrices);
+
+    // Get sub-account's mmy
+    uint256 _mmrValueE30 = calculator.getMMR(_subAccount);
+
+    if (_equityValueE30 < 0) {} else {}
+
+    return _equityValueE30 < 0 || uint256(_equityValueE30) < _mmrValueE30;
   }
 
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage.

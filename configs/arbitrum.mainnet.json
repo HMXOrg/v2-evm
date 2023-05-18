@@ -47,5 +47,9 @@
     "stakedGLPStrategy": "0x7FeC31e5966C84E8A81C574a0504ff637E3CC569",
     "convertedGlpStrategy": "0x4D9DF83C94c54F75aC2870514C2AD72047f96BB8"
   },
+  "hooks": {
+    "tradingStaking": "0x5381e29eEDd851e8700c1886d8B956D12200e6E9",
+    "tlc": "0xd2476A7bCEfBd2b4fF1676CaCb04bab49367c014"
+  },
   "calculator": "0xfc51C8c673C27e1b3D89688ef46D706A77CA28DB"
 }

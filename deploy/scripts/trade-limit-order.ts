@@ -26,9 +26,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await handler.createOrder(
       0, // subAccountId
       0, // marketIndex
-      ethers.utils.parseUnits("10", 30), // sizeDelta
-      ethers.utils.parseUnits("1550", 30), // triggerPrice
-      ethers.utils.parseUnits("0", 30), // acceptablePrice
+      ethers.utils.parseUnits("1000", 30), // sizeDelta
+      ethers.utils.parseUnits("0", 30), // triggerPrice
+      ethers.utils.parseUnits("123123123123123123", 30), // acceptablePrice
       true, // triggerAboveThreshold
       executionFee,
       true, // reduceOnly (true to not flip position)

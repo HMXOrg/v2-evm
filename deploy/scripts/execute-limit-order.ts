@@ -39,7 +39,7 @@ const publishTimeDiff = [
 ];
 
 const subAccountId = 0;
-const marketIndex = 0;
+const orderIndex = 1;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
@@ -58,7 +58,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await handler.executeOrder(
       deployer.address,
       subAccountId,
-      marketIndex,
+      orderIndex,
       deployer.address,
       priceUpdateData,
       publishTimeDiffUpdateData,

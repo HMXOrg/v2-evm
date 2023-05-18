@@ -40,6 +40,7 @@ const config: HardhatUserConfig = {
     },
     arb_goerli: {
       url: process.env.ARBITRUM_GOERLI_RPC || "",
+      chainId: 421613,
       accounts:
         process.env.POLYGON_MAINNET_PRIVATE_KEY !== undefined
           ? [process.env.POLYGON_MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]

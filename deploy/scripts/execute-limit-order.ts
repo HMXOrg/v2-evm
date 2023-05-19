@@ -39,7 +39,7 @@ const publishTimeDiff = [
 ];
 
 const subAccountId = 0;
-const orderIndex = 1;
+const orderIndex = 5;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
@@ -67,7 +67,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       { gasLimit: 10000000 }
     )
   ).wait();
-  console.log(`Order Index: ${await handler.limitOrdersIndex(address)}`);
   console.log("Execute Limit Order Success!");
 };
 

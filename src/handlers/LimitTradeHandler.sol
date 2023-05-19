@@ -92,6 +92,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address tpToken
   );
   event LogSetGuaranteeLimitPrice(bool isActive);
+  event LogSetDelegate(address sender, address delegate);
 
   /**
    * Structs
@@ -219,6 +220,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /**
    * Core Functions
    */
+  function setDelegate(address _delegate) external {
+    require(tx.origin == msg.sender, "ONLY EOA");
+
+    delegations[msg.sender] = _delegate;
+    emit LogSetDelegate(msg.sender, _delegate);
+  }
+
   /// @notice Create a new limit order
   /// @param _subAccountId Sub-account Id
   /// @param _marketIndex Market Index

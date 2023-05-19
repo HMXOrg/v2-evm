@@ -9,6 +9,8 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/
 
 // interfaces
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { LiquidationService } from "@hmx/services/LiquidationService.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
@@ -19,6 +21,7 @@ import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
+import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 
 /// @title BotHandler
@@ -94,6 +97,74 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
   /**
    * Core Functions
    */
+
+  /// @dev Checks if the force-taking of maximum profit is possible for a given position.
+  /// @param _positionIds The ID of the position to check.
+  /// @param _injectedAssetIds The array of injected asset IDs.
+  /// @param _injectedPrices The array of injected prices.
+  /// @return A boolean indicating whether the force-taking of maximum profit is possible.
+  function checkForceTakeMaxProfit(
+    bytes32 _positionIds,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
+  ) external view returns (bool) {
+    if (
+      _injectedAssetIds.length != _injectedPrices.length || _injectedAssetIds.length == 0 || _injectedPrices.length == 0
+    ) revert IBotHandler_InvalidArray();
+
+    // SLOADs
+    PerpStorage _perpStorage = PerpStorage(TradeService(tradeService).perpStorage());
+    ConfigStorage _configStorage = ConfigStorage(TradeService(tradeService).configStorage());
+    OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
+    Calculator _calculator = TradeService(tradeService).calculator();
+
+    // Get Position
+    IPerpStorage.Position memory _position = _perpStorage.getPositionById(_positionIds);
+
+    // If no position
+    if (_position.primaryAccount == address(0)) return false;
+
+    // validate market status
+    IConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_position.marketIndex);
+    uint256 marketStatus = _oracle.marketStatus(_marketConfig.assetId);
+    if (marketStatus != 2 || !_marketConfig.active) return false;
+
+    PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(_position.marketIndex);
+
+    // get injected price
+    uint256 _priceE30;
+    for (uint256 j; j < _injectedAssetIds.length; ) {
+      if (_injectedAssetIds[j] == _marketConfig.assetId) {
+        _priceE30 = _injectedPrices[j];
+        // stop inside looping after found price
+        break;
+      }
+      unchecked {
+        j++;
+      }
+    }
+
+    // get adaptive price
+    (uint256 _adaptivePriceE30, ) = _oracle.getLatestAdaptivePrice(
+      _marketConfig.assetId,
+      true,
+      (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+      -_position.positionSizeE30,
+      _marketConfig.fundingRate.maxSkewScaleUSD,
+      _priceE30
+    );
+
+    (bool _isProfit, uint256 _delta) = _calculator.getDelta(
+      _abs(_position.positionSizeE30),
+      _position.positionSizeE30 > 0,
+      _adaptivePriceE30,
+      _position.avgEntryPriceE30,
+      _position.lastIncreaseTimestamp
+    );
+
+    // Check if there is a profit and the delta is greater than the reserve value
+    return _isProfit && _delta > _position.reserveValueE30;
+  }
 
   /// @notice force to close position and take profit, depend on reserve value on this position
   /// @param _account position's owner
@@ -386,6 +457,10 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     IEcoPyth(_pyth).getAssetIds();
     emit LogSetPyth(pyth, _pyth);
     pyth = _pyth;
+  }
+
+  function _abs(int256 x) private pure returns (uint256) {
+    return uint256(x >= 0 ? x : -x);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

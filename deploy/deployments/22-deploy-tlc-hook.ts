@@ -8,8 +8,8 @@ const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
 const tradeService = config.services.trade;
-const tlc = "0x962972C4DA1c0398296fCb6Ee04eea3A4f48b0Bb";
-const tlcStaking = "0x8DdF31A4C859cA0a26a7b9B361218FB3c50A30a5";
+const tlc = "0xe8Ae03C982330d1Ef8a912697654633708c7905a";
+const tlcStaking = "0xCC2239588e85cC1B342229cfaC2e3Aba539c79c6";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];

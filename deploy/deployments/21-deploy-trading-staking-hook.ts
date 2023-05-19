@@ -7,7 +7,7 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const tradingStaking = "0x934dD689e9962427aab71b226b386945F5d190bC";
+const tradingStaking = "0x337Fb2a4e972d4E612A068990FFF735e9d28fB87";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];

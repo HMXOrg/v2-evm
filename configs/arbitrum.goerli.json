@@ -47,8 +47,8 @@
     "convertedGlpStrategy": "0xE0DF60d32011b139B86D03347184A92158BdDCdE"
   },
   "hooks": {
-    "tradingStaking": "",
-    "tlc": ""
+    "tradingStaking": "0x3456ad721Da9e8D6Aa6Ce936844a4Bf2f3e41183",
+    "tlc": "0x8b0953C39288Bb82D2074E056c76f0be62EB5614"
   },
   "calculator": "0xba07bfCBa46834E18F6Eb07e31843d4e2240E524"
 }

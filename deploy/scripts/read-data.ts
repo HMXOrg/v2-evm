@@ -11,11 +11,12 @@ import {
   ConfigStorage__factory,
 } from "../../typechain";
 import { getConfig } from "../utils/config";
+import { getPricesFromPyth } from "../utils/price";
 import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 0;
+const subAccountId = 1;
 
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
@@ -678,7 +679,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   const markets = [ethusdMarket, btcusdMarket, applusdMarket, jpyusdMarket];
-  const oraclePrices = [wethPrice._price, wbtcPrice._price, applePrice._price, jpyPrice._price];
+  const [rawEthPrice, rawBtcPrice, rawUsdcPrice, rawUsdtPrice, rawDaiPrice, rawAAPLPrice, rawJpyPrice] =
+    await getPricesFromPyth();
+  const oraclePrices = [rawEthPrice, rawBtcPrice, rawAAPLPrice, rawJpyPrice];
   const marketConfigs = [ethusdMarketConfig, btcusdMarketConfig, applusdMarketConfig, jpyusdMarketConfig];
   const globalAssetClasses = [cryptoGlobalAssetClass, equityGlobalAssetClass, forexGlobalAssetClass];
 
@@ -739,7 +742,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         markets[marketIndex].longPositionSize.sub(markets[marketIndex].shortPositionSize),
         marketConfigs[marketIndex].fundingRate.maxSkewScaleUSD,
         each.positionSizeE30.mul(-1),
-        oraclePrices[marketIndex]
+        BigNumber.from(oraclePrices[marketIndex] * 1e8).mul(ethers.utils.parseUnits("1", 22))
       );
 
       const borrowingFee = globalAssetClasses[marketConfigs[marketIndex].assetClass].sumBorrowingRate
@@ -782,6 +785,10 @@ function calculateAdaptivePrice(
   sizeDelta: BigNumber,
   price: BigNumber
 ): BigNumber {
+  console.log("marketSkew", marketSkew);
+  console.log("maxSkewScaleUSD", maxSkewScaleUSD);
+  console.log("sizeDelta", sizeDelta);
+  console.log("price", price);
   const premium = marketSkew.mul(ONE_USD).div(maxSkewScaleUSD);
   const premiumAfter = marketSkew.add(sizeDelta).mul(ONE_USD).div(maxSkewScaleUSD);
   const premiumMedian = premium.add(premiumAfter).div(2);

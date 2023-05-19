@@ -7,6 +7,7 @@ interface IBotHandler {
    */
   error IBotHandler_UnauthorizedSender();
   error IBotHandler_InsufficientLiquidity();
+  error IBotHandler_InvalidArray();
 
   /**
    * States
@@ -18,6 +19,12 @@ interface IBotHandler {
   /**
    * Functions
    */
+  function checkForceTakeMaxProfit(
+    bytes32 _positionIds,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
+  ) external view returns (bool);
+
   function forceTakeMaxProfit(
     address _account,
     uint8 _subAccountId,

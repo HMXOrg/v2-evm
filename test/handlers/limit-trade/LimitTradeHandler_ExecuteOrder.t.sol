@@ -213,7 +213,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   }
 
   // Execute a BUY order to create new Long position
-  function w() external {
+  function testCorrectness_executeOrder_BuyOrder_NewLongPosition() external {
     // Create Buy Order
     mockOracle.setPrice(999 * 1e30);
     limitTradeHandler.createOrder{ value: 0.1 ether }({

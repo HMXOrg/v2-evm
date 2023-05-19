@@ -121,6 +121,8 @@ interface ILimitTradeHandler {
     address _tpToken
   ) external;
 
+  function setDelegate(address _delegate) external;
+
   function setPyth(address _pyth) external;
 
   function setGuaranteeLimitPrice(bool isActive) external;

@@ -147,6 +147,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   EnumerableSet.UintSet private activeOrderPointers;
   EnumerableSet.UintSet private activeMarketOrderPointers;
   EnumerableSet.UintSet private activeLimitOrderPointers;
+  mapping(address => address) public delegations;
+  address private senderOverride;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _weth Address of WETH.
@@ -198,6 +200,22 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _;
   }
 
+  modifier delegate() {
+    if (delegations[msg.sender] != address(0)) {
+      senderOverride = delegations[msg.sender];
+    }
+    _;
+    senderOverride = address(0);
+  }
+
+  function _msgSender() internal view override returns (address) {
+    if (senderOverride == address(0)) {
+      return msg.sender;
+    } else {
+      return senderOverride;
+    }
+  }
+
   /**
    * Core Functions
    */
@@ -221,7 +239,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 _executionFee,
     bool _reduceOnly,
     address _tpToken
-  ) external payable nonReentrant {
+  ) external payable nonReentrant delegate {
     // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
     if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
     // The attached native token must be equal to _executionFee
@@ -234,12 +252,12 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _transferInETH();
 
     // Get the sub-account and order index for the limit order
-    address _subAccount = _getSubAccount(msg.sender, _subAccountId);
+    address _subAccount = _getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
 
     // Create the limit order
     LimitOrder memory _order = LimitOrder({
-      account: msg.sender,
+      account: _msgSender(),
       subAccountId: _subAccountId,
       orderIndex: _orderIndex,
       marketIndex: _marketIndex,
@@ -257,7 +275,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _addOrder(_order, _subAccount, _orderIndex);
 
     emit LogCreateLimitOrder(
-      msg.sender,
+      _msgSender(),
       _subAccountId,
       _orderIndex,
       _marketIndex,
@@ -502,8 +520,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /// @notice Cancel a limit order
   /// @param _subAccountId Sub-account Id
   /// @param _orderIndex Order Index which could be retrieved from the emitted event from `createOrder()`
-  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
-    address subAccount = _getSubAccount(msg.sender, _subAccountId);
+  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant delegate {
+    address subAccount = _getSubAccount(_msgSender(), _subAccountId);
     LimitOrder memory _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
@@ -548,8 +566,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool _triggerAboveThreshold,
     bool _reduceOnly,
     address _tpToken
-  ) external nonReentrant {
-    address subAccount = _getSubAccount(msg.sender, _subAccountId);
+  ) external nonReentrant delegate {
+    address subAccount = _getSubAccount(_msgSender(), _subAccountId);
     LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();

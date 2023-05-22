@@ -7,7 +7,7 @@
   "handlers": {
     "bot": "0xA962fF080a3157F6d142dB0C6F30feDeA28A4e0C",
     "crossMargin": "0xf43A3bCDB8c9ACa51Dc1f1888252900054e133C7",
-    "limitTrade": "0x7aB55E8bbe1210A55c8e2468E90A07B3E18b50Cc",
+    "limitTrade": "0x4f902Dc505A78C56bAB9b4E5f0cF5f166f6B0B91",
     "liquidity": "0xE925d634F490F087966DEA677C8167Cf3ba75d68",
     "marketTrade": ""
   },
@@ -50,5 +50,9 @@
     "tradingStaking": "0x3456ad721Da9e8D6Aa6Ce936844a4Bf2f3e41183",
     "tlc": "0x8b0953C39288Bb82D2074E056c76f0be62EB5614"
   },
-  "calculator": "0xba07bfCBa46834E18F6Eb07e31843d4e2240E524"
+  "calculator": "0xba07bfCBa46834E18F6Eb07e31843d4e2240E524",
+  "accountAbstraction": {
+    "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+    "factory": "0x2dC02905A19879Be641f050a9659C47725E5d500"
+  }
 }

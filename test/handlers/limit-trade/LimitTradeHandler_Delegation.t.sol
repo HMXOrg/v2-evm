@@ -5,6 +5,7 @@ import { LimitTradeHandler_Base, IPerpStorage, IConfigStorage } from "./LimitTra
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { LimitOrderTester } from "../../testers/LimitOrderTester.sol";
 import { MockAccountAbstraction } from "../../mocks/MockAccountAbstraction.sol";
+import { console } from "forge-std/console.sol";
 
 // What is this test DONE
 // - revert
@@ -120,6 +121,7 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
     entryPoint.createOrder{ value: 0.1 ether }({
       account: address(aliceAA),
       target: address(limitTradeHandler),
+      mainAccount: ALICE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
@@ -133,8 +135,8 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
 
     // Retrieve Buy Order that was just created.
     ILimitTradeHandler.LimitOrder memory limitOrder;
-    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
-    assertEq(limitOrder.account, address(this), "Order should be created.");
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
+    assertEq(limitOrder.account, ALICE, "Order should be created.");
 
     // Mock price to make the order executable
     mockOracle.setPrice(1001 * 1e30);
@@ -143,7 +145,7 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
 
     // Execute Long Increase Order
     limitTradeHandler.executeOrder({
-      _account: address(this),
+      _account: ALICE,
       _subAccountId: 0,
       _orderIndex: 0,
       _feeReceiver: payable(ALICE),
@@ -152,7 +154,7 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
       _minPublishTime: 0,
       _encodedVaas: keccak256("someEncodedVaas")
     });
-    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(address(this), 0);
+    (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, address(0), "Order should be executed and removed from the order list.");
 
     assertEq(mockTradeService.increasePositionCallCount(), 1);
@@ -163,7 +165,7 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
       int256 _sizeDelta,
       uint256 _limitPriceE30
     ) = mockTradeService.increasePositionCalls(0);
-    assertEq(_primaryAccount, address(this));
+    assertEq(_primaryAccount, ALICE);
     assertEq(_subAccountId, 0);
     assertEq(_marketIndex, 1);
     assertEq(_sizeDelta, 1000 * 1e30);

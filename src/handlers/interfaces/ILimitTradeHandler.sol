@@ -25,6 +25,7 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_MarketOrderNoUpdate();
   error ILimitTradeHandler_LimitOrderConvertToMarketOrder();
   error ILimitTradeHandler_NotExecutionState();
+  error ILimitTradeHandler_Unauthorized();
 
   /**
    * Structs
@@ -85,6 +86,18 @@ interface ILimitTradeHandler {
   /**
    * Functions
    */
+  function createOrder(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    int256 _sizeDelta,
+    uint256 _triggerPrice,
+    uint256 _acceptablePrice,
+    bool _triggerAboveThreshold,
+    uint256 _executionFee,
+    bool _reduceOnly,
+    address _tpToken
+  ) external payable;
 
   function createOrder(
     uint8 _subAccountId,

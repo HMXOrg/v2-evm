@@ -16,6 +16,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { console } from "forge-std/console.sol";
 
 /// @title LimitTradeHandler
 /// @notice This contract handles the create, update, and cancel for the Trading module.
@@ -201,9 +202,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _;
   }
 
-  modifier delegate() {
-    if (delegations[msg.sender] != address(0)) {
-      senderOverride = delegations[msg.sender];
+  modifier delegate(address mainAccount) {
+    if (delegations[mainAccount] == msg.sender) {
+      senderOverride = mainAccount;
     }
     _;
     senderOverride = address(0);
@@ -221,10 +222,35 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
    * Core Functions
    */
   function setDelegate(address _delegate) external {
-    require(tx.origin == msg.sender, "ONLY EOA");
-
     delegations[msg.sender] = _delegate;
     emit LogSetDelegate(msg.sender, _delegate);
+  }
+
+  function createOrder(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    int256 _sizeDelta,
+    uint256 _triggerPrice,
+    uint256 _acceptablePrice,
+    bool _triggerAboveThreshold,
+    uint256 _executionFee,
+    bool _reduceOnly,
+    address _tpToken
+  ) external payable nonReentrant delegate(_mainAccount) {
+    console.log(_msgSender());
+    if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
+    _createOrder(
+      _subAccountId,
+      _marketIndex,
+      _sizeDelta,
+      _triggerPrice,
+      _acceptablePrice,
+      _triggerAboveThreshold,
+      _executionFee,
+      _reduceOnly,
+      _tpToken
+    );
   }
 
   /// @notice Create a new limit order
@@ -247,7 +273,31 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 _executionFee,
     bool _reduceOnly,
     address _tpToken
-  ) external payable nonReentrant delegate {
+  ) external payable nonReentrant {
+    _createOrder(
+      _subAccountId,
+      _marketIndex,
+      _sizeDelta,
+      _triggerPrice,
+      _acceptablePrice,
+      _triggerAboveThreshold,
+      _executionFee,
+      _reduceOnly,
+      _tpToken
+    );
+  }
+
+  function _createOrder(
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    int256 _sizeDelta,
+    uint256 _triggerPrice,
+    uint256 _acceptablePrice,
+    bool _triggerAboveThreshold,
+    uint256 _executionFee,
+    bool _reduceOnly,
+    address _tpToken
+  ) internal {
     // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
     if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
     // The attached native token must be equal to _executionFee
@@ -528,7 +578,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /// @notice Cancel a limit order
   /// @param _subAccountId Sub-account Id
   /// @param _orderIndex Order Index which could be retrieved from the emitted event from `createOrder()`
-  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant delegate {
+  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
     address subAccount = _getSubAccount(_msgSender(), _subAccountId);
     LimitOrder memory _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
@@ -574,7 +624,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool _triggerAboveThreshold,
     bool _reduceOnly,
     address _tpToken
-  ) external nonReentrant delegate {
+  ) external nonReentrant {
     address subAccount = _getSubAccount(_msgSender(), _subAccountId);
     LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists

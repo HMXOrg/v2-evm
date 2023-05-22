@@ -91,7 +91,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
    * ERC20 interaction functions
    */
 
-  function pullToken(address _token) external returns (uint256) {
+  function pullToken(address _token) external onlyWhitelistedExecutor returns (uint256) {
     uint256 prevBalance = totalAmount[_token];
     uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this));
 
@@ -357,42 +357,42 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     plpLiquidityDebtUSDE30 += _fundingFeeValue;
   }
 
-  function addTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external {
+  function addTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external onlyWhitelistedExecutor {
     tradingFeeDebt[_trader] += _tradingFeeDebt;
     globalTradingFeeDebt += _tradingFeeDebt;
   }
 
-  function addBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external {
+  function addBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external onlyWhitelistedExecutor {
     borrowingFeeDebt[_trader] += _borrowingFeeDebt;
     globalBorrowingFeeDebt += _borrowingFeeDebt;
   }
 
-  function addFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external {
+  function addFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external onlyWhitelistedExecutor {
     fundingFeeDebt[_trader] += _fundingFeeDebt;
     globalFundingFeeDebt += _fundingFeeDebt;
   }
 
-  function addLossDebt(address _trader, uint256 _lossDebt) external {
+  function addLossDebt(address _trader, uint256 _lossDebt) external onlyWhitelistedExecutor {
     lossDebt[_trader] += _lossDebt;
     globalLossDebt += _lossDebt;
   }
 
-  function subTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external {
+  function subTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external onlyWhitelistedExecutor {
     tradingFeeDebt[_trader] -= _tradingFeeDebt;
     globalTradingFeeDebt -= _tradingFeeDebt;
   }
 
-  function subBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external {
+  function subBorrowingFeeDebt(address _trader, uint256 _borrowingFeeDebt) external onlyWhitelistedExecutor {
     borrowingFeeDebt[_trader] -= _borrowingFeeDebt;
     globalBorrowingFeeDebt -= _borrowingFeeDebt;
   }
 
-  function subFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external {
+  function subFundingFeeDebt(address _trader, uint256 _fundingFeeDebt) external onlyWhitelistedExecutor {
     fundingFeeDebt[_trader] -= _fundingFeeDebt;
     globalFundingFeeDebt -= _fundingFeeDebt;
   }
 
-  function subLossDebt(address _trader, uint256 _lossDebt) external {
+  function subLossDebt(address _trader, uint256 _lossDebt) external onlyWhitelistedExecutor {
     lossDebt[_trader] -= _lossDebt;
     globalLossDebt -= _lossDebt;
   }

@@ -20,6 +20,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
   function testRevert_update_NonExistentOrder() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
     limitTradeHandler.updateOrder({
+      _mainAccount: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _sizeDelta: 100,
@@ -33,6 +34,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
   function testRevert_WhenUpdateMarketOrder() external {
     // create a market order (trigger price = 0)
     limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: address(this),
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 100,
@@ -46,6 +48,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MarketOrderNoUpdate()"));
     limitTradeHandler.updateOrder({
+      _mainAccount: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _sizeDelta: 100,
@@ -59,6 +62,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
   function testRevert_WhenConvertLimitOrderToMarketOrder() external {
     // create a limit order (trigger price > 0)
     limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: address(this),
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 100,
@@ -72,6 +76,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_LimitOrderConvertToMarketOrder()"));
     limitTradeHandler.updateOrder({
+      _mainAccount: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _sizeDelta: 100,
@@ -85,6 +90,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
   // Update an order
   function testCorrectness_updateOrder() external {
     limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: address(this),
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 100,
@@ -114,6 +120,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
     });
 
     limitTradeHandler.updateOrder({
+      _mainAccount: address(this),
       _subAccountId: 0,
       _orderIndex: 0,
       _sizeDelta: 200,

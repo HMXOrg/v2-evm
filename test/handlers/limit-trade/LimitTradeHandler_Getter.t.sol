@@ -46,6 +46,7 @@ contract LimitTradeHandler_Getter is LimitTradeHandler_Base {
   function _createLimitOrder() internal {
     vm.prank(ALICE);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: ALICE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 100,
@@ -61,6 +62,7 @@ contract LimitTradeHandler_Getter is LimitTradeHandler_Base {
   function _createMarketOrder() internal {
     vm.prank(ALICE);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: ALICE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 100,
@@ -75,7 +77,7 @@ contract LimitTradeHandler_Getter is LimitTradeHandler_Base {
 
   function _cancelOrder(uint256 _orderIndex) internal {
     vm.prank(ALICE);
-    limitTradeHandler.cancelOrder({ _subAccountId: 0, _orderIndex: _orderIndex });
+    limitTradeHandler.cancelOrder({ _mainAccount: ALICE, _subAccountId: 0, _orderIndex: _orderIndex });
   }
 
   // Set trade service with zero address

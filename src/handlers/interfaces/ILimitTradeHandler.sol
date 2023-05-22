@@ -122,9 +122,10 @@ interface ILimitTradeHandler {
     bytes32 _encodedVaas
   ) external;
 
-  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external;
+  function cancelOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) external;
 
   function updateOrder(
+    address _mainAccount,
     uint8 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,

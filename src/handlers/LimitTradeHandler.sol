@@ -16,7 +16,6 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
-import { console } from "forge-std/console.sol";
 
 /// @title LimitTradeHandler
 /// @notice This contract handles the create, update, and cancel for the Trading module.
@@ -238,7 +237,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool _reduceOnly,
     address _tpToken
   ) external payable nonReentrant delegate(_mainAccount) {
-    console.log(_msgSender());
     if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
     _createOrder(
       _subAccountId,
@@ -578,7 +576,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /// @notice Cancel a limit order
   /// @param _subAccountId Sub-account Id
   /// @param _orderIndex Order Index which could be retrieved from the emitted event from `createOrder()`
-  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
+  function cancelOrder(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _orderIndex
+  ) external nonReentrant delegate(_mainAccount) {
     address subAccount = _getSubAccount(_msgSender(), _subAccountId);
     LimitOrder memory _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
@@ -617,6 +619,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
   /// @param _tpToken Take profit token, when trader has profit
   function updateOrder(
+    address _mainAccount,
     uint8 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
@@ -624,7 +627,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool _triggerAboveThreshold,
     bool _reduceOnly,
     address _tpToken
-  ) external nonReentrant {
+  ) external nonReentrant delegate(_mainAccount) {
     address subAccount = _getSubAccount(_msgSender(), _subAccountId);
     LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists

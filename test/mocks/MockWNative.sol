@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: WTF
 pragma solidity 0.8.18;
 
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
@@ -44,7 +45,8 @@ contract MockWNative is IWNative {
   function withdraw(uint256 wad) public override {
     require(balanceOf[msg.sender] >= wad);
     balanceOf[msg.sender] -= wad;
-    msg.sender.call{ value: wad }("");
+    (bool success, ) = msg.sender.call{ value: wad }("");
+    require(success, "MockWNative: withdraw failed");
     emit Withdrawal(msg.sender, wad);
   }
 

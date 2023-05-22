@@ -52,7 +52,7 @@ contract MockLiquidityService {
     address /* _token */,
     uint256 /* _amount */,
     uint256 /* _minAmount */
-  ) external returns (uint256) {
+  ) external view returns (uint256) {
     if (reverted) {
       if (revertAsMessage) {
         require(false, "Reverted as Message");

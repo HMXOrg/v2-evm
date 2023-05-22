@@ -30,13 +30,13 @@ contract MockGlpManager is IGmxGlpManager {
   }
 
   function addLiquidityForAccount(
-    address _fundingAccount,
-    address _account,
-    address _token,
-    uint256 _amount,
-    uint256 _minUsdg,
-    uint256 _minGlp
-  ) external returns (uint256) {
+    address /* _fundingAccount */,
+    address /* _account */,
+    address /* _token */,
+    uint256 /* _amount */,
+    uint256 /* _minUsdg */,
+    uint256 /* _minGlp */
+  ) external pure returns (uint256) {
     return 0;
   }
 }

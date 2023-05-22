@@ -5,6 +5,8 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { BaseTest, IPerpStorage, IConfigStorage } from "@hmx-test/base/BaseTest.sol";
 import { LimitOrderTester } from "@hmx-test/testers/LimitOrderTester.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
+import { MockAccountAbstraction } from "../../mocks/MockAccountAbstraction.sol";
+import { MockEntryPoint } from "../../mocks/MockEntryPoint.sol";
 
 contract LimitTradeHandler_Base is BaseTest {
   uint8 internal constant INCREASE = 0;
@@ -12,6 +14,7 @@ contract LimitTradeHandler_Base is BaseTest {
 
   ILimitTradeHandler limitTradeHandler;
   LimitOrderTester limitOrderTester;
+  MockEntryPoint entryPoint;
 
   function setUp() public virtual {
     limitTradeHandler = Deployer.deployLimitTradeHandler(
@@ -31,6 +34,8 @@ contract LimitTradeHandler_Base is BaseTest {
     ecoPyth.setUpdater(address(limitTradeHandler), true);
 
     limitTradeHandler.setGuaranteeLimitPrice(true);
+
+    entryPoint = new MockEntryPoint();
   }
 
   // =========================================

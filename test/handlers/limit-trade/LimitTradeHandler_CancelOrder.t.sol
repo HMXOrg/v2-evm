@@ -18,7 +18,7 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
   // Cancel a non existent order
   function testRevert_cancel_NonExistentOrder() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-    limitTradeHandler.cancelOrder({ _subAccountId: 0, _orderIndex: 0 });
+    limitTradeHandler.cancelOrder({ _mainAccount: address(this), _subAccountId: 0, _orderIndex: 0 });
   }
 
   // Cancel an existing order
@@ -27,6 +27,7 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
     uint256 balanceBefore = ALICE.balance;
     vm.startPrank(ALICE);
     limitTradeHandler.createOrder{ value: 0.1 ether }({
+      _mainAccount: ALICE,
       _subAccountId: 0,
       _marketIndex: 1,
       _sizeDelta: 1000 * 1e30,
@@ -42,7 +43,7 @@ contract LimitTradeHandler_CancelOrder is LimitTradeHandler_Base {
     (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, ALICE);
 
-    limitTradeHandler.cancelOrder({ _subAccountId: 0, _orderIndex: 0 });
+    limitTradeHandler.cancelOrder({ _mainAccount: ALICE, _subAccountId: 0, _orderIndex: 0 });
 
     (limitOrder.account, , , , , , , , , , , ) = limitTradeHandler.limitOrders(ALICE, 0);
     assertEq(limitOrder.account, address(0));

@@ -47,6 +47,8 @@ import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpS
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
+import { IHmxAccountFactory } from "@hmx/account-abstraction/interfaces/IHmxAccountFactory.sol";
+
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
@@ -512,6 +514,13 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IConvertedGlpStrategy(payable(_proxy));
+  }
+
+  /**
+   * Account Abstraction
+   */
+  function deployHmxAccountFactory(address _entryPoint) internal returns (IHmxAccountFactory) {
+    return IHmxAccountFactory(deployContractWithArguments("HmxAccountFactory", abi.encode(_entryPoint)));
   }
 
   /**

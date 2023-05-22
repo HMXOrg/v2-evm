@@ -25,6 +25,7 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_MarketOrderNoUpdate();
   error ILimitTradeHandler_LimitOrderConvertToMarketOrder();
   error ILimitTradeHandler_NotExecutionState();
+  error ILimitTradeHandler_Unauthorized();
 
   /**
    * Structs
@@ -85,6 +86,18 @@ interface ILimitTradeHandler {
   /**
    * Functions
    */
+  function createOrder(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _marketIndex,
+    int256 _sizeDelta,
+    uint256 _triggerPrice,
+    uint256 _acceptablePrice,
+    bool _triggerAboveThreshold,
+    uint256 _executionFee,
+    bool _reduceOnly,
+    address _tpToken
+  ) external payable;
 
   function createOrder(
     uint8 _subAccountId,
@@ -109,9 +122,10 @@ interface ILimitTradeHandler {
     bytes32 _encodedVaas
   ) external;
 
-  function cancelOrder(uint8 _subAccountId, uint256 _orderIndex) external;
+  function cancelOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) external;
 
   function updateOrder(
+    address _mainAccount,
     uint8 _subAccountId,
     uint256 _orderIndex,
     int256 _sizeDelta,
@@ -120,6 +134,8 @@ interface ILimitTradeHandler {
     bool _reduceOnly,
     address _tpToken
   ) external;
+
+  function setDelegate(address _delegate) external;
 
   function setPyth(address _pyth) external;
 

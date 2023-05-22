@@ -9,19 +9,11 @@ contract HmxAccount_ExecuteTest is HmxAccount_Base {
     super.setUp();
   }
 
-  function testRevert_WhenTryToExecuteNotAllowedDest() external {
-    vm.expectRevert("destination not allowed");
-    hmxAccount.execute(address(this), 0, "");
-  }
-
-  function testCorrectness_WhenCallToAllowedDest() external {
+  function testCorrectness_WhenOwnerCallExecute() external {
     // Setup mock states so execute not fail
     MockErc20 token = new MockErc20("some", "some", 18);
     token.mint(address(this), 1 ether);
     token.approve(address(hmxAccount), 1 ether);
-
-    // Allow token to be called by HmxAccount
-    hmxAccountFactory.setIsAllowedDest(address(token), true);
 
     hmxAccount.execute(
       address(token),

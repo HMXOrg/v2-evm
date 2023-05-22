@@ -64,7 +64,6 @@ contract HmxAccount is BaseAccount, TokenCallbackHandler, UUPSUpgradeable, Initi
    */
   function execute(address dest, uint256 value, bytes calldata func) external {
     _requireFromEntryPointOrOwner();
-    require(factory.isAllowedDest(dest), "destination not allowed");
     _call(dest, value, func);
   }
 
@@ -75,7 +74,6 @@ contract HmxAccount is BaseAccount, TokenCallbackHandler, UUPSUpgradeable, Initi
     _requireFromEntryPointOrOwner();
     require(dest.length == func.length, "wrong array lengths");
     for (uint256 i = 0; i < dest.length; i++) {
-      require(factory.isAllowedDest(dest[i]), "destination not allowed");
       _call(dest[i], 0, func[i]);
     }
   }

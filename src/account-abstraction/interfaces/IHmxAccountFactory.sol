@@ -6,12 +6,6 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts/proxy/utils/UUPSUpgrade
 import { HmxAccount } from "@hmx/account-abstraction/HmxAccount.sol";
 
 interface IHmxAccountFactory {
-  function isAllowedDest(address owner) external returns (bool);
-
-  function ownerOf(address account) external returns (address);
-
-  function setIsAllowedDest(address _dest, bool _isAllowed) external;
-
   function upgrade(UUPSUpgradeable[] calldata _accounts, address _newAccountImplementation) external;
 
   function createAccount(address _owner, uint256 salt) external returns (HmxAccount ret);

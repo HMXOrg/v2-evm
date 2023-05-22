@@ -17,10 +17,8 @@ contract HmxAccountFactory_CreateAccountTest is HmxAccountFactory_Base {
     HmxAccount account = hmxAccountFactory.createAccount(owner, salt);
 
     // Assert the account is created correctly
-    // - The account is owned by the owner
     // - The account's factory is HmxAccountFactory
     // - The account's owner is the owner
-    assertEq(hmxAccountFactory.ownerOf(address(account)), owner);
     assertEq(address(account.factory()), address(hmxAccountFactory));
     assertEq(account.owner(), owner);
   }

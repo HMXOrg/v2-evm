@@ -23,10 +23,6 @@ import { HmxAccount } from "@hmx/account-abstraction/HmxAccount.sol";
  */
 contract HmxAccountFactory is Ownable, IHmxAccountFactory {
   HmxAccount public immutable accountImplementation;
-  mapping(address => bool) public isAllowedDest;
-  mapping(address => address) public ownerOf;
-
-  event SetIsAllowedDest(address indexed dest, bool prevIsAllowed, bool isAllowed);
 
   constructor(IEntryPoint _entryPoint) {
     accountImplementation = new HmxAccount(_entryPoint);
@@ -52,15 +48,6 @@ contract HmxAccountFactory is Ownable, IHmxAccountFactory {
         )
       )
     );
-    ownerOf[address(ret)] = _owner;
-  }
-
-  /**
-   * set whether an account is allowed to call the destination.
-   */
-  function setIsAllowedDest(address _dest, bool _isAllowed) external onlyOwner {
-    emit SetIsAllowedDest(_dest, isAllowedDest[_dest], _isAllowed);
-    isAllowedDest[_dest] = _isAllowed;
   }
 
   /**

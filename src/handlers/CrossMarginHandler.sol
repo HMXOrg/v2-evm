@@ -80,7 +80,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public pyth;
   uint256 public nextExecutionOrderIndex; // the index of the next withdraw order that should be executed
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
-  bool private isExecuting; // order is executing (prevent direct call executeWithdrawOrder()
 
   WithdrawOrder[] public withdrawOrders; // all withdrawOrder
   mapping(address => WithdrawOrder[]) public subAccountExecutedWithdrawOrders; // subAccount -> executed orders
@@ -303,8 +302,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = withdrawOrders[i];
       _executionFee = _order.executionFee;
-      // Set the flag to indicate that orders are currently being executed
-      isExecuting = true;
 
       try this.executeWithdrawOrder(_order) {
         emit LogExecuteWithdrawOrder(
@@ -339,7 +336,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       // assign exec time
       _order.executedTimestamp = uint48(block.timestamp);
 
-      isExecuting = false;
       _totalFeeReceiver += _executionFee;
 
       // save to executed order first
@@ -361,7 +357,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _order WithdrawOrder struct representing the order to execute.
   function executeWithdrawOrder(WithdrawOrder memory _order) external {
     // if not in executing state, then revert
-    if (!isExecuting) revert ICrossMarginHandler_NotExecutionState();
+    if (msg.sender != address(this)) revert ICrossMarginHandler_NotExecutionState();
 
     // Call service to withdraw collateral
     if (_order.shouldUnwrap) {

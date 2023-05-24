@@ -196,7 +196,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
-  function updateLiquidityEnabled(bool _enabled) external nonReentrant onlyOwner {
+  function updateLiquidityEnabled(bool _enabled) external nonReentrant onlyPositionManager {
     // SLOAD
     TradeService _tradeService = TradeService(tradeService);
     ConfigStorage _configStorage = ConfigStorage(_tradeService.configStorage());
@@ -205,7 +205,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     emit LogUpdateLiquidityEnabled(_enabled);
   }
 
-  function updateDynamicEnabled(bool _enabled) external nonReentrant onlyOwner {
+  function updateDynamicEnabled(bool _enabled) external nonReentrant onlyPositionManager {
     // SLOAD
     TradeService _tradeService = TradeService(tradeService);
     ConfigStorage _configStorage = ConfigStorage(_tradeService.configStorage());

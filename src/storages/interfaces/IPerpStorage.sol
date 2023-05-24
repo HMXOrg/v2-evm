@@ -37,6 +37,7 @@ interface IPerpStorage {
     uint256 lastFundingTime;
     int256 accumFundingLong; // accumulative of funding fee value on LONG positions using for calculating surplus
     int256 accumFundingShort; // accumulative of funding fee value on SHORT positions using for calculating surplus
+    int256 fundingAccrued; // the accrued funding rate which is the result of funding velocity. It is the accumulation of S in S = (U+V)/2 * t
   }
 
   // Trade position

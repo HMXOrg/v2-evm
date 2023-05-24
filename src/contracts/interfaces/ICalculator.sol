@@ -20,7 +20,7 @@ interface ICalculator {
     uint256 fundingInterval;
     int256 marketSkewUSDE30;
     int256 ratio;
-    int256 nextFundingRate;
+    int256 fundingRateVelocity;
     int256 elapsedIntervals;
   }
 
@@ -101,7 +101,7 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (uint256 _collateralValueE30);
 
-  function getNextFundingRate(uint256 _marketIndex) external view returns (int256);
+  function getFundingRateVelocity(uint256 _marketIndex) external view returns (int256);
 
   function getDelta(
     uint256 _size,

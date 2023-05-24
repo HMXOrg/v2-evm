@@ -707,25 +707,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [0],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [1],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [2],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [3],
     },
   ];

@@ -378,7 +378,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     {
       PerpStorage.AssetClass memory _assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
       _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
-      _vars.position.entryFundingRate = _market.currentFundingRate;
+      _vars.position.entryFundingRate = _market.fundingAccrued;
     }
 
     {
@@ -848,7 +848,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
         // update position info
         _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
-        _vars.position.entryFundingRate = _market.currentFundingRate;
+        _vars.position.entryFundingRate = _market.fundingAccrued;
         _vars.position.positionSizeE30 = _vars.isLongPosition
           ? int256(_temp.newAbsPositionSizeE30)
           : -int256(_temp.newAbsPositionSizeE30);

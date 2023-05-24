@@ -626,9 +626,14 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         }
         {
           // Calculate funding fee
-          int256 nextFundingRate = _getNextFundingRate(_var.position.marketIndex);
-          int256 fundingRate = _market.currentFundingRate + nextFundingRate;
-          _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
+          uint256 _fundingInterval = ConfigStorage(configStorage).getTradingConfig().fundingInterval;
+          int256 nextFundingRate = _market.currentFundingRate + _getFundingRateVelocity(_var.position.marketIndex);
+          int256 elapsedIntervals = int((block.timestamp - _market.lastFundingTime) / _fundingInterval);
+          int256 lastFundingAccrued = _market.fundingAccrued;
+          int256 currentFundingAccrued = _market.fundingAccrued +
+            ((_market.currentFundingRate + nextFundingRate) / 2) *
+            elapsedIntervals;
+          _unrealizedFeeE30 += getFundingFee(_var.isLong, _var.absSize, currentFundingAccrued, lastFundingAccrued);
         }
         // Calculate trading fee
         _unrealizedFeeE30 += int256(_getTradingFee(_var.absSize, _marketConfig.decreasePositionFeeRateBPS));
@@ -921,14 +926,14 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return uint256((int256(_positionNextClosePrice) * _newMarketPositionSize) / _divisor);
   }
 
-  function getNextFundingRate(uint256 _marketIndex) external view returns (int256 fundingRate) {
-    return _getNextFundingRate(_marketIndex);
+  function getFundingRateVelocity(uint256 _marketIndex) external view returns (int256 fundingRate) {
+    return _getFundingRateVelocity(_marketIndex);
   }
 
-  /// @notice Calculate next funding rate using when increase/decrease position.
+  /// @notice Calculate the funding rate velocity
   /// @param _marketIndex Market Index.
-  /// @return fundingRate next funding rate using for both LONG & SHORT positions.
-  function _getNextFundingRate(uint256 _marketIndex) internal view returns (int256 fundingRate) {
+  /// @return fundingRateVelocity which is the result of u = vt to get how fast the funding rate would change
+  function _getFundingRateVelocity(uint256 _marketIndex) internal view returns (int256 fundingRateVelocity) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
@@ -941,50 +946,33 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
     vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
 
-    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
+    // The result of this fundingRateVelocity Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
-    vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
+    vars.fundingRateVelocity = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
 
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
-    vars.nextFundingRate = vars.nextFundingRate * vars.elapsedIntervals;
+    vars.fundingRateVelocity = vars.fundingRateVelocity * vars.elapsedIntervals;
 
-    return vars.nextFundingRate;
+    return vars.fundingRateVelocity;
   }
 
   /**
    * Funding Rate
    */
-  /// @notice This function returns funding fee according to trader's position
-  /// @param _marketIndex Index of market
-  /// @param _isLong Is long or short exposure
-  /// @param _size Position size
-  /// @return fundingFee Funding fee of position
+
   function getFundingFee(
-    uint256 _marketIndex,
-    bool _isLong,
-    int256 _size,
-    int256 _entryFundingRate
-  ) external view returns (int256 fundingFee) {
-    if (_size == 0) return 0;
-    uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
-
-    PerpStorage.Market memory _market = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
-
-    return _getFundingFee(_isLong, absSize, _market.currentFundingRate, _entryFundingRate);
-  }
-
-  function _getFundingFee(
     bool _isLong,
     uint256 _size,
-    int256 _sumFundingRate,
-    int256 _entryFundingRate
-  ) private pure returns (int256 fundingFee) {
-    int256 _fundingRate = _sumFundingRate - _entryFundingRate;
+    int256 _currentFundingAccrued,
+    int256 _lastFundingAccrued
+  ) public pure returns (int256 fundingFee) {
+    if (_size == 0) return 0;
+    int256 _fundingAccrued = _currentFundingAccrued - _lastFundingAccrued;
 
-    // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
-    // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
-    fundingFee = (int256(_size) * _fundingRate) / int64(RATE_PRECISION);
+    // IF _fundingAccrued < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
+    // IF _fundingAccrued > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
+    fundingFee = (int256(_size) * _fundingAccrued) / int64(RATE_PRECISION);
 
     // Position Exposure   | Funding Rate       | Fund Flow
     // (isLong)            | (fundingRate > 0)  | (traderMustPay)

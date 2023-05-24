@@ -38,15 +38,15 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
   }
 
   function getFundingFee(
-    uint256 _marketIndex,
     bool _isLong,
-    int256 _size,
-    int256 _entryFundingRate
+    uint256 _size,
+    int256 _currentFundingAccrued,
+    int256 _lastFundingAccrued
   ) public view override returns (int256) {
     if (actualFunction[keccak256("getFundingFee")]) {
-      return c.getFundingFee(_marketIndex, _isLong, _size, _entryFundingRate);
+      return c.getFundingFee(_isLong, _size, _currentFundingAccrued, _lastFundingAccrued);
     } else {
-      return super.getFundingFee(_marketIndex, _isLong, _size, _entryFundingRate);
+      return super.getFundingFee(_isLong, _size, _currentFundingAccrued, _lastFundingAccrued);
     }
   }
 
@@ -62,11 +62,11 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
-  function getNextFundingRate(uint256 _marketIndex) public view virtual override returns (int256) {
-    if (actualFunction[keccak256("getNextFundingRate")]) {
-      return c.getNextFundingRate(_marketIndex);
+  function getFundingRateVelocity(uint256 _marketIndex) public view virtual override returns (int256) {
+    if (actualFunction[keccak256("getFundingRateVelocity")]) {
+      return c.getFundingRateVelocity(_marketIndex);
     } else {
-      return super.getNextFundingRate(_marketIndex);
+      return super.getFundingRateVelocity(_marketIndex);
     }
   }
 
@@ -140,5 +140,9 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     } else {
       return super.getPendingBorrowingFeeE30();
     }
+  }
+
+  function _abs(int256 x) private pure returns (uint256) {
+    return uint256(x >= 0 ? x : -x);
   }
 }

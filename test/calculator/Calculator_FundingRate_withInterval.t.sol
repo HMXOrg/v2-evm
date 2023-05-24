@@ -100,7 +100,7 @@ contract Calculator_FundingRate is Calculator_Base {
   // |  15 |   70 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |      -0.00546667 |
   // |  16 |   75 |       6000000 |        3000000 |         3000000 |           -0.0004 |                   -0.002 |      -0.00746667 |
 
-  function testCorrectness_getNextFundingRate_withInterval() external {
+  function testCorrectness_getFundingRateVelocity_withInterval() external {
     // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
     // | Row | Time | Long Size USD | Short Size USD | Market Skew USD | Next Funding Rate | Next Funding Rate x Time | Acm Funding Rate |
     // |-----|------|---------------|----------------|-----------------|-------------------|--------------------------|------------------|
@@ -139,7 +139,7 @@ contract Calculator_FundingRate is Calculator_Base {
       vars.accumFundingRate
     );
 
-    int256 nextFundingRate = calculator.getNextFundingRate(0);
+    int256 nextFundingRate = calculator.getFundingRateVelocity(0);
     vars.accumFundingRate += nextFundingRate;
 
     if (longPositionSize > 0) {
@@ -187,7 +187,7 @@ contract Calculator_FundingRate is Calculator_Base {
         vars.accumFundingRate
       );
 
-      nextFundingRate = calculator.getNextFundingRate(0);
+      nextFundingRate = calculator.getFundingRateVelocity(0);
       vars.accumFundingRate += nextFundingRate;
 
       if (longPositionSize > 0) {
@@ -236,7 +236,7 @@ contract Calculator_FundingRate is Calculator_Base {
         vars.accumFundingRate
       );
 
-      nextFundingRate = calculator.getNextFundingRate(0);
+      nextFundingRate = calculator.getFundingRateVelocity(0);
       vars.accumFundingRate += nextFundingRate;
 
       if (longPositionSize > 0) {
@@ -285,7 +285,7 @@ contract Calculator_FundingRate is Calculator_Base {
         vars.accumFundingRate
       );
 
-      nextFundingRate = calculator.getNextFundingRate(0);
+      nextFundingRate = calculator.getFundingRateVelocity(0);
       vars.accumFundingRate += nextFundingRate;
 
       if (longPositionSize > 0) {
@@ -334,7 +334,7 @@ contract Calculator_FundingRate is Calculator_Base {
         vars.accumFundingRate
       );
 
-      nextFundingRate = calculator.getNextFundingRate(0);
+      nextFundingRate = calculator.getFundingRateVelocity(0);
       vars.accumFundingRate += nextFundingRate;
 
       if (longPositionSize > 0) {
@@ -382,7 +382,7 @@ contract Calculator_FundingRate is Calculator_Base {
         vars.accumFundingRate
       );
 
-      nextFundingRate = calculator.getNextFundingRate(0);
+      nextFundingRate = calculator.getFundingRateVelocity(0);
       vars.accumFundingRate += nextFundingRate;
 
       if (longPositionSize > 0) {

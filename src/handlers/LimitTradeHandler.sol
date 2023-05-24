@@ -400,9 +400,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   }
 
   function _handleOrderFail(ExecuteOrderVars memory vars, string memory errMsg) internal {
-    // Execution failed
-    isExecuting = false;
-
     // Handle the error depending on the type of order
     if (vars.isMarketOrder) {
       // Cancel market order and transfer execution fee to executor
@@ -426,11 +423,15 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       // Revert with the error message
       require(false, errMsg);
     }
+
+    // Execution failed
+    isExecuting = false;
   }
 
   function executeLimitOrder(ExecuteOrderVars memory vars) external {
     // if not in executing state, then revert
     if (!isExecuting) revert ILimitTradeHandler_NotExecutionState();
+    if (msg.sender != address(this)) revert ILimitTradeHandler_NotWhitelisted();
 
     // Remove this executed order from the list
     _removeOrder(vars.order, vars.subAccount, vars.orderIndex);

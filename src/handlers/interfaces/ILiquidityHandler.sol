@@ -14,10 +14,17 @@ interface ILiquidityHandler {
   error ILiquidityHandler_NotExecutionState();
   error ILiquidityHandler_NoOrder();
   error ILiquidityHandler_NotOrderOwner();
+  error ILiquidityHandler_NotWNativeToken();
 
   /**
    * Structs
    */
+  enum LiquidityOrderStatus {
+    PENDING,
+    SUCCESS,
+    FAIL
+  }
+
   struct LiquidityOrder {
     uint256 orderId;
     uint256 amount;
@@ -30,7 +37,7 @@ interface ILiquidityHandler {
     address token;
     bool isAdd;
     bool isNativeOut; // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
-    uint8 status; // 0 = pending, 1 = execution success, 2 = execution fail
+    LiquidityOrderStatus status;
   }
 
   /**

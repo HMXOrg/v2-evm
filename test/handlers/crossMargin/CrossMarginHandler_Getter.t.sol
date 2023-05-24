@@ -162,12 +162,12 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base {
       assertEq(_orders[0].orderId, 0);
       assertEq(_orders[0].createdTimestamp, 101);
       assertEq(_orders[0].executedTimestamp, 0);
-      assertEq(_orders[0].status, 0); // pending
+      assertEq(uint(_orders[0].status), 0); // pending
 
       assertEq(_orders[1].orderId, 1);
       assertEq(_orders[1].createdTimestamp, 101);
       assertEq(_orders[1].executedTimestamp, 0);
-      assertEq(_orders[1].status, 0); // pending
+      assertEq(uint(_orders[1].status), 0); // pending
     }
 
     vm.warp(block.timestamp + 100);
@@ -187,12 +187,12 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base {
       assertEq(_orders[0].orderId, 0);
       assertEq(_orders[0].createdTimestamp, 101);
       assertEq(_orders[0].executedTimestamp, 201);
-      assertEq(_orders[0].status, 1); // success
+      assertEq(uint(_orders[0].status), 1); // success
 
       assertEq(_orders[1].orderId, 1);
       assertEq(_orders[1].createdTimestamp, 101);
       assertEq(_orders[1].executedTimestamp, 201);
-      assertEq(_orders[1].status, 2); // fail
+      assertEq(uint(_orders[1].status), 2); // fail
     }
   }
 }

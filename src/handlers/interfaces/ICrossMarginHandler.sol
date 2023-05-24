@@ -20,6 +20,12 @@ interface ICrossMarginHandler {
   /**
    * Structs
    */
+  enum WithdrawOrderStatus {
+    PENDING,
+    SUCCESS,
+    FAIL
+  }
+
   struct WithdrawOrder {
     uint256 orderId;
     uint256 amount;
@@ -30,7 +36,7 @@ interface ICrossMarginHandler {
     address token;
     CrossMarginService crossMarginService;
     uint8 subAccountId;
-    uint8 status; // 0 = pending, 1 = execution success, 2 = execution fail
+    WithdrawOrderStatus status; // 0 = pending, 1 = execution success, 2 = execution fail
     bool shouldUnwrap;
   }
 

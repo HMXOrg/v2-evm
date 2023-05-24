@@ -258,7 +258,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         crossMarginService: CrossMarginService(crossMarginService),
         createdTimestamp: uint48(block.timestamp),
         executedTimestamp: 0,
-        status: 0 // pending
+        status: WithdrawOrderStatus.PENDING
       })
     );
 
@@ -317,38 +317,30 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
           _order.token,
           _order.amount,
           _order.shouldUnwrap,
-          true
+          true,
+          ""
         );
-
         // update order status
-        _order.status = 1; // success
-      } catch Error(string memory) {
-        // Do nothing
-      } catch (bytes memory) {
-        emit LogExecuteWithdrawOrder(
-          _order.account,
-          _order.subAccountId,
-          _order.orderId,
-          _order.token,
-          _order.amount,
-          _order.shouldUnwrap,
-          false
-        );
-
-        // update order status
-        _order.status = 2; // fail
+        _order.status = WithdrawOrderStatus.SUCCESS;
+      } catch Error(string memory errMsg) {
+        _handleOrderFail(_order, errMsg);
+      } catch Panic(uint /*errorCode*/) {
+        _handleOrderFail(_order, "Panic occurred while executing the withdraw order");
+      } catch (bytes memory errMsg) {
+        _handleOrderFail(_order, string(errMsg));
       }
 
       // assign exec time
       _order.executedTimestamp = uint48(block.timestamp);
-
-      isExecuting = false;
       _totalFeeReceiver += _executionFee;
 
       // save to executed order first
       subAccountExecutedWithdrawOrders[_getSubAccount(_order.account, _order.subAccountId)].push(_order);
       // clear executed withdraw order
       delete withdrawOrders[i];
+
+      // Free up the flag
+      isExecuting = false;
 
       unchecked {
         ++i;
@@ -358,6 +350,21 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     nextExecutionOrderIndex = _endIndex + 1;
     // Pay total collected fees to the executor
     _transferOutETH(_totalFeeReceiver, _feeReceiver);
+  }
+
+  function _handleOrderFail(WithdrawOrder memory order, string memory errMsg) internal {
+    emit LogExecuteWithdrawOrder(
+      order.account,
+      order.subAccountId,
+      order.orderId,
+      order.token,
+      order.amount,
+      order.shouldUnwrap,
+      false,
+      errMsg
+    );
+
+    order.status = WithdrawOrderStatus.FAIL;
   }
 
   /// @notice Executes a single withdraw order by transferring the specified amount of collateral token to the user's wallet.

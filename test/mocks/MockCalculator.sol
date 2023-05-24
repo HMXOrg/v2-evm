@@ -255,4 +255,6 @@ contract MockCalculator is ICalculator {
   ) external pure returns (uint256) {}
 
   function getPendingBorrowingFeeE30() public view virtual returns (uint256) {}
+
+  function proportionalElapsedInDay(uint256 _marketIndex) public view virtual returns (uint256 elapsed) {}
 }

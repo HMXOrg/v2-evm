@@ -142,6 +142,14 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
+  function proportionalElapsedInDay(uint256 _marketIndex) public view override returns (uint256 elapsed) {
+    if (actualFunction[keccak256("proportionalElapsedInDay")]) {
+      return c.proportionalElapsedInDay(_marketIndex);
+    } else {
+      return super.proportionalElapsedInDay(_marketIndex);
+    }
+  }
+
   function _abs(int256 x) private pure returns (uint256) {
     return uint256(x >= 0 ? x : -x);
   }

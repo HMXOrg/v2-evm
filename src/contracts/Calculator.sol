@@ -949,13 +949,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return 0;
-    // Get funding interval
-    vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
-    // If block.timestamp not pass the next funding time, return 0.
-    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return 0;
-
     vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
-
+    
     // The result of this fundingRateVelocity Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);

@@ -201,6 +201,8 @@ interface IConfigStorage {
     AssetConfig memory _newConfig
   ) external returns (AssetConfig memory _assetConfig);
 
+  function setConfigExecutor(address _executorAddress, bool _isServiceExecutor) external;
+
   function setWeth(address _weth) external;
 
   function setSGlp(address _sglp) external;

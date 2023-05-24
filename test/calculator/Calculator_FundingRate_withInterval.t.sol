@@ -113,7 +113,7 @@ contract Calculator_FundingRate is Calculator_Base {
 
     uint256 longPositionSize = 2_000_000 * 1e30;
 
-    uint256 shortPositionSize = 1_000_000 * 1e30;
+    uint256 shortPositionSize = 2_000_000 * 1e30;
 
     vars.accumFundingLong = 0;
     vars.accumFundingShort = 0;

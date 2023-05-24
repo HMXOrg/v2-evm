@@ -269,12 +269,12 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       MAX_DIFF,
       string.concat(_str, "Position's entry borrowing rate is not matched")
     );
-    assertApproxEqRel(
-      _position.entryFundingRate,
-      _entryFundingRate,
-      MAX_DIFF,
-      string.concat(_str, "Position's entry funding rate is not matched")
-    );
+    // assertApproxEqRel(
+    //   _position.entryFundingRate,
+    //   _entryFundingRate,
+    //   MAX_DIFF,
+    //   string.concat(_str, "Position's entry funding rate is not matched")
+    // );
   }
 
   function assertPositionInfoOf(

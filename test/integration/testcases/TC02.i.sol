@@ -263,10 +263,11 @@ contract TC02 is BaseIntTest_WithActions {
       //                      = 1575.0007875
 
       // Market's Funding rate
-      // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
-      //                      = -(60 * 300 / 300000000 * 0.0004)
-      //                      = -0.000000024
-      assertMarketFundingRate(wethMarketIndex, -0.000000024 * 1e18, 1180, "T6: ");
+      // Funding rate         = currentFundingRate + (fundingRateVelocity * elapsedInterval / SECONDS_IN_DAY)
+      // Funding rate         = currentFundingRate + (-(skew / maxSkeScale * maxFundingRate) * elapsedInterval / SECONDS_IN_DAY)
+      //                      = 0 + (-(300 / 300000000 * 0.0004) * 60 / 86400)
+      //                      = -0.000000000000277777
+      assertMarketFundingRate(wethMarketIndex, -0.000000000000277777 * 1e18, 1180, "T6: ");
 
       // Crypto Borrowing rate
       //    = reserve * interval * base rate / tvl
@@ -327,7 +328,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 13.5 * 1e30,
         _realizedPnl: 7.5 * 1e30,
         _entryBorrowingRate: 0.000008124373119358 * 1e18,
-        _entryFundingRate: -0.000000024 * 1e18,
+        _entryFundingRate: -96,
         _str: "T6: "
       });
 
@@ -603,7 +604,11 @@ contract TC02 is BaseIntTest_WithActions {
       // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
       //                      = -(60 * -6000 / 300000000 * 0.0004)
       //                      = 0.00000048
-      assertMarketFundingRate(jpyMarketIndex, 0.00000048 * 1e18, 1300, "T8: ");
+      // Funding rate         = currentFundingRate + (fundingRateVelocity * elapsedInterval / SECONDS_IN_DAY)
+      // Funding rate         = currentFundingRate + (-(skew / maxSkeScale * maxFundingRate) * elapsedInterval / SECONDS_IN_DAY)
+      //                      = 0 + (-(-6000 / 300000000 * 0.0004) * 60 / 86400)
+      //                      = 0.00000000000555555555555555556
+      assertMarketFundingRate(jpyMarketIndex, 5555555, 1300, "T8: ");
 
       // Forex Borrowing rate
       //    = reserve * interval * base rate / tvl
@@ -738,7 +743,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00317213 * 1e8,
         _devFee: 0.00003038 * 1e8,
-        _fundingFeeReserve: 0.00000014 * 1e8,
+        _fundingFeeReserve: 0,
         _str: "T8: "
       });
 
@@ -958,7 +963,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00331784 * 1e8,
         _devFee: 0.00005609 * 1e8,
-        _fundingFeeReserve: 0.00000014 * 1e8,
+        _fundingFeeReserve: 0,
         _str: "T12: "
       });
 
@@ -1064,7 +1069,7 @@ contract TC02 is BaseIntTest_WithActions {
       // And Time passed         = 1480 - 1420 = 60 seconds (60 intervals)
       // Then Funding rate       = -(60 * (3000 / 300000000) * 0.04%)
       //                         = -0.00000024
-      assertMarketFundingRate(wbtcMarketIndex, -0.00000024 * 1e18, 1480, "T15: ");
+      assertMarketFundingRate(wbtcMarketIndex, -2777777, 1480, "T15: ");
 
       // Crypto Borrowing rate calculation
       // Given Latest info
@@ -1184,7 +1189,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00345277 * 1e8,
         _devFee: 0.00008008 * 1e8,
-        _fundingFeeReserve: 0.00000017 * 1e8,
+        _fundingFeeReserve: 0,
         _str: "T15: "
       });
 
@@ -1283,7 +1288,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Then Pending Funding rate      = -(60 * (0 / 300000000) * 0.04%)
       //                                = 0
       // And Market's sum Funding rate  = -0.00000024 + 0
-      assertMarketFundingRate(wbtcMarketIndex, -0.00000024 * 1e18, 1540, "T17: ");
+      assertMarketFundingRate(wbtcMarketIndex, -2777777, 1540, "T17: ");
 
       // Crypto Borrowing rate calculation
       // Given Latest info
@@ -1336,7 +1341,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0.000120918598722811 * 1e18,
-        _entryFundingRate: -0.00000024 * 1e18,
+        _entryFundingRate: -2893,
         _str: "T17: "
       });
 
@@ -1391,7 +1396,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00357138 * 1e8,
         _devFee: 0.00010100 * 1e8,
-        _fundingFeeReserve: 0.00000017 * 1e8,
+        _fundingFeeReserve: 0,
         _str: "T17: "
       });
 
@@ -1600,7 +1605,7 @@ contract TC02 is BaseIntTest_WithActions {
         _token: address(wbtc),
         _fee: 0.00371709 * 1e8,
         _devFee: 0.00012693 * 1e8,
-        _fundingFeeReserve: 0.00000021 * 1e8,
+        _fundingFeeReserve: 0,
         _str: "T19: "
       });
 

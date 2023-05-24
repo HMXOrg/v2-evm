@@ -42,6 +42,8 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
   event LogLiquidate(address subAccount);
   event LogInjectTokenToPlpLiquidity(address indexed account, address token, uint256 amount);
   event LogInjectTokenToFundingFeeReserve(address indexed account, address token, uint256 amount);
+  event LogUpdateLiquidityEnabled(bool enable);
+  event LogUpdateDynamicEnabled(bool enable);
 
   event LogSetTradeService(address oldTradeService, address newTradeService);
   event LogSetPositionManager(address account, bool allowed);
@@ -194,6 +196,24 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
+  function updateLiquidityEnabled(bool _enabled) external nonReentrant onlyOwner {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+    ConfigStorage _configStorage = ConfigStorage(_tradeService.configStorage());
+
+    _configStorage.setLiquidityEnabled(_enabled);
+    emit LogUpdateLiquidityEnabled(_enabled);
+  }
+
+  function updateDynamicEnabled(bool _enabled) external nonReentrant onlyOwner {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+    ConfigStorage _configStorage = ConfigStorage(_tradeService.configStorage());
+
+    _configStorage.setDynamicEnabled(_enabled);
+    emit LogUpdateDynamicEnabled(_enabled);
+  }
+
   /// @notice deleverage
   /// @param _account position's owner
   /// @param _subAccountId sub-account that owned position
@@ -264,8 +284,6 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
 
     // Get sub-account's mmy
     uint256 _mmrValueE30 = calculator.getMMR(_subAccount);
-
-    if (_equityValueE30 < 0) {} else {}
 
     return _equityValueE30 < 0 || uint256(_equityValueE30) < _mmrValueE30;
   }

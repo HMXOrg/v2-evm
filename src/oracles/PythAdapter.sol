@@ -116,6 +116,10 @@ contract PythAdapter is OwnableUpgradeable, IPythAdapter {
     return (_convertToUint256(_price, _isMax, 30, _config.inverse), _price.publishTime);
   }
 
+  function getConfigByAssetId(bytes32 _assetId) external view returns (IPythAdapter.PythPriceConfig memory) {
+    return configs[_assetId];
+  }
+
   /**
    * Setter
    */

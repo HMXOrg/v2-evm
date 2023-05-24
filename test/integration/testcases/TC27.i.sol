@@ -11,7 +11,7 @@ import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 contract TC27 is BaseIntTest_WithActions {
   function test_correctness_PLP_disableDynamicFee() external {
     // T0: Initialized state
-    configStorage.setDynamicEnabled(false);
+    botHandler.updateDynamicEnabled(false);
     // ALICE as liquidity provider
     // BOB is open position
 

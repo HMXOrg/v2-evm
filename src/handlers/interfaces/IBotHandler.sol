@@ -88,6 +88,10 @@ interface IBotHandler {
     bytes32 _encodedVaas
   ) external payable;
 
+  function updateLiquidityEnabled(bool _enabled) external;
+
+  function updateDynamicEnabled(bool _enabled) external;
+
   function injectTokenToPlpLiquidity(address _token, uint256 _amount) external;
 
   function injectTokenToFundingFeeReserve(address _token, uint256 _amount) external;

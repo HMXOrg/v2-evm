@@ -65,7 +65,8 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     address token,
     uint256 amount,
     bool shouldUnwrap,
-    bool isSuccess
+    bool isSuccess,
+    string errMsg
   );
 
   /**
@@ -237,6 +238,8 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   ) external payable nonReentrant onlyAcceptedToken(_token) returns (uint256 _orderId) {
     if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler_InsufficientExecutionFee();
     if (msg.value != _executionFee) revert ICrossMarginHandler_InCorrectValueTransfer();
+    if (_shouldUnwrap && _token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth())
+      revert ICrossMarginHandler_NotWNativeToken();
 
     // convert native to WNative (including executionFee)
     _transferInETH();
@@ -362,9 +365,14 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   function executeWithdrawOrder(WithdrawOrder memory _order) external {
     // if not in executing state, then revert
     if (!isExecuting) revert ICrossMarginHandler_NotExecutionState();
+    if (msg.sender != address(this)) revert ICrossMarginHandler_NotWhitelisted();
+    if (
+      _order.shouldUnwrap &&
+      _order.token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()
+    ) revert ICrossMarginHandler_NotWNativeToken();
 
-    // Call service to withdraw collateral
-    if (_order.shouldUnwrap) {
+    if (_order.shouldUnwrap) // Call service to withdraw collateral
+    {
       // Withdraw wNative straight to this contract first.
       _order.crossMarginService.withdrawCollateral(
         _order.account,

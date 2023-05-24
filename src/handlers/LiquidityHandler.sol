@@ -346,6 +346,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256 _amountOut) {
     // if not in executing state, then revert
     if (!isExecuting) revert ILiquidityHandler_NotExecutionState();
+    if (msg.sender != address(this)) revert ILiquidityHandler_NotWhitelisted();
 
     if (_order.isAdd) {
       IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);

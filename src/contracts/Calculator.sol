@@ -626,13 +626,14 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         }
         {
           // Calculate funding fee
-          uint256 _fundingInterval = ConfigStorage(configStorage).getTradingConfig().fundingInterval;
-          int256 nextFundingRate = _market.currentFundingRate + _getFundingRateVelocity(_var.position.marketIndex);
-          int256 elapsedIntervals = int((block.timestamp - _market.lastFundingTime) / _fundingInterval);
+          int256 proportionalElapsedInDay = int256(proportionalElapsedInDay(_var.position.marketIndex));
+          int256 nextFundingRate = _market.currentFundingRate +
+            ((_getFundingRateVelocity(_var.position.marketIndex) * proportionalElapsedInDay) / 1e18);
           int256 lastFundingAccrued = _market.fundingAccrued;
           int256 currentFundingAccrued = _market.fundingAccrued +
-            ((_market.currentFundingRate + nextFundingRate) / 2) *
-            elapsedIntervals;
+            ((_market.currentFundingRate + nextFundingRate) * proportionalElapsedInDay) /
+            2 /
+            1e18;
           _unrealizedFeeE30 += getFundingFee(_var.isLong, _var.absSize, currentFundingAccrued, lastFundingAccrued);
         }
         // Calculate trading fee
@@ -930,6 +931,15 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return _getFundingRateVelocity(_marketIndex);
   }
 
+  function proportionalElapsedInDay(uint256 _marketIndex) public view returns (uint256 elapsed) {
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+    ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
+    PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
+    uint256 fundingInterval = _configStorage.getTradingConfig().fundingInterval;
+    uint256 elapsedIntervals = (block.timestamp - globalMarket.lastFundingTime) / fundingInterval;
+    return (elapsedIntervals * 1e18) / 1 days;
+  }
+
   /// @notice Calculate the funding rate velocity
   /// @param _marketIndex Market Index.
   /// @return fundingRateVelocity which is the result of u = vt to get how fast the funding rate would change
@@ -949,12 +959,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     // The result of this fundingRateVelocity Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
-    vars.fundingRateVelocity = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
-
-    vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
-    vars.fundingRateVelocity = vars.fundingRateVelocity * vars.elapsedIntervals;
-
-    return vars.fundingRateVelocity;
+    return (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
   }
 
   /**

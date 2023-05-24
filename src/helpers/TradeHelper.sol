@@ -216,6 +216,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     uint256 _fundingInterval = ConfigStorage(configStorage).getTradingConfig().fundingInterval;
     uint256 _lastFundingTime = _market.lastFundingTime;
+    console.log("_lastFundingTime", _lastFundingTime);
 
     // If last funding time is 0, set it to the nearest funding interval time and return.
     if (_lastFundingTime == 0) {
@@ -225,17 +226,17 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     }
 
     // If block.timestamp is not passed the next funding interval, skip updating
-    console.log("_lastFundingTime", _lastFundingTime);
     if (_lastFundingTime + _fundingInterval <= block.timestamp) {
       // update funding rate
-      int256 nextFundingRate = _market.currentFundingRate + _calculator.getFundingRateVelocity(_marketIndex);
-      int256 elapsedIntervals = int((block.timestamp - _market.lastFundingTime) / _fundingInterval);
+      int256 proportionalElapsedInDay = int256(_calculator.proportionalElapsedInDay(_marketIndex));
+      int256 nextFundingRate = _market.currentFundingRate +
+        ((_calculator.getFundingRateVelocity(_marketIndex) * proportionalElapsedInDay) / 1e18);
       int256 lastFundingAccrued = _market.fundingAccrued;
-      _market.fundingAccrued += ((_market.currentFundingRate + nextFundingRate) / 2) * elapsedIntervals;
+      _market.fundingAccrued += ((_market.currentFundingRate + nextFundingRate) * proportionalElapsedInDay) / 2 / 1e18;
       console.log("nextFundingRate");
       console.logInt(nextFundingRate);
       console.log("elapsedIntervals");
-      console.logInt(elapsedIntervals);
+      console.logInt(proportionalElapsedInDay);
       console.log("lastFundingAccrued");
       console.logInt(lastFundingAccrued);
       console.log("_market.fundingAccrued");

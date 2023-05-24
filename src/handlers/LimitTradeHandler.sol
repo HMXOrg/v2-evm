@@ -431,7 +431,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   function executeLimitOrder(ExecuteOrderVars memory vars) external {
     // if not in executing state, then revert
     if (!isExecuting) revert ILimitTradeHandler_NotExecutionState();
-    if (msg.sender != address(this)) revert ILimitTradeHandler_NotWhitelisted();
+    if (msg.sender != address(this)) revert ILimitTradeHandler_Unauthorized();
 
     // Remove this executed order from the list
     _removeOrder(vars.order, vars.subAccount, vars.orderIndex);

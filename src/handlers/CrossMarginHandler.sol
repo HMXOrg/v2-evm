@@ -372,14 +372,14 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   function executeWithdrawOrder(WithdrawOrder memory _order) external {
     // if not in executing state, then revert
     if (!isExecuting) revert ICrossMarginHandler_NotExecutionState();
-    if (msg.sender != address(this)) revert ICrossMarginHandler_NotWhitelisted();
+    if (msg.sender != address(this)) revert ICrossMarginHandler_Unauthorized();
     if (
       _order.shouldUnwrap &&
       _order.token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()
     ) revert ICrossMarginHandler_NotWNativeToken();
 
-    if (_order.shouldUnwrap) // Call service to withdraw collateral
-    {
+    // Call service to withdraw collateral
+    if (_order.shouldUnwrap) {
       // Withdraw wNative straight to this contract first.
       _order.crossMarginService.withdrawCollateral(
         _order.account,

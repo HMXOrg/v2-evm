@@ -20,8 +20,6 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
-import { console } from "forge-std/console.sol";
-
 /// @title LiquidityHandler
 /// @notice This contract handles liquidity orders for adding or removing liquidity from a pool
 contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILiquidityHandler {
@@ -353,7 +351,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256 _amountOut) {
     // if not in executing state, then revert
     if (!isExecuting) revert ILiquidityHandler_NotExecutionState();
-    if (msg.sender != address(this)) revert ILiquidityHandler_NotWhitelisted();
+    if (msg.sender != address(this)) revert ILiquidityHandler_Unauthorized();
 
     if (_order.isAdd) {
       IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
@@ -457,8 +455,10 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
     IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
-    // prevent attack by using call method to ignore revert call from destination address
-    // gas be set to 2300 equal to gas limit on transfer method
+    // To mitigate potential attacks, the call method is utilized,
+    // allowing the contract to bypass any revert calls from the destination address.
+    // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
+    // the transaction maintains a secure execution."
     (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
   }
 

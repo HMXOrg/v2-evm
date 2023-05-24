@@ -15,6 +15,7 @@ interface ILiquidityHandler {
   error ILiquidityHandler_NoOrder();
   error ILiquidityHandler_NotOrderOwner();
   error ILiquidityHandler_NotWNativeToken();
+  error ILiquidityHandler_Unauthorized();
 
   /**
    * Structs

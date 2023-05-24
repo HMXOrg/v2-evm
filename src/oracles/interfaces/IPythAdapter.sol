@@ -17,4 +17,6 @@ interface IPythAdapter is IOracleAdapter {
   function setConfig(bytes32 _assetId, bytes32 _pythPriceId, bool _inverse) external;
 
   function configs(bytes32 _assetId) external view returns (bytes32 _pythPriceId, bool _inverse);
+
+  function getConfigByAssetId(bytes32 _assetId) external view returns (PythPriceConfig memory);
 }

@@ -37,6 +37,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetAssetClassConfigByIndex(uint256 index, AssetClassConfig oldConfig, AssetClassConfig newConfig);
   event LogSetLiquidityEnabled(bool oldValue, bool newValue);
   event LogSetMinimumPositionSize(uint256 oldValue, uint256 newValue);
+  event LogSetConfigExecutor(address indexed executorAddress, bool isServiceExecutor);
   event LogAddAssetClassConfig(uint256 index, AssetClassConfig newConfig);
   event LogAddMarketConfig(uint256 index, MarketConfig newConfig);
   event LogRemoveUnderlying(address token);
@@ -83,6 +84,17 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   MarketConfig[] public marketConfigs;
   AssetClassConfig[] public assetClassConfigs;
   address[] public tradeServiceHooks;
+
+  mapping(address => bool) public configExecutors;
+
+  /**
+   * Modifiers
+   */
+
+  modifier onlyWhitelistedExecutor() {
+    if (!configExecutors[msg.sender]) revert IConfigStorage_NotWhiteListed();
+    _;
+  }
 
   function initialize() external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -214,6 +226,11 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
    * Setter
    */
 
+  function setConfigExecutor(address _executorAddress, bool _isServiceExecutor) external onlyOwner {
+    configExecutors[_executorAddress] = _isServiceExecutor;
+    emit LogSetConfigExecutor(_executorAddress, _isServiceExecutor);
+  }
+
   function setMinimumPositionSize(uint256 _minimumPositionSize) external onlyOwner {
     emit LogSetMinimumPositionSize(minimumPositionSize, _minimumPositionSize);
     minimumPositionSize = _minimumPositionSize;
@@ -251,12 +268,12 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     liquidityConfig = _liquidityConfig;
   }
 
-  function setLiquidityEnabled(bool _enabled) external onlyOwner {
+  function setLiquidityEnabled(bool _enabled) external onlyWhitelistedExecutor {
     emit LogSetLiquidityEnabled(liquidityConfig.enabled, _enabled);
     liquidityConfig.enabled = _enabled;
   }
 
-  function setDynamicEnabled(bool _enabled) external onlyOwner {
+  function setDynamicEnabled(bool _enabled) external onlyWhitelistedExecutor {
     liquidityConfig.dynamicFeeEnabled = _enabled;
     emit LogSetDynamicEnabled(_enabled);
   }

@@ -8,7 +8,7 @@ contract TC14 is BaseIntTest_WithActions {
   function testCorrectness_AddLiquidity_CircuitBreaker() external {
     // T0: Initialized state
     // set circuit breaker
-    configStorage.setLiquidityEnabled(false);
+    botHandler.updateLiquidityEnabled(false);
     // ALICE NEED 10k in terms of WBTC = 10000 /20000 * 10**8  = 5e7
     uint256 _amount = 5e7;
 
@@ -32,7 +32,7 @@ contract TC14 is BaseIntTest_WithActions {
   }
 
   function testCorrectness_RemoveLiquidity_CircuitBreaker() external {
-    configStorage.setLiquidityEnabled(false);
+    botHandler.updateLiquidityEnabled(false);
     // T0 initial State
     vm.deal(ALICE, executionOrderFee);
     uint256 _amount = 10 ether;

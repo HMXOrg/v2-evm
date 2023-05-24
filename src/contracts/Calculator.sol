@@ -565,6 +565,15 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         for (uint256 j; j < _injectedAssetIds.length; ) {
           if (_injectedAssetIds[j] == _marketConfig.assetId) {
             _var.priceE30 = _injectedPrices[j];
+            (_var.priceE30, , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+              _marketConfig.assetId,
+              !_var.isLong, // if current position is SHORT position, then we use max price
+              (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+              -_var.position.positionSizeE30,
+              _marketConfig.fundingRate.maxSkewScaleUSD,
+              _var.priceE30
+            );
+
             // stop inside looping after found price
             break;
           }

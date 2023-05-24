@@ -322,6 +322,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
       configStorage.setWeth(address(weth));
       configStorage.setPLP(address(plpV2));
+
+      configStorage.setConfigExecutor(address(botHandler), true);
     }
 
     {

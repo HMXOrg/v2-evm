@@ -438,7 +438,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _marketConfig.assetId
       );
 
-      // if the free collateral is less than the initial margin required, revert the transaction with an error
+      // if the free collateral is less than zero, revert the transaction with an error
       if (subAccountFreeCollateral < 0) revert ITradeService_InsufficientFreeCollateral();
     }
 

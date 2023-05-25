@@ -91,7 +91,11 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
    * ERC20 interaction functions
    */
 
-  function pullToken(address _token) external returns (uint256) {
+  function pullToken(address _token) external nonReentrant onlyWhitelistedExecutor returns (uint256) {
+    return _pullToken(_token);
+  }
+
+  function _pullToken(address _token) internal returns (uint256) {
     uint256 prevBalance = totalAmount[_token];
     uint256 nextBalance = IERC20Upgradeable(_token).balanceOf(address(this));
 
@@ -141,6 +145,14 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
     protocolFees[_token] -= _amount;
     IERC20Upgradeable(_token).safeTransfer(_receiver, _amount);
+    _pullToken(_token);
+  }
+
+  function withdrawDevFee(address _token, uint256 _amount, address _receiver) external onlyOwner {
+    if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
+    devFees[_token] -= _amount;
+    IERC20Upgradeable(_token).safeTransfer(_receiver, _amount);
+    _pullToken(_token);
   }
 
   function removePLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {

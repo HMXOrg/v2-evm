@@ -94,4 +94,8 @@ interface ILiquidityHandler {
     uint256 _limit,
     uint256 _offset
   ) external view returns (LiquidityOrder[] memory _liquidityOrders);
+
+  function setMaxExecutionChuck(uint256 _maxExecutionChuck) external;
+
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external;
 }

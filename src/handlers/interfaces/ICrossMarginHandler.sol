@@ -80,6 +80,10 @@ interface ICrossMarginHandler {
 
   function setOrderExecutor(address _executor, bool _isAllow) external;
 
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external;
+
+  function setMaxExecutionChuck(uint256 _maxExecutionChuck) external;
+
   function convertSGlpCollateral(
     uint8 _subAccountId,
     address _tokenOut,

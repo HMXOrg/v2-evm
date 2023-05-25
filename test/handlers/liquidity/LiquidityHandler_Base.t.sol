@@ -16,7 +16,8 @@ contract LiquidityHandler_Base is BaseTest {
       address(proxyAdmin),
       address(mockLiquidityService),
       address(ecoPyth),
-      5 ether
+      5 ether,
+      10
     );
     plp.setMinter(address(this), true);
     mockLiquidityService.setPlpEnabled(true);

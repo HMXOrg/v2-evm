@@ -98,6 +98,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   // HLP
   uint256 internal constant executionOrderFee = 0.0001 ether;
+  uint256 internal constant maxExecutionChuck = 10; // 10 orders per time
 
   bytes32 constant sGlpAssetId = "SGLP";
 
@@ -268,7 +269,8 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(proxyAdmin),
       address(liquidityService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      maxExecutionChuck
     );
 
     // Deploy GlpStrategy
@@ -308,13 +310,15 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(proxyAdmin),
       address(liquidityService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      maxExecutionChuck
     );
     crossMarginHandler = Deployer.deployCrossMarginHandler(
       address(proxyAdmin),
       address(crossMarginService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      maxExecutionChuck
     );
   }
 

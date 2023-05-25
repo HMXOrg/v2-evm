@@ -40,6 +40,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   event LogSetPyth(address indexed oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogMaxExecutionChuck(uint256 oldValue, uint256 newValue);
   event LogCreateWithdrawOrder(
     address indexed account,
     uint8 indexed subAccountId,
@@ -81,6 +82,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public pyth;
   uint256 public nextExecutionOrderIndex; // the index of the next withdraw order that should be executed
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
+  uint256 public maxExecutionChuck; // maximum execution order sizes per request
   bool private isExecuting; // order is executing (prevent direct call executeWithdrawOrder()
 
   WithdrawOrder[] public withdrawOrders; // all withdrawOrder
@@ -91,7 +93,12 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _crossMarginService Address of the CrossMarginService contract.
   /// @param _pyth Address of the Pyth contract.
   /// @param _minExecutionOrderFee Minimum execution fee for a withdrawal order.
-  function initialize(address _crossMarginService, address _pyth, uint256 _minExecutionOrderFee) external initializer {
+  function initialize(
+    address _crossMarginService,
+    address _pyth,
+    uint256 _minExecutionOrderFee,
+    uint256 _maxExecutionChuck
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
@@ -102,6 +109,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     crossMarginService = _crossMarginService;
     pyth = _pyth;
     minExecutionOrderFee = _minExecutionOrderFee;
+    maxExecutionChuck = _maxExecutionChuck;
   }
 
   function getActiveWithdrawOrders(
@@ -481,6 +489,13 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
     emit LogSetMinExecutionFee(minExecutionOrderFee, _newMinExecutionFee);
     minExecutionOrderFee = _newMinExecutionFee;
+  }
+
+  /// @notice setMaxExecutionChuck
+  /// @param _maxExecutionChuck maximum check sizes when execute orders
+  function setMaxExecutionChuck(uint256 _maxExecutionChuck) external nonReentrant onlyOwner {
+    emit LogMaxExecutionChuck(maxExecutionChuck, _maxExecutionChuck);
+    maxExecutionChuck = _maxExecutionChuck;
   }
 
   /// @notice setOrderExecutor

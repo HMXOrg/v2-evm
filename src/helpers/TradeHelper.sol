@@ -335,7 +335,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     int256 _unrealizedPnl,
     int256 _fundingFee,
     address _tpToken
-  ) external {
+  ) external nonReentrant onlyWhitelistedExecutor {
     _increaseCollateral(_positionId, _subAccount, _unrealizedPnl, _fundingFee, _tpToken);
   }
 

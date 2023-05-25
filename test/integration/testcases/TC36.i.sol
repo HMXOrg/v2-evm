@@ -9,6 +9,7 @@ import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.so
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { console } from "forge-std/console.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract TC36 is BaseIntTest_WithActions {
   function testCorrectness_TC36_MaxUtilization() external {
@@ -262,6 +263,13 @@ contract TC36 is BaseIntTest_WithActions {
       block.timestamp,
       true // execute now
     );
+
+    IConfigStorage.PLPTokenConfig memory _config;
+    _config.targetWeight = 0.95 * 1e18;
+    _config.bufferLiquidity = 0;
+    _config.maxWeightDiff = 1e18;
+    _config.accepted = true;
+    configStorage.setPlpTokenConfig(address(wbtc), _config);
 
     removeLiquidity(
       ALICE,

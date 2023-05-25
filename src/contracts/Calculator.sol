@@ -304,7 +304,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
     ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
     LiquidityDirection direction
-  ) internal pure returns (uint32) {
+  ) internal view returns (uint32) {
     uint32 _feeBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
@@ -331,7 +331,12 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
     // _nextWeight represented 18 precision
     uint256 _nextWeight = (nextValue * ETH_PRECISION) / (_totalLiquidityUSD + _value);
-    if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
+    uint256 withdrawalWeightDiff = _plpTokenConfig.targetWeight > _plpTokenConfig.maxWeightDiff
+      ? _plpTokenConfig.targetWeight - _plpTokenConfig.maxWeightDiff
+      : 0;
+    if (
+      _nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff || _nextWeight < withdrawalWeightDiff
+    ) {
       revert ICalculator_PoolImbalance();
     }
 

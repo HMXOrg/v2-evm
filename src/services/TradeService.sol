@@ -211,9 +211,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     _vars.tradeHelper = TradeHelper(tradeHelper);
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
-    // validate service should be called from handler ONLY
-    _vars.configStorage.validateServiceExecutor(address(this), msg.sender);
-
     // get the sub-account from the primary account and sub-account ID
     _vars.subAccount = _getSubAccount(_primaryAccount, _subAccountId);
 
@@ -490,8 +487,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     // validates
     {
-      // validate service should be called from handler ONLY
-      _vars.configStorage.validateServiceExecutor(address(this), msg.sender);
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
     }

@@ -128,9 +128,6 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
 
     // validate market status
     IConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_position.marketIndex);
-    uint256 marketStatus = _oracle.marketStatus(_marketConfig.assetId);
-    if (marketStatus != 2 || !_marketConfig.active) return false;
-
     PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(_position.marketIndex);
 
     // get injected price
@@ -145,6 +142,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
         j++;
       }
     }
+    if (_priceE30 == 0) revert IBotHandler_InvalidPrice();
 
     // get adaptive price
     (uint256 _adaptivePriceE30, ) = _oracle.getLatestAdaptivePrice(

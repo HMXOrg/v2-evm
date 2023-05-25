@@ -8,6 +8,7 @@ interface IBotHandler {
   error IBotHandler_UnauthorizedSender();
   error IBotHandler_InsufficientLiquidity();
   error IBotHandler_InvalidArray();
+  error IBotHandler_InvalidPrice();
 
   /**
    * States

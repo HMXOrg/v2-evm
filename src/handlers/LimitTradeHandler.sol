@@ -166,25 +166,20 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
-    // Sanity check
-    TradeService(_tradeService).perpStorage();
-    IEcoPyth(_pyth).getAssetIds();
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
 
     minExecutionFee = _minExecutionFee;
+    minExecutionTimestamp = _minExecutionTimestamp;
     weth = _weth;
     tradeService = _tradeService;
     pyth = IEcoPyth(_pyth);
     isAllowAllExecutor = false;
     isGuaranteeLimitPrice = false;
 
-    if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
-    minExecutionFee = _minExecutionFee;
-    minExecutionTimestamp = _minExecutionTimestamp;
-
+    // Sanity check
     // slither-disable-next-line unused-return
     TradeService(_tradeService).perpStorage();
-    // @todo sanity check ecopyth
+    IEcoPyth(_pyth).getAssetIds();
   }
 
   receive() external payable {

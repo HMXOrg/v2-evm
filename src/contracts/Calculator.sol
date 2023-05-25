@@ -937,7 +937,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
     uint256 fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     uint256 elapsedIntervals = (block.timestamp - globalMarket.lastFundingTime) / fundingInterval;
-    return (elapsedIntervals * 1e18) / 1 days;
+    uint256 intervalsInOneDay = 1 days / fundingInterval;
+    return (elapsedIntervals * 1e18) / intervalsInOneDay;
   }
 
   /// @notice Calculate the funding rate velocity
@@ -950,7 +951,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return 0;
     vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
-    
+
     // The result of this fundingRateVelocity Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);

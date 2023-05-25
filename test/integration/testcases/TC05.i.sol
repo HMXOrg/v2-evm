@@ -72,7 +72,7 @@ contract TC05 is BaseIntTest_WithActions {
     }
 
     // T2: Alice buy the position for 20 mins, JPYUSD dumped hard to 0.007945967421533571712355979340 USD. This makes Alice account went below her kill level
-    vm.warp(block.timestamp + (20 * MINUTES));
+    vm.warp(block.timestamp + (200 * MINUTES));
     {
       updatePriceData = new bytes[](3);
       // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
@@ -97,8 +97,8 @@ contract TC05 is BaseIntTest_WithActions {
        * protocol fee = 0.000225 + (0.0015 - (0.0015 * 15%)) = 0.03255
        * liquidation fee = 0.00025
        */
-      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 0.01199078 * 1e8);
-      assertVaultsFees(address(wbtc), 0.032550 * 1e8, 0.00046096 * 1e8, 0.00079999 * 1e8);
+      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 1213266);
+      assertVaultsFees(address(wbtc), 0.032550 * 1e8, 55971, 0);
       assertPLPLiquidity(address(wbtc), 10.00383251 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);
       assertNumberOfPosition(ALICE, 0);

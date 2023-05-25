@@ -223,30 +223,30 @@ contract TC24 is BaseIntTest_WithActions {
       _T9Assert2();
     }
 
-    // // =============================================================
-    // // | SHORT trader receive funding fee from PLP                 |
-    // // =============================================================
+    // =============================================================
+    // | SHORT trader receive funding fee from PLP                 |
+    // =============================================================
 
-    // /**
-    //  * T10: CAROL market sell weth with 300_000 USD at price 1500 USD
-    //  *     Then CAROL should has new Short Position in WETH market
-    //  */
-    // {
-    //   skip(60); // time passed for 60 seconds
+    /**
+     * T10: CAROL market sell weth with 300_000 USD at price 1500 USD
+     *     Then CAROL should has new Short Position in WETH market
+     */
+    {
+      skip(60); // time passed for 60 seconds
 
-    //   marketSell(
-    //     CAROL,
-    //     0,
-    //     wethMarketIndex,
-    //     300_000 * 1e30,
-    //     address(wbtc),
-    //     tickPrices,
-    //     publishTimeDiff,
-    //     block.timestamp
-    //   );
+      marketSell(
+        CAROL,
+        0,
+        wethMarketIndex,
+        300_000 * 1e30,
+        address(wbtc),
+        tickPrices,
+        publishTimeDiff,
+        block.timestamp
+      );
 
-    //   _T10Assert();
-    // }
+      _T10Assert();
+    }
 
     // /**
     //  * T11: CAROL close sell position at price 1500 USD
@@ -606,60 +606,37 @@ contract TC24 is BaseIntTest_WithActions {
     // Last Funding Time    = 2560 + 60 = 2620
     // Last Long Funding Rate = -0.00317599999999986
     // Last Short Funding Rate = -0.00317599999999986
-    assertMarketFundingRate(wethMarketIndex, -0.00317599999999986 * 1e18, 2620, "T9: ");
 
-    // And accum funding fee
-    // accumFundingLong  = old value + new value
-    //                   = 0 + Long position size * (current funding rate - last long funding rate)
-    //                   = 0 + (2_100_000 * (-0.00317599999999986 - (-0.00302399999999988)))
-    //                   = -319.199999999958
-    // accumFundingShort = old value + new value
-    //                   = -28.8 + Short position size * (current funding rate - last short funding rate)
-    //                   = -28.8 + 200_000 * (-0.00317599999999986 - (-0.00302399999999988))
-    //                   = -59.199999999996
-    // CAROL get funding fee reserve
-    //                   = 59.199999999996 - 59.199999999996 = 0
-    assertMarketAccumFundingFee(wethMarketIndex, 319.199999999958 * 1e30, 0, "T9: ");
+    // Market's Funding rate
+    // Funding rate         = currentFundingRate + (fundingRateVelocity * elapsedInterval / SECONDS_IN_DAY)
+    // Funding rate         = currentFundingRate + (-(skew / maxSkeScale * maxFundingRate) * elapsedInterval / SECONDS_IN_DAY)
+    //                      = -0.0000000349999999999999999 + (-(2100000-200000 / 300000000 * 0.0004) * 60 / 86400)
+    //                      = -0.0000000367592592592592592
+    // Last Funding Time    = 2560 + 60 = 2620
+    assertMarketFundingRate(wethMarketIndex, -36759259257, 2620, "T9: ");
 
-    // Funding fee Reserve
-    // WBTC              = old balance - deduct amount
-    //                   = 0.06239999 - (59.199999999996 / 20_000) = 0.0594399900000002
-    //                   = 0.05944000
-    assertFundingFeeReserve(address(wbtc), 0.05944000 * 1e8, "T9: ");
+    assertMarketAccumFundingFee(wethMarketIndex, 52324458900000000000000000, 0, "T9: ");
+
+    assertFundingFeeReserve(address(wbtc), 0 * 1e8, "T9: ");
 
     // Then Vault BTC's balance should still be the same as T6
     assertVaultTokenBalance(address(wbtc), 65 * 1e8, "T9: ");
   }
 
   function _T10Assert() internal {
-    // When CAROL Sell WETH Market
-    // Market's Funding rate
-    // new Funding rate     = -(60 * (Skew ratio * Max funding rate))
-    //                      = -((60 / 1) * (2_100_000 / 300_000_000 * 0.0004))
-    //                      = -0.000168
-    // Accum Funding Rate   = old + new = -0.00317599999999986 + -0.000168 = -0.00334399999999986
-    // Last Funding Time    = 2620 + 60 = 2680
-    assertMarketFundingRate(wethMarketIndex, -0.00334399999999986 * 1e18, 2680, "T10: ");
+    assertMarketFundingRate(wethMarketIndex, -38703703701, 2680, "T10: ");
 
     // Funding fee Reserve
     // must still be as same as T9
-    assertFundingFeeReserve(address(wbtc), 0.05944000 * 1e8, "T10: ");
+    assertFundingFeeReserve(address(wbtc), 0 * 1e8, "T10: ");
     assertFundingFeeReserve(address(usdc), 0, "T10: ");
 
     // Then Vault BTC's balance should still be the same as T6
     assertVaultTokenBalance(address(wbtc), 65 * 1e8, "T10: ");
 
-    // And accum funding fee
-    // accumFundingLong  = old + (Long position size * (current funding rate - last long funding rate))
-    //                   = -319.199999999958 + (2_100_000 * (-0.00334399999999986 - (-0.00317599999999986)))
-    //                   = -319.199999999958 + (-352.8) = -671.999999999958 USD
-    // accumFundingShort = 0
-    assertMarketAccumFundingFee(wethMarketIndex, 671.999999999958 * 1e30, 0, "T10: ");
+    assertMarketAccumFundingFee(wethMarketIndex, 107349534600000000000000000, 0, "T10: ");
 
-    // And entry funding rate of CAROL's Short position
-    // entryFundingRate     = currentFundingRate
-    //                      = -0.00334399999999986
-    assertEntryFundingRate(getSubAccount(CAROL, 0), wethMarketIndex, -0.00334399999999986 * 1e18, "T10: ");
+    assertEntryFundingRate(getSubAccount(CAROL, 0), wethMarketIndex, -331404318, "T10: ");
   }
 
   function _T11Assert() internal {

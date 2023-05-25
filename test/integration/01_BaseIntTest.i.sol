@@ -74,6 +74,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
   uint256 internal constant executionOrderFee = 0.0001 ether;
+  uint256 internal constant maxExecutionChuck = 10; // 10 orders per time
   uint256 internal constant minExecutionTimestamp = 60 * 5; // 5 minutes
 
   uint256 internal constant SECONDS = 1;
@@ -267,7 +268,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(proxyAdmin),
       address(crossMarginService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      maxExecutionChuck
     );
 
     limitTradeHandler = Deployer.deployLimitTradeHandler(
@@ -284,7 +286,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(proxyAdmin),
       address(liquidityService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      maxExecutionChuck
     );
 
     marketTradeHandler = Deployer.deployMarketTradeHandler(address(proxyAdmin), address(tradeService), address(pyth));

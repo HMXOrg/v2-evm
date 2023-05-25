@@ -370,6 +370,11 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     // if the position size is zero after the update, revert the transaction with an error
     if (_vars.position.positionSizeE30 == 0) revert ITradeService_BadPositionSize();
+    // Ensure that the new absolute position size is greater than zero, but not smaller than the minimum allowed position size
+    if (
+      _abs(_vars.position.positionSizeE30) > 0 &&
+      _abs(_vars.position.positionSizeE30) < ConfigStorage(configStorage).minimumPositionSize()
+    ) revert ITradeService_TooTinyPosition();
 
     // update entry borrowing/funding rates
     {

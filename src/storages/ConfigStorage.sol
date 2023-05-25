@@ -362,8 +362,16 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     CollateralTokenConfig memory _newConfig
   ) external onlyOwner returns (CollateralTokenConfig memory _collateralTokenConfig) {
     emit LogSetCollateralTokenConfig(_assetId, assetCollateralTokenConfigs[_assetId], _newConfig);
+    // get current config, if new collateral's assetId then push to array
+    CollateralTokenConfig memory _curCollateralTokenConfig = assetCollateralTokenConfigs[_assetId];
+    if (
+      _curCollateralTokenConfig.settleStrategy == address(0) &&
+      _curCollateralTokenConfig.collateralFactorBPS == 0 &&
+      _curCollateralTokenConfig.accepted == false
+    ) {
+      collateralAssetIds.push(_assetId);
+    }
     assetCollateralTokenConfigs[_assetId] = _newConfig;
-    collateralAssetIds.push(_assetId);
     return assetCollateralTokenConfigs[_assetId];
   }
 

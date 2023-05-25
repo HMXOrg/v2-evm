@@ -581,6 +581,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
             j++;
           }
         }
+        if (_var.priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
         // Check to overwrite price
         if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
@@ -709,6 +710,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
             j++;
           }
         }
+        if (_priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
         // Get token asset id from ConfigStorage
         if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {

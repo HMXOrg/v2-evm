@@ -18,10 +18,17 @@ contract DeployCrossMarginHandler is ConfigJsonRepo {
     address pythAddress = getJsonAddress(".oracles.ecoPyth");
     address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
     uint256 minExecutionFee = 30;
+    uint256 maxExecutionChuck = 10;
     address proxyAdmin = getJsonAddress(".proxyAdmin");
 
     address crossMarginHandlerAddress = address(
-      Deployer.deployCrossMarginHandler(address(proxyAdmin), crossMarginServiceAddress, pythAddress, minExecutionFee)
+      Deployer.deployCrossMarginHandler(
+        address(proxyAdmin),
+        crossMarginServiceAddress,
+        pythAddress,
+        minExecutionFee,
+        maxExecutionChuck
+      )
     );
 
     vm.stopBroadcast();

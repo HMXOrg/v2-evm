@@ -266,6 +266,21 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external onlyOwner {
     emit LogSetLiquidityConfig(liquidityConfig, _liquidityConfig);
     liquidityConfig = _liquidityConfig;
+
+    uint256 plpTotalTokenWeight = 0;
+    for (uint256 i = 0; i < plpAssetIds.length; ) {
+      plpTotalTokenWeight += assetPlpTokenConfigs[plpAssetIds[i]].targetWeight;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    liquidityConfig.plpTotalTokenWeight = plpTotalTokenWeight;
+
+    if (liquidityConfig.plpTotalTokenWeight > 1e18) {
+      revert IConfigStorage_ExceedLimitSetting();
+    }
   }
 
   function setLiquidityEnabled(bool _enabled) external onlyWhitelistedExecutor {

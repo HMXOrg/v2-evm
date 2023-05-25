@@ -918,7 +918,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
     IWNative(weth).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
-    payable(_receiver).transfer(_amountOut);
+    // To mitigate potential attacks, the call method is utilized,
+    // allowing the contract to bypass any revert calls from the destination address.
+    // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
+    // the transaction maintains a secure execution."
+    (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
   }
 
   function _min(uint256 x, uint256 y) private pure returns (uint256) {

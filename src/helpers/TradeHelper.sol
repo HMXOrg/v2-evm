@@ -11,6 +11,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/
 
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { console } from "forge-std/console.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   /**
@@ -205,6 +206,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   /// @notice This function updates the funding rate for the given market index.
   /// @param _marketIndex The index of the market.
   function updateFundingRate(uint256 _marketIndex) external nonReentrant onlyWhitelistedExecutor {
+    console.log("updateFundingRate");
     // SLOAD
     Calculator _calculator = calculator;
     PerpStorage _perpStorage = PerpStorage(perpStorage);
@@ -214,6 +216,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     uint256 _fundingInterval = ConfigStorage(configStorage).getTradingConfig().fundingInterval;
     uint256 _lastFundingTime = _market.lastFundingTime;
+    console.log("_lastFundingTime", _lastFundingTime);
 
     // If last funding time is 0, set it to the nearest funding interval time and return.
     if (_lastFundingTime == 0) {
@@ -230,6 +233,19 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         ((_calculator.getFundingRateVelocity(_marketIndex) * proportionalElapsedInDay) / 1e18);
       int256 lastFundingAccrued = _market.fundingAccrued;
       _market.fundingAccrued += ((_market.currentFundingRate + nextFundingRate) * proportionalElapsedInDay) / 2 / 1e18;
+      console.log("block.timestamp", block.timestamp);
+      console.log("fundingRateVelocity");
+      console.logInt(_calculator.getFundingRateVelocity(_marketIndex));
+      console.log("currentFundingRate");
+      console.logInt(_market.currentFundingRate);
+      console.log("nextFundingRate");
+      console.logInt(nextFundingRate);
+      console.log("proportionalElapsedInDay");
+      console.logInt(proportionalElapsedInDay);
+      console.log("lastFundingAccrued");
+      console.logInt(lastFundingAccrued);
+      console.log("_market.fundingAccrued");
+      console.logInt(_market.fundingAccrued);
 
       if (_market.longPositionSize > 0) {
         int256 fundingFeeLongE30 = _calculator.getFundingFee(
@@ -406,6 +422,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       PerpStorage(perpStorage).getMarketByIndex(_marketIndex).fundingAccrued,
       _position.entryFundingRate
     );
+    console.log("funding fee position");
+    console.logInt(_fundingFee);
     // Update global state
     _isLong
       ? _updateAccumFundingLong(_marketIndex, -_fundingFee)

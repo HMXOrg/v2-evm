@@ -428,7 +428,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     }
 
     // save the updated position to the storage
-    _vars.position.lastIncreaseTimestamp = block.timestamp;
     _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
 
     {

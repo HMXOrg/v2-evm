@@ -448,8 +448,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
         plpAssetIds.push(_assetId);
       }
 
-      assetPlpTokenConfigs[_assetId] = _configs[_i];
       emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
+      assetPlpTokenConfigs[_assetId] = _configs[_i];
 
       // Update totalWeight accordingly
 

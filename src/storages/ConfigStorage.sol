@@ -43,6 +43,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogRemoveUnderlying(address token);
   event LogDelistMarket(uint256 marketIndex);
   event LogAddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
+  event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
 
   /**
    * Constants
@@ -448,8 +449,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
         plpAssetIds.push(_assetId);
       }
 
-      assetPlpTokenConfigs[_assetId] = _configs[_i];
       emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
+      assetPlpTokenConfigs[_assetId] = _configs[_i];
 
       // Update totalWeight accordingly
 
@@ -510,6 +511,15 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   }
 
   function setTradeServiceHooks(address[] calldata _newHooks) external onlyOwner {
+    for (uint256 i = 0; i < _newHooks.length; ) {
+      if (_newHooks[i] == address(0)) revert IConfigStorage_InvalidAddress();
+
+      unchecked {
+        ++i;
+      }
+    }
+    emit LogSetTradeServiceHooks(tradeServiceHooks, _newHooks);
+
     tradeServiceHooks = _newHooks;
   }
 

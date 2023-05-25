@@ -38,6 +38,13 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     address receiver
   );
   event LogWithdrawFundingFeeSurplus(uint256 surplusValue);
+  event LogConvertSGlpCollateral(
+    address primaryAccount,
+    uint256 subAccountId,
+    address tokenOut,
+    uint256 amountIn,
+    uint256 amountOut
+  );
 
   /**
    * Structs
@@ -263,6 +270,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     _vaultStorage.decreaseTraderBalance(_subAccount, _configStorage.sglp(), _amountIn);
     _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _amountOut);
 
+    emit LogConvertSGlpCollateral(_primaryAccount, _subAccountId, _tokenOut, _amountIn, _amountOut);
     return _amountOut;
   }
 

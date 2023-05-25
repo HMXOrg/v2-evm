@@ -338,6 +338,22 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   ) external onlyOwner returns (PLPTokenConfig memory _plpTokenConfig) {
     emit LogSetPlpTokenConfig(_token, assetPlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
     assetPlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
+
+    uint256 plpTotalTokenWeight = 0;
+    for (uint256 i = 0; i < plpAssetIds.length; ) {
+      plpTotalTokenWeight += assetPlpTokenConfigs[plpAssetIds[i]].targetWeight;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    liquidityConfig.plpTotalTokenWeight = plpTotalTokenWeight;
+
+    if (liquidityConfig.plpTotalTokenWeight > 1e18) {
+      revert IConfigStorage_ExceedLimitSetting();
+    }
+
     return _newConfig;
   }
 

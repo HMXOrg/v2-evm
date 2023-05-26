@@ -596,6 +596,9 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // update position, market, and global market state
     (_isMaxProfit, _isProfit, _delta) = _decreasePosition(_marketConfig, _marketIndex, _vars);
 
+    // Call Trade Service Hook
+    _decreasePositionHooks(_account, _subAccountId, _marketIndex, _vars.positionSizeE30ToDecrease);
+
     emit LogForceClosePosition(
       _vars.positionId,
       _account,
@@ -761,7 +764,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     }
     _vars.oldSumSe = _vars.absPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30);
     _vars.oldSumS2e = _vars.absPositionSizeE30.mulDiv(_vars.absPositionSizeE30, _vars.position.avgEntryPriceE30);
-    uint256 _newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
     _temp.newAbsPositionSizeE30 = _vars.absPositionSizeE30 - _vars.positionSizeE30ToDecrease;
 
@@ -870,11 +872,11 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
             _market.longPositionSize - _vars.positionSizeE30ToDecrease,
             _vars.position.avgEntryPriceE30 > 0
               ? (_market.longAccumSE - _vars.oldSumSe) +
-                _newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)
+                _temp.newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)
               : 0,
             _vars.position.avgEntryPriceE30 > 0
               ? (_market.longAccumS2E - _vars.oldSumS2e) +
-                _newAbsPositionSizeE30.mulDiv(_newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
+                _temp.newAbsPositionSizeE30.mulDiv(_temp.newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
               : 0
           )
           : _vars.perpStorage.updateGlobalShortMarketById(
@@ -882,11 +884,11 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
             _market.shortPositionSize - _vars.positionSizeE30ToDecrease,
             _vars.position.avgEntryPriceE30 > 0
               ? (_market.shortAccumSE - _vars.oldSumSe) +
-                _newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)
+                _temp.newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)
               : 0,
             _vars.position.avgEntryPriceE30 > 0
               ? (_market.shortAccumS2E - _vars.oldSumS2e) +
-                _newAbsPositionSizeE30.mulDiv(_newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
+                _temp.newAbsPositionSizeE30.mulDiv(_temp.newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
               : 0
           );
       }

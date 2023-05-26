@@ -64,7 +64,6 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   function removeRewarder(uint256 removeRewarderIndex) external onlyOwner {
     address removedRewarder = rewarders[removeRewarderIndex];
     rewarders[removeRewarderIndex] = rewarders[rewarders.length - 1];
-    rewarders[rewarders.length - 1] = removedRewarder;
     rewarders.pop();
     isRewarder[removedRewarder] = false;
   }

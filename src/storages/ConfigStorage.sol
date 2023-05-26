@@ -496,7 +496,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     uint256 _len = plpAssetIds.length;
     for (uint256 _i = 0; _i < _len; ) {
       if (_assetId == plpAssetIds[_i]) {
-        delete plpAssetIds[_i];
+        plpAssetIds[_i] = plpAssetIds[_len - 1];
+        plpAssetIds.pop();
         break;
       }
 

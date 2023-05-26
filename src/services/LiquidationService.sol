@@ -280,6 +280,12 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
             _vars.position.avgEntryPriceE30,
             _vars.position.lastIncreaseTimestamp
           );
+
+          // if trader has profit more than reserved value then trader's profit maximum is reserved value
+          if (_isProfit && _delta >= _vars.position.reserveValueE30) {
+            _delta = _vars.position.reserveValueE30;
+          }
+
           _realizedPnl = _isProfit ? int256(_delta) : -int256(_delta);
           _unrealizedPnL += _realizedPnl;
         }

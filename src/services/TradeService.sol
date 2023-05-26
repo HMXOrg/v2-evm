@@ -14,6 +14,7 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // interfaces
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
@@ -215,10 +216,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
     // get the sub-account from the primary account and sub-account ID
-    _vars.subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    _vars.subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
 
     // get the position for the given sub-account and market index
-    _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
+    _vars.positionId = HMXLib.getPositionId(_vars.subAccount, _marketIndex);
     _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
 
     // get the global market for the given market index
@@ -308,7 +309,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     }
 
     // get the absolute value of the new size delta
-    _vars.absSizeDelta = _abs(_sizeDelta);
+    _vars.absSizeDelta = HMXLib.abs(_sizeDelta);
     _vars.oldSumSe = 0;
     _vars.oldSumS2e = 0;
 
@@ -347,7 +348,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // if adjust position, calculate the new average price
     if (!_vars.isNewPosition) {
       (bool _isProfit, uint256 _delta) = calculator.getDelta(
-        _abs(_vars.position.positionSizeE30),
+        HMXLib.abs(_vars.position.positionSizeE30),
         _vars.isLong,
         _vars.closePriceE30,
         _vars.position.avgEntryPriceE30,
@@ -357,7 +358,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       int256 deltaPnl = _vars.isLong ? int256(_delta) : -int256(_delta);
       _vars.unrealizedPnl = _isProfit ? deltaPnl : -deltaPnl;
 
-      uint256 absPositionSizeE30 = _abs(_vars.position.positionSizeE30);
+      uint256 absPositionSizeE30 = HMXLib.abs(_vars.position.positionSizeE30);
       _vars.oldSumSe = absPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30);
       _vars.oldSumS2e = absPositionSizeE30.mulDiv(absPositionSizeE30, _vars.position.avgEntryPriceE30);
 
@@ -377,8 +378,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     if (_vars.position.positionSizeE30 == 0) revert ITradeService_BadPositionSize();
     // Ensure that the new absolute position size is greater than zero, but not smaller than the minimum allowed position size
     if (
-      _abs(_vars.position.positionSizeE30) > 0 &&
-      _abs(_vars.position.positionSizeE30) < ConfigStorage(configStorage).minimumPositionSize()
+      HMXLib.abs(_vars.position.positionSizeE30) > 0 &&
+      HMXLib.abs(_vars.position.positionSizeE30) < ConfigStorage(configStorage).minimumPositionSize()
     ) revert ITradeService_TooTinyPosition();
 
     // update entry borrowing/funding rates
@@ -416,7 +417,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
             _market.shortAccumS2E + _vars.absSizeDelta.mulDiv(_vars.absSizeDelta, _vars.position.avgEntryPriceE30)
           );
       } else {
-        uint256 absNewPositionSizeE30 = _abs(_vars.position.positionSizeE30);
+        uint256 absNewPositionSizeE30 = HMXLib.abs(_vars.position.positionSizeE30);
         _vars.isLong
           ? _vars.perpStorage.updateGlobalLongMarketById(
             _marketIndex,
@@ -501,11 +502,11 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     }
 
     // prepare variables
-    _vars.subAccount = _getSubAccount(_account, _subAccountId);
-    _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
+    _vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
+    _vars.positionId = HMXLib.getPositionId(_vars.subAccount, _marketIndex);
     _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
     _vars.isLongPosition = _vars.position.positionSizeE30 > 0;
-    _vars.absPositionSizeE30 = uint256(_abs(_vars.position.positionSizeE30));
+    _vars.absPositionSizeE30 = uint256(HMXLib.abs(_vars.position.positionSizeE30));
     _vars.positionSizeE30ToDecrease = _positionSizeE30ToDecrease;
     _vars.tpToken = _tpToken;
     _vars.limitPriceE30 = _limitPriceE30;
@@ -562,8 +563,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     // prepare variables
     ConfigStorage.MarketConfig memory _marketConfig = _vars.configStorage.getMarketConfigByIndex(_marketIndex);
-    _vars.subAccount = _getSubAccount(_account, _subAccountId);
-    _vars.positionId = _getPositionId(_vars.subAccount, _marketIndex);
+    _vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
+    _vars.positionId = HMXLib.getPositionId(_vars.subAccount, _marketIndex);
     _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
@@ -573,7 +574,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     }
 
     _vars.isLongPosition = _vars.position.positionSizeE30 > 0;
-    _vars.absPositionSizeE30 = uint256(_abs(_vars.position.positionSizeE30));
+    _vars.absPositionSizeE30 = uint256(HMXLib.abs(_vars.position.positionSizeE30));
     _vars.positionSizeE30ToDecrease = _vars.absPositionSizeE30;
     _vars.tpToken = _tpToken;
 
@@ -715,20 +716,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   /**
    * Private Functions
    */
-
-  function _abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
-  }
-
-  function _getSubAccount(address _primary, uint8 _subAccountId) private pure returns (address) {
-    if (_subAccountId > 255) revert();
-    return address(uint160(_primary) ^ uint160(_subAccountId));
-  }
-
-  function _getPositionId(address _account, uint256 _marketIndex) private pure returns (bytes32) {
-    return keccak256(abi.encodePacked(_account, _marketIndex));
-  }
-
   struct PrivateDecreasePositionVars {
     uint256 newAbsPositionSizeE30;
     TradeHelper tradeHelper;

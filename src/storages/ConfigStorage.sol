@@ -566,7 +566,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     tradeServiceHooks = _newHooks;
   }
 
-  function isContract(address _addr) internal returns (bool isContract) {
+  function isContract(address _addr) internal returns (bool) {
     uint32 size;
     assembly {
       size := extcodesize(_addr)

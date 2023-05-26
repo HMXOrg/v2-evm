@@ -751,6 +751,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   function _getIMR(address _subAccount) internal view returns (uint256 _imrValueE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
@@ -764,7 +765,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       }
 
       // Calculate IMR on position
-      _imrValueE30 += _calculatePositionIMR(_size, _position.marketIndex);
+      _imrValueE30 += _calculatePositionIMR(_size, _position.marketIndex, _configStorage);
 
       unchecked {
         i++;
@@ -784,6 +785,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   function _getMMR(address _subAccount) internal view returns (uint256 _mmrValueE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
@@ -797,7 +799,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       }
 
       // Calculate MMR on position
-      _mmrValueE30 += _calculatePositionMMR(_size, _position.marketIndex);
+      _mmrValueE30 += _calculatePositionMMR(_size, _position.marketIndex, _configStorage);
 
       unchecked {
         i++;
@@ -815,16 +817,16 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _positionSizeE30,
     uint256 _marketIndex
   ) external view returns (uint256 _imrE30) {
-    return _calculatePositionIMR(_positionSizeE30, _marketIndex);
+    return _calculatePositionIMR(_positionSizeE30, _marketIndex, ConfigStorage(configStorage));
   }
 
   function _calculatePositionIMR(
     uint256 _positionSizeE30,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    ConfigStorage _configStorage
   ) internal view returns (uint256 _imrE30) {
     // Get market config according to position
-    ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
-
+    ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFractionBPS) / BPS;
     return _imrE30;
   }
@@ -837,16 +839,16 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _positionSizeE30,
     uint256 _marketIndex
   ) external view returns (uint256 _mmrE30) {
-    return _calculatePositionMMR(_positionSizeE30, _marketIndex);
+    return _calculatePositionMMR(_positionSizeE30, _marketIndex, ConfigStorage(configStorage));
   }
 
   function _calculatePositionMMR(
     uint256 _positionSizeE30,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    ConfigStorage _configStorage
   ) internal view returns (uint256 _mmrE30) {
     // Get market config according to position
-    ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
-
+    ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFractionBPS) / BPS;
     return _mmrE30;
   }

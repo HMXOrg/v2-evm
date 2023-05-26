@@ -173,9 +173,10 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function getPlpTokens() external view returns (address[] memory) {
     address[] memory _result = new address[](plpAssetIds.length);
+    bytes32[] memory _plpAssetIds = plpAssetIds;
 
-    for (uint256 _i = 0; _i < plpAssetIds.length; ) {
-      _result[_i] = assetConfigs[plpAssetIds[_i]].tokenAddress;
+    for (uint256 _i = 0; _i < _plpAssetIds.length; ) {
+      _result[_i] = assetConfigs[_plpAssetIds[_i]].tokenAddress;
       unchecked {
         ++_i;
       }

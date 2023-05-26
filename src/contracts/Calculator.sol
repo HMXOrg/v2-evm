@@ -11,6 +11,7 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { FullMath } from "@hmx/libraries/FullMath.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
@@ -559,7 +560,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     // Loop through all trader's positions
     for (uint256 i; i < _len; ) {
       _var.position = _positions[i];
-      _var.absSize = _abs(_var.position.positionSizeE30);
+      _var.absSize = HMXLib.abs(_var.position.positionSizeE30);
       _var.isLong = _var.position.positionSizeE30 > 0;
 
       // Get market config according to opening position
@@ -952,8 +953,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
 
     // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
-    vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
-    vars.ratio = _min(vars.ratio, 1e18);
+    vars.ratio = HMXLib.max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
+    vars.ratio = HMXLib.min(vars.ratio, 1e18);
     vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
 
     vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
@@ -1139,18 +1140,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
     // Return the values of isProfit and delta.
     return (isProfit, delta);
-  }
-
-  function _max(int256 a, int256 b) internal pure returns (int256) {
-    return a > b ? a : b;
-  }
-
-  function _min(int256 a, int256 b) internal pure returns (int256) {
-    return a < b ? a : b;
-  }
-
-  function _abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
   }
 
   function _getGlobalMarketPnl(

@@ -286,35 +286,35 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // WBTC
     _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // DAI
     _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
       targetWeight: 1e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // USDC
     _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
       targetWeight: 3e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // USDT
     _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
 

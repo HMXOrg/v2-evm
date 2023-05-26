@@ -13,6 +13,8 @@ interface IConfigStorage {
   error IConfigStorage_BadArgs();
   error IConfigStorage_NotAcceptedCollateral();
   error IConfigStorage_NotAcceptedLiquidity();
+  error IConfigStorage_MaxFeeBps();
+  error IConfigStorage_InvalidAssetClass();
 
   /**
    * Structs
@@ -54,7 +56,7 @@ interface IConfigStorage {
     uint32 initialMarginFractionBPS; // IMF
     uint32 maintenanceMarginFractionBPS; // MMF
     uint32 maxProfitRateBPS; // maximum profit that trader could take per position
-    uint32 minLeverageBPS; // minimum leverage that trader could open position
+    uint32 minLeverageBPS; // OBSOLETED
     uint8 assetClass; // Crypto = 1, Forex = 2, Stock = 3
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted
@@ -158,8 +160,6 @@ interface IConfigStorage {
 
   function setMinimumPositionSize(uint256 _minimumPositionSize) external;
 
-  function setPlpAssetId(bytes32[] memory _plpAssetIds) external;
-
   function setLiquidityEnabled(bool _enabled) external;
 
   function setDynamicEnabled(bool _enabled) external;
@@ -173,6 +173,12 @@ interface IConfigStorage {
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external;
 
   function setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) external;
+
+  function setServiceExecutors(
+    address[] calldata _contractAddresses,
+    address[] calldata _executorAddresses,
+    bool[] calldata _isServiceExecutors
+  ) external;
 
   function setPnlFactor(uint32 _pnlFactor) external;
 

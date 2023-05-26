@@ -14,6 +14,7 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
@@ -148,7 +149,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address
-    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
 
     // Increase collateral token balance
     _vaultStorage.increaseTraderBalance(_subAccount, _token, _amount);
@@ -179,7 +180,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address
-    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
 
     // Get current collateral token balance of trader's account
     // and deduct with new token withdrawing amount
@@ -268,7 +269,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     _amountOut = ConvertedGlpStrategy(convertedSglpStrategy).execute(_tokenOut, _amountIn);
 
     // Adjusting trader balance
-    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
     _vaultStorage.decreaseTraderBalance(_subAccount, _configStorage.sglp(), _amountIn);
     _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _amountOut);
 
@@ -329,17 +330,6 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /**
    * Private Functions
    */
-
-  /// @notice Calculate subAccount address on trader.
-  /// @dev This uses to create subAccount address combined between Primary account and SubAccount ID.
-  /// @param _primary Trader's primary wallet account.
-  /// @param _subAccountId Trader's sub account ID.
-  /// @return _subAccount Trader's sub account address used for trading.
-  function _getSubAccount(address _primary, uint8 _subAccountId) private pure returns (address _subAccount) {
-    if (_subAccountId > 255) revert();
-    return address(uint160(_primary) ^ uint160(_subAccountId));
-  }
-
   function _getRepayAmount(
     ConfigStorage _configStorage,
     OracleMiddleware _oracle,

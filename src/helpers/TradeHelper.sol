@@ -12,6 +12,7 @@ import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/m
 
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {
   using SafeCastUpgradeable for uint256;
@@ -272,7 +273,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     uint32 _positionFeeBPS,
     uint8 _assetClassIndex
   ) external nonReentrant onlyWhitelistedExecutor {
-    address _subAccount = _getSubAccount(_position.primaryAccount, _position.subAccountId);
+    address _subAccount = HMXLib.getSubAccount(_position.primaryAccount, _position.subAccountId);
 
     // update fee
     (uint256 _tradingFeeToBePaid, uint256 _borrowingFeeToBePaid, int256 _fundingFeeToBePaid) = _updateFeeStates(
@@ -843,15 +844,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     _market.accumFundingShort += fundingShort;
     _perpStorage.updateMarket(_marketIndex, _market);
-  }
-
-  function _abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
-  }
-
-  function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address) {
-    if (_subAccountId > 255) revert();
-    return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 
   /**

@@ -76,7 +76,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       })
     );
 
@@ -94,7 +94,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       })
     );
 
@@ -112,7 +112,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       })
     );
   }

@@ -7,6 +7,7 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // interfaces
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
@@ -158,7 +159,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     );
 
     (bool _isProfit, uint256 _delta) = _calculator.getDelta(
-      _abs(_position.positionSizeE30),
+      HMXLib.abs(_position.positionSizeE30),
       _position.positionSizeE30 > 0,
       _adaptivePriceE30,
       _position.avgEntryPriceE30,
@@ -476,10 +477,6 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     IEcoPyth(_pyth).getAssetIds();
     emit LogSetPyth(pyth, _pyth);
     pyth = _pyth;
-  }
-
-  function _abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

@@ -3,6 +3,7 @@ pragma solidity 0.8.18;
 
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -203,9 +204,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /**
    * Private Functions
    */
-  function _abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
-  }
 
   /// @dev Liquidates positions associated with a given sub-account.
   /// It iterates over the list of position IDs and updates borrowing rate,
@@ -251,7 +249,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           _vars.positionId,
           _subAccount,
           _vars.position,
-          _abs(_vars.position.positionSizeE30),
+          HMXLib.abs(_vars.position.positionSizeE30),
           _vars.marketConfig.decreasePositionFeeRateBPS,
           _vars.marketConfig.assetClass,
           _vars.position.marketIndex
@@ -275,7 +273,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
       // Update global state
       {
         int256 _realizedPnl;
-        uint256 absPositionSize = _abs(_vars.position.positionSizeE30);
+        uint256 absPositionSize = HMXLib.abs(_vars.position.positionSizeE30);
         {
           (bool _isProfit, uint256 _delta) = _vars.calculator.getDelta(
             absPositionSize,

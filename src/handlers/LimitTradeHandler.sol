@@ -6,6 +6,7 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
@@ -310,7 +311,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _transferInETH();
 
     // Get the sub-account and order index for the limit order
-    address _subAccount = _getSubAccount(_msgSender(), _subAccountId);
+    address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
 
     // Create the limit order
@@ -367,7 +368,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
     ExecuteOrderVars memory vars;
-    vars.subAccount = _getSubAccount(_account, _subAccountId);
+    vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
     vars.order = limitOrders[vars.subAccount][_orderIndex];
 
     // Check if this order still exists
@@ -452,7 +453,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     );
 
     // Retrieve existing position
-    vars.positionId = _getPositionId(vars.subAccount, vars.order.marketIndex);
+    vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.order.marketIndex);
     PerpStorage.Position memory _existingPosition = PerpStorage(TradeService(tradeService).perpStorage())
       .getPositionById(vars.positionId);
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
@@ -583,7 +584,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint8 _subAccountId,
     uint256 _orderIndex
   ) external nonReentrant delegate(_mainAccount) {
-    address subAccount = _getSubAccount(_msgSender(), _subAccountId);
+    address subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     LimitOrder memory _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
@@ -630,7 +631,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool _reduceOnly,
     address _tpToken
   ) external nonReentrant delegate(_mainAccount) {
-    address subAccount = _getSubAccount(_msgSender(), _subAccountId);
+    address subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
@@ -812,17 +813,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /**
    * Private Functions
    */
-
-  /// @notice Derive sub-account from primary account and sub-account id
-  function _getSubAccount(address primary, uint8 subAccountId) private pure returns (address) {
-    if (subAccountId > 255) revert ILimitTradeHandler_BadSubAccountId();
-    return address(uint160(primary) ^ uint160(subAccountId));
-  }
-
-  /// @notice Derive positionId from sub-account and market index
-  function _getPositionId(address _subAccount, uint256 _marketIndex) private pure returns (bytes32) {
-    return keccak256(abi.encodePacked(_subAccount, _marketIndex));
-  }
 
   function _validatePositionOrderPrice(
     bool _triggerAboveThreshold,

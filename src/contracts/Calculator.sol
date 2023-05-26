@@ -860,14 +860,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) external view returns (int256 _freeCollateral) {
-    return _getFreeCollateral(_subAccount, _limitPriceE30, _limitAssetId);
-  }
-
-  function _getFreeCollateral(
-    address _subAccount,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) internal view returns (int256 _freeCollateral) {
     int256 equity = _getEquity(_subAccount, _limitPriceE30, _limitAssetId, new bytes32[](0), new uint256[](0));
     uint256 imr = _getIMR(_subAccount);
     _freeCollateral = equity - int256(imr);

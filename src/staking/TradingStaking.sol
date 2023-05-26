@@ -85,14 +85,14 @@ contract TradingStaking is OwnableUpgradeable, ITradingStaking {
       //Updating the pool data for this rewarder and the corresponding market index provided
       _updatePool(_newMarketIndex[i], _newRewarder);
 
-      //Emitting LogAddRewarder event
-      emit LogAddRewarder(_newRewarder, _newMarketIndex);
-
       //Incrementing iterator inside 'unchecked' block
       unchecked {
         ++i;
       }
     }
+
+    //Emitting LogAddRewarder event
+    emit LogAddRewarder(_newRewarder, _newMarketIndex);
   }
 
   /// @dev Removes a rewarder address from a market index by its corresponding index. The function deletes the removed rewarder from the

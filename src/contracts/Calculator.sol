@@ -517,6 +517,9 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   }
 
   struct GetUnrealizedPnlAndFee {
+    ConfigStorage configStorage;
+    PerpStorage perpStorage;
+    OracleMiddleware oracle;
     PerpStorage.Position position;
     uint256 absSize;
     bool isLong;
@@ -546,17 +549,21 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bytes32[] memory _injectedAssetIds,
     uint256[] memory _injectedPrices
   ) internal view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+    GetUnrealizedPnlAndFee memory _var;
+    // SLOADs
+    _var.configStorage = ConfigStorage(configStorage);
+    _var.perpStorage = PerpStorage(perpStorage);
+    _var.oracle = OracleMiddleware(oracle);
+
     // Get all trader's opening positions
-    PerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    PerpStorage.Position[] memory _positions = _var.perpStorage.getPositionBySubAccount(_subAccount);
 
     ConfigStorage.MarketConfig memory _marketConfig;
     PerpStorage.Market memory _market;
-    uint256 pnlFactorBps = ConfigStorage(configStorage).pnlFactorBPS();
-    uint256 liquidationFee = ConfigStorage(configStorage).getLiquidationConfig().liquidationFeeUSDE30;
+    uint256 pnlFactorBps = _var.configStorage.pnlFactorBPS();
+    uint256 liquidationFee = _var.configStorage.getLiquidationConfig().liquidationFeeUSDE30;
 
-    GetUnrealizedPnlAndFee memory _var;
     uint256 _len = _positions.length;
-
     // Loop through all trader's positions
     for (uint256 i; i < _len; ) {
       _var.position = _positions[i];
@@ -564,14 +571,14 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       _var.isLong = _var.position.positionSizeE30 > 0;
 
       // Get market config according to opening position
-      _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_var.position.marketIndex);
-      _market = PerpStorage(perpStorage).getMarketByIndex(_var.position.marketIndex);
+      _marketConfig = _var.configStorage.getMarketConfigByIndex(_var.position.marketIndex);
+      _market = _var.perpStorage.getMarketByIndex(_var.position.marketIndex);
 
       if (_injectedAssetIds.length > 0) {
         for (uint256 j; j < _injectedAssetIds.length; ) {
           if (_injectedAssetIds[j] == _marketConfig.assetId) {
             _var.priceE30 = _injectedPrices[j];
-            (_var.priceE30, , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+            (_var.priceE30, , ) = _var.oracle.getLatestAdaptivePriceWithMarketStatus(
               _marketConfig.assetId,
               !_var.isLong, // if current position is SHORT position, then we use max price
               (int(_market.longPositionSize) - int(_market.shortPositionSize)),
@@ -593,7 +600,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
           _var.priceE30 = _limitPriceE30;
         } else {
-          (_var.priceE30, , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+          (_var.priceE30, , ) = _var.oracle.getLatestAdaptivePriceWithMarketStatus(
             _marketConfig.assetId,
             !_var.isLong, // if current position is SHORT position, then we use max price
             (int(_market.longPositionSize) - int(_market.shortPositionSize)),
@@ -628,7 +635,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         {
           // Calculate borrowing fee
           uint256 _plpTVL = _getPLPValueE30(false);
-          PerpStorage.AssetClass memory _assetClass = PerpStorage(perpStorage).getAssetClassByIndex(
+          PerpStorage.AssetClass memory _assetClass = _var.perpStorage.getAssetClassByIndex(
             _marketConfig.assetClass
           );
           uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);

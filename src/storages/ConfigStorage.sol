@@ -360,6 +360,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
     if (_newConfig.assetClass > assetClassConfigs.length - 1) revert IConfigStorage_InvalidAssetClass();
+    if (_newConfig.initialMarginFractionBPS < _newConfig.maintenanceMarginFractionBPS)
+      revert IConfigStorage_InvalidValue();
 
     emit LogSetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
@@ -506,9 +508,12 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   }
 
   function addMarketConfig(MarketConfig calldata _newConfig) external onlyOwner returns (uint256 _newMarketIndex) {
+    // pre-validate
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
     if (_newConfig.assetClass > assetClassConfigs.length - 1) revert IConfigStorage_InvalidAssetClass();
+    if (_newConfig.initialMarginFractionBPS < _newConfig.maintenanceMarginFractionBPS)
+      revert IConfigStorage_InvalidValue();
 
     _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);

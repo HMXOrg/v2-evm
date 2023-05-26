@@ -57,7 +57,9 @@ interface ILimitTradeHandler {
 
   function tradeService() external returns (address);
 
-  function minExecutionFee() external returns (uint256);
+  function minExecutionFee() external returns (uint64);
+
+  function minExecutionTimestamp() external returns (uint32);
 
   function orderExecutors(address _address) external returns (bool);
 
@@ -143,7 +145,9 @@ interface ILimitTradeHandler {
 
   function setTradeService(address _newTradeService) external;
 
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external;
+  function setMinExecutionFee(uint64 _newMinExecutionFee) external;
+
+  function setMinExecutionTimestamp(uint32 _newMinExecutionTimestamp) external;
 
   function setOrderExecutor(address _executor, bool _isAllow) external;
 

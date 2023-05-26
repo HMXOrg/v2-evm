@@ -118,9 +118,9 @@ library Deployer {
     return IOracleAdapter(payable(_proxy));
   }
 
-  function deployOracleMiddleware(address _proxyAdmin) internal returns (IOracleMiddleware) {
+  function deployOracleMiddleware(address _proxyAdmin, uint256 _maxTrustPriceAge) internal returns (IOracleMiddleware) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/OracleMiddleware.sol/OracleMiddleware.json"));
-    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(uint256)")), _maxTrustPriceAge);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IOracleMiddleware(payable(_proxy));
   }
@@ -204,12 +204,12 @@ library Deployer {
     address _weth,
     address _tradeService,
     address _pyth,
-    uint256 _minExecutionFee,
-    uint256 _minExecutionTimestamp
+    uint64 _minExecutionFee,
+    uint32 _minExecutionTimestamp
   ) internal returns (ILimitTradeHandler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LimitTradeHandler.sol/LimitTradeHandler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,uint256,uint256)")),
+      bytes4(keccak256("initialize(address,address,address,uint64,uint32)")),
       _weth,
       _tradeService,
       _pyth,

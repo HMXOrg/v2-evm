@@ -99,6 +99,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   // HLP
   uint256 internal constant executionOrderFee = 0.0001 ether;
   uint256 internal constant maxExecutionChuck = 10; // 10 orders per time
+  uint256 internal constant maxTrustPriceAge = type(uint32).max;
 
   bytes32 constant sGlpAssetId = "SGLP";
 
@@ -238,7 +239,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(address(proxyAdmin), sglp, glpManager, sGlpAssetId);
 
     //deploy oracleMiddleWare
-    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin), maxTrustPriceAge);
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage(address(proxyAdmin));

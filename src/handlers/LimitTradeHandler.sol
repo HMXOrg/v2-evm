@@ -29,9 +29,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
    * Events
    */
   event LogSetTradeService(address oldValue, address newValue);
-  event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogSetMinExecutionFee(uint64 oldValue, uint64 newValue);
   event LogSetIsAllowAllExecutor(bool oldValue, bool newValue);
-  event LogSetMinExecutionTimestamp(uint256 oldValue, uint256 newValue);
+  event LogSetMinExecutionTimestamp(uint32 oldValue, uint32 newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogSetPyth(address oldValue, address newValue);
   event LogCreateLimitOrder(
@@ -132,28 +132,31 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
    */
   uint8 internal constant BUY = 0;
   uint8 internal constant SELL = 1;
-  uint256 internal constant MAX_EXECUTION_FEE = 5 ether;
+  uint64 internal constant MAX_EXECUTION_FEE = 5 ether;
 
   /**
    * States
    */
+  IEcoPyth public pyth;
   address public weth;
   address public tradeService;
-  IEcoPyth public pyth;
-  uint256 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
-  uint256 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on order stale
-  bool private isExecuting; // order is executing (prevent direct call executeLimitOrder()
+  address private senderOverride;
+
+  uint64 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
+  uint32 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on order stale
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
+  bool public isGuaranteeLimitPrice;
+  bool private isExecuting; // order is executing (prevent direct call executeLimitOrder()
+
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
-  bool public isGuaranteeLimitPrice;
+  mapping(address => address) public delegations;
 
+  // Pointers
   EnumerableSet.UintSet private activeOrderPointers;
   EnumerableSet.UintSet private activeMarketOrderPointers;
   EnumerableSet.UintSet private activeLimitOrderPointers;
-  mapping(address => address) public delegations;
-  address private senderOverride;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _weth Address of WETH.
@@ -164,8 +167,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address _weth,
     address _tradeService,
     address _pyth,
-    uint256 _minExecutionFee,
-    uint256 _minExecutionTimestamp
+    uint64 _minExecutionFee,
+    uint32 _minExecutionTimestamp
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -296,7 +299,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address _tpToken
   ) internal {
     // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
-    if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
+    if (_executionFee < uint256(minExecutionFee)) revert ILimitTradeHandler_InsufficientExecutionFee();
     // The attached native token must be equal to _executionFee
     if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
 
@@ -379,7 +382,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     vars.isMarketOrder = vars.order.triggerAboveThreshold && vars.order.triggerPrice == 0;
 
     // Check if the order is a market order and is stale
-    if (vars.isMarketOrder && block.timestamp > vars.order.createdTimestamp + minExecutionTimestamp) {
+    if (vars.isMarketOrder && block.timestamp > vars.order.createdTimestamp + uint256(minExecutionTimestamp)) {
       _cancelOrder(vars.order, vars.subAccount, vars.orderIndex);
       return;
     }
@@ -445,8 +448,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       vars.order.acceptablePrice,
       vars.order.marketIndex,
       vars.order.sizeDelta,
-      vars.order.sizeDelta > 0,
-      true
+      vars.order.sizeDelta > 0
     );
 
     // Retrieve existing position
@@ -653,14 +655,14 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _order.tpToken = _tpToken;
 
     emit LogUpdateLimitOrder(
-      _order.account,
-      _order.subAccountId,
+      _mainAccount,
+      _subAccountId,
       _orderIndex,
-      _order.sizeDelta,
-      _order.triggerPrice,
-      _order.triggerAboveThreshold,
-      _order.reduceOnly,
-      _order.tpToken
+      _sizeDelta,
+      _triggerPrice,
+      _triggerAboveThreshold,
+      _reduceOnly,
+      _tpToken
     );
   }
 
@@ -771,7 +773,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
+  function setMinExecutionFee(uint64 _newMinExecutionFee) external nonReentrant onlyOwner {
     if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;
@@ -782,7 +784,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     isAllowAllExecutor = _isAllow;
   }
 
-  function setMinExecutionTimestamp(uint256 _newMinExecutionTimestamp) external onlyOwner {
+  function setMinExecutionTimestamp(uint32 _newMinExecutionTimestamp) external onlyOwner {
     emit LogSetMinExecutionTimestamp(minExecutionTimestamp, _newMinExecutionTimestamp);
     minExecutionTimestamp = _newMinExecutionTimestamp;
   }
@@ -828,8 +830,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 _acceptablePrice,
     uint256 _marketIndex,
     int256 _sizeDelta,
-    bool _maximizePrice,
-    bool _revertOnError
+    bool _maximizePrice
   ) private view returns (uint256, bool) {
     ValidatePositionOrderPriceVars memory vars;
 
@@ -842,9 +843,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     (vars.oraclePrice, ) = vars.oracle.getLatestPrice(vars.marketConfig.assetId, true);
     vars.isPriceValid = _triggerAboveThreshold ? vars.oraclePrice > _triggerPrice : vars.oraclePrice < _triggerPrice;
 
-    if (_revertOnError) {
-      if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
-    }
+    if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
 
     // Validate acceptable price with adaptive price
     (vars.adaptivePrice, , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
@@ -857,18 +856,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     );
 
     // Validate market status
-    if (vars.marketStatus != 2) {
-      if (_revertOnError) revert ILimitTradeHandler_MarketIsClosed();
-      else return (vars.adaptivePrice, false);
-    }
+    if (vars.marketStatus != 2) revert ILimitTradeHandler_MarketIsClosed();
 
     // Validate price is executable
     bool isBuy = _sizeDelta > 0;
     vars.isPriceValid = isBuy ? vars.adaptivePrice < _acceptablePrice : vars.adaptivePrice > _acceptablePrice;
 
-    if (_revertOnError) {
-      if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
-    }
+    if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
 
     return (vars.adaptivePrice, vars.isPriceValid);
   }

@@ -6,6 +6,7 @@ interface IConfigStorage {
    * Errors
    */
   error IConfigStorage_InvalidAddress();
+  error IConfigStorage_InvalidValue();
   error IConfigStorage_NotWhiteListed();
   error IConfigStorage_ExceedLimitSetting();
   error IConfigStorage_BadLen();

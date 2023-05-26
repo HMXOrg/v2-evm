@@ -164,7 +164,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockGmxRewardRouterv2 = new MockGmxRewardRouterV2();
 
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
-    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin), 365 days);
 
     convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(
       address(proxyAdmin),

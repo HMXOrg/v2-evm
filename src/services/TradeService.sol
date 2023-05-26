@@ -413,7 +413,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
           : _vars.perpStorage.updateGlobalShortMarketById(
             _marketIndex,
             _market.shortPositionSize + _vars.absSizeDelta,
-            _market.shortAccumSE + ((_vars.absSizeDelta * 1e30) / _vars.position.avgEntryPriceE30),
+            _market.shortAccumSE + _vars.absSizeDelta.mulDiv(1e30, _vars.position.avgEntryPriceE30),
             _market.shortAccumS2E + _vars.absSizeDelta.mulDiv(_vars.absSizeDelta, _vars.position.avgEntryPriceE30)
           );
       } else {

@@ -252,8 +252,6 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       _vaultStorage.withdrawSurplusFromFundingFeeReserveToPLP(_stableToken, _repayAmount);
       _vars.fundingFeeSurplusValue -= _repayValue;
     }
-    // If fee cannot be covered, revert.
-    if (_vars.fundingFeeSurplusValue > 0) revert ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
 
     emit LogWithdrawFundingFeeSurplus(_vars.fundingFeeSurplusValue);
   }

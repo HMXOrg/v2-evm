@@ -2,6 +2,7 @@
 pragma solidity 0.8.18;
 
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -20,6 +21,9 @@ import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 /// @title LiquidationService
 /// @dev This contract implements the ILiquidationService interface and provides functionality for liquidating sub-accounts by resetting their positions' value in storage.
 contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, OwnableUpgradeable {
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
+
   /**
    * Events
    */

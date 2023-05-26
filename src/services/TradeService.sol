@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 // bases
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 
 // contracts
 import { FullMath } from "@hmx/libraries/FullMath.sol";
@@ -20,6 +21,8 @@ import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.so
 
 contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgradeable {
   using FullMath for uint256;
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
 
   /**
    * Events

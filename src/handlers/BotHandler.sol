@@ -6,6 +6,7 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 
 // interfaces
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
@@ -27,6 +28,8 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 /// @title BotHandler
 contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
 
   /**
    * Events

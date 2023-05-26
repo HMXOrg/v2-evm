@@ -367,6 +367,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
+    // Update price to Pyth
+    pyth.updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+
     ExecuteOrderVars memory vars;
     vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
     vars.order = limitOrders[vars.subAccount][_orderIndex];
@@ -438,9 +441,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // Remove this executed order from the list
     _removeOrder(vars.order, vars.subAccount, vars.orderIndex);
-
-    // Update price to Pyth
-    pyth.updatePriceFeeds(vars.priceData, vars.publishTimeData, vars.minPublishTime, vars.encodedVaas);
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(

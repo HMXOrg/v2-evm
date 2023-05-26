@@ -472,12 +472,12 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     assetClassConfigs[_index] = _newConfig;
   }
 
-  function addMarketConfig(MarketConfig calldata _newConfig) external onlyOwner returns (uint256 _index) {
+  function addMarketConfig(MarketConfig calldata _newConfig) external onlyOwner returns (uint256 _newMarketIndex) {
     // pre-validate
     if (_newConfig.initialMarginFractionBPS < _newConfig.maintenanceMarginFractionBPS)
       revert IConfigStorage_InvalidValue();
 
-    uint256 _newMarketIndex = marketConfigs.length;
+    _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
     emit LogAddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;

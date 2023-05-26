@@ -167,6 +167,8 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     // 5. mint HLP to lp provider
     PLPv2(_vars.configStorage.plp()).mint(_lpProvider, _vars.mintAmount);
 
+    if (PLPv2(_vars.configStorage.plp()).totalSupply() < 1e18) revert LiquidityService_TinyShare();
+
     emit AddLiquidity(
       _lpProvider,
       _token,
@@ -211,6 +213,8 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     // 5. post-validate
     _validatePLPHealthCheck(_tokenOut);
+
+    if (PLPv2(_configStorage.plp()).totalSupply() < 1e18) revert LiquidityService_TinyShare();
 
     emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aumE30, _lpSupply, _lpUsdValueE30, _amountOutToken);
 

@@ -57,7 +57,7 @@ contract TC34 is BaseIntTest_WithActions {
     removeLiquidity(
       ALICE,
       address(wbtc),
-      _balanceAll,
+      _balanceAll - 1 ether,
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
@@ -83,11 +83,11 @@ contract TC34 is BaseIntTest_WithActions {
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
         who: ALICE,
-        lpTotalSupply: 0,
-        totalAmount: 429_160,
-        plpLiquidity: 0,
-        plpAmount: 0,
-        fee: 429_160, //150_000 +279_160
+        lpTotalSupply: 1 ether,
+        totalAmount: 434132,
+        plpLiquidity: 5001,
+        plpAmount: 1 ether,
+        fee: 429131,
         executionFee: _totalExecutionOrderFee
       })
     );

@@ -16,6 +16,7 @@ interface ILiquidityService {
   error LiquidityService_InsufficientLiquidityBuffer();
   error LiquidityService_MaxPLPUtilizationExceeded();
   error LiquidityService_InsufficientPLPReserved();
+  error LiquidityService_TinyShare();
 
   /**
    * Enum

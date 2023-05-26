@@ -274,7 +274,7 @@ contract TC36 is BaseIntTest_WithActions {
     removeLiquidity(
       ALICE,
       address(wbtc),
-      plpV2.balanceOf(ALICE),
+      plpV2.balanceOf(ALICE) - 1 ether,
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
@@ -283,16 +283,16 @@ contract TC36 is BaseIntTest_WithActions {
     );
 
     {
-      assertApproxEqRel(calculator.getPLPValueE30(false), 0, MAX_DIFF, "plp TVL");
+      assertApproxEqRel(calculator.getPLPValueE30(false), 1e30, MAX_DIFF, "plp TVL");
 
       assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
-      assertApproxEqRel(calculator.getAUME30(false), 0, MAX_DIFF, "AUM");
+      assertApproxEqRel(calculator.getAUME30(false), 1e30, MAX_DIFF, "AUM");
 
-      assertPLPTotalSupply(0);
+      assertPLPTotalSupply(1 ether);
 
-      assertTokenBalanceOf(ALICE, address(plpV2), 0);
-      assertPLPLiquidity(address(wbtc), 0);
+      assertTokenBalanceOf(ALICE, address(plpV2), 1 ether);
+      assertPLPLiquidity(address(wbtc), 0.00005001 * 1e8);
       assertPLPLiquidity(address(usdc), 0);
     }
   }

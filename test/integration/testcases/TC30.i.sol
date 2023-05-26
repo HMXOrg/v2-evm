@@ -230,7 +230,7 @@ contract TC30 is BaseIntTest_WithActions {
     removeLiquidity(
       BOB,
       address(usdc),
-      plpV2.balanceOf(BOB),
+      plpV2.balanceOf(BOB) - 1 ether,
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
@@ -269,12 +269,12 @@ contract TC30 is BaseIntTest_WithActions {
     uint256 _executionFeeTotal = _executionFeeAddliquidity + (3 * executionOrderFee) - _pythGasFee;
     // END PART REMOVE LIQUIDITY
 
-    assertPLPTotalSupply(0);
+    assertPLPTotalSupply(1 ether);
 
-    assertEq(calculator.getAUME30(false), 0, "AUM");
+    assertEq(calculator.getAUME30(false), 1.000001 * 1e30, "AUM");
 
     assertPLPLiquidity(address(wbtc), 0);
-    assertPLPLiquidity(address(usdc), 0);
+    assertPLPLiquidity(address(usdc), 1.000001 * 1e6);
 
     assertEq(nextExecutedIndex, 7, "nextExecutionOrder Index");
     assertTokenBalanceOf(address(liquidityHandler), address(wbtc), 0);

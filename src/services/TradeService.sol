@@ -333,6 +333,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _marketConfig.assetClass
       );
     }
+    // update global market state after update fee rate
+    _market = _vars.perpStorage.getMarketByIndex(_marketIndex);
 
     _vars.nextClosePrice = _calculateNextClosePrice(
       _market,
@@ -840,6 +842,9 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.absPositionSizeE30;
       _vars.perpStorage.updateGlobalState(_globalState);
       _vars.perpStorage.updateAssetClass(_marketConfig.assetClass, _assetClass);
+
+      // update assetClass state after update reserveValueE30
+      _assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
 
       // partial close position
       if (_temp.newAbsPositionSizeE30 != 0) {

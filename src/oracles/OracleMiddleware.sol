@@ -2,11 +2,15 @@
 pragma solidity 0.8.18;
 
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 
 contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
+
   /**
    * Structs
    */

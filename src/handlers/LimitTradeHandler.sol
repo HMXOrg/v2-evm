@@ -5,6 +5,7 @@ pragma solidity 0.8.18;
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 
 // contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
@@ -21,6 +22,9 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 /// @notice This contract handles the create, update, and cancel for the Trading module.
 contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILimitTradeHandler {
   using EnumerableSet for EnumerableSet.UintSet;
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
+
   /**
    * Events
    */

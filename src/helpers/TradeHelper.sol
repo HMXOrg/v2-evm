@@ -8,11 +8,15 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
+
   /**
    * Events
    */

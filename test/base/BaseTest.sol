@@ -252,7 +252,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000 * 1e30 })
     });
 
     IConfigStorage.MarketConfig memory _btcConfig = IConfigStorage.MarketConfig({
@@ -268,7 +268,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       decreasePositionFeeRateBPS: 0,
       allowIncreasePosition: true,
       active: true,
-      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+      fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000 * 1e30 })
     });
 
     ethMarketIndex = configStorage.addMarketConfig(_ethConfig);
@@ -286,35 +286,35 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // WBTC
     _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // DAI
     _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
       targetWeight: 1e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // USDC
     _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
       targetWeight: 3e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // USDT
     _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
 

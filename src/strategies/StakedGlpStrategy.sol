@@ -82,32 +82,37 @@ contract StakedGlpStrategy is OwnableUpgradeable, IStakedGlpStrategy {
   }
 
   function execute() external onlyWhitelist {
+    // SLOADs
+    IERC20Upgradeable _rewardToken = rewardToken;
+    IERC20Upgradeable _sglp = sglp;
+    IVaultStorage _vaultStorage = vaultStorage;
+
     // 1. Build calldata.
     bytes memory _callData = abi.encodeWithSelector(IGmxRewardTracker.claim.selector, address(this));
 
     // 2. Cook
-    uint256 rewardAmountBefore = rewardToken.balanceOf(address(this));
-    vaultStorage.cook(address(sglp), address(rewardTracker), _callData);
-    uint256 yields = rewardToken.balanceOf(address(this)) - rewardAmountBefore;
+    uint256 rewardAmountBefore = _rewardToken.balanceOf(address(this));
+    _vaultStorage.cook(address(_sglp), address(rewardTracker), _callData);
+    uint256 yields = _rewardToken.balanceOf(address(this)) - rewardAmountBefore;
 
     // 3. Deduct strategy fee.
     uint256 strategyFee = (yields * strategyBps) / 10000;
 
     // 4. Reinvest what left to GLP.
     uint256 stakeAmount = yields - strategyFee;
-    rewardToken.approve(address(glpManager), stakeAmount);
-    rewardRouter.mintAndStakeGlp(address(rewardToken), stakeAmount, 0, 0);
+    _rewardToken.approve(address(glpManager), stakeAmount);
+    rewardRouter.mintAndStakeGlp(address(_rewardToken), stakeAmount, 0, 0);
 
     // 5. Settle
     // SLOAD
-    uint256 sGlpBalance = sglp.balanceOf(address(this));
+    uint256 sGlpBalance = _sglp.balanceOf(address(this));
 
-    sglp.safeTransfer(address(vaultStorage), sGlpBalance);
-    rewardToken.safeTransfer(treasury, strategyFee);
+    _sglp.safeTransfer(address(_vaultStorage), sGlpBalance);
+    _rewardToken.safeTransfer(treasury, strategyFee);
 
     // 6. Update accounting.
-    vaultStorage.pullToken(address(sglp));
-    vaultStorage.addPLPLiquidity(address(sglp), sGlpBalance);
+    _vaultStorage.pullToken(address(_sglp));
+    _vaultStorage.addPLPLiquidity(address(_sglp), sGlpBalance);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

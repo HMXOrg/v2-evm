@@ -6,6 +6,7 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { console } from "forge-std/console.sol";
 
 contract TC01 is BaseIntTest_WithActions {
@@ -148,6 +149,41 @@ contract TC01 is BaseIntTest_WithActions {
     // T6: Alice max withdraws 9,870 USD PLP in pools
     vm.deal(ALICE, executionOrderFee);
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
+
+    removeLiquidity(
+      ALICE,
+      address(wbtc),
+      9_870 ether,
+      executionOrderFee,
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      true
+    );
+    // State has not changed due to pool imbalance error
+    liquidityTester.assertLiquidityInfo(
+      LiquidityTester.LiquidityExpectedData({
+        token: address(wbtc),
+        who: BOB,
+        lpTotalSupply: 9_969.68 ether,
+        totalAmount: 50001400, //49_501_400 + 500_000
+        plpLiquidity: 49_848_400, //49_350_000
+        plpAmount: 99.68 ether,
+        fee: 153_000, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000
+        executionFee: _totalExecutionOrderFee
+      })
+    );
+
+    // T7: Alice max withdraws 9,870 USD PLP in pools
+    vm.deal(ALICE, executionOrderFee);
+    _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
+
+    IConfigStorage.PLPTokenConfig memory _config;
+    _config.targetWeight = 0.95 * 1e18;
+    _config.bufferLiquidity = 0;
+    _config.maxWeightDiff = 1e18;
+    _config.accepted = true;
+    configStorage.setPlpTokenConfig(address(wbtc), _config);
 
     removeLiquidity(
       ALICE,

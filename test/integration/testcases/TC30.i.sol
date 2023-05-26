@@ -7,6 +7,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { console } from "forge-std/console.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract TC30 is BaseIntTest_WithActions {
   function test_correctness_executeMultipleOrders() external {
@@ -189,6 +190,14 @@ contract TC30 is BaseIntTest_WithActions {
     vm.deal(ALICE, executionOrderFee);
     console.log("C", plpV2.balanceOf(ALICE));
     console.log(plpV2.totalSupply());
+
+    IConfigStorage.PLPTokenConfig memory _config;
+    _config.targetWeight = 0.95 * 1e18;
+    _config.bufferLiquidity = 0;
+    _config.maxWeightDiff = 1e18;
+    _config.accepted = true;
+    configStorage.setPlpTokenConfig(address(wbtc), _config);
+
     removeLiquidity(
       ALICE,
       address(usdc),

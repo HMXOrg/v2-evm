@@ -7,6 +7,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract TC34 is BaseIntTest_WithActions {
   function test_correctness_swingPriceViaExecution() external {
@@ -45,6 +46,13 @@ contract TC34 is BaseIntTest_WithActions {
 
     vm.deal(ALICE, executionOrderFee);
     uint256 _balanceAll = plpV2.balanceOf(ALICE);
+
+    IConfigStorage.PLPTokenConfig memory _config;
+    _config.targetWeight = 0.95 * 1e18;
+    _config.bufferLiquidity = 0;
+    _config.maxWeightDiff = 1e18;
+    _config.accepted = true;
+    configStorage.setPlpTokenConfig(address(wbtc), _config);
 
     removeLiquidity(
       ALICE,

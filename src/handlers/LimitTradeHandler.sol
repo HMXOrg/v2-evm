@@ -875,13 +875,15 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool _maximizePrice
   ) private view {
     if (_sizeDelta == 0) revert ILimitTradeHandler_BadSizeDelta();
-
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+    ConfigStorage _configStorage = ConfigStorage(_tradeService.configStorage());
     ValidatePositionOrderPriceVars memory vars;
 
     // Get price from Pyth
-    vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
-    vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
+    vars.marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
+    vars.oracle = OracleMiddleware(_configStorage.oracle());
+    vars.globalMarket = PerpStorage(_tradeService.perpStorage()).getMarketByIndex(_marketIndex);
 
     (uint256 _currentPrice, , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,

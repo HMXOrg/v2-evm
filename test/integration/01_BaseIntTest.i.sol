@@ -76,6 +76,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   uint256 internal constant executionOrderFee = 0.0001 ether;
   uint256 internal constant maxExecutionChuck = 10; // 10 orders per time
   uint256 internal constant minExecutionTimestamp = 60 * 5; // 5 minutes
+  uint256 internal constant maxTrustPriceAge = type(uint32).max;
 
   uint256 internal constant SECONDS = 1;
   uint256 internal constant MINUTES = SECONDS * 60;
@@ -174,7 +175,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(pyth));
 
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware(address(proxyAdmin));
+    oracleMiddleWare = Deployer.deployOracleMiddleware(address(proxyAdmin), maxTrustPriceAge);
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage(address(proxyAdmin));

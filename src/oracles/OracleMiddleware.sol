@@ -34,6 +34,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     address _newAdapter
   );
   event LogSetAdapter(address oldPythAdapter, address newPythAdapter);
+  event LogSetMaxTrustPriceAge(uint256 oldValue, uint256 newValue);
   /**
    * States
    */
@@ -53,6 +54,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   // 2 = Active, equivalent to `trading` from Pyth
   // assetId => marketStatus
   mapping(bytes32 => uint8) public marketStatus;
+  uint256 maxTrustPriceAge;
 
   /**
    * Modifiers
@@ -65,8 +67,9 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     _;
   }
 
-  function initialize() external initializer {
+  function initialize(uint256 _maxTrustPriceAge) external initializer {
     OwnableUpgradeable.__Ownable_init();
+    maxTrustPriceAge = _maxTrustPriceAge;
   }
 
   /// @notice Return the latest price and last update of the given asset id.
@@ -353,6 +356,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     uint32 _trustPriceAge,
     address _adapter
   ) external onlyOwner {
+    if (_trustPriceAge > maxTrustPriceAge) revert IOracleMiddleware_InvalidValue();
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
     emit LogSetAssetPriceConfig(
       _assetId,
@@ -405,6 +409,13 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     isUpdater[_account] = _isActive;
     emit LogSetUpdater(_account, _isActive);
+  }
+
+  /// @notice setMaxTrustPriceAge
+  /// @param _maxTrustPriceAge _maxTrustPriceAge in timestamp
+  function setMaxTrustPriceAge(uint256 _maxTrustPriceAge) external onlyOwner {
+    emit LogSetMaxTrustPriceAge(maxTrustPriceAge, _maxTrustPriceAge);
+    maxTrustPriceAge = _maxTrustPriceAge;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

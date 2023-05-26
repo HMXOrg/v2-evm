@@ -118,9 +118,9 @@ library Deployer {
     return IOracleAdapter(payable(_proxy));
   }
 
-  function deployOracleMiddleware(address _proxyAdmin) internal returns (IOracleMiddleware) {
+  function deployOracleMiddleware(address _proxyAdmin, uint256 _maxTrustPriceAge) internal returns (IOracleMiddleware) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/OracleMiddleware.sol/OracleMiddleware.json"));
-    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(uint256)")), _maxTrustPriceAge);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IOracleMiddleware(payable(_proxy));
   }

@@ -6,6 +6,7 @@ import { BaseTest, IConfigStorage, MockErc20 } from "@hmx-test/base/BaseTest.sol
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
+import { MockNonEOA } from "@hmx-test/mocks/MockNonEOA.sol";
 
 contract CrossMarginService_Base is BaseTest {
   address internal CROSS_MARGIN_HANDLER;
@@ -13,7 +14,7 @@ contract CrossMarginService_Base is BaseTest {
   ICrossMarginService crossMarginService;
 
   function setUp() public virtual {
-    CROSS_MARGIN_HANDLER = makeAddr("CROSS_MARGIN_HANDLER");
+    CROSS_MARGIN_HANDLER = address(new MockNonEOA());
 
     crossMarginService = Deployer.deployCrossMarginService(
       address(proxyAdmin),
@@ -29,6 +30,7 @@ contract CrossMarginService_Base is BaseTest {
     vaultStorage.setServiceExecutors(address(crossMarginService), true);
 
     // @note - ALICE must act as CROSS_MARGIN_HANDLER here because CROSS_MARGIN_HANDLER doesn't included on this unit test yet
+    ALICE = address(new MockNonEOA());
     configStorage.setServiceExecutor(address(crossMarginService), ALICE, true);
 
     // Set accepted token deposit/withdraw

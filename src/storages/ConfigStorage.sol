@@ -360,7 +360,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
     if (_newConfig.assetClass > assetClassConfigs.length - 1) revert IConfigStorage_InvalidAssetClass();
-    if (_newConfig.fundingRate.maxSkewScaleUSD == 0) revert IConfigStorage_ExceedLimitSetting();
 
     emit LogSetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
@@ -371,8 +370,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     address _token,
     PLPTokenConfig memory _newConfig
   ) external onlyOwner returns (PLPTokenConfig memory _plpTokenConfig) {
-    if (_newConfig.maxWeightDiff == 0) revert IConfigStorage_ExceedLimitSetting();
-
     emit LogSetPlpTokenConfig(_token, assetPlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
     assetPlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
 
@@ -456,8 +453,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     uint256 _tokenLen = _tokens.length;
     for (uint256 _i; _i < _tokenLen; ) {
-      if (_configs[_i].maxWeightDiff == 0) revert IConfigStorage_ExceedLimitSetting();
-
       bytes32 _assetId = tokenAssetIds[_tokens[_i]];
 
       uint256 _assetIdLen = plpAssetIds.length;
@@ -514,7 +509,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
     if (_newConfig.assetClass > assetClassConfigs.length - 1) revert IConfigStorage_InvalidAssetClass();
-    if (_newConfig.fundingRate.maxSkewScaleUSD == 0) revert IConfigStorage_ExceedLimitSetting();
 
     _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);

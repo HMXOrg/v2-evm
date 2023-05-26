@@ -277,7 +277,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     _market = _vars.perpStorage.getMarketByIndex(_marketIndex);
 
     {
-      uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
       // Get Price market.
@@ -286,7 +285,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         !_vars.isLong // if current position is SHORT position, then we use max price
       );
 
-      (_vars.adaptivePriceE30, _lastPriceUpdated, _marketStatus) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (_vars.adaptivePriceE30, , _marketStatus) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         _vars.isLong, // if current position is SHORT position, then we use max price
         (int(_market.longPositionSize) - int(_market.shortPositionSize)),
@@ -518,10 +517,9 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     PerpStorage.Market memory _market = _vars.perpStorage.getMarketByIndex(_marketIndex);
     {
-      uint256 _lastPriceUpdated;
       uint8 _marketStatus;
 
-      (_vars.closePrice, _lastPriceUpdated, _marketStatus) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (_vars.closePrice, , _marketStatus) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
         _marketConfig.assetId,
         !_vars.isLongPosition, // if current position is SHORT position, then we use max price
         (int(_market.longPositionSize) - int(_market.shortPositionSize)),

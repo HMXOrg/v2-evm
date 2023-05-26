@@ -56,7 +56,6 @@ interface IConfigStorage {
     uint32 initialMarginFractionBPS; // IMF
     uint32 maintenanceMarginFractionBPS; // MMF
     uint32 maxProfitRateBPS; // maximum profit that trader could take per position
-    uint32 minLeverageBPS; // OBSOLETED
     uint8 assetClass; // Crypto = 1, Forex = 2, Stock = 3
     bool allowIncreasePosition; // allow trader to increase position
     bool active; // if active = false, means this market is delisted

@@ -5,6 +5,7 @@ pragma solidity 0.8.18;
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
 // interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
@@ -15,6 +16,7 @@ import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
 /// @notice storage contract to keep configs
 contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   using SafeERC20Upgradeable for ERC20Upgradeable;
+  using AddressUpgradeable for address;
 
   /**
    * Events
@@ -48,8 +50,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   /**
    * Constants
    */
-  address public constant ITERABLE_ADDRESS_LIST_START = address(1);
-  address public constant ITERABLE_ADDRESS_LIST_END = address(1);
   uint256 public constant BPS = 1e4;
   uint256 public constant MAX_FEE_BPS = 0.3 * 1e4; // 30%
 
@@ -308,8 +308,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     if (
       _contractAddress == address(0) ||
       _executorAddress == address(0) ||
-      !isContract(_contractAddress) ||
-      !isContract(_executorAddress)
+      !_contractAddress.isContract() ||
+      !_executorAddress.isContract()
     ) revert IConfigStorage_InvalidAddress();
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
     emit LogSetServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
@@ -414,7 +414,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     bytes32 _assetId,
     AssetConfig memory _newConfig
   ) external onlyOwner returns (AssetConfig memory _assetConfig) {
-    if (!isContract(_newConfig.tokenAddress)) revert IConfigStorage_BadArgs();
+    if (!_newConfig.tokenAddress.isContract()) revert IConfigStorage_BadArgs();
 
     emit LogSetAssetConfig(_assetId, assetConfigs[_assetId], _newConfig);
     assetConfigs[_assetId] = _newConfig;
@@ -431,14 +431,14 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   }
 
   function setWeth(address _weth) external onlyOwner {
-    if (!isContract(_weth)) revert IConfigStorage_BadArgs();
+    if (!_weth.isContract()) revert IConfigStorage_BadArgs();
 
     emit LogSetToken(weth, _weth);
     weth = _weth;
   }
 
   function setSGlp(address _sglp) external onlyOwner {
-    if (!isContract(_sglp)) revert IConfigStorage_BadArgs();
+    if (!_sglp.isContract()) revert IConfigStorage_BadArgs();
 
     emit LogSetToken(sglp, _sglp);
     sglp = _sglp;
@@ -565,14 +565,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     emit LogSetTradeServiceHooks(tradeServiceHooks, _newHooks);
 
     tradeServiceHooks = _newHooks;
-  }
-
-  function isContract(address _addr) internal returns (bool) {
-    uint32 size;
-    assembly {
-      size := extcodesize(_addr)
-    }
-    return (size > 0);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

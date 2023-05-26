@@ -242,25 +242,6 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
     markets[_marketIndex] = _market;
   }
 
-  function increaseSubAccountBorrowingFee(address _subAccount, uint256 _borrowingFee) external onlyWhitelistedExecutor {
-    subAccountBorrowingFee[_subAccount] += _borrowingFee;
-  }
-
-  function decreaseSubAccountBorrowingFee(address _subAccount, uint256 _borrowingFee) external onlyWhitelistedExecutor {
-    // Maximum decrease the current amount
-    if (subAccountBorrowingFee[_subAccount] < _borrowingFee) {
-      subAccountBorrowingFee[_subAccount] = 0;
-      return;
-    }
-
-    subAccountBorrowingFee[_subAccount] -= _borrowingFee;
-  }
-
-  function increaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
-    globalState.reserveValueE30 += _reserve;
-    assetClasses[_assetClassIndex].reserveValueE30 += _reserve;
-  }
-
   function decreaseReserved(uint8 _assetClassIndex, uint256 _reserve) external onlyWhitelistedExecutor {
     globalState.reserveValueE30 -= _reserve;
     assetClasses[_assetClassIndex].reserveValueE30 -= _reserve;

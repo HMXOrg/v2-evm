@@ -96,7 +96,5 @@ interface IPerpStorage {
 
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
 
-  function increaseReserved(uint8 _assetClassIndex, uint256 _reserve) external;
-
   function decreaseReserved(uint8 _assetClassIndex, uint256 _reserve) external;
 }

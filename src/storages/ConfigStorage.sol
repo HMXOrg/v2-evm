@@ -48,8 +48,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   /**
    * Constants
    */
-  address public constant ITERABLE_ADDRESS_LIST_START = address(1);
-  address public constant ITERABLE_ADDRESS_LIST_END = address(1);
   uint256 public constant BPS = 1e4;
   uint256 public constant MAX_FEE_BPS = 0.3 * 1e4; // 30%
 

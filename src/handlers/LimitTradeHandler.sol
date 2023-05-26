@@ -445,8 +445,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       vars.order.acceptablePrice,
       vars.order.marketIndex,
       vars.order.sizeDelta,
-      vars.order.sizeDelta > 0,
-      true
+      vars.order.sizeDelta > 0
     );
 
     // Retrieve existing position
@@ -828,8 +827,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 _acceptablePrice,
     uint256 _marketIndex,
     int256 _sizeDelta,
-    bool _maximizePrice,
-    bool _revertOnError
+    bool _maximizePrice
   ) private view returns (uint256, bool) {
     ValidatePositionOrderPriceVars memory vars;
 
@@ -842,9 +840,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     (vars.oraclePrice, ) = vars.oracle.getLatestPrice(vars.marketConfig.assetId, true);
     vars.isPriceValid = _triggerAboveThreshold ? vars.oraclePrice > _triggerPrice : vars.oraclePrice < _triggerPrice;
 
-    if (_revertOnError) {
-      if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
-    }
+    if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
 
     // Validate acceptable price with adaptive price
     (vars.adaptivePrice, , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
@@ -857,18 +853,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     );
 
     // Validate market status
-    if (vars.marketStatus != 2) {
-      if (_revertOnError) revert ILimitTradeHandler_MarketIsClosed();
-      else return (vars.adaptivePrice, false);
-    }
+    if (vars.marketStatus != 2) revert ILimitTradeHandler_MarketIsClosed();
 
     // Validate price is executable
     bool isBuy = _sizeDelta > 0;
     vars.isPriceValid = isBuy ? vars.adaptivePrice < _acceptablePrice : vars.adaptivePrice > _acceptablePrice;
 
-    if (_revertOnError) {
-      if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
-    }
+    if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
 
     return (vars.adaptivePrice, vars.isPriceValid);
   }

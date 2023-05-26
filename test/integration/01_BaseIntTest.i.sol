@@ -278,8 +278,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(weth),
       address(tradeService),
       address(pyth),
-      executionOrderFee,
-      minExecutionTimestamp
+      uint64(executionOrderFee),
+      uint32(minExecutionTimestamp)
     );
     limitTradeHandler.setGuaranteeLimitPrice(true);
 

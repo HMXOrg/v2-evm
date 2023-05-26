@@ -655,14 +655,14 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _order.tpToken = _tpToken;
 
     emit LogUpdateLimitOrder(
-      _order.account,
-      _order.subAccountId,
+      _mainAccount,
+      _subAccountId,
       _orderIndex,
-      _order.sizeDelta,
-      _order.triggerPrice,
-      _order.triggerAboveThreshold,
-      _order.reduceOnly,
-      _order.tpToken
+      _sizeDelta,
+      _triggerPrice,
+      _triggerAboveThreshold,
+      _reduceOnly,
+      _tpToken
     );
   }
 

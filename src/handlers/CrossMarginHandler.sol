@@ -302,6 +302,10 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       _endIndex = _latestOrderIndex;
     }
 
+    // split execution into chunk for preventing exceed block gas limit
+    if (_endIndex - nextExecutionOrderIndex > maxExecutionChuck)
+      _endIndex = nextExecutionOrderIndex + maxExecutionChuck;
+
     // Update the price and publish time data using the Pyth oracle
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);

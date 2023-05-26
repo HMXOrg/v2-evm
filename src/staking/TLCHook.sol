@@ -61,7 +61,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
     // This is to make the TLC token composable as ERC20 with regular 18 decimals
     uint256 _mintAmount = _sizeDelta / 1e12;
     _tlc.mint(address(this), _mintAmount);
-    _tlc.approve(_tlcStaking, _mintAmount);
+    _tlc.approve(address(_tlcStaking), _mintAmount);
     _tlcStaking.deposit(_primaryAccount, _mintAmount);
   }
 

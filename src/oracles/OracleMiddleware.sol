@@ -389,7 +389,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @notice Set market status for the given asset.
   /// @param _assetId The asset address to set.
   /// @param _status Status enum, see `marketStatus` comment section.
-  function _setMarketStatus(bytes32 _assetId, uint8 _status) internal onlyUpdater {
+  function _setMarketStatus(bytes32 _assetId, uint8 _status) internal {
     if (_status > 2) revert IOracleMiddleware_InvalidMarketStatus();
 
     marketStatus[_assetId] = _status;

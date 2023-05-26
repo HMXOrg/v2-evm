@@ -637,12 +637,6 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       revert ITradeService_PlpHealthy();
   }
 
-  /// @notice Validates if close position with max profit.
-  /// @param _isMaxProfit close position with max profit.
-  function validateMaxProfit(bool _isMaxProfit) external pure {
-    if (!_isMaxProfit) revert ITradeService_ReservedValueStillEnough();
-  }
-
   /// @notice Reloads the configuration for the contract.
   function reloadConfig() external nonReentrant onlyOwner {
     calculator = Calculator(ConfigStorage(configStorage).calculator());

@@ -64,8 +64,6 @@ interface ITradeService {
     address _tpToken
   ) external returns (bool _isMaxProfit, bool _isProfit, uint256 _delta);
 
-  function validateMaxProfit(bool isMaxProfit) external view;
-
   function validateDeleverage() external view;
 
   function validateMarketDelisted(uint256 _marketIndex) external view;

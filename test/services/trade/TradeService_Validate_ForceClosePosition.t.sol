@@ -54,11 +54,6 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
     tradeService.validateDeleverage();
   }
 
-  function testRevert_validateMaxProfit_WhenIsNotMaxProfit() external {
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_ReservedValueStillEnough()"));
-    tradeService.validateMaxProfit(false);
-  }
-
   function testCorrectness_validateMarketDelisted() external {
     configStorage.delistMarket(ethMarketIndex);
 
@@ -93,9 +88,5 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
 
     // PLP safety buffer = 1 + ((40,000 - 120,000) / 120,000) = 0.33333333333333337
     tradeService.validateDeleverage();
-  }
-
-  function testRevert_validateMaxProfit() external view {
-    tradeService.validateMaxProfit(true);
   }
 }

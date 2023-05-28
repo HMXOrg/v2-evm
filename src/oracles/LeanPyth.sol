@@ -70,7 +70,7 @@ contract LeanPyth is OwnableUpgradeable, ILeanPyth {
   /// @param id The unique identifier of the price feed.
   /// @return price The current price.
   function getPriceUnsafe(bytes32 id) external view returns (PythStructs.Price memory price) {
-    IPythPriceInfo storage priceInfo = priceInfos[id];
+    IPythPriceInfo memory priceInfo = priceInfos[id];
     if (priceInfo.publishTime == 0) revert LeanPyth_PriceFeedNotFound();
 
     price.publishTime = priceInfo.publishTime;

@@ -12,6 +12,27 @@ const daiPriceId = "0xb0948a5e5313200c632b51bb5ca32f6de0d36e9950a942d19751e833f7
 const applePriceId = "0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688";
 const jpyPriceId = "0xef2c98c804ba503c6a707e38be4dfbb16683775f195b091252bf24693042fd52";
 
+export async function getPricesFromPyth(): Promise<number[]> {
+  const connection = new EvmPriceServiceConnection("https://xc-mainnet.pyth.network", {
+    logger: console,
+  });
+
+  const prices = await connection.getLatestPriceFeeds([
+    wethPriceId,
+    wbtcPriceId,
+    usdcPriceId,
+    usdtPriceId,
+    daiPriceId,
+    applePriceId,
+    jpyPriceId,
+  ]);
+  return prices!.map((each) => {
+    const rawPrice = Number(each.getPriceUnchecked().price);
+    const expo = Number(each.getPriceUnchecked().expo);
+    return Number((rawPrice * Math.pow(10, expo)).toFixed(8));
+  });
+}
+
 export async function getUpdatePriceData(
   signer: SignerWithAddress,
   priceUpdates: number[],

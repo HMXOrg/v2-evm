@@ -27,13 +27,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   const priceUpdates = [
+    1, // Placeholder
     1900.02, // ETH
-    20000.29, // ETH
+    20000.29, // BTC
     1, // USDC
     1, // USDT
     1, // DAI
     137.3, // AAPL
     198.2, // JPY
+    1, // GLP
   ];
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
@@ -46,7 +48,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     true
   );
 
-  await (await pyth.setUpdater(deployer.address, true)).wait();
+  // await (await pyth.setUpdater(deployer.address, true)).wait();
   await (
     await pyth.updatePriceFeeds(
       priceUpdateData,

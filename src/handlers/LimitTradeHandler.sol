@@ -146,13 +146,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   uint64 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
   uint32 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on order stale
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
-  bool public isGuaranteeLimitPrice;
+  bool public isGuaranteeLimitPrice; // If this is ture, Gurantee Limit Price feature will be turned on. Limit Price set by orders will be used instead of the current Oracle Price.
   bool private isExecuting; // order is executing (prevent direct call executeLimitOrder()
 
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
-  mapping(address => address) public delegations;
+  mapping(address => address) public delegations; // The mapping of mainAccount => Smart Wallet to be used for Account Abstraction
 
   // Pointers
   EnumerableSet.UintSet private activeOrderPointers;
@@ -164,6 +164,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /// @param _tradeService Address of the TradeService contract.
   /// @param _pyth Address of the Pyth contract.
   /// @param _minExecutionFee Minimum execution fee for a trading order.
+  /// @param _minExecutionTimestamp If the order lives longer than this config, the order is stale and should be cancelled.
   function initialize(
     address _weth,
     address _tradeService,

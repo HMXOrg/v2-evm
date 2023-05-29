@@ -963,12 +963,12 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   ) private pure returns (uint256 _nextClosePrice) {
     if (_maxSkewScale == 0) return _oraclePrice;
 
-    // premium before       = market skew - size delta / max scale skew
-    // premium after        = market skew - position size / max scale skew
+    // new position size    = position size + size delta
+    // new market skew      = long position size - short position size + size delta
+    // premium before       = new market skew / max scale skew
+    // premium after        = (new market skew - new position size) / max scale skew
     // premium              = (premium after + premium after) / 2
-    // next close price     = 100 * (1 + premium)
-    // remaining size       = position size - size delta
-    // next avg price       = (next close price * remaining size) / (remaining size + unrealized pnl)
+    // next close price     = oracle price * (1 + premium)
 
     // Example:
     // Given

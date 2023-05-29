@@ -175,7 +175,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   /// @notice decrease sub-account collateral
   /// @param _subAccount - sub account
   /// @param _token - collateral token to increase
-  /// @param _amount - amount to increase
+  /// @param _amount - amount to decrease
   function decreaseTraderBalance(
     address _subAccount,
     address _token,

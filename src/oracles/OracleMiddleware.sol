@@ -143,6 +143,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @param _marketSkew market skew quoted in asset (NOT USD)
   /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
   /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  /// @param _limitPriceE30 The limit price to override the current Oracle Price [OBSOLETED]
   function getLatestAdaptivePrice(
     bytes32 _assetId,
     bool _isMax,
@@ -170,6 +171,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @param _marketSkew market skew quoted in asset (NOT USD)
   /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
   /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  /// @param _limitPriceE30 The limit price to override the current Oracle Price [OBSOLETED]
   function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
     bool _isMax,
@@ -197,6 +199,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @param _marketSkew market skew quoted in asset (NOT USD)
   /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
   /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  /// @param _limitPriceE30 The limit price to override the current Oracle Price [OBSOLETED]
   function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     bool _isMax,
@@ -227,6 +230,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @param _marketSkew market skew quoted in asset (NOT USD)
   /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
   /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  /// @param _limitPriceE30 The limit price to override the current Oracle Price [OBSOLETED]
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     bool _isMax,

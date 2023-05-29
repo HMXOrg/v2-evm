@@ -228,17 +228,11 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     ConfigStorage.MarketConfig memory _marketConfig = _vars.configStorage.getMarketConfigByIndex(_marketIndex);
 
     {
-      // check size delta
-      if (_sizeDelta == 0) revert ITradeService_BadSizeDelta();
-
       // Market active represent the market is still listed on our protocol
       if (!_marketConfig.active) revert ITradeService_MarketIsDelisted();
 
       // check allow increase position
       if (!_marketConfig.allowIncreasePosition) revert ITradeService_NotAllowIncrease();
-
-      // check sub account equity is under MMR
-      _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
     }
 
     // determine whether the new size delta is for a long position

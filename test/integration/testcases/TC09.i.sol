@@ -63,7 +63,7 @@ contract TC09 is BaseIntTest_WithActions {
       uint256 traderBalanceBefore = vaultStorage.traderBalances(ALICE, address(wbtc));
       uint256 protocolFeesBefore = vaultStorage.protocolFees(address(wbtc));
       uint256 devFeesBefore = vaultStorage.devFees(address(wbtc));
-      uint256 plpLiquidityBefore = vaultStorage.plpLiquidity(address(wbtc));
+      uint256 hlpLiquidityBefore = vaultStorage.hlpLiquidity(address(wbtc));
 
       updatePriceData = new bytes[](3);
       // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
@@ -85,7 +85,7 @@ contract TC09 is BaseIntTest_WithActions {
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
        * |    Dev |                                      |    0.000225 |           0.00001096 |                   |             |  0.00023596 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
-       * |    PLP |                           0.03377036 |             |           0.00006215 |                   |             |  0.03383251 |  BTC |
+       * |    HLP |                           0.03377036 |             |           0.00006215 |                   |             |  0.03383251 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
        * |  P-fee |                                      |    0.001275 |                      |                   |             |    0.001275 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
@@ -99,7 +99,7 @@ contract TC09 is BaseIntTest_WithActions {
         devFeesBefore + (0.00023596 * 1e8),
         0.00079999 * 1e8
       );
-      assertPLPLiquidity(address(wbtc), plpLiquidityBefore + 0.03383251 * 1e8);
+      assertHLPLiquidity(address(wbtc), hlpLiquidityBefore + 0.03383251 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);
       assertNumberOfPosition(aliceSubAccount1, 0);
       assertPositionInfoOf(aliceSubAccount1, jpyMarketIndex, 0, 0, 0, 0, 0, 0);

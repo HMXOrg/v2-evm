@@ -16,7 +16,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 //   - add liquidity with zero amount
 //   - slippage check fail
 // What is this test not covered
-//   - PLP transfer in cooldown period
+//   - HLP transfer in cooldown period
 //   - collect fee
 //   - add liquidity with dynamic fee (will be test in Calculator and integration test)
 contract LiquidityService_AddLiquidity is LiquidityService_Base {
@@ -28,24 +28,24 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
   }
 
   // add liquidity
-  function testCorrectness_WhenPLPAddLiquidity() external {
+  function testCorrectness_WhenHLPAddLiquidity() external {
     dai.approve(address(liquidityService), type(uint256).max);
 
     dai.mint(address(vaultStorage), 100 ether);
     liquidityService.addLiquidity(ALICE, address(dai), 100 ether, 0);
 
     assertEq(dai.balanceOf(address(vaultStorage)), 100 ether, "VaultStorage should receive DAI from Handler.");
-    assertEq(plp.totalSupply(), 99.7 ether, "PLP Total Supply");
+    assertEq(hlp.totalSupply(), 99.7 ether, "HLP Total Supply");
   }
 
-  function testRevert_WhenPLPAddLiquidity_WithInvalidHandler() external {
+  function testRevert_WhenHLPAddLiquidity_WithInvalidHandler() external {
     vm.prank(BOB);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotWhiteListed()"));
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, type(uint256).max);
   }
 
   // add liquidity when circuit break
-  function testRevert_WhenCircuitBreak_PLPShouldNotAddLiquidity() external {
+  function testRevert_WhenCircuitBreak_HLPShouldNotAddLiquidity() external {
     // disable liquidity config
     configStorage.setLiquidityEnabled(false);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
@@ -53,44 +53,44 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
   }
 
   // remove liquidity when circuit break
-  function testRevert_WhenCircuitBreak_PLPShouldNotRemoveLiquidity() external {
+  function testRevert_WhenCircuitBreak_HLPShouldNotRemoveLiquidity() external {
     configStorage.setLiquidityEnabled(false);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
     liquidityService.removeLiquidity(ALICE, address(weth), 10 ether, 0);
   }
 
   // add liquidity on unlisted token
-  function testRevert_WhenPLPAddLiquidity_WithUnlistedToken() external {
+  function testRevert_WhenHLPAddLiquidity_WithUnlistedToken() external {
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedLiquidity()"));
-    // bad is not listed as plp token
+    // bad is not listed as hlp token
     liquidityService.addLiquidity(ALICE, address(bad), 10 ether, 0);
   }
 
   // add liquidity on not accepted token
-  function testRevert_WhenPLPAddLiquidity_WithNotAcceptedToken() external {
+  function testRevert_WhenHLPAddLiquidity_WithNotAcceptedToken() external {
     // update weth to not accepted
-    IConfigStorage.PLPTokenConfig memory _plpTokenConfig = configStorage.getAssetPlpTokenConfigByToken(address(weth));
-    _plpTokenConfig.accepted = false;
-    configStorage.setPlpTokenConfig(address(weth), _plpTokenConfig);
+    IConfigStorage.HLPTokenConfig memory _hlpTokenConfig = configStorage.getAssetHlpTokenConfigByToken(address(weth));
+    _hlpTokenConfig.accepted = false;
+    configStorage.setHlpTokenConfig(address(weth), _hlpTokenConfig);
 
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedLiquidity()"));
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);
   }
 
   // add liquidity with zero amount
-  function testRevert_WhenPLPAddLiquidity_WithZeroAmount() external {
+  function testRevert_WhenHLPAddLiquidity_WithZeroAmount() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
     liquidityService.addLiquidity(ALICE, address(weth), 0, 0);
   }
 
   // slippage check fail
-  function testRevert_WhenPLPAddLiquidity_AndSlippageCheckFail() external {
+  function testRevert_WhenHLPAddLiquidity_AndSlippageCheckFail() external {
     weth.mint(address(vaultStorage), 10 ether);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_InsufficientLiquidityMint()"));
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, type(uint256).max);
   }
 
-  // function testRevert_WhenPLPTransferToken_AfterAddLiquidity_InCoolDownPeriod()
+  // function testRevert_WhenHLPTransferToken_AfterAddLiquidity_InCoolDownPeriod()
   //   external
   // {}
 }

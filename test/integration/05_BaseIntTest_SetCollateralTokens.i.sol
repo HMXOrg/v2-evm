@@ -24,7 +24,7 @@ abstract contract BaseIntTest_SetCollateralTokens is BaseIntTest_SetOracle {
   /// @param _assetId Asset's ID
   /// @param _collateralFactorBPS token reliability factor to calculate buying power, 1e4 = 100%
   /// @param _isAccepted accepted to deposit as collateral
-  /// @param _settleStrategy determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+  /// @param _settleStrategy determine token will be settled for NON HLP collateral, e.g. aUSDC redeemed as USDC
   function _addCollateralConfig(
     bytes32 _assetId,
     uint32 _collateralFactorBPS,

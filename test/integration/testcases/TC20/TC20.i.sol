@@ -45,11 +45,11 @@ contract TC20 is BaseIntTest_WithActions {
     // And Bob provide liquidity 5 btc
     addLiquidity(BOB, wbtc, 5 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     {
-      // PLP liquidity and total supply should be corrected
+      // HLP liquidity and total supply should be corrected
       // 5 * 0.997 = 4.985
       // 4.985 * 20000 = 99700
-      assertPLPLiquidity(address(wbtc), 4.985 * 1e8);
-      assertPLPTotalSupply(99700 * 1e18);
+      assertHLPLiquidity(address(wbtc), 4.985 * 1e8);
+      assertHLPTotalSupply(99700 * 1e18);
       assertTVL(99700 * 1e30, false);
     }
 

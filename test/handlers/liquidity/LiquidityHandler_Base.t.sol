@@ -18,8 +18,8 @@ contract LiquidityHandler_Base is BaseTest {
       address(ecoPyth),
       5 ether
     );
-    plp.setMinter(address(this), true);
-    mockLiquidityService.setPlpEnabled(true);
+    hlp.setMinter(address(this), true);
+    mockLiquidityService.setHlpEnabled(true);
 
     ecoPyth.setUpdater(address(liquidityHandler), true);
   }

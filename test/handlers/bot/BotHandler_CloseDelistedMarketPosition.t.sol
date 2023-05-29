@@ -40,17 +40,17 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
 
     // TVL
     // 1000000 USDT -> 2000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
 
     // assume ALICE has free collateral for 10,000 USD
     mockCalculator.setEquity(ALICE, 10_000 * 1e30);
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
-    // mock PLP token for profitable trader
+    // mock HLP token for profitable trader
     // related with TVL 2,000,000 USD then provide liquidity, - 1,000,000 WETH (price 1$)
     //                                                        - 10,000 WBTC (price 100$)
-    vaultStorage.addPLPLiquidity(address(weth), 1_000_000 ether);
-    vaultStorage.addPLPLiquidity(address(wbtc), 10_000 ether);
+    vaultStorage.addHLPLiquidity(address(weth), 1_000_000 ether);
+    vaultStorage.addHLPLiquidity(address(wbtc), 10_000 ether);
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
@@ -117,14 +117,14 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     );
 
     // all calculation is same with testCorrectness_WhenExecutorCloseShortPositionForAlice_AndProfitIsGreaterThenReserved
-    address[] memory _checkPlpTokens = new address[](1);
+    address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedHlpLiquidities = new uint256[](1);
     uint256[] memory _expectedFees = new uint256[](1);
 
-    _checkPlpTokens[0] = _tpToken;
+    _checkHlpTokens[0] = _tpToken;
     _expectedTraderBalances[0] = 199_500 ether;
-    _expectedPlpLiquidities[0] = 900_000 ether;
+    _expectedHlpLiquidities[0] = 900_000 ether;
     _expectedFees[0] = 500 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -142,9 +142,9 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     });
     positionTester.assertDecreasePositionResult(
       _assertData,
-      _checkPlpTokens,
+      _checkHlpTokens,
       _expectedTraderBalances,
-      _expectedPlpLiquidities,
+      _expectedHlpLiquidities,
       _expectedFees
     );
   }
@@ -184,14 +184,14 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     );
 
     // all calculation is same with testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved
-    address[] memory _checkPlpTokens = new address[](1);
+    address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedHlpLiquidities = new uint256[](1);
     uint256[] memory _expectedFees = new uint256[](1);
 
-    _checkPlpTokens[0] = _tpToken;
+    _checkHlpTokens[0] = _tpToken;
     _expectedTraderBalances[0] = 182_155.963302752293577981 ether;
-    _expectedPlpLiquidities[0] = 917_431.192660550458715597 ether;
+    _expectedHlpLiquidities[0] = 917_431.192660550458715597 ether;
     _expectedFees[0] = 412.844036697247706422 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -209,9 +209,9 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
     });
     positionTester.assertDecreasePositionResult(
       _assertData,
-      _checkPlpTokens,
+      _checkHlpTokens,
       _expectedTraderBalances,
-      _expectedPlpLiquidities,
+      _expectedHlpLiquidities,
       _expectedFees
     );
   }

@@ -53,7 +53,7 @@ interface ICalculator {
 
   function getGlobalPNLE30() external view returns (int256);
 
-  function getPLPValueE30(bool isMaxPrice) external view returns (uint256);
+  function getHLPValueE30(bool isMaxPrice) external view returns (uint256);
 
   function getFreeCollateral(
     address _subAccount,
@@ -61,7 +61,7 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (int256 _freeCollateral);
 
-  function getPLPPrice(uint256 aum, uint256 supply) external returns (uint256);
+  function getHLPPrice(uint256 aum, uint256 supply) external returns (uint256);
 
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _amount) external view returns (uint256);
 

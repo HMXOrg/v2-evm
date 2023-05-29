@@ -21,7 +21,7 @@ interface ITradeService {
   error ITradeService_InsufficientLiquidity();
   error ITradeService_InsufficientFreeCollateral();
   error ITradeService_ReservedValueStillEnough();
-  error ITradeService_PlpHealthy();
+  error ITradeService_HlpHealthy();
   error ITradeService_MarketHealthy();
   error ITradeService_InvalidAddress();
   error ITradeService_PositionSizeExceed();

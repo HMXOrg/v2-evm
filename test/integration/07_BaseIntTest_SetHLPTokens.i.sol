@@ -4,9 +4,9 @@ pragma solidity 0.8.18;
 import { BaseIntTest_SetAssetConfigs } from "@hmx-test/integration/06_BaseIntTest_SetAssetConfigs.i.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-abstract contract BaseIntTest_SetPLPTokens is BaseIntTest_SetAssetConfigs {
+abstract contract BaseIntTest_SetHLPTokens is BaseIntTest_SetAssetConfigs {
   constructor() {
-    // Set PLP Tokens
+    // Set HLP Tokens
     // @todo - GLP
     address[] memory _tokens = new address[](5);
     _tokens[0] = address(usdc);
@@ -15,30 +15,30 @@ abstract contract BaseIntTest_SetPLPTokens is BaseIntTest_SetAssetConfigs {
     _tokens[3] = address(weth);
     _tokens[4] = address(wbtc);
 
-    IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](_tokens.length);
+    IConfigStorage.HLPTokenConfig[] memory _hlpTokenConfig = new IConfigStorage.HLPTokenConfig[](_tokens.length);
     // @todo - integrate GLP, treat WBTC as GLP for now
-    _plpTokenConfig[0] = _buildAcceptedPLPTokenConfig({
+    _hlpTokenConfig[0] = _buildAcceptedHLPTokenConfig({
       _targetWeight: 0.05 * 1e18,
       _bufferLiquidity: 0,
       _maxWeightDiff: 0.95 * 1e18
     });
-    _plpTokenConfig[1] = _buildNotAcceptedPLPTokenConfig();
-    _plpTokenConfig[2] = _buildNotAcceptedPLPTokenConfig();
-    _plpTokenConfig[3] = _buildNotAcceptedPLPTokenConfig();
-    _plpTokenConfig[4] = _buildAcceptedPLPTokenConfig({
+    _hlpTokenConfig[1] = _buildNotAcceptedHLPTokenConfig();
+    _hlpTokenConfig[2] = _buildNotAcceptedHLPTokenConfig();
+    _hlpTokenConfig[3] = _buildNotAcceptedHLPTokenConfig();
+    _hlpTokenConfig[4] = _buildAcceptedHLPTokenConfig({
       _targetWeight: 0.95 * 1e18,
       _bufferLiquidity: 0,
       _maxWeightDiff: 0.05 * 1e18
     });
 
-    configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
+    configStorage.addOrUpdateAcceptedToken(_tokens, _hlpTokenConfig);
   }
 
-  function _buildAcceptedPLPTokenConfig(
+  function _buildAcceptedHLPTokenConfig(
     uint256 _targetWeight,
     uint256 _bufferLiquidity,
     uint256 _maxWeightDiff
-  ) private pure returns (IConfigStorage.PLPTokenConfig memory _config) {
+  ) private pure returns (IConfigStorage.HLPTokenConfig memory _config) {
     _config.targetWeight = _targetWeight;
     _config.bufferLiquidity = _bufferLiquidity;
     _config.maxWeightDiff = _maxWeightDiff;
@@ -46,7 +46,7 @@ abstract contract BaseIntTest_SetPLPTokens is BaseIntTest_SetAssetConfigs {
     return _config;
   }
 
-  function _buildNotAcceptedPLPTokenConfig() private pure returns (IConfigStorage.PLPTokenConfig memory _config) {
+  function _buildNotAcceptedHLPTokenConfig() private pure returns (IConfigStorage.HLPTokenConfig memory _config) {
     return _config;
   }
 }

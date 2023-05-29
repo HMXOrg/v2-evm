@@ -27,51 +27,51 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     assertTokenBalanceOf(_account, _token, _balance, "");
   }
 
-  // PLP
-  function assertPLPTotalSupply(uint256 _totalSupply, string memory _str) internal {
+  // HLP
+  function assertHLPTotalSupply(uint256 _totalSupply, string memory _str) internal {
     assertApproxEqRel(
-      plpV2.totalSupply(),
+      hlpV2.totalSupply(),
       _totalSupply,
       MAX_DIFF,
-      string.concat(_str, "PLPv2 Total supply is not matched")
+      string.concat(_str, "HLP Total supply is not matched")
     );
   }
 
-  function assertPLPTotalSupply(uint256 _totalSupply) internal {
-    assertPLPTotalSupply(_totalSupply, "");
+  function assertHLPTotalSupply(uint256 _totalSupply) internal {
+    assertHLPTotalSupply(_totalSupply, "");
   }
 
   // Vault Storage
 
-  function assertPLPDebt(uint256 _plpDebt, string memory _str) internal {
+  function assertHLPDebt(uint256 _hlpDebt, string memory _str) internal {
     assertApproxEqRel(
-      vaultStorage.plpLiquidityDebtUSDE30(),
-      _plpDebt,
+      vaultStorage.hlpLiquidityDebtUSDE30(),
+      _hlpDebt,
       MAX_DIFF,
-      string.concat(_str, "PLP liquidity debt is not matched")
+      string.concat(_str, "HLP liquidity debt is not matched")
     );
   }
 
-  function assertPLPDebt(uint256 _plpDebt) internal {
-    assertPLPDebt(_plpDebt, "");
+  function assertHLPDebt(uint256 _hlpDebt) internal {
+    assertHLPDebt(_hlpDebt, "");
   }
 
-  function assertPLPLiquidity(address _token, uint256 _liquidity, string memory _str) internal {
+  function assertHLPLiquidity(address _token, uint256 _liquidity, string memory _str) internal {
     assertApproxEqRel(
-      vaultStorage.plpLiquidity(_token),
+      vaultStorage.hlpLiquidity(_token),
       _liquidity,
       MAX_DIFF,
-      string.concat(_str, "PLP token liquidity is not matched")
+      string.concat(_str, "HLP token liquidity is not matched")
     );
   }
 
-  function assertPLPLiquidity(address _token, uint256 _liquidity) internal {
-    assertPLPLiquidity(_token, _liquidity, "");
+  function assertHLPLiquidity(address _token, uint256 _liquidity) internal {
+    assertHLPLiquidity(_token, _liquidity, "");
   }
 
   function assertTVL(uint256 _tvl, bool _isMaxPrice, string memory _str) internal {
     assertApproxEqRel(
-      calculator.getPLPValueE30(_isMaxPrice),
+      calculator.getHLPValueE30(_isMaxPrice),
       _tvl,
       MAX_DIFF,
       string.concat(_str, "TVL is not matched")

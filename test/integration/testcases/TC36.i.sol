@@ -52,12 +52,12 @@ contract TC36 is BaseIntTest_WithActions {
     );
 
     {
-      // PLP => 1_994_000.00(WBTC) + 100_000 (USDC)
-      assertPLPTotalSupply(2_094_000 * 1e18);
-      // assert PLP
-      assertTokenBalanceOf(ALICE, address(plpV2), 2_094_000 * 1e18);
-      assertPLPLiquidity(address(wbtc), 99.7 * 1e8);
-      assertPLPLiquidity(address(usdc), 100_000 * 1e6);
+      // HLP => 1_994_000.00(WBTC) + 100_000 (USDC)
+      assertHLPTotalSupply(2_094_000 * 1e18);
+      // assert HLP
+      assertTokenBalanceOf(ALICE, address(hlpV2), 2_094_000 * 1e18);
+      assertHLPLiquidity(address(wbtc), 99.7 * 1e8);
+      assertHLPLiquidity(address(usdc), 100_000 * 1e6);
     }
 
     // Retrieve the global state
@@ -81,7 +81,7 @@ contract TC36 is BaseIntTest_WithActions {
     uint256 _pythGasFee = initialPriceFeedDatas.length;
     vm.deal(BOB, _pythGasFee);
     vm.deal(BOB, 1 ether);
-    console.log("tvl", calculator.getPLPValueE30(true));
+    console.log("tvl", calculator.getHLPValueE30(true));
     marketBuy(BOB, 0, wbtcMarketIndex, 18_611_867 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
 
     {
@@ -95,8 +95,8 @@ contract TC36 is BaseIntTest_WithActions {
 
       // MaxUtilization from above 1_675_200 *1e30 => 1675200000000000000000000000000000000
 
-      uint256 _plpTVL = calculator.getPLPValueE30(false);
-      uint256 _maxUtilizationValue = (_plpTVL * _liquidityConfig.maxPLPUtilizationBPS) / 10000;
+      uint256 _hlpTVL = calculator.getHLPValueE30(false);
+      uint256 _maxUtilizationValue = (_hlpTVL * _liquidityConfig.maxHLPUtilizationBPS) / 10000;
 
       assertApproxEqRel(
         _globalState.reserveValueE30,
@@ -110,12 +110,12 @@ contract TC36 is BaseIntTest_WithActions {
         MAX_DIFF,
         "AssetClass's Reserve"
       );
-      assertApproxEqRel(_plpTVL, 2094000000000000000000000000000000000, MAX_DIFF, "PLP TVL");
+      assertApproxEqRel(_hlpTVL, 2094000000000000000000000000000000000, MAX_DIFF, "HLP TVL");
       assertApproxEqRel(_maxUtilizationValue, 1675200000000000000000000000000000000, MAX_DIFF, "MaxUtilizationValue");
     }
 
     vm.deal(ALICE, executionOrderFee);
-    uint256 _plpAliceBefore = plpV2.balanceOf(ALICE);
+    uint256 _hlpAliceBefore = hlpV2.balanceOf(ALICE);
 
     // Alice try to remove liquidity, but refund due to reach max utilization
     removeLiquidity(
@@ -128,17 +128,17 @@ contract TC36 is BaseIntTest_WithActions {
       block.timestamp,
       true
     );
-    uint256 _plpAliceAfter = plpV2.balanceOf(ALICE);
+    uint256 _hlpAliceAfter = hlpV2.balanceOf(ALICE);
 
     {
-      // PLP before and PLP after executed remove liquidity should be the same because platform refund due to reach max utilization
-      assertEq(_plpAliceBefore, _plpAliceAfter, "Alice PLP should get refund");
-      // PLP => 1_994_000.00(WBTC) + 100_000 (USDC)
-      assertPLPTotalSupply(2_094_000 * 1e18);
-      // assert PLP
-      assertTokenBalanceOf(ALICE, address(plpV2), 2_094_000 * 1e18);
-      assertPLPLiquidity(address(wbtc), 99.7 * 1e8);
-      assertPLPLiquidity(address(usdc), 100_000 * 1e6);
+      // HLP before and HLP after executed remove liquidity should be the same because platform refund due to reach max utilization
+      assertEq(_hlpAliceBefore, _hlpAliceAfter, "Alice HLP should get refund");
+      // HLP => 1_994_000.00(WBTC) + 100_000 (USDC)
+      assertHLPTotalSupply(2_094_000 * 1e18);
+      // assert HLP
+      assertTokenBalanceOf(ALICE, address(hlpV2), 2_094_000 * 1e18);
+      assertHLPLiquidity(address(wbtc), 99.7 * 1e8);
+      assertHLPLiquidity(address(usdc), 100_000 * 1e6);
     }
 
     // Alice able to add 1000 USDC liquidity to help reserve % better
@@ -157,26 +157,26 @@ contract TC36 is BaseIntTest_WithActions {
     {
       // wbtc 99.7 * 1e30 * 20000 => 1994000000000000000000000000000000000
       // usdc 100_997.2  * 1e30 * 1 => 100997200000000000000000000000000000
-      // plpValueE30 = 2094997200000000000000000000000000000
+      // hlpValueE30 = 2094997200000000000000000000000000000
 
       // PNL = -6012221
       // WBTC   LONG         20000000000000000000000000000000000              20620444433333333333333333333320000              18613333000000000000000000000000000000             =560052858364255462951685200733910932
 
-      // AUM = plpValueE30 -PNL + Pending Borrowing Fee;
+      // AUM = hlpValueE30 -PNL + Pending Borrowing Fee;
       // AUM = 2094997200000000000000000000000000000 - (-6012221) + 0
       // AUM = 2655050058364255462951685200733910932
 
-      assertApproxEqRel(calculator.getPLPValueE30(false), 2094997200000000000000000000000000000, MAX_DIFF, "plp TVL");
+      assertApproxEqRel(calculator.getHLPValueE30(false), 2094997200000000000000000000000000000, MAX_DIFF, "hlp TVL");
 
       assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
       assertApproxEqRel(calculator.getAUME30(false), 2094332274215590197526000000006012221, MAX_DIFF, "AUM");
 
-      assertPLPTotalSupply(2094786772875837506655217);
+      assertHLPTotalSupply(2094786772875837506655217);
 
-      assertTokenBalanceOf(ALICE, address(plpV2), 2094786772875837506655217);
-      assertPLPLiquidity(address(wbtc), 99.7 * 1e8);
-      assertPLPLiquidity(address(usdc), 100_997.2 * 1e6);
+      assertTokenBalanceOf(ALICE, address(hlpV2), 2094786772875837506655217);
+      assertHLPLiquidity(address(wbtc), 99.7 * 1e8);
+      assertHLPLiquidity(address(usdc), 100_997.2 * 1e6);
     }
 
     vm.deal(ALICE, executionOrderFee);
@@ -194,24 +194,24 @@ contract TC36 is BaseIntTest_WithActions {
       //fee => 0.3%, liquidityRemove = 3_168_639
       // wbtc 99.66831361 * 1e30 * 20000 => 1993366272200000000000000000000000000
       // usdc 100_997.2  * 1e30 * 1 => 100997200000000000000000000000000000
-      // plpValueE30 = 2094363472200000000000000000000000000
+      // hlpValueE30 = 2094363472200000000000000000000000000
 
       // PNL = -6012221
       // WBTC   LONG         20000000000000000000000000000000000              20620444433333333333333333333320000              18613333000000000000000000000000000000             =560052858364255462951685200733910932
 
       //  AUM =  2094363472200000000000000000000000000 - ( -6012221) + 0
 
-      assertApproxEqRel(calculator.getPLPValueE30(false), 2094363472200000000000000000000000000, MAX_DIFF, "plp TVL");
+      assertApproxEqRel(calculator.getHLPValueE30(false), 2094363472200000000000000000000000000, MAX_DIFF, "hlp TVL");
 
       assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
       assertApproxEqRel(calculator.getAUME30(false), 2094332274215590197526000000006012221, MAX_DIFF, "AUM");
 
-      assertPLPTotalSupply(2094286772875837506655217);
-      // assert PLP
-      assertTokenBalanceOf(ALICE, address(plpV2), 2094286772875837506655217);
-      assertPLPLiquidity(address(wbtc), 99.66831361 * 1e8);
-      assertPLPLiquidity(address(usdc), 100_997.2 * 1e6);
+      assertHLPTotalSupply(2094286772875837506655217);
+      // assert HLP
+      assertTokenBalanceOf(ALICE, address(hlpV2), 2094286772875837506655217);
+      assertHLPLiquidity(address(wbtc), 99.66831361 * 1e8);
+      assertHLPLiquidity(address(usdc), 100_997.2 * 1e6);
     }
 
     //BOB close all position
@@ -233,23 +233,23 @@ contract TC36 is BaseIntTest_WithActions {
 
     {
       //from above state
-      //plpValueE30 = 2654416330564255462951685200733910932
+      //hlpValueE30 = 2654416330564255462951685200733910932
       //maxUtilization = 2654416330564255462951685200733910932 * 8000 / 10000 => 1675490777760000000000000000000000000
       IPerpStorage.GlobalState memory _globalState = perpStorage.getGlobalState();
       _marketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
       IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
       IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
-      uint256 _plpTVL = calculator.getPLPValueE30(false);
+      uint256 _hlpTVL = calculator.getHLPValueE30(false);
 
-      uint256 _maxUtilizationValue = (_plpTVL * _liquidityConfig.maxPLPUtilizationBPS) / 10000;
+      uint256 _maxUtilizationValue = (_hlpTVL * _liquidityConfig.maxHLPUtilizationBPS) / 10000;
 
       assertApproxEqRel(_globalState.reserveValueE30, 0, MAX_DIFF, "Global Reserve");
       assertApproxEqRel(_assetClass.reserveValueE30, 0, MAX_DIFF, "Global AssetClass Reserve");
-      assertApproxEqRel(_plpTVL, 2094363472200000000000000000000000000, MAX_DIFF, "PLP TVL");
+      assertApproxEqRel(_hlpTVL, 2094363472200000000000000000000000000, MAX_DIFF, "HLP TVL");
       assertApproxEqRel(_maxUtilizationValue, 1675490777760000000000000000000000000, MAX_DIFF, "MaxUtilizationValue");
     }
 
-    // Try to remove All liquidity in PLP should be success
+    // Try to remove All liquidity in HLP should be success
     vm.deal(ALICE, executionOrderFee * 2);
 
     removeLiquidity(
@@ -266,7 +266,7 @@ contract TC36 is BaseIntTest_WithActions {
     removeLiquidity(
       ALICE,
       address(wbtc),
-      plpV2.balanceOf(ALICE),
+      hlpV2.balanceOf(ALICE),
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
@@ -275,17 +275,17 @@ contract TC36 is BaseIntTest_WithActions {
     );
 
     {
-      assertApproxEqRel(calculator.getPLPValueE30(false), 0, MAX_DIFF, "plp TVL");
+      assertApproxEqRel(calculator.getHLPValueE30(false), 0, MAX_DIFF, "hlp TVL");
 
       assertApproxEqRel(calculator.getPendingBorrowingFeeE30(), 0, MAX_DIFF, "pending Borrowing Fee");
 
       assertApproxEqRel(calculator.getAUME30(false), 0, MAX_DIFF, "AUM");
 
-      assertPLPTotalSupply(0);
+      assertHLPTotalSupply(0);
 
-      assertTokenBalanceOf(ALICE, address(plpV2), 0);
-      assertPLPLiquidity(address(wbtc), 0);
-      assertPLPLiquidity(address(usdc), 0);
+      assertTokenBalanceOf(ALICE, address(hlpV2), 0);
+      assertHLPLiquidity(address(wbtc), 0);
+      assertHLPLiquidity(address(usdc), 0);
     }
   }
 }

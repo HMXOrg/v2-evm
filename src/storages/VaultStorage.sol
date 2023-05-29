@@ -27,10 +27,10 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
    * States
    */
   mapping(address => uint256) public totalAmount; //token => tokenAmount
-  mapping(address => uint256) public plpLiquidity; // token => PLPTokenAmount
+  mapping(address => uint256) public hlpLiquidity; // token => HLPTokenAmount
   mapping(address => uint256) public protocolFees; // protocol fee in token unit
 
-  uint256 public plpLiquidityDebtUSDE30; // USD dept accounting when fundingFee is not enough to repay to trader
+  uint256 public hlpLiquidityDebtUSDE30; // USD dept accounting when fundingFee is not enough to repay to trader
   mapping(address => uint256) public fundingFeeReserve; // sum of realized funding fee amount
 
   mapping(address => uint256) public devFees;
@@ -125,16 +125,16 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     fundingFeeReserve[_token] -= _amount;
   }
 
-  function addPlpLiquidityDebtUSDE30(uint256 _value) external onlyWhitelistedExecutor {
-    plpLiquidityDebtUSDE30 += _value;
+  function addHlpLiquidityDebtUSDE30(uint256 _value) external onlyWhitelistedExecutor {
+    hlpLiquidityDebtUSDE30 += _value;
   }
 
-  function removePlpLiquidityDebtUSDE30(uint256 _value) external onlyWhitelistedExecutor {
-    plpLiquidityDebtUSDE30 -= _value;
+  function removeHlpLiquidityDebtUSDE30(uint256 _value) external onlyWhitelistedExecutor {
+    hlpLiquidityDebtUSDE30 -= _value;
   }
 
-  function addPLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
-    plpLiquidity[_token] += _amount;
+  function addHLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
+    hlpLiquidity[_token] += _amount;
   }
 
   function withdrawFee(address _token, uint256 _amount, address _receiver) external onlyWhitelistedExecutor {
@@ -143,9 +143,9 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     IERC20Upgradeable(_token).safeTransfer(_receiver, _amount);
   }
 
-  function removePLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
-    if (plpLiquidity[_token] < _amount) revert IVaultStorage_PLPBalanceRemaining();
-    plpLiquidity[_token] -= _amount;
+  function removeHLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {
+    if (hlpLiquidity[_token] < _amount) revert IVaultStorage_HLPBalanceRemaining();
+    hlpLiquidity[_token] -= _amount;
   }
 
   /// @notice increase sub-account collateral
@@ -172,13 +172,13 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     _deductTraderBalance(_subAccount, _token, _amount);
   }
 
-  /// @notice Pays the PLP for providing liquidity with the specified token and amount.
-  /// @param _trader The address of the trader paying the PLP.
-  /// @param _token The address of the token being used to pay the PLP.
-  /// @param _amount The amount of the token being used to pay the PLP.
-  function payPlp(address _trader, address _token, uint256 _amount) external onlyWhitelistedExecutor {
-    // Increase the PLP's liquidity for the specified token
-    plpLiquidity[_token] += _amount;
+  /// @notice Pays the HLP for providing liquidity with the specified token and amount.
+  /// @param _trader The address of the trader paying the HLP.
+  /// @param _token The address of the token being used to pay the HLP.
+  /// @param _amount The amount of the token being used to pay the HLP.
+  function payHlp(address _trader, address _token, uint256 _amount) external onlyWhitelistedExecutor {
+    // Increase the HLP's liquidity for the specified token
+    hlpLiquidity[_token] += _amount;
 
     // Decrease the trader's balance for the specified token
     _deductTraderBalance(_trader, _token, _amount);
@@ -207,17 +207,17 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     address _trader,
     address _token,
     uint256 _devFeeAmount,
-    uint256 _plpFeeAmount
+    uint256 _hlpFeeAmount
   ) external onlyWhitelistedExecutor {
     // Deduct amount from trader balance
-    _deductTraderBalance(_trader, _token, _devFeeAmount + _plpFeeAmount);
+    _deductTraderBalance(_trader, _token, _devFeeAmount + _hlpFeeAmount);
 
-    // Increase the amount to devFees and plpLiquidity
+    // Increase the amount to devFees and hlpLiquidity
     devFees[_token] += _devFeeAmount;
-    plpLiquidity[_token] += _plpFeeAmount;
+    hlpLiquidity[_token] += _hlpFeeAmount;
   }
 
-  function payFundingFeeFromTraderToPlp(
+  function payFundingFeeFromTraderToHlp(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount
@@ -225,17 +225,17 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     // Deduct amount from trader balance
     _deductTraderBalance(_trader, _token, _fundingFeeAmount);
 
-    // Increase the amount to plpLiquidity
-    plpLiquidity[_token] += _fundingFeeAmount;
+    // Increase the amount to hlpLiquidity
+    hlpLiquidity[_token] += _fundingFeeAmount;
   }
 
-  function payFundingFeeFromPlpToTrader(
+  function payFundingFeeFromHlpToTrader(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount
   ) external onlyWhitelistedExecutor {
-    // Deduct amount from plpLiquidity
-    plpLiquidity[_token] -= _fundingFeeAmount;
+    // Deduct amount from hlpLiquidity
+    hlpLiquidity[_token] -= _fundingFeeAmount;
 
     // Increase the amount to trader
     _increaseTraderBalance(_trader, _token, _fundingFeeAmount);
@@ -247,8 +247,8 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     uint256 _totalProfitAmount,
     uint256 _settlementFeeAmount
   ) external onlyWhitelistedExecutor {
-    // Deduct amount from plpLiquidity
-    plpLiquidity[_token] -= _totalProfitAmount;
+    // Deduct amount from hlpLiquidity
+    hlpLiquidity[_token] -= _totalProfitAmount;
 
     protocolFees[_token] += _settlementFeeAmount;
     _increaseTraderBalance(_trader, _token, _totalProfitAmount - _settlementFeeAmount);
@@ -271,7 +271,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     }
   }
 
-  function convertFundingFeeReserveWithPLP(
+  function convertFundingFeeReserveWithHLP(
     address _convertToken,
     address _targetToken,
     uint256 _convertAmount,
@@ -280,25 +280,25 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     // Deduct convert token amount from funding fee reserve
     fundingFeeReserve[_convertToken] -= _convertAmount;
 
-    // Increase convert token amount to PLP
-    plpLiquidity[_convertToken] += _convertAmount;
+    // Increase convert token amount to HLP
+    hlpLiquidity[_convertToken] += _convertAmount;
 
-    // Deduct target token amount from PLP
-    plpLiquidity[_targetToken] -= _targetAmount;
+    // Deduct target token amount from HLP
+    hlpLiquidity[_targetToken] -= _targetAmount;
 
     // Deduct convert token amount from funding fee reserve
     fundingFeeReserve[_targetToken] += _targetAmount;
   }
 
-  function withdrawSurplusFromFundingFeeReserveToPLP(
+  function withdrawSurplusFromFundingFeeReserveToHLP(
     address _token,
     uint256 _fundingFeeAmount
   ) external onlyWhitelistedExecutor {
     // Deduct amount from funding fee reserve
     fundingFeeReserve[_token] -= _fundingFeeAmount;
 
-    // Increase the amount to PLP
-    plpLiquidity[_token] += _fundingFeeAmount;
+    // Increase the amount to HLP
+    hlpLiquidity[_token] += _fundingFeeAmount;
   }
 
   function payFundingFeeFromTraderToFundingFeeReserve(
@@ -325,7 +325,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     _increaseTraderBalance(_trader, _token, _fundingFeeAmount);
   }
 
-  function repayFundingFeeDebtFromTraderToPlp(
+  function repayFundingFeeDebtFromTraderToHlp(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount,
@@ -334,27 +334,27 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     // Deduct amount from trader balance
     _deductTraderBalance(_trader, _token, _fundingFeeAmount);
 
-    // Add token amounts that PLP received
-    plpLiquidity[_token] += _fundingFeeAmount;
+    // Add token amounts that HLP received
+    hlpLiquidity[_token] += _fundingFeeAmount;
 
-    // Remove debt value on PLP as received
-    plpLiquidityDebtUSDE30 -= _fundingFeeValue;
+    // Remove debt value on HLP as received
+    hlpLiquidityDebtUSDE30 -= _fundingFeeValue;
   }
 
-  function borrowFundingFeeFromPlpToTrader(
+  function borrowFundingFeeFromHlpToTrader(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount,
     uint256 _fundingFeeValue
   ) external onlyWhitelistedExecutor {
-    // Deduct token amounts from PLP
-    plpLiquidity[_token] -= _fundingFeeAmount;
+    // Deduct token amounts from HLP
+    hlpLiquidity[_token] -= _fundingFeeAmount;
 
     // Increase the amount to trader
     _increaseTraderBalance(_trader, _token, _fundingFeeAmount);
 
-    // Add debt value on PLP
-    plpLiquidityDebtUSDE30 += _fundingFeeValue;
+    // Add debt value on HLP
+    hlpLiquidityDebtUSDE30 += _fundingFeeValue;
   }
 
   function addTradingFeeDebt(address _trader, uint256 _tradingFeeDebt) external onlyWhitelistedExecutor {

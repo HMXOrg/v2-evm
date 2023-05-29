@@ -22,5 +22,5 @@ forge script ./config/05_SetAssetConfig.s.sol:SetAssetConfig --rpc-url $TARGET_R
 echo "Set Whitelist"
 forge script ./config/06_SetWhitelist.s.sol:SetWhitelist --rpc-url $TARGET_RPC --broadcast --with-gas-price 110000000
 
-echo "Set PLP"
-forge script ./config/07_SetPLP.s.sol:SetPLP --rpc-url $TARGET_RPC --broadcast --with-gas-price 110000000
+echo "Set HLP"
+forge script ./config/07_SetHLP.s.sol:SetHLP --rpc-url $TARGET_RPC --broadcast --with-gas-price 110000000

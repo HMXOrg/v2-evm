@@ -5,10 +5,10 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 
 // Test cover Scenarios
 //   - LONG trader pay funding fee to funding fee reserve
-//   - LONG trader repay funding fee debts to PLP and pay remaining to funding fee reserve
+//   - LONG trader repay funding fee debts to HLP and pay remaining to funding fee reserve
 //   - SHORT trader receive funding fee from funding fee reserve
-//   - SHORT trader receive funding fee from PLP borrowing
-//   - SHORT trader receive funding fee from funding fee reserve and borrow fee from PLP
+//   - SHORT trader receive funding fee from HLP borrowing
+//   - SHORT trader receive funding fee from funding fee reserve and borrow fee from HLP
 //   - Deployer call withdrawSurplus function with contain surplus amount - must success
 //   - Deployer call withdrawSurplus function with no surplus amount - must revert
 
@@ -111,14 +111,14 @@ contract TC24 is BaseIntTest_WithActions {
     }
 
     /**
-     * T5: Deployer see the surplus on funding fee and try to withdraw surplus to PLP
+     * T5: Deployer see the surplus on funding fee and try to withdraw surplus to HLP
      *     @note deployer must converts all funding fee reserves to stable token (USDC) before called withdraw surplus
      */
     {
       skip(60); // time passed for 60 seconds
 
       _T5Assert1();
-      // Add USDC liquidity first to make plp have token to convert
+      // Add USDC liquidity first to make hlp have token to convert
       addLiquidity(DAVE, usdc, 50_000 * 1e6, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
 
       _T5Assert2();
@@ -224,7 +224,7 @@ contract TC24 is BaseIntTest_WithActions {
     }
 
     // =============================================================
-    // | SHORT trader receive funding fee from PLP                 |
+    // | SHORT trader receive funding fee from HLP                 |
     // =============================================================
 
     /**
@@ -251,7 +251,7 @@ contract TC24 is BaseIntTest_WithActions {
     /**
      * T11: CAROL close sell position at price 1500 USD
      *      Then CAROL should get funding fee from funding fee reserve
-     *      And funding fee reserve must borrow fee from PLP because reserve not enough to repay to CAROL
+     *      And funding fee reserve must borrow fee from HLP because reserve not enough to repay to CAROL
      */
     {
       skip(60 * 60); // time passed for 1 hour
@@ -262,7 +262,7 @@ contract TC24 is BaseIntTest_WithActions {
     }
 
     // ======================================================================================
-    // | SHORT trader receive funding fee from PLP borrowing                                |
+    // | SHORT trader receive funding fee from HLP borrowing                                |
     // ======================================================================================
 
     /**
@@ -287,7 +287,7 @@ contract TC24 is BaseIntTest_WithActions {
 
     /**
      * T13: CAROL close LONG position
-     *      AND get funding fee from PLP borrowing
+     *      AND get funding fee from HLP borrowing
      */
     {
       skip(60 * 60); // time passed for 1 hour
@@ -298,12 +298,12 @@ contract TC24 is BaseIntTest_WithActions {
     }
 
     // ======================================================================================
-    // | LONG trader repay funding fee debts to PLP and pay remaining to funding fee reserve |
+    // | LONG trader repay funding fee debts to HLP and pay remaining to funding fee reserve |
     // ======================================================================================
 
     /**
      * T14: ALICE close LONG position
-     *      AND pay borrowing debt from PLP
+     *      AND pay borrowing debt from HLP
      */
     {
       skip(60); // time passed for 60 seconds
@@ -329,14 +329,14 @@ contract TC24 is BaseIntTest_WithActions {
 
     // Then Bob should pay fee for 0.3% = 0.15 BTC
 
-    // Assert PLP Liquidity
+    // Assert HLP Liquidity
     //    BTC = 50-0.15 = 49.85 (amount - fee)
-    assertPLPLiquidity(address(wbtc), 49.85 * 1e8, "T1: ");
+    assertHLPLiquidity(address(wbtc), 49.85 * 1e8, "T1: ");
 
-    // When PLP Token price is 1$
-    // Then PLP Token should Mint = 49.85 btc * 20,000 USD = 997_000 USD
+    // When HLP Token price is 1$
+    // Then HLP Token should Mint = 49.85 btc * 20,000 USD = 997_000 USD
     //                            = 997_000 / 1 = 997_000 Tokens
-    assertPLPTotalSupply(997_000 * 1e18, "T1: ");
+    assertHLPTotalSupply(997_000 * 1e18, "T1: ");
 
     // Assert Fee distribution
     // According from T0
@@ -375,10 +375,10 @@ contract TC24 is BaseIntTest_WithActions {
     //    BTC - 10
     assertSubAccountTokenBalance(getSubAccount(ALICE, 0), address(wbtc), true, 10 * 1e8, "T2: ");
 
-    // And PLP total supply and Liquidity must not be changed
+    // And HLP total supply and Liquidity must not be changed
     // note: data from T1
-    assertPLPTotalSupply(997_000 * 1e18, "T2: ");
-    assertPLPLiquidity(address(wbtc), 49.85 * 1e8, "T2: ");
+    assertHLPTotalSupply(997_000 * 1e18, "T2: ");
+    assertHLPLiquidity(address(wbtc), 49.85 * 1e8, "T2: ");
 
     // And Alice should not pay any fee
     // note: vault's fees should be same with T1
@@ -468,16 +468,16 @@ contract TC24 is BaseIntTest_WithActions {
 
   function _T5Assert1() internal {
     // Assert before withdraw surplus
-    // PLP's liquidity = old amount + borrowing fee + trader's profit/loss
+    // HLP's liquidity = old amount + borrowing fee + trader's profit/loss
     // ** in this test, we ignore calculating on those number and only focus on funding fee
     // so magic number for borrowing fee + trader's profit/loss = 0.27322718 BTC
-    // new PLP's liquidity = 49.85 + 0.09322717999999952 = 49.94322718 WBTC
-    assertPLPLiquidity(address(wbtc), 49.94322718 * 1e8, "T5: ");
+    // new HLP's liquidity = 49.85 + 0.09322717999999952 = 49.94322718 WBTC
+    assertHLPLiquidity(address(wbtc), 49.94322718 * 1e8, "T5: ");
   }
 
   function _T5Assert2() internal {
-    // new PLP's liquidity = 50_000 USDC
-    assertPLPLiquidity(address(usdc), 50_000 * 1e6, "T5: ");
+    // new HLP's liquidity = 50_000 USDC
+    assertHLPLiquidity(address(usdc), 50_000 * 1e6, "T5: ");
   }
 
   function _T5Assert3() internal {
@@ -489,25 +489,25 @@ contract TC24 is BaseIntTest_WithActions {
     assertFundingFeeReserve(address(wbtc), 0 * 1e8, "T5: ");
     assertFundingFeeReserve(address(usdc), 3_600 * 1e6, "T5: ");
 
-    // And USDC on PLP liquidity will be decreased
+    // And USDC on HLP liquidity will be decreased
     // USDC = 50_000 - 3_600 = 46_400 USDC
-    assertPLPLiquidity(address(usdc), 46_400 * 1e6, "T5: ");
+    assertHLPLiquidity(address(usdc), 46_400 * 1e6, "T5: ");
 
-    // AND WBTC on PLP liquidity will be increased
+    // AND WBTC on HLP liquidity will be increased
     // WBTC = 49.94322718 + 0.18 = 50.12322718
-    assertPLPLiquidity(address(wbtc), 50.12322718 * 1e8, "T5: ");
+    assertHLPLiquidity(address(wbtc), 50.12322718 * 1e8, "T5: ");
   }
 
   function _T5Assert4() internal {
-    // Assert PLP Liquidity
-    // When Deployer withdraw Surplus to PLP
+    // Assert HLP Liquidity
+    // When Deployer withdraw Surplus to HLP
     // all funding fee reserve will consider as surplus
     // according to Alice is the only one trader in the market
     assertFundingFeeReserve(address(usdc), 0, "T5: ");
-    // PLP USDC = old + surplus amount
+    // HLP USDC = old + surplus amount
     //          = 46_400 + 3_600
     //          = 50000
-    assertPLPLiquidity(address(usdc), 50_000 * 1e6, "T5: ");
+    assertHLPLiquidity(address(usdc), 50_000 * 1e6, "T5: ");
   }
 
   function _T6Assert() internal {
@@ -695,12 +695,12 @@ contract TC24 is BaseIntTest_WithActions {
     //                   = -2592 + 2592 = 0
     assertMarketAccumFundingFee(wethMarketIndex, 18815.999999999958 * 1e30, 0, "T11: ");
 
-    // And PLP borrowing debt will be increased
-    // PLP borrowing debt = 2592 - (WBTC on funding fee reserve)
+    // And HLP borrowing debt will be increased
+    // HLP borrowing debt = 2592 - (WBTC on funding fee reserve)
     //                    = 2592 - (0.05944 * 20_000)
     //                    = 1403.2
     // Borrowing amount   = 2593 - 1189.8 = 1403.2
-    assertPLPDebt(1403.2 * 1e30, "T11: ");
+    assertHLPDebt(1403.2 * 1e30, "T11: ");
   }
 
   function _T12Assert() internal {
@@ -756,11 +756,11 @@ contract TC24 is BaseIntTest_WithActions {
     //                   = -959.99999999976 + 959.99999999976 = 0
     assertMarketAccumFundingFee(wethMarketIndex, 39328.799999994918 * 1e30, 0, "T13: ");
 
-    // And PLP borrowing debt will be increased
-    // PLP borrowing debt = last debt value + new borrowing amount
+    // And HLP borrowing debt will be increased
+    // HLP borrowing debt = last debt value + new borrowing amount
     //                    = 1403.2 + 959.99999999976 = 2363.19999999976
     //                    = 2363.19999999976
-    assertPLPDebt(2363.19999999976 * 1e30, "T13: ");
+    assertHLPDebt(2363.19999999976 * 1e30, "T13: ");
   }
 
   function _T14Assert() internal {
@@ -785,12 +785,12 @@ contract TC24 is BaseIntTest_WithActions {
     assertMarketAccumFundingFee(wethMarketIndex, 0, 0, "T14: ");
 
     // And Funding fee Reserve must be increased
-    // WBTC amount       = (funding fee value - PLP Debt) / BTC Price
+    // WBTC amount       = (funding fee value - HLP Debt) / BTC Price
     //                   = (39681.599999994918 - 2363.19999999976) / 20_000
     //                   = 1.8659199999997579 BTC
     assertFundingFeeReserve(address(wbtc), 1.86591999 * 1e8, "T14: ");
 
-    // And PLP borrowing debt will be zero after Alice repay debt
-    assertPLPDebt(0, "T14: ");
+    // And HLP borrowing debt will be zero after Alice repay debt
+    assertHLPDebt(0, "T14: ");
   }
 }

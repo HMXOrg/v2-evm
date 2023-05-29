@@ -29,8 +29,8 @@ contract TradeService_FundingFee is TradeService_Base {
       tradeHelper.reloadConfig();
     }
 
-    // Set PLPLiquidity
-    vaultStorage.addPLPLiquidity(configStorage.getPlpTokens()[0], 1000 * 1e18);
+    // Set HLPLiquidity
+    vaultStorage.addHLPLiquidity(configStorage.getHlpTokens()[0], 1000 * 1e18);
 
     // Ignore Borrowing fee on this test
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
@@ -51,11 +51,11 @@ contract TradeService_FundingFee is TradeService_Base {
 
   function testCorrectness_fundingFee() external {
     // Set fundingFee to have enough token amounts to repay funding fee
-    vaultStorage.addFundingFee(configStorage.getPlpTokens()[0], 10 * 1e18);
+    vaultStorage.addFundingFee(configStorage.getHlpTokens()[0], 10 * 1e18);
 
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -108,10 +108,10 @@ contract TradeService_FundingFee is TradeService_Base {
     }
   }
 
-  function testCorrectness_fundingFee_borrowFundingFeeFromPLP() external {
+  function testCorrectness_fundingFee_borrowFundingFeeFromHLP() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -152,7 +152,7 @@ contract TradeService_FundingFee is TradeService_Base {
     vm.warp(block.timestamp + 1);
     {
       assertEq(vaultStorage.traderBalances(bobAddress, address(weth)), 0);
-      assertEq(vaultStorage.plpLiquidityDebtUSDE30(), 0);
+      assertEq(vaultStorage.hlpLiquidityDebtUSDE30(), 0);
 
       tradeService.decreasePosition(BOB, 0, ethMarketIndex, 200_000 * 1e30, address(0), 0);
       IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(0);

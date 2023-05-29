@@ -25,8 +25,8 @@ interface IConfigStorage {
   }
 
   /// @notice perp liquidity provider token config
-  struct PLPTokenConfig {
-    uint256 targetWeight; // percentage of all accepted PLP tokens
+  struct HLPTokenConfig {
+    uint256 targetWeight; // percentage of all accepted HLP tokens
     uint256 bufferLiquidity; // liquidity reserved for swapping, decimal is depends on token
     uint256 maxWeightDiff; // Maximum difference from the target weight in %
     bool accepted; // accepted to provide liquidity
@@ -34,7 +34,7 @@ interface IConfigStorage {
 
   /// @notice collateral token config
   struct CollateralTokenConfig {
-    address settleStrategy; // determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+    address settleStrategy; // determine token will be settled for NON HLP collateral, e.g. aUSDC redeemed as USDC
     uint32 collateralFactorBPS; // token reliability factor to calculate buying power, 1e4 = 100%
     bool accepted; // accepted to deposit as collateral
   }
@@ -65,13 +65,13 @@ interface IConfigStorage {
   }
 
   struct LiquidityConfig {
-    uint256 plpTotalTokenWeight; // % of token Weight (must be 1e18)
-    uint32 plpSafetyBufferBPS; // for PLP deleverage
-    uint32 taxFeeRateBPS; // PLP deposit, withdraw, settle collect when pool weight is imbalances
+    uint256 hlpTotalTokenWeight; // % of token Weight (must be 1e18)
+    uint32 hlpSafetyBufferBPS; // for HLP deleverage
+    uint32 taxFeeRateBPS; // HLP deposit, withdraw, settle collect when pool weight is imbalances
     uint32 flashLoanFeeRateBPS;
-    uint32 maxPLPUtilizationBPS; //% of max utilization
-    uint32 depositFeeRateBPS; // PLP deposit fee rate
-    uint32 withdrawFeeRateBPS; // PLP withdraw fee rate
+    uint32 maxHLPUtilizationBPS; //% of max utilization
+    uint32 depositFeeRateBPS; // HLP deposit fee rate
+    uint32 withdrawFeeRateBPS; // HLP withdraw fee rate
     bool dynamicFeeEnabled; // if disabled, swap, add or remove liquidity will exclude tax fee
     bool enabled; // Circuit breaker on Liquidity
   }
@@ -100,7 +100,7 @@ interface IConfigStorage {
 
   function oracle() external view returns (address);
 
-  function plp() external view returns (address);
+  function hlp() external view returns (address);
 
   function treasury() external view returns (address);
 
@@ -139,7 +139,7 @@ interface IConfigStorage {
 
   function getMarketConfigsLength() external view returns (uint256);
 
-  function getPlpTokens() external view returns (address[] memory);
+  function getHlpTokens() external view returns (address[] memory);
 
   function getAssetConfigByToken(address _token) external view returns (AssetConfig memory);
 
@@ -147,17 +147,17 @@ interface IConfigStorage {
 
   function getAssetConfig(bytes32 _assetId) external view returns (AssetConfig memory);
 
-  function getAssetPlpTokenConfig(bytes32 _assetId) external view returns (PLPTokenConfig memory);
+  function getAssetHlpTokenConfig(bytes32 _assetId) external view returns (HLPTokenConfig memory);
 
-  function getAssetPlpTokenConfigByToken(address _token) external view returns (PLPTokenConfig memory);
+  function getAssetHlpTokenConfigByToken(address _token) external view returns (HLPTokenConfig memory);
 
-  function getPlpAssetIds() external view returns (bytes32[] memory);
+  function getHlpAssetIds() external view returns (bytes32[] memory);
 
   function getTradeServiceHooks() external view returns (address[] memory);
 
   function setMinimumPositionSize(uint256 _minimumPositionSize) external;
 
-  function setPlpAssetId(bytes32[] memory _plpAssetIds) external;
+  function setHlpAssetId(bytes32[] memory _hlpAssetIds) external;
 
   function setLiquidityEnabled(bool _enabled) external;
 
@@ -167,7 +167,7 @@ interface IConfigStorage {
 
   function setOracle(address _oracle) external;
 
-  function setPLP(address _plp) external;
+  function setHLP(address _hlp) external;
 
   function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external;
 
@@ -186,10 +186,10 @@ interface IConfigStorage {
     MarketConfig memory _newConfig
   ) external returns (MarketConfig memory _marketConfig);
 
-  function setPlpTokenConfig(
+  function setHlpTokenConfig(
     address _token,
-    PLPTokenConfig memory _newConfig
-  ) external returns (PLPTokenConfig memory _plpTokenConfig);
+    HLPTokenConfig memory _newConfig
+  ) external returns (HLPTokenConfig memory _hlpTokenConfig);
 
   function setCollateralTokenConfig(
     bytes32 _assetId,
@@ -207,7 +207,7 @@ interface IConfigStorage {
 
   function setSGlp(address _sglp) external;
 
-  function addOrUpdateAcceptedToken(address[] calldata _tokens, PLPTokenConfig[] calldata _configs) external;
+  function addOrUpdateAcceptedToken(address[] calldata _tokens, HLPTokenConfig[] calldata _configs) external;
 
   function addAssetClassConfig(AssetClassConfig calldata _newConfig) external returns (uint256 _index);
 

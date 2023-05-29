@@ -7,7 +7,7 @@ import {
   watchContractEvent,
   WatchContractEventConfig,
   WatchContractEventCallback,
-} from "@wagmi/core"
+} from "@wagmi/core";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BotHandler
@@ -64,7 +64,7 @@ export const botHandlerABI = [
       { name: "token", internalType: "address", type: "address", indexed: false },
       { name: "amount", internalType: "uint256", type: "uint256", indexed: false },
     ],
-    name: "LogInjectTokenToPlpLiquidity",
+    name: "LogInjectTokenToHlpLiquidity",
   },
   {
     type: "event",
@@ -259,7 +259,7 @@ export const botHandlerABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_amount", internalType: "uint256", type: "uint256" },
     ],
-    name: "injectTokenToPlpLiquidity",
+    name: "injectTokenToHlpLiquidity",
     outputs: [],
   },
   {
@@ -376,7 +376,7 @@ export const botHandlerABI = [
     name: "withdrawFundingFeeSurplus",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ConfigStorage
@@ -456,7 +456,7 @@ export const configStorageABI = [
       { name: "_token", internalType: "address", type: "address", indexed: false },
       {
         name: "_config",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -468,7 +468,7 @@ export const configStorageABI = [
       },
       {
         name: "_newConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -479,7 +479,7 @@ export const configStorageABI = [
         indexed: false,
       },
     ],
-    name: "LogAddOrUpdatePLPTokenConfigs",
+    name: "LogAddOrUpdateHLPTokenConfigs",
   },
   {
     type: "event",
@@ -631,11 +631,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -648,11 +648,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -760,10 +760,10 @@ export const configStorageABI = [
     type: "event",
     anonymous: false,
     inputs: [
-      { name: "oldPlp", internalType: "address", type: "address", indexed: true },
-      { name: "newPlp", internalType: "address", type: "address", indexed: false },
+      { name: "oldHlp", internalType: "address", type: "address", indexed: true },
+      { name: "newHlp", internalType: "address", type: "address", indexed: false },
     ],
-    name: "LogSetPLP",
+    name: "LogSetHLP",
   },
   {
     type: "event",
@@ -772,7 +772,7 @@ export const configStorageABI = [
       { name: "token", internalType: "address", type: "address", indexed: false },
       {
         name: "oldConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -784,7 +784,7 @@ export const configStorageABI = [
       },
       {
         name: "newConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -795,7 +795,7 @@ export const configStorageABI = [
         indexed: false,
       },
     ],
-    name: "LogSetPlpTokenConfig",
+    name: "LogSetHlpTokenConfig",
   },
   {
     type: "event",
@@ -963,7 +963,7 @@ export const configStorageABI = [
       { name: "_tokens", internalType: "address[]", type: "address[]" },
       {
         name: "_configs",
-        internalType: "struct IConfigStorage.PLPTokenConfig[]",
+        internalType: "struct IConfigStorage.HLPTokenConfig[]",
         type: "tuple[]",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1017,7 +1017,7 @@ export const configStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "", internalType: "bytes32", type: "bytes32" }],
-    name: "assetPlpTokenConfigs",
+    name: "assetHlpTokenConfigs",
     outputs: [
       { name: "targetWeight", internalType: "uint256", type: "uint256" },
       { name: "bufferLiquidity", internalType: "uint256", type: "uint256" },
@@ -1116,11 +1116,11 @@ export const configStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "_assetId", internalType: "bytes32", type: "bytes32" }],
-    name: "getAssetPlpTokenConfig",
+    name: "getAssetHlpTokenConfig",
     outputs: [
       {
         name: "",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1135,11 +1135,11 @@ export const configStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "_token", internalType: "address", type: "address" }],
-    name: "getAssetPlpTokenConfigByToken",
+    name: "getAssetHlpTokenConfigByToken",
     outputs: [
       {
         name: "",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1207,11 +1207,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -1303,14 +1303,14 @@ export const configStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [],
-    name: "getPlpAssetIds",
+    name: "getHlpAssetIds",
     outputs: [{ name: "", internalType: "bytes32[]", type: "bytes32[]" }],
   },
   {
     stateMutability: "view",
     type: "function",
     inputs: [],
-    name: "getPlpTokens",
+    name: "getHlpTokens",
     outputs: [{ name: "", internalType: "address[]", type: "address[]" }],
   },
   {
@@ -1353,11 +1353,11 @@ export const configStorageABI = [
     inputs: [],
     name: "liquidityConfig",
     outputs: [
-      { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-      { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+      { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+      { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
       { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
       { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-      { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+      { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
       { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
       { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
       { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -1418,14 +1418,14 @@ export const configStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [],
-    name: "plp",
+    name: "hlp",
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
   {
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "", internalType: "uint256", type: "uint256" }],
-    name: "plpAssetIds",
+    name: "hlpAssetIds",
     outputs: [{ name: "", internalType: "bytes32", type: "bytes32" }],
   },
   {
@@ -1577,11 +1577,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -1682,15 +1682,15 @@ export const configStorageABI = [
   {
     stateMutability: "nonpayable",
     type: "function",
-    inputs: [{ name: "_plp", internalType: "address", type: "address" }],
-    name: "setPLP",
+    inputs: [{ name: "_hlp", internalType: "address", type: "address" }],
+    name: "setHLP",
     outputs: [],
   },
   {
     stateMutability: "nonpayable",
     type: "function",
-    inputs: [{ name: "_plpAssetIds", internalType: "bytes32[]", type: "bytes32[]" }],
-    name: "setPlpAssetId",
+    inputs: [{ name: "_hlpAssetIds", internalType: "bytes32[]", type: "bytes32[]" }],
+    name: "setHlpAssetId",
     outputs: [],
   },
   {
@@ -1700,7 +1700,7 @@ export const configStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       {
         name: "_newConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1710,11 +1710,11 @@ export const configStorageABI = [
         ],
       },
     ],
-    name: "setPlpTokenConfig",
+    name: "setHlpTokenConfig",
     outputs: [
       {
-        name: "_plpTokenConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        name: "_hlpTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1888,7 +1888,7 @@ export const configStorageABI = [
     name: "weth",
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CrossMarginHandler
@@ -2328,7 +2328,7 @@ export const crossMarginHandlerABI = [
     ],
   },
   { stateMutability: "payable", type: "receive" },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // EcoPyth
@@ -2525,7 +2525,7 @@ export const ecoPythABI = [
     name: "updatePriceFeeds",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IGmxGlpManager
@@ -2567,7 +2567,7 @@ export const iGmxGlpManagerABI = [
     name: "getAums",
     outputs: [{ name: "", internalType: "uint256[]", type: "uint256[]" }],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LimitTradeHandler
@@ -3179,7 +3179,7 @@ export const limitTradeHandlerABI = [
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
   { stateMutability: "payable", type: "receive" },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LiquidityHandler
@@ -3620,7 +3620,7 @@ export const liquidityHandlerABI = [
     outputs: [],
   },
   { stateMutability: "payable", type: "receive" },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MarketTradeHandler
@@ -3771,7 +3771,7 @@ export const marketTradeHandlerABI = [
     name: "transferOwnership",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // OracleMiddleware
@@ -4046,7 +4046,7 @@ export const oracleMiddlewareABI = [
       { name: "_status", internalType: "uint8", type: "uint8" },
     ],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PerpStorage
@@ -4540,7 +4540,7 @@ export const perpStorageABI = [
     name: "updateMarket",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PythAdapter
@@ -4674,7 +4674,7 @@ export const pythAdapterABI = [
     name: "transferOwnership",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VaultStorage
@@ -4684,7 +4684,7 @@ export const vaultStorageABI = [
   { stateMutability: "nonpayable", type: "constructor", inputs: [] },
   { type: "error", inputs: [], name: "IVaultStorage_Forbidden" },
   { type: "error", inputs: [], name: "IVaultStorage_NotWhiteListed" },
-  { type: "error", inputs: [], name: "IVaultStorage_PLPBalanceRemaining" },
+  { type: "error", inputs: [], name: "IVaultStorage_HLPBalanceRemaining" },
   { type: "error", inputs: [], name: "IVaultStorage_TargetNotContract" },
   { type: "error", inputs: [], name: "IVaultStorage_TraderBalanceRemaining" },
   { type: "error", inputs: [], name: "IVaultStorage_TraderTokenAlreadyExists" },
@@ -4791,14 +4791,14 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_amount", internalType: "uint256", type: "uint256" },
     ],
-    name: "addPLPLiquidity",
+    name: "addHLPLiquidity",
     outputs: [],
   },
   {
     stateMutability: "nonpayable",
     type: "function",
     inputs: [{ name: "_value", internalType: "uint256", type: "uint256" }],
-    name: "addPlpLiquidityDebtUSDE30",
+    name: "addHlpLiquidityDebtUSDE30",
     outputs: [],
   },
   {
@@ -4820,7 +4820,7 @@ export const vaultStorageABI = [
       { name: "_fundingFeeAmount", internalType: "uint256", type: "uint256" },
       { name: "_fundingFeeValue", internalType: "uint256", type: "uint256" },
     ],
-    name: "borrowFundingFeeFromPlpToTrader",
+    name: "borrowFundingFeeFromHlpToTrader",
     outputs: [],
   },
   {
@@ -4839,7 +4839,7 @@ export const vaultStorageABI = [
       { name: "_convertAmount", internalType: "uint256", type: "uint256" },
       { name: "_targetAmount", internalType: "uint256", type: "uint256" },
     ],
-    name: "convertFundingFeeReserveWithPLP",
+    name: "convertFundingFeeReserveWithHLP",
     outputs: [],
   },
   {
@@ -4953,7 +4953,7 @@ export const vaultStorageABI = [
       { name: "_trader", internalType: "address", type: "address" },
       { name: "_token", internalType: "address", type: "address" },
       { name: "_devFeeAmount", internalType: "uint256", type: "uint256" },
-      { name: "_plpFeeAmount", internalType: "uint256", type: "uint256" },
+      { name: "_hlpFeeAmount", internalType: "uint256", type: "uint256" },
     ],
     name: "payBorrowingFee",
     outputs: [],
@@ -4977,7 +4977,7 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_fundingFeeAmount", internalType: "uint256", type: "uint256" },
     ],
-    name: "payFundingFeeFromPlpToTrader",
+    name: "payFundingFeeFromHlpToTrader",
     outputs: [],
   },
   {
@@ -4999,7 +4999,7 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_fundingFeeAmount", internalType: "uint256", type: "uint256" },
     ],
-    name: "payFundingFeeFromTraderToPlp",
+    name: "payFundingFeeFromTraderToHlp",
     outputs: [],
   },
   {
@@ -5010,7 +5010,7 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_amount", internalType: "uint256", type: "uint256" },
     ],
-    name: "payPlp",
+    name: "payHlp",
     outputs: [],
   },
   {
@@ -5041,14 +5041,14 @@ export const vaultStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "", internalType: "address", type: "address" }],
-    name: "plpLiquidity",
+    name: "hlpLiquidity",
     outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
   {
     stateMutability: "view",
     type: "function",
     inputs: [],
-    name: "plpLiquidityDebtUSDE30",
+    name: "hlpLiquidityDebtUSDE30",
     outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
   {
@@ -5093,14 +5093,14 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_amount", internalType: "uint256", type: "uint256" },
     ],
-    name: "removePLPLiquidity",
+    name: "removeHLPLiquidity",
     outputs: [],
   },
   {
     stateMutability: "nonpayable",
     type: "function",
     inputs: [{ name: "_value", internalType: "uint256", type: "uint256" }],
-    name: "removePlpLiquidityDebtUSDE30",
+    name: "removeHlpLiquidityDebtUSDE30",
     outputs: [],
   },
   { stateMutability: "nonpayable", type: "function", inputs: [], name: "renounceOwnership", outputs: [] },
@@ -5113,7 +5113,7 @@ export const vaultStorageABI = [
       { name: "_fundingFeeAmount", internalType: "uint256", type: "uint256" },
       { name: "_fundingFeeValue", internalType: "uint256", type: "uint256" },
     ],
-    name: "repayFundingFeeDebtFromTraderToPlp",
+    name: "repayFundingFeeDebtFromTraderToHlp",
     outputs: [],
   },
   {
@@ -5285,10 +5285,10 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_fundingFeeAmount", internalType: "uint256", type: "uint256" },
     ],
-    name: "withdrawSurplusFromFundingFeeReserveToPLP",
+    name: "withdrawSurplusFromFundingFeeReserveToHLP",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Core
@@ -5298,7 +5298,7 @@ export const vaultStorageABI = [
  * Wraps __{@link getContract}__ with `abi` set to __{@link botHandlerABI}__.
  */
 export function getBotHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: botHandlerABI, ...config })
+  return getContract({ abi: botHandlerABI, ...config });
 }
 
 /**
@@ -5306,9 +5306,9 @@ export function getBotHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readBotHandler<
   TAbi extends readonly unknown[] = typeof botHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: botHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: botHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5316,19 +5316,19 @@ export function readBotHandler<
  */
 export function watchBotHandlerEvent<
   TAbi extends readonly unknown[] = typeof botHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: botHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent({ abi: botHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback);
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link configStorageABI}__.
  */
 export function getConfigStorage(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: configStorageABI, ...config })
+  return getContract({ abi: configStorageABI, ...config });
 }
 
 /**
@@ -5336,9 +5336,9 @@ export function getConfigStorage(config: Omit<GetContractArgs, "abi">) {
  */
 export function readConfigStorage<
   TAbi extends readonly unknown[] = typeof configStorageABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: configStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: configStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5346,22 +5346,22 @@ export function readConfigStorage<
  */
 export function watchConfigStorageEvent<
   TAbi extends readonly unknown[] = typeof configStorageABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: configStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link crossMarginHandlerABI}__.
  */
 export function getCrossMarginHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: crossMarginHandlerABI, ...config })
+  return getContract({ abi: crossMarginHandlerABI, ...config });
 }
 
 /**
@@ -5369,9 +5369,9 @@ export function getCrossMarginHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readCrossMarginHandler<
   TAbi extends readonly unknown[] = typeof crossMarginHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: crossMarginHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: crossMarginHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5379,31 +5379,31 @@ export function readCrossMarginHandler<
  */
 export function watchCrossMarginHandlerEvent<
   TAbi extends readonly unknown[] = typeof crossMarginHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: crossMarginHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link ecoPythABI}__.
  */
 export function getEcoPyth(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: ecoPythABI, ...config })
+  return getContract({ abi: ecoPythABI, ...config });
 }
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link ecoPythABI}__.
  */
 export function readEcoPyth<TAbi extends readonly unknown[] = typeof ecoPythABI, TFunctionName extends string = string>(
-  config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">,
+  config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">
 ) {
-  return readContract({ abi: ecoPythABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: ecoPythABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5411,19 +5411,19 @@ export function readEcoPyth<TAbi extends readonly unknown[] = typeof ecoPythABI,
  */
 export function watchEcoPythEvent<
   TAbi extends readonly unknown[] = typeof ecoPythABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: ecoPythABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent({ abi: ecoPythABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback);
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link iGmxGlpManagerABI}__.
  */
 export function getIGmxGlpManager(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: iGmxGlpManagerABI, ...config })
+  return getContract({ abi: iGmxGlpManagerABI, ...config });
 }
 
 /**
@@ -5431,16 +5431,16 @@ export function getIGmxGlpManager(config: Omit<GetContractArgs, "abi">) {
  */
 export function readIGmxGlpManager<
   TAbi extends readonly unknown[] = typeof iGmxGlpManagerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: iGmxGlpManagerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: iGmxGlpManagerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link limitTradeHandlerABI}__.
  */
 export function getLimitTradeHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: limitTradeHandlerABI, ...config })
+  return getContract({ abi: limitTradeHandlerABI, ...config });
 }
 
 /**
@@ -5448,9 +5448,9 @@ export function getLimitTradeHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readLimitTradeHandler<
   TAbi extends readonly unknown[] = typeof limitTradeHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: limitTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: limitTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5458,22 +5458,22 @@ export function readLimitTradeHandler<
  */
 export function watchLimitTradeHandlerEvent<
   TAbi extends readonly unknown[] = typeof limitTradeHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: limitTradeHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link liquidityHandlerABI}__.
  */
 export function getLiquidityHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: liquidityHandlerABI, ...config })
+  return getContract({ abi: liquidityHandlerABI, ...config });
 }
 
 /**
@@ -5481,9 +5481,9 @@ export function getLiquidityHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readLiquidityHandler<
   TAbi extends readonly unknown[] = typeof liquidityHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: liquidityHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: liquidityHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5491,22 +5491,22 @@ export function readLiquidityHandler<
  */
 export function watchLiquidityHandlerEvent<
   TAbi extends readonly unknown[] = typeof liquidityHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: liquidityHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link marketTradeHandlerABI}__.
  */
 export function getMarketTradeHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: marketTradeHandlerABI, ...config })
+  return getContract({ abi: marketTradeHandlerABI, ...config });
 }
 
 /**
@@ -5514,9 +5514,9 @@ export function getMarketTradeHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readMarketTradeHandler<
   TAbi extends readonly unknown[] = typeof marketTradeHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: marketTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: marketTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5524,22 +5524,22 @@ export function readMarketTradeHandler<
  */
 export function watchMarketTradeHandlerEvent<
   TAbi extends readonly unknown[] = typeof marketTradeHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: marketTradeHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link oracleMiddlewareABI}__.
  */
 export function getOracleMiddleware(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: oracleMiddlewareABI, ...config })
+  return getContract({ abi: oracleMiddlewareABI, ...config });
 }
 
 /**
@@ -5547,9 +5547,9 @@ export function getOracleMiddleware(config: Omit<GetContractArgs, "abi">) {
  */
 export function readOracleMiddleware<
   TAbi extends readonly unknown[] = typeof oracleMiddlewareABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: oracleMiddlewareABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: oracleMiddlewareABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5557,22 +5557,22 @@ export function readOracleMiddleware<
  */
 export function watchOracleMiddlewareEvent<
   TAbi extends readonly unknown[] = typeof oracleMiddlewareABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: oracleMiddlewareABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link perpStorageABI}__.
  */
 export function getPerpStorage(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: perpStorageABI, ...config })
+  return getContract({ abi: perpStorageABI, ...config });
 }
 
 /**
@@ -5580,9 +5580,9 @@ export function getPerpStorage(config: Omit<GetContractArgs, "abi">) {
  */
 export function readPerpStorage<
   TAbi extends readonly unknown[] = typeof perpStorageABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: perpStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: perpStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5590,19 +5590,19 @@ export function readPerpStorage<
  */
 export function watchPerpStorageEvent<
   TAbi extends readonly unknown[] = typeof perpStorageABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: perpStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent({ abi: perpStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback);
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link pythAdapterABI}__.
  */
 export function getPythAdapter(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: pythAdapterABI, ...config })
+  return getContract({ abi: pythAdapterABI, ...config });
 }
 
 /**
@@ -5610,9 +5610,9 @@ export function getPythAdapter(config: Omit<GetContractArgs, "abi">) {
  */
 export function readPythAdapter<
   TAbi extends readonly unknown[] = typeof pythAdapterABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: pythAdapterABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: pythAdapterABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5620,19 +5620,19 @@ export function readPythAdapter<
  */
 export function watchPythAdapterEvent<
   TAbi extends readonly unknown[] = typeof pythAdapterABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: pythAdapterABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent({ abi: pythAdapterABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback);
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link vaultStorageABI}__.
  */
 export function getVaultStorage(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: vaultStorageABI, ...config })
+  return getContract({ abi: vaultStorageABI, ...config });
 }
 
 /**
@@ -5640,9 +5640,9 @@ export function getVaultStorage(config: Omit<GetContractArgs, "abi">) {
  */
 export function readVaultStorage<
   TAbi extends readonly unknown[] = typeof vaultStorageABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: vaultStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: vaultStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5650,10 +5650,13 @@ export function readVaultStorage<
  */
 export function watchVaultStorageEvent<
   TAbi extends readonly unknown[] = typeof vaultStorageABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: vaultStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent(
+    { abi: vaultStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
+    callback
+  );
 }

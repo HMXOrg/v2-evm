@@ -189,9 +189,9 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount, _receiver);
   }
 
-  /// @notice Check funding fee surplus and transfer to PLP
+  /// @notice Check funding fee surplus and transfer to HLP
   /// @dev Check if value on funding fee reserve have exceed balance for paying to traders
-  ///      - If yes means exceed value are the surplus for platform and can be booked to PLP
+  ///      - If yes means exceed value are the surplus for platform and can be booked to HLP
   function withdrawFundingFeeSurplus(address _stableToken) external nonReentrant onlyWhitelistedExecutor {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
@@ -228,7 +228,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       revert ICrossMarginHandler_NoFundingFeeSurplus();
 
     _vars.fundingFeeSurplusValue = _vars.totalFundingFeeReserveValueE30 - _vars.fundingFeeBookValue;
-    // Transfer surplus amount to PLP
+    // Transfer surplus amount to HLP
     {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _configStorage,
@@ -238,7 +238,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         _stableToken
       );
 
-      _vaultStorage.withdrawSurplusFromFundingFeeReserveToPLP(_stableToken, _repayAmount);
+      _vaultStorage.withdrawSurplusFromFundingFeeReserveToHLP(_stableToken, _repayAmount);
       _vars.fundingFeeSurplusValue -= _repayValue;
     }
     // If fee cannot be covered, revert.

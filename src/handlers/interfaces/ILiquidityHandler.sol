@@ -68,8 +68,8 @@ interface ILiquidityHandler {
   function executeOrder(
     uint256 _endIndex,
     address payable _feeReceiver,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
+    bytes32[] calldata _priceData,
+    bytes32[] calldata _publishTimeData,
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external;
@@ -82,7 +82,7 @@ interface ILiquidityHandler {
 
   function setOrderExecutor(address _executor, bool _isOk) external;
 
-  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256);
+  function executeLiquidity(LiquidityOrder calldata _order) external returns (uint256);
 
   function getActiveLiquidityOrders(
     uint256 _limit,

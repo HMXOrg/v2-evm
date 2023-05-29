@@ -218,7 +218,8 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Get funding Fee LONG & SHORT on each market to find positive values
     // positive value mean how much protocol book funding fee value that will be paid to trader
     // Loop through all markets to sum funding fee on LONG and SHORT sides
-    for (uint256 i = 0; i < _configStorage.getMarketConfigsLength(); ) {
+    uint256 len = _configStorage.getMarketConfigsLength();
+    for (uint256 i = 0; i < len; ) {
       PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
       if (_market.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);

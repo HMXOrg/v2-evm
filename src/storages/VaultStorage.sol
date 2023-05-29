@@ -492,7 +492,8 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   function _validateAddTraderToken(address _trader, address _token) private view {
     address[] memory traderToken = traderTokens[_trader];
 
-    for (uint256 i; i < traderToken.length; ) {
+    uint256 len = traderToken.length;
+    for (uint256 i; i < len; ) {
       if (traderToken[i] == _token) revert IVaultStorage_TraderTokenAlreadyExists();
       unchecked {
         i++;

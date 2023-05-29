@@ -154,7 +154,7 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     emit LogWithdraw(epochTimestamp, to, amount);
   }
 
-  function harvest(uint256 startEpochTimestamp, uint256 noOfEpochs, address[] memory _rewarders) external {
+  function harvest(uint256 startEpochTimestamp, uint256 noOfEpochs, address[] calldata _rewarders) external {
     // SLOAD
     uint256 _epochLength = epochLength;
     uint256 epochTimestamp = (startEpochTimestamp / _epochLength) * _epochLength;
@@ -177,7 +177,7 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     address user,
     uint256 startEpochTimestamp,
     uint256 noOfEpochs,
-    address[] memory _rewarders
+    address[] calldata _rewarders
   ) external {
     // SLOAD
     uint256 _epochLength = epochLength;
@@ -204,7 +204,7 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     uint256 epochTimestamp,
     address user,
     address receiver,
-    address[] memory _rewarders
+    address[] calldata _rewarders
   ) internal {
     // Floor down the timestamp, in case it is incorrectly formatted
     epochTimestamp = (epochTimestamp / _epochLength) * _epochLength;

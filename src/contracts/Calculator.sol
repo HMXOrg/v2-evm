@@ -695,7 +695,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     address[] memory _traderTokens = VaultStorage(vaultStorage).getTraderTokens(_subAccount);
 
     // Loop through list of current depositing tokens
-    for (uint256 i; i < _traderTokens.length; ) {
+    uint256 len = _traderTokens.length;
+    for (uint256 i; i < len; ) {
       address _token = _traderTokens[i];
       ConfigStorage.CollateralTokenConfig memory _collateralTokenConfig = ConfigStorage(configStorage)
         .getCollateralTokenConfigs(_token);
@@ -714,7 +715,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       bytes32 _tokenAssetId = ConfigStorage(configStorage).tokenAssetIds(_token);
 
       if (_injectedAssetIds.length > 0) {
-        for (uint256 j; j < _injectedAssetIds.length; ) {
+        uint256 len = _injectedAssetIds.length;
+        for (uint256 j; j < len; ) {
           if (_injectedAssetIds[j] == _tokenAssetId) {
             _priceE30 = _injectedPrices[j];
             // stop inside looping after found price
@@ -762,7 +764,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     // Loop through all trader's positions
-    for (uint256 i; i < _traderPositions.length; ) {
+    uint256 len = _traderPositions.length;
+    for (uint256 i; i < len; ) {
       PerpStorage.Position memory _position = _traderPositions[i];
 
       uint256 _size;

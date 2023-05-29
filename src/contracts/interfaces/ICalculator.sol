@@ -83,6 +83,12 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (int256 _equityValueE30);
 
+  function getEquityWithInjectedPrices(
+    address _subAccount,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
+  ) external view returns (int256 _equityValueE30);
+
   function getUnrealizedPnlAndFee(
     address _subAccount,
     uint256 _limitPriceE30,

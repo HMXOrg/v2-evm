@@ -889,7 +889,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
     vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
 
-    (uint256 _currentPrice, , ) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+    (uint256 _currentPrice, , ) = vars.oracle.unsafeGetLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),

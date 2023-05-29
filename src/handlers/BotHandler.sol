@@ -147,7 +147,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     }
 
     // get adaptive price
-    (uint256 _adaptivePriceE30, ) = _oracle.getLatestAdaptivePrice(
+    (uint256 _adaptivePriceE30, ) = _oracle.unsafeGetLatestAdaptivePrice(
       _marketConfig.assetId,
       true,
       (int(_market.longPositionSize) - int(_market.shortPositionSize)),

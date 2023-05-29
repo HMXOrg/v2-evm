@@ -258,7 +258,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 amountAfterFee = _collectFee(_token, _lpProvider, _price, _amount, _feeBps, LiquidityAction.ADD_LIQUIDITY);
 
     // 2. Calculate mint amount
-    _tokenValueUSDAfterFee = _calculator.convertTokenDecimals(
+    _tokenValueUSDAfterFee = _convertTokenDecimals(
       ConfigStorage(configStorage).getAssetTokenDecimal(_token),
       USD_DECIMALS,
       (amountAfterFee * _price) / PRICE_PRECISION
@@ -297,7 +297,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     );
 
     // 2. Calculate token amount out
-    uint256 _amountOut = _calculator.convertTokenDecimals(
+    uint256 _amountOut = _convertTokenDecimals(
       USD_DECIMALS,
       _configStorage.getAssetTokenDecimal(_tokenOut),
       (_lpUsdValueE30 * PRICE_PRECISION) / _maxPrice
@@ -332,7 +332,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     Calculator _calculator = Calculator(_configStorage.calculator());
 
-    uint256 tokenUSDValueE30 = _calculator.convertTokenDecimals(
+    uint256 tokenUSDValueE30 = _convertTokenDecimals(
       _configStorage.getAssetTokenDecimal(_token),
       USD_DECIMALS,
       (_amount * _price) / PRICE_PRECISION // tokenValueInDecimal = amount * priceE30 / 1e30
@@ -436,6 +436,14 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     if (_amount == 0) {
       revert LiquidityService_BadAmount();
     }
+  }
+
+  function _convertTokenDecimals(
+    uint256 fromTokenDecimals,
+    uint256 toTokenDecimals,
+    uint256 amount
+  ) internal pure returns (uint256) {
+    return (amount * 10 ** toTokenDecimals) / 10 ** fromTokenDecimals;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

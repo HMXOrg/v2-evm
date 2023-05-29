@@ -294,7 +294,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _limitPriceE30
       );
 
-      (_vars.closePriceE30, , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (_vars.closePriceE30, ) = _vars.oracle.getLatestAdaptivePrice(
         _marketConfig.assetId,
         _vars.isLong, // if current position is SHORT position, then we use max price
         (int(_market.longPositionSize) - int(_market.shortPositionSize)),

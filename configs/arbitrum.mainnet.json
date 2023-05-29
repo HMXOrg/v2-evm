@@ -51,5 +51,9 @@
     "tradingStaking": "0x5381e29eEDd851e8700c1886d8B956D12200e6E9",
     "tlc": "0xd2476A7bCEfBd2b4fF1676CaCb04bab49367c014"
   },
-  "calculator": "0xfc51C8c673C27e1b3D89688ef46D706A77CA28DB"
+  "calculator": "0xfc51C8c673C27e1b3D89688ef46D706A77CA28DB",
+  "accountAbstraction": {
+    "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+    "factory": ""
+  }
 }

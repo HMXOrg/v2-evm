@@ -276,11 +276,13 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
+    uint256 _nextExecutionOrderIndex = nextExecutionOrderIndex;
+
     // Get the number of liquidity orders
     uint256 _orderLength = liquidityOrders.length;
 
     // Ensure there are orders to execute
-    if (nextExecutionOrderIndex == _orderLength) revert ILiquidityHandler_NoOrder();
+    if (_nextExecutionOrderIndex == _orderLength) revert ILiquidityHandler_NoOrder();
 
     // Set the end index to the latest order index if it exceeds the number of orders
     uint256 _latestOrderIndex = _orderLength - 1;
@@ -289,8 +291,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     }
 
     // split execution into chunk for preventing exceed block gas limit
-    if (_endIndex - nextExecutionOrderIndex > maxExecutionChuck)
-      _endIndex = nextExecutionOrderIndex + maxExecutionChuck;
+    if (_endIndex - _nextExecutionOrderIndex > maxExecutionChuck)
+      _endIndex = _nextExecutionOrderIndex + maxExecutionChuck;
 
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
@@ -300,7 +302,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _totalFeeReceiver;
     uint256 _executionFee;
 
-    for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
+    for (uint256 i = _nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = liquidityOrders[i];
       if (_order.amount > 0) {
         _executionFee = _order.executionFee;

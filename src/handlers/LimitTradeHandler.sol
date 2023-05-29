@@ -138,7 +138,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   IEcoPyth public pyth;
   uint256 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
   uint256 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on order stale
-  bool private isExecuting; // order is executing (prevent direct call executeLimitOrder()
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
@@ -386,10 +385,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     }
 
     // try executing order
-    isExecuting = true;
     try this.executeLimitOrder(vars) {
       // Execution succeeded
-      isExecuting = false;
     } catch Error(string memory errMsg) {
       _handleOrderFail(vars, errMsg);
     } catch Panic(uint /*errorCode*/) {
@@ -400,9 +397,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   }
 
   function _handleOrderFail(ExecuteOrderVars memory vars, string memory errMsg) internal {
-    // Execution failed
-    isExecuting = false;
-
     // Handle the error depending on the type of order
     if (vars.isMarketOrder) {
       // Cancel market order and transfer execution fee to executor
@@ -430,7 +424,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   function executeLimitOrder(ExecuteOrderVars memory vars) external {
     // if not in executing state, then revert
-    if (!isExecuting) revert ILimitTradeHandler_NotExecutionState();
+    if (msg.sender != address(this)) revert ILimitTradeHandler_NotExecutionState();
 
     // Remove this executed order from the list
     _removeOrder(vars.order, vars.subAccount, vars.orderIndex);

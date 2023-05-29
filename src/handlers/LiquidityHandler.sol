@@ -83,7 +83,6 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   address public pyth; //pyth
   uint256 public nextExecutionOrderIndex; // the index of the next liquidity order that should be executed
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
-  bool private isExecuting; // order is executing (prevent direct call executeLiquidity()
 
   LiquidityOrder[] public liquidityOrders; // all liquidityOrder
   mapping(address => bool) public orderExecutors; // address -> whitelist executors
@@ -290,8 +289,6 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _order = liquidityOrders[i];
       if (_order.amount > 0) {
         _executionFee = _order.executionFee;
-        // Set the flag to indicate that orders are currently being executed
-        isExecuting = true;
 
         try this.executeLiquidity(_order) returns (uint256 actualOut) {
           emit LogExecuteLiquidityOrder(
@@ -320,8 +317,6 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         // assign exec time
         _order.executedTimestamp = uint48(block.timestamp);
 
-        isExecuting = false;
-
         _totalFeeReceiver += _executionFee;
 
         // save to executed order first
@@ -345,7 +340,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @param _order LiquidityOrder struct representing the order to execute.
   function executeLiquidity(LiquidityOrder memory _order) external returns (uint256 _amountOut) {
     // if not in executing state, then revert
-    if (!isExecuting) revert ILiquidityHandler_NotExecutionState();
+    if (msg.sender != address(this)) revert ILiquidityHandler_NotExecutionState();
 
     if (_order.isAdd) {
       IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);

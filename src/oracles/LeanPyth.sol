@@ -57,7 +57,8 @@ contract LeanPyth is OwnableUpgradeable, ILeanPyth {
     if (msg.value > 0) revert LeanPyth_ExpectZeroFee();
 
     // Loop through all of the price data
-    for (uint i = 0; i < updateData.length; ) {
+    uint256 len = updateData.length;
+    for (uint i = 0; i < len; ) {
       _updatePriceBatchFromVm(updateData[i]);
 
       unchecked {

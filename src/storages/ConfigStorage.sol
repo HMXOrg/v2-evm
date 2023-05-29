@@ -175,7 +175,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     address[] memory _result = new address[](plpAssetIds.length);
     bytes32[] memory _plpAssetIds = plpAssetIds;
 
-    for (uint256 _i = 0; _i < _plpAssetIds.length; ) {
+    uint256 len = _plpAssetIds.length;
+    for (uint256 _i = 0; _i < len; ) {
       _result[_i] = assetConfigs[_plpAssetIds[_i]].tokenAddress;
       unchecked {
         ++_i;

@@ -597,25 +597,16 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       _market = _var.perpStorage.getMarketByIndex(_var.position.marketIndex);
 
       if (_injectedAssetIds.length > 0) {
-        for (uint256 j; j < _injectedAssetIds.length; ) {
-          if (_injectedAssetIds[j] == _marketConfig.assetId) {
-            _var.priceE30 = _injectedPrices[j];
-            (_var.priceE30, ) = _var.oracle.unsafeGetLatestAdaptivePrice(
-              _marketConfig.assetId,
-              !_var.isLong, // if current position is SHORT position, then we use max price
-              (int(_market.longPositionSize) - int(_market.shortPositionSize)),
-              -_var.position.positionSizeE30,
-              _marketConfig.fundingRate.maxSkewScaleUSD,
-              _var.priceE30
-            );
+        _var.priceE30 = _getPriceFromInjectedData(_marketConfig.assetId, _injectedAssetIds, _injectedPrices);
+        (_var.priceE30, ) = _var.oracle.unsafeGetLatestAdaptivePrice(
+          _marketConfig.assetId,
+          !_var.isLong, // if current position is SHORT position, then we use max price
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+          -_var.position.positionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          _var.priceE30
+        );
 
-            // stop inside looping after found price
-            break;
-          }
-          unchecked {
-            j++;
-          }
-        }
         if (_var.priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
         // Check to overwrite price
@@ -741,17 +732,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       _var.tokenAssetId = _var.configStorage.tokenAssetIds(_token);
 
       if (_injectedAssetIds.length > 0) {
-        uint256 injectedAssetIdLen = _injectedAssetIds.length;
-        for (uint256 j; j < injectedAssetIdLen; ) {
-          if (_injectedAssetIds[j] == _var.tokenAssetId) {
-            _var.priceE30 = _injectedPrices[j];
-            // stop inside looping after found price
-            break;
-          }
-          unchecked {
-            j++;
-          }
-        }
+        _var.priceE30 = _getPriceFromInjectedData(_var.tokenAssetId, _injectedAssetIds, _injectedPrices);
         if (_var.priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
         // Get token asset id from ConfigStorage
@@ -770,7 +751,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       _collateralValueE30 += (_var.amount * _var.priceE30 * _var.collateralFactorBPS) / ((10 ** _var.decimals) * BPS);
 
       unchecked {
-        i++;
+        ++i;
       }
     }
 
@@ -805,7 +786,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       _imrValueE30 += _calculatePositionIMR(_size, _position.marketIndex, _configStorage);
 
       unchecked {
-        i++;
+        ++i;
       }
     }
 
@@ -839,7 +820,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       _mmrValueE30 += _calculatePositionMMR(_size, _position.marketIndex, _configStorage);
 
       unchecked {
-        i++;
+        ++i;
       }
     }
 
@@ -1195,6 +1176,25 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     int256 pnlFromDirection = isLong ? -(sumSize.toInt256()) : sumSize.toInt256();
     int256 result = pnlFromPositions + pnlFromSkew + pnlFromVolatility.toInt256() - pnlFromDirection;
     return isLong ? result : -result;
+  }
+
+  function _getPriceFromInjectedData(
+    bytes32 _tokenAssetId,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
+  ) internal pure returns (uint256 _priceE30) {
+    uint256 injectedAssetIdLen = _injectedAssetIds.length;
+    for (uint256 i; i < injectedAssetIdLen; ) {
+      if (_injectedAssetIds[i] == _tokenAssetId) {
+        _priceE30 = _injectedPrices[i];
+        // stop inside looping after found price
+        break;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+    return _priceE30;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

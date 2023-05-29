@@ -314,7 +314,8 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(proxyAdmin),
       address(crossMarginService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      address(gmxRewardRouterV2Address)
     );
   }
 

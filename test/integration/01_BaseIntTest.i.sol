@@ -267,7 +267,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(proxyAdmin),
       address(crossMarginService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      address(gmxRewardRouterV2)
     );
 
     limitTradeHandler = Deployer.deployLimitTradeHandler(

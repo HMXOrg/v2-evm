@@ -69,7 +69,8 @@ contract CrossMarginHandler_Base is BaseTest {
       address(proxyAdmin),
       address(crossMarginService),
       address(ecoPyth),
-      executionOrderFee
+      executionOrderFee,
+      address(0)
     );
 
     ecoPyth.setUpdater(address(crossMarginHandler), true);

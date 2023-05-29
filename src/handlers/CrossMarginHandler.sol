@@ -15,6 +15,8 @@ import { IWNative } from "../interfaces/IWNative.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
+import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 
 /// @title CrossMarginHandler
 /// @notice This contract handles the deposit and withdrawal of collateral tokens for the Cross Margin Trading module.
@@ -84,12 +86,18 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   WithdrawOrder[] public withdrawOrders; // all withdrawOrder
   mapping(address => WithdrawOrder[]) public subAccountExecutedWithdrawOrders; // subAccount -> executed orders
   mapping(address => bool) public orderExecutors; //address -> flag to execute
+  address public gmxRewardRouter;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _crossMarginService Address of the CrossMarginService contract.
   /// @param _pyth Address of the Pyth contract.
   /// @param _minExecutionOrderFee Minimum execution fee for a withdrawal order.
-  function initialize(address _crossMarginService, address _pyth, uint256 _minExecutionOrderFee) external initializer {
+  function initialize(
+    address _crossMarginService,
+    address _pyth,
+    uint256 _minExecutionOrderFee,
+    address _gmxRewardRouter
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
@@ -100,6 +108,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     crossMarginService = _crossMarginService;
     pyth = _pyth;
     minExecutionOrderFee = _minExecutionOrderFee;
+    gmxRewardRouter = _gmxRewardRouter;
   }
 
   function getActiveWithdrawOrders(
@@ -480,6 +489,36 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   ) external nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _amountOut) {
     return
       CrossMarginService(crossMarginService).convertSGlpCollateral(msg.sender, _subAccountId, _tokenOut, _amountIn);
+  }
+
+  function depositCollateralAndConvertToGLP(
+    uint8 _subAccountId,
+    address _token,
+    uint256 _amount,
+    bool _shouldWrap,
+    uint256 _minGlp
+  ) external payable nonReentrant {
+    // SLOAD
+    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+    IGmxRewardRouterV2 rewardRouter = IGmxRewardRouterV2(gmxRewardRouter);
+
+    uint256 glpAmount;
+    if (!_shouldWrap) {
+      // Convert _token into GLP
+      glpAmount = rewardRouter.mintAndStakeGlp(_token, _amount, 0, _minGlp);
+    } else {
+      // Convert ETH into GLP
+      glpAmount = rewardRouter.mintAndStakeGlpETH(0, _minGlp);
+    }
+
+    // Transfer GLP to VaultStorage
+    ERC20Upgradeable(address(ConvertedGlpStrategy(_crossMarginService.convertedSglpStrategy()).sglp())).safeTransfer(
+      _crossMarginService.vaultStorage(),
+      _amount
+    );
+
+    // Call service to deposit collateral
+    _crossMarginService.depositCollateral(msg.sender, _subAccountId, _token, _amount);
   }
 
   /**

@@ -166,14 +166,16 @@ library Deployer {
     address _proxyAdmin,
     address _crossMarginService,
     address _pyth,
-    uint256 _executionOrderFee
+    uint256 _executionOrderFee,
+    address _gmxRewardRouter
   ) internal returns (ICrossMarginHandler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/CrossMarginHandler.sol/CrossMarginHandler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,uint256)")),
+      bytes4(keccak256("initialize(address,address,uint256,address)")),
       _crossMarginService,
       _pyth,
-      _executionOrderFee
+      _executionOrderFee,
+      _gmxRewardRouter
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ICrossMarginHandler(payable(_proxy));

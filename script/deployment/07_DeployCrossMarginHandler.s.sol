@@ -19,9 +19,16 @@ contract DeployCrossMarginHandler is ConfigJsonRepo {
     address crossMarginServiceAddress = getJsonAddress(".services.crossMargin");
     uint256 minExecutionFee = 30;
     address proxyAdmin = getJsonAddress(".proxyAdmin");
+    address gmxRewardRouter = getJsonAddress(".yieldSources.gmx.rewardRouterV2");
 
     address crossMarginHandlerAddress = address(
-      Deployer.deployCrossMarginHandler(address(proxyAdmin), crossMarginServiceAddress, pythAddress, minExecutionFee)
+      Deployer.deployCrossMarginHandler(
+        address(proxyAdmin),
+        crossMarginServiceAddress,
+        pythAddress,
+        minExecutionFee,
+        gmxRewardRouter
+      )
     );
 
     vm.stopBroadcast();

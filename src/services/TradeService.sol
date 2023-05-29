@@ -384,10 +384,14 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     {
       // calculate the initial margin required for the new position
-      uint256 _imr = (_vars.absSizeDelta * _marketConfig.initialMarginFractionBPS) / BPS;
-
+      // uint256 _imr = (_vars.absSizeDelta * _marketConfig.initialMarginFractionBPS) / BPS;
       // calculate the maximum amount of reserve required for the new position
-      uint256 _maxReserve = (_imr * _marketConfig.maxProfitRateBPS) / BPS;
+      // uint256 _maxReserve = (_imr * _marketConfig.maxProfitRateBPS) / BPS;
+      // Division after multiplication:
+      uint256 _maxReserve = (_vars.absSizeDelta *
+        _marketConfig.initialMarginFractionBPS *
+        _marketConfig.maxProfitRateBPS) / (BPS * BPS);
+
       // increase the reserved amount by the maximum reserve required for the new position
       _increaseReserved(_marketConfig.assetClass, _maxReserve);
       _vars.position.reserveValueE30 += _maxReserve;

@@ -600,7 +600,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         for (uint256 j; j < _injectedAssetIds.length; ) {
           if (_injectedAssetIds[j] == _marketConfig.assetId) {
             _var.priceE30 = _injectedPrices[j];
-            (_var.priceE30, , ) = _var.oracle.getLatestAdaptivePriceWithMarketStatus(
+            (_var.priceE30, ) = _var.oracle.unsafeGetLatestAdaptivePrice(
               _marketConfig.assetId,
               !_var.isLong, // if current position is SHORT position, then we use max price
               (int(_market.longPositionSize) - int(_market.shortPositionSize)),
@@ -622,7 +622,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
           _var.priceE30 = _limitPriceE30;
         } else {
-          (_var.priceE30, , ) = _var.oracle.getLatestAdaptivePriceWithMarketStatus(
+          (_var.priceE30, ) = _var.oracle.getLatestAdaptivePrice(
             _marketConfig.assetId,
             !_var.isLong, // if current position is SHORT position, then we use max price
             (int(_market.longPositionSize) - int(_market.shortPositionSize)),
@@ -754,17 +754,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         }
         if (_var.priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
-<<<<<<< HEAD
         // Get token asset id from ConfigStorage
         if (_var.tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
           _var.priceE30 = _limitPriceE30;
-=======
-        // Override the current Oracle Price of _limitAssetId with _limitPriceE30
-        if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
-          _priceE30 = _limitPriceE30;
->>>>>>> cb53d9160a413fc73375069d389158261fdb578e
         } else {
-          (_var.priceE30, , ) = _var.oracle.getLatestPriceWithMarketStatus(
+          (_var.priceE30, ) = _var.oracle.getLatestPrice(
             _var.tokenAssetId,
             false // @note Collateral value always use Min price
           );

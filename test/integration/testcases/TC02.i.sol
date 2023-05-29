@@ -149,7 +149,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 27 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T4: "
       });
 
@@ -328,7 +328,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 13.5 * 1e30,
         _realizedPnl: 7.5 * 1e30,
         _entryBorrowingRate: 0.000008124373119358 * 1e18,
-        _entryFundingRate: -96,
+        _lastFundingAccrued: -96,
         _str: "T6: "
       });
 
@@ -488,7 +488,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 54 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T7: "
       });
 
@@ -657,7 +657,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T8: "
       });
 
@@ -911,7 +911,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0.000026718161223128 * 1e18,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T12: "
       });
 
@@ -1125,7 +1125,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T15: "
       });
 
@@ -1341,7 +1341,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0.000120918598722811 * 1e18,
-        _entryFundingRate: -2893,
+        _lastFundingAccrued: -2893,
         _str: "T17: "
       });
 
@@ -1542,7 +1542,7 @@ contract TC02 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T19: "
       });
 

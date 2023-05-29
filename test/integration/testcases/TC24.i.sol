@@ -429,7 +429,7 @@ contract TC24 is BaseIntTest_WithActions {
       _reserveValue: 135_000 * 1e30,
       _realizedPnl: 0,
       _entryBorrowingRate: 0,
-      _entryFundingRate: 0,
+      _lastFundingAccrued: 0,
       _str: "T3: "
     });
 
@@ -555,7 +555,7 @@ contract TC24 is BaseIntTest_WithActions {
     assertMarketAccumFundingFee(wethMarketIndex, 0.000127314814 * 1e30, 0, "T7: ");
 
     // And entry funding rate of CAROL's Short position
-    // entryFundingRate     = currentFundingAccrued
+    // lastFundingAccrued     = currentFundingAccrued
     //                      = -0.000000000256558641975308643
     assertEntryFundingRate(getSubAccount(CAROL, 0), wethMarketIndex, -256558641, "T7: ");
   }

@@ -50,7 +50,7 @@ interface IPerpStorage {
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
     int256 realizedPnl;
-    int256 entryFundingRate;
+    int256 lastFundingAccrued;
     uint8 subAccountId;
   }
 

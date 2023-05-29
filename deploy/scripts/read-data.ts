@@ -750,7 +750,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
       const fundingFee = markets[marketIndex].currentFundingRate
         .add(nextFundingRates[marketIndex])
-        .sub(each.entryFundingRate)
+        .sub(each.lastFundingAccrued)
         .mul(each.positionSizeE30.abs())
         .div(parseUnits("1", 18))
         .mul(each.positionSizeE30.gt(0) ? -1 : 1);

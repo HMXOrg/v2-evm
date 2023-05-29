@@ -404,7 +404,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       _isLong,
       _abs(_position.positionSizeE30),
       PerpStorage(perpStorage).getMarketByIndex(_marketIndex).fundingAccrued,
-      _position.entryFundingRate
+      _position.lastFundingAccrued
     );
 
     // Update global state

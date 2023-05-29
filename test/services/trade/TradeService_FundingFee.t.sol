@@ -140,7 +140,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(alicePosition.positionSizeE30),
           _market.fundingAccrued,
-          alicePosition.entryFundingRate
+          alicePosition.lastFundingAccrued
         ),
         -738.450038580246882702 * 1e30,
         0.000001 * 1e30
@@ -151,7 +151,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(bobPosition.positionSizeE30),
           _market.fundingAccrued,
-          bobPosition.entryFundingRate
+          bobPosition.lastFundingAccrued
         ),
         1476.900077160493765405 * 1e30,
         0.000001 * 1e30
@@ -184,7 +184,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(alicePosition.positionSizeE30),
           _market.fundingAccrued,
-          alicePosition.entryFundingRate
+          alicePosition.lastFundingAccrued
         ),
         -1525.460283779149676775 * 1e30,
         0.000001 * 1e30
@@ -195,7 +195,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(bobPosition.positionSizeE30),
           _market.fundingAccrued,
-          bobPosition.entryFundingRate
+          bobPosition.lastFundingAccrued
         ),
         3050.920567558299353550 * 1e30,
         0.000001 * 1e30
@@ -228,7 +228,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(alicePosition.positionSizeE30),
           _market.fundingAccrued,
-          alicePosition.entryFundingRate
+          alicePosition.lastFundingAccrued
         ),
         -3266.929762517147082690 * 1e30,
         0.000001 * 1e30
@@ -239,7 +239,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(bobPosition.positionSizeE30),
           _market.fundingAccrued,
-          bobPosition.entryFundingRate
+          bobPosition.lastFundingAccrued
         ),
         6533.859525034294165380 * 1e30,
         0.000001 * 1e30
@@ -272,7 +272,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(alicePosition.positionSizeE30),
           _market.fundingAccrued,
-          alicePosition.entryFundingRate
+          alicePosition.lastFundingAccrued
         ),
         1656.070494684498726201 * 1e30,
         0.000001 * 1e30
@@ -283,7 +283,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(bobPosition.positionSizeE30),
           _market.fundingAccrued,
-          bobPosition.entryFundingRate
+          bobPosition.lastFundingAccrued
         ),
         -3312.140989368997452402 * 1e30,
         0.000001 * 1e30
@@ -316,7 +316,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(alicePosition.positionSizeE30),
           _market.fundingAccrued,
-          alicePosition.entryFundingRate
+          alicePosition.lastFundingAccrued
         ),
         20946.193951474622735986 * 1e30,
         0.000001 * 1e30
@@ -327,7 +327,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(bobPosition.positionSizeE30),
           _market.fundingAccrued,
-          bobPosition.entryFundingRate
+          bobPosition.lastFundingAccrued
         ),
         -41892.387902949245471973 * 1e30,
         0.000001 * 1e30
@@ -360,7 +360,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(alicePosition.positionSizeE30),
           _market.fundingAccrued,
-          alicePosition.entryFundingRate
+          alicePosition.lastFundingAccrued
         ),
         22352.765453532236278988 * 1e30,
         0.000001 * 1e30
@@ -371,7 +371,7 @@ contract TradeService_FundingFee is TradeService_Base {
           false,
           _abs(bobPosition.positionSizeE30),
           _market.fundingAccrued,
-          bobPosition.entryFundingRate
+          bobPosition.lastFundingAccrued
         ),
         -44705.530907064472557977 * 1e30,
         0.000001 * 1e30

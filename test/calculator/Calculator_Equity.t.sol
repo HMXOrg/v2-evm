@@ -73,7 +73,7 @@ contract Calculator_Equity is Calculator_Base {
         positionSizeE30: 100_000 * 1e30,
         avgEntryPriceE30: 1_600 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -120,7 +120,7 @@ contract Calculator_Equity is Calculator_Base {
         positionSizeE30: 100_000 * 1e30,
         avgEntryPriceE30: 1_600 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0

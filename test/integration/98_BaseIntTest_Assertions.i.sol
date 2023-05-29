@@ -233,7 +233,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _reserveValue,
     int256 _realizedPnl,
     uint256 _entryBorrowingRate,
-    int256 _entryFundingRate,
+    int256 _lastFundingAccrued,
     string memory _str
   ) internal {
     bytes32 _positionId = keccak256(abi.encodePacked(_subAccount, _marketIndex));
@@ -270,8 +270,8 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       string.concat(_str, "Position's entry borrowing rate is not matched")
     );
     // assertApproxEqRel(
-    //   _position.entryFundingRate,
-    //   _entryFundingRate,
+    //   _position.lastFundingAccrued,
+    //   _lastFundingAccrued,
     //   MAX_DIFF,
     //   string.concat(_str, "Position's entry funding rate is not matched")
     // );
@@ -285,7 +285,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _reserveValue,
     int256 _realizedPnl,
     uint256 _entryBorrowingRate,
-    int256 _entryFundingRate
+    int256 _lastFundingAccrued
   ) internal {
     assertPositionInfoOf(
       _subAccount,
@@ -295,7 +295,7 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
       _reserveValue,
       _realizedPnl,
       _entryBorrowingRate,
-      _entryFundingRate,
+      _lastFundingAccrued,
       ""
     );
   }
@@ -303,15 +303,15 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
   function assertEntryFundingRate(
     address _subAccount,
     uint256 _marketIndex,
-    int256 _entryFundingRate,
+    int256 _lastFundingAccrued,
     string memory _str
   ) internal {
     bytes32 _positionId = keccak256(abi.encodePacked(_subAccount, _marketIndex));
     IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
 
     assertEq(
-      _position.entryFundingRate,
-      _entryFundingRate,
+      _position.lastFundingAccrued,
+      _lastFundingAccrued,
       string.concat(_str, "Position's entry funding rate is not matched")
     );
   }

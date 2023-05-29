@@ -79,6 +79,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
   /// @notice Initializes the BotHandler contract with the provided configuration parameters.
   /// @param _tradeService Address of the TradeService contract.
   /// @param _liquidationService Address of the LiquidationService contract.
+  /// @param _crossMarginService Address of the CrossMarginService contract.
   /// @param _pyth Address of the Pyth contract.
   function initialize(
     address _tradeService,

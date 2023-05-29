@@ -444,7 +444,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     sglp = _sglp;
   }
 
-  /// @notice add or update AcceptedToken
+  /// @notice add or update accepted tokens of HLP
   /// @dev This function only allows to add new token or update existing token,
   /// any attempt to remove token will be reverted.
   /// @param _tokens The token addresses to set.
@@ -462,6 +462,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
       bool _isSetPLPAssetId = true;
 
+      // Search if this token is already added to the accepted token list
       for (uint256 _j; _j < _assetIdLen; ) {
         if (plpAssetIds[_j] == _assetId) {
           _isSetPLPAssetId = false;
@@ -480,15 +481,15 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
           _configs[_i].targetWeight;
       }
 
+      // If this is a new accepted token,
       // put asset ID after add totalWeight
       if (_isSetPLPAssetId) {
         plpAssetIds.push(_assetId);
       }
 
+      // Update config
       emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
       assetPlpTokenConfigs[_assetId] = _configs[_i];
-
-      // Update totalWeight accordingly
 
       unchecked {
         ++_i;

@@ -67,7 +67,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return PLP Value in E18 format
+  /// @return PLP Value in E30 format
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
@@ -404,7 +404,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       BPS;
   }
 
-  // return in e18
+  /// @notice Get target value of a token in HLP according to its target weight
+  /// @param totalLiquidityUSD total liquidity USD of the whole HLP
+  /// @param tokenWeight the token weight of this token
+  /// @param totalTokenWeight the total token weight of HLP
   function _getTargetValue(
     uint256 totalLiquidityUSD, //e30
     uint256 tokenWeight, //e18
@@ -635,9 +638,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         {
           // Calculate borrowing fee
           uint256 _plpTVL = _getPLPValueE30(false);
-          PerpStorage.AssetClass memory _assetClass = _var.perpStorage.getAssetClassByIndex(
-            _marketConfig.assetClass
-          );
+          PerpStorage.AssetClass memory _assetClass = _var.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
           uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);
           _unrealizedFeeE30 += int256(
             _getBorrowingFee(
@@ -725,7 +726,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         }
         if (_priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
-        // Get token asset id from ConfigStorage
+        // Override the current Oracle Price of _limitAssetId with _limitPriceE30
         if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
           _priceE30 = _limitPriceE30;
         } else {

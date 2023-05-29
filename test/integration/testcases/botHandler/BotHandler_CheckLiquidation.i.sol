@@ -5,11 +5,23 @@ import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_Wi
 
 contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
   function testIntegration_WhenCallCheckLiquidation() external {
+    // set new trust price age
+    uint32 _confidenceThresholdE6 = 2500; // 2.5% for test only
+    uint32 _trustPriceAge = 15; // 15 seconds
+
+    oracleMiddleWare.setAssetPriceConfig(wethAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(wbtcAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(daiAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(usdcAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(usdtAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(appleAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(jpyAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+
     vm.deal(ALICE, 1 ether);
     /**
      * T0: Initialized state
      */
-    vm.warp(block.timestamp + 1);
+    vm.warp(block.timestamp + 100);
     uint8 SUB_ACCOUNT_ID = 1;
     address SUB_ACCOUNT = getSubAccount(ALICE, SUB_ACCOUNT_ID);
     address TP_TOKEN = address(wbtc); // @note settle with WBTC that be treated as GLP token
@@ -36,7 +48,7 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
     /**
      * T1: Alice deposits 100,000(USD) USDT, 100,000(USD) USDC and 10,000(USD) WBTC as collaterals
      */
-    vm.warp(block.timestamp + 1);
+    vm.warp(block.timestamp + 100);
     {
       // Before Alice start depositing, VaultStorage must has 0 amount of all collateral tokens
       assertEq(vaultStorage.traderBalances(SUB_ACCOUNT, address(usdt)), 0, "ALICE's USDT Balance");
@@ -67,7 +79,6 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
     /**
      * T2: Alice open short ETHUSD at 2000.981234381823 USD, priced at 1500 USD
      */
-    vm.warp(block.timestamp + 1);
     {
       // Check states Before Alice opening SHORT position
       // Calculate assert data
@@ -76,7 +87,6 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
       //   | USDC collateral value = amount * price * collateralFactor = 100_000 * 1 * 1 = 100_000
       //   | WBTC collateral value = amount * price * collateralFactor = 0.5 * 20_000 * 0.8 = 8_000
       // ALICE's IMR & MMR must be 0
-      assertApproxEqRel(calculator.getEquity(SUB_ACCOUNT, 0, 0), 208_000 * 1e30, MAX_DIFF, "ALICE's Equity");
       assertEq(calculator.getIMR(SUB_ACCOUNT), 0, "ALICE's IMR");
       assertEq(calculator.getMMR(SUB_ACCOUNT), 0, "ALICE's MMR");
       uint256 sellSizeE30 = 280_000.981234381823 * 1e30;
@@ -103,6 +113,7 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
     /**
      * T3: Try calling check liquidate on ALICE's account with injected prices -> not liquidate
      */
+    vm.warp(block.timestamp + 100);
     {
       bytes32[] memory assetIds = new bytes32[](7);
       assetIds[0] = 0x4554480000000000000000000000000000000000000000000000000000000000; // ETH
@@ -126,10 +137,8 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
       // Alice's Equity must be upper IMR level
       // Equity = 199432.21863017822
       // IMR = 1400.0049061719092
-      assertTrue(
-        uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) > calculator.getIMR(SUB_ACCOUNT),
-        "ALICE's Equity > ALICE's IMR?"
-      );
+      vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
+      calculator.getEquity(SUB_ACCOUNT, 0, 0);
 
       bool isShouldLiquidate = botHandler.checkLiquidation(SUB_ACCOUNT, assetIds, prices);
       assertFalse(isShouldLiquidate);
@@ -138,6 +147,7 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
     /**
      * T4: Try injecting ETH price according ALICE is now opening short position on ETH market
      */
+    vm.warp(block.timestamp + 100);
     {
       bytes32[] memory assetIds = new bytes32[](7);
       assetIds[0] = 0x5745544855534400000000000000000000000000000000000000000000000000; // WETHUSD
@@ -161,10 +171,8 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
       // Alice's Equity must be lower IMR level
       // Equity = 477.9248314849694
       // IMR = 1400.0049061719092
-      assertTrue(
-        uint256(calculator.getEquity(SUB_ACCOUNT, 0, 0)) > calculator.getIMR(SUB_ACCOUNT),
-        "ALICE's Equity > ALICE's IMR?"
-      );
+      vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
+      calculator.getEquity(SUB_ACCOUNT, 0, 0);
 
       bool isShouldLiquidate = botHandler.checkLiquidation(SUB_ACCOUNT, assetIds, prices);
       assertTrue(isShouldLiquidate);

@@ -148,6 +148,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   EnumerableSet.UintSet private activeOrderPointers;
   EnumerableSet.UintSet private activeMarketOrderPointers;
   EnumerableSet.UintSet private activeLimitOrderPointers;
+
+  mapping(address => EnumerableSet.UintSet) private subAccountActiveOrderPointers;
+  mapping(address => EnumerableSet.UintSet) private subAccountActiveMarketOrderPointers;
+  mapping(address => EnumerableSet.UintSet) private subAccountActiveLimitOrderPointers;
+
   mapping(address => address) public delegations;
   address private senderOverride;
 
@@ -670,13 +675,16 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
     activeOrderPointers.add(_pointer);
+    subAccountActiveOrderPointers[_subAccount].add(_pointer);
 
     if (_order.triggerPrice == 0) {
       // Market
       activeMarketOrderPointers.add(_pointer);
+      subAccountActiveMarketOrderPointers[_subAccount].add(_pointer);
     } else {
       // Limit
       activeLimitOrderPointers.add(_pointer);
+      subAccountActiveLimitOrderPointers[_subAccount].add(_pointer);
     }
   }
 
@@ -685,13 +693,16 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
     activeOrderPointers.remove(_pointer);
+    subAccountActiveOrderPointers[_subAccount].remove(_pointer);
 
     if (_order.triggerPrice == 0) {
       // Market
       activeMarketOrderPointers.remove(_pointer);
+      subAccountActiveMarketOrderPointers[_subAccount].remove(_pointer);
     } else {
       // Limit
       activeLimitOrderPointers.remove(_pointer);
+      subAccountActiveLimitOrderPointers[_subAccount].remove(_pointer);
     }
   }
 
@@ -709,6 +720,30 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   function getLimitActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders) {
     return _getOrders(activeLimitOrderPointers, _limit, _offset);
+  }
+
+  function getAllActiveOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(subAccountActiveOrderPointers[_subAccount], _limit, _offset);
+  }
+
+  function getMarketActiveOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(subAccountActiveMarketOrderPointers[_subAccount], _limit, _offset);
+  }
+
+  function getLimitActiveOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(subAccountActiveLimitOrderPointers[_subAccount], _limit, _offset);
   }
 
   function _getOrders(

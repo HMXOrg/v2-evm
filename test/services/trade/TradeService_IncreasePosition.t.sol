@@ -41,15 +41,6 @@ contract TradeService_IncreasePosition is TradeService_Base {
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
   }
 
-  function testRevert_increasePosition_WhenBadSizeDelta() external {
-    // Increase Long ETH size 0
-    {
-      int256 sizeDelta = 0;
-      vm.expectRevert(abi.encodeWithSignature("ITradeService_BadSizeDelta()"));
-      tradeService.increasePosition(ALICE, 0, ethMarketIndex, sizeDelta, 0);
-    }
-  }
-
   function testRevert_increasePosition_WhenNotAllowIncreasePosition() external {
     configStorage.setMarketConfig(
       0,

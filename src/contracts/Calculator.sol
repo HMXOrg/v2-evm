@@ -69,12 +69,15 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @param _isMaxPrice Use Max or Min Price
   /// @return PLP Value in E18 format
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
+    // SLOAD
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
+
     // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
-    uint256 borrowingFeeDebt = VaultStorage(vaultStorage).globalBorrowingFeeDebt();
+    uint256 borrowingFeeDebt = _vaultStorage.globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
 
-    uint256 lossDebt = VaultStorage(vaultStorage).globalLossDebt();
+    uint256 lossDebt = _vaultStorage.globalLossDebt();
     uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
     if (pnlE30 < 0) {
@@ -360,10 +363,13 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     address _token,
     uint256 _liquidityUsdDelta
   ) external view returns (uint256 _settlementFeeRate) {
+    // SLOAD
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+
     // usd debt
     uint256 _tokenLiquidityUsd = _getPLPUnderlyingAssetValueE30(
-      ConfigStorage(configStorage).tokenAssetIds(_token),
-      ConfigStorage(configStorage),
+      _configStorage.tokenAssetIds(_token),
+      _configStorage,
       false
     );
     if (_tokenLiquidityUsd == 0) return 0;
@@ -371,12 +377,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     // total usd debt
 
     uint256 _totalLiquidityUsd = _getPLPValueE30(false);
-    ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
+    ConfigStorage.LiquidityConfig memory _liquidityConfig = _configStorage.getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
 
-    uint256 _targetUsd = (_totalLiquidityUsd *
-      ConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight) /
+    uint256 _targetUsd = (_totalLiquidityUsd * _configStorage.getAssetPlpTokenConfigByToken(_token).targetWeight) /
       _liquidityConfig.plpTotalTokenWeight;
 
     if (_targetUsd == 0) return 0;
@@ -485,6 +490,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bytes32[] memory _injectedAssetIds,
     uint256[] memory _injectedPrices
   ) internal view returns (int256 _equityValueE30) {
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
+
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = _getCollateralValue(
       _subAccount,
@@ -508,10 +515,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     _equityValueE30 += _unrealizedPnlValueE30;
     _equityValueE30 -= _unrealizedFeeValueE30;
 
-    _equityValueE30 -= int256(VaultStorage(vaultStorage).tradingFeeDebt(_subAccount));
-    _equityValueE30 -= int256(VaultStorage(vaultStorage).borrowingFeeDebt(_subAccount));
-    _equityValueE30 -= int256(VaultStorage(vaultStorage).fundingFeeDebt(_subAccount));
-    _equityValueE30 -= int256(VaultStorage(vaultStorage).lossDebt(_subAccount));
+    _equityValueE30 -= int256(_vaultStorage.tradingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(_vaultStorage.borrowingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(_vaultStorage.fundingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(_vaultStorage.lossDebt(_subAccount));
 
     return _equityValueE30;
   }
@@ -526,6 +533,18 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 priceE30;
     bool isProfit;
     uint256 delta;
+  }
+
+  struct GetCollateralValue {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    uint256 decimals;
+    uint256 amount;
+    uint256 priceE30;
+    bytes32 tokenAssetId;
+    uint32 collateralFactorBPS;
+    address[] traderTokens;
   }
 
   /// @notice Calculate unrealized PnL from trader's sub account.
@@ -688,34 +707,41 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bytes32[] memory _injectedAssetIds,
     uint256[] memory _injectedPrices
   ) internal view returns (uint256 _collateralValueE30) {
+    GetCollateralValue memory _var;
+
+    // SLOADs
+    _var.vaultStorage = VaultStorage(vaultStorage);
+    _var.configStorage = ConfigStorage(configStorage);
+    _var.oracle = OracleMiddleware(oracle);
+
     // Get list of current depositing tokens on trader's account
-    address[] memory _traderTokens = VaultStorage(vaultStorage).getTraderTokens(_subAccount);
+    _var.traderTokens = _var.vaultStorage.getTraderTokens(_subAccount);
 
     // Loop through list of current depositing tokens
-    uint256 len = _traderTokens.length;
-    for (uint256 i; i < len; ) {
-      address _token = _traderTokens[i];
-      ConfigStorage.CollateralTokenConfig memory _collateralTokenConfig = ConfigStorage(configStorage)
-        .getCollateralTokenConfigs(_token);
+    uint256 traderTokenLen = _var.traderTokens.length;
+    for (uint256 i; i < traderTokenLen; ) {
+      address _token = _var.traderTokens[i];
+      ConfigStorage.CollateralTokenConfig memory _collateralTokenConfig = _var.configStorage.getCollateralTokenConfigs(
+        _token
+      );
 
       // Get token decimals from ConfigStorage
-      uint256 _decimals = ConfigStorage(configStorage).getAssetConfigByToken(_token).decimals;
+      _var.decimals = _var.configStorage.getAssetConfigByToken(_token).decimals;
 
       // Get collateralFactor from ConfigStorage
-      uint32 collateralFactorBPS = _collateralTokenConfig.collateralFactorBPS;
+      _var.collateralFactorBPS = _collateralTokenConfig.collateralFactorBPS;
 
       // Get current collateral token balance of trader's account
-      uint256 _amount = VaultStorage(vaultStorage).traderBalances(_subAccount, _token);
+      _var.amount = _var.vaultStorage.traderBalances(_subAccount, _token);
 
       // Get price from oracle
-      uint256 _priceE30;
-      bytes32 _tokenAssetId = ConfigStorage(configStorage).tokenAssetIds(_token);
+      _var.tokenAssetId = _var.configStorage.tokenAssetIds(_token);
 
       if (_injectedAssetIds.length > 0) {
-        uint256 len = _injectedAssetIds.length;
-        for (uint256 j; j < len; ) {
-          if (_injectedAssetIds[j] == _tokenAssetId) {
-            _priceE30 = _injectedPrices[j];
+        uint256 injectedAssetIdLen = _injectedAssetIds.length;
+        for (uint256 j; j < injectedAssetIdLen; ) {
+          if (_injectedAssetIds[j] == _var.tokenAssetId) {
+            _var.priceE30 = _injectedPrices[j];
             // stop inside looping after found price
             break;
           }
@@ -723,14 +749,14 @@ contract Calculator is OwnableUpgradeable, ICalculator {
             j++;
           }
         }
-        if (_priceE30 == 0) revert ICalculator_InvalidPrice();
+        if (_var.priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
         // Get token asset id from ConfigStorage
-        if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
-          _priceE30 = _limitPriceE30;
+        if (_var.tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
+          _var.priceE30 = _limitPriceE30;
         } else {
-          (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
-            _tokenAssetId,
+          (_var.priceE30, , ) = _var.oracle.getLatestPriceWithMarketStatus(
+            _var.tokenAssetId,
             false // @note Collateral value always use Min price
           );
         }
@@ -738,7 +764,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       // Calculate accumulative value of collateral tokens
       // collateral value = (collateral amount * price) * collateralFactorBPS
       // collateralFactor 1e4 = 100%
-      _collateralValueE30 += (_amount * _priceE30 * collateralFactorBPS) / ((10 ** _decimals) * BPS);
+      _collateralValueE30 += (_var.amount * _var.priceE30 * _var.collateralFactorBPS) / ((10 ** _var.decimals) * BPS);
 
       unchecked {
         i++;

@@ -193,7 +193,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     (bool _isMaxProfit, , ) = _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
-    _tradeService.validateMaxProfit(_isMaxProfit);
+    if (!_isMaxProfit) revert IBotHandler_ReservedValueStillEnough();
 
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }

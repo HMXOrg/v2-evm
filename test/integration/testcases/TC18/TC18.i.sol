@@ -126,7 +126,7 @@ contract TC18 is BaseIntTest_WithActions {
       tickPrices,
       publishTimeDiff,
       block.timestamp,
-      "ITradeService_ReservedValueStillEnough()"
+      "IBotHandler_ReservedValueStillEnough()"
     );
   }
 }

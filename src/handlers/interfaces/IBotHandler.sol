@@ -9,6 +9,7 @@ interface IBotHandler {
   error IBotHandler_InsufficientLiquidity();
   error IBotHandler_InvalidArray();
   error IBotHandler_InvalidPrice();
+  error IBotHandler_ReservedValueStillEnough();
 
   /**
    * States

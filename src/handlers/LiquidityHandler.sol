@@ -199,11 +199,11 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   }
 
   /// @notice Create a new RemoveLiquidity order
-  /// @param _tokenOut address token in
-  /// @param _amountIn amount token in (based on decimals)
-  /// @param _minOut minAmountOut
+  /// @param _tokenOut The address of the token user wish to receive
+  /// @param _amountIn The amount of HLP to remove liquidity
+  /// @param _minOut minAmountOut of the selected token out
   /// @param _executionFee The execution fee of order
-  /// @param _isNativeOut in case of user need native token
+  /// @param _isNativeOut If true, the contract will try to unwrap it into Native Token
   function createRemoveLiquidityOrder(
     address _tokenOut,
     uint256 _amountIn,

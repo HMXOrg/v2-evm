@@ -80,6 +80,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _vaultStorage The address of the VaultStorage contract.
   /// @param _perpStorage The address of the PerpStorage contract.
   /// @param _calculator The address of the Calculator contract.
+  /// @param _convertedSglpStrategy The address of the ConvertedGlpStrategy contract for converting GLP collateral to other tokens.
   function initialize(
     address _configStorage,
     address _vaultStorage,
@@ -167,6 +168,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _subAccountId Trader's Sub-Account Id.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
+  /// @param _receiver The receiver address of the collateral
   function withdrawCollateral(
     address _primaryAccount,
     uint8 _subAccountId,

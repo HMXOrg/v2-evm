@@ -67,7 +67,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return PLP Value in E18 format
+  /// @return PLP Value in E30 format
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
     // SLOAD
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
@@ -409,7 +409,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       BPS;
   }
 
-  // return in e18
+  /// @notice Get target value of a token in HLP according to its target weight
+  /// @param totalLiquidityUSD total liquidity USD of the whole HLP
+  /// @param tokenWeight the token weight of this token
+  /// @param totalTokenWeight the total token weight of HLP
   function _getTargetValue(
     uint256 totalLiquidityUSD, //e30
     uint256 tokenWeight, //e18
@@ -751,9 +754,15 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         }
         if (_var.priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
+<<<<<<< HEAD
         // Get token asset id from ConfigStorage
         if (_var.tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
           _var.priceE30 = _limitPriceE30;
+=======
+        // Override the current Oracle Price of _limitAssetId with _limitPriceE30
+        if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
+          _priceE30 = _limitPriceE30;
+>>>>>>> cb53d9160a413fc73375069d389158261fdb578e
         } else {
           (_var.priceE30, , ) = _var.oracle.getLatestPriceWithMarketStatus(
             _var.tokenAssetId,

@@ -38,7 +38,7 @@ const publishTimeDiff = [
   0, // JPY
 ];
 
-const mainAccount = "0x6a5d2bf8ba767f7763cd342cb62c5076f9924872";
+const mainAccount = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
 const subAccountId = 0;
 const orderIndex = 0;
 

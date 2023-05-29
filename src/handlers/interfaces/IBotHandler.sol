@@ -49,11 +49,33 @@ interface IBotHandler {
     bytes32 _encodedVaas
   ) external payable;
 
+  function deleverages(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _marketIndexes,
+    address[] memory _tpTokens,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable;
+
   function closeDelistedMarketPosition(
     address _account,
     uint8 _subAccountId,
     uint256 _marketIndex,
     address _tpToken,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable;
+
+  function closeDelistedMarketPositions(
+    address[] calldata _accounts,
+    uint8[] calldata _subAccountIds,
+    uint256[] calldata _marketIndexes,
+    address[] calldata _tpTokens,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
     uint256 _minPublishTime,

@@ -37,11 +37,18 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
    */
   event LogTakeMaxProfit(address indexed account, uint8 subAccountId, uint256 marketIndex, address tpToken);
   event LogDeleverage(address indexed account, uint8 subAccountId, uint256 marketIndex, address tpToken);
+  event LogDeleverages(address[] indexed accounts, uint8[] subAccountIds, uint256[] marketIndexes, address[] tpTokens);
   event LogCloseDelistedMarketPosition(
     address indexed account,
     uint8 subAccountId,
     uint256 marketIndex,
     address tpToken
+  );
+  event LogCloseDelistedMarketPositions(
+    address[] indexed accounts,
+    uint8[] subAccountIds,
+    uint256[] marketIndexes,
+    address[] tpTokens
   );
   event LogLiquidate(address subAccount);
   event LogInjectTokenToPlpLiquidity(address indexed account, address token, uint256 amount);
@@ -246,6 +253,50 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
+  function deleverages(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _marketIndexes,
+    address[] memory _tpTokens,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable nonReentrant onlyPositionManager {
+    // pre-validation
+    if (
+      _accounts.length != _subAccountIds.length &&
+      _subAccountIds.length != _marketIndexes.length &&
+      _marketIndexes.length != _tpTokens.length
+    ) revert IBotHandler_InvalidArray();
+
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+
+    _deleverages(_accounts, _subAccountIds, _marketIndexes, _tpTokens);
+
+    emit LogDeleverages(_accounts, _subAccountIds, _marketIndexes, _tpTokens);
+  }
+
+  function _deleverages(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _marketIndexes,
+    address[] memory _tpTokens
+  ) internal nonReentrant {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+    uint256 len = _accounts.length;
+    for (uint256 i; i < len; ) {
+      _tradeService.validateDeleverage();
+      _tradeService.forceClosePosition(_accounts[i], _subAccountIds[i], _marketIndexes[i], _tpTokens[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
   /// @notice forceClosePosition
   /// @param _account position's owner
   /// @param _subAccountId sub-account that owned position
@@ -273,6 +324,51 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
 
     emit LogCloseDelistedMarketPosition(_account, _subAccountId, _marketIndex, _tpToken);
+  }
+
+  function closeDelistedMarketPositions(
+    address[] calldata _accounts,
+    uint8[] calldata _subAccountIds,
+    uint256[] calldata _marketIndexes,
+    address[] calldata _tpTokens,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable nonReentrant onlyPositionManager {
+    // pre-validation
+    if (
+      _accounts.length != _subAccountIds.length &&
+      _subAccountIds.length != _marketIndexes.length &&
+      _marketIndexes.length != _tpTokens.length
+    ) revert IBotHandler_InvalidArray();
+
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+
+    _closeDelistedMarketPositions(_accounts, _subAccountIds, _marketIndexes, _tpTokens);
+
+    emit LogCloseDelistedMarketPositions(_accounts, _subAccountIds, _marketIndexes, _tpTokens);
+  }
+
+  function _closeDelistedMarketPositions(
+    address[] calldata _accounts,
+    uint8[] calldata _subAccountIds,
+    uint256[] calldata _marketIndexes,
+    address[] calldata _tpTokens
+  ) internal nonReentrant {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
+    uint256 len = _accounts.length;
+    for (uint256 i; i < len; ) {
+      _tradeService.validateMarketDelisted(_marketIndexes[i]);
+      _tradeService.forceClosePosition(_accounts[i], _subAccountIds[i], _marketIndexes[i], _tpTokens[i]);
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   function checkLiquidation(

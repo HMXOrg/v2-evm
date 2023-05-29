@@ -263,7 +263,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     plp = _plp;
   }
 
-  function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external onlyOwner {
+  function setLiquidityConfig(LiquidityConfig calldata _liquidityConfig) external onlyOwner {
     if (
       _liquidityConfig.taxFeeRateBPS > MAX_FEE_BPS ||
       _liquidityConfig.flashLoanFeeRateBPS > MAX_FEE_BPS ||
@@ -337,26 +337,26 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     pnlFactorBPS = _pnlFactorBPS;
   }
 
-  function setSwapConfig(SwapConfig memory _newConfig) external onlyOwner {
+  function setSwapConfig(SwapConfig calldata _newConfig) external onlyOwner {
     emit LogSetSwapConfig(swapConfig, _newConfig);
     swapConfig = _newConfig;
   }
 
-  function setTradingConfig(TradingConfig memory _newConfig) external onlyOwner {
+  function setTradingConfig(TradingConfig calldata _newConfig) external onlyOwner {
     if (_newConfig.fundingInterval == 0 || _newConfig.devFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_ExceedLimitSetting();
     emit LogSetTradingConfig(tradingConfig, _newConfig);
     tradingConfig = _newConfig;
   }
 
-  function setLiquidationConfig(LiquidationConfig memory _newConfig) external onlyOwner {
+  function setLiquidationConfig(LiquidationConfig calldata _newConfig) external onlyOwner {
     emit LogSetLiquidationConfig(liquidationConfig, _newConfig);
     liquidationConfig = _newConfig;
   }
 
   function setMarketConfig(
     uint256 _marketIndex,
-    MarketConfig memory _newConfig
+    MarketConfig calldata _newConfig
   ) external onlyOwner returns (MarketConfig memory _marketConfig) {
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
@@ -371,7 +371,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function setPlpTokenConfig(
     address _token,
-    PLPTokenConfig memory _newConfig
+    PLPTokenConfig calldata _newConfig
   ) external onlyOwner returns (PLPTokenConfig memory _plpTokenConfig) {
     emit LogSetPlpTokenConfig(_token, assetPlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
     assetPlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
@@ -392,7 +392,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function setCollateralTokenConfig(
     bytes32 _assetId,
-    CollateralTokenConfig memory _newConfig
+    CollateralTokenConfig calldata _newConfig
   ) external onlyOwner returns (CollateralTokenConfig memory _collateralTokenConfig) {
     if (_newConfig.collateralFactorBPS == 0) revert IConfigStorage_ExceedLimitSetting();
 
@@ -412,7 +412,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   function setAssetConfig(
     bytes32 _assetId,
-    AssetConfig memory _newConfig
+    AssetConfig calldata _newConfig
   ) external onlyOwner returns (AssetConfig memory _assetConfig) {
     if (!_newConfig.tokenAddress.isContract()) revert IConfigStorage_BadArgs();
 

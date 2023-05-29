@@ -169,7 +169,7 @@ interface IConfigStorage {
 
   function setPLP(address _plp) external;
 
-  function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external;
+  function setLiquidityConfig(LiquidityConfig calldata _liquidityConfig) external;
 
   function setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) external;
 
@@ -181,30 +181,30 @@ interface IConfigStorage {
 
   function setPnlFactor(uint32 _pnlFactor) external;
 
-  function setSwapConfig(SwapConfig memory _newConfig) external;
+  function setSwapConfig(SwapConfig calldata _newConfig) external;
 
-  function setTradingConfig(TradingConfig memory _newConfig) external;
+  function setTradingConfig(TradingConfig calldata _newConfig) external;
 
-  function setLiquidationConfig(LiquidationConfig memory _newConfig) external;
+  function setLiquidationConfig(LiquidationConfig calldata _newConfig) external;
 
   function setMarketConfig(
     uint256 _marketIndex,
-    MarketConfig memory _newConfig
+    MarketConfig calldata _newConfig
   ) external returns (MarketConfig memory _marketConfig);
 
   function setPlpTokenConfig(
     address _token,
-    PLPTokenConfig memory _newConfig
+    PLPTokenConfig calldata _newConfig
   ) external returns (PLPTokenConfig memory _plpTokenConfig);
 
   function setCollateralTokenConfig(
     bytes32 _assetId,
-    CollateralTokenConfig memory _newConfig
+    CollateralTokenConfig calldata _newConfig
   ) external returns (CollateralTokenConfig memory _collateralTokenConfig);
 
   function setAssetConfig(
     bytes32 assetId,
-    AssetConfig memory _newConfig
+    AssetConfig calldata _newConfig
   ) external returns (AssetConfig memory _assetConfig);
 
   function setConfigExecutor(address _executorAddress, bool _isServiceExecutor) external;

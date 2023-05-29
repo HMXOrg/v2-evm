@@ -230,15 +230,18 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
     markets[_marketIndex].shortAccumS2E = _newAccumS2E;
   }
 
-  function updateGlobalState(GlobalState memory _newGlobalState) external onlyWhitelistedExecutor {
+  function updateGlobalState(GlobalState calldata _newGlobalState) external onlyWhitelistedExecutor {
     globalState = _newGlobalState;
   }
 
-  function updateAssetClass(uint8 _assetClassIndex, AssetClass memory _newAssetClass) external onlyWhitelistedExecutor {
+  function updateAssetClass(
+    uint8 _assetClassIndex,
+    AssetClass calldata _newAssetClass
+  ) external onlyWhitelistedExecutor {
     assetClasses[_assetClassIndex] = _newAssetClass;
   }
 
-  function updateMarket(uint256 _marketIndex, Market memory _market) external onlyWhitelistedExecutor {
+  function updateMarket(uint256 _marketIndex, Market calldata _market) external onlyWhitelistedExecutor {
     markets[_marketIndex] = _market;
   }
 

@@ -271,8 +271,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function executeOrder(
     uint256 _endIndex,
     address payable _feeReceiver,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
+    bytes32[] calldata _priceData,
+    bytes32[] calldata _publishTimeData,
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
@@ -360,7 +360,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
   /// @notice execute either addLiquidity or removeLiquidity
   /// @param _order LiquidityOrder struct representing the order to execute.
-  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256 _amountOut) {
+  function executeLiquidity(LiquidityOrder calldata _order) external returns (uint256 _amountOut) {
     // if not in executing state, then revert
     if (!isExecuting) revert ILiquidityHandler_NotExecutionState();
     if (msg.sender != address(this)) revert ILiquidityHandler_Unauthorized();

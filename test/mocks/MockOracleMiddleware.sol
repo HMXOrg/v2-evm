@@ -162,6 +162,8 @@ contract MockOracleMiddleware is IOracleMiddleware {
 
   function setUpdater(address /*_updater*/, bool /*_isActive*/) external {}
 
+  function setPyth(address /*_pyth*/) external {}
+
   function setAssetPriceConfig(
     bytes32 /*_assetId*/,
     uint32 /*_confidenceThresholdE6*/,
@@ -169,5 +171,12 @@ contract MockOracleMiddleware is IOracleMiddleware {
     address /* adapter */
   ) external {}
 
-  function setMultipleMarketStatus(bytes32[] memory _assetIds, uint8[] memory _statuses) external {}
+  function setMultipleMarketStatus(
+    bytes32[] memory _assetIds,
+    uint8[] memory _statuses,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external {}
 }

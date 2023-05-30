@@ -16,6 +16,7 @@ contract SetEcoPythUpdater is ConfigJsonRepo {
     ecoPyth.setUpdater(getJsonAddress(".handlers.limitTrade"), true);
     ecoPyth.setUpdater(getJsonAddress(".handlers.liquidity"), true);
     ecoPyth.setUpdater(getJsonAddress(".handlers.marketTrade"), true);
+    ecoPyth.setUpdater(getJsonAddress(".oracles.middleware"), true);
 
     vm.stopBroadcast();
   }

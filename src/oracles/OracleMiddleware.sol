@@ -6,6 +6,8 @@ import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+
 contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /**
    * Structs
@@ -34,6 +36,8 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     address _newAdapter
   );
   event LogSetAdapter(address oldPythAdapter, address newPythAdapter);
+  event LogSetPyth(address oldPyth, address newPyth);
+
   /**
    * States
    */
@@ -53,6 +57,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   // 2 = Active, equivalent to `trading` from Pyth
   // assetId => marketStatus
   mapping(bytes32 => uint8) public marketStatus;
+  address public pyth;
 
   /**
    * Modifiers
@@ -65,8 +70,13 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     _;
   }
 
-  function initialize() external initializer {
+  function initialize(address _pyth) external initializer {
     OwnableUpgradeable.__Ownable_init();
+
+    // Sanity check
+    IEcoPyth(_pyth).getAssetIds();
+
+    pyth = _pyth;
   }
 
   /// @notice Return the latest price and last update of the given asset id.
@@ -394,7 +404,18 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @notice Set market status for the given assets.
   /// @param _assetIds The asset addresses to set.
   /// @param _statuses Status enum, see `marketStatus` comment section.
-  function setMultipleMarketStatus(bytes32[] memory _assetIds, uint8[] memory _statuses) external onlyUpdater {
+  function setMultipleMarketStatus(
+    bytes32[] memory _assetIds,
+    uint8[] memory _statuses,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external onlyUpdater {
+    // Feed prices first either market is opening or closing to prevent frontrun
+    // slither-disable-next-line arbitrary-send-eth
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+
     uint256 _len = _assetIds.length;
     for (uint256 _i = 0; _i < _len; ) {
       _setMarketStatus(_assetIds[_i], _statuses[_i]);
@@ -408,6 +429,15 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     isUpdater[_account] = _isActive;
     emit LogSetUpdater(_account, _isActive);
+  }
+
+  /// @notice Set new Pyth contract address.
+  /// @param _pyth New Pyth contract address.
+  function setPyth(address _pyth) external onlyOwner {
+    // Sanity check
+    IEcoPyth(_pyth).getAssetIds();
+    emit LogSetPyth(pyth, _pyth);
+    pyth = _pyth;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

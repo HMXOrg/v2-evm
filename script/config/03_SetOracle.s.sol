@@ -69,7 +69,17 @@ contract SetOracle is ConfigJsonRepo {
     _statuses[6] = 2;
     _statuses[7] = 2;
 
-    oracleMiddleWare.setMultipleMarketStatus(_assetIds, _statuses); // active
+    bytes32[] memory priceUpdateData;
+    bytes32[] memory publishTimeUpdateData;
+
+    oracleMiddleWare.setMultipleMarketStatus(
+      _assetIds,
+      _statuses,
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("someEncodedVaas")
+    ); // active
 
     // Set AssetPriceConfig
     uint32 _confidenceThresholdE6 = 100000; // 2.5% for test only

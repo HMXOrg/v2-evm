@@ -955,7 +955,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     // The result of this fundingRateVelocity Formula will be in the range of [-maxFundingRate, maxFundingRate]
     vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
     vars.ratio = _min(vars.ratio, 1e18);
-    return (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
+    return (vars.ratio * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
   }
 
   /**

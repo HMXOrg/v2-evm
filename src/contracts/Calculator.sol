@@ -1160,7 +1160,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 sumS2E, // SUM(positionSize^2 / entryPrice)
     uint256 sumSize, // longSize or shortSize
     bool isLong
-  ) public pure returns (int256) {
+  ) internal pure returns (int256) {
     sumSE = isLong ? -sumSE : sumSE;
     int256 pnlFromPositions = (price.toInt256() * sumSE) / 1e30;
     int256 pnlFromSkew = ((((price.toInt256() * skew) / (maxSkew.toInt256())) * sumSE) / 1e30);

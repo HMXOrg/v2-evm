@@ -77,13 +77,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
     if (pnlE30 < 0) {
-      aum += uint256(-pnlE30);
-    } else {
-      uint256 _pnl = uint256(pnlE30);
+      uint256 _pnl = uint256(-pnlE30);
       if (aum < _pnl) return 0;
-      unchecked {
-        aum -= _pnl;
-      }
+      aum -= _pnl;
+    } else {
+      aum += uint256(pnlE30);
     }
 
     return aum;
@@ -206,7 +204,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
       if (_market.longPositionSize > 0) {
-        _pnlLongE30 = _getGlobalMarketPnl(
+        _pnlLongE30 = getGlobalMarketPnl(
           priceE30,
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           _marketConfig.fundingRate.maxSkewScaleUSD,
@@ -217,7 +215,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         );
       }
       if (_market.shortPositionSize > 0) {
-        _pnlShortE30 = _getGlobalMarketPnl(
+        _pnlShortE30 = getGlobalMarketPnl(
           priceE30,
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           _marketConfig.fundingRate.maxSkewScaleUSD,
@@ -1152,7 +1150,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return uint256(x >= 0 ? x : -x);
   }
 
-  function _getGlobalMarketPnl(
+  function getGlobalMarketPnl(
     uint256 price,
     int256 skew,
     uint256 maxSkew,

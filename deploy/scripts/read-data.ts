@@ -16,7 +16,7 @@ import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 1;
+const subAccountId = 0;
 
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
@@ -150,49 +150,49 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestPrice",
+      function: "getLatestPrice",
       args: [usdcAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestPrice",
+      function: "getLatestPrice",
       args: [usdtAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestPrice",
+      function: "getLatestPrice",
       args: [daiAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestPrice",
+      function: "getLatestPrice",
       args: [ethAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestPrice",
+      function: "getLatestPrice",
       args: [wbtcAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestPrice",
+      function: "getLatestPrice",
       args: [appleAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestPrice",
+      function: "getLatestPrice",
       args: [jpyAssetId, false],
     },
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestPrice",
+      function: "getLatestPrice",
       args: [glpAssetId, false],
     },
     // PLP
@@ -480,7 +480,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestAdaptivePrice",
+      function: "getLatestAdaptivePrice",
       args: [
         ethAssetId,
         true,
@@ -495,7 +495,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestAdaptivePrice",
+      function: "getLatestAdaptivePrice",
       args: [
         wbtcAssetId,
         true,
@@ -510,7 +510,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestAdaptivePrice",
+      function: "getLatestAdaptivePrice",
       args: [
         appleAssetId,
         true,
@@ -525,7 +525,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: OracleMiddleware__factory.abi,
       target: config.oracles.middleware,
-      function: "unsafeGetLatestAdaptivePrice",
+      function: "getLatestAdaptivePrice",
       args: [
         jpyAssetId,
         true,
@@ -681,7 +681,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const markets = [ethusdMarket, btcusdMarket, applusdMarket, jpyusdMarket];
   const [rawEthPrice, rawBtcPrice, rawUsdcPrice, rawUsdtPrice, rawDaiPrice, rawAAPLPrice, rawJpyPrice] =
     await getPricesFromPyth();
-  const oraclePrices = [rawEthPrice, rawBtcPrice, rawAAPLPrice, rawJpyPrice];
+  const oraclePrices = [rawEthPrice, rawBtcPrice, rawAAPLPrice, 1 / rawJpyPrice];
   const marketConfigs = [ethusdMarketConfig, btcusdMarketConfig, applusdMarketConfig, jpyusdMarketConfig];
   const globalAssetClasses = [cryptoGlobalAssetClass, equityGlobalAssetClass, forexGlobalAssetClass];
 
@@ -742,7 +742,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         markets[marketIndex].longPositionSize.sub(markets[marketIndex].shortPositionSize),
         marketConfigs[marketIndex].fundingRate.maxSkewScaleUSD,
         each.positionSizeE30.mul(-1),
-        BigNumber.from(oraclePrices[marketIndex] * 1e8).mul(ethers.utils.parseUnits("1", 22))
+        BigNumber.from(Math.floor(oraclePrices[marketIndex] * 1e8)).mul(ethers.utils.parseUnits("1", 22))
       );
 
       const borrowingFee = globalAssetClasses[marketConfigs[marketIndex].assetClass].sumBorrowingRate
@@ -773,7 +773,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           each.positionSizeE30.abs().mul(marketConfigs[marketIndex].decreasePositionFeeRateBPS).div(10000),
           30
         ),
-        positionLeverage: equity.gt(0) ? formatUnits(each.positionSizeE30.mul(parseUnits("1", 30)).div(equity), 30) : 0,
+        positionLeverage: equity.gt(0)
+          ? formatUnits(each.positionSizeE30.abs().mul(parseUnits("1", 30)).div(equity), 30)
+          : 0,
       };
     })
   );

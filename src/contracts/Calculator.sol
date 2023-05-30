@@ -1152,6 +1152,43 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return uint256(x >= 0 ? x : -x);
   }
 
+  function getGlobalMarketPnl(uint256 marketIndex, bool isLong) external view returns (int256) {
+    // SLOAD
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+    PerpStorage _perpStorage = PerpStorage(perpStorage);
+    OracleMiddleware _oracle = OracleMiddleware(oracle);
+    ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(marketIndex);
+    PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(marketIndex);
+
+    int256 _pnlLongE30 = 0;
+    int256 _pnlShortE30 = 0;
+    (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
+
+    if (isLong) {
+      return
+        _getGlobalMarketPnl(
+          priceE30,
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          int(_market.longAccumSE),
+          _market.longAccumS2E,
+          _market.longPositionSize,
+          true
+        );
+    } else {
+      return
+        _getGlobalMarketPnl(
+          priceE30,
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          int(_market.shortAccumSE),
+          _market.shortAccumS2E,
+          _market.shortPositionSize,
+          false
+        );
+    }
+  }
+
   function _getGlobalMarketPnl(
     uint256 price,
     int256 skew,

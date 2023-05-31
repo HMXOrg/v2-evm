@@ -1165,7 +1165,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 pnlFromVolatility = price.mulDiv(sumS2E, 2 * maxSkew);
     int256 pnlFromDirection = isLong ? -(sumSize.toInt256()) : sumSize.toInt256();
     int256 result = pnlFromPositions + pnlFromSkew + pnlFromVolatility.toInt256() - pnlFromDirection;
-    return isLong ? result : -result;
+    return result;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

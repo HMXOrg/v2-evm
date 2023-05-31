@@ -85,7 +85,7 @@ contract TC38 is BaseIntTest_WithActions {
 
     // PLP LIQUIDITY 99.7 WBTC, 100_000 usdc
     {
-      /* 
+      /*
       BEFORE T3
 
       Pending Borrowing Fee = 0 (no skip)
@@ -102,6 +102,12 @@ contract TC38 is BaseIntTest_WithActions {
       assertApproxEqRel(plpValueBefore, 2093835074056630000000000000000000000, 0, "PLP TVL Before Feed Price");
       assertApproxEqRel(pendingBorrowingFeeBefore, 0, MAX_DIFF, "Pending Borrowing Fee Before Feed Price");
       assertApproxEqRel(aumBefore, 2093835074056630000000000000000065469, MAX_DIFF, "AUM Before Feed Price");
+      assertApproxEqRel(
+        -int256(plpValueBefore - aumBefore - pendingBorrowingFeeBefore),
+        -65469,
+        MAX_DIFF,
+        "GLOBAL PNLE30"
+      );
     }
 
     {

@@ -263,8 +263,9 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
       _assetConfig.confidenceThresholdE6
     );
 
-    // check price age
-    if (block.timestamp - _lastUpdate > _assetConfig.trustPriceAge) revert IOracleMiddleware_PriceStale();
+    // ignore check price age when market is closed
+    if (marketStatus[_assetId] == 2 && block.timestamp - _lastUpdate > _assetConfig.trustPriceAge)
+      revert IOracleMiddleware_PriceStale();
 
     // 2. Return the price and last update
     return (_price, _lastUpdate);

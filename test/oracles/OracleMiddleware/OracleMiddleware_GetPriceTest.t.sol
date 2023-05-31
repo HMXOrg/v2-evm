@@ -62,6 +62,8 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
 
   // get latest price but price is stale
   function testRevert_WhenGetLastestPriceButPriceIsStale() external {
+    oracleMiddleware.setUpdater(address(this), true);
+    oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // active
     vm.warp(block.timestamp + 30);
     vm.expectRevert(abi.encodeWithSignature("IOracleMiddleware_PriceStale()"));
     oracleMiddleware.getLatestPrice(wbtcAssetId, true);
@@ -78,7 +80,7 @@ contract OracleMiddleware_GetPriceTest is OracleMiddleware_BaseTest {
   function testCorrectness_WhenGetWithMarketStatusButPriceIsStale() external {
     // Set wbtc market status
     vm.startPrank(ALICE);
-    oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(1)); // inactive
+    oracleMiddleware.setMarketStatus(wbtcAssetId, uint8(2)); // inactive
     vm.stopPrank();
 
     vm.warp(block.timestamp + 30);

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-//base
+// Base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-// interfaces
+// Interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";

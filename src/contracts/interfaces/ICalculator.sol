@@ -137,4 +137,6 @@ interface ICalculator {
   function setConfigStorage(address _address) external;
 
   function setPerpStorage(address _address) external;
+
+  function proportionalElapsedInDay(uint256 _marketIndex) external view returns (uint256 elapsed);
 }

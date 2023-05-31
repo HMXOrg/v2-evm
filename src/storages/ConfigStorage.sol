@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-//base
+// Base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
-// interfaces
+// Interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
 import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
@@ -24,7 +24,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetServiceExecutor(address indexed contractAddress, address executorAddress, bool isServiceExecutor);
   event LogSetCalculator(address indexed oldCalculator, address newCalculator);
   event LogSetOracle(address indexed oldOracle, address newOracle);
-  event LogSetHLP(address indexed oldPlp, address newPlp);
+  event LogSetHLP(address indexed oldHlp, address newHlp);
   event LogSetLiquidityConfig(LiquidityConfig indexed oldLiquidityConfig, LiquidityConfig newLiquidityConfig);
   event LogSetDynamicEnabled(bool enabled);
   event LogSetPnlFactor(uint32 oldPnlFactorBPS, uint32 newPnlFactorBPS);
@@ -32,7 +32,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetTradingConfig(TradingConfig indexed oldConfig, TradingConfig newConfig);
   event LogSetLiquidationConfig(LiquidationConfig indexed oldConfig, LiquidationConfig newConfig);
   event LogSetMarketConfig(uint256 marketIndex, MarketConfig oldConfig, MarketConfig newConfig);
-  event LogSetPlpTokenConfig(address token, HLPTokenConfig oldConfig, HLPTokenConfig newConfig);
+  event LogSetHlpTokenConfig(address token, HLPTokenConfig oldConfig, HLPTokenConfig newConfig);
   event LogSetCollateralTokenConfig(bytes32 assetId, CollateralTokenConfig oldConfig, CollateralTokenConfig newConfig);
   event LogSetAssetConfig(bytes32 assetId, AssetConfig oldConfig, AssetConfig newConfig);
   event LogSetToken(address indexed oldToken, address newToken);
@@ -79,7 +79,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(bytes32 => AssetConfig) public assetConfigs;
   // HLP stuff
   bytes32[] public hlpAssetIds;
-  mapping(bytes32 => HLPTokenConfig) public assetPlpTokenConfigs;
+  mapping(bytes32 => HLPTokenConfig) public assetHlpTokenConfigs;
   // Cross margin
   bytes32[] public collateralAssetIds;
   mapping(bytes32 => CollateralTokenConfig) public assetCollateralTokenConfigs;
@@ -114,7 +114,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   }
 
   function validateAcceptedLiquidityToken(address _token) external view {
-    if (!assetPlpTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedLiquidity();
+    if (!assetHlpTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedLiquidity();
   }
 
   /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
@@ -171,7 +171,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     return assetClassConfigs.length;
   }
 
-  function getPlpTokens() external view returns (address[] memory) {
+  function getHlpTokens() external view returns (address[] memory) {
     address[] memory _result = new address[](hlpAssetIds.length);
     bytes32[] memory _hlpAssetIds = hlpAssetIds;
 
@@ -211,15 +211,15 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     return assetConfigs[_assetId];
   }
 
-  function getAssetPlpTokenConfig(bytes32 _assetId) external view returns (HLPTokenConfig memory) {
-    return assetPlpTokenConfigs[_assetId];
+  function getAssetHlpTokenConfig(bytes32 _assetId) external view returns (HLPTokenConfig memory) {
+    return assetHlpTokenConfigs[_assetId];
   }
 
-  function getAssetPlpTokenConfigByToken(address _token) external view returns (HLPTokenConfig memory) {
-    return assetPlpTokenConfigs[tokenAssetIds[_token]];
+  function getAssetHlpTokenConfigByToken(address _token) external view returns (HLPTokenConfig memory) {
+    return assetHlpTokenConfigs[tokenAssetIds[_token]];
   }
 
-  function getPlpAssetIds() external view returns (bytes32[] memory) {
+  function getHlpAssetIds() external view returns (bytes32[] memory) {
     return hlpAssetIds;
   }
 
@@ -277,7 +277,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     uint256 hlpTotalTokenWeight = 0;
     for (uint256 i = 0; i < hlpAssetIds.length; ) {
-      hlpTotalTokenWeight += assetPlpTokenConfigs[hlpAssetIds[i]].targetWeight;
+      hlpTotalTokenWeight += assetHlpTokenConfigs[hlpAssetIds[i]].targetWeight;
 
       unchecked {
         ++i;
@@ -370,16 +370,16 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     return marketConfigs[_marketIndex];
   }
 
-  function setPlpTokenConfig(
+  function setHlpTokenConfig(
     address _token,
     HLPTokenConfig calldata _newConfig
   ) external onlyOwner returns (HLPTokenConfig memory _hlpTokenConfig) {
-    emit LogSetPlpTokenConfig(_token, assetPlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
-    assetPlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
+    emit LogSetHlpTokenConfig(_token, assetHlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
+    assetHlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
 
     uint256 hlpTotalTokenWeight = 0;
     for (uint256 i = 0; i < hlpAssetIds.length; ) {
-      hlpTotalTokenWeight += assetPlpTokenConfigs[hlpAssetIds[i]].targetWeight;
+      hlpTotalTokenWeight += assetHlpTokenConfigs[hlpAssetIds[i]].targetWeight;
 
       unchecked {
         ++i;
@@ -478,7 +478,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
         liquidityConfig.hlpTotalTokenWeight = _configs[_i].targetWeight;
       } else {
         liquidityConfig.hlpTotalTokenWeight =
-          (liquidityConfig.hlpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
+          (liquidityConfig.hlpTotalTokenWeight - assetHlpTokenConfigs[_assetId].targetWeight) +
           _configs[_i].targetWeight;
       }
 
@@ -489,8 +489,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
       }
 
       // Update config
-      emit LogAddOrUpdateHLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
-      assetPlpTokenConfigs[_assetId] = _configs[_i];
+      emit LogAddOrUpdateHLPTokenConfigs(_tokens[_i], assetHlpTokenConfigs[_assetId], _configs[_i]);
+      assetHlpTokenConfigs[_assetId] = _configs[_i];
 
       unchecked {
         ++_i;
@@ -535,7 +535,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     bytes32 _assetId = tokenAssetIds[_token];
 
     // Update totalTokenWeight
-    liquidityConfig.hlpTotalTokenWeight -= assetPlpTokenConfigs[_assetId].targetWeight;
+    liquidityConfig.hlpTotalTokenWeight -= assetHlpTokenConfigs[_assetId].targetWeight;
 
     // delete from hlpAssetIds
     uint256 _len = hlpAssetIds.length;
@@ -551,7 +551,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
       }
     }
     // Delete hlpTokenConfig
-    delete assetPlpTokenConfigs[_assetId];
+    delete assetHlpTokenConfigs[_assetId];
 
     emit LogRemoveUnderlying(_token);
   }

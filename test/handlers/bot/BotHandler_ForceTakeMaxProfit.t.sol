@@ -114,14 +114,14 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     );
 
     // all calculation is same with testCorrectness_WhenExecutorCloseShortPositionForAlice_AndProfitIsGreaterThenReserved
-    address[] memory _checkPlpTokens = new address[](1);
+    address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedHlpLiquidities = new uint256[](1);
     uint256[] memory _expectedFees = new uint256[](1);
 
-    _checkPlpTokens[0] = _tpToken;
+    _checkHlpTokens[0] = _tpToken;
     _expectedTraderBalances[0] = 199_500 ether;
-    _expectedPlpLiquidities[0] = 900_000 ether;
+    _expectedHlpLiquidities[0] = 900_000 ether;
     _expectedFees[0] = 500 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -139,9 +139,9 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     });
     positionTester.assertDecreasePositionResult(
       _assertData,
-      _checkPlpTokens,
+      _checkHlpTokens,
       _expectedTraderBalances,
-      _expectedPlpLiquidities,
+      _expectedHlpLiquidities,
       _expectedFees
     );
   }
@@ -179,14 +179,14 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     );
 
     // all calculation is same with testCorrectness_WhenExecutorCloseLongPositionForAlice_AndProfitIsEqualsToReserved
-    address[] memory _checkPlpTokens = new address[](1);
+    address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedHlpLiquidities = new uint256[](1);
     uint256[] memory _expectedFees = new uint256[](1);
 
-    _checkPlpTokens[0] = _tpToken;
+    _checkHlpTokens[0] = _tpToken;
     _expectedTraderBalances[0] = 182_155.963302752293577981 ether;
-    _expectedPlpLiquidities[0] = 917_431.192660550458715597 ether;
+    _expectedHlpLiquidities[0] = 917_431.192660550458715597 ether;
     _expectedFees[0] = 412.844036697247706422 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -204,9 +204,9 @@ contract BotHandler_ForceTakeMaxProfit is BotHandler_Base {
     });
     positionTester.assertDecreasePositionResult(
       _assertData,
-      _checkPlpTokens,
+      _checkHlpTokens,
       _expectedTraderBalances,
-      _expectedPlpLiquidities,
+      _expectedHlpLiquidities,
       _expectedFees
     );
   }

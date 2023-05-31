@@ -93,7 +93,7 @@ contract TC25 is BaseIntTest_WithActions {
       weth	  0
       wbtc	  1994000000000000000000000000000000000 (20_000 * 99.7)
 
-      PNL =  -5596160
+      PNL =  -5731632
       
       Market Exposure     Price                                            AdaptivePrice                                    SIZE                                              PNL
       WBTC   LONG         20000000000000000000000000000000000              20003333333333333333333333333320000              100000000000000000000000000000000000              -16663889351774704215964005932355
@@ -102,8 +102,8 @@ contract TC25 is BaseIntTest_WithActions {
 
       Pending Borrowing Fee = 0 (no skip)
       AUM = HLP VALUE - PNL + PENDING_BORROWING_FEE
-      AUM = 2094000000000000000000000000000000000- (-5596160) +0
-      AUM = 2094000000000000000000000000005596160
+      AUM = 2094000000000000000000000000000000000- (-5731632) + 0 
+      AUM = 2094000000000000000000000000005731632
       PNL = hlpValue - aum + pendingBorrowingFee) negative of PNL means hlp is profit
       */
 
@@ -111,13 +111,15 @@ contract TC25 is BaseIntTest_WithActions {
       uint256 pendingBorrowingFeeBefore = calculator.getPendingBorrowingFeeE30();
       uint256 aumBefore = calculator.getAUME30(false);
 
-      assertApproxEqRel(hlpValueBefore, 2094000000000000000000000000000000000, MAX_DIFF, "HLP TVL Before Feed Price");
+      assertApproxEqRel(hlpValueBefore, 2093835074056630000000000000000000000, MAX_DIFF, "HLP TVL Before Feed Price");
       assertApproxEqRel(pendingBorrowingFeeBefore, 0, MAX_DIFF, "Pending Borrowing Fee Before Feed Price");
-      assertApproxEqRel(aumBefore, 2094000000000000000000000000005596160, MAX_DIFF, "AUM Before Feed Price");
-
+      assertApproxEqRel(aumBefore, 2093835074056629999999999999994268368, MAX_DIFF, "AUM Before Feed Price");
+      console2.log("aumBefore", aumBefore);
+      console2.log("hlpValueBefore", hlpValueBefore);
+      console2.log("pendingBorrowingFeeBefore", pendingBorrowingFeeBefore);
       assertApproxEqRel(
-        -int256(aumBefore - hlpValueBefore - pendingBorrowingFeeBefore),
-        -5596160,
+        int256(aumBefore) - int256(hlpValueBefore) - int256(pendingBorrowingFeeBefore),
+        -5731632,
         MAX_DIFF,
         "GLOBAL PNLE30"
       );
@@ -136,7 +138,7 @@ contract TC25 is BaseIntTest_WithActions {
     {
       /*
       AFTER T2
-      HLP VALUE = 2193700000000000000000000000000000000
+      HLP VALUE = 2193542311526886000000000000000000000
       assetIds	value
       usdc	  100000000000000000000000000000000000
       usdt	  0
@@ -144,7 +146,7 @@ contract TC25 is BaseIntTest_WithActions {
       weth	  0
       wbtc	  2093700000000000000000000000000000000 (21_000 * 99.7)
 
-      PNL = -25009095728153152550460542716185613
+      PNL = 15007542563839215898193133666694455a
       Market Exposure     Price                                            AdaptivePrice                                    SIZE                                              PNL
       WBTC   LONG         21000000000000000000000000000000000              20003333333333333333333333333320000              100000000000000000000000000000000000              4982502916180636560573237793771026
       JPY    LONG         7346297098947275625720855402                     7347521481797100171658475544                     100000000000000000000000000000000000              -16663889351774704215963998283398
@@ -152,19 +154,19 @@ contract TC25 is BaseIntTest_WithActions {
 
       Pending Borrowing Fee = 0 (no skip)
       AUM = HLP VALUE - PNL + PENDING_BORROWING_FEE
-      AUM = 2193700000000000000000000000000000000 - (-25009095728153152550460542716185613) + 0
-      AUM = 2218709095728153152550460542716185613
+      AUM = 2193542311526886000000000000000000000 + (15007542563839215898193133666694455) + 0
+      AUM = 2208549854090725215898193133666694455
       PNL =  hlpValue - aum + pendingBorrowingFee) negative of PNL means hlp is profit
       */
 
       uint256 hlpValueAfter = calculator.getHLPValueE30(false);
       uint256 pendingBorrowingFeeAfter = calculator.getPendingBorrowingFeeE30();
       uint256 aumAfter = calculator.getAUME30(false);
-      assertApproxEqRel(aumAfter, 2218709095728153152550460542716185613, MAX_DIFF, "AUM After T2");
+      assertApproxEqRel(aumAfter, 2208549854090725215898193133666694455, MAX_DIFF, "AUM After T2");
       assertApproxEqRel(hlpValueAfter, 2193700000000000000000000000000000000, MAX_DIFF, "HLP TVL After T2");
       assertApproxEqRel(pendingBorrowingFeeAfter, 0, MAX_DIFF, "Pending Borrowing Fee After T2");
       int256 pnlAfter = int256(hlpValueAfter) - int256(aumAfter) + int256(pendingBorrowingFeeAfter);
-      assertApproxEqRel(pnlAfter, -25009095728153152550460542716185613, MAX_DIFF, "GLOBAL PNLE30 After T2");
+      assertApproxEqRel(pnlAfter, -15007542563839215898193133666694455, MAX_DIFF, "GLOBAL PNLE30 After T2");
     }
 
     // T3: FEED PRICE
@@ -180,7 +182,7 @@ contract TC25 is BaseIntTest_WithActions {
       /*
       AFTER T3
 
-      HLP VALUE = 2193700000000000000000000000000000000
+      HLP VALUE = 2155213908519401344106767225398703651
       assetIds	value
       usdc	  100000000000000000000000000000000000
       usdt	  0
@@ -188,7 +190,7 @@ contract TC25 is BaseIntTest_WithActions {
       weth	  0
       wbtc	  2093700000000000000000000000000000000 (21_000 * 99.7)
 
-      PNL = 28326864724579583997165365551805191
+      PNL = -38328417888893520649432774601296349
       Market Exposure     Price                                            AdaptivePrice                                    SIZE                                              PNL
       WBTC   LONG         21000000000000000000000000000000000              20003333333333333333333333333320000              100000000000000000000000000000000000              4982502916180636560573237793771026
       JPY    LONG         7346297098947275625720855402                     7347521481797100166760944145                     100000000000000000000000000000000000              -16663889351774704215963998283398
@@ -200,17 +202,17 @@ contract TC25 is BaseIntTest_WithActions {
           BorrowingFee => (NEXT BORROWING RATE * _assetClassState.reserveValueE30) / RATE_PRECISION;
 
       Pending Forex (JPY position) =>
-          NEXT BORROWING Rate  =  (300000000000000 * 900000000000000000000000000000000 * 1 ) / 2193700000000000000000000000000000000 = 123079728312
+          NEXT BORROWING Rate  =  (300000000000000 * 900000000000000000000000000000000 * 1 ) / 2155213908519401344106767225398703651 = 123079728312
           Borrowing Fee = 123079728312 * 900000000000000000000000000000000 / 1e18 => 110771755480800000000000000
 
       Pending Crypto (WETH, WBTC position) =>
-          NEXT BORROWING Rate  =  (100000000000000 * 18000000000000000000000000000000000 * 1 ) / 2193700000000000000000000000000000000 = 820531522085
+          NEXT BORROWING Rate  =  (100000000000000 * 18000000000000000000000000000000000 * 1 ) / 2155213908519401344106767225398703651 = 820531522085
           Borrowing Fee =  820531522085 * 18000000000000000000000000000000000 / 1e18 =>  14769567397530000000000000000
       Pending Equity => 0 (no position)
 
       AUM = HLP VALUE - PNL + PENDING_BORROWING_FEE
-      AUM =  2193700000000000000000000000000000000 - (28326864724579583997165365551805191) + 14880339153010800000000000000
-      AUM =  2165373150155759569013634634448194809
+      AUM =  2155213908519401344106767225398703651 - (-38328417888893520649432774601296349) + 14880339153010800000000000000
+      AUM =  2193542341288634017767000000000000000
       PNL =  hlpValue - aum + pendingBorrowingFee) negative of PNL means hlp is profit
 
       */
@@ -219,7 +221,7 @@ contract TC25 is BaseIntTest_WithActions {
       uint256 pendingBorrowingFeeAfter = calculator.getPendingBorrowingFeeE30();
       uint256 aumAfter = calculator.getAUME30(false);
       int256 pnlAfter = int256(hlpValueAfter) - int256(aumAfter) + int256(pendingBorrowingFeeAfter);
-      assertApproxEqRel(aumAfter, 2165373150155759569013634634448194809, MAX_DIFF, "AUM After Feed Price T3");
+      assertApproxEqRel(aumAfter, 2155213908519401344106767225398703651, MAX_DIFF, "AUM After Feed Price T3");
       assertApproxEqRel(hlpValueAfter, 2193700000000000000000000000000000000, MAX_DIFF, "HLP TVL After Feed Price T3");
       assertApproxEqRel(
         pendingBorrowingFeeAfter,
@@ -227,7 +229,7 @@ contract TC25 is BaseIntTest_WithActions {
         MAX_DIFF,
         "Pending Borrowing Fee After Feed Price T3"
       );
-      assertApproxEqRel(pnlAfter, 28326864724579583997165365551805191, MAX_DIFF, "GLOBAL PNLE30 After Feed Price T3");
+      assertApproxEqRel(pnlAfter, 38328417888893520649432774601296349, MAX_DIFF, "GLOBAL PNLE30 After Feed Price T3");
     }
 
     // T4: Add BTC in hlp
@@ -261,7 +263,7 @@ contract TC25 is BaseIntTest_WithActions {
       assertHLPLiquidity(address(usdc), 100_000 * 1e6);
 
       /*
-      HLP VALUE = 2298374500000000000000000000000000000
+      HLP VALUE = 2298208927894045110000000000000000000
       assetIds	value
       usdc	  100000000000000000000000000000000000
       usdt	  0
@@ -269,29 +271,29 @@ contract TC25 is BaseIntTest_WithActions {
       weth	  0
       wbtc	  2198374500000000000000000000000000000 (21_000 * 104.6845)
 
-      PNL = 28326864724579583997165365551805191
+      PNL = -38328417888893520649432774601296349
       Market Exposure     Price                                            AdaptivePrice                                    SIZE                                              PNL
       WBTC   LONG         21000000000000000000000000000000000              20003333333333333333333333333320000              100000000000000000000000000000000000              4982502916180636560573237793771026
       JPY    LONG         7346297098947275625720855402                     7347521481797100166760944145                     100000000000000000000000000000000000              -16663889351774704215963998283398
       WETH   SHORT        1000000000000000000000000000000000               1499750000000000001000000000000000               100000000000000000000000000000000000              33322220370061676946157692948869263
 
-      Pending Borrowing Fee =  14202646261516800000000000000 (hlpTVL is changed)
+      Pending Borrowing Fee =  14203669476608100000000000000 (hlpTVL is changed)
 
          NEXT BORROWING Rate => (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _hlpTVL
           BorrowingFee => (NEXT BORROWING RATE * _assetClassState.reserveValueE30) / RATE_PRECISION;
 
       Pending Forex (JPY position) =>
-          NEXT BORROWING Rate  =  (300000000000000 * 900000000000000000000000000000000 * 1 ) / 2298374500000000000000000000000000000 = 117474328052
+          NEXT BORROWING Rate  =  (300000000000000 * 900000000000000000000000000000000 * 1 ) / 2298208927894045110000000000000000000 = 117474328052
           Borrowing Fee = 117474328052 * 900000000000000000000000000000000 / 1e18 => 105726895246800000000000000
 
       Pending Crypto (WETH, WBTC position) =>
-          NEXT BORROWING Rate  =  (100000000000000 * 18000000000000000000000000000000000 * 1 ) / 2298374500000000000000000000000000000 = 783162187015
+          NEXT BORROWING Rate  =  (100000000000000 * 18000000000000000000000000000000000 * 1 ) / 2298208927894045110000000000000000000 = 783162187015
           Borrowing Fee =  783162187015 * 18000000000000000000000000000000000 / 1e18 =>  14096919366270000000000000000
       Pending Equity => 0 (no position)
 
       AUM = HLP VALUE - PNL + PENDING_BORROWING_FEE
-      AUM =  2298374500000000000000000000000000000 - (28326864724579583997165365551805191) + 14202646261516800000000000000
-      AUM =  2270047649478066677519634634448194809
+      AUM =  2298208927894045110000000000000000000 - 38328417888893520649432774601296349 + 14203669476608100000000000000
+      AUM =  2259880524208821065958667225398703651
       PNL =  hlpValue - aum + pendingBorrowingFee) negative of PNL means hlp is profit
 
       */
@@ -300,7 +302,7 @@ contract TC25 is BaseIntTest_WithActions {
       uint256 pendingBorrowingFeeAfter = calculator.getPendingBorrowingFeeE30();
       uint256 aumAfter = calculator.getAUME30(false);
       int256 pnlAfter = int256(hlpValueAfter) - int256(aumAfter) + int256(pendingBorrowingFeeAfter);
-      assertApproxEqRel(aumAfter, 2270047649478066677519634634448194809, MAX_DIFF, "AUM After T4");
+      assertApproxEqRel(aumAfter, 2259880524208821065958667225398703651, MAX_DIFF, "AUM After T4");
       assertApproxEqRel(hlpValueAfter, 2298374500000000000000000000000000000, MAX_DIFF, "HLP TVL After T4");
       assertApproxEqRel(
         pendingBorrowingFeeAfter,
@@ -308,7 +310,7 @@ contract TC25 is BaseIntTest_WithActions {
         MAX_DIFF,
         "Pending Borrowing Fee After T4"
       );
-      assertApproxEqRel(pnlAfter, 28326864724579583997165365551805191, MAX_DIFF, "GLOBAL PNLE30  After T4");
+      assertApproxEqRel(pnlAfter, 38328417888893520649432774601296349, MAX_DIFF, "GLOBAL PNLE30  After T4");
     }
 
     // T5: BTC price changed to 18,000 (check AUM)
@@ -323,7 +325,7 @@ contract TC25 is BaseIntTest_WithActions {
       /*
       AFTER T5
 
-      HLP VALUE = 1984321000000000000000000000000000000
+      HLP VALUE = 1984289090765815080000000000000000000
       assetIds	value
       usdc	  100000000000000000000000000000000000
       usdt	  0
@@ -331,29 +333,29 @@ contract TC25 is BaseIntTest_WithActions {
       weth	  0
       wbtc	  1884321000000000000000000000000000000 (18_000 * 104.6845)
 
-      PNL = 43321720884401878955785028913446065
+      PNL = -23333561729071225690813111239655475
       Market Exposure     Price                                            AdaptivePrice                                    SIZE                                              PNL
       WBTC   LONG         18000000000000000000000000000000000              20003333333333333320000000000000000              100000000000000000000000000000000000              -10014997500416597233794367605339120
       JPY    LONG         7346297098947275625720855402                     7347521481797100166760944145                     100000000000000000000000000000000000              -16663889351774704215963998283398
       WETH   SHORT        1000000000000000000000000000000000               1499750000000000001000000000000000               100000000000000000000000000000000000              +33322220370061676946157692948869263
 
-      Pending Borrowing Fee = 32900926815763200000000000000
+      Pending Borrowing Fee = 32901455893598100000000000000
 
          NEXT BORROWING Rate => (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _hlpTVL
           BorrowingFee => (NEXT BORROWING RATE * _assetClassState.reserveValueE30) / RATE_PRECISION;
 
       Pending Forex (JPY position) =>
-          NEXT BORROWING Rate  =  (300000000000000 * 900000000000000000000000000000000 * 2 ) / 1984321000000000000000000000000000000 = 272133389708
+          NEXT BORROWING Rate  =  (300000000000000 * 900000000000000000000000000000000 * 2 ) / 1984289090765815080000000000000000000 = 272133389708
           Borrowing Fee = 272133389708 * 900000000000000000000000000000000 / 1e18 => 244920050737200000000000000
 
       Pending Crypto (WETH, WBTC position) =>
-          NEXT BORROWING Rate  =  (100000000000000 * 18000000000000000000000000000000000 * 2 ) / 1984321000000000000000000000000000000 = 1814222598057
+          NEXT BORROWING Rate  =  (100000000000000 * 18000000000000000000000000000000000 * 2 ) / 1984289090765815080000000000000000000 = 1814222598057
           Borrowing Fee =  1814222598057 * 18000000000000000000000000000000000 / 1e18 =>  32656006765026000000000000000
       Pending Equity => 0 (no position)
 
       AUM = HLP VALUE - PNL + PENDING_BORROWING_FEE
-      AUM =  1984321000000000000000000000000000000 - (43321720884401878955785028913446065) + 32900926815763200000000000000
-      AUM =  1940999312016524936807414971086553935
+      AUM =  1984289090765815080000000000000000000 - 23333561729071225690813111239655475 + 32901455893598100000000000000
+      AUM =  1960955561938199747907286888760344525
       PNL =  hlpValue - aum + pendingBorrowingFee) negative of PNL means hlp is profit
 
       */
@@ -361,7 +363,7 @@ contract TC25 is BaseIntTest_WithActions {
       uint256 pendingBorrowingFeeAfter = calculator.getPendingBorrowingFeeE30();
       uint256 aumAfter = calculator.getAUME30(false);
       int256 pnlAfter = int256(hlpValueAfter) - int256(aumAfter) + int256(pendingBorrowingFeeAfter);
-      assertApproxEqRel(aumAfter, 1940999312016524936807414971086553935, MAX_DIFF, "AUM After T5");
+      assertApproxEqRel(aumAfter, 1960955561938199747907286888760344525, MAX_DIFF, "AUM After T5");
       assertApproxEqRel(hlpValueAfter, 1984321000000000000000000000000000000, MAX_DIFF, "HLP TVL After T5");
       assertApproxEqRel(
         pendingBorrowingFeeAfter,
@@ -369,7 +371,7 @@ contract TC25 is BaseIntTest_WithActions {
         MAX_DIFF,
         "Pending Borrowing Fee After T5"
       );
-      assertApproxEqRel(pnlAfter, 43321720884401878955785028913446065, MAX_DIFF, "GLOBAL PNLE30 After T5");
+      assertApproxEqRel(pnlAfter, 23333561729071225690813111239655475, MAX_DIFF, "GLOBAL PNLE30 After T5");
     }
   }
 }

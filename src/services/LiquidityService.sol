@@ -396,7 +396,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     // liquidity left < buffer liquidity then revert
     if (
       VaultStorage(vaultStorage).hlpLiquidity(_token) <
-      _configStorage.getAssetPlpTokenConfigByToken(_token).bufferLiquidity
+      _configStorage.getAssetHlpTokenConfigByToken(_token).bufferLiquidity
     ) {
       revert LiquidityService_InsufficientLiquidityBuffer();
     }

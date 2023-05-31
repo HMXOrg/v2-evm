@@ -8,6 +8,7 @@ import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { console } from "forge-std/console.sol";
 
 contract TC38 is BaseIntTest_WithActions {
   function testCorrectness_TC38_MarketAveragePriceCalculation() external {
@@ -84,7 +85,7 @@ contract TC38 is BaseIntTest_WithActions {
 
     // HLP LIQUIDITY 99.7 WBTC, 100_000 usdc
     {
-      /* 
+      /*
       BEFORE T3
 
       Pending Borrowing Fee = 0 (no skip)
@@ -98,12 +99,11 @@ contract TC38 is BaseIntTest_WithActions {
       uint256 pendingBorrowingFeeBefore = calculator.getPendingBorrowingFeeE30();
       uint256 aumBefore = calculator.getAUME30(false);
 
-      assertApproxEqRel(hlpValueBefore, 2093835074056630000000000000000000000, MAX_DIFF, "HLP TVL Before Feed Price");
+      assertApproxEqRel(hlpValueBefore, 2093835074056630000000000000000000000, 0, "HLP TVL Before Feed Price");
       assertApproxEqRel(pendingBorrowingFeeBefore, 0, MAX_DIFF, "Pending Borrowing Fee Before Feed Price");
       assertApproxEqRel(aumBefore, 2093835074056630000000000000000065469, MAX_DIFF, "AUM Before Feed Price");
-
       assertApproxEqRel(
-        -int256(aumBefore - hlpValueBefore - pendingBorrowingFeeBefore),
+        -int256(hlpValueBefore - aumBefore - pendingBorrowingFeeBefore),
         -65469,
         MAX_DIFF,
         "GLOBAL PNLE30"
@@ -155,14 +155,60 @@ contract TC38 is BaseIntTest_WithActions {
       (int256 _BobUnrealizedPnlE30, ) = calculator.getUnrealizedPnlAndFee(getSubAccount(BOB, 0), 0, 0);
       (int256 _CarolUnrealizedPnlE30, ) = calculator.getUnrealizedPnlAndFee(getSubAccount(CAROL, 0), 0, 0);
 
+      IPerpStorage.Market memory market = perpStorage.getMarketByIndex(wethMarketIndex);
+      IConfigStorage.MarketConfig memory marketConfig = configStorage.getMarketConfigByIndex(wethMarketIndex);
+
+      IPerpStorage.Position memory bobPosition = perpStorage.getPositionById(getPositionId(BOB, 0, wethMarketIndex));
+      IPerpStorage.Position memory carolPosition = perpStorage.getPositionById(
+        getPositionId(CAROL, 0, wethMarketIndex)
+      );
+
+      (uint256 bobClosePrice, ) = oracleMiddleWare.getLatestAdaptivePrice(
+        wethAssetId,
+        false,
+        int256(market.longPositionSize) - int256(market.shortPositionSize),
+        -bobPosition.positionSizeE30,
+        marketConfig.fundingRate.maxSkewScaleUSD,
+        0
+      );
+      (bool bobIsProfit, uint256 bobProfit) = calculator.getDelta(
+        uint256(bobPosition.positionSizeE30),
+        true,
+        bobClosePrice,
+        bobPosition.avgEntryPriceE30,
+        0
+      );
+
+      (uint256 carolClosePrice, ) = oracleMiddleWare.getLatestAdaptivePrice(
+        wethAssetId,
+        false,
+        int256(market.longPositionSize) - int256(market.shortPositionSize),
+        -carolPosition.positionSizeE30,
+        marketConfig.fundingRate.maxSkewScaleUSD,
+        0
+      );
+      (bool carolIsProfit, uint256 carolProfit) = calculator.getDelta(
+        uint256(carolPosition.positionSizeE30),
+        true,
+        carolClosePrice,
+        carolPosition.avgEntryPriceE30,
+        0
+      );
+
       assertEq(_BobUnrealizedPnlE30, 7_200 * 1e30, "T4: Bob unrealized Pnl");
       assertEq(_CarolUnrealizedPnlE30, 1730362327240939953049650331945816, "T4: CAROL unrealized Pnl");
 
-      // Bob Delta = 9016484913540967321995421402572359
-      // Bob Unrealized Pnl = 9016484913540967321995421402572359 * 0.8 = 7.2131879308327738576e+33/1e30 = 7213.1879308327738576
+      int256 globalPnl = calculator.getGlobalPNLE30();
+      uint256 aumWithoutGlobalPnL = calculator.getHLPValueE30(true) +
+        calculator.getPendingBorrowingFeeE30() +
+        vaultStorage.globalBorrowingFeeDebt() +
+        vaultStorage.globalLossDebt();
+      uint256 aumWithGlobalPnL = aumWithoutGlobalPnL - bobProfit - carolProfit;
+      assertApproxEqRel(globalPnl, -(int256(bobProfit) + int256(carolProfit)), MAX_DIFF);
+      assertApproxEqRel(aumWithGlobalPnL, calculator.getAUME30(true), MAX_DIFF);
 
+      // Bob Delta = 9016484913540967321995421402572359
       // Carol Delta = 2162952909051174941312062914932271
-      // Carol Unrealized Pnl = 2162952909051174941312062914932271 * 0.8 = 1.730362327240939953e+33/1e30 = 1730.362327240939953
 
       assertApproxEqRel(
         -(9016484913540967321995421402572359 + 2162952909051174941312062914932271),

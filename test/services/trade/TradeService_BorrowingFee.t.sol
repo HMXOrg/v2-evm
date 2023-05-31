@@ -331,8 +331,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(102);
     {
-      // Last fee to Plp = 0.81 * 85% = 0.6885
-      // Plp Value = 1000000 + 0.6885 = 1000000.6885
+      // Last fee to Hlp = 0.81 * 85% = 0.6885
+      // Hlp Value = 1000000 + 0.6885 = 1000000.6885
       // BorrowingRate: 0.0001 * 135000 / 1000000.6885 * (102 - 101) = 0.000013499990705256
       // BorrowingFee: 0.000013499990705256 * 135000 = 1.82249874520956
       assertEq(mockCalculator.getPendingBorrowingFeeE30(), 1.82249874520956 * 1e30, "PendingBorrowingFee T102");
@@ -358,8 +358,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
       assertEq(_assetClass.sumSettledBorrowingFeeE30, 0.81 * 1e30);
 
       // At this point, can still ignore BOB, as BOB has just joined, timeDelta = 0
-      // Last fee to Plp = 0.81 * 85% = 0.6885
-      // Plp Value = 1000000 + 0.6885 = 1000000.6885
+      // Last fee to Hlp = 0.81 * 85% = 0.6885
+      // Hlp Value = 1000000 + 0.6885 = 1000000.6885
       // BorrowingRate: 0.0001 * 135000 / 1000000.6885 * (110 - 101) = 0.000121499916347307
       // BorrowingFee: 0.000121499916347307 * 135000 = 16.402488706886444
       assertEq(mockCalculator.getPendingBorrowingFeeE30(), 16.402488706886445 * 1e30, "PendingBorrowingFee T110");
@@ -367,8 +367,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(120);
     {
-      // Last fee to Plp = 0.81 * 85% = 0.6885
-      // Plp Value = 1000000 + 0.6885 = 1000000.6885
+      // Last fee to Hlp = 0.81 * 85% = 0.6885
+      // Hlp Value = 1000000 + 0.6885 = 1000000.6885
 
       // T110-120 portion
       // BorrowingRate: 0.0001 * 225000 / 1000000.6885 * (120 - 110) = 0.000224999845087606

@@ -715,7 +715,7 @@
             "src": "src/storages/ConfigStorage.sol:77"
           },
           {
-            "label": "assetPlpTokenConfigs",
+            "label": "assetHlpTokenConfigs",
             "offset": 0,
             "slot": "120",
             "type": "t_mapping(t_bytes32,t_struct(HLPTokenConfig)44267_storage)",
@@ -5117,7 +5117,7 @@
             "src": "src/storages/ConfigStorage.sol:78"
           },
           {
-            "label": "assetPlpTokenConfigs",
+            "label": "assetHlpTokenConfigs",
             "offset": 0,
             "slot": "120",
             "type": "t_mapping(t_bytes32,t_struct(HLPTokenConfig)44454_storage)",

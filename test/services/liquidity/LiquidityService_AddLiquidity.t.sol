@@ -69,9 +69,9 @@ contract LiquidityService_AddLiquidity is LiquidityService_Base {
   // add liquidity on not accepted token
   function testRevert_WhenHLPAddLiquidity_WithNotAcceptedToken() external {
     // update weth to not accepted
-    IConfigStorage.HLPTokenConfig memory _hlpTokenConfig = configStorage.getAssetPlpTokenConfigByToken(address(weth));
+    IConfigStorage.HLPTokenConfig memory _hlpTokenConfig = configStorage.getAssetHlpTokenConfigByToken(address(weth));
     _hlpTokenConfig.accepted = false;
-    configStorage.setPlpTokenConfig(address(weth), _hlpTokenConfig);
+    configStorage.setHlpTokenConfig(address(weth), _hlpTokenConfig);
 
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedLiquidity()"));
     liquidityService.addLiquidity(ALICE, address(weth), 10 ether, 0);

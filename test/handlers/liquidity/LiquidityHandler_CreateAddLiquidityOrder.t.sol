@@ -66,7 +66,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
   }
 
   function test_revert_hlpCircuitBreaker() external {
-    mockLiquidityService.setPlpEnabled(false);
+    mockLiquidityService.setHlpEnabled(false);
 
     vm.deal(ALICE, 5 ether); //deal with out of gas
     wbtc.mint(ALICE, 1 ether);

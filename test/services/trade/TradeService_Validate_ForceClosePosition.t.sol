@@ -23,7 +23,7 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
     tradeService.validateMarketDelisted(ethMarketIndex);
   }
 
-  function testRevert_validateDeleverage_WhenPlpHealthy() external {
+  function testRevert_validateDeleverage_WhenHlpHealthy() external {
     // Add Liquidity 120,000 USDT -> 120,000 USD
     // TVL = 120,000 USD
     // AUM = 120,000 USD
@@ -50,7 +50,7 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
     mockCalculator.setAUM((80_000) * 1e30);
 
     // HLP safety buffer = 1 + ((80,000 - 120,000) / 120,000) = 0.6666666666666667
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_PlpHealthy()"));
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_HlpHealthy()"));
     tradeService.validateDeleverage();
   }
 

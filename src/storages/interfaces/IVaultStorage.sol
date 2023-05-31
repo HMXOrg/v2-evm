@@ -48,26 +48,26 @@ interface IVaultStorage {
 
   function removeFundingFee(address _token, uint256 _amount) external;
 
-  function addPlpLiquidityDebtUSDE30(uint256 _value) external;
+  function addHlpLiquidityDebtUSDE30(uint256 _value) external;
 
-  function removePlpLiquidityDebtUSDE30(uint256 _value) external;
+  function removeHlpLiquidityDebtUSDE30(uint256 _value) external;
 
   function increaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
 
   function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
 
-  function payPlp(address _trader, address _token, uint256 _amount) external;
+  function payHlp(address _trader, address _token, uint256 _amount) external;
 
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
 
-  function borrowFundingFeeFromPlpToTrader(
+  function borrowFundingFeeFromHlpToTrader(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount,
     uint256 _fundingFeeValue
   ) external;
 
-  function repayFundingFeeDebtFromTraderToPlp(
+  function repayFundingFeeDebtFromTraderToHlp(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount,
@@ -77,4 +77,8 @@ interface IVaultStorage {
   function cook(address _token, address _target, bytes calldata _callData) external returns (bytes memory);
 
   function setStrategyAllowance(address _token, address _strategy, address _target) external;
+
+  function globalBorrowingFeeDebt() external returns (uint256);
+
+  function globalLossDebt() external returns (uint256);
 }

@@ -141,7 +141,7 @@ interface IConfigStorage {
 
   function getMarketConfigsLength() external view returns (uint256);
 
-  function getPlpTokens() external view returns (address[] memory);
+  function getHlpTokens() external view returns (address[] memory);
 
   function getAssetConfigByToken(address _token) external view returns (AssetConfig memory);
 
@@ -149,11 +149,11 @@ interface IConfigStorage {
 
   function getAssetConfig(bytes32 _assetId) external view returns (AssetConfig memory);
 
-  function getAssetPlpTokenConfig(bytes32 _assetId) external view returns (HLPTokenConfig memory);
+  function getAssetHlpTokenConfig(bytes32 _assetId) external view returns (HLPTokenConfig memory);
 
-  function getAssetPlpTokenConfigByToken(address _token) external view returns (HLPTokenConfig memory);
+  function getAssetHlpTokenConfigByToken(address _token) external view returns (HLPTokenConfig memory);
 
-  function getPlpAssetIds() external view returns (bytes32[] memory);
+  function getHlpAssetIds() external view returns (bytes32[] memory);
 
   function getTradeServiceHooks() external view returns (address[] memory);
 
@@ -192,7 +192,7 @@ interface IConfigStorage {
     MarketConfig calldata _newConfig
   ) external returns (MarketConfig memory _marketConfig);
 
-  function setPlpTokenConfig(
+  function setHlpTokenConfig(
     address _token,
     HLPTokenConfig calldata _newConfig
   ) external returns (HLPTokenConfig memory _hlpTokenConfig);

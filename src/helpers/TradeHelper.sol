@@ -468,11 +468,11 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         _vars.payerBalance = _vars.vaultStorage.hlpLiquidity(_assetConfig.tokenAddress);
 
         // get profit from hlp
-        _increaseCollateralWithUnrealizedPnlFromPlp(_vars);
+        _increaseCollateralWithUnrealizedPnlFromHlp(_vars);
       }
     }
 
-    bytes32[] memory _hlpAssetIds = _vars.configStorage.getPlpAssetIds();
+    bytes32[] memory _hlpAssetIds = _vars.configStorage.getHlpAssetIds();
     uint256 _len = _hlpAssetIds.length;
     {
       // loop for get fee from fee reserve
@@ -503,9 +503,9 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         _vars.payerBalance = _vars.vaultStorage.hlpLiquidity(_assetConfig.tokenAddress);
 
         // get profit from hlp
-        _increaseCollateralWithUnrealizedPnlFromPlp(_vars);
+        _increaseCollateralWithUnrealizedPnlFromHlp(_vars);
         // get fee from hlp
-        _increaseCollateralWithFundingFeeFromPlp(_vars);
+        _increaseCollateralWithFundingFeeFromHlp(_vars);
 
         unchecked {
           ++i;
@@ -514,7 +514,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     }
   }
 
-  function _increaseCollateralWithUnrealizedPnlFromPlp(IncreaseCollateralVars memory _vars) internal {
+  function _increaseCollateralWithUnrealizedPnlFromHlp(IncreaseCollateralVars memory _vars) internal {
     if (_vars.payerBalance > 0 && _vars.unrealizedPnlToBeReceived > 0) {
       // We are going to deduct funding fee balance,
       // so we need to check whether funding fee has this collateral token or not.
@@ -564,7 +564,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     }
   }
 
-  function _increaseCollateralWithFundingFeeFromPlp(IncreaseCollateralVars memory _vars) internal {
+  function _increaseCollateralWithFundingFeeFromHlp(IncreaseCollateralVars memory _vars) internal {
     if (_vars.payerBalance > 0 && _vars.fundingFeeToBeReceived > 0) {
       // We are going to deduct hlp liquidity balance,
       // so we need to check whether hlp has this collateral token or not.
@@ -576,7 +576,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         _vars.tokenDecimal
       );
       // book the balances
-      _vars.vaultStorage.borrowFundingFeeFromPlpToTrader(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
+      _vars.vaultStorage.borrowFundingFeeFromHlpToTrader(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.fundingFeeToBeReceived -= _repayValue;
@@ -606,7 +606,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     _vars.positionId = _positionId;
     _vars.subAccount = _subAccount;
 
-    bytes32[] memory _hlpAssetIds = _vars.configStorage.getPlpAssetIds();
+    bytes32[] memory _hlpAssetIds = _vars.configStorage.getHlpAssetIds();
     uint256 _len = _hlpAssetIds.length;
 
     // check loss
@@ -650,15 +650,15 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       // settle liquidation fee
       _decreaseCollateralWithLiquidationFee(_vars, _liquidator);
       // settle borrowing fee
-      _decreaseCollateralWithBorrowingFeeToPlp(_vars);
+      _decreaseCollateralWithBorrowingFeeToHlp(_vars);
       // settle trading fee
       _decreaseCollateralWithTradingFeeToProtocolFee(_vars);
       // settle funding fee to hlp
-      _decreaseCollateralWithFundingFeeToPlp(_vars);
+      _decreaseCollateralWithFundingFeeToHlp(_vars);
       // settle funding fee to fee reserve
       _decreaseCollateralWithFundingFeeToFeeReserve(_vars);
       // settle loss fee
-      _decreaseCollateralWithUnrealizedPnlToPlp(_vars);
+      _decreaseCollateralWithUnrealizedPnlToHlp(_vars);
 
       unchecked {
         ++i;
@@ -666,7 +666,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     }
   }
 
-  function _decreaseCollateralWithUnrealizedPnlToPlp(DecreaseCollateralVars memory _vars) internal {
+  function _decreaseCollateralWithUnrealizedPnlToHlp(DecreaseCollateralVars memory _vars) internal {
     if (_vars.payerBalance > 0 && _vars.unrealizedPnlToBePaid > 0) {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _vars.payerBalance,
@@ -674,7 +674,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         _vars.tokenPrice,
         _vars.tokenDecimal
       );
-      VaultStorage(_vars.vaultStorage).payPlp(_vars.subAccount, _vars.token, _repayAmount);
+      VaultStorage(_vars.vaultStorage).payHlp(_vars.subAccount, _vars.token, _repayAmount);
 
       _vars.unrealizedPnlToBePaid -= _repayValue;
       _vars.payerBalance -= _repayAmount;
@@ -685,7 +685,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     }
   }
 
-  function _decreaseCollateralWithFundingFeeToPlp(DecreaseCollateralVars memory _vars) internal {
+  function _decreaseCollateralWithFundingFeeToHlp(DecreaseCollateralVars memory _vars) internal {
     // If absFundingFeeToBePaid is less than borrowing debts from HLP, Then Trader repay with all current collateral amounts to HLP
     // Else Trader repay with just enough current collateral amounts to HLP
     if (_vars.payerBalance > 0 && _vars.fundingFeeToBePaid > 0 && _vars.hlpDebt > 0) {
@@ -697,7 +697,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         _vars.tokenDecimal
       );
       // book the balances
-      _vars.vaultStorage.repayFundingFeeDebtFromTraderToPlp(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
+      _vars.vaultStorage.repayFundingFeeDebtFromTraderToHlp(_vars.subAccount, _vars.token, _repayAmount, _repayValue);
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.fundingFeeToBePaid -= _repayValue;
@@ -766,7 +766,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     }
   }
 
-  function _decreaseCollateralWithBorrowingFeeToPlp(DecreaseCollateralVars memory _vars) internal {
+  function _decreaseCollateralWithBorrowingFeeToHlp(DecreaseCollateralVars memory _vars) internal {
     if (_vars.payerBalance > 0 && _vars.borrowingFeeToBePaid > 0) {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _vars.payerBalance,

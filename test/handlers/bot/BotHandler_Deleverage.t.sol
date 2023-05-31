@@ -63,7 +63,7 @@ contract BotHandler_Deleverage is BotHandler_Base {
 
     // HLP safety buffer = 1 + ((80,000 - 120,000) / 120,000) = 0.6666666666666667
 
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_PlpHealthy()"));
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_HlpHealthy()"));
     botHandler.deleverage(
       ALICE,
       0,
@@ -161,7 +161,7 @@ contract BotHandler_Deleverage is BotHandler_Base {
     mockCalculator.setHLPValue(80_000 * 1e30);
 
     // HLP safety buffer = 1 + ((80,000 - 80,000) / 80,000) = 1
-    vm.expectRevert(abi.encodeWithSignature("ITradeService_PlpHealthy()"));
+    vm.expectRevert(abi.encodeWithSignature("ITradeService_HlpHealthy()"));
     botHandler.deleverage(
       ALICE,
       0,

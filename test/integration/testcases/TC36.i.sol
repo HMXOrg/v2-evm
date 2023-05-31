@@ -269,7 +269,7 @@ contract TC36 is BaseIntTest_WithActions {
     _config.bufferLiquidity = 0;
     _config.maxWeightDiff = 1e18;
     _config.accepted = true;
-    configStorage.setPlpTokenConfig(address(wbtc), _config);
+    configStorage.setHlpTokenConfig(address(wbtc), _config);
 
     removeLiquidity(
       ALICE,

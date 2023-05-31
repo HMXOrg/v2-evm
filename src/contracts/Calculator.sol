@@ -81,13 +81,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 aum = _getHLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
     if (pnlE30 < 0) {
-      aum += uint256(-pnlE30);
-    } else {
-      uint256 _pnl = uint256(pnlE30);
+      uint256 _pnl = uint256(-pnlE30);
       if (aum < _pnl) return 0;
-      unchecked {
-        aum -= _pnl;
-      }
+      aum -= _pnl;
+    } else {
+      aum += uint256(pnlE30);
     }
 
     return aum;
@@ -146,7 +144,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   function _getHLPValueE30(bool _isMaxPrice) internal view returns (uint256) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
-    bytes32[] memory _hlpAssetIds = _configStorage.getPlpAssetIds();
+    bytes32[] memory _hlpAssetIds = _configStorage.getHlpAssetIds();
     uint256 assetValue = 0;
     uint256 _len = _hlpAssetIds.length;
 
@@ -276,7 +274,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         _getHLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false),
         _getHLPValueE30(false),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getAssetPlpTokenConfigByToken(_token),
+        _configStorage.getAssetHlpTokenConfigByToken(_token),
         LiquidityDirection.ADD
       );
   }
@@ -296,7 +294,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         _getHLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true),
         _getHLPValueE30(true),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getAssetPlpTokenConfigByToken(_token),
+        _configStorage.getAssetHlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
       );
   }
@@ -381,7 +379,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
 
-    uint256 _targetUsd = (_totalLiquidityUsd * _configStorage.getAssetPlpTokenConfigByToken(_token).targetWeight) /
+    uint256 _targetUsd = (_totalLiquidityUsd * _configStorage.getAssetHlpTokenConfigByToken(_token).targetWeight) /
       _liquidityConfig.hlpTotalTokenWeight;
 
     if (_targetUsd == 0) return 0;
@@ -477,6 +475,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return _getEquity(_subAccount, _limitPriceE30, _limitAssetId, new bytes32[](0), new uint256[](0));
   }
 
+  /// @notice Calculate equity value of a given account. Same as above but allow injected price.
+  /// @dev This function is supposed to be used in view function only.
+  /// @param _subAccount Trader's account address
+  /// @param _injectedAssetIds AssetIds to be used for price ref.
+  /// @param _injectedPrices Prices to be used for calculate equity
   function getEquityWithInjectedPrices(
     address _subAccount,
     bytes32[] memory _injectedAssetIds,
@@ -486,6 +489,12 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return _getEquity(_subAccount, 0, 0, _injectedAssetIds, _injectedPrices);
   }
 
+  /// @notice Perform the actual equity calculation.
+  /// @param _subAccount The trader's account addresss to be calculate.
+  /// @param _limitPriceE30 Price to be overwritten for a specific assetId.
+  /// @param _limitAssetId Asset Id that its price will need to be overwritten.
+  /// @param _injectedAssetIds AssetIds to be used for price ref.
+  /// @param _injectedPrices Prices to be used for calculate equity
   function _getEquity(
     address _subAccount,
     uint256 _limitPriceE30,
@@ -1157,14 +1166,14 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 sumS2E, // SUM(positionSize^2 / entryPrice)
     uint256 sumSize, // longSize or shortSize
     bool isLong
-  ) public pure returns (int256) {
+  ) internal pure returns (int256) {
     sumSE = isLong ? -sumSE : sumSE;
     int256 pnlFromPositions = (price.toInt256() * sumSE) / 1e30;
     int256 pnlFromSkew = ((((price.toInt256() * skew) / (maxSkew.toInt256())) * sumSE) / 1e30);
     uint256 pnlFromVolatility = price.mulDiv(sumS2E, 2 * maxSkew);
     int256 pnlFromDirection = isLong ? -(sumSize.toInt256()) : sumSize.toInt256();
     int256 result = pnlFromPositions + pnlFromSkew + pnlFromVolatility.toInt256() - pnlFromDirection;
-    return isLong ? result : -result;
+    return result;
   }
 
   function _getPriceFromInjectedData(

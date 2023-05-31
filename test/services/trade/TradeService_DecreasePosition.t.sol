@@ -151,14 +151,14 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // and HLP WETH liquidity should reduced by 23809.523809523809523809 ether
     //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 23809.523809523809523809 = 976190.476190476190476191 ether
     // finally fee should increased by 119.047619047619047619 ether
-    address[] memory _checkPlpTokens = new address[](1);
+    address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedHlpLiquidities = new uint256[](1);
     uint256[] memory _expectedFees = new uint256[](1);
 
-    _checkPlpTokens[0] = _tpToken;
+    _checkHlpTokens[0] = _tpToken;
     _expectedTraderBalances[0] = 123_690.47619047619047619 ether;
-    _expectedPlpLiquidities[0] = 976_190.476190476190476191 ether;
+    _expectedHlpLiquidities[0] = 976_190.476190476190476191 ether;
     _expectedFees[0] = 119.047619047619047619 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -176,9 +176,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
     });
     positionTester.assertDecreasePositionResult(
       _assertData,
-      _checkPlpTokens,
+      _checkHlpTokens,
       _expectedTraderBalances,
-      _expectedPlpLiquidities,
+      _expectedHlpLiquidities,
       _expectedFees
     );
   }
@@ -268,21 +268,21 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // then ALICE sub-account wbtc collateral should be reduced by 145 WBTC
     // and HLP WBTC liquidity should increased by 145 WBTC
     //     HLP WBTC liquidity has 10,000 WBTC then liquidity remaining is 10000 + 145 = 10145 WBTC
-    address[] memory _checkPlpTokens = new address[](2);
+    address[] memory _checkHlpTokens = new address[](2);
     uint256[] memory _expectedTraderBalances = new uint256[](2);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](2);
+    uint256[] memory _expectedHlpLiquidities = new uint256[](2);
     uint256[] memory _expectedFees = new uint256[](2);
 
     // expected WETH balance
-    _checkPlpTokens[0] = address(weth);
+    _checkHlpTokens[0] = address(weth);
     _expectedTraderBalances[0] = 0 ether;
-    _expectedPlpLiquidities[0] = 1_010_000 ether;
+    _expectedHlpLiquidities[0] = 1_010_000 ether;
     _expectedFees[0] = 0; // when trader loss, should not has fee
 
     // expected WBTC balance
-    _checkPlpTokens[1] = address(wbtc);
+    _checkHlpTokens[1] = address(wbtc);
     _expectedTraderBalances[1] = 9_855 * 1e8;
-    _expectedPlpLiquidities[1] = 10_145 * 1e8;
+    _expectedHlpLiquidities[1] = 10_145 * 1e8;
     _expectedFees[1] = 0; // when trader loss, should not has fee
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -299,9 +299,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
     });
     positionTester.assertDecreasePositionResult(
       _assertData,
-      _checkPlpTokens,
+      _checkHlpTokens,
       _expectedTraderBalances,
-      _expectedPlpLiquidities,
+      _expectedHlpLiquidities,
       _expectedFees
     );
   }
@@ -371,14 +371,14 @@ contract TradeService_DecreasePosition is TradeService_Base {
     //                             = 100000 - 52631.578947368421052631 = 47368.421052631578947369 ether
     // and HLP WETH liquidity should increased by 52631.578947368421052631 ether
     //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 + 52631.578947368421052631 = 1052631.578947368421052631 ether
-    address[] memory _checkPlpTokens = new address[](1);
+    address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedHlpLiquidities = new uint256[](1);
     uint256[] memory _expectedFees = new uint256[](1);
 
-    _checkPlpTokens[0] = address(weth);
+    _checkHlpTokens[0] = address(weth);
     _expectedTraderBalances[0] = 47_368.421052631578947369 ether;
-    _expectedPlpLiquidities[0] = 1_052_631.578947368421052631 ether;
+    _expectedHlpLiquidities[0] = 1_052_631.578947368421052631 ether;
     _expectedFees[0] = 0 ether; // settlement fee should be 0 when trader loss
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -396,9 +396,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
     });
     positionTester.assertDecreasePositionResult(
       _assertData,
-      _checkPlpTokens,
+      _checkHlpTokens,
       _expectedTraderBalances,
-      _expectedPlpLiquidities,
+      _expectedHlpLiquidities,
       _expectedFees
     );
   }
@@ -470,14 +470,14 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // and HLP WETH liquidity should reduced by 52631.578947368421052631ether
     //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 52631.578947368421052631 = 947368.421052631578947369 ether
     // finally fee should increased by 263.157894736842105263 ether
-    address[] memory _checkPlpTokens = new address[](1);
+    address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedHlpLiquidities = new uint256[](1);
     uint256[] memory _expectedFees = new uint256[](1);
 
-    _checkPlpTokens[0] = _tpToken;
+    _checkHlpTokens[0] = _tpToken;
     _expectedTraderBalances[0] = 152_368.421052631578947368 ether;
-    _expectedPlpLiquidities[0] = 947_368.421052631578947369 ether;
+    _expectedHlpLiquidities[0] = 947_368.421052631578947369 ether;
     _expectedFees[0] = 263.157894736842105263 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -495,9 +495,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
     });
     positionTester.assertDecreasePositionResult(
       _assertData,
-      _checkPlpTokens,
+      _checkHlpTokens,
       _expectedTraderBalances,
-      _expectedPlpLiquidities,
+      _expectedHlpLiquidities,
       _expectedFees
     );
   }
@@ -575,14 +575,14 @@ contract TradeService_DecreasePosition is TradeService_Base {
     // and HLP WETH liquidity should reduced by 81818.181818181818181818 ether
     //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 81818.181818181818181818 = 918181.818181818181818182 ether
     // finally fee should increased by 409.090909090909090909 ether
-    address[] memory _checkPlpTokens = new address[](1);
+    address[] memory _checkHlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
-    uint256[] memory _expectedPlpLiquidities = new uint256[](1);
+    uint256[] memory _expectedHlpLiquidities = new uint256[](1);
     uint256[] memory _expectedFees = new uint256[](1);
 
-    _checkPlpTokens[0] = _tpToken;
+    _checkHlpTokens[0] = _tpToken;
     _expectedTraderBalances[0] = 181_409.090909090909090909 ether;
-    _expectedPlpLiquidities[0] = 918_181.818181818181818182 ether;
+    _expectedHlpLiquidities[0] = 918_181.818181818181818182 ether;
     _expectedFees[0] = 409.090909090909090909 ether;
 
     PositionTester.DecreasePositionAssertionData memory _assertData = PositionTester.DecreasePositionAssertionData({
@@ -600,9 +600,9 @@ contract TradeService_DecreasePosition is TradeService_Base {
     });
     positionTester.assertDecreasePositionResult(
       _assertData,
-      _checkPlpTokens,
+      _checkHlpTokens,
       _expectedTraderBalances,
-      _expectedPlpLiquidities,
+      _expectedHlpLiquidities,
       _expectedFees
     );
   }

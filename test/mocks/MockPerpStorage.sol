@@ -79,4 +79,21 @@ contract MockPerpStorage {
   function updateAssetClass(uint8 _assetClassIndex, IPerpStorage.AssetClass memory _newAssetClass) external {
     assetClasses[_assetClassIndex] = _newAssetClass;
   }
+
+  function updateGlobalCounterTradeStates(
+    uint256 _marketIndex,
+    uint256 longPositionSize,
+    uint256 longAccumSE,
+    uint256 longAccumS2E,
+    uint256 shortPositionSize,
+    uint256 shortAccumSE,
+    uint256 shortAccumS2E
+  ) external {
+    markets[_marketIndex].longPositionSize = longPositionSize;
+    markets[_marketIndex].longAccumSE = longAccumSE;
+    markets[_marketIndex].longAccumS2E = longAccumS2E;
+    markets[_marketIndex].shortPositionSize = shortPositionSize;
+    markets[_marketIndex].shortAccumSE = shortAccumSE;
+    markets[_marketIndex].shortAccumS2E = shortAccumS2E;
+  }
 }

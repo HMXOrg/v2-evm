@@ -129,11 +129,11 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     fundingFeeReserve[_token] -= _amount;
   }
 
-  function addPlpLiquidityDebtUSDE30(uint256 _value) external onlyWhitelistedExecutor {
+  function addHlpLiquidityDebtUSDE30(uint256 _value) external onlyWhitelistedExecutor {
     hlpLiquidityDebtUSDE30 += _value;
   }
 
-  function removePlpLiquidityDebtUSDE30(uint256 _value) external onlyWhitelistedExecutor {
+  function removeHlpLiquidityDebtUSDE30(uint256 _value) external onlyWhitelistedExecutor {
     hlpLiquidityDebtUSDE30 -= _value;
   }
 
@@ -188,7 +188,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   /// @param _trader The address of the trader paying the HLP.
   /// @param _token The address of the token being used to pay the HLP.
   /// @param _amount The amount of the token being used to pay the HLP.
-  function payPlp(address _trader, address _token, uint256 _amount) external onlyWhitelistedExecutor {
+  function payHlp(address _trader, address _token, uint256 _amount) external onlyWhitelistedExecutor {
     // Increase the HLP's liquidity for the specified token
     hlpLiquidity[_token] += _amount;
 
@@ -229,7 +229,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     hlpLiquidity[_token] += _hlpFeeAmount;
   }
 
-  function payFundingFeeFromTraderToPlp(
+  function payFundingFeeFromTraderToHlp(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount
@@ -241,7 +241,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     hlpLiquidity[_token] += _fundingFeeAmount;
   }
 
-  function payFundingFeeFromPlpToTrader(
+  function payFundingFeeFromHlpToTrader(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount
@@ -337,7 +337,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     _increaseTraderBalance(_trader, _token, _fundingFeeAmount);
   }
 
-  function repayFundingFeeDebtFromTraderToPlp(
+  function repayFundingFeeDebtFromTraderToHlp(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount,
@@ -353,7 +353,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     hlpLiquidityDebtUSDE30 -= _fundingFeeValue;
   }
 
-  function borrowFundingFeeFromPlpToTrader(
+  function borrowFundingFeeFromHlpToTrader(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount,

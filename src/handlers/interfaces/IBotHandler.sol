@@ -112,11 +112,20 @@ interface IBotHandler {
     bytes32 _encodedVaas
   ) external payable;
 
+  function setMultipleMarketStatus(
+    bytes32[] memory _assetIds,
+    uint8[] memory _statuses,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external;
+
   function updateLiquidityEnabled(bool _enabled) external;
 
   function updateDynamicEnabled(bool _enabled) external;
 
-  function injectTokenToPlpLiquidity(address _token, uint256 _amount) external;
+  function injectTokenToHlpLiquidity(address _token, uint256 _amount) external;
 
   function injectTokenToFundingFeeReserve(address _token, uint256 _amount) external;
 

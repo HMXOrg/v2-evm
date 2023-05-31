@@ -35,7 +35,7 @@ contract PositionTester is StdAssertions {
   IPerpStorage.Market cacheMarket;
   IPerpStorage.GlobalState cacheGlobalState;
   // cache vault storage
-  uint256 cachePlpTokenLiquidity;
+  uint256 cacheHlpTokenLiquidity;
   uint256 cacheTraderBalance;
 
   constructor(IPerpStorage _perpStorage, IVaultStorage _vaultStorage, IOracleMiddleware _oracle) {
@@ -52,7 +52,7 @@ contract PositionTester is StdAssertions {
     cacheMarket = perpStorage.getMarketByIndex(cachePosition.marketIndex);
     cacheGlobalState = perpStorage.getGlobalState();
 
-    cachePlpTokenLiquidity = vaultStorage.hlpLiquidity(_token);
+    cacheHlpTokenLiquidity = vaultStorage.hlpLiquidity(_token);
     cacheTraderBalance = vaultStorage.traderBalances(_subAccount, _token);
   }
 
@@ -77,7 +77,7 @@ contract PositionTester is StdAssertions {
     DecreasePositionAssertionData memory _data,
     address[] calldata _hlpTokens,
     uint256[] calldata _expectedBalances,
-    uint256[] calldata _expectedPlpLiquidities,
+    uint256[] calldata _expectedHlpLiquidities,
     uint256[] calldata _expectedFees
   ) external {
     address _subAccount = _getSubAccount(_data.primaryAccount, _data.subAccountId);
@@ -92,7 +92,7 @@ contract PositionTester is StdAssertions {
       for (uint256 _i; _i < _len; ) {
         _token = _hlpTokens[_i];
         _expectBalance = _expectedBalances[_i];
-        _expectLiquidity = _expectedPlpLiquidities[_i];
+        _expectLiquidity = _expectedHlpLiquidities[_i];
         _expectFee = _expectedFees[_i];
 
         assertEq(vaultStorage.traderBalances(_subAccount, _token), _expectBalance, "trader balance");

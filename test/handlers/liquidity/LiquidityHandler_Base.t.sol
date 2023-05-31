@@ -20,7 +20,7 @@ contract LiquidityHandler_Base is BaseTest {
       10
     );
     hlp.setMinter(address(this), true);
-    mockLiquidityService.setPlpEnabled(true);
+    mockLiquidityService.setHlpEnabled(true);
 
     ecoPyth.setUpdater(address(liquidityHandler), true);
   }

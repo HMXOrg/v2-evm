@@ -43,7 +43,7 @@ contract MockLiquidityService {
     revertAsMessage = isRevertMessage;
   }
 
-  function setPlpEnabled(bool _hlpEnabled) external {
+  function setHlpEnabled(bool _hlpEnabled) external {
     hlpEnabled = _hlpEnabled;
   }
 

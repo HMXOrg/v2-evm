@@ -180,7 +180,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _setUpTradingConfig();
     _setUpAssetClassConfigs();
     _setUpMarketConfigs();
-    _setUpPlpTokenConfigs();
+    _setUpHlpTokenConfigs();
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
 
@@ -274,7 +274,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   }
 
   /// @notice set up all hlp token configs in Perp
-  function _setUpPlpTokenConfigs() private {
+  function _setUpHlpTokenConfigs() private {
     // set HLP token
     configStorage.setHLP(address(hlp));
 

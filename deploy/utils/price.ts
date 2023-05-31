@@ -11,6 +11,8 @@ const usdtPriceId = "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e97168
 const daiPriceId = "0xb0948a5e5313200c632b51bb5ca32f6de0d36e9950a942d19751e833f70dabfd";
 const applePriceId = "0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688";
 const jpyPriceId = "0xef2c98c804ba503c6a707e38be4dfbb16683775f195b091252bf24693042fd52";
+const glpPriceId = "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a"; // USDC override
+const xauPriceId = "0x765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2";
 
 export async function getPricesFromPyth(): Promise<number[]> {
   const connection = new EvmPriceServiceConnection("https://xc-mainnet.pyth.network", {
@@ -54,6 +56,8 @@ export async function getUpdatePriceData(
       daiPriceId,
       applePriceId,
       jpyPriceId,
+      glpPriceId,
+      xauPriceId,
     ]);
     priceUpdates = prices!.map((each) => {
       const rawPrice = Number(each.getPriceUnchecked().price);

@@ -244,6 +244,11 @@
       "address": "0xbe9c4A1dB8Aba74F5dB49fbe17c75d6133d08BA5",
       "txHash": "0x0a16af8cc2a9568b1b0bce4704174adfe38d16e956a8dfd496c11337df9d8653",
       "kind": "transparent"
+    },
+    {
+      "address": "0x0b7160BAD5ec8Ac742Ca1AB4f8698c735BC29bAc",
+      "txHash": "0x25487bed6267c453ea34e8f79a30bfd4a69240ba033d4feba464d67acf225582",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -9041,6 +9046,154 @@
           "t_uint48": {
             "label": "uint48",
             "numberOfBytes": "6"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "105b3eba8ca925aff78d67a8a9c2f50e5186fe060eeab1dc91574254d9c897d3": {
+      "address": "0xEaBD6b5E1C09679580B2a1E4E0E539A216Ae7545",
+      "txHash": "0x7316e5a7102175b59aa0e2e111e739420078d88f34d7ecb993f3b8fd3c6a2281",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "prices",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "contract": "EcoPyth",
+            "src": "src/oracles/EcoPyth.sol:20"
+          },
+          {
+            "label": "minPublishTime",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_uint256",
+            "contract": "EcoPyth",
+            "src": "src/oracles/EcoPyth.sol:24"
+          },
+          {
+            "label": "publishTimeDiff",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "contract": "EcoPyth",
+            "src": "src/oracles/EcoPyth.sol:27"
+          },
+          {
+            "label": "mapAssetIdToIndex",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_mapping(t_bytes32,t_uint256)",
+            "contract": "EcoPyth",
+            "src": "src/oracles/EcoPyth.sol:29"
+          },
+          {
+            "label": "assetIds",
+            "offset": 0,
+            "slot": "105",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "contract": "EcoPyth",
+            "src": "src/oracles/EcoPyth.sol:30"
+          },
+          {
+            "label": "indexCount",
+            "offset": 0,
+            "slot": "106",
+            "type": "t_uint256",
+            "contract": "EcoPyth",
+            "src": "src/oracles/EcoPyth.sol:31"
+          },
+          {
+            "label": "isUpdaters",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "EcoPyth",
+            "src": "src/oracles/EcoPyth.sol:39"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
           },
           "t_uint8": {
             "label": "uint8",

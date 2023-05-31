@@ -21,10 +21,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
   const addresses = [
     config.oracles.pythAdapter,
-    config.handlers.crossMargin,
-    config.handlers.limitTrade,
-    config.handlers.liquidity,
-    config.handlers.marketTrade,
+    // config.handlers.crossMargin,
+    // config.handlers.limitTrade,
+    // config.handlers.liquidity,
+    // config.handlers.bot,
   ];
   await Promise.all(
     addresses.map(async (each) => {
@@ -32,7 +32,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       return pythAdapter.setPyth(config.oracles.ecoPyth);
     })
   );
-  console.log("> Set Mock Pyth success!");
+  console.log("> Set Eco Pyth success!");
 };
 export default func;
-func.tags = ["SetMockPyth"];
+func.tags = ["SetEcoPyth"];

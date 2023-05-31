@@ -60,7 +60,7 @@ contract SetOracle is ConfigJsonRepo {
     _assetIds[5] = glpAssetId;
     _assetIds[6] = appleAssetId;
     _assetIds[7] = jpyAssetId;
-    _assetIds[7] = xauAssetId;
+    _assetIds[8] = xauAssetId;
 
     uint8[] memory _statuses = new uint8[](9);
     _statuses[0] = 2;

@@ -20,7 +20,7 @@
     "trade": "0x4369107370D63f3B7b8915D5923ac6e3910c63E8"
   },
   "oracles": {
-    "ecoPyth": "0x17a0392D6FA15957CAFC92888F7c37D3b8Fd22FB",
+    "ecoPyth": "0x0b7160BAD5ec8Ac742Ca1AB4f8698c735BC29bAc",
     "pythAdapter": "0x278BF9953B43bA5495fDA25027e6d358dE850078",
     "sglpStakedAdapter": "",
     "middleware": "0xa42d21F2a0F7288Ede66cdd26Dde148971383bae"

@@ -112,6 +112,7 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
     // Set MarketStatus
     uint8 _marketActiveStatus = uint8(2);
     oracleMiddleWare.setUpdater(address(this), true); // Whitelist updater for oracleMiddleWare
+    oracleMiddleWare.setUpdater(address(botHandler), true); // Whitelist updater for oracleMiddleWare
     // crypto
     oracleMiddleWare.setMarketStatus(usdcAssetId, _marketActiveStatus); // active
     oracleMiddleWare.setMarketStatus(usdtAssetId, _marketActiveStatus); // active

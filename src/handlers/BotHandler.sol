@@ -45,6 +45,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
   event LogUpdateLiquidityEnabled(bool enable);
   event LogUpdateDynamicEnabled(bool enable);
 
+  event LogSetMultipleMarketStatus(bytes32[] indexed _assetId, uint8[] _status);
   event LogSetTradeService(address oldTradeService, address newTradeService);
   event LogSetPositionManager(address account, bool allowed);
   event LogSetLiquidationService(address oldLiquidationService, address newLiquidationService);
@@ -335,6 +336,31 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
     CrossMarginService(crossMarginService).withdrawFundingFeeSurplus(_stableToken);
+  }
+
+  /// @notice Set market status for the given assets.
+  /// @param _assetIds The asset addresses to set.
+  /// @param _statuses Status enum, see `marketStatus` comment section.
+  function setMultipleMarketStatus(
+    bytes32[] memory _assetIds,
+    uint8[] memory _statuses,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external nonReentrant onlyPositionManager {
+    if (_assetIds.length != _statuses.length) revert IBotHandler_InvalidArray();
+
+    // Feed prices first either market is opening or closing to prevent frontrun
+    // slither-disable-next-line arbitrary-send-eth
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+
+    // SLOADs
+    ConfigStorage _configStorage = ConfigStorage(TradeService(tradeService).configStorage());
+    OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
+    _oracle.setMultipleMarketStatus(_assetIds, _statuses);
+
+    emit LogSetMultipleMarketStatus(_assetIds, _statuses);
   }
 
   function convertFundingFeeReserve(

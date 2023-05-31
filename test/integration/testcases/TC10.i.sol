@@ -106,13 +106,8 @@ contract TC10 is BaseIntTest_WithActions {
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|
        * |    liq |                                      |             |                      |                  |  0.00021739 |  0.00021739 |  BTC |
        */
-      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 3073948);
-      assertVaultsFees(
-        address(wbtc),
-        protocolFeesBefore + (0.00166305 * 1e8),
-        devFeesBefore + (0.0007413 * 1e8),
-        0.00212869 * 1e8
-      );
+      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 3286807);
+      assertVaultsFees(address(wbtc), protocolFeesBefore + (0.00166305 * 1e8), devFeesBefore + (0.0007413 * 1e8), 0);
       assertPLPLiquidity(address(wbtc), plpLiquidityBefore + (0.06242622 * 1e8));
       assertSubAccountTokenBalance(BOT, address(wbtc), true, (0.00021739 * 1e8));
 

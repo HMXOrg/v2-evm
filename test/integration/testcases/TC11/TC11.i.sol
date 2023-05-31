@@ -115,7 +115,7 @@ contract TC11 is BaseIntTest_WithActions {
         _reserveValue: 540 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
       assertPositionInfoOf({
         _subAccount: _aliceSubAccount0,
@@ -125,7 +125,7 @@ contract TC11 is BaseIntTest_WithActions {
         _reserveValue: 1_350 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
       // And Bob should has corrected position
       assertPositionInfoOf({
@@ -136,7 +136,7 @@ contract TC11 is BaseIntTest_WithActions {
         _reserveValue: 1_350 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 
@@ -162,7 +162,7 @@ contract TC11 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
       assertPositionInfoOf({
         _subAccount: _bobSubAccount0,
@@ -172,7 +172,7 @@ contract TC11 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 
@@ -210,7 +210,7 @@ contract TC11 is BaseIntTest_WithActions {
         _reserveValue: 1350 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
 
       // should not affected old market
@@ -222,7 +222,7 @@ contract TC11 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 

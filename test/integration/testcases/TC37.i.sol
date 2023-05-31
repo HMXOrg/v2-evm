@@ -116,7 +116,7 @@ contract TC37 is BaseIntTest_WithActions {
        * |--------|--------------|-------------|----------------------|------------------|-------------|-------------|------|
        * |    liq |              |             |                      |                  |  0.00024875 |  0.00024875 |  BTC |
        */
-      assertSubAccountTokenBalance(ALICE, address(wbtc), true, traderBalanceBefore - (0.04758967 * 1e8));
+      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 4173075);
       assertVaultsFees(address(wbtc), protocolFeesBefore + (0.00422886 * 1e8), devFeesBefore + (0.01169217 * 1e8), 0);
       assertPLPLiquidity(address(wbtc), plpLiquidityBefore + (0.03141989 * 1e8));
       assertSubAccountTokenBalance(BOT, address(wbtc), true, (0.00024875 * 1e8));

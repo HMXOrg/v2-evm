@@ -85,7 +85,7 @@ contract TC22 is BaseIntTest_WithActions {
         _reserveValue: 630_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "Alice's BTC position"
       });
     }
@@ -116,7 +116,7 @@ contract TC22 is BaseIntTest_WithActions {
         _reserveValue: 720_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "Bob's BTC position"
       });
     }
@@ -148,7 +148,7 @@ contract TC22 is BaseIntTest_WithActions {
         _reserveValue: 270_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "Alice's APPLE position"
       });
     }
@@ -174,7 +174,7 @@ contract TC22 is BaseIntTest_WithActions {
         _reserveValue: 4_500_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "Carol's APPLE position"
       });
     }

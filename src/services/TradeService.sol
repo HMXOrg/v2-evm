@@ -38,7 +38,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     int256 increasedSize,
     uint256 avgEntryPrice,
     uint256 entryBorrowingRate,
-    int256 entryFundingRate,
+    int256 lastFundingAccrued,
     int256 realizedPnl,
     uint256 reserveValueE30
   );
@@ -50,7 +50,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     int256 decreasedSize,
     uint256 avgEntryPrice,
     uint256 entryBorrowingRate,
-    int256 entryFundingRate,
+    int256 lastFundingAccrued,
     int256 realizedPnl,
     uint256 reserveValueE30
   );
@@ -379,7 +379,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     {
       PerpStorage.AssetClass memory _assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
       _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
-      _vars.position.entryFundingRate = _market.currentFundingRate;
+      _vars.position.lastFundingAccrued = _market.fundingAccrued;
     }
 
     {
@@ -463,7 +463,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _sizeDelta,
       _vars.position.avgEntryPriceE30,
       _vars.position.entryBorrowingRate,
-      _vars.position.entryFundingRate,
+      _vars.position.lastFundingAccrued,
       _vars.position.realizedPnl,
       _vars.position.reserveValueE30
     );
@@ -834,7 +834,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
         // update position info
         _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
-        _vars.position.entryFundingRate = _market.currentFundingRate;
+        _vars.position.lastFundingAccrued = _market.fundingAccrued;
         _vars.position.positionSizeE30 = _vars.isLongPosition
           ? int256(_temp.newAbsPositionSizeE30)
           : -int256(_temp.newAbsPositionSizeE30);
@@ -914,7 +914,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       int256(_vars.positionSizeE30ToDecrease),
       _vars.position.avgEntryPriceE30,
       _vars.position.entryBorrowingRate,
-      _vars.position.entryFundingRate,
+      _vars.position.lastFundingAccrued,
       _vars.position.realizedPnl,
       _vars.position.reserveValueE30
     );

@@ -102,12 +102,7 @@ contract TC17 is BaseIntTest_WithActions {
        * |    liq |                                      |             |                      |                  |  0.00021276 |  0.00021276 |  BTC |
        */
       assertSubAccountTokenBalance(ALICE, address(wbtc), false, 0);
-      assertVaultsFees(
-        address(wbtc),
-        protocolFeesBefore + (0.00162766 * 1e8),
-        devFeesBefore + (0.00071621 * 1e8),
-        0.00208340 * 1e8
-      );
+      assertVaultsFees(address(wbtc), protocolFeesBefore + (0.00162766 * 1e8), devFeesBefore + (0.00071621 * 1e8), 0);
       assertPLPLiquidity(address(wbtc), plpLiquidityBefore + traderBalanceBefore - (0.15308771 - 0.14844768) * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, (0.00021276 * 1e8));
 

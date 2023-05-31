@@ -332,7 +332,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         positionSizeE30: 1000 * 1e30,
         avgEntryPriceE30: 1000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -500,7 +500,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         positionSizeE30: -1000 * 1e30,
         avgEntryPriceE30: 1000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -605,7 +605,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         positionSizeE30: 1000 * 1e30,
         avgEntryPriceE30: 1000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -726,7 +726,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         positionSizeE30: -1200 * 1e30,
         avgEntryPriceE30: 1000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -847,7 +847,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         positionSizeE30: 1000 * 1e30,
         avgEntryPriceE30: 1000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -962,7 +962,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         positionSizeE30: -1200 * 1e30,
         avgEntryPriceE30: 1000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -1077,7 +1077,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         positionSizeE30: 1000 * 1e30,
         avgEntryPriceE30: 1000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -1192,7 +1192,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
         positionSizeE30: -1200 * 1e30,
         avgEntryPriceE30: 1000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0

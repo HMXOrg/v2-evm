@@ -192,10 +192,10 @@ contract MockCalculator is ICalculator {
   }
 
   function getFundingFee(
-    uint256 /*_marketIndex*/,
     bool /*_isLong*/,
-    int256 /*_size*/,
-    int256 /*_entryFundingRate*/
+    uint256 /*_size*/,
+    int256 /*_currentFundingAccrued*/,
+    int256 /*_lastFundingAccrued*/
   ) public view virtual returns (int256) {
     return fundingFee;
   }
@@ -208,7 +208,7 @@ contract MockCalculator is ICalculator {
     return borrowingFee;
   }
 
-  function getNextFundingRate(uint256 /*marketIndex*/) public view virtual returns (int256) {
+  function getFundingRateVelocity(uint256 /*marketIndex*/) public view virtual returns (int256) {
     return fundingRate;
   }
 
@@ -263,4 +263,6 @@ contract MockCalculator is ICalculator {
   ) external pure returns (uint256) {}
 
   function getPendingBorrowingFeeE30() public view virtual returns (uint256) {}
+
+  function proportionalElapsedInDay(uint256 _marketIndex) public view virtual returns (uint256 elapsed) {}
 }

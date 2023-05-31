@@ -169,7 +169,7 @@ contract TradeTester is StdAssertions {
     assertEq(_position.reserveValueE30, _positionExpectedData.reserveValueE30, "Position Reserve");
 
     assertEq(_position.entryBorrowingRate, _assetClassExpectedData.sumBorrowingRate, "Entry Borrowing rate");
-    assertEq(_position.entryFundingRate, _marketExpectedData.currentFundingRate, "Entry Funding rate");
+    assertEq(_position.lastFundingAccrued, _marketExpectedData.currentFundingRate, "Entry Funding rate");
   }
 
   /// @notice Assert Market

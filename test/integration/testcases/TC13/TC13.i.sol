@@ -151,7 +151,7 @@
 //         _reserveValue: 9 * 1e30,
 //         _realizedPnl: 0,
 //         _entryBorrowingRate: 0,
-//         _entryFundingRate: 0,
+//         _lastFundingAccrued: 0,
 //         _str: "Alice's BTC position"
 //       });
 
@@ -163,7 +163,7 @@
 //         _reserveValue: 90 * 1e30,
 //         _realizedPnl: 0,
 //         _entryBorrowingRate: 0,
-//         _entryFundingRate: 0,
+//         _lastFundingAccrued: 0,
 //         _str: "Alice's JPY position"
 //       });
 //     }
@@ -192,7 +192,7 @@
 //         _reserveValue: 90 * 1e30,
 //         _realizedPnl: 0,
 //         _entryBorrowingRate: 0,
-//         _entryFundingRate: 0
+//         _lastFundingAccrued: 0
 //       });
 //     }
 
@@ -232,7 +232,7 @@
 //         _reserveValue: 27 * 1e30,
 //         _realizedPnl: 0,
 //         _entryBorrowingRate: 0,
-//         _entryFundingRate: 0
+//         _lastFundingAccrued: 0
 //       });
 //     }
 
@@ -256,7 +256,7 @@
 //         _reserveValue: 0,
 //         _realizedPnl: 0,
 //         _entryBorrowingRate: 0,
-//         _entryFundingRate: 0
+//         _lastFundingAccrued: 0
 //       });
 //     }
 //   }

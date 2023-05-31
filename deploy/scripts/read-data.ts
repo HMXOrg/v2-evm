@@ -710,25 +710,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [0],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [1],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [2],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [3],
     },
   ];
@@ -753,7 +753,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
       const fundingFee = markets[marketIndex].currentFundingRate
         .add(nextFundingRates[marketIndex])
-        .sub(each.entryFundingRate)
+        .sub(each.lastFundingAccrued)
         .mul(each.positionSizeE30.abs())
         .div(parseUnits("1", 18))
         .mul(each.positionSizeE30.gt(0) ? -1 : 1);

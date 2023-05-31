@@ -19,4 +19,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("> ConfigStorage: Add Asset Class Config success!");
 };
 export default func;
-func.tags = ["AddAssetClassConfigCrypto"];
+func.tags = ["AddAssetClassConfigCommodities"];

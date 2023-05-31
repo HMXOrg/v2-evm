@@ -72,6 +72,16 @@ contract TC29 is BaseIntTest_WithActions {
     /**
      * Alice sell short ETHUSD limit order at 200,000 USD (ETH price at 1500 USD)
      */
+
+    // Assert on Global Pnl before trading occurred
+    {
+      // Global PNL from all markets must start with Zero since no opening trade positions yet
+      assertEq(calculator.getGlobalPNLE30(), 0);
+      // Unrealized Pnl on ALICE with SUB_ACCOUNT ID 1 must be Zero
+      (int256 AliceUnrealizedPnl, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
+      assertEq(AliceUnrealizedPnl, 0);
+    }
+
     vm.warp(block.timestamp + 1);
     {
       uint256 sellSizeE30 = 2_300_000 * 1e30;
@@ -99,10 +109,20 @@ contract TC29 is BaseIntTest_WithActions {
       );
     }
 
+    // Assert on Global Pnl after trading occurred
+    {
+      // Global PNL from all markets must start with Zero since no opening trade positions yet
+      // Note that 768955 is precision loss it mean global PNL = 768955 / 1e30 that approximate to Zero
+      assertEq(calculator.getGlobalPNLE30(), -768955, "getGlobalPNLE30");
+      // Unrealized Pnl on ALICE with SUB_ACCOUNT ID 1 must be Zero
+      (int256 AliceUnrealizedPnl, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
+      assertEq(AliceUnrealizedPnl, 0, "UnrealizedPnlAndFee");
+    }
+
     /**
      * T2: Alice's sub account 1 equity goes below MMR
      */
-    vm.warp(block.timestamp + 1);
+    vm.warp(block.timestamp + 15);
     {
       //  Set Price for BTCUSD expected make Alice's Equity < MMR
       // bytes32[] memory _assetIds = new bytes32[](1);
@@ -119,12 +139,19 @@ contract TC29 is BaseIntTest_WithActions {
         calculator.getEquity(SUB_ACCOUNT, 0, 0) < int(calculator.getMMR(SUB_ACCOUNT)),
         "ALICE's Equity < MMR?"
       );
+
+      // Assert on Global Pnl after set ETH price from 1,500 to 2,000
+      {
+        // Global PNL must be equal to Alice's unrealized Pnl
+        (int256 AliceUnrealizedPnl, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
+        assertApproxEqRel(calculator.getGlobalPNLE30(), -AliceUnrealizedPnl, MAX_DIFF, "getGlobalPNLE30");
+      }
     }
 
     /**
      * T3: Liquidation on Alice's account happened
      */
-    vm.warp(block.timestamp + 1);
+    vm.warp(block.timestamp + 15);
     {
       // ALICE's position before liquidate must contain 1 position
       IPerpStorage.Position[] memory traderPositionBefore = perpStorage.getPositionBySubAccount(SUB_ACCOUNT);
@@ -133,6 +160,7 @@ contract TC29 is BaseIntTest_WithActions {
 
       bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
       bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+
       botHandler.liquidate(
         SUB_ACCOUNT,
         priceUpdateData,
@@ -144,6 +172,13 @@ contract TC29 is BaseIntTest_WithActions {
       // ALICE's position before liquidate must contain 0 position
       IPerpStorage.Position[] memory traderPositionAfter = perpStorage.getPositionBySubAccount(SUB_ACCOUNT);
       assertEq(traderPositionAfter.length, 0);
+
+      // Assert on Global Pnl after Liquidate Alice's position
+      {
+        // Global PNL must be equal to Alice's unrealized Pnl
+        (int256 AliceUnrealizedPnl, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
+        assertApproxEqRel(calculator.getGlobalPNLE30(), -AliceUnrealizedPnl, MAX_DIFF, "getGlobalPNLE30");
+      }
     }
 
     /**
@@ -180,6 +215,7 @@ contract TC29 is BaseIntTest_WithActions {
       address tpToken = address(wbtc); // @note settle with WBTC that be treated as GLP token
       bytes[] memory priceData = new bytes[](0);
       vm.deal(ALICE, 1 ether);
+
       marketBuy(
         ALICE,
         SUB_ACCOUNT_ID,

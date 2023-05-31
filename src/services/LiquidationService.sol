@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // contracts
+import { FullMath } from "@hmx/libraries/FullMath.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -20,6 +21,7 @@ import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 /// @title LiquidationService
 /// @dev This contract implements the ILiquidationService interface and provides functionality for liquidating sub-accounts by resetting their positions' value in storage.
 contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, OwnableUpgradeable {
+  using FullMath for uint256;
   /**
    * Events
    */
@@ -34,6 +36,9 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
    */
   struct LiquidatePositionVars {
     bytes32 positionId;
+    uint256 absPositionSizeE30;
+    uint256 oldSumSe;
+    uint256 oldSumS2e;
     IPerpStorage.Position position;
     PerpStorage.Market globalMarket;
     ConfigStorage.MarketConfig marketConfig;
@@ -234,6 +239,8 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
       // Get the current position id from the list
       _vars.positionId = positionIds[i];
       _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
+      _vars.absPositionSizeE30 = _abs(_vars.position.positionSizeE30);
+
       bool _isLong = _vars.position.positionSizeE30 > 0;
 
       _vars.marketConfig = _vars.configStorage.getMarketConfigByIndex(_vars.position.marketIndex);
@@ -259,6 +266,8 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
         fundingFee += _fundingFee;
       }
 
+      _vars.oldSumSe = _vars.absPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30);
+      _vars.oldSumS2e = _vars.absPositionSizeE30.mulDiv(_vars.absPositionSizeE30, _vars.position.avgEntryPriceE30);
       _vars.globalMarket = _vars.perpStorage.getMarketByIndex(_vars.position.marketIndex);
 
       (uint256 _adaptivePrice, , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
@@ -286,11 +295,27 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           _unrealizedPnL += _realizedPnl;
         }
 
-        _vars.perpStorage.decreasePositionSize(_vars.position.marketIndex, _isLong, absPositionSize);
         _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.reserveValueE30);
 
         // remove the position's value in storage
         _vars.perpStorage.removePositionFromSubAccount(_subAccount, _vars.positionId);
+      }
+
+      // Update counter trade states
+      {
+        _isLong
+          ? _vars.perpStorage.updateGlobalLongMarketById(
+            _vars.position.marketIndex,
+            _vars.globalMarket.longPositionSize - _vars.absPositionSizeE30,
+            _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.longAccumSE - _vars.oldSumSe) : 0,
+            _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.longAccumS2E - _vars.oldSumS2e) : 0
+          )
+          : _vars.perpStorage.updateGlobalShortMarketById(
+            _vars.position.marketIndex,
+            _vars.globalMarket.shortPositionSize - _vars.absPositionSizeE30,
+            _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.shortAccumSE - _vars.oldSumSe) : 0,
+            _vars.position.avgEntryPriceE30 > 0 ? (_vars.globalMarket.shortAccumS2E - _vars.oldSumS2e) : 0
+          );
       }
 
       unchecked {

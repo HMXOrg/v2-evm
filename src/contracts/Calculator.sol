@@ -16,6 +16,8 @@ import { FullMath } from "@hmx/libraries/FullMath.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
+import { console2 } from "forge-std/console2.sol";
+
 contract Calculator is OwnableUpgradeable, ICalculator {
   using SafeCastUpgradeable for int256;
   using SafeCastUpgradeable for uint256;
@@ -73,18 +75,23 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 borrowingFeeDebt = VaultStorage(vaultStorage).globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
 
+    console2.log("---- getAUME30()");
+
     uint256 lossDebt = VaultStorage(vaultStorage).globalLossDebt();
     uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
     if (pnlE30 < 0) {
-      aum += uint256(-pnlE30);
-    } else {
-      uint256 _pnl = uint256(pnlE30);
+      uint256 _pnl = uint256(-pnlE30);
       if (aum < _pnl) return 0;
-      unchecked {
-        aum -= _pnl;
-      }
+      aum -= _pnl;
+    } else {
+      aum += uint256(pnlE30);
     }
+
+    console2.log("pendingBorrowingFeeE30", pendingBorrowingFeeE30);
+    console2.log("borrowingFeeDebt", borrowingFeeDebt);
+    console2.log("pnlE30", pnlE30);
+    console2.log("aum", aum);
 
     return aum;
   }
@@ -1167,7 +1174,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 pnlFromVolatility = price.mulDiv(sumS2E, 2 * maxSkew);
     int256 pnlFromDirection = isLong ? -(sumSize.toInt256()) : sumSize.toInt256();
     int256 result = pnlFromPositions + pnlFromSkew + pnlFromVolatility.toInt256() - pnlFromDirection;
-    return isLong ? result : -result;
+    return result;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

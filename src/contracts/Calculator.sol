@@ -463,6 +463,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return _getEquity(_subAccount, _limitPriceE30, _limitAssetId, new bytes32[](0), new uint256[](0));
   }
 
+  /// @notice Calculate equity value of a given account. Same as above but allow injected price.
+  /// @dev This function is supposed to be used in view function only.
+  /// @param _subAccount Trader's account address
+  /// @param _injectedAssetIds AssetIds to be used for price ref.
+  /// @param _injectedPrices Prices to be used for calculate equity
   function getEquityWithInjectedPrices(
     address _subAccount,
     bytes32[] memory _injectedAssetIds,
@@ -472,6 +477,12 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return _getEquity(_subAccount, 0, 0, _injectedAssetIds, _injectedPrices);
   }
 
+  /// @notice Perform the actual equity calculation.
+  /// @param _subAccount The trader's account addresss to be calculate.
+  /// @param _limitPriceE30 Price to be overwritten for a specific assetId.
+  /// @param _limitAssetId Asset Id that its price will need to be overwritten.
+  /// @param _injectedAssetIds AssetIds to be used for price ref.
+  /// @param _injectedPrices Prices to be used for calculate equity
   function _getEquity(
     address _subAccount,
     uint256 _limitPriceE30,
@@ -1160,7 +1171,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 sumS2E, // SUM(positionSize^2 / entryPrice)
     uint256 sumSize, // longSize or shortSize
     bool isLong
-  ) public pure returns (int256) {
+  ) internal pure returns (int256) {
     sumSE = isLong ? -sumSE : sumSE;
     int256 pnlFromPositions = (price.toInt256() * sumSE) / 1e30;
     int256 pnlFromSkew = ((((price.toInt256() * skew) / (maxSkew.toInt256())) * sumSE) / 1e30);

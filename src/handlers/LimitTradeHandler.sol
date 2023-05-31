@@ -437,6 +437,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     // if not in executing state, then revert
     if (msg.sender != address(this)) revert ILimitTradeHandler_Unauthorized();
 
+    // SLOADs
+    TradeService _tradeService = TradeService(tradeService);
+    bool _isGuaranteeLimitPrice = isGuaranteeLimitPrice;
+
     // Remove this executed order from the list
     _removeOrder(vars.order, vars.subAccount, vars.orderIndex);
 
@@ -452,8 +456,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // Retrieve existing position
     vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.order.marketIndex);
-    PerpStorage.Position memory _existingPosition = PerpStorage(TradeService(tradeService).perpStorage())
-      .getPositionById(vars.positionId);
+    PerpStorage.Position memory _existingPosition = PerpStorage(_tradeService.perpStorage()).getPositionById(
+      vars.positionId
+    );
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
@@ -463,37 +468,37 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       if (vars.isNewPosition || vars.positionIsLong) {
         // New position and Long position
         // just increase position when BUY
-        TradeService(tradeService).increasePosition({
+        _tradeService.increasePosition({
           _primaryAccount: vars.order.account,
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-          _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+          _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
         });
       } else if (!vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
         if (_flipSide) {
           // Flip the position
           // Fully close Short position
-          TradeService(tradeService).decreasePosition({
+          _tradeService.decreasePosition({
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
           // Flip it to Long position
-          TradeService(tradeService).increasePosition({
+          _tradeService.increasePosition({
             _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         } else {
           // Not flip
-          TradeService(tradeService).decreasePosition({
+          _tradeService.decreasePosition({
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -502,7 +507,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               uint256(-_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         }
       }
@@ -511,37 +516,37 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       if (vars.isNewPosition || !vars.positionIsLong) {
         // New position and Short position
         // just increase position when SELL
-        TradeService(tradeService).increasePosition({
+        _tradeService.increasePosition({
           _primaryAccount: vars.order.account,
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-          _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+          _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
         });
       } else if (vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
         if (_flipSide) {
           // Flip the position
           // Fully close Long position
-          TradeService(tradeService).decreasePosition({
+          _tradeService.decreasePosition({
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
           // Flip it to Short position
-          TradeService(tradeService).increasePosition({
+          _tradeService.increasePosition({
             _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         } else {
           // Not flip
-          TradeService(tradeService).decreasePosition({
+          _tradeService.decreasePosition({
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -550,7 +555,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               uint256(_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         }
       }
@@ -852,10 +857,12 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   ) private view returns (uint256, bool) {
     ValidatePositionOrderPriceVars memory vars;
 
+    // SLOADs
     // Get price from Pyth
-    vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
-    vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
+    TradeService _tradeService = TradeService(tradeService);
+    vars.marketConfig = ConfigStorage(_tradeService.configStorage()).getMarketConfigByIndex(_marketIndex);
+    vars.oracle = OracleMiddleware(ConfigStorage(_tradeService.configStorage()).oracle());
+    vars.globalMarket = PerpStorage(_tradeService.perpStorage()).getMarketByIndex(_marketIndex);
 
     // Validate trigger price with oracle price
     (vars.oraclePrice, ) = vars.oracle.getLatestPrice(vars.marketConfig.assetId, true);

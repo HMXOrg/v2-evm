@@ -290,11 +290,14 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
+    // SLOAD
+    uint256 _nextExecutionOrderIndex = nextExecutionOrderIndex;
+
     // Get the number of withdraw orders
     uint256 _orderLength = withdrawOrders.length;
 
     // Ensure there are orders to execute
-    if (nextExecutionOrderIndex == _orderLength) revert ICrossMarginHandler_NoOrder();
+    if (_nextExecutionOrderIndex == _orderLength) revert ICrossMarginHandler_NoOrder();
 
     // Set the end index to the latest order index if it exceeds the number of orders
     uint256 _latestOrderIndex = _orderLength - 1;
@@ -303,8 +306,8 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     }
 
     // split execution into chunk for preventing exceed block gas limit
-    if (_endIndex - nextExecutionOrderIndex > maxExecutionChuck)
-      _endIndex = nextExecutionOrderIndex + maxExecutionChuck;
+    if (_endIndex - _nextExecutionOrderIndex > maxExecutionChuck)
+      _endIndex = _nextExecutionOrderIndex + maxExecutionChuck;
 
     // Update the price and publish time data using the Pyth oracle
     // slither-disable-next-line arbitrary-send-eth
@@ -315,7 +318,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _totalFeeReceiver;
     uint256 _executionFee;
 
-    for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
+    for (uint256 i = _nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = withdrawOrders[i];
       _executionFee = _order.executionFee;
 

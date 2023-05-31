@@ -77,4 +77,8 @@ interface IVaultStorage {
   function cook(address _token, address _target, bytes calldata _callData) external returns (bytes memory);
 
   function setStrategyAllowance(address _token, address _strategy, address _target) external;
+
+  function globalBorrowingFeeDebt() external returns (uint256);
+
+  function globalLossDebt() external returns (uint256);
 }

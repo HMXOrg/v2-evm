@@ -83,7 +83,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
-    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    VaultStorage(_vaultStorage).hlpLiquidityDebtUSDE30();
     ConfigStorage(_configStorage).getLiquidityConfig();
     TradeHelper(_tradeHelper).perpStorage();
   }

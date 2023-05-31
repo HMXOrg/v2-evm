@@ -14,7 +14,7 @@ import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandle
 
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
@@ -121,7 +121,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   // TOKENS
   IERC20Upgradeable sglp;
   IERC20Upgradeable glp;
-  IPLPv2 plpV2;
+  IHLP hlpV2;
   IERC20Upgradeable usdc;
 
   IWNative weth; //for native
@@ -157,9 +157,9 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   function setUp() public virtual {
     _deployContracts();
-    //setup plp
+    //setup hlp
     {
-      plpV2.setMinter(address(liquidityService), true);
+      hlpV2.setMinter(address(liquidityService), true);
     }
 
     //setup Strategy
@@ -174,7 +174,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       configStorage.setOracle(address(oracleMiddleware));
       configStorage.setCalculator(address(calculator));
       configStorage.setWeth(address(weth));
-      configStorage.setPLP(address(plpV2));
+      configStorage.setHLP(address(hlpV2));
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
     }
@@ -205,7 +205,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     _setupLiquidityWithConfig();
 
     // Deploy LiquidityTester
-    liquidityTester = new LiquidityTester(plpV2, vaultStorage, perpStorage, FEEVER);
+    liquidityTester = new LiquidityTester(hlpV2, vaultStorage, perpStorage, FEEVER);
   }
 
   function _deployContracts() private {
@@ -224,7 +224,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     pyth = Deployer.deployEcoPyth(address(proxyAdmin));
 
     // Tokens
-    plpV2 = Deployer.deployPLPv2(address(proxyAdmin));
+    hlpV2 = Deployer.deployHLP(address(proxyAdmin));
 
     weth = IWNative(wethAddress);
     usdc = IERC20Upgradeable(usdcAddress);
@@ -330,9 +330,9 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       IConfigStorage.LiquidityConfig({
         depositFeeRateBPS: 30, // 0.3%
         withdrawFeeRateBPS: 30, // 0.3%
-        maxPLPUtilizationBPS: 8000, // 80%
-        plpTotalTokenWeight: 0,
-        plpSafetyBufferBPS: 2000, // 20%
+        maxHLPUtilizationBPS: 8000, // 80%
+        hlpTotalTokenWeight: 0,
+        hlpSafetyBufferBPS: 2000, // 20%
         taxFeeRateBPS: 50, // 0.5%
         flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: true,
@@ -345,20 +345,20 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     _tokens[0] = address(sGlpAddress);
     _tokens[1] = address(usdc);
 
-    IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](_tokens.length);
+    IConfigStorage.HLPTokenConfig[] memory _hlpTokenConfig = new IConfigStorage.HLPTokenConfig[](_tokens.length);
 
-    _plpTokenConfig[0] = _buildAcceptedPLPTokenConfig({
+    _hlpTokenConfig[0] = _buildAcceptedHLPTokenConfig({
       _targetWeight: 0.95 * 1e18,
       _bufferLiquidity: 0,
       _maxWeightDiff: 0.05 * 1e18
     });
-    _plpTokenConfig[1] = _buildAcceptedPLPTokenConfig({
+    _hlpTokenConfig[1] = _buildAcceptedHLPTokenConfig({
       _targetWeight: 0.05 * 1e18,
       _bufferLiquidity: 0,
       _maxWeightDiff: 0.95 * 1e18
     });
 
-    configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
+    configStorage.addOrUpdateAcceptedToken(_tokens, _hlpTokenConfig);
   }
 
   function _setupCollateralTokenConfig() private {
@@ -374,7 +374,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   /// @param _assetId Asset's ID
   /// @param _collateralFactorBPS token reliability factor to calculate buying power, 1e4 = 100%
   /// @param _isAccepted accepted to deposit as collateral
-  /// @param _settleStrategy determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+  /// @param _settleStrategy determine token will be settled for NON HLP collateral, e.g. aUSDC redeemed as USDC
   function _addCollateralConfig(
     bytes32 _assetId,
     uint32 _collateralFactorBPS,
@@ -469,11 +469,11 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     oracleMiddleware.setAssetPriceConfig(usdcAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
   }
 
-  function _buildAcceptedPLPTokenConfig(
+  function _buildAcceptedHLPTokenConfig(
     uint256 _targetWeight,
     uint256 _bufferLiquidity,
     uint256 _maxWeightDiff
-  ) private pure returns (IConfigStorage.PLPTokenConfig memory _config) {
+  ) private pure returns (IConfigStorage.HLPTokenConfig memory _config) {
     _config.targetWeight = _targetWeight;
     _config.bufferLiquidity = _bufferLiquidity;
     _config.maxWeightDiff = _maxWeightDiff;
@@ -505,11 +505,11 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     vm.stopPrank();
 
     if (executeNow) {
-      executePLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
+      executeHLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
     }
   }
 
-  function executePLPOrder(
+  function executeHLPOrder(
     uint256 _endIndex,
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,

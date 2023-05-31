@@ -75,7 +75,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     );
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -108,7 +108,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
   function testRevert_increasePosition_WhenBadExposure() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -135,7 +135,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
   function testRevert_increasePosition_WhenITradeService_InsufficientLiquidity_OnePosition() external {
     // TVL
     // 10000 USDT -> 10000 USD
-    mockCalculator.setPLPValue(10_000 * 1e30);
+    mockCalculator.setHLPValue(10_000 * 1e30);
     // ALICE add collateral
     // 20000 USDT -> free collateral -> 20000 USD
     mockCalculator.setFreeCollateral(20_000 * 1e30);
@@ -155,7 +155,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
   function testRevert_increasePosition_WhenITradeService_InsufficientLiquidity_TwoPosition() external {
     // TVL
     // 16800 USDT -> 168000 USD
-    mockCalculator.setPLPValue(168_000 * 1e30);
+    mockCalculator.setHLPValue(168_000 * 1e30);
     // ALICE add collateral
     // 20000 USDT -> free collateral -> 20000 USD
     mockCalculator.setFreeCollateral(20_000 * 1e30);
@@ -195,7 +195,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // setup
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -236,7 +236,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
     // setup
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -276,7 +276,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
   function testCorrectness_increasePosition_WhenIncreaseAndAdjustLongMarket01() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -366,7 +366,7 @@ contract TradeService_IncreasePosition is TradeService_Base {
   function testCorrectness_increasePosition_WhenIncreaseAndAdjustShortMarket02() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);

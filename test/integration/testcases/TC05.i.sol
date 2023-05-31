@@ -93,13 +93,13 @@ contract TC05 is BaseIntTest_WithActions {
        * total pay: 0.03377036 + 0.0015 + 0.00007311 + 0.00079999 + 0.00025 = 0.03639346
        * trader balance = 0.04850000 - 0.03639346 = 0.01210654
        * dev fee = (0.0015 * 15%) + (0.00007311 * 15%) = 0.00023596 | 0.000225 + 0.00023596 = 0.00046096
-       * plp liquidity = 9.97 + (0.03377036 + (0.00007311 - 0.00001096)) = 10.00383251
+       * hlp liquidity = 9.97 + (0.03377036 + (0.00007311 - 0.00001096)) = 10.00383251
        * protocol fee = 0.000225 + (0.0015 - (0.0015 * 15%)) = 0.03255
        * liquidation fee = 0.00025
        */
       assertSubAccountTokenBalance(ALICE, address(wbtc), true, 1213266);
       assertVaultsFees(address(wbtc), 0.032550 * 1e8, 55971, 0);
-      assertPLPLiquidity(address(wbtc), 10.00383251 * 1e8);
+      assertHLPLiquidity(address(wbtc), 10.00383251 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);
       assertNumberOfPosition(ALICE, 0);
       assertPositionInfoOf(ALICE, jpyMarketIndex, 0, 0, 0, 0, 0, 0);

@@ -7,7 +7,7 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 
-contract SetPLP is ConfigJsonRepo {
+contract SetHLP is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
@@ -28,25 +28,25 @@ contract SetPLP is ConfigJsonRepo {
     _tokens[4] = getJsonAddress(".tokens.wbtc");
     _tokens[5] = getJsonAddress(".tokens.sglp");
 
-    IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](_tokens.length);
-    _plpTokenConfig[0] = _getPLPTokenConfigStruct(0.05 ether, 0, 1000e18, true);
-    _plpTokenConfig[1] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
-    _plpTokenConfig[2] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
-    _plpTokenConfig[3] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
-    _plpTokenConfig[4] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
-    _plpTokenConfig[5] = _getPLPTokenConfigStruct(0.95 ether, 0, 1000e18, true);
+    IConfigStorage.HLPTokenConfig[] memory _hlpTokenConfig = new IConfigStorage.HLPTokenConfig[](_tokens.length);
+    _hlpTokenConfig[0] = _getHLPTokenConfigStruct(0.05 ether, 0, 1000e18, true);
+    _hlpTokenConfig[1] = _getHLPTokenConfigStruct(0, 0, 1000e18, false);
+    _hlpTokenConfig[2] = _getHLPTokenConfigStruct(0, 0, 1000e18, false);
+    _hlpTokenConfig[3] = _getHLPTokenConfigStruct(0, 0, 1000e18, false);
+    _hlpTokenConfig[4] = _getHLPTokenConfigStruct(0, 0, 1000e18, false);
+    _hlpTokenConfig[5] = _getHLPTokenConfigStruct(0.95 ether, 0, 1000e18, true);
 
-    configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
+    configStorage.addOrUpdateAcceptedToken(_tokens, _hlpTokenConfig);
   }
 
-  function _getPLPTokenConfigStruct(
+  function _getHLPTokenConfigStruct(
     uint256 _targetWeight,
     uint256 _bufferLiquidity,
     uint256 _maxWeightDiff,
     bool _accepted
-  ) private pure returns (IConfigStorage.PLPTokenConfig memory) {
+  ) private pure returns (IConfigStorage.HLPTokenConfig memory) {
     return
-      IConfigStorage.PLPTokenConfig({
+      IConfigStorage.HLPTokenConfig({
         targetWeight: _targetWeight,
         bufferLiquidity: _bufferLiquidity,
         maxWeightDiff: _maxWeightDiff,

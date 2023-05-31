@@ -40,17 +40,17 @@ contract BotHandler_CloseDelistedMarketPosition is BotHandler_Base {
 
     // TVL
     // 1000000 USDT -> 2000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
 
     // assume ALICE has free collateral for 10,000 USD
     mockCalculator.setEquity(ALICE, 10_000 * 1e30);
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
-    // mock PLP token for profitable trader
+    // mock HLP token for profitable trader
     // related with TVL 2,000,000 USD then provide liquidity, - 1,000,000 WETH (price 1$)
     //                                                        - 10,000 WBTC (price 100$)
-    vaultStorage.addPLPLiquidity(address(weth), 1_000_000 ether);
-    vaultStorage.addPLPLiquidity(address(wbtc), 10_000 ether);
+    vaultStorage.addHLPLiquidity(address(weth), 1_000_000 ether);
+    vaultStorage.addHLPLiquidity(address(wbtc), 10_000 ether);
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether

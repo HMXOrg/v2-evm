@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { HLP } from "@hmx/contracts/HLP.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
@@ -34,7 +34,7 @@ contract SetCollateralTokens is ConfigJsonRepo {
   /// @param _assetId Asset's ID
   /// @param _collateralFactorBPS token reliability factor to calculate buying power, 1e4 = 100%
   /// @param _isAccepted accepted to deposit as collateral
-  /// @param _settleStrategy determine token will be settled for NON PLP collateral, e.g. aUSDC redeemed as USDC
+  /// @param _settleStrategy determine token will be settled for NON HLP collateral, e.g. aUSDC redeemed as USDC
   function _addCollateralConfig(
     bytes32 _assetId,
     uint32 _collateralFactorBPS,

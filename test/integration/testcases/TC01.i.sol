@@ -41,28 +41,28 @@ contract TC01 is BaseIntTest_WithActions {
         who: ALICE,
         lpTotalSupply: 99_70 ether,
         totalAmount: _amount,
-        plpLiquidity: 49_850_000,
-        plpAmount: 9_970 ether, //
+        hlpLiquidity: 49_850_000,
+        hlpAmount: 9_970 ether, //
         fee: 150_000, //fee = 0.5e8( 0.5e8 -0.3%) = 0.0015 * 1e8
         executionFee: _totalExecutionOrderFee
       })
     );
 
-    // no one in PLP pool, so aum must be = totalSupply
+    // no one in HLP pool, so aum must be = totalSupply
     assertApproxEqRel(
       calculator.getAUME30(false) / 1e12,
-      plpV2.totalSupply(),
+      hlpV2.totalSupply(),
       0.0001 ether,
       "AUM & total Supply mismatch"
     );
 
-    // T2: Alice withdraws 100,000 USD with PLP
+    // T2: Alice withdraws 100,000 USD with HLP
     vm.deal(ALICE, executionOrderFee);
 
     uint256 amountToRemove = 100_000 ether;
     vm.startPrank(ALICE);
 
-    plpV2.approve(address(liquidityHandler), amountToRemove);
+    hlpV2.approve(address(liquidityHandler), amountToRemove);
     vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
     liquidityHandler.createRemoveLiquidityOrder{ value: executionOrderFee }(
       address(wbtc),
@@ -72,7 +72,7 @@ contract TC01 is BaseIntTest_WithActions {
       false
     );
     vm.stopPrank();
-    // T3: Alice withdraws PLP 100 USD
+    // T3: Alice withdraws HLP 100 USD
     //  10000 -> 0.5 e8
     //   100 -> 0.005 e8 btc
     removeLiquidity(
@@ -91,11 +91,11 @@ contract TC01 is BaseIntTest_WithActions {
       LiquidityTester.LiquidityExpectedData({
         token: address(wbtc),
         who: ALICE,
-        lpTotalSupply: 9_870 ether, // 9970 plp - 100 plp
+        lpTotalSupply: 9_870 ether, // 9970 hlp - 100 hlp
         totalAmount: 49_501_400, //(0.5 e8 - 0.005)+ 1400 fee
-        plpLiquidity: 49_350_000, // 49_850_000 - 500_000
-        plpAmount: 9_870 ether, // 9970 -100 (remove lq)
-        //fee Alice addLiquidity (150_000) + fee Alice removeLiquidity(100 plp => 500_000-(500_000-0.28%) => 1,400 ) = 151400
+        hlpLiquidity: 49_350_000, // 49_850_000 - 500_000
+        hlpAmount: 9_870 ether, // 9970 -100 (remove lq)
+        //fee Alice addLiquidity (150_000) + fee Alice removeLiquidity(100 hlp => 500_000-(500_000-0.28%) => 1,400 ) = 151400
         fee: 151_400,
         executionFee: _totalExecutionOrderFee
       })
@@ -139,14 +139,14 @@ contract TC01 is BaseIntTest_WithActions {
         who: BOB,
         lpTotalSupply: 9_969.68 ether,
         totalAmount: 50001400, //49_501_400 + 500_000
-        plpLiquidity: 49_848_400, //49_350_000
-        plpAmount: 99.68 ether,
+        hlpLiquidity: 49_848_400, //49_350_000
+        hlpAmount: 99.68 ether,
         fee: 153_000, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000
         executionFee: _totalExecutionOrderFee
       })
     );
 
-    // T6: Alice max withdraws 9,870 USD PLP in pools
+    // T6: Alice max withdraws 9,870 USD HLP in pools
     vm.deal(ALICE, executionOrderFee);
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
 
@@ -167,18 +167,18 @@ contract TC01 is BaseIntTest_WithActions {
         who: BOB,
         lpTotalSupply: 9_969.68 ether,
         totalAmount: 50001400, //49_501_400 + 500_000
-        plpLiquidity: 49_848_400, //49_350_000
-        plpAmount: 99.68 ether,
+        hlpLiquidity: 49_848_400, //49_350_000
+        hlpAmount: 99.68 ether,
         fee: 153_000, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000
         executionFee: _totalExecutionOrderFee
       })
     );
 
-    // T7: Alice max withdraws 9,870 USD PLP in pools
+    // T7: Alice max withdraws 9,870 USD HLP in pools
     vm.deal(ALICE, executionOrderFee);
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
 
-    IConfigStorage.PLPTokenConfig memory _config;
+    IConfigStorage.HLPTokenConfig memory _config;
     _config.targetWeight = 0.95 * 1e18;
     _config.bufferLiquidity = 0;
     _config.maxWeightDiff = 1e18;
@@ -201,8 +201,8 @@ contract TC01 is BaseIntTest_WithActions {
         who: ALICE,
         lpTotalSupply: 99.68 ether, //only BOB LP LEFT
         totalAmount: 927_760,
-        plpLiquidity: 498_400,
-        plpAmount: 102060000000000, // ALICE PLP AMOUNT SHOULD BE 0
+        hlpLiquidity: 498_400,
+        hlpAmount: 102060000000000, // ALICE HLP AMOUNT SHOULD BE 0
         fee: 429_360, //153_000 + 276_360
         executionFee: _totalExecutionOrderFee
       })

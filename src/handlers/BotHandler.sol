@@ -459,7 +459,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     (uint256 _stableTokenPrice, ) = _oracle.getLatestPrice(_configStorage.tokenAssetIds(_stableToken), false);
 
     // Loop through collateral lists
-    // And do accounting to swap token on funding fee reserve with plp liquidity
+    // And do accounting to swap token on funding fee reserve with hlp liquidity
 
     vars.collateralTokens = _configStorage.getCollateralTokens();
     uint256 _len = vars.collateralTokens.length;
@@ -478,11 +478,11 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
               (10 ** _configStorage.getAssetTokenDecimal(_stableToken))) /
             (_stableTokenPrice * (10 ** _configStorage.getAssetTokenDecimal(vars.collatToken)));
 
-          if (_vaultStorage.plpLiquidity(_stableToken) < vars.convertedStableAmount)
+          if (_vaultStorage.hlpLiquidity(_stableToken) < vars.convertedStableAmount)
             revert IBotHandler_InsufficientLiquidity();
 
           // funding fee should be reduced while liquidity should be increased
-          _vaultStorage.convertFundingFeeReserveWithPLP(
+          _vaultStorage.convertFundingFeeReserveWithHLP(
             vars.collatToken,
             _stableToken,
             vars.fundingFeeReserve,
@@ -507,7 +507,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     IERC20Upgradeable(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
 
     // do accounting on vault storage
-    _vaultStorage.addPLPLiquidity(_token, _amount);
+    _vaultStorage.addHLPLiquidity(_token, _amount);
     _vaultStorage.pullToken(_token);
 
     emit LogInjectTokenToPlpLiquidity(msg.sender, _token, _amount);

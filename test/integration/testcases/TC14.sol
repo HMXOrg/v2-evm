@@ -37,11 +37,11 @@ contract TC14 is BaseIntTest_WithActions {
     vm.deal(ALICE, executionOrderFee);
     uint256 _amount = 10 ether;
     vm.prank(address(liquidityService));
-    plpV2.mint(ALICE, _amount);
+    hlpV2.mint(ALICE, _amount);
 
     vm.startPrank(ALICE);
 
-    plpV2.approve(address(liquidityHandler), _amount);
+    hlpV2.approve(address(liquidityHandler), _amount);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
     liquidityHandler.createRemoveLiquidityOrder{ value: executionOrderFee }(
       address(wbtc),

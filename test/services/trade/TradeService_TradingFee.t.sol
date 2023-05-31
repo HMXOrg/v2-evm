@@ -29,7 +29,7 @@ contract TradeService_TradingFee is TradeService_Base {
   function testCorrectness_tradingFee_usedOneCollateral() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -92,7 +92,7 @@ contract TradeService_TradingFee is TradeService_Base {
   function testCorrectness_tradingFee_usedManyCollaterals() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);
@@ -137,7 +137,7 @@ contract TradeService_TradingFee is TradeService_Base {
   function testCorrectness_tradingFee_WhenDecreasePosition() external {
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);

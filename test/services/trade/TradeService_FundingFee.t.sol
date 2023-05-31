@@ -30,8 +30,8 @@ contract TradeService_FundingFee is TradeService_Base {
       tradeHelper.reloadConfig();
     }
 
-    // Set PLPLiquidity
-    vaultStorage.addPLPLiquidity(configStorage.getPlpTokens()[0], 1000 * 1e18);
+    // Set HLPLiquidity
+    vaultStorage.addHLPLiquidity(configStorage.getPlpTokens()[0], 1000 * 1e18);
 
     // Ignore Borrowing fee on this test
     IConfigStorage.AssetClassConfig memory _cryptoConfig = IConfigStorage.AssetClassConfig({ baseBorrowingRate: 0 });
@@ -58,7 +58,7 @@ contract TradeService_FundingFee is TradeService_Base {
 
     // TVL
     // 1000000 USDT -> 1000000 USD
-    mockCalculator.setPLPValue(100_000_000 * 1e30);
+    mockCalculator.setHLPValue(100_000_000 * 1e30);
     // ALICE add collateral
     // 10000 USDT -> free collateral -> 10000 USD
     mockCalculator.setFreeCollateral(10_000 * 1e30);

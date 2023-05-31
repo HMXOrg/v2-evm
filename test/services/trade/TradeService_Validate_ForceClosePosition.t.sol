@@ -6,11 +6,11 @@ import { TradeService_Base } from "./TradeService_Base.t.sol";
 // What is this test DONE
 // - success
 //   - validateMarketDelisted when market not delisted
-//   - validateDeleverage when plp not healthy
+//   - validateDeleverage when hlp not healthy
 //   - validateMaxProfit when close with max profit
 // - revert
 //   - validateMarketDelisted when market delisted
-//   - validateDeleverage when plp healthy
+//   - validateDeleverage when hlp healthy
 //   - validateMaxProfit when not close with max profit
 
 contract TradeService_Validate_ForceClosePosition is TradeService_Base {
@@ -27,8 +27,8 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
     // Add Liquidity 120,000 USDT -> 120,000 USD
     // TVL = 120,000 USD
     // AUM = 120,000 USD
-    vaultStorage.addPLPLiquidity(address(usdt), 120_000 * 1e6);
-    mockCalculator.setPLPValue(120_000 * 1e30);
+    vaultStorage.addHLPLiquidity(address(usdt), 120_000 * 1e6);
+    mockCalculator.setHLPValue(120_000 * 1e30);
     mockCalculator.setAUM(120_000 * 1e30);
 
     // ALICE add collateral 10,000 USD
@@ -49,7 +49,7 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
     // AUM = 120,000 - 40,000 = 80,000
     mockCalculator.setAUM((80_000) * 1e30);
 
-    // PLP safety buffer = 1 + ((80,000 - 120,000) / 120,000) = 0.6666666666666667
+    // HLP safety buffer = 1 + ((80,000 - 120,000) / 120,000) = 0.6666666666666667
     vm.expectRevert(abi.encodeWithSignature("ITradeService_PlpHealthy()"));
     tradeService.validateDeleverage();
   }
@@ -64,8 +64,8 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
     // Add Liquidity 120,000 USDT -> 120,000 USD
     // TVL = 120,000 USD
     // AUM = 120,000 USD
-    vaultStorage.addPLPLiquidity(address(usdt), 120_000 * 1e6);
-    mockCalculator.setPLPValue(120_000 * 1e30);
+    vaultStorage.addHLPLiquidity(address(usdt), 120_000 * 1e6);
+    mockCalculator.setHLPValue(120_000 * 1e30);
     mockCalculator.setAUM(120_000 * 1e30);
 
     // ALICE add collateral 10,000 USD
@@ -86,7 +86,7 @@ contract TradeService_Validate_ForceClosePosition is TradeService_Base {
     // AUM = 120,000 - 80,000 = 40,000
     mockCalculator.setAUM((40_000) * 1e30);
 
-    // PLP safety buffer = 1 + ((40,000 - 120,000) / 120,000) = 0.33333333333333337
+    // HLP safety buffer = 1 + ((40,000 - 120,000) / 120,000) = 0.33333333333333337
     tradeService.validateDeleverage();
   }
 }

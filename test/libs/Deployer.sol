@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import { Vm } from "forge-std/Vm.sol";
 
 // Interfaces
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
@@ -55,11 +55,11 @@ library Deployer {
    * General Contracts
    */
 
-  function deployPLPv2(address _proxyAdmin) internal returns (IPLPv2) {
-    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/PLPv2.sol/PLPv2.json"));
+  function deployHLP(address _proxyAdmin) internal returns (IHLP) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/HLP.sol/HLP.json"));
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IPLPv2(payable(_proxy));
+    return IHLP(payable(_proxy));
   }
 
   function deployCalculator(

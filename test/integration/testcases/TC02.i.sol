@@ -33,14 +33,14 @@ contract TC02 is BaseIntTest_WithActions {
 
       // Then Bob should pay fee for 0.3% = 0.003 BTC
 
-      // Assert PLP Liquidity
+      // Assert HLP Liquidity
       //    BTC = 0.997 (amount - fee)
-      assertPLPLiquidity(address(wbtc), 0.997 * 1e8, "T1: ");
+      assertHLPLiquidity(address(wbtc), 0.997 * 1e8, "T1: ");
 
-      // When PLP Token price is 1$
-      // Then PLP Token should Mint = 0.997 btc * 20,000 USD = 19,940 USD
+      // When HLP Token price is 1$
+      // Then HLP Token should Mint = 0.997 btc * 20,000 USD = 19,940 USD
       //                            = 19940 / 1 = 19940 Tokens
-      assertPLPTotalSupply(19_940 * 1e18, "T1: ");
+      assertHLPTotalSupply(19_940 * 1e18, "T1: ");
 
       // Assert Fee distribution
       // According from T0
@@ -80,10 +80,10 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.01
       assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 0.01 * 1e8, "T2: ");
 
-      // And PLP total supply and Liquidity must not be changed
+      // And HLP total supply and Liquidity must not be changed
       // note: data from T1
-      assertPLPTotalSupply(19_940 * 1e18, "T2: ");
-      assertPLPLiquidity(address(wbtc), 0.997 * 1e8, "T2: ");
+      assertHLPTotalSupply(19_940 * 1e18, "T2: ");
+      assertHLPLiquidity(address(wbtc), 0.997 * 1e8, "T2: ");
 
       // And Alice should not pay any fee
       // note: vault's fees should be same with T1
@@ -183,7 +183,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Vault's fees
       //    BTC - protocol fee  = 0.003 btc
       //        - dev fee       = 0 btc
-      // and PLP's liquidity
+      // and HLP's liquidity
       //    BTC - 0.997 btc
 
       // Alice paid fees list
@@ -197,7 +197,7 @@ contract TC02 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  = 0.003 + 0.00001275 = 0.00301275 btc
       //        - dev fee       = 0 + 0.00000225     = 0.00000225 btc
-      // and PLP's liquidity still be
+      // and HLP's liquidity still be
       //    BTC - 0.997 btc
       assertVaultsFees({
         _token: address(wbtc),
@@ -207,7 +207,7 @@ contract TC02 is BaseIntTest_WithActions {
         _str: "T4: "
       });
 
-      assertPLPLiquidity(address(wbtc), 0.997 * 1e8, "T4: ");
+      assertHLPLiquidity(address(wbtc), 0.997 * 1e8, "T4: ");
 
       // Assert Market
       assertMarketLongPosition(wethMarketIndex, 300 * 1e30, 1_500.00075 * 1e30, "T4: ");
@@ -362,8 +362,8 @@ contract TC02 is BaseIntTest_WithActions {
       //      Trading fee     = 0.15 / 20000                  = 0.0000075 btc
       //      Borrowing fee   = 0.000219358074222666 / 20000  = 0.00000001 btc
 
-      // And Alice receive funding fee from PLP
-      // When PLP pay Alice by Liquidity
+      // And Alice receive funding fee from HLP
+      // When HLP pay Alice by Liquidity
       //    BTC, (price: 20,000 USD)
       //      Funding fee     = 0.0000036 / 20000             = 0.00000000 (018) btc !too small
       //      Trader's profit = 7.5 / 20000
@@ -379,7 +379,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Vault's fees
       //    BTC - protocol fee  = 0.00301275 btc
       //        - dev fee       = 0.00000225 btc
-      // and PLP's liquidity
+      // and HLP's liquidity
       //    BTC - 0.997 btc
 
       // Alice paid list
@@ -390,10 +390,10 @@ contract TC02 is BaseIntTest_WithActions {
       //                                  = 0.00000638 btc
       //      Borrowing fee - 0.00000001 btc
       //        - pay for dev (15%)       = 0.00000000 (15) btc !too small
-      //        - pay for PLP (85%)       = 0.00000001 - 0
+      //        - pay for HLP (85%)       = 0.00000001 - 0
       //                                  = 0.00000001 btc
 
-      // PLP paid list
+      // HLP paid list
       //    BTC
       //      Funding fee   - 0.00000000 (018) btc !too small
       //      Trader profit - 0.000375 btc
@@ -401,7 +401,7 @@ contract TC02 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  = 0.00301275 + 0.00000638     = 0.00301913 btc
       //        - dev fee       = 0.00000225 + 0 + 0.00000112 = 0.00000337 btc
-      // and PLP's liquidity
+      // and HLP's liquidity
       //    BTC - 0.997 + 0.00000001 - 0.000375 = 0.99662501 btc
 
       // Assert Vault
@@ -413,7 +413,7 @@ contract TC02 is BaseIntTest_WithActions {
         _str: "T6: "
       });
 
-      assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T6: ");
+      assertHLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T6: ");
 
       // Assert Market
 
@@ -523,7 +523,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Vault's fees
       //    BTC - protocol fee  = 0.00301913 btc
       //        - dev fee       = 0.00000337 btc
-      // and PLP's liquidity
+      // and HLP's liquidity
       //    BTC - 0.99662501 btc
 
       // Alice paid fees list
@@ -538,7 +538,7 @@ contract TC02 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  = 0.00301913 + 0.0000765 = 0.00309563 btc
       //        - dev fee       = 0.00000337 + 0.0000135 = 0.00001687 btc
-      // and PLP's liquidity
+      // and HLP's liquidity
       //    BTC - 0.99662501 btc
       assertVaultsFees({
         _token: address(wbtc),
@@ -548,7 +548,7 @@ contract TC02 is BaseIntTest_WithActions {
         _str: "T7: "
       });
 
-      assertPLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T7: ");
+      assertHLPLiquidity(address(wbtc), 0.99662501 * 1e8, "T7: ");
 
       // Assert Market
       assertMarketLongPosition(jpyMarketIndex, 0, 0, "T7: ");
@@ -692,8 +692,8 @@ contract TC02 is BaseIntTest_WithActions {
       //      Borrowing fee   = 0.002633287318366608 / 20000  = 0.00000013 btc
       //      Funding fee     = 0.00288 / 20000               = 0.00000014 btc
 
-      // And Alice receive funding fee from PLP
-      // When PLP pay Alice by Liquidity
+      // And Alice receive funding fee from HLP
+      // When HLP pay Alice by Liquidity
       //    BTC, (price: 20,000 USD)
       //      Trader's profit = 18.01762211333523763485750665291 / 20000
       //                      = 0.00090088 btc
@@ -709,7 +709,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Vault's fees
       //    BTC - protocol fee  = 0.00309563 btc
       //        - dev fee       = 0.00001687 btc
-      // and PLP's liquidity
+      // and HLP's liquidity
       //    BTC - 0.99662501 btc
 
       // Alice paid fees list
@@ -721,14 +721,14 @@ contract TC02 is BaseIntTest_WithActions {
       //    Borrowing fee
       //      BTC - 0.00000013 btc
       //          - pay for dev (15%)       = 0.00000001 btc
-      //          - pay for PLP (85%)       = 0.00000013 - 0.00000001
+      //          - pay for HLP (85%)       = 0.00000013 - 0.00000001
       //                                    = 0.00000012
       //    Funding fee
       //      BTC - 0.00000014 btc
       //          - pay for funding fee (100%) = 0.00000014 btc
       //
 
-      // PLP paid list
+      // HLP paid list
       //    BTC
       //      Trader profit - 0.00090088 btc
 
@@ -736,7 +736,7 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - protocol fee  0.00309563 + 0.0000765              = 0.00317213 btc
       //        - dev fee       0.00001687 + 0.0000135 + 0.00000001 = 0.00003038 btc
       //        - funding fee   0.00000014 btc
-      // and PLP's liquidity
+      // and HLP's liquidity
       //    BTC - 0.99662501 + 0.00000012 - 0.00090088 = 0.99572425 btc
 
       assertVaultsFees({
@@ -747,7 +747,7 @@ contract TC02 is BaseIntTest_WithActions {
         _str: "T8: "
       });
 
-      assertPLPLiquidity(address(wbtc), 0.99572425 * 1e8, "T8: ");
+      assertHLPLiquidity(address(wbtc), 0.99572425 * 1e8, "T8: ");
 
       // Assert Market
       assertMarketLongPosition(jpyMarketIndex, 0, 0, "T8: ");
@@ -927,7 +927,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Invariant Testing
       assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T12: " });
 
-      // Assert Trader's balances, Vault's fees and PLP's Liquidity
+      // Assert Trader's balances, Vault's fees and HLP's Liquidity
 
       // Bob's collateral before settle payment
       //    BTC - 0.01 btc
@@ -936,7 +936,7 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - protocol fee  = 0.00317213 btc
       //        - dev fee       = 0.00003038 btc
 
-      // PLP's liquidity before settle payment
+      // HLP's liquidity before settle payment
       //    BTC - 0.99572425 btc
 
       // Settlement detail
@@ -947,7 +947,7 @@ contract TC02 is BaseIntTest_WithActions {
       //          - pay for protocol (85%)  = 0.00017142 - 0.00002571
       //                                    = 0.00014571 btc
 
-      // And PLP has to pay
+      // And HLP has to pay
       //     nothing
 
       // Bob's collateral after settle payment
@@ -967,9 +967,9 @@ contract TC02 is BaseIntTest_WithActions {
         _str: "T12: "
       });
 
-      // PLP's liquidity after settle payment
+      // HLP's liquidity after settle payment
       //    nothing changed
-      assertPLPLiquidity(address(wbtc), 0.99572425 * 1e8, "T12: ");
+      assertHLPLiquidity(address(wbtc), 0.99572425 * 1e8, "T12: ");
 
       // Asset Market's state, Asset class's state
 
@@ -1141,7 +1141,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Invariant Testing
       assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T15: " });
 
-      // Assert Trader's balances, Vault's fees and PLP's Liquidity
+      // Assert Trader's balances, Vault's fees and HLP's Liquidity
 
       // Bob's collateral before settle payment
       //    BTC - 0.00982858 btc
@@ -1150,7 +1150,7 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - protocol fee  = 0.00331784 btc
       //        - dev fee       = 0.00005609 btc
 
-      // PLP's liquidity before settle payment
+      // HLP's liquidity before settle payment
       //    BTC - 0.99572425 btc
 
       // Settlement detail
@@ -1163,14 +1163,14 @@ contract TC02 is BaseIntTest_WithActions {
       //    Borrowing fee - 0.02440433326798917 USD
       //      BTC - 0.02440433326798917 / 18900.01  = 0.00000129 btc
       //          - pay for dev (15%)               = 0.00000019 btc
-      //          - pay for PLP (85%)               = 0.00000129 - 0.00000019
+      //          - pay for HLP (85%)               = 0.00000129 - 0.00000019
       //                                            = 0.0000011
       //    Funding fee - 0.00072 USD
       //      BTC - 0.00072 / 18900.01              = 0.00000003 btc
       //          - pay for funding fee (100%)      = 0.00000003 btc
       //
 
-      // And PLP has to pay
+      // And HLP has to pay
       //    Trader profit - 150 USD
       //      BTC - 150 / 18900.01                  = 0.00793650 btc
 
@@ -1193,9 +1193,9 @@ contract TC02 is BaseIntTest_WithActions {
         _str: "T15: "
       });
 
-      // PLP's liquidity after settle payment
+      // HLP's liquidity after settle payment
       //    BTC - 0.99572425 + 0.0000011 - 0.00793650 = 0.98778885
-      assertPLPLiquidity(address(wbtc), 0.98778885 * 1e8, "T15: ");
+      assertHLPLiquidity(address(wbtc), 0.98778885 * 1e8, "T15: ");
 
       // Asset Market's state, Asset class's state
 
@@ -1357,7 +1357,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Invariant Testing
       assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T17: " });
 
-      // Assert Trader's balances, Vault's fees and PLP's Liquidity
+      // Assert Trader's balances, Vault's fees and HLP's Liquidity
 
       // Bob's collateral before settle payment
       //    BTC - 0.01760503 btc
@@ -1367,7 +1367,7 @@ contract TC02 is BaseIntTest_WithActions {
       //        - dev fee       = 0.00008008 btc
       //        - funding fee   = 0.00000017 btc
 
-      // PLP's liquidity before settle payment
+      // HLP's liquidity before settle payment
       //    BTC - 0.98778896 btc
 
       // Settlement detail
@@ -1378,7 +1378,7 @@ contract TC02 is BaseIntTest_WithActions {
       //          - pay for protocol (85%)       = 0.00013953 - 0.00002092
       //                                         = 0.00011861 btc
 
-      // And PLP has to pay
+      // And HLP has to pay
       //    nothing
 
       // Bob's collateral after settle payment
@@ -1400,9 +1400,9 @@ contract TC02 is BaseIntTest_WithActions {
         _str: "T17: "
       });
 
-      // PLP's liquidity after settle payment
+      // HLP's liquidity after settle payment
       //    BTC - 0.98778885
-      assertPLPLiquidity(address(wbtc), 0.98778885 * 1e8, "T17: ");
+      assertHLPLiquidity(address(wbtc), 0.98778885 * 1e8, "T17: ");
 
       // Asset Market's state, Asset class's state
 
@@ -1558,7 +1558,7 @@ contract TC02 is BaseIntTest_WithActions {
       // Invariant Testing
       assertSubAccountStatus({ _subAccount: _aliceSubAccount0, _imr: 1.5 * 1e30, _mmr: 0.75 * 1e30, _str: "T19: " });
 
-      // Assert Trader's balances, Vault's fees and PLP's Liquidity
+      // Assert Trader's balances, Vault's fees and HLP's Liquidity
 
       // Bob's collateral before settle payment
       //    BTC - 0.01746550 btc
@@ -1567,7 +1567,7 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - protocol fee  = 0.00331784 btc
       //        - dev fee       = 0.00005609 btc
 
-      // PLP's liquidity before settle payment
+      // HLP's liquidity before settle payment
       //    BTC - 0.98778885 btc
 
       // Settlement detail
@@ -1580,13 +1580,13 @@ contract TC02 is BaseIntTest_WithActions {
       //    Borrowing fee - 0.02656843109739486 USD
       //      BTC - 0.02656843109739486 / 17500     = 0.00000151 btc
       //          - pay for dev (15%)               = 0.00000022 btc
-      //          - pay for PLP (85%)               = 0.00000151 - 0.00000022
+      //          - pay for HLP (85%)               = 0.00000151 - 0.00000022
       //                                            = 0.00000129 btc
       //    Funding fee - 0.00072 USD
       //      BTC - 0.00072 / 17500                 = 0.00000004 btc
       //          - pay for funding fee (100%)      = 0.00000004 btc
 
-      // And PLP has to pay
+      // And HLP has to pay
       //    Trader profit - 270 USD
       //      BTC - 270 / 17500                     = 0.01542857 btc
 
@@ -1609,10 +1609,10 @@ contract TC02 is BaseIntTest_WithActions {
         _str: "T19: "
       });
 
-      // PLP's liquidity after settle payment
+      // HLP's liquidity after settle payment
       //    BTC = 0.98778885 + 0.00000129 - 0.01542857
       //        = 0.97236157
-      assertPLPLiquidity(address(wbtc), 0.97236157 * 1e8, "T19: ");
+      assertHLPLiquidity(address(wbtc), 0.97236157 * 1e8, "T19: ");
 
       // Asset Market's state, Asset class's state
 

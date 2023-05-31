@@ -456,7 +456,7 @@ export const configStorageABI = [
       { name: "_token", internalType: "address", type: "address", indexed: false },
       {
         name: "_config",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -468,7 +468,7 @@ export const configStorageABI = [
       },
       {
         name: "_newConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -479,7 +479,7 @@ export const configStorageABI = [
         indexed: false,
       },
     ],
-    name: "LogAddOrUpdatePLPTokenConfigs",
+    name: "LogAddOrUpdateHLPTokenConfigs",
   },
   {
     type: "event",
@@ -631,11 +631,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -648,11 +648,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -763,7 +763,7 @@ export const configStorageABI = [
       { name: "oldPlp", internalType: "address", type: "address", indexed: true },
       { name: "newPlp", internalType: "address", type: "address", indexed: false },
     ],
-    name: "LogSetPLP",
+    name: "LogSetHLP",
   },
   {
     type: "event",
@@ -772,7 +772,7 @@ export const configStorageABI = [
       { name: "token", internalType: "address", type: "address", indexed: false },
       {
         name: "oldConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -784,7 +784,7 @@ export const configStorageABI = [
       },
       {
         name: "newConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -963,7 +963,7 @@ export const configStorageABI = [
       { name: "_tokens", internalType: "address[]", type: "address[]" },
       {
         name: "_configs",
-        internalType: "struct IConfigStorage.PLPTokenConfig[]",
+        internalType: "struct IConfigStorage.HLPTokenConfig[]",
         type: "tuple[]",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1120,7 +1120,7 @@ export const configStorageABI = [
     outputs: [
       {
         name: "",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1139,7 +1139,7 @@ export const configStorageABI = [
     outputs: [
       {
         name: "",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1207,11 +1207,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -1353,11 +1353,11 @@ export const configStorageABI = [
     inputs: [],
     name: "liquidityConfig",
     outputs: [
-      { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-      { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+      { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+      { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
       { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
       { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-      { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+      { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
       { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
       { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
       { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -1418,14 +1418,14 @@ export const configStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [],
-    name: "plp",
+    name: "hlp",
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
   {
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "", internalType: "uint256", type: "uint256" }],
-    name: "plpAssetIds",
+    name: "hlpAssetIds",
     outputs: [{ name: "", internalType: "bytes32", type: "bytes32" }],
   },
   {
@@ -1577,11 +1577,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -1682,14 +1682,14 @@ export const configStorageABI = [
   {
     stateMutability: "nonpayable",
     type: "function",
-    inputs: [{ name: "_plp", internalType: "address", type: "address" }],
-    name: "setPLP",
+    inputs: [{ name: "_hlp", internalType: "address", type: "address" }],
+    name: "setHLP",
     outputs: [],
   },
   {
     stateMutability: "nonpayable",
     type: "function",
-    inputs: [{ name: "_plpAssetIds", internalType: "bytes32[]", type: "bytes32[]" }],
+    inputs: [{ name: "_hlpAssetIds", internalType: "bytes32[]", type: "bytes32[]" }],
     name: "setPlpAssetId",
     outputs: [],
   },
@@ -1700,7 +1700,7 @@ export const configStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       {
         name: "_newConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1713,8 +1713,8 @@ export const configStorageABI = [
     name: "setPlpTokenConfig",
     outputs: [
       {
-        name: "_plpTokenConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        name: "_hlpTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -4777,7 +4777,7 @@ export const vaultStorageABI = [
   { stateMutability: "nonpayable", type: "constructor", inputs: [] },
   { type: "error", inputs: [], name: "IVaultStorage_Forbidden" },
   { type: "error", inputs: [], name: "IVaultStorage_NotWhiteListed" },
-  { type: "error", inputs: [], name: "IVaultStorage_PLPBalanceRemaining" },
+  { type: "error", inputs: [], name: "IVaultStorage_HLPBalanceRemaining" },
   { type: "error", inputs: [], name: "IVaultStorage_TargetNotContract" },
   { type: "error", inputs: [], name: "IVaultStorage_TraderBalanceRemaining" },
   { type: "error", inputs: [], name: "IVaultStorage_TraderTokenAlreadyExists" },
@@ -4884,7 +4884,7 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_amount", internalType: "uint256", type: "uint256" },
     ],
-    name: "addPLPLiquidity",
+    name: "addHLPLiquidity",
     outputs: [],
   },
   {
@@ -4932,7 +4932,7 @@ export const vaultStorageABI = [
       { name: "_convertAmount", internalType: "uint256", type: "uint256" },
       { name: "_targetAmount", internalType: "uint256", type: "uint256" },
     ],
-    name: "convertFundingFeeReserveWithPLP",
+    name: "convertFundingFeeReserveWithHLP",
     outputs: [],
   },
   {
@@ -5046,7 +5046,7 @@ export const vaultStorageABI = [
       { name: "_trader", internalType: "address", type: "address" },
       { name: "_token", internalType: "address", type: "address" },
       { name: "_devFeeAmount", internalType: "uint256", type: "uint256" },
-      { name: "_plpFeeAmount", internalType: "uint256", type: "uint256" },
+      { name: "_hlpFeeAmount", internalType: "uint256", type: "uint256" },
     ],
     name: "payBorrowingFee",
     outputs: [],
@@ -5134,14 +5134,14 @@ export const vaultStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "", internalType: "address", type: "address" }],
-    name: "plpLiquidity",
+    name: "hlpLiquidity",
     outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
   {
     stateMutability: "view",
     type: "function",
     inputs: [],
-    name: "plpLiquidityDebtUSDE30",
+    name: "hlpLiquidityDebtUSDE30",
     outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
   {
@@ -5186,7 +5186,7 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_amount", internalType: "uint256", type: "uint256" },
     ],
-    name: "removePLPLiquidity",
+    name: "removeHLPLiquidity",
     outputs: [],
   },
   {
@@ -5378,7 +5378,7 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_fundingFeeAmount", internalType: "uint256", type: "uint256" },
     ],
-    name: "withdrawSurplusFromFundingFeeReserveToPLP",
+    name: "withdrawSurplusFromFundingFeeReserveToHLP",
     outputs: [],
   },
 ] as const;

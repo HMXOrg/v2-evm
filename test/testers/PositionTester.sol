@@ -52,7 +52,7 @@ contract PositionTester is StdAssertions {
     cacheMarket = perpStorage.getMarketByIndex(cachePosition.marketIndex);
     cacheGlobalState = perpStorage.getGlobalState();
 
-    cachePlpTokenLiquidity = vaultStorage.plpLiquidity(_token);
+    cachePlpTokenLiquidity = vaultStorage.hlpLiquidity(_token);
     cacheTraderBalance = vaultStorage.traderBalances(_subAccount, _token);
   }
 
@@ -75,7 +75,7 @@ contract PositionTester is StdAssertions {
   //   - [pending] sum of borrowing fee
   function assertDecreasePositionResult(
     DecreasePositionAssertionData memory _data,
-    address[] calldata _plpTokens,
+    address[] calldata _hlpTokens,
     uint256[] calldata _expectedBalances,
     uint256[] calldata _expectedPlpLiquidities,
     uint256[] calldata _expectedFees
@@ -83,20 +83,20 @@ contract PositionTester is StdAssertions {
     address _subAccount = _getSubAccount(_data.primaryAccount, _data.subAccountId);
 
     {
-      uint256 _len = _plpTokens.length;
+      uint256 _len = _hlpTokens.length;
       // collateral
       address _token;
       uint256 _expectBalance;
       uint256 _expectLiquidity;
       uint256 _expectFee;
       for (uint256 _i; _i < _len; ) {
-        _token = _plpTokens[_i];
+        _token = _hlpTokens[_i];
         _expectBalance = _expectedBalances[_i];
         _expectLiquidity = _expectedPlpLiquidities[_i];
         _expectFee = _expectedFees[_i];
 
         assertEq(vaultStorage.traderBalances(_subAccount, _token), _expectBalance, "trader balance");
-        assertEq(vaultStorage.plpLiquidity(_token), _expectLiquidity, "liquidity");
+        assertEq(vaultStorage.hlpLiquidity(_token), _expectLiquidity, "liquidity");
         assertEq(vaultStorage.protocolFees(_token), _expectFee, "protocol fee");
 
         unchecked {

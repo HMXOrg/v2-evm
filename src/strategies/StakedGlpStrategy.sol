@@ -112,7 +112,7 @@ contract StakedGlpStrategy is OwnableUpgradeable, IStakedGlpStrategy {
 
     // 6. Update accounting.
     _vaultStorage.pullToken(address(_sglp));
-    _vaultStorage.addPLPLiquidity(address(_sglp), sGlpBalance);
+    _vaultStorage.addHLPLiquidity(address(_sglp), sGlpBalance);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

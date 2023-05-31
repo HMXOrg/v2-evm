@@ -171,7 +171,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
-    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    VaultStorage(_vaultStorage).hlpLiquidityDebtUSDE30();
     ConfigStorage(_configStorage).getLiquidityConfig();
 
     perpStorage = _perpStorage;
@@ -628,10 +628,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // SLOAD
     Calculator _calculator = calculator;
     uint256 _aum = _calculator.getAUME30(false);
-    uint256 _tvl = _calculator.getPLPValueE30(false);
+    uint256 _tvl = _calculator.getHLPValueE30(false);
 
-    // check plp safety buffer
-    if ((_tvl - _aum) * BPS <= (BPS - ConfigStorage(configStorage).getLiquidityConfig().plpSafetyBufferBPS) * _tvl)
+    // check hlp safety buffer
+    if ((_tvl - _aum) * BPS <= (BPS - ConfigStorage(configStorage).getLiquidityConfig().hlpSafetyBufferBPS) * _tvl)
       revert ITradeService_PlpHealthy();
   }
 
@@ -1012,7 +1012,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     PerpStorage _perpStorage = PerpStorage(perpStorage);
 
     // Get the total TVL
-    uint256 tvl = calculator.getPLPValueE30(true);
+    uint256 tvl = calculator.getHLPValueE30(true);
 
     // Retrieve the global state
     PerpStorage.GlobalState memory _globalState = _perpStorage.getGlobalState();
@@ -1028,7 +1028,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     _assetClass.reserveValueE30 += _reservedValue;
 
     // Check if the new reserve value exceeds the % of AUM, and revert if it does
-    if ((tvl * _liquidityConfig.maxPLPUtilizationBPS) < _globalState.reserveValueE30 * BPS) {
+    if ((tvl * _liquidityConfig.maxHLPUtilizationBPS) < _globalState.reserveValueE30 * BPS) {
       revert ITradeService_InsufficientLiquidity();
     }
 

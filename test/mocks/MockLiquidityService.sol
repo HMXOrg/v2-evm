@@ -12,7 +12,7 @@ contract MockLiquidityService {
   //is reverted is true, it can set to revert as bytes or revert as message
   bool public revertAsMessage;
 
-  bool public plpEnabled;
+  bool public hlpEnabled;
   error LiquidityService_CircuitBreaker();
   error LiquidityService_BadAmount();
   error LiquidityService_RevertAsBytes();
@@ -43,8 +43,8 @@ contract MockLiquidityService {
     revertAsMessage = isRevertMessage;
   }
 
-  function setPlpEnabled(bool _plpEnabled) external {
-    plpEnabled = _plpEnabled;
+  function setPlpEnabled(bool _hlpEnabled) external {
+    hlpEnabled = _hlpEnabled;
   }
 
   function addLiquidity(
@@ -86,7 +86,7 @@ contract MockLiquidityService {
   /// @notice validatePreAddRemoveLiquidity used in Handler,Service
   /// @param _amount amountIn
   function validatePreAddRemoveLiquidity(uint256 _amount) public view {
-    if (!plpEnabled) {
+    if (!hlpEnabled) {
       revert LiquidityService_CircuitBreaker();
     }
 

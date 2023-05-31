@@ -49,17 +49,17 @@ contract TradeService_ForceClosePosition is TradeService_Base {
 
     // TVL
     // 1000000 USDT -> 2000000 USD
-    mockCalculator.setPLPValue(1_000_000 * 1e30);
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
 
     // assume ALICE has free collateral for 10,000 USD
     mockCalculator.setEquity(ALICE, 10_000 * 1e30);
     mockCalculator.setFreeCollateral(10_000 * 1e30);
 
-    // mock PLP token for profitable trader
+    // mock HLP token for profitable trader
     // related with TVL 2,000,000 USD then provide liquidity, - 1,000,000 WETH (price 1$)
     //                                                        - 10,000 WBTC (price 100$)
-    vaultStorage.addPLPLiquidity(address(weth), 1_000_000 ether);
-    vaultStorage.addPLPLiquidity(address(wbtc), 10_000 ether);
+    vaultStorage.addHLPLiquidity(address(weth), 1_000_000 ether);
+    vaultStorage.addHLPLiquidity(address(wbtc), 10_000 ether);
 
     // assume ALICE sub-account 0 has collateral
     // weth - 100,000 ether
@@ -139,8 +139,8 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     // settlement fee = 100000 * 0.5 / 100 = 500 ether
     // then ALICE sub account 0 collateral should be increased by 100000 - 500 = 99500 ether
     //                             = 100000 + 99500 = 199500 ether
-    // and PLP WETH liquidity should reduced by 100000 ether
-    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 100000 = 900000 ether
+    // and HLP WETH liquidity should reduced by 100000 ether
+    //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 100000 = 900000 ether
     // finally fee should increased by 500 ether
     address[] memory _checkPlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);
@@ -243,8 +243,8 @@ contract TradeService_ForceClosePosition is TradeService_Base {
     // settlement fee = 82568.807339449541284403 * 0.5 / 100 = 412.844036697247706422 ether
     // then ALICE sub account 0 collateral should be increased by 82568.807339449541284403 - 412.844036697247706422 = 82155.963302752293577981 ether
     //                             = 100000 + 82155.963302752293577981 = 182155.963302752293577981 ether
-    // and PLP WETH liquidity should reduced by 82568.807339449541284403 ether
-    //     PLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 82568.807339449541284403 = 917431.192660550458715597 ether
+    // and HLP WETH liquidity should reduced by 82568.807339449541284403 ether
+    //     HLP WETH liquidity has 1,000,000 ether then liquidity remaining is 1000000 - 82568.807339449541284403 = 917431.192660550458715597 ether
     // finally fee should increased by 412.844036697247706422 ether
     address[] memory _checkPlpTokens = new address[](1);
     uint256[] memory _expectedTraderBalances = new uint256[](1);

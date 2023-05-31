@@ -82,7 +82,7 @@ contract TC10 is BaseIntTest_WithActions {
       uint256 traderBalanceBefore = vaultStorage.traderBalances(ALICE, address(wbtc));
       uint256 protocolFeesBefore = vaultStorage.protocolFees(address(wbtc));
       uint256 devFeesBefore = vaultStorage.devFees(address(wbtc));
-      uint256 plpLiquidityBefore = vaultStorage.plpLiquidity(address(wbtc));
+      uint256 hlpLiquidityBefore = vaultStorage.hlpLiquidity(address(wbtc));
 
       liquidate(getSubAccount(ALICE, 0), tickPrices, publishTimeDiff, block.timestamp);
       /*
@@ -100,7 +100,7 @@ contract TC10 is BaseIntTest_WithActions {
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|
        * |    Dev |                                      |  0.00029347 |           0.00044783 |                  |             |   0.0007413 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|
-       * |    PLP |                           0.05988846 |             |           0.00253776 |                  |             |  0.06242622 |  BTC |
+       * |    HLP |                           0.05988846 |             |           0.00253776 |                  |             |  0.06242622 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|
        * |  P-fee |                                      |  0.00166305 |                      |                  |             |  0.00166305 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|
@@ -108,7 +108,7 @@ contract TC10 is BaseIntTest_WithActions {
        */
       assertSubAccountTokenBalance(ALICE, address(wbtc), true, 3286807);
       assertVaultsFees(address(wbtc), protocolFeesBefore + (0.00166305 * 1e8), devFeesBefore + (0.0007413 * 1e8), 0);
-      assertPLPLiquidity(address(wbtc), plpLiquidityBefore + (0.06242622 * 1e8));
+      assertHLPLiquidity(address(wbtc), hlpLiquidityBefore + (0.06242622 * 1e8));
       assertSubAccountTokenBalance(BOT, address(wbtc), true, (0.00021739 * 1e8));
 
       assertNumberOfPosition(ALICE, 0);

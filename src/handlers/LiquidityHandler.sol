@@ -140,7 +140,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @notice Create a new AddLiquidity order
   /// @param _tokenIn address token in
   /// @param _amountIn amount token in (based on decimals)
-  /// @param _minOut minPLP out
+  /// @param _minOut minHLP out
   /// @param _executionFee The execution fee of order
   /// @param _shouldWrap in case of sending native token
   function createAddLiquidityOrder(
@@ -221,7 +221,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     _transferInETH();
 
     // transfers ERC-20 token from user's account to this contract
-    IERC20Upgradeable(ConfigStorage(LiquidityService(liquidityService).configStorage()).plp()).safeTransferFrom(
+    IERC20Upgradeable(ConfigStorage(LiquidityService(liquidityService).configStorage()).hlp()).safeTransferFrom(
       msg.sender,
       address(this),
       _amountIn
@@ -443,7 +443,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     }
     // Remove Liquidity order
     else {
-      address hlp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
+      address hlp = ConfigStorage(LiquidityService(liquidityService).configStorage()).hlp();
       IERC20Upgradeable(hlp).safeTransfer(_account, _amount);
       emit LogRefund(_account, _order.orderId, hlp, _amount, false);
     }

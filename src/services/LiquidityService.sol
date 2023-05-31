@@ -11,7 +11,7 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
-import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { HLP } from "@hmx/contracts/HLP.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 
 // interfaces
@@ -93,7 +93,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
-    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    VaultStorage(_vaultStorage).hlpLiquidityDebtUSDE30();
     ConfigStorage(_configStorage).getLiquidityConfig();
   }
 
@@ -151,7 +151,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     // 3. get AUM and LpSupply before deduction fee
     _vars.aumE30 = _vars.calculator.getAUME30(true);
-    _vars.lpSupply = ERC20Upgradeable(_vars.configStorage.plp()).totalSupply();
+    _vars.lpSupply = ERC20Upgradeable(_vars.configStorage.hlp()).totalSupply();
 
     // 4. calculate hlp mint amount
     (_vars.tokenValueUSDAfterFee, _vars.mintAmount) = _joinPool(
@@ -165,9 +165,9 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     );
 
     // 5. mint HLP to lp provider
-    PLPv2(_vars.configStorage.plp()).mint(_lpProvider, _vars.mintAmount);
+    HLP(_vars.configStorage.hlp()).mint(_lpProvider, _vars.mintAmount);
 
-    if (PLPv2(_vars.configStorage.plp()).totalSupply() < 1e18) revert LiquidityService_TinyShare();
+    if (HLP(_vars.configStorage.hlp()).totalSupply() < 1e18) revert LiquidityService_TinyShare();
 
     emit AddLiquidity(
       _lpProvider,
@@ -201,20 +201,20 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     // 2. get AUM and LpSupply
     uint256 _aumE30 = Calculator(_configStorage.calculator()).getAUME30(false);
-    uint256 _lpSupply = ERC20Upgradeable(_configStorage.plp()).totalSupply();
+    uint256 _lpSupply = ERC20Upgradeable(_configStorage.hlp()).totalSupply();
 
     // 3. calculate lp value to be removed
     uint256 _lpUsdValueE30 = _lpSupply != 0 ? (_amount * _aumE30) / _lpSupply : 0;
     uint256 _amountOutToken = _exitPool(_tokenOut, _lpUsdValueE30, _lpProvider, _minAmount);
 
     // 4. burn HLP from lp provider and transfer withdrawn token to LiquidityHandler
-    PLPv2(_configStorage.plp()).burn(msg.sender, _amount);
+    HLP(_configStorage.hlp()).burn(msg.sender, _amount);
     VaultStorage(vaultStorage).pushToken(_tokenOut, msg.sender, _amountOutToken);
 
     // 5. post-validate
-    _validatePLPHealthCheck(_tokenOut);
+    _validateHLPHealthCheck(_tokenOut);
 
-    if (PLPv2(_configStorage.plp()).totalSupply() < 1e18) revert LiquidityService_TinyShare();
+    if (HLP(_configStorage.hlp()).totalSupply() < 1e18) revert LiquidityService_TinyShare();
 
     emit RemoveLiquidity(_lpProvider, _tokenOut, _amount, _aumE30, _lpSupply, _lpUsdValueE30, _amountOutToken);
 
@@ -240,7 +240,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @param _aumE30 The total Asset Under Management (AUM) of the pool in 10^30 units.
   /// @param _lpSupply The total supply of liquidity provider tokens.
   /// @return _tokenValueUSDAfterFee The value of the added _token in USD after deducting the liquidity provider fee.
-  /// @return _mintAmount The amount of liquidity provider tokens (PLP tokens) minted after the liquidity addition.
+  /// @return _mintAmount The amount of liquidity provider tokens (HLP tokens) minted after the liquidity addition.
   function _joinPool(
     address _token,
     uint256 _amount,
@@ -270,7 +270,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     if (_mintAmount < _minMintAmount) revert LiquidityService_InsufficientLiquidityMint();
 
     // 4. Accounting LP
-    VaultStorage(vaultStorage).addPLPLiquidity(_token, amountAfterFee);
+    VaultStorage(vaultStorage).addHLPLiquidity(_token, amountAfterFee);
     return (_tokenValueUSDAfterFee, _mintAmount);
   }
 
@@ -307,7 +307,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     // 3. Calculate and collect fees
     uint32 _feeBps = _calculator.getRemoveLiquidityFeeBPS(_tokenOut, _lpUsdValueE30, _configStorage);
-    VaultStorage(vaultStorage).removePLPLiquidity(_tokenOut, _amountOut);
+    VaultStorage(vaultStorage).removeHLPLiquidity(_tokenOut, _amountOut);
     _amountOut = _collectFee(_tokenOut, _lpProvider, _maxPrice, _amountOut, _feeBps, LiquidityAction.REMOVE_LIQUIDITY);
 
     if (_minTokenAmount > _amountOut) {
@@ -389,13 +389,13 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     return _amount - _feeTokenAmount;
   }
 
-  function _validatePLPHealthCheck(address _token) private view {
+  function _validateHLPHealthCheck(address _token) private view {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     // liquidity left < buffer liquidity then revert
     if (
-      VaultStorage(vaultStorage).plpLiquidity(_token) <
+      VaultStorage(vaultStorage).hlpLiquidity(_token) <
       _configStorage.getAssetPlpTokenConfigByToken(_token).bufferLiquidity
     ) {
       revert LiquidityService_InsufficientLiquidityBuffer();
@@ -405,20 +405,20 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     PerpStorage.GlobalState memory _globalState = PerpStorage(perpStorage).getGlobalState();
     Calculator _calculator = Calculator(_configStorage.calculator());
 
-    // Validate Max PLP Utilization
+    // Validate Max HLP Utilization
     // =====================================
-    // reserveValue / PLP TVL > maxPLPUtilization
+    // reserveValue / HLP TVL > maxHLPUtilization
     // Transform to save precision:
-    // reserveValue > maxPLPUtilization * PLP TVL
-    uint256 plpTVL = _calculator.getPLPValueE30(false);
+    // reserveValue > maxHLPUtilization * HLP TVL
+    uint256 hlpTVL = _calculator.getHLPValueE30(false);
 
-    if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxPLPUtilizationBPS * plpTVL) {
-      revert LiquidityService_MaxPLPUtilizationExceeded();
+    if (_globalState.reserveValueE30 * BPS > _liquidityConfig.maxHLPUtilizationBPS * hlpTVL) {
+      revert LiquidityService_MaxHLPUtilizationExceeded();
     }
 
-    // Validate PLP Reserved
-    if (_globalState.reserveValueE30 > plpTVL) {
-      revert LiquidityService_InsufficientPLPReserved();
+    // Validate HLP Reserved
+    if (_globalState.reserveValueE30 > hlpTVL) {
+      revert LiquidityService_InsufficientHLPReserved();
     }
   }
 

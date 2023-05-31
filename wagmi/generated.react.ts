@@ -460,7 +460,7 @@ export const configStorageABI = [
       { name: "_token", internalType: "address", type: "address", indexed: false },
       {
         name: "_config",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -472,7 +472,7 @@ export const configStorageABI = [
       },
       {
         name: "_newConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -483,7 +483,7 @@ export const configStorageABI = [
         indexed: false,
       },
     ],
-    name: "LogAddOrUpdatePLPTokenConfigs",
+    name: "LogAddOrUpdateHLPTokenConfigs",
   },
   {
     type: "event",
@@ -635,11 +635,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -652,11 +652,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -767,7 +767,7 @@ export const configStorageABI = [
       { name: "oldPlp", internalType: "address", type: "address", indexed: true },
       { name: "newPlp", internalType: "address", type: "address", indexed: false },
     ],
-    name: "LogSetPLP",
+    name: "LogSetHLP",
   },
   {
     type: "event",
@@ -776,7 +776,7 @@ export const configStorageABI = [
       { name: "token", internalType: "address", type: "address", indexed: false },
       {
         name: "oldConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -788,7 +788,7 @@ export const configStorageABI = [
       },
       {
         name: "newConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -967,7 +967,7 @@ export const configStorageABI = [
       { name: "_tokens", internalType: "address[]", type: "address[]" },
       {
         name: "_configs",
-        internalType: "struct IConfigStorage.PLPTokenConfig[]",
+        internalType: "struct IConfigStorage.HLPTokenConfig[]",
         type: "tuple[]",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1124,7 +1124,7 @@ export const configStorageABI = [
     outputs: [
       {
         name: "",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1143,7 +1143,7 @@ export const configStorageABI = [
     outputs: [
       {
         name: "",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1211,11 +1211,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -1357,11 +1357,11 @@ export const configStorageABI = [
     inputs: [],
     name: "liquidityConfig",
     outputs: [
-      { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-      { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+      { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+      { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
       { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
       { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-      { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+      { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
       { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
       { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
       { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -1422,14 +1422,14 @@ export const configStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [],
-    name: "plp",
+    name: "hlp",
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
   {
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "", internalType: "uint256", type: "uint256" }],
-    name: "plpAssetIds",
+    name: "hlpAssetIds",
     outputs: [{ name: "", internalType: "bytes32", type: "bytes32" }],
   },
   {
@@ -1581,11 +1581,11 @@ export const configStorageABI = [
         internalType: "struct IConfigStorage.LiquidityConfig",
         type: "tuple",
         components: [
-          { name: "plpTotalTokenWeight", internalType: "uint256", type: "uint256" },
-          { name: "plpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
+          { name: "hlpTotalTokenWeight", internalType: "uint256", type: "uint256" },
+          { name: "hlpSafetyBufferBPS", internalType: "uint32", type: "uint32" },
           { name: "taxFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "flashLoanFeeRateBPS", internalType: "uint32", type: "uint32" },
-          { name: "maxPLPUtilizationBPS", internalType: "uint32", type: "uint32" },
+          { name: "maxHLPUtilizationBPS", internalType: "uint32", type: "uint32" },
           { name: "depositFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "withdrawFeeRateBPS", internalType: "uint32", type: "uint32" },
           { name: "dynamicFeeEnabled", internalType: "bool", type: "bool" },
@@ -1686,14 +1686,14 @@ export const configStorageABI = [
   {
     stateMutability: "nonpayable",
     type: "function",
-    inputs: [{ name: "_plp", internalType: "address", type: "address" }],
-    name: "setPLP",
+    inputs: [{ name: "_hlp", internalType: "address", type: "address" }],
+    name: "setHLP",
     outputs: [],
   },
   {
     stateMutability: "nonpayable",
     type: "function",
-    inputs: [{ name: "_plpAssetIds", internalType: "bytes32[]", type: "bytes32[]" }],
+    inputs: [{ name: "_hlpAssetIds", internalType: "bytes32[]", type: "bytes32[]" }],
     name: "setPlpAssetId",
     outputs: [],
   },
@@ -1704,7 +1704,7 @@ export const configStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       {
         name: "_newConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -1717,8 +1717,8 @@ export const configStorageABI = [
     name: "setPlpTokenConfig",
     outputs: [
       {
-        name: "_plpTokenConfig",
-        internalType: "struct IConfigStorage.PLPTokenConfig",
+        name: "_hlpTokenConfig",
+        internalType: "struct IConfigStorage.HLPTokenConfig",
         type: "tuple",
         components: [
           { name: "targetWeight", internalType: "uint256", type: "uint256" },
@@ -4781,7 +4781,7 @@ export const vaultStorageABI = [
   { stateMutability: "nonpayable", type: "constructor", inputs: [] },
   { type: "error", inputs: [], name: "IVaultStorage_Forbidden" },
   { type: "error", inputs: [], name: "IVaultStorage_NotWhiteListed" },
-  { type: "error", inputs: [], name: "IVaultStorage_PLPBalanceRemaining" },
+  { type: "error", inputs: [], name: "IVaultStorage_HLPBalanceRemaining" },
   { type: "error", inputs: [], name: "IVaultStorage_TargetNotContract" },
   { type: "error", inputs: [], name: "IVaultStorage_TraderBalanceRemaining" },
   { type: "error", inputs: [], name: "IVaultStorage_TraderTokenAlreadyExists" },
@@ -4888,7 +4888,7 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_amount", internalType: "uint256", type: "uint256" },
     ],
-    name: "addPLPLiquidity",
+    name: "addHLPLiquidity",
     outputs: [],
   },
   {
@@ -4936,7 +4936,7 @@ export const vaultStorageABI = [
       { name: "_convertAmount", internalType: "uint256", type: "uint256" },
       { name: "_targetAmount", internalType: "uint256", type: "uint256" },
     ],
-    name: "convertFundingFeeReserveWithPLP",
+    name: "convertFundingFeeReserveWithHLP",
     outputs: [],
   },
   {
@@ -5050,7 +5050,7 @@ export const vaultStorageABI = [
       { name: "_trader", internalType: "address", type: "address" },
       { name: "_token", internalType: "address", type: "address" },
       { name: "_devFeeAmount", internalType: "uint256", type: "uint256" },
-      { name: "_plpFeeAmount", internalType: "uint256", type: "uint256" },
+      { name: "_hlpFeeAmount", internalType: "uint256", type: "uint256" },
     ],
     name: "payBorrowingFee",
     outputs: [],
@@ -5138,14 +5138,14 @@ export const vaultStorageABI = [
     stateMutability: "view",
     type: "function",
     inputs: [{ name: "", internalType: "address", type: "address" }],
-    name: "plpLiquidity",
+    name: "hlpLiquidity",
     outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
   {
     stateMutability: "view",
     type: "function",
     inputs: [],
-    name: "plpLiquidityDebtUSDE30",
+    name: "hlpLiquidityDebtUSDE30",
     outputs: [{ name: "", internalType: "uint256", type: "uint256" }],
   },
   {
@@ -5190,7 +5190,7 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_amount", internalType: "uint256", type: "uint256" },
     ],
-    name: "removePLPLiquidity",
+    name: "removeHLPLiquidity",
     outputs: [],
   },
   {
@@ -5382,7 +5382,7 @@ export const vaultStorageABI = [
       { name: "_token", internalType: "address", type: "address" },
       { name: "_fundingFeeAmount", internalType: "uint256", type: "uint256" },
     ],
-    name: "withdrawSurplusFromFundingFeeReserveToPLP",
+    name: "withdrawSurplusFromFundingFeeReserveToHLP",
     outputs: [],
   },
 ] as const;
@@ -5874,15 +5874,15 @@ export function useBotHandlerUpdateDynamicEnabled<TMode extends WriteContractMod
         "updateDynamicEnabled"
       > & { functionName?: "updateDynamicEnabled" }
     : UseContractWriteConfig<TMode, typeof botHandlerABI, "updateDynamicEnabled"> & {
-        abi?: never
-        functionName?: "updateDynamicEnabled"
-      } = {} as any,
+        abi?: never;
+        functionName?: "updateDynamicEnabled";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof botHandlerABI, "updateDynamicEnabled">({
     abi: botHandlerABI,
     functionName: "updateDynamicEnabled",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5896,15 +5896,15 @@ export function useBotHandlerUpdateLiquidityEnabled<TMode extends WriteContractM
         "updateLiquidityEnabled"
       > & { functionName?: "updateLiquidityEnabled" }
     : UseContractWriteConfig<TMode, typeof botHandlerABI, "updateLiquidityEnabled"> & {
-        abi?: never
-        functionName?: "updateLiquidityEnabled"
-      } = {} as any,
+        abi?: never;
+        functionName?: "updateLiquidityEnabled";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof botHandlerABI, "updateLiquidityEnabled">({
     abi: botHandlerABI,
     functionName: "updateLiquidityEnabled",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6160,13 +6160,13 @@ export function usePrepareBotHandlerUpdateDynamicEnabled(
   config: Omit<
     UsePrepareContractWriteConfig<typeof botHandlerABI, "updateDynamicEnabled">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: botHandlerABI,
     functionName: "updateDynamicEnabled",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof botHandlerABI, "updateDynamicEnabled">)
+  } as UsePrepareContractWriteConfig<typeof botHandlerABI, "updateDynamicEnabled">);
 }
 
 /**
@@ -6176,13 +6176,13 @@ export function usePrepareBotHandlerUpdateLiquidityEnabled(
   config: Omit<
     UsePrepareContractWriteConfig<typeof botHandlerABI, "updateLiquidityEnabled">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: botHandlerABI,
     functionName: "updateLiquidityEnabled",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof botHandlerABI, "updateLiquidityEnabled">)
+  } as UsePrepareContractWriteConfig<typeof botHandlerABI, "updateLiquidityEnabled">);
 }
 
 /**
@@ -6366,16 +6366,13 @@ export function useBotHandlerLogTakeMaxProfitEvent(
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link botHandlerABI}__ and `eventName` set to `"LogUpdateDynamicEnabled"`.
  */
 export function useBotHandlerLogUpdateDynamicEnabledEvent(
-  config: Omit<
-    UseContractEventConfig<typeof botHandlerABI, "LogUpdateDynamicEnabled">,
-    "abi" | "eventName"
-  > = {} as any,
+  config: Omit<UseContractEventConfig<typeof botHandlerABI, "LogUpdateDynamicEnabled">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: botHandlerABI,
     eventName: "LogUpdateDynamicEnabled",
     ...config,
-  } as UseContractEventConfig<typeof botHandlerABI, "LogUpdateDynamicEnabled">)
+  } as UseContractEventConfig<typeof botHandlerABI, "LogUpdateDynamicEnabled">);
 }
 
 /**
@@ -6385,13 +6382,13 @@ export function useBotHandlerLogUpdateLiquidityEnabledEvent(
   config: Omit<
     UseContractEventConfig<typeof botHandlerABI, "LogUpdateLiquidityEnabled">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: botHandlerABI,
     eventName: "LogUpdateLiquidityEnabled",
     ...config,
-  } as UseContractEventConfig<typeof botHandlerABI, "LogUpdateLiquidityEnabled">)
+  } as UseContractEventConfig<typeof botHandlerABI, "LogUpdateLiquidityEnabled">);
 }
 
 /**
@@ -6590,18 +6587,18 @@ export function useConfigStorageCollateralAssetIds<
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"configExecutors"`.
  */
 export function useConfigStorageConfigExecutors<
-  TSelectData = ReadContractResult<typeof configStorageABI, "configExecutors">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "configExecutors">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "configExecutors", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "configExecutors", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "configExecutors",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -7028,30 +7025,30 @@ export function useConfigStorageOwner<TSelectData = ReadContractResult<typeof co
 }
 
 /**
- * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"plp"`.
+ * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"hlp"`.
  */
-export function useConfigStoragePlp<TSelectData = ReadContractResult<typeof configStorageABI, "plp">>(
-  config: Omit<UseContractReadConfig<typeof configStorageABI, "plp", TSelectData>, "abi" | "functionName"> = {} as any
+export function useConfigStoragePlp<TSelectData = ReadContractResult<typeof configStorageABI, "hlp">>(
+  config: Omit<UseContractReadConfig<typeof configStorageABI, "hlp", TSelectData>, "abi" | "functionName"> = {} as any
 ) {
-  return useContractRead({ abi: configStorageABI, functionName: "plp", ...config } as UseContractReadConfig<
+  return useContractRead({ abi: configStorageABI, functionName: "hlp", ...config } as UseContractReadConfig<
     typeof configStorageABI,
-    "plp",
+    "hlp",
     TSelectData
   >);
 }
 
 /**
- * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"plpAssetIds"`.
+ * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"hlpAssetIds"`.
  */
-export function useConfigStoragePlpAssetIds<TSelectData = ReadContractResult<typeof configStorageABI, "plpAssetIds">>(
+export function useConfigStoragePlpAssetIds<TSelectData = ReadContractResult<typeof configStorageABI, "hlpAssetIds">>(
   config: Omit<
-    UseContractReadConfig<typeof configStorageABI, "plpAssetIds", TSelectData>,
+    UseContractReadConfig<typeof configStorageABI, "hlpAssetIds", TSelectData>,
     "abi" | "functionName"
   > = {} as any
 ) {
-  return useContractRead({ abi: configStorageABI, functionName: "plpAssetIds", ...config } as UseContractReadConfig<
+  return useContractRead({ abi: configStorageABI, functionName: "hlpAssetIds", ...config } as UseContractReadConfig<
     typeof configStorageABI,
-    "plpAssetIds",
+    "hlpAssetIds",
     TSelectData
   >);
 }
@@ -7522,15 +7519,15 @@ export function useConfigStorageSetConfigExecutor<TMode extends WriteContractMod
         "setConfigExecutor"
       > & { functionName?: "setConfigExecutor" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setConfigExecutor"> & {
-        abi?: never
-        functionName?: "setConfigExecutor"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setConfigExecutor";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setConfigExecutor">({
     abi: configStorageABI,
     functionName: "setConfigExecutor",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7688,21 +7685,21 @@ export function useConfigStorageSetOracle<TMode extends WriteContractMode>(
 }
 
 /**
- * Wraps __{@link useContractWrite}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"setPLP"`.
+ * Wraps __{@link useContractWrite}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"setHLP"`.
  */
 export function useConfigStorageSetPlp<TMode extends WriteContractMode>(
   config: TMode extends "prepared"
-    ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof configStorageABI, "setPLP">["abi"], "setPLP"> & {
-        functionName?: "setPLP";
+    ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof configStorageABI, "setHLP">["abi"], "setHLP"> & {
+        functionName?: "setHLP";
       }
-    : UseContractWriteConfig<TMode, typeof configStorageABI, "setPLP"> & {
+    : UseContractWriteConfig<TMode, typeof configStorageABI, "setHLP"> & {
         abi?: never;
-        functionName?: "setPLP";
+        functionName?: "setHLP";
       } = {} as any
 ) {
-  return useContractWrite<TMode, typeof configStorageABI, "setPLP">({
+  return useContractWrite<TMode, typeof configStorageABI, "setHLP">({
     abi: configStorageABI,
-    functionName: "setPLP",
+    functionName: "setHLP",
     ...config,
   } as any);
 }
@@ -8119,13 +8116,13 @@ export function usePrepareConfigStorageSetConfigExecutor(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setConfigExecutor">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setConfigExecutor",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setConfigExecutor">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setConfigExecutor">);
 }
 
 /**
@@ -8238,16 +8235,16 @@ export function usePrepareConfigStorageSetOracle(
 }
 
 /**
- * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"setPLP"`.
+ * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"setHLP"`.
  */
 export function usePrepareConfigStorageSetPlp(
-  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setPLP">, "abi" | "functionName"> = {} as any
+  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setHLP">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
-    functionName: "setPLP",
+    functionName: "setHLP",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setPLP">);
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setHLP">);
 }
 
 /**
@@ -8458,19 +8455,19 @@ export function useConfigStorageLogAddMarketConfigEvent(
 }
 
 /**
- * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogAddOrUpdatePLPTokenConfigs"`.
+ * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogAddOrUpdateHLPTokenConfigs"`.
  */
 export function useConfigStorageLogAddOrUpdatePlpTokenConfigsEvent(
   config: Omit<
-    UseContractEventConfig<typeof configStorageABI, "LogAddOrUpdatePLPTokenConfigs">,
+    UseContractEventConfig<typeof configStorageABI, "LogAddOrUpdateHLPTokenConfigs">,
     "abi" | "eventName"
   > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
-    eventName: "LogAddOrUpdatePLPTokenConfigs",
+    eventName: "LogAddOrUpdateHLPTokenConfigs",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogAddOrUpdatePLPTokenConfigs">);
+  } as UseContractEventConfig<typeof configStorageABI, "LogAddOrUpdateHLPTokenConfigs">);
 }
 
 /**
@@ -8559,16 +8556,13 @@ export function useConfigStorageLogSetCollateralTokenConfigEvent(
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetConfigExecutor"`.
  */
 export function useConfigStorageLogSetConfigExecutorEvent(
-  config: Omit<
-    UseContractEventConfig<typeof configStorageABI, "LogSetConfigExecutor">,
-    "abi" | "eventName"
-  > = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetConfigExecutor">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetConfigExecutor",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetConfigExecutor">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetConfigExecutor">);
 }
 
 /**
@@ -8674,14 +8668,14 @@ export function useConfigStorageLogSetOracleEvent(
 }
 
 /**
- * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetPLP"`.
+ * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetHLP"`.
  */
 export function useConfigStorageLogSetPlpEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetPLP">, "abi" | "eventName"> = {} as any
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetHLP">, "abi" | "eventName"> = {} as any
 ) {
-  return useContractEvent({ abi: configStorageABI, eventName: "LogSetPLP", ...config } as UseContractEventConfig<
+  return useContractEvent({ abi: configStorageABI, eventName: "LogSetHLP", ...config } as UseContractEventConfig<
     typeof configStorageABI,
-    "LogSetPLP"
+    "LogSetHLP"
   >);
 }
 
@@ -10528,18 +10522,18 @@ export function useLimitTradeHandlerGetAllActiveOrders<
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"getAllActiveOrdersBySubAccount"`.
  */
 export function useLimitTradeHandlerGetAllActiveOrdersBySubAccount<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "getAllActiveOrdersBySubAccount",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount", TSelectData>);
 }
 
 /**
@@ -10564,18 +10558,18 @@ export function useLimitTradeHandlerGetLimitActiveOrders<
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"getLimitActiveOrdersBySubAccount"`.
  */
 export function useLimitTradeHandlerGetLimitActiveOrdersBySubAccount<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "getLimitActiveOrdersBySubAccount",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount", TSelectData>);
 }
 
 /**
@@ -10600,18 +10594,18 @@ export function useLimitTradeHandlerGetMarketActiveOrders<
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"getMarketActiveOrdersBySubAccount"`.
  */
 export function useLimitTradeHandlerGetMarketActiveOrdersBySubAccount<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "getMarketActiveOrdersBySubAccount",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount", TSelectData>);
 }
 
 /**
@@ -14734,18 +14728,18 @@ export function usePythAdapterConfigs<TSelectData = ReadContractResult<typeof py
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link pythAdapterABI}__ and `functionName` set to `"getConfigByAssetId"`.
  */
 export function usePythAdapterGetConfigByAssetId<
-  TSelectData = ReadContractResult<typeof pythAdapterABI, "getConfigByAssetId">,
+  TSelectData = ReadContractResult<typeof pythAdapterABI, "getConfigByAssetId">
 >(
   config: Omit<
     UseContractReadConfig<typeof pythAdapterABI, "getConfigByAssetId", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: pythAdapterABI,
     functionName: "getConfigByAssetId",
     ...config,
-  } as UseContractReadConfig<typeof pythAdapterABI, "getConfigByAssetId", TSelectData>)
+  } as UseContractReadConfig<typeof pythAdapterABI, "getConfigByAssetId", TSelectData>);
 }
 
 /**
@@ -15266,37 +15260,37 @@ export function useVaultStorageOwner<TSelectData = ReadContractResult<typeof vau
 }
 
 /**
- * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"plpLiquidity"`.
+ * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"hlpLiquidity"`.
  */
-export function useVaultStoragePlpLiquidity<TSelectData = ReadContractResult<typeof vaultStorageABI, "plpLiquidity">>(
+export function useVaultStoragePlpLiquidity<TSelectData = ReadContractResult<typeof vaultStorageABI, "hlpLiquidity">>(
   config: Omit<
-    UseContractReadConfig<typeof vaultStorageABI, "plpLiquidity", TSelectData>,
+    UseContractReadConfig<typeof vaultStorageABI, "hlpLiquidity", TSelectData>,
     "abi" | "functionName"
   > = {} as any
 ) {
-  return useContractRead({ abi: vaultStorageABI, functionName: "plpLiquidity", ...config } as UseContractReadConfig<
+  return useContractRead({ abi: vaultStorageABI, functionName: "hlpLiquidity", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
-    "plpLiquidity",
+    "hlpLiquidity",
     TSelectData
   >);
 }
 
 /**
- * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"plpLiquidityDebtUSDE30"`.
+ * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"hlpLiquidityDebtUSDE30"`.
  */
 export function useVaultStoragePlpLiquidityDebtUsde30<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "plpLiquidityDebtUSDE30">
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "hlpLiquidityDebtUSDE30">
 >(
   config: Omit<
-    UseContractReadConfig<typeof vaultStorageABI, "plpLiquidityDebtUSDE30", TSelectData>,
+    UseContractReadConfig<typeof vaultStorageABI, "hlpLiquidityDebtUSDE30", TSelectData>,
     "abi" | "functionName"
   > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
-    functionName: "plpLiquidityDebtUSDE30",
+    functionName: "hlpLiquidityDebtUSDE30",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "plpLiquidityDebtUSDE30", TSelectData>);
+  } as UseContractReadConfig<typeof vaultStorageABI, "hlpLiquidityDebtUSDE30", TSelectData>);
 }
 
 /**
@@ -15577,23 +15571,23 @@ export function useVaultStorageAddLossDebt<TMode extends WriteContractMode>(
 }
 
 /**
- * Wraps __{@link useContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"addPLPLiquidity"`.
+ * Wraps __{@link useContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"addHLPLiquidity"`.
  */
 export function useVaultStorageAddPlpLiquidity<TMode extends WriteContractMode>(
   config: TMode extends "prepared"
     ? UseContractWriteConfig<
         TMode,
-        PrepareWriteContractResult<typeof vaultStorageABI, "addPLPLiquidity">["abi"],
-        "addPLPLiquidity"
-      > & { functionName?: "addPLPLiquidity" }
-    : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addPLPLiquidity"> & {
+        PrepareWriteContractResult<typeof vaultStorageABI, "addHLPLiquidity">["abi"],
+        "addHLPLiquidity"
+      > & { functionName?: "addHLPLiquidity" }
+    : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addHLPLiquidity"> & {
         abi?: never;
-        functionName?: "addPLPLiquidity";
+        functionName?: "addHLPLiquidity";
       } = {} as any
 ) {
-  return useContractWrite<TMode, typeof vaultStorageABI, "addPLPLiquidity">({
+  return useContractWrite<TMode, typeof vaultStorageABI, "addHLPLiquidity">({
     abi: vaultStorageABI,
-    functionName: "addPLPLiquidity",
+    functionName: "addHLPLiquidity",
     ...config,
   } as any);
 }
@@ -15665,23 +15659,23 @@ export function useVaultStorageBorrowFundingFeeFromPlpToTrader<TMode extends Wri
 }
 
 /**
- * Wraps __{@link useContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"convertFundingFeeReserveWithPLP"`.
+ * Wraps __{@link useContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"convertFundingFeeReserveWithHLP"`.
  */
 export function useVaultStorageConvertFundingFeeReserveWithPlp<TMode extends WriteContractMode>(
   config: TMode extends "prepared"
     ? UseContractWriteConfig<
         TMode,
-        PrepareWriteContractResult<typeof vaultStorageABI, "convertFundingFeeReserveWithPLP">["abi"],
-        "convertFundingFeeReserveWithPLP"
-      > & { functionName?: "convertFundingFeeReserveWithPLP" }
-    : UseContractWriteConfig<TMode, typeof vaultStorageABI, "convertFundingFeeReserveWithPLP"> & {
+        PrepareWriteContractResult<typeof vaultStorageABI, "convertFundingFeeReserveWithHLP">["abi"],
+        "convertFundingFeeReserveWithHLP"
+      > & { functionName?: "convertFundingFeeReserveWithHLP" }
+    : UseContractWriteConfig<TMode, typeof vaultStorageABI, "convertFundingFeeReserveWithHLP"> & {
         abi?: never;
-        functionName?: "convertFundingFeeReserveWithPLP";
+        functionName?: "convertFundingFeeReserveWithHLP";
       } = {} as any
 ) {
-  return useContractWrite<TMode, typeof vaultStorageABI, "convertFundingFeeReserveWithPLP">({
+  return useContractWrite<TMode, typeof vaultStorageABI, "convertFundingFeeReserveWithHLP">({
     abi: vaultStorageABI,
-    functionName: "convertFundingFeeReserveWithPLP",
+    functionName: "convertFundingFeeReserveWithHLP",
     ...config,
   } as any);
 }
@@ -16013,23 +16007,23 @@ export function useVaultStorageRemoveFundingFee<TMode extends WriteContractMode>
 }
 
 /**
- * Wraps __{@link useContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"removePLPLiquidity"`.
+ * Wraps __{@link useContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"removeHLPLiquidity"`.
  */
 export function useVaultStorageRemovePlpLiquidity<TMode extends WriteContractMode>(
   config: TMode extends "prepared"
     ? UseContractWriteConfig<
         TMode,
-        PrepareWriteContractResult<typeof vaultStorageABI, "removePLPLiquidity">["abi"],
-        "removePLPLiquidity"
-      > & { functionName?: "removePLPLiquidity" }
-    : UseContractWriteConfig<TMode, typeof vaultStorageABI, "removePLPLiquidity"> & {
+        PrepareWriteContractResult<typeof vaultStorageABI, "removeHLPLiquidity">["abi"],
+        "removeHLPLiquidity"
+      > & { functionName?: "removeHLPLiquidity" }
+    : UseContractWriteConfig<TMode, typeof vaultStorageABI, "removeHLPLiquidity"> & {
         abi?: never;
-        functionName?: "removePLPLiquidity";
+        functionName?: "removeHLPLiquidity";
       } = {} as any
 ) {
-  return useContractWrite<TMode, typeof vaultStorageABI, "removePLPLiquidity">({
+  return useContractWrite<TMode, typeof vaultStorageABI, "removeHLPLiquidity">({
     abi: vaultStorageABI,
-    functionName: "removePLPLiquidity",
+    functionName: "removeHLPLiquidity",
     ...config,
   } as any);
 }
@@ -16299,23 +16293,23 @@ export function useVaultStorageWithdrawFee<TMode extends WriteContractMode>(
 }
 
 /**
- * Wraps __{@link useContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"withdrawSurplusFromFundingFeeReserveToPLP"`.
+ * Wraps __{@link useContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"withdrawSurplusFromFundingFeeReserveToHLP"`.
  */
 export function useVaultStorageWithdrawSurplusFromFundingFeeReserveToPlp<TMode extends WriteContractMode>(
   config: TMode extends "prepared"
     ? UseContractWriteConfig<
         TMode,
-        PrepareWriteContractResult<typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToPLP">["abi"],
-        "withdrawSurplusFromFundingFeeReserveToPLP"
-      > & { functionName?: "withdrawSurplusFromFundingFeeReserveToPLP" }
-    : UseContractWriteConfig<TMode, typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToPLP"> & {
+        PrepareWriteContractResult<typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP">["abi"],
+        "withdrawSurplusFromFundingFeeReserveToHLP"
+      > & { functionName?: "withdrawSurplusFromFundingFeeReserveToHLP" }
+    : UseContractWriteConfig<TMode, typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP"> & {
         abi?: never;
-        functionName?: "withdrawSurplusFromFundingFeeReserveToPLP";
+        functionName?: "withdrawSurplusFromFundingFeeReserveToHLP";
       } = {} as any
 ) {
-  return useContractWrite<TMode, typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToPLP">({
+  return useContractWrite<TMode, typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP">({
     abi: vaultStorageABI,
-    functionName: "withdrawSurplusFromFundingFeeReserveToPLP",
+    functionName: "withdrawSurplusFromFundingFeeReserveToHLP",
     ...config,
   } as any);
 }
@@ -16407,19 +16401,19 @@ export function usePrepareVaultStorageAddLossDebt(
 }
 
 /**
- * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"addPLPLiquidity"`.
+ * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"addHLPLiquidity"`.
  */
 export function usePrepareVaultStorageAddPlpLiquidity(
   config: Omit<
-    UsePrepareContractWriteConfig<typeof vaultStorageABI, "addPLPLiquidity">,
+    UsePrepareContractWriteConfig<typeof vaultStorageABI, "addHLPLiquidity">,
     "abi" | "functionName"
   > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
-    functionName: "addPLPLiquidity",
+    functionName: "addHLPLiquidity",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addPLPLiquidity">);
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addHLPLiquidity">);
 }
 
 /**
@@ -16471,19 +16465,19 @@ export function usePrepareVaultStorageBorrowFundingFeeFromPlpToTrader(
 }
 
 /**
- * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"convertFundingFeeReserveWithPLP"`.
+ * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"convertFundingFeeReserveWithHLP"`.
  */
 export function usePrepareVaultStorageConvertFundingFeeReserveWithPlp(
   config: Omit<
-    UsePrepareContractWriteConfig<typeof vaultStorageABI, "convertFundingFeeReserveWithPLP">,
+    UsePrepareContractWriteConfig<typeof vaultStorageABI, "convertFundingFeeReserveWithHLP">,
     "abi" | "functionName"
   > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
-    functionName: "convertFundingFeeReserveWithPLP",
+    functionName: "convertFundingFeeReserveWithHLP",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "convertFundingFeeReserveWithPLP">);
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "convertFundingFeeReserveWithHLP">);
 }
 
 /**
@@ -16712,19 +16706,19 @@ export function usePrepareVaultStorageRemoveFundingFee(
 }
 
 /**
- * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"removePLPLiquidity"`.
+ * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"removeHLPLiquidity"`.
  */
 export function usePrepareVaultStorageRemovePlpLiquidity(
   config: Omit<
-    UsePrepareContractWriteConfig<typeof vaultStorageABI, "removePLPLiquidity">,
+    UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeHLPLiquidity">,
     "abi" | "functionName"
   > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
-    functionName: "removePLPLiquidity",
+    functionName: "removeHLPLiquidity",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "removePLPLiquidity">);
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeHLPLiquidity">);
 }
 
 /**
@@ -16911,19 +16905,19 @@ export function usePrepareVaultStorageWithdrawFee(
 }
 
 /**
- * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"withdrawSurplusFromFundingFeeReserveToPLP"`.
+ * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"withdrawSurplusFromFundingFeeReserveToHLP"`.
  */
 export function usePrepareVaultStorageWithdrawSurplusFromFundingFeeReserveToPlp(
   config: Omit<
-    UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToPLP">,
+    UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP">,
     "abi" | "functionName"
   > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
-    functionName: "withdrawSurplusFromFundingFeeReserveToPLP",
+    functionName: "withdrawSurplusFromFundingFeeReserveToHLP",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToPLP">);
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP">);
 }
 
 /**

@@ -7,7 +7,7 @@ contract MockVaultStorage {
   mapping(address => mapping(address => uint256)) public traderBalances;
   mapping(address => address[]) public traderTokens;
 
-  uint256 public plpLiquidityDebtUSDE30;
+  uint256 public hlpLiquidityDebtUSDE30;
 
   // =========================================
   // | ---------- Setter ------------------- |

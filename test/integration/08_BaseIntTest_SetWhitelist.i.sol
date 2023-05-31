@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { BaseIntTest_SetPLPTokens } from "@hmx-test/integration/07_BaseIntTest_SetPLPTokens.i.sol";
+import { BaseIntTest_SetHLPTokens } from "@hmx-test/integration/07_BaseIntTest_SetHLPTokens.i.sol";
 
-abstract contract BaseIntTest_SetWhitelist is BaseIntTest_SetPLPTokens {
+abstract contract BaseIntTest_SetWhitelist is BaseIntTest_SetHLPTokens {
   constructor() {
     // Set order executors
     limitTradeHandler.setOrderExecutor(ORDER_EXECUTOR, true);

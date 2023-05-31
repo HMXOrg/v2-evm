@@ -72,12 +72,12 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
 
   function getNextBorrowingRate(
     uint8 _assetClassIndex,
-    uint256 _plpTVL
+    uint256 _hlpTVL
   ) public view override returns (uint256 _nextBorrowingRate) {
     if (actualFunction[keccak256("getNextBorrowingRate")]) {
-      return c.getNextBorrowingRate(_assetClassIndex, _plpTVL);
+      return c.getNextBorrowingRate(_assetClassIndex, _hlpTVL);
     } else {
-      return super.getNextBorrowingRate(_assetClassIndex, _plpTVL);
+      return super.getNextBorrowingRate(_assetClassIndex, _hlpTVL);
     }
   }
 
@@ -112,11 +112,11 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
     }
   }
 
-  function getPLPValueE30(bool _isMaxPrice) public view override returns (uint256 _nextAveragePrice) {
-    if (actualFunction[keccak256("getPLPValueE30")]) {
-      return c.getPLPValueE30(_isMaxPrice);
+  function getHLPValueE30(bool _isMaxPrice) public view override returns (uint256 _nextAveragePrice) {
+    if (actualFunction[keccak256("getHLPValueE30")]) {
+      return c.getHLPValueE30(_isMaxPrice);
     } else {
-      return super.getPLPValueE30(_isMaxPrice);
+      return super.getHLPValueE30(_isMaxPrice);
     }
   }
 

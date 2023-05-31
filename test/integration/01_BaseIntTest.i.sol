@@ -30,7 +30,7 @@ import { MockGmxRewardRouterV2 } from "@hmx-test/mocks/MockGmxRewardRouterV2.sol
 // Interfaces
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
@@ -38,7 +38,7 @@ import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
@@ -74,7 +74,9 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 abstract contract BaseIntTest is TestBase, StdCheats {
   /* Constants */
   uint256 internal constant executionOrderFee = 0.0001 ether;
+  uint256 internal constant maxExecutionChuck = 10; // 10 orders per time
   uint256 internal constant minExecutionTimestamp = 60 * 5; // 5 minutes
+  uint256 internal constant maxTrustPriceAge = type(uint32).max;
 
   uint256 internal constant SECONDS = 1;
   uint256 internal constant MINUTES = SECONDS * 60;
@@ -123,7 +125,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
   //LP tokens
   ERC20Upgradeable glp;
-  IPLPv2 plpV2;
+  IHLP hlpV2;
 
   MockErc20 wbtc; // decimals 8
   MockErc20 usdc; // decimals 6
@@ -173,7 +175,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(pyth));
 
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware(address(proxyAdmin));
+    oracleMiddleWare = Deployer.deployOracleMiddleware(address(proxyAdmin), maxTrustPriceAge);
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage(address(proxyAdmin));
@@ -185,8 +187,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     vaultStorage = Deployer.deployVaultStorage(address(proxyAdmin));
 
     // Tokens
-    // deploy plp
-    plpV2 = Deployer.deployPLPv2(address(proxyAdmin));
+    // deploy hlp
+    hlpV2 = Deployer.deployHLP(address(proxyAdmin));
 
     wbtc = new MockErc20("Wrapped Bitcoin", "WBTC", 8);
     dai = new MockErc20("DAI Stablecoin", "DAI", 18);
@@ -267,7 +269,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(proxyAdmin),
       address(crossMarginService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      maxExecutionChuck
     );
 
     limitTradeHandler = Deployer.deployLimitTradeHandler(
@@ -275,8 +278,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(weth),
       address(tradeService),
       address(pyth),
-      executionOrderFee,
-      minExecutionTimestamp
+      uint64(executionOrderFee),
+      uint32(minExecutionTimestamp)
     );
     limitTradeHandler.setGuaranteeLimitPrice(true);
 
@@ -284,7 +287,8 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       address(proxyAdmin),
       address(liquidityService),
       address(pyth),
-      executionOrderFee
+      executionOrderFee,
+      maxExecutionChuck
     );
 
     marketTradeHandler = Deployer.deployMarketTradeHandler(address(proxyAdmin), address(tradeService), address(pyth));
@@ -294,7 +298,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     crossMarginTester = new CrossMarginTester(vaultStorage, perpStorage, address(crossMarginHandler));
     globalMarketTester = new MarketTester(perpStorage);
     limitOrderTester = new LimitOrderTester(limitTradeHandler);
-    liquidityTester = new LiquidityTester(plpV2, vaultStorage, perpStorage, FEEVER);
+    liquidityTester = new LiquidityTester(hlpV2, vaultStorage, perpStorage, FEEVER);
     positionTester = new PositionTester(perpStorage, vaultStorage, oracleMiddleWare);
     positionTester02 = new PositionTester02(perpStorage);
 
@@ -321,7 +325,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       configStorage.setServiceExecutor(address(tradeHelper), address(tradeService), true);
 
       configStorage.setWeth(address(weth));
-      configStorage.setPLP(address(plpV2));
+      configStorage.setHLP(address(hlpV2));
 
       configStorage.setConfigExecutor(address(botHandler), true);
     }

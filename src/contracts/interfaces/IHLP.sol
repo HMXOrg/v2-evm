@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-interface IPLPv2 {
+interface IHLP {
   /**
    * ERRORS
    */
-  error IPLPv2_onlyMinter();
+  error IHLP_onlyMinter();
 
   /**
    * States

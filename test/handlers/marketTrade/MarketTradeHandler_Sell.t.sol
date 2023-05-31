@@ -52,7 +52,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
         positionSizeE30: -15_000 * 1e30,
         avgEntryPriceE30: 20_000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 1_350 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -77,7 +77,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
         positionSizeE30: 15_000 * 1e30,
         avgEntryPriceE30: 20_000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 1_350 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -102,7 +102,7 @@ contract MarketTradeHandler_Sell is MarketTradeHandler_Base {
         positionSizeE30: 15_000 * 1e30,
         avgEntryPriceE30: 20_000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 1_350 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0

@@ -100,7 +100,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _reserveValue: 90 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T1: "
       });
 
@@ -181,7 +181,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _reserveValue: 99 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 24619312482903,
-        _entryFundingRate: -79999999980,
+        _lastFundingAccrued: -79999999980,
         _str: "T2: "
       });
 
@@ -267,7 +267,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _reserveValue: 90 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 24619312482903,
-        _entryFundingRate: -79999999980,
+        _lastFundingAccrued: -79999999980,
         _str: "T3: "
       });
 
@@ -357,7 +357,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _reserveValue: 99 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 81489919184653,
-        _entryFundingRate: -247999999980,
+        _lastFundingAccrued: -1639,
         _str: "T4: "
       });
 
@@ -440,7 +440,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _reserveValue: 9 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T5: "
       });
 
@@ -527,7 +527,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _reserveValue: 9.9 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 8124370593224,
-        _entryFundingRate: 79999999980,
+        _lastFundingAccrued: 321,
         _str: "T6: "
       });
 
@@ -614,7 +614,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _reserveValue: 9 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 8124370593224,
-        _entryFundingRate: 79999999980,
+        _lastFundingAccrued: 321,
         _str: "T7: "
       });
       // And market's state should be corrected
@@ -703,7 +703,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _reserveValue: 9.9 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 25185548838996,
-        _entryFundingRate: 247999999980,
+        _lastFundingAccrued: 1639,
         _str: "T8: "
       });
       // And market's state should be corrected

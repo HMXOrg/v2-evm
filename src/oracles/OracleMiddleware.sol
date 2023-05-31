@@ -2,11 +2,15 @@
 pragma solidity 0.8.18;
 
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 import { IOracleMiddleware } from "./interfaces/IOracleMiddleware.sol";
 import { IPythAdapter } from "./interfaces/IPythAdapter.sol";
 import { IOracleAdapter } from "./interfaces/IOracleAdapter.sol";
 
 contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
+
   /**
    * Structs
    */
@@ -34,7 +38,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     address _newAdapter
   );
   event LogSetAdapter(address oldPythAdapter, address newPythAdapter);
-
+  event LogSetMaxTrustPriceAge(uint256 oldValue, uint256 newValue);
   /**
    * States
    */
@@ -54,6 +58,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   // 2 = Active, equivalent to `trading` from Pyth
   // assetId => marketStatus
   mapping(bytes32 => uint8) public marketStatus;
+  uint256 maxTrustPriceAge;
 
   /**
    * Modifiers
@@ -66,8 +71,9 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     _;
   }
 
-  function initialize() external initializer {
+  function initialize(uint256 _maxTrustPriceAge) external initializer {
     OwnableUpgradeable.__Ownable_init();
+    maxTrustPriceAge = _maxTrustPriceAge;
   }
 
   /// @notice Return the latest price and last update of the given asset id.
@@ -137,6 +143,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @param _marketSkew market skew quoted in asset (NOT USD)
   /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
   /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  /// @param _limitPriceE30 The limit price to override the current Oracle Price [OBSOLETED]
   function getLatestAdaptivePrice(
     bytes32 _assetId,
     bool _isMax,
@@ -164,6 +171,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @param _marketSkew market skew quoted in asset (NOT USD)
   /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
   /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  /// @param _limitPriceE30 The limit price to override the current Oracle Price [OBSOLETED]
   function unsafeGetLatestAdaptivePrice(
     bytes32 _assetId,
     bool _isMax,
@@ -191,6 +199,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @param _marketSkew market skew quoted in asset (NOT USD)
   /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
   /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  /// @param _limitPriceE30 The limit price to override the current Oracle Price [OBSOLETED]
   function getLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     bool _isMax,
@@ -221,6 +230,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @param _marketSkew market skew quoted in asset (NOT USD)
   /// @param _sizeDelta The size delta of this operation. It will determine the new market skew to be used for calculation.
   /// @param _maxSkewScaleUSD The config of maxSkewScaleUSD
+  /// @param _limitPriceE30 The limit price to override the current Oracle Price [OBSOLETED]
   function unsafeGetLatestAdaptivePriceWithMarketStatus(
     bytes32 _assetId,
     bool _isMax,
@@ -355,6 +365,7 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     uint32 _trustPriceAge,
     address _adapter
   ) external onlyOwner {
+    if (_trustPriceAge > maxTrustPriceAge) revert IOracleMiddleware_InvalidValue();
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
     emit LogSetAssetPriceConfig(
       _assetId,
@@ -377,16 +388,13 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   /// @param _assetId The asset address to set.
   /// @param _status Status enum, see `marketStatus` comment section.
   function setMarketStatus(bytes32 _assetId, uint8 _status) external onlyUpdater {
-    if (_status > 2) revert IOracleMiddleware_InvalidMarketStatus();
-
-    marketStatus[_assetId] = _status;
-    emit LogSetMarketStatus(_assetId, _status);
+    _setMarketStatus(_assetId, _status);
   }
 
   /// @notice Set market status for the given asset.
   /// @param _assetId The asset address to set.
   /// @param _status Status enum, see `marketStatus` comment section.
-  function _setMarketStatus(bytes32 _assetId, uint8 _status) internal onlyUpdater {
+  function _setMarketStatus(bytes32 _assetId, uint8 _status) internal {
     if (_status > 2) revert IOracleMiddleware_InvalidMarketStatus();
 
     marketStatus[_assetId] = _status;
@@ -410,6 +418,13 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
   function setUpdater(address _account, bool _isActive) external onlyOwner {
     isUpdater[_account] = _isActive;
     emit LogSetUpdater(_account, _isActive);
+  }
+
+  /// @notice setMaxTrustPriceAge
+  /// @param _maxTrustPriceAge _maxTrustPriceAge in timestamp
+  function setMaxTrustPriceAge(uint256 _maxTrustPriceAge) external onlyOwner {
+    emit LogSetMaxTrustPriceAge(maxTrustPriceAge, _maxTrustPriceAge);
+    maxTrustPriceAge = _maxTrustPriceAge;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

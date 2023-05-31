@@ -37,10 +37,10 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
 
   function test_revert_InsufficientExecutionFee() external {
     vm.deal(ALICE, 5 ether);
-    plp.mint(ALICE, 5 ether);
+    hlp.mint(ALICE, 5 ether);
     vm.startPrank(ALICE);
 
-    plp.approve(address(liquidityHandler), 1 ether);
+    hlp.approve(address(liquidityHandler), 1 ether);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_InsufficientExecutionFee()"));
     liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(wbtc), 1 ether, 1 ether, 3 ether, false);
     vm.stopPrank();
@@ -48,10 +48,10 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
 
   function test_revert_incorrectValueTransfer() external {
     vm.deal(ALICE, 5 ether);
-    plp.mint(ALICE, 5 ether);
+    hlp.mint(ALICE, 5 ether);
 
     vm.startPrank(ALICE);
-    plp.approve(address(liquidityHandler), 1 ether);
+    hlp.approve(address(liquidityHandler), 1 ether);
     vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_InCorrectValueTransfer()"));
     liquidityHandler.createRemoveLiquidityOrder{ value: 3 ether }(address(wbtc), 1 ether, 1 ether, 5 ether, false);
     vm.stopPrank();
@@ -66,16 +66,16 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
     liquidityHandler.createRemoveLiquidityOrder{ value: 3 ether }(address(weth), 1 ether, 1 ether, 5 ether, false);
   }
 
-  function test_revert_plpCircuitBreaker() external {
-    mockLiquidityService.setPlpEnabled(false);
+  function test_revert_hlpCircuitBreaker() external {
+    mockLiquidityService.setHlpEnabled(false);
 
     vm.deal(ALICE, 5 ether);
-    plp.mint(ALICE, 5 ether);
+    hlp.mint(ALICE, 5 ether);
 
     vm.startPrank(ALICE);
-    plp.approve(address(liquidityHandler), type(uint256).max);
+    hlp.approve(address(liquidityHandler), type(uint256).max);
 
-    // plpIn 5 ether, execution fee 5
+    // hlpIn 5 ether, execution fee 5
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
     uint256 _index = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(
       address(wbtc),
@@ -89,12 +89,12 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
 
   function test_revert_badAmount() external {
     vm.deal(ALICE, 5 ether);
-    plp.mint(ALICE, 5 ether);
+    hlp.mint(ALICE, 5 ether);
 
     vm.startPrank(ALICE);
-    plp.approve(address(liquidityHandler), type(uint256).max);
+    hlp.approve(address(liquidityHandler), type(uint256).max);
 
-    // plpIn 5 ether, execution fee 5
+    // hlpIn 5 ether, execution fee 5
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
     uint256 _index = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(wbtc), 0, 0, 5 ether, false);
     vm.stopPrank();
@@ -123,12 +123,12 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
 
   function _createRemoveLiquidityOrder() internal {
     vm.deal(ALICE, 5 ether);
-    plp.mint(ALICE, 5 ether);
+    hlp.mint(ALICE, 5 ether);
 
     vm.startPrank(ALICE);
-    plp.approve(address(liquidityHandler), type(uint256).max);
+    hlp.approve(address(liquidityHandler), type(uint256).max);
 
-    // plpIn 5 ether, execution fee 5
+    // hlpIn 5 ether, execution fee 5
     uint256 _index = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(
       address(wbtc),
       5 ether,
@@ -138,13 +138,13 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
     );
     vm.stopPrank();
 
-    assertEq(plp.balanceOf(ALICE), 0, "User PLP Balance");
+    assertEq(hlp.balanceOf(ALICE), 0, "User HLP Balance");
 
     ILiquidityHandler.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders();
 
     assertEq(_orders[_index].account, ALICE, "Alice Order.account");
     assertEq(_orders[_index].token, address(wbtc), "Alice Order.token");
-    assertEq(_orders[_index].amount, 5 ether, "Alice PLP Order.amount");
+    assertEq(_orders[_index].amount, 5 ether, "Alice HLP Order.amount");
     assertEq(_orders[_index].minOut, 0, "Alice WBTC Order.minOut");
     assertEq(_orders[_index].actualAmountOut, 0, "Alice WBTC Order.actualAmountOut");
     assertEq(_orders[_index].isAdd, false, "Alice Order.isAdd");

@@ -3,15 +3,15 @@ pragma solidity 0.8.18;
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { HLP } from "@hmx/contracts/HLP.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract SetConfig is ConfigJsonRepo {
   function run() public {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
-    PLPv2 plpV2 = PLPv2(getJsonAddress(".tokens.hlp"));
-    plpV2.setMinter(getJsonAddress(".services.liquidity"), true);
+    HLP hlpV2 = HLP(getJsonAddress(".tokens.hlp"));
+    hlpV2.setMinter(getJsonAddress(".services.liquidity"), true);
 
     IConfigStorage configStorage = IConfigStorage(getJsonAddress(".storages.config"));
 
@@ -30,9 +30,9 @@ contract SetConfig is ConfigJsonRepo {
       IConfigStorage.LiquidityConfig({
         depositFeeRateBPS: 30, // 0.3%
         withdrawFeeRateBPS: 30, // 0.3%
-        maxPLPUtilizationBPS: 8000, // 80%
-        plpTotalTokenWeight: 0,
-        plpSafetyBufferBPS: 2000, // 20%
+        maxHLPUtilizationBPS: 8000, // 80%
+        hlpTotalTokenWeight: 0,
+        hlpSafetyBufferBPS: 2000, // 20%
         taxFeeRateBPS: 50, // 0.5%
         flashLoanFeeRateBPS: 0, // @todo - TBD
         dynamicFeeEnabled: true,

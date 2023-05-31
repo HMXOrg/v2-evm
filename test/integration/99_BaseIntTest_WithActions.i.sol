@@ -39,11 +39,11 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      executePLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
+      executeHLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
     }
   }
 
-  function executePLPOrder(
+  function executeHLPOrder(
     uint256 _endIndex,
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
@@ -67,7 +67,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /// @notice Helper function to remove liquidity and execute order via handler
   /// @param _liquidityProvider liquidity provider address
   /// @param _tokenOut liquidity token to remove
-  /// @param _amountIn PLP amount to remove
+  /// @param _amountIn HLP amount to remove
   /// @param _executionFee execution fee
   function removeLiquidity(
     address _liquidityProvider,
@@ -81,7 +81,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   ) internal {
     vm.startPrank(_liquidityProvider);
 
-    plpV2.approve(address(liquidityHandler), _amountIn);
+    hlpV2.approve(address(liquidityHandler), _amountIn);
     // _tokenOut.approve(address(liquidityHandler), _amountIn);
     /// note: minOut always 0 to make test passed
     /// note: shouldWrap treat as false when only GLP could be liquidity
@@ -95,7 +95,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      executePLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
+      executeHLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
     }
   }
 

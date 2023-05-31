@@ -11,6 +11,7 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { FullMath } from "@hmx/libraries/FullMath.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
@@ -55,7 +56,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
-    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    VaultStorage(_vaultStorage).hlpLiquidityDebtUSDE30();
     ConfigStorage(_configStorage).getLiquidityConfig();
 
     oracle = _oracle;
@@ -66,15 +67,18 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return PLP Value in E18 format
+  /// @return HLP Value in E30 format
   function getAUME30(bool _isMaxPrice) external view returns (uint256) {
-    // plpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
+    // SLOAD
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
+
+    // hlpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
-    uint256 borrowingFeeDebt = VaultStorage(vaultStorage).globalBorrowingFeeDebt();
+    uint256 borrowingFeeDebt = _vaultStorage.globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
 
-    uint256 lossDebt = VaultStorage(vaultStorage).globalLossDebt();
-    uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
+    uint256 lossDebt = _vaultStorage.globalLossDebt();
+    uint256 aum = _getHLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
     if (pnlE30 < 0) {
       uint256 _pnl = uint256(-pnlE30);
@@ -104,13 +108,13 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     PerpStorage _perpStorage = PerpStorage(perpStorage);
     uint256 _len = ConfigStorage(configStorage).getAssetClassConfigsLength();
 
-    // Get the PLP TVL.
-    uint256 _plpTVL = _getPLPValueE30(false);
+    // Get the HLP TVL.
+    uint256 _hlpTVL = _getHLPValueE30(false);
     uint256 _pendingBorrowingFee; // sum from each asset class
     for (uint256 i; i < _len; ) {
       PerpStorage.AssetClass memory _assetClassState = _perpStorage.getAssetClassByIndex(i);
 
-      uint256 _borrowingFeeE30 = (_getNextBorrowingRate(uint8(i), _plpTVL) * _assetClassState.reserveValueE30) /
+      uint256 _borrowingFeeE30 = (_getNextBorrowingRate(uint8(i), _hlpTVL) * _assetClassState.reserveValueE30) /
         RATE_PRECISION;
 
       // Formula:
@@ -127,25 +131,25 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return _pendingBorrowingFee;
   }
 
-  /// @notice GetPLPValue in E30
+  /// @notice GetHLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return PLP Value
-  function getPLPValueE30(bool _isMaxPrice) external view returns (uint256) {
-    return _getPLPValueE30(_isMaxPrice);
+  /// @return HLP Value
+  function getHLPValueE30(bool _isMaxPrice) external view returns (uint256) {
+    return _getHLPValueE30(_isMaxPrice);
   }
 
-  /// @notice GetPLPValue in E30
+  /// @notice GetHLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return PLP Value
-  function _getPLPValueE30(bool _isMaxPrice) internal view returns (uint256) {
+  /// @return HLP Value
+  function _getHLPValueE30(bool _isMaxPrice) internal view returns (uint256) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
-    bytes32[] memory _plpAssetIds = _configStorage.getPlpAssetIds();
+    bytes32[] memory _hlpAssetIds = _configStorage.getHlpAssetIds();
     uint256 assetValue = 0;
-    uint256 _len = _plpAssetIds.length;
+    uint256 _len = _hlpAssetIds.length;
 
     for (uint256 i = 0; i < _len; ) {
-      uint256 value = _getPLPUnderlyingAssetValueE30(_plpAssetIds[i], _configStorage, _isMaxPrice);
+      uint256 value = _getHLPUnderlyingAssetValueE30(_hlpAssetIds[i], _configStorage, _isMaxPrice);
       unchecked {
         assetValue += value;
         ++i;
@@ -155,12 +159,12 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return assetValue;
   }
 
-  /// @notice Get PLP underlying asset value in E30
+  /// @notice Get HLP underlying asset value in E30
   /// @param _underlyingAssetId the underlying asset id, the one we want to find the value
   /// @param _configStorage config storage
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return PLP Value
-  function _getPLPUnderlyingAssetValueE30(
+  /// @return HLP Value
+  function _getHLPUnderlyingAssetValueE30(
     bytes32 _underlyingAssetId,
     ConfigStorage _configStorage,
     bool _isMaxPrice
@@ -168,19 +172,19 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     ConfigStorage.AssetConfig memory _assetConfig = _configStorage.getAssetConfig(_underlyingAssetId);
 
     (uint256 _priceE30, ) = OracleMiddleware(oracle).unsafeGetLatestPrice(_underlyingAssetId, _isMaxPrice);
-    uint256 value = (VaultStorage(vaultStorage).plpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
+    uint256 value = (VaultStorage(vaultStorage).hlpLiquidity(_assetConfig.tokenAddress) * _priceE30) /
       (10 ** _assetConfig.decimals);
 
     return value;
   }
 
-  /// @notice getPLPPrice in e18 format
-  /// @param _aum aum in PLP
-  /// @param _plpSupply Total Supply of PLP token
-  /// @return PLP Price in e18
-  function getPLPPrice(uint256 _aum, uint256 _plpSupply) external pure returns (uint256) {
-    if (_plpSupply == 0) return 0;
-    return _aum / _plpSupply;
+  /// @notice getHLPPrice in e18 format
+  /// @param _aum aum in HLP
+  /// @param _hlpSupply Total Supply of HLP token
+  /// @return HLP Price in e18
+  function getHLPPrice(uint256 _aum, uint256 _hlpSupply) external pure returns (uint256) {
+    if (_hlpSupply == 0) return 0;
+    return _aum / _hlpSupply;
   }
 
   /// @dev Computes the global market PnL in E30 format by iterating through all the markets.
@@ -204,7 +208,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
       if (_market.longPositionSize > 0) {
-        _pnlLongE30 = getGlobalMarketPnl(
+        _pnlLongE30 = _getGlobalMarketPnl(
           priceE30,
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           _marketConfig.fundingRate.maxSkewScaleUSD,
@@ -215,7 +219,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         );
       }
       if (_market.shortPositionSize > 0) {
-        _pnlShortE30 = getGlobalMarketPnl(
+        _pnlShortE30 = _getGlobalMarketPnl(
           priceE30,
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           _marketConfig.fundingRate.maxSkewScaleUSD,
@@ -239,8 +243,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   }
 
   /// @notice getMintAmount in e18 format
-  /// @param _aumE30 aum in PLP E30
-  /// @param _totalSupply PLP total supply
+  /// @param _aumE30 aum in HLP E30
+  /// @param _totalSupply HLP total supply
   /// @param _value value in USD e30
   /// @return mintAmount in e18 format
   function getMintAmount(uint256 _aumE30, uint256 _totalSupply, uint256 _value) external pure returns (uint256) {
@@ -267,10 +271,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return
       _getFeeBPS(
         _tokenValueE30,
-        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false),
-        _getPLPValueE30(false),
+        _getHLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, false),
+        _getHLPValueE30(false),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getAssetPlpTokenConfigByToken(_token),
+        _configStorage.getAssetHlpTokenConfigByToken(_token),
         LiquidityDirection.ADD
       );
   }
@@ -287,10 +291,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return
       _getFeeBPS(
         _tokenValueE30,
-        _getPLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true),
-        _getPLPValueE30(true),
+        _getHLPUnderlyingAssetValueE30(_configStorage.tokenAssetIds(_token), _configStorage, true),
+        _getHLPValueE30(true),
         _configStorage.getLiquidityConfig(),
-        _configStorage.getAssetPlpTokenConfigByToken(_token),
+        _configStorage.getAssetHlpTokenConfigByToken(_token),
         LiquidityDirection.REMOVE
       );
   }
@@ -300,20 +304,20 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _liquidityUSD, //e30
     uint256 _totalLiquidityUSD, //e30
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
-    ConfigStorage.PLPTokenConfig memory _plpTokenConfig,
+    ConfigStorage.HLPTokenConfig memory _hlpTokenConfig,
     LiquidityDirection direction
-  ) internal pure returns (uint32) {
+  ) internal view returns (uint32) {
     uint32 _feeBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
     uint32 _taxBPS = _liquidityConfig.taxFeeRateBPS;
-    uint256 _totalTokenWeight = _liquidityConfig.plpTotalTokenWeight;
+    uint256 _totalTokenWeight = _liquidityConfig.hlpTotalTokenWeight;
 
     uint256 startValue = _liquidityUSD;
     uint256 nextValue = startValue + _value;
     if (direction == LiquidityDirection.REMOVE) nextValue = _value > startValue ? 0 : startValue - _value;
 
-    uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _plpTokenConfig.targetWeight, _totalTokenWeight);
+    uint256 targetValue = _getTargetValue(_totalLiquidityUSD, _hlpTokenConfig.targetWeight, _totalTokenWeight);
 
     if (targetValue == 0) return _feeBPS;
 
@@ -329,7 +333,12 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
     // _nextWeight represented 18 precision
     uint256 _nextWeight = (nextValue * ETH_PRECISION) / (_totalLiquidityUSD + _value);
-    if (_nextWeight > _plpTokenConfig.targetWeight + _plpTokenConfig.maxWeightDiff) {
+    uint256 withdrawalWeightDiff = _hlpTokenConfig.targetWeight > _hlpTokenConfig.maxWeightDiff
+      ? _hlpTokenConfig.targetWeight - _hlpTokenConfig.maxWeightDiff
+      : 0;
+    if (
+      _nextWeight > _hlpTokenConfig.targetWeight + _hlpTokenConfig.maxWeightDiff || _nextWeight < withdrawalWeightDiff
+    ) {
       revert ICalculator_PoolImbalance();
     }
 
@@ -352,24 +361,26 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     address _token,
     uint256 _liquidityUsdDelta
   ) external view returns (uint256 _settlementFeeRate) {
+    // SLOAD
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+
     // usd debt
-    uint256 _tokenLiquidityUsd = _getPLPUnderlyingAssetValueE30(
-      ConfigStorage(configStorage).tokenAssetIds(_token),
-      ConfigStorage(configStorage),
+    uint256 _tokenLiquidityUsd = _getHLPUnderlyingAssetValueE30(
+      _configStorage.tokenAssetIds(_token),
+      _configStorage,
       false
     );
     if (_tokenLiquidityUsd == 0) return 0;
 
     // total usd debt
 
-    uint256 _totalLiquidityUsd = _getPLPValueE30(false);
-    ConfigStorage.LiquidityConfig memory _liquidityConfig = ConfigStorage(configStorage).getLiquidityConfig();
+    uint256 _totalLiquidityUsd = _getHLPValueE30(false);
+    ConfigStorage.LiquidityConfig memory _liquidityConfig = _configStorage.getLiquidityConfig();
 
     // target value = total usd debt * target weight ratio (targe weigh / total weight);
 
-    uint256 _targetUsd = (_totalLiquidityUsd *
-      ConfigStorage(configStorage).getAssetPlpTokenConfigByToken(_token).targetWeight) /
-      _liquidityConfig.plpTotalTokenWeight;
+    uint256 _targetUsd = (_totalLiquidityUsd * _configStorage.getAssetHlpTokenConfigByToken(_token).targetWeight) /
+      _liquidityConfig.hlpTotalTokenWeight;
 
     if (_targetUsd == 0) return 0;
 
@@ -396,7 +407,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       BPS;
   }
 
-  // return in e18
+  /// @notice Get target value of a token in HLP according to its target weight
+  /// @param totalLiquidityUSD total liquidity USD of the whole HLP
+  /// @param tokenWeight the token weight of this token
+  /// @param totalTokenWeight the total token weight of HLP
   function _getTargetValue(
     uint256 totalLiquidityUSD, //e30
     uint256 tokenWeight, //e18
@@ -424,7 +438,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @param _vaultStorage New VaultStorage contract address.
   function setVaultStorage(address _vaultStorage) external onlyOwner {
     if (_vaultStorage == address(0)) revert ICalculator_InvalidAddress();
-    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    VaultStorage(_vaultStorage).hlpLiquidityDebtUSDE30();
     emit LogSetVaultStorage(vaultStorage, _vaultStorage);
     vaultStorage = _vaultStorage;
   }
@@ -488,6 +502,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bytes32[] memory _injectedAssetIds,
     uint256[] memory _injectedPrices
   ) internal view returns (int256 _equityValueE30) {
+    VaultStorage _vaultStorage = VaultStorage(vaultStorage);
+
     // Calculate collateral tokens' value on trader's sub account
     uint256 _collateralValueE30 = _getCollateralValue(
       _subAccount,
@@ -511,21 +527,36 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     _equityValueE30 += _unrealizedPnlValueE30;
     _equityValueE30 -= _unrealizedFeeValueE30;
 
-    _equityValueE30 -= int256(VaultStorage(vaultStorage).tradingFeeDebt(_subAccount));
-    _equityValueE30 -= int256(VaultStorage(vaultStorage).borrowingFeeDebt(_subAccount));
-    _equityValueE30 -= int256(VaultStorage(vaultStorage).fundingFeeDebt(_subAccount));
-    _equityValueE30 -= int256(VaultStorage(vaultStorage).lossDebt(_subAccount));
+    _equityValueE30 -= int256(_vaultStorage.tradingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(_vaultStorage.borrowingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(_vaultStorage.fundingFeeDebt(_subAccount));
+    _equityValueE30 -= int256(_vaultStorage.lossDebt(_subAccount));
 
     return _equityValueE30;
   }
 
   struct GetUnrealizedPnlAndFee {
+    ConfigStorage configStorage;
+    PerpStorage perpStorage;
+    OracleMiddleware oracle;
     PerpStorage.Position position;
     uint256 absSize;
     bool isLong;
     uint256 priceE30;
     bool isProfit;
     uint256 delta;
+  }
+
+  struct GetCollateralValue {
+    VaultStorage vaultStorage;
+    ConfigStorage configStorage;
+    OracleMiddleware oracle;
+    uint256 decimals;
+    uint256 amount;
+    uint256 priceE30;
+    bytes32 tokenAssetId;
+    uint32 collateralFactorBPS;
+    address[] traderTokens;
   }
 
   /// @notice Calculate unrealized PnL from trader's sub account.
@@ -549,53 +580,49 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bytes32[] memory _injectedAssetIds,
     uint256[] memory _injectedPrices
   ) internal view returns (int256 _unrealizedPnlE30, int256 _unrealizedFeeE30) {
+    GetUnrealizedPnlAndFee memory _var;
+    // SLOADs
+    _var.configStorage = ConfigStorage(configStorage);
+    _var.perpStorage = PerpStorage(perpStorage);
+    _var.oracle = OracleMiddleware(oracle);
+
     // Get all trader's opening positions
-    PerpStorage.Position[] memory _positions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    PerpStorage.Position[] memory _positions = _var.perpStorage.getPositionBySubAccount(_subAccount);
 
     ConfigStorage.MarketConfig memory _marketConfig;
     PerpStorage.Market memory _market;
-    uint256 pnlFactorBps = ConfigStorage(configStorage).pnlFactorBPS();
-    uint256 liquidationFee = ConfigStorage(configStorage).getLiquidationConfig().liquidationFeeUSDE30;
+    uint256 pnlFactorBps = _var.configStorage.pnlFactorBPS();
+    uint256 liquidationFee = _var.configStorage.getLiquidationConfig().liquidationFeeUSDE30;
 
-    GetUnrealizedPnlAndFee memory _var;
     uint256 _len = _positions.length;
-
     // Loop through all trader's positions
     for (uint256 i; i < _len; ) {
       _var.position = _positions[i];
-      _var.absSize = _abs(_var.position.positionSizeE30);
+      _var.absSize = HMXLib.abs(_var.position.positionSizeE30);
       _var.isLong = _var.position.positionSizeE30 > 0;
 
       // Get market config according to opening position
-      _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_var.position.marketIndex);
-      _market = PerpStorage(perpStorage).getMarketByIndex(_var.position.marketIndex);
+      _marketConfig = _var.configStorage.getMarketConfigByIndex(_var.position.marketIndex);
+      _market = _var.perpStorage.getMarketByIndex(_var.position.marketIndex);
 
       if (_injectedAssetIds.length > 0) {
-        for (uint256 j; j < _injectedAssetIds.length; ) {
-          if (_injectedAssetIds[j] == _marketConfig.assetId) {
-            _var.priceE30 = _injectedPrices[j];
-            (_var.priceE30, ) = OracleMiddleware(oracle).unsafeGetLatestAdaptivePrice(
-              _marketConfig.assetId,
-              !_var.isLong, // if current position is SHORT position, then we use max price
-              (int(_market.longPositionSize) - int(_market.shortPositionSize)),
-              -_var.position.positionSizeE30,
-              _marketConfig.fundingRate.maxSkewScaleUSD,
-              _var.priceE30
-            );
+        _var.priceE30 = _getPriceFromInjectedData(_marketConfig.assetId, _injectedAssetIds, _injectedPrices);
+        (_var.priceE30, ) = _var.oracle.unsafeGetLatestAdaptivePrice(
+          _marketConfig.assetId,
+          !_var.isLong, // if current position is SHORT position, then we use max price
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+          -_var.position.positionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          _var.priceE30
+        );
 
-            // stop inside looping after found price
-            break;
-          }
-          unchecked {
-            j++;
-          }
-        }
+        if (_var.priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
         // Check to overwrite price
         if (_limitAssetId == _marketConfig.assetId && _limitPriceE30 != 0) {
           _var.priceE30 = _limitPriceE30;
         } else {
-          (_var.priceE30, , ) = OracleMiddleware(oracle).getLatestAdaptivePriceWithMarketStatus(
+          (_var.priceE30, ) = _var.oracle.getLatestAdaptivePrice(
             _marketConfig.assetId,
             !_var.isLong, // if current position is SHORT position, then we use max price
             (int(_market.longPositionSize) - int(_market.shortPositionSize)),
@@ -629,11 +656,9 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       {
         {
           // Calculate borrowing fee
-          uint256 _plpTVL = _getPLPValueE30(false);
-          PerpStorage.AssetClass memory _assetClass = PerpStorage(perpStorage).getAssetClassByIndex(
-            _marketConfig.assetClass
-          );
-          uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _plpTVL);
+          uint256 _hlpTVL = _getHLPValueE30(false);
+          PerpStorage.AssetClass memory _assetClass = _var.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
+          uint256 _nextBorrowingRate = _getNextBorrowingRate(_marketConfig.assetClass, _hlpTVL);
           _unrealizedFeeE30 += int256(
             _getBorrowingFee(
               _var.position.reserveValueE30,
@@ -644,9 +669,15 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         }
         {
           // Calculate funding fee
-          int256 nextFundingRate = _getNextFundingRate(_var.position.marketIndex);
-          int256 fundingRate = _market.currentFundingRate + nextFundingRate;
-          _unrealizedFeeE30 += _getFundingFee(_var.isLong, _var.absSize, fundingRate, _var.position.entryFundingRate);
+          int256 proportionalElapsedInDay = int256(proportionalElapsedInDay(_var.position.marketIndex));
+          int256 nextFundingRate = _market.currentFundingRate +
+            ((_getFundingRateVelocity(_var.position.marketIndex) * proportionalElapsedInDay) / 1e18);
+          int256 lastFundingAccrued = _market.fundingAccrued;
+          int256 currentFundingAccrued = _market.fundingAccrued +
+            ((_market.currentFundingRate + nextFundingRate) * proportionalElapsedInDay) /
+            2 /
+            1e18;
+          _unrealizedFeeE30 += getFundingFee(_var.isLong, _var.absSize, currentFundingAccrued, lastFundingAccrued);
         }
         // Calculate trading fee
         _unrealizedFeeE30 += int256(_getTradingFee(_var.absSize, _marketConfig.decreasePositionFeeRateBPS));
@@ -685,46 +716,46 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     bytes32[] memory _injectedAssetIds,
     uint256[] memory _injectedPrices
   ) internal view returns (uint256 _collateralValueE30) {
+    GetCollateralValue memory _var;
+
+    // SLOADs
+    _var.vaultStorage = VaultStorage(vaultStorage);
+    _var.configStorage = ConfigStorage(configStorage);
+    _var.oracle = OracleMiddleware(oracle);
+
     // Get list of current depositing tokens on trader's account
-    address[] memory _traderTokens = VaultStorage(vaultStorage).getTraderTokens(_subAccount);
+    _var.traderTokens = _var.vaultStorage.getTraderTokens(_subAccount);
 
     // Loop through list of current depositing tokens
-    for (uint256 i; i < _traderTokens.length; ) {
-      address _token = _traderTokens[i];
-      ConfigStorage.CollateralTokenConfig memory _collateralTokenConfig = ConfigStorage(configStorage)
-        .getCollateralTokenConfigs(_token);
+    uint256 traderTokenLen = _var.traderTokens.length;
+    for (uint256 i; i < traderTokenLen; ) {
+      address _token = _var.traderTokens[i];
+      ConfigStorage.CollateralTokenConfig memory _collateralTokenConfig = _var.configStorage.getCollateralTokenConfigs(
+        _token
+      );
 
       // Get token decimals from ConfigStorage
-      uint256 _decimals = ConfigStorage(configStorage).getAssetConfigByToken(_token).decimals;
+      _var.decimals = _var.configStorage.getAssetConfigByToken(_token).decimals;
 
       // Get collateralFactor from ConfigStorage
-      uint32 collateralFactorBPS = _collateralTokenConfig.collateralFactorBPS;
+      _var.collateralFactorBPS = _collateralTokenConfig.collateralFactorBPS;
 
       // Get current collateral token balance of trader's account
-      uint256 _amount = VaultStorage(vaultStorage).traderBalances(_subAccount, _token);
+      _var.amount = _var.vaultStorage.traderBalances(_subAccount, _token);
 
       // Get price from oracle
-      uint256 _priceE30;
-      bytes32 _tokenAssetId = ConfigStorage(configStorage).tokenAssetIds(_token);
+      _var.tokenAssetId = _var.configStorage.tokenAssetIds(_token);
 
       if (_injectedAssetIds.length > 0) {
-        for (uint256 j; j < _injectedAssetIds.length; ) {
-          if (_injectedAssetIds[j] == _tokenAssetId) {
-            _priceE30 = _injectedPrices[j];
-            // stop inside looping after found price
-            break;
-          }
-          unchecked {
-            j++;
-          }
-        }
+        _var.priceE30 = _getPriceFromInjectedData(_var.tokenAssetId, _injectedAssetIds, _injectedPrices);
+        if (_var.priceE30 == 0) revert ICalculator_InvalidPrice();
       } else {
         // Get token asset id from ConfigStorage
-        if (_tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
-          _priceE30 = _limitPriceE30;
+        if (_var.tokenAssetId == _limitAssetId && _limitPriceE30 != 0) {
+          _var.priceE30 = _limitPriceE30;
         } else {
-          (_priceE30, , ) = OracleMiddleware(oracle).getLatestPriceWithMarketStatus(
-            _tokenAssetId,
+          (_var.priceE30, ) = _var.oracle.getLatestPrice(
+            _var.tokenAssetId,
             false // @note Collateral value always use Min price
           );
         }
@@ -732,10 +763,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       // Calculate accumulative value of collateral tokens
       // collateral value = (collateral amount * price) * collateralFactorBPS
       // collateralFactor 1e4 = 100%
-      _collateralValueE30 += (_amount * _priceE30 * collateralFactorBPS) / ((10 ** _decimals) * BPS);
+      _collateralValueE30 += (_var.amount * _var.priceE30 * _var.collateralFactorBPS) / ((10 ** _var.decimals) * BPS);
 
       unchecked {
-        i++;
+        ++i;
       }
     }
 
@@ -752,9 +783,11 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   function _getIMR(address _subAccount) internal view returns (uint256 _imrValueE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     // Loop through all trader's positions
-    for (uint256 i; i < _traderPositions.length; ) {
+    uint256 len = _traderPositions.length;
+    for (uint256 i; i < len; ) {
       PerpStorage.Position memory _position = _traderPositions[i];
 
       uint256 _size;
@@ -765,10 +798,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       }
 
       // Calculate IMR on position
-      _imrValueE30 += _calculatePositionIMR(_size, _position.marketIndex);
+      _imrValueE30 += _calculatePositionIMR(_size, _position.marketIndex, _configStorage);
 
       unchecked {
-        i++;
+        ++i;
       }
     }
 
@@ -785,6 +818,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   function _getMMR(address _subAccount) internal view returns (uint256 _mmrValueE30) {
     // Get all trader's opening positions
     PerpStorage.Position[] memory _traderPositions = PerpStorage(perpStorage).getPositionBySubAccount(_subAccount);
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     // Loop through all trader's positions
     for (uint256 i; i < _traderPositions.length; ) {
@@ -798,10 +832,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       }
 
       // Calculate MMR on position
-      _mmrValueE30 += _calculatePositionMMR(_size, _position.marketIndex);
+      _mmrValueE30 += _calculatePositionMMR(_size, _position.marketIndex, _configStorage);
 
       unchecked {
-        i++;
+        ++i;
       }
     }
 
@@ -816,16 +850,16 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _positionSizeE30,
     uint256 _marketIndex
   ) external view returns (uint256 _imrE30) {
-    return _calculatePositionIMR(_positionSizeE30, _marketIndex);
+    return _calculatePositionIMR(_positionSizeE30, _marketIndex, ConfigStorage(configStorage));
   }
 
   function _calculatePositionIMR(
     uint256 _positionSizeE30,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    ConfigStorage _configStorage
   ) internal view returns (uint256 _imrE30) {
     // Get market config according to position
-    ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
-
+    ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     _imrE30 = (_positionSizeE30 * _marketConfig.initialMarginFractionBPS) / BPS;
     return _imrE30;
   }
@@ -838,16 +872,16 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _positionSizeE30,
     uint256 _marketIndex
   ) external view returns (uint256 _mmrE30) {
-    return _calculatePositionMMR(_positionSizeE30, _marketIndex);
+    return _calculatePositionMMR(_positionSizeE30, _marketIndex, ConfigStorage(configStorage));
   }
 
   function _calculatePositionMMR(
     uint256 _positionSizeE30,
-    uint256 _marketIndex
+    uint256 _marketIndex,
+    ConfigStorage _configStorage
   ) internal view returns (uint256 _mmrE30) {
     // Get market config according to position
-    ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(_marketIndex);
-
+    ConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     _mmrE30 = (_positionSizeE30 * _marketConfig.maintenanceMarginFractionBPS) / BPS;
     return _mmrE30;
   }
@@ -862,14 +896,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 _limitPriceE30,
     bytes32 _limitAssetId
   ) external view returns (int256 _freeCollateral) {
-    return _getFreeCollateral(_subAccount, _limitPriceE30, _limitAssetId);
-  }
-
-  function _getFreeCollateral(
-    address _subAccount,
-    uint256 _limitPriceE30,
-    bytes32 _limitAssetId
-  ) internal view returns (int256 _freeCollateral) {
     int256 equity = _getEquity(_subAccount, _limitPriceE30, _limitAssetId, new bytes32[](0), new uint256[](0));
     uint256 imr = _getIMR(_subAccount);
     _freeCollateral = equity - int256(imr);
@@ -939,70 +965,53 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return uint256((int256(_positionNextClosePrice) * _newMarketPositionSize) / _divisor);
   }
 
-  function getNextFundingRate(uint256 _marketIndex) external view returns (int256 fundingRate) {
-    return _getNextFundingRate(_marketIndex);
+  function getFundingRateVelocity(uint256 _marketIndex) external view returns (int256 fundingRate) {
+    return _getFundingRateVelocity(_marketIndex);
   }
 
-  /// @notice Calculate next funding rate using when increase/decrease position.
+  function proportionalElapsedInDay(uint256 _marketIndex) public view returns (uint256 elapsed) {
+    ConfigStorage _configStorage = ConfigStorage(configStorage);
+    ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
+    PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
+    uint256 fundingInterval = _configStorage.getTradingConfig().fundingInterval;
+    uint256 elapsedIntervals = (block.timestamp - globalMarket.lastFundingTime) / fundingInterval;
+    uint256 intervalsInOneDay = 1 days / fundingInterval;
+    return (elapsedIntervals * 1e18) / intervalsInOneDay;
+  }
+
+  /// @notice Calculate the funding rate velocity
   /// @param _marketIndex Market Index.
-  /// @return fundingRate next funding rate using for both LONG & SHORT positions.
-  function _getNextFundingRate(uint256 _marketIndex) internal view returns (int256 fundingRate) {
+  /// @return fundingRateVelocity which is the result of u = vt to get how fast the funding rate would change
+  function _getFundingRateVelocity(uint256 _marketIndex) internal view returns (int256 fundingRateVelocity) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     GetFundingRateVar memory vars;
     ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
     if (marketConfig.fundingRate.maxFundingRate == 0 || marketConfig.fundingRate.maxSkewScaleUSD == 0) return 0;
-    // Get funding interval
-    vars.fundingInterval = _configStorage.getTradingConfig().fundingInterval;
-    // If block.timestamp not pass the next funding time, return 0.
-    if (globalMarket.lastFundingTime + vars.fundingInterval > block.timestamp) return 0;
-
     vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
 
-    // The result of this nextFundingRate Formula will be in the range of [-maxFundingRate, maxFundingRate]
-    vars.ratio = _max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
-    vars.ratio = _min(vars.ratio, 1e18);
-    vars.nextFundingRate = (vars.ratio * int(uint(marketConfig.fundingRate.maxFundingRate))) / 1e18;
-
-    vars.elapsedIntervals = int((block.timestamp - globalMarket.lastFundingTime) / vars.fundingInterval);
-    vars.nextFundingRate = vars.nextFundingRate * vars.elapsedIntervals;
-
-    return vars.nextFundingRate;
+    // The result of this fundingRateVelocity Formula will be in the range of [-maxFundingRate, maxFundingRate]
+    vars.ratio = HMXLib.max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
+    vars.ratio = HMXLib.min(vars.ratio, 1e18);
+    return (vars.ratio * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
   }
 
   /**
    * Funding Rate
    */
-  /// @notice This function returns funding fee according to trader's position
-  /// @param _marketIndex Index of market
-  /// @param _isLong Is long or short exposure
-  /// @param _size Position size
-  /// @return fundingFee Funding fee of position
+
   function getFundingFee(
-    uint256 _marketIndex,
-    bool _isLong,
-    int256 _size,
-    int256 _entryFundingRate
-  ) external view returns (int256 fundingFee) {
-    if (_size == 0) return 0;
-    uint256 absSize = _size > 0 ? uint(_size) : uint(-_size);
-
-    PerpStorage.Market memory _market = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
-
-    return _getFundingFee(_isLong, absSize, _market.currentFundingRate, _entryFundingRate);
-  }
-
-  function _getFundingFee(
     bool _isLong,
     uint256 _size,
-    int256 _sumFundingRate,
-    int256 _entryFundingRate
-  ) private pure returns (int256 fundingFee) {
-    int256 _fundingRate = _sumFundingRate - _entryFundingRate;
+    int256 _currentFundingAccrued,
+    int256 _lastFundingAccrued
+  ) public pure returns (int256 fundingFee) {
+    if (_size == 0) return 0;
+    int256 _fundingAccrued = _currentFundingAccrued - _lastFundingAccrued;
 
-    // IF _fundingRate < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
-    // IF _fundingRate > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
-    fundingFee = (int256(_size) * _fundingRate) / int64(RATE_PRECISION);
+    // IF _fundingAccrued < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
+    // IF _fundingAccrued > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
+    fundingFee = (int256(_size) * _fundingAccrued) / int64(RATE_PRECISION);
 
     // Position Exposure   | Funding Rate       | Fund Flow
     // (isLong)            | (fundingRate > 0)  | (traderMustPay)
@@ -1049,18 +1058,18 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   function getNextBorrowingRate(
     uint8 _assetClassIndex,
-    uint256 _plpTVL
+    uint256 _hlpTVL
   ) external view returns (uint256 _nextBorrowingRate) {
-    return _getNextBorrowingRate(_assetClassIndex, _plpTVL);
+    return _getNextBorrowingRate(_assetClassIndex, _hlpTVL);
   }
 
   /// @notice This function takes an asset class index as input and returns the next borrowing rate for that asset class.
   /// @param _assetClassIndex The index of the asset class.
-  /// @param _plpTVL value in plp
+  /// @param _hlpTVL value in hlp
   /// @return _nextBorrowingRate The next borrowing rate for the asset class.
   function _getNextBorrowingRate(
     uint8 _assetClassIndex,
-    uint256 _plpTVL
+    uint256 _hlpTVL
   ) internal view returns (uint256 _nextBorrowingRate) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
@@ -1073,14 +1082,14 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     // If block.timestamp not pass the next funding time, return 0.
     if (_assetClassState.lastBorrowingTime + _tradingConfig.fundingInterval > block.timestamp) return 0;
 
-    // If PLP TVL is 0, return 0.
-    if (_plpTVL == 0) return 0;
+    // If HLP TVL is 0, return 0.
+    if (_hlpTVL == 0) return 0;
 
     // Calculate the number of funding intervals that have passed since the last borrowing time.
     uint256 intervals = (block.timestamp - _assetClassState.lastBorrowingTime) / _tradingConfig.fundingInterval;
 
     // Calculate the next borrowing rate based on the asset class config, global asset class reserve value, and intervals.
-    return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _plpTVL;
+    return (_assetClassConfig.baseBorrowingRate * _assetClassState.reserveValueE30 * intervals) / _hlpTVL;
   }
 
   function getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) external pure returns (uint256 tradingFee) {
@@ -1149,19 +1158,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return (isProfit, delta);
   }
 
-  function _max(int256 a, int256 b) internal pure returns (int256) {
-    return a > b ? a : b;
-  }
-
-  function _min(int256 a, int256 b) internal pure returns (int256) {
-    return a < b ? a : b;
-  }
-
-  function _abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
-  }
-
-  function getGlobalMarketPnl(
+  function _getGlobalMarketPnl(
     uint256 price,
     int256 skew,
     uint256 maxSkew,
@@ -1177,6 +1174,25 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     int256 pnlFromDirection = isLong ? -(sumSize.toInt256()) : sumSize.toInt256();
     int256 result = pnlFromPositions + pnlFromSkew + pnlFromVolatility.toInt256() - pnlFromDirection;
     return result;
+  }
+
+  function _getPriceFromInjectedData(
+    bytes32 _tokenAssetId,
+    bytes32[] memory _injectedAssetIds,
+    uint256[] memory _injectedPrices
+  ) internal pure returns (uint256 _priceE30) {
+    uint256 injectedAssetIdLen = _injectedAssetIds.length;
+    for (uint256 i; i < injectedAssetIdLen; ) {
+      if (_injectedAssetIds[i] == _tokenAssetId) {
+        _priceE30 = _injectedPrices[i];
+        // stop inside looping after found price
+        break;
+      }
+      unchecked {
+        ++i;
+      }
+    }
+    return _priceE30;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

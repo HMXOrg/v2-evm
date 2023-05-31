@@ -7,6 +7,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { console } from "forge-std/console.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract TC30 is BaseIntTest_WithActions {
   function test_correctness_executeMultipleOrders() external {
@@ -34,11 +35,11 @@ contract TC30 is BaseIntTest_WithActions {
       assertEq(liquidityOrders[0].orderId, 0, "OrderId After Created");
     }
     //  ALICE add 1 BTC
-    //  plp Liquidity => (wbtc) 0.9970000
+    //  hlp Liquidity => (wbtc) 0.9970000
     // fee (wbtc) 0.003000000
     // feetotal (wbtc) 0.003000000
-    // ALICE received PLP amount = 19,940.00
-    // plpTotalSupply = 19,940.00
+    // ALICE received HLP amount = 19,940.00
+    // hlpTotalSupply = 19,940.00
 
     vm.deal(ALICE, executionOrderFee);
     uint256 _aliceUSDCAmount = 20_000 * 1e6;
@@ -59,11 +60,11 @@ contract TC30 is BaseIntTest_WithActions {
       assertEq(liquidityOrders[1].orderId, 1, "OrderId After Created");
     }
     // ALICE add 20000 USDC
-    // plp liquidity  (wbtc) 0.9970000  => (wbtc) 0.9970000, usdc(19840.0000000)
+    // hlp liquidity  (wbtc) 0.9970000  => (wbtc) 0.9970000, usdc(19840.0000000)
     // fee = 160 (usdc)
     // feetotal 0.003000000 (wbtc) + 160 (usdc)
-    // ALICE received PLP amount = 19,840.00
-    //plpTotalSupply = 39780
+    // ALICE received HLP amount = 19,840.00
+    //hlpTotalSupply = 39780
 
     uint256 _bobUSDCAmount = 0.5 * 1e6;
     vm.deal(BOB, executionOrderFee);
@@ -86,11 +87,11 @@ contract TC30 is BaseIntTest_WithActions {
     }
     // BOB ADD 0.5 USDC
     // LQ After fee = 0.496
-    // plp liquidity (wbtc) 0.9970000, usdc(19840.0000000) => (wbtc) 0.9970000, usdc(19840.4960000)
+    // hlp liquidity (wbtc) 0.9970000, usdc(19840.0000000) => (wbtc) 0.9970000, usdc(19840.4960000)
     // fee = 0.004000000 (usdc)
     // feetotal 0.003000000 (wbtc) + 160 (usdc) => 0.003000000 (wbtc) + 160.004 (usdc)
-    // BOB received PLP amount = 0.496
-    // plpTotalSupply = 39780 => 39780.496
+    // BOB received HLP amount = 0.496
+    // hlpTotalSupply = 39780 => 39780.496
 
     vm.deal(BOB, executionOrderFee);
     uint256 _bobBTCAmount = 0.5 * 1e8;
@@ -113,36 +114,36 @@ contract TC30 is BaseIntTest_WithActions {
 
     // BOB ADD 0.5 BTC
     // LQ After fee => 0.4996500
-    // plp liquidity (wbtc) 0.9970000, usdc(19840.4960000) => (wbtc) 1.49665, usdc(19840.4960000)
+    // hlp liquidity (wbtc) 0.9970000, usdc(19840.4960000) => (wbtc) 1.49665, usdc(19840.4960000)
     // fee => 0.000350000 (wbtc)
     // feetotal => 0.003000000 (wbtc) + 160.004 (usdc) => 0.00335 (wbtc) + 160.004 (usdc)
-    // BOB received PLP amount =>  9,993.0000000
-    // plpTotalSupply = 39780.496 => 49_773.496
+    // BOB received HLP amount =>  9,993.0000000
+    // hlpTotalSupply = 39780.496 => 49_773.496
     uint256 _lastOrderIndex = liquidityHandler.getLiquidityOrders().length - 1;
-    executePLPOrder(_lastOrderIndex, tickPrices, publishTimeDiff, block.timestamp);
+    executeHLPOrder(_lastOrderIndex, tickPrices, publishTimeDiff, block.timestamp);
 
-    assertEq(calculator.getAUME30(false) / plpV2.totalSupply() / 1e12, 1, "AUM");
-    assertPLPTotalSupply(49_773.496 * 1e18);
+    assertEq(calculator.getAUME30(false) / hlpV2.totalSupply() / 1e12, 1, "AUM");
+    assertHLPTotalSupply(49_773.496 * 1e18);
 
-    // assert PLP
+    // assert HLP
     {
-      // ALICE received PLP =>  19,940.00 +  19,840.00 => 39,780
-      // BOB received PLP =>  0.496+ 9,993.0000000 => 9,993.496
-      assertTokenBalanceOf(ALICE, address(plpV2), 39_780 * 1e18);
-      assertTokenBalanceOf(BOB, address(plpV2), 9993.496 * 1e18);
+      // ALICE received HLP =>  19,940.00 +  19,840.00 => 39,780
+      // BOB received HLP =>  0.496+ 9,993.0000000 => 9,993.496
+      assertTokenBalanceOf(ALICE, address(hlpV2), 39_780 * 1e18);
+      assertTokenBalanceOf(BOB, address(hlpV2), 9993.496 * 1e18);
     }
 
     //asert USDC
     {
       address _usdc = address(usdc);
-      assertPLPLiquidity(_usdc, 19840.4960000 * 1e6);
+      assertHLPLiquidity(_usdc, 19840.4960000 * 1e6);
       assertEq(vaultStorage.protocolFees(_usdc), 160.004 * 1e6, "Vault's Fee USDC is not matched");
     }
 
     //assert BTC
     {
       address _wbtc = address(wbtc);
-      assertPLPLiquidity(_wbtc, 1.49665 * 1e8);
+      assertHLPLiquidity(_wbtc, 1.49665 * 1e8);
       assertEq(vaultStorage.protocolFees(_wbtc), 0.00335 * 1e8, "Vault's Fee WBTC is not matched");
     }
 
@@ -154,12 +155,12 @@ contract TC30 is BaseIntTest_WithActions {
     // END PART ADD LIQUIDITY
 
     // current state
-    // plp liquidity => (wbtc) 1.49665, usdc(19840.4960000)
-    // ALICE PLP in hand => 39,780
-    // BOB PLP in hand => 9,993.496
+    // hlp liquidity => (wbtc) 1.49665, usdc(19840.4960000)
+    // ALICE HLP in hand => 39,780
+    // BOB HLP in hand => 9,993.496
     vm.deal(ALICE, executionOrderFee);
-    console.log("A", plpV2.balanceOf(ALICE));
-    console.log(plpV2.totalSupply());
+    console.log("A", hlpV2.balanceOf(ALICE));
+    console.log(hlpV2.totalSupply());
     removeLiquidity(
       ALICE,
       address(wbtc),
@@ -170,76 +171,84 @@ contract TC30 is BaseIntTest_WithActions {
       block.timestamp,
       false
     );
-    console.log("B", plpV2.balanceOf(ALICE));
-    console.log(plpV2.totalSupply());
+    console.log("B", hlpV2.balanceOf(ALICE));
+    console.log(hlpV2.totalSupply());
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
       assertEq(liquidityOrders.length, 5, "liquidityOrder size After Created");
       assertEq(liquidityOrders[4].orderId, 4, "OrderId After Created");
     }
-    // ALICE REMOVE 29_933 PLP (price = 20000)
-    // plpTotalSupply = 49_773.496 - 29_933(PLP) => 19840.496
+    // ALICE REMOVE 29_933 HLP (price = 20000)
+    // hlpTotalSupply = 49_773.496 - 29_933(HLP) => 19840.496
     // TOKEN OUT AMOUNT BEFORE FEE => 1.49665 wbtc
 
-    // plp liquidity  1.49665 (wbtc),19840.4960000 (usdc) =>  0 (wbtc), 19840.4960000 (usdc)
+    // hlp liquidity  1.49665 (wbtc),19840.4960000 (usdc) =>  0 (wbtc), 19840.4960000 (usdc)
     // fee => 0.009578560 (wbtc)
     // feetotal => 0.00335 (wbtc) + 160.004 (usdc) =>  0.01292856 (wbtc)  + 160.004 (usdc)
     // ALICE received WBTC amount => 1.49665 - 0.009578560 =>  1.48707144 (wbtc)
 
     vm.deal(ALICE, executionOrderFee);
-    console.log("C", plpV2.balanceOf(ALICE));
-    console.log(plpV2.totalSupply());
+    console.log("C", hlpV2.balanceOf(ALICE));
+    console.log(hlpV2.totalSupply());
+
+    IConfigStorage.HLPTokenConfig memory _config;
+    _config.targetWeight = 0.95 * 1e18;
+    _config.bufferLiquidity = 0;
+    _config.maxWeightDiff = 1e18;
+    _config.accepted = true;
+    configStorage.setHlpTokenConfig(address(wbtc), _config);
+
     removeLiquidity(
       ALICE,
       address(usdc),
-      plpV2.balanceOf(ALICE),
+      hlpV2.balanceOf(ALICE),
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
       block.timestamp,
       false
     );
-    console.log("D", plpV2.balanceOf(ALICE));
-    console.log(plpV2.totalSupply());
+    console.log("D", hlpV2.balanceOf(ALICE));
+    console.log(hlpV2.totalSupply());
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
       assertEq(liquidityOrders.length, 6, "liquidityOrder size After Created");
       assertEq(liquidityOrders[5].orderId, 5, "OrderId After Created");
     }
-    // ALICE REMOVE 9_847 PLP (price =1)
-    // plpTotalSupply = 19840.496 - 9_847(PLP) => 9,993.496
+    // ALICE REMOVE 9_847 HLP (price =1)
+    // hlpTotalSupply = 19840.496 - 9_847(HLP) => 9,993.496
     // TOKEN OUT AMOUNT BEFORE FEE => 9,847 USDC
 
-    // plp liquidity 19840.4960000 (usdc) => 9,993.496 (usdc)
+    // hlp liquidity 19840.4960000 (usdc) => 9,993.496 (usdc)
     // fee => 0
     // feetotal => 0.01292856 (wbtc)  + 160.004 (usdc)
     // ALICE received USDC amount 9_847
 
     vm.deal(BOB, executionOrderFee);
-    console.log("E", plpV2.balanceOf(BOB));
-    console.log(plpV2.totalSupply());
+    console.log("E", hlpV2.balanceOf(BOB));
+    console.log(hlpV2.totalSupply());
     removeLiquidity(
       BOB,
       address(usdc),
-      plpV2.balanceOf(BOB),
+      hlpV2.balanceOf(BOB) - 1 ether,
       executionOrderFee,
       tickPrices,
       publishTimeDiff,
       block.timestamp,
       false
     );
-    console.log("F", plpV2.balanceOf(BOB));
-    console.log(plpV2.totalSupply());
+    console.log("F", hlpV2.balanceOf(BOB));
+    console.log(hlpV2.totalSupply());
     {
       ILiquidityHandler.LiquidityOrder[] memory liquidityOrders = liquidityHandler.getLiquidityOrders();
       assertEq(liquidityOrders.length, 7, "liquidityOrder size After Created");
       assertEq(liquidityOrders[6].orderId, 6, "OrderId After Created");
     }
-    // BOB REMOVE 9_993.496 PLP (price =1)
-    // plpTotalSupply = 9,993.496- 9,993.496(PLP) = 0
+    // BOB REMOVE 9_993.496 HLP (price =1)
+    // hlpTotalSupply = 9,993.496- 9,993.496(HLP) = 0
     // TOKEN OUT AMOUNT BEFORE FEE => 9_993.496
 
-    // plp liquidity  9,993.496 (usdc) => 0 (usdc)
+    // hlp liquidity  9,993.496 (usdc) => 0 (usdc)
     // fee => 0 because it's 100% pool weight 5% => reduce make it better
     // feetotal => 0.01292856 (wbtc)  + 160.004 (usdc)
     // BOB received USDC amount => 9_993.496
@@ -250,8 +259,8 @@ contract TC30 is BaseIntTest_WithActions {
     // feetotal => 0.01292856 (wbtc)  + 160.004 (usdc)
 
     _lastOrderIndex = liquidityHandler.getLiquidityOrders().length - 1;
-    executePLPOrder(_lastOrderIndex, tickPrices, publishTimeDiff, block.timestamp);
-    console.log(plpV2.totalSupply());
+    executeHLPOrder(_lastOrderIndex, tickPrices, publishTimeDiff, block.timestamp);
+    console.log(hlpV2.totalSupply());
 
     nextExecutedIndex = liquidityHandler.nextExecutionOrderIndex();
 
@@ -260,12 +269,12 @@ contract TC30 is BaseIntTest_WithActions {
     uint256 _executionFeeTotal = _executionFeeAddliquidity + (3 * executionOrderFee) - _pythGasFee;
     // END PART REMOVE LIQUIDITY
 
-    assertPLPTotalSupply(0);
+    assertHLPTotalSupply(1 ether);
 
-    assertEq(calculator.getAUME30(false), 0, "AUM");
+    assertEq(calculator.getAUME30(false), 1.000001 * 1e30, "AUM");
 
-    assertPLPLiquidity(address(wbtc), 0);
-    assertPLPLiquidity(address(usdc), 0);
+    assertHLPLiquidity(address(wbtc), 0);
+    assertHLPLiquidity(address(usdc), 1.000001 * 1e6);
 
     assertEq(nextExecutedIndex, 7, "nextExecutionOrder Index");
     assertTokenBalanceOf(address(liquidityHandler), address(wbtc), 0);
@@ -276,7 +285,7 @@ contract TC30 is BaseIntTest_WithActions {
     //assert btc
     {
       address _wbtc = address(wbtc);
-      // alice remove 29_933 plp into wbtc
+      // alice remove 29_933 hlp into wbtc
       assertTokenBalanceOf(ALICE, _wbtc, 1.48707144 * 1e8);
       //bob remove liquidity in usdc only
       assertTokenBalanceOf(BOB, _wbtc, 0);

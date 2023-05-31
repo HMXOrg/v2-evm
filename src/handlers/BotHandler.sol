@@ -6,6 +6,8 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // interfaces
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
@@ -27,20 +29,29 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 /// @title BotHandler
 contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
 
   /**
    * Events
    */
   event LogTakeMaxProfit(address indexed account, uint8 subAccountId, uint256 marketIndex, address tpToken);
   event LogDeleverage(address indexed account, uint8 subAccountId, uint256 marketIndex, address tpToken);
+  event LogDeleverages(address[] indexed accounts, uint8[] subAccountIds, uint256[] marketIndexes, address[] tpTokens);
   event LogCloseDelistedMarketPosition(
     address indexed account,
     uint8 subAccountId,
     uint256 marketIndex,
     address tpToken
   );
+  event LogCloseDelistedMarketPositions(
+    address[] indexed accounts,
+    uint8[] subAccountIds,
+    uint256[] marketIndexes,
+    address[] tpTokens
+  );
   event LogLiquidate(address subAccount);
-  event LogInjectTokenToPlpLiquidity(address indexed account, address token, uint256 amount);
+  event LogInjectTokenToHlpLiquidity(address indexed account, address token, uint256 amount);
   event LogInjectTokenToFundingFeeReserve(address indexed account, address token, uint256 amount);
   event LogUpdateLiquidityEnabled(bool enable);
   event LogUpdateDynamicEnabled(bool enable);
@@ -76,6 +87,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
   /// @notice Initializes the BotHandler contract with the provided configuration parameters.
   /// @param _tradeService Address of the TradeService contract.
   /// @param _liquidationService Address of the LiquidationService contract.
+  /// @param _crossMarginService Address of the CrossMarginService contract.
   /// @param _pyth Address of the Pyth contract.
   function initialize(
     address _tradeService,
@@ -129,9 +141,6 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
 
     // validate market status
     IConfigStorage.MarketConfig memory _marketConfig = _configStorage.getMarketConfigByIndex(_position.marketIndex);
-    uint256 marketStatus = _oracle.marketStatus(_marketConfig.assetId);
-    if (marketStatus != 2 || !_marketConfig.active) return false;
-
     PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(_position.marketIndex);
 
     // get injected price
@@ -146,6 +155,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
         j++;
       }
     }
+    if (_priceE30 == 0) revert IBotHandler_InvalidPrice();
 
     // get adaptive price
     (uint256 _adaptivePriceE30, ) = _oracle.unsafeGetLatestAdaptivePrice(
@@ -158,7 +168,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     );
 
     (bool _isProfit, uint256 _delta) = _calculator.getDelta(
-      _abs(_position.positionSizeE30),
+      HMXLib.abs(_position.positionSizeE30),
       _position.positionSizeE30 > 0,
       _adaptivePriceE30,
       _position.avgEntryPriceE30,
@@ -192,7 +202,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     (bool _isMaxProfit, , ) = _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
-    _tradeService.validateMaxProfit(_isMaxProfit);
+    if (!_isMaxProfit) revert IBotHandler_ReservedValueStillEnough();
 
     emit LogTakeMaxProfit(_account, _subAccountId, _marketIndex, _tpToken);
   }
@@ -244,6 +254,50 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     emit LogDeleverage(_account, _subAccountId, _marketIndex, _tpToken);
   }
 
+  function deleverages(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _marketIndexes,
+    address[] memory _tpTokens,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable nonReentrant onlyPositionManager {
+    // pre-validation
+    if (
+      _accounts.length != _subAccountIds.length &&
+      _subAccountIds.length != _marketIndexes.length &&
+      _marketIndexes.length != _tpTokens.length
+    ) revert IBotHandler_InvalidArray();
+
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+
+    _deleverages(_accounts, _subAccountIds, _marketIndexes, _tpTokens);
+
+    emit LogDeleverages(_accounts, _subAccountIds, _marketIndexes, _tpTokens);
+  }
+
+  function _deleverages(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _marketIndexes,
+    address[] memory _tpTokens
+  ) internal nonReentrant {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+    uint256 len = _accounts.length;
+    for (uint256 i; i < len; ) {
+      _tradeService.validateDeleverage();
+      _tradeService.forceClosePosition(_accounts[i], _subAccountIds[i], _marketIndexes[i], _tpTokens[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
   /// @notice forceClosePosition
   /// @param _account position's owner
   /// @param _subAccountId sub-account that owned position
@@ -271,6 +325,51 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     _tradeService.forceClosePosition(_account, _subAccountId, _marketIndex, _tpToken);
 
     emit LogCloseDelistedMarketPosition(_account, _subAccountId, _marketIndex, _tpToken);
+  }
+
+  function closeDelistedMarketPositions(
+    address[] calldata _accounts,
+    uint8[] calldata _subAccountIds,
+    uint256[] calldata _marketIndexes,
+    address[] calldata _tpTokens,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external payable nonReentrant onlyPositionManager {
+    // pre-validation
+    if (
+      _accounts.length != _subAccountIds.length &&
+      _subAccountIds.length != _marketIndexes.length &&
+      _marketIndexes.length != _tpTokens.length
+    ) revert IBotHandler_InvalidArray();
+
+    // Feed Price
+    // slither-disable-next-line arbitrary-send-eth
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+
+    _closeDelistedMarketPositions(_accounts, _subAccountIds, _marketIndexes, _tpTokens);
+
+    emit LogCloseDelistedMarketPositions(_accounts, _subAccountIds, _marketIndexes, _tpTokens);
+  }
+
+  function _closeDelistedMarketPositions(
+    address[] calldata _accounts,
+    uint8[] calldata _subAccountIds,
+    uint256[] calldata _marketIndexes,
+    address[] calldata _tpTokens
+  ) internal nonReentrant {
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+
+    uint256 len = _accounts.length;
+    for (uint256 i; i < len; ) {
+      _tradeService.validateMarketDelisted(_marketIndexes[i]);
+      _tradeService.forceClosePosition(_accounts[i], _subAccountIds[i], _marketIndexes[i], _tpTokens[i]);
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   function checkLiquidation(
@@ -386,7 +485,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     (uint256 _stableTokenPrice, ) = _oracle.getLatestPrice(_configStorage.tokenAssetIds(_stableToken), false);
 
     // Loop through collateral lists
-    // And do accounting to swap token on funding fee reserve with plp liquidity
+    // And do accounting to swap token on funding fee reserve with hlp liquidity
 
     vars.collateralTokens = _configStorage.getCollateralTokens();
     uint256 _len = vars.collateralTokens.length;
@@ -405,11 +504,11 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
               (10 ** _configStorage.getAssetTokenDecimal(_stableToken))) /
             (_stableTokenPrice * (10 ** _configStorage.getAssetTokenDecimal(vars.collatToken)));
 
-          if (_vaultStorage.plpLiquidity(_stableToken) < vars.convertedStableAmount)
+          if (_vaultStorage.hlpLiquidity(_stableToken) < vars.convertedStableAmount)
             revert IBotHandler_InsufficientLiquidity();
 
           // funding fee should be reduced while liquidity should be increased
-          _vaultStorage.convertFundingFeeReserveWithPLP(
+          _vaultStorage.convertFundingFeeReserveWithHLP(
             vars.collatToken,
             _stableToken,
             vars.fundingFeeReserve,
@@ -427,17 +526,17 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
   /// @notice This function transfers tokens to the vault storage and performs accounting.
   /// @param _token The address of the token to be transferred.
   /// @param _amount The amount of tokens to be transferred.
-  function injectTokenToPlpLiquidity(address _token, uint256 _amount) external nonReentrant onlyOwner {
+  function injectTokenToHlpLiquidity(address _token, uint256 _amount) external nonReentrant onlyOwner {
     VaultStorage _vaultStorage = VaultStorage(ITradeService(tradeService).vaultStorage());
 
     // transfer token
     IERC20Upgradeable(_token).safeTransferFrom(msg.sender, address(_vaultStorage), _amount);
 
     // do accounting on vault storage
-    _vaultStorage.addPLPLiquidity(_token, _amount);
+    _vaultStorage.addHLPLiquidity(_token, _amount);
     _vaultStorage.pullToken(_token);
 
-    emit LogInjectTokenToPlpLiquidity(msg.sender, _token, _amount);
+    emit LogInjectTokenToHlpLiquidity(msg.sender, _token, _amount);
   }
 
   /// @notice This function transfers tokens to the vault storage and performs accounting.
@@ -501,10 +600,6 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     IEcoPyth(_pyth).getAssetIds();
     emit LogSetPyth(pyth, _pyth);
     pyth = _pyth;
-  }
-
-  function _abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

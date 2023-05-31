@@ -10,10 +10,10 @@ const config = getConfig();
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
-  const Contract = await ethers.getContractFactory("PLPv2", deployer);
+  const Contract = await ethers.getContractFactory("HLP", deployer);
   const contract = await upgrades.deployProxy(Contract, []);
   await contract.deployed();
-  console.log(`Deploying PLPv2 Contract`);
+  console.log(`Deploying HLP Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
   config.tokens.hlp = contract.address;
@@ -21,9 +21,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   await tenderly.verify({
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "PLPv2",
+    name: "HLP",
   });
 };
 
 export default func;
-func.tags = ["DeployPLP"];
+func.tags = ["DeployHLP"];

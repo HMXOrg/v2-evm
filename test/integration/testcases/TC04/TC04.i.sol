@@ -67,7 +67,7 @@ contract TC04 is BaseIntTest_WithActions {
         _reserveValue: 1350 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T2: "
       });
 
@@ -116,7 +116,7 @@ contract TC04 is BaseIntTest_WithActions {
         _reserveValue: 1620 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T2: "
       });
 
@@ -168,7 +168,7 @@ contract TC04 is BaseIntTest_WithActions {
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T3: "
       });
 
@@ -232,7 +232,7 @@ contract TC04 is BaseIntTest_WithActions {
         _reserveValue: 540 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T4: "
       });
 
@@ -267,7 +267,7 @@ contract TC04 is BaseIntTest_WithActions {
         _reserveValue: 2160 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T5: "
       });
 

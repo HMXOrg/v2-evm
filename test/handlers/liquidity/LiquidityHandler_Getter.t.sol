@@ -110,7 +110,7 @@ contract LiquidityHandler_Getter is LiquidityHandler_Base {
       _orders = liquidityHandler.getExecutedLiquidityOrders(ALICE, 20, 0);
       for (uint256 i = 0; i < _orders.length; i++) {
         assertEq(_orders[i].orderId, i);
-        assertEq(_orders[i].status, 1);
+        assertEq(uint(_orders[i].status), 1);
         assertEq(_orders[i].actualAmountOut > 0, true);
       }
     }
@@ -130,12 +130,12 @@ contract LiquidityHandler_Getter is LiquidityHandler_Base {
       assertEq(_orders[0].orderId, 0);
       assertEq(_orders[0].createdTimestamp, 101);
       assertEq(_orders[0].executedTimestamp, 0);
-      assertEq(_orders[0].status, 0); // pending
+      assertEq(uint(_orders[0].status), 0); // pending
 
       assertEq(_orders[1].orderId, 1);
       assertEq(_orders[1].createdTimestamp, 101);
       assertEq(_orders[1].executedTimestamp, 0);
-      assertEq(_orders[1].status, 0); // pending
+      assertEq(uint(_orders[1].status), 0); // pending
     }
 
     vm.warp(block.timestamp + 100);
@@ -152,12 +152,12 @@ contract LiquidityHandler_Getter is LiquidityHandler_Base {
       assertEq(_orders[0].orderId, 0);
       assertEq(_orders[0].createdTimestamp, 101);
       assertEq(_orders[0].executedTimestamp, 201);
-      assertEq(_orders[0].status, 1); // success
+      assertEq(uint(_orders[0].status), 1); // success
 
       assertEq(_orders[1].orderId, 1);
       assertEq(_orders[1].createdTimestamp, 101);
       assertEq(_orders[1].executedTimestamp, 201);
-      assertEq(_orders[1].status, 2); // fail
+      assertEq(uint(_orders[1].status), 2); // fail
     }
   }
 }

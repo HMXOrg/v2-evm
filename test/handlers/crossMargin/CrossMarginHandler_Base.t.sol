@@ -13,6 +13,7 @@ contract CrossMarginHandler_Base is BaseTest {
 
   uint8 internal SUB_ACCOUNT_NO = 1;
   uint256 internal constant executionOrderFee = 0.0001 ether;
+  uint256 internal constant maxExecutionChuck = 10;
 
   bytes[] internal priceDataBytes;
 
@@ -69,7 +70,8 @@ contract CrossMarginHandler_Base is BaseTest {
       address(proxyAdmin),
       address(crossMarginService),
       address(ecoPyth),
-      executionOrderFee
+      executionOrderFee,
+      maxExecutionChuck
     );
 
     ecoPyth.setUpdater(address(crossMarginHandler), true);
@@ -104,7 +106,6 @@ contract CrossMarginHandler_Base is BaseTest {
         maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
-        minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.1 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
         increasePositionFeeRateBPS: 0,

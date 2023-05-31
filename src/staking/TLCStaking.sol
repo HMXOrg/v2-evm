@@ -64,7 +64,6 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
   function removeRewarder(uint256 removeRewarderIndex) external onlyOwner {
     address removedRewarder = rewarders[removeRewarderIndex];
     rewarders[removeRewarderIndex] = rewarders[rewarders.length - 1];
-    rewarders[rewarders.length - 1] = removedRewarder;
     rewarders.pop();
     isRewarder[removedRewarder] = false;
   }
@@ -155,16 +154,18 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     emit LogWithdraw(epochTimestamp, to, amount);
   }
 
-  function harvest(uint256 startEpochTimestamp, uint256 noOfEpochs, address[] memory _rewarders) external {
-    uint256 epochTimestamp = (startEpochTimestamp / epochLength) * epochLength;
+  function harvest(uint256 startEpochTimestamp, uint256 noOfEpochs, address[] calldata _rewarders) external {
+    // SLOAD
+    uint256 _epochLength = epochLength;
+    uint256 epochTimestamp = (startEpochTimestamp / _epochLength) * _epochLength;
     for (uint256 i = 0; i < noOfEpochs; ) {
       // If the epoch is in the future, then break the loop
-      if (epochTimestamp + epochLength > block.timestamp) break;
+      if (epochTimestamp + _epochLength > block.timestamp) break;
 
-      _harvestFor(epochTimestamp, msg.sender, msg.sender, _rewarders);
+      _harvestFor(_epochLength, epochTimestamp, msg.sender, msg.sender, _rewarders);
 
       // Increment epoch timestamp
-      epochTimestamp += epochLength;
+      epochTimestamp += _epochLength;
 
       unchecked {
         ++i;
@@ -176,18 +177,21 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     address user,
     uint256 startEpochTimestamp,
     uint256 noOfEpochs,
-    address[] memory _rewarders
+    address[] calldata _rewarders
   ) external {
-    if (compounder != msg.sender) revert TLCStaking_NotCompounder();
-    uint256 epochTimestamp = (startEpochTimestamp / epochLength) * epochLength;
+    // SLOAD
+    uint256 _epochLength = epochLength;
+    address _compounder = compounder;
+    if (_compounder != msg.sender) revert TLCStaking_NotCompounder();
+    uint256 epochTimestamp = (startEpochTimestamp / _epochLength) * _epochLength;
     for (uint256 i = 0; i < noOfEpochs; ) {
       // If the epoch is in the future, then break the loop
-      if (epochTimestamp + epochLength > block.timestamp) break;
+      if (epochTimestamp + _epochLength > block.timestamp) break;
 
-      _harvestFor(epochTimestamp, user, compounder, _rewarders);
+      _harvestFor(_epochLength, epochTimestamp, user, _compounder, _rewarders);
 
       // Increment epoch timestamp
-      epochTimestamp += epochLength;
+      epochTimestamp += _epochLength;
 
       unchecked {
         ++i;
@@ -195,9 +199,15 @@ contract TLCStaking is OwnableUpgradeable, ITLCStaking {
     }
   }
 
-  function _harvestFor(uint256 epochTimestamp, address user, address receiver, address[] memory _rewarders) internal {
+  function _harvestFor(
+    uint256 _epochLength,
+    uint256 epochTimestamp,
+    address user,
+    address receiver,
+    address[] calldata _rewarders
+  ) internal {
     // Floor down the timestamp, in case it is incorrectly formatted
-    epochTimestamp = (epochTimestamp / epochLength) * epochLength;
+    epochTimestamp = (epochTimestamp / _epochLength) * _epochLength;
 
     uint256 length = _rewarders.length;
     for (uint256 i = 0; i < length; ) {

@@ -70,7 +70,6 @@ abstract contract BaseIntTest_SetMarkets is BaseIntTest_SetConfig {
     _newMarketConfig.initialMarginFractionBPS = _imf;
     _newMarketConfig.maintenanceMarginFractionBPS = _mmf;
     _newMarketConfig.maxProfitRateBPS = 90000; // 900%
-    _newMarketConfig.minLeverageBPS = 11000; // 110%
     _newMarketConfig.assetClass = _assetClass;
     _newMarketConfig.allowIncreasePosition = true;
     _newMarketConfig.active = true;

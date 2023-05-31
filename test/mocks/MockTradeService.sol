@@ -98,7 +98,7 @@ contract MockTradeService is ITradeService {
 
   function validateMarketDelisted(uint256 _marketIndex) external view {}
 
-  function getNextFundingRate(
+  function getFundingRateVelocity(
     uint256 /*_marketIndex*/,
     uint256 /*_price*/
   ) external pure returns (int256 fundingRate, int256 fundingRateLong, int256 fundingRateShort) {

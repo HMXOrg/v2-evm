@@ -6,7 +6,7 @@ import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
-import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { HLP } from "@hmx/contracts/HLP.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 

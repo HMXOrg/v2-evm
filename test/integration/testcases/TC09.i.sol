@@ -58,12 +58,12 @@ contract TC09 is BaseIntTest_WithActions {
     }
 
     // T2: Alice buy the position for 20 mins, JPYUSD dumped hard to 0.007945967421533571712355979340 USD. This makes Alice account went below her kill level
-    vm.warp(block.timestamp + (20 * MINUTES));
+    vm.warp(block.timestamp + (200 * MINUTES));
     {
       uint256 traderBalanceBefore = vaultStorage.traderBalances(ALICE, address(wbtc));
       uint256 protocolFeesBefore = vaultStorage.protocolFees(address(wbtc));
       uint256 devFeesBefore = vaultStorage.devFees(address(wbtc));
-      uint256 plpLiquidityBefore = vaultStorage.plpLiquidity(address(wbtc));
+      uint256 hlpLiquidityBefore = vaultStorage.hlpLiquidity(address(wbtc));
 
       updatePriceData = new bytes[](3);
       // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
@@ -85,21 +85,16 @@ contract TC09 is BaseIntTest_WithActions {
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
        * |    Dev |                                      |    0.000225 |           0.00001096 |                   |             |  0.00023596 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
-       * |    PLP |                           0.03377036 |             |           0.00006215 |                   |             |  0.03383251 |  BTC |
+       * |    HLP |                           0.03377036 |             |           0.00006215 |                   |             |  0.03383251 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
        * |  P-fee |                                      |    0.001275 |                      |                   |             |    0.001275 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|-------------------|-------------|-------------|------|
        * |    liq |                                      |             |                      |                   |     0.00025 |     0.00025 |  BTC |
        */
       address aliceSubAccount1 = getSubAccount(ALICE, 0);
-      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 1199078);
-      assertVaultsFees(
-        address(wbtc),
-        protocolFeesBefore + (0.001275 * 1e8),
-        devFeesBefore + (0.00023596 * 1e8),
-        0.00079999 * 1e8
-      );
-      assertPLPLiquidity(address(wbtc), plpLiquidityBefore + 0.03383251 * 1e8);
+      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 1213266);
+      assertVaultsFees(address(wbtc), protocolFeesBefore + (0.001275 * 1e8), 63471, 0);
+      assertHLPLiquidity(address(wbtc), hlpLiquidityBefore + 0.03383251 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);
       assertNumberOfPosition(aliceSubAccount1, 0);
       assertPositionInfoOf(aliceSubAccount1, jpyMarketIndex, 0, 0, 0, 0, 0, 0);

@@ -4,7 +4,7 @@ pragma solidity 0.8.18;
 import { Vm } from "forge-std/Vm.sol";
 
 // Interfaces
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
@@ -35,7 +35,6 @@ import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
 import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
 import { ITLCStaking } from "@hmx/staking/interfaces/ITLCStaking.sol";
 import { IEpochRewarder } from "@hmx/staking/interfaces/IEpochRewarder.sol";
-import { IVester } from "@hmx/vesting/interfaces/IVester.sol";
 
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
@@ -56,11 +55,11 @@ library Deployer {
    * General Contracts
    */
 
-  function deployPLPv2(address _proxyAdmin) internal returns (IPLPv2) {
-    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/PLPv2.sol/PLPv2.json"));
+  function deployHLP(address _proxyAdmin) internal returns (IHLP) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/HLP.sol/HLP.json"));
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IPLPv2(payable(_proxy));
+    return IHLP(payable(_proxy));
   }
 
   function deployCalculator(
@@ -119,9 +118,9 @@ library Deployer {
     return IOracleAdapter(payable(_proxy));
   }
 
-  function deployOracleMiddleware(address _proxyAdmin) internal returns (IOracleMiddleware) {
+  function deployOracleMiddleware(address _proxyAdmin, uint256 _maxTrustPriceAge) internal returns (IOracleMiddleware) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/OracleMiddleware.sol/OracleMiddleware.json"));
-    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
+    bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize(uint256)")), _maxTrustPriceAge);
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IOracleMiddleware(payable(_proxy));
   }
@@ -166,14 +165,16 @@ library Deployer {
     address _proxyAdmin,
     address _crossMarginService,
     address _pyth,
-    uint256 _executionOrderFee
+    uint256 _executionOrderFee,
+    uint256 _maxExecutionChuck
   ) internal returns (ICrossMarginHandler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/CrossMarginHandler.sol/CrossMarginHandler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,uint256)")),
+      bytes4(keccak256("initialize(address,address,uint256,uint256)")),
       _crossMarginService,
       _pyth,
-      _executionOrderFee
+      _executionOrderFee,
+      _maxExecutionChuck
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ICrossMarginHandler(payable(_proxy));
@@ -183,14 +184,16 @@ library Deployer {
     address _proxyAdmin,
     address _liquidityService,
     address _pyth,
-    uint256 _executionOrderFee
+    uint256 _executionOrderFee,
+    uint256 _maxExecutionChuck
   ) internal returns (ILiquidityHandler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LiquidityHandler.sol/LiquidityHandler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,uint256)")),
+      bytes4(keccak256("initialize(address,address,uint256,uint256)")),
       _liquidityService,
       _pyth,
-      _executionOrderFee
+      _executionOrderFee,
+      _maxExecutionChuck
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ILiquidityHandler(payable(_proxy));
@@ -201,12 +204,12 @@ library Deployer {
     address _weth,
     address _tradeService,
     address _pyth,
-    uint256 _minExecutionFee,
-    uint256 _minExecutionTimestamp
+    uint64 _minExecutionFee,
+    uint32 _minExecutionTimestamp
   ) internal returns (ILimitTradeHandler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LimitTradeHandler.sol/LimitTradeHandler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,uint256,uint256)")),
+      bytes4(keccak256("initialize(address,address,address,uint64,uint32)")),
       _weth,
       _tradeService,
       _pyth,
@@ -449,29 +452,6 @@ library Deployer {
     bytes memory _initializer = abi.encodeWithSelector(bytes4(keccak256("initialize()")));
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ITraderLoyaltyCredit(payable(_proxy));
-  }
-
-  /*
-   * Vesting
-   */
-
-  function deployVester(
-    address _proxyAdmin,
-    address esHMXAddress,
-    address hmxAddress,
-    address vestedEsHmxDestinationAddress,
-    address unusedEsHmxDestinationAddress
-  ) internal returns (IVester) {
-    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/Vester.sol/Vester.json"));
-    bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address)")),
-      esHMXAddress,
-      hmxAddress,
-      vestedEsHmxDestinationAddress,
-      unusedEsHmxDestinationAddress
-    );
-    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IVester(payable(_proxy));
   }
 
   /*

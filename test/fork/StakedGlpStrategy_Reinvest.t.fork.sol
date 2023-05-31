@@ -18,11 +18,11 @@ contract StakedGlpStrategy_Reinvest is GlpStrategy_Base {
     vm.prank(ALICE);
     rewardRouter.mintAndStakeGlpETH{ value: 100e18 }(0, 0);
 
-    //alice bring sglp to deposit at plp liquidity
+    //alice bring sglp to deposit at hlp liquidity
     uint256 sglpAmount = sglp.balanceOf(ALICE);
 
-    uint256 vaultStorageBeforeAddLq = vaultStorage.plpLiquidity(sGlpAddress);
-    uint256 plpBefore = plpV2.balanceOf(ALICE);
+    uint256 vaultStorageBeforeAddLq = vaultStorage.hlpLiquidity(sGlpAddress);
+    uint256 hlpBefore = hlpV2.balanceOf(ALICE);
     addLiquidity(
       ALICE,
       ERC20Upgradeable(sGlpAddress),
@@ -33,10 +33,10 @@ contract StakedGlpStrategy_Reinvest is GlpStrategy_Base {
       block.timestamp,
       true
     );
-    uint256 vaultStorageAfterAddLq = vaultStorage.plpLiquidity(sGlpAddress);
+    uint256 vaultStorageAfterAddLq = vaultStorage.hlpLiquidity(sGlpAddress);
 
     assertTrue(vaultStorageAfterAddLq > vaultStorageBeforeAddLq, "Liquidity should increase");
-    assertTrue(plpV2.balanceOf(ALICE) > plpBefore, "PLP amount of Alice should increase");
+    assertTrue(hlpV2.balanceOf(ALICE) > hlpBefore, "HLP amount of Alice should increase");
     assertEq(sglp.balanceOf(ALICE), 0, "Alice GLP after Add LQ");
     assertEq(rewardTracker.claimable(address(vaultStorage)), 0, "pending reward must be 0");
 
@@ -47,9 +47,9 @@ contract StakedGlpStrategy_Reinvest is GlpStrategy_Base {
     vm.prank(keeper);
     stakedGlpStrategy.execute();
     assertTrue(
-      vaultStorage.plpLiquidity(sGlpAddress) > vaultStorageAfterAddLq,
+      vaultStorage.hlpLiquidity(sGlpAddress) > vaultStorageAfterAddLq,
       "Liquidity should increase after compounded"
     );
-    assertEq(plpV2.balanceOf(address(stakedGlpStrategy)), 0, "PLP amount of StakedGlpStrategy should be zero");
+    assertEq(hlpV2.balanceOf(address(stakedGlpStrategy)), 0, "HLP amount of StakedGlpStrategy should be zero");
   }
 }

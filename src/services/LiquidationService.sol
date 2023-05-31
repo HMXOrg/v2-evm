@@ -2,6 +2,8 @@
 pragma solidity 0.8.18;
 
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // contracts
 import { FullMath } from "@hmx/libraries/FullMath.sol";
@@ -21,7 +23,10 @@ import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 /// @title LiquidationService
 /// @dev This contract implements the ILiquidationService interface and provides functionality for liquidating sub-accounts by resetting their positions' value in storage.
 contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, OwnableUpgradeable {
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
   using FullMath for uint256;
+
   /**
    * Events
    */
@@ -83,7 +88,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
-    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    VaultStorage(_vaultStorage).hlpLiquidityDebtUSDE30();
     ConfigStorage(_configStorage).getLiquidityConfig();
     TradeHelper(_tradeHelper).perpStorage();
   }
@@ -206,9 +211,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /**
    * Private Functions
    */
-  function _abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
-  }
 
   /// @dev Liquidates positions associated with a given sub-account.
   /// It iterates over the list of position IDs and updates borrowing rate,
@@ -239,7 +241,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
       // Get the current position id from the list
       _vars.positionId = positionIds[i];
       _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
-      _vars.absPositionSizeE30 = _abs(_vars.position.positionSizeE30);
+      _vars.absPositionSizeE30 = HMXLib.abs(_vars.position.positionSizeE30);
 
       bool _isLong = _vars.position.positionSizeE30 > 0;
 
@@ -256,7 +258,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           _vars.positionId,
           _subAccount,
           _vars.position,
-          _abs(_vars.position.positionSizeE30),
+          HMXLib.abs(_vars.position.positionSizeE30),
           _vars.marketConfig.decreasePositionFeeRateBPS,
           _vars.marketConfig.assetClass,
           _vars.position.marketIndex
@@ -270,7 +272,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
       _vars.oldSumS2e = _vars.absPositionSizeE30.mulDiv(_vars.absPositionSizeE30, _vars.position.avgEntryPriceE30);
       _vars.globalMarket = _vars.perpStorage.getMarketByIndex(_vars.position.marketIndex);
 
-      (uint256 _adaptivePrice, , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (uint256 _adaptivePrice, ) = _vars.oracle.getLatestAdaptivePrice(
         _vars.marketConfig.assetId,
         _isLong,
         (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
@@ -282,7 +284,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
       // Update global state
       {
         int256 _realizedPnl;
-        uint256 absPositionSize = _abs(_vars.position.positionSizeE30);
+        uint256 absPositionSize = HMXLib.abs(_vars.position.positionSizeE30);
         {
           (bool _isProfit, uint256 _delta) = _vars.calculator.getDelta(
             absPositionSize,
@@ -291,6 +293,12 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
             _vars.position.avgEntryPriceE30,
             _vars.position.lastIncreaseTimestamp
           );
+
+          // if trader has profit more than reserved value then trader's profit maximum is reserved value
+          if (_isProfit && _delta >= _vars.position.reserveValueE30) {
+            _delta = _vars.position.reserveValueE30;
+          }
+
           _realizedPnl = _isProfit ? int256(_delta) : -int256(_delta);
           _unrealizedPnL += _realizedPnl;
         }

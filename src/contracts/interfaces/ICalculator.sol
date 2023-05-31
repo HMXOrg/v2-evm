@@ -11,6 +11,7 @@ interface ICalculator {
   error ICalculator_InvalidAddress();
   error ICalculator_InvalidArray();
   error ICalculator_InvalidAveragePrice();
+  error ICalculator_InvalidPrice();
   error ICalculator_PoolImbalance();
 
   /**
@@ -20,7 +21,7 @@ interface ICalculator {
     uint256 fundingInterval;
     int256 marketSkewUSDE30;
     int256 ratio;
-    int256 nextFundingRate;
+    int256 fundingRateVelocity;
     int256 elapsedIntervals;
   }
 
@@ -53,7 +54,7 @@ interface ICalculator {
 
   function getGlobalPNLE30() external view returns (int256);
 
-  function getPLPValueE30(bool isMaxPrice) external view returns (uint256);
+  function getHLPValueE30(bool isMaxPrice) external view returns (uint256);
 
   function getFreeCollateral(
     address _subAccount,
@@ -61,7 +62,7 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (int256 _freeCollateral);
 
-  function getPLPPrice(uint256 aum, uint256 supply) external returns (uint256);
+  function getHLPPrice(uint256 aum, uint256 supply) external returns (uint256);
 
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _amount) external view returns (uint256);
 
@@ -107,7 +108,7 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (uint256 _collateralValueE30);
 
-  function getNextFundingRate(uint256 _marketIndex) external view returns (int256);
+  function getFundingRateVelocity(uint256 _marketIndex) external view returns (int256);
 
   function getDelta(
     uint256 _size,
@@ -136,4 +137,6 @@ interface ICalculator {
   function setConfigStorage(address _address) external;
 
   function setPerpStorage(address _address) external;
+
+  function proportionalElapsedInDay(uint256 _marketIndex) external view returns (uint256 elapsed);
 }

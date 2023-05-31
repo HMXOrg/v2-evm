@@ -21,7 +21,7 @@ interface ITradeService {
   error ITradeService_InsufficientLiquidity();
   error ITradeService_InsufficientFreeCollateral();
   error ITradeService_ReservedValueStillEnough();
-  error ITradeService_PlpHealthy();
+  error ITradeService_HlpHealthy();
   error ITradeService_MarketHealthy();
   error ITradeService_InvalidAddress();
   error ITradeService_PositionSizeExceed();
@@ -63,8 +63,6 @@ interface ITradeService {
     uint256 _marketIndex,
     address _tpToken
   ) external returns (bool _isMaxProfit, bool _isProfit, uint256 _delta);
-
-  function validateMaxProfit(bool isMaxProfit) external view;
 
   function validateDeleverage() external view;
 

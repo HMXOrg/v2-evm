@@ -4,6 +4,7 @@ pragma solidity 0.8.18;
 //base
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -13,6 +14,7 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // Interfaces
 import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
@@ -22,6 +24,9 @@ import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
  * @dev A cross-margin trading service that allows traders to deposit and withdraw collateral tokens.
  */
 contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginService {
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
+
   /**
    * Events
    */
@@ -38,6 +43,13 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     address receiver
   );
   event LogWithdrawFundingFeeSurplus(uint256 surplusValue);
+  event LogConvertSGlpCollateral(
+    address primaryAccount,
+    uint256 subAccountId,
+    address tokenOut,
+    uint256 amountIn,
+    uint256 amountOut
+  );
 
   /**
    * Structs
@@ -68,6 +80,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _vaultStorage The address of the VaultStorage contract.
   /// @param _perpStorage The address of the PerpStorage contract.
   /// @param _calculator The address of the Calculator contract.
+  /// @param _convertedSglpStrategy The address of the ConvertedGlpStrategy contract for converting GLP collateral to other tokens.
   function initialize(
     address _configStorage,
     address _vaultStorage,
@@ -137,7 +150,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address
-    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
 
     // Increase collateral token balance
     _vaultStorage.increaseTraderBalance(_subAccount, _token, _amount);
@@ -155,6 +168,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _subAccountId Trader's Sub-Account Id.
   /// @param _token Token that's withdrawn as collateral.
   /// @param _amount Token withdrawing amount.
+  /// @param _receiver The receiver address of the collateral
   function withdrawCollateral(
     address _primaryAccount,
     uint8 _subAccountId,
@@ -168,7 +182,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
     // Get trader's sub-account address
-    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
 
     // Get current collateral token balance of trader's account
     // and deduct with new token withdrawing amount
@@ -189,9 +203,9 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     emit LogWithdrawCollateral(_primaryAccount, _subAccount, _token, _amount, _receiver);
   }
 
-  /// @notice Check funding fee surplus and transfer to PLP
+  /// @notice Check funding fee surplus and transfer to HLP
   /// @dev Check if value on funding fee reserve have exceed balance for paying to traders
-  ///      - If yes means exceed value are the surplus for platform and can be booked to PLP
+  ///      - If yes means exceed value are the surplus for platform and can be booked to HLP
   function withdrawFundingFeeSurplus(address _stableToken) external nonReentrant onlyWhitelistedExecutor {
     // SLOAD
     ConfigStorage _configStorage = ConfigStorage(configStorage);
@@ -204,7 +218,8 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Get funding Fee LONG & SHORT on each market to find positive values
     // positive value mean how much protocol book funding fee value that will be paid to trader
     // Loop through all markets to sum funding fee on LONG and SHORT sides
-    for (uint256 i = 0; i < _configStorage.getMarketConfigsLength(); ) {
+    uint256 len = _configStorage.getMarketConfigsLength();
+    for (uint256 i = 0; i < len; ) {
       PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
       if (_market.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
@@ -228,7 +243,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       revert ICrossMarginHandler_NoFundingFeeSurplus();
 
     _vars.fundingFeeSurplusValue = _vars.totalFundingFeeReserveValueE30 - _vars.fundingFeeBookValue;
-    // Transfer surplus amount to PLP
+    // Transfer surplus amount to HLP
     {
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _configStorage,
@@ -238,11 +253,9 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         _stableToken
       );
 
-      _vaultStorage.withdrawSurplusFromFundingFeeReserveToPLP(_stableToken, _repayAmount);
+      _vaultStorage.withdrawSurplusFromFundingFeeReserveToHLP(_stableToken, _repayAmount);
       _vars.fundingFeeSurplusValue -= _repayValue;
     }
-    // If fee cannot be covered, revert.
-    if (_vars.fundingFeeSurplusValue > 0) revert ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
 
     emit LogWithdrawFundingFeeSurplus(_vars.fundingFeeSurplusValue);
   }
@@ -259,10 +272,11 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     _amountOut = ConvertedGlpStrategy(convertedSglpStrategy).execute(_tokenOut, _amountIn);
 
     // Adjusting trader balance
-    address _subAccount = _getSubAccount(_primaryAccount, _subAccountId);
+    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
     _vaultStorage.decreaseTraderBalance(_subAccount, _configStorage.sglp(), _amountIn);
     _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _amountOut);
 
+    emit LogConvertSGlpCollateral(_primaryAccount, _subAccountId, _tokenOut, _amountIn, _amountOut);
     return _amountOut;
   }
 
@@ -319,17 +333,6 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /**
    * Private Functions
    */
-
-  /// @notice Calculate subAccount address on trader.
-  /// @dev This uses to create subAccount address combined between Primary account and SubAccount ID.
-  /// @param _primary Trader's primary wallet account.
-  /// @param _subAccountId Trader's sub account ID.
-  /// @return _subAccount Trader's sub account address used for trading.
-  function _getSubAccount(address _primary, uint8 _subAccountId) private pure returns (address _subAccount) {
-    if (_subAccountId > 255) revert();
-    return address(uint160(_primary) ^ uint160(_subAccountId));
-  }
-
   function _getRepayAmount(
     ConfigStorage _configStorage,
     OracleMiddleware _oracle,

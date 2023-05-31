@@ -84,7 +84,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   uint256 public nextExecutionOrderIndex; // the index of the next withdraw order that should be executed
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
   uint256 public maxExecutionChuck; // maximum execution order sizes per request
-  bool private isExecuting; // order is executing (prevent direct call executeWithdrawOrder()
 
   WithdrawOrder[] public withdrawOrders; // all withdrawOrder
   mapping(address => WithdrawOrder[]) public subAccountExecutedWithdrawOrders; // subAccount -> executed orders
@@ -319,8 +318,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = withdrawOrders[i];
       _executionFee = _order.executionFee;
-      // Set the flag to indicate that orders are currently being executed
-      isExecuting = true;
 
       try this.executeWithdrawOrder(_order) {
         emit LogExecuteWithdrawOrder(
@@ -352,9 +349,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       // clear executed withdraw order
       delete withdrawOrders[i];
 
-      // Free up the flag
-      isExecuting = false;
-
       unchecked {
         ++i;
       }
@@ -384,7 +378,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _order WithdrawOrder struct representing the order to execute.
   function executeWithdrawOrder(WithdrawOrder memory _order) external {
     // if not in executing state, then revert
-    if (!isExecuting) revert ICrossMarginHandler_NotExecutionState();
     if (msg.sender != address(this)) revert ICrossMarginHandler_Unauthorized();
     if (
       _order.shouldUnwrap &&

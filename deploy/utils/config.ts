@@ -32,6 +32,9 @@ export function writeConfigFile(config: any) {
     case "mumbai":
       filePath = "./configs/arbitrum.goerli.json";
       break;
+    case "arb_goerli":
+      filePath = "./configs/arbitrum.goerli.json";
+      break;
     default:
       throw Error("Unsupported network");
   }

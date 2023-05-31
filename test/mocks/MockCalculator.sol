@@ -89,6 +89,14 @@ contract MockCalculator is ICalculator {
     return equitiesOf[_subAccount];
   }
 
+  function getEquityWithInjectedPrices(
+    address _subAccount,
+    bytes32[] memory /* _injectedAssetIds */,
+    uint256[] memory /* _injectedPrices */
+  ) external view returns (int256) {
+    return equitiesOf[_subAccount];
+  }
+
   // @todo - Add Description
   function getUnrealizedPnlAndFee(
     address _subAccount,

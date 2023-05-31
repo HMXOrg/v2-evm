@@ -21,20 +21,20 @@ contract SetPLP is ConfigJsonRepo {
     IConfigStorage configStorage = IConfigStorage(getJsonAddress(".storages.config"));
 
     address[] memory _tokens = new address[](6);
-    _tokens[0] = getJsonAddress(".tokens.sglp");
-    _tokens[1] = getJsonAddress(".tokens.usdc");
-    _tokens[2] = getJsonAddress(".tokens.usdt");
-    _tokens[3] = getJsonAddress(".tokens.dai");
-    _tokens[4] = getJsonAddress(".tokens.weth");
-    _tokens[5] = getJsonAddress(".tokens.wbtc");
+    _tokens[0] = getJsonAddress(".tokens.usdc");
+    _tokens[1] = getJsonAddress(".tokens.usdt");
+    _tokens[2] = getJsonAddress(".tokens.dai");
+    _tokens[3] = getJsonAddress(".tokens.weth");
+    _tokens[4] = getJsonAddress(".tokens.wbtc");
+    _tokens[5] = getJsonAddress(".tokens.sglp");
 
     IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](_tokens.length);
-    _plpTokenConfig[0] = _getPLPTokenConfigStruct(0.95 ether, 0, 1000e18, true);
-    _plpTokenConfig[1] = _getPLPTokenConfigStruct(0.05 ether, 0, 1000e18, true);
+    _plpTokenConfig[0] = _getPLPTokenConfigStruct(0.05 ether, 0, 1000e18, true);
+    _plpTokenConfig[1] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
     _plpTokenConfig[2] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
     _plpTokenConfig[3] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
     _plpTokenConfig[4] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
-    _plpTokenConfig[5] = _getPLPTokenConfigStruct(0, 0, 1000e18, false);
+    _plpTokenConfig[5] = _getPLPTokenConfigStruct(0.95 ether, 0, 1000e18, true);
 
     configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
   }

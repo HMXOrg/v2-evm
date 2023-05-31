@@ -79,6 +79,8 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     configStorage = _configStorage;
     tradeHelper = _tradeHelper;
 
+    calculator = Calculator(ConfigStorage(configStorage).calculator());
+
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
     VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();

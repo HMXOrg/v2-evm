@@ -38,27 +38,28 @@ const publishTimeDiff = [
   0, // JPY
 ];
 
+const mainAccount = "0x6a5d2bf8ba767f7763cd342cb62c5076f9924872";
 const subAccountId = 0;
-const marketIndex = 0;
+const orderIndex = 0;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
-  const address = BigNumber.from(deployer.address).xor(subAccountId).toHexString();
+  const address = BigNumber.from(mainAccount).xor(subAccountId).toHexString();
 
   const handler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
   const [priceUpdateData, publishTimeDiffUpdateData] = await getUpdatePriceData(
     deployer,
     priceUpdates,
     publishTimeDiff,
-    false
+    true
   );
 
   console.log("Execute Limit Order...");
   await (
     await handler.executeOrder(
-      deployer.address,
+      mainAccount,
       subAccountId,
-      marketIndex,
+      orderIndex,
       deployer.address,
       priceUpdateData,
       publishTimeDiffUpdateData,
@@ -67,7 +68,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       { gasLimit: 10000000 }
     )
   ).wait();
-  console.log(`Order Index: ${await handler.limitOrdersIndex(address)}`);
   console.log("Execute Limit Order Success!");
 };
 

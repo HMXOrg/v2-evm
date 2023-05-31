@@ -147,7 +147,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   uint32 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on order stale
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
   bool public isGuaranteeLimitPrice; // If this is ture, Gurantee Limit Price feature will be turned on. Limit Price set by orders will be used instead of the current Oracle Price.
-  bool private isExecuting; // order is executing (prevent direct call executeLimitOrder()
 
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
@@ -158,6 +157,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   EnumerableSet.UintSet private activeOrderPointers;
   EnumerableSet.UintSet private activeMarketOrderPointers;
   EnumerableSet.UintSet private activeLimitOrderPointers;
+
+  mapping(address => EnumerableSet.UintSet) private subAccountActiveOrderPointers;
+  mapping(address => EnumerableSet.UintSet) private subAccountActiveMarketOrderPointers;
+  mapping(address => EnumerableSet.UintSet) private subAccountActiveLimitOrderPointers;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _weth Address of WETH.
@@ -393,10 +396,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     }
 
     // try executing order
-    isExecuting = true;
     try this.executeLimitOrder(vars) {
       // Execution succeeded
-      isExecuting = false;
     } catch Error(string memory errMsg) {
       _handleOrderFail(vars, errMsg);
     } catch Panic(uint /*errorCode*/) {
@@ -430,14 +431,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       // Revert with the error message
       require(false, errMsg);
     }
-
-    // Execution failed
-    isExecuting = false;
   }
 
   function executeLimitOrder(ExecuteOrderVars memory vars) external {
     // if not in executing state, then revert
-    if (!isExecuting) revert ILimitTradeHandler_NotExecutionState();
     if (msg.sender != address(this)) revert ILimitTradeHandler_Unauthorized();
 
     // Remove this executed order from the list
@@ -674,13 +671,16 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
     activeOrderPointers.add(_pointer);
+    subAccountActiveOrderPointers[_subAccount].add(_pointer);
 
     if (_order.triggerPrice == 0) {
       // Market
       activeMarketOrderPointers.add(_pointer);
+      subAccountActiveMarketOrderPointers[_subAccount].add(_pointer);
     } else {
       // Limit
       activeLimitOrderPointers.add(_pointer);
+      subAccountActiveLimitOrderPointers[_subAccount].add(_pointer);
     }
   }
 
@@ -689,13 +689,16 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
     activeOrderPointers.remove(_pointer);
+    subAccountActiveOrderPointers[_subAccount].remove(_pointer);
 
     if (_order.triggerPrice == 0) {
       // Market
       activeMarketOrderPointers.remove(_pointer);
+      subAccountActiveMarketOrderPointers[_subAccount].remove(_pointer);
     } else {
       // Limit
       activeLimitOrderPointers.remove(_pointer);
+      subAccountActiveLimitOrderPointers[_subAccount].remove(_pointer);
     }
   }
 
@@ -713,6 +716,30 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   function getLimitActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders) {
     return _getOrders(activeLimitOrderPointers, _limit, _offset);
+  }
+
+  function getAllActiveOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(subAccountActiveOrderPointers[_subAccount], _limit, _offset);
+  }
+
+  function getMarketActiveOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(subAccountActiveMarketOrderPointers[_subAccount], _limit, _offset);
+  }
+
+  function getLimitActiveOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LimitOrder[] memory _orders) {
+    return _getOrders(subAccountActiveLimitOrderPointers[_subAccount], _limit, _offset);
   }
 
   function _getOrders(
@@ -876,7 +903,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     vars.oracle = OracleMiddleware(_configStorage.oracle());
     vars.globalMarket = PerpStorage(_tradeService.perpStorage()).getMarketByIndex(_marketIndex);
 
-    (uint256 _currentPrice, ) = vars.oracle.getLatestAdaptivePrice(
+    (uint256 _currentPrice, , ) = vars.oracle.unsafeGetLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
       _maximizePrice,
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),

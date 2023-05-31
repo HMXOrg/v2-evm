@@ -85,7 +85,6 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   uint256 public nextExecutionOrderIndex; // the index of the next liquidity order that should be executed
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
   uint256 public maxExecutionChuck; // maximum execution order sizes per request
-  bool private isExecuting; // order is executing (prevent direct call executeLiquidity()
 
   LiquidityOrder[] public liquidityOrders; // all liquidityOrder
   mapping(address => bool) public orderExecutors; // address -> whitelist executors
@@ -304,8 +303,6 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _order = liquidityOrders[i];
       if (_order.amount > 0) {
         _executionFee = _order.executionFee;
-        // Set the flag to indicate that orders are currently being executed
-        isExecuting = true;
 
         try this.executeLiquidity(_order) returns (uint256 actualOut) {
           emit LogExecuteLiquidityOrder(
@@ -337,9 +334,6 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         accountExecutedLiquidityOrders[_order.account].push(_order);
         // clear executed liquidity order
         delete liquidityOrders[i];
-
-        // Free up the flag
-        isExecuting = false;
       }
 
       unchecked {
@@ -362,7 +356,6 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @param _order LiquidityOrder struct representing the order to execute.
   function executeLiquidity(LiquidityOrder calldata _order) external returns (uint256 _amountOut) {
     // if not in executing state, then revert
-    if (!isExecuting) revert ILiquidityHandler_NotExecutionState();
     if (msg.sender != address(this)) revert ILiquidityHandler_Unauthorized();
 
     if (_order.isAdd) {

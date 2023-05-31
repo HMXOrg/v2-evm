@@ -59,7 +59,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
   function test_revert_directCall_executeLiquidity() external {
     _createAddLiquidityWBTCOrder();
     ILiquidityHandler.LiquidityOrder[] memory aliceOrders = liquidityHandler.getLiquidityOrders();
-    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_NotExecutionState()"));
+    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_Unauthorized()"));
     liquidityHandler.executeLiquidity(aliceOrders[0]);
   }
 

@@ -407,7 +407,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     bool _isLong = _position.positionSizeE30 > 0;
     _fundingFee = _calculator.getFundingFee(
       _isLong,
-      _abs(_position.positionSizeE30),
+      HMXLib.abs(_position.positionSizeE30),
       PerpStorage(perpStorage).getMarketByIndex(_marketIndex).fundingAccrued,
       _position.lastFundingAccrued
     );

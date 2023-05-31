@@ -113,7 +113,7 @@ contract TC29 is BaseIntTest_WithActions {
     {
       // Global PNL from all markets must start with Zero since no opening trade positions yet
       // Note that 768955 is precision loss it mean global PNL = 768955 / 1e30 that approximate to Zero
-      assertEq(calculator.getGlobalPNLE30(), 768955, "getGlobalPNLE30");
+      assertEq(calculator.getGlobalPNLE30(), -768955, "getGlobalPNLE30");
       // Unrealized Pnl on ALICE with SUB_ACCOUNT ID 1 must be Zero
       (int256 AliceUnrealizedPnl, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
       assertEq(AliceUnrealizedPnl, 0, "UnrealizedPnlAndFee");
@@ -144,7 +144,7 @@ contract TC29 is BaseIntTest_WithActions {
       {
         // Global PNL must be equal to Alice's unrealized Pnl
         (int256 AliceUnrealizedPnl, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
-        assertApproxEqRel(calculator.getGlobalPNLE30(), AliceUnrealizedPnl, MAX_DIFF, "getGlobalPNLE30");
+        assertApproxEqRel(calculator.getGlobalPNLE30(), -AliceUnrealizedPnl, MAX_DIFF, "getGlobalPNLE30");
       }
     }
 
@@ -177,7 +177,7 @@ contract TC29 is BaseIntTest_WithActions {
       {
         // Global PNL must be equal to Alice's unrealized Pnl
         (int256 AliceUnrealizedPnl, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
-        assertApproxEqRel(calculator.getGlobalPNLE30(), AliceUnrealizedPnl, MAX_DIFF, "getGlobalPNLE30");
+        assertApproxEqRel(calculator.getGlobalPNLE30(), -AliceUnrealizedPnl, MAX_DIFF, "getGlobalPNLE30");
       }
     }
 

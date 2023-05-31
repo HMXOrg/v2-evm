@@ -16,8 +16,6 @@ import { FullMath } from "@hmx/libraries/FullMath.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 contract Calculator is OwnableUpgradeable, ICalculator {
   using SafeCastUpgradeable for int256;
   using SafeCastUpgradeable for uint256;
@@ -75,8 +73,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     uint256 borrowingFeeDebt = VaultStorage(vaultStorage).globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
 
-    console2.log("---- getAUME30()");
-
     uint256 lossDebt = VaultStorage(vaultStorage).globalLossDebt();
     uint256 aum = _getPLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
 
@@ -87,11 +83,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     } else {
       aum += uint256(pnlE30);
     }
-
-    console2.log("pendingBorrowingFeeE30", pendingBorrowingFeeE30);
-    console2.log("borrowingFeeDebt", borrowingFeeDebt);
-    console2.log("pnlE30", pnlE30);
-    console2.log("aum", aum);
 
     return aum;
   }
@@ -213,7 +204,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
       (uint256 priceE30, ) = _oracle.unsafeGetLatestPrice(_marketConfig.assetId, false);
 
       if (_market.longPositionSize > 0) {
-        _pnlLongE30 = _getGlobalMarketPnl(
+        _pnlLongE30 = getGlobalMarketPnl(
           priceE30,
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           _marketConfig.fundingRate.maxSkewScaleUSD,
@@ -224,7 +215,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         );
       }
       if (_market.shortPositionSize > 0) {
-        _pnlShortE30 = _getGlobalMarketPnl(
+        _pnlShortE30 = getGlobalMarketPnl(
           priceE30,
           (int(_market.longPositionSize) - int(_market.shortPositionSize)),
           _marketConfig.fundingRate.maxSkewScaleUSD,
@@ -1159,7 +1150,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     return uint256(x >= 0 ? x : -x);
   }
 
-  function _getGlobalMarketPnl(
+  function getGlobalMarketPnl(
     uint256 price,
     int256 skew,
     uint256 maxSkew,

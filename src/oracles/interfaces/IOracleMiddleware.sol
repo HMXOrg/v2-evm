@@ -82,14 +82,5 @@ interface IOracleMiddleware {
     address _adapter
   ) external;
 
-  function setMultipleMarketStatus(
-    bytes32[] memory _assetIds,
-    uint8[] memory _statuses,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
-  ) external;
-
-  function setPyth(address _pyth) external;
+  function setMultipleMarketStatus(bytes32[] memory _assetIds, uint8[] memory _statuses) external;
 }

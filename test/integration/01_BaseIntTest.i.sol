@@ -173,7 +173,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(pyth));
 
     // deploy oracleMiddleWare
-    oracleMiddleWare = Deployer.deployOracleMiddleware(address(proxyAdmin), address(pyth));
+    oracleMiddleWare = Deployer.deployOracleMiddleware(address(proxyAdmin));
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage(address(proxyAdmin));

@@ -237,7 +237,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     stakedGlpOracleAdapter = Deployer.deployStakedGlpOracleAdapter(address(proxyAdmin), sglp, glpManager, sGlpAssetId);
 
     //deploy oracleMiddleWare
-    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin), address(pyth));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
 
     // deploy configStorage
     configStorage = Deployer.deployConfigStorage(address(proxyAdmin));

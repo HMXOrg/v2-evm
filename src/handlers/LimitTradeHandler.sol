@@ -305,9 +305,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     // The attached native token must be equal to _executionFee
     if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
 
-    // Validate the order price
-    _validateCreateOrderPrice(_triggerAboveThreshold, _triggerPrice, _marketIndex, _sizeDelta, _sizeDelta > 0);
-
     // Transfer in the native token to be used as execution fee
     _transferInETH();
 

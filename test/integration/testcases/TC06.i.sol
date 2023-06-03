@@ -15,7 +15,6 @@ contract TC06 is BaseIntTest_WithActions {
     address TP_TOKEN = address(wbtc); // @note settle with WBTC that be treated as GLP token
     // Make LP contains some liquidity
     {
-      bytes[] memory priceData = new bytes[](0);
       vm.deal(BOB, 1 ether); //deal with out of gas
       wbtc.mint(BOB, 10 * 1e8);
       addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
@@ -80,7 +79,6 @@ contract TC06 is BaseIntTest_WithActions {
       assertEq(calculator.getIMR(SUB_ACCOUNT), 0, "ALICE's IMR");
       assertEq(calculator.getMMR(SUB_ACCOUNT), 0, "ALICE's MMR");
       uint256 sellSizeE30 = 280_000.981234381823 * 1e30;
-      bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
       marketSell(
         ALICE,
@@ -140,7 +138,6 @@ contract TC06 is BaseIntTest_WithActions {
       // Alice withdraw 1(USD) of USDC
       // Expect Alice can't withdraw collateral because Equity < IMR
       // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
-      bytes[] memory priceData = new bytes[](0);
       withdrawCollateral(
         ALICE,
         SUB_ACCOUNT_ID,
@@ -160,7 +157,6 @@ contract TC06 is BaseIntTest_WithActions {
     {
       (int256 unrealizedPnlValueBefore, ) = calculator.getUnrealizedPnlAndFee(SUB_ACCOUNT, 0, 0);
       uint256 buySizeE30 = 0.88 * 1e30;
-      bytes[] memory priceData = new bytes[](0);
 
       // oracle price 2597000000000000000000000000000000
       // next close price 2595788066228490517342781666668398
@@ -212,7 +208,6 @@ contract TC06 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       uint256 sellSizeE30 = 1_000 * 1e30;
-      bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
       // Expect Alice can't increase SHORT position because Equity < IMR
       marketSell(
@@ -300,7 +295,6 @@ contract TC06 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       uint256 buySizeE30 = 280_000.9812343818 * 1e30;
-      bytes[] memory priceData = new bytes[](0);
       marketBuy(
         ALICE,
         SUB_ACCOUNT_ID,
@@ -319,7 +313,6 @@ contract TC06 is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 1);
     {
       // Alice withdraw 1(USD) of USDC
-      bytes[] memory priceData = new bytes[](0);
       withdrawCollateral(
         ALICE,
         SUB_ACCOUNT_ID,

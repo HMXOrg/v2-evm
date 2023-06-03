@@ -21,6 +21,10 @@ contract DeployLiquidityService is ConfigJsonRepo {
     address tradeHelperAddress = getJsonAddress(".helpers.trade");
     address proxyAdmin = getJsonAddress(".proxyAdmin");
 
+    // shhh compiler
+    calculatorAddress;
+    tradeHelperAddress;
+
     address liquidityServiceAddress = address(
       Deployer.deployLiquidityService(
         address(proxyAdmin),

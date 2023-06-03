@@ -74,13 +74,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     vm.startPrank(ALICE);
     wbtc.approve(address(liquidityHandler), type(uint256).max);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
-    uint256 _latestOrderIndex = liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
-      address(wbtc),
-      1 ether,
-      1 ether,
-      5 ether,
-      false
-    );
+    liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(address(wbtc), 1 ether, 1 ether, 5 ether, false);
     vm.stopPrank();
   }
 
@@ -91,13 +85,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base {
     vm.startPrank(ALICE);
     wbtc.approve(address(liquidityHandler), type(uint256).max);
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
-    uint256 _latestOrderIndex = liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
-      address(wbtc),
-      0,
-      0,
-      5 ether,
-      false
-    );
+    liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(address(wbtc), 0, 0, 5 ether, false);
     vm.stopPrank();
   }
 

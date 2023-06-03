@@ -348,7 +348,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     _transferOutETH(_totalFeeReceiver, _feeReceiver);
   }
 
-  function _handleOrderFail(LiquidityOrder memory order, string memory errMsg) internal {
+  function _handleOrderFail(LiquidityOrder memory order, string memory /* errMsg */) internal {
     //refund in case of revert as order
     _refund(order);
     order.status = LiquidityOrderStatus.FAIL;
@@ -467,6 +467,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
     // the transaction maintains a secure execution."
     (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
+    // shhh compiler
+    success;
   }
 
   /**

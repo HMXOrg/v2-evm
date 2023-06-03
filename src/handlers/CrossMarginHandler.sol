@@ -541,6 +541,8 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
     // the transaction maintains a secure execution."
     (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
+    // shhhh compiler
+    success;
   }
 
   receive() external payable {

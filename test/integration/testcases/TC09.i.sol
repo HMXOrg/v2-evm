@@ -13,8 +13,6 @@ contract TC09 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
   function testCorrectness_TC09() external {
-    bytes[] memory priceData = new bytes[](0);
-
     // T0: Initialized state
     {
       //deal with out of gas
@@ -64,6 +62,10 @@ contract TC09 is BaseIntTest_WithActions {
       uint256 protocolFeesBefore = vaultStorage.protocolFees(address(wbtc));
       uint256 devFeesBefore = vaultStorage.devFees(address(wbtc));
       uint256 hlpLiquidityBefore = vaultStorage.hlpLiquidity(address(wbtc));
+
+      // shhh - compiler
+      traderBalanceBefore;
+      devFeesBefore;
 
       updatePriceData = new bytes[](3);
       // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);

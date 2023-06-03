@@ -195,6 +195,10 @@ contract TC38 is BaseIntTest_WithActions {
         0
       );
 
+      // shhh compiler
+      bobIsProfit;
+      carolIsProfit;
+
       assertEq(_BobUnrealizedPnlE30, 7_200 * 1e30, "T4: Bob unrealized Pnl");
       assertEq(_CarolUnrealizedPnlE30, 1730362327240939953049650331945816, "T4: CAROL unrealized Pnl");
 

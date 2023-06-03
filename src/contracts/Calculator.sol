@@ -306,7 +306,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     ConfigStorage.LiquidityConfig memory _liquidityConfig,
     ConfigStorage.HLPTokenConfig memory _hlpTokenConfig,
     LiquidityDirection direction
-  ) internal view returns (uint32) {
+  ) internal pure returns (uint32) {
     uint32 _feeBPS = direction == LiquidityDirection.ADD
       ? _liquidityConfig.depositFeeRateBPS
       : _liquidityConfig.withdrawFeeRateBPS;
@@ -669,12 +669,12 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         }
         {
           // Calculate funding fee
-          int256 proportionalElapsedInDay = int256(proportionalElapsedInDay(_var.position.marketIndex));
+          int256 _proportionalElapsedInDay = int256(proportionalElapsedInDay(_var.position.marketIndex));
           int256 nextFundingRate = _market.currentFundingRate +
-            ((_getFundingRateVelocity(_var.position.marketIndex) * proportionalElapsedInDay) / 1e18);
+            ((_getFundingRateVelocity(_var.position.marketIndex) * _proportionalElapsedInDay) / 1e18);
           int256 lastFundingAccrued = _market.fundingAccrued;
           int256 currentFundingAccrued = _market.fundingAccrued +
-            ((_market.currentFundingRate + nextFundingRate) * proportionalElapsedInDay) /
+            ((_market.currentFundingRate + nextFundingRate) * _proportionalElapsedInDay) /
             2 /
             1e18;
           _unrealizedFeeE30 += getFundingFee(_var.isLong, _var.absSize, currentFundingAccrued, lastFundingAccrued);
@@ -971,7 +971,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   function proportionalElapsedInDay(uint256 _marketIndex) public view returns (uint256 elapsed) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
-    ConfigStorage.MarketConfig memory marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
     PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
     uint256 fundingInterval = _configStorage.getTradingConfig().fundingInterval;
     uint256 elapsedIntervals = (block.timestamp - globalMarket.lastFundingTime) / fundingInterval;

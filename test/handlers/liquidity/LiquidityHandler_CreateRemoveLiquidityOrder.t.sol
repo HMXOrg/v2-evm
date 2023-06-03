@@ -77,13 +77,7 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
 
     // hlpIn 5 ether, execution fee 5
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_CircuitBreaker()"));
-    uint256 _index = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(
-      address(wbtc),
-      5 ether,
-      0,
-      5 ether,
-      false
-    );
+    liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(wbtc), 5 ether, 0, 5 ether, false);
     vm.stopPrank();
   }
 
@@ -96,7 +90,7 @@ contract LiquidityHandler_CreateRemoveLiquidityOrder is LiquidityHandler_Base {
 
     // hlpIn 5 ether, execution fee 5
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
-    uint256 _index = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(wbtc), 0, 0, 5 ether, false);
+    liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(address(wbtc), 0, 0, 5 ether, false);
     vm.stopPrank();
   }
 

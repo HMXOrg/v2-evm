@@ -201,8 +201,8 @@ contract TradeTester is StdAssertions {
   ///       - Global state
   ///         - Reserve value
   function _assertPerpStorage(
-    address _subAccount,
-    PerpStorageExpectedData memory _perpStorageExpectedData,
+    address /* _subAccount */,
+    PerpStorageExpectedData memory /* _perpStorageExpectedData */,
     AssetClassExpectedData memory _assetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData
   ) internal {

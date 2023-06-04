@@ -47,6 +47,8 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     address aliceAddress = getSubAccount(ALICE, 0);
     address bobAddress = getSubAccount(BOB, 0);
+    // shhh compiler
+    bobAddress;
     vaultStorage.increaseTraderBalance(aliceAddress, address(usdt), 100 * 1e6);
 
     vm.warp(100);

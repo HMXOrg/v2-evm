@@ -945,6 +945,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
     // the transaction maintains a secure execution."
     (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
+    // shhh compiler
+    success;
   }
 
   function _min(uint256 x, uint256 y) private pure returns (uint256) {

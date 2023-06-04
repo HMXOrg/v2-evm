@@ -47,7 +47,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint256 _endIndex,
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
-    uint256 _minPublishTime
+    uint256 /* _minPublishTime */
   ) internal {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
@@ -131,7 +131,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint256 _withdrawAmount,
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
-    uint256 _minPublishTime,
+    uint256 /* _minPublishTime */,
     uint256 _executionFee
   ) internal {
     vm.prank(_account);
@@ -198,7 +198,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
     uint256 _minPublishTime,
-    string memory signature
+    string memory /* signature */
   ) internal {
     vm.prank(_account);
     limitTradeHandler.createOrder{ value: executionOrderFee }(
@@ -269,7 +269,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
     uint256 _minPublishTime,
-    string memory signature
+    string memory /* signature */
   ) internal {
     vm.prank(_account);
     limitTradeHandler.createOrder{ value: executionOrderFee }(

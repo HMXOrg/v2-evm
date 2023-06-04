@@ -162,12 +162,12 @@ abstract contract BaseIntTest_SetOracle is BaseIntTest_SetMarkets {
 
   /// @notice setPrices of pyth
   function setPrices(int24[] memory _tickPrices, uint24[] memory _publishTimeDiff) public {
-    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
-    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiff);
     pyth.updatePriceFeeds(priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));
   }
 
-  function updatePriceFeeds(int24[] memory _tickPrices, uint256 publishTime) internal {
+  function updatePriceFeeds(int24[] memory _tickPrices, uint256 /* publishTime */) internal {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     uint24[] memory _publishTimeDiff = new uint24[](_tickPrices.length);
     for (uint256 i = 0; i < _tickPrices.length; i++) {

@@ -17,7 +17,6 @@ contract TC29 is BaseIntTest_WithActions {
     address SUB_ACCOUNT = getSubAccount(ALICE, SUB_ACCOUNT_ID);
     // Make LP contains some liquidity
     {
-      bytes[] memory priceData = new bytes[](0);
       vm.deal(BOB, 1 ether); //deal with out of gas
       wbtc.mint(BOB, 100 * 1e8);
       addLiquidity(BOB, wbtc, 100 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
@@ -86,7 +85,6 @@ contract TC29 is BaseIntTest_WithActions {
     {
       uint256 sellSizeE30 = 2_300_000 * 1e30;
       address tpToken = address(wbtc);
-      bytes[] memory priceData = new bytes[](0);
 
       // ALICE opens SHORT position on with WETH Market Price = 1500 USD
       vm.deal(ALICE, executionOrderFee);
@@ -156,7 +154,6 @@ contract TC29 is BaseIntTest_WithActions {
       // ALICE's position before liquidate must contain 1 position
       IPerpStorage.Position[] memory traderPositionBefore = perpStorage.getPositionBySubAccount(SUB_ACCOUNT);
       assertEq(traderPositionBefore.length, 1);
-      bytes[] memory prices = new bytes[](0);
 
       bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
       bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
@@ -213,7 +210,6 @@ contract TC29 is BaseIntTest_WithActions {
     {
       uint256 buySizeE30 = 3_000 * 1e30;
       address tpToken = address(wbtc); // @note settle with WBTC that be treated as GLP token
-      bytes[] memory priceData = new bytes[](0);
       vm.deal(ALICE, 1 ether);
 
       marketBuy(

@@ -22,6 +22,8 @@ contract DeployLiquidationService is ConfigJsonRepo {
     address vaultStorageAddress = getJsonAddress(".storages.vault");
     address perpStorageAddress = getJsonAddress(".storages.perp");
     address calculatorAddress = getJsonAddress(".calculator");
+    // shhh compiler
+    calculatorAddress;
     address tradeHelperAddress = getJsonAddress(".helpers.trade");
     address liquidationServiceAddress = address(
       Deployer.deployLiquidationService(

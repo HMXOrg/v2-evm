@@ -13,8 +13,6 @@ contract TC05 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
   function testCorrectness_TC05() external {
-    bytes[] memory priceData = new bytes[](0);
-
     // T0: Initialized state
     {
       //deal with out of gas
@@ -67,7 +65,7 @@ contract TC05 is BaseIntTest_WithActions {
       tickPrices[2] = 0; // USDC tick price $1
       tickPrices[6] = 48285; // JPY tick price $125
       // buy
-      bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
+      getPositionId(ALICE, 0, jpyMarketIndex);
       marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     }
 

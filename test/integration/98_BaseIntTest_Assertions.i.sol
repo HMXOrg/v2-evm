@@ -236,6 +236,9 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     int256 _lastFundingAccrued,
     string memory _str
   ) internal {
+    // shhh compiler
+    _lastFundingAccrued;
+
     bytes32 _positionId = keccak256(abi.encodePacked(_subAccount, _marketIndex));
     IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
 
@@ -366,6 +369,9 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _avgPrice,
     string memory _str
   ) internal {
+    // shhh compiler
+    _avgPrice;
+
     IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
     assertApproxEqRel(
@@ -386,6 +392,9 @@ contract BaseIntTest_Assertions is BaseIntTest_SetWhitelist, StdAssertions {
     uint256 _avgPrice,
     string memory _str
   ) internal {
+    // shhh compiler
+    _avgPrice;
+
     IPerpStorage.Market memory _market = perpStorage.getMarketByIndex(_marketIndex);
 
     assertApproxEqRel(

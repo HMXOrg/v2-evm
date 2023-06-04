@@ -146,7 +146,7 @@ contract CrossMarginHandler_Base is BaseTest {
     uint256 _withdrawAmount,
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
-    uint256 _minPublishTime,
+    uint256 /* _minPublishTime */,
     bool _shouldUnwrap
   ) internal {
     vm.deal(ALICE, executionOrderFee);
@@ -176,7 +176,7 @@ contract CrossMarginHandler_Base is BaseTest {
     vm.deal(ALICE, 0.0001 ether);
 
     vm.prank(ALICE);
-    uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: executionOrderFee }(
+    crossMarginHandler.createWithdrawCollateralOrder{ value: executionOrderFee }(
       SUB_ACCOUNT_NO,
       address(weth),
       1 ether,

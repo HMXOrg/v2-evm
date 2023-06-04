@@ -97,6 +97,9 @@ contract TC37 is BaseIntTest_WithActions {
       uint256 devFeesBefore = vaultStorage.devFees(address(wbtc));
       uint256 hlpLiquidityBefore = vaultStorage.hlpLiquidity(address(wbtc));
 
+      // shhh compiler
+      traderBalanceBefore;
+
       liquidate(getSubAccount(ALICE, 0), tickPrices, publishTimeDiff, block.timestamp);
 
       /*

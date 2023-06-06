@@ -64,10 +64,6 @@ const assetConfigs = [
     adapter: config.oracles.pythAdapter,
   },
 ];
-const assetId = ethers.utils.formatBytes32String("GLP");
-const confidenceThreshold = 0; // UNUSED
-const trustPriceAge = 15; // 15 seconds
-const adapter = config.oracles.pythAdapter;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];

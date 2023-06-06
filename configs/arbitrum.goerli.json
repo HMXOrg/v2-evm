@@ -7,7 +7,7 @@
   "handlers": {
     "bot": "0xA962fF080a3157F6d142dB0C6F30feDeA28A4e0C",
     "crossMargin": "0xf43A3bCDB8c9ACa51Dc1f1888252900054e133C7",
-    "limitTrade": "0x4f902Dc505A78C56bAB9b4E5f0cF5f166f6B0B91",
+    "limitTrade": "0x7EeBb2852983Eb7CFa063F3F194dDc2E082f3228",
     "liquidity": "0xE925d634F490F087966DEA677C8167Cf3ba75d68",
     "marketTrade": ""
   },

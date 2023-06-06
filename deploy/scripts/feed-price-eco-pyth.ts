@@ -27,7 +27,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   const priceUpdates = [
-    1, // Placeholder
     1900.02, // ETH
     20000.29, // BTC
     1, // USDC

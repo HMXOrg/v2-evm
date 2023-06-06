@@ -22,60 +22,51 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   let totalPnL = BigNumber.from(0);
   let markets = [BigNumber.from(0), BigNumber.from(0), BigNumber.from(0), BigNumber.from(0)];
   // const blockNumber = 22950890;
-  // for (let i = 0; i < positions.length; i++) {
-  //   const position = positions[i];
-  //   const market = await perpStorage.markets(position.marketIndex, {
-  //     blockTag: blockNumber,
-  //   });
-  //   const marketSkew = market.longPositionSize.sub(market.shortPositionSize);
-  //   const marketConfig = await configStorage.marketConfigs(position.marketIndex, {
-  //     blockTag: blockNumber,
-  //   });
-  //   const closePrice = (
-  //     await oracleMiddleware.unsafeGetLatestAdaptivePriceWithMarketStatus(
-  //       marketConfig.assetId,
-  //       true,
-  //       marketSkew,
-  //       position.positionSizeE30.mul(-1),
-  //       ethers.utils.parseUnits("3000000", 30),
-  //       0,
-  //       {
-  //         blockTag: blockNumber,
-  //       }
-  //     )
-  //   )._adaptivePrice;
-  //   const pnl = getPnL(closePrice, position.avgEntryPriceE30, position.positionSizeE30);
-  //   console.log(position.marketIndex, position.positionSizeE30.gt(0), "PnL", ethers.utils.formatUnits(pnl, 30));
-  //   totalPnL = totalPnL.add(pnl);
-  //   const isLong = position.positionSizeE30.gt(0);
-  //   markets[position.marketIndex.toNumber()] = markets[position.marketIndex.toNumber()].add(pnl);
-  // }
+  for (let i = 0; i < positions.length; i++) {
+    const position = positions[i];
+    const market = await perpStorage.markets(position.marketIndex);
+    const marketSkew = market.longPositionSize.sub(market.shortPositionSize);
+    const marketConfig = await configStorage.marketConfigs(position.marketIndex);
+    const closePrice = (
+      await oracleMiddleware.unsafeGetLatestAdaptivePriceWithMarketStatus(
+        marketConfig.assetId,
+        true,
+        marketSkew,
+        position.positionSizeE30.mul(-1),
+        ethers.utils.parseUnits("3000000", 30),
+        0
+      )
+    )._adaptivePrice;
+    const pnl = getPnL(closePrice, position.avgEntryPriceE30, position.positionSizeE30);
+    console.log(position.marketIndex, position.positionSizeE30.gt(0), "PnL", ethers.utils.formatUnits(pnl, 30));
+    totalPnL = totalPnL.add(pnl);
+  }
   console.log("Loop PnL", ethers.utils.formatUnits(totalPnL, 30));
   console.log("Global PnL", ethers.utils.formatUnits(await calculator.getGlobalPNLE30(), 30));
-  console.log(
-    "Market 0",
-    ethers.utils.formatUnits(markets[0], 30),
-    ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(0, true), 30),
-    ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(0, false), 30)
-  );
-  console.log(
-    "Market 1",
-    ethers.utils.formatUnits(markets[1], 30),
-    ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(1, true), 30),
-    ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(1, false), 30)
-  );
-  console.log(
-    "Market 2",
-    ethers.utils.formatUnits(markets[2], 30),
-    ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(2, true), 30),
-    ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(2, false), 30)
-  );
-  console.log(
-    "Market 3",
-    ethers.utils.formatUnits(markets[3], 30),
-    ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(3, true), 30),
-    ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(3, false), 30)
-  );
+  // console.log(
+  //   "Market 0",
+  //   ethers.utils.formatUnits(markets[0], 30),
+  //   ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(0, true), 30),
+  //   ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(0, false), 30)
+  // );
+  // console.log(
+  //   "Market 1",
+  //   ethers.utils.formatUnits(markets[1], 30),
+  //   ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(1, true), 30),
+  //   ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(1, false), 30)
+  // );
+  // console.log(
+  //   "Market 2",
+  //   ethers.utils.formatUnits(markets[2], 30),
+  //   ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(2, true), 30),
+  //   ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(2, false), 30)
+  // );
+  // console.log(
+  //   "Market 3",
+  //   ethers.utils.formatUnits(markets[3], 30),
+  //   ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(3, true), 30),
+  //   ethers.utils.formatUnits(await calculator.getGlobalMarketPnl(3, false), 30)
+  // );
 };
 
 function getPnL(closePrice: BigNumber, averagePrice: BigNumber, size: BigNumber): BigNumber {

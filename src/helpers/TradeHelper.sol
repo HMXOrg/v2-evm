@@ -416,7 +416,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     _isLong
       ? _updateAccumFundingLong(_marketIndex, -_fundingFee)
       : _updateAccumFundingShort(_marketIndex, -_fundingFee);
-    emit LogSettleFundingFeeValue(_positionId, _subAccount, uint256(_fundingFee));
+    emit LogSettleFundingFeeValue(_positionId, _subAccount, _fundingFee > 0 ? uint256(_fundingFee) : 0);
 
     return (_tradingFee, _borrowingFee, _fundingFee);
   }
@@ -692,7 +692,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
       // Trader repay with just enough current collateral amounts to HLP
       (uint256 _repayAmount, uint256 _repayValue) = _getRepayAmount(
         _vars.payerBalance,
-        _vars.hlpDebt,
+        _vars.fundingFeeToBePaid > _vars.hlpDebt ? _vars.hlpDebt : _vars.fundingFeeToBePaid,
         _vars.tokenPrice,
         _vars.tokenDecimal
       );

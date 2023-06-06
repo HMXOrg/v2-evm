@@ -21,20 +21,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const positions = await perpStorage.getActivePositions(100, 0);
   let totalPnL = BigNumber.from(0);
   let markets = [BigNumber.from(0), BigNumber.from(0), BigNumber.from(0), BigNumber.from(0)];
-  // const blockNumber = 22950890;
+  // const blockTag = { blockTag: 23205839 };
+  const blockTag = {};
   for (let i = 0; i < positions.length; i++) {
     const position = positions[i];
-    const market = await perpStorage.markets(position.marketIndex);
+    const market = await perpStorage.markets(position.marketIndex, blockTag);
     const marketSkew = market.longPositionSize.sub(market.shortPositionSize);
-    const marketConfig = await configStorage.marketConfigs(position.marketIndex);
+    const marketConfig = await configStorage.marketConfigs(position.marketIndex, blockTag);
     const closePrice = (
       await oracleMiddleware.unsafeGetLatestAdaptivePriceWithMarketStatus(
         marketConfig.assetId,
         true,
         marketSkew,
         position.positionSizeE30.mul(-1),
-        ethers.utils.parseUnits("3000000", 30),
-        0
+        ethers.utils.parseUnits("300000000", 30),
+        0,
+        blockTag
       )
     )._adaptivePrice;
     const pnl = getPnL(closePrice, position.avgEntryPriceE30, position.positionSizeE30);
@@ -42,7 +44,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     totalPnL = totalPnL.add(pnl);
   }
   console.log("Loop PnL", ethers.utils.formatUnits(totalPnL, 30));
-  console.log("Global PnL", ethers.utils.formatUnits(await calculator.getGlobalPNLE30(), 30));
+  console.log("Global PnL", ethers.utils.formatUnits(await calculator.getGlobalPNLE30(blockTag), 30));
   // console.log(
   //   "Market 0",
   //   ethers.utils.formatUnits(markets[0], 30),

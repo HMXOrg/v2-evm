@@ -45,6 +45,9 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
   event LogDecreasePosition(
     bytes32 indexed positionId,
+    address primaryAccount,
+    uint8 subAccountId,
+    address subAccount,
     uint256 marketIndex,
     int256 size,
     int256 decreasedSize,
@@ -59,6 +62,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     bytes32 indexed positionId,
     address indexed account,
     uint8 subAccountId,
+    address subAccount,
     uint256 marketIndex,
     address tpToken,
     uint256 closedPositionSize,
@@ -116,21 +120,33 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     int256 realizedPnl;
     int256 unrealizedPnl;
     int256 fundingFee;
-    bool isLongPosition;
-    address subAccount;
     address tpToken;
     bytes32 positionId;
     uint256 nextClosePrice;
     uint256 oldSumSe;
     uint256 oldSumS2e;
     uint256 nextAvgPrice;
+    uint256 marketIndex;
+    uint256 toRealizedPnl;
+    bool isLongPosition;
+    AccountInfo accountInfo;
     // for SLOAD
     Calculator calculator;
     PerpStorage perpStorage;
     ConfigStorage configStorage;
     OracleMiddleware oracle;
     PerpStorage.Position position;
+    PerpStorage.Market market;
+    PerpStorage.GlobalState globalState;
+    PerpStorage.AssetClass assetClass;
   }
+
+  struct AccountInfo {
+    address primaryAccount;
+    uint8 subAccountId;
+    address subAccount;
+  }
+
   struct SettleLossVars {
     uint256 price;
     uint256 collateral;
@@ -492,6 +508,9 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
     ConfigStorage.MarketConfig memory _marketConfig = _vars.configStorage.getMarketConfigByIndex(_marketIndex);
 
+    _vars.accountInfo.primaryAccount = _account;
+    _vars.accountInfo.subAccountId = _subAccountId;
+
     // validates
     {
       // Market active represent the market is still listed on our protocol
@@ -499,8 +518,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     }
 
     // prepare variables
-    _vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
-    _vars.positionId = HMXLib.getPositionId(_vars.subAccount, _marketIndex);
+    _vars.accountInfo.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
+    _vars.positionId = HMXLib.getPositionId(_vars.accountInfo.subAccount, _marketIndex);
     _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
     _vars.isLongPosition = _vars.position.positionSizeE30 > 0;
     _vars.absPositionSizeE30 = uint256(HMXLib.abs(_vars.position.positionSizeE30));
@@ -530,7 +549,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       if (_marketStatus != 2) revert ITradeService_MarketIsClosed();
 
       // check sub account equity is under MMR
-      _subAccountHealthCheck(_vars.subAccount, _limitPriceE30, _marketConfig.assetId);
+      _subAccountHealthCheck(_vars.accountInfo.subAccount, _limitPriceE30, _marketConfig.assetId);
     }
 
     // update position, market, and global market state
@@ -557,10 +576,13 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     _vars.calculator = calculator;
     _vars.perpStorage = PerpStorage(perpStorage);
 
+    _vars.accountInfo.primaryAccount = _account;
+    _vars.accountInfo.subAccountId = _subAccountId;
+
     // prepare variables
     ConfigStorage.MarketConfig memory _marketConfig = _vars.configStorage.getMarketConfigByIndex(_marketIndex);
-    _vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
-    _vars.positionId = HMXLib.getPositionId(_vars.subAccount, _marketIndex);
+    _vars.accountInfo.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
+    _vars.positionId = HMXLib.getPositionId(_vars.accountInfo.subAccount, _marketIndex);
     _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
     _vars.oracle = OracleMiddleware(_vars.configStorage.oracle());
 
@@ -592,7 +614,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       if (_marketConfig.active && _marketStatus != 2) revert ITradeService_MarketIsClosed();
       // check sub account equity is under MMR
       /// @dev no need to derived price on this
-      _subAccountHealthCheck(_vars.subAccount, 0, 0);
+      _subAccountHealthCheck(_vars.accountInfo.subAccount, 0, 0);
     }
 
     // update position, market, and global market state
@@ -605,6 +627,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _vars.positionId,
       _account,
       _subAccountId,
+      _vars.accountInfo.subAccount,
       _marketIndex,
       _tpToken,
       _vars.absPositionSizeE30,
@@ -727,21 +750,22 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // SLOAD
     _temp.tradeHelper = TradeHelper(tradeHelper);
 
+    _vars.marketIndex = _marketIndex;
     {
       // Update borrowing rate
       _temp.tradeHelper.updateBorrowingRate(_marketConfig.assetClass);
 
       // Update funding rate
-      _temp.tradeHelper.updateFundingRate(_marketIndex);
+      _temp.tradeHelper.updateFundingRate(_vars.marketIndex);
 
       (_vars.tradingFee, _vars.borrowingFee, _vars.fundingFee) = _temp.tradeHelper.updateFeeStates(
         _vars.positionId,
-        _vars.subAccount,
+        _vars.accountInfo.subAccount,
         _vars.position,
         _vars.positionSizeE30ToDecrease,
         _marketConfig.increasePositionFeeRateBPS,
         _marketConfig.assetClass,
-        _marketIndex
+        _vars.marketIndex
       );
     }
     _vars.oldSumSe = _vars.absPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30);
@@ -755,7 +779,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _temp.newAbsPositionSizeE30 < ConfigStorage(configStorage).minimumPositionSize()
     ) revert ITradeService_TooTinyPosition();
 
-    PerpStorage.Market memory _market = _vars.perpStorage.getMarketByIndex(_marketIndex);
+    _vars.market = _vars.perpStorage.getMarketByIndex(_vars.marketIndex);
 
     {
       // calculate next close price
@@ -765,7 +789,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       );
 
       _vars.nextClosePrice = _calculateNextClosePrice(
-        _market,
+        _vars.market,
         _marketConfig.fundingRate.maxSkewScaleUSD,
         _vars.oraclePrice,
         _vars.position.positionSizeE30,
@@ -791,13 +815,13 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _isMaxProfit = true;
       }
 
-      uint256 _toRealizedPnl = (delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30;
+      _vars.toRealizedPnl = (delta * _vars.positionSizeE30ToDecrease) / _vars.absPositionSizeE30;
       if (isProfit) {
-        _vars.realizedPnl = int256(_toRealizedPnl);
-        _vars.unrealizedPnl = int256(delta - _toRealizedPnl);
+        _vars.realizedPnl = int256(_vars.toRealizedPnl);
+        _vars.unrealizedPnl = int256(delta - _vars.toRealizedPnl);
       } else {
-        _vars.realizedPnl = -int256(_toRealizedPnl);
-        _vars.unrealizedPnl = -int256(delta - _toRealizedPnl);
+        _vars.realizedPnl = -int256(_vars.toRealizedPnl);
+        _vars.unrealizedPnl = -int256(delta - _vars.toRealizedPnl);
       }
     }
 
@@ -806,22 +830,22 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
      */
     {
       // update global & asset class state
-      PerpStorage.GlobalState memory _globalState = _vars.perpStorage.getGlobalState();
-      PerpStorage.AssetClass memory _assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
+      _vars.globalState = _vars.perpStorage.getGlobalState();
+      _vars.assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
 
       // update global storage
       // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
-      _globalState.reserveValueE30 -=
+      _vars.globalState.reserveValueE30 -=
         (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
         _vars.absPositionSizeE30;
-      _assetClass.reserveValueE30 -=
+      _vars.assetClass.reserveValueE30 -=
         (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
         _vars.absPositionSizeE30;
-      _vars.perpStorage.updateGlobalState(_globalState);
-      _vars.perpStorage.updateAssetClass(_marketConfig.assetClass, _assetClass);
+      _vars.perpStorage.updateGlobalState(_vars.globalState);
+      _vars.perpStorage.updateAssetClass(_marketConfig.assetClass, _vars.assetClass);
 
       // update assetClass state after update reserveValueE30
-      _assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
+      _vars.assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
 
       // partial close position
       if (_temp.newAbsPositionSizeE30 != 0) {
@@ -833,8 +857,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         );
 
         // update position info
-        _vars.position.entryBorrowingRate = _assetClass.sumBorrowingRate;
-        _vars.position.lastFundingAccrued = _market.fundingAccrued;
+        _vars.position.entryBorrowingRate = _vars.assetClass.sumBorrowingRate;
+        _vars.position.lastFundingAccrued = _vars.market.fundingAccrued;
         _vars.position.positionSizeE30 = _vars.isLongPosition
           ? int256(_temp.newAbsPositionSizeE30)
           : -int256(_temp.newAbsPositionSizeE30);
@@ -844,35 +868,35 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
           BPS;
         _vars.position.realizedPnl += _vars.realizedPnl;
 
-        _vars.perpStorage.savePosition(_vars.subAccount, _vars.positionId, _vars.position);
+        _vars.perpStorage.savePosition(_vars.accountInfo.subAccount, _vars.positionId, _vars.position);
       } else {
-        _vars.perpStorage.removePositionFromSubAccount(_vars.subAccount, _vars.positionId);
+        _vars.perpStorage.removePositionFromSubAccount(_vars.accountInfo.subAccount, _vars.positionId);
       }
 
       // update counter trade states
       {
         _vars.isLongPosition
           ? _vars.perpStorage.updateGlobalLongMarketById(
-            _marketIndex,
-            _market.longPositionSize - _vars.positionSizeE30ToDecrease,
+            _vars.marketIndex,
+            _vars.market.longPositionSize - _vars.positionSizeE30ToDecrease,
             _vars.position.avgEntryPriceE30 > 0
-              ? (_market.longAccumSE - _vars.oldSumSe) +
+              ? (_vars.market.longAccumSE - _vars.oldSumSe) +
                 _temp.newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)
               : 0,
             _vars.position.avgEntryPriceE30 > 0
-              ? (_market.longAccumS2E - _vars.oldSumS2e) +
+              ? (_vars.market.longAccumS2E - _vars.oldSumS2e) +
                 _temp.newAbsPositionSizeE30.mulDiv(_temp.newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
               : 0
           )
           : _vars.perpStorage.updateGlobalShortMarketById(
-            _marketIndex,
-            _market.shortPositionSize - _vars.positionSizeE30ToDecrease,
+            _vars.marketIndex,
+            _vars.market.shortPositionSize - _vars.positionSizeE30ToDecrease,
             _vars.position.avgEntryPriceE30 > 0
-              ? (_market.shortAccumSE - _vars.oldSumSe) +
+              ? (_vars.market.shortAccumSE - _vars.oldSumSe) +
                 _temp.newAbsPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30)
               : 0,
             _vars.position.avgEntryPriceE30 > 0
-              ? (_market.shortAccumS2E - _vars.oldSumS2e) +
+              ? (_vars.market.shortAccumS2E - _vars.oldSumS2e) +
                 _temp.newAbsPositionSizeE30.mulDiv(_temp.newAbsPositionSizeE30, _vars.position.avgEntryPriceE30)
               : 0
           );
@@ -884,14 +908,14 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // =======================================
     _temp.tradeHelper.increaseCollateral(
       _vars.positionId,
-      _vars.subAccount,
+      _vars.accountInfo.subAccount,
       _vars.realizedPnl,
       _vars.fundingFee,
       _vars.tpToken
     );
     _temp.tradeHelper.decreaseCollateral(
       _vars.positionId,
-      _vars.subAccount,
+      _vars.accountInfo.subAccount,
       _vars.realizedPnl,
       _vars.fundingFee,
       _vars.borrowingFee,
@@ -903,13 +927,21 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // =========================================
     // | --------- post validation ----------- |
     // =========================================
+    {
+      // check sub account equity is under MMR
+      _subAccountHealthCheck(_vars.accountInfo.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
 
-    // check sub account equity is under MMR
-    _subAccountHealthCheck(_vars.subAccount, _vars.limitPriceE30, _marketConfig.assetId);
+      _logDecreasePosition(_vars);
+    }
+  }
 
+  function _logDecreasePosition(DecreasePositionVars memory _vars) private {
     emit LogDecreasePosition(
       _vars.positionId,
-      _marketIndex,
+      _vars.accountInfo.primaryAccount,
+      _vars.accountInfo.subAccountId,
+      _vars.accountInfo.subAccount,
+      _vars.marketIndex,
       _vars.position.positionSizeE30,
       int256(_vars.positionSizeE30ToDecrease),
       _vars.position.avgEntryPriceE30,

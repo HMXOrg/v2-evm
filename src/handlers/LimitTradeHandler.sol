@@ -5,6 +5,8 @@ pragma solidity 0.8.18;
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
@@ -21,13 +23,16 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 /// @notice This contract handles the create, update, and cancel for the Trading module.
 contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILimitTradeHandler {
   using EnumerableSet for EnumerableSet.UintSet;
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
+
   /**
    * Events
    */
   event LogSetTradeService(address oldValue, address newValue);
-  event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogSetMinExecutionFee(uint64 oldValue, uint64 newValue);
   event LogSetIsAllowAllExecutor(bool oldValue, bool newValue);
-  event LogSetMinExecutionTimestamp(uint256 oldValue, uint256 newValue);
+  event LogSetMinExecutionTimestamp(uint32 oldValue, uint32 newValue);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogSetPyth(address oldValue, address newValue);
   event LogCreateLimitOrder(
@@ -128,22 +133,27 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
    */
   uint8 internal constant BUY = 0;
   uint8 internal constant SELL = 1;
-  uint256 internal constant MAX_EXECUTION_FEE = 5 ether;
+  uint64 internal constant MAX_EXECUTION_FEE = 5 ether;
 
   /**
    * States
    */
+  IEcoPyth public pyth;
   address public weth;
   address public tradeService;
-  IEcoPyth public pyth;
-  uint256 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
-  uint256 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on order stale
+  address private senderOverride;
+
+  uint64 public minExecutionFee; // Minimum execution fee to be collected by the order executor addresses for gas
+  uint32 public minExecutionTimestamp; // Minimum execution timestamp using on market order to validate on order stale
   bool public isAllowAllExecutor; // If this is true, everyone can execute limit orders
+  bool public isGuaranteeLimitPrice; // If this is ture, Gurantee Limit Price feature will be turned on. Limit Price set by orders will be used instead of the current Oracle Price.
+
   mapping(address => bool) public orderExecutors; // The allowed addresses to execute limit orders
   mapping(address => mapping(uint256 => LimitOrder)) public limitOrders; // Array of Limit Orders of each sub-account
   mapping(address => uint256) public limitOrdersIndex; // The last limit order index of each sub-account
-  bool public isGuaranteeLimitPrice;
+  mapping(address => address) public delegations; // The mapping of mainAccount => Smart Wallet to be used for Account Abstraction
 
+  // Pointers
   EnumerableSet.UintSet private activeOrderPointers;
   EnumerableSet.UintSet private activeMarketOrderPointers;
   EnumerableSet.UintSet private activeLimitOrderPointers;
@@ -152,43 +162,36 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   mapping(address => EnumerableSet.UintSet) private subAccountActiveMarketOrderPointers;
   mapping(address => EnumerableSet.UintSet) private subAccountActiveLimitOrderPointers;
 
-  mapping(address => address) public delegations;
-  address private senderOverride;
-
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _weth Address of WETH.
   /// @param _tradeService Address of the TradeService contract.
   /// @param _pyth Address of the Pyth contract.
   /// @param _minExecutionFee Minimum execution fee for a trading order.
+  /// @param _minExecutionTimestamp If the order lives longer than this config, the order is stale and should be cancelled.
   function initialize(
     address _weth,
     address _tradeService,
     address _pyth,
-    uint256 _minExecutionFee,
-    uint256 _minExecutionTimestamp
+    uint64 _minExecutionFee,
+    uint32 _minExecutionTimestamp
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
-    // Sanity check
-    TradeService(_tradeService).perpStorage();
-    IEcoPyth(_pyth).getAssetIds();
     if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
 
     minExecutionFee = _minExecutionFee;
+    minExecutionTimestamp = _minExecutionTimestamp;
     weth = _weth;
     tradeService = _tradeService;
     pyth = IEcoPyth(_pyth);
     isAllowAllExecutor = false;
     isGuaranteeLimitPrice = false;
 
-    if (_minExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
-    minExecutionFee = _minExecutionFee;
-    minExecutionTimestamp = _minExecutionTimestamp;
-
+    // Sanity check
     // slither-disable-next-line unused-return
     TradeService(_tradeService).perpStorage();
-    // @todo sanity check ecopyth
+    IEcoPyth(_pyth).getAssetIds();
   }
 
   receive() external payable {
@@ -301,7 +304,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address _tpToken
   ) internal {
     // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
-    if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
+    if (_executionFee < uint256(minExecutionFee)) revert ILimitTradeHandler_InsufficientExecutionFee();
     // The attached native token must be equal to _executionFee
     if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
 
@@ -309,7 +312,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _transferInETH();
 
     // Get the sub-account and order index for the limit order
-    address _subAccount = _getSubAccount(_msgSender(), _subAccountId);
+    address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
 
     // Create the limit order
@@ -360,13 +363,16 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint8 _subAccountId,
     uint256 _orderIndex,
     address payable _feeReceiver,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
+    bytes32[] calldata _priceData,
+    bytes32[] calldata _publishTimeData,
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
+    // Update price to Pyth
+    pyth.updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+
     ExecuteOrderVars memory vars;
-    vars.subAccount = _getSubAccount(_account, _subAccountId);
+    vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
     vars.order = limitOrders[vars.subAccount][_orderIndex];
 
     // Check if this order still exists
@@ -381,7 +387,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     vars.isMarketOrder = vars.order.triggerAboveThreshold && vars.order.triggerPrice == 0;
 
     // Check if the order is a market order and is stale
-    if (vars.isMarketOrder && block.timestamp > vars.order.createdTimestamp + minExecutionTimestamp) {
+    if (vars.isMarketOrder && block.timestamp > vars.order.createdTimestamp + uint256(minExecutionTimestamp)) {
       _cancelOrder(vars.order, vars.subAccount, vars.orderIndex);
       return;
     }
@@ -426,13 +432,14 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   function executeLimitOrder(ExecuteOrderVars memory vars) external {
     // if not in executing state, then revert
-    if (msg.sender != address(this)) revert ILimitTradeHandler_NotExecutionState();
+    if (msg.sender != address(this)) revert ILimitTradeHandler_Unauthorized();
+
+    // SLOADs
+    TradeService _tradeService = TradeService(tradeService);
+    bool _isGuaranteeLimitPrice = isGuaranteeLimitPrice;
 
     // Remove this executed order from the list
     _removeOrder(vars.order, vars.subAccount, vars.orderIndex);
-
-    // Update price to Pyth
-    pyth.updatePriceFeeds(vars.priceData, vars.publishTimeData, vars.minPublishTime, vars.encodedVaas);
 
     // Validate if the current price is valid for the execution of this order
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
@@ -441,14 +448,14 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       vars.order.acceptablePrice,
       vars.order.marketIndex,
       vars.order.sizeDelta,
-      vars.order.sizeDelta > 0,
-      true
+      vars.order.sizeDelta > 0
     );
 
     // Retrieve existing position
-    vars.positionId = _getPositionId(vars.subAccount, vars.order.marketIndex);
-    PerpStorage.Position memory _existingPosition = PerpStorage(TradeService(tradeService).perpStorage())
-      .getPositionById(vars.positionId);
+    vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.order.marketIndex);
+    PerpStorage.Position memory _existingPosition = PerpStorage(_tradeService.perpStorage()).getPositionById(
+      vars.positionId
+    );
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
@@ -458,37 +465,37 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       if (vars.isNewPosition || vars.positionIsLong) {
         // New position and Long position
         // just increase position when BUY
-        TradeService(tradeService).increasePosition({
+        _tradeService.increasePosition({
           _primaryAccount: vars.order.account,
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-          _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+          _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
         });
       } else if (!vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
         if (_flipSide) {
           // Flip the position
           // Fully close Short position
-          TradeService(tradeService).decreasePosition({
+          _tradeService.decreasePosition({
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
           // Flip it to Long position
-          TradeService(tradeService).increasePosition({
+          _tradeService.increasePosition({
             _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         } else {
           // Not flip
-          TradeService(tradeService).decreasePosition({
+          _tradeService.decreasePosition({
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -497,7 +504,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               uint256(-_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         }
       }
@@ -506,37 +513,37 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       if (vars.isNewPosition || !vars.positionIsLong) {
         // New position and Short position
         // just increase position when SELL
-        TradeService(tradeService).increasePosition({
+        _tradeService.increasePosition({
           _primaryAccount: vars.order.account,
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
           _sizeDelta: vars.order.sizeDelta,
-          _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+          _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
         });
       } else if (vars.positionIsLong) {
         bool _flipSide = !vars.order.reduceOnly && (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
         if (_flipSide) {
           // Flip the position
           // Fully close Long position
-          TradeService(tradeService).decreasePosition({
+          _tradeService.decreasePosition({
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
           // Flip it to Short position
-          TradeService(tradeService).increasePosition({
+          _tradeService.increasePosition({
             _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
             _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         } else {
           // Not flip
-          TradeService(tradeService).decreasePosition({
+          _tradeService.decreasePosition({
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
@@ -545,7 +552,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
               uint256(_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
-            _limitPriceE30: isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         }
       }
@@ -577,7 +584,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint8 _subAccountId,
     uint256 _orderIndex
   ) external nonReentrant delegate(_mainAccount) {
-    address subAccount = _getSubAccount(_msgSender(), _subAccountId);
+    address subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     LimitOrder memory _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
@@ -624,7 +631,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool _reduceOnly,
     address _tpToken
   ) external nonReentrant delegate(_mainAccount) {
-    address subAccount = _getSubAccount(_msgSender(), _subAccountId);
+    address subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
@@ -649,14 +656,14 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     _order.tpToken = _tpToken;
 
     emit LogUpdateLimitOrder(
-      _order.account,
-      _order.subAccountId,
+      _mainAccount,
+      _subAccountId,
       _orderIndex,
-      _order.sizeDelta,
-      _order.triggerPrice,
-      _order.triggerAboveThreshold,
-      _order.reduceOnly,
-      _order.tpToken
+      _sizeDelta,
+      _triggerPrice,
+      _triggerAboveThreshold,
+      _reduceOnly,
+      _tpToken
     );
   }
 
@@ -797,7 +804,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   /// @notice setMinExecutionFee
   /// @param _newMinExecutionFee minExecutionFee in ethers
-  function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
+  function setMinExecutionFee(uint64 _newMinExecutionFee) external nonReentrant onlyOwner {
     if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;
@@ -808,7 +815,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     isAllowAllExecutor = _isAllow;
   }
 
-  function setMinExecutionTimestamp(uint256 _newMinExecutionTimestamp) external onlyOwner {
+  function setMinExecutionTimestamp(uint32 _newMinExecutionTimestamp) external onlyOwner {
     emit LogSetMinExecutionTimestamp(minExecutionTimestamp, _newMinExecutionTimestamp);
     minExecutionTimestamp = _newMinExecutionTimestamp;
   }
@@ -837,40 +844,28 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
    * Private Functions
    */
 
-  /// @notice Derive sub-account from primary account and sub-account id
-  function _getSubAccount(address primary, uint8 subAccountId) private pure returns (address) {
-    if (subAccountId > 255) revert ILimitTradeHandler_BadSubAccountId();
-    return address(uint160(primary) ^ uint160(subAccountId));
-  }
-
-  /// @notice Derive positionId from sub-account and market index
-  function _getPositionId(address _subAccount, uint256 _marketIndex) private pure returns (bytes32) {
-    return keccak256(abi.encodePacked(_subAccount, _marketIndex));
-  }
-
   function _validatePositionOrderPrice(
     bool _triggerAboveThreshold,
     uint256 _triggerPrice,
     uint256 _acceptablePrice,
     uint256 _marketIndex,
     int256 _sizeDelta,
-    bool _maximizePrice,
-    bool _revertOnError
+    bool _maximizePrice
   ) private view returns (uint256, bool) {
     ValidatePositionOrderPriceVars memory vars;
 
+    // SLOADs
     // Get price from Pyth
-    vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
-    vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
+    TradeService _tradeService = TradeService(tradeService);
+    vars.marketConfig = ConfigStorage(_tradeService.configStorage()).getMarketConfigByIndex(_marketIndex);
+    vars.oracle = OracleMiddleware(ConfigStorage(_tradeService.configStorage()).oracle());
+    vars.globalMarket = PerpStorage(_tradeService.perpStorage()).getMarketByIndex(_marketIndex);
 
     // Validate trigger price with oracle price
     (vars.oraclePrice, ) = vars.oracle.getLatestPrice(vars.marketConfig.assetId, true);
     vars.isPriceValid = _triggerAboveThreshold ? vars.oraclePrice > _triggerPrice : vars.oraclePrice < _triggerPrice;
 
-    if (_revertOnError) {
-      if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
-    }
+    if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
 
     // Validate acceptable price with adaptive price
     (vars.adaptivePrice, , vars.marketStatus) = vars.oracle.getLatestAdaptivePriceWithMarketStatus(
@@ -883,18 +878,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     );
 
     // Validate market status
-    if (vars.marketStatus != 2) {
-      if (_revertOnError) revert ILimitTradeHandler_MarketIsClosed();
-      else return (vars.adaptivePrice, false);
-    }
+    if (vars.marketStatus != 2) revert ILimitTradeHandler_MarketIsClosed();
 
     // Validate price is executable
     bool isBuy = _sizeDelta > 0;
     vars.isPriceValid = isBuy ? vars.adaptivePrice < _acceptablePrice : vars.adaptivePrice > _acceptablePrice;
 
-    if (_revertOnError) {
-      if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
-    }
+    if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
 
     return (vars.adaptivePrice, vars.isPriceValid);
   }
@@ -907,13 +897,15 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool _maximizePrice
   ) private view {
     if (_sizeDelta == 0) revert ILimitTradeHandler_BadSizeDelta();
-
+    // SLOAD
+    TradeService _tradeService = TradeService(tradeService);
+    ConfigStorage _configStorage = ConfigStorage(_tradeService.configStorage());
     ValidatePositionOrderPriceVars memory vars;
 
     // Get price from Pyth
-    vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
-    vars.oracle = OracleMiddleware(ConfigStorage(TradeService(tradeService).configStorage()).oracle());
-    vars.globalMarket = PerpStorage(TradeService(tradeService).perpStorage()).getMarketByIndex(_marketIndex);
+    vars.marketConfig = _configStorage.getMarketConfigByIndex(_marketIndex);
+    vars.oracle = OracleMiddleware(_configStorage.oracle());
+    vars.globalMarket = PerpStorage(_tradeService.perpStorage()).getMarketByIndex(_marketIndex);
 
     (uint256 _currentPrice, , ) = vars.oracle.unsafeGetLatestAdaptivePriceWithMarketStatus(
       vars.marketConfig.assetId,
@@ -948,7 +940,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
     IWNative(weth).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
-    payable(_receiver).transfer(_amountOut);
+    // To mitigate potential attacks, the call method is utilized,
+    // allowing the contract to bypass any revert calls from the destination address.
+    // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
+    // the transaction maintains a secure execution."
+    (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
+    // shhh compiler
+    success;
   }
 
   function _min(uint256 x, uint256 y) private pure returns (uint256) {

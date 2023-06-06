@@ -6,7 +6,7 @@ import {
   OracleMiddleware__factory,
   VaultStorage__factory,
   ERC20__factory,
-  PLPv2__factory,
+  HLP__factory,
   PerpStorage__factory,
   ConfigStorage__factory,
 } from "../../typechain";
@@ -52,7 +52,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("=== Wallet Balances ===");
   console.table([
     {
-      token: "plp",
+      token: "hlp",
       balance: formatUnits(balances[1][config.tokens.hlp].toString(), 18),
     },
     {
@@ -195,9 +195,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "getLatestPrice",
       args: [glpAssetId, false],
     },
-    // PLP
+    // HLP
     {
-      interface: PLPv2__factory.abi,
+      interface: HLP__factory.abi,
       target: config.tokens.hlp,
       function: "totalSupply",
       args: [],
@@ -211,44 +211,44 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getPLPValueE30",
+      function: "getHLPValueE30",
       args: [true],
     },
-    // PLP Liquidity
+    // HLP Liquidity
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "plpLiquidity",
+      function: "hlpLiquidity",
       args: [config.tokens.usdc],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "plpLiquidity",
+      function: "hlpLiquidity",
       args: [config.tokens.usdt],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "plpLiquidity",
+      function: "hlpLiquidity",
       args: [config.tokens.dai],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "plpLiquidity",
+      function: "hlpLiquidity",
       args: [config.tokens.weth],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "plpLiquidity",
+      function: "hlpLiquidity",
       args: [config.tokens.wbtc],
     },
     {
       interface: VaultStorage__factory.abi,
       target: config.storages.vault,
-      function: "plpLiquidity",
+      function: "hlpLiquidity",
       args: [config.tokens.sglp],
     },
     // Global Markets
@@ -330,15 +330,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       applePrice,
       jpyPrice,
       sglpPrice,
-      plpTotalSupply,
-      plpAum,
-      plpTvl,
-      plpLiquidityUsdc,
-      plpLiquidityUsdt,
-      plpLiquidityDai,
-      plpLiquidityWeth,
-      plpLiquidityWbtc,
-      plpLiquiditySglp,
+      hlpTotalSupply,
+      hlpAum,
+      hlpTvl,
+      hlpLiquidityUsdc,
+      hlpLiquidityUsdt,
+      hlpLiquidityDai,
+      hlpLiquidityWeth,
+      hlpLiquidityWbtc,
+      hlpLiquiditySglp,
       ethusdMarket,
       btcusdMarket,
       applusdMarket,
@@ -609,18 +609,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   console.log("=== Trader Tokens ===");
   console.log(traderTokens);
-  console.log("=== PLP ===");
+  console.log("=== HLP ===");
   console.table({
-    plpTotalSupply: formatUnits(plpTotalSupply, 18),
-    plpAum: plpAum ? formatUnits(plpAum, 30) : 0,
-    plpPrice:
-      plpAum && plpAum.gt(0) ? formatUnits(plpAum.mul(ethers.utils.parseEther("1")).div(plpTotalSupply), 30) : 0,
-    usdc: formatUnits(plpLiquidityUsdc, 6),
-    usdt: formatUnits(plpLiquidityUsdt, 6),
-    dai: formatUnits(plpLiquidityDai, 18),
-    weth: formatUnits(plpLiquidityWeth, 18),
-    wbtc: formatUnits(plpLiquidityWbtc, 8),
-    sglp: formatUnits(plpLiquiditySglp, 18),
+    hlpTotalSupply: formatUnits(hlpTotalSupply, 18),
+    hlpAum: hlpAum ? formatUnits(hlpAum, 30) : 0,
+    hlpPrice:
+      hlpAum && hlpAum.gt(0) ? formatUnits(hlpAum.mul(ethers.utils.parseEther("1")).div(hlpTotalSupply), 30) : 0,
+    usdc: formatUnits(hlpLiquidityUsdc, 6),
+    usdt: formatUnits(hlpLiquidityUsdt, 6),
+    dai: formatUnits(hlpLiquidityDai, 18),
+    weth: formatUnits(hlpLiquidityWeth, 18),
+    wbtc: formatUnits(hlpLiquidityWbtc, 8),
+    sglp: formatUnits(hlpLiquiditySglp, 18),
   });
   console.log("=== Asset Class ====");
   console.table({
@@ -679,9 +679,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 
   const markets = [ethusdMarket, btcusdMarket, applusdMarket, jpyusdMarket];
-  const [rawEthPrice, rawBtcPrice, rawUsdcPrice, rawUsdtPrice, rawDaiPrice, rawAAPLPrice, rawJpyPrice] =
+  const [rawEthPrice, rawBtcPrice, rawUsdcPrice, rawUsdtPrice, rawDaiPrice, rawAAHLPrice, rawJpyPrice] =
     await getPricesFromPyth();
-  const oraclePrices = [rawEthPrice, rawBtcPrice, rawAAPLPrice, 1 / rawJpyPrice];
+  const oraclePrices = [rawEthPrice, rawBtcPrice, rawAAHLPrice, rawJpyPrice];
   const marketConfigs = [ethusdMarketConfig, btcusdMarketConfig, applusdMarketConfig, jpyusdMarketConfig];
   const globalAssetClasses = [cryptoGlobalAssetClass, equityGlobalAssetClass, forexGlobalAssetClass];
 
@@ -690,19 +690,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getNextBorrowingRate",
-      args: [0, plpTvl || 0],
+      args: [0, hlpTvl || 0],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getNextBorrowingRate",
-      args: [1, plpTvl || 0],
+      args: [1, hlpTvl || 0],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
       function: "getNextBorrowingRate",
-      args: [2, plpTvl || 0],
+      args: [2, hlpTvl || 0],
     },
   ];
   const [, nextBorrowingRates] = await multi.multiCall(nextBorrowingRateInputs);
@@ -710,25 +710,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [0],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [1],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [2],
     },
     {
       interface: Calculator__factory.abi,
       target: config.calculator,
-      function: "getNextFundingRate",
+      function: "getFundingRateVelocity",
       args: [3],
     },
   ];
@@ -753,7 +753,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
       const fundingFee = markets[marketIndex].currentFundingRate
         .add(nextFundingRates[marketIndex])
-        .sub(each.entryFundingRate)
+        .sub(each.lastFundingAccrued)
         .mul(each.positionSizeE30.abs())
         .div(parseUnits("1", 18))
         .mul(each.positionSizeE30.gt(0) ? -1 : 1);

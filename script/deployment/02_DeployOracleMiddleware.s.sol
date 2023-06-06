@@ -15,8 +15,9 @@ contract DeployOracleMiddleware is ConfigJsonRepo {
     uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
     vm.startBroadcast(deployerPrivateKey);
     address proxyAdmin = getJsonAddress(".proxyAdmin");
+    uint256 maxTrustPriceAge = 365 days;
 
-    address oracleMiddlewareAddress = address(Deployer.deployOracleMiddleware(address(proxyAdmin)));
+    address oracleMiddlewareAddress = address(Deployer.deployOracleMiddleware(address(proxyAdmin), maxTrustPriceAge));
 
     vm.stopBroadcast();
 

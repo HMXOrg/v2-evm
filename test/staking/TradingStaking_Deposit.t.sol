@@ -28,7 +28,7 @@ contract TradingStaking_Deposit is TradingStaking_Base {
     // after 1 hours
     vm.warp(block.timestamp + 1 hours);
 
-    // Alice deposit 100 PLP
+    // Alice deposit 100 HLP
     tradingStaking.deposit(ALICE, ethMarketIndex, 100 * 1e30);
 
     assertEq(tradingStaking.getUserTokenAmount(ethMarketIndex, ALICE), 200 * 1e30);
@@ -143,7 +143,7 @@ contract TradingStaking_Deposit is TradingStaking_Base {
     // after 8 days
     vm.warp(block.timestamp + 8 days);
 
-    // Alice deposits 100 PLP
+    // Alice deposits 100 HLP
     tradingStaking.deposit(ALICE, ethMarketIndex, 100 * 1e30);
 
     assertEq(ethMarketRewarder.accRewardPerShare(), 0);
@@ -151,7 +151,7 @@ contract TradingStaking_Deposit is TradingStaking_Base {
     assertEq(ethMarketRewarder.lastRewardTime(), 691201);
     assertEq(ethMarketRewarder.pendingReward(ALICE), 604800 ether);
 
-    // Bob deposits 100 PLP
+    // Bob deposits 100 HLP
     tradingStaking.deposit(BOB, ethMarketIndex, 100 * 1e30);
 
     // 7 days * 1 / 100 = 6048
@@ -178,7 +178,7 @@ contract TradingStaking_Deposit is TradingStaking_Base {
     // after 4 days
     vm.warp(block.timestamp + 4 days);
 
-    // Alice deposits 100 PLP
+    // Alice deposits 100 HLP
     tradingStaking.deposit(ALICE, ethMarketIndex, 100 * 1e30);
 
     assertEq(ethMarketRewarder.accRewardPerShare(), 0);
@@ -191,7 +191,7 @@ contract TradingStaking_Deposit is TradingStaking_Base {
     // 7 days * 1 * 100 / 100 = 604800
     assertEq(ethMarketRewarder.pendingReward(ALICE), 604800 ether);
 
-    // Bob deposits 100 PLP
+    // Bob deposits 100 HLP
     tradingStaking.deposit(BOB, ethMarketIndex, 100 * 1e30);
 
     assertEq(ethMarketRewarder.pendingReward(BOB), 0);
@@ -203,7 +203,7 @@ contract TradingStaking_Deposit is TradingStaking_Base {
     // after 1 hours
     vm.warp(block.timestamp + 1 hours);
 
-    // Alice deposits 100 PLP
+    // Alice deposits 100 HLP
     tradingStaking.deposit(ALICE, ethMarketIndex, 100 * 1e30);
 
     assertEq(ethMarketRewarder.pendingReward(ALICE), 604800 ether);

@@ -5,7 +5,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 

@@ -5,6 +5,7 @@ pragma solidity 0.8.18;
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
 // Interfaces
 import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
@@ -15,6 +16,7 @@ import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
 /// @notice storage contract to keep configs
 contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   using SafeERC20Upgradeable for ERC20Upgradeable;
+  using AddressUpgradeable for address;
 
   /**
    * Events
@@ -22,7 +24,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetServiceExecutor(address indexed contractAddress, address executorAddress, bool isServiceExecutor);
   event LogSetCalculator(address indexed oldCalculator, address newCalculator);
   event LogSetOracle(address indexed oldOracle, address newOracle);
-  event LogSetPLP(address indexed oldPlp, address newPlp);
+  event LogSetHLP(address indexed oldHlp, address newHlp);
   event LogSetLiquidityConfig(LiquidityConfig indexed oldLiquidityConfig, LiquidityConfig newLiquidityConfig);
   event LogSetDynamicEnabled(bool enabled);
   event LogSetPnlFactor(uint32 oldPnlFactorBPS, uint32 newPnlFactorBPS);
@@ -30,7 +32,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogSetTradingConfig(TradingConfig indexed oldConfig, TradingConfig newConfig);
   event LogSetLiquidationConfig(LiquidationConfig indexed oldConfig, LiquidationConfig newConfig);
   event LogSetMarketConfig(uint256 marketIndex, MarketConfig oldConfig, MarketConfig newConfig);
-  event LogSetPlpTokenConfig(address token, PLPTokenConfig oldConfig, PLPTokenConfig newConfig);
+  event LogSetHlpTokenConfig(address token, HLPTokenConfig oldConfig, HLPTokenConfig newConfig);
   event LogSetCollateralTokenConfig(bytes32 assetId, CollateralTokenConfig oldConfig, CollateralTokenConfig newConfig);
   event LogSetAssetConfig(bytes32 assetId, AssetConfig oldConfig, AssetConfig newConfig);
   event LogSetToken(address indexed oldToken, address newToken);
@@ -42,13 +44,14 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogAddMarketConfig(uint256 index, MarketConfig newConfig);
   event LogRemoveUnderlying(address token);
   event LogDelistMarket(uint256 marketIndex);
-  event LogAddOrUpdatePLPTokenConfigs(address _token, PLPTokenConfig _config, PLPTokenConfig _newConfig);
+  event LogAddOrUpdateHLPTokenConfigs(address _token, HLPTokenConfig _config, HLPTokenConfig _newConfig);
+  event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
 
   /**
    * Constants
    */
-  address public constant ITERABLE_ADDRESS_LIST_START = address(1);
-  address public constant ITERABLE_ADDRESS_LIST_END = address(1);
+  uint256 public constant BPS = 1e4;
+  uint256 public constant MAX_FEE_BPS = 0.3 * 1e4; // 30%
 
   /**
    * States
@@ -63,7 +66,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
   address public calculator;
   address public oracle;
-  address public plp;
+  address public hlp;
   address public treasury;
   uint32 public pnlFactorBPS; // factor that calculate unrealized PnL after collateral factor
   uint256 public minimumPositionSize;
@@ -74,9 +77,9 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(address => bytes32) public tokenAssetIds;
   // Asset ID => Configs
   mapping(bytes32 => AssetConfig) public assetConfigs;
-  // PLP stuff
-  bytes32[] public plpAssetIds;
-  mapping(bytes32 => PLPTokenConfig) public assetPlpTokenConfigs;
+  // HLP stuff
+  bytes32[] public hlpAssetIds;
+  mapping(bytes32 => HLPTokenConfig) public assetHlpTokenConfigs;
   // Cross margin
   bytes32[] public collateralAssetIds;
   mapping(bytes32 => CollateralTokenConfig) public assetCollateralTokenConfigs;
@@ -111,7 +114,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   }
 
   function validateAcceptedLiquidityToken(address _token) external view {
-    if (!assetPlpTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedLiquidity();
+    if (!assetHlpTokenConfigs[tokenAssetIds[_token]].accepted) revert IConfigStorage_NotAcceptedLiquidity();
   }
 
   /// @notice Validate only accepted token to be deposit/withdraw as collateral token.
@@ -168,11 +171,13 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     return assetClassConfigs.length;
   }
 
-  function getPlpTokens() external view returns (address[] memory) {
-    address[] memory _result = new address[](plpAssetIds.length);
+  function getHlpTokens() external view returns (address[] memory) {
+    address[] memory _result = new address[](hlpAssetIds.length);
+    bytes32[] memory _hlpAssetIds = hlpAssetIds;
 
-    for (uint256 _i = 0; _i < plpAssetIds.length; ) {
-      _result[_i] = assetConfigs[plpAssetIds[_i]].tokenAddress;
+    uint256 len = _hlpAssetIds.length;
+    for (uint256 _i = 0; _i < len; ) {
+      _result[_i] = assetConfigs[_hlpAssetIds[_i]].tokenAddress;
       unchecked {
         ++_i;
       }
@@ -206,16 +211,16 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     return assetConfigs[_assetId];
   }
 
-  function getAssetPlpTokenConfig(bytes32 _assetId) external view returns (PLPTokenConfig memory) {
-    return assetPlpTokenConfigs[_assetId];
+  function getAssetHlpTokenConfig(bytes32 _assetId) external view returns (HLPTokenConfig memory) {
+    return assetHlpTokenConfigs[_assetId];
   }
 
-  function getAssetPlpTokenConfigByToken(address _token) external view returns (PLPTokenConfig memory) {
-    return assetPlpTokenConfigs[tokenAssetIds[_token]];
+  function getAssetHlpTokenConfigByToken(address _token) external view returns (HLPTokenConfig memory) {
+    return assetHlpTokenConfigs[tokenAssetIds[_token]];
   }
 
-  function getPlpAssetIds() external view returns (bytes32[] memory) {
-    return plpAssetIds;
+  function getHlpAssetIds() external view returns (bytes32[] memory) {
+    return hlpAssetIds;
   }
 
   function getTradeServiceHooks() external view returns (address[] memory) {
@@ -236,10 +241,6 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     minimumPositionSize = _minimumPositionSize;
   }
 
-  function setPlpAssetId(bytes32[] memory _plpAssetIds) external onlyOwner {
-    plpAssetIds = _plpAssetIds;
-  }
-
   function setCalculator(address _calculator) external onlyOwner {
     emit LogSetCalculator(calculator, _calculator);
     calculator = _calculator;
@@ -256,16 +257,34 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     IOracleMiddleware(_oracle).isUpdater(_oracle);
   }
 
-  function setPLP(address _plp) external onlyOwner {
-    if (_plp == address(0)) revert IConfigStorage_InvalidAddress();
-    emit LogSetPLP(plp, _plp);
+  function setHLP(address _hlp) external onlyOwner {
+    if (_hlp == address(0)) revert IConfigStorage_InvalidAddress();
+    emit LogSetHLP(hlp, _hlp);
 
-    plp = _plp;
+    hlp = _hlp;
   }
 
-  function setLiquidityConfig(LiquidityConfig memory _liquidityConfig) external onlyOwner {
+  function setLiquidityConfig(LiquidityConfig calldata _liquidityConfig) external onlyOwner {
+    if (
+      _liquidityConfig.taxFeeRateBPS > MAX_FEE_BPS ||
+      _liquidityConfig.flashLoanFeeRateBPS > MAX_FEE_BPS ||
+      _liquidityConfig.depositFeeRateBPS > MAX_FEE_BPS ||
+      _liquidityConfig.withdrawFeeRateBPS > MAX_FEE_BPS
+    ) revert IConfigStorage_MaxFeeBps();
+    if (_liquidityConfig.maxHLPUtilizationBPS > BPS) revert IConfigStorage_ExceedLimitSetting();
     emit LogSetLiquidityConfig(liquidityConfig, _liquidityConfig);
     liquidityConfig = _liquidityConfig;
+
+    uint256 hlpTotalTokenWeight = 0;
+    for (uint256 i = 0; i < hlpAssetIds.length; ) {
+      hlpTotalTokenWeight += assetHlpTokenConfigs[hlpAssetIds[i]].targetWeight;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    liquidityConfig.hlpTotalTokenWeight = hlpTotalTokenWeight;
   }
 
   function setLiquidityEnabled(bool _enabled) external onlyWhitelistedExecutor {
@@ -283,9 +302,35 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     address _executorAddress,
     bool _isServiceExecutor
   ) external onlyOwner {
-    if (_contractAddress == address(0) || _executorAddress == address(0)) revert IConfigStorage_InvalidAddress();
+    _setServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
+  }
+
+  function _setServiceExecutor(address _contractAddress, address _executorAddress, bool _isServiceExecutor) internal {
+    if (
+      _contractAddress == address(0) ||
+      _executorAddress == address(0) ||
+      !_contractAddress.isContract() ||
+      !_executorAddress.isContract()
+    ) revert IConfigStorage_InvalidAddress();
     serviceExecutors[_contractAddress][_executorAddress] = _isServiceExecutor;
     emit LogSetServiceExecutor(_contractAddress, _executorAddress, _isServiceExecutor);
+  }
+
+  function setServiceExecutors(
+    address[] calldata _contractAddresses,
+    address[] calldata _executorAddresses,
+    bool[] calldata _isServiceExecutors
+  ) external onlyOwner {
+    if (
+      _contractAddresses.length != _executorAddresses.length && _executorAddresses.length != _isServiceExecutors.length
+    ) revert IConfigStorage_BadArgs();
+
+    for (uint256 i = 0; i < _contractAddresses.length; ) {
+      _setServiceExecutor(_contractAddresses[i], _executorAddresses[i], _isServiceExecutors[i]);
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   function setPnlFactor(uint32 _pnlFactorBPS) external onlyOwner {
@@ -293,53 +338,85 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     pnlFactorBPS = _pnlFactorBPS;
   }
 
-  function setSwapConfig(SwapConfig memory _newConfig) external onlyOwner {
+  function setSwapConfig(SwapConfig calldata _newConfig) external onlyOwner {
     emit LogSetSwapConfig(swapConfig, _newConfig);
     swapConfig = _newConfig;
   }
 
-  function setTradingConfig(TradingConfig memory _newConfig) external onlyOwner {
+  function setTradingConfig(TradingConfig calldata _newConfig) external onlyOwner {
+    if (_newConfig.fundingInterval == 0 || _newConfig.devFeeRateBPS > MAX_FEE_BPS)
+      revert IConfigStorage_ExceedLimitSetting();
     emit LogSetTradingConfig(tradingConfig, _newConfig);
     tradingConfig = _newConfig;
   }
 
-  function setLiquidationConfig(LiquidationConfig memory _newConfig) external onlyOwner {
+  function setLiquidationConfig(LiquidationConfig calldata _newConfig) external onlyOwner {
     emit LogSetLiquidationConfig(liquidationConfig, _newConfig);
     liquidationConfig = _newConfig;
   }
 
   function setMarketConfig(
     uint256 _marketIndex,
-    MarketConfig memory _newConfig
+    MarketConfig calldata _newConfig
   ) external onlyOwner returns (MarketConfig memory _marketConfig) {
+    if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
+      revert IConfigStorage_MaxFeeBps();
+    if (_newConfig.assetClass > assetClassConfigs.length - 1) revert IConfigStorage_InvalidAssetClass();
+    if (_newConfig.initialMarginFractionBPS < _newConfig.maintenanceMarginFractionBPS)
+      revert IConfigStorage_InvalidValue();
+
     emit LogSetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
     return marketConfigs[_marketIndex];
   }
 
-  function setPlpTokenConfig(
+  function setHlpTokenConfig(
     address _token,
-    PLPTokenConfig memory _newConfig
-  ) external onlyOwner returns (PLPTokenConfig memory _plpTokenConfig) {
-    emit LogSetPlpTokenConfig(_token, assetPlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
-    assetPlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
+    HLPTokenConfig calldata _newConfig
+  ) external onlyOwner returns (HLPTokenConfig memory _hlpTokenConfig) {
+    emit LogSetHlpTokenConfig(_token, assetHlpTokenConfigs[tokenAssetIds[_token]], _newConfig);
+    assetHlpTokenConfigs[tokenAssetIds[_token]] = _newConfig;
+
+    uint256 hlpTotalTokenWeight = 0;
+    for (uint256 i = 0; i < hlpAssetIds.length; ) {
+      hlpTotalTokenWeight += assetHlpTokenConfigs[hlpAssetIds[i]].targetWeight;
+
+      unchecked {
+        ++i;
+      }
+    }
+
+    liquidityConfig.hlpTotalTokenWeight = hlpTotalTokenWeight;
+
     return _newConfig;
   }
 
   function setCollateralTokenConfig(
     bytes32 _assetId,
-    CollateralTokenConfig memory _newConfig
+    CollateralTokenConfig calldata _newConfig
   ) external onlyOwner returns (CollateralTokenConfig memory _collateralTokenConfig) {
+    if (_newConfig.collateralFactorBPS == 0) revert IConfigStorage_ExceedLimitSetting();
+
     emit LogSetCollateralTokenConfig(_assetId, assetCollateralTokenConfigs[_assetId], _newConfig);
+    // get current config, if new collateral's assetId then push to array
+    CollateralTokenConfig memory _curCollateralTokenConfig = assetCollateralTokenConfigs[_assetId];
+    if (
+      _curCollateralTokenConfig.settleStrategy == address(0) &&
+      _curCollateralTokenConfig.collateralFactorBPS == 0 &&
+      _curCollateralTokenConfig.accepted == false
+    ) {
+      collateralAssetIds.push(_assetId);
+    }
     assetCollateralTokenConfigs[_assetId] = _newConfig;
-    collateralAssetIds.push(_assetId);
     return assetCollateralTokenConfigs[_assetId];
   }
 
   function setAssetConfig(
     bytes32 _assetId,
-    AssetConfig memory _newConfig
+    AssetConfig calldata _newConfig
   ) external onlyOwner returns (AssetConfig memory _assetConfig) {
+    if (!_newConfig.tokenAddress.isContract()) revert IConfigStorage_BadArgs();
+
     emit LogSetAssetConfig(_assetId, assetConfigs[_assetId], _newConfig);
     assetConfigs[_assetId] = _newConfig;
     address _token = _newConfig.tokenAddress;
@@ -355,21 +432,25 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   }
 
   function setWeth(address _weth) external onlyOwner {
+    if (!_weth.isContract()) revert IConfigStorage_BadArgs();
+
     emit LogSetToken(weth, _weth);
     weth = _weth;
   }
 
   function setSGlp(address _sglp) external onlyOwner {
+    if (!_sglp.isContract()) revert IConfigStorage_BadArgs();
+
     emit LogSetToken(sglp, _sglp);
     sglp = _sglp;
   }
 
-  /// @notice add or update AcceptedToken
+  /// @notice add or update accepted tokens of HLP
   /// @dev This function only allows to add new token or update existing token,
   /// any attempt to remove token will be reverted.
   /// @param _tokens The token addresses to set.
   /// @param _configs The token configs to set.
-  function addOrUpdateAcceptedToken(address[] calldata _tokens, PLPTokenConfig[] calldata _configs) external onlyOwner {
+  function addOrUpdateAcceptedToken(address[] calldata _tokens, HLPTokenConfig[] calldata _configs) external onlyOwner {
     if (_tokens.length != _configs.length) {
       revert IConfigStorage_BadLen();
     }
@@ -378,41 +459,38 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     for (uint256 _i; _i < _tokenLen; ) {
       bytes32 _assetId = tokenAssetIds[_tokens[_i]];
 
-      uint256 _assetIdLen = plpAssetIds.length;
+      uint256 _assetIdLen = hlpAssetIds.length;
 
-      bool _isSetPLPAssetId = true;
+      bool _isSetHLPAssetId = true;
 
+      // Search if this token is already added to the accepted token list
       for (uint256 _j; _j < _assetIdLen; ) {
-        if (plpAssetIds[_j] == _assetId) {
-          _isSetPLPAssetId = false;
+        if (hlpAssetIds[_j] == _assetId) {
+          _isSetHLPAssetId = false;
         }
         unchecked {
           ++_j;
         }
       }
 
-      // Adjust plpTotalToken Weight
-      if (liquidityConfig.plpTotalTokenWeight == 0) {
-        liquidityConfig.plpTotalTokenWeight = _configs[_i].targetWeight;
+      // Adjust hlpTotalToken Weight
+      if (liquidityConfig.hlpTotalTokenWeight == 0) {
+        liquidityConfig.hlpTotalTokenWeight = _configs[_i].targetWeight;
       } else {
-        liquidityConfig.plpTotalTokenWeight =
-          (liquidityConfig.plpTotalTokenWeight - assetPlpTokenConfigs[_assetId].targetWeight) +
+        liquidityConfig.hlpTotalTokenWeight =
+          (liquidityConfig.hlpTotalTokenWeight - assetHlpTokenConfigs[_assetId].targetWeight) +
           _configs[_i].targetWeight;
       }
 
-      if (liquidityConfig.plpTotalTokenWeight > 1e18) {
-        revert IConfigStorage_ExceedLimitSetting();
-      }
-
+      // If this is a new accepted token,
       // put asset ID after add totalWeight
-      if (_isSetPLPAssetId) {
-        plpAssetIds.push(_assetId);
+      if (_isSetHLPAssetId) {
+        hlpAssetIds.push(_assetId);
       }
 
-      assetPlpTokenConfigs[_assetId] = _configs[_i];
-      emit LogAddOrUpdatePLPTokenConfigs(_tokens[_i], assetPlpTokenConfigs[_assetId], _configs[_i]);
-
-      // Update totalWeight accordingly
+      // Update config
+      emit LogAddOrUpdateHLPTokenConfigs(_tokens[_i], assetHlpTokenConfigs[_assetId], _configs[_i]);
+      assetHlpTokenConfigs[_assetId] = _configs[_i];
 
       unchecked {
         ++_i;
@@ -432,8 +510,15 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     assetClassConfigs[_index] = _newConfig;
   }
 
-  function addMarketConfig(MarketConfig calldata _newConfig) external onlyOwner returns (uint256 _index) {
-    uint256 _newMarketIndex = marketConfigs.length;
+  function addMarketConfig(MarketConfig calldata _newConfig) external onlyOwner returns (uint256 _newMarketIndex) {
+    // pre-validate
+    if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
+      revert IConfigStorage_MaxFeeBps();
+    if (_newConfig.assetClass > assetClassConfigs.length - 1) revert IConfigStorage_InvalidAssetClass();
+    if (_newConfig.initialMarginFractionBPS < _newConfig.maintenanceMarginFractionBPS)
+      revert IConfigStorage_InvalidValue();
+
+    _newMarketIndex = marketConfigs.length;
     marketConfigs.push(_newConfig);
     emit LogAddMarketConfig(_newMarketIndex, _newConfig);
     return _newMarketIndex;
@@ -450,13 +535,14 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     bytes32 _assetId = tokenAssetIds[_token];
 
     // Update totalTokenWeight
-    liquidityConfig.plpTotalTokenWeight -= assetPlpTokenConfigs[_assetId].targetWeight;
+    liquidityConfig.hlpTotalTokenWeight -= assetHlpTokenConfigs[_assetId].targetWeight;
 
-    // delete from plpAssetIds
-    uint256 _len = plpAssetIds.length;
+    // delete from hlpAssetIds
+    uint256 _len = hlpAssetIds.length;
     for (uint256 _i = 0; _i < _len; ) {
-      if (_assetId == plpAssetIds[_i]) {
-        delete plpAssetIds[_i];
+      if (_assetId == hlpAssetIds[_i]) {
+        hlpAssetIds[_i] = hlpAssetIds[_len - 1];
+        hlpAssetIds.pop();
         break;
       }
 
@@ -464,13 +550,22 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
         ++_i;
       }
     }
-    // Delete plpTokenConfig
-    delete assetPlpTokenConfigs[_assetId];
+    // Delete hlpTokenConfig
+    delete assetHlpTokenConfigs[_assetId];
 
     emit LogRemoveUnderlying(_token);
   }
 
   function setTradeServiceHooks(address[] calldata _newHooks) external onlyOwner {
+    for (uint256 i = 0; i < _newHooks.length; ) {
+      if (_newHooks[i] == address(0)) revert IConfigStorage_InvalidAddress();
+
+      unchecked {
+        ++i;
+      }
+    }
+    emit LogSetTradeServiceHooks(tradeServiceHooks, _newHooks);
+
     tradeServiceHooks = _newHooks;
   }
 

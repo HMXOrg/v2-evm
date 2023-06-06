@@ -21,6 +21,9 @@ contract StakedGlpOracleAdapter is OwnableUpgradeable, IOracleAdapter {
     sGlp = _sGlp;
     glpManager = _glpManager;
     sGlpAssetId = _sGlpAssetId;
+
+    // Sanity check
+    _glpManager.getAum(true);
   }
 
   /// @notice Get the latest price of SGLP.

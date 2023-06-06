@@ -95,7 +95,7 @@ contract TC04_2 is BaseIntTest_WithActions {
         _reserveValue: 135 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T1: "
       });
 
@@ -169,7 +169,7 @@ contract TC04_2 is BaseIntTest_WithActions {
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 38687491044562,
-        _entryFundingRate: -120000000000,
+        _lastFundingAccrued: -120000000000,
         _str: "T2: "
       });
 
@@ -249,7 +249,7 @@ contract TC04_2 is BaseIntTest_WithActions {
         _reserveValue: 108 * 1e30,
         _realizedPnl: 15.003149992125019687450781373046 * 1e30,
         _entryBorrowingRate: 38687491044562,
-        _entryFundingRate: -120000000000,
+        _lastFundingAccrued: -120000000000,
         _str: "T3: "
       });
 
@@ -295,7 +295,7 @@ contract TC04_2 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T4: "
       });
 
@@ -396,7 +396,7 @@ contract TC04_2 is BaseIntTest_WithActions {
         _reserveValue: 675 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T5: "
       });
 
@@ -470,7 +470,7 @@ contract TC04_2 is BaseIntTest_WithActions {
         _reserveValue: 2700 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 403615566318282,
-        _entryFundingRate: 120000000000,
+        _lastFundingAccrued: 120000000000,
         _str: "T6: "
       });
 
@@ -552,7 +552,7 @@ contract TC04_2 is BaseIntTest_WithActions {
         _reserveValue: 405 * 1e30,
         _realizedPnl: -59986799966999917499793749484373,
         _entryBorrowingRate: 403615566318282,
-        _entryFundingRate: 120000000000,
+        _lastFundingAccrued: 120000000000,
         _str: "T7: "
       });
 
@@ -598,7 +598,7 @@ contract TC04_2 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "T8: "
       });
 

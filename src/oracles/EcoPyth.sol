@@ -2,12 +2,16 @@
 pragma solidity 0.8.18;
 
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 import { IPythPriceInfo, IEcoPythPriceInfo } from "./interfaces/IPyth.sol";
 import { IEcoPyth } from "./interfaces/IEcoPyth.sol";
 
 contract EcoPyth is OwnableUpgradeable, IEcoPyth {
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
+
   // errors
   error EcoPyth_ExpectZeroFee();
   error EcoPyth_OnlyUpdater();

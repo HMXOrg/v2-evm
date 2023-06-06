@@ -15,9 +15,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     await configStorage.setLiquidityConfig({
       depositFeeRateBPS: 30, // 0.3%
       withdrawFeeRateBPS: 30, // 0.3%
-      maxPLPUtilizationBPS: 8000, // 80%
-      plpTotalTokenWeight: 0,
-      plpSafetyBufferBPS: 2000, // 20%
+      maxHLPUtilizationBPS: 8000, // 80%
+      hlpTotalTokenWeight: 0,
+      hlpSafetyBufferBPS: 2000, // 20%
       taxFeeRateBPS: 50, // 0.5%
       flashLoanFeeRateBPS: 0,
       dynamicFeeEnabled: true,

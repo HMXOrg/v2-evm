@@ -30,7 +30,7 @@ import { MockGlpManager } from "../mocks/MockGlpManager.sol";
 import { MockGmxRewardRouterV2 } from "../mocks/MockGmxRewardRouterV2.sol";
 
 // Interfaces
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
@@ -62,7 +62,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
   IVaultStorage internal vaultStorage;
 
   // other contracts
-  IPLPv2 internal plp;
+  IHLP internal hlp;
   ICalculator internal calculator;
 
   // oracle
@@ -140,7 +140,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockPyth = new MockPyth(60, 1);
     ecoPyth = Deployer.deployEcoPyth(address(proxyAdmin));
 
-    plp = Deployer.deployPLPv2(address(proxyAdmin));
+    hlp = Deployer.deployHLP(address(proxyAdmin));
 
     configStorage = Deployer.deployConfigStorage(address(proxyAdmin));
     perpStorage = Deployer.deployPerpStorage(address(proxyAdmin));
@@ -164,7 +164,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     mockGmxRewardRouterv2 = new MockGmxRewardRouterV2();
 
     pythAdapter = Deployer.deployPythAdapter(address(proxyAdmin), address(mockPyth));
-    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin));
+    oracleMiddleware = Deployer.deployOracleMiddleware(address(proxyAdmin), 365 days);
 
     convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(
       address(proxyAdmin),
@@ -180,7 +180,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _setUpTradingConfig();
     _setUpAssetClassConfigs();
     _setUpMarketConfigs();
-    _setUpPlpTokenConfigs();
+    _setUpHlpTokenConfigs();
     _setUpCollateralTokenConfigs();
     _setUpLiquidationConfig();
 
@@ -196,9 +196,9 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       IConfigStorage.LiquidityConfig({
         depositFeeRateBPS: 0,
         withdrawFeeRateBPS: 0,
-        maxPLPUtilizationBPS: 0.8 * 1e4,
-        plpTotalTokenWeight: 0,
-        plpSafetyBufferBPS: 0.6 * 1e4,
+        maxHLPUtilizationBPS: 0.8 * 1e4,
+        hlpTotalTokenWeight: 0,
+        hlpSafetyBufferBPS: 0.6 * 1e4,
         taxFeeRateBPS: 0.005 * 1e4, // 0.5%
         flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: false,
@@ -245,7 +245,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       maxShortPositionSize: 10_000_000 * 1e30,
       assetClass: 0,
       maxProfitRateBPS: 9 * 1e4,
-      minLeverageBPS: 1 * 1e4,
       initialMarginFractionBPS: 0.01 * 1e4,
       maintenanceMarginFractionBPS: 0.005 * 1e4,
       increasePositionFeeRateBPS: 0,
@@ -261,7 +260,6 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
       maxShortPositionSize: 10_000_000 * 1e30,
       assetClass: 0,
       maxProfitRateBPS: 9 * 1e4,
-      minLeverageBPS: 1 * 1e4,
       initialMarginFractionBPS: 0.01 * 1e4,
       maintenanceMarginFractionBPS: 0.005 * 1e4,
       increasePositionFeeRateBPS: 0,
@@ -275,46 +273,46 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     btcMarketIndex = configStorage.addMarketConfig(_btcConfig);
   }
 
-  /// @notice set up all plp token configs in Perp
-  function _setUpPlpTokenConfigs() private {
-    // set PLP token
-    configStorage.setPLP(address(plp));
+  /// @notice set up all hlp token configs in Perp
+  function _setUpHlpTokenConfigs() private {
+    // set HLP token
+    configStorage.setHLP(address(hlp));
 
     // add Accepted Token for LP config
-    IConfigStorage.PLPTokenConfig[] memory _plpTokenConfig = new IConfigStorage.PLPTokenConfig[](5);
+    IConfigStorage.HLPTokenConfig[] memory _hlpTokenConfig = new IConfigStorage.HLPTokenConfig[](5);
     // WETH
-    _plpTokenConfig[0] = IConfigStorage.PLPTokenConfig({
+    _hlpTokenConfig[0] = IConfigStorage.HLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // WBTC
-    _plpTokenConfig[1] = IConfigStorage.PLPTokenConfig({
+    _hlpTokenConfig[1] = IConfigStorage.HLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // DAI
-    _plpTokenConfig[2] = IConfigStorage.PLPTokenConfig({
+    _hlpTokenConfig[2] = IConfigStorage.HLPTokenConfig({
       targetWeight: 1e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // USDC
-    _plpTokenConfig[3] = IConfigStorage.PLPTokenConfig({
+    _hlpTokenConfig[3] = IConfigStorage.HLPTokenConfig({
       targetWeight: 3e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
     // USDT
-    _plpTokenConfig[4] = IConfigStorage.PLPTokenConfig({
+    _hlpTokenConfig[4] = IConfigStorage.HLPTokenConfig({
       targetWeight: 2e17,
       bufferLiquidity: 0,
-      maxWeightDiff: 0,
+      maxWeightDiff: 1e18,
       accepted: true
     });
 
@@ -325,7 +323,7 @@ abstract contract BaseTest is TestBase, StdAssertions, StdCheatsSafe {
     _tokens[3] = address(usdc);
     _tokens[4] = address(usdt);
 
-    configStorage.addOrUpdateAcceptedToken(_tokens, _plpTokenConfig);
+    configStorage.addOrUpdateAcceptedToken(_tokens, _hlpTokenConfig);
   }
 
   /// @notice set up all collateral token configs in Perp

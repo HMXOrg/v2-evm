@@ -33,7 +33,7 @@ contract LimitTradeHandler_Setter is LimitTradeHandler_Base {
 
   function testRevert_setMinExecutionFee_MaxExecutionFee() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MaxExecutionFee()"));
-    limitTradeHandler.setMinExecutionFee(100 ether);
+    limitTradeHandler.setMinExecutionFee(6 ether);
   }
 
   function testCorrectness_setMinExecutionFee() external {

@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { PLPv2 } from "@hmx/contracts/PLPv2.sol";
+import { HLP } from "@hmx/contracts/HLP.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract SetMarkets is ConfigJsonRepo {
@@ -55,7 +55,6 @@ contract SetMarkets is ConfigJsonRepo {
     _newMarketConfig.initialMarginFractionBPS = _imf;
     _newMarketConfig.maintenanceMarginFractionBPS = _mmf;
     _newMarketConfig.maxProfitRateBPS = 90000; // 900%
-    _newMarketConfig.minLeverageBPS = 11000; // 110%
     _newMarketConfig.assetClass = _assetClass;
     _newMarketConfig.allowIncreasePosition = true;
     _newMarketConfig.active = true;

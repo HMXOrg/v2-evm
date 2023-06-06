@@ -46,12 +46,12 @@ contract TC22 is BaseIntTest_WithActions {
     // And Bob provide liquidity 500 btc
     addLiquidity(BOB, wbtc, 500 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     {
-      // PLP liquidity and total supply should be corrected
+      // HLP liquidity and total supply should be corrected
       // 500 * 0.997 = 498.5
       // 498.5 * 20000 = 9_970_000
       // Max utilized = 9_970_000 * 0.8 = 7_976_000
-      assertPLPLiquidity(address(wbtc), 498.5 * 1e8);
-      assertPLPTotalSupply(9_970_000 * 1e18);
+      assertHLPLiquidity(address(wbtc), 498.5 * 1e8);
+      assertHLPTotalSupply(9_970_000 * 1e18);
       assertTVL(9_970_000 * 1e30, false);
     }
 
@@ -85,7 +85,7 @@ contract TC22 is BaseIntTest_WithActions {
         _reserveValue: 630_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "Alice's BTC position"
       });
     }
@@ -116,7 +116,7 @@ contract TC22 is BaseIntTest_WithActions {
         _reserveValue: 720_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "Bob's BTC position"
       });
     }
@@ -148,7 +148,7 @@ contract TC22 is BaseIntTest_WithActions {
         _reserveValue: 270_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "Alice's APPLE position"
       });
     }
@@ -174,7 +174,7 @@ contract TC22 is BaseIntTest_WithActions {
         _reserveValue: 4_500_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0,
+        _lastFundingAccrued: 0,
         _str: "Carol's APPLE position"
       });
     }

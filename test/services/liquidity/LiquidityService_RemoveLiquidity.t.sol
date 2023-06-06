@@ -13,10 +13,10 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 //   - fail on slippage
 // What is this test not covered
 // - correctness
-//   - remove liquidity of another PLP
+//   - remove liquidity of another HLP
 //   - remove liquidity with dynamic fee (will be test in Calculator and integration test)
 // - revert
-//   - PLP transfer in cool down period
+//   - HLP transfer in cool down period
 contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
   function setUp() public virtual override {
     super.setUp();
@@ -33,14 +33,14 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     mockCalculator.setAUM(99.7e18);
   }
 
-  function testCorrectness_WhenPLPRemoveLiquidity() external {
+  function testCorrectness_WhenHLPRemoveLiquidity() external {
     liquidityService.removeLiquidity(address(this), address(dai), 50 ether, 0);
 
-    assertEq(plp.totalSupply(), 49.7 ether, "PLP Total Supply");
+    assertEq(hlp.totalSupply(), 49.7 ether, "HLP Total Supply");
   }
 
   // remove liquidity when circuit break
-  function testRevert_WhenCircuitBreak_PLPShouldNotRemoveLiquidity() external {
+  function testRevert_WhenCircuitBreak_HLPShouldNotRemoveLiquidity() external {
     // disable liquidity config
     IConfigStorage.LiquidityConfig memory _liquidityConfig = configStorage.getLiquidityConfig();
     _liquidityConfig.enabled = false;
@@ -50,17 +50,17 @@ contract LiquidityService_RemoveLiquidity is LiquidityService_Base {
     liquidityService.removeLiquidity(ALICE, address(dai), 5 ether, 0);
   }
 
-  function testRevert_WhenPLPRemoveLiquidity_WithZeroAmount() external {
+  function testRevert_WhenHLPRemoveLiquidity_WithZeroAmount() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_BadAmount()"));
     liquidityService.removeLiquidity(ALICE, address(dai), 0, 0);
   }
 
-  function testRevert_WhenPLPRemoveLiquidity_AndSlippageCheckFail() external {
+  function testRevert_WhenHLPRemoveLiquidity_AndSlippageCheckFail() external {
     vm.expectRevert(abi.encodeWithSignature("LiquidityService_Slippage()"));
     liquidityService.removeLiquidity(ALICE, address(dai), 5 ether, type(uint256).max);
   }
 
-  // function testRevert_WhenPLPRemoveLiquidity_AfterAddLiquidity_InCoolDownPeriod()
+  // function testRevert_WhenHLPRemoveLiquidity_AfterAddLiquidity_InCoolDownPeriod()
   //   external
   // {}
 }

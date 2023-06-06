@@ -23,7 +23,6 @@ contract Calculator_FundingRate is Calculator_Base {
         maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
-        minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.01 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
         increasePositionFeeRateBPS: 0,
@@ -44,7 +43,7 @@ contract Calculator_FundingRate is Calculator_Base {
         positionSizeE30: 100_000 * 1e30,
         avgEntryPriceE30: 20_000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -61,7 +60,7 @@ contract Calculator_FundingRate is Calculator_Base {
         positionSizeE30: -50_000 * 1e30,
         avgEntryPriceE30: 25_000 * 1e30,
         entryBorrowingRate: 0,
-        entryFundingRate: 0,
+        lastFundingAccrued: 0,
         reserveValueE30: 9_000 * 1e30,
         lastIncreaseTimestamp: block.timestamp,
         realizedPnl: 0
@@ -94,7 +93,7 @@ contract Calculator_FundingRate is Calculator_Base {
   // | 16   | 1,000,000.00 | 1,000,000.00 | 0.00           | -0.120000%         | -2,800.0000000 | 1,400.0000000   | -11,200.0000000   | 5,600.0000000      |
   // --------------------------------------------------------------------------------------------------------------------------------------------------------
 
-  function testCorrectness_getNextFundingRate_noInterval() external {
+  function testCorrectness_getFundingRateVelocity_noInterval() external {
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -127,7 +126,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    int256 nextFundingRate = calculator.getNextFundingRate(0);
+    int256 nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate; // -0.013333%
     assertEq(nextFundingRate, -133333333333333); // -0.013333%
     assertEq(currentFundingRate, -133333333333333); // -0.013333%
@@ -155,7 +154,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate; // -0.026667%
     assertEq(nextFundingRate, -133333333333333); // -0.026667%
     assertEq(currentFundingRate, -266666666666666); // -0.026667%
@@ -183,7 +182,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate; // -0.026667%
     assertEq(nextFundingRate, 0); // -0.026667%
     assertEq(currentFundingRate, -266666666666666); // -0.026667%
@@ -211,7 +210,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 0); // 0%
     assertEq(currentFundingRate, -266666666666666); // -0.026667%
@@ -239,7 +238,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 266666666666666); // 0.026667%
     assertEq(currentFundingRate, 0); // 0%
@@ -267,7 +266,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 266666666666666); // 0.026667%
     assertEq(currentFundingRate, 266666666666666); // 0.026667%
@@ -295,7 +294,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 266666666666666); // 0.026667%
     assertEq(currentFundingRate, 533333333333332); // 0.053333%
@@ -323,7 +322,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 133333333333333); // 0.013333%
     assertEq(currentFundingRate, 666666666666665); // 0.066667%
@@ -351,7 +350,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 66666666666666); // 0.00666667%
     assertEq(currentFundingRate, 733333333333331); // 0.073333%
@@ -379,7 +378,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 66666666666666); // 0.00666667%
     assertEq(currentFundingRate, 799999999999997); // 0.080000%
@@ -407,7 +406,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate; // 0.040000%
     assertEq(nextFundingRate, -400000000000000); // -0.040000%
     assertEq(currentFundingRate, 399999999999997); // 0.040000%
@@ -435,7 +434,7 @@ contract Calculator_FundingRate is Calculator_Base {
       currentFundingRate
     );
 
-    nextFundingRate = calculator.getNextFundingRate(0);
+    nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, -400000000000000); // -0.040000%
     assertEq(currentFundingRate, -3); // 0.000000%

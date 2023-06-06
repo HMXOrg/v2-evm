@@ -5,7 +5,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
@@ -76,8 +76,8 @@ contract TradeTester is StdAssertions {
   }
 
   struct VaultStorageExpectedData {
-    uint256 plpLiquidityDebtUSDE30;
-    mapping(address => uint256) plpLiquidity;
+    uint256 hlpLiquidityDebtUSDE30;
+    mapping(address => uint256) hlpLiquidity;
     mapping(address => uint256) fees;
     mapping(address => uint256) fundingFee;
     mapping(address => uint256) devFees;
@@ -169,7 +169,7 @@ contract TradeTester is StdAssertions {
     assertEq(_position.reserveValueE30, _positionExpectedData.reserveValueE30, "Position Reserve");
 
     assertEq(_position.entryBorrowingRate, _assetClassExpectedData.sumBorrowingRate, "Entry Borrowing rate");
-    assertEq(_position.entryFundingRate, _marketExpectedData.currentFundingRate, "Entry Funding rate");
+    assertEq(_position.lastFundingAccrued, _marketExpectedData.currentFundingRate, "Entry Funding rate");
   }
 
   /// @notice Assert Market
@@ -201,8 +201,8 @@ contract TradeTester is StdAssertions {
   ///       - Global state
   ///         - Reserve value
   function _assertPerpStorage(
-    address _subAccount,
-    PerpStorageExpectedData memory _perpStorageExpectedData,
+    address /* _subAccount */,
+    PerpStorageExpectedData memory /* _perpStorageExpectedData */,
     AssetClassExpectedData memory _assetClassExpectedData,
     GlobalStateExpectedData memory _globalStateExpectedData
   ) internal {
@@ -228,17 +228,17 @@ contract TradeTester is StdAssertions {
   ///       - Dev fee
   ///       - Funding Fee
   ///       - Fee
-  ///       - PLP Liquidity
-  ///       - PLP Liquidity Debt value
+  ///       - HLP Liquidity
+  ///       - HLP Liquidity Debt value
   function _assertVaultStorage(address _subAccount, VaultStorageExpectedData storage _expectedData) internal {
-    assertEq(vaultStorage.plpLiquidityDebtUSDE30(), _expectedData.plpLiquidityDebtUSDE30);
+    assertEq(vaultStorage.hlpLiquidityDebtUSDE30(), _expectedData.hlpLiquidityDebtUSDE30);
 
     uint256 _len = interestTokens.length;
     address _token;
     for (uint256 _i; _i < _len; ) {
       _token = interestTokens[_i];
 
-      assertEq(vaultStorage.plpLiquidity(_token), _expectedData.plpLiquidity[_token], "PLP Liquidity");
+      assertEq(vaultStorage.hlpLiquidity(_token), _expectedData.hlpLiquidity[_token], "HLP Liquidity");
       assertEq(vaultStorage.protocolFees(_token), _expectedData.fees[_token], "Protocol Fee");
       assertEq(vaultStorage.fundingFeeReserve(_token), _expectedData.fundingFee[_token], "Funding Fee");
       assertEq(vaultStorage.devFees(_token), _expectedData.devFees[_token], "Dev Fee");

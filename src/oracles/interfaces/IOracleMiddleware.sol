@@ -7,6 +7,7 @@ interface IOracleMiddleware {
   error IOracleMiddleware_MarketStatusUndefined();
   error IOracleMiddleware_OnlyUpdater();
   error IOracleMiddleware_InvalidMarketStatus();
+  error IOracleMiddleware_InvalidValue();
 
   function isUpdater(address _updater) external returns (bool);
 

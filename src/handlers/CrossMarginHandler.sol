@@ -15,6 +15,7 @@ import { IWNative } from "../interfaces/IWNative.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 /// @title CrossMarginHandler
 /// @notice This contract handles the deposit and withdrawal of collateral tokens for the Cross Margin Trading module.
@@ -40,6 +41,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   event LogSetPyth(address indexed oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogMaxExecutionChuck(uint256 oldValue, uint256 newValue);
   event LogCreateWithdrawOrder(
     address indexed account,
     uint8 indexed subAccountId,
@@ -65,7 +67,8 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     address token,
     uint256 amount,
     bool shouldUnwrap,
-    bool isSuccess
+    bool isSuccess,
+    string errMsg
   );
 
   /**
@@ -80,6 +83,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public pyth;
   uint256 public nextExecutionOrderIndex; // the index of the next withdraw order that should be executed
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
+  uint256 public maxExecutionChuck; // maximum execution order sizes per request
 
   WithdrawOrder[] public withdrawOrders; // all withdrawOrder
   mapping(address => WithdrawOrder[]) public subAccountExecutedWithdrawOrders; // subAccount -> executed orders
@@ -89,7 +93,12 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _crossMarginService Address of the CrossMarginService contract.
   /// @param _pyth Address of the Pyth contract.
   /// @param _minExecutionOrderFee Minimum execution fee for a withdrawal order.
-  function initialize(address _crossMarginService, address _pyth, uint256 _minExecutionOrderFee) external initializer {
+  function initialize(
+    address _crossMarginService,
+    address _pyth,
+    uint256 _minExecutionOrderFee,
+    uint256 _maxExecutionChuck
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
@@ -100,6 +109,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     crossMarginService = _crossMarginService;
     pyth = _pyth;
     minExecutionOrderFee = _minExecutionOrderFee;
+    maxExecutionChuck = _maxExecutionChuck;
   }
 
   function getActiveWithdrawOrders(
@@ -236,6 +246,8 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   ) external payable nonReentrant onlyAcceptedToken(_token) returns (uint256 _orderId) {
     if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler_InsufficientExecutionFee();
     if (msg.value != _executionFee) revert ICrossMarginHandler_InCorrectValueTransfer();
+    if (_shouldUnwrap && _token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth())
+      revert ICrossMarginHandler_NotWNativeToken();
 
     // convert native to WNative (including executionFee)
     _transferInETH();
@@ -254,7 +266,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         crossMarginService: CrossMarginService(crossMarginService),
         createdTimestamp: uint48(block.timestamp),
         executedTimestamp: 0,
-        status: 0 // pending
+        status: WithdrawOrderStatus.PENDING
       })
     );
 
@@ -278,17 +290,24 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
+    // SLOAD
+    uint256 _nextExecutionOrderIndex = nextExecutionOrderIndex;
+
     // Get the number of withdraw orders
     uint256 _orderLength = withdrawOrders.length;
 
     // Ensure there are orders to execute
-    if (nextExecutionOrderIndex == _orderLength) revert ICrossMarginHandler_NoOrder();
+    if (_nextExecutionOrderIndex == _orderLength) revert ICrossMarginHandler_NoOrder();
 
     // Set the end index to the latest order index if it exceeds the number of orders
     uint256 _latestOrderIndex = _orderLength - 1;
     if (_endIndex > _latestOrderIndex) {
       _endIndex = _latestOrderIndex;
     }
+
+    // split execution into chunk for preventing exceed block gas limit
+    if (_endIndex - _nextExecutionOrderIndex > maxExecutionChuck)
+      _endIndex = _nextExecutionOrderIndex + maxExecutionChuck;
 
     // Update the price and publish time data using the Pyth oracle
     // slither-disable-next-line arbitrary-send-eth
@@ -299,7 +318,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _totalFeeReceiver;
     uint256 _executionFee;
 
-    for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
+    for (uint256 i = _nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = withdrawOrders[i];
       _executionFee = _order.executionFee;
 
@@ -311,35 +330,25 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
           _order.token,
           _order.amount,
           _order.shouldUnwrap,
-          true
+          true,
+          ""
         );
-
         // update order status
-        _order.status = 1; // success
-      } catch Error(string memory) {
-        // Do nothing
-      } catch (bytes memory) {
-        emit LogExecuteWithdrawOrder(
-          _order.account,
-          _order.subAccountId,
-          _order.orderId,
-          _order.token,
-          _order.amount,
-          _order.shouldUnwrap,
-          false
-        );
-
-        // update order status
-        _order.status = 2; // fail
+        _order.status = WithdrawOrderStatus.SUCCESS;
+      } catch Error(string memory errMsg) {
+        _handleOrderFail(_order, errMsg);
+      } catch Panic(uint /*errorCode*/) {
+        _handleOrderFail(_order, "Panic occurred while executing the withdraw order");
+      } catch (bytes memory errMsg) {
+        _handleOrderFail(_order, string(errMsg));
       }
 
       // assign exec time
       _order.executedTimestamp = uint48(block.timestamp);
-
       _totalFeeReceiver += _executionFee;
 
       // save to executed order first
-      subAccountExecutedWithdrawOrders[_getSubAccount(_order.account, _order.subAccountId)].push(_order);
+      subAccountExecutedWithdrawOrders[HMXLib.getSubAccount(_order.account, _order.subAccountId)].push(_order);
       // clear executed withdraw order
       delete withdrawOrders[i];
 
@@ -353,11 +362,30 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     _transferOutETH(_totalFeeReceiver, _feeReceiver);
   }
 
+  function _handleOrderFail(WithdrawOrder memory order, string memory errMsg) internal {
+    emit LogExecuteWithdrawOrder(
+      order.account,
+      order.subAccountId,
+      order.orderId,
+      order.token,
+      order.amount,
+      order.shouldUnwrap,
+      false,
+      errMsg
+    );
+
+    order.status = WithdrawOrderStatus.FAIL;
+  }
+
   /// @notice Executes a single withdraw order by transferring the specified amount of collateral token to the user's wallet.
   /// @param _order WithdrawOrder struct representing the order to execute.
   function executeWithdrawOrder(WithdrawOrder memory _order) external {
     // if not in executing state, then revert
-    if (msg.sender != address(this)) revert ICrossMarginHandler_NotExecutionState();
+    if (msg.sender != address(this)) revert ICrossMarginHandler_Unauthorized();
+    if (
+      _order.shouldUnwrap &&
+      _order.token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()
+    ) revert ICrossMarginHandler_NotWNativeToken();
 
     // Call service to withdraw collateral
     if (_order.shouldUnwrap) {
@@ -464,6 +492,13 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     minExecutionOrderFee = _newMinExecutionFee;
   }
 
+  /// @notice setMaxExecutionChuck
+  /// @param _maxExecutionChuck maximum check sizes when execute orders
+  function setMaxExecutionChuck(uint256 _maxExecutionChuck) external nonReentrant onlyOwner {
+    emit LogMaxExecutionChuck(maxExecutionChuck, _maxExecutionChuck);
+    maxExecutionChuck = _maxExecutionChuck;
+  }
+
   /// @notice setOrderExecutor
   /// @param _executor address who will be executor
   /// @param _isAllow flag to allow to execute
@@ -501,12 +536,13 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
     IWNative(ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
-    payable(_receiver).transfer(_amountOut);
-  }
-
-  function _getSubAccount(address _primary, uint8 _subAccountId) private pure returns (address) {
-    if (_subAccountId > 255) revert();
-    return address(uint160(_primary) ^ uint160(_subAccountId));
+    // To mitigate potential attacks, the call method is utilized,
+    // allowing the contract to bypass any revert calls from the destination address.
+    // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
+    // the transaction maintains a secure execution."
+    (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
+    // shhhh compiler
+    success;
   }
 
   receive() external payable {

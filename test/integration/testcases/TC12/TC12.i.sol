@@ -85,7 +85,7 @@ contract TC12 is BaseIntTest_WithActions {
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
       assertPositionInfoOf({
         _subAccount: _aliceSubAccount0,
@@ -95,7 +95,7 @@ contract TC12 is BaseIntTest_WithActions {
         _reserveValue: 27 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
       // should not has apple
       assertPositionInfoOf({
@@ -106,7 +106,7 @@ contract TC12 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 
@@ -137,7 +137,7 @@ contract TC12 is BaseIntTest_WithActions {
         _reserveValue: 2700 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
       // should not affected with ALICE sub-account 0
       assertPositionInfoOf({
@@ -148,7 +148,7 @@ contract TC12 is BaseIntTest_WithActions {
         _reserveValue: 270 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 
@@ -178,7 +178,7 @@ contract TC12 is BaseIntTest_WithActions {
         _reserveValue: 1350 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 
@@ -205,7 +205,7 @@ contract TC12 is BaseIntTest_WithActions {
         _reserveValue: 1350 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 
@@ -235,7 +235,7 @@ contract TC12 is BaseIntTest_WithActions {
         _reserveValue: 1350 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 
@@ -321,7 +321,7 @@ contract TC12 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
   }

@@ -17,7 +17,6 @@ contract Calculator_GetGlobalPNLE30Test is Calculator_Base {
         maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
-        minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.01 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
         increasePositionFeeRateBPS: 0,
@@ -41,10 +40,13 @@ contract Calculator_GetGlobalPNLE30Test is Calculator_Base {
       1478.99298048554020 * 1e30,
       301550790.483496218 * 1e30
     );
+    // long global_pnl 2568550.2424053754
+    // short global_pnl -422946.3689845529
+    // (2568550.2424053754 + -422946.3689845529) = 2145603.87342082
     assertEq(
       calculator.getGlobalPNLE30(),
-      2991496611389926918868344864000000000,
-      "Global PnL should equal: ~2991496.611389927"
+      2145603873420827528467645024000000000,
+      "Global PnL should equal: ~2145603.87342082"
     );
   }
 }

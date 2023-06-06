@@ -13,8 +13,8 @@ forge script ./deployment/01_DeployPythAdapter.s.sol:DeployPythAdapter --rpc-url
 echo "Deploy Oracle"
 forge script ./deployment/02_DeployOracleMiddleware.s.sol:DeployOracleMiddleware --rpc-url $TARGET_RPC --broadcast
 
-echo "Deploy Storages & PLP token"
-forge script ./deployment/03_DeployStoragesAndPLPToken.s.sol:DeployStoragesAndPLPToken --rpc-url $TARGET_RPC --broadcast
+echo "Deploy Storages & HLP token"
+forge script ./deployment/03_DeployStoragesAndHLPToken.s.sol:DeployStoragesAndHLPToken --rpc-url $TARGET_RPC --broadcast
 
 echo "Deploy Calculators"
 forge script ./deployment/04_DeployCalculators.s.sol:DeployCalculators --rpc-url $TARGET_RPC --broadcast

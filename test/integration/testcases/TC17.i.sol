@@ -52,7 +52,7 @@ contract TC17 is BaseIntTest_WithActions {
       tickPrices[6] = 48285; // JPY tick price $125
 
       // buy
-      bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
+      getPositionId(ALICE, 0, jpyMarketIndex);
       marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
       marketBuy(ALICE, 0, wbtcMarketIndex, 10_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
       marketBuy(ALICE, 0, appleMarketIndex, 10_000 * 1e30, address(usdt), tickPrices, publishTimeDiff, block.timestamp);
@@ -77,7 +77,7 @@ contract TC17 is BaseIntTest_WithActions {
       uint256 traderBalanceBefore = vaultStorage.traderBalances(ALICE, address(wbtc));
       uint256 protocolFeesBefore = vaultStorage.protocolFees(address(wbtc));
       uint256 devFeesBefore = vaultStorage.devFees(address(wbtc));
-      uint256 plpLiquidityBefore = vaultStorage.plpLiquidity(address(wbtc));
+      uint256 hlpLiquidityBefore = vaultStorage.hlpLiquidity(address(wbtc));
 
       liquidate(getSubAccount(ALICE, 0), tickPrices, publishTimeDiff, block.timestamp);
       /*
@@ -95,20 +95,15 @@ contract TC17 is BaseIntTest_WithActions {
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|
        * |    Dev |                                      |  0.00028723 |           0.00042898 |                  |             |  0.00071621 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|
-       * |    PLP |                           0.14601677 |             |           0.00243091 |                  |             |  0.14844768 |  BTC |
+       * |    HLP |                           0.14601677 |             |           0.00243091 |                  |             |  0.14844768 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|
        * |  P-fee |                                      |  0.00162766 |                      |                  |             |  0.00162766 |  BTC |
        * |--------|--------------------------------------|-------------|----------------------|------------------|-------------|-------------|------|
        * |    liq |                                      |             |                      |                  |  0.00021276 |  0.00021276 |  BTC |
        */
       assertSubAccountTokenBalance(ALICE, address(wbtc), false, 0);
-      assertVaultsFees(
-        address(wbtc),
-        protocolFeesBefore + (0.00162766 * 1e8),
-        devFeesBefore + (0.00071621 * 1e8),
-        0.00208340 * 1e8
-      );
-      assertPLPLiquidity(address(wbtc), plpLiquidityBefore + traderBalanceBefore - (0.15308771 - 0.14844768) * 1e8);
+      assertVaultsFees(address(wbtc), protocolFeesBefore + (0.00162766 * 1e8), devFeesBefore + (0.00071621 * 1e8), 0);
+      assertHLPLiquidity(address(wbtc), hlpLiquidityBefore + traderBalanceBefore - (0.15308771 - 0.14844768) * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, (0.00021276 * 1e8));
 
       assertNumberOfPosition(ALICE, 0);

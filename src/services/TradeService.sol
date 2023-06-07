@@ -40,7 +40,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     uint256 entryBorrowingRate,
     int256 lastFundingAccrued,
     int256 realizedPnl,
-    uint256 reserveValueE30
+    uint256 reserveValueE30,
+    uint256 price
   );
 
   event LogDecreasePosition(
@@ -55,7 +56,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     uint256 entryBorrowingRate,
     int256 lastFundingAccrued,
     int256 realizedPnl,
-    uint256 reserveValueE30
+    uint256 reserveValueE30,
+    uint256 price
   );
 
   event LogForceClosePosition(
@@ -481,7 +483,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _vars.position.entryBorrowingRate,
       _vars.position.lastFundingAccrued,
       _vars.position.realizedPnl,
-      _vars.position.reserveValueE30
+      _vars.position.reserveValueE30,
+      _vars.isNewPosition ? _vars.adaptivePriceE30 : _vars.closePriceE30
     );
   }
 
@@ -948,7 +951,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _vars.position.entryBorrowingRate,
       _vars.position.lastFundingAccrued,
       _vars.position.realizedPnl,
-      _vars.position.reserveValueE30
+      _vars.position.reserveValueE30,
+      _vars.closePrice
     );
   }
 

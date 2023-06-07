@@ -66,6 +66,14 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     uint256 amount
   );
 
+  event LogSettleSettlementFeeAmount(
+    bytes32 positionId,
+    address subAccount,
+    address token,
+    uint256 feeUsd,
+    uint256 amount
+  );
+
   event LogReceivedFundingFeeValue(bytes32 positionId, address subAccount, uint256 feeUsd);
   event LogReceivedFundingFeeAmount(
     bytes32 positionId,
@@ -377,8 +385,8 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
    */
 
   function _updateFeeStates(
-    bytes32 _positionId,
-    address _subAccount,
+    bytes32 /*_positionId*/,
+    address /*_subAccount*/,
     PerpStorage.Position memory _position,
     uint256 _sizeDelta,
     uint32 _positionFeeBPS,
@@ -390,7 +398,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // Calculate the trading fee
     _tradingFee = (_sizeDelta * _positionFeeBPS) / BPS;
-    emit LogSettleTradingFeeValue(_positionId, _subAccount, _tradingFee);
 
     // Calculate the borrowing fee
     _borrowingFee = _calculator.getBorrowingFee(
@@ -400,7 +407,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     );
     // Update global state
     _accumSettledBorrowingFee(_assetClassIndex, _borrowingFee);
-    emit LogSettleBorrowingFeeValue(_positionId, _subAccount, _borrowingFee);
 
     // Calculate the funding fee
     // We are assuming that the market state has been updated with the latest funding rate
@@ -416,7 +422,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     _isLong
       ? _updateAccumFundingLong(_marketIndex, -_fundingFee)
       : _updateAccumFundingShort(_marketIndex, -_fundingFee);
-    emit LogSettleFundingFeeValue(_positionId, _subAccount, _fundingFee > 0 ? uint256(_fundingFee) : 0);
 
     return (_tradingFee, _borrowingFee, _fundingFee);
   }
@@ -528,10 +533,19 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
       // Calculate for settlement fee
       uint256 _settlementFeeRate = calculator.getSettlementFeeRate(_vars.token, _repayValue);
-      uint256 _settlementFee = (_repayAmount * _settlementFeeRate) / 1e18;
+      uint256 _settlementFeeAmount = (_repayAmount * _settlementFeeRate) / 1e18;
+      uint256 _settlementFeeValue = (_repayValue * _settlementFeeRate) / 1e18;
 
       // book the balances
-      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, _settlementFee);
+      _vars.vaultStorage.payTraderProfit(_vars.subAccount, _vars.token, _repayAmount, _settlementFeeAmount);
+
+      emit LogSettleSettlementFeeAmount(
+        _vars.positionId,
+        _vars.subAccount,
+        _vars.token,
+        _settlementFeeValue,
+        _settlementFeeAmount
+      );
 
       // deduct _vars.unrealizedPnlToBeReceived with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.unrealizedPnlToBeReceived -= _repayValue;
@@ -611,6 +625,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // check loss
     if (_unrealizedPnl < 0) {
+      emit LogSettleUnRealizedPnlValue(_vars.positionId, _vars.subAccount, uint256(-_unrealizedPnl));
       _vars.vaultStorage.addLossDebt(_subAccount, uint256(-_unrealizedPnl));
     }
     _vars.unrealizedPnlToBePaid = _vars.vaultStorage.lossDebt(_subAccount);
@@ -625,6 +640,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
     // check funding fee
     if (_fundingFee > 0) {
+      emit LogSettleFundingFeeValue(_vars.positionId, _vars.subAccount, uint256(_fundingFee));
       _vars.vaultStorage.addFundingFeeDebt(_subAccount, uint256(_fundingFee));
     }
     _vars.fundingFeeToBePaid = _vars.vaultStorage.fundingFeeDebt(_subAccount);
@@ -632,11 +648,9 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     // check liquidation fee
     _vars.liquidationFeeToBePaid = _liquidationFee;
 
-    emit LogSettleUnRealizedPnlValue(_vars.positionId, _vars.subAccount, _vars.unrealizedPnlToBePaid);
-    emit LogSettleTradingFeeValue(_vars.positionId, _vars.subAccount, _vars.tradingFeeToBePaid);
-    emit LogSettleBorrowingFeeValue(_vars.positionId, _vars.subAccount, _vars.borrowingFeeToBePaid);
-    emit LogSettleFundingFeeValue(_vars.positionId, _vars.subAccount, _vars.fundingFeeToBePaid);
-    emit LogSettleLiquidationFeeValue(_vars.positionId, _vars.subAccount, _vars.liquidationFeeToBePaid);
+    emit LogSettleTradingFeeValue(_vars.positionId, _vars.subAccount, _tradingFee);
+    emit LogSettleBorrowingFeeValue(_vars.positionId, _vars.subAccount, _borrowingFee);
+    emit LogSettleLiquidationFeeValue(_vars.positionId, _vars.subAccount, _liquidationFee);
 
     // loop for settle
     for (uint256 i = 0; i < _len; ) {

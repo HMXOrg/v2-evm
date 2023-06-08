@@ -876,7 +876,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       (int(vars.globalMarket.longPositionSize) - int(vars.globalMarket.shortPositionSize)),
       _sizeDelta,
       vars.marketConfig.fundingRate.maxSkewScaleUSD,
-      _triggerPrice
+      0
     );
 
     // Validate market status

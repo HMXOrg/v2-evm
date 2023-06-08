@@ -11,7 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const Contract = await ethers.getContractFactory("LimitTradeHandler", deployer);
-  const TARGET_ADDRESS = config.handlers.bot;
+  const TARGET_ADDRESS = config.handlers.limitTrade;
 
   console.log(`> Preparing to upgrade LimitTradeHandler`);
   const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);

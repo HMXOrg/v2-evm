@@ -1396,7 +1396,7 @@ contract TC03 is BaseIntTest_WithActions {
       _marketIndex: wbtcMarketIndex,
       _sizeDelta: 3000 * 1e30,
       _triggerPrice: 21_500 * 1e30,
-      _acceptablePrice: 22037.5 * 1e30, // 21500 * (1 + 0.025) = 22037.5
+      _acceptablePrice: 22575 * 1e30, // 21500 * (1 + 0.05) = 22037.5
       _triggerAboveThreshold: true,
       _executionFee: executionOrderFee,
       _reduceOnly: true,

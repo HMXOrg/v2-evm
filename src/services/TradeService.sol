@@ -914,7 +914,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _vars.accountInfo.subAccount,
       _vars.realizedPnl,
       _vars.fundingFee,
-      _vars.tpToken
+      _vars.tpToken,
+      _vars.marketIndex
     );
     _temp.tradeHelper.decreaseCollateral(
       _vars.positionId,
@@ -924,7 +925,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _vars.borrowingFee,
       _vars.tradingFee,
       0,
-      address(0)
+      address(0),
+      _vars.marketIndex
     );
 
     // =========================================

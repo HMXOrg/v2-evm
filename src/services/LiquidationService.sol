@@ -166,7 +166,14 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     _vars.liquidationFeeUSDE30 = _vars.configStorage.getLiquidationConfig().liquidationFeeUSDE30;
 
     // get profit and fee
-    _vars.tradeHelper.increaseCollateral(bytes32(0), _subAccount, _vars.unrealizedPnL, _vars.fundingFee, address(0));
+    _vars.tradeHelper.increaseCollateral(
+      bytes32(0),
+      _subAccount,
+      _vars.unrealizedPnL,
+      _vars.fundingFee,
+      address(0),
+      type(uint256).max
+    );
     // settle fee and loss
     _vars.tradeHelper.decreaseCollateral(
       bytes32(0),
@@ -176,7 +183,8 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
       _vars.borrowingFee,
       _vars.tradingFee,
       _vars.liquidationFeeUSDE30,
-      _liquidator
+      _liquidator,
+      type(uint256).max
     );
 
     // do accounting on sub account

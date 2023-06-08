@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { console2 } from "forge-std/console2.sol";
-
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -14,7 +12,6 @@ import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/m
 
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ITradeHelper } from "@hmx/helpers/interfaces/ITradeHelper.sol";
-import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgradeable {

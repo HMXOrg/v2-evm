@@ -214,6 +214,16 @@
       "address": "0x42A460211d20EbCaA6982AE5f4b602dCB9973B1c",
       "txHash": "0x0b64ae88131670ba514c558180adc2dc4bb7a8ca9aecfffab80a309992ac4e4f",
       "kind": "transparent"
+    },
+    {
+      "address": "0xf95F018F17e05E68262E69A070d106B63Ce55317",
+      "txHash": "0xc88afb85c1e4d71579e88b4d6d36b6cffc81938650324b6d85cd98e97b8d3534",
+      "kind": "transparent"
+    },
+    {
+      "address": "0x85da4D806D53120AF8f3Bd2D328549851Da49617",
+      "txHash": "0x6611aca1eba39387979b529ceb57e783c905337581bcf94925445805070b94df",
+      "kind": "transparent"
     }
   ],
   "impls": {
@@ -11473,6 +11483,106 @@
           "t_contract(Calculator)14988": {
             "label": "contract Calculator",
             "numberOfBytes": "20"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "3dcc37ccd1e2bb061f85bcfd718a8f3e80c68f3d325273635c3c1982421434e0": {
+      "address": "0xE770E62EfFE7dBF0103043787EA65E11EcC41309",
+      "txHash": "0x5072275640545960cbdae91e7cd6e97071e4925590933c8b9834c539e90b4e9d",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "tradeService",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "TLCHook",
+            "src": "src/staking/TLCHook.sol:15"
+          },
+          {
+            "label": "tlc",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_address",
+            "contract": "TLCHook",
+            "src": "src/staking/TLCHook.sol:16"
+          },
+          {
+            "label": "tlcStaking",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "TLCHook",
+            "src": "src/staking/TLCHook.sol:17"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
           },
           "t_uint256": {
             "label": "uint256",

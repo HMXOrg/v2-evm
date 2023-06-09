@@ -29,7 +29,8 @@
   "tokens": {
     "hlp": "",
     "weth": "",
-    "sglp": ""
+    "sglp": "",
+    "traderLoyaltyCredit": ""
   },
   "yieldSources": {
     "gmx": {
@@ -42,5 +43,13 @@
     "stakedGlpStrategy": "",
     "convertedGlpStrategy": ""
   },
-  "calculator": ""
+  "calculator": "",
+  "accountAbstraction": {
+    "entryPoint": "",
+    "factory": ""
+  },
+  "staking": {
+    "trading": "",
+    "tlc": ""
+  }
 }

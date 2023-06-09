@@ -5,24 +5,26 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const tradingStaking = config.staking.trading;
+const tradeService = config.services.trade;
+const tlc = config.tokens.traderLoyaltyCredit;
+const tlcStaking = config.staking.tlc;
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
 
-  const Contract = await ethers.getContractFactory("TradingStakingHook", deployer);
+  const Contract = await ethers.getContractFactory("TLCHook", deployer);
 
-  const contract = await upgrades.deployProxy(Contract, [tradingStaking, config.services.trade]);
+  const contract = await upgrades.deployProxy(Contract, [tradeService, tlc, tlcStaking]);
   await contract.deployed();
-  console.log(`Deploying TradingStakingHook Contract`);
+  console.log(`Deploying TLCHook Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.hooks.tradingStaking = contract.address;
+  config.hooks.tlc = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({
     address: await getImplementationAddress(network.provider, contract.address),
-    name: "TradingStakingHook",
+    name: "TLCHook",
   });
 }
 

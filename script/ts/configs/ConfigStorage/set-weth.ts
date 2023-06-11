@@ -9,7 +9,7 @@ async function main() {
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   console.log("> ConfigStorage: Set WETH...");
-  await (await configStorage.setHLP(config.tokens.weth)).wait();
+  await (await configStorage.setWeth(config.tokens.weth)).wait();
   console.log("> ConfigStorage: Set WETH success!");
 }
 

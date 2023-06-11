@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await (
     await liquidityHandler.createAddLiquidityOrder(
       token.address,
-      ethers.utils.parseUnits("100", decimals),
+      ethers.utils.parseUnits("1000", decimals),
       0,
       executionFee,
       false, //eth = true

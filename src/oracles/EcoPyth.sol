@@ -122,6 +122,20 @@ contract EcoPyth is OwnableUpgradeable, IEcoPyth {
     emit LogSetUpdater(_account, _isActive);
   }
 
+  function setUpdaters(address[] calldata _accounts, bool[] calldata _isActives) external onlyOwner {
+    if (_accounts.length != _isActives.length) revert EcoPyth_InvalidArgs();
+    for (uint256 i = 0; i < _accounts.length; ) {
+      // Set the `isActive` status of the given account
+      isUpdaters[_accounts[i]] = _isActives[i];
+
+      // Emit a `LogSetUpdater` event indicating the updated status of the account
+      emit LogSetUpdater(_accounts[i], _isActives[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
   function insertAssetIds(bytes32[] calldata _assetIds) external onlyOwner {
     uint256 _len = _assetIds.length;
     for (uint256 i = 0; i < _len; ) {

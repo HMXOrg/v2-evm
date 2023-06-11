@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
+import { ConfigJsonRepo } from "@hmx-script/foundry/utils/ConfigJsonRepo.s.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 

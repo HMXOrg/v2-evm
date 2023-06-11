@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
+import { ConfigJsonRepo } from "@hmx-script/foundry/utils/ConfigJsonRepo.s.sol";
 
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";

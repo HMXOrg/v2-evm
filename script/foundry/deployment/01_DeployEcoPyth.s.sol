@@ -2,7 +2,7 @@
 pragma solidity 0.8.18;
 
 import { EcoPyth } from "@hmx/oracles/EcoPyth.sol";
-import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
+import { ConfigJsonRepo } from "@hmx-script/foundry/utils/ConfigJsonRepo.s.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 contract DeployLeanPyth is ConfigJsonRepo {

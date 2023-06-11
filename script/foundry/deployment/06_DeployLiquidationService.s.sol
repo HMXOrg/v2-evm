@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
+import { ConfigJsonRepo } from "@hmx-script/foundry/utils/ConfigJsonRepo.s.sol";
 
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { LiquidationService } from "@hmx/services/LiquidationService.sol";

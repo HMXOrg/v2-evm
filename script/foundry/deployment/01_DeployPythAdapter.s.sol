@@ -5,7 +5,7 @@ import { IPyth } from "pyth-sdk-solidity/IPyth.sol";
 
 import { PythAdapter } from "@hmx/oracles/PythAdapter.sol";
 
-import { ConfigJsonRepo } from "@hmx-script/utils/ConfigJsonRepo.s.sol";
+import { ConfigJsonRepo } from "@hmx-script/foundry/utils/ConfigJsonRepo.s.sol";
 
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";

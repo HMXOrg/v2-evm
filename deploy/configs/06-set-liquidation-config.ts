@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("> ConfigStorage: Set Liquidation Config...");
   await (
     await configStorage.setLiquidationConfig({
-      liquidationFeeUSDE30: 5 * 1e30,
+      liquidationFeeUSDE30: ethers.utils.parseUnits("5", 30),
     })
   ).wait();
   console.log("> ConfigStorage: Set Liquidation Config success!");

@@ -45,11 +45,13 @@ contract SetOracle is ConfigJsonRepo {
     assetPythPriceDatas.push(AssetPythPriceData({ assetId: usdtAssetId, inverse: false }));
     assetPythPriceDatas.push(AssetPythPriceData({ assetId: appleAssetId, inverse: false }));
     assetPythPriceDatas.push(AssetPythPriceData({ assetId: jpyAssetId, inverse: true }));
+    assetPythPriceDatas.push(AssetPythPriceData({ assetId: xauAssetId, inverse: true }));
 
     // Set MarketStatus
     oracleMiddleWare.setUpdater(0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a, true);
+    oracleMiddleWare.setUpdater(0x0578C797798Ae89b688Cd5676348344d7d0EC35E, true);
 
-    bytes32[] memory _assetIds = new bytes32[](8);
+    bytes32[] memory _assetIds = new bytes32[](9);
     _assetIds[0] = usdcAssetId;
     _assetIds[1] = usdtAssetId;
     _assetIds[2] = daiAssetId;
@@ -58,8 +60,9 @@ contract SetOracle is ConfigJsonRepo {
     _assetIds[5] = glpAssetId;
     _assetIds[6] = appleAssetId;
     _assetIds[7] = jpyAssetId;
+    _assetIds[8] = xauAssetId;
 
-    uint8[] memory _statuses = new uint8[](8);
+    uint8[] memory _statuses = new uint8[](9);
     _statuses[0] = 2;
     _statuses[1] = 2;
     _statuses[2] = 2;
@@ -68,6 +71,7 @@ contract SetOracle is ConfigJsonRepo {
     _statuses[5] = 2;
     _statuses[6] = 2;
     _statuses[7] = 2;
+    _statuses[8] = 2;
 
     oracleMiddleWare.setMultipleMarketStatus(_assetIds, _statuses); // active
 
@@ -96,14 +100,16 @@ contract SetOracle is ConfigJsonRepo {
     oracleMiddleWare.setAssetPriceConfig(usdtAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
     oracleMiddleWare.setAssetPriceConfig(appleAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
     oracleMiddleWare.setAssetPriceConfig(jpyAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(glpAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleWare.setAssetPriceConfig(xauAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
 
     // GLP
-    oracleMiddleWare.setAssetPriceConfig(
-      glpAssetId,
-      _confidenceThresholdE6,
-      _trustPriceAge,
-      address(stakedGlpOracleAdapter)
-    );
+    // oracleMiddleWare.setAssetPriceConfig(
+    //   glpAssetId,
+    //   _confidenceThresholdE6,
+    //   _trustPriceAge,
+    //   address(stakedGlpOracleAdapter)
+    // );
 
     vm.stopBroadcast();
   }

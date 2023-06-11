@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("> ConfigStorage: Add Asset Class Config...");
   await (
     await configStorage.addAssetClassConfig({
-      baseBorrowingRate: 0.00000003 * 1e18, // 0.01% per hour
+      baseBorrowingRate: ethers.utils.parseEther("0.00000003"), // 0.01% per hour
     })
   ).wait();
   console.log("> ConfigStorage: Add Asset Class Config success!");

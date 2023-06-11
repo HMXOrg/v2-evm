@@ -1,34 +1,33 @@
 {
   "proxyAdmin": "",
   "storages": {
-    "config": "0x417B34E90990657BF6adC1Ecc2ac4B36069cc927",
-    "perp": "0x995F553c6EF760ACB6EED102b376c3f159014e3c",
-    "vault": "0x68DaEB1C169d16395Bd03C2d0776A3e54015323e"
+    "config": "",
+    "perp": "",
+    "vault": ""
   },
   "handlers": {
-    "bot": "0xb4D3b20c2AF9dB32ef86f301F1CD4B5E92b1D1e1",
-    "crossMargin": "0x2BBFD6845156845f1f6BB37D91519C2c1c2E2C85",
-    "limitTrade": "0x6c099BFD7fD91DbA514dc1169A85fD9D6659Ad03",
-    "liquidity": "0x0555886918E7862b9D500E35bDE3a3A14CcD29DE",
-    "marketTrade": ""
+    "bot": "",
+    "crossMargin": "",
+    "limitTrade": "",
+    "liquidity": ""
   },
   "helpers": {
-    "trade": "0x35A301796949f5235f8fc3311E6013450aaf2354"
+    "trade": ""
   },
   "services": {
-    "crossMargin": "0xb88771661eFE5a1577Ce0366540dCe33279aD8Cd",
-    "liquidity": "0xFd89a05652492D748a94cD24c636e33054E9F4c2",
-    "liquidation": "0xC98966b9A3236e4d82FBcDe94f0Df257b5033c4C",
-    "trade": "0x34eFfFEdbD326796256B4C253dC3F8F1dfe23D63"
+    "crossMargin": "",
+    "liquidity": "",
+    "liquidation": "",
+    "trade": ""
   },
   "oracles": {
-    "ecoPyth": "0xEB27B05178515c7E6E51dEE159c8487A011ac030",
-    "pythAdapter": "0x4c08D11Bc95075AD992Bd7A5776D0D9813E264d5",
-    "sglpStakedAdapter": "0x7AAF085e43f059105F7e1ECc525E8142fF962159",
-    "middleware": "0xFc41505F4e24345E3797b6730a948a2B03a5eC5e"
+    "ecoPyth": "",
+    "pythAdapter": "",
+    "sglpStakedAdapter": "",
+    "middleware": ""
   },
   "tokens": {
-    "hlp": "0x28826219ffb76aa41a56a40e875709391795e512",
+    "hlp": "",
     "weth": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
     "wbtc": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
     "usdt": "0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9",
@@ -45,14 +44,14 @@
     }
   },
   "strategies": {
-    "stakedGLPStrategy": "0x7FeC31e5966C84E8A81C574a0504ff637E3CC569",
-    "convertedGlpStrategy": "0x4D9DF83C94c54F75aC2870514C2AD72047f96BB8"
+    "stakedGLPStrategy": "",
+    "convertedGlpStrategy": ""
   },
   "hooks": {
-    "tradingStaking": "0x5381e29eEDd851e8700c1886d8B956D12200e6E9",
-    "tlc": "0xd2476A7bCEfBd2b4fF1676CaCb04bab49367c014"
+    "tradingStaking": "",
+    "tlc": ""
   },
-  "calculator": "0xfc51C8c673C27e1b3D89688ef46D706A77CA28DB",
+  "calculator": "",
   "accountAbstraction": {
     "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
     "factory": ""

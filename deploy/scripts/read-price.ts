@@ -15,11 +15,24 @@ const daiAssetId = ethers.utils.formatBytes32String("DAI");
 const appleAssetId = ethers.utils.formatBytes32String("AAPL");
 const jpyAssetId = ethers.utils.formatBytes32String("JPY");
 const glpAssetId = ethers.utils.formatBytes32String("GLP");
+const xauAssetId = ethers.utils.formatBytes32String("XAU");
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
   const oracle = OracleMiddleware__factory.connect(config.oracles.middleware, deployer);
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
+  console.log([
+    ethAssetId,
+    wbtcAssetId,
+    usdcAssetId,
+    usdtAssetId,
+    daiAssetId,
+    appleAssetId,
+    jpyAssetId,
+    glpAssetId,
+    xauAssetId,
+  ]);
+  console.log(await ecoPyth.getAssetIds());
   console.log((await ecoPyth.getPriceUnsafe(ethAssetId)).price);
   console.log((await ecoPyth.getPriceUnsafe(wbtcAssetId)).price);
   console.log((await ecoPyth.getPriceUnsafe(usdcAssetId)).price);
@@ -28,7 +41,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log((await ecoPyth.getPriceUnsafe(appleAssetId)).price);
   console.log((await ecoPyth.getPriceUnsafe(jpyAssetId)).price);
   console.log((await ecoPyth.getPriceUnsafe(glpAssetId)).price);
-  console.log(await oracle.getLatestPriceWithMarketStatus(glpAssetId, true));
+  console.log((await ecoPyth.getPriceUnsafe(xauAssetId)).price);
 };
 
 export default func;

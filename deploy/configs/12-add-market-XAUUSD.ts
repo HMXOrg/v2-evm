@@ -9,6 +9,7 @@ const config = getConfig();
 const cryptoAssetClass = 0;
 const equityAssetClass = 1;
 const forexAssetClass = 2;
+const commoditiesAssetClass = 3;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
@@ -17,14 +18,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("> ConfigStorage: Add Market Config...");
   await (
     await configStorage.addMarketConfig({
-      assetId: ethers.utils.formatBytes32String("ETH"),
+      assetId: ethers.utils.formatBytes32String("XAU"),
       increasePositionFeeRateBPS: 10, // 0.1%
       decreasePositionFeeRateBPS: 10, // 0.1%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
       maxProfitRateBPS: 90000, // 900%
       minLeverageBPS: 11000, // 110%
-      assetClass: cryptoAssetClass,
+      assetClass: commoditiesAssetClass,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
@@ -38,4 +39,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("> ConfigStorage: Add Market Config success!");
 };
 export default func;
-func.tags = ["AddMarket-ETHUSD"];
+func.tags = ["AddMarket-XAUUSD"];

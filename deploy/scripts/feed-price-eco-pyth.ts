@@ -4,15 +4,17 @@ import { ethers } from "hardhat";
 import { EvmPriceServiceConnection } from "@pythnetwork/pyth-evm-js";
 import { EcoPyth__factory } from "../../typechain";
 import { getConfig } from "../utils/config";
-import { getUpdatePriceData } from "../utils/price";
+import { getUpdatePriceData, getPricesFromPythWithPriceIds } from "../utils/price";
 
-const wethPriceId = "0xca80ba6dc32e08d06f1aa886011eed1d77c77be9eb761cc10d72b7d0a2fd57a6";
-const wbtcPriceId = "0xf9c0172ba10dfa4d19088d94f5bf61d3b54d5bd7483a322a982e1373ee8ea31b";
-const usdcPriceId = "0x41f3625971ca2ed2263e78573fe5ce23e13d2558ed3f2e47ab0f84fb9e7ae722";
-const usdtPriceId = "0x1fc18861232290221461220bd4e2acd1dcdfbc89c84092c93c18bdc7756c1588";
-const daiPriceId = "0x87a67534df591d2dd5ec577ab3c75668a8e3d35e92e27bf29d9e2e52df8de412";
-const applePriceId = "0xafcc9a5bb5eefd55e12b6f0b4c8e6bccf72b785134ee232a5d175afd082e8832";
-const jpyPriceId = "0x20a938f54b68f1f2ef18ea0328f6dd0747f8ea11486d22b021e83a900be89776";
+const wethPriceId = "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace";
+const wbtcPriceId = "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
+const usdcPriceId = "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a";
+const usdtPriceId = "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b";
+const daiPriceId = "0xb0948a5e5313200c632b51bb5ca32f6de0d36e9950a942d19751e833f70dabfd";
+const applePriceId = "0x49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688";
+const jpyPriceId = "0xef2c98c804ba503c6a707e38be4dfbb16683775f195b091252bf24693042fd52";
+const glpPriceId = "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a"; // USDC override
+const xauPriceId = "0x765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2";
 
 const config = getConfig();
 const BigNumber = ethers.BigNumber;
@@ -28,13 +30,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const priceUpdates = [
     1900.02, // ETH
-    20000.29, // BTC
+    20000.29, // ETH
     1, // USDC
     1, // USDT
     1, // DAI
     137.3, // AAPL
     198.2, // JPY
     1, // GLP
+    1958, // XAU
   ];
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
@@ -47,7 +50,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     true
   );
 
-  // await (await pyth.setUpdater(deployer.address, true)).wait();
+  await (await pyth.setUpdater(deployer.address, true)).wait();
   await (
     await pyth.updatePriceFeeds(
       priceUpdateData,

@@ -395,6 +395,27 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     bytes32 _assetId,
     CollateralTokenConfig calldata _newConfig
   ) external onlyOwner returns (CollateralTokenConfig memory _collateralTokenConfig) {
+    return _setCollateralTokenConfig(_assetId, _newConfig);
+  }
+
+  function setCollateralTokenConfigs(
+    bytes32[] calldata _assetIds,
+    CollateralTokenConfig[] calldata _newConfigs
+  ) external onlyOwner {
+    if (_assetIds.length != _newConfigs.length) revert IConfigStorage_BadLen();
+    for (uint256 i = 0; i < _assetIds.length; ) {
+      _setCollateralTokenConfig(_assetIds[i], _newConfigs[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _setCollateralTokenConfig(
+    bytes32 _assetId,
+    CollateralTokenConfig calldata _newConfig
+  ) internal returns (CollateralTokenConfig memory _collateralTokenConfig) {
     if (_newConfig.collateralFactorBPS == 0) revert IConfigStorage_ExceedLimitSetting();
 
     emit LogSetCollateralTokenConfig(_assetId, assetCollateralTokenConfigs[_assetId], _newConfig);
@@ -415,6 +436,24 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     bytes32 _assetId,
     AssetConfig calldata _newConfig
   ) external onlyOwner returns (AssetConfig memory _assetConfig) {
+    return _setAssetConfig(_assetId, _newConfig);
+  }
+
+  function setAssetConfigs(bytes32[] calldata _assetIds, AssetConfig[] calldata _newConfigs) external onlyOwner {
+    if (_assetIds.length != _newConfigs.length) revert IConfigStorage_BadLen();
+    for (uint256 i = 0; i < _assetIds.length; ) {
+      _setAssetConfig(_assetIds[i], _newConfigs[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _setAssetConfig(
+    bytes32 _assetId,
+    AssetConfig calldata _newConfig
+  ) internal returns (AssetConfig memory _assetConfig) {
     if (!_newConfig.tokenAddress.isContract()) revert IConfigStorage_BadArgs();
 
     emit LogSetAssetConfig(_assetId, assetConfigs[_assetId], _newConfig);

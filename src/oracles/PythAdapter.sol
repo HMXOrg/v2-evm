@@ -12,6 +12,7 @@ contract PythAdapter is OwnableUpgradeable, IPythAdapter {
   error PythAdapter_ConfidenceRatioTooHigh();
   error PythAdapter_OnlyUpdater();
   error PythAdapter_UnknownAssetId();
+  error PythAdapter_WrongArgs();
 
   // state variables
   IReadablePyth public pyth;
@@ -39,6 +40,28 @@ contract PythAdapter is OwnableUpgradeable, IPythAdapter {
     emit LogSetConfig(_assetId, _pythPriceId, _inverse);
 
     configs[_assetId] = _config;
+  }
+
+  function setConfigs(
+    bytes32[] calldata _assetIds,
+    bytes32[] calldata _pythPriceIds,
+    bool[] calldata _inverses
+  ) external onlyOwner {
+    if (_assetIds.length != _pythPriceIds.length || _pythPriceIds.length != _inverses.length)
+      revert PythAdapter_WrongArgs();
+    PythPriceConfig memory _config;
+    for (uint256 i = 0; i < _assetIds.length; ) {
+      _config = configs[_assetIds[i]];
+      _config.pythPriceId = _pythPriceIds[i];
+      _config.inverse = _inverses[i];
+      emit LogSetConfig(_assetIds[i], _pythPriceIds[i], _inverses[i]);
+
+      configs[_assetIds[i]] = _config;
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @notice convert Pyth's price to uint256.

@@ -162,6 +162,23 @@ contract PerpStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IPerpSto
    * Setters
    */
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external onlyOwner nonReentrant {
+    _setServiceExecutor(_executorAddress, _isServiceExecutor);
+  }
+
+  function setServiceExecutorBatch(
+    address[] calldata _executorAddresses,
+    bool[] calldata _isServiceExecutors
+  ) external onlyOwner nonReentrant {
+    if (_executorAddresses.length != _isServiceExecutors.length) revert IPerpStorage_BadLen();
+    for (uint256 i = 0; i < _executorAddresses.length; ) {
+      _setServiceExecutor(_executorAddresses[i], _isServiceExecutors[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _setServiceExecutor(address _executorAddress, bool _isServiceExecutor) internal {
     serviceExecutors[_executorAddress] = _isServiceExecutor;
     emit LogSetServiceExecutor(_executorAddress, _isServiceExecutor);
   }

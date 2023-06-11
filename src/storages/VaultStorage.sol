@@ -20,7 +20,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
    * Events
    */
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
-  event SetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
+  event LogSetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
   event LogSetStrategyAllowance(address indexed token, address strategy, address prevTarget, address newTarget);
 
   /**
@@ -112,9 +112,26 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
    * Setters
    */
 
-  function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external nonReentrant onlyOwner {
+  function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external onlyOwner nonReentrant {
+    _setServiceExecutor(_executorAddress, _isServiceExecutor);
+  }
+
+  function setServiceExecutorBatch(
+    address[] calldata _executorAddresses,
+    bool[] calldata _isServiceExecutors
+  ) external onlyOwner nonReentrant {
+    if (_executorAddresses.length != _isServiceExecutors.length) revert IVaultStorage_BadLen();
+    for (uint256 i = 0; i < _executorAddresses.length; ) {
+      _setServiceExecutor(_executorAddresses[i], _isServiceExecutors[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _setServiceExecutor(address _executorAddress, bool _isServiceExecutor) internal {
     serviceExecutors[_executorAddress] = _isServiceExecutor;
-    emit SetServiceExecutor(_executorAddress, _isServiceExecutor);
+    emit LogSetServiceExecutor(_executorAddress, _isServiceExecutor);
   }
 
   function addFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {

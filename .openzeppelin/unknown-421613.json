@@ -5728,7 +5728,7 @@
             "label": "pyth",
             "offset": 0,
             "slot": "101",
-            "type": "t_contract(IReadablePyth)30451",
+            "type": "t_contract(IReadablePyth)31655",
             "contract": "PythAdapter",
             "src": "src/oracles/PythAdapter.sol:17"
           },
@@ -5736,7 +5736,7 @@
             "label": "configs",
             "offset": 0,
             "slot": "102",
-            "type": "t_mapping(t_bytes32,t_struct(PythPriceConfig)30403_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(PythPriceConfig)31607_storage)",
             "contract": "PythAdapter",
             "src": "src/oracles/PythAdapter.sol:19"
           }
@@ -5762,15 +5762,15 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IReadablePyth)30451": {
+          "t_contract(IReadablePyth)31655": {
             "label": "contract IReadablePyth",
             "numberOfBytes": "20"
           },
-          "t_mapping(t_bytes32,t_struct(PythPriceConfig)30403_storage)": {
+          "t_mapping(t_bytes32,t_struct(PythPriceConfig)31607_storage)": {
             "label": "mapping(bytes32 => struct IPythAdapter.PythPriceConfig)",
             "numberOfBytes": "32"
           },
-          "t_struct(PythPriceConfig)30403_storage": {
+          "t_struct(PythPriceConfig)31607_storage": {
             "label": "struct IPythAdapter.PythPriceConfig",
             "members": [
               {
@@ -7698,7 +7698,7 @@
             "label": "assetPriceConfigs",
             "offset": 0,
             "slot": "102",
-            "type": "t_mapping(t_bytes32,t_struct(AssetPriceConfig)29513_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(AssetPriceConfig)29692_storage)",
             "contract": "OracleMiddleware",
             "src": "src/oracles/OracleMiddleware.sol:48"
           },
@@ -7744,7 +7744,7 @@
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_struct(AssetPriceConfig)29513_storage)": {
+          "t_mapping(t_bytes32,t_struct(AssetPriceConfig)29692_storage)": {
             "label": "mapping(bytes32 => struct OracleMiddleware.AssetPriceConfig)",
             "numberOfBytes": "32"
           },
@@ -7752,7 +7752,7 @@
             "label": "mapping(bytes32 => uint8)",
             "numberOfBytes": "32"
           },
-          "t_struct(AssetPriceConfig)29513_storage": {
+          "t_struct(AssetPriceConfig)29692_storage": {
             "label": "struct OracleMiddleware.AssetPriceConfig",
             "members": [
               {
@@ -7842,7 +7842,7 @@
             "label": "liquidityConfig",
             "offset": 0,
             "slot": "101",
-            "type": "t_struct(LiquidityConfig)46377_storage",
+            "type": "t_struct(LiquidityConfig)46751_storage",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:59"
           },
@@ -7850,7 +7850,7 @@
             "label": "swapConfig",
             "offset": 0,
             "slot": "103",
-            "type": "t_struct(SwapConfig)46382_storage",
+            "type": "t_struct(SwapConfig)46756_storage",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:60"
           },
@@ -7858,7 +7858,7 @@
             "label": "tradingConfig",
             "offset": 0,
             "slot": "104",
-            "type": "t_struct(TradingConfig)46391_storage",
+            "type": "t_struct(TradingConfig)46765_storage",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:61"
           },
@@ -7866,7 +7866,7 @@
             "label": "liquidationConfig",
             "offset": 0,
             "slot": "107",
-            "type": "t_struct(LiquidationConfig)46394_storage",
+            "type": "t_struct(LiquidationConfig)46768_storage",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:62"
           },
@@ -7962,7 +7962,7 @@
             "label": "assetConfigs",
             "offset": 0,
             "slot": "118",
-            "type": "t_mapping(t_bytes32,t_struct(AssetConfig)46308_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(AssetConfig)46682_storage)",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:79"
           },
@@ -7978,7 +7978,7 @@
             "label": "assetHlpTokenConfigs",
             "offset": 0,
             "slot": "120",
-            "type": "t_mapping(t_bytes32,t_struct(HLPTokenConfig)46317_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(HLPTokenConfig)46691_storage)",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:82"
           },
@@ -7994,7 +7994,7 @@
             "label": "assetCollateralTokenConfigs",
             "offset": 0,
             "slot": "122",
-            "type": "t_mapping(t_bytes32,t_struct(CollateralTokenConfig)46324_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(CollateralTokenConfig)46698_storage)",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:85"
           },
@@ -8002,7 +8002,7 @@
             "label": "marketConfigs",
             "offset": 0,
             "slot": "123",
-            "type": "t_array(t_struct(MarketConfig)46355_storage)dyn_storage",
+            "type": "t_array(t_struct(MarketConfig)46729_storage)dyn_storage",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:87"
           },
@@ -8010,7 +8010,7 @@
             "label": "assetClassConfigs",
             "offset": 0,
             "slot": "124",
-            "type": "t_array(t_struct(AssetClassConfig)46358_storage)dyn_storage",
+            "type": "t_array(t_struct(AssetClassConfig)46732_storage)dyn_storage",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:88"
           },
@@ -8044,11 +8044,11 @@
             "label": "bytes32[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(AssetClassConfig)46358_storage)dyn_storage": {
+          "t_array(t_struct(AssetClassConfig)46732_storage)dyn_storage": {
             "label": "struct IConfigStorage.AssetClassConfig[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(MarketConfig)46355_storage)dyn_storage": {
+          "t_array(t_struct(MarketConfig)46729_storage)dyn_storage": {
             "label": "struct IConfigStorage.MarketConfig[]",
             "numberOfBytes": "32"
           },
@@ -8080,19 +8080,19 @@
             "label": "mapping(address => mapping(address => bool))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_struct(AssetConfig)46308_storage)": {
+          "t_mapping(t_bytes32,t_struct(AssetConfig)46682_storage)": {
             "label": "mapping(bytes32 => struct IConfigStorage.AssetConfig)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_struct(CollateralTokenConfig)46324_storage)": {
+          "t_mapping(t_bytes32,t_struct(CollateralTokenConfig)46698_storage)": {
             "label": "mapping(bytes32 => struct IConfigStorage.CollateralTokenConfig)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_struct(HLPTokenConfig)46317_storage)": {
+          "t_mapping(t_bytes32,t_struct(HLPTokenConfig)46691_storage)": {
             "label": "mapping(bytes32 => struct IConfigStorage.HLPTokenConfig)",
             "numberOfBytes": "32"
           },
-          "t_struct(AssetClassConfig)46358_storage": {
+          "t_struct(AssetClassConfig)46732_storage": {
             "label": "struct IConfigStorage.AssetClassConfig",
             "members": [
               {
@@ -8104,7 +8104,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(AssetConfig)46308_storage": {
+          "t_struct(AssetConfig)46682_storage": {
             "label": "struct IConfigStorage.AssetConfig",
             "members": [
               {
@@ -8134,7 +8134,7 @@
             ],
             "numberOfBytes": "96"
           },
-          "t_struct(CollateralTokenConfig)46324_storage": {
+          "t_struct(CollateralTokenConfig)46698_storage": {
             "label": "struct IConfigStorage.CollateralTokenConfig",
             "members": [
               {
@@ -8158,7 +8158,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(FundingRate)46329_storage": {
+          "t_struct(FundingRate)46703_storage": {
             "label": "struct IConfigStorage.FundingRate",
             "members": [
               {
@@ -8176,7 +8176,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(HLPTokenConfig)46317_storage": {
+          "t_struct(HLPTokenConfig)46691_storage": {
             "label": "struct IConfigStorage.HLPTokenConfig",
             "members": [
               {
@@ -8206,7 +8206,7 @@
             ],
             "numberOfBytes": "128"
           },
-          "t_struct(LiquidationConfig)46394_storage": {
+          "t_struct(LiquidationConfig)46768_storage": {
             "label": "struct IConfigStorage.LiquidationConfig",
             "members": [
               {
@@ -8218,7 +8218,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(LiquidityConfig)46377_storage": {
+          "t_struct(LiquidityConfig)46751_storage": {
             "label": "struct IConfigStorage.LiquidityConfig",
             "members": [
               {
@@ -8278,7 +8278,7 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(MarketConfig)46355_storage": {
+          "t_struct(MarketConfig)46729_storage": {
             "label": "struct IConfigStorage.MarketConfig",
             "members": [
               {
@@ -8349,14 +8349,14 @@
               },
               {
                 "label": "fundingRate",
-                "type": "t_struct(FundingRate)46329_storage",
+                "type": "t_struct(FundingRate)46703_storage",
                 "offset": 0,
                 "slot": "4"
               }
             ],
             "numberOfBytes": "192"
           },
-          "t_struct(SwapConfig)46382_storage": {
+          "t_struct(SwapConfig)46756_storage": {
             "label": "struct IConfigStorage.SwapConfig",
             "members": [
               {
@@ -8374,7 +8374,7 @@
             ],
             "numberOfBytes": "32"
           },
-          "t_struct(TradingConfig)46391_storage": {
+          "t_struct(TradingConfig)46765_storage": {
             "label": "struct IConfigStorage.TradingConfig",
             "members": [
               {
@@ -11587,6 +11587,908 @@
           "t_uint256": {
             "label": "uint256",
             "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "8f1b61670603faac415cc98d7113e22ea9850f1437c3433808fc309557ffdca3": {
+      "address": "0xDCaa1566b0754B2c69F2d0CA59498cB91eB8be7c",
+      "txHash": "0x78bfd56cbfed88d92e8c231f24e20c3a30450d3ce25774a24563a09f254cbb1e",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "pyth",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_contract(IReadablePyth)31798",
+            "contract": "PythAdapter",
+            "src": "src/oracles/PythAdapter.sol:18"
+          },
+          {
+            "label": "configs",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_bytes32,t_struct(PythPriceConfig)31750_storage)",
+            "contract": "PythAdapter",
+            "src": "src/oracles/PythAdapter.sol:20"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IReadablePyth)31798": {
+            "label": "contract IReadablePyth",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_bytes32,t_struct(PythPriceConfig)31750_storage)": {
+            "label": "mapping(bytes32 => struct IPythAdapter.PythPriceConfig)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(PythPriceConfig)31750_storage": {
+            "label": "struct IPythAdapter.PythPriceConfig",
+            "members": [
+              {
+                "label": "pythPriceId",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "inverse",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "112fccf81852ba0a0c671b3429474940a3a3afd58d397ba1ffa37040a6424514": {
+      "address": "0x506E9EA52F383696Fb4685CBE86B2832662dA783",
+      "txHash": "0xe89c895116e294145f5263219e780910b8363e3f3653e7e5e3d86e34c4cf205f",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "isUpdater",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "OracleMiddleware",
+            "src": "src/oracles/OracleMiddleware.sol:47"
+          },
+          {
+            "label": "assetPriceConfigs",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_mapping(t_bytes32,t_struct(AssetPriceConfig)29692_storage)",
+            "contract": "OracleMiddleware",
+            "src": "src/oracles/OracleMiddleware.sol:48"
+          },
+          {
+            "label": "marketStatus",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_mapping(t_bytes32,t_uint8)",
+            "contract": "OracleMiddleware",
+            "src": "src/oracles/OracleMiddleware.sol:60"
+          },
+          {
+            "label": "maxTrustPriceAge",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_uint256",
+            "contract": "OracleMiddleware",
+            "src": "src/oracles/OracleMiddleware.sol:61"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(AssetPriceConfig)29692_storage)": {
+            "label": "mapping(bytes32 => struct OracleMiddleware.AssetPriceConfig)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint8)": {
+            "label": "mapping(bytes32 => uint8)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AssetPriceConfig)29692_storage": {
+            "label": "struct OracleMiddleware.AssetPriceConfig",
+            "members": [
+              {
+                "label": "trustPriceAge",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "confidenceThresholdE6",
+                "type": "t_uint32",
+                "offset": 4,
+                "slot": "0"
+              },
+              {
+                "label": "adapter",
+                "type": "t_address",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "44878e2a59e85cbdcb2dcfb2ee93664db089524832e61304ea2dd9a00f0edde4": {
+      "address": "0xaf27cb598c88De4F49d7A69e1de944C68295da2B",
+      "txHash": "0x0131644ac4b3bd508c1c911bf0bc66facc05e6317dd3df3993aecf1876d72ade",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "liquidityConfig",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_struct(LiquidityConfig)46813_storage",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:59"
+          },
+          {
+            "label": "swapConfig",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_struct(SwapConfig)46818_storage",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:60"
+          },
+          {
+            "label": "tradingConfig",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_struct(TradingConfig)46827_storage",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:61"
+          },
+          {
+            "label": "liquidationConfig",
+            "offset": 0,
+            "slot": "107",
+            "type": "t_struct(LiquidationConfig)46830_storage",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:62"
+          },
+          {
+            "label": "allowedLiquidators",
+            "offset": 0,
+            "slot": "108",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:64"
+          },
+          {
+            "label": "serviceExecutors",
+            "offset": 0,
+            "slot": "109",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_bool))",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:65"
+          },
+          {
+            "label": "calculator",
+            "offset": 0,
+            "slot": "110",
+            "type": "t_address",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:67"
+          },
+          {
+            "label": "oracle",
+            "offset": 0,
+            "slot": "111",
+            "type": "t_address",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:68"
+          },
+          {
+            "label": "hlp",
+            "offset": 0,
+            "slot": "112",
+            "type": "t_address",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:69"
+          },
+          {
+            "label": "treasury",
+            "offset": 0,
+            "slot": "113",
+            "type": "t_address",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:70"
+          },
+          {
+            "label": "pnlFactorBPS",
+            "offset": 20,
+            "slot": "113",
+            "type": "t_uint32",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:71"
+          },
+          {
+            "label": "minimumPositionSize",
+            "offset": 0,
+            "slot": "114",
+            "type": "t_uint256",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:72"
+          },
+          {
+            "label": "weth",
+            "offset": 0,
+            "slot": "115",
+            "type": "t_address",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:73"
+          },
+          {
+            "label": "sglp",
+            "offset": 0,
+            "slot": "116",
+            "type": "t_address",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:74"
+          },
+          {
+            "label": "tokenAssetIds",
+            "offset": 0,
+            "slot": "117",
+            "type": "t_mapping(t_address,t_bytes32)",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:77"
+          },
+          {
+            "label": "assetConfigs",
+            "offset": 0,
+            "slot": "118",
+            "type": "t_mapping(t_bytes32,t_struct(AssetConfig)46744_storage)",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:79"
+          },
+          {
+            "label": "hlpAssetIds",
+            "offset": 0,
+            "slot": "119",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:81"
+          },
+          {
+            "label": "assetHlpTokenConfigs",
+            "offset": 0,
+            "slot": "120",
+            "type": "t_mapping(t_bytes32,t_struct(HLPTokenConfig)46753_storage)",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:82"
+          },
+          {
+            "label": "collateralAssetIds",
+            "offset": 0,
+            "slot": "121",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:84"
+          },
+          {
+            "label": "assetCollateralTokenConfigs",
+            "offset": 0,
+            "slot": "122",
+            "type": "t_mapping(t_bytes32,t_struct(CollateralTokenConfig)46760_storage)",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:85"
+          },
+          {
+            "label": "marketConfigs",
+            "offset": 0,
+            "slot": "123",
+            "type": "t_array(t_struct(MarketConfig)46791_storage)dyn_storage",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:87"
+          },
+          {
+            "label": "assetClassConfigs",
+            "offset": 0,
+            "slot": "124",
+            "type": "t_array(t_struct(AssetClassConfig)46794_storage)dyn_storage",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:88"
+          },
+          {
+            "label": "tradeServiceHooks",
+            "offset": 0,
+            "slot": "125",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:89"
+          },
+          {
+            "label": "configExecutors",
+            "offset": 0,
+            "slot": "126",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "ConfigStorage",
+            "src": "src/storages/ConfigStorage.sol:91"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(AssetClassConfig)46794_storage)dyn_storage": {
+            "label": "struct IConfigStorage.AssetClassConfig[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_struct(MarketConfig)46791_storage)dyn_storage": {
+            "label": "struct IConfigStorage.MarketConfig[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bytes32)": {
+            "label": "mapping(address => bytes32)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_bool))": {
+            "label": "mapping(address => mapping(address => bool))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(AssetConfig)46744_storage)": {
+            "label": "mapping(bytes32 => struct IConfigStorage.AssetConfig)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(CollateralTokenConfig)46760_storage)": {
+            "label": "mapping(bytes32 => struct IConfigStorage.CollateralTokenConfig)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(HLPTokenConfig)46753_storage)": {
+            "label": "mapping(bytes32 => struct IConfigStorage.HLPTokenConfig)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AssetClassConfig)46794_storage": {
+            "label": "struct IConfigStorage.AssetClassConfig",
+            "members": [
+              {
+                "label": "baseBorrowingRate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(AssetConfig)46744_storage": {
+            "label": "struct IConfigStorage.AssetConfig",
+            "members": [
+              {
+                "label": "tokenAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "assetId",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "decimals",
+                "type": "t_uint8",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isStableCoin",
+                "type": "t_bool",
+                "offset": 1,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(CollateralTokenConfig)46760_storage": {
+            "label": "struct IConfigStorage.CollateralTokenConfig",
+            "members": [
+              {
+                "label": "settleStrategy",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "collateralFactorBPS",
+                "type": "t_uint32",
+                "offset": 20,
+                "slot": "0"
+              },
+              {
+                "label": "accepted",
+                "type": "t_bool",
+                "offset": 24,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(FundingRate)46765_storage": {
+            "label": "struct IConfigStorage.FundingRate",
+            "members": [
+              {
+                "label": "maxSkewScaleUSD",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "maxFundingRate",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(HLPTokenConfig)46753_storage": {
+            "label": "struct IConfigStorage.HLPTokenConfig",
+            "members": [
+              {
+                "label": "targetWeight",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "bufferLiquidity",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "maxWeightDiff",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "accepted",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(LiquidationConfig)46830_storage": {
+            "label": "struct IConfigStorage.LiquidationConfig",
+            "members": [
+              {
+                "label": "liquidationFeeUSDE30",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(LiquidityConfig)46813_storage": {
+            "label": "struct IConfigStorage.LiquidityConfig",
+            "members": [
+              {
+                "label": "hlpTotalTokenWeight",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "hlpSafetyBufferBPS",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "taxFeeRateBPS",
+                "type": "t_uint32",
+                "offset": 4,
+                "slot": "1"
+              },
+              {
+                "label": "flashLoanFeeRateBPS",
+                "type": "t_uint32",
+                "offset": 8,
+                "slot": "1"
+              },
+              {
+                "label": "maxHLPUtilizationBPS",
+                "type": "t_uint32",
+                "offset": 12,
+                "slot": "1"
+              },
+              {
+                "label": "depositFeeRateBPS",
+                "type": "t_uint32",
+                "offset": 16,
+                "slot": "1"
+              },
+              {
+                "label": "withdrawFeeRateBPS",
+                "type": "t_uint32",
+                "offset": 20,
+                "slot": "1"
+              },
+              {
+                "label": "dynamicFeeEnabled",
+                "type": "t_bool",
+                "offset": 24,
+                "slot": "1"
+              },
+              {
+                "label": "enabled",
+                "type": "t_bool",
+                "offset": 25,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(MarketConfig)46791_storage": {
+            "label": "struct IConfigStorage.MarketConfig",
+            "members": [
+              {
+                "label": "assetId",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "maxLongPositionSize",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "maxShortPositionSize",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "increasePositionFeeRateBPS",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "decreasePositionFeeRateBPS",
+                "type": "t_uint32",
+                "offset": 4,
+                "slot": "3"
+              },
+              {
+                "label": "initialMarginFractionBPS",
+                "type": "t_uint32",
+                "offset": 8,
+                "slot": "3"
+              },
+              {
+                "label": "maintenanceMarginFractionBPS",
+                "type": "t_uint32",
+                "offset": 12,
+                "slot": "3"
+              },
+              {
+                "label": "maxProfitRateBPS",
+                "type": "t_uint32",
+                "offset": 16,
+                "slot": "3"
+              },
+              {
+                "label": "assetClass",
+                "type": "t_uint8",
+                "offset": 20,
+                "slot": "3"
+              },
+              {
+                "label": "allowIncreasePosition",
+                "type": "t_bool",
+                "offset": 21,
+                "slot": "3"
+              },
+              {
+                "label": "active",
+                "type": "t_bool",
+                "offset": 22,
+                "slot": "3"
+              },
+              {
+                "label": "fundingRate",
+                "type": "t_struct(FundingRate)46765_storage",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "192"
+          },
+          "t_struct(SwapConfig)46818_storage": {
+            "label": "struct IConfigStorage.SwapConfig",
+            "members": [
+              {
+                "label": "stablecoinSwapFeeRateBPS",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "swapFeeRateBPS",
+                "type": "t_uint32",
+                "offset": 4,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(TradingConfig)46827_storage": {
+            "label": "struct IConfigStorage.TradingConfig",
+            "members": [
+              {
+                "label": "fundingInterval",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "minProfitDuration",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "devFeeRateBPS",
+                "type": "t_uint32",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "maxPosition",
+                "type": "t_uint8",
+                "offset": 4,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
           },
           "t_uint8": {
             "label": "uint8",

@@ -23,7 +23,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
       maintenanceMarginFractionBPS: 5, // MMF = 0.05%
       maxProfitRateBPS: 90000, // 900%
-      minLeverageBPS: 11000, // 110%
       assetClass: forexAssetClass,
       allowIncreasePosition: true,
       active: true,

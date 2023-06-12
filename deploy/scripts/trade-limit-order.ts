@@ -22,7 +22,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
   const handler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  // await (await handler.setMinExecutionFee(30)).wait();
   const executionFee = await handler.minExecutionFee();
   console.log("Limit Order...");
   await (

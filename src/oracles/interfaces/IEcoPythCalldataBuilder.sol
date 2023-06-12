@@ -5,9 +5,8 @@ interface IEcoPythCalldataBuilder {
   struct BuildData {
     bytes32 assetId;
     int64 priceE8;
-    int8 expo;
     uint160 publishTime;
-    uint24 maxDiffBps;
+    uint32 maxDiffBps;
   }
 
   function build(

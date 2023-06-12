@@ -30,14 +30,12 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
     _data[0] = IEcoPythCalldataBuilder.BuildData({
       assetId: "0",
       priceE8: 49999999,
-      expo: -8,
       publishTime: 0,
       maxDiffBps: 15000
     });
     _data[1] = IEcoPythCalldataBuilder.BuildData({
       assetId: "1",
       priceE8: 19_000.25 * 10 ** 8,
-      expo: -8,
       publishTime: 0,
       maxDiffBps: 15000
     });
@@ -53,14 +51,12 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
     _data[0] = IEcoPythCalldataBuilder.BuildData({
       assetId: "0",
       priceE8: 150000001,
-      expo: -8,
       publishTime: 0,
       maxDiffBps: 15000
     });
     _data[1] = IEcoPythCalldataBuilder.BuildData({
       assetId: "1",
       priceE8: 19_000.25 * 10 ** 8,
-      expo: -8,
       publishTime: 0,
       maxDiffBps: 15000
     });
@@ -75,14 +71,12 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
     _data[0] = IEcoPythCalldataBuilder.BuildData({
       assetId: "0",
       priceE8: 1.5 * 10 ** 8,
-      expo: -8,
       publishTime: 1688,
       maxDiffBps: 15000
     });
     _data[1] = IEcoPythCalldataBuilder.BuildData({
       assetId: "1",
       priceE8: 19_000.25 * 10 ** 8,
-      expo: -8,
       publishTime: 1689,
       maxDiffBps: 15000
     });

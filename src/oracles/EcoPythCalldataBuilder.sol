@@ -20,12 +20,12 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     ecoPyth = ecoPyth_;
   }
 
-  function isOverMaxDiff(bytes32 _assetId, int64 _price, uint24 _maxDiffBps) internal view returns (bool) {
+  function isOverMaxDiff(bytes32 _assetId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
     PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(_assetId);
-    if (_ecoPythPrice.price * 10000 > _price * int24(_maxDiffBps)) {
+    if (_ecoPythPrice.price * 10000 > _price * int32(_maxDiffBps)) {
       return true;
     }
-    if (_ecoPythPrice.price * int24(_maxDiffBps) < _price * 10000) {
+    if (_ecoPythPrice.price * int32(_maxDiffBps) < _price * 10000) {
       return true;
     }
     return false;
@@ -61,9 +61,7 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     uint24[] memory _publishTimeDiffs = new uint24[](_data.length);
     for (uint _i = 0; _i < _data.length; ) {
       // Build the price update calldata
-      _ticks[_i] = TickMath.getTickAtSqrtRatio(
-        SqrtX96Codec.encode(PythLib.convertToUint(_data[_i].priceE8, _data[_i].expo, 18))
-      );
+      _ticks[_i] = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(PythLib.convertToUint(_data[_i].priceE8, -8, 18)));
       _publishTimeDiffs[_i] = uint24(_data[_i].publishTime - _minPublishTime);
 
       unchecked {

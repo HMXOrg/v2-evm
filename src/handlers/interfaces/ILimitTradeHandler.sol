@@ -8,6 +8,7 @@ interface ILimitTradeHandler {
    * Errors
    */
   error ILimitTradeHandler_InvalidAddress();
+  error ILimitTradeHandler_InvalidArraySize();
   error ILimitTradeHandler_InsufficientExecutionFee();
   error ILimitTradeHandler_IncorrectValueTransfer();
   error ILimitTradeHandler_NotWhitelisted();
@@ -113,13 +114,13 @@ interface ILimitTradeHandler {
     address _tpToken
   ) external payable;
 
-  function executeOrder(
-    address _account,
-    uint8 _subAccountId,
-    uint256 _orderIndex,
+  function executeOrders(
+    address[] calldata _accounts,
+    uint8[] calldata _subAccountIds,
+    uint256[] calldata _orderIndexes,
     address payable _feeReceiver,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
+    bytes32[] calldata _priceData,
+    bytes32[] calldata _publishTimeData,
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external;

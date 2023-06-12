@@ -118,10 +118,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   function testRevert_executeOrder_NotWhitelisted() external {
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NotWhitelisted()"));
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -133,10 +140,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
   // Execute a non-existent order
   function testRevert_executeOrder_NonExistentOrder() external {
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -166,10 +180,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPriceStale(false);
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MarketIsClosed()"));
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -199,10 +220,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPriceStale(false);
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -239,10 +267,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPriceStale(false);
 
     // Execute Long Increase Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -295,10 +330,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPriceStale(false);
 
     // Execute Long Increase Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -356,10 +398,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1002.1 * 1e30);
 
     // Execute Long Increase Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 1,
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 1;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -407,10 +453,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPriceStale(false);
 
     // Execute Short Increase Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -464,10 +517,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPriceStale(false);
 
     // Execute Short Increase Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -524,10 +584,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1003 * 1e30);
 
     // Execute Short Increase Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 1,
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 1;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -570,10 +634,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1001 * 1e30);
 
     // Execute Buy Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -629,10 +700,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1003 * 1e30);
 
     // Execute Sell Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 1,
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 1;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -691,10 +766,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1001 * 1e30);
 
     // Execute Sell Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -750,10 +832,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1003 * 1e30);
 
     // Execute Buy Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 1,
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 1;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -812,10 +898,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1001 * 1e30);
 
     // Execute Buy Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -871,10 +964,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1003 * 1e30);
 
     // Execute Sell Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 1,
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 1;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -927,10 +1024,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1001 * 1e30);
 
     // Execute Sell Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -986,10 +1090,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1003 * 1e30);
 
     // Execute Buy Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 1,
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 1;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -1042,10 +1150,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1001 * 1e30);
 
     // Execute Buy Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -1101,10 +1216,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1003 * 1e30);
 
     // Execute Sell Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 1,
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 1;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -1157,10 +1276,17 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1001 * 1e30);
 
     // Execute Sell Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,
@@ -1216,10 +1342,14 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setPrice(1003 * 1e30);
 
     // Execute Buy Order
-    limitTradeHandler.executeOrder({
-      _account: address(this),
-      _subAccountId: 0,
-      _orderIndex: 1,
+    accounts[0] = address(this);
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 1;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,

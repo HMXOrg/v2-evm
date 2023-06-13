@@ -6,6 +6,7 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
+import { MulticallUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/MulticallUpgradeable.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // contracts
@@ -21,7 +22,7 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 /// @title LimitTradeHandler
 /// @notice This contract handles the create, update, and cancel for the Trading module.
-contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILimitTradeHandler {
+contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, MulticallUpgradeable, ILimitTradeHandler {
   using EnumerableSet for EnumerableSet.UintSet;
   using SafeCastUpgradeable for uint256;
   using SafeCastUpgradeable for int256;

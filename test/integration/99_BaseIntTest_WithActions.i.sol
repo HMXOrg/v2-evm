@@ -218,10 +218,17 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
 
     // if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
-    limitTradeHandler.executeOrder(
-      _account,
-      _subAccountId,
-      _orderIndex,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = _account;
+    subAccountIds[0] = _subAccountId;
+    orderIndexes[0] = _orderIndex;
+
+    limitTradeHandler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
       payable(FEEVER),
       priceUpdateData,
       publishTimeUpdateData,
@@ -289,10 +296,17 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
 
     // if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
-    limitTradeHandler.executeOrder(
-      _account,
-      _subAccountId,
-      _orderIndex,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = _account;
+    subAccountIds[0] = _subAccountId;
+    orderIndexes[0] = _orderIndex;
+
+    limitTradeHandler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
       payable(FEEVER),
       priceUpdateData,
       publishTimeUpdateData,
@@ -361,10 +375,18 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
     if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
-    limitTradeHandler.executeOrder(
-      _account,
-      _subAccountId,
-      _orderIndex,
+
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = _account;
+    subAccountIds[0] = _subAccountId;
+    orderIndexes[0] = _orderIndex;
+
+    limitTradeHandler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
       _feeReceiver,
       priceUpdateData,
       publishTimeUpdateData,

@@ -365,6 +365,35 @@ contract OracleMiddleware is OwnableUpgradeable, IOracleMiddleware {
     uint32 _trustPriceAge,
     address _adapter
   ) external onlyOwner {
+    _setAssetPriceConfig(_assetId, _confidenceThresholdE6, _trustPriceAge, _adapter);
+  }
+
+  function setAssetPriceConfigs(
+    bytes32[] calldata _assetIds,
+    uint32[] calldata _confidenceThresholdE6s,
+    uint32[] calldata _trustPriceAges,
+    address[] calldata _adapters
+  ) external onlyOwner {
+    if (
+      _assetIds.length != _confidenceThresholdE6s.length ||
+      _assetIds.length != _trustPriceAges.length ||
+      _assetIds.length != _adapters.length
+    ) revert IOracleMiddleware_InvalidValue();
+
+    for (uint256 i = 0; i < _assetIds.length; ) {
+      _setAssetPriceConfig(_assetIds[i], _confidenceThresholdE6s[i], _trustPriceAges[i], _adapters[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _setAssetPriceConfig(
+    bytes32 _assetId,
+    uint32 _confidenceThresholdE6,
+    uint32 _trustPriceAge,
+    address _adapter
+  ) internal {
     if (_trustPriceAge > maxTrustPriceAge) revert IOracleMiddleware_InvalidValue();
     AssetPriceConfig memory _config = assetPriceConfigs[_assetId];
     emit LogSetAssetPriceConfig(

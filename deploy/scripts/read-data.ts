@@ -21,6 +21,7 @@ const subAccountId = 1;
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
 const ONE_USD = parseUnits("1", 30);
+const WeiPerEther = parseUnits("1", 18);
 
 const ethAssetId = ethers.utils.formatBytes32String("ETH");
 const wbtcAssetId = ethers.utils.formatBytes32String("BTC");
@@ -734,12 +735,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [3],
     },
   ];
-  const [, nextFundingRates] = await multi.multiCall(nextFundingRateInputs);
+  const [, fundingRateVelocities] = await multi.multiCall(nextFundingRateInputs);
 
   console.log("=== Positions ===");
   console.table(
     positions.map((each) => {
       const marketIndex = each.marketIndex.toNumber();
+      const market = markets[marketIndex];
       const closePrice = calculateAdaptivePrice(
         markets[marketIndex].longPositionSize.sub(markets[marketIndex].shortPositionSize),
         marketConfigs[marketIndex].fundingRate.maxSkewScaleUSD,
@@ -753,12 +755,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         .mul(each.reserveValueE30)
         .div(parseUnits("1", 18));
 
-      const fundingFee = markets[marketIndex].currentFundingRate
-        .add(nextFundingRates[marketIndex])
-        .sub(each.lastFundingAccrued)
-        .mul(each.positionSizeE30.abs())
-        .div(parseUnits("1", 18))
-        .mul(each.positionSizeE30.gt(0) ? -1 : 1);
+      const timestamp = Math.floor(new Date().valueOf() / 1000);
+      const proportionalElapsedInDay = _proportionalElapsedInDay(timestamp, markets[marketIndex].lastFundingTime);
+      const nextFundingRate = markets[marketIndex].currentFundingRate.add(
+        fundingRateVelocities[marketIndex].mul(proportionalElapsedInDay).div(WeiPerEther)
+      );
+      const lastFundingAccrued = market.fundingAccrued;
+      const fundingAccrued = market.fundingAccrued.add(
+        market.currentFundingRate.add(nextFundingRate).mul(proportionalElapsedInDay).div(2).div(WeiPerEther)
+      );
+      const fundingFee = fundingAccrued.sub(lastFundingAccrued).mul(each.positionSizeE30).div(WeiPerEther);
       return {
         exposure: each.positionSizeE30.gt(0) ? "LONG" : "SHORT",
         size: formatUnits(each.positionSizeE30, 30),
@@ -801,6 +807,14 @@ function calculateAdaptivePrice(
 
 function getPnL(closePrice: BigNumber, averagePrice: BigNumber, size: BigNumber): BigNumber {
   return closePrice.sub(averagePrice).mul(size).div(averagePrice);
+}
+
+function _proportionalElapsedInDay(blockTimestamp: BigNumber, lastFundingTime: BigNumber): BigNumber {
+  const secondsInDay = 60 * 60 * 24;
+  const fundingInterval = 1;
+  const elapsedIntervals = blockTimestamp.sub(lastFundingTime).div(fundingInterval);
+  const intervalsInOneDay = WeiPerEther.mul(secondsInDay).div(fundingInterval);
+  return elapsedIntervals.mul(WeiPerEther).div(intervalsInOneDay);
 }
 
 export default func;

@@ -3,6 +3,7 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
 import { EvmPriceServiceConnection } from "@pythnetwork/pyth-evm-js";
 import {
+  CrossMarginHandler__factory,
   IPyth__factory,
   LimitTradeHandler__factory,
   MockPyth__factory,
@@ -19,10 +20,10 @@ const orderExecutor = "0x0578C797798Ae89b688Cd5676348344d7d0EC35E";
 async function main() {
   const deployer = (await ethers.getSigners())[0];
 
-  console.log("> LimitTradeHandler: Set Order Executor...");
-  const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  await (await limitTradeHandler.setOrderExecutor(orderExecutor, true)).wait();
-  console.log("> LimitTradeHandler: Set Order Executor success!");
+  console.log("> CrossMarginHandler: Set Order Executor...");
+  const crossMarginHandler = CrossMarginHandler__factory.connect(config.handlers.crossMargin, deployer);
+  await (await crossMarginHandler.setOrderExecutor(orderExecutor, true)).wait();
+  console.log("> CrossMarginHandler: Set Order Executor success!");
 }
 main().catch((error) => {
   console.error(error);

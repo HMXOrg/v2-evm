@@ -24,7 +24,8 @@
     "pyth": "",
     "pythAdapter": "",
     "sglpStakedAdapter": "",
-    "middleware": ""
+    "middleware": "",
+    "ecoPythCalldataBuilder": ""
   },
   "tokens": {
     "hlp": "",

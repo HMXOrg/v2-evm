@@ -8,31 +8,11 @@ import { getPriceData } from "../utils/pyth";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const receiver = "0x09FC1B9B288647FF0b5b4668C74e51F8bEA50C67";
+const receiver = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
 const tokensToMint = [
   {
     token: config.tokens.usdc,
     amount: "1000000",
-  },
-  {
-    token: config.tokens.dai,
-    amount: "1000000",
-  },
-  {
-    token: config.tokens.usdt,
-    amount: "1000000",
-  },
-  {
-    token: config.tokens.wbtc,
-    amount: "10",
-  },
-  {
-    token: config.tokens.sglp,
-    amount: "1000000",
-  },
-  {
-    token: config.tokens.weth,
-    amount: "10",
   },
 ];
 

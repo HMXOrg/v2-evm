@@ -39,8 +39,8 @@ const publishTimeDiff = [
 ];
 
 const mainAccount = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
-const subAccountId = 0;
-const orderIndex = 0;
+const subAccountId = 1;
+const orderIndex = 2;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];

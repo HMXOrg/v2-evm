@@ -16,7 +16,7 @@ import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 0;
+const subAccountId = 1;
 
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
@@ -663,6 +663,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     ETHUSD: {
       longPositionSize: formatUnits(ethusdMarket.longPositionSize, 30),
       shortPositionSize: formatUnits(ethusdMarket.shortPositionSize, 30),
+      currentFundingRate: formatUnits(ethusdMarket.currentFundingRate, 18),
+      fundingAccrued: formatUnits(ethusdMarket.fundingAccrued, 18),
     },
     BTCUSD: {
       longPositionSize: formatUnits(btcusdMarket.longPositionSize, 30),

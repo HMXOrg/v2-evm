@@ -13,6 +13,7 @@ export default [
   "OracleMiddleware.json",
   "PythAdapter.json",
   "EcoPyth.json",
+  "EcoPythCalldataBuilder.json",
   // GMX
   "IGmxGlpManager.json",
 ];

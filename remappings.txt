@@ -3,6 +3,7 @@ forge-std/=lib/forge-std/src/
 @openzeppelin-upgradeable/=lib/openzeppelin-contracts-upgradeable/
 pyth-sdk-solidity/=lib/pyth-sdk-solidity/
 @chainlink/=lib/chainlink/
+@solmate/=lib/solmate/src/
 
 @config/=config/default/
 @hmx/=src/

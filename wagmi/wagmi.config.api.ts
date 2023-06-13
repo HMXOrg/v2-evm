@@ -1,6 +1,6 @@
 import { defineConfig } from "@wagmi/cli";
 import { foundry, actions } from "@wagmi/cli/plugins";
-import inclusion from "./inclusion";
+import inclusion from "./inclusion.api";
 
 export default defineConfig({
   out: "wagmi/generated.api.ts",

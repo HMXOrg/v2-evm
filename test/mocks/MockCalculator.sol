@@ -192,8 +192,7 @@ contract MockCalculator is ICalculator {
   }
 
   function getFundingFee(
-    bool /*_isLong*/,
-    uint256 /*_size*/,
+    int256 /*_size*/,
     int256 /*_currentFundingAccrued*/,
     int256 /*_lastFundingAccrued*/
   ) public view virtual returns (int256) {

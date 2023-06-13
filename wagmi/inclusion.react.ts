@@ -7,6 +7,8 @@ export default [
   "ConfigStorage.json",
   "PerpStorage.json",
   "VaultStorage.json",
+  // Oracle
+  "OracleMiddleware.json",
   // GMX
   "IGmxGlpManager.json",
 ];

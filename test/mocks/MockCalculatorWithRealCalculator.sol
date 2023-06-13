@@ -38,15 +38,14 @@ contract MockCalculatorWithRealCalculator is MockCalculator {
   }
 
   function getFundingFee(
-    bool _isLong,
-    uint256 _size,
+    int256 _size,
     int256 _currentFundingAccrued,
     int256 _lastFundingAccrued
   ) public view override returns (int256) {
     if (actualFunction[keccak256("getFundingFee")]) {
-      return c.getFundingFee(_isLong, _size, _currentFundingAccrued, _lastFundingAccrued);
+      return c.getFundingFee(_size, _currentFundingAccrued, _lastFundingAccrued);
     } else {
-      return super.getFundingFee(_isLong, _size, _currentFundingAccrued, _lastFundingAccrued);
+      return super.getFundingFee(_size, _currentFundingAccrued, _lastFundingAccrued);
     }
   }
 

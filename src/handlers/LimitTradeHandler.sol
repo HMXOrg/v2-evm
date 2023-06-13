@@ -247,6 +247,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     address _tpToken
   ) external payable nonReentrant delegate(_mainAccount) {
     if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
+    // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
+    if (_executionFee < uint256(minExecutionFee)) revert ILimitTradeHandler_InsufficientExecutionFee();
+    // The attached native token must be equal to _executionFee
+    if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
+    // Transfer in the native token to be used as execution fee
+    _transferInETH();
+
     _createOrder(
       _subAccountId,
       _marketIndex,
@@ -281,6 +288,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     bool _reduceOnly,
     address _tpToken
   ) external payable nonReentrant {
+    // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
+    if (_executionFee < uint256(minExecutionFee)) revert ILimitTradeHandler_InsufficientExecutionFee();
+    // The attached native token must be equal to _executionFee
+    if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
+    // Transfer in the native token to be used as execution fee
+    _transferInETH();
+
     _createOrder(
       _subAccountId,
       _marketIndex,
@@ -294,6 +308,50 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     );
   }
 
+  struct CreateMultiOrderParams {
+    uint8 subAccountId;
+    uint256 marketIndex;
+    int256 sizeDelta;
+    uint256 triggerPrice;
+    uint256 acceptablePrice;
+    bool triggerAboveThreshold;
+    bool reduceOnly;
+    address tpToken;
+  }
+
+  function createMultiOrders(
+    address _mainAccount,
+    uint256 _eachExecutionFee,
+    CreateMultiOrderParams[] memory _params
+  ) external payable nonReentrant delegate(_mainAccount) {
+    // Check if overrided _msgSender() is the same as _mainAccount.
+    // If real msg.sender is not delegated, _msgSender won't be overrided
+    if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
+    // Check if each execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
+    if (_eachExecutionFee < uint256(minExecutionFee)) revert ILimitTradeHandler_InsufficientExecutionFee();
+    // The attached native token must be equal to _eachExecutionFee * params.length
+    if (msg.value != _eachExecutionFee * _params.length) revert ILimitTradeHandler_IncorrectValueTransfer();
+    // Transfer in the native token to be used as execution fee
+    _transferInETH();
+
+    for (uint i = 0; i < _params.length; ) {
+      _createOrder(
+        _params[i].subAccountId,
+        _params[i].marketIndex,
+        _params[i].sizeDelta,
+        _params[i].triggerPrice,
+        _params[i].acceptablePrice,
+        _params[i].triggerAboveThreshold,
+        _eachExecutionFee,
+        _params[i].reduceOnly,
+        _params[i].tpToken
+      );
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
   function _createOrder(
     uint8 _subAccountId,
     uint256 _marketIndex,
@@ -305,14 +363,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     bool _reduceOnly,
     address _tpToken
   ) internal {
-    // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
-    if (_executionFee < uint256(minExecutionFee)) revert ILimitTradeHandler_InsufficientExecutionFee();
-    // The attached native token must be equal to _executionFee
-    if (msg.value != _executionFee) revert ILimitTradeHandler_IncorrectValueTransfer();
-
-    // Transfer in the native token to be used as execution fee
-    _transferInETH();
-
     // Get the sub-account and order index for the limit order
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];

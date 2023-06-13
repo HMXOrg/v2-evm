@@ -16,7 +16,7 @@ import { MultiCall } from "@indexed-finance/multicall";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
-const subAccountId = 1;
+const subAccountId = 0;
 
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
@@ -277,6 +277,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "markets",
       args: [3],
     },
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "markets",
+      args: [4],
+    },
     // Positions
     {
       interface: PerpStorage__factory.abi,
@@ -308,6 +314,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       target: config.storages.config,
       function: "marketConfigs",
       args: [3],
+    },
+    {
+      interface: ConfigStorage__factory.abi,
+      target: config.storages.config,
+      function: "marketConfigs",
+      args: [4],
     },
   ];
   const [
@@ -344,11 +356,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       btcusdMarket,
       applusdMarket,
       jpyusdMarket,
+      xauusdMarket,
       positions,
       ethusdMarketConfig,
       btcusdMarketConfig,
       applusdMarketConfig,
       jpyusdMarketConfig,
+      xauusdMarketConfig,
     ],
   ] = await multi.multiCall(inputs);
 
@@ -581,10 +595,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(formatUnits(sglpPrice?._price, 30));
   console.log("=== Adaptive Prices ===");
 
-  console.log(formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
-  console.log(formatUnits(btcusdAdaptivePrice._adaptivePrice, 30));
-  console.log(formatUnits(applusdAdaptivePrice._adaptivePrice, 30));
-  console.log(formatUnits(jpyusdAdaptivePrice._adaptivePrice, 30));
+  console.log(formatUnits(ethusdAdaptivePrice?._adaptivePrice, 30));
+  console.log(formatUnits(btcusdAdaptivePrice?._adaptivePrice, 30));
+  console.log(formatUnits(applusdAdaptivePrice?._adaptivePrice, 30));
+  console.log(formatUnits(jpyusdAdaptivePrice?._adaptivePrice, 30));
   console.log("=== Cross Margin Account ===");
   console.table({
     equity: formatUnits(equity, 30),
@@ -681,7 +695,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
   });
 
-  const markets = [ethusdMarket, btcusdMarket, applusdMarket, jpyusdMarket];
+  const markets = [ethusdMarket, btcusdMarket, applusdMarket, jpyusdMarket, xauusdMarket];
   const [rawEthPrice, rawBtcPrice, rawUsdcPrice, rawUsdtPrice, rawDaiPrice, rawAAHLPrice, rawJpyPrice] =
     await getPricesFromPyth();
   const oraclePrices = [rawEthPrice, rawBtcPrice, rawAAHLPrice, rawJpyPrice];
@@ -755,10 +769,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         .mul(each.reserveValueE30)
         .div(parseUnits("1", 18));
 
-      const timestamp = Math.floor(new Date().valueOf() / 1000);
+      const timestamp = BigNumber.from(Math.floor(new Date().valueOf() / 1000));
       const proportionalElapsedInDay = _proportionalElapsedInDay(timestamp, markets[marketIndex].lastFundingTime);
       const nextFundingRate = markets[marketIndex].currentFundingRate.add(
         fundingRateVelocities[marketIndex].mul(proportionalElapsedInDay).div(WeiPerEther)
+      );
+      console.log(
+        "fundingRateVelocities[marketIndex]",
+        fundingRateVelocities[marketIndex],
+        "timestamp",
+        timestamp,
+        "proportionalElapsedInDay",
+        proportionalElapsedInDay,
+        "nextFundingRate",
+        nextFundingRate,
+        "lastFundingTime",
+        markets[marketIndex].lastFundingTime
       );
       const lastFundingAccrued = market.fundingAccrued;
       const fundingAccrued = market.fundingAccrued.add(
@@ -814,7 +840,7 @@ function _proportionalElapsedInDay(blockTimestamp: BigNumber, lastFundingTime: B
   const fundingInterval = 1;
   const elapsedIntervals = blockTimestamp.sub(lastFundingTime).div(fundingInterval);
   const intervalsInOneDay = WeiPerEther.mul(secondsInDay).div(fundingInterval);
-  return elapsedIntervals.mul(WeiPerEther).div(intervalsInOneDay);
+  return elapsedIntervals.mul(WeiPerEther).div(secondsInDay);
 }
 
 export default func;

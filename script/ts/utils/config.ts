@@ -16,6 +16,9 @@ export function getConfig() {
   if (network.name === "arb_goerli") {
     return ArbitrumGoerliConfig;
   }
+  if (network.name === "arbitrum") {
+    return ArbitrumMainnetConfig;
+  }
 
   throw new Error("not found config");
 }
@@ -23,6 +26,9 @@ export function getConfig() {
 export function writeConfigFile(config: any) {
   let filePath;
   switch (network.name) {
+    case "arbitrum":
+      filePath = "./configs/arbitrum.mainnet.json";
+      break;
     case "matic":
       filePath = "./configs/arbitrum.goerli.json";
       break;

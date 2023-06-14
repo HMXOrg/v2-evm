@@ -23,27 +23,23 @@ function getRemappings() {
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
-    matic: {
-      url: process.env.POLYGON_MAINNET_RPC || "",
-      accounts: process.env.POLYGON_MAINNET_PRIVATE_KEY !== undefined ? [process.env.POLYGON_MAINNET_PRIVATE_KEY] : [],
-    },
-    mumbai: {
-      url: process.env.POLYGON_MUMBAI_RPC || "",
-      accounts: process.env.POLYGON_MUMBAI_PRIVATE_KEY !== undefined ? [process.env.POLYGON_MUMBAI_PRIVATE_KEY] : [],
-    },
     tenderly: {
       url: process.env.POLYGON_TENDERLY_RPC || "",
       accounts:
-        process.env.POLYGON_MAINNET_PRIVATE_KEY !== undefined
-          ? [process.env.POLYGON_MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]
+        process.env.MAINNET_PRIVATE_KEY !== undefined
+          ? [process.env.MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]
           : [],
+    },
+    arbitrum: {
+      url: process.env.ARBITRUM_MAINNET_RPC || "",
+      accounts: [process.env.MAINNET_PRIVATE_KEY || ""],
     },
     arb_goerli: {
       url: process.env.ARBITRUM_GOERLI_RPC || "",
       chainId: 421613,
       accounts:
-        process.env.POLYGON_MAINNET_PRIVATE_KEY !== undefined
-          ? [process.env.POLYGON_MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]
+        process.env.MAINNET_PRIVATE_KEY !== undefined
+          ? [process.env.MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]
           : [],
     },
   },

@@ -584,21 +584,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   ];
   const [, [tradingFeeDebt, borrowingFeeDebt, fundingFeeDebt, lossDebt]] = await multi.multiCall(accountDebtRequests);
 
-  console.log("=== Prices ===");
-  console.log(formatUnits(usdcPrice._price, 30));
-  console.log(formatUnits(usdtPrice?._price, 30));
-  console.log(formatUnits(daiPrice?._price, 30));
-  console.log(formatUnits(wethPrice?._price, 30));
-  console.log(formatUnits(wbtcPrice?._price, 30));
-  console.log(formatUnits(applePrice?._price, 30));
-  console.log(formatUnits(jpyPrice?._price, 30));
-  console.log(formatUnits(sglpPrice?._price, 30));
-  console.log("=== Adaptive Prices ===");
+  // console.log("=== Prices ===");
+  // console.log(formatUnits(usdcPrice._price, 30));
+  // console.log(formatUnits(usdtPrice?._price, 30));
+  // console.log(formatUnits(daiPrice?._price, 30));
+  // console.log(formatUnits(wethPrice?._price, 30));
+  // console.log(formatUnits(wbtcPrice?._price, 30));
+  // console.log(formatUnits(applePrice?._price, 30));
+  // console.log(formatUnits(jpyPrice?._price, 30));
+  // console.log(formatUnits(sglpPrice?._price, 30));
+  // console.log("=== Adaptive Prices ===");
 
-  console.log(formatUnits(ethusdAdaptivePrice?._adaptivePrice, 30));
-  console.log(formatUnits(btcusdAdaptivePrice?._adaptivePrice, 30));
-  console.log(formatUnits(applusdAdaptivePrice?._adaptivePrice, 30));
-  console.log(formatUnits(jpyusdAdaptivePrice?._adaptivePrice, 30));
+  // console.log(formatUnits(ethusdAdaptivePrice?._adaptivePrice, 30));
+  // console.log(formatUnits(btcusdAdaptivePrice?._adaptivePrice, 30));
+  // console.log(formatUnits(applusdAdaptivePrice?._adaptivePrice, 30));
+  // console.log(formatUnits(jpyusdAdaptivePrice?._adaptivePrice, 30));
   console.log("=== Cross Margin Account ===");
   console.table({
     equity: formatUnits(equity, 30),
@@ -777,6 +777,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       const nextFundingRate = currentFundingRate.add(
         fundingRateVelocity.mul(proportionalElapsedInDay).div(WeiPerEther)
       );
+      console.log("nextFundingRate", nextFundingRate);
       const lastFundingAccrued = market.fundingAccrued;
       const fundingAccrued = lastFundingAccrued.add(
         currentFundingRate.add(nextFundingRate).mul(proportionalElapsedInDay).div(2).div(WeiPerEther)

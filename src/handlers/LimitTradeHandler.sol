@@ -210,9 +210,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     _;
   }
 
-  modifier delegate(address mainAccount) {
-    if (delegations[mainAccount] == msg.sender) {
-      senderOverride = mainAccount;
+  modifier delegate(address _mainAccount) {
+    if (delegations[_mainAccount] == msg.sender) {
+      senderOverride = _mainAccount;
     }
     _;
     senderOverride = address(0);
@@ -246,6 +246,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     bool _reduceOnly,
     address _tpToken
   ) external payable nonReentrant delegate(_mainAccount) {
+    // Check if overrided _msgSender() is the same as _mainAccount.
+    // If msg.sender is not a delegatee, _msgSender() won't be overrided
+    // which then makes _msgSender() to become msg.sender not the _mainAccount.
     if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
     // Check if execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
     if (_executionFee < uint256(minExecutionFee)) revert ILimitTradeHandler_InsufficientExecutionFee();
@@ -308,48 +311,100 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     );
   }
 
-  struct CreateMultiOrderParams {
-    uint8 subAccountId;
-    uint256 marketIndex;
-    int256 sizeDelta;
-    uint256 triggerPrice;
-    uint256 acceptablePrice;
-    bool triggerAboveThreshold;
-    bool reduceOnly;
-    address tpToken;
-  }
-
-  function createMultiOrders(
+  /// @notice Batch multiple commands to a one single transaction.
+  /// @dev Support delegate and enforce a hard auth.
+  /// @dev This is useful for a better UX to handle TP/SL.
+  /// @param _mainAccount The owner of these actions.
+  /// @param _cmds The commands to be executed.
+  /// @param _data The data for each command.
+  function batch(
     address _mainAccount,
-    uint256 _eachExecutionFee,
-    CreateMultiOrderParams[] memory _params
+    Command[] calldata _cmds,
+    bytes[] calldata _data
   ) external payable nonReentrant delegate(_mainAccount) {
     // Check if overrided _msgSender() is the same as _mainAccount.
-    // If real msg.sender is not delegated, _msgSender won't be overrided
+    // If msg.sender is not a delegatee, _msgSender() won't be overrided
+    // which then makes _msgSender() to become msg.sender not the _mainAccount.
     if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
-    // Check if each execution fee is lower than minExecutionFee, then it's too low. We won't allow it.
-    if (_eachExecutionFee < uint256(minExecutionFee)) revert ILimitTradeHandler_InsufficientExecutionFee();
-    // The attached native token must be equal to _eachExecutionFee * params.length
-    if (msg.value != _eachExecutionFee * _params.length) revert ILimitTradeHandler_IncorrectValueTransfer();
-    // Transfer in the native token to be used as execution fee
-    _transferInETH();
+    // Check if _cmds's len match with _data's len
+    if (_cmds.length != _data.length) revert ILimitTradeHandler_BadCalldata();
 
-    for (uint i = 0; i < _params.length; ) {
-      _createOrder(
-        _params[i].subAccountId,
-        _params[i].marketIndex,
-        _params[i].sizeDelta,
-        _params[i].triggerPrice,
-        _params[i].acceptablePrice,
-        _params[i].triggerAboveThreshold,
-        _eachExecutionFee,
-        _params[i].reduceOnly,
-        _params[i].tpToken
-      );
+    // Execute commands
+    // _expectedMsgValue is used for check after cmds are executed
+    uint256 _expectedMsgValue = 0;
+    for (uint i = 0; i < _cmds.length; ) {
+      if (_cmds[i] == Command.Create) {
+        // Perform the create order command
+        (
+          uint8 _subAccountId,
+          uint256 _marketIndex,
+          int256 _sizeDelta,
+          uint256 _triggerPrice,
+          uint256 _acceptablePrice,
+          bool _triggerAboveThreshold,
+          uint256 _executionFee,
+          bool _reduceOnly,
+          address _tpToken
+        ) = abi.decode(_data[i], (uint8, uint256, int256, uint256, uint256, bool, uint256, bool, address));
+        // Check execution fee to make sure it is > minExecution before create an order.
+        if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
+        // Optimistically create order here w/o checking if provided msg.value
+        // is enough to execution fee here, but will check after finished all cmds.
+        _createOrder(
+          _subAccountId,
+          _marketIndex,
+          _sizeDelta,
+          _triggerPrice,
+          _acceptablePrice,
+          _triggerAboveThreshold,
+          _executionFee,
+          _reduceOnly,
+          _tpToken
+        );
+        // Update expectedMsgValue
+        _expectedMsgValue += _executionFee;
+      } else if (_cmds[i] == Command.Update) {
+        // Perform the update order command
+        (
+          uint8 _subAccountId,
+          uint256 _orderIndex,
+          int256 _sizeDelta,
+          uint256 _triggerPrice,
+          bool _triggerAboveThreshold,
+          bool _reduceOnly,
+          address _tpToken
+        ) = abi.decode(_data[i], (uint8, uint256, int256, uint256, bool, bool, address));
+        _updateOrder(
+          _mainAccount,
+          _subAccountId,
+          _orderIndex,
+          _sizeDelta,
+          _triggerPrice,
+          _triggerAboveThreshold,
+          _reduceOnly,
+          _tpToken
+        );
+      } else if (_cmds[i] == Command.Cancel) {
+        // Perform the cancel order command
+        (uint8 _subAccountId, uint256 _orderIndex) = abi.decode(_data[i], (uint8, uint256));
+        address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
+        LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
+        // Check if order still exists
+        if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
+        _cancelOrder(_order, _subAccount, _orderIndex);
+      }
+
       unchecked {
         ++i;
       }
     }
+
+    // Check if msg.value equals to _expectedMsgValue
+    // This is a bit anti-check/effect/interaction pattern
+    // but it's the best way to make sure that the msg.value is enough
+    if (msg.value != _expectedMsgValue) revert ILimitTradeHandler_InsufficientExecutionFee();
+    // Transfer in the native token to be used as execution fee
+    _transferInETH();
   }
 
   function _createOrder(
@@ -636,12 +691,17 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     uint8 _subAccountId,
     uint256 _orderIndex
   ) external nonReentrant delegate(_mainAccount) {
-    address subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
-    LimitOrder memory _order = limitOrders[subAccount][_orderIndex];
+    // Check if overrided _msgSender() is the same as _mainAccount.
+    // If msg.sender is not a delegatee, _msgSender() won't be overrided
+    // which then makes _msgSender() to become msg.sender not the _mainAccount.
+    if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
+
+    address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
+    LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
-    _cancelOrder(_order, subAccount, _orderIndex);
+    _cancelOrder(_order, _subAccount, _orderIndex);
   }
 
   function _cancelOrder(LimitOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
@@ -683,6 +743,33 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     bool _reduceOnly,
     address _tpToken
   ) external nonReentrant delegate(_mainAccount) {
+    // Check if overrided _msgSender() is the same as _mainAccount.
+    // If msg.sender is not a delegatee, _msgSender() won't be overrided
+    // which then makes _msgSender() to become msg.sender not the _mainAccount.
+    if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
+
+    _updateOrder(
+      _mainAccount,
+      _subAccountId,
+      _orderIndex,
+      _sizeDelta,
+      _triggerPrice,
+      _triggerAboveThreshold,
+      _reduceOnly,
+      _tpToken
+    );
+  }
+
+  function _updateOrder(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _orderIndex,
+    int256 _sizeDelta,
+    uint256 _triggerPrice,
+    bool _triggerAboveThreshold,
+    bool _reduceOnly,
+    address _tpToken
+  ) internal {
     address subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     LimitOrder storage _order = limitOrders[subAccount][_orderIndex];
     // Check if this order still exists

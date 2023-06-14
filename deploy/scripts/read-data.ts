@@ -750,6 +750,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
   ];
   const [, fundingRateVelocities] = await multi.multiCall(nextFundingRateInputs);
+  console.log("fundingRateVelocities", fundingRateVelocities);
 
   console.log("=== Positions ===");
   console.table(
@@ -771,26 +772,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
       const timestamp = BigNumber.from(Math.floor(new Date().valueOf() / 1000));
       const proportionalElapsedInDay = _proportionalElapsedInDay(timestamp, markets[marketIndex].lastFundingTime);
-      const nextFundingRate = markets[marketIndex].currentFundingRate.add(
-        fundingRateVelocities[marketIndex].mul(proportionalElapsedInDay).div(WeiPerEther)
-      );
-      console.log(
-        "fundingRateVelocities[marketIndex]",
-        fundingRateVelocities[marketIndex],
-        "timestamp",
-        timestamp,
-        "proportionalElapsedInDay",
-        proportionalElapsedInDay,
-        "nextFundingRate",
-        nextFundingRate,
-        "lastFundingTime",
-        markets[marketIndex].lastFundingTime
+      const fundingRateVelocity = fundingRateVelocities[marketIndex];
+      const currentFundingRate = markets[marketIndex].currentFundingRate;
+      const nextFundingRate = currentFundingRate.add(
+        fundingRateVelocity.mul(proportionalElapsedInDay).div(WeiPerEther)
       );
       const lastFundingAccrued = market.fundingAccrued;
-      const fundingAccrued = market.fundingAccrued.add(
-        market.currentFundingRate.add(nextFundingRate).mul(proportionalElapsedInDay).div(2).div(WeiPerEther)
+      const fundingAccrued = lastFundingAccrued.add(
+        currentFundingRate.add(nextFundingRate).mul(proportionalElapsedInDay).div(2).div(WeiPerEther)
       );
-      const fundingFee = fundingAccrued.sub(lastFundingAccrued).mul(each.positionSizeE30).div(WeiPerEther);
+      const fundingFee = fundingAccrued.sub(each.lastFundingAccrued).mul(each.positionSizeE30).div(WeiPerEther);
       return {
         exposure: each.positionSizeE30.gt(0) ? "LONG" : "SHORT",
         size: formatUnits(each.positionSizeE30, 30),
@@ -821,10 +812,6 @@ function calculateAdaptivePrice(
   sizeDelta: BigNumber,
   price: BigNumber
 ): BigNumber {
-  console.log("marketSkew", marketSkew);
-  console.log("maxSkewScaleUSD", maxSkewScaleUSD);
-  console.log("sizeDelta", sizeDelta);
-  console.log("price", price);
   const premium = marketSkew.mul(ONE_USD).div(maxSkewScaleUSD);
   const premiumAfter = marketSkew.add(sizeDelta).mul(ONE_USD).div(maxSkewScaleUSD);
   const premiumMedian = premium.add(premiumAfter).div(2);
@@ -837,9 +824,7 @@ function getPnL(closePrice: BigNumber, averagePrice: BigNumber, size: BigNumber)
 
 function _proportionalElapsedInDay(blockTimestamp: BigNumber, lastFundingTime: BigNumber): BigNumber {
   const secondsInDay = 60 * 60 * 24;
-  const fundingInterval = 1;
-  const elapsedIntervals = blockTimestamp.sub(lastFundingTime).div(fundingInterval);
-  const intervalsInOneDay = WeiPerEther.mul(secondsInDay).div(fundingInterval);
+  const elapsedIntervals = blockTimestamp.sub(lastFundingTime);
   return elapsedIntervals.mul(WeiPerEther).div(secondsInDay);
 }
 

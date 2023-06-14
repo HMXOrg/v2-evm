@@ -23,6 +23,10 @@ const inputs = [
     executorAddress: config.helpers.trade,
     isServiceExecutor: true,
   },
+  {
+    executorAddress: config.services.liquidation,
+    isServiceExecutor: true,
+  },
 ];
 
 async function main() {

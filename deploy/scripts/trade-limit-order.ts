@@ -15,7 +15,7 @@ import { getPriceData } from "../utils/pyth";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const subAccountId = 1;
+const subAccountId = 0;
 const marketIndex = 0;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -29,7 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       deployer.address,
       subAccountId, // subAccountId
       marketIndex, // marketIndex
-      ethers.utils.parseUnits("1999999", 30), // sizeDelta
+      ethers.utils.parseUnits("1", 30), // sizeDelta
       ethers.utils.parseUnits("0", 30), // triggerPrice
       ethers.utils.parseUnits("123123123", 30), // acceptablePrice
       true, // triggerAboveThreshold

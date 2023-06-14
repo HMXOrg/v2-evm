@@ -8,7 +8,7 @@ import { getPriceData } from "../utils/pyth";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const receiver = "0x145901b1f825f9cf0958bd4D79F667daD1fe7f6b";
+const receiver = "0xC40Af2937ed35c6360C452335648e1b36329aD9d";
 const tokensToMint = [
   {
     token: config.tokens.usdc,

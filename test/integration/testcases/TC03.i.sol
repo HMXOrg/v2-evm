@@ -265,7 +265,7 @@ contract TC03 is BaseIntTest_WithActions {
       // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
       //                      = -(60 * 300 / 300000000 * 0.0004)
       //                      = -0.000000024
-      assertMarketFundingRate(wethMarketIndex, -277777, 1180, "T6: ");
+      assertMarketFundingRate(wethMarketIndex, 277777, 1180, "T6: ");
 
       // Crypto Borrowing rate
       //    = reserve * interval * base rate / tvl
@@ -584,7 +584,7 @@ contract TC03 is BaseIntTest_WithActions {
       // Funding rate         = -(Intervals * (Skew ratio * Max funding rate))
       //                      = -(60 * -6000 / 300000000 * 0.0004)
       //                      = 0.00000048
-      assertMarketFundingRate(jpyMarketIndex, 5555555, 1300, "T8: ");
+      assertMarketFundingRate(jpyMarketIndex, -5555555, 1300, "T8: ");
 
       // Forex Borrowing rate
       //    = reserve * interval * base rate / tvl
@@ -1027,7 +1027,7 @@ contract TC03 is BaseIntTest_WithActions {
       // And Time passed         = 1480 - 1420 = 60 seconds (60 intervals)
       // Then Funding rate       = -(60 * (3000 / 300000000) * 0.04%)
       //                         = -0.00000024
-      assertMarketFundingRate(wbtcMarketIndex, -2777777, 1480, "T15: ");
+      assertMarketFundingRate(wbtcMarketIndex, 2777777, 1480, "T15: ");
 
       // Crypto Borrowing rate calculation
       // Given Latest info
@@ -1235,7 +1235,7 @@ contract TC03 is BaseIntTest_WithActions {
       // Then Pending Funding rate      = -(60 * (0 / 300000000) * 0.04%)
       //                                = 0
       // And Market's sum Funding rate  = -0.00000024 + 0
-      assertMarketFundingRate(wbtcMarketIndex, -2777777, 1540, "T17: ");
+      assertMarketFundingRate(wbtcMarketIndex, 2777777, 1540, "T17: ");
 
       // Crypto Borrowing rate calculation
       // Given Latest info

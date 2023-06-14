@@ -97,8 +97,8 @@ contract Calculator_FundingRate is Calculator_Base {
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 1    | 2,000,000	  | 1,000,000    |	1,000,000    |	-0.013333%        |	0              |	0               |  0	                | 0
-    // | 2    | 2,000,000	  | 1,000,000    |	1,000,000    |	-0.026667%        |	-266.6666667   |	133.3333333     |  -266.6666667	      | 133.3333333
+    // | 1    | 2,000,000	  | 1,000,000    |	1,000,000    |	 0.013333%        |	0              |	0               |  0	                | 0
+    // | 2    | 2,000,000	  | 1,000,000    |	1,000,000    |	 0.026667%        |	 266.6666667   | -133.3333333     |   266.6666667	      | -133.3333333
 
     // Mock global market config as table above
     uint256 marketIndex = 0;
@@ -127,15 +127,15 @@ contract Calculator_FundingRate is Calculator_Base {
     );
 
     int256 nextFundingRate = calculator.getFundingRateVelocity(0);
-    currentFundingRate += nextFundingRate; // -0.013333%
-    assertEq(nextFundingRate, -133333333333333); // -0.013333%
-    assertEq(currentFundingRate, -133333333333333); // -0.013333%
+    currentFundingRate += nextFundingRate; // 0.013333%
+    assertEq(nextFundingRate, 133333333333333); // 0.013333%
+    assertEq(currentFundingRate, 133333333333333); // 0.013333%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 2    | 2,000,000	  | 1,000,000    |	1,000,000    |	-0.026667%        |	-266.6666667   |	133.3333333     |  -266.6666667	      | 133.3333333
-    // | 3    | 1,000,000	  | 1,000,000    |	0            |	-0.026667%        |	-533.3333333   |	266.6666667     |  -800	              | 400
+    // | 2    | 2,000,000	  | 1,000,000    |	1,000,000    |	 0.026667%        |	 266.6666667   |-133.3333333     |   266.6666667	      | -133.3333333
+    // | 3    | 1,000,000	  | 1,000,000    |	0            |	 0.026667%        |	 533.3333333   |-266.6666667     |   800	              | -400
 
     // Mock global market config as table above
     longPositionSize = 2_000_000 * 1e30;
@@ -155,15 +155,15 @@ contract Calculator_FundingRate is Calculator_Base {
     );
 
     nextFundingRate = calculator.getFundingRateVelocity(0);
-    currentFundingRate += nextFundingRate; // -0.026667%
-    assertEq(nextFundingRate, -133333333333333); // -0.026667%
-    assertEq(currentFundingRate, -266666666666666); // -0.026667%
+    currentFundingRate += nextFundingRate; // 0.026667%
+    assertEq(nextFundingRate, 133333333333333); // 0.013333%
+    assertEq(currentFundingRate, 266666666666666); // 0.026667%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 3    | 1,000,000	  | 1,000,000    |	0            |	-0.026667%        |	-533.3333333   |	266.6666667     |  -800	              | 400
-    // | 4    | 1,000,000	  | 1,000,000    |	0            |	-0.026667%        |	-266.6666667   |	266.6666667     |  -1066.666667	      | 666.6666667
+    // | 3    | 1,000,000	  | 1,000,000    |	0            |	 0.026667%        |	 533.3333333   | -266.6666667     |   800	              | -400
+    // | 4    | 1,000,000	  | 1,000,000    |	0            |	 0.026667%        |	 266.6666667   | -266.6666667     |   1066.666667	      | -666.6666667
 
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
@@ -184,14 +184,14 @@ contract Calculator_FundingRate is Calculator_Base {
 
     nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate; // -0.026667%
-    assertEq(nextFundingRate, 0); // -0.026667%
-    assertEq(currentFundingRate, -266666666666666); // -0.026667%
+    assertEq(nextFundingRate, 0); // 0%
+    assertEq(currentFundingRate, 266666666666666); // -0.026667%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 4    | 1,000,000	  | 1,000,000    |	0            |	-0.026667%        |	-266.6666667   |	266.6666667     |  -1066.666667	      | 666.6666667
-    // | 5    | 1,000,000	  | 3,000,000    | -2,000,000.00 |	0.000000%         |	-266.6666667   |	266.6666667     |  -1333.333333	      | 933.3333333
+    // | 4    | 1,000,000	  | 1,000,000    |	0            |	0.026667%         |	266.6666667   |	-266.6666667     |   1066.666667	      | -666.6666667
+    // | 5    | 1,000,000	  | 3,000,000    | -2,000,000.00 |	0.000000%         |	266.6666667   |	-266.6666667     |   1333.333333	      | -933.3333333
 
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
@@ -213,69 +213,13 @@ contract Calculator_FundingRate is Calculator_Base {
     nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
     assertEq(nextFundingRate, 0); // 0%
-    assertEq(currentFundingRate, -266666666666666); // -0.026667%
-
-    // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
-    // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 5    | 1,000,000	  | 3,000,000    | -2,000,000.00 |	0.000000%         |	-266.6666667   |	266.6666667     |  -1333.333333	      | 933.3333333
-    // | 6    | 1,000,000	  | 3,000,000    | -2,000,000.00 |	0.026667%         |	0              |	0               |  -1333.333333	      | 933.3333333
-
-    // Mock global market config as table above
-    longPositionSize = 1_000_000 * 1e30;
-
-    accumFundingRateLong += nextFundingRateLong;
-
-    shortPositionSize = 3_000_000 * 1e30;
-
-    accumFundingRateShort += nextFundingRateShort;
-
-    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
-    mockPerpStorage.updateGlobalShortMarketById(
-      marketIndex,
-      shortPositionSize,
-      accumFundingRateShort,
-      currentFundingRate
-    );
-
-    nextFundingRate = calculator.getFundingRateVelocity(0);
-    currentFundingRate += nextFundingRate;
-    assertEq(nextFundingRate, 266666666666666); // 0.026667%
-    assertEq(currentFundingRate, 0); // 0%
-
-    // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
-    // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 6    | 1,000,000	  | 3,000,000    | -2,000,000.00 |	0.026667%         |	0              |	0               |  -1333.333333	      | 933.3333333
-    // | 7    | 1,000,000	  | 3,000,000    | -2,000,000.00 |	0.053333%         |	266.6666667    |	-800            |  -1066.666667	      | 133.3333333
-
-    // Mock global market config as table above
-    longPositionSize = 1_000_000 * 1e30;
-
-    accumFundingRateLong += nextFundingRateLong;
-
-    shortPositionSize = 3_000_000 * 1e30;
-
-    accumFundingRateShort += nextFundingRateShort;
-
-    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
-    mockPerpStorage.updateGlobalShortMarketById(
-      marketIndex,
-      shortPositionSize,
-      accumFundingRateShort,
-      currentFundingRate
-    );
-
-    nextFundingRate = calculator.getFundingRateVelocity(0);
-    currentFundingRate += nextFundingRate;
-    assertEq(nextFundingRate, 266666666666666); // 0.026667%
     assertEq(currentFundingRate, 266666666666666); // 0.026667%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 7    | 1,000,000	  | 3,000,000    | -2,000,000.00 |	0.053333%         |	266.6666667    |	-800            |  -1066.666667	      | 133.3333333
-    // | 8    | 2,000,000	  | 3,000,000    | -1,000,000.00 |	0.066667%         |	533.3333333    |	-1600           |  -533.3333333	      | -1466.666667
+    // | 5    | 1,000,000	  | 3,000,000    | -2,000,000.00 |	0.000000%         |	 266.6666667   | -266.6666667     |   1333.333333	      | -933.3333333
+    // | 6    | 1,000,000	  | 3,000,000    | -2,000,000.00 |-0.026667%          |	0              |	0               |   1333.333333	      | -933.3333333
 
     // Mock global market config as table above
     longPositionSize = 1_000_000 * 1e30;
@@ -296,14 +240,70 @@ contract Calculator_FundingRate is Calculator_Base {
 
     nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
-    assertEq(nextFundingRate, 266666666666666); // 0.026667%
-    assertEq(currentFundingRate, 533333333333332); // 0.053333%
+    assertEq(nextFundingRate, -266666666666666); // -0.026667%
+    assertEq(currentFundingRate, 0); // 0%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 8    | 2,000,000	  | 3,000,000    | -1,000,000.00 |	0.066667%         |	533.3333333    |	-1600           |  -533.3333333	      | -1466.666667
-    // | 9    | 2,500,000	  | 3,000,000    | -500,000.00   |	0.073333%         |	1333.333333    |	-2000           |  800	              | -3466.666667
+    // | 6    | 1,000,000	  | 3,000,000    | -2,000,000.00 |-0.026667%         |	0              |	0               |   1333.333333	      | -933.3333333
+    // | 7    | 1,000,000	  | 3,000,000    | -2,000,000.00 |-0.053333%         | -266.6666667    |	 800            |   1066.666667	      | -133.3333333
+
+    // Mock global market config as table above
+    longPositionSize = 1_000_000 * 1e30;
+
+    accumFundingRateLong += nextFundingRateLong;
+
+    shortPositionSize = 3_000_000 * 1e30;
+
+    accumFundingRateShort += nextFundingRateShort;
+
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
+    mockPerpStorage.updateGlobalShortMarketById(
+      marketIndex,
+      shortPositionSize,
+      accumFundingRateShort,
+      currentFundingRate
+    );
+
+    nextFundingRate = calculator.getFundingRateVelocity(0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, -266666666666666); // 0.026667%
+    assertEq(currentFundingRate, -266666666666666); // 0.026667%
+
+    // --------------------------------------------------------------------------------------------------------------------------------------------------------
+    // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
+    // --------------------------------------------------------------------------------------------------------------------------------------------------------
+    // | 7    | 1,000,000	  | 3,000,000    | -2,000,000.00 | -0.053333%         |-266.6666667    |	 800            |   1066.666667	      | -133.3333333
+    // | 8    | 2,000,000	  | 3,000,000    | -1,000,000.00 | -0.066667%         |-533.3333333    |	 1600           |   533.3333333	      |  1466.666667
+
+    // Mock global market config as table above
+    longPositionSize = 1_000_000 * 1e30;
+
+    accumFundingRateLong += nextFundingRateLong;
+
+    shortPositionSize = 3_000_000 * 1e30;
+
+    accumFundingRateShort += nextFundingRateShort;
+
+    mockPerpStorage.updateGlobalLongMarketById(marketIndex, longPositionSize, accumFundingRateLong, currentFundingRate);
+    mockPerpStorage.updateGlobalShortMarketById(
+      marketIndex,
+      shortPositionSize,
+      accumFundingRateShort,
+      currentFundingRate
+    );
+
+    nextFundingRate = calculator.getFundingRateVelocity(0);
+    currentFundingRate += nextFundingRate;
+    assertEq(nextFundingRate, -266666666666666); // 0.026667%
+    assertEq(currentFundingRate, -533333333333332); // 0.053333%
+
+    // --------------------------------------------------------------------------------------------------------------------------------------------------------
+    // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
+    // --------------------------------------------------------------------------------------------------------------------------------------------------------
+    // | 8    | 2,000,000	  | 3,000,000    | -1,000,000.00 |	-0.066667%         |	-533.3333333    |	 1600           |  533.3333333	      |  1466.666667
+    // | 9    | 2,500,000	  | 3,000,000    | -500,000.00   |	-0.073333%         |	-1333.333333    |	 2000           |  -800	              |  3466.666667
 
     // Mock global market config as table above
     longPositionSize = 2_000_000 * 1e30;
@@ -324,14 +324,14 @@ contract Calculator_FundingRate is Calculator_Base {
 
     nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
-    assertEq(nextFundingRate, 133333333333333); // 0.013333%
-    assertEq(currentFundingRate, 666666666666665); // 0.066667%
+    assertEq(nextFundingRate, -133333333333333); // -0.013333%
+    assertEq(currentFundingRate, -666666666666665); // 0.066667%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 9    | 2,500,000	  | 3,000,000    | -500,000.00   |	0.073333%         |	1333.333333    |	-2000           |  800	              | -3466.666667
-    // | 10   | 2,500,000	  | 3,000,000    | -500,000.00   |	0.080000%         |	1833.333333    |	-2200           |  2633.333333	      | -5666.666667
+    // | 9    | 2,500,000	  | 3,000,000    | -500,000.00   |	-0.073333%         |	-1333.333333    |	 2000           |  -800	              |  3466.666667
+    // | 10   | 2,500,000	  | 3,000,000    | -500,000.00   |	-0.080000%         |	-1833.333333    |	 2200           |  -2633.333333	      |  5666.666667
 
     // Mock global market config as table above
     longPositionSize = 2_500_000 * 1e30;
@@ -352,14 +352,14 @@ contract Calculator_FundingRate is Calculator_Base {
 
     nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
-    assertEq(nextFundingRate, 66666666666666); // 0.00666667%
-    assertEq(currentFundingRate, 733333333333331); // 0.073333%
+    assertEq(nextFundingRate, -66666666666666); // 0.00666667%
+    assertEq(currentFundingRate, -733333333333331); // 0.073333%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 10   | 2,500,000	  | 3,000,000    | -500,000.00   |	0.080000%         |	1833.333333    |	-2200           |  2633.333333	      | -5666.666667
-    // | 11   | 6,000,000	  | 3,000,000    | 3,000,000.00  |	0.040000%         |	2000           |	-2400           |  4633.333333	      | -8066.666667
+    // | 10   | 2,500,000	  | 3,000,000    | -500,000.00   |	-0.080000%         |	-1833.333333    |	2200           |  -2633.333333	      | 5666.666667
+    // | 11   | 6,000,000	  | 3,000,000    | 3,000,000.00  |	-0.040000%         |	-2000           |	2400           |  -4633.333333	      | 8066.666667
 
     // Mock global market config as table above
     longPositionSize = 2_500_000 * 1e30;
@@ -380,14 +380,14 @@ contract Calculator_FundingRate is Calculator_Base {
 
     nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
-    assertEq(nextFundingRate, 66666666666666); // 0.00666667%
-    assertEq(currentFundingRate, 799999999999997); // 0.080000%
+    assertEq(nextFundingRate, -66666666666666); // 0.00666667%
+    assertEq(currentFundingRate, -799999999999997); // 0.080000%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 11   | 6,000,000	  | 3,000,000    | 3,000,000.00  |	0.040000%         |	2000           |	-2400           |  4633.333333	      | -8066.666667
-    // | 12   | 6,000,000	  | 3,000,000    | 3,000,000.00  |	0.000000%         |	2000           |	-1200           |  7033.333333	      | -9266.666667
+    // | 11   | 6,000,000	  | 3,000,000    | 3,000,000.00  | -0.040000%         |	-2000           |	 2400           |  -4633.333333	      |  8066.666667
+    // | 12   | 6,000,000	  | 3,000,000    | 3,000,000.00  |	0.000000%         |	-2000           |	 1200           |  -7033.333333	      |  9266.666667
 
     // Mock global market config as table above
     longPositionSize = 6_000_000 * 1e30;
@@ -407,15 +407,15 @@ contract Calculator_FundingRate is Calculator_Base {
     );
 
     nextFundingRate = calculator.getFundingRateVelocity(0);
-    currentFundingRate += nextFundingRate; // 0.040000%
-    assertEq(nextFundingRate, -400000000000000); // -0.040000%
-    assertEq(currentFundingRate, 399999999999997); // 0.040000%
+    currentFundingRate += nextFundingRate; // -0.040000%
+    assertEq(nextFundingRate, 400000000000000); // 0.040000%
+    assertEq(currentFundingRate, -399999999999997); // -0.040000%
 
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
     // | Row  | LongSizeUSD | ShortSizeUSD | MarketSkewUSD | CurrentFundingRate | LongFundingFee |	ShortFundingFee	|	LongFundingAccrued	| ShortFundingAccrued |
     // --------------------------------------------------------------------------------------------------------------------------------------------------------
-    // | 12   | 6,000,000	  | 3,000,000    | 3,000,000.00  |	0.000000%         |	2000           |	-1200           |  7033.333333	      | -9266.666667
-    // | 13   | 6,000,000	  | 3,000,000    | 3,000,000.00  |	-0.040000%        |	0              |	0               |  7033.333333	      | -9266.666667
+    // | 12   | 6,000,000	  | 3,000,000    | 3,000,000.00  |	0.000000%         |	-2000          |	 1200           |  -7033.333333	      |  9266.666667
+    // | 13   | 6,000,000	  | 3,000,000    | 3,000,000.00  |	 0.040000%        |	0              |	0               |  -7033.333333	      |  9266.666667
 
     // Mock global market config as table above
     longPositionSize = 6_000_000 * 1e30;
@@ -436,7 +436,7 @@ contract Calculator_FundingRate is Calculator_Base {
 
     nextFundingRate = calculator.getFundingRateVelocity(0);
     currentFundingRate += nextFundingRate;
-    assertEq(nextFundingRate, -400000000000000); // -0.040000%
-    assertEq(currentFundingRate, -3); // 0.000000%
+    assertEq(nextFundingRate, 400000000000000); // 0.040000%
+    assertEq(currentFundingRate, 3); // 0.000000%
   }
 }

@@ -316,18 +316,18 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
   /// @dev This is useful for a better UX to handle TP/SL.
   /// @param _mainAccount The owner of these actions.
   /// @param _cmds The commands to be executed.
-  /// @param _data The data for each command.
+  /// @param _datas The data for each command.
   function batch(
     address _mainAccount,
     Command[] calldata _cmds,
-    bytes[] calldata _data
+    bytes[] calldata _datas
   ) external payable nonReentrant delegate(_mainAccount) {
     // Check if overrided _msgSender() is the same as _mainAccount.
     // If msg.sender is not a delegatee, _msgSender() won't be overrided
     // which then makes _msgSender() to become msg.sender not the _mainAccount.
     if (_mainAccount != _msgSender()) revert ILimitTradeHandler_Unauthorized();
     // Check if _cmds's len match with _data's len
-    if (_cmds.length != _data.length) revert ILimitTradeHandler_BadCalldata();
+    if (_cmds.length != _datas.length) revert ILimitTradeHandler_BadCalldata();
 
     // Execute commands
     // _expectedMsgValue is used for check after cmds are executed
@@ -345,7 +345,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
           uint256 _executionFee,
           bool _reduceOnly,
           address _tpToken
-        ) = abi.decode(_data[i], (uint8, uint256, int256, uint256, uint256, bool, uint256, bool, address));
+        ) = abi.decode(_datas[i], (uint8, uint256, int256, uint256, uint256, bool, uint256, bool, address));
         // Check execution fee to make sure it is > minExecution before create an order.
         if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
         // Optimistically create order here w/o checking if provided msg.value
@@ -373,7 +373,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
           bool _triggerAboveThreshold,
           bool _reduceOnly,
           address _tpToken
-        ) = abi.decode(_data[i], (uint8, uint256, int256, uint256, bool, bool, address));
+        ) = abi.decode(_datas[i], (uint8, uint256, int256, uint256, bool, bool, address));
         _updateOrder(
           _mainAccount,
           _subAccountId,
@@ -386,7 +386,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
         );
       } else if (_cmds[i] == Command.Cancel) {
         // Perform the cancel order command
-        (uint8 _subAccountId, uint256 _orderIndex) = abi.decode(_data[i], (uint8, uint256));
+        (uint8 _subAccountId, uint256 _orderIndex) = abi.decode(_datas[i], (uint8, uint256));
         address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
         LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
         // Check if order still exists

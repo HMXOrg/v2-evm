@@ -12,7 +12,7 @@ line_length = 80
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
 
 [rpc_endpoints]
-arbitrum_fork = "${arbitrum_one_fork}"
+arbitrum_fork = "${ARBITRUM_ONE_FORK}"
 
 [invariant]
 runs = 2000

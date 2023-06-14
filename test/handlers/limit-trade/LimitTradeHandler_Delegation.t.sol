@@ -12,6 +12,8 @@ import { console } from "forge-std/console.sol";
 //   - Try creating an order will too low execution fee
 //   - Try creating an order with incorrect `msg.value`
 //   - Try creating an order with sub-account id > 255
+//   - Try update an order without being the delegatee
+//   - Try cancel an order without being the delegatee
 // - success
 //   - Try creating BUY and SELL orders and check that the indices of the orders are correct and that all orders are created correctly.
 
@@ -105,6 +107,20 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       })
     );
+  }
+
+  function testRevert_WhenUpdateOrderWithoutBeingDelegatee() external {
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_Unauthorized()"));
+    limitTradeHandler.updateOrder(address(this), 0, 0, 0, 0, true, true, address(0));
+    vm.stopPrank();
+  }
+
+  function testRevert_WhenCancelOrderWithoutBeingDelegatee() external {
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_Unauthorized()"));
+    limitTradeHandler.cancelOrder(address(this), 0, 0);
+    vm.stopPrank();
   }
 
   function testCorrectness_createOrderViaEntryPoint() external {

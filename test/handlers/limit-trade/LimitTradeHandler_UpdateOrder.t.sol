@@ -25,6 +25,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _orderIndex: 0,
       _sizeDelta: 100,
       _triggerPrice: 2e30,
+      _acceptablePrice: 2e30,
       _triggerAboveThreshold: true,
       _reduceOnly: false,
       _tpToken: address(0)
@@ -53,6 +54,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _orderIndex: 0,
       _sizeDelta: 100,
       _triggerPrice: 2e30,
+      _acceptablePrice: 2e30,
       _triggerAboveThreshold: true,
       _reduceOnly: false,
       _tpToken: address(0)
@@ -81,6 +83,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _orderIndex: 0,
       _sizeDelta: 100,
       _triggerPrice: 0,
+      _acceptablePrice: 0,
       _triggerAboveThreshold: true,
       _reduceOnly: false,
       _tpToken: address(0)
@@ -125,6 +128,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
       _orderIndex: 0,
       _sizeDelta: 200,
       _triggerPrice: 3e30,
+      _acceptablePrice: 1e30,
       _triggerAboveThreshold: true,
       _reduceOnly: false,
       _tpToken: address(0)
@@ -142,7 +146,7 @@ contract LimitTradeHandler_UpdateOrder is LimitTradeHandler_Base {
         subAccountId: 0,
         marketIndex: 1,
         triggerPrice: 3e30,
-        acceptablePrice: 3e30,
+        acceptablePrice: 1e30,
         executionFee: 0.1 ether
       })
     });

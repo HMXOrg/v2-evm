@@ -105,11 +105,11 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[1] = ILimitTradeHandler.Command.Create;
 
     bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
+    _datas[0] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
+    _datas[1] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InsufficientExecutionFee()"));
-    limitTradeHandler.batch{ value: 10 ether }(address(this), _cmds, _datas);
+    limitTradeHandler.batch{ value: 10 ether }(address(this), 0, _cmds, _datas);
   }
 
   function testRevert_WhenBatchWithoutBeingDelegatee() external {
@@ -118,13 +118,13 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[1] = ILimitTradeHandler.Command.Create;
 
     bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
+    _datas[0] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
+    _datas[1] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
 
     vm.deal(ALICE, 100 ether);
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_Unauthorized()"));
-    limitTradeHandler.batch{ value: 2 ether }(address(this), _cmds, _datas);
+    limitTradeHandler.batch{ value: 2 ether }(address(this), 0, _cmds, _datas);
   }
 
   function testRevert_WhenUpdateNonExistedOrder() external {
@@ -132,10 +132,10 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[0] = ILimitTradeHandler.Command.Update;
 
     bytes[] memory _datas = new bytes[](1);
-    _datas[0] = abi.encode(0, 0, 100 * 1e30, 1_000 * 1e30, true, true, address(1));
+    _datas[0] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, true, address(1));
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-    limitTradeHandler.batch(address(this), _cmds, _datas);
+    limitTradeHandler.batch(address(this), 0, _cmds, _datas);
   }
 
   function testRevert_WhenUpdateOrderWithZeroSizeDelta() external {
@@ -144,11 +144,11 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[1] = ILimitTradeHandler.Command.Update;
 
     bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 0, 0, 0, true, true, address(1));
+    _datas[0] = abi.encode(0, 100 * 1e30, 1_000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
+    _datas[1] = abi.encode(0, 0, 0, 800 * 1e30, true, true, address(1));
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_BadSizeDelta()"));
-    limitTradeHandler.batch{ value: 1 ether }(address(this), _cmds, _datas);
+    limitTradeHandler.batch{ value: 1 ether }(address(this), 0, _cmds, _datas);
   }
 
   function testRevert_WhenUpdateMarketOrder() external {
@@ -157,11 +157,11 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[1] = ILimitTradeHandler.Command.Update;
 
     bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 0, 100 * 1e30, 0, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 0, 50 * 1e30, 0, true, true, address(1));
+    _datas[0] = abi.encode(0, 100 * 1e30, 0, 800 * 1e30, true, 1 ether, true, address(1));
+    _datas[1] = abi.encode(0, 50 * 1e30, 0, 800 * 1e30, true, true, address(1));
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MarketOrderNoUpdate()"));
-    limitTradeHandler.batch{ value: 1 ether }(address(this), _cmds, _datas);
+    limitTradeHandler.batch{ value: 1 ether }(address(this), 0, _cmds, _datas);
   }
 
   function testRevert_WhenConvertLimitOrderToMarketOrder() external {
@@ -170,11 +170,11 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[1] = ILimitTradeHandler.Command.Update;
 
     bytes[] memory _datas = new bytes[](2);
-    _datas[0] = abi.encode(0, 0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
-    _datas[1] = abi.encode(0, 0, 50 * 1e30, 0, true, false, address(1));
+    _datas[0] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 1 ether, true, address(1));
+    _datas[1] = abi.encode(0, 50 * 1e30, 0, 800 * 1e30, true, false, address(1));
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_LimitOrderConvertToMarketOrder()"));
-    limitTradeHandler.batch{ value: 1 ether }(address(this), _cmds, _datas);
+    limitTradeHandler.batch{ value: 1 ether }(address(this), 0, _cmds, _datas);
   }
 
   function testRevert_WhenCancelNonExistedOrder() external {
@@ -182,10 +182,10 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[0] = ILimitTradeHandler.Command.Cancel;
 
     bytes[] memory _datas = new bytes[](1);
-    _datas[0] = abi.encode(0, 0);
+    _datas[0] = abi.encode(0);
 
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_NonExistentOrder()"));
-    limitTradeHandler.batch(address(this), _cmds, _datas);
+    limitTradeHandler.batch(address(this), 0, _cmds, _datas);
   }
 
   function testCorrectness_WhenCreateMultipleOrders() external {
@@ -195,11 +195,11 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[2] = ILimitTradeHandler.Command.Create;
 
     bytes[] memory _datas = new bytes[](3);
-    _datas[0] = abi.encode(0, 0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
-    _datas[1] = abi.encode(0, 0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
-    _datas[2] = abi.encode(0, 0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
+    _datas[0] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
+    _datas[1] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
+    _datas[2] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
 
-    limitTradeHandler.batch{ value: 0.3 ether }(address(this), _cmds, _datas);
+    limitTradeHandler.batch{ value: 0.3 ether }(address(this), 0, _cmds, _datas);
 
     assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 3, "limitOrdersIndex should increase by three.");
     limitOrderTester.assertLimitOrder({
@@ -252,7 +252,7 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     });
   }
 
-  function testCorrectness_WhenCreateUpdateCanel() external {
+  function testCorrectness_WhenCreateUpdateCancel() external {
     // Create 3 orders
     ILimitTradeHandler.Command[] memory _cmds = new ILimitTradeHandler.Command[](3);
     _cmds[0] = ILimitTradeHandler.Command.Create;
@@ -260,11 +260,11 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[2] = ILimitTradeHandler.Command.Create;
 
     bytes[] memory _datas = new bytes[](3);
-    _datas[0] = abi.encode(0, 0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
-    _datas[1] = abi.encode(0, 0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
-    _datas[2] = abi.encode(0, 0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
+    _datas[0] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
+    _datas[1] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
+    _datas[2] = abi.encode(0, 100 * 1e30, 1000 * 1e30, 800 * 1e30, true, 0.1 ether, true, address(weth));
 
-    limitTradeHandler.batch{ value: 0.3 ether }(address(this), _cmds, _datas);
+    limitTradeHandler.batch{ value: 0.3 ether }(address(this), 0, _cmds, _datas);
 
     // Update #1 and #2 orders, Cancel #3 orders
     _cmds = new ILimitTradeHandler.Command[](3);
@@ -273,12 +273,12 @@ contract LimitTradeHandler_Batch is LimitTradeHandler_Base {
     _cmds[2] = ILimitTradeHandler.Command.Cancel;
 
     _datas = new bytes[](3);
-    _datas[0] = abi.encode(0, 0, 50 * 1e30, 1000 * 1e30, true, true, address(weth));
-    _datas[1] = abi.encode(0, 1, 10 * 1e30, 1000 * 1e30, true, true, address(weth));
-    _datas[2] = abi.encode(0, 2);
+    _datas[0] = abi.encode(0, 50 * 1e30, 1000 * 1e30, 800 * 1e30, true, true, address(weth));
+    _datas[1] = abi.encode(1, 10 * 1e30, 1000 * 1e30, 800 * 1e30, true, true, address(weth));
+    _datas[2] = abi.encode(2);
 
     uint256 _balanceBefore = address(this).balance;
-    limitTradeHandler.batch(address(this), _cmds, _datas);
+    limitTradeHandler.batch(address(this), 0, _cmds, _datas);
     uint256 _balanceAfter = address(this).balance;
 
     assertEq(limitTradeHandler.limitOrdersIndex(address(this)), 3, "limitOrdersIndex should be 3");

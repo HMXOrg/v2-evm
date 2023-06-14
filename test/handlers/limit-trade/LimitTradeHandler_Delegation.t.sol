@@ -112,7 +112,7 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
   function testRevert_WhenUpdateOrderWithoutBeingDelegatee() external {
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_Unauthorized()"));
-    limitTradeHandler.updateOrder(address(this), 0, 0, 0, 0, true, true, address(0));
+    limitTradeHandler.updateOrder(address(this), 0, 0, 0, 0, 0, true, true, address(0));
     vm.stopPrank();
   }
 

@@ -98,7 +98,12 @@ interface ILimitTradeHandler {
   /**
    * Functions
    */
-  function batch(address _mainAccount, Command[] calldata _cmds, bytes[] calldata _data) external payable;
+  function batch(
+    address _mainAccount,
+    uint8 _subAccountId,
+    Command[] calldata _cmds,
+    bytes[] calldata _data
+  ) external payable;
 
   function createOrder(
     address _mainAccount,
@@ -144,6 +149,7 @@ interface ILimitTradeHandler {
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
+    uint256 _acceptablePrice,
     bool _triggerAboveThreshold,
     bool _reduceOnly,
     address _tpToken

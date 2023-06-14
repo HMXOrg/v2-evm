@@ -311,14 +311,37 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     );
   }
 
+  struct BatchCreateOrderLocalVars {
+    uint256 marketIndex;
+    int256 sizeDelta;
+    uint256 triggerPrice;
+    uint256 acceptablePrice;
+    bool triggerAboveThreshold;
+    uint256 executionFee;
+    bool reduceOnly;
+    address tpToken;
+  }
+
+  struct BatchUpdateOrderLocalVars {
+    uint256 orderIndex;
+    int256 sizeDelta;
+    uint256 triggerPrice;
+    uint256 acceptablePrice;
+    bool triggerAboveThreshold;
+    bool reduceOnly;
+    address tpToken;
+  }
+
   /// @notice Batch multiple commands to a one single transaction.
   /// @dev Support delegate and enforce a hard auth.
   /// @dev This is useful for a better UX to handle TP/SL.
   /// @param _mainAccount The owner of these actions.
+  /// @param _subAccountId The sub account id.
   /// @param _cmds The commands to be executed.
   /// @param _datas The data for each command.
   function batch(
     address _mainAccount,
+    uint8 _subAccountId,
     Command[] calldata _cmds,
     bytes[] calldata _datas
   ) external payable nonReentrant delegate(_mainAccount) {
@@ -335,58 +358,59 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     for (uint i = 0; i < _cmds.length; ) {
       if (_cmds[i] == Command.Create) {
         // Perform the create order command
+        BatchCreateOrderLocalVars memory _localVars;
         (
-          uint8 _subAccountId,
-          uint256 _marketIndex,
-          int256 _sizeDelta,
-          uint256 _triggerPrice,
-          uint256 _acceptablePrice,
-          bool _triggerAboveThreshold,
-          uint256 _executionFee,
-          bool _reduceOnly,
-          address _tpToken
-        ) = abi.decode(_datas[i], (uint8, uint256, int256, uint256, uint256, bool, uint256, bool, address));
+          _localVars.marketIndex,
+          _localVars.sizeDelta,
+          _localVars.triggerPrice,
+          _localVars.acceptablePrice,
+          _localVars.triggerAboveThreshold,
+          _localVars.executionFee,
+          _localVars.reduceOnly,
+          _localVars.tpToken
+        ) = abi.decode(_datas[i], (uint256, int256, uint256, uint256, bool, uint256, bool, address));
         // Check execution fee to make sure it is > minExecution before create an order.
-        if (_executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
+        if (_localVars.executionFee < minExecutionFee) revert ILimitTradeHandler_InsufficientExecutionFee();
         // Optimistically create order here w/o checking if provided msg.value
         // is enough to execution fee here, but will check after finished all cmds.
         _createOrder(
           _subAccountId,
-          _marketIndex,
-          _sizeDelta,
-          _triggerPrice,
-          _acceptablePrice,
-          _triggerAboveThreshold,
-          _executionFee,
-          _reduceOnly,
-          _tpToken
+          _localVars.marketIndex,
+          _localVars.sizeDelta,
+          _localVars.triggerPrice,
+          _localVars.acceptablePrice,
+          _localVars.triggerAboveThreshold,
+          _localVars.executionFee,
+          _localVars.reduceOnly,
+          _localVars.tpToken
         );
         // Update expectedMsgValue
-        _expectedMsgValue += _executionFee;
+        _expectedMsgValue += _localVars.executionFee;
       } else if (_cmds[i] == Command.Update) {
-        // Perform the update order command
+        BatchUpdateOrderLocalVars memory _localVars;
         (
-          uint8 _subAccountId,
-          uint256 _orderIndex,
-          int256 _sizeDelta,
-          uint256 _triggerPrice,
-          bool _triggerAboveThreshold,
-          bool _reduceOnly,
-          address _tpToken
-        ) = abi.decode(_datas[i], (uint8, uint256, int256, uint256, bool, bool, address));
+          _localVars.orderIndex,
+          _localVars.sizeDelta,
+          _localVars.triggerPrice,
+          _localVars.acceptablePrice,
+          _localVars.triggerAboveThreshold,
+          _localVars.reduceOnly,
+          _localVars.tpToken
+        ) = abi.decode(_datas[i], (uint256, int256, uint256, uint256, bool, bool, address));
         _updateOrder(
           _mainAccount,
           _subAccountId,
-          _orderIndex,
-          _sizeDelta,
-          _triggerPrice,
-          _triggerAboveThreshold,
-          _reduceOnly,
-          _tpToken
+          _localVars.orderIndex,
+          _localVars.sizeDelta,
+          _localVars.triggerPrice,
+          _localVars.acceptablePrice,
+          _localVars.triggerAboveThreshold,
+          _localVars.reduceOnly,
+          _localVars.tpToken
         );
       } else if (_cmds[i] == Command.Cancel) {
         // Perform the cancel order command
-        (uint8 _subAccountId, uint256 _orderIndex) = abi.decode(_datas[i], (uint8, uint256));
+        uint256 _orderIndex = abi.decode(_datas[i], (uint256));
         address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
         LimitOrder memory _order = limitOrders[_subAccount][_orderIndex];
         // Check if order still exists
@@ -749,6 +773,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
   /// @param _orderIndex Order Index which could be retrieved from the emitted event from `createOrder()`
   /// @param _sizeDelta How much the position size will change in USD (1e30), can be negative for INCREASE order
   /// @param _triggerPrice The price that this limit order will be triggered
+  /// @param _acceptablePrice The acceptable price for the order
   /// @param _triggerAboveThreshold The current price must go above/below the trigger price for the order to be executed
   /// @param _reduceOnly If true, it's a Reduce-Only order which will not flip the side of the position
   /// @param _tpToken Take profit token, when trader has profit
@@ -758,6 +783,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
+    uint256 _acceptablePrice,
     bool _triggerAboveThreshold,
     bool _reduceOnly,
     address _tpToken
@@ -773,6 +799,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
       _orderIndex,
       _sizeDelta,
       _triggerPrice,
+      _acceptablePrice,
       _triggerAboveThreshold,
       _reduceOnly,
       _tpToken
@@ -785,6 +812,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
+    uint256 _acceptablePrice,
     bool _triggerAboveThreshold,
     bool _reduceOnly,
     address _tpToken
@@ -808,6 +836,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
 
     // Update order
     _order.triggerPrice = _triggerPrice;
+    _order.acceptablePrice = _acceptablePrice;
     _order.triggerAboveThreshold = _triggerAboveThreshold;
     _order.sizeDelta = _sizeDelta;
     _order.reduceOnly = _reduceOnly;

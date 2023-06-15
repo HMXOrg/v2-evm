@@ -17,6 +17,7 @@ interface ICrossMarginHandler {
   error ICrossMarginHandler_NotExecutionState();
   error ICrossMarginHandler_NotWNativeToken();
   error ICrossMarginHandler_Unauthorized();
+  error ICrossMarginHandler_BadAmount();
 
   /**
    * Structs

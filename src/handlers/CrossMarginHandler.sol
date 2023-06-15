@@ -244,6 +244,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _executionFee,
     bool _shouldUnwrap
   ) external payable nonReentrant onlyAcceptedToken(_token) returns (uint256 _orderId) {
+    if (_amount == 0) revert ICrossMarginHandler_BadAmount();
     if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler_InsufficientExecutionFee();
     if (msg.value != _executionFee) revert ICrossMarginHandler_InCorrectValueTransfer();
     if (_shouldUnwrap && _token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth())
@@ -320,6 +321,15 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     for (uint256 i = _nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = withdrawOrders[i];
+
+      // skip cancelled orders
+      if (_order.amount == 0) {
+        unchecked {
+          ++i;
+        }
+        continue;
+      }
+
       _executionFee = _order.executionFee;
 
       try this.executeWithdrawOrder(_order) {
@@ -432,6 +442,9 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     if (msg.sender != _order.account) revert ICrossMarginHandler_NotOrderOwner();
 
     delete withdrawOrders[_orderIndex];
+
+    // refund the _order.executionFee
+    _transferOutETH(_order.executionFee, msg.sender);
 
     emit LogCancelWithdrawOrder(
       payable(msg.sender),

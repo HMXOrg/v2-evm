@@ -407,6 +407,9 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     _refund(_order);
 
+    // refund the _order.executionFee
+    _transferOutETH(_order.executionFee, msg.sender);
+
     emit LogCancelLiquidityOrder(
       payable(msg.sender),
       _order.orderId,

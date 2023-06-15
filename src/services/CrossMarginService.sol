@@ -264,12 +264,13 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     address _primaryAccount,
     uint8 _subAccountId,
     address _tokenOut,
-    uint256 _amountIn
+    uint256 _amountIn,
+    uint256 _minAmountOut
   ) external nonReentrant onlyWhitelistedExecutor returns (uint256 _amountOut) {
     // Get trader's sub-account address
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     ConfigStorage _configStorage = ConfigStorage(configStorage);
-    _amountOut = ConvertedGlpStrategy(convertedSglpStrategy).execute(_tokenOut, _amountIn);
+    _amountOut = ConvertedGlpStrategy(convertedSglpStrategy).execute(_tokenOut, _amountIn, _minAmountOut);
 
     // Adjusting trader balance
     address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);

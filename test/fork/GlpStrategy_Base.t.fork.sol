@@ -431,6 +431,17 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
         tickPrice: 0
       })
     );
+    assetPythPriceDatas.push(
+      AssetPythPriceData({
+        assetId: ethAssetId,
+        priceId: ethAssetId,
+        price: 1 * 1e8,
+        exponent: -8,
+        inverse: false,
+        conf: 0,
+        tickPrice: 0
+      })
+    );
     AssetPythPriceData memory _data;
     for (uint256 i = 0; i < assetPythPriceDatas.length; ) {
       _data = assetPythPriceDatas[i];
@@ -467,6 +478,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     );
 
     oracleMiddleware.setAssetPriceConfig(usdcAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
+    oracleMiddleware.setAssetPriceConfig(ethAssetId, _confidenceThresholdE6, _trustPriceAge, address(pythAdapter));
   }
 
   function _buildAcceptedHLPTokenConfig(

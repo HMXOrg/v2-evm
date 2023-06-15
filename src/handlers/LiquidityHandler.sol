@@ -159,7 +159,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     if (_shouldWrap) {
       if (msg.value != _amountIn + _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
     } else {
-      if (msg.value != minExecutionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
+      if (msg.value != _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
       IERC20Upgradeable(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 

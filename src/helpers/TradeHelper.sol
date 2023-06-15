@@ -103,6 +103,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
+  event LogFundingRate(uint256 indexed marketIndex, int256 oldFundingRate, int256 newFundingRate);
 
   /**
    * Structs
@@ -264,8 +265,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
       if (_market.longPositionSize > 0) {
         int256 fundingFeeLongE30 = _calculator.getFundingFee(
-          true,
-          _market.longPositionSize,
+          int256(_market.longPositionSize),
           _market.fundingAccrued,
           lastFundingAccrued
         );
@@ -274,14 +274,14 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
       if (_market.shortPositionSize > 0) {
         int256 fundingFeeShortE30 = _calculator.getFundingFee(
-          false,
-          _market.shortPositionSize,
+          -int256(_market.shortPositionSize),
           _market.fundingAccrued,
           lastFundingAccrued
         );
         _market.accumFundingShort += fundingFeeShortE30;
       }
 
+      emit LogFundingRate(_marketIndex, _market.currentFundingRate, nextFundingRate);
       _market.currentFundingRate = nextFundingRate;
       _market.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
       _perpStorage.updateMarket(_marketIndex, _market);
@@ -435,8 +435,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
     // We are assuming that the market state has been updated with the latest funding rate
     bool _isLong = _position.positionSizeE30 > 0;
     _fundingFee = _calculator.getFundingFee(
-      _isLong,
-      HMXLib.abs(_position.positionSizeE30),
+      _position.positionSizeE30,
       PerpStorage(perpStorage).getMarketByIndex(_marketIndex).fundingAccrued,
       _position.lastFundingAccrued
     );

@@ -6,6 +6,7 @@ interface IPerpStorage {
    * Errors
    */
   error IPerpStorage_NotWhiteListed();
+  error IPerpStorage_BadLen();
 
   /**
    * Structs

@@ -27,7 +27,7 @@ contract HLP is ReentrancyGuardUpgradeable, OwnableUpgradeable, ERC20Upgradeable
   function initialize() external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
-    ERC20Upgradeable.__ERC20_init("HLP", "Perp88 LP v2");
+    ERC20Upgradeable.__ERC20_init("HLP", "HLP");
   }
 
   function setMinter(address minter, bool isMinter) external onlyOwner nonReentrant {

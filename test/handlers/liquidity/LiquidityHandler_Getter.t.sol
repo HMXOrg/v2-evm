@@ -98,11 +98,11 @@ contract LiquidityHandler_Getter is LiquidityHandler_Base {
     assertEq(liquidityHandler.getExecutedLiquidityOrders(ALICE, 20, 0).length, 3);
 
     _executeOrder(11);
-    assertEq(liquidityHandler.getExecutedLiquidityOrders(ALICE, 20, 0).length, 14);
+    assertEq(liquidityHandler.getExecutedLiquidityOrders(ALICE, 20, 0).length, 13);
     assertEq(liquidityHandler.getExecutedLiquidityOrders(ALICE, 4, 0).length, 4);
     assertEq(liquidityHandler.getExecutedLiquidityOrders(ALICE, 4, 4).length, 4);
     assertEq(liquidityHandler.getExecutedLiquidityOrders(ALICE, 4, 8).length, 4);
-    assertEq(liquidityHandler.getExecutedLiquidityOrders(ALICE, 4, 12).length, 2);
+    assertEq(liquidityHandler.getExecutedLiquidityOrders(ALICE, 4, 12).length, 1);
 
     // Check order id
     {

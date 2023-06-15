@@ -447,7 +447,7 @@ contract TC24 is BaseIntTest_WithActions {
     //                      = 0 + (-(1_500_000 / 300_000_000 * 0.0004) * 1200 / 86400)
     //                      = -0.0000000277777777777777778
     // Last Funding Time    = 1000 + 60 + 60 + 1200 = 2320
-    assertMarketFundingRate(wethMarketIndex, -27777777777, 2320, "T4: ");
+    assertMarketFundingRate(wethMarketIndex, 27777777777, 2320, "T4: ");
 
     // Funding accrued      = (currentFundingRate + nextFundingRate) / 2 * (elapsedInterval / SECONDS_IN_DAY) + previousFundingAccrued
     //                      = (0 + -0.0000000277777777777777778) / 2 * (1200 / 86400) + 0
@@ -536,7 +536,7 @@ contract TC24 is BaseIntTest_WithActions {
     //                      = -0.0000000277777777777777778 + (-(2_000_000 / 300_000_000 * 0.0004) * 180 / 86400)
     //                      = -0.0000000333333333333333332
     // Last Funding Time    = 2320 + (60 + 60 + 60) = 2500
-    assertMarketFundingRate(wethMarketIndex, -33333333332, 2500, "T7: ");
+    assertMarketFundingRate(wethMarketIndex, 33333333332, 2500, "T7: ");
 
     // Funding fee Reserve
     // must still be 0 according to T6 that called withdraw surplus
@@ -557,7 +557,7 @@ contract TC24 is BaseIntTest_WithActions {
     // And entry funding rate of CAROL's Short position
     // lastFundingAccrued     = currentFundingAccrued
     //                      = -0.000000000256558641975308643
-    assertEntryFundingRate(getSubAccount(CAROL, 0), wethMarketIndex, -256558641, "T7: ");
+    assertEntryFundingRate(getSubAccount(CAROL, 0), wethMarketIndex, 256558641, "T7: ");
   }
 
   function _T8Assert1() internal {
@@ -574,7 +574,7 @@ contract TC24 is BaseIntTest_WithActions {
     //                      = -0.0000000333333333333333332 + (-(2_000_000-200_000 / 300_000_000 * 0.0004) * 60 / 86400)
     //                      = -0.0000000349999999999999999
     // Last Funding Time    = 2500 + 60 = 2560
-    assertMarketFundingRate(wethMarketIndex, -34999999998, 2560, "T8: ");
+    assertMarketFundingRate(wethMarketIndex, 34999999998, 2560, "T8: ");
 
     // currentFundingAccrued= (currentFundingRate + nextFundingRate) / 2 * (elapsedInterval / SECONDS_IN_DAY) + previousFundingAccrued
     //                      = (-0.0000000333333333333333332 + -0.0000000349999999999999999) / 2 * (60 / 86400) + -0.000000000256558641975308643
@@ -613,7 +613,7 @@ contract TC24 is BaseIntTest_WithActions {
     //                      = -0.0000000349999999999999999 + (-(2100000-200000 / 300000000 * 0.0004) * 60 / 86400)
     //                      = -0.0000000367592592592592592
     // Last Funding Time    = 2560 + 60 = 2620
-    assertMarketFundingRate(wethMarketIndex, -36759259257, 2620, "T9: ");
+    assertMarketFundingRate(wethMarketIndex, 36759259257, 2620, "T9: ");
 
     assertMarketAccumFundingFee(wethMarketIndex, 52324458900000000000000000, 0, "T9: ");
 
@@ -624,7 +624,7 @@ contract TC24 is BaseIntTest_WithActions {
   }
 
   function _T10Assert() internal {
-    assertMarketFundingRate(wethMarketIndex, -38703703701, 2680, "T10: ");
+    assertMarketFundingRate(wethMarketIndex, 38703703701, 2680, "T10: ");
 
     // Funding fee Reserve
     // must still be as same as T9
@@ -636,7 +636,7 @@ contract TC24 is BaseIntTest_WithActions {
 
     assertMarketAccumFundingFee(wethMarketIndex, 107349534600000000000000000, 0, "T10: ");
 
-    assertEntryFundingRate(getSubAccount(CAROL, 0), wethMarketIndex, -331404318, "T10: ");
+    assertEntryFundingRate(getSubAccount(CAROL, 0), wethMarketIndex, 331404318, "T10: ");
   }
 
   function _T11Assert() internal {

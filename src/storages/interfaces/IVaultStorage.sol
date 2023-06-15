@@ -12,6 +12,7 @@ interface IVaultStorage {
   error IVaultStorage_HLPBalanceRemaining();
   error IVaultStorage_Forbidden();
   error IVaultStorage_TargetNotContract();
+  error IVaultStorage_BadLen();
 
   /**
    * Functions

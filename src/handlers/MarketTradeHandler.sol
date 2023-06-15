@@ -274,7 +274,6 @@ contract MarketTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @param _subAccountId Trader's sub account ID.
   /// @return _subAccount Trader's sub account address used for trading.
   function _getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
-    if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 

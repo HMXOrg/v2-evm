@@ -30,7 +30,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
    */
   event LogSetLiquidityService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
-  event LogMaxExecutionChuck(uint256 oldValue, uint256 newValue);
+  event LogMaxExecutionChunk(uint256 oldValue, uint256 newValue);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogCreateAddLiquidityOrder(
@@ -84,7 +84,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   address public pyth; //pyth
   uint256 public nextExecutionOrderIndex; // the index of the next liquidity order that should be executed
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
-  uint256 public maxExecutionChuck; // maximum execution order sizes per request
+  uint256 public maxExecutionChunk; // maximum execution order sizes per request
 
   LiquidityOrder[] public liquidityOrders; // all liquidityOrder
   mapping(address => bool) public orderExecutors; // address -> whitelist executors
@@ -98,7 +98,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     address _liquidityService,
     address _pyth,
     uint256 _minExecutionOrderFee,
-    uint256 _maxExecutionChuck
+    uint256 _maxExecutionChunk
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -106,7 +106,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     liquidityService = _liquidityService;
     pyth = _pyth;
     minExecutionOrderFee = _minExecutionOrderFee;
-    maxExecutionChuck = _maxExecutionChuck;
+    maxExecutionChunk = _maxExecutionChunk;
 
     // Sanity check
     // slither-disable-next-line unused-return
@@ -159,7 +159,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     if (_shouldWrap) {
       if (msg.value != _amountIn + _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
     } else {
-      if (msg.value != minExecutionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
+      if (msg.value != _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
       IERC20Upgradeable(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
@@ -290,8 +290,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     }
 
     // split execution into chunk for preventing exceed block gas limit
-    if (_endIndex - _nextExecutionOrderIndex > maxExecutionChuck)
-      _endIndex = _nextExecutionOrderIndex + maxExecutionChuck;
+    if (_endIndex - _nextExecutionOrderIndex > maxExecutionChunk - 1)
+      _endIndex = _nextExecutionOrderIndex + maxExecutionChunk - 1;
 
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
@@ -407,6 +407,9 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     _refund(_order);
 
+    // refund the _order.executionFee
+    _transferOutETH(_order.executionFee, msg.sender);
+
     emit LogCancelLiquidityOrder(
       payable(msg.sender),
       _order.orderId,
@@ -467,8 +470,12 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
     // the transaction maintains a secure execution."
     (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
-    // shhh compiler
-    success;
+    // send WNative instead when native token transfer fail
+    if (!success) {
+      address weth = ConfigStorage(LiquidityService(liquidityService).configStorage()).weth();
+      IWNative(weth).deposit{ value: _amountOut }();
+      IWNative(weth).transfer(_receiver, _amountOut);
+    }
   }
 
   /**
@@ -568,11 +575,11 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     minExecutionOrderFee = _newMinExecutionFee;
   }
 
-  /// @notice setMaxExecutionChuck
-  /// @param _maxExecutionChuck maximum check sizes when execute orders
-  function setMaxExecutionChuck(uint256 _maxExecutionChuck) external nonReentrant onlyOwner {
-    emit LogMaxExecutionChuck(maxExecutionChuck, _maxExecutionChuck);
-    maxExecutionChuck = _maxExecutionChuck;
+  /// @notice setMaxExecutionChunk
+  /// @param _maxExecutionChunk maximum check sizes when execute orders
+  function setMaxExecutionChunk(uint256 _maxExecutionChunk) external nonReentrant onlyOwner {
+    emit LogMaxExecutionChunk(maxExecutionChunk, _maxExecutionChunk);
+    maxExecutionChunk = _maxExecutionChunk;
   }
 
   /// @notice setOrderExecutor

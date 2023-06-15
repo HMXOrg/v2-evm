@@ -524,10 +524,17 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   function convertSGlpCollateral(
     uint8 _subAccountId,
     address _tokenOut,
-    uint256 _amountIn
+    uint256 _amountIn,
+    uint256 _minAmountOut
   ) external nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _amountOut) {
     return
-      CrossMarginService(crossMarginService).convertSGlpCollateral(msg.sender, _subAccountId, _tokenOut, _amountIn);
+      CrossMarginService(crossMarginService).convertSGlpCollateral(
+        msg.sender,
+        _subAccountId,
+        _tokenOut,
+        _amountIn,
+        _minAmountOut
+      );
   }
 
   /**

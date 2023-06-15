@@ -46,6 +46,7 @@ interface ICrossMarginService {
     address _primaryAccount,
     uint8 _subAccountId,
     address _tokenOut,
-    uint256 _amountIn
+    uint256 _amountIn,
+    uint256 _minAmountOut
   ) external returns (uint256);
 }

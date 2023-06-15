@@ -88,7 +88,8 @@ interface ICrossMarginHandler {
   function convertSGlpCollateral(
     uint8 _subAccountId,
     address _tokenOut,
-    uint256 _amountIn
+    uint256 _amountIn,
+    uint256 _minAmountOut
   ) external returns (uint256 _amountOut);
 
   function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrder);

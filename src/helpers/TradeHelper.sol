@@ -103,6 +103,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
   event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
+  event LogFundingRate(uint256 indexed marketIndex, int256 oldFundingRate, int256 newFundingRate);
 
   /**
    * Structs
@@ -280,6 +281,7 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
         _market.accumFundingShort += fundingFeeShortE30;
       }
 
+      emit LogFundingRate(_marketIndex, _market.currentFundingRate, nextFundingRate);
       _market.currentFundingRate = nextFundingRate;
       _market.lastFundingTime = (block.timestamp / _fundingInterval) * _fundingInterval;
       _perpStorage.updateMarket(_marketIndex, _market);

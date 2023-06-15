@@ -6,7 +6,7 @@ import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 
 contract StakedGlpStrategy_Reinvest is GlpStrategy_Base {
-  uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_one_fork"));
+  uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
 
   function setUp() public override {
     super.setUp();

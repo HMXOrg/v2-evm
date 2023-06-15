@@ -467,8 +467,12 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
     // the transaction maintains a secure execution."
     (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
-    // shhh compiler
-    success;
+    // send WNative instead when native token transfer fail
+    if (!success) {
+      address weth = ConfigStorage(LiquidityService(liquidityService).configStorage()).weth();
+      IWNative(weth).deposit{ value: _amountOut }();
+      IWNative(weth).transfer(_receiver, _amountOut);
+    }
   }
 
   /**

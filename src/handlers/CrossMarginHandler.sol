@@ -541,8 +541,12 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
     // the transaction maintains a secure execution."
     (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
-    // shhhh compiler
-    success;
+    // send WNative instead when native token transfer fail
+    if (!success) {
+      address weth = ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth();
+      IWNative(weth).deposit{ value: _amountOut }();
+      IWNative(weth).transfer(_receiver, _amountOut);
+    }
   }
 
   receive() external payable {

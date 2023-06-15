@@ -367,7 +367,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     emit LogSetMarketConfig(_marketIndex, marketConfigs[_marketIndex], _newConfig);
     marketConfigs[_marketIndex] = _newConfig;
-    return marketConfigs[_marketIndex];
+    return _newConfig;
   }
 
   function setHlpTokenConfig(

@@ -84,10 +84,17 @@ contract TC39 is BaseIntTest_WithActions {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
 
-    limitTradeHandler.executeOrder(
-      BOB,
-      0,
-      _orderIndex,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = BOB;
+    subAccountIds[0] = 0;
+    orderIndexes[0] = _orderIndex;
+
+    limitTradeHandler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
       payable(FEEVER),
       priceUpdateData,
       publishTimeUpdateData,
@@ -126,10 +133,14 @@ contract TC39 is BaseIntTest_WithActions {
 
     _orderIndex = limitTradeHandler.limitOrdersIndex(getSubAccount(BOB, 0)) - 1;
 
-    limitTradeHandler.executeOrder(
-      BOB,
-      0,
-      _orderIndex,
+    accounts[0] = BOB;
+    subAccountIds[0] = 0;
+    orderIndexes[0] = _orderIndex;
+
+    limitTradeHandler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
       payable(FEEVER),
       priceUpdateData,
       publishTimeUpdateData,

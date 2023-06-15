@@ -157,10 +157,17 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
     mockOracle.setPriceStale(false);
 
     // Execute Long Increase Order
-    limitTradeHandler.executeOrder({
-      _account: ALICE,
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = ALICE;
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,

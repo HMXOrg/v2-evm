@@ -677,7 +677,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
             ((_market.currentFundingRate + nextFundingRate) * _proportionalElapsedInDay) /
             2 /
             1e18;
-          _unrealizedFeeE30 += getFundingFee(_var.isLong, _var.absSize, currentFundingAccrued, lastFundingAccrued);
+          _unrealizedFeeE30 += getFundingFee(_var.position.positionSizeE30, currentFundingAccrued, lastFundingAccrued);
         }
         // Calculate trading fee
         _unrealizedFeeE30 += int256(_getTradingFee(_var.absSize, _marketConfig.decreasePositionFeeRateBPS));
@@ -990,42 +990,27 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     vars.marketSkewUSDE30 = int(globalMarket.longPositionSize) - int(globalMarket.shortPositionSize);
 
     // The result of this fundingRateVelocity Formula will be in the range of [-maxFundingRate, maxFundingRate]
-    vars.ratio = HMXLib.max(-1e18, -((vars.marketSkewUSDE30 * 1e18) / int(marketConfig.fundingRate.maxSkewScaleUSD)));
-    vars.ratio = HMXLib.min(vars.ratio, 1e18);
-    return (vars.ratio * int(marketConfig.fundingRate.maxFundingRate)) / 1e18;
+    vars.ratio =
+      (vars.marketSkewUSDE30 * int(marketConfig.fundingRate.maxFundingRate)) /
+      int(marketConfig.fundingRate.maxSkewScaleUSD);
+    return
+      vars.ratio > 0
+        ? HMXLib.min(vars.ratio, int(marketConfig.fundingRate.maxFundingRate))
+        : HMXLib.max(vars.ratio, -int(marketConfig.fundingRate.maxFundingRate));
   }
 
   /**
    * Funding Rate
    */
-
   function getFundingFee(
-    bool _isLong,
-    uint256 _size,
+    int256 _size,
     int256 _currentFundingAccrued,
     int256 _lastFundingAccrued
   ) public pure returns (int256 fundingFee) {
-    if (_size == 0) return 0;
     int256 _fundingAccrued = _currentFundingAccrued - _lastFundingAccrued;
-
-    // IF _fundingAccrued < 0, LONG positions pay fees to SHORT and SHORT positions receive fees from LONG
-    // IF _fundingAccrued > 0, LONG positions receive fees from SHORT and SHORT pay fees to LONG
-    fundingFee = (int256(_size) * _fundingAccrued) / int64(RATE_PRECISION);
-
-    // Position Exposure   | Funding Rate       | Fund Flow
-    // (isLong)            | (fundingRate > 0)  | (traderMustPay)
-    // ---------------------------------------------------------------------
-    // true                | true               | false  (fee reserve -> trader)
-    // true                | false              | true   (trader -> fee reserve)
-    // false               | true               | true   (trader -> fee reserve)
-    // false               | false              | false  (fee reserve -> trader)
-
-    // If fundingFee is negative mean Trader receives Fee
-    // If fundingFee is positive mean Trader pays Fee
-    if (_isLong) {
-      return -fundingFee;
-    }
-    return fundingFee;
+    // positive funding fee = trader pay funding fee
+    // negative funding fee = trader receive funding fee
+    return (_size * _fundingAccrued) / int64(RATE_PRECISION);
   }
 
   /// @notice Calculates the borrowing fee for a given asset class based on the reserved value, entry borrowing rate, and current sum borrowing rate of the asset class.

@@ -481,41 +481,60 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
   }
 
   /// @notice Execute a limit order
-  /// @param _account the primary account of the order
-  /// @param _subAccountId Sub-account Id
-  /// @param _orderIndex Order Index which could be retrieved from the emitted event from `createOrder()`
+  /// @param _accounts the primary account of the order
+  /// @param _subAccountIds Sub-account Id
+  /// @param _orderIndexes Order Index which could be retrieved from the emitted event from `createOrder()`
   /// @param _feeReceiver Which address will receive the execution fee for this transaction
   /// @param _priceData Price data from the Pyth oracle.
   /// @param _publishTimeData Publish time data from the Pyth oracle.
   /// @param _minPublishTime Minimum publish time for the Pyth oracle data.
   /// @param _encodedVaas Encoded VaaS data for the Pyth oracle.
-  function executeOrder(
-    address _account,
-    uint8 _subAccountId,
-    uint256 _orderIndex,
+  function executeOrders(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _orderIndexes,
     address payable _feeReceiver,
     bytes32[] calldata _priceData,
     bytes32[] calldata _publishTimeData,
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
+    if (_accounts.length != _subAccountIds.length && _accounts.length != _orderIndexes.length)
+      revert ILimitTradeHandler_InvalidArraySize();
+
     // Update price to Pyth
     pyth.updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
     ExecuteOrderVars memory vars;
-    vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
-    vars.order = limitOrders[vars.subAccount][_orderIndex];
-
-    // Check if this order still exists
-    if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
-
-    vars.orderIndex = _orderIndex;
     vars.feeReceiver = _feeReceiver;
     vars.priceData = _priceData;
     vars.publishTimeData = _publishTimeData;
     vars.minPublishTime = _minPublishTime;
     vars.encodedVaas = _encodedVaas;
+
+    // Loop through order list
+    for (uint256 i = 0; i < _accounts.length; ) {
+      _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _executeOrder(
+    ExecuteOrderVars memory vars,
+    address _account,
+    uint8 _subAccountId,
+    uint256 _orderIndex
+  ) internal {
+    vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
+    vars.order = limitOrders[vars.subAccount][_orderIndex];
+    vars.orderIndex = _orderIndex;
     vars.isMarketOrder = vars.order.triggerAboveThreshold && vars.order.triggerPrice == 0;
+
+    // Check if this order still exists
+    if (vars.order.account == address(0)) revert ILimitTradeHandler_NonExistentOrder();
 
     // Check if the order is a market order and is stale
     if (vars.isMarketOrder && block.timestamp > vars.order.createdTimestamp + uint256(minExecutionTimestamp)) {

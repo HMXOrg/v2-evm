@@ -13,10 +13,10 @@ contract EcoPyth is OwnableUpgradeable, IEcoPyth {
   using SafeCastUpgradeable for int256;
 
   // errors
-  error EcoPyth_ExpectZeroFee();
   error EcoPyth_OnlyUpdater();
   error EcoPyth_PriceFeedNotFound();
   error EcoPyth_AssetIdHasAlreadyBeenDefined();
+  error EcoPyth_InvalidArgs();
 
   // array of price data
   // it is stored as `tick` from the Uniswap tick price math
@@ -45,6 +45,7 @@ contract EcoPyth is OwnableUpgradeable, IEcoPyth {
   // events
   event LogSetUpdater(address indexed _account, bool _isActive);
   event LogVaas(bytes32 _encodedVaas);
+  event SetAssetId(uint256 indexed index, bytes32 assetId);
 
   /**
    * Modifiers
@@ -121,6 +122,20 @@ contract EcoPyth is OwnableUpgradeable, IEcoPyth {
     emit LogSetUpdater(_account, _isActive);
   }
 
+  function setUpdaters(address[] calldata _accounts, bool[] calldata _isActives) external onlyOwner {
+    if (_accounts.length != _isActives.length) revert EcoPyth_InvalidArgs();
+    for (uint256 i = 0; i < _accounts.length; ) {
+      // Set the `isActive` status of the given account
+      isUpdaters[_accounts[i]] = _isActives[i];
+
+      // Emit a `LogSetUpdater` event indicating the updated status of the account
+      emit LogSetUpdater(_accounts[i], _isActives[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
   function insertAssetIds(bytes32[] calldata _assetIds) external onlyOwner {
     uint256 _len = _assetIds.length;
     for (uint256 i = 0; i < _len; ) {
@@ -139,8 +154,23 @@ contract EcoPyth is OwnableUpgradeable, IEcoPyth {
   function _insertAssetId(bytes32 _assetId) internal {
     if (mapAssetIdToIndex[_assetId] != 0) revert EcoPyth_AssetIdHasAlreadyBeenDefined();
     mapAssetIdToIndex[_assetId] = indexCount;
+    emit SetAssetId(indexCount, _assetId);
     assetIds.push(_assetId);
     ++indexCount;
+  }
+
+  function setAssetId(uint256 _index, bytes32 _assetId) external onlyOwner {
+    if (_index == 0) revert EcoPyth_InvalidArgs();
+
+    mapAssetIdToIndex[_assetId] = _index;
+
+    emit SetAssetId(_index, _assetId);
+
+    // Reset all prices to zero,
+    // this will prevent anyone from using the prices from here without another price update
+    delete prices;
+    delete publishTimeDiff;
+    minPublishTime = 0;
   }
 
   function buildPriceUpdateData(int24[] calldata _prices) external pure returns (bytes32[] memory _updateData) {

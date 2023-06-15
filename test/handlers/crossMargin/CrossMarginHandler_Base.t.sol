@@ -130,7 +130,6 @@ contract CrossMarginHandler_Base is BaseTest {
    */
 
   function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
-    if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 

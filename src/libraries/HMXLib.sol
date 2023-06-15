@@ -5,7 +5,6 @@ library HMXLib {
   error HMXLib_WrongSubAccountId();
 
   function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
-    if (_subAccountId > 255) revert HMXLib_WrongSubAccountId();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 

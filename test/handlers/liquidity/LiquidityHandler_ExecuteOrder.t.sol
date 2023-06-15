@@ -416,6 +416,22 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base {
     assertEq(liquidityHandler.nextExecutionOrderIndex(), 3);
   }
 
+  function test_correctness_refunding_when_cancelOrder() external {
+    uint256 _orderIndex = _createAddLiquidityWBTCOrder();
+
+    // Check Alice balance before cancel
+    assertEq(wbtc.balanceOf(ALICE), 0 ether);
+    assertEq(ALICE.balance, 0 ether);
+
+    // Cancel
+    vm.prank(ALICE);
+    liquidityHandler.cancelLiquidityOrder(_orderIndex);
+
+    // Check Alice balance after cancel
+    assertEq(wbtc.balanceOf(ALICE), 1 ether);
+    assertEq(ALICE.balance, 5 ether);
+  }
+
   function _createAddLiquidityWBTCOrder() internal returns (uint256) {
     vm.deal(ALICE, 5 ether); //deal with out of gas
     wbtc.mint(ALICE, 1 ether);

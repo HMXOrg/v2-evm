@@ -270,12 +270,18 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Get trader's sub-account address
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     ConfigStorage _configStorage = ConfigStorage(configStorage);
+    Calculator _calculator = Calculator(calculator);
     _amountOut = ConvertedGlpStrategy(convertedSglpStrategy).execute(_tokenOut, _amountIn, _minAmountOut);
 
     // Adjusting trader balance
     address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
     _vaultStorage.decreaseTraderBalance(_subAccount, _configStorage.sglp(), _amountIn);
     _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _amountOut);
+
+    // Calculate validation for if new Equity is below IMR or not
+    int256 equity = _calculator.getEquity(_subAccount, 0, 0);
+    if (equity < 0 || uint256(equity) < _calculator.getIMR(_subAccount))
+      revert ICrossMarginService_WithdrawBalanceBelowIMR();
 
     emit LogConvertSGlpCollateral(_primaryAccount, _subAccountId, _tokenOut, _amountIn, _amountOut);
     return _amountOut;

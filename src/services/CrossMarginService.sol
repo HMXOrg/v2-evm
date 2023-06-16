@@ -270,6 +270,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Get trader's sub-account address
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     ConfigStorage _configStorage = ConfigStorage(configStorage);
+    Calculator _calculator = Calculator(calculator);
     _amountOut = ConvertedGlpStrategy(convertedSglpStrategy).execute(_tokenOut, _amountIn, _minAmountOut);
 
     // Adjusting trader balance

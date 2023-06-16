@@ -970,12 +970,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   }
 
   function proportionalElapsedInDay(uint256 _marketIndex) public view returns (uint256 elapsed) {
-    ConfigStorage _configStorage = ConfigStorage(configStorage);
     PerpStorage.Market memory globalMarket = PerpStorage(perpStorage).getMarketByIndex(_marketIndex);
-    uint256 fundingInterval = _configStorage.getTradingConfig().fundingInterval;
-    uint256 elapsedIntervals = (block.timestamp - globalMarket.lastFundingTime) / fundingInterval;
-    uint256 intervalsInOneDay = 1 days / fundingInterval;
-    return (elapsedIntervals * 1e18) / intervalsInOneDay;
+    return ((block.timestamp - globalMarket.lastFundingTime) * 1e18) / 1 days;
   }
 
   /// @notice Calculate the funding rate velocity

@@ -174,29 +174,12 @@ contract EcoPyth is OwnableUpgradeable, IEcoPyth {
   }
 
   function buildPriceUpdateData(int24[] calldata _prices) external pure returns (bytes32[] memory _updateData) {
-    _updateData = new bytes32[](_prices.length / MAX_PRICE_PER_WORD + 1);
-    _updateData[0] = bytes32(uint256(0));
-    for (uint256 i; i < _prices.length; i++) {
+    _updateData = new bytes32[]((_prices.length + MAX_PRICE_PER_WORD - 1) / MAX_PRICE_PER_WORD);
+    for (uint256 i; i < _prices.length; ++i) {
       uint256 outerIndex = i / MAX_PRICE_PER_WORD;
       uint256 innerIndex = i % MAX_PRICE_PER_WORD;
-
-      bytes32 partialWord = bytes32(
-        abi.encodePacked(
-          innerIndex == 0 ? _prices[i] : int24(0),
-          innerIndex == 1 ? _prices[i] : int24(0),
-          innerIndex == 2 ? _prices[i] : int24(0),
-          innerIndex == 3 ? _prices[i] : int24(0),
-          innerIndex == 4 ? _prices[i] : int24(0),
-          innerIndex == 5 ? _prices[i] : int24(0),
-          innerIndex == 6 ? _prices[i] : int24(0),
-          innerIndex == 7 ? _prices[i] : int24(0),
-          innerIndex == 8 ? _prices[i] : int24(0),
-          innerIndex == 9 ? _prices[i] : int24(0)
-        )
-      );
-      bytes32 previousWord = _updateData[outerIndex];
-
-      _updateData[outerIndex] = previousWord | partialWord;
+      bytes32 partialWord = bytes32(uint256(uint24(_prices[i])) << (24 * (MAX_PRICE_PER_WORD - 1 - innerIndex) + 16));
+      _updateData[outerIndex] |= partialWord;
     }
   }
 

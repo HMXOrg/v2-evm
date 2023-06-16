@@ -266,8 +266,8 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
   ) external payable nonReentrant onlyPositionManager {
     // pre-validation
     if (
-      _accounts.length != _subAccountIds.length &&
-      _subAccountIds.length != _marketIndexes.length &&
+      _accounts.length != _subAccountIds.length ||
+      _subAccountIds.length != _marketIndexes.length ||
       _marketIndexes.length != _tpTokens.length
     ) revert IBotHandler_InvalidArray();
 
@@ -339,8 +339,8 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
   ) external payable nonReentrant onlyPositionManager {
     // pre-validation
     if (
-      _accounts.length != _subAccountIds.length &&
-      _subAccountIds.length != _marketIndexes.length &&
+      _accounts.length != _subAccountIds.length ||
+      _subAccountIds.length != _marketIndexes.length ||
       _marketIndexes.length != _tpTokens.length
     ) revert IBotHandler_InvalidArray();
 

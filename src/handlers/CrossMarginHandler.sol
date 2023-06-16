@@ -244,6 +244,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _executionFee,
     bool _shouldUnwrap
   ) external payable nonReentrant onlyAcceptedToken(_token) returns (uint256 _orderId) {
+    if (_amount == 0) revert ICrossMarginHandler_BadAmount();
     if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler_InsufficientExecutionFee();
     if (msg.value != _executionFee) revert ICrossMarginHandler_InCorrectValueTransfer();
     if (_shouldUnwrap && _token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth())
@@ -320,6 +321,15 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     for (uint256 i = _nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = withdrawOrders[i];
+
+      // skip cancelled orders
+      if (_order.amount == 0) {
+        unchecked {
+          ++i;
+        }
+        continue;
+      }
+
       _executionFee = _order.executionFee;
 
       try this.executeWithdrawOrder(_order) {
@@ -433,6 +443,9 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     delete withdrawOrders[_orderIndex];
 
+    // refund the _order.executionFee
+    _transferOutETH(_order.executionFee, msg.sender);
+
     emit LogCancelWithdrawOrder(
       payable(msg.sender),
       _order.subAccountId,
@@ -511,10 +524,17 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   function convertSGlpCollateral(
     uint8 _subAccountId,
     address _tokenOut,
-    uint256 _amountIn
+    uint256 _amountIn,
+    uint256 _minAmountOut
   ) external nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _amountOut) {
     return
-      CrossMarginService(crossMarginService).convertSGlpCollateral(msg.sender, _subAccountId, _tokenOut, _amountIn);
+      CrossMarginService(crossMarginService).convertSGlpCollateral(
+        msg.sender,
+        _subAccountId,
+        _tokenOut,
+        _amountIn,
+        _minAmountOut
+      );
   }
 
   /**
@@ -541,8 +561,12 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
     // the transaction maintains a secure execution."
     (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
-    // shhhh compiler
-    success;
+    // send WNative instead when native token transfer fail
+    if (!success) {
+      address weth = ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth();
+      IWNative(weth).deposit{ value: _amountOut }();
+      IWNative(weth).transfer(_receiver, _amountOut);
+    }
   }
 
   receive() external payable {

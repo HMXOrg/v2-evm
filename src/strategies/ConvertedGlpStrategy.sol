@@ -51,13 +51,17 @@ contract ConvertedGlpStrategy is OwnableUpgradeable, IConvertedGlpStrategy {
     emit SetWhitelistExecutor(_executor, _active);
   }
 
-  function execute(address _tokenOut, uint256 _amount) external onlyWhitelist returns (uint256 _amountOut) {
+  function execute(
+    address _tokenOut,
+    uint256 _amount,
+    uint256 _minAmountOut
+  ) external onlyWhitelist returns (uint256 _amountOut) {
     // 1. Build calldata.
     bytes memory _callData = abi.encodeWithSelector(
       IGmxRewardRouterV2.unstakeAndRedeemGlp.selector,
       _tokenOut,
       _amount,
-      0,
+      _minAmountOut,
       address(this)
     );
 

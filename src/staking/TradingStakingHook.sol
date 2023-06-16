@@ -36,7 +36,10 @@ contract TradingStakingHook is ITradeServiceHook, OwnableUpgradeable {
     uint256 _sizeDelta,
     bytes32
   ) external onlyTradeService {
-    ITradingStaking(tradingStaking).deposit(_primaryAccount, _marketIndex, _sizeDelta / 1e12);
+    ITradingStaking ts = ITradingStaking(tradingStaking);
+    if (ts.isMarketIndex(_marketIndex)) {
+      ts.deposit(_primaryAccount, _marketIndex, _sizeDelta / 1e12);
+    }
   }
 
   function onDecreasePosition(
@@ -46,7 +49,11 @@ contract TradingStakingHook is ITradeServiceHook, OwnableUpgradeable {
     uint256 _sizeDelta,
     bytes32
   ) external onlyTradeService {
-    ITradingStaking(tradingStaking).withdraw(_primaryAccount, _marketIndex, _sizeDelta / 1e12);
+    ITradingStaking ts = ITradingStaking(tradingStaking);
+    uint256 amountToWithdraw = _sizeDelta / 1e12;
+    if (ts.getUserTokenAmount(_marketIndex, _primaryAccount) >= amountToWithdraw) {
+      ts.withdraw(_primaryAccount, _marketIndex, amountToWithdraw);
+    }
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

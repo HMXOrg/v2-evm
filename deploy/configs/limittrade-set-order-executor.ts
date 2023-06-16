@@ -9,7 +9,7 @@ const config = getConfig();
 const BigNumber = ethers.BigNumber;
 const parseUnits = ethers.utils.parseUnits;
 
-const orderExecutor = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
+const orderExecutor = "0x0578C797798Ae89b688Cd5676348344d7d0EC35E";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];

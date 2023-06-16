@@ -9,7 +9,7 @@ const config = getConfig();
 
 const tradeService = config.services.trade;
 const tlc = "0xe8Ae03C982330d1Ef8a912697654633708c7905a";
-const tlcStaking = "0xCC2239588e85cC1B342229cfaC2e3Aba539c79c6";
+const tlcStaking = "0x1b55dE2Fdd705264027A3FE143d933A00E10a729";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];

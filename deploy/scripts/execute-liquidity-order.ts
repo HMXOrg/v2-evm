@@ -21,6 +21,8 @@ const priceUpdates = [
   1, // DAI
   137.3, // AAPL
   198.2, // JPY
+  1, // GLP
+  1958, // XAU
 ];
 const minPublishTime = Math.floor(new Date().valueOf() / 1000);
 const publishTimeDiff = [
@@ -31,6 +33,8 @@ const publishTimeDiff = [
   0, // DAI
   0, // AAPL
   0, // JPY
+  0, // GLP
+  0, // XAU
 ];
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {

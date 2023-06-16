@@ -21,6 +21,7 @@ abstract contract ConfigJsonRepo is Script {
   bytes32 constant appleAssetId = "AAPL";
   bytes32 constant jpyAssetId = "JPY";
   bytes32 constant glpAssetId = "GLP";
+  bytes32 constant xauAssetId = "XAU";
 
   function getJsonAddress(string memory _key) internal view returns (address _value) {
     string memory json = vm.readFile(configFilePath);

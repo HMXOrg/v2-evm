@@ -14,6 +14,7 @@ const daiAssetId = ethers.utils.formatBytes32String("DAI");
 const appleAssetId = ethers.utils.formatBytes32String("AAPL");
 const jpyAssetId = ethers.utils.formatBytes32String("JPY");
 const glpAssetId = ethers.utils.formatBytes32String("GLP");
+const xauAssetId = ethers.utils.formatBytes32String("XAU");
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];

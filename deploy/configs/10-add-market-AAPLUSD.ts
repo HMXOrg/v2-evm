@@ -28,14 +28,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: 300_000_000 * 1e30, // 300 M
-        maxFundingRate: 0.00000116 * 1e18, // 10% per day
+        maxSkewScaleUSD: ethers.utils.parseUnits("300000000", 30), // 300 M
+        maxFundingRate: ethers.utils.parseUnits("0.00000116", 18), // 10% per day
       },
-      maxLongPositionSize: 10_000_000 * 1e30,
-      maxShortPositionSize: 10_000_000 * 1e30,
+      maxLongPositionSize: ethers.utils.parseUnits("10000000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("10000000", 30),
     })
   ).wait();
   console.log("> ConfigStorage: Add Market Config success!");
 };
 export default func;
-func.tags = ["AddMarket-ETHUSD"];
+func.tags = ["AddMarket-AAPLUSD"];

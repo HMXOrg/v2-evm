@@ -10,14 +10,14 @@ const config = getConfig();
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
 
-  const Contract = await ethers.getContractFactory("LimitTradeHandler", deployer);
-  const TARGET_ADDRESS = config.handlers.limitTrade;
+  const Contract = await ethers.getContractFactory("TradeHelper", deployer);
+  const TARGET_ADDRESS = config.helpers.trade;
 
-  console.log(`> Preparing to upgrade LimitTradeHandler`);
+  console.log(`> Preparing to upgrade TradeHelper`);
   const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);
   console.log(`> Done`);
 
-  console.log(`> New LimitTradeHandler Implementation address: ${newImplementation}`);
+  console.log(`> New TradeHelper Implementation address: ${newImplementation}`);
   const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract);
   console.log(`> ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
   console.log(`> Waiting for tx to be mined...`);
@@ -27,9 +27,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log(`> Verify contract on Tenderly`);
   await tenderly.verify({
     address: newImplementation.toString(),
-    name: "LimitTradeHandler",
+    name: "TradeHelper",
   });
 };
 
 export default func;
-func.tags = ["UpgradeLimitTradeHandler"];
+func.tags = ["UpgradeTradeHelper"];

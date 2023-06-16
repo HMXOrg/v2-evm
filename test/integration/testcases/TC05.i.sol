@@ -13,8 +13,6 @@ contract TC05 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
 
   function testCorrectness_TC05() external {
-    bytes[] memory priceData = new bytes[](0);
-
     // T0: Initialized state
     {
       //deal with out of gas
@@ -67,12 +65,12 @@ contract TC05 is BaseIntTest_WithActions {
       tickPrices[2] = 0; // USDC tick price $1
       tickPrices[6] = 48285; // JPY tick price $125
       // buy
-      bytes32 _positionId = getPositionId(ALICE, 0, jpyMarketIndex);
+      getPositionId(ALICE, 0, jpyMarketIndex);
       marketBuy(ALICE, 0, jpyMarketIndex, 100_000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
     }
 
     // T2: Alice buy the position for 20 mins, JPYUSD dumped hard to 0.007945967421533571712355979340 USD. This makes Alice account went below her kill level
-    vm.warp(block.timestamp + (20 * MINUTES));
+    vm.warp(block.timestamp + (200 * MINUTES));
     {
       updatePriceData = new bytes[](3);
       // updatePriceData[0] = _createPriceFeedUpdateData(jpyAssetId, 125.85 * 1e3, 0);
@@ -93,13 +91,13 @@ contract TC05 is BaseIntTest_WithActions {
        * total pay: 0.03377036 + 0.0015 + 0.00007311 + 0.00079999 + 0.00025 = 0.03639346
        * trader balance = 0.04850000 - 0.03639346 = 0.01210654
        * dev fee = (0.0015 * 15%) + (0.00007311 * 15%) = 0.00023596 | 0.000225 + 0.00023596 = 0.00046096
-       * plp liquidity = 9.97 + (0.03377036 + (0.00007311 - 0.00001096)) = 10.00383251
+       * hlp liquidity = 9.97 + (0.03377036 + (0.00007311 - 0.00001096)) = 10.00383251
        * protocol fee = 0.000225 + (0.0015 - (0.0015 * 15%)) = 0.03255
        * liquidation fee = 0.00025
        */
-      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 0.01199078 * 1e8);
-      assertVaultsFees(address(wbtc), 0.032550 * 1e8, 0.00046096 * 1e8, 0.00079999 * 1e8);
-      assertPLPLiquidity(address(wbtc), 10.00383251 * 1e8);
+      assertSubAccountTokenBalance(ALICE, address(wbtc), true, 1213266);
+      assertVaultsFees(address(wbtc), 0.032550 * 1e8, 55971, 0);
+      assertHLPLiquidity(address(wbtc), 10.00383251 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);
       assertNumberOfPosition(ALICE, 0);
       assertPositionInfoOf(ALICE, jpyMarketIndex, 0, 0, 0, 0, 0, 0);

@@ -7,7 +7,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 abstract contract BaseIntTest_SetConfig is BaseIntTest {
   constructor() {
     // Set Minter
-    plpV2.setMinter(address(liquidityService), true);
+    hlpV2.setMinter(address(liquidityService), true);
 
     // Setup Liquidity config for global used
     _setLiquidityConfig();
@@ -29,9 +29,9 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
       IConfigStorage.LiquidityConfig({
         depositFeeRateBPS: 30, // 0.3%
         withdrawFeeRateBPS: 30, // 0.3%
-        maxPLPUtilizationBPS: 8000, // 80%
-        plpTotalTokenWeight: 0,
-        plpSafetyBufferBPS: 2000, // 20%
+        maxHLPUtilizationBPS: 8000, // 80%
+        hlpTotalTokenWeight: 0,
+        hlpSafetyBufferBPS: 2000, // 20%
         taxFeeRateBPS: 50, // 0.5%
         flashLoanFeeRateBPS: 0,
         dynamicFeeEnabled: true,

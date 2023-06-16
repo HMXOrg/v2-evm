@@ -5,7 +5,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 
-import { IPLPv2 } from "@hmx/contracts/interfaces/IPLPv2.sol";
+import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
@@ -21,8 +21,8 @@ contract LiquidityTester is StdAssertions {
     address who;
     uint256 lpTotalSupply;
     uint256 totalAmount; // totalAmount in vaultStorage
-    uint256 plpLiquidity;
-    uint256 plpAmount;
+    uint256 hlpLiquidity;
+    uint256 hlpAmount;
     uint256 fee;
     uint256 executionFee;
   }
@@ -30,7 +30,7 @@ contract LiquidityTester is StdAssertions {
   /**
    * States
    */
-  IPLPv2 plp;
+  IHLP hlp;
 
   IVaultStorage vaultStorage;
   IPerpStorage perpStorage;
@@ -39,48 +39,48 @@ contract LiquidityTester is StdAssertions {
 
   uint256 constant MAX_DIFF = 0.0001 ether; // 0.01 %
 
-  constructor(IPLPv2 _plp, IVaultStorage _vaultStorage, IPerpStorage _perpStorage, address _feeReceiver) {
-    plp = _plp;
+  constructor(IHLP _hlp, IVaultStorage _vaultStorage, IPerpStorage _perpStorage, address _feeReceiver) {
+    hlp = _hlp;
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
     feeReceiver = _feeReceiver;
   }
 
-  /// @notice Assert function when PLP provider add / remove liquidity
+  /// @notice Assert function when HLP provider add / remove liquidity
   /// @dev This function will check
-  ///      - PLPv2 total supply
+  ///      - HLP total supply
   ///      - Execution fee in handler, if address is valid
-  ///      - PLP liquidity in VaultStorage's state
+  ///      - HLP liquidity in VaultStorage's state
   ///      - Total token amount in VaultStorage's state
   ///      - Fee is VaultStorage's state
   ///      - Token balance in VaultStorage
   function assertLiquidityInfo(LiquidityExpectedData memory _expectedData) external {
     address _token = _expectedData.token;
 
-    // Check PLPv2 total supply
-    assertApproxEqRel(plp.totalSupply(), _expectedData.lpTotalSupply, MAX_DIFF, "PLP Total supply");
-    assertApproxEqRel(plp.balanceOf(_expectedData.who), _expectedData.plpAmount, MAX_DIFF, "PLP Amount");
+    // Check HLP total supply
+    assertApproxEqRel(hlp.totalSupply(), _expectedData.lpTotalSupply, MAX_DIFF, "HLP Total supply");
+    assertApproxEqRel(hlp.balanceOf(_expectedData.who), _expectedData.hlpAmount, MAX_DIFF, "HLP Amount");
 
     // Order execution fee is on OrderExecutor in Native
     assertApproxEqRel(feeReceiver.balance, _expectedData.executionFee, MAX_DIFF, "Execution Order Fee");
 
     // Check VaultStorage's state
     assertApproxEqRel(
-      vaultStorage.plpLiquidity(_token),
-      _expectedData.plpLiquidity,
+      vaultStorage.hlpLiquidity(_token),
+      _expectedData.hlpLiquidity,
       MAX_DIFF,
-      "PLP token liquidity amount"
+      "HLP token liquidity amount"
     );
     assertApproxEqRel(vaultStorage.totalAmount(_token), _expectedData.totalAmount, MAX_DIFF, "TokenAmount balance");
     assertApproxEqRel(vaultStorage.protocolFees(_token), _expectedData.fee, MAX_DIFF, "Protocol Fee");
     assertApproxEqRel(
       vaultStorage.totalAmount(_token),
-      vaultStorage.plpLiquidity(_token) + vaultStorage.protocolFees(_token),
+      vaultStorage.hlpLiquidity(_token) + vaultStorage.protocolFees(_token),
       MAX_DIFF
     );
 
     // Check token balance
-    // balanceOf must be equals to plpLiquidity in Vault
+    // balanceOf must be equals to hlpLiquidity in Vault
     assertApproxEqRel(
       IERC20(_token).balanceOf(address(vaultStorage)),
       _expectedData.totalAmount,

@@ -56,7 +56,7 @@ contract TC18 is BaseIntTest_WithActions {
         _reserveValue: 1_080 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 
@@ -78,7 +78,7 @@ contract TC18 is BaseIntTest_WithActions {
         _reserveValue: 810 * 1e30,
         _realizedPnl: 270 * 1e30,
         _entryBorrowingRate: 0.000081243731193580 * 1e18,
-        _entryFundingRate: -0.00000024 * 1e18
+        _lastFundingAccrued: -0.00000024 * 1e18
       });
 
       assertSubAccountTokenBalance(_aliceSubAccount0, address(wbtc), true, 1.01274548 * 1e8);
@@ -100,7 +100,7 @@ contract TC18 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 
@@ -126,7 +126,7 @@ contract TC18 is BaseIntTest_WithActions {
       tickPrices,
       publishTimeDiff,
       block.timestamp,
-      "ITradeService_ReservedValueStillEnough()"
+      "IBotHandler_ReservedValueStillEnough()"
     );
   }
 }

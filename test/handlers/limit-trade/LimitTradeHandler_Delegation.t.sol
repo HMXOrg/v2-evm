@@ -12,6 +12,8 @@ import { console } from "forge-std/console.sol";
 //   - Try creating an order will too low execution fee
 //   - Try creating an order with incorrect `msg.value`
 //   - Try creating an order with sub-account id > 255
+//   - Try update an order without being the delegatee
+//   - Try cancel an order without being the delegatee
 // - success
 //   - Try creating BUY and SELL orders and check that the indices of the orders are correct and that all orders are created correctly.
 
@@ -62,14 +64,13 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
-        minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.01 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
         increasePositionFeeRateBPS: 0,
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       })
     );
 
@@ -80,14 +81,13 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
-        minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.01 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
         increasePositionFeeRateBPS: 0,
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       })
     );
 
@@ -98,16 +98,29 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
         maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
-        minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.01 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
         increasePositionFeeRateBPS: 0,
         decreasePositionFeeRateBPS: 0,
         allowIncreasePosition: true,
         active: true,
-        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 0 })
+        fundingRate: IConfigStorage.FundingRate({ maxFundingRate: 0, maxSkewScaleUSD: 1_000_000_000 * 1e30 })
       })
     );
+  }
+
+  function testRevert_WhenUpdateOrderWithoutBeingDelegatee() external {
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_Unauthorized()"));
+    limitTradeHandler.updateOrder(address(this), 0, 0, 0, 0, 0, true, true, address(0));
+    vm.stopPrank();
+  }
+
+  function testRevert_WhenCancelOrderWithoutBeingDelegatee() external {
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_Unauthorized()"));
+    limitTradeHandler.cancelOrder(address(this), 0, 0);
+    vm.stopPrank();
   }
 
   function testCorrectness_createOrderViaEntryPoint() external {
@@ -144,10 +157,17 @@ contract LimitTradeHandler_Delegation is LimitTradeHandler_Base {
     mockOracle.setPriceStale(false);
 
     // Execute Long Increase Order
-    limitTradeHandler.executeOrder({
-      _account: ALICE,
-      _subAccountId: 0,
-      _orderIndex: 0,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = ALICE;
+    subAccountIds[0] = 0;
+    orderIndexes[0] = 0;
+
+    limitTradeHandler.executeOrders({
+      _accounts: accounts,
+      _subAccountIds: subAccountIds,
+      _orderIndexes: orderIndexes,
       _feeReceiver: payable(ALICE),
       _priceData: priceUpdateData,
       _publishTimeData: publishTimeUpdateData,

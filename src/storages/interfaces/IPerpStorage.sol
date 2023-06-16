@@ -6,6 +6,7 @@ interface IPerpStorage {
    * Errors
    */
   error IPerpStorage_NotWhiteListed();
+  error IPerpStorage_BadLen();
 
   /**
    * Structs
@@ -37,6 +38,7 @@ interface IPerpStorage {
     uint256 lastFundingTime;
     int256 accumFundingLong; // accumulative of funding fee value on LONG positions using for calculating surplus
     int256 accumFundingShort; // accumulative of funding fee value on SHORT positions using for calculating surplus
+    int256 fundingAccrued; // the accrued funding rate which is the result of funding velocity. It is the accumulation of S in S = (U+V)/2 * t
   }
 
   // Trade position
@@ -49,7 +51,7 @@ interface IPerpStorage {
     uint256 lastIncreaseTimestamp; // To validate position lifetime
     int256 positionSizeE30; // LONG (+), SHORT(-) Position Size
     int256 realizedPnl;
-    int256 entryFundingRate;
+    int256 lastFundingAccrued;
     uint8 subAccountId;
   }
 
@@ -95,8 +97,6 @@ interface IPerpStorage {
   function getPositionIds(address _subAccount) external returns (bytes32[] memory _positionIds);
 
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
-
-  function increaseReserved(uint8 _assetClassIndex, uint256 _reserve) external;
 
   function decreaseReserved(uint8 _assetClassIndex, uint256 _reserve) external;
 }

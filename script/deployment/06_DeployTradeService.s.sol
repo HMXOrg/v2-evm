@@ -21,6 +21,9 @@ contract DeployTradeService is ConfigJsonRepo {
     address tradeHelperAddress = getJsonAddress(".helpers.trade");
     address proxyAdmin = getJsonAddress(".proxyAdmin");
 
+    // shhh compiler
+    calculatorAddress;
+
     address tradeServiceAddress = address(
       Deployer.deployTradeService(
         address(proxyAdmin),

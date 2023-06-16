@@ -54,12 +54,15 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   }
 
   function _mintTLC(address _primaryAccount, uint256 _sizeDelta) internal {
+    // SLOADs
+    TraderLoyaltyCredit _tlc = TraderLoyaltyCredit(tlc);
+    TLCStaking _tlcStaking = TLCStaking(tlcStaking);
     // Calculate mint amount which is equal to sizeDelta but convert decimal from 1e30 to 1e18
     // This is to make the TLC token composable as ERC20 with regular 18 decimals
     uint256 _mintAmount = _sizeDelta / 1e12;
-    TraderLoyaltyCredit(tlc).mint(address(this), _mintAmount);
-    TraderLoyaltyCredit(tlc).approve(tlcStaking, _mintAmount);
-    TLCStaking(tlcStaking).deposit(_primaryAccount, _mintAmount);
+    _tlc.mint(address(this), _mintAmount);
+    _tlc.approve(address(_tlcStaking), _mintAmount);
+    _tlcStaking.deposit(_primaryAccount, _mintAmount);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

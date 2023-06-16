@@ -23,14 +23,14 @@ contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
 
   function testCorrectness_WhenGetSettlementFeeRateAndMakePoolBetterThenNoFee() external {
     // usd debt
-    // vaultStorage.addPLPLiquidityUSDE30(address(weth), 3000 * 1e30);
-    vaultStorage.addPLPLiquidity(address(weth), 3000 ether);
-    vaultStorage.addPLPLiquidity(address(dai), 7000 ether);
+    // vaultStorage.addHLPLiquidityUSDE30(address(weth), 3000 * 1e30);
+    vaultStorage.addHLPLiquidity(address(weth), 3000 ether);
+    vaultStorage.addHLPLiquidity(address(dai), 7000 ether);
 
     // liquidity config
     // tax fee rate = 0.5%
     // total weight = 100%
-    // plp WETH pool weigh = 20%
+    // hlp WETH pool weigh = 20%
     uint256 _rate = calculator.getSettlementFeeRate(address(weth), 1200 * 1e30);
 
     // calculation
@@ -46,13 +46,13 @@ contract Calculator_GetSettlementFeeRate is Calculator_BaseWithStorage {
 
   function testCorrectness_WhenGetSettlementFeeRateAndMakePoolWorst() external {
     // usd debt
-    vaultStorage.addPLPLiquidity(address(dai), 1_000 ether);
-    vaultStorage.addPLPLiquidity(address(weth), 9_000 ether);
+    vaultStorage.addHLPLiquidity(address(dai), 1_000 ether);
+    vaultStorage.addHLPLiquidity(address(weth), 9_000 ether);
 
     // liquidity config
     // tax fee rate = 0.5%
     // total weight = 100%
-    // plp DAI pool weigh = 10%
+    // hlp DAI pool weigh = 10%
     uint256 _rate = calculator.getSettlementFeeRate(address(dai), 200 * 1e30);
 
     // calculation

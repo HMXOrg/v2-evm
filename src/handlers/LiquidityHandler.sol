@@ -30,6 +30,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
    */
   event LogSetLiquidityService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
+  event LogMaxExecutionChunk(uint256 oldValue, uint256 newValue);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogCreateAddLiquidityOrder(
@@ -83,6 +84,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   address public pyth; //pyth
   uint256 public nextExecutionOrderIndex; // the index of the next liquidity order that should be executed
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
+  uint256 public maxExecutionChunk; // maximum execution order sizes per request
 
   LiquidityOrder[] public liquidityOrders; // all liquidityOrder
   mapping(address => bool) public orderExecutors; // address -> whitelist executors
@@ -92,13 +94,19 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @param _liquidityService Address of the LiquidityService contract.
   /// @param _pyth Address of the Pyth contract.
   /// @param _minExecutionOrderFee Minimum execution fee for execute order.
-  function initialize(address _liquidityService, address _pyth, uint256 _minExecutionOrderFee) external initializer {
+  function initialize(
+    address _liquidityService,
+    address _pyth,
+    uint256 _minExecutionOrderFee,
+    uint256 _maxExecutionChunk
+  ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
     liquidityService = _liquidityService;
     pyth = _pyth;
     minExecutionOrderFee = _minExecutionOrderFee;
+    maxExecutionChunk = _maxExecutionChunk;
 
     // Sanity check
     // slither-disable-next-line unused-return
@@ -132,7 +140,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @notice Create a new AddLiquidity order
   /// @param _tokenIn address token in
   /// @param _amountIn amount token in (based on decimals)
-  /// @param _minOut minPLP out
+  /// @param _minOut minHLP out
   /// @param _executionFee The execution fee of order
   /// @param _shouldWrap in case of sending native token
   function createAddLiquidityOrder(
@@ -142,20 +150,20 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _executionFee,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
-    uint48 _createdTimestamp = uint48(block.timestamp);
-
     // pre validate
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
     if (_executionFee < minExecutionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
+    if (_shouldWrap && _tokenIn != ConfigStorage(LiquidityService(liquidityService).configStorage()).weth())
+      revert ILiquidityHandler_NotWNativeToken();
 
     if (_shouldWrap) {
       if (msg.value != _amountIn + _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
     } else {
-      if (msg.value != minExecutionOrderFee) revert ILiquidityHandler_InCorrectValueTransfer();
+      if (msg.value != _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
       IERC20Upgradeable(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
 
-    //1. convert native to WNative (including executionFee)
+    // convert native to WNative (including executionFee)
     _transferInETH();
 
     _orderId = liquidityOrders.length;
@@ -171,9 +179,9 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         isAdd: true,
         executionFee: _executionFee,
         isNativeOut: _shouldWrap,
-        createdTimestamp: _createdTimestamp,
+        createdTimestamp: uint48(block.timestamp),
         executedTimestamp: 0,
-        status: 0
+        status: LiquidityOrderStatus.PENDING
       })
     );
 
@@ -184,17 +192,17 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _amountIn,
       _minOut,
       _executionFee,
-      _createdTimestamp
+      uint48(block.timestamp)
     );
     return _orderId;
   }
 
   /// @notice Create a new RemoveLiquidity order
-  /// @param _tokenOut address token in
-  /// @param _amountIn amount token in (based on decimals)
-  /// @param _minOut minAmountOut
+  /// @param _tokenOut The address of the token user wish to receive
+  /// @param _amountIn The amount of HLP to remove liquidity
+  /// @param _minOut minAmountOut of the selected token out
   /// @param _executionFee The execution fee of order
-  /// @param _isNativeOut in case of user need native token
+  /// @param _isNativeOut If true, the contract will try to unwrap it into Native Token
   function createRemoveLiquidityOrder(
     address _tokenOut,
     uint256 _amountIn,
@@ -202,16 +210,18 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _executionFee,
     bool _isNativeOut
   ) external payable nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _orderId) {
-    uint48 _createdTimestamp = uint48(block.timestamp);
-
+    // pre validate
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
     if (_executionFee < minExecutionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
     if (msg.value != _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
+    if (_isNativeOut && _tokenOut != ConfigStorage(LiquidityService(liquidityService).configStorage()).weth())
+      revert ILiquidityHandler_NotWNativeToken();
 
     // convert native to WNative (including executionFee)
     _transferInETH();
 
-    IERC20Upgradeable(ConfigStorage(LiquidityService(liquidityService).configStorage()).plp()).safeTransferFrom(
+    // transfers ERC-20 token from user's account to this contract
+    IERC20Upgradeable(ConfigStorage(LiquidityService(liquidityService).configStorage()).hlp()).safeTransferFrom(
       msg.sender,
       address(this),
       _amountIn
@@ -230,9 +240,9 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         isAdd: false,
         executionFee: _executionFee,
         isNativeOut: _isNativeOut,
-        createdTimestamp: _createdTimestamp,
+        createdTimestamp: uint48(block.timestamp),
         executedTimestamp: 0,
-        status: 0
+        status: LiquidityOrderStatus.PENDING
       })
     );
 
@@ -244,7 +254,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       _minOut,
       _executionFee,
       _isNativeOut,
-      _createdTimestamp
+      uint48(block.timestamp)
     );
     return _orderId;
   }
@@ -260,22 +270,28 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function executeOrder(
     uint256 _endIndex,
     address payable _feeReceiver,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
+    bytes32[] calldata _priceData,
+    bytes32[] calldata _publishTimeData,
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
+    uint256 _nextExecutionOrderIndex = nextExecutionOrderIndex;
+
     // Get the number of liquidity orders
     uint256 _orderLength = liquidityOrders.length;
 
     // Ensure there are orders to execute
-    if (nextExecutionOrderIndex == _orderLength) revert ILiquidityHandler_NoOrder();
+    if (_nextExecutionOrderIndex == _orderLength) revert ILiquidityHandler_NoOrder();
 
     // Set the end index to the latest order index if it exceeds the number of orders
     uint256 _latestOrderIndex = _orderLength - 1;
     if (_endIndex > _latestOrderIndex) {
       _endIndex = _latestOrderIndex;
     }
+
+    // split execution into chunk for preventing exceed block gas limit
+    if (_endIndex - _nextExecutionOrderIndex > maxExecutionChunk - 1)
+      _endIndex = _nextExecutionOrderIndex + maxExecutionChunk - 1;
 
     // slither-disable-next-line arbitrary-send-eth
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
@@ -285,7 +301,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _totalFeeReceiver;
     uint256 _executionFee;
 
-    for (uint256 i = nextExecutionOrderIndex; i <= _endIndex; ) {
+    for (uint256 i = _nextExecutionOrderIndex; i <= _endIndex; ) {
       _order = liquidityOrders[i];
       if (_order.amount > 0) {
         _executionFee = _order.executionFee;
@@ -302,26 +318,22 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
           );
 
           // update order status
-          _order.status = 1; // success
+          _order.status = LiquidityOrderStatus.SUCCESS;
           _order.actualAmountOut = actualOut;
-        } catch Error(string memory) {
-          //refund in case of revert as message
-          _refund(_order);
-          _order.status = 2; // fail
-        } catch (bytes memory) {
-          //refund in case of revert as bytes
-          _refund(_order);
-          _order.status = 2; // fail
+        } catch Error(string memory errMsg) {
+          _handleOrderFail(_order, errMsg);
+        } catch Panic(uint /*errorCode*/) {
+          _handleOrderFail(_order, "Panic occurred while executing the withdraw order");
+        } catch (bytes memory errMsg) {
+          _handleOrderFail(_order, string(errMsg));
         }
 
         // assign exec time
         _order.executedTimestamp = uint48(block.timestamp);
-
         _totalFeeReceiver += _executionFee;
 
         // save to executed order first
         accountExecutedLiquidityOrders[_order.account].push(_order);
-
         // clear executed liquidity order
         delete liquidityOrders[i];
       }
@@ -336,11 +348,17 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     _transferOutETH(_totalFeeReceiver, _feeReceiver);
   }
 
+  function _handleOrderFail(LiquidityOrder memory order, string memory /* errMsg */) internal {
+    //refund in case of revert as order
+    _refund(order);
+    order.status = LiquidityOrderStatus.FAIL;
+  }
+
   /// @notice execute either addLiquidity or removeLiquidity
   /// @param _order LiquidityOrder struct representing the order to execute.
-  function executeLiquidity(LiquidityOrder memory _order) external returns (uint256 _amountOut) {
+  function executeLiquidity(LiquidityOrder calldata _order) external returns (uint256 _amountOut) {
     // if not in executing state, then revert
-    if (msg.sender != address(this)) revert ILiquidityHandler_NotExecutionState();
+    if (msg.sender != address(this)) revert ILiquidityHandler_Unauthorized();
 
     if (_order.isAdd) {
       IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
@@ -389,6 +407,9 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     _refund(_order);
 
+    // refund the _order.executionFee
+    _transferOutETH(_order.executionFee, msg.sender);
+
     emit LogCancelLiquidityOrder(
       payable(msg.sender),
       _order.orderId,
@@ -414,6 +435,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     address _account = _order.account;
 
+    // Add Liquidity order
     if (_order.isAdd) {
       if (_order.isNativeOut) {
         _transferOutETH(_amount, _account);
@@ -421,8 +443,10 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         IERC20Upgradeable(_order.token).safeTransfer(_account, _amount);
       }
       emit LogRefund(_account, _order.orderId, _order.token, _amount, _order.isNativeOut);
-    } else {
-      address hlp = ConfigStorage(LiquidityService(liquidityService).configStorage()).plp();
+    }
+    // Remove Liquidity order
+    else {
+      address hlp = ConfigStorage(LiquidityService(liquidityService).configStorage()).hlp();
       IERC20Upgradeable(hlp).safeTransfer(_account, _amount);
       emit LogRefund(_account, _order.orderId, hlp, _amount, false);
     }
@@ -441,7 +465,17 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
     IWNative(ConfigStorage(LiquidityService(liquidityService).configStorage()).weth()).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
-    payable(_receiver).transfer(_amountOut);
+    // To mitigate potential attacks, the call method is utilized,
+    // allowing the contract to bypass any revert calls from the destination address.
+    // By setting the gas limit to 2300, equivalent to the gas limit of the transfer method,
+    // the transaction maintains a secure execution."
+    (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
+    // send WNative instead when native token transfer fail
+    if (!success) {
+      address weth = ConfigStorage(LiquidityService(liquidityService).configStorage()).weth();
+      IWNative(weth).deposit{ value: _amountOut }();
+      IWNative(weth).transfer(_receiver, _amountOut);
+    }
   }
 
   /**
@@ -539,6 +573,13 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function setMinExecutionFee(uint256 _newMinExecutionFee) external nonReentrant onlyOwner {
     emit LogSetMinExecutionFee(minExecutionOrderFee, _newMinExecutionFee);
     minExecutionOrderFee = _newMinExecutionFee;
+  }
+
+  /// @notice setMaxExecutionChunk
+  /// @param _maxExecutionChunk maximum check sizes when execute orders
+  function setMaxExecutionChunk(uint256 _maxExecutionChunk) external nonReentrant onlyOwner {
+    emit LogMaxExecutionChunk(maxExecutionChunk, _maxExecutionChunk);
+    maxExecutionChunk = _maxExecutionChunk;
   }
 
   /// @notice setOrderExecutor

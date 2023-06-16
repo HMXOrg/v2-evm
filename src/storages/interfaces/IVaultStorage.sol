@@ -9,16 +9,17 @@ interface IVaultStorage {
   error IVaultStorage_TraderTokenAlreadyExists();
   error IVaultStorage_TraderBalanceRemaining();
   error IVaultStorage_ZeroAddress();
-  error IVaultStorage_PLPBalanceRemaining();
+  error IVaultStorage_HLPBalanceRemaining();
   error IVaultStorage_Forbidden();
   error IVaultStorage_TargetNotContract();
+  error IVaultStorage_BadLen();
 
   /**
    * Functions
    */
   function totalAmount(address _token) external returns (uint256);
 
-  function plpLiquidityDebtUSDE30() external view returns (uint256);
+  function hlpLiquidityDebtUSDE30() external view returns (uint256);
 
   function traderBalances(address _trader, address _token) external view returns (uint256 amount);
 
@@ -30,17 +31,17 @@ interface IVaultStorage {
 
   function devFees(address _token) external view returns (uint256);
 
-  function plpLiquidity(address _token) external view returns (uint256);
+  function hlpLiquidity(address _token) external view returns (uint256);
 
   function pullToken(address _token) external returns (uint256);
 
   function addFee(address _token, uint256 _amount) external;
 
-  function addPLPLiquidity(address _token, uint256 _amount) external;
+  function addHLPLiquidity(address _token, uint256 _amount) external;
 
   function withdrawFee(address _token, uint256 _amount, address _receiver) external;
 
-  function removePLPLiquidity(address _token, uint256 _amount) external;
+  function removeHLPLiquidity(address _token, uint256 _amount) external;
 
   function pushToken(address _token, address _to, uint256 _amount) external;
 
@@ -48,26 +49,26 @@ interface IVaultStorage {
 
   function removeFundingFee(address _token, uint256 _amount) external;
 
-  function addPlpLiquidityDebtUSDE30(uint256 _value) external;
+  function addHlpLiquidityDebtUSDE30(uint256 _value) external;
 
-  function removePlpLiquidityDebtUSDE30(uint256 _value) external;
+  function removeHlpLiquidityDebtUSDE30(uint256 _value) external;
 
   function increaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
 
   function decreaseTraderBalance(address _subAccount, address _token, uint256 _amount) external;
 
-  function payPlp(address _trader, address _token, uint256 _amount) external;
+  function payHlp(address _trader, address _token, uint256 _amount) external;
 
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
 
-  function borrowFundingFeeFromPlpToTrader(
+  function borrowFundingFeeFromHlpToTrader(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount,
     uint256 _fundingFeeValue
   ) external;
 
-  function repayFundingFeeDebtFromTraderToPlp(
+  function repayFundingFeeDebtFromTraderToHlp(
     address _trader,
     address _token,
     uint256 _fundingFeeAmount,

@@ -15,7 +15,6 @@ contract TC07 is BaseIntTest_WithActions {
     address SUB_ACCOUNT = getSubAccount(ALICE, SUB_ACCOUNT_ID);
     // Make LP contains some liquidity
     {
-      bytes[] memory priceData = new bytes[](0);
       vm.deal(BOB, 1 ether); //deal with out of gas
       vm.deal(ALICE, 1 ether); //deal with out of gas
       wbtc.mint(BOB, 10 * 1e8);
@@ -72,7 +71,6 @@ contract TC07 is BaseIntTest_WithActions {
     {
       uint256 sellSizeE30 = 100_000 * 1e30;
       address tpToken = address(wbtc);
-      bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
 
       marketSell(
@@ -137,7 +135,6 @@ contract TC07 is BaseIntTest_WithActions {
 
       // Alice withdraw 1000(USD) of USDC
       // Expected that Alice can normally withdraw collateral
-      bytes[] memory priceData = new bytes[](0);
       withdrawCollateral(
         ALICE,
         SUB_ACCOUNT_ID,
@@ -162,7 +159,6 @@ contract TC07 is BaseIntTest_WithActions {
     {
       uint256 sellSizeE30 = 1_000_000 * 1e30;
       address tpToken = address(wbtc);
-      bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1550 USD
       // Expect after sell position, will make Equity more closer to IMR level
       marketSell(
@@ -216,7 +212,6 @@ contract TC07 is BaseIntTest_WithActions {
     {
       // Alice withdraw 1(USD) of USDC
       // Expect Alice can't withdraw collateral because Equity < IMR
-      bytes[] memory priceData = new bytes[](0);
       // vm.expectRevert(abi.encodeWithSignature("ICrossMarginService_WithdrawBalanceBelowIMR()"));
       withdrawCollateral(
         ALICE,
@@ -261,7 +256,6 @@ contract TC07 is BaseIntTest_WithActions {
       // Before Alice withdraw USDC
       assertEq(usdc.balanceOf(ALICE), 1000 * 1e6, "USDC Balance Of");
       // Alice withdraw 10(USD) of USDC
-      bytes[] memory priceData = new bytes[](0);
       withdrawCollateral(
         ALICE,
         SUB_ACCOUNT_ID,

@@ -39,15 +39,15 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      executePLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
+      executeHLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
     }
   }
 
-  function executePLPOrder(
+  function executeHLPOrder(
     uint256 _endIndex,
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
-    uint256 _minPublishTime
+    uint256 /* _minPublishTime */
   ) internal {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
@@ -67,7 +67,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   /// @notice Helper function to remove liquidity and execute order via handler
   /// @param _liquidityProvider liquidity provider address
   /// @param _tokenOut liquidity token to remove
-  /// @param _amountIn PLP amount to remove
+  /// @param _amountIn HLP amount to remove
   /// @param _executionFee execution fee
   function removeLiquidity(
     address _liquidityProvider,
@@ -81,7 +81,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
   ) internal {
     vm.startPrank(_liquidityProvider);
 
-    plpV2.approve(address(liquidityHandler), _amountIn);
+    hlpV2.approve(address(liquidityHandler), _amountIn);
     // _tokenOut.approve(address(liquidityHandler), _amountIn);
     /// note: minOut always 0 to make test passed
     /// note: shouldWrap treat as false when only GLP could be liquidity
@@ -95,7 +95,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     vm.stopPrank();
 
     if (executeNow) {
-      executePLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
+      executeHLPOrder(_orderIndex, _tickPrices, _publishTimeDiffs, _minPublishTime);
     }
   }
 
@@ -131,7 +131,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     uint256 _withdrawAmount,
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
-    uint256 _minPublishTime,
+    uint256 /* _minPublishTime */,
     uint256 _executionFee
   ) internal {
     vm.prank(_account);
@@ -198,7 +198,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
     uint256 _minPublishTime,
-    string memory signature
+    string memory /* signature */
   ) internal {
     vm.prank(_account);
     limitTradeHandler.createOrder{ value: executionOrderFee }(
@@ -218,10 +218,17 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
 
     // if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
-    limitTradeHandler.executeOrder(
-      _account,
-      _subAccountId,
-      _orderIndex,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = _account;
+    subAccountIds[0] = _subAccountId;
+    orderIndexes[0] = _orderIndex;
+
+    limitTradeHandler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
       payable(FEEVER),
       priceUpdateData,
       publishTimeUpdateData,
@@ -269,7 +276,7 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
     uint256 _minPublishTime,
-    string memory signature
+    string memory /* signature */
   ) internal {
     vm.prank(_account);
     limitTradeHandler.createOrder{ value: executionOrderFee }(
@@ -289,10 +296,17 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
 
     // if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
-    limitTradeHandler.executeOrder(
-      _account,
-      _subAccountId,
-      _orderIndex,
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = _account;
+    subAccountIds[0] = _subAccountId;
+    orderIndexes[0] = _orderIndex;
+
+    limitTradeHandler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
       payable(FEEVER),
       priceUpdateData,
       publishTimeUpdateData,
@@ -361,10 +375,18 @@ contract BaseIntTest_WithActions is BaseIntTest_Assertions {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(_tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(_publishTimeDiffs);
     if (isStringNotEmpty(signature)) vm.expectRevert(abi.encodeWithSignature(signature));
-    limitTradeHandler.executeOrder(
-      _account,
-      _subAccountId,
-      _orderIndex,
+
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = _account;
+    subAccountIds[0] = _subAccountId;
+    orderIndexes[0] = _orderIndex;
+
+    limitTradeHandler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
       _feeReceiver,
       priceUpdateData,
       publishTimeUpdateData,

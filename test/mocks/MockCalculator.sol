@@ -19,7 +19,7 @@ contract MockCalculator is ICalculator {
   uint256 collateralValue;
   int256 freeCollateral;
   uint256 aum;
-  uint256 plpValue;
+  uint256 hlpValue;
   uint256 nextBorrowingRate;
   int256 fundingFee;
   int256 fundingRate;
@@ -61,8 +61,8 @@ contract MockCalculator is ICalculator {
     freeCollateral = _mockFreeCollateral;
   }
 
-  function setPLPValue(uint256 _mockPLPValue) external {
-    plpValue = _mockPLPValue;
+  function setHLPValue(uint256 _mockHLPValue) external {
+    hlpValue = _mockHLPValue;
   }
 
   function setFundingFee(int256 _fundingFee) external {
@@ -138,11 +138,11 @@ contract MockCalculator is ICalculator {
     return aum;
   }
 
-  function getPLPValueE30(bool /* isMaxPrice */) public view virtual returns (uint256) {
-    return plpValue;
+  function getHLPValueE30(bool /* isMaxPrice */) public view virtual returns (uint256) {
+    return hlpValue;
   }
 
-  function getPLPPrice(uint256 /* aum */, uint256 /* supply */) external pure returns (uint256) {
+  function getHLPPrice(uint256 /* aum */, uint256 /* supply */) external pure returns (uint256) {
     // 1$
     return 1e30;
   }
@@ -183,7 +183,7 @@ contract MockCalculator is ICalculator {
     return freeCollateral;
   }
 
-  function getNextBorrowingRate(uint8 /*_assetClassIndex*/, uint256 /*_plpTVL*/) public view virtual returns (uint256) {
+  function getNextBorrowingRate(uint8 /*_assetClassIndex*/, uint256 /*_hlpTVL*/) public view virtual returns (uint256) {
     return nextBorrowingRate;
   }
 
@@ -192,10 +192,9 @@ contract MockCalculator is ICalculator {
   }
 
   function getFundingFee(
-    uint256 /*_marketIndex*/,
-    bool /*_isLong*/,
     int256 /*_size*/,
-    int256 /*_entryFundingRate*/
+    int256 /*_currentFundingAccrued*/,
+    int256 /*_lastFundingAccrued*/
   ) public view virtual returns (int256) {
     return fundingFee;
   }
@@ -208,7 +207,7 @@ contract MockCalculator is ICalculator {
     return borrowingFee;
   }
 
-  function getNextFundingRate(uint256 /*marketIndex*/) public view virtual returns (int256) {
+  function getFundingRateVelocity(uint256 /*marketIndex*/) public view virtual returns (int256) {
     return fundingRate;
   }
 
@@ -265,4 +264,6 @@ contract MockCalculator is ICalculator {
   function getPendingBorrowingFeeE30() public view virtual returns (uint256) {}
 
   function getGlobalMarketPnl(uint256 marketIndex, bool isLong) external view returns (int256) {}
+
+  function proportionalElapsedInDay(uint256 _marketIndex) public view virtual returns (uint256 elapsed) {}
 }

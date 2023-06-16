@@ -13,6 +13,7 @@ contract CrossMarginHandler_Base is BaseTest {
 
   uint8 internal SUB_ACCOUNT_NO = 1;
   uint256 internal constant executionOrderFee = 0.0001 ether;
+  uint256 internal constant maxExecutionChuck = 10;
 
   bytes[] internal priceDataBytes;
 
@@ -69,7 +70,8 @@ contract CrossMarginHandler_Base is BaseTest {
       address(proxyAdmin),
       address(crossMarginService),
       address(ecoPyth),
-      executionOrderFee
+      executionOrderFee,
+      maxExecutionChuck
     );
 
     ecoPyth.setUpdater(address(crossMarginHandler), true);
@@ -104,7 +106,6 @@ contract CrossMarginHandler_Base is BaseTest {
         maxShortPositionSize: 10_000_000 * 1e30,
         assetClass: 1,
         maxProfitRateBPS: 9 * 1e4,
-        minLeverageBPS: 1 * 1e4,
         initialMarginFractionBPS: 0.1 * 1e4,
         maintenanceMarginFractionBPS: 0.005 * 1e4,
         increasePositionFeeRateBPS: 0,
@@ -129,7 +130,6 @@ contract CrossMarginHandler_Base is BaseTest {
    */
 
   function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
-    if (_subAccountId > 255) revert();
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }
 
@@ -145,7 +145,7 @@ contract CrossMarginHandler_Base is BaseTest {
     uint256 _withdrawAmount,
     int24[] memory _tickPrices,
     uint24[] memory _publishTimeDiffs,
-    uint256 _minPublishTime,
+    uint256 /* _minPublishTime */,
     bool _shouldUnwrap
   ) internal {
     vm.deal(ALICE, executionOrderFee);
@@ -175,7 +175,7 @@ contract CrossMarginHandler_Base is BaseTest {
     vm.deal(ALICE, 0.0001 ether);
 
     vm.prank(ALICE);
-    uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: executionOrderFee }(
+    crossMarginHandler.createWithdrawCollateralOrder{ value: executionOrderFee }(
       SUB_ACCOUNT_NO,
       address(weth),
       1 ether,

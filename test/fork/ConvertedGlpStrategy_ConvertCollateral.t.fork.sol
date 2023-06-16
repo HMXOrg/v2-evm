@@ -9,7 +9,7 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 contract ConvertedGlpStrategy_ConvertCollateral is GlpStrategy_Base {
-  uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_one_fork"));
+  uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
 
   function setUp() public override {
     super.setUp();
@@ -33,7 +33,7 @@ contract ConvertedGlpStrategy_ConvertCollateral is GlpStrategy_Base {
     assertEq(fglpStakeAmount, sglpAmount, "fglp stake amount");
 
     vm.prank(ALICE);
-    uint256 amountOut = crossMarginHandler.convertSGlpCollateral(0, usdcAddress, sglpAmount);
+    uint256 amountOut = crossMarginHandler.convertSGlpCollateral(0, usdcAddress, sglpAmount, 0);
 
     assertEq(vaultStorage.traderBalances(ALICE, address(sglp)), 0, "trader balance sglp should be 0");
     assertEq(vaultStorage.traderBalances(ALICE, address(usdc)), amountOut, "trader balance sglp should be 0");
@@ -57,7 +57,7 @@ contract ConvertedGlpStrategy_ConvertCollateral is GlpStrategy_Base {
     assertEq(fglpStakeAmount, sglpAmount, "fglp stake amount");
 
     vm.prank(ALICE);
-    uint256 amountOut = crossMarginHandler.convertSGlpCollateral(0, wethAddress, sglpAmount);
+    uint256 amountOut = crossMarginHandler.convertSGlpCollateral(0, wethAddress, sglpAmount, 0);
 
     assertEq(vaultStorage.traderBalances(ALICE, address(sglp)), 0, "trader balance sglp should be 0");
     assertEq(vaultStorage.traderBalances(ALICE, address(weth)), amountOut, "trader balance sglp should be 0");

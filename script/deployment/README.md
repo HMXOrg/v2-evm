@@ -2,11 +2,11 @@
 
 1. Deploy pyth adapter
 2. Deploy oracle middleware
-3. Deploy storages & PLPv2
+3. Deploy storages & HLP
   - Config storage
   - Perp storage
   - Vault storage
-  - PLPv2
+  - HLP
 4. Deploy calculators
   - Calculator
 5. Set calculator in ConfigStorage

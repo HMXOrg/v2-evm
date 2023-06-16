@@ -27,6 +27,16 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_LimitOrderConvertToMarketOrder();
   error ILimitTradeHandler_NotExecutionState();
   error ILimitTradeHandler_Unauthorized();
+  error ILimitTradeHandler_BadCalldata();
+
+  /**
+   * Enums
+   */
+  enum Command {
+    Create,
+    Update,
+    Cancel
+  }
 
   /**
    * Structs
@@ -89,6 +99,13 @@ interface ILimitTradeHandler {
   /**
    * Functions
    */
+  function batch(
+    address _mainAccount,
+    uint8 _subAccountId,
+    Command[] calldata _cmds,
+    bytes[] calldata _data
+  ) external payable;
+
   function createOrder(
     address _mainAccount,
     uint8 _subAccountId,
@@ -133,6 +150,7 @@ interface ILimitTradeHandler {
     uint256 _orderIndex,
     int256 _sizeDelta,
     uint256 _triggerPrice,
+    uint256 _acceptablePrice,
     bool _triggerAboveThreshold,
     bool _reduceOnly,
     address _tpToken

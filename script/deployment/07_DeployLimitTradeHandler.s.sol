@@ -36,9 +36,8 @@ contract DeployHandlers is ConfigJsonRepo {
     );
 
     // @todo - TBD
-    uint256 minExecutionFee = 0;
-    uint256 minExecutionTimestamp = 5 * 60;
-    uint256 executionOrderFee = 0.0001 ether;
+    uint64 minExecutionFee = 0;
+    uint32 minExecutionTimestamp = 5 * 60;
 
     address limitTradeHandlerAddress = address(
       Deployer.deployLimitTradeHandler(

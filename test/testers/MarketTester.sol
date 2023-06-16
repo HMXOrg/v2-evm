@@ -7,6 +7,7 @@ import { StdAssertions } from "forge-std/StdAssertions.sol";
 
 contract MarketTester is StdAssertions {
   struct AssertData {
+    uint256 marketIndex;
     uint256 longPositionSize;
     uint256 shortPositionSize;
   }
@@ -15,5 +16,10 @@ contract MarketTester is StdAssertions {
 
   constructor(IPerpStorage _perpStorage) {
     perpStorage = _perpStorage;
+  }
+
+  function assertMarket(AssertData memory data) external {
+    assertEq(perpStorage.getMarketByIndex(data.marketIndex).longPositionSize, data.longPositionSize);
+    assertEq(perpStorage.getMarketByIndex(data.marketIndex).shortPositionSize, data.shortPositionSize);
   }
 }

@@ -51,18 +51,18 @@ contract TC38 is BaseIntTest_WithActions {
     );
 
     {
-      // PLP => 1_994_000.00(WBTC) + 100_000 (USDC)
-      assertPLPTotalSupply(2_094_000 * 1e18);
+      // HLP => 1_994_000.00(WBTC) + 100_000 (USDC)
+      assertHLPTotalSupply(2_094_000 * 1e18);
 
-      // assert PLP
-      assertTokenBalanceOf(ALICE, address(plpV2), 2_094_000 * 1e18);
-      assertPLPLiquidity(address(wbtc), 99.7 * 1e8);
-      assertPLPLiquidity(address(usdc), 100_000 * 1e6);
+      // assert HLP
+      assertTokenBalanceOf(ALICE, address(hlpV2), 2_094_000 * 1e18);
+      assertHLPLiquidity(address(wbtc), 99.7 * 1e8);
+      assertHLPLiquidity(address(usdc), 100_000 * 1e6);
     }
 
     // T2: Open 2 positions in the same market and the same exposure
     {
-      // Assert collateral (PLP 100,000 + Collateral 1,000) => 101_000
+      // Assert collateral (HLP 100,000 + Collateral 1,000) => 101_000
       assertVaultTokenBalance(address(usdc), 100_000 * 1e6, "TC38: before deposit collateral");
     }
 
@@ -72,7 +72,7 @@ contract TC38 is BaseIntTest_WithActions {
     depositCollateral(CAROL, 0, ERC20(address(usdc)), 100_000 * 1e6);
 
     {
-      // Assert collateral (PLP 100,000 + Collateral 1,000) => 101_000
+      // Assert collateral (HLP 100,000 + Collateral 1,000) => 101_000
       assertVaultTokenBalance(address(usdc), 300_000 * 1e6, "TC38: before deposit collateral");
     }
 
@@ -83,27 +83,27 @@ contract TC38 is BaseIntTest_WithActions {
     vm.deal(BOB, 1 ether);
     marketBuy(BOB, 0, wethMarketIndex, 100_000 * 1e30, address(usdc), tickPrices, publishTimeDiff, block.timestamp);
 
-    // PLP LIQUIDITY 99.7 WBTC, 100_000 usdc
+    // HLP LIQUIDITY 99.7 WBTC, 100_000 usdc
     {
       /*
       BEFORE T3
 
       Pending Borrowing Fee = 0 (no skip)
-      AUM = PLP VALUE - PNL + PENDING_BORROWING_FEE
+      AUM = HLP VALUE - PNL + PENDING_BORROWING_FEE
       AUM = 2093835074056630000000000000000000000 - (-65469) +0
       AUM = 2093835074056630000000000000000065469
-      PNL = plpValue - aum + pendingBorrowingFee) negative of PNL means plp is profit
+      PNL = hlpValue - aum + pendingBorrowingFee) negative of PNL means hlp is profit
       */
 
-      uint256 plpValueBefore = calculator.getPLPValueE30(false);
+      uint256 hlpValueBefore = calculator.getHLPValueE30(false);
       uint256 pendingBorrowingFeeBefore = calculator.getPendingBorrowingFeeE30();
       uint256 aumBefore = calculator.getAUME30(false);
 
-      assertApproxEqRel(plpValueBefore, 2093835074056630000000000000000000000, 0, "PLP TVL Before Feed Price");
+      assertApproxEqRel(hlpValueBefore, 2093835074056630000000000000000000000, 0, "HLP TVL Before Feed Price");
       assertApproxEqRel(pendingBorrowingFeeBefore, 0, MAX_DIFF, "Pending Borrowing Fee Before Feed Price");
       assertApproxEqRel(aumBefore, 2093835074056630000000000000000065469, MAX_DIFF, "AUM Before Feed Price");
       assertApproxEqRel(
-        -int256(plpValueBefore - aumBefore - pendingBorrowingFeeBefore),
+        -int256(hlpValueBefore - aumBefore - pendingBorrowingFeeBefore),
         -65469,
         MAX_DIFF,
         "GLOBAL PNLE30"
@@ -195,11 +195,15 @@ contract TC38 is BaseIntTest_WithActions {
         0
       );
 
+      // shhh compiler
+      bobIsProfit;
+      carolIsProfit;
+
       assertEq(_BobUnrealizedPnlE30, 7_200 * 1e30, "T4: Bob unrealized Pnl");
       assertEq(_CarolUnrealizedPnlE30, 1730362327240939953049650331945816, "T4: CAROL unrealized Pnl");
 
       int256 globalPnl = calculator.getGlobalPNLE30();
-      uint256 aumWithoutGlobalPnL = calculator.getPLPValueE30(true) +
+      uint256 aumWithoutGlobalPnL = calculator.getHLPValueE30(true) +
         calculator.getPendingBorrowingFeeE30() +
         vaultStorage.globalBorrowingFeeDebt() +
         vaultStorage.globalLossDebt();

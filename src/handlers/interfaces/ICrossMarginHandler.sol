@@ -15,10 +15,19 @@ interface ICrossMarginHandler {
   error ICrossMarginHandler_NoOrder();
   error ICrossMarginHandler_NotOrderOwner();
   error ICrossMarginHandler_NotExecutionState();
+  error ICrossMarginHandler_NotWNativeToken();
+  error ICrossMarginHandler_Unauthorized();
+  error ICrossMarginHandler_BadAmount();
 
   /**
    * Structs
    */
+  enum WithdrawOrderStatus {
+    PENDING,
+    SUCCESS,
+    FAIL
+  }
+
   struct WithdrawOrder {
     uint256 orderId;
     uint256 amount;
@@ -29,7 +38,7 @@ interface ICrossMarginHandler {
     address token;
     CrossMarginService crossMarginService;
     uint8 subAccountId;
-    uint8 status; // 0 = pending, 1 = execution success, 2 = execution fail
+    WithdrawOrderStatus status; // 0 = pending, 1 = execution success, 2 = execution fail
     bool shouldUnwrap;
   }
 
@@ -72,10 +81,15 @@ interface ICrossMarginHandler {
 
   function setOrderExecutor(address _executor, bool _isAllow) external;
 
+  function setMinExecutionFee(uint256 _newMinExecutionFee) external;
+
+  function setMaxExecutionChuck(uint256 _maxExecutionChuck) external;
+
   function convertSGlpCollateral(
     uint8 _subAccountId,
     address _tokenOut,
-    uint256 _amountIn
+    uint256 _amountIn,
+    uint256 _minAmountOut
   ) external returns (uint256 _amountOut);
 
   function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrder);

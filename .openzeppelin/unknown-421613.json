@@ -783,7 +783,7 @@
             "src": "src/storages/ConfigStorage.sol:64"
           },
           {
-            "label": "plp",
+            "label": "hlp",
             "offset": 0,
             "slot": "112",
             "type": "t_address",
@@ -847,7 +847,7 @@
             "src": "src/storages/ConfigStorage.sol:75"
           },
           {
-            "label": "plpAssetIds",
+            "label": "hlpAssetIds",
             "offset": 0,
             "slot": "119",
             "type": "t_array(t_bytes32)dyn_storage",
@@ -855,10 +855,10 @@
             "src": "src/storages/ConfigStorage.sol:77"
           },
           {
-            "label": "assetPlpTokenConfigs",
+            "label": "assetHlpTokenConfigs",
             "offset": 0,
             "slot": "120",
-            "type": "t_mapping(t_bytes32,t_struct(PLPTokenConfig)44267_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(HLPTokenConfig)44267_storage)",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:78"
           },
@@ -960,8 +960,8 @@
             "label": "mapping(bytes32 => struct IConfigStorage.CollateralTokenConfig)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_struct(PLPTokenConfig)44267_storage)": {
-            "label": "mapping(bytes32 => struct IConfigStorage.PLPTokenConfig)",
+          "t_mapping(t_bytes32,t_struct(HLPTokenConfig)44267_storage)": {
+            "label": "mapping(bytes32 => struct IConfigStorage.HLPTokenConfig)",
             "numberOfBytes": "32"
           },
           "t_struct(AssetClassConfig)44310_storage": {
@@ -1064,13 +1064,13 @@
             "label": "struct IConfigStorage.LiquidityConfig",
             "members": [
               {
-                "label": "plpTotalTokenWeight",
+                "label": "hlpTotalTokenWeight",
                 "type": "t_uint256",
                 "offset": 0,
                 "slot": "0"
               },
               {
-                "label": "plpSafetyBufferBPS",
+                "label": "hlpSafetyBufferBPS",
                 "type": "t_uint32",
                 "offset": 0,
                 "slot": "1"
@@ -1088,7 +1088,7 @@
                 "slot": "1"
               },
               {
-                "label": "maxPLPUtilizationBPS",
+                "label": "maxHLPUtilizationBPS",
                 "type": "t_uint32",
                 "offset": 12,
                 "slot": "1"
@@ -1204,8 +1204,8 @@
             ],
             "numberOfBytes": "192"
           },
-          "t_struct(PLPTokenConfig)44267_storage": {
-            "label": "struct IConfigStorage.PLPTokenConfig",
+          "t_struct(HLPTokenConfig)44267_storage": {
+            "label": "struct IConfigStorage.HLPTokenConfig",
             "members": [
               {
                 "label": "targetWeight",
@@ -1839,8 +1839,8 @@
             "offset": 0,
             "slot": "201",
             "type": "t_mapping(t_address,t_bool)",
-            "contract": "PLPv2",
-            "src": "src/contracts/PLPv2.sol:12"
+            "contract": "HLP",
+            "src": "src/contracts/HLP.sol:12"
           }
         ],
         "types": {
@@ -1963,7 +1963,7 @@
             "src": "src/storages/VaultStorage.sol:29"
           },
           {
-            "label": "plpLiquidity",
+            "label": "hlpLiquidity",
             "offset": 0,
             "slot": "152",
             "type": "t_mapping(t_address,t_uint256)",
@@ -1979,7 +1979,7 @@
             "src": "src/storages/VaultStorage.sol:31"
           },
           {
-            "label": "plpLiquidityDebtUSDE30",
+            "label": "hlpLiquidityDebtUSDE30",
             "offset": 0,
             "slot": "154",
             "type": "t_uint256",
@@ -5185,7 +5185,7 @@
             "src": "src/storages/ConfigStorage.sol:65"
           },
           {
-            "label": "plp",
+            "label": "hlp",
             "offset": 0,
             "slot": "112",
             "type": "t_address",
@@ -5249,7 +5249,7 @@
             "src": "src/storages/ConfigStorage.sol:76"
           },
           {
-            "label": "plpAssetIds",
+            "label": "hlpAssetIds",
             "offset": 0,
             "slot": "119",
             "type": "t_array(t_bytes32)dyn_storage",
@@ -5257,10 +5257,10 @@
             "src": "src/storages/ConfigStorage.sol:78"
           },
           {
-            "label": "assetPlpTokenConfigs",
+            "label": "assetHlpTokenConfigs",
             "offset": 0,
             "slot": "120",
-            "type": "t_mapping(t_bytes32,t_struct(PLPTokenConfig)44454_storage)",
+            "type": "t_mapping(t_bytes32,t_struct(HLPTokenConfig)44454_storage)",
             "contract": "ConfigStorage",
             "src": "src/storages/ConfigStorage.sol:79"
           },
@@ -5370,8 +5370,8 @@
             "label": "mapping(bytes32 => struct IConfigStorage.CollateralTokenConfig)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_bytes32,t_struct(PLPTokenConfig)44454_storage)": {
-            "label": "mapping(bytes32 => struct IConfigStorage.PLPTokenConfig)",
+          "t_mapping(t_bytes32,t_struct(HLPTokenConfig)44454_storage)": {
+            "label": "mapping(bytes32 => struct IConfigStorage.HLPTokenConfig)",
             "numberOfBytes": "32"
           },
           "t_struct(AssetClassConfig)44497_storage": {
@@ -5474,13 +5474,13 @@
             "label": "struct IConfigStorage.LiquidityConfig",
             "members": [
               {
-                "label": "plpTotalTokenWeight",
+                "label": "hlpTotalTokenWeight",
                 "type": "t_uint256",
                 "offset": 0,
                 "slot": "0"
               },
               {
-                "label": "plpSafetyBufferBPS",
+                "label": "hlpSafetyBufferBPS",
                 "type": "t_uint32",
                 "offset": 0,
                 "slot": "1"
@@ -5498,7 +5498,7 @@
                 "slot": "1"
               },
               {
-                "label": "maxPLPUtilizationBPS",
+                "label": "maxHLPUtilizationBPS",
                 "type": "t_uint32",
                 "offset": 12,
                 "slot": "1"
@@ -5614,8 +5614,8 @@
             ],
             "numberOfBytes": "192"
           },
-          "t_struct(PLPTokenConfig)44454_storage": {
-            "label": "struct IConfigStorage.PLPTokenConfig",
+          "t_struct(HLPTokenConfig)44454_storage": {
+            "label": "struct IConfigStorage.HLPTokenConfig",
             "members": [
               {
                 "label": "targetWeight",

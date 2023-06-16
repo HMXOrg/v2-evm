@@ -6,9 +6,9 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 
 // Interfaces
-import { IPLPv2 } from "./interfaces/IPLPv2.sol";
+import { IHLP } from "./interfaces/IHLP.sol";
 
-contract PLPv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable, ERC20Upgradeable {
+contract HLP is ReentrancyGuardUpgradeable, OwnableUpgradeable, ERC20Upgradeable {
   mapping(address => bool) public minters;
 
   event SetMinter(address indexed minter, bool isMinter);
@@ -19,7 +19,7 @@ contract PLPv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable, ERC20Upgradeab
 
   modifier onlyMinter() {
     if (!minters[msg.sender]) {
-      revert IPLPv2.IPLPv2_onlyMinter();
+      revert IHLP.IHLP_onlyMinter();
     }
     _;
   }
@@ -27,7 +27,7 @@ contract PLPv2 is ReentrancyGuardUpgradeable, OwnableUpgradeable, ERC20Upgradeab
   function initialize() external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
-    ERC20Upgradeable.__ERC20_init("PLPv2", "Perp88 LP v2");
+    ERC20Upgradeable.__ERC20_init("HLP", "HLP");
   }
 
   function setMinter(address minter, bool isMinter) external onlyOwner nonReentrant {

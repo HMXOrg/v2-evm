@@ -2,6 +2,8 @@
 pragma solidity 0.8.18;
 
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
+import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // contracts
 import { FullMath } from "@hmx/libraries/FullMath.sol";
@@ -21,10 +23,34 @@ import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
 /// @title LiquidationService
 /// @dev This contract implements the ILiquidationService interface and provides functionality for liquidating sub-accounts by resetting their positions' value in storage.
 contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, OwnableUpgradeable {
+  using SafeCastUpgradeable for uint256;
+  using SafeCastUpgradeable for int256;
   using FullMath for uint256;
+
   /**
    * Events
    */
+  event LogLiquidation(
+    address indexed subAccount,
+    int256 equity,
+    uint256 mmr,
+    uint256 tradingFee,
+    uint256 borrowingFee,
+    int256 fundingFee,
+    uint256 liquidationFee,
+    int256 unrealizedPnL
+  );
+
+  event LogLiquidationPosition(
+    bytes32 indexed positionId,
+    address indexed account,
+    uint8 subAccountId,
+    uint256 marketIndex,
+    int256 size,
+    bool isProfit,
+    uint256 delta
+  );
+
   event LogSetConfigStorage(address indexed oldConfigStorage, address newConfigStorage);
   event LogSetVaultStorage(address indexed oldVaultStorage, address newVaultStorage);
   event LogSetPerpStorage(address indexed oldPerpStorage, address newPerpStorage);
@@ -34,11 +60,30 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /**
    * Structs
    */
+
+  struct LiquidateVars {
+    uint256 mmr;
+    uint256 tradingFee;
+    uint256 borrowingFee;
+    uint256 liquidationFeeUSDE30;
+    int256 equity;
+    int256 fundingFee;
+    int256 unrealizedPnL;
+    VaultStorage vaultStorage;
+    TradeHelper tradeHelper;
+    Calculator calculator;
+    ConfigStorage configStorage;
+  }
+
   struct LiquidatePositionVars {
     bytes32 positionId;
     uint256 absPositionSizeE30;
     uint256 oldSumSe;
     uint256 oldSumS2e;
+    uint256 tradingFee;
+    uint256 borrowingFee;
+    int256 fundingFee;
+    bool isLong;
     IPerpStorage.Position position;
     PerpStorage.Market globalMarket;
     ConfigStorage.MarketConfig marketConfig;
@@ -83,7 +128,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
     // Sanity check
     PerpStorage(_perpStorage).getGlobalState();
-    VaultStorage(_vaultStorage).plpLiquidityDebtUSDE30();
+    VaultStorage(_vaultStorage).hlpLiquidityDebtUSDE30();
     ConfigStorage(_configStorage).getLiquidityConfig();
     TradeHelper(_tradeHelper).perpStorage();
   }
@@ -103,7 +148,7 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /// @notice Liquidates a sub-account by settling its positions and resetting its value in storage
   /// @param _subAccount The sub-account to be liquidated
   function liquidate(address _subAccount, address _liquidator) external onlyWhitelistedExecutor {
-    LiquidatePositionVars memory _vars;
+    LiquidateVars memory _vars;
     // SLOAD
     _vars.tradeHelper = TradeHelper(tradeHelper);
     _vars.vaultStorage = VaultStorage(vaultStorage);
@@ -111,27 +156,35 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     _vars.calculator = Calculator(_vars.configStorage.calculator());
 
     // If the equity is greater than or equal to the MMR, the account is healthy and cannot be liquidated
-    int256 _equity = _vars.calculator.getEquity(_subAccount, 0, 0);
-    if (_equity >= 0 && uint256(_equity) >= _vars.calculator.getMMR(_subAccount))
-      revert ILiquidationService_AccountHealthy();
+    _vars.equity = _vars.calculator.getEquity(_subAccount, 0, 0);
+    _vars.mmr = _vars.calculator.getMMR(_subAccount);
+    if (_vars.equity >= 0 && uint256(_vars.equity) >= _vars.mmr) revert ILiquidationService_AccountHealthy();
 
     // Liquidate the positions by resetting their value in storage
-    (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee, int256 _unrealizedPnL) = _liquidatePosition(
-      _subAccount
-    );
+    (_vars.tradingFee, _vars.borrowingFee, _vars.fundingFee, _vars.unrealizedPnL) = _liquidatePosition(_subAccount);
+
+    _vars.liquidationFeeUSDE30 = _vars.configStorage.getLiquidationConfig().liquidationFeeUSDE30;
 
     // get profit and fee
-    _vars.tradeHelper.increaseCollateral(bytes32(0), _subAccount, _unrealizedPnL, _fundingFee, address(0));
+    _vars.tradeHelper.increaseCollateral(
+      bytes32(0),
+      _subAccount,
+      _vars.unrealizedPnL,
+      _vars.fundingFee,
+      address(0),
+      type(uint256).max
+    );
     // settle fee and loss
     _vars.tradeHelper.decreaseCollateral(
       bytes32(0),
       _subAccount,
-      _unrealizedPnL,
-      _fundingFee,
-      _borrowingFee,
-      _tradingFee,
-      _vars.configStorage.getLiquidationConfig().liquidationFeeUSDE30,
-      _liquidator
+      _vars.unrealizedPnL,
+      _vars.fundingFee,
+      _vars.borrowingFee,
+      _vars.tradingFee,
+      _vars.liquidationFeeUSDE30,
+      _liquidator,
+      type(uint256).max
     );
 
     // do accounting on sub account
@@ -139,6 +192,17 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
     _vars.vaultStorage.subTradingFeeDebt(_subAccount, _vars.vaultStorage.tradingFeeDebt(_subAccount));
     _vars.vaultStorage.subBorrowingFeeDebt(_subAccount, _vars.vaultStorage.borrowingFeeDebt(_subAccount));
     _vars.vaultStorage.subFundingFeeDebt(_subAccount, _vars.vaultStorage.fundingFeeDebt(_subAccount));
+
+    emit LogLiquidation(
+      _subAccount,
+      _vars.equity,
+      _vars.mmr,
+      _vars.tradingFee,
+      _vars.borrowingFee,
+      _vars.fundingFee,
+      _vars.liquidationFeeUSDE30,
+      _vars.unrealizedPnL
+    );
   }
 
   function reloadConfig() external nonReentrant onlyOwner {
@@ -206,9 +270,6 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
   /**
    * Private Functions
    */
-  function _abs(int256 x) private pure returns (uint256) {
-    return uint256(x >= 0 ? x : -x);
-  }
 
   /// @dev Liquidates positions associated with a given sub-account.
   /// It iterates over the list of position IDs and updates borrowing rate,
@@ -239,9 +300,9 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
       // Get the current position id from the list
       _vars.positionId = positionIds[i];
       _vars.position = _vars.perpStorage.getPositionById(_vars.positionId);
-      _vars.absPositionSizeE30 = _abs(_vars.position.positionSizeE30);
+      _vars.absPositionSizeE30 = HMXLib.abs(_vars.position.positionSizeE30);
 
-      bool _isLong = _vars.position.positionSizeE30 > 0;
+      _vars.isLong = _vars.position.positionSizeE30 > 0;
 
       _vars.marketConfig = _vars.configStorage.getMarketConfigByIndex(_vars.position.marketIndex);
 
@@ -252,27 +313,27 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
       // Update fees
       {
-        (uint256 _tradingFee, uint256 _borrowingFee, int256 _fundingFee) = _vars.tradeHelper.updateFeeStates(
+        (_vars.tradingFee, _vars.borrowingFee, _vars.fundingFee) = _vars.tradeHelper.updateFeeStates(
           _vars.positionId,
           _subAccount,
           _vars.position,
-          _abs(_vars.position.positionSizeE30),
+          HMXLib.abs(_vars.position.positionSizeE30),
           _vars.marketConfig.decreasePositionFeeRateBPS,
           _vars.marketConfig.assetClass,
           _vars.position.marketIndex
         );
-        tradingFee += _tradingFee;
-        borrowingFee += _borrowingFee;
-        fundingFee += _fundingFee;
+        tradingFee += _vars.tradingFee;
+        borrowingFee += _vars.borrowingFee;
+        fundingFee += _vars.fundingFee;
       }
 
       _vars.oldSumSe = _vars.absPositionSizeE30.mulDiv(1e30, _vars.position.avgEntryPriceE30);
       _vars.oldSumS2e = _vars.absPositionSizeE30.mulDiv(_vars.absPositionSizeE30, _vars.position.avgEntryPriceE30);
       _vars.globalMarket = _vars.perpStorage.getMarketByIndex(_vars.position.marketIndex);
 
-      (uint256 _adaptivePrice, , ) = _vars.oracle.getLatestAdaptivePriceWithMarketStatus(
+      (uint256 _adaptivePrice, ) = _vars.oracle.getLatestAdaptivePrice(
         _vars.marketConfig.assetId,
-        _isLong,
+        _vars.isLong,
         (int(_vars.globalMarket.longPositionSize) - int(_vars.globalMarket.shortPositionSize)),
         -_vars.position.positionSizeE30,
         _vars.marketConfig.fundingRate.maxSkewScaleUSD,
@@ -282,28 +343,43 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
       // Update global state
       {
         int256 _realizedPnl;
-        uint256 absPositionSize = _abs(_vars.position.positionSizeE30);
-        {
-          (bool _isProfit, uint256 _delta) = _vars.calculator.getDelta(
-            absPositionSize,
-            _vars.position.positionSizeE30 > 0,
-            _adaptivePrice,
-            _vars.position.avgEntryPriceE30,
-            _vars.position.lastIncreaseTimestamp
-          );
-          _realizedPnl = _isProfit ? int256(_delta) : -int256(_delta);
-          _unrealizedPnL += _realizedPnl;
+        uint256 absPositionSize = HMXLib.abs(_vars.position.positionSizeE30);
+
+        (bool _isProfit, uint256 _delta) = _vars.calculator.getDelta(
+          absPositionSize,
+          _vars.position.positionSizeE30 > 0,
+          _adaptivePrice,
+          _vars.position.avgEntryPriceE30,
+          _vars.position.lastIncreaseTimestamp
+        );
+
+        // if trader has profit more than reserved value then trader's profit maximum is reserved value
+        if (_isProfit && _delta >= _vars.position.reserveValueE30) {
+          _delta = _vars.position.reserveValueE30;
         }
+
+        _realizedPnl = _isProfit ? int256(_delta) : -int256(_delta);
+        _unrealizedPnL += _realizedPnl;
 
         _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.reserveValueE30);
 
         // remove the position's value in storage
         _vars.perpStorage.removePositionFromSubAccount(_subAccount, _vars.positionId);
+
+        emit LogLiquidationPosition(
+          _vars.positionId,
+          _vars.position.primaryAccount,
+          _vars.position.subAccountId,
+          _vars.position.marketIndex,
+          _vars.position.positionSizeE30,
+          _isProfit,
+          _delta
+        );
       }
 
       // Update counter trade states
       {
-        _isLong
+        _vars.isLong
           ? _vars.perpStorage.updateGlobalLongMarketById(
             _vars.position.marketIndex,
             _vars.globalMarket.longPositionSize - _vars.absPositionSizeE30,

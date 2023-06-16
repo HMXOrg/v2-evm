@@ -19,9 +19,16 @@ contract DeployLiquidityHandler is ConfigJsonRepo {
     address liquidityServiceAddress = getJsonAddress(".services.liquidity");
     // @todo - TBD
     uint256 minExecutionFee = 30;
+    uint256 maxExecutionChuck = 10;
 
     address liquidityHandlerAddress = address(
-      Deployer.deployLiquidityHandler(address(proxyAdmin), liquidityServiceAddress, pythAddress, minExecutionFee)
+      Deployer.deployLiquidityHandler(
+        address(proxyAdmin),
+        liquidityServiceAddress,
+        pythAddress,
+        minExecutionFee,
+        maxExecutionChuck
+      )
     );
 
     vm.stopBroadcast();

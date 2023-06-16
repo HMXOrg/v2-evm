@@ -45,11 +45,11 @@ contract TC20 is BaseIntTest_WithActions {
     // And Bob provide liquidity 5 btc
     addLiquidity(BOB, wbtc, 5 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
     {
-      // PLP liquidity and total supply should be corrected
+      // HLP liquidity and total supply should be corrected
       // 5 * 0.997 = 4.985
       // 4.985 * 20000 = 99700
-      assertPLPLiquidity(address(wbtc), 4.985 * 1e8);
-      assertPLPTotalSupply(99700 * 1e18);
+      assertHLPLiquidity(address(wbtc), 4.985 * 1e8);
+      assertHLPTotalSupply(99700 * 1e18);
       assertTVL(99700 * 1e30, false);
     }
 
@@ -77,7 +77,7 @@ contract TC20 is BaseIntTest_WithActions {
         _reserveValue: 54_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
 
       // 600000 * 1% (IMF) = 6000 * 900% (max profit) = 54,000
@@ -115,7 +115,7 @@ contract TC20 is BaseIntTest_WithActions {
         _reserveValue: 9_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
 
       // 20000 * 5% (IMF) = 1000 * 900% (max profit) = 9000
@@ -142,7 +142,7 @@ contract TC20 is BaseIntTest_WithActions {
         _reserveValue: 67_500 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
 
       assertAssetClassReserve(0, 67_500 * 1e30);
@@ -197,7 +197,7 @@ contract TC20 is BaseIntTest_WithActions {
         _reserveValue: 9_000 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 246193124829032,
-        _entryFundingRate: -399999999990
+        _lastFundingAccrued: -399999999990
       });
 
       assertAssetClassReserve(0, 67_500 * 1e30);
@@ -234,7 +234,7 @@ contract TC20 is BaseIntTest_WithActions {
         _reserveValue: 0,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
-        _entryFundingRate: 0
+        _lastFundingAccrued: 0
       });
     }
 

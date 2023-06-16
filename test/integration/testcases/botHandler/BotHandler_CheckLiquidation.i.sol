@@ -27,7 +27,6 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
     address TP_TOKEN = address(wbtc); // @note settle with WBTC that be treated as GLP token
     // Make LP contains some liquidity
     {
-      bytes[] memory priceData = new bytes[](0);
       vm.deal(BOB, 1 ether); //deal with out of gas
       wbtc.mint(BOB, 10 * 1e8);
       addLiquidity(BOB, wbtc, 10 * 1e8, executionOrderFee, tickPrices, publishTimeDiff, block.timestamp, true);
@@ -90,7 +89,6 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
       assertEq(calculator.getIMR(SUB_ACCOUNT), 0, "ALICE's IMR");
       assertEq(calculator.getMMR(SUB_ACCOUNT), 0, "ALICE's MMR");
       uint256 sellSizeE30 = 280_000.981234381823 * 1e30;
-      bytes[] memory priceData = new bytes[](0);
       // ALICE opens SHORT position with WETH Market Price = 1500 USD
       marketSell(
         ALICE,
@@ -116,8 +114,8 @@ contract BotHandler_CheckLiquidation is BaseIntTest_WithActions {
     vm.warp(block.timestamp + 100);
     {
       bytes32[] memory assetIds = new bytes32[](7);
-      assetIds[0] = 0x4554480000000000000000000000000000000000000000000000000000000000; // ETH
-      assetIds[1] = 0x4254430000000000000000000000000000000000000000000000000000000000; // BTC
+      assetIds[0] = 0x5745544855534400000000000000000000000000000000000000000000000000; // WETHUSD
+      assetIds[1] = 0x5742544355534400000000000000000000000000000000000000000000000000; // BTCUSD
       assetIds[2] = 0x4441490000000000000000000000000000000000000000000000000000000000; // DAI
       assetIds[3] = 0x5553444355534400000000000000000000000000000000000000000000000000; // USDCUSD
       assetIds[4] = 0x5553445455534400000000000000000000000000000000000000000000000000; // USDTUSD

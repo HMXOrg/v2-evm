@@ -141,5 +141,24 @@ contract TC18 is BaseIntTest_WithActions {
         _lastFundingAccrued: 0
       });
     }
+
+    // APPLE's price rebound to $136.8
+    tickPrices[5] = 49187; // APPL tick price $136.8
+    // And Alice sell more position at APPLE 3,000 USD
+    marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+
+    // ### Scenario: Bot couldn't force close Alice's position
+    // When Bot force close ALICE's APPLE position
+    // Then Revert ReservedValueStillEnough
+    forceTakeMaxProfit(
+      ALICE,
+      0,
+      appleMarketIndex,
+      address(wbtc),
+      tickPrices,
+      publishTimeDiff,
+      block.timestamp,
+      "IBotHandler_ReservedValueStillEnough()"
+    );
   }
 }

@@ -13,6 +13,7 @@ interface IVaultStorage {
   error IVaultStorage_Forbidden();
   error IVaultStorage_TargetNotContract();
   error IVaultStorage_BadLen();
+  error IVaultStorage_InvalidAddress();
 
   /**
    * Functions
@@ -78,6 +79,8 @@ interface IVaultStorage {
   function cook(address _token, address _target, bytes calldata _callData) external returns (bytes memory);
 
   function setStrategyAllowance(address _token, address _strategy, address _target) external;
+
+  function setStrategyFunctionSigAllowance(address _token, address _strategy, bytes4 _target) external;
 
   function globalBorrowingFeeDebt() external returns (uint256);
 

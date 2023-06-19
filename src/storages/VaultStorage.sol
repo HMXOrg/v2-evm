@@ -130,6 +130,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   }
 
   function _setServiceExecutor(address _executorAddress, bool _isServiceExecutor) internal {
+    if (!_executorAddress.isContract()) revert IVaultStorage_InvalidAddress();
     serviceExecutors[_executorAddress] = _isServiceExecutor;
     emit LogSetServiceExecutor(_executorAddress, _isServiceExecutor);
   }

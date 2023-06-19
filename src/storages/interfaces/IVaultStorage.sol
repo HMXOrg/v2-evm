@@ -13,6 +13,7 @@ interface IVaultStorage {
   error IVaultStorage_Forbidden();
   error IVaultStorage_TargetNotContract();
   error IVaultStorage_BadLen();
+  error IVaultStorage_InvalidAddress();
 
   /**
    * Functions

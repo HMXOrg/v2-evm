@@ -204,6 +204,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _amount,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_token) {
+    if (_amount == 0) revert ICrossMarginHandler_BadAmount();
     // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
 

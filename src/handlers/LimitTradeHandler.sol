@@ -19,6 +19,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { console2 } from "forge-std/console2.sol";
 
 /// @title LimitTradeHandler
 /// @notice This contract handles the create, update, and cancel for the Trading module.
@@ -118,6 +119,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     bool positionIsLong;
     bool isNewPosition;
     bool isMarketOrder;
+    int256 sizeDelta;
   }
 
   struct ValidatePositionOrderPriceVars {
@@ -591,16 +593,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     // Remove this executed order from the list
     _removeOrder(vars.order, vars.subAccount, vars.orderIndex);
 
-    // Validate if the current price is valid for the execution of this order
-    (uint256 _currentPrice, ) = _validatePositionOrderPrice(
-      vars.order.triggerAboveThreshold,
-      vars.order.triggerPrice,
-      vars.order.acceptablePrice,
-      vars.order.marketIndex,
-      vars.order.sizeDelta,
-      vars.order.sizeDelta > 0
-    );
-
     // Retrieve existing position
     vars.positionId = HMXLib.getPositionId(vars.subAccount, vars.order.marketIndex);
     PerpStorage.Position memory _existingPosition = PerpStorage(_tradeService.perpStorage()).getPositionById(
@@ -609,8 +601,29 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
+    // Validate if the current price is valid for the execution of this order
+
+    // Handle the sizeDelta in case it is sent with max int 256
+    vars.sizeDelta = vars.order.sizeDelta;
+    if (!vars.isNewPosition && (vars.order.sizeDelta == type(int256).max || vars.order.sizeDelta == type(int256).min)) {
+      if (vars.order.sizeDelta > 0) {
+        vars.sizeDelta = int256(HMXLib.abs(_existingPosition.positionSizeE30));
+      } else {
+        vars.sizeDelta = -int256(HMXLib.abs(_existingPosition.positionSizeE30));
+      }
+    }
+
+    (uint256 _currentPrice, ) = _validatePositionOrderPrice(
+      vars.order.triggerAboveThreshold,
+      vars.order.triggerPrice,
+      vars.order.acceptablePrice,
+      vars.order.marketIndex,
+      vars.sizeDelta,
+      vars.sizeDelta > 0
+    );
+
     // Execute the order
-    if (vars.order.sizeDelta > 0) {
+    if (vars.sizeDelta > 0) {
       // BUY
       if (vars.isNewPosition || vars.positionIsLong) {
         // New position and Long position
@@ -619,11 +632,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
           _primaryAccount: vars.order.account,
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
-          _sizeDelta: vars.order.sizeDelta,
+          _sizeDelta: vars.sizeDelta,
           _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
         });
       } else if (!vars.positionIsLong) {
-        bool _flipSide = !vars.order.reduceOnly && vars.order.sizeDelta > (-_existingPosition.positionSizeE30);
+        bool _flipSide = !vars.order.reduceOnly && vars.sizeDelta > (-_existingPosition.positionSizeE30);
         if (_flipSide) {
           // Flip the position
           // Fully close Short position
@@ -640,7 +653,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
             _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
+            _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
             _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         } else {
@@ -649,8 +662,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _positionSizeE30ToDecrease: _min(
-              uint256(vars.order.sizeDelta),
+            _positionSizeE30ToDecrease: HMXLib.min(
+              uint256(vars.sizeDelta),
               uint256(-_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
@@ -658,7 +671,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
           });
         }
       }
-    } else if (vars.order.sizeDelta < 0) {
+    } else if (vars.sizeDelta < 0) {
       // SELL
       if (vars.isNewPosition || !vars.positionIsLong) {
         // New position and Short position
@@ -667,11 +680,11 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
           _primaryAccount: vars.order.account,
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
-          _sizeDelta: vars.order.sizeDelta,
+          _sizeDelta: vars.sizeDelta,
           _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
         });
       } else if (vars.positionIsLong) {
-        bool _flipSide = !vars.order.reduceOnly && (-vars.order.sizeDelta) > _existingPosition.positionSizeE30;
+        bool _flipSide = !vars.order.reduceOnly && (-vars.sizeDelta) > _existingPosition.positionSizeE30;
         if (_flipSide) {
           // Flip the position
           // Fully close Long position
@@ -688,7 +701,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
             _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _sizeDelta: vars.order.sizeDelta + _existingPosition.positionSizeE30,
+            _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
             _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
         } else {
@@ -697,8 +710,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
             _account: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _positionSizeE30ToDecrease: _min(
-              uint256(-vars.order.sizeDelta),
+            _positionSizeE30ToDecrease: HMXLib.min(
+              uint256(-vars.sizeDelta),
               uint256(_existingPosition.positionSizeE30)
             ),
             _tpToken: vars.order.tpToken,
@@ -1138,10 +1151,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
       IWNative(weth).deposit{ value: _amountOut }();
       IWNative(weth).transfer(_receiver, _amountOut);
     }
-  }
-
-  function _min(uint256 x, uint256 y) private pure returns (uint256) {
-    return x < y ? x : y;
   }
 
   function _encodePointer(address _account, uint96 _index) internal pure returns (uint256 _pointer) {

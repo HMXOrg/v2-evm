@@ -6,8 +6,8 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
-import { MulticallUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/MulticallUpgradeable.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
 // contracts
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
@@ -23,7 +23,7 @@ import { console2 } from "forge-std/console2.sol";
 
 /// @title LimitTradeHandler
 /// @notice This contract handles the create, update, and cancel for the Trading module.
-contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, MulticallUpgradeable, ILimitTradeHandler {
+contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILimitTradeHandler {
   using EnumerableSet for EnumerableSet.UintSet;
   using SafeCastUpgradeable for uint256;
   using SafeCastUpgradeable for int256;
@@ -1041,9 +1041,30 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, Mu
     IEcoPyth(_pyth).getAssetIds();
   }
 
+  function multicall(bytes[] calldata data) external returns (bytes[] memory results) {
+    results = new bytes[](data.length);
+    for (uint256 i = 0; i < data.length; i++) {
+      results[i] = _functionDelegateCall(address(this), data[i]);
+    }
+    return results;
+  }
+
   /**
    * Private Functions
    */
+  /**
+   * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
+   * but performing a delegate call.
+   *
+   * _Available since v3.4._
+   */
+  function _functionDelegateCall(address target, bytes memory data) private returns (bytes memory) {
+    require(AddressUpgradeable.isContract(target), "Address: delegate call to non-contract");
+
+    // solhint-disable-next-line avoid-low-level-calls
+    (bool success, bytes memory returndata) = target.delegatecall(data);
+    return AddressUpgradeable.verifyCallResult(success, returndata, "Address: low-level delegate call failed");
+  }
 
   function _validatePositionOrderPrice(
     bool _triggerAboveThreshold,

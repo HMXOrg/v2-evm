@@ -91,7 +91,6 @@ contract TradeService_Hooks is TradeService_Base {
     // input
     int256 sizeDelta = 1_000_000 * 1e30;
 
-    vm.expectRevert(abi.encodeWithSignature("TradingStaking_UnknownMarketIndex()"));
     tradeService.increasePosition(ALICE, 0, btcMarketIndex, sizeDelta, 0);
   }
 

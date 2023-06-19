@@ -366,6 +366,12 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.position.lastIncreaseTimestamp
       );
 
+      // if the position has profit more than reserved value,
+      // then not allow to increase position to prevent max profit cap bypass.
+      if (_isProfit && _delta >= _vars.position.reserveValueE30) {
+        revert ITradeService_NotAllowIncrease();
+      }
+
       int256 deltaPnl = _vars.isLong ? int256(_delta) : -int256(_delta);
       _vars.unrealizedPnl = _isProfit ? deltaPnl : -deltaPnl;
 
@@ -388,9 +394,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     // if the position size is zero after the update, revert the transaction with an error
     if (_vars.position.positionSizeE30 == 0) revert ITradeService_BadPositionSize();
     // ensure that the new absolute position size is not smaller than the minimum allowed position size
-    if (
-      HMXLib.abs(_vars.position.positionSizeE30) < ConfigStorage(configStorage).minimumPositionSize()
-    ) revert ITradeService_TooTinyPosition();
+    if (HMXLib.abs(_vars.position.positionSizeE30) < ConfigStorage(configStorage).minimumPositionSize())
+      revert ITradeService_TooTinyPosition();
 
     // update entry borrowing/funding rates
     {

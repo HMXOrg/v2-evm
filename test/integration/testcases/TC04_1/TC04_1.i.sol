@@ -4,11 +4,23 @@ pragma solidity 0.8.18;
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 import { console2 } from "forge-std/console2.sol";
 
 contract TC04_1 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
+
+  function setUp() external {
+    // Raised maxProfitRateBPS so that positions can be increased
+    IConfigStorage.MarketConfig memory _wbtcMarketConfig = configStorage.getMarketConfigByIndex(wbtcMarketIndex);
+    _wbtcMarketConfig.maxProfitRateBPS = 1500_00; // 1500%
+    configStorage.setMarketConfig(wbtcMarketIndex, _wbtcMarketConfig);
+
+    IConfigStorage.MarketConfig memory _jpyMarketConfig = configStorage.getMarketConfigByIndex(jpyMarketIndex);
+    _jpyMarketConfig.maxProfitRateBPS = 1500_00; // 1500%
+    configStorage.setMarketConfig(jpyMarketIndex, _jpyMarketConfig);
+  }
 
   // ## TC04.1 - manage position, adjust with profit and loss
   function testCorrectness_TC04_1_AveragePriceCalculationWithIncreasePosition() external {
@@ -97,7 +109,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _marketIndex: wbtcMarketIndex,
         _positionSize: int256(1000 * 1e30),
         _avgPrice: 20000.03333333333333333333333332 * 1e30,
-        _reserveValue: 90 * 1e30,
+        _reserveValue: 150 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
         _lastFundingAccrued: 0,
@@ -178,9 +190,9 @@ contract TC04_1 is BaseIntTest_WithActions {
         _marketIndex: wbtcMarketIndex,
         _positionSize: int256(1100 * 1e30),
         _avgPrice: 20166.703638888888888888888888882166 * 1e30,
-        _reserveValue: 99 * 1e30,
+        _reserveValue: 165 * 1e30,
         _realizedPnl: 0,
-        _entryBorrowingRate: 24619312482903,
+        _entryBorrowingRate: 41032091620931,
         _lastFundingAccrued: -79999999980,
         _str: "T2: "
       });
@@ -264,9 +276,9 @@ contract TC04_1 is BaseIntTest_WithActions {
         _marketIndex: wbtcMarketIndex,
         _positionSize: int256(1000 * 1e30),
         _avgPrice: 22000.117333333333333333333333326 * 1e30,
-        _reserveValue: 90 * 1e30,
+        _reserveValue: 150 * 1e30,
         _realizedPnl: 0,
-        _entryBorrowingRate: 24619312482903,
+        _entryBorrowingRate: 41032091620931,
         _lastFundingAccrued: -79999999980,
         _str: "T3: "
       });
@@ -354,9 +366,9 @@ contract TC04_1 is BaseIntTest_WithActions {
         _marketIndex: wbtcMarketIndex,
         _positionSize: int256(1100 * 1e30),
         _avgPrice: 21801.921711711711711711711711689890 * 1e30,
-        _reserveValue: 99 * 1e30,
+        _reserveValue: 165 * 1e30,
         _realizedPnl: 0,
-        _entryBorrowingRate: 81489919184653,
+        _entryBorrowingRate: 135824263179369,
         _lastFundingAccrued: -1639,
         _str: "T4: "
       });
@@ -437,7 +449,7 @@ contract TC04_1 is BaseIntTest_WithActions {
         _marketIndex: jpyMarketIndex,
         _positionSize: -int256(1000 * 1e30),
         _avgPrice: 0.007346284855118777380261479200 * 1e30,
-        _reserveValue: 9 * 1e30,
+        _reserveValue: 15 * 1e30,
         _realizedPnl: 0,
         _entryBorrowingRate: 0,
         _lastFundingAccrued: 0,
@@ -524,9 +536,9 @@ contract TC04_1 is BaseIntTest_WithActions {
         _marketIndex: jpyMarketIndex,
         _positionSize: -int256(1100 * 1e30),
         _avgPrice: 0.007352903120867465906419653230 * 1e30,
-        _reserveValue: 9.9 * 1e30,
+        _reserveValue: 16.5 * 1e30,
         _realizedPnl: 0,
-        _entryBorrowingRate: 8124370593224,
+        _entryBorrowingRate: 13541730508752,
         _lastFundingAccrued: 321,
         _str: "T6: "
       });
@@ -611,9 +623,9 @@ contract TC04_1 is BaseIntTest_WithActions {
         _marketIndex: jpyMarketIndex,
         _positionSize: -int256(1000 * 1e30),
         _avgPrice: 0.007419734124775861002906078030 * 1e30,
-        _reserveValue: 9 * 1e30,
+        _reserveValue: 15 * 1e30,
         _realizedPnl: 0,
-        _entryBorrowingRate: 8124370593224,
+        _entryBorrowingRate: 13541730508752,
         _lastFundingAccrued: 321,
         _str: "T7: "
       });
@@ -700,9 +712,9 @@ contract TC04_1 is BaseIntTest_WithActions {
         _marketIndex: jpyMarketIndex,
         _positionSize: -int256(1100 * 1e30),
         _avgPrice: 0.007412992553944980466657186968 * 1e30,
-        _reserveValue: 9.9 * 1e30,
+        _reserveValue: 16.5 * 1e30,
         _realizedPnl: 0,
-        _entryBorrowingRate: 25185548838996,
+        _entryBorrowingRate: 41979364291901,
         _lastFundingAccrued: 1639,
         _str: "T8: "
       });

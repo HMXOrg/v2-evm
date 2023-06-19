@@ -80,6 +80,8 @@ interface IVaultStorage {
 
   function setStrategyAllowance(address _token, address _strategy, address _target) external;
 
+  function setStrategyFunctionSigAllowance(address _token, address _strategy, bytes4 _target) external;
+
   function globalBorrowingFeeDebt() external returns (uint256);
 
   function globalLossDebt() external returns (uint256);

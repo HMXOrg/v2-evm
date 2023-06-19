@@ -190,6 +190,17 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
       vaultStorage.setStrategyAllowance(address(sglp), address(convertedGlpStrategy), address(rewardRouter));
 
+      vaultStorage.setStrategyFunctionSigAllowance(
+        address(sglp),
+        address(stakedGlpStrategy),
+        IGmxRewardTracker.claim.selector
+      );
+      vaultStorage.setStrategyFunctionSigAllowance(
+        address(sglp),
+        address(convertedGlpStrategy),
+        IGmxRewardRouterV2.unstakeAndRedeemGlp.selector
+      );
+
       perpStorage.setServiceExecutors(address(liquidityService), true);
     }
 

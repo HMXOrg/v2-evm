@@ -8,6 +8,12 @@ import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
+// GMX
+import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
+import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
+import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
+
 contract ConvertedGlpStrategy_ConvertCollateral is GlpStrategy_Base {
   uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
 
@@ -31,6 +37,12 @@ contract ConvertedGlpStrategy_ConvertCollateral is GlpStrategy_Base {
 
     assertEq(glpStakeAmount, sglpAmount, "glp stake amount");
     assertEq(fglpStakeAmount, sglpAmount, "fglp stake amount");
+
+    vaultStorage.setStrategyFunctionSigAllowance(
+      address(sglp),
+      address(convertedGlpStrategy),
+      IGmxRewardRouterV2.unstakeAndRedeemGlp.selector
+    );
 
     vm.prank(ALICE);
     uint256 amountOut = crossMarginHandler.convertSGlpCollateral(0, usdcAddress, sglpAmount, 0);

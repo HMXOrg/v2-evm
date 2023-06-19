@@ -30,7 +30,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
    */
   event LogSetLiquidityService(address oldValue, address newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
-  event LogMaxExecutionChunk(uint256 oldValue, uint256 newValue);
+  event LogSetMaxExecutionChunk(uint256 oldValue, uint256 newValue);
   event LogSetPyth(address oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogCreateAddLiquidityOrder(
@@ -578,7 +578,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @notice setMaxExecutionChunk
   /// @param _maxExecutionChunk maximum check sizes when execute orders
   function setMaxExecutionChunk(uint256 _maxExecutionChunk) external nonReentrant onlyOwner {
-    emit LogMaxExecutionChunk(maxExecutionChunk, _maxExecutionChunk);
+    emit LogSetMaxExecutionChunk(maxExecutionChunk, _maxExecutionChunk);
     maxExecutionChunk = _maxExecutionChunk;
   }
 

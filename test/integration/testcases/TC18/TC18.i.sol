@@ -107,10 +107,42 @@ contract TC18 is BaseIntTest_WithActions {
     // ### Scenario: Alice trade on APPLE's market, and profit reached to reserve
     // When Alice sell APPLE 3,000 USD
     marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    {
+      // Then Alice's APPLE position should be corrected
+      assertPositionInfoOf({
+        _subAccount: _aliceSubAccount0,
+        _marketIndex: appleMarketIndex,
+        _positionSize: int256(-3000 * 1e30),
+        _avgPrice: 151.99442031409855 * 1e30,
+        _reserveValue: 1_350 * 1e30,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _lastFundingAccrued: 0
+      });
+    }
 
     skip(15);
-    // And APPLE's price dump to 136.8 USD (reached to max reserve)
+    // And APPLE's price dump to 70 USD (reached to max reserve)
     // updatePriceData[1] = _createPriceFeedUpdateData(appleAssetId, 136.8 * 1e8, 0);
+    tickPrices[5] = 42487; // APPL tick price $70
+    // And Alice sell more position at APPLE 3,000 USD
+    marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);
+    {
+      // This should be reverted as it reached to max reserve, Alice only allow to close position.
+      // However, the revert is catched by the limit handler, hence Alice's position should not be altered.
+      assertPositionInfoOf({
+        _subAccount: _aliceSubAccount0,
+        _marketIndex: appleMarketIndex,
+        _positionSize: int256(-3000 * 1e30),
+        _avgPrice: 151.99442031409855 * 1e30,
+        _reserveValue: 1_350 * 1e30,
+        _realizedPnl: 0,
+        _entryBorrowingRate: 0,
+        _lastFundingAccrued: 0
+      });
+    }
+
+    // APPLE's price rebound to $136.8
     tickPrices[5] = 49187; // APPL tick price $136.8
     // And Alice sell more position at APPLE 3,000 USD
     marketSell(ALICE, 0, appleMarketIndex, 3000 * 1e30, address(wbtc), tickPrices, publishTimeDiff, block.timestamp);

@@ -26,7 +26,7 @@ Services form the core business logic of the protocol. They handle the processin
 Storages are responsible for storing critical states and data of the protocol.
 
 ## License
-The primary license for HMXv2 is the Business Source License 1.1 (`BUSL-1.1`), see LICENSE. Minus the following exceptions:
+The primary license for HMXv2 is the Business Source License 1.1 (`BUSL-1.1`), see [https://github.com/hmx/v2-evm/blob/main/LICENSE](LICENSE). Minus the following exceptions:
 - `Interfaces` are published under MIT
 - Any files state `MIT`
 Each of these contracts states their license type.

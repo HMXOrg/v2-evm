@@ -5,7 +5,7 @@ import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "
 import { getConfig } from "../../utils/config";
 
 const config = getConfig();
-const minimumPositionSize = ethers.utils.parseUnits("10", 30);
+const minimumPositionSize = 10;
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];

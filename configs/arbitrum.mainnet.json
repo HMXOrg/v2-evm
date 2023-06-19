@@ -45,7 +45,7 @@
     }
   },
   "strategies": {
-    "stakedGLPStrategy": "",
+    "stakedGlpStrategy": "",
     "convertedGlpStrategy": ""
   },
   "hooks": {

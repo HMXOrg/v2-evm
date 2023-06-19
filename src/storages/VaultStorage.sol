@@ -37,7 +37,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   mapping(address => uint256) public hlpLiquidity; // token => HLPTokenAmount
   mapping(address => uint256) public protocolFees; // protocol fee in token unit
 
-  uint256 public hlpLiquidityDebtUSDE30; // USD dept accounting when fundingFee is not enough to repay to trader
+  uint256 public hlpLiquidityDebtUSDE30; // USD debt accounting when fundingFee is not enough to repay to trader
   mapping(address => uint256) public fundingFeeReserve; // sum of realized funding fee amount
 
   mapping(address => uint256) public devFees;

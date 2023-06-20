@@ -50,6 +50,36 @@ const inputs = [
     pythPriceId: ethers.utils.formatBytes32String("XAU"),
     inverse: false,
   },
+  {
+    assetId: ethers.utils.formatBytes32String("AMZN"),
+    pythPriceId: ethers.utils.formatBytes32String("AMZN"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("NVDA"),
+    pythPriceId: ethers.utils.formatBytes32String("NVDA"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("MSFT"),
+    pythPriceId: ethers.utils.formatBytes32String("MSFT"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("TSLA"),
+    pythPriceId: ethers.utils.formatBytes32String("TSLA"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("EUR"),
+    pythPriceId: ethers.utils.formatBytes32String("EUR"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("XAG"),
+    pythPriceId: ethers.utils.formatBytes32String("XAG"),
+    inverse: false,
+  },
 ];
 
 async function main() {

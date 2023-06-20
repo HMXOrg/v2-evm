@@ -7,7 +7,7 @@ import { getConfig } from "../../utils/config";
 const config = getConfig();
 
 const liquidityConfig = {
-  depositFeeRateBPS: 30, // 0.3%
+  depositFeeRateBPS: 0, // 0%
   withdrawFeeRateBPS: 30, // 0.3%
   maxHLPUtilizationBPS: 8000, // 80%
   hlpTotalTokenWeight: 0, // DEFAULT

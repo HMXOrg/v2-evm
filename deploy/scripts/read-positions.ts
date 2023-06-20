@@ -36,7 +36,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         true,
         marketSkew,
         position.positionSizeE30.mul(-1),
-        ethers.utils.parseUnits("300000000", 30),
+        ethers.utils.parseUnits("1000000000", 30),
         0,
         blockTag
       )

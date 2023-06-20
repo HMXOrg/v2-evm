@@ -39,7 +39,8 @@ export async function getUpdatePriceData(
   signer: SignerWithAddress,
   priceUpdates: number[],
   publishTimeDiff: number[],
-  useRealPrices: boolean
+  useRealPrices: boolean,
+  priceIds: string[]
 ): Promise<[string[], string[]]> {
   if (useRealPrices) {
     // https://xc-mainnet.pyth.network
@@ -48,17 +49,7 @@ export async function getUpdatePriceData(
       logger: console,
     });
 
-    const prices = await connection.getLatestPriceFeeds([
-      wethPriceId,
-      wbtcPriceId,
-      usdcPriceId,
-      usdtPriceId,
-      daiPriceId,
-      applePriceId,
-      jpyPriceId,
-      glpPriceId,
-      xauPriceId,
-    ]);
+    const prices = await connection.getLatestPriceFeeds(priceIds);
     priceUpdates = prices!.map((each) => {
       const rawPrice = Number(each.getPriceUnchecked().price);
       const expo = Number(each.getPriceUnchecked().expo);

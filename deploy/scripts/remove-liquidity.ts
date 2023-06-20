@@ -15,13 +15,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const allowance = await hlp.allowance(deployer.address, liquidityHandler.address);
   if (allowance.eq(0)) await (await hlp.approve(liquidityHandler.address, ethers.constants.MaxUint256)).wait();
 
-  const executionFee = await liquidityHandler.executionOrderFee();
+  const executionFee = await liquidityHandler.minExecutionOrderFee();
   console.log(`Execution Fee: ${executionFee}`);
   console.log(`Creating Remove Liquidity Order...`);
   await (
     await liquidityHandler.createRemoveLiquidityOrder(
       config.tokens.usdc,
-      ethers.utils.parseUnits("400", 18),
+      ethers.utils.parseUnits("10000", 18),
       0,
       executionFee,
       false,

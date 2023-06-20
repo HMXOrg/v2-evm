@@ -29,12 +29,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       deployer.address,
       subAccountId, // subAccountId
       marketIndex, // marketIndex
-      ethers.utils.parseUnits("1", 30), // sizeDelta
+      ethers.utils.parseUnits("10000", 30), // sizeDelta
       ethers.utils.parseUnits("0", 30), // triggerPrice
-      ethers.utils.parseUnits("123123123", 30), // acceptablePrice
+      ethers.utils.parseUnits("123123123123", 30), // acceptablePrice
       true, // triggerAboveThreshold
       executionFee,
-      true, // reduceOnly (true to not flip position)
+      false, // reduceOnly (true to not flip position)
       config.tokens.usdc, // tpToken
       { value: executionFee }
     )

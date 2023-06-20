@@ -61,6 +61,42 @@ const assetConfigs = [
     trustPriceAge: 60 * 60 * 24 * 3, // 3 days
     adapter: config.oracles.pythAdapter,
   },
+  {
+    assetId: ethers.utils.formatBytes32String("AMZN"),
+    confidenceThreshold: 0,
+    trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+    adapter: config.oracles.pythAdapter,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("NVDA"),
+    confidenceThreshold: 0,
+    trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+    adapter: config.oracles.pythAdapter,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("MSFT"),
+    confidenceThreshold: 0,
+    trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+    adapter: config.oracles.pythAdapter,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("TSLA"),
+    confidenceThreshold: 0,
+    trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+    adapter: config.oracles.pythAdapter,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("EUR"),
+    confidenceThreshold: 0,
+    trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+    adapter: config.oracles.pythAdapter,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("XAG"),
+    confidenceThreshold: 0,
+    trustPriceAge: 60 * 60 * 24 * 3, // 3 days
+    adapter: config.oracles.pythAdapter,
+  },
 ];
 
 async function main() {

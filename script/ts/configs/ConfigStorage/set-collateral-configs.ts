@@ -10,7 +10,7 @@ const inputs = [
   {
     assetId: ethers.utils.formatBytes32String("ETH"),
     collateralConfig: {
-      collateralFactorBPS: 0.8 * BPS,
+      collateralFactorBPS: 0.85 * BPS,
       accepted: true,
       settleStrategy: ethers.constants.AddressZero,
     },
@@ -18,7 +18,7 @@ const inputs = [
   {
     assetId: ethers.utils.formatBytes32String("BTC"),
     collateralConfig: {
-      collateralFactorBPS: 0.8 * BPS,
+      collateralFactorBPS: 0.85 * BPS,
       accepted: true,
       settleStrategy: ethers.constants.AddressZero,
     },

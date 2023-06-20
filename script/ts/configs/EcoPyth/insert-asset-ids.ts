@@ -14,8 +14,12 @@ const assertIds = [
   ethers.utils.formatBytes32String("DAI"),
   ethers.utils.formatBytes32String("AAPL"),
   ethers.utils.formatBytes32String("JPY"),
-  ethers.utils.formatBytes32String("GLP"),
   ethers.utils.formatBytes32String("XAU"),
+  ethers.utils.formatBytes32String("AMZN"),
+  ethers.utils.formatBytes32String("MSFT"),
+  ethers.utils.formatBytes32String("TSLA"),
+  ethers.utils.formatBytes32String("EUR"),
+  ethers.utils.formatBytes32String("XAG"),
 ];
 
 async function main() {

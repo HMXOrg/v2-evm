@@ -7,9 +7,9 @@ import { getConfig } from "../../utils/config";
 const config = getConfig();
 const tradingConfig = {
   fundingInterval: 1, // second
-  devFeeRateBPS: 1500, // 15%
+  devFeeRateBPS: 1000, // 10%
   minProfitDuration: 15, // second
-  maxPosition: 10,
+  maxPosition: 10, // 10 positions per sub-account max
 };
 
 async function main() {

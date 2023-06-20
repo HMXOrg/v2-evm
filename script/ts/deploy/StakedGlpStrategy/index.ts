@@ -5,8 +5,7 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const keeper = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
-const treasury = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
+const treasury = "0xcf0D151f84dCa261b1d201b04cDe24227Aa181F6";
 const strategyBPS = 1000; // 10%
 
 async function main() {
@@ -30,7 +29,7 @@ async function main() {
   console.log(`Deploying StakedGlpStrategy Contract`);
   console.log(`Deployed at: ${contract.address}`);
 
-  config.strategies.stakedGLPStrategy = contract.address;
+  config.strategies.stakedGlpStrategy = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({

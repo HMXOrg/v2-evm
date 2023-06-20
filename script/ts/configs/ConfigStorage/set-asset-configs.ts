@@ -57,7 +57,7 @@ const inputs = [
       assetId: ethers.utils.formatBytes32String("GLP"),
       tokenAddress: config.tokens.sglp,
       decimals: 18,
-      isStableCoin: true,
+      isStableCoin: false,
     },
   },
 ];

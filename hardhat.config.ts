@@ -24,7 +24,7 @@ const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   networks: {
     tenderly: {
-      url: process.env.POLYGON_TENDERLY_RPC || "",
+      url: process.env.TENDERLY_RPC || "",
       accounts:
         process.env.MAINNET_PRIVATE_KEY !== undefined
           ? [process.env.MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]

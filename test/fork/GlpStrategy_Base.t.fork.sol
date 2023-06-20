@@ -48,7 +48,7 @@ import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC2
 //tester
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 //deployment
-import { Deployment } from "@hmx-script/Deployment.s.sol";
+import { Deployment } from "@hmx-script/foundry/Deployment.s.sol";
 
 // Mock
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";

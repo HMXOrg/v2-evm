@@ -1,57 +1,63 @@
 {
   "storages": {
-    "config": "0x5b48F183Aa7ca49bfc5CEb1dF7a82104C04D2Eaa",
-    "perp": "0xBD20b23217c1D797Ea496B22985EAF5767d23280",
-    "vault": "0xCaC59822ccC488c4cD1e27216a02b498d746Cd7c"
+    "config": "0x8923A5e874E4C614f28cb7814D22B65C934f4401",
+    "perp": "0x5a820DCAF28522Bc7a655Ef72687D16B732C27DC",
+    "vault": "0x2171b665B37f3be45b4BEB740728EbF5B8CC6709"
   },
   "handlers": {
-    "bot": "0x52e274a0A8C77c13d54bc75699b054E61Cb9aCa3",
-    "crossMargin": "0xef9F92108a99909D999c1333d8B72C9e83CB4b2A",
-    "limitTrade": "0x0C265F1201828d4A89ae1DbEb9b77C2Fab96Bb18",
-    "liquidity": "0x87e9442e62B4a95B2a22D96107252026030B6764"
+    "bot": "0xe0cb00Ed6f01226763e74f3f617F952f99643eC7",
+    "crossMargin": "0xF4573e1354ee94eBB5B5C1C2Ae9A8Fa6fF4203dF",
+    "limitTrade": "0x43C3f523d6D17a99A2E59A997dfe059b7a5a95e2",
+    "liquidity": "0x42A460211d20EbCaA6982AE5f4b602dCB9973B1c"
   },
   "helpers": {
-    "trade": "0xBF032651226C5CDe38eF540aA0dE9D35012541bc"
+    "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a"
   },
   "services": {
-    "crossMargin": "0x036c97d8B6670e9A5a8F20735487C60A409E7aF2",
-    "liquidity": "0xA47cEb816ad3c18d423566ad5495dA4D0f24dE60",
-    "liquidation": "0x4CFe91835d4A30543Ef10E4c2C59BDEffcf39650",
-    "trade": "0x4369107370D63f3B7b8915D5923ac6e3910c63E8"
+    "crossMargin": "0x932BDbdd8Ea527f1531DCf36b6e10c4138006A14",
+    "liquidity": "0x686fA9AA62A8571Be022ba72f93Da83D8b9814e5",
+    "liquidation": "0x7e7923f809345A919f28cA1dE5a5B375b3B1874b",
+    "trade": "0x937DbD8bB0E155D4c3773dE366E4ae9f421411e2"
   },
   "oracles": {
-    "ecoPyth": "0x0b7160BAD5ec8Ac742Ca1AB4f8698c735BC29bAc",
-    "pythAdapter": "0x278BF9953B43bA5495fDA25027e6d358dE850078",
+    "ecoPyth": "0xBaDB27718087B8d2D490479515E6222D9A20CDf4",
+    "pythAdapter": "0x9b95A42832aBa0D96AD40F8B6CcC4404924C51c8",
     "sglpStakedAdapter": "",
-    "middleware": "0xa42d21F2a0F7288Ede66cdd26Dde148971383bae"
+    "middleware": "0x8146fcc39216c1733C7d075398F5F791729Cfb91",
+    "ecoPythCalldataBuilder": "0x5B7087C23b72e6B8b117EFe8C4A082b450Ab1eE8"
   },
   "tokens": {
-    "hlp": "0x5bF27147c4E57698DFF626DB6065a23C7f42A48F",
+    "hlp": "0x83CC3519fA8F501Cd0C325f4F5e34Ac0B67c22fE",
     "weth": "0xBbCcDa8F9eb6DCb293c63C34055C17a12e3e71E2",
     "wbtc": "0x239088Eb1d4c581A0Afc611651Eb5039053EDBFB",
     "usdt": "0x38C9767ed6fb3FDD81a73af1CCFe233197905434",
     "usdc": "0x38934bDf2462768388829194fD40a43eD9916B4C",
     "dai": "0xaFefd85e3803CeD051200867eAAf1AA1BbDcBE16",
-    "sglp": "0x3eDd3F503688f258D8dEC86d6f2D3236D4492245"
+    "sglp": "0x3eDd3F503688f258D8dEC86d6f2D3236D4492245",
+    "traderLoyaltyCredit": "0x362c3EFD05D199D290083e475F7f63aF424acF08"
   },
   "yieldSources": {
     "gmx": {
-      "glpManager": "",
-      "rewardRouterV2": "",
-      "rewardTracker": ""
+      "glpManager": "0x3963FfC9dff443c2A94f21b129D429891E32ec18",
+      "rewardRouterV2": "0xB95DB5B167D75e6d04227CfFFA61069348d271F5",
+      "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6"
     }
   },
   "strategies": {
     "stakedGlpStrategy": "",
-    "convertedGlpStrategy": "0x2C3bEd3dCAF84343Dfe03266d4f91180896439DD"
+    "convertedGlpStrategy": "0xE0DF60d32011b139B86D03347184A92158BdDCdE"
   },
   "hooks": {
-    "tradingStaking": "0x23FB1e4Fc1e1A32cBA6d97e2A92B883B26915cb7",
-    "tlc": "0xbe9c4A1dB8Aba74F5dB49fbe17c75d6133d08BA5"
+    "tradingStaking": "0xf95F018F17e05E68262E69A070d106B63Ce55317",
+    "tlc": "0x85da4D806D53120AF8f3Bd2D328549851Da49617"
   },
-  "calculator": "0x6414b8534a0e8AF4683BcED843c300Bb3C6C6C3a",
+  "calculator": "0xf96b8cd6619E22A63E91960e8827B74256c913Ef",
   "accountAbstraction": {
     "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
     "factory": "0x2dC02905A19879Be641f050a9659C47725E5d500"
+  },
+  "staking": {
+    "trading": "0x3D0Ff2Dc469DB700656d55F384758C1209BFa16A",
+    "tlc": "0xD04d22f868316B510F924ee6749aABf2ef3E1ACD"
   }
 }

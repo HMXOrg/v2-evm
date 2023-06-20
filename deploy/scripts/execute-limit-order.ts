@@ -40,7 +40,7 @@ const publishTimeDiff = [
 
 const mainAccount = "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a";
 const subAccountId = 0;
-const orderIndex = 5;
+const orderIndex = 17;
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const deployer = (await ethers.getSigners())[0];
@@ -56,10 +56,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("Execute Limit Order...");
   await (
-    await handler.executeOrder(
-      mainAccount,
-      subAccountId,
-      orderIndex,
+    await handler.executeOrders(
+      [mainAccount],
+      [subAccountId],
+      [orderIndex],
       deployer.address,
       priceUpdateData,
       publishTimeDiffUpdateData,

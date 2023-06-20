@@ -18,7 +18,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
   const oracleMiddleware = OracleMiddleware__factory.connect(config.oracles.middleware, deployer);
   const calculator = Calculator__factory.connect(config.calculator, deployer);
+  console.log(await calculator.getFundingRateVelocity(0));
   const positions = await perpStorage.getActivePositions(100, 0);
+  console.log(positions);
   let totalPnL = BigNumber.from(0);
   let markets = [BigNumber.from(0), BigNumber.from(0), BigNumber.from(0), BigNumber.from(0)];
   // const blockTag = { blockTag: 23205839 };
@@ -34,7 +36,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         true,
         marketSkew,
         position.positionSizeE30.mul(-1),
-        ethers.utils.parseUnits("300000000", 30),
+        ethers.utils.parseUnits("1000000000", 30),
         0,
         blockTag
       )

@@ -24,7 +24,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
       maxProfitRateBPS: 90000, // 900%
-      minLeverageBPS: 11000, // 110%
       assetClass: commoditiesAssetClass,
       allowIncreasePosition: true,
       active: true,

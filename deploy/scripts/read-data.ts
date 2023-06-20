@@ -21,6 +21,7 @@ const subAccountId = 0;
 const formatUnits = ethers.utils.formatUnits;
 const parseUnits = ethers.utils.parseUnits;
 const ONE_USD = parseUnits("1", 30);
+const WeiPerEther = parseUnits("1", 18);
 
 const ethAssetId = ethers.utils.formatBytes32String("ETH");
 const wbtcAssetId = ethers.utils.formatBytes32String("BTC");
@@ -276,6 +277,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       function: "markets",
       args: [3],
     },
+    {
+      interface: PerpStorage__factory.abi,
+      target: config.storages.perp,
+      function: "markets",
+      args: [4],
+    },
     // Positions
     {
       interface: PerpStorage__factory.abi,
@@ -307,6 +314,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       target: config.storages.config,
       function: "marketConfigs",
       args: [3],
+    },
+    {
+      interface: ConfigStorage__factory.abi,
+      target: config.storages.config,
+      function: "marketConfigs",
+      args: [4],
     },
   ];
   const [
@@ -343,11 +356,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       btcusdMarket,
       applusdMarket,
       jpyusdMarket,
+      xauusdMarket,
       positions,
       ethusdMarketConfig,
       btcusdMarketConfig,
       applusdMarketConfig,
       jpyusdMarketConfig,
+      xauusdMarketConfig,
     ],
   ] = await multi.multiCall(inputs);
 
@@ -569,21 +584,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   ];
   const [, [tradingFeeDebt, borrowingFeeDebt, fundingFeeDebt, lossDebt]] = await multi.multiCall(accountDebtRequests);
 
-  console.log("=== Prices ===");
-  console.log(formatUnits(usdcPrice._price, 30));
-  console.log(formatUnits(usdtPrice?._price, 30));
-  console.log(formatUnits(daiPrice?._price, 30));
-  console.log(formatUnits(wethPrice?._price, 30));
-  console.log(formatUnits(wbtcPrice?._price, 30));
-  console.log(formatUnits(applePrice?._price, 30));
-  console.log(formatUnits(jpyPrice?._price, 30));
-  console.log(formatUnits(sglpPrice?._price, 30));
-  console.log("=== Adaptive Prices ===");
+  // console.log("=== Prices ===");
+  // console.log(formatUnits(usdcPrice._price, 30));
+  // console.log(formatUnits(usdtPrice?._price, 30));
+  // console.log(formatUnits(daiPrice?._price, 30));
+  // console.log(formatUnits(wethPrice?._price, 30));
+  // console.log(formatUnits(wbtcPrice?._price, 30));
+  // console.log(formatUnits(applePrice?._price, 30));
+  // console.log(formatUnits(jpyPrice?._price, 30));
+  // console.log(formatUnits(sglpPrice?._price, 30));
+  // console.log("=== Adaptive Prices ===");
 
-  console.log(formatUnits(ethusdAdaptivePrice._adaptivePrice, 30));
-  console.log(formatUnits(btcusdAdaptivePrice._adaptivePrice, 30));
-  console.log(formatUnits(applusdAdaptivePrice._adaptivePrice, 30));
-  console.log(formatUnits(jpyusdAdaptivePrice._adaptivePrice, 30));
+  // console.log(formatUnits(ethusdAdaptivePrice?._adaptivePrice, 30));
+  // console.log(formatUnits(btcusdAdaptivePrice?._adaptivePrice, 30));
+  // console.log(formatUnits(applusdAdaptivePrice?._adaptivePrice, 30));
+  // console.log(formatUnits(jpyusdAdaptivePrice?._adaptivePrice, 30));
   console.log("=== Cross Margin Account ===");
   console.table({
     equity: formatUnits(equity, 30),
@@ -663,6 +678,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     ETHUSD: {
       longPositionSize: formatUnits(ethusdMarket.longPositionSize, 30),
       shortPositionSize: formatUnits(ethusdMarket.shortPositionSize, 30),
+      currentFundingRate: formatUnits(ethusdMarket.currentFundingRate, 18),
+      fundingAccrued: formatUnits(ethusdMarket.fundingAccrued, 18),
     },
     BTCUSD: {
       longPositionSize: formatUnits(btcusdMarket.longPositionSize, 30),
@@ -678,7 +695,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
   });
 
-  const markets = [ethusdMarket, btcusdMarket, applusdMarket, jpyusdMarket];
+  const markets = [ethusdMarket, btcusdMarket, applusdMarket, jpyusdMarket, xauusdMarket];
   const [rawEthPrice, rawBtcPrice, rawUsdcPrice, rawUsdtPrice, rawDaiPrice, rawAAHLPrice, rawJpyPrice] =
     await getPricesFromPyth();
   const oraclePrices = [rawEthPrice, rawBtcPrice, rawAAHLPrice, rawJpyPrice];
@@ -732,12 +749,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       args: [3],
     },
   ];
-  const [, nextFundingRates] = await multi.multiCall(nextFundingRateInputs);
+  const [, fundingRateVelocities] = await multi.multiCall(nextFundingRateInputs);
+  console.log("fundingRateVelocities", fundingRateVelocities);
 
   console.log("=== Positions ===");
   console.table(
     positions.map((each) => {
       const marketIndex = each.marketIndex.toNumber();
+      const market = markets[marketIndex];
       const closePrice = calculateAdaptivePrice(
         markets[marketIndex].longPositionSize.sub(markets[marketIndex].shortPositionSize),
         marketConfigs[marketIndex].fundingRate.maxSkewScaleUSD,
@@ -751,12 +770,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         .mul(each.reserveValueE30)
         .div(parseUnits("1", 18));
 
-      const fundingFee = markets[marketIndex].currentFundingRate
-        .add(nextFundingRates[marketIndex])
-        .sub(each.lastFundingAccrued)
-        .mul(each.positionSizeE30.abs())
-        .div(parseUnits("1", 18))
-        .mul(each.positionSizeE30.gt(0) ? -1 : 1);
+      const timestamp = BigNumber.from(Math.floor(new Date().valueOf() / 1000));
+      const proportionalElapsedInDay = _proportionalElapsedInDay(timestamp, markets[marketIndex].lastFundingTime);
+      const fundingRateVelocity = fundingRateVelocities[marketIndex];
+      const currentFundingRate = markets[marketIndex].currentFundingRate;
+      const nextFundingRate = currentFundingRate.add(
+        fundingRateVelocity.mul(proportionalElapsedInDay).div(WeiPerEther)
+      );
+      console.log("nextFundingRate", nextFundingRate);
+      const lastFundingAccrued = market.fundingAccrued;
+      const fundingAccrued = lastFundingAccrued.add(
+        currentFundingRate.add(nextFundingRate).mul(proportionalElapsedInDay).div(2).div(WeiPerEther)
+      );
+      const fundingFee = fundingAccrued.sub(each.lastFundingAccrued).mul(each.positionSizeE30).div(WeiPerEther);
       return {
         exposure: each.positionSizeE30.gt(0) ? "LONG" : "SHORT",
         size: formatUnits(each.positionSizeE30, 30),
@@ -787,10 +813,6 @@ function calculateAdaptivePrice(
   sizeDelta: BigNumber,
   price: BigNumber
 ): BigNumber {
-  console.log("marketSkew", marketSkew);
-  console.log("maxSkewScaleUSD", maxSkewScaleUSD);
-  console.log("sizeDelta", sizeDelta);
-  console.log("price", price);
   const premium = marketSkew.mul(ONE_USD).div(maxSkewScaleUSD);
   const premiumAfter = marketSkew.add(sizeDelta).mul(ONE_USD).div(maxSkewScaleUSD);
   const premiumMedian = premium.add(premiumAfter).div(2);
@@ -799,6 +821,12 @@ function calculateAdaptivePrice(
 
 function getPnL(closePrice: BigNumber, averagePrice: BigNumber, size: BigNumber): BigNumber {
   return closePrice.sub(averagePrice).mul(size).div(averagePrice);
+}
+
+function _proportionalElapsedInDay(blockTimestamp: BigNumber, lastFundingTime: BigNumber): BigNumber {
+  const secondsInDay = 60 * 60 * 24;
+  const elapsedIntervals = blockTimestamp.sub(lastFundingTime);
+  return elapsedIntervals.mul(WeiPerEther).div(secondsInDay);
 }
 
 export default func;

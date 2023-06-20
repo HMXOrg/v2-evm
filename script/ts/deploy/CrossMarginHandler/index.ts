@@ -5,8 +5,8 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const minExecutionFee = 30;
-const maxExecutionChuck = 100;
+const minExecutionFee = ethers.utils.parseEther("0.0003"); // 0.0003 ether
+const maxExecutionChunk = 100;
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
@@ -16,7 +16,7 @@ async function main() {
     config.services.crossMargin,
     config.oracles.ecoPyth,
     minExecutionFee,
-    maxExecutionChuck,
+    maxExecutionChunk,
   ]);
   await contract.deployed();
   console.log(`Deploying CrossMarginHandler Contract`);

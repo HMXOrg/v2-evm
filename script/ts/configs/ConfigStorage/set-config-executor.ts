@@ -3,7 +3,7 @@ import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "
 import { getConfig } from "../../utils/config";
 
 const config = getConfig();
-const executor = "0x0578C797798Ae89b688Cd5676348344d7d0EC35E";
+const executor = config.handlers.bot;
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];

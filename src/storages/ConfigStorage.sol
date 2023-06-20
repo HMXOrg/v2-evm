@@ -232,6 +232,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
    */
 
   function setConfigExecutor(address _executorAddress, bool _isServiceExecutor) external onlyOwner {
+    if (!_executorAddress.isContract()) revert IConfigStorage_InvalidAddress();
     configExecutors[_executorAddress] = _isServiceExecutor;
     emit LogSetConfigExecutor(_executorAddress, _isServiceExecutor);
   }
@@ -292,7 +293,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     liquidityConfig.enabled = _enabled;
   }
 
-  function setDynamicEnabled(bool _enabled) external onlyWhitelistedExecutor {
+  function setDynamicEnabled(bool _enabled) external onlyOwner {
     liquidityConfig.dynamicFeeEnabled = _enabled;
     emit LogSetDynamicEnabled(_enabled);
   }

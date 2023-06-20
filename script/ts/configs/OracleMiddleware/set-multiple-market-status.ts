@@ -9,22 +9,6 @@ const inputs = [
     assetId: ethers.utils.formatBytes32String("ETH"),
     status: 2,
   },
-  {
-    assetId: ethers.utils.formatBytes32String("BTC"),
-    status: 2,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("AAPL"),
-    status: 2,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("JPY"),
-    status: 2,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("XAU"),
-    status: 2,
-  },
 ];
 
 async function main() {

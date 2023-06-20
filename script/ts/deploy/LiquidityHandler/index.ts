@@ -5,8 +5,8 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const minExecutionOrderFee = 30;
-const maxExecutionChuck = 100;
+const minExecutionFee = ethers.utils.parseEther("0.0003"); // 0.0003 ether
+const maxExecutionChunk = 100;
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
@@ -15,8 +15,8 @@ async function main() {
   const contract = await upgrades.deployProxy(Contract, [
     config.services.liquidity,
     config.oracles.ecoPyth,
-    minExecutionOrderFee,
-    maxExecutionChuck,
+    minExecutionFee,
+    maxExecutionChunk,
   ]);
   await contract.deployed();
   console.log(`Deploying LiquidityHandler Contract`);

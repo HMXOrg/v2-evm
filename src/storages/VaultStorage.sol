@@ -9,6 +9,7 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
+import { console2 } from "forge-std/console2.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens
@@ -22,6 +23,12 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
   event LogSetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
   event LogSetStrategyAllowance(address indexed token, address strategy, address prevTarget, address newTarget);
+  event LogSetStrategyFunctionSigAllowance(
+    address indexed token,
+    address strategy,
+    bytes4 prevFunctionSig,
+    bytes4 newFunctionSig
+  );
 
   /**
    * States
@@ -30,7 +37,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   mapping(address => uint256) public hlpLiquidity; // token => HLPTokenAmount
   mapping(address => uint256) public protocolFees; // protocol fee in token unit
 
-  uint256 public hlpLiquidityDebtUSDE30; // USD dept accounting when fundingFee is not enough to repay to trader
+  uint256 public hlpLiquidityDebtUSDE30; // USD debt accounting when fundingFee is not enough to repay to trader
   mapping(address => uint256) public fundingFeeReserve; // sum of realized funding fee amount
 
   mapping(address => uint256) public devFees;
@@ -53,6 +60,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   mapping(address => mapping(address => address)) public strategyAllowances;
   // mapping(service executor address => allow)
   mapping(address => bool) public serviceExecutors;
+  mapping(address token => mapping(address strategy => bytes4 functionSig)) public strategyFunctionSigAllowances;
 
   /**
    * Modifiers
@@ -130,6 +138,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   }
 
   function _setServiceExecutor(address _executorAddress, bool _isServiceExecutor) internal {
+    if (!_executorAddress.isContract()) revert IVaultStorage_InvalidAddress();
     serviceExecutors[_executorAddress] = _isServiceExecutor;
     emit LogSetServiceExecutor(_executorAddress, _isServiceExecutor);
   }
@@ -442,6 +451,20 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     strategyAllowances[_token][_strategy] = _target;
   }
 
+  /// @notice Set the allowed function sig of a strategy for a token
+  /// @param _token The token to set the strategy for
+  /// @param _strategy The strategy to set
+  /// @param _target The target function sig to allow
+  function setStrategyFunctionSigAllowance(address _token, address _strategy, bytes4 _target) external onlyOwner {
+    emit LogSetStrategyFunctionSigAllowance(
+      _token,
+      _strategy,
+      strategyFunctionSigAllowances[_token][_strategy],
+      _target
+    );
+    strategyFunctionSigAllowances[_token][_strategy] = _target;
+  }
+
   function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
     // If the _res length is less than 68, then the transaction failed silently (without a revert message)
     if (_returnData.length < 68) return "Transaction reverted silently";
@@ -460,6 +483,10 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     // Check
     // 1. Only strategy for specific token can call this function
     if (strategyAllowances[_token][msg.sender] != _target) revert IVaultStorage_Forbidden();
+
+    // Only whitelisted function sig can be performed by the strategy
+    bytes4 functionSig = bytes4(_callData[:4]);
+    if (strategyFunctionSigAllowances[_token][msg.sender] != functionSig) revert IVaultStorage_Forbidden();
 
     // 2. Execute the call as what the strategy wants
     (bool _success, bytes memory _returnData) = _target.call(_callData);

@@ -53,8 +53,11 @@ contract TradingStakingHook is ITradeServiceHook, OwnableUpgradeable {
   ) external onlyTradeService {
     ITradingStaking ts = ITradingStaking(tradingStaking);
     uint256 amountToWithdraw = _sizeDelta / 1e12;
-    if (ts.getUserTokenAmount(_marketIndex, _primaryAccount) >= amountToWithdraw) {
+    uint256 userTokenAmount = ts.getUserTokenAmount(_marketIndex, _primaryAccount);
+    if (userTokenAmount >= amountToWithdraw) {
       ts.withdraw(_primaryAccount, _marketIndex, amountToWithdraw);
+    } else {
+      ts.withdraw(_primaryAccount, _marketIndex, userTokenAmount);
     }
   }
 

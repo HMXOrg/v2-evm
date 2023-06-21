@@ -12,7 +12,6 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
-import { console2 } from "forge-std/console2.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens

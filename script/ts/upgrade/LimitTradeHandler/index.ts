@@ -14,11 +14,15 @@ async function main() {
   const TARGET_ADDRESS = config.handlers.limitTrade;
 
   console.log(`> Preparing to upgrade LimitTradeHandler`);
-  const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);
+  const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract, {
+    unsafeAllow: ["delegatecall"],
+  });
   console.log(`> Done`);
 
   console.log(`> New LimitTradeHandler Implementation address: ${newImplementation}`);
-  const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract);
+  const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract, {
+    unsafeAllow: ["delegatecall"],
+  });
   console.log(`> ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
   console.log(`> Waiting for tx to be mined...`);
   await upgradeTx.deployTransaction.wait(3);

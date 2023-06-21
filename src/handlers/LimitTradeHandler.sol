@@ -623,100 +623,121 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     );
 
     // Execute the order
-    if (vars.sizeDelta > 0) {
-      // BUY
-      if (vars.isNewPosition || vars.positionIsLong) {
-        // New position and Long position
-        // just increase position when BUY
-        _tradeService.increasePosition({
-          _primaryAccount: vars.order.account,
+    if (vars.order.reduceOnly) {
+      bool isCloseLong = (vars.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
+      bool isCloseShort = (vars.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
+      bool isClosePosition = !vars.isNewPosition && (isCloseLong || isCloseShort);
+      if (isClosePosition) {
+        _tradeService.decreasePosition({
+          _account: vars.order.account,
           _subAccountId: vars.order.subAccountId,
           _marketIndex: vars.order.marketIndex,
-          _sizeDelta: vars.sizeDelta,
+          _positionSizeE30ToDecrease: HMXLib.min(
+            HMXLib.abs(vars.sizeDelta),
+            HMXLib.abs(_existingPosition.positionSizeE30)
+          ),
+          _tpToken: vars.order.tpToken,
           _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
         });
-      } else if (!vars.positionIsLong) {
-        bool _flipSide = !vars.order.reduceOnly && vars.sizeDelta > (-_existingPosition.positionSizeE30);
-        if (_flipSide) {
-          // Flip the position
-          // Fully close Short position
-          _tradeService.decreasePosition({
-            _account: vars.order.account,
-            _subAccountId: vars.order.subAccountId,
-            _marketIndex: vars.order.marketIndex,
-            _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
-            _tpToken: vars.order.tpToken,
-            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
-          });
-          // Flip it to Long position
-          _tradeService.increasePosition({
-            _primaryAccount: vars.order.account,
-            _subAccountId: vars.order.subAccountId,
-            _marketIndex: vars.order.marketIndex,
-            _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
-            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
-          });
-        } else {
-          // Not flip
-          _tradeService.decreasePosition({
-            _account: vars.order.account,
-            _subAccountId: vars.order.subAccountId,
-            _marketIndex: vars.order.marketIndex,
-            _positionSizeE30ToDecrease: HMXLib.min(
-              uint256(vars.sizeDelta),
-              uint256(-_existingPosition.positionSizeE30)
-            ),
-            _tpToken: vars.order.tpToken,
-            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
-          });
-        }
+      } else {
+        // Do nothing if the size delta is wrong for reduce-only
       }
-    } else if (vars.sizeDelta < 0) {
-      // SELL
-      if (vars.isNewPosition || !vars.positionIsLong) {
-        // New position and Short position
-        // just increase position when SELL
-        _tradeService.increasePosition({
-          _primaryAccount: vars.order.account,
-          _subAccountId: vars.order.subAccountId,
-          _marketIndex: vars.order.marketIndex,
-          _sizeDelta: vars.sizeDelta,
-          _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
-        });
-      } else if (vars.positionIsLong) {
-        bool _flipSide = !vars.order.reduceOnly && (-vars.sizeDelta) > _existingPosition.positionSizeE30;
-        if (_flipSide) {
-          // Flip the position
-          // Fully close Long position
-          _tradeService.decreasePosition({
-            _account: vars.order.account,
-            _subAccountId: vars.order.subAccountId,
-            _marketIndex: vars.order.marketIndex,
-            _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
-            _tpToken: vars.order.tpToken,
-            _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
-          });
-          // Flip it to Short position
+    } else {
+      if (vars.sizeDelta > 0) {
+        // BUY
+        if (vars.isNewPosition || vars.positionIsLong) {
+          // New position and Long position
+          // just increase position when BUY
           _tradeService.increasePosition({
             _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
+            _sizeDelta: vars.sizeDelta,
             _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
-        } else {
-          // Not flip
-          _tradeService.decreasePosition({
-            _account: vars.order.account,
+        } else if (!vars.positionIsLong) {
+          bool _flipSide = !vars.order.reduceOnly && vars.sizeDelta > (-_existingPosition.positionSizeE30);
+          if (_flipSide) {
+            // Flip the position
+            // Fully close Short position
+            _tradeService.decreasePosition({
+              _account: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _positionSizeE30ToDecrease: uint256(-_existingPosition.positionSizeE30),
+              _tpToken: vars.order.tpToken,
+              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            });
+            // Flip it to Long position
+            _tradeService.increasePosition({
+              _primaryAccount: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
+              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            });
+          } else {
+            // Not flip
+            _tradeService.decreasePosition({
+              _account: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _positionSizeE30ToDecrease: HMXLib.min(
+                uint256(vars.sizeDelta),
+                uint256(-_existingPosition.positionSizeE30)
+              ),
+              _tpToken: vars.order.tpToken,
+              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            });
+          }
+        }
+      } else if (vars.sizeDelta < 0) {
+        // SELL
+        if (vars.isNewPosition || !vars.positionIsLong) {
+          // New position and Short position
+          // just increase position when SELL
+          _tradeService.increasePosition({
+            _primaryAccount: vars.order.account,
             _subAccountId: vars.order.subAccountId,
             _marketIndex: vars.order.marketIndex,
-            _positionSizeE30ToDecrease: HMXLib.min(
-              uint256(-vars.sizeDelta),
-              uint256(_existingPosition.positionSizeE30)
-            ),
-            _tpToken: vars.order.tpToken,
+            _sizeDelta: vars.sizeDelta,
             _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
+        } else if (vars.positionIsLong) {
+          bool _flipSide = !vars.order.reduceOnly && (-vars.sizeDelta) > _existingPosition.positionSizeE30;
+          if (_flipSide) {
+            // Flip the position
+            // Fully close Long position
+            _tradeService.decreasePosition({
+              _account: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _positionSizeE30ToDecrease: uint256(_existingPosition.positionSizeE30),
+              _tpToken: vars.order.tpToken,
+              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            });
+            // Flip it to Short position
+            _tradeService.increasePosition({
+              _primaryAccount: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _sizeDelta: vars.sizeDelta + _existingPosition.positionSizeE30,
+              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            });
+          } else {
+            // Not flip
+            _tradeService.decreasePosition({
+              _account: vars.order.account,
+              _subAccountId: vars.order.subAccountId,
+              _marketIndex: vars.order.marketIndex,
+              _positionSizeE30ToDecrease: HMXLib.min(
+                uint256(-vars.sizeDelta),
+                uint256(_existingPosition.positionSizeE30)
+              ),
+              _tpToken: vars.order.tpToken,
+              _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
+            });
+          }
         }
       }
     }

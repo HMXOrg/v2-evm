@@ -891,7 +891,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _acceptablePrice: 1025 * 1e30, // 1000 * (1 + 0.025) = 1025
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
-      _reduceOnly: true,
+      _reduceOnly: false,
       _tpToken: address(weth)
     });
 
@@ -1017,7 +1017,7 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
       _acceptablePrice: 976.95 * 1e30, // 1002 * (1 - 0.025) = 976.95
       _triggerAboveThreshold: true,
       _executionFee: 0.1 ether,
-      _reduceOnly: true,
+      _reduceOnly: false,
       _tpToken: address(weth)
     });
 

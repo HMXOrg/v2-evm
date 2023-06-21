@@ -785,7 +785,7 @@ contract TC02 is BaseIntTest_WithActions {
       _acceptablePrice: 18450 * 1e30, // 18_000 * (1 + 0.025) = 18450
       _triggerAboveThreshold: false,
       _executionFee: executionOrderFee,
-      _reduceOnly: true,
+      _reduceOnly: false,
       _tpToken: address(wbtc)
     });
 
@@ -1241,7 +1241,7 @@ contract TC02 is BaseIntTest_WithActions {
       _acceptablePrice: 20475 * 1e30, // 21_000 * (1 - 0.025) = 20475
       _triggerAboveThreshold: true,
       _executionFee: executionOrderFee,
-      _reduceOnly: true,
+      _reduceOnly: false,
       _tpToken: address(wbtc)
     });
 

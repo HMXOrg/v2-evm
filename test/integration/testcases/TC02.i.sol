@@ -1429,13 +1429,14 @@ contract TC02 is BaseIntTest_WithActions {
 
     // T18: Bob create limit order close short position 3000 USD at price 18,900 USD
     // Order Index: 3
+    // Create wrong order first
     createLimitTradeOrder({
       _account: BOB,
       _subAccountId: 0,
       _marketIndex: wbtcMarketIndex,
-      _sizeDelta: 3000 * 1e30,
+      _sizeDelta: -3000 * 1e30,
       _triggerPrice: 18_900 * 1e30,
-      _acceptablePrice: 19372.5 * 1e30, // 18_900 * (1 + 0.025) = 19372.5
+      _acceptablePrice: 0,
       _triggerAboveThreshold: false,
       _executionFee: executionOrderFee,
       _reduceOnly: true,
@@ -1459,6 +1460,31 @@ contract TC02 is BaseIntTest_WithActions {
       _publishTimeDiffs: publishTimeDiff,
       _minPublishTime: block.timestamp
     });
+
+    // Create the correct order
+    createLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _marketIndex: wbtcMarketIndex,
+      _sizeDelta: 3000 * 1e30,
+      _triggerPrice: 18_900 * 1e30,
+      _acceptablePrice: 19372.5 * 1e30, // 18_900 * (1 + 0.025) = 19372.5
+      _triggerAboveThreshold: false,
+      _executionFee: executionOrderFee,
+      _reduceOnly: true,
+      _tpToken: address(wbtc)
+    });
+    executeLimitTradeOrder({
+      _account: BOB,
+      _subAccountId: 0,
+      _orderIndex: 4,
+      _feeReceiver: payable(FEEVER),
+      _tickPrices: tickPrices,
+      _publishTimeDiffs: publishTimeDiff,
+      _minPublishTime: block.timestamp
+    });
+
+    skip(60);
     {
       // When Limit order index 2 has executed
       // Then Bob fully close Btc short position at price 18,900 USD

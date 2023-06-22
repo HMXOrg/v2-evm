@@ -68,12 +68,6 @@ const assetConfigs = [
     adapter: config.oracles.pythAdapter,
   },
   {
-    assetId: ethers.utils.formatBytes32String("NVDA"),
-    confidenceThreshold: 0,
-    trustPriceAge: 60 * 60 * 24 * 3, // 3 days
-    adapter: config.oracles.pythAdapter,
-  },
-  {
     assetId: ethers.utils.formatBytes32String("MSFT"),
     confidenceThreshold: 0,
     trustPriceAge: 60 * 60 * 24 * 3, // 3 days

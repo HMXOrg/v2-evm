@@ -56,11 +56,6 @@ const inputs = [
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("NVDA"),
-    pythPriceId: ethers.utils.formatBytes32String("NVDA"),
-    inverse: false,
-  },
-  {
     assetId: ethers.utils.formatBytes32String("MSFT"),
     pythPriceId: ethers.utils.formatBytes32String("MSFT"),
     inverse: false,

@@ -6,7 +6,7 @@ const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
 const treasury = "0xcf0D151f84dCa261b1d201b04cDe24227Aa181F6";
-const strategyBPS = 1000; // 10%
+const strategyBPS = 0; // 0%
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];

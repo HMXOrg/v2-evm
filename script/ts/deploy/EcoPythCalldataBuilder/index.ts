@@ -5,10 +5,10 @@ async function main() {
   const config = getConfig();
   const deployer = (await ethers.getSigners())[0];
 
-  const Contract = await ethers.getContractFactory("EcoPythCalldataBuilder", deployer);
-  const contract = await Contract.deploy(config.oracles.ecoPyth);
-  await contract.deployed();
   console.log(`Deploying EcoPythCalldataBuilder Contract`);
+  const Contract = await ethers.getContractFactory("EcoPythCalldataBuilder", deployer);
+  const contract = await Contract.deploy(config.oracles.ecoPyth, config.vendors.gmx.glpManager, config.tokens.sglp);
+  await contract.deployed();
   console.log(`Deployed at: ${contract.address}`);
 
   config.oracles.ecoPythCalldataBuilder = contract.address;

@@ -5,6 +5,7 @@
 pragma solidity 0.8.18;
 
 // deps
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";
 
 // interfaces
@@ -15,12 +16,23 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { SqrtX96Codec } from "@hmx/libraries/SqrtX96Codec.sol";
 import { PythLib } from "@hmx/libraries/PythLib.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
+import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
+
+import { console2 } from "forge-std/console2.sol";
 
 contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
-  IEcoPyth public ecoPyth;
+  bytes32 internal constant GLP_ASSET_ID = 0x474c500000000000000000000000000000000000000000000000000000000000;
 
-  constructor(IEcoPyth ecoPyth_) {
+  IEcoPyth public ecoPyth;
+  IERC20 public sGlp;
+  IGmxGlpManager public glpManager;
+
+  event LogSetMaxGlpPriceDiff(uint32 _prevMaxGlpPriceDiff, uint32 _newMaxGlpPriceDiff);
+
+  constructor(IEcoPyth ecoPyth_, IGmxGlpManager glpManager_, IERC20 sGlp_) {
     ecoPyth = ecoPyth_;
+    sGlp = sGlp_;
+    glpManager = glpManager_;
   }
 
   function isOverMaxDiff(bytes32 _assetId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
@@ -48,7 +60,11 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     _minPublishTime = type(uint256).max;
     for (uint _i = 0; _i < _data.length; ) {
       // Check if price vs last price on EcoPyth is not over max diff
-      require(!isOverMaxDiff(_data[_i].assetId, _data[_i].priceE8, _data[_i].maxDiffBps), "OVER_DIFF");
+      if (_data[_i].assetId != GLP_ASSET_ID) {
+        // If not GLP, then check the diff.
+        // GLP no need to check diff due to the price will be query from GlpManager.
+        require(!isOverMaxDiff(_data[_i].assetId, _data[_i].priceE8, _data[_i].maxDiffBps), "OVER_DIFF");
+      }
 
       // Find the minimum publish time
       if (_data[_i].publishTime < _minPublishTime) {
@@ -64,7 +80,15 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     uint24[] memory _publishTimeDiffs = new uint24[](_data.length);
     for (uint _i = 0; _i < _data.length; ) {
       // Build the price update calldata
-      _ticks[_i] = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(PythLib.convertToUint(_data[_i].priceE8, -8, 18)));
+      if (_data[_i].assetId != GLP_ASSET_ID) {
+        // If data is not GLP, then make tick rightaway.
+        _ticks[_i] = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(PythLib.convertToUint(_data[_i].priceE8, -8, 18)));
+      } else {
+        // If data is GLP, then replace price with the price of GLP on-chain.
+        uint256 _midAum = (glpManager.getAum(true) + glpManager.getAum(false)) / 2e12;
+        uint256 _glpPrice = (1e18 * _midAum) / sGlp.totalSupply();
+        _ticks[_i] = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(_glpPrice));
+      }
       _publishTimeDiffs[_i] = uint24(_data[_i].publishTime - _minPublishTime);
 
       unchecked {

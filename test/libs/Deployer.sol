@@ -96,8 +96,15 @@ library Deployer {
     return IEcoPyth(payable(_proxy));
   }
 
-  function deployEcoPythCalldataBuilder(address _ecoPyth) internal returns (IEcoPythCalldataBuilder) {
-    return IEcoPythCalldataBuilder(deployContractWithArguments("EcoPythCalldataBuilder", abi.encode(_ecoPyth)));
+  function deployEcoPythCalldataBuilder(
+    address _ecoPyth,
+    address _glpManager,
+    address _sGlp
+  ) internal returns (IEcoPythCalldataBuilder) {
+    return
+      IEcoPythCalldataBuilder(
+        deployContractWithArguments("EcoPythCalldataBuilder", abi.encode(_ecoPyth, _sGlp, _glpManager))
+      );
   }
 
   function deployPythAdapter(address _proxyAdmin, address _pyth) internal returns (IPythAdapter) {

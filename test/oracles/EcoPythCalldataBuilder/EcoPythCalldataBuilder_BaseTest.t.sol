@@ -12,7 +12,13 @@ contract EcoPythCalldataBuilder_BaseTest is BaseTest {
   IEcoPythCalldataBuilder internal ecoPythCalldataBuilder;
 
   function setUp() public virtual {
+    // Mint sGLP here so that supply is = 1 sGLP
+    sglp.mint(address(this), 1 * 1e18);
     ecoPyth.setUpdater(address(this), true);
-    ecoPythCalldataBuilder = Deployer.deployEcoPythCalldataBuilder(address(ecoPyth));
+    ecoPythCalldataBuilder = Deployer.deployEcoPythCalldataBuilder(
+      address(ecoPyth),
+      address(sglp),
+      address(mockGlpManager)
+    );
   }
 }

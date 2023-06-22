@@ -142,7 +142,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     // 1. validate
     _validatePreAddRemoveLiquidity(_amount);
 
-    if (VaultStorage(vaultStorage).pullToken(_token) != _amount) {
+    if (VaultStorage(vaultStorage).pullToken(_token) < _amount) {
       revert LiquidityService_InvalidInputAmount();
     }
 

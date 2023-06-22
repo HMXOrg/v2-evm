@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
+// This code is made available under the terms and conditions of the Business Source License 1.1 (BUSL-1.1).
+// The act of publishing this code is driven by the aim to promote transparency and facilitate its utilization for educational purposes.
+
 pragma solidity 0.8.18;
 
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
@@ -9,7 +12,6 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 import { IVaultStorage } from "./interfaces/IVaultStorage.sol";
-import { console2 } from "forge-std/console2.sol";
 
 /// @title VaultStorage
 /// @notice storage contract to do accounting for token, and also hold physical tokens

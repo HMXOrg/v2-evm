@@ -103,6 +103,19 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   );
   event LogSetGuaranteeLimitPrice(bool isActive);
   event LogSetDelegate(address sender, address delegate);
+  event LogExecuteLimitOrderFail(
+    address indexed account,
+    uint256 indexed subAccountId,
+    uint256 orderIndex,
+    uint256 marketIndex,
+    int256 sizeDelta,
+    uint256 triggerPrice,
+    bool triggerAboveThreshold,
+    uint256 executionFee,
+    bool reduceOnly,
+    address tpToken,
+    string errMsg
+  );
 
   /**
    * Structs
@@ -579,8 +592,19 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         errMsg
       );
     } else {
-      // Revert with the error message
-      require(false, errMsg);
+      emit LogExecuteLimitOrderFail(
+        vars.order.account,
+        vars.order.subAccountId,
+        vars.orderIndex,
+        vars.order.marketIndex,
+        vars.order.sizeDelta,
+        vars.order.triggerPrice,
+        vars.order.triggerAboveThreshold,
+        vars.order.executionFee,
+        vars.order.reduceOnly,
+        vars.order.tpToken,
+        errMsg
+      );
     }
   }
 

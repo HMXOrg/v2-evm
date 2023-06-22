@@ -19496,9 +19496,9 @@
             "label": "pyth",
             "offset": 0,
             "slot": "151",
-            "type": "t_contract(IEcoPyth)40914",
+            "type": "t_contract(IEcoPyth)32816",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:145"
+            "src": "src/handlers/LimitTradeHandler.sol:147"
           },
           {
             "label": "weth",
@@ -19506,7 +19506,7 @@
             "slot": "152",
             "type": "t_address",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:146"
+            "src": "src/handlers/LimitTradeHandler.sol:148"
           },
           {
             "label": "tradeService",
@@ -19514,7 +19514,7 @@
             "slot": "153",
             "type": "t_address",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:147"
+            "src": "src/handlers/LimitTradeHandler.sol:149"
           },
           {
             "label": "senderOverride",
@@ -19522,7 +19522,7 @@
             "slot": "154",
             "type": "t_address",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:148"
+            "src": "src/handlers/LimitTradeHandler.sol:150"
           },
           {
             "label": "minExecutionFee",
@@ -19530,7 +19530,7 @@
             "slot": "154",
             "type": "t_uint64",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:150"
+            "src": "src/handlers/LimitTradeHandler.sol:152"
           },
           {
             "label": "minExecutionTimestamp",
@@ -19538,7 +19538,7 @@
             "slot": "154",
             "type": "t_uint32",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:151"
+            "src": "src/handlers/LimitTradeHandler.sol:153"
           },
           {
             "label": "isAllowAllExecutor",
@@ -19546,7 +19546,7 @@
             "slot": "155",
             "type": "t_bool",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:152"
+            "src": "src/handlers/LimitTradeHandler.sol:154"
           },
           {
             "label": "isGuaranteeLimitPrice",
@@ -19554,7 +19554,7 @@
             "slot": "155",
             "type": "t_bool",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:153"
+            "src": "src/handlers/LimitTradeHandler.sol:155"
           },
           {
             "label": "orderExecutors",
@@ -19562,15 +19562,15 @@
             "slot": "156",
             "type": "t_mapping(t_address,t_bool)",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:155"
+            "src": "src/handlers/LimitTradeHandler.sol:157"
           },
           {
             "label": "limitOrders",
             "offset": 0,
             "slot": "157",
-            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(LimitOrder)32675_storage))",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(LimitOrder)24577_storage))",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:156"
+            "src": "src/handlers/LimitTradeHandler.sol:158"
           },
           {
             "label": "limitOrdersIndex",
@@ -19578,7 +19578,7 @@
             "slot": "158",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:157"
+            "src": "src/handlers/LimitTradeHandler.sol:159"
           },
           {
             "label": "delegations",
@@ -19586,55 +19586,55 @@
             "slot": "159",
             "type": "t_mapping(t_address,t_address)",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:158"
+            "src": "src/handlers/LimitTradeHandler.sol:160"
           },
           {
             "label": "activeOrderPointers",
             "offset": 0,
             "slot": "160",
-            "type": "t_struct(UintSet)16892_storage",
+            "type": "t_struct(UintSet)8796_storage",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:161"
+            "src": "src/handlers/LimitTradeHandler.sol:163"
           },
           {
             "label": "activeMarketOrderPointers",
             "offset": 0,
             "slot": "162",
-            "type": "t_struct(UintSet)16892_storage",
+            "type": "t_struct(UintSet)8796_storage",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:162"
+            "src": "src/handlers/LimitTradeHandler.sol:164"
           },
           {
             "label": "activeLimitOrderPointers",
             "offset": 0,
             "slot": "164",
-            "type": "t_struct(UintSet)16892_storage",
+            "type": "t_struct(UintSet)8796_storage",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:163"
+            "src": "src/handlers/LimitTradeHandler.sol:165"
           },
           {
             "label": "subAccountActiveOrderPointers",
             "offset": 0,
             "slot": "166",
-            "type": "t_mapping(t_address,t_struct(UintSet)16892_storage)",
+            "type": "t_mapping(t_address,t_struct(UintSet)8796_storage)",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:165"
+            "src": "src/handlers/LimitTradeHandler.sol:167"
           },
           {
             "label": "subAccountActiveMarketOrderPointers",
             "offset": 0,
             "slot": "167",
-            "type": "t_mapping(t_address,t_struct(UintSet)16892_storage)",
+            "type": "t_mapping(t_address,t_struct(UintSet)8796_storage)",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:166"
+            "src": "src/handlers/LimitTradeHandler.sol:168"
           },
           {
             "label": "subAccountActiveLimitOrderPointers",
             "offset": 0,
             "slot": "168",
-            "type": "t_mapping(t_address,t_struct(UintSet)16892_storage)",
+            "type": "t_mapping(t_address,t_struct(UintSet)8796_storage)",
             "contract": "LimitTradeHandler",
-            "src": "src/handlers/LimitTradeHandler.sol:167"
+            "src": "src/handlers/LimitTradeHandler.sol:169"
           }
         ],
         "types": {
@@ -19662,7 +19662,7 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IEcoPyth)40914": {
+          "t_contract(IEcoPyth)32816": {
             "label": "contract IEcoPyth",
             "numberOfBytes": "20"
           },
@@ -19678,11 +19678,11 @@
             "label": "mapping(address => bool)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_mapping(t_uint256,t_struct(LimitOrder)32675_storage))": {
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(LimitOrder)24577_storage))": {
             "label": "mapping(address => mapping(uint256 => struct ILimitTradeHandler.LimitOrder))",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(UintSet)16892_storage)": {
+          "t_mapping(t_address,t_struct(UintSet)8796_storage)": {
             "label": "mapping(address => struct EnumerableSet.UintSet)",
             "numberOfBytes": "32"
           },
@@ -19694,11 +19694,11 @@
             "label": "mapping(bytes32 => uint256)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_struct(LimitOrder)32675_storage)": {
+          "t_mapping(t_uint256,t_struct(LimitOrder)24577_storage)": {
             "label": "mapping(uint256 => struct ILimitTradeHandler.LimitOrder)",
             "numberOfBytes": "32"
           },
-          "t_struct(LimitOrder)32675_storage": {
+          "t_struct(LimitOrder)24577_storage": {
             "label": "struct ILimitTradeHandler.LimitOrder",
             "members": [
               {
@@ -19776,7 +19776,7 @@
             ],
             "numberOfBytes": "320"
           },
-          "t_struct(Set)16420_storage": {
+          "t_struct(Set)8324_storage": {
             "label": "struct EnumerableSet.Set",
             "members": [
               {
@@ -19794,12 +19794,408 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(UintSet)16892_storage": {
+          "t_struct(UintSet)8796_storage": {
             "label": "struct EnumerableSet.UintSet",
             "members": [
               {
                 "label": "_inner",
-                "type": "t_struct(Set)16420_storage",
+                "type": "t_struct(Set)8324_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "8817572ae7342d9ac318c49970fe0024f4e1f901e5f13c1789067bddfcceac08": {
+      "address": "0xfD74Ce77eE316fA9715192554d303F4682154164",
+      "txHash": "0x6ae265e948421bb3939132922392bae1ebe067a67282b26d5ac2687534e1ab61",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "pyth",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_contract(IEcoPyth)32868",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:160"
+          },
+          {
+            "label": "weth",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_address",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:161"
+          },
+          {
+            "label": "tradeService",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_address",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:162"
+          },
+          {
+            "label": "senderOverride",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_address",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:163"
+          },
+          {
+            "label": "minExecutionFee",
+            "offset": 20,
+            "slot": "154",
+            "type": "t_uint64",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:165"
+          },
+          {
+            "label": "minExecutionTimestamp",
+            "offset": 28,
+            "slot": "154",
+            "type": "t_uint32",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:166"
+          },
+          {
+            "label": "isAllowAllExecutor",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_bool",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:167"
+          },
+          {
+            "label": "isGuaranteeLimitPrice",
+            "offset": 1,
+            "slot": "155",
+            "type": "t_bool",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:168"
+          },
+          {
+            "label": "orderExecutors",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:170"
+          },
+          {
+            "label": "limitOrders",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_mapping(t_uint256,t_struct(LimitOrder)24629_storage))",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:171"
+          },
+          {
+            "label": "limitOrdersIndex",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:172"
+          },
+          {
+            "label": "delegations",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_mapping(t_address,t_address)",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:173"
+          },
+          {
+            "label": "activeOrderPointers",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_struct(UintSet)8796_storage",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:176"
+          },
+          {
+            "label": "activeMarketOrderPointers",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_struct(UintSet)8796_storage",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:177"
+          },
+          {
+            "label": "activeLimitOrderPointers",
+            "offset": 0,
+            "slot": "164",
+            "type": "t_struct(UintSet)8796_storage",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:178"
+          },
+          {
+            "label": "subAccountActiveOrderPointers",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_mapping(t_address,t_struct(UintSet)8796_storage)",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:180"
+          },
+          {
+            "label": "subAccountActiveMarketOrderPointers",
+            "offset": 0,
+            "slot": "167",
+            "type": "t_mapping(t_address,t_struct(UintSet)8796_storage)",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:181"
+          },
+          {
+            "label": "subAccountActiveLimitOrderPointers",
+            "offset": 0,
+            "slot": "168",
+            "type": "t_mapping(t_address,t_struct(UintSet)8796_storage)",
+            "contract": "LimitTradeHandler",
+            "src": "src/handlers/LimitTradeHandler.sol:182"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IEcoPyth)32868": {
+            "label": "contract IEcoPyth",
+            "numberOfBytes": "20"
+          },
+          "t_int256": {
+            "label": "int256",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_uint256,t_struct(LimitOrder)24629_storage))": {
+            "label": "mapping(address => mapping(uint256 => struct ILimitTradeHandler.LimitOrder))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(UintSet)8796_storage)": {
+            "label": "mapping(address => struct EnumerableSet.UintSet)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_struct(LimitOrder)24629_storage)": {
+            "label": "mapping(uint256 => struct ILimitTradeHandler.LimitOrder)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(LimitOrder)24629_storage": {
+            "label": "struct ILimitTradeHandler.LimitOrder",
+            "members": [
+              {
+                "label": "account",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "tpToken",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "triggerAboveThreshold",
+                "type": "t_bool",
+                "offset": 20,
+                "slot": "1"
+              },
+              {
+                "label": "reduceOnly",
+                "type": "t_bool",
+                "offset": 21,
+                "slot": "1"
+              },
+              {
+                "label": "sizeDelta",
+                "type": "t_int256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "subAccountId",
+                "type": "t_uint8",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "orderIndex",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "4"
+              },
+              {
+                "label": "marketIndex",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "5"
+              },
+              {
+                "label": "triggerPrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "6"
+              },
+              {
+                "label": "acceptablePrice",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "7"
+              },
+              {
+                "label": "executionFee",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "8"
+              },
+              {
+                "label": "createdTimestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "9"
+              }
+            ],
+            "numberOfBytes": "320"
+          },
+          "t_struct(Set)8324_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_indexes",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(UintSet)8796_storage": {
+            "label": "struct EnumerableSet.UintSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)8324_storage",
                 "offset": 0,
                 "slot": "0"
               }

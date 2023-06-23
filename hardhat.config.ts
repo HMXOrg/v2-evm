@@ -11,6 +11,7 @@ import "hardhat-preprocessor";
 import "@typechain/hardhat";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
+import "@nomicfoundation/hardhat-verify";
 
 function getRemappings() {
   return fs
@@ -65,6 +66,12 @@ const config: HardhatUserConfig = {
     project: process.env.TENDERLY_PROJECT_NAME!,
     username: process.env.TENDERLY_USERNAME!,
     privateVerification: true,
+  },
+  etherscan: {
+    apiKey: {
+      arbitrumOne: process.env.ETHERSCAN_API_KEY!,
+      arbitrumGoerli: process.env.ETHERSCAN_API_KEY!,
+    },
   },
   // This fully resolves paths for imports in the ./lib directory for Hardhat
   preprocess: {

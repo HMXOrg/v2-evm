@@ -1,4 +1,11 @@
 // SPDX-License-Identifier: MIT
+//   _   _ __  ____  __
+//  | | | |  \/  \ \/ /
+//  | |_| | |\/| |\  /
+//  |  _  | |  | |/  \
+//  |_| |_|_|  |_/_/\_\
+//
+
 pragma solidity 0.8.18;
 
 import { IReadablePyth } from "./IReadablePyth.sol";

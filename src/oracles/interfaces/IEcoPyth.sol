@@ -1,4 +1,11 @@
 // SPDX-License-Identifier: MIT
+//   _   _ __  ____  __
+//  | | | |  \/  \ \/ /
+//  | |_| | |\/| |\  /
+//  |  _  | |  | |/  \
+//  |_| |_|_|  |_/_/\_\
+//
+
 pragma solidity 0.8.18;
 
 import { PythStructs } from "pyth-sdk-solidity/IPyth.sol";

@@ -631,13 +631,14 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // Handle the sizeDelta in case it is sent with max int 256
     vars.sizeDelta = vars.order.sizeDelta;
-    if (!vars.isNewPosition && (vars.order.sizeDelta == type(int256).max || vars.order.sizeDelta == type(int256).min)) {
+    if (vars.order.sizeDelta == type(int256).max || vars.order.sizeDelta == type(int256).min) {
       if (vars.order.sizeDelta > 0) {
         vars.sizeDelta = int256(HMXLib.abs(_existingPosition.positionSizeE30));
       } else {
         vars.sizeDelta = -int256(HMXLib.abs(_existingPosition.positionSizeE30));
       }
     }
+    if (vars.sizeDelta == 0) revert ILimitTradeHandler_BadSizeDelta();
 
     (uint256 _currentPrice, ) = _validatePositionOrderPrice(
       vars.order.triggerAboveThreshold,

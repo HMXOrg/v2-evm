@@ -764,8 +764,7 @@ contract TC03 is BaseIntTest_WithActions {
       _feeReceiver: payable(FEEVER),
       _tickPrices: tickPrices,
       _publishTimeDiffs: publishTimeDiff,
-      _minPublishTime: block.timestamp,
-      signature: "ILimitTradeHandler_InvalidPriceForExecution()"
+      _minPublishTime: block.timestamp
     });
 
     // T12: Btc Price has changed to 17,950 USD
@@ -987,8 +986,7 @@ contract TC03 is BaseIntTest_WithActions {
       _feeReceiver: payable(FEEVER),
       _tickPrices: tickPrices,
       _publishTimeDiffs: publishTimeDiff,
-      _minPublishTime: block.timestamp,
-      signature: "ILimitTradeHandler_InvalidPriceForExecution()"
+      _minPublishTime: block.timestamp
     });
 
     // T15: Btc Price has changed to 17_940 USD

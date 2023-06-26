@@ -506,6 +506,31 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   /// @param _publishTimeData Publish time data from the Pyth oracle.
   /// @param _minPublishTime Minimum publish time for the Pyth oracle data.
   /// @param _encodedVaas Encoded VaaS data for the Pyth oracle.
+  /// @param _isRevert If true, when limit order failed to execute, this function will revert.
+  function executeOrders(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _orderIndexes,
+    address payable _feeReceiver,
+    bytes32[] calldata _priceData,
+    bytes32[] calldata _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas,
+    bool _isRevert
+  ) external nonReentrant onlyOrderExecutor {
+    _executeOrders(
+      _accounts,
+      _subAccountIds,
+      _orderIndexes,
+      _feeReceiver,
+      _priceData,
+      _publishTimeData,
+      _minPublishTime,
+      _encodedVaas,
+      _isRevert
+    );
+  }
+
   function executeOrders(
     address[] memory _accounts,
     uint8[] memory _subAccountIds,
@@ -516,6 +541,30 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 _minPublishTime,
     bytes32 _encodedVaas
   ) external nonReentrant onlyOrderExecutor {
+    _executeOrders(
+      _accounts,
+      _subAccountIds,
+      _orderIndexes,
+      _feeReceiver,
+      _priceData,
+      _publishTimeData,
+      _minPublishTime,
+      _encodedVaas,
+      false
+    );
+  }
+
+  function _executeOrders(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _orderIndexes,
+    address payable _feeReceiver,
+    bytes32[] calldata _priceData,
+    bytes32[] calldata _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas,
+    bool _isRevert
+  ) internal {
     if (_accounts.length != _subAccountIds.length && _accounts.length != _orderIndexes.length)
       revert ILimitTradeHandler_InvalidArraySize();
 
@@ -531,7 +580,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // Loop through order list
     for (uint256 i = 0; i < _accounts.length; ) {
-      _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i]);
+      _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
 
       unchecked {
         ++i;
@@ -543,7 +592,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     ExecuteOrderVars memory vars,
     address _account,
     uint8 _subAccountId,
-    uint256 _orderIndex
+    uint256 _orderIndex,
+    bool _isRevert
   ) internal {
     vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
     vars.order = limitOrders[vars.subAccount][_orderIndex];
@@ -563,15 +613,15 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     try this.executeLimitOrder(vars) {
       // Execution succeeded
     } catch Error(string memory errMsg) {
-      _handleOrderFail(vars, errMsg);
+      _handleOrderFail(vars, errMsg, _isRevert);
     } catch Panic(uint /*errorCode*/) {
-      _handleOrderFail(vars, "Panic occurred while executing the limit order");
+      _handleOrderFail(vars, "Panic occurred while executing the limit order", _isRevert);
     } catch (bytes memory errMsg) {
-      _handleOrderFail(vars, string(errMsg));
+      _handleOrderFail(vars, string(errMsg), _isRevert);
     }
   }
 
-  function _handleOrderFail(ExecuteOrderVars memory vars, string memory errMsg) internal {
+  function _handleOrderFail(ExecuteOrderVars memory vars, string memory errMsg, bool _isRevert) internal {
     // Handle the error depending on the type of order
     if (vars.isMarketOrder) {
       // Cancel market order and transfer execution fee to executor
@@ -592,19 +642,24 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
         errMsg
       );
     } else {
-      emit LogExecuteLimitOrderFail(
-        vars.order.account,
-        vars.order.subAccountId,
-        vars.orderIndex,
-        vars.order.marketIndex,
-        vars.order.sizeDelta,
-        vars.order.triggerPrice,
-        vars.order.triggerAboveThreshold,
-        vars.order.executionFee,
-        vars.order.reduceOnly,
-        vars.order.tpToken,
-        errMsg
-      );
+      if (_isRevert) {
+        // Revert with the error message
+        require(false, errMsg);
+      } else {
+        emit LogExecuteLimitOrderFail(
+          vars.order.account,
+          vars.order.subAccountId,
+          vars.orderIndex,
+          vars.order.marketIndex,
+          vars.order.sizeDelta,
+          vars.order.triggerPrice,
+          vars.order.triggerAboveThreshold,
+          vars.order.executionFee,
+          vars.order.reduceOnly,
+          vars.order.tpToken,
+          errMsg
+        );
+      }
     }
   }
 

@@ -63,7 +63,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 executionFee,
     bool reduceOnly,
     address tpToken,
-    string errMsg
+    bytes errMsg
   );
   event LogExecuteLimitOrder(
     address indexed account,
@@ -114,7 +114,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 executionFee,
     bool reduceOnly,
     address tpToken,
-    string errMsg
+    bytes errMsg
   );
 
   /**
@@ -613,15 +613,15 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     try this.executeLimitOrder(vars) {
       // Execution succeeded
     } catch Error(string memory errMsg) {
-      _handleOrderFail(vars, errMsg, _isRevert);
+      _handleOrderFail(vars, bytes(errMsg), _isRevert);
     } catch Panic(uint /*errorCode*/) {
-      _handleOrderFail(vars, "Panic occurred while executing the limit order", _isRevert);
+      _handleOrderFail(vars, bytes("Panic occurred while executing the limit order"), _isRevert);
     } catch (bytes memory errMsg) {
-      _handleOrderFail(vars, string(errMsg), _isRevert);
+      _handleOrderFail(vars, errMsg, _isRevert);
     }
   }
 
-  function _handleOrderFail(ExecuteOrderVars memory vars, string memory errMsg, bool _isRevert) internal {
+  function _handleOrderFail(ExecuteOrderVars memory vars, bytes memory errMsg, bool _isRevert) internal {
     // Handle the error depending on the type of order
     if (vars.isMarketOrder) {
       // Cancel market order and transfer execution fee to executor
@@ -644,7 +644,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     } else {
       if (_isRevert) {
         // Revert with the error message
-        require(false, errMsg);
+        require(false, string(errMsg));
       } else {
         emit LogExecuteLimitOrderFail(
           vars.order.account,

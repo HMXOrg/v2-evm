@@ -1,18 +1,8 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import {
-  CrossMarginHandler__factory,
-  ERC20__factory,
-  IPyth__factory,
-  LimitTradeHandler__factory,
-  MarketTradeHandler__factory,
-  PerpStorage__factory,
-  TradeService__factory,
-  VaultStorage__factory,
-} from "../../typechain";
+import { LimitTradeHandler__factory } from "../../typechain";
 import { getConfig } from "../utils/config";
-import { getPriceData } from "../utils/pyth";
 import { getUpdatePriceData } from "../utils/price";
 
 const BigNumber = ethers.BigNumber;

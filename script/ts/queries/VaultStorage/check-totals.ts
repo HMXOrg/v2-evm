@@ -7,6 +7,18 @@ import { VaultStorage__factory } from "../../../../typechain";
 import { getSubAccount } from "../../utils/account";
 import _ from "lodash";
 
+type CheckTotalTable = {
+  collateralSymbol: string;
+  traderCollateral: string;
+  hlpLiquidity: string;
+  protocolFees: string;
+  devFees: string;
+  fundingFeeReserve: string;
+  sum: string;
+  totalAmount: string;
+  diff: string;
+};
+
 async function main() {
   const accounts = [
     "0x480a54a3aa47f9351d9c0518b394c032f20a4713",
@@ -31,11 +43,13 @@ async function main() {
     "0xbce338b553195f9ef224f7854e89d4aa75c8b83a",
     "0x04bee613690e98a1959f236c38abaa5f2439b14a",
     "0x10c69d9d8ae54fd1ab12a4bec82c2695b977bcec",
+    "0x3231C08B500bb26e0654cb0338F135CeD44d6B84",
   ];
   const chain = chains[42161];
   const config = loadConfig(42161);
   const provider = new ethers.providers.JsonRpcProvider(chain.rpc);
   const multicall = new MultiCall(provider);
+  const displayTable: CheckTotalTable[] = [];
 
   const traderCollaterals: Record<string, ethers.BigNumber> = {};
   for (const [symbol, collateral] of Object.entries(collaterals)) {
@@ -87,15 +101,20 @@ async function main() {
       VaultStorage__factory.createInterface(),
       multicallCallData
     );
-    console.log(`hlpLiquidity: ${hlpLiquidity}`);
-    console.log(`protocolFees: ${protocolFees}`);
-    console.log(`devFees: ${devFees}`);
-    console.log(
-      `sum: ${traderCollaterals[symbol].add(hlpLiquidity).add(protocolFees).add(devFees).add(fundingFeeReserve)}`
-    );
-    console.log(`totalAmount: ${totalAmount}`);
-    // console.table(traderCollaterals);
+    const sum = traderCollaterals[symbol].add(hlpLiquidity).add(protocolFees).add(devFees).add(fundingFeeReserve);
+    displayTable.push({
+      collateralSymbol: symbol,
+      traderCollateral: ethers.utils.formatUnits(traderCollaterals[symbol], collateral.decimals),
+      hlpLiquidity: ethers.utils.formatUnits(hlpLiquidity, collateral.decimals),
+      protocolFees: ethers.utils.formatUnits(protocolFees, collateral.decimals),
+      devFees: ethers.utils.formatUnits(devFees, collateral.decimals),
+      fundingFeeReserve: ethers.utils.formatUnits(fundingFeeReserve, collateral.decimals),
+      sum: ethers.utils.formatUnits(sum, collateral.decimals),
+      totalAmount: ethers.utils.formatUnits(totalAmount, collateral.decimals),
+      diff: ethers.utils.formatUnits(totalAmount.sub(sum), collateral.decimals),
+    });
   }
+  console.table(displayTable);
 }
 
 main()

@@ -12,7 +12,7 @@ async function main() {
 
   const contract = await upgrades.deployProxy(Contract, [
     config.tokens.sglp,
-    config.yieldSources.gmx.rewardRouterV2,
+    config.vendors.gmx.rewardRouterV2,
     config.storages.vault,
   ]);
   await contract.deployed();

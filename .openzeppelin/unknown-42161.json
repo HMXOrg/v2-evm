@@ -1943,7 +1943,7 @@
             "slot": "151",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:38"
+            "src": "src/storages/VaultStorage.sol:44"
           },
           {
             "label": "hlpLiquidity",
@@ -1951,7 +1951,7 @@
             "slot": "152",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:39"
+            "src": "src/storages/VaultStorage.sol:45"
           },
           {
             "label": "protocolFees",
@@ -1959,7 +1959,7 @@
             "slot": "153",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:40"
+            "src": "src/storages/VaultStorage.sol:46"
           },
           {
             "label": "hlpLiquidityDebtUSDE30",
@@ -1967,7 +1967,7 @@
             "slot": "154",
             "type": "t_uint256",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:42"
+            "src": "src/storages/VaultStorage.sol:48"
           },
           {
             "label": "fundingFeeReserve",
@@ -1975,7 +1975,7 @@
             "slot": "155",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:43"
+            "src": "src/storages/VaultStorage.sol:49"
           },
           {
             "label": "devFees",
@@ -1983,7 +1983,7 @@
             "slot": "156",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:45"
+            "src": "src/storages/VaultStorage.sol:51"
           },
           {
             "label": "tradingFeeDebt",
@@ -1991,7 +1991,7 @@
             "slot": "157",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:47"
+            "src": "src/storages/VaultStorage.sol:53"
           },
           {
             "label": "borrowingFeeDebt",
@@ -1999,7 +1999,7 @@
             "slot": "158",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:48"
+            "src": "src/storages/VaultStorage.sol:54"
           },
           {
             "label": "fundingFeeDebt",
@@ -2007,7 +2007,7 @@
             "slot": "159",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:49"
+            "src": "src/storages/VaultStorage.sol:55"
           },
           {
             "label": "lossDebt",
@@ -2015,7 +2015,7 @@
             "slot": "160",
             "type": "t_mapping(t_address,t_uint256)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:50"
+            "src": "src/storages/VaultStorage.sol:56"
           },
           {
             "label": "globalTradingFeeDebt",
@@ -2023,7 +2023,7 @@
             "slot": "161",
             "type": "t_uint256",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:52"
+            "src": "src/storages/VaultStorage.sol:58"
           },
           {
             "label": "globalBorrowingFeeDebt",
@@ -2031,7 +2031,7 @@
             "slot": "162",
             "type": "t_uint256",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:53"
+            "src": "src/storages/VaultStorage.sol:59"
           },
           {
             "label": "globalFundingFeeDebt",
@@ -2039,7 +2039,7 @@
             "slot": "163",
             "type": "t_uint256",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:54"
+            "src": "src/storages/VaultStorage.sol:60"
           },
           {
             "label": "globalLossDebt",
@@ -2047,7 +2047,7 @@
             "slot": "164",
             "type": "t_uint256",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:55"
+            "src": "src/storages/VaultStorage.sol:61"
           },
           {
             "label": "traderBalances",
@@ -2055,7 +2055,7 @@
             "slot": "165",
             "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:58"
+            "src": "src/storages/VaultStorage.sol:64"
           },
           {
             "label": "traderTokens",
@@ -2063,7 +2063,7 @@
             "slot": "166",
             "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:60"
+            "src": "src/storages/VaultStorage.sol:66"
           },
           {
             "label": "strategyAllowances",
@@ -2071,7 +2071,7 @@
             "slot": "167",
             "type": "t_mapping(t_address,t_mapping(t_address,t_address))",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:62"
+            "src": "src/storages/VaultStorage.sol:68"
           },
           {
             "label": "serviceExecutors",
@@ -2079,7 +2079,7 @@
             "slot": "168",
             "type": "t_mapping(t_address,t_bool)",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:64"
+            "src": "src/storages/VaultStorage.sol:70"
           },
           {
             "label": "strategyFunctionSigAllowances",
@@ -2087,7 +2087,7 @@
             "slot": "169",
             "type": "t_mapping(t_address,t_mapping(t_address,t_bytes4))",
             "contract": "VaultStorage",
-            "src": "src/storages/VaultStorage.sol:65"
+            "src": "src/storages/VaultStorage.sol:71"
           }
         ],
         "types": {
@@ -4270,6 +4270,290 @@
           "t_uint16": {
             "label": "uint16",
             "numberOfBytes": "2"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "1fa0a6819e5686e0e30394fd1ca973ad260948589df3ed18e457859565cf3d0f": {
+      "address": "0xC90466D18C402a0395CCe0B165D9fA1ae5CE43cB",
+      "txHash": "0xba60f731ae4f85b90b91a027650dc40ae187858374a1cd79724e266bdd37bcfe",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "totalAmount",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:38"
+          },
+          {
+            "label": "hlpLiquidity",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:39"
+          },
+          {
+            "label": "protocolFees",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:40"
+          },
+          {
+            "label": "hlpLiquidityDebtUSDE30",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_uint256",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:42"
+          },
+          {
+            "label": "fundingFeeReserve",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:43"
+          },
+          {
+            "label": "devFees",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:45"
+          },
+          {
+            "label": "tradingFeeDebt",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:47"
+          },
+          {
+            "label": "borrowingFeeDebt",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:48"
+          },
+          {
+            "label": "fundingFeeDebt",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:49"
+          },
+          {
+            "label": "lossDebt",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:50"
+          },
+          {
+            "label": "globalTradingFeeDebt",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_uint256",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:52"
+          },
+          {
+            "label": "globalBorrowingFeeDebt",
+            "offset": 0,
+            "slot": "162",
+            "type": "t_uint256",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:53"
+          },
+          {
+            "label": "globalFundingFeeDebt",
+            "offset": 0,
+            "slot": "163",
+            "type": "t_uint256",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:54"
+          },
+          {
+            "label": "globalLossDebt",
+            "offset": 0,
+            "slot": "164",
+            "type": "t_uint256",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:55"
+          },
+          {
+            "label": "traderBalances",
+            "offset": 0,
+            "slot": "165",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:58"
+          },
+          {
+            "label": "traderTokens",
+            "offset": 0,
+            "slot": "166",
+            "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:60"
+          },
+          {
+            "label": "strategyAllowances",
+            "offset": 0,
+            "slot": "167",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_address))",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:62"
+          },
+          {
+            "label": "serviceExecutors",
+            "offset": 0,
+            "slot": "168",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:64"
+          },
+          {
+            "label": "strategyFunctionSigAllowances",
+            "offset": 0,
+            "slot": "169",
+            "type": "t_mapping(t_address,t_mapping(t_address,t_bytes4))",
+            "contract": "VaultStorage",
+            "src": "src/storages/VaultStorage.sol:65"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes4": {
+            "label": "bytes4",
+            "numberOfBytes": "4"
+          },
+          "t_mapping(t_address,t_address)": {
+            "label": "mapping(address => address)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_array(t_address)dyn_storage)": {
+            "label": "mapping(address => address[])",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bytes4)": {
+            "label": "mapping(address => bytes4)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_address))": {
+            "label": "mapping(address => mapping(address => address))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_bytes4))": {
+            "label": "mapping(address => mapping(address => bytes4))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(address => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
           },
           "t_uint256": {
             "label": "uint256",

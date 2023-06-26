@@ -16,6 +16,9 @@ export function getConfig() {
   if (network.name === "arb_goerli") {
     return ArbitrumGoerliConfig;
   }
+  if (network.name === "arbitrum") {
+    return ArbitrumMainnetConfig;
+  }
 
   throw new Error("not found config");
 }

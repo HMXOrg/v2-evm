@@ -14,17 +14,24 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
 
     ecoPyth.insertAssetId("0");
     ecoPyth.insertAssetId("1");
+    ecoPyth.insertAssetId("GLP");
 
     // Initialized prices
-    int24[] memory _prices = new int24[](2);
+    int24[] memory _prices = new int24[](3);
     _prices[0] = int24(0);
     _prices[1] = int24(98527);
+    _prices[2] = int24(0);
     bytes32[] memory priceUpdateDatas = ecoPyth.buildPriceUpdateData(_prices);
-    uint24[] memory _publishTime = new uint24[](2);
+    uint24[] memory _publishTime = new uint24[](3);
     _publishTime[0] = uint24(0);
     _publishTime[1] = uint24(0);
+    _publishTime[2] = uint24(0);
     bytes32[] memory publishTimeUpdateDatas = ecoPyth.buildPublishTimeUpdateData(_publishTime);
     ecoPyth.updatePriceFeeds(priceUpdateDatas, publishTimeUpdateDatas, 1600, keccak256("pyth"));
+
+    // Assuming GLP price is 1
+    mockGlpManager.setMinAum(1e30);
+    mockGlpManager.setMaxAum(1e30);
   }
 
   function testRevert_WhenNewPriceLessThanAllowDiff() external {
@@ -70,7 +77,7 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
   }
 
   function testCorrectness_WhenNewPriceIsValid() external {
-    IEcoPythCalldataBuilder.BuildData[] memory _data = new IEcoPythCalldataBuilder.BuildData[](2);
+    IEcoPythCalldataBuilder.BuildData[] memory _data = new IEcoPythCalldataBuilder.BuildData[](3);
     _data[0] = IEcoPythCalldataBuilder.BuildData({
       assetId: "0",
       priceE8: 1.5 * 10 ** 8,
@@ -81,6 +88,12 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
       assetId: "1",
       priceE8: 19_000.25 * 10 ** 8,
       publishTime: 1689,
+      maxDiffBps: 15000
+    });
+    _data[2] = IEcoPythCalldataBuilder.BuildData({
+      assetId: "GLP",
+      priceE8: 1.01 * 1e8,
+      publishTime: 0,
       maxDiffBps: 15000
     });
 
@@ -98,5 +111,10 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
     _priceInfo = ecoPyth.getPriceUnsafe("1");
     assertEq(_priceInfo.price, int64(1900024965577));
     assertEq(_priceInfo.publishTime, 1689);
+
+    // This should be overrided by the price from GLP Manager
+    _priceInfo = ecoPyth.getPriceUnsafe("GLP");
+    assertEq(_priceInfo.price, int64(100000000));
+    assertEq(_priceInfo.publishTime, 0);
   }
 }

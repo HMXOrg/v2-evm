@@ -1,8 +1,13 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { EcoPyth__factory } from "../../typechain";
+import { EcoPythCalldataBuilder__factory, EcoPyth__factory } from "../../typechain";
 import { getConfig } from "./config";
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 import { EvmPriceServiceConnection } from "@pythnetwork/pyth-evm-js";
+import {
+  ecoPythAssetIdByIndex,
+  ecoPythHoomanReadableByIndex,
+  ecoPythPriceFeedIdsByIndex,
+} from "../../script/ts/constants/eco-pyth-index";
 
 const wethPriceId = "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace";
 const wbtcPriceId = "0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
@@ -35,35 +40,73 @@ export async function getPricesFromPyth(): Promise<number[]> {
   });
 }
 
-export async function getUpdatePriceData(
-  signer: SignerWithAddress,
-  priceUpdates: number[],
-  publishTimeDiff: number[],
-  useRealPrices: boolean,
-  priceIds: string[]
-): Promise<[string[], string[]]> {
-  if (useRealPrices) {
-    // https://xc-mainnet.pyth.network
-    // https://xc-testnet.pyth.network
-    const connection = new EvmPriceServiceConnection("https://xc-mainnet.pyth.network", {
-      logger: console,
-    });
-
-    const prices = await connection.getLatestPriceFeeds(priceIds);
-    priceUpdates = prices!.map((each) => {
-      const rawPrice = Number(each.getPriceUnchecked().price);
-      const expo = Number(each.getPriceUnchecked().expo);
-      return Number((rawPrice * Math.pow(10, expo)).toFixed(8));
-    });
-    console.log("priceUpdates", priceUpdates);
+function _priceToPriceE8(price: string, expo: number) {
+  const targetBN = ethers.BigNumber.from(8);
+  const priceBN = ethers.BigNumber.from(price);
+  const expoBN = ethers.BigNumber.from(expo);
+  const priceDecimals = expoBN.mul(-1);
+  if (targetBN.sub(priceDecimals).gte(0)) {
+    return priceBN.mul(Math.pow(10, targetBN.sub(priceDecimals).toNumber()));
   }
+  return priceBN.div(Math.pow(10, priceDecimals.sub(targetBN).toNumber()));
+}
 
-  const config = getConfig();
-  const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, signer);
-  const tickPrices = priceUpdates.map((each) => priceToClosestTick(each));
-  const priceUpdateData = await pyth.buildPriceUpdateData(tickPrices);
-  const publishTimeDiffUpdateData = await pyth.buildPublishTimeUpdateData(publishTimeDiff);
-  return [priceUpdateData, publishTimeDiffUpdateData];
+export async function getUpdatePriceData(priceIds: string[]): Promise<[number, string[], string[], string]> {
+  let hashedVaas = "";
+
+  const MAX_PRICE_DIFF = 150_00;
+  // https://xc-mainnet.pyth.network
+  // https://xc-testnet.pyth.network
+  const connection = new EvmPriceServiceConnection("https://xc-mainnet.pyth.network", {
+    logger: console,
+  });
+
+  const prices = await connection.getLatestPriceFeeds(priceIds.filter((each) => each !== "GLP"));
+  if (!prices) {
+    throw new Error("Failed to get prices from Pyth");
+  }
+  const buildData = [];
+  for (let i = 0; i < priceIds.length; i++) {
+    if (priceIds[i] === "GLP") {
+      // If the asset is GLP, use the GLP price from the contract
+      buildData.push({
+        assetId: ecoPythAssetIdByIndex[i],
+        priceE8: ethers.BigNumber.from(0), // EcoPythCallDataBuilder will use the GLP price from the contract
+        publishTime: ethers.BigNumber.from(Math.floor(Date.now() / 1000)),
+        maxDiffBps: MAX_PRICE_DIFF,
+      });
+      continue;
+    }
+    // If the asset is not GLP, use the price from Pyth
+    const priceFeed = prices.find((each) => each.id === ecoPythPriceFeedIdsByIndex[i].substring(2));
+    if (!priceFeed) {
+      throw new Error(`Failed to get price feed from Pyth ${ecoPythPriceFeedIdsByIndex[i]}`);
+    }
+    const priceInfo = priceFeed.getPriceUnchecked();
+    buildData.push({
+      assetId: ecoPythAssetIdByIndex[i],
+      priceE8: _priceToPriceE8(priceInfo.price, priceInfo.expo),
+      publishTime: ethers.BigNumber.from(priceInfo.publishTime),
+      maxDiffBps: MAX_PRICE_DIFF,
+    });
+  }
+  console.log(buildData);
+  const vaas = await connection.getPriceFeedsUpdateData(priceIds.filter((each) => each !== "GLP"));
+  hashedVaas = ethers.utils.keccak256(
+    "0x" +
+      vaas
+        .map((each) => {
+          return each.substring(2);
+        })
+        .join("")
+  );
+
+  const ecoPythCalldataBuilder = EcoPythCalldataBuilder__factory.connect(
+    "0x44E31321E748dDc768a019aee4c62c14E53424F1",
+    ethers.provider
+  );
+  const [minPublishedTime, priceUpdateData, publishTimeDiffUpdateData] = await ecoPythCalldataBuilder.build(buildData);
+  return [minPublishedTime.toNumber(), priceUpdateData, publishTimeDiffUpdateData, hashedVaas];
 }
 
 export function priceToClosestTick(price: number): number {

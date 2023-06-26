@@ -6,12 +6,7 @@ import { getConfig } from "../../utils/config";
 
 const config = getConfig();
 
-const inputs = [
-  { updater: config.handlers.bot, isUpdater: true },
-  { updater: config.handlers.crossMargin, isUpdater: true },
-  { updater: config.handlers.limitTrade, isUpdater: true },
-  { updater: config.handlers.liquidity, isUpdater: true },
-];
+const inputs = [{ updater: "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872", isUpdater: true }];
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];

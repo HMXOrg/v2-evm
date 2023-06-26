@@ -12,18 +12,18 @@ const forexAssetClass = 2;
 const commoditiesAssetClass = 3;
 
 const marketConfig = {
-  assetId: ethers.utils.formatBytes32String("ETH"),
-  increasePositionFeeRateBPS: 7, // 0.07%
-  decreasePositionFeeRateBPS: 7, // 0.07%
-  initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
-  maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-  maxProfitRateBPS: 150000, // 1500%
-  assetClass: cryptoAssetClass,
+  assetId: ethers.utils.formatBytes32String("XAG"),
+  increasePositionFeeRateBPS: 5, // 0.05%
+  decreasePositionFeeRateBPS: 5, // 0.05%
+  initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
+  maintenanceMarginFractionBPS: 100, // MMF = 1%
+  maxProfitRateBPS: 75000, // 750%
+  assetClass: commoditiesAssetClass,
   allowIncreasePosition: true,
   active: true,
   fundingRate: {
-    maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
-    maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
+    maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 300 M
+    maxFundingRate: ethers.utils.parseUnits("1", 18), // 10% per day
   },
   maxLongPositionSize: ethers.utils.parseUnits("10000000", 30),
   maxShortPositionSize: ethers.utils.parseUnits("10000000", 30),

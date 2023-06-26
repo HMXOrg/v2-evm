@@ -84,8 +84,10 @@
     "@types/readline-sync": "^1.4.4",
     "@wagmi/cli": "^0.1.14",
     "dotenv": "^16.0.0",
+    "ethers": "5.7",
     "hardhat": "^2.9.1",
     "hardhat-preprocessor": "^0.1.5",
+    "lodash": "^4.17.21",
     "prettier": "^2.6.2",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "readline-sync": "^1.4.10",
@@ -95,6 +97,7 @@
   },
   "dependencies": {
     "@openzeppelin/hardhat-upgrades": "^1.22.1",
+    "@types/lodash": "^4.14.195",
     "wagmi": "^0.12.7"
   }
 }

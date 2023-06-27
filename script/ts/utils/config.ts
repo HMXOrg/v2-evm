@@ -3,6 +3,16 @@ import * as fs from "fs";
 import ArbitrumGoerliConfig from "../../../configs/arbitrum.goerli.json";
 import ArbitrumMainnetConfig from "../../../configs/arbitrum.mainnet.json";
 
+export function loadConfig(chainId: number) {
+  if (chainId === 42161) {
+    return ArbitrumMainnetConfig;
+  }
+  if (chainId === 421613) {
+    return ArbitrumGoerliConfig;
+  }
+  throw new Error("not found config");
+}
+
 export function getConfig() {
   if (network.name === "matic") {
     return ArbitrumGoerliConfig;

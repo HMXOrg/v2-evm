@@ -39,7 +39,6 @@ interface ILiquidityHandler {
     bool isAdd;
     bool isNativeOut; // token Out for remove liquidity(!unwrap) and refund addLiquidity (shouldWrap) flag
     LiquidityOrderStatus status;
-    bool isHyper;
   }
 
   /**

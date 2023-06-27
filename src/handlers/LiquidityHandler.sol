@@ -97,6 +97,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // account -> executed orders
 
   IHyperStaking public hlpStaking;
+  mapping(address user => mapping(uint256 orderId => bool isHyper)) isHyper;
 
   /// @notice Initializes the LiquidityHandler contract with the provided configuration parameters.
   /// @param _liquidityService Address of the LiquidityService contract.
@@ -214,10 +215,10 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         isNativeOut: _shouldWrap,
         createdTimestamp: uint48(block.timestamp),
         executedTimestamp: 0,
-        status: LiquidityOrderStatus.PENDING,
-        isHyper: _isHyper
+        status: LiquidityOrderStatus.PENDING
       })
     );
+    isHyper[msg.sender][_orderId] = _isHyper;
     emit LogCreateAddLiquidityOrder(
       msg.sender,
       _orderId,
@@ -275,8 +276,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         isNativeOut: _isNativeOut,
         createdTimestamp: uint48(block.timestamp),
         executedTimestamp: 0,
-        status: LiquidityOrderStatus.PENDING,
-        isHyper: false
+        status: LiquidityOrderStatus.PENDING
       })
     );
 
@@ -411,7 +411,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
           address(hlpStaking),
           _amountOut
         );
-        if (_order.isHyper) {
+        if (isHyper[_order.account][_order.orderId]) {
           IHyperStaking(hlpStaking).depositHyper(_order.account, _amountOut);
         } else {
           IHyperStaking(hlpStaking).deposit(_order.account, _amountOut);

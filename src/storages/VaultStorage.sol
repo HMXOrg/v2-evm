@@ -114,6 +114,10 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   }
 
   function pushToken(address _token, address _to, uint256 _amount) external nonReentrant onlyWhitelistedExecutor {
+    _pushToken(_token, _to, _amount);
+  }
+
+  function _pushToken(address _token, address _to, uint256 _amount) internal {
     IERC20Upgradeable(_token).safeTransfer(_to, _amount);
     totalAmount[_token] = IERC20Upgradeable(_token).balanceOf(address(this));
   }
@@ -172,15 +176,13 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   function withdrawFee(address _token, uint256 _amount, address _receiver) external onlyWhitelistedExecutor {
     if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
     protocolFees[_token] -= _amount;
-    IERC20Upgradeable(_token).safeTransfer(_receiver, _amount);
-    _pullToken(_token);
+    _pushToken(_token, _receiver, _amount);
   }
 
   function withdrawDevFee(address _token, uint256 _amount, address _receiver) external onlyOwner {
     if (_receiver == address(0)) revert IVaultStorage_ZeroAddress();
     devFees[_token] -= _amount;
-    IERC20Upgradeable(_token).safeTransfer(_receiver, _amount);
-    _pullToken(_token);
+    _pushToken(_token, _receiver, _amount);
   }
 
   function removeHLPLiquidity(address _token, uint256 _amount) external onlyWhitelistedExecutor {

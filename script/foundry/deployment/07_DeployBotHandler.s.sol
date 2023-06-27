@@ -10,7 +10,6 @@ import { BotHandler } from "@hmx/handlers/BotHandler.sol";
 import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
 import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
 import { LiquidityHandler } from "@hmx/handlers/LiquidityHandler.sol";
-import { MarketTradeHandler } from "@hmx/handlers/MarketTradeHandler.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 contract DeployBotHandler is ConfigJsonRepo {

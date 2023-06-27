@@ -16,9 +16,9 @@ async function main() {
   const contract = await upgrades.deployProxy(Contract, [
     config.tokens.sglp,
     {
-      rewardRouter: config.yieldSources.gmx.rewardRouterV2,
-      rewardTracker: config.yieldSources.gmx.rewardTracker,
-      glpManager: config.yieldSources.gmx.glpManager,
+      rewardRouter: config.vendors.gmx.rewardRouterV2,
+      rewardTracker: config.vendors.gmx.rewardTracker,
+      glpManager: config.vendors.gmx.glpManager,
       oracleMiddleware: config.oracles.middleware,
       vaultStorage: config.storages.vault,
     },

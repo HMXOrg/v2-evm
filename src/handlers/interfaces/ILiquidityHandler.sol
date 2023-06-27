@@ -99,4 +99,6 @@ interface ILiquidityHandler {
   function setMaxExecutionChunk(uint256 _maxExecutionChunk) external;
 
   function setMinExecutionFee(uint256 _newMinExecutionFee) external;
+
+  function setHlpStaking(address _hlpStaking) external;
 }

@@ -11,9 +11,15 @@ import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { console } from "forge-std/console.sol";
+import { MockHLPStaking } from "@hmx-test/mocks/MockHLPStaking.sol";
 
 contract TC01 is BaseIntTest_WithActions {
+  MockHLPStaking hlpStaking;
+
   function testCorrectness_TC01_AddAndRemoveLiquiditySuccess() external {
+    hlpStaking = new MockHLPStaking(address(hlpV2));
+    liquidityHandler.setHlpStaking(address(hlpStaking));
+
     // T0: Initialized state
     uint256 _totalExecutionOrderFee = executionOrderFee - initialPriceFeedDatas.length;
     // WBTC = 19998.34577790
@@ -45,11 +51,13 @@ contract TC01 is BaseIntTest_WithActions {
         lpTotalSupply: 99_70 ether,
         totalAmount: _amount,
         hlpLiquidity: 49_850_000,
-        hlpAmount: 9_970 ether, //
+        hlpAmount: 0 ether, //
         fee: 150_000, //fee = 0.5e8( 0.5e8 -0.3%) = 0.0015 * 1e8
         executionFee: _totalExecutionOrderFee
       })
     );
+
+    assertApproxEqRel(hlpStaking.userTokenAmount(ALICE), 9_970 ether, MAX_DIFF);
 
     // no one in HLP pool, so aum must be = totalSupply
     assertApproxEqRel(
@@ -64,7 +72,6 @@ contract TC01 is BaseIntTest_WithActions {
 
     uint256 amountToRemove = 100_000 ether;
     vm.startPrank(ALICE);
-
     hlpV2.approve(address(liquidityHandler), amountToRemove);
     vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
     liquidityHandler.createRemoveLiquidityOrder{ value: executionOrderFee }(
@@ -75,6 +82,9 @@ contract TC01 is BaseIntTest_WithActions {
       false
     );
     vm.stopPrank();
+
+    vm.prank(ALICE);
+    hlpStaking.withdraw(100 ether);
     // T3: Alice withdraws HLP 100 USD
     //  10000 -> 0.5 e8
     //   100 -> 0.005 e8 btc
@@ -97,12 +107,13 @@ contract TC01 is BaseIntTest_WithActions {
         lpTotalSupply: 9_870 ether, // 9970 hlp - 100 hlp
         totalAmount: 49_501_400, //(0.5 e8 - 0.005)+ 1400 fee
         hlpLiquidity: 49_350_000, // 49_850_000 - 500_000
-        hlpAmount: 9_870 ether, // 9970 -100 (remove lq)
+        hlpAmount: 0 ether, // 9970 -100 (remove lq)
         //fee Alice addLiquidity (150_000) + fee Alice removeLiquidity(100 hlp => 500_000-(500_000-0.28%) => 1,400 ) = 151400
         fee: 151_400,
         executionFee: _totalExecutionOrderFee
       })
     );
+    assertApproxEqRel(hlpStaking.userTokenAmount(ALICE), 9_870 ether, MAX_DIFF); // 9970 -100 (remove lq)
 
     // T5: As a Liquidity, Bob adds 100 USD(GLP) // 100/ 20000 => 0.005
     vm.deal(BOB, executionOrderFee);
@@ -143,13 +154,18 @@ contract TC01 is BaseIntTest_WithActions {
         lpTotalSupply: 9_969.68 ether,
         totalAmount: 50001400, //49_501_400 + 500_000
         hlpLiquidity: 49_848_400, //49_350_000
-        hlpAmount: 99.68 ether,
+        hlpAmount: 0,
         fee: 153_000, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000
         executionFee: _totalExecutionOrderFee
       })
     );
 
+    assertApproxEqRel(hlpStaking.userTokenAmount(BOB), 99.68 ether, MAX_DIFF);
+
     // T6: Alice max withdraws 9,870 USD HLP in pools
+    vm.prank(ALICE);
+    hlpStaking.withdraw(9_870 ether);
+
     vm.deal(ALICE, executionOrderFee);
     _totalExecutionOrderFee += (executionOrderFee - initialPriceFeedDatas.length);
 
@@ -171,11 +187,13 @@ contract TC01 is BaseIntTest_WithActions {
         lpTotalSupply: 9_969.68 ether,
         totalAmount: 50001400, //49_501_400 + 500_000
         hlpLiquidity: 49_848_400, //49_350_000
-        hlpAmount: 99.68 ether,
+        hlpAmount: 0 ether,
         fee: 153_000, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000
         executionFee: _totalExecutionOrderFee
       })
     );
+    assertApproxEqRel(hlpV2.balanceOf(ALICE), 9_870 ether, MAX_DIFF);
+    assertApproxEqRel(hlpStaking.userTokenAmount(BOB), 99.68 ether, MAX_DIFF);
 
     // T7: Alice max withdraws 9,870 USD HLP in pools
     vm.deal(ALICE, executionOrderFee);
@@ -205,7 +223,7 @@ contract TC01 is BaseIntTest_WithActions {
         lpTotalSupply: 99.68 ether, //only BOB LP LEFT
         totalAmount: 927_760,
         hlpLiquidity: 498_400,
-        hlpAmount: 102060000000000, // ALICE HLP AMOUNT SHOULD BE 0
+        hlpAmount: 0, // ALICE HLP AMOUNT SHOULD BE 0
         fee: 429_360, //153_000 + 276_360
         executionFee: _totalExecutionOrderFee
       })

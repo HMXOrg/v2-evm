@@ -371,7 +371,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
       // if the position has profit more than reserved value,
       // then not allow to increase position to prevent max profit cap bypass.
-      if (_isProfit && _delta >= _vars.position.reserveValueE30) {
+      if ((_isProfit && _delta >= _vars.position.reserveValueE30) || _delta == 0) {
         revert ITradeService_NotAllowIncrease();
       }
 

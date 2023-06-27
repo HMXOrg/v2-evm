@@ -13,7 +13,7 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 /// @title Trade Tester
-/// @notice This Tester help to check state after user interact with LimitTradeHandler / MarketTradeHandler / TradeService
+/// @notice This Tester help to check state after user interact with LimitTradeHandler / TradeService
 contract TradeTester is StdAssertions {
   /**
    * States
@@ -22,7 +22,6 @@ contract TradeTester is StdAssertions {
   IPerpStorage perpStorage;
 
   address limitTradeHandler;
-  address marketHandler;
 
   address[] interestTokens;
 
@@ -30,13 +29,11 @@ contract TradeTester is StdAssertions {
     IVaultStorage _vaultStorage,
     IPerpStorage _perpStorage,
     address _limitTradeHandler,
-    address _marketHandler,
     address[] memory _interestTokens
   ) {
     vaultStorage = _vaultStorage;
     perpStorage = _perpStorage;
     limitTradeHandler = _limitTradeHandler;
-    marketHandler = _marketHandler;
 
     interestTokens = _interestTokens;
   }

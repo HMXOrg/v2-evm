@@ -23,7 +23,6 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
-import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 
@@ -231,21 +230,6 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ILimitTradeHandler(payable(_proxy));
-  }
-
-  function deployMarketTradeHandler(
-    address _proxyAdmin,
-    address _tradeService,
-    address _pyth
-  ) internal returns (IMarketTradeHandler) {
-    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/MarketTradeHandler.sol/MarketTradeHandler.json"));
-    bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address)")),
-      _tradeService,
-      _pyth
-    );
-    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IMarketTradeHandler(payable(_proxy));
   }
 
   function deployBotHandler(

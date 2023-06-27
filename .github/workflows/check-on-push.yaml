@@ -3,6 +3,9 @@ name: Check
 on:
   push:
     branches:
+      - "main"
+  pull_request:
+    branches:
       - "release/**"
       - "releases/**"
       - "feat/**"

@@ -369,9 +369,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.position.lastIncreaseTimestamp
       );
 
-      // if the position has profit more than reserved value,
-      // then not allow to increase position to prevent max profit cap bypass.
-      if ((_isProfit && _delta >= _vars.position.reserveValueE30) || _delta == 0) {
+      // Prevents increasing the position if it has already reached a profit greater than the reserved value
+      // in order to avoid bypassing the maximum profit cap.
+      // Additionally, if the minimum profit duration has been reached, increasing the position is not allowed.
+      if (_isProfit && (_delta >= _vars.position.reserveValueE30 || _delta == 0)) {
         revert ITradeService_NotAllowIncrease();
       }
 

@@ -50,7 +50,7 @@ jobs:
 
       - name: Run Forge tests
         run: |
-          ARBITRUM_ONE_FORK=${{secrets.ARBITRUM_ONE_FORK}} forge test -vvv
+          ARBITRUM_ONE_FORK=${{secrets.ARBITRUM_ONE_FORK}} forge test -vvvv
         id: test
   # analyze:
   #   name: Slither Analyze

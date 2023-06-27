@@ -17,11 +17,13 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
+import { HLP } from "@hmx/contracts/HLP.sol";
 
 // interfaces
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { IHyperStaking } from "@hmx/staking/interfaces/IHyperStaking.sol";
 
 /// @title LiquidityHandler
 /// @notice This contract handles liquidity orders for adding or removing liquidity from a pool
@@ -79,6 +81,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 amount,
     bool isNativeOut
   );
+  event LogSetHlpStaking(address oldHlpStaking, address newHlpStaking);
 
   /**
    * States
@@ -92,6 +95,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   LiquidityOrder[] public liquidityOrders; // all liquidityOrder
   mapping(address => bool) public orderExecutors; // address -> whitelist executors
   mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // account -> executed orders
+
+  IHyperStaking public hlpStaking;
 
   /// @notice Initializes the LiquidityHandler contract with the provided configuration parameters.
   /// @param _liquidityService Address of the LiquidityService contract.
@@ -140,7 +145,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
    * Core Functions
    */
 
-  /// @notice Create a new AddLiquidity order
+  /// @notice Create a new AddLiquidity order without participating in HLP Surge event
   /// @param _tokenIn address token in
   /// @param _amountIn amount token in (based on decimals)
   /// @param _minOut minHLP out
@@ -153,24 +158,49 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _executionFee,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
+    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, false);
+  }
+
+  /// @notice Create a new AddLiquidity order and maybe participate in HLP Surge event
+  /// @param _tokenIn address token in
+  /// @param _amountIn amount token in (based on decimals)
+  /// @param _minOut minHLP out
+  /// @param _executionFee The execution fee of order
+  /// @param _shouldWrap in case of sending native token
+  /// @param _isHyper true will participate this liquidity into HLP Surge
+  function createAddLiquidityOrder(
+    address _tokenIn,
+    uint256 _amountIn,
+    uint256 _minOut,
+    uint256 _executionFee,
+    bool _shouldWrap,
+    bool _isHyper
+  ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
+    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, _isHyper);
+  }
+
+  function _createAddLiquidityOrder(
+    address _tokenIn,
+    uint256 _amountIn,
+    uint256 _minOut,
+    uint256 _executionFee,
+    bool _shouldWrap,
+    bool _isHyper
+  ) internal returns (uint256 _orderId) {
     // pre validate
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
     if (_executionFee < minExecutionOrderFee) revert ILiquidityHandler_InsufficientExecutionFee();
     if (_shouldWrap && _tokenIn != ConfigStorage(LiquidityService(liquidityService).configStorage()).weth())
       revert ILiquidityHandler_NotWNativeToken();
-
     if (_shouldWrap) {
       if (msg.value != _amountIn + _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
     } else {
       if (msg.value != _executionFee) revert ILiquidityHandler_InCorrectValueTransfer();
       IERC20Upgradeable(_tokenIn).safeTransferFrom(msg.sender, address(this), _amountIn);
     }
-
     // convert native to WNative (including executionFee)
     _transferInETH();
-
     _orderId = liquidityOrders.length;
-
     liquidityOrders.push(
       LiquidityOrder({
         account: payable(msg.sender),
@@ -184,10 +214,10 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         isNativeOut: _shouldWrap,
         createdTimestamp: uint48(block.timestamp),
         executedTimestamp: 0,
-        status: LiquidityOrderStatus.PENDING
+        status: LiquidityOrderStatus.PENDING,
+        isHyper: _isHyper
       })
     );
-
     emit LogCreateAddLiquidityOrder(
       msg.sender,
       _orderId,
@@ -245,7 +275,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         isNativeOut: _isNativeOut,
         createdTimestamp: uint48(block.timestamp),
         executedTimestamp: 0,
-        status: LiquidityOrderStatus.PENDING
+        status: LiquidityOrderStatus.PENDING,
+        isHyper: false
       })
     );
 
@@ -364,13 +395,37 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     if (msg.sender != address(this)) revert ILiquidityHandler_Unauthorized();
 
     if (_order.isAdd) {
-      IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
-      _amountOut = LiquidityService(liquidityService).addLiquidity(
-        _order.account,
-        _order.token,
-        _order.amount,
-        _order.minOut
-      );
+      if (address(hlpStaking) != address(0)) {
+        // If HLPStaking is live
+        IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
+        _amountOut = LiquidityService(liquidityService).addLiquidity(
+          _order.account,
+          _order.token,
+          _order.amount,
+          _order.minOut,
+          address(this)
+        );
+
+        // Auto stake into HLPStaking
+        IERC20Upgradeable(ConfigStorage(LiquidityService(liquidityService).configStorage()).hlp()).safeApprove(
+          address(hlpStaking),
+          _amountOut
+        );
+        if (_order.isHyper) {
+          IHyperStaking(hlpStaking).depositHyper(_order.account, _amountOut);
+        } else {
+          IHyperStaking(hlpStaking).deposit(_order.account, _amountOut);
+        }
+      } else {
+        // If no HLPStaking
+        IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
+        _amountOut = LiquidityService(liquidityService).addLiquidity(
+          _order.account,
+          _order.token,
+          _order.amount,
+          _order.minOut
+        );
+      }
 
       return _amountOut;
     } else {
@@ -603,6 +658,15 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     // Sanity check
     IEcoPyth(_pyth).getAssetIds();
+  }
+
+  function setHlpStaking(address _hlpStaking) external onlyOwner {
+    if (_hlpStaking == address(0)) revert ILiquidityHandler_InvalidAddress();
+    emit LogSetHlpStaking(address(hlpStaking), _hlpStaking);
+    hlpStaking = IHyperStaking(_hlpStaking);
+
+    // Sanity check
+    hlpStaking.startHyperEventDepositTimestamp();
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

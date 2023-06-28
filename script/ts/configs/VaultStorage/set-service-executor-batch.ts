@@ -1,11 +1,7 @@
-import { ethers } from "hardhat";
-import {
-  ConfigStorage__factory,
-  EcoPyth__factory,
-  PythAdapter__factory,
-  VaultStorage__factory,
-} from "../../../../typechain";
-import { getConfig } from "../../utils/config";
+import { getChainId } from "hardhat";
+import { VaultStorage__factory } from "../../../../typechain";
+import { getConfig, loadConfig } from "../../utils/config";
+import signers from "../../entities/signers";
 
 const config = getConfig();
 
@@ -17,7 +13,9 @@ const inputs = [
 ];
 
 async function main() {
-  const deployer = (await ethers.getSigners())[0];
+  const chainId = Number(await getChainId());
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, deployer);
 
   console.log("> VaultStorage: Set Service Executors...");

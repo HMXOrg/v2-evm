@@ -97,7 +97,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // account -> executed orders
 
   IHyperStaking public hlpStaking;
-  mapping(address user => mapping(uint256 orderId => bool isHyper)) isHyper;
+  mapping(address user => mapping(uint256 orderId => bool isSurge)) isSurge;
 
   /// @notice Initializes the LiquidityHandler contract with the provided configuration parameters.
   /// @param _liquidityService Address of the LiquidityService contract.
@@ -168,16 +168,16 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @param _minOut minHLP out
   /// @param _executionFee The execution fee of order
   /// @param _shouldWrap in case of sending native token
-  /// @param _isHyper true will participate this liquidity into HLP Surge
+  /// @param _isSurge true will participate this liquidity into HLP Surge
   function createAddLiquidityOrder(
     address _tokenIn,
     uint256 _amountIn,
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldWrap,
-    bool _isHyper
+    bool _isSurge
   ) external payable nonReentrant onlyAcceptedToken(_tokenIn) returns (uint256 _orderId) {
-    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, _isHyper);
+    return _createAddLiquidityOrder(_tokenIn, _amountIn, _minOut, _executionFee, _shouldWrap, _isSurge);
   }
 
   function _createAddLiquidityOrder(
@@ -186,7 +186,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _minOut,
     uint256 _executionFee,
     bool _shouldWrap,
-    bool _isHyper
+    bool _isSurge
   ) internal returns (uint256 _orderId) {
     // pre validate
     LiquidityService(liquidityService).validatePreAddRemoveLiquidity(_amountIn);
@@ -218,7 +218,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         status: LiquidityOrderStatus.PENDING
       })
     );
-    isHyper[msg.sender][_orderId] = _isHyper;
+    isSurge[msg.sender][_orderId] = _isSurge;
     emit LogCreateAddLiquidityOrder(
       msg.sender,
       _orderId,
@@ -411,7 +411,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
           address(hlpStaking),
           _amountOut
         );
-        if (isHyper[_order.account][_order.orderId]) {
+        if (isSurge[_order.account][_order.orderId]) {
           IHyperStaking(hlpStaking).depositHyper(_order.account, _amountOut);
         } else {
           IHyperStaking(hlpStaking).deposit(_order.account, _amountOut);

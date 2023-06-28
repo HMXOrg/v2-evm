@@ -4,17 +4,17 @@
 
 pragma solidity 0.8.18;
 
-interface IHyperStaking {
+interface ISurgeStaking {
   struct TierConfig {
     uint256 maxCap;
     uint256 multiplier;
   }
 
-  function startHyperEventDepositTimestamp() external view returns (uint256);
+  function startSurgeEventDepositTimestamp() external view returns (uint256);
 
-  function endHyperEventDepositTimestamp() external view returns (uint256);
+  function endSurgeEventDepositTimestamp() external view returns (uint256);
 
-  function endHyperEventLockTimestamp() external view returns (uint256);
+  function endSurgeEventLockTimestamp() external view returns (uint256);
 
   function rewarders(uint256 index) external returns (address);
 
@@ -34,9 +34,9 @@ interface IHyperStaking {
 
   function harvestToCompounder(address user, address[] memory rewarders) external;
 
-  function calculateTotalShareFromHyperEvent(address rewarder) external view returns (uint256);
+  function calculateTotalShareFromSurgeEvent(address rewarder) external view returns (uint256);
 
-  function calculateShareFromHyperEvent(address rewarder, address user) external view returns (uint256);
+  function calculateShareFromSurgeEvent(address rewarder, address user) external view returns (uint256);
 
   function calculateTotalShare(address rewarder) external view returns (uint256);
 
@@ -44,5 +44,5 @@ interface IHyperStaking {
 
   function isRewarder(address rewarder) external view returns (bool);
 
-  function setHyperRewarder(address _hyperRewarder) external;
+  function setSurgeRewarder(address _hyperRewarder) external;
 }

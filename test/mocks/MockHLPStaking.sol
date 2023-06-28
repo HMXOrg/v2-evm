@@ -13,15 +13,15 @@ contract MockHLPStaking {
     hlp = HLP(_hlp);
   }
 
-  function startHyperEventDepositTimestamp() external pure returns (uint256) {
+  function startSurgeEventDepositTimestamp() external pure returns (uint256) {
     return 0;
   }
 
-  function endHyperEventDepositTimestamp() external pure returns (uint256) {
+  function endSurgeEventDepositTimestamp() external pure returns (uint256) {
     return 0;
   }
 
-  function endHyperEventLockTimestamp() external pure returns (uint256) {
+  function endSurgeEventLockTimestamp() external pure returns (uint256) {
     return 0;
   }
 

@@ -31,7 +31,7 @@ contract MockHLPStaking {
     userTokenAmount[to] += amount;
   }
 
-  function depositHyper(address to, uint256 amount) external {
+  function depositSurge(address to, uint256 amount) external {
     hlp.transferFrom(msg.sender, address(this), amount);
 
     userTokenAmount[to] += amount;

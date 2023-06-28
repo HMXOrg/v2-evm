@@ -407,12 +407,8 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
         );
 
         // Auto stake into HLPStaking
-        IERC20Upgradeable(ConfigStorage(LiquidityService(liquidityService).configStorage()).hlp()).safeApprove(
-          address(hlpStaking),
-          _amountOut
-        );
         if (isSurge[_order.account][_order.orderId]) {
-          IHyperStaking(hlpStaking).depositHyper(_order.account, _amountOut);
+          IHyperStaking(hlpStaking).depositSurge(_order.account, _amountOut);
         } else {
           IHyperStaking(hlpStaking).deposit(_order.account, _amountOut);
         }
@@ -667,6 +663,12 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
 
     // Sanity check
     hlpStaking.startHyperEventDepositTimestamp();
+
+    // Max approve
+    IERC20Upgradeable(ConfigStorage(LiquidityService(liquidityService).configStorage()).hlp()).safeApprove(
+      address(hlpStaking),
+      type(uint256).max
+    );
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

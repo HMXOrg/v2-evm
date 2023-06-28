@@ -28,7 +28,7 @@ interface IHyperStaking {
 
   function deposit(address to, uint256 amount) external;
 
-  function depositHyper(address to, uint256 amount) external;
+  function depositSurge(address to, uint256 amount) external;
 
   function withdraw(uint256 amount) external;
 

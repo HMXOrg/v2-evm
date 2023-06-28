@@ -23,7 +23,7 @@ import { HLP } from "@hmx/contracts/HLP.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
-import { IHyperStaking } from "@hmx/staking/interfaces/IHyperStaking.sol";
+import { ISurgeStaking } from "@hmx/staking/interfaces/ISurgeStaking.sol";
 
 /// @title LiquidityHandler
 /// @notice This contract handles liquidity orders for adding or removing liquidity from a pool
@@ -96,7 +96,7 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   mapping(address => bool) public orderExecutors; // address -> whitelist executors
   mapping(address => LiquidityOrder[]) public accountExecutedLiquidityOrders; // account -> executed orders
 
-  IHyperStaking public hlpStaking;
+  ISurgeStaking public hlpStaking;
   mapping(address user => mapping(uint256 orderId => bool isSurge)) isSurge;
 
   /// @notice Initializes the LiquidityHandler contract with the provided configuration parameters.
@@ -395,34 +395,24 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     if (msg.sender != address(this)) revert ILiquidityHandler_Unauthorized();
 
     if (_order.isAdd) {
-      if (address(hlpStaking) != address(0)) {
+      bool isHlpStakingDeployed = address(hlpStaking) != address(0);
+      IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
+      _amountOut = LiquidityService(liquidityService).addLiquidity(
+        _order.account,
+        _order.token,
+        _order.amount,
+        _order.minOut,
+        isHlpStakingDeployed ? address(this) : _order.account
+      );
+      if (isHlpStakingDeployed) {
         // If HLPStaking is live
-        IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
-        _amountOut = LiquidityService(liquidityService).addLiquidity(
-          _order.account,
-          _order.token,
-          _order.amount,
-          _order.minOut,
-          address(this)
-        );
-
         // Auto stake into HLPStaking
         if (isSurge[_order.account][_order.orderId]) {
-          IHyperStaking(hlpStaking).depositSurge(_order.account, _amountOut);
+          ISurgeStaking(hlpStaking).depositSurge(_order.account, _amountOut);
         } else {
-          IHyperStaking(hlpStaking).deposit(_order.account, _amountOut);
+          ISurgeStaking(hlpStaking).deposit(_order.account, _amountOut);
         }
-      } else {
-        // If no HLPStaking
-        IERC20Upgradeable(_order.token).safeTransfer(LiquidityService(liquidityService).vaultStorage(), _order.amount);
-        _amountOut = LiquidityService(liquidityService).addLiquidity(
-          _order.account,
-          _order.token,
-          _order.amount,
-          _order.minOut
-        );
       }
-
       return _amountOut;
     } else {
       _amountOut = LiquidityService(liquidityService).removeLiquidity(
@@ -659,10 +649,10 @@ contract LiquidityHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   function setHlpStaking(address _hlpStaking) external onlyOwner {
     if (_hlpStaking == address(0)) revert ILiquidityHandler_InvalidAddress();
     emit LogSetHlpStaking(address(hlpStaking), _hlpStaking);
-    hlpStaking = IHyperStaking(_hlpStaking);
+    hlpStaking = ISurgeStaking(_hlpStaking);
 
     // Sanity check
-    hlpStaking.startHyperEventDepositTimestamp();
+    hlpStaking.startSurgeEventDepositTimestamp();
 
     // Max approve
     IERC20Upgradeable(ConfigStorage(LiquidityService(liquidityService).configStorage()).hlp()).safeApprove(

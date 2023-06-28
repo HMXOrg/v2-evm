@@ -1,14 +1,11 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers, tenderly, upgrades, network } from "hardhat";
-import { getConfig, writeConfigFile } from "../../utils/config";
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-
-const BigNumber = ethers.BigNumber;
-const config = getConfig();
+import { ethers, tenderly, upgrades, getChainId } from "hardhat";
+import { loadConfig } from "../../utils/config";
+import signers from "../../entities/signers";
 
 async function main() {
-  const deployer = (await ethers.getSigners())[0];
+  const chainId = Number(await getChainId());
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
 
   const Contract = await ethers.getContractFactory("LiquidityService", deployer);
   const TARGET_ADDRESS = config.services.liquidity;

@@ -60,5 +60,6 @@
     "trading": "0x3D0Ff2Dc469DB700656d55F384758C1209BFa16A",
     "tlc": "0xD04d22f868316B510F924ee6749aABf2ef3E1ACD",
     "hlp": ""
-  }
+  },
+  "rewardDistributor": ""
 }

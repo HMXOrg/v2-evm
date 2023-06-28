@@ -8,7 +8,7 @@
     "bot": "0xe0cb00Ed6f01226763e74f3f617F952f99643eC7",
     "crossMargin": "0xF4573e1354ee94eBB5B5C1C2Ae9A8Fa6fF4203dF",
     "limitTrade": "0x43C3f523d6D17a99A2E59A997dfe059b7a5a95e2",
-    "liquidity": "0x42A460211d20EbCaA6982AE5f4b602dCB9973B1c"
+    "liquidity": "0xc46a03cc351fB320C35074Acf1028A14D450E400"
   },
   "helpers": {
     "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a"
@@ -59,6 +59,6 @@
   "staking": {
     "trading": "0x3D0Ff2Dc469DB700656d55F384758C1209BFa16A",
     "tlc": "0xD04d22f868316B510F924ee6749aABf2ef3E1ACD",
-    "hlp": ""
+    "hlp": "0xD65bAFdA80bF362cB8689c5a054eafD743b1B48e"
   }
 }

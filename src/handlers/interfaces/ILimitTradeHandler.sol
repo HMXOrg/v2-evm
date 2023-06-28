@@ -142,6 +142,18 @@ interface ILimitTradeHandler {
     bytes32 _encodedVaas
   ) external;
 
+  function executeOrders(
+    address[] calldata _accounts,
+    uint8[] calldata _subAccountIds,
+    uint256[] calldata _orderIndexes,
+    address payable _feeReceiver,
+    bytes32[] calldata _priceData,
+    bytes32[] calldata _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas,
+    bool _isRevert
+  ) external;
+
   function cancelOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) external;
 
   function updateOrder(

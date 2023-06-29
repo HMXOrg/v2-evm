@@ -23,7 +23,6 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
-import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 
@@ -49,8 +48,6 @@ import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrateg
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
-
-import { IHmxAccountFactory } from "@hmx/account-abstraction/interfaces/IHmxAccountFactory.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -233,21 +230,6 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ILimitTradeHandler(payable(_proxy));
-  }
-
-  function deployMarketTradeHandler(
-    address _proxyAdmin,
-    address _tradeService,
-    address _pyth
-  ) internal returns (IMarketTradeHandler) {
-    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/MarketTradeHandler.sol/MarketTradeHandler.json"));
-    bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address)")),
-      _tradeService,
-      _pyth
-    );
-    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IMarketTradeHandler(payable(_proxy));
   }
 
   function deployBotHandler(
@@ -509,13 +491,6 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IConvertedGlpStrategy(payable(_proxy));
-  }
-
-  /**
-   * Account Abstraction
-   */
-  function deployHmxAccountFactory(address _entryPoint) internal returns (IHmxAccountFactory) {
-    return IHmxAccountFactory(deployContractWithArguments("HmxAccountFactory", abi.encode(_entryPoint)));
   }
 
   /**

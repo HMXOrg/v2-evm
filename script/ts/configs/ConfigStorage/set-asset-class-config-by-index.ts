@@ -1,7 +1,5 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "../../../../typechain";
+import { ConfigStorage__factory } from "../../../../typechain";
 import { getConfig } from "../../utils/config";
 
 const config = getConfig();
@@ -10,9 +8,9 @@ const equityAssetClass = 1;
 const forexAssetClass = 2;
 const commoditiesAssetClass = 3;
 
-const assetIndex = cryptoAssetClass;
+const assetIndex = commoditiesAssetClass;
 const assetConfig = {
-  baseBorrowingRate: ethers.utils.parseEther("0.000000000002536783"), // 0.008% per hour
+  baseBorrowingRate: ethers.utils.parseEther("0.000000022222222222"), // 0.008% per hour
 };
 
 async function main() {

@@ -1,21 +1,23 @@
-import { ethers } from "hardhat";
 import { EcoPyth__factory } from "../../../../typechain";
-import { getConfig } from "../../../../deploy/utils/config";
-import { getUpdatePriceData } from "../../../../deploy/utils/price";
 import { ecoPythPriceFeedIdsByIndex } from "../../constants/eco-pyth-index";
 import * as readlineSync from "readline-sync";
+import { Command } from "commander";
+import { loadConfig } from "../../utils/config";
+import { getUpdatePriceData } from "../../utils/price";
+import signers from "../../entities/signers";
+import chains from "../../entities/chains";
 
-async function main() {
-  // https://xc-mainnet.pyth.network
-  // https://xc-testnet.pyth.network
-  const config = getConfig();
-  const deployer = (await ethers.getSigners())[0];
+async function main(chainId: number) {
+  const config = loadConfig(chainId);
+  const provider = chains[chainId].jsonRpcProvider;
+  const deployer = signers.deployer(chainId);
+  const deployerAddress = await deployer.getAddress();
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
 
-  const [minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] = await getUpdatePriceData(
-    ecoPythPriceFeedIdsByIndex
-  );
+  const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
+    await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
+  console.table(readableTable);
   const confirm = readlineSync.question("Confirm to update price feeds? (y/n): ");
   switch (confirm) {
     case "y":
@@ -30,15 +32,23 @@ async function main() {
 
   console.log("Feed Price...");
   console.log("Allow deployer to update price feeds...");
-  await (await pyth.setUpdater(deployer.address, true)).wait();
+  await (await pyth.setUpdater(deployerAddress, true)).wait();
   console.log("Update price feeds...");
   await (await pyth.updatePriceFeeds(priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas)).wait();
   console.log("Disallow deployer to update price feeds...");
-  await (await pyth.setUpdater(deployer.address, false)).wait();
+  await (await pyth.setUpdater(deployerAddress, false)).wait();
   console.log("Feed Price success!");
 }
 
-main()
+const prog = new Command();
+
+prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
+
+prog.parse(process.argv);
+
+const opts = prog.opts();
+
+main(opts.chainId)
   .then(() => {
     process.exit(0);
   })

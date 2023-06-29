@@ -48,7 +48,6 @@ import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
-import { IMarketTradeHandler } from "@hmx/handlers/interfaces/IMarketTradeHandler.sol";
 
 import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
@@ -107,7 +106,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
   ICrossMarginHandler crossMarginHandler;
   ILimitTradeHandler limitTradeHandler;
   ILiquidityHandler liquidityHandler;
-  IMarketTradeHandler marketTradeHandler;
 
   // services
   ICrossMarginService crossMarginService;
@@ -294,10 +292,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       maxExecutionChuck
     );
 
-    marketTradeHandler = Deployer.deployMarketTradeHandler(address(proxyAdmin), address(tradeService), address(pyth));
-
     // testers
-
     crossMarginTester = new CrossMarginTester(vaultStorage, perpStorage, address(crossMarginHandler));
     globalMarketTester = new MarketTester(perpStorage);
     limitOrderTester = new LimitOrderTester(limitTradeHandler);
@@ -307,13 +302,7 @@ abstract contract BaseIntTest is TestBase, StdCheats {
 
     address[] memory interestTokens = new address[](1);
     interestTokens[0] = address(0);
-    tradeTester = new TradeTester(
-      vaultStorage,
-      perpStorage,
-      address(limitTradeHandler),
-      address(marketTradeHandler),
-      interestTokens
-    );
+    tradeTester = new TradeTester(vaultStorage, perpStorage, address(limitTradeHandler), interestTokens);
     /* Setup part */
     // Setup ConfigStorage
     {
@@ -323,7 +312,6 @@ abstract contract BaseIntTest is TestBase, StdCheats {
       // Set whitelists for executors
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
       configStorage.setServiceExecutor(address(crossMarginService), address(botHandler), true);
-      configStorage.setServiceExecutor(address(tradeService), address(marketTradeHandler), true);
       configStorage.setServiceExecutor(address(tradeHelper), address(liquidationService), true);
       configStorage.setServiceExecutor(address(tradeHelper), address(tradeService), true);
 

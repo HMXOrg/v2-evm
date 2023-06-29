@@ -224,13 +224,21 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     WithdrawFundingFeeSurplusVars memory _vars;
 
-    // Get funding Fee LONG & SHORT on each market to find positive values
-    // positive value mean how much protocol book funding fee value that will be paid to trader
-    // Loop through all markets to sum funding fee on LONG and SHORT sides
+    // This loop we go through `accumFundingLong` and `accumFundingShort` of each market
+    // `accumFundingLong` and `accumFundingShort` are the unsettled funding fee of the market
+    // we will use `fundingFeeBookValue` to sum up the current funding fee debt of every market
+    // after we know all the current funding fee debt, we will compare it with `fundingFeeReserve`
+    // to find out how much funding fee surplus there is in the platform.
+    // (`fundingFeeReserve` keeps track of funding fee paid by traders)
     uint256 len = _configStorage.getMarketConfigsLength();
     for (uint256 i = 0; i < len; ) {
       PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
+      // Only sum up the negative funding fee,
+      // (negative funding fee means trader will receive funding fee)
+      // we only care about negative funding fee here because
+      // we would like to know how much the protocol owed the traders,
+      // so that we will not withdraw too much funding fee surplus to the point that we can't pay the traders
       if (_market.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
       if (_market.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingShort);
 
@@ -246,8 +254,9 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     _vars.fundingFeeAmount = _vaultStorage.fundingFeeReserve(_stableToken);
     _vars.totalFundingFeeReserveValueE30 = (_vars.fundingFeeAmount * _vars.tokenPrice) / (10 ** _vars.tokenDecimal);
 
-    // If fundingFeeBookValue > totalFundingFeeReserveValueE30 means protocol has exceed balance of fee reserved for paying to traders
-    // Funding fee surplus = totalFundingFeeReserveValueE30 - fundingFeeBookValue
+    // If fundingFeeBookValue > totalFundingFeeReserveValueE30 means protocol has funds in `fundingFeeReserve` more than what the protocol owed the traders
+    // so, the protocol is currently with funding fee surplus
+    // funding fee surplus = totalFundingFeeReserveValueE30 - fundingFeeBookValue
     if (_vars.fundingFeeBookValue > _vars.totalFundingFeeReserveValueE30 || (_vars.totalFundingFeeReserveValueE30 == 0))
       revert ICrossMarginHandler_NoFundingFeeSurplus();
 

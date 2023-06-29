@@ -12,9 +12,9 @@ abstract contract BaseIntTest_SetWhitelist is BaseIntTest_SetHLPTokens {
     limitTradeHandler.setOrderExecutor(ORDER_EXECUTOR, true);
     liquidityHandler.setOrderExecutor(ORDER_EXECUTOR, true);
 
-    address[] memory _contractAddresses = new address[](6);
-    address[] memory _executorAddresses = new address[](6);
-    bool[] memory _isServiceExecutors = new bool[](6);
+    address[] memory _contractAddresses = new address[](5);
+    address[] memory _executorAddresses = new address[](5);
+    bool[] memory _isServiceExecutors = new bool[](5);
     // Set Cross margin executors
     _contractAddresses[0] = address(crossMarginService);
     _executorAddresses[0] = address(crossMarginHandler);
@@ -36,19 +36,14 @@ abstract contract BaseIntTest_SetWhitelist is BaseIntTest_SetHLPTokens {
     _isServiceExecutors[3] = true;
 
     _contractAddresses[4] = address(tradeService);
-    _executorAddresses[4] = address(marketTradeHandler);
+    _executorAddresses[4] = address(botHandler);
     _isServiceExecutors[4] = true;
-
-    _contractAddresses[5] = address(tradeService);
-    _executorAddresses[5] = address(botHandler);
-    _isServiceExecutors[5] = true;
 
     configStorage.setServiceExecutors(_contractAddresses, _executorAddresses, _isServiceExecutors);
 
     pyth.setUpdater(address(crossMarginHandler), true);
     pyth.setUpdater(address(liquidityHandler), true);
     pyth.setUpdater(address(limitTradeHandler), true);
-    pyth.setUpdater(address(marketTradeHandler), true);
     pyth.setUpdater(address(botHandler), true);
   }
 }

@@ -19,6 +19,7 @@ async function main() {
   const activePositions = await perpStorage.getActivePositions(100, 0);
 
   const numberOfMarkets = 15;
+  const result = [];
   for (let i = 0; i < numberOfMarkets; i++) {
     const inputs = [
       {
@@ -40,34 +41,37 @@ async function main() {
         args: [i],
       },
     ];
-    const [, [market_eth, fundingRateVelocity, proportionalElapsedInDay]] = await multicall.multiCall(inputs as any);
-    const nextFundingRate = market_eth.currentFundingRate.add(
+    const [, [market, fundingRateVelocity, proportionalElapsedInDay]] = await multicall.multiCall(inputs as any);
+    const nextFundingRate = market.currentFundingRate.add(
       fundingRateVelocity.mul(proportionalElapsedInDay).div(ONE_ETHER)
     ); //int256 nextFundingRate = _market.currentFundingRate + ((_calculator.getFundingRateVelocity(_marketIndex) * proportionalElapsedInDay) / 1e18);
-    const lastFundingAccrued = market_eth.fundingAccrued;
+    const lastFundingAccrued = market.fundingAccrued;
     const newFundingAccrued = lastFundingAccrued.add(
-      market_eth.currentFundingRate.add(nextFundingRate).mul(proportionalElapsedInDay).div(2).div(ONE_ETHER)
+      market.currentFundingRate.add(nextFundingRate).mul(proportionalElapsedInDay).div(2).div(ONE_ETHER)
     );
 
-    const accumFundingLong = market_eth.accumFundingLong.add(
-      getFundingFee(market_eth.longPositionSize, newFundingAccrued, lastFundingAccrued)
+    const accumFundingLong = market.accumFundingLong.add(
+      getFundingFee(market.longPositionSize, newFundingAccrued, lastFundingAccrued)
     );
-    const accumFundingShort = market_eth.accumFundingShort.add(
-      getFundingFee(market_eth.shortPositionSize.mul(-1), newFundingAccrued, lastFundingAccrued)
+    const accumFundingShort = market.accumFundingShort.add(
+      getFundingFee(market.shortPositionSize.mul(-1), newFundingAccrued, lastFundingAccrued)
     );
-    console.log("market", i);
-    console.log("accumFundingLong", formatUnits(accumFundingLong, 30));
-    console.log("accumFundingShort", formatUnits(accumFundingShort, 30));
-
     const positions = activePositions.filter((each: any) => each.marketIndex.eq(i));
     let allFundingFee = BigNumber.from(0);
     positions.forEach((each: any) => {
       const fundingFee = getFundingFee(each.positionSizeE30, newFundingAccrued, each.lastFundingAccrued);
       allFundingFee = allFundingFee.add(fundingFee);
     });
-    console.log("sumFundingFeeAllPositions", formatUnits(allFundingFee, 30));
-    console.log("diff", formatUnits(accumFundingLong.add(accumFundingShort).sub(allFundingFee), 30));
+
+    result.push({
+      market: i,
+      accumFundingLong: formatUnits(accumFundingLong, 30),
+      accumFundingShort: formatUnits(accumFundingShort, 30),
+      sumFundingFeeAllPositions: formatUnits(allFundingFee, 30),
+      diff: formatUnits(accumFundingLong.add(accumFundingShort).sub(allFundingFee), 30),
+    });
   }
+  console.table(result);
 }
 
 function getFundingFee(size: BigNumber, currentFundingAccrued: BigNumber, lastFundingAccrued: BigNumber): BigNumber {

@@ -7,14 +7,14 @@ async function main() {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
 
-  const Contract = await ethers.getContractFactory("LiquidityHandler", deployer);
-  const TARGET_ADDRESS = config.handlers.liquidity;
+  const Contract = await ethers.getContractFactory("LiquidityService", deployer);
+  const TARGET_ADDRESS = config.services.liquidity;
 
-  console.log(`> Preparing to upgrade LiquidityHandler`);
+  console.log(`> Preparing to upgrade LiquidityService`);
   const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);
   console.log(`> Done`);
 
-  console.log(`> New LiquidityHandler Implementation address: ${newImplementation}`);
+  console.log(`> New LiquidityService Implementation address: ${newImplementation}`);
   const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract);
   console.log(`> ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
   console.log(`> Waiting for tx to be mined...`);
@@ -24,7 +24,7 @@ async function main() {
   console.log(`> Verify contract on Tenderly`);
   await tenderly.verify({
     address: newImplementation.toString(),
-    name: "LiquidityHandler",
+    name: "LiquidityService",
   });
 }
 

@@ -59,6 +59,8 @@
   },
   "staking": {
     "trading": "",
-    "tlc": ""
-  }
+    "tlc": "",
+    "hlp": ""
+  },
+  "rewardDistributor": ""
 }

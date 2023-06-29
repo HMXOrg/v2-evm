@@ -67,6 +67,24 @@ contract MockLiquidityService {
     return 1;
   }
 
+  function addLiquidity(
+    address /*_lpProvider*/,
+    address /* _token */,
+    uint256 /* _amount */,
+    uint256 /* _minAmount */,
+    address
+  ) external view returns (uint256) {
+    if (reverted) {
+      if (revertAsMessage) {
+        require(false, "Reverted as Message");
+      } else {
+        revert LiquidityService_RevertAsBytes();
+      }
+    }
+
+    return 1;
+  }
+
   function removeLiquidity(
     address /*_lpProvider*/,
     address _tokenOut,

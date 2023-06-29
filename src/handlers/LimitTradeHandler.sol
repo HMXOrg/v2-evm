@@ -223,7 +223,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
   // Only whitelisted addresses can be able to execute limit orders
   modifier onlyOrderExecutor() {
-    if (!isAllowAllExecutor && !orderExecutors[msg.sender]) revert ILimitTradeHandler_NotWhitelisted();
+    if (!orderExecutors[msg.sender]) revert ILimitTradeHandler_NotWhitelisted();
     _;
   }
 
@@ -1112,11 +1112,6 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     if (_newMinExecutionFee > MAX_EXECUTION_FEE) revert ILimitTradeHandler_MaxExecutionFee();
     emit LogSetMinExecutionFee(minExecutionFee, _newMinExecutionFee);
     minExecutionFee = _newMinExecutionFee;
-  }
-
-  function setIsAllowAllExecutor(bool _isAllow) external nonReentrant onlyOwner {
-    emit LogSetIsAllowAllExecutor(isAllowAllExecutor, _isAllow);
-    isAllowAllExecutor = _isAllow;
   }
 
   function setMinExecutionTimestamp(uint32 _newMinExecutionTimestamp) external onlyOwner {

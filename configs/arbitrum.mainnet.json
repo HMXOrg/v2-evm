@@ -62,5 +62,6 @@
   "staking": {
     "trading": "",
     "tlc": ""
-  }
+  },
+  "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D"
 }

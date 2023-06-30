@@ -618,7 +618,6 @@ contract TradeHelper is ITradeHelper, ReentrancyGuardUpgradeable, OwnableUpgrade
 
       // deduct _vars.absFundingFeeToBePaid with _repayAmount, so that the next iteration could continue deducting the fee
       _vars.fundingFeeToBeReceived -= _repayValue;
-      _vars.payerBalance -= _repayAmount;
 
       emit LogReceivedFundingFeeAmount(
         _vars.positionId,

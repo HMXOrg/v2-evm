@@ -133,6 +133,26 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     uint256 _amount,
     uint256 _minAmount
   ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) returns (uint256) {
+    return _addLiquidity(_lpProvider, _token, _amount, _minAmount, _lpProvider);
+  }
+
+  function addLiquidity(
+    address _lpProvider,
+    address _token,
+    uint256 _amount,
+    uint256 _minAmount,
+    address _receiver
+  ) external nonReentrant onlyWhitelistedExecutor onlyAcceptedToken(_token) returns (uint256) {
+    return _addLiquidity(_lpProvider, _token, _amount, _minAmount, _receiver);
+  }
+
+  function _addLiquidity(
+    address _lpProvider,
+    address _token,
+    uint256 _amount,
+    uint256 _minAmount,
+    address _receiver
+  ) internal returns (uint256) {
     AddLiquidityVars memory _vars;
 
     // SLOAD
@@ -168,7 +188,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     );
 
     // 5. mint HLP to lp provider
-    HLP(_vars.configStorage.hlp()).mint(_lpProvider, _vars.mintAmount);
+    HLP(_vars.configStorage.hlp()).mint(_receiver, _vars.mintAmount);
 
     if (HLP(_vars.configStorage.hlp()).totalSupply() < 1e18) revert LiquidityService_TinyShare();
 

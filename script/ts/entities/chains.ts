@@ -17,4 +17,9 @@ export default {
     rpc: process.env.ARBITRUM_MAINNET_RPC,
     jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_MAINNET_RPC),
   },
+  421613: {
+    name: "arbitrum",
+    rpc: process.env.ARBITRUM_GOERLI_RPC,
+    jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_GOERLI_RPC),
+  },
 } as { [chainId: number]: ChainEntity };

@@ -24,7 +24,7 @@
     "pythAdapter": "0x16450238B44856BBb050Fb77611f79b0dB2f1E37",
     "sglpStakedAdapter": "",
     "middleware": "0x0DbdfF9CeE7cA35C8bcd48B031f8C2aB274F4552",
-    "ecoPythCalldataBuilder": "0x0622DBf2ee42C531AF2AB8Fe4d802B4546D3119a"
+    "ecoPythCalldataBuilder": "0x2426028a97052D9A8Dc6ff9a3eb96d2AD587136B"
   },
   "tokens": {
     "hlp": "0x9772cE382D33573850f029c56828dff7717b3282",

@@ -10,7 +10,7 @@ async function main() {
 
   console.log("> LiquidityHandler: Set HLP Staking...");
   const handler = LiquidityHandler__factory.connect(config.handlers.liquidity, deployer);
-  await (await handler.setHlpStaking(config.staking.hlp)).wait();
+  await (await handler.setHlpStaking(config.staking.hlp, { gasLimit: 10000000 })).wait();
   console.log("> LiquidityHandler: Set HLP Staking success!");
 }
 

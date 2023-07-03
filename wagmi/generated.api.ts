@@ -7,7 +7,7 @@ import {
   watchContractEvent,
   WatchContractEventConfig,
   WatchContractEventCallback,
-} from "@wagmi/core"
+} from "@wagmi/core";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BotHandler
@@ -455,7 +455,7 @@ export const botHandlerABI = [
     name: "withdrawFundingFeeSurplus",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ConfigStorage
@@ -2013,7 +2013,7 @@ export const configStorageABI = [
     name: "weth",
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CrossMarginHandler
@@ -2483,7 +2483,7 @@ export const crossMarginHandlerABI = [
     ],
   },
   { stateMutability: "payable", type: "receive" },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // EcoPyth
@@ -2709,7 +2709,7 @@ export const ecoPythABI = [
     name: "updatePriceFeeds",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // EcoPythCalldataBuilder
@@ -2778,7 +2778,7 @@ export const ecoPythCalldataBuilderABI = [
     name: "sGlp",
     outputs: [{ name: "", internalType: "contract IERC20", type: "address" }],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IGmxGlpManager
@@ -2820,7 +2820,7 @@ export const iGmxGlpManagerABI = [
     name: "getAums",
     outputs: [{ name: "", internalType: "uint256[]", type: "uint256[]" }],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LimitTradeHandler
@@ -2923,7 +2923,25 @@ export const limitTradeHandlerABI = [
       { name: "executionFee", internalType: "uint256", type: "uint256", indexed: false },
       { name: "reduceOnly", internalType: "bool", type: "bool", indexed: false },
       { name: "tpToken", internalType: "address", type: "address", indexed: false },
-      { name: "errMsg", internalType: "string", type: "string", indexed: false },
+      { name: "errMsg", internalType: "bytes", type: "bytes", indexed: false },
+    ],
+    name: "LogExecuteLimitOrderFail",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "account", internalType: "address", type: "address", indexed: true },
+      { name: "subAccountId", internalType: "uint256", type: "uint256", indexed: true },
+      { name: "orderIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "sizeDelta", internalType: "int256", type: "int256", indexed: false },
+      { name: "triggerPrice", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "triggerAboveThreshold", internalType: "bool", type: "bool", indexed: false },
+      { name: "executionFee", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "reduceOnly", internalType: "bool", type: "bool", indexed: false },
+      { name: "tpToken", internalType: "address", type: "address", indexed: false },
+      { name: "errMsg", internalType: "bytes", type: "bytes", indexed: false },
     ],
     name: "LogExecuteMarketOrderFail",
   },
@@ -3151,6 +3169,23 @@ export const limitTradeHandlerABI = [
       },
     ],
     name: "executeLimitOrder",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [
+      { name: "_accounts", internalType: "address[]", type: "address[]" },
+      { name: "_subAccountIds", internalType: "uint8[]", type: "uint8[]" },
+      { name: "_orderIndexes", internalType: "uint256[]", type: "uint256[]" },
+      { name: "_feeReceiver", internalType: "address payable", type: "address" },
+      { name: "_priceData", internalType: "bytes32[]", type: "bytes32[]" },
+      { name: "_publishTimeData", internalType: "bytes32[]", type: "bytes32[]" },
+      { name: "_minPublishTime", internalType: "uint256", type: "uint256" },
+      { name: "_encodedVaas", internalType: "bytes32", type: "bytes32" },
+      { name: "_isRevert", internalType: "bool", type: "bool" },
+    ],
+    name: "executeOrders",
     outputs: [],
   },
   {
@@ -3550,7 +3585,7 @@ export const limitTradeHandlerABI = [
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
   { stateMutability: "payable", type: "receive" },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LiquidityHandler
@@ -4054,7 +4089,7 @@ export const liquidityHandlerABI = [
     outputs: [],
   },
   { stateMutability: "payable", type: "receive" },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MarketTradeHandler
@@ -4205,7 +4240,7 @@ export const marketTradeHandlerABI = [
     name: "transferOwnership",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // OracleMiddleware
@@ -4515,7 +4550,7 @@ export const oracleMiddlewareABI = [
       { name: "_status", internalType: "uint8", type: "uint8" },
     ],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PerpStorage
@@ -4993,7 +5028,7 @@ export const perpStorageABI = [
     name: "updateMarket",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PythAdapter
@@ -5139,7 +5174,313 @@ export const pythAdapterABI = [
     name: "transferOwnership",
     outputs: [],
   },
-] as const
+] as const;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TradeService
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+export const tradeServiceABI = [
+  { stateMutability: "nonpayable", type: "constructor", inputs: [] },
+  { type: "error", inputs: [], name: "HMXLib_WrongSubAccountId" },
+  { type: "error", inputs: [], name: "ITradeService_BadExposure" },
+  { type: "error", inputs: [], name: "ITradeService_BadNumberOfPosition" },
+  { type: "error", inputs: [], name: "ITradeService_BadPositionSize" },
+  { type: "error", inputs: [], name: "ITradeService_BadSizeDelta" },
+  { type: "error", inputs: [], name: "ITradeService_BadSubAccountId" },
+  { type: "error", inputs: [], name: "ITradeService_DecreaseTooHighPositionSize" },
+  { type: "error", inputs: [], name: "ITradeService_HlpHealthy" },
+  { type: "error", inputs: [], name: "ITradeService_InsufficientFreeCollateral" },
+  { type: "error", inputs: [], name: "ITradeService_InsufficientLiquidity" },
+  { type: "error", inputs: [], name: "ITradeService_InvalidAddress" },
+  { type: "error", inputs: [], name: "ITradeService_InvalidAveragePrice" },
+  { type: "error", inputs: [], name: "ITradeService_MarketHealthy" },
+  { type: "error", inputs: [], name: "ITradeService_MarketIsClosed" },
+  { type: "error", inputs: [], name: "ITradeService_MarketIsDelisted" },
+  { type: "error", inputs: [], name: "ITradeService_NotAllowIncrease" },
+  { type: "error", inputs: [], name: "ITradeService_PositionAlreadyClosed" },
+  { type: "error", inputs: [], name: "ITradeService_PositionSizeExceed" },
+  { type: "error", inputs: [], name: "ITradeService_ReservedValueStillEnough" },
+  { type: "error", inputs: [], name: "ITradeService_SubAccountEquityIsUnderMMR" },
+  { type: "error", inputs: [], name: "ITradeService_TooTinyPosition" },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [{ name: "version", internalType: "uint8", type: "uint8", indexed: false }],
+    name: "Initialized",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "positionId", internalType: "bytes32", type: "bytes32", indexed: true },
+      { name: "primaryAccount", internalType: "address", type: "address", indexed: false },
+      { name: "subAccountId", internalType: "uint8", type: "uint8", indexed: false },
+      { name: "subAccount", internalType: "address", type: "address", indexed: false },
+      { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "size", internalType: "int256", type: "int256", indexed: false },
+      { name: "decreasedSize", internalType: "int256", type: "int256", indexed: false },
+      { name: "avgEntryPrice", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "entryBorrowingRate", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "lastFundingAccrued", internalType: "int256", type: "int256", indexed: false },
+      { name: "realizedPnl", internalType: "int256", type: "int256", indexed: false },
+      { name: "reserveValueE30", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "price", internalType: "uint256", type: "uint256", indexed: false },
+    ],
+    name: "LogDecreasePosition",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "account", internalType: "address", type: "address", indexed: true },
+      { name: "subAccountId", internalType: "uint8", type: "uint8", indexed: false },
+      { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "tpToken", internalType: "address", type: "address", indexed: false },
+      { name: "closedPositionSize", internalType: "uint256", type: "uint256", indexed: false },
+    ],
+    name: "LogDeleverage",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "positionId", internalType: "bytes32", type: "bytes32", indexed: true },
+      { name: "account", internalType: "address", type: "address", indexed: true },
+      { name: "subAccountId", internalType: "uint8", type: "uint8", indexed: false },
+      { name: "subAccount", internalType: "address", type: "address", indexed: false },
+      { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "tpToken", internalType: "address", type: "address", indexed: false },
+      { name: "closedPositionSize", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "isProfit", internalType: "bool", type: "bool", indexed: false },
+      { name: "delta", internalType: "uint256", type: "uint256", indexed: false },
+    ],
+    name: "LogForceClosePosition",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "positionId", internalType: "bytes32", type: "bytes32", indexed: false },
+      { name: "primaryAccount", internalType: "address", type: "address", indexed: false },
+      { name: "subAccountId", internalType: "uint8", type: "uint8", indexed: false },
+      { name: "subAccount", internalType: "address", type: "address", indexed: false },
+      { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "size", internalType: "int256", type: "int256", indexed: false },
+      { name: "increasedSize", internalType: "int256", type: "int256", indexed: false },
+      { name: "avgEntryPrice", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "entryBorrowingRate", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "lastFundingAccrued", internalType: "int256", type: "int256", indexed: false },
+      { name: "realizedPnl", internalType: "int256", type: "int256", indexed: false },
+      { name: "reserveValueE30", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "price", internalType: "uint256", type: "uint256", indexed: false },
+    ],
+    name: "LogIncreasePosition",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "oldCalculator", internalType: "address", type: "address", indexed: true },
+      { name: "newCalculator", internalType: "address", type: "address", indexed: false },
+    ],
+    name: "LogSetCalculator",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "oldConfigStorage", internalType: "address", type: "address", indexed: true },
+      { name: "newConfigStorage", internalType: "address", type: "address", indexed: false },
+    ],
+    name: "LogSetConfigStorage",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "oldPerpStorage", internalType: "address", type: "address", indexed: true },
+      { name: "newPerpStorage", internalType: "address", type: "address", indexed: false },
+    ],
+    name: "LogSetPerpStorage",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "oldTradeHelper", internalType: "address", type: "address", indexed: true },
+      { name: "newTradeHelper", internalType: "address", type: "address", indexed: false },
+    ],
+    name: "LogSetTradeHelper",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "oldVaultStorage", internalType: "address", type: "address", indexed: true },
+      { name: "newVaultStorage", internalType: "address", type: "address", indexed: false },
+    ],
+    name: "LogSetVaultStorage",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "previousOwner", internalType: "address", type: "address", indexed: true },
+      { name: "newOwner", internalType: "address", type: "address", indexed: true },
+    ],
+    name: "OwnershipTransferred",
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "calculator",
+    outputs: [{ name: "", internalType: "contract Calculator", type: "address" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "configStorage",
+    outputs: [{ name: "", internalType: "address", type: "address" }],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [
+      { name: "_account", internalType: "address", type: "address" },
+      { name: "_subAccountId", internalType: "uint8", type: "uint8" },
+      { name: "_marketIndex", internalType: "uint256", type: "uint256" },
+      { name: "_positionSizeE30ToDecrease", internalType: "uint256", type: "uint256" },
+      { name: "_tpToken", internalType: "address", type: "address" },
+      { name: "_limitPriceE30", internalType: "uint256", type: "uint256" },
+    ],
+    name: "decreasePosition",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [
+      { name: "_account", internalType: "address", type: "address" },
+      { name: "_subAccountId", internalType: "uint8", type: "uint8" },
+      { name: "_marketIndex", internalType: "uint256", type: "uint256" },
+      { name: "_tpToken", internalType: "address", type: "address" },
+    ],
+    name: "forceClosePosition",
+    outputs: [
+      { name: "_isMaxProfit", internalType: "bool", type: "bool" },
+      { name: "_isProfit", internalType: "bool", type: "bool" },
+      { name: "_delta", internalType: "uint256", type: "uint256" },
+    ],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [
+      { name: "_primaryAccount", internalType: "address", type: "address" },
+      { name: "_subAccountId", internalType: "uint8", type: "uint8" },
+      { name: "_marketIndex", internalType: "uint256", type: "uint256" },
+      { name: "_sizeDelta", internalType: "int256", type: "int256" },
+      { name: "_limitPriceE30", internalType: "uint256", type: "uint256" },
+    ],
+    name: "increasePosition",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [
+      { name: "_perpStorage", internalType: "address", type: "address" },
+      { name: "_vaultStorage", internalType: "address", type: "address" },
+      { name: "_configStorage", internalType: "address", type: "address" },
+      { name: "_tradeHelper", internalType: "address", type: "address" },
+    ],
+    name: "initialize",
+    outputs: [],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "owner",
+    outputs: [{ name: "", internalType: "address", type: "address" }],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "perpStorage",
+    outputs: [{ name: "", internalType: "address", type: "address" }],
+  },
+  { stateMutability: "nonpayable", type: "function", inputs: [], name: "reloadConfig", outputs: [] },
+  { stateMutability: "nonpayable", type: "function", inputs: [], name: "renounceOwnership", outputs: [] },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [{ name: "_calculator", internalType: "address", type: "address" }],
+    name: "setCalculator",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [{ name: "_configStorage", internalType: "address", type: "address" }],
+    name: "setConfigStorage",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [{ name: "_perpStorage", internalType: "address", type: "address" }],
+    name: "setPerpStorage",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [{ name: "_tradeHelper", internalType: "address", type: "address" }],
+    name: "setTradeHelper",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [{ name: "_vaultStorage", internalType: "address", type: "address" }],
+    name: "setVaultStorage",
+    outputs: [],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "tradeHelper",
+    outputs: [{ name: "", internalType: "address", type: "address" }],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [{ name: "newOwner", internalType: "address", type: "address" }],
+    name: "transferOwnership",
+    outputs: [],
+  },
+  { stateMutability: "view", type: "function", inputs: [], name: "validateDeleverage", outputs: [] },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [{ name: "_marketIndex", internalType: "uint256", type: "uint256" }],
+    name: "validateMarketDelisted",
+    outputs: [],
+  },
+  {
+    stateMutability: "view",
+    type: "function",
+    inputs: [],
+    name: "vaultStorage",
+    outputs: [{ name: "", internalType: "address", type: "address" }],
+  },
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VaultStorage
@@ -5808,7 +6149,7 @@ export const vaultStorageABI = [
     name: "withdrawSurplusFromFundingFeeReserveToHLP",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Core
@@ -5818,7 +6159,7 @@ export const vaultStorageABI = [
  * Wraps __{@link getContract}__ with `abi` set to __{@link botHandlerABI}__.
  */
 export function getBotHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: botHandlerABI, ...config })
+  return getContract({ abi: botHandlerABI, ...config });
 }
 
 /**
@@ -5826,9 +6167,9 @@ export function getBotHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readBotHandler<
   TAbi extends readonly unknown[] = typeof botHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: botHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: botHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5836,19 +6177,19 @@ export function readBotHandler<
  */
 export function watchBotHandlerEvent<
   TAbi extends readonly unknown[] = typeof botHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: botHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent({ abi: botHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback);
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link configStorageABI}__.
  */
 export function getConfigStorage(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: configStorageABI, ...config })
+  return getContract({ abi: configStorageABI, ...config });
 }
 
 /**
@@ -5856,9 +6197,9 @@ export function getConfigStorage(config: Omit<GetContractArgs, "abi">) {
  */
 export function readConfigStorage<
   TAbi extends readonly unknown[] = typeof configStorageABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: configStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: configStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5866,22 +6207,22 @@ export function readConfigStorage<
  */
 export function watchConfigStorageEvent<
   TAbi extends readonly unknown[] = typeof configStorageABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: configStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link crossMarginHandlerABI}__.
  */
 export function getCrossMarginHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: crossMarginHandlerABI, ...config })
+  return getContract({ abi: crossMarginHandlerABI, ...config });
 }
 
 /**
@@ -5889,9 +6230,9 @@ export function getCrossMarginHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readCrossMarginHandler<
   TAbi extends readonly unknown[] = typeof crossMarginHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: crossMarginHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: crossMarginHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5899,31 +6240,31 @@ export function readCrossMarginHandler<
  */
 export function watchCrossMarginHandlerEvent<
   TAbi extends readonly unknown[] = typeof crossMarginHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: crossMarginHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link ecoPythABI}__.
  */
 export function getEcoPyth(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: ecoPythABI, ...config })
+  return getContract({ abi: ecoPythABI, ...config });
 }
 
 /**
  * Wraps __{@link readContract}__ with `abi` set to __{@link ecoPythABI}__.
  */
 export function readEcoPyth<TAbi extends readonly unknown[] = typeof ecoPythABI, TFunctionName extends string = string>(
-  config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">,
+  config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">
 ) {
-  return readContract({ abi: ecoPythABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: ecoPythABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -5931,19 +6272,19 @@ export function readEcoPyth<TAbi extends readonly unknown[] = typeof ecoPythABI,
  */
 export function watchEcoPythEvent<
   TAbi extends readonly unknown[] = typeof ecoPythABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: ecoPythABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent({ abi: ecoPythABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback);
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link ecoPythCalldataBuilderABI}__.
  */
 export function getEcoPythCalldataBuilder(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: ecoPythCalldataBuilderABI, ...config })
+  return getContract({ abi: ecoPythCalldataBuilderABI, ...config });
 }
 
 /**
@@ -5951,12 +6292,12 @@ export function getEcoPythCalldataBuilder(config: Omit<GetContractArgs, "abi">) 
  */
 export function readEcoPythCalldataBuilder<
   TAbi extends readonly unknown[] = typeof ecoPythCalldataBuilderABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
   return readContract({ abi: ecoPythCalldataBuilderABI, ...config } as unknown as ReadContractConfig<
     TAbi,
     TFunctionName
-  >)
+  >);
 }
 
 /**
@@ -5964,22 +6305,22 @@ export function readEcoPythCalldataBuilder<
  */
 export function watchEcoPythCalldataBuilderEvent<
   TAbi extends readonly unknown[] = typeof ecoPythCalldataBuilderABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: ecoPythCalldataBuilderABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link iGmxGlpManagerABI}__.
  */
 export function getIGmxGlpManager(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: iGmxGlpManagerABI, ...config })
+  return getContract({ abi: iGmxGlpManagerABI, ...config });
 }
 
 /**
@@ -5987,16 +6328,16 @@ export function getIGmxGlpManager(config: Omit<GetContractArgs, "abi">) {
  */
 export function readIGmxGlpManager<
   TAbi extends readonly unknown[] = typeof iGmxGlpManagerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: iGmxGlpManagerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: iGmxGlpManagerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link limitTradeHandlerABI}__.
  */
 export function getLimitTradeHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: limitTradeHandlerABI, ...config })
+  return getContract({ abi: limitTradeHandlerABI, ...config });
 }
 
 /**
@@ -6004,9 +6345,9 @@ export function getLimitTradeHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readLimitTradeHandler<
   TAbi extends readonly unknown[] = typeof limitTradeHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: limitTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: limitTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -6014,22 +6355,22 @@ export function readLimitTradeHandler<
  */
 export function watchLimitTradeHandlerEvent<
   TAbi extends readonly unknown[] = typeof limitTradeHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: limitTradeHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link liquidityHandlerABI}__.
  */
 export function getLiquidityHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: liquidityHandlerABI, ...config })
+  return getContract({ abi: liquidityHandlerABI, ...config });
 }
 
 /**
@@ -6037,9 +6378,9 @@ export function getLiquidityHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readLiquidityHandler<
   TAbi extends readonly unknown[] = typeof liquidityHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: liquidityHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: liquidityHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -6047,22 +6388,22 @@ export function readLiquidityHandler<
  */
 export function watchLiquidityHandlerEvent<
   TAbi extends readonly unknown[] = typeof liquidityHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: liquidityHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link marketTradeHandlerABI}__.
  */
 export function getMarketTradeHandler(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: marketTradeHandlerABI, ...config })
+  return getContract({ abi: marketTradeHandlerABI, ...config });
 }
 
 /**
@@ -6070,9 +6411,9 @@ export function getMarketTradeHandler(config: Omit<GetContractArgs, "abi">) {
  */
 export function readMarketTradeHandler<
   TAbi extends readonly unknown[] = typeof marketTradeHandlerABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: marketTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: marketTradeHandlerABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -6080,22 +6421,22 @@ export function readMarketTradeHandler<
  */
 export function watchMarketTradeHandlerEvent<
   TAbi extends readonly unknown[] = typeof marketTradeHandlerABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: marketTradeHandlerABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link oracleMiddlewareABI}__.
  */
 export function getOracleMiddleware(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: oracleMiddlewareABI, ...config })
+  return getContract({ abi: oracleMiddlewareABI, ...config });
 }
 
 /**
@@ -6103,9 +6444,9 @@ export function getOracleMiddleware(config: Omit<GetContractArgs, "abi">) {
  */
 export function readOracleMiddleware<
   TAbi extends readonly unknown[] = typeof oracleMiddlewareABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: oracleMiddlewareABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: oracleMiddlewareABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -6113,22 +6454,22 @@ export function readOracleMiddleware<
  */
 export function watchOracleMiddlewareEvent<
   TAbi extends readonly unknown[] = typeof oracleMiddlewareABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
   return watchContractEvent(
     { abi: oracleMiddlewareABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
-    callback,
-  )
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link perpStorageABI}__.
  */
 export function getPerpStorage(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: perpStorageABI, ...config })
+  return getContract({ abi: perpStorageABI, ...config });
 }
 
 /**
@@ -6136,9 +6477,9 @@ export function getPerpStorage(config: Omit<GetContractArgs, "abi">) {
  */
 export function readPerpStorage<
   TAbi extends readonly unknown[] = typeof perpStorageABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: perpStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: perpStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -6146,19 +6487,19 @@ export function readPerpStorage<
  */
 export function watchPerpStorageEvent<
   TAbi extends readonly unknown[] = typeof perpStorageABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: perpStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent({ abi: perpStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback);
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link pythAdapterABI}__.
  */
 export function getPythAdapter(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: pythAdapterABI, ...config })
+  return getContract({ abi: pythAdapterABI, ...config });
 }
 
 /**
@@ -6166,9 +6507,9 @@ export function getPythAdapter(config: Omit<GetContractArgs, "abi">) {
  */
 export function readPythAdapter<
   TAbi extends readonly unknown[] = typeof pythAdapterABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: pythAdapterABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: pythAdapterABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -6176,19 +6517,52 @@ export function readPythAdapter<
  */
 export function watchPythAdapterEvent<
   TAbi extends readonly unknown[] = typeof pythAdapterABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: pythAdapterABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent({ abi: pythAdapterABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback);
+}
+
+/**
+ * Wraps __{@link getContract}__ with `abi` set to __{@link tradeServiceABI}__.
+ */
+export function getTradeService(config: Omit<GetContractArgs, "abi">) {
+  return getContract({ abi: tradeServiceABI, ...config });
+}
+
+/**
+ * Wraps __{@link readContract}__ with `abi` set to __{@link tradeServiceABI}__.
+ */
+export function readTradeService<
+  TAbi extends readonly unknown[] = typeof tradeServiceABI,
+  TFunctionName extends string = string
+>(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
+  return readContract({ abi: tradeServiceABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
+}
+
+/**
+ * Wraps __{@link watchContractEvent}__ with `abi` set to __{@link tradeServiceABI}__.
+ */
+export function watchTradeServiceEvent<
+  TAbi extends readonly unknown[] = typeof tradeServiceABI,
+  TEventName extends string = string
+>(
+  config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
+  callback: WatchContractEventCallback<TAbi, TEventName>
+) {
+  return watchContractEvent(
+    { abi: tradeServiceABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
+    callback
+  );
 }
 
 /**
  * Wraps __{@link getContract}__ with `abi` set to __{@link vaultStorageABI}__.
  */
 export function getVaultStorage(config: Omit<GetContractArgs, "abi">) {
-  return getContract({ abi: vaultStorageABI, ...config })
+  return getContract({ abi: vaultStorageABI, ...config });
 }
 
 /**
@@ -6196,9 +6570,9 @@ export function getVaultStorage(config: Omit<GetContractArgs, "abi">) {
  */
 export function readVaultStorage<
   TAbi extends readonly unknown[] = typeof vaultStorageABI,
-  TFunctionName extends string = string,
+  TFunctionName extends string = string
 >(config: Omit<ReadContractConfig<TAbi, TFunctionName>, "abi">) {
-  return readContract({ abi: vaultStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>)
+  return readContract({ abi: vaultStorageABI, ...config } as unknown as ReadContractConfig<TAbi, TFunctionName>);
 }
 
 /**
@@ -6206,10 +6580,13 @@ export function readVaultStorage<
  */
 export function watchVaultStorageEvent<
   TAbi extends readonly unknown[] = typeof vaultStorageABI,
-  TEventName extends string = string,
+  TEventName extends string = string
 >(
   config: Omit<WatchContractEventConfig<TAbi, TEventName>, "abi">,
-  callback: WatchContractEventCallback<TAbi, TEventName>,
+  callback: WatchContractEventCallback<TAbi, TEventName>
 ) {
-  return watchContractEvent({ abi: vaultStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>, callback)
+  return watchContractEvent(
+    { abi: vaultStorageABI, ...config } as WatchContractEventConfig<TAbi, TEventName>,
+    callback
+  );
 }

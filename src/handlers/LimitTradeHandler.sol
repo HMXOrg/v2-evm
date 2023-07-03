@@ -1204,7 +1204,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool isBuy = _sizeDelta > 0;
     vars.isPriceValid = isBuy ? vars.adaptivePrice < _acceptablePrice : vars.adaptivePrice > _acceptablePrice;
 
-    if (!vars.isPriceValid) revert ILimitTradeHandler_InvalidPriceForExecution();
+    if (!vars.isPriceValid) revert ILimitTradeHandler_PriceSlippage();
 
     return (vars.adaptivePrice, vars.isPriceValid);
   }

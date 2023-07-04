@@ -15,12 +15,14 @@ const ERC20_ABI = [
     "event Transfer(address indexed from, address indexed to, uint amount)"
 ];
 
+/// @dev Change address of the pool here:
 const ADDRESS = "0xFd29298041eA355cF7e15652689F2865443C3144";
 
 const chain = chains[42161];
 const config = loadConfig(42161);
 const provider = new ethers.providers.JsonRpcProvider(chain.rpc);
 
+// Index of token, swap between (0, 1) when the price is inverted.
 const IN = 1;
 const OUT = 0;
 
@@ -37,13 +39,14 @@ async function main() {
 
     // Vault Contract to get pool's tokens
     const vault_contract = new ethers.Contract(VAULT_ADDRESS,VAULT_ABI, provider);
+    vault_contract.connect(provider);
 
     // Get ERC20 Token's Contracts, to call `decimals()` to calculate the rate
     const tokens_data = await vault_contract.getPoolTokens(poolId);
-    const tokenIn = tokens_data['tokens'][IN];
-    const tokenOut = tokens_data['tokens'][OUT];
-    const contract_tokenIn = new ethers.Contract(tokenIn, ERC20_ABI, provider);
-    const contract_tokenOut = new ethers.Contract(tokenOut, ERC20_ABI, provider);
+    const contract_tokenIn = new ethers.Contract(tokens_data['tokens'][IN], ERC20_ABI, provider);
+    contract_tokenIn.connect(provider);
+    const contract_tokenOut = new ethers.Contract(tokens_data['tokens'][OUT], ERC20_ABI, provider);
+    contract_tokenOut.connect(provider);
     const decimalIn = await contract_tokenIn.decimals();
     const decimalOut = await contract_tokenOut.decimals();
     const tokenSymbolIn = await contract_tokenIn.symbol();
@@ -61,6 +64,7 @@ async function main() {
     const weightOut = normalizedWeights[OUT]
     const minimizedWeightIn = weightIn.mul(BigNumber.from(10)).div(rateW).toNumber() // div by decimal = 1e18, mul 10 cause BigNumber got rounded
     const minimizedWeightOut = weightOut.mul(BigNumber.from(10)).div(rateW).toNumber() // div by decimal = 1e18, mul 10 cause BigNumber got rounded
+    // NOTE: -- Logging info --
     // console.log('#### Var Info ####');
     // console.log('Wi:', minimizedWeightIn);
     // console.log('Wo:', minimizedWeightOut);

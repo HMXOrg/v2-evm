@@ -1,30 +1,27 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers, tenderly, upgrades, network } from "hardhat";
-import { getConfig, writeConfigFile } from "../../utils/config";
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-
-const BigNumber = ethers.BigNumber;
-const config = getConfig();
+import { ethers, tenderly, upgrades } from "hardhat";
+import { getConfig } from "../../utils/config";
+import signers from "../../entities/signers";
+import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
 async function main() {
-  const deployer = (await ethers.getSigners())[0];
+  const config = getConfig();
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const deployer = signers.deployer(chainId);
+  const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
-  const Contract = await ethers.getContractFactory("VaultStorage", deployer);
-  const TARGET_ADDRESS = config.storages.vault;
+  const VaultStorage = await ethers.getContractFactory("VaultStorage", deployer);
+  const vaultStorageAddress = config.storages.vault;
 
-  console.log(`> Preparing to upgrade VaultStorage`);
-  const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);
-  console.log(`> Done`);
+  console.log(`[upgrade/VaultStorage] Preparing to upgrade VaultStorage`);
+  const newImplementation = await upgrades.prepareUpgrade(vaultStorageAddress, VaultStorage);
+  console.log(`[upgrade/VaultStorage] Done`);
 
-  console.log(`> New VaultStorage Implementation address: ${newImplementation}`);
-  const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract);
-  console.log(`> ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
-  console.log(`> Waiting for tx to be mined...`);
-  await upgradeTx.deployTransaction.wait(3);
-  console.log(`> Tx is mined!`);
+  console.log(`[upgrade/VaultStorage] New VaultStorage Implementation address: ${newImplementation}`);
+  console.log(`[upgrade/VaultStorage] Upgrading VaultStorage`);
+  await proxyAdminWrapper.upgrade(vaultStorageAddress, newImplementation.toString());
+  console.log(`[upgrade/VaultStorage] Done`);
 
-  console.log(`> Verify contract on Tenderly`);
+  console.log(`[upgrade/VaultStorage] Verify contract on Tenderly`);
   await tenderly.verify({
     address: newImplementation.toString(),
     name: "VaultStorage",

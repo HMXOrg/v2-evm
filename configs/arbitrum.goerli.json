@@ -1,4 +1,7 @@
 {
+  "proxyAdmin": "",
+  "timelock": "",
+  "safe": "",
   "storages": {
     "config": "0x8923A5e874E4C614f28cb7814D22B65C934f4401",
     "perp": "0x5a820DCAF28522Bc7a655Ef72687D16B732C27DC",

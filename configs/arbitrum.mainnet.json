@@ -1,5 +1,7 @@
 {
   "proxyAdmin": "0x2E7983f9A1D08c57989eEA20adC9242321dA6589",
+  "timelock": "0xF3CcdE1c41bc4Bf1eA991cDcA3Eb595fd4921eEF",
+  "safe": "0x6409ba830719cd0fE27ccB3051DF1b399C90df4a",
   "storages": {
     "config": "0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0",
     "perp": "0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303",
@@ -60,7 +62,7 @@
   "staking": {
     "trading": "",
     "tlc": "",
-    "hlp": ""
+    "hlp": "0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C"
   },
-  "rewardDistributor": ""
+  "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D"
 }

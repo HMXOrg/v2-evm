@@ -10,8 +10,8 @@ import {
   UsePrepareContractWriteConfig,
   useContractEvent,
   UseContractEventConfig,
-} from "wagmi"
-import { ReadContractResult, WriteContractMode, PrepareWriteContractResult } from "wagmi/actions"
+} from "wagmi";
+import { ReadContractResult, WriteContractMode, PrepareWriteContractResult } from "wagmi/actions";
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ConfigStorage
@@ -1569,7 +1569,7 @@ export const configStorageABI = [
     name: "weth",
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CrossMarginHandler
@@ -2039,7 +2039,7 @@ export const crossMarginHandlerABI = [
     ],
   },
   { stateMutability: "payable", type: "receive" },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // IGmxGlpManager
@@ -2081,7 +2081,7 @@ export const iGmxGlpManagerABI = [
     name: "getAums",
     outputs: [{ name: "", internalType: "uint256[]", type: "uint256[]" }],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LimitTradeHandler
@@ -2184,7 +2184,25 @@ export const limitTradeHandlerABI = [
       { name: "executionFee", internalType: "uint256", type: "uint256", indexed: false },
       { name: "reduceOnly", internalType: "bool", type: "bool", indexed: false },
       { name: "tpToken", internalType: "address", type: "address", indexed: false },
-      { name: "errMsg", internalType: "string", type: "string", indexed: false },
+      { name: "errMsg", internalType: "bytes", type: "bytes", indexed: false },
+    ],
+    name: "LogExecuteLimitOrderFail",
+  },
+  {
+    type: "event",
+    anonymous: false,
+    inputs: [
+      { name: "account", internalType: "address", type: "address", indexed: true },
+      { name: "subAccountId", internalType: "uint256", type: "uint256", indexed: true },
+      { name: "orderIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "marketIndex", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "sizeDelta", internalType: "int256", type: "int256", indexed: false },
+      { name: "triggerPrice", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "triggerAboveThreshold", internalType: "bool", type: "bool", indexed: false },
+      { name: "executionFee", internalType: "uint256", type: "uint256", indexed: false },
+      { name: "reduceOnly", internalType: "bool", type: "bool", indexed: false },
+      { name: "tpToken", internalType: "address", type: "address", indexed: false },
+      { name: "errMsg", internalType: "bytes", type: "bytes", indexed: false },
     ],
     name: "LogExecuteMarketOrderFail",
   },
@@ -2412,6 +2430,23 @@ export const limitTradeHandlerABI = [
       },
     ],
     name: "executeLimitOrder",
+    outputs: [],
+  },
+  {
+    stateMutability: "nonpayable",
+    type: "function",
+    inputs: [
+      { name: "_accounts", internalType: "address[]", type: "address[]" },
+      { name: "_subAccountIds", internalType: "uint8[]", type: "uint8[]" },
+      { name: "_orderIndexes", internalType: "uint256[]", type: "uint256[]" },
+      { name: "_feeReceiver", internalType: "address payable", type: "address" },
+      { name: "_priceData", internalType: "bytes32[]", type: "bytes32[]" },
+      { name: "_publishTimeData", internalType: "bytes32[]", type: "bytes32[]" },
+      { name: "_minPublishTime", internalType: "uint256", type: "uint256" },
+      { name: "_encodedVaas", internalType: "bytes32", type: "bytes32" },
+      { name: "_isRevert", internalType: "bool", type: "bool" },
+    ],
+    name: "executeOrders",
     outputs: [],
   },
   {
@@ -2811,7 +2846,7 @@ export const limitTradeHandlerABI = [
     outputs: [{ name: "", internalType: "address", type: "address" }],
   },
   { stateMutability: "payable", type: "receive" },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LiquidityHandler
@@ -3315,7 +3350,7 @@ export const liquidityHandlerABI = [
     outputs: [],
   },
   { stateMutability: "payable", type: "receive" },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // OracleMiddleware
@@ -3625,7 +3660,7 @@ export const oracleMiddlewareABI = [
       { name: "_status", internalType: "uint8", type: "uint8" },
     ],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PerpStorage
@@ -4103,7 +4138,7 @@ export const perpStorageABI = [
     name: "updateMarket",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // VaultStorage
@@ -4772,7 +4807,7 @@ export const vaultStorageABI = [
     name: "withdrawSurplusFromFundingFeeReserveToHLP",
     outputs: [],
   },
-] as const
+] as const;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // React
@@ -4782,7 +4817,7 @@ export const vaultStorageABI = [
  * Wraps __{@link useContract}__ with `abi` set to __{@link configStorageABI}__.
  */
 export function useConfigStorage(config: Omit<UseContractConfig, "abi"> = {} as any) {
-  return useContract({ abi: configStorageABI, ...config })
+  return useContract({ abi: configStorageABI, ...config });
 }
 
 /**
@@ -4790,26 +4825,26 @@ export function useConfigStorage(config: Omit<UseContractConfig, "abi"> = {} as 
  */
 export function useConfigStorageRead<
   TFunctionName extends string,
-  TSelectData = ReadContractResult<typeof configStorageABI, TFunctionName>,
+  TSelectData = ReadContractResult<typeof configStorageABI, TFunctionName>
 >(config: Omit<UseContractReadConfig<typeof configStorageABI, TFunctionName, TSelectData>, "abi"> = {} as any) {
   return useContractRead({ abi: configStorageABI, ...config } as UseContractReadConfig<
     typeof configStorageABI,
     TFunctionName,
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"BPS"`.
  */
 export function useConfigStorageBps<TSelectData = ReadContractResult<typeof configStorageABI, "BPS">>(
-  config: Omit<UseContractReadConfig<typeof configStorageABI, "BPS", TSelectData>, "abi" | "functionName"> = {} as any,
+  config: Omit<UseContractReadConfig<typeof configStorageABI, "BPS", TSelectData>, "abi" | "functionName"> = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "BPS", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "BPS",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -4819,67 +4854,67 @@ export function useConfigStorageMaxFeeBps<TSelectData = ReadContractResult<typeo
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "MAX_FEE_BPS", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "MAX_FEE_BPS", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "MAX_FEE_BPS",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"allowedLiquidators"`.
  */
 export function useConfigStorageAllowedLiquidators<
-  TSelectData = ReadContractResult<typeof configStorageABI, "allowedLiquidators">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "allowedLiquidators">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "allowedLiquidators", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "allowedLiquidators",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "allowedLiquidators", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "allowedLiquidators", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"assetClassConfigs"`.
  */
 export function useConfigStorageAssetClassConfigs<
-  TSelectData = ReadContractResult<typeof configStorageABI, "assetClassConfigs">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "assetClassConfigs">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "assetClassConfigs", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "assetClassConfigs",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "assetClassConfigs", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "assetClassConfigs", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"assetCollateralTokenConfigs"`.
  */
 export function useConfigStorageAssetCollateralTokenConfigs<
-  TSelectData = ReadContractResult<typeof configStorageABI, "assetCollateralTokenConfigs">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "assetCollateralTokenConfigs">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "assetCollateralTokenConfigs", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "assetCollateralTokenConfigs",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "assetCollateralTokenConfigs", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "assetCollateralTokenConfigs", TSelectData>);
 }
 
 /**
@@ -4889,31 +4924,31 @@ export function useConfigStorageAssetConfigs<TSelectData = ReadContractResult<ty
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "assetConfigs", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "assetConfigs", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "assetConfigs",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"assetHlpTokenConfigs"`.
  */
 export function useConfigStorageAssetHlpTokenConfigs<
-  TSelectData = ReadContractResult<typeof configStorageABI, "assetHlpTokenConfigs">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "assetHlpTokenConfigs">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "assetHlpTokenConfigs", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "assetHlpTokenConfigs",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "assetHlpTokenConfigs", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "assetHlpTokenConfigs", TSelectData>);
 }
 
 /**
@@ -4923,229 +4958,229 @@ export function useConfigStorageCalculator<TSelectData = ReadContractResult<type
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "calculator", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "calculator", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "calculator",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"collateralAssetIds"`.
  */
 export function useConfigStorageCollateralAssetIds<
-  TSelectData = ReadContractResult<typeof configStorageABI, "collateralAssetIds">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "collateralAssetIds">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "collateralAssetIds", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "collateralAssetIds",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "collateralAssetIds", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "collateralAssetIds", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"configExecutors"`.
  */
 export function useConfigStorageConfigExecutors<
-  TSelectData = ReadContractResult<typeof configStorageABI, "configExecutors">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "configExecutors">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "configExecutors", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "configExecutors", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "configExecutors",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getAssetClassConfigByIndex"`.
  */
 export function useConfigStorageGetAssetClassConfigByIndex<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetClassConfigByIndex">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetClassConfigByIndex">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getAssetClassConfigByIndex", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getAssetClassConfigByIndex",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getAssetClassConfigByIndex", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getAssetClassConfigByIndex", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getAssetClassConfigsLength"`.
  */
 export function useConfigStorageGetAssetClassConfigsLength<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetClassConfigsLength">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetClassConfigsLength">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getAssetClassConfigsLength", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getAssetClassConfigsLength",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getAssetClassConfigsLength", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getAssetClassConfigsLength", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getAssetConfig"`.
  */
 export function useConfigStorageGetAssetConfig<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetConfig">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetConfig">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getAssetConfig", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "getAssetConfig", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "getAssetConfig",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getAssetConfigByToken"`.
  */
 export function useConfigStorageGetAssetConfigByToken<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetConfigByToken">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetConfigByToken">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getAssetConfigByToken", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getAssetConfigByToken",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getAssetConfigByToken", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getAssetConfigByToken", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getAssetHlpTokenConfig"`.
  */
 export function useConfigStorageGetAssetHlpTokenConfig<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetHlpTokenConfig">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetHlpTokenConfig">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getAssetHlpTokenConfig", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getAssetHlpTokenConfig",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getAssetHlpTokenConfig", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getAssetHlpTokenConfig", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getAssetHlpTokenConfigByToken"`.
  */
 export function useConfigStorageGetAssetHlpTokenConfigByToken<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetHlpTokenConfigByToken">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetHlpTokenConfigByToken">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getAssetHlpTokenConfigByToken", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getAssetHlpTokenConfigByToken",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getAssetHlpTokenConfigByToken", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getAssetHlpTokenConfigByToken", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getAssetTokenDecimal"`.
  */
 export function useConfigStorageGetAssetTokenDecimal<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetTokenDecimal">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getAssetTokenDecimal">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getAssetTokenDecimal", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getAssetTokenDecimal",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getAssetTokenDecimal", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getAssetTokenDecimal", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getCollateralTokenConfigs"`.
  */
 export function useConfigStorageGetCollateralTokenConfigs<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getCollateralTokenConfigs">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getCollateralTokenConfigs">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getCollateralTokenConfigs", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getCollateralTokenConfigs",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getCollateralTokenConfigs", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getCollateralTokenConfigs", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getCollateralTokens"`.
  */
 export function useConfigStorageGetCollateralTokens<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getCollateralTokens">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getCollateralTokens">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getCollateralTokens", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getCollateralTokens",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getCollateralTokens", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getCollateralTokens", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getHlpAssetIds"`.
  */
 export function useConfigStorageGetHlpAssetIds<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getHlpAssetIds">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getHlpAssetIds">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getHlpAssetIds", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "getHlpAssetIds", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "getHlpAssetIds",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -5155,152 +5190,152 @@ export function useConfigStorageGetHlpTokens<TSelectData = ReadContractResult<ty
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getHlpTokens", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "getHlpTokens", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "getHlpTokens",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getLiquidationConfig"`.
  */
 export function useConfigStorageGetLiquidationConfig<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getLiquidationConfig">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getLiquidationConfig">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getLiquidationConfig", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getLiquidationConfig",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getLiquidationConfig", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getLiquidationConfig", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getLiquidityConfig"`.
  */
 export function useConfigStorageGetLiquidityConfig<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getLiquidityConfig">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getLiquidityConfig">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getLiquidityConfig", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getLiquidityConfig",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getLiquidityConfig", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getLiquidityConfig", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getMarketConfigByIndex"`.
  */
 export function useConfigStorageGetMarketConfigByIndex<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getMarketConfigByIndex">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getMarketConfigByIndex">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getMarketConfigByIndex", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getMarketConfigByIndex",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getMarketConfigByIndex", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getMarketConfigByIndex", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getMarketConfigs"`.
  */
 export function useConfigStorageGetMarketConfigs<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getMarketConfigs">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getMarketConfigs">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getMarketConfigs", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getMarketConfigs",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getMarketConfigs", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getMarketConfigs", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getMarketConfigsLength"`.
  */
 export function useConfigStorageGetMarketConfigsLength<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getMarketConfigsLength">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getMarketConfigsLength">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getMarketConfigsLength", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getMarketConfigsLength",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getMarketConfigsLength", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getMarketConfigsLength", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getTradeServiceHooks"`.
  */
 export function useConfigStorageGetTradeServiceHooks<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getTradeServiceHooks">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getTradeServiceHooks">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getTradeServiceHooks", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getTradeServiceHooks",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getTradeServiceHooks", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getTradeServiceHooks", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"getTradingConfig"`.
  */
 export function useConfigStorageGetTradingConfig<
-  TSelectData = ReadContractResult<typeof configStorageABI, "getTradingConfig">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "getTradingConfig">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "getTradingConfig", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "getTradingConfig",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "getTradingConfig", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "getTradingConfig", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"hlp"`.
  */
 export function useConfigStorageHlp<TSelectData = ReadContractResult<typeof configStorageABI, "hlp">>(
-  config: Omit<UseContractReadConfig<typeof configStorageABI, "hlp", TSelectData>, "abi" | "functionName"> = {} as any,
+  config: Omit<UseContractReadConfig<typeof configStorageABI, "hlp", TSelectData>, "abi" | "functionName"> = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "hlp", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "hlp",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -5310,85 +5345,85 @@ export function useConfigStorageHlpAssetIds<TSelectData = ReadContractResult<typ
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "hlpAssetIds", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "hlpAssetIds", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "hlpAssetIds",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"liquidationConfig"`.
  */
 export function useConfigStorageLiquidationConfig<
-  TSelectData = ReadContractResult<typeof configStorageABI, "liquidationConfig">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "liquidationConfig">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "liquidationConfig", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "liquidationConfig",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "liquidationConfig", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "liquidationConfig", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"liquidityConfig"`.
  */
 export function useConfigStorageLiquidityConfig<
-  TSelectData = ReadContractResult<typeof configStorageABI, "liquidityConfig">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "liquidityConfig">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "liquidityConfig", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "liquidityConfig", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "liquidityConfig",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"marketConfigs"`.
  */
 export function useConfigStorageMarketConfigs<
-  TSelectData = ReadContractResult<typeof configStorageABI, "marketConfigs">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "marketConfigs">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "marketConfigs", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "marketConfigs", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "marketConfigs",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"minimumPositionSize"`.
  */
 export function useConfigStorageMinimumPositionSize<
-  TSelectData = ReadContractResult<typeof configStorageABI, "minimumPositionSize">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "minimumPositionSize">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "minimumPositionSize", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "minimumPositionSize",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "minimumPositionSize", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "minimumPositionSize", TSelectData>);
 }
 
 /**
@@ -5398,29 +5433,26 @@ export function useConfigStorageOracle<TSelectData = ReadContractResult<typeof c
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "oracle", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "oracle", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "oracle",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"owner"`.
  */
 export function useConfigStorageOwner<TSelectData = ReadContractResult<typeof configStorageABI, "owner">>(
-  config: Omit<
-    UseContractReadConfig<typeof configStorageABI, "owner", TSelectData>,
-    "abi" | "functionName"
-  > = {} as any,
+  config: Omit<UseContractReadConfig<typeof configStorageABI, "owner", TSelectData>, "abi" | "functionName"> = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "owner", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "owner",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -5430,44 +5462,44 @@ export function useConfigStoragePnlFactorBps<TSelectData = ReadContractResult<ty
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "pnlFactorBPS", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "pnlFactorBPS", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "pnlFactorBPS",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"serviceExecutors"`.
  */
 export function useConfigStorageServiceExecutors<
-  TSelectData = ReadContractResult<typeof configStorageABI, "serviceExecutors">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "serviceExecutors">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "serviceExecutors", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "serviceExecutors",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "serviceExecutors", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "serviceExecutors", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"sglp"`.
  */
 export function useConfigStorageSglp<TSelectData = ReadContractResult<typeof configStorageABI, "sglp">>(
-  config: Omit<UseContractReadConfig<typeof configStorageABI, "sglp", TSelectData>, "abi" | "functionName"> = {} as any,
+  config: Omit<UseContractReadConfig<typeof configStorageABI, "sglp", TSelectData>, "abi" | "functionName"> = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "sglp", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "sglp",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -5477,67 +5509,67 @@ export function useConfigStorageSwapConfig<TSelectData = ReadContractResult<type
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "swapConfig", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "swapConfig", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "swapConfig",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"tokenAssetIds"`.
  */
 export function useConfigStorageTokenAssetIds<
-  TSelectData = ReadContractResult<typeof configStorageABI, "tokenAssetIds">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "tokenAssetIds">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "tokenAssetIds", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "tokenAssetIds", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "tokenAssetIds",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"tradeServiceHooks"`.
  */
 export function useConfigStorageTradeServiceHooks<
-  TSelectData = ReadContractResult<typeof configStorageABI, "tradeServiceHooks">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "tradeServiceHooks">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "tradeServiceHooks", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "tradeServiceHooks",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "tradeServiceHooks", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "tradeServiceHooks", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"tradingConfig"`.
  */
 export function useConfigStorageTradingConfig<
-  TSelectData = ReadContractResult<typeof configStorageABI, "tradingConfig">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "tradingConfig">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "tradingConfig", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "tradingConfig", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "tradingConfig",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -5547,80 +5579,80 @@ export function useConfigStorageTreasury<TSelectData = ReadContractResult<typeof
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "treasury", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "treasury", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "treasury",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"validateAcceptedCollateral"`.
  */
 export function useConfigStorageValidateAcceptedCollateral<
-  TSelectData = ReadContractResult<typeof configStorageABI, "validateAcceptedCollateral">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "validateAcceptedCollateral">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "validateAcceptedCollateral", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "validateAcceptedCollateral",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "validateAcceptedCollateral", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "validateAcceptedCollateral", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"validateAcceptedLiquidityToken"`.
  */
 export function useConfigStorageValidateAcceptedLiquidityToken<
-  TSelectData = ReadContractResult<typeof configStorageABI, "validateAcceptedLiquidityToken">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "validateAcceptedLiquidityToken">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "validateAcceptedLiquidityToken", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "validateAcceptedLiquidityToken",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "validateAcceptedLiquidityToken", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "validateAcceptedLiquidityToken", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"validateServiceExecutor"`.
  */
 export function useConfigStorageValidateServiceExecutor<
-  TSelectData = ReadContractResult<typeof configStorageABI, "validateServiceExecutor">,
+  TSelectData = ReadContractResult<typeof configStorageABI, "validateServiceExecutor">
 >(
   config: Omit<
     UseContractReadConfig<typeof configStorageABI, "validateServiceExecutor", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: configStorageABI,
     functionName: "validateServiceExecutor",
     ...config,
-  } as UseContractReadConfig<typeof configStorageABI, "validateServiceExecutor", TSelectData>)
+  } as UseContractReadConfig<typeof configStorageABI, "validateServiceExecutor", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"weth"`.
  */
 export function useConfigStorageWeth<TSelectData = ReadContractResult<typeof configStorageABI, "weth">>(
-  config: Omit<UseContractReadConfig<typeof configStorageABI, "weth", TSelectData>, "abi" | "functionName"> = {} as any,
+  config: Omit<UseContractReadConfig<typeof configStorageABI, "weth", TSelectData>, "abi" | "functionName"> = {} as any
 ) {
   return useContractRead({ abi: configStorageABI, functionName: "weth", ...config } as UseContractReadConfig<
     typeof configStorageABI,
     "weth",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -5630,10 +5662,10 @@ export function useConfigStorageWrite<TMode extends WriteContractMode, TFunction
   config: TMode extends "prepared"
     ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof configStorageABI, string>["abi"], TFunctionName>
     : UseContractWriteConfig<TMode, typeof configStorageABI, TFunctionName> & {
-        abi?: never
-      } = {} as any,
+        abi?: never;
+      } = {} as any
 ) {
-  return useContractWrite<TMode, typeof configStorageABI, TFunctionName>({ abi: configStorageABI, ...config } as any)
+  return useContractWrite<TMode, typeof configStorageABI, TFunctionName>({ abi: configStorageABI, ...config } as any);
 }
 
 /**
@@ -5647,15 +5679,15 @@ export function useConfigStorageAddAssetClassConfig<TMode extends WriteContractM
         "addAssetClassConfig"
       > & { functionName?: "addAssetClassConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "addAssetClassConfig"> & {
-        abi?: never
-        functionName?: "addAssetClassConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addAssetClassConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "addAssetClassConfig">({
     abi: configStorageABI,
     functionName: "addAssetClassConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5669,15 +5701,15 @@ export function useConfigStorageAddMarketConfig<TMode extends WriteContractMode>
         "addMarketConfig"
       > & { functionName?: "addMarketConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "addMarketConfig"> & {
-        abi?: never
-        functionName?: "addMarketConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addMarketConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "addMarketConfig">({
     abi: configStorageABI,
     functionName: "addMarketConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5691,15 +5723,15 @@ export function useConfigStorageAddOrUpdateAcceptedToken<TMode extends WriteCont
         "addOrUpdateAcceptedToken"
       > & { functionName?: "addOrUpdateAcceptedToken" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "addOrUpdateAcceptedToken"> & {
-        abi?: never
-        functionName?: "addOrUpdateAcceptedToken"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addOrUpdateAcceptedToken";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "addOrUpdateAcceptedToken">({
     abi: configStorageABI,
     functionName: "addOrUpdateAcceptedToken",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5713,15 +5745,15 @@ export function useConfigStorageDelistMarket<TMode extends WriteContractMode>(
         "delistMarket"
       > & { functionName?: "delistMarket" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "delistMarket"> & {
-        abi?: never
-        functionName?: "delistMarket"
-      } = {} as any,
+        abi?: never;
+        functionName?: "delistMarket";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "delistMarket">({
     abi: configStorageABI,
     functionName: "delistMarket",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5735,15 +5767,15 @@ export function useConfigStorageInitialize<TMode extends WriteContractMode>(
         "initialize"
       > & { functionName?: "initialize" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "initialize"> & {
-        abi?: never
-        functionName?: "initialize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "initialize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "initialize">({
     abi: configStorageABI,
     functionName: "initialize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5757,15 +5789,15 @@ export function useConfigStorageRemoveAcceptedToken<TMode extends WriteContractM
         "removeAcceptedToken"
       > & { functionName?: "removeAcceptedToken" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "removeAcceptedToken"> & {
-        abi?: never
-        functionName?: "removeAcceptedToken"
-      } = {} as any,
+        abi?: never;
+        functionName?: "removeAcceptedToken";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "removeAcceptedToken">({
     abi: configStorageABI,
     functionName: "removeAcceptedToken",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5779,15 +5811,15 @@ export function useConfigStorageRenounceOwnership<TMode extends WriteContractMod
         "renounceOwnership"
       > & { functionName?: "renounceOwnership" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "renounceOwnership"> & {
-        abi?: never
-        functionName?: "renounceOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "renounceOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "renounceOwnership">({
     abi: configStorageABI,
     functionName: "renounceOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5801,15 +5833,15 @@ export function useConfigStorageSetAssetClassConfigByIndex<TMode extends WriteCo
         "setAssetClassConfigByIndex"
       > & { functionName?: "setAssetClassConfigByIndex" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setAssetClassConfigByIndex"> & {
-        abi?: never
-        functionName?: "setAssetClassConfigByIndex"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setAssetClassConfigByIndex";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setAssetClassConfigByIndex">({
     abi: configStorageABI,
     functionName: "setAssetClassConfigByIndex",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5823,15 +5855,15 @@ export function useConfigStorageSetAssetConfig<TMode extends WriteContractMode>(
         "setAssetConfig"
       > & { functionName?: "setAssetConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setAssetConfig"> & {
-        abi?: never
-        functionName?: "setAssetConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setAssetConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setAssetConfig">({
     abi: configStorageABI,
     functionName: "setAssetConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5845,15 +5877,15 @@ export function useConfigStorageSetAssetConfigs<TMode extends WriteContractMode>
         "setAssetConfigs"
       > & { functionName?: "setAssetConfigs" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setAssetConfigs"> & {
-        abi?: never
-        functionName?: "setAssetConfigs"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setAssetConfigs";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setAssetConfigs">({
     abi: configStorageABI,
     functionName: "setAssetConfigs",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5867,15 +5899,15 @@ export function useConfigStorageSetCalculator<TMode extends WriteContractMode>(
         "setCalculator"
       > & { functionName?: "setCalculator" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setCalculator"> & {
-        abi?: never
-        functionName?: "setCalculator"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setCalculator";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setCalculator">({
     abi: configStorageABI,
     functionName: "setCalculator",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5889,15 +5921,15 @@ export function useConfigStorageSetCollateralTokenConfig<TMode extends WriteCont
         "setCollateralTokenConfig"
       > & { functionName?: "setCollateralTokenConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setCollateralTokenConfig"> & {
-        abi?: never
-        functionName?: "setCollateralTokenConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setCollateralTokenConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setCollateralTokenConfig">({
     abi: configStorageABI,
     functionName: "setCollateralTokenConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5911,15 +5943,15 @@ export function useConfigStorageSetCollateralTokenConfigs<TMode extends WriteCon
         "setCollateralTokenConfigs"
       > & { functionName?: "setCollateralTokenConfigs" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setCollateralTokenConfigs"> & {
-        abi?: never
-        functionName?: "setCollateralTokenConfigs"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setCollateralTokenConfigs";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setCollateralTokenConfigs">({
     abi: configStorageABI,
     functionName: "setCollateralTokenConfigs",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5933,15 +5965,15 @@ export function useConfigStorageSetConfigExecutor<TMode extends WriteContractMod
         "setConfigExecutor"
       > & { functionName?: "setConfigExecutor" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setConfigExecutor"> & {
-        abi?: never
-        functionName?: "setConfigExecutor"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setConfigExecutor";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setConfigExecutor">({
     abi: configStorageABI,
     functionName: "setConfigExecutor",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5955,15 +5987,15 @@ export function useConfigStorageSetDynamicEnabled<TMode extends WriteContractMod
         "setDynamicEnabled"
       > & { functionName?: "setDynamicEnabled" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setDynamicEnabled"> & {
-        abi?: never
-        functionName?: "setDynamicEnabled"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setDynamicEnabled";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setDynamicEnabled">({
     abi: configStorageABI,
     functionName: "setDynamicEnabled",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5972,18 +6004,18 @@ export function useConfigStorageSetDynamicEnabled<TMode extends WriteContractMod
 export function useConfigStorageSetHlp<TMode extends WriteContractMode>(
   config: TMode extends "prepared"
     ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof configStorageABI, "setHLP">["abi"], "setHLP"> & {
-        functionName?: "setHLP"
+        functionName?: "setHLP";
       }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setHLP"> & {
-        abi?: never
-        functionName?: "setHLP"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setHLP";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setHLP">({
     abi: configStorageABI,
     functionName: "setHLP",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -5997,15 +6029,15 @@ export function useConfigStorageSetHlpTokenConfig<TMode extends WriteContractMod
         "setHlpTokenConfig"
       > & { functionName?: "setHlpTokenConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setHlpTokenConfig"> & {
-        abi?: never
-        functionName?: "setHlpTokenConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setHlpTokenConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setHlpTokenConfig">({
     abi: configStorageABI,
     functionName: "setHlpTokenConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6019,15 +6051,15 @@ export function useConfigStorageSetLiquidationConfig<TMode extends WriteContract
         "setLiquidationConfig"
       > & { functionName?: "setLiquidationConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setLiquidationConfig"> & {
-        abi?: never
-        functionName?: "setLiquidationConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setLiquidationConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setLiquidationConfig">({
     abi: configStorageABI,
     functionName: "setLiquidationConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6041,15 +6073,15 @@ export function useConfigStorageSetLiquidityConfig<TMode extends WriteContractMo
         "setLiquidityConfig"
       > & { functionName?: "setLiquidityConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setLiquidityConfig"> & {
-        abi?: never
-        functionName?: "setLiquidityConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setLiquidityConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setLiquidityConfig">({
     abi: configStorageABI,
     functionName: "setLiquidityConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6063,15 +6095,15 @@ export function useConfigStorageSetLiquidityEnabled<TMode extends WriteContractM
         "setLiquidityEnabled"
       > & { functionName?: "setLiquidityEnabled" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setLiquidityEnabled"> & {
-        abi?: never
-        functionName?: "setLiquidityEnabled"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setLiquidityEnabled";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setLiquidityEnabled">({
     abi: configStorageABI,
     functionName: "setLiquidityEnabled",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6085,15 +6117,15 @@ export function useConfigStorageSetMarketConfig<TMode extends WriteContractMode>
         "setMarketConfig"
       > & { functionName?: "setMarketConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setMarketConfig"> & {
-        abi?: never
-        functionName?: "setMarketConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMarketConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setMarketConfig">({
     abi: configStorageABI,
     functionName: "setMarketConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6107,15 +6139,15 @@ export function useConfigStorageSetMinimumPositionSize<TMode extends WriteContra
         "setMinimumPositionSize"
       > & { functionName?: "setMinimumPositionSize" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setMinimumPositionSize"> & {
-        abi?: never
-        functionName?: "setMinimumPositionSize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMinimumPositionSize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setMinimumPositionSize">({
     abi: configStorageABI,
     functionName: "setMinimumPositionSize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6129,15 +6161,15 @@ export function useConfigStorageSetOracle<TMode extends WriteContractMode>(
         "setOracle"
       > & { functionName?: "setOracle" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setOracle"> & {
-        abi?: never
-        functionName?: "setOracle"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setOracle";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setOracle">({
     abi: configStorageABI,
     functionName: "setOracle",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6151,15 +6183,15 @@ export function useConfigStorageSetPnlFactor<TMode extends WriteContractMode>(
         "setPnlFactor"
       > & { functionName?: "setPnlFactor" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setPnlFactor"> & {
-        abi?: never
-        functionName?: "setPnlFactor"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setPnlFactor";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setPnlFactor">({
     abi: configStorageABI,
     functionName: "setPnlFactor",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6173,15 +6205,15 @@ export function useConfigStorageSetSGlp<TMode extends WriteContractMode>(
         "setSGlp"
       > & { functionName?: "setSGlp" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setSGlp"> & {
-        abi?: never
-        functionName?: "setSGlp"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setSGlp";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setSGlp">({
     abi: configStorageABI,
     functionName: "setSGlp",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6195,15 +6227,15 @@ export function useConfigStorageSetServiceExecutor<TMode extends WriteContractMo
         "setServiceExecutor"
       > & { functionName?: "setServiceExecutor" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setServiceExecutor"> & {
-        abi?: never
-        functionName?: "setServiceExecutor"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setServiceExecutor";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setServiceExecutor">({
     abi: configStorageABI,
     functionName: "setServiceExecutor",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6217,15 +6249,15 @@ export function useConfigStorageSetServiceExecutors<TMode extends WriteContractM
         "setServiceExecutors"
       > & { functionName?: "setServiceExecutors" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setServiceExecutors"> & {
-        abi?: never
-        functionName?: "setServiceExecutors"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setServiceExecutors";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setServiceExecutors">({
     abi: configStorageABI,
     functionName: "setServiceExecutors",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6239,15 +6271,15 @@ export function useConfigStorageSetSwapConfig<TMode extends WriteContractMode>(
         "setSwapConfig"
       > & { functionName?: "setSwapConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setSwapConfig"> & {
-        abi?: never
-        functionName?: "setSwapConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setSwapConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setSwapConfig">({
     abi: configStorageABI,
     functionName: "setSwapConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6261,15 +6293,15 @@ export function useConfigStorageSetTradeServiceHooks<TMode extends WriteContract
         "setTradeServiceHooks"
       > & { functionName?: "setTradeServiceHooks" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setTradeServiceHooks"> & {
-        abi?: never
-        functionName?: "setTradeServiceHooks"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setTradeServiceHooks";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setTradeServiceHooks">({
     abi: configStorageABI,
     functionName: "setTradeServiceHooks",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6283,15 +6315,15 @@ export function useConfigStorageSetTradingConfig<TMode extends WriteContractMode
         "setTradingConfig"
       > & { functionName?: "setTradingConfig" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setTradingConfig"> & {
-        abi?: never
-        functionName?: "setTradingConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setTradingConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setTradingConfig">({
     abi: configStorageABI,
     functionName: "setTradingConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6305,15 +6337,15 @@ export function useConfigStorageSetWeth<TMode extends WriteContractMode>(
         "setWeth"
       > & { functionName?: "setWeth" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "setWeth"> & {
-        abi?: never
-        functionName?: "setWeth"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setWeth";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "setWeth">({
     abi: configStorageABI,
     functionName: "setWeth",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -6327,27 +6359,27 @@ export function useConfigStorageTransferOwnership<TMode extends WriteContractMod
         "transferOwnership"
       > & { functionName?: "transferOwnership" }
     : UseContractWriteConfig<TMode, typeof configStorageABI, "transferOwnership"> & {
-        abi?: never
-        functionName?: "transferOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "transferOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof configStorageABI, "transferOwnership">({
     abi: configStorageABI,
     functionName: "transferOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link configStorageABI}__.
  */
 export function usePrepareConfigStorageWrite<TFunctionName extends string>(
-  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, TFunctionName>, "abi"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, TFunctionName>, "abi"> = {} as any
 ) {
   return usePrepareContractWrite({ abi: configStorageABI, ...config } as UsePrepareContractWriteConfig<
     typeof configStorageABI,
     TFunctionName
-  >)
+  >);
 }
 
 /**
@@ -6357,13 +6389,13 @@ export function usePrepareConfigStorageAddAssetClassConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "addAssetClassConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "addAssetClassConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "addAssetClassConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "addAssetClassConfig">);
 }
 
 /**
@@ -6373,13 +6405,13 @@ export function usePrepareConfigStorageAddMarketConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "addMarketConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "addMarketConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "addMarketConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "addMarketConfig">);
 }
 
 /**
@@ -6389,13 +6421,13 @@ export function usePrepareConfigStorageAddOrUpdateAcceptedToken(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "addOrUpdateAcceptedToken">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "addOrUpdateAcceptedToken",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "addOrUpdateAcceptedToken">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "addOrUpdateAcceptedToken">);
 }
 
 /**
@@ -6405,29 +6437,26 @@ export function usePrepareConfigStorageDelistMarket(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "delistMarket">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "delistMarket",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "delistMarket">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "delistMarket">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"initialize"`.
  */
 export function usePrepareConfigStorageInitialize(
-  config: Omit<
-    UsePrepareContractWriteConfig<typeof configStorageABI, "initialize">,
-    "abi" | "functionName"
-  > = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "initialize">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "initialize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "initialize">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "initialize">);
 }
 
 /**
@@ -6437,13 +6466,13 @@ export function usePrepareConfigStorageRemoveAcceptedToken(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "removeAcceptedToken">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "removeAcceptedToken",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "removeAcceptedToken">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "removeAcceptedToken">);
 }
 
 /**
@@ -6453,13 +6482,13 @@ export function usePrepareConfigStorageRenounceOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "renounceOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "renounceOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "renounceOwnership">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "renounceOwnership">);
 }
 
 /**
@@ -6469,13 +6498,13 @@ export function usePrepareConfigStorageSetAssetClassConfigByIndex(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setAssetClassConfigByIndex">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setAssetClassConfigByIndex",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setAssetClassConfigByIndex">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setAssetClassConfigByIndex">);
 }
 
 /**
@@ -6485,13 +6514,13 @@ export function usePrepareConfigStorageSetAssetConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setAssetConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setAssetConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setAssetConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setAssetConfig">);
 }
 
 /**
@@ -6501,13 +6530,13 @@ export function usePrepareConfigStorageSetAssetConfigs(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setAssetConfigs">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setAssetConfigs",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setAssetConfigs">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setAssetConfigs">);
 }
 
 /**
@@ -6517,13 +6546,13 @@ export function usePrepareConfigStorageSetCalculator(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setCalculator">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setCalculator",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setCalculator">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setCalculator">);
 }
 
 /**
@@ -6533,13 +6562,13 @@ export function usePrepareConfigStorageSetCollateralTokenConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setCollateralTokenConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setCollateralTokenConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setCollateralTokenConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setCollateralTokenConfig">);
 }
 
 /**
@@ -6549,13 +6578,13 @@ export function usePrepareConfigStorageSetCollateralTokenConfigs(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setCollateralTokenConfigs">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setCollateralTokenConfigs",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setCollateralTokenConfigs">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setCollateralTokenConfigs">);
 }
 
 /**
@@ -6565,13 +6594,13 @@ export function usePrepareConfigStorageSetConfigExecutor(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setConfigExecutor">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setConfigExecutor",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setConfigExecutor">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setConfigExecutor">);
 }
 
 /**
@@ -6581,26 +6610,26 @@ export function usePrepareConfigStorageSetDynamicEnabled(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setDynamicEnabled">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setDynamicEnabled",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setDynamicEnabled">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setDynamicEnabled">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"setHLP"`.
  */
 export function usePrepareConfigStorageSetHlp(
-  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setHLP">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setHLP">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setHLP",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setHLP">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setHLP">);
 }
 
 /**
@@ -6610,13 +6639,13 @@ export function usePrepareConfigStorageSetHlpTokenConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setHlpTokenConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setHlpTokenConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setHlpTokenConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setHlpTokenConfig">);
 }
 
 /**
@@ -6626,13 +6655,13 @@ export function usePrepareConfigStorageSetLiquidationConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setLiquidationConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setLiquidationConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setLiquidationConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setLiquidationConfig">);
 }
 
 /**
@@ -6642,13 +6671,13 @@ export function usePrepareConfigStorageSetLiquidityConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setLiquidityConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setLiquidityConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setLiquidityConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setLiquidityConfig">);
 }
 
 /**
@@ -6658,13 +6687,13 @@ export function usePrepareConfigStorageSetLiquidityEnabled(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setLiquidityEnabled">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setLiquidityEnabled",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setLiquidityEnabled">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setLiquidityEnabled">);
 }
 
 /**
@@ -6674,13 +6703,13 @@ export function usePrepareConfigStorageSetMarketConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setMarketConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setMarketConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setMarketConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setMarketConfig">);
 }
 
 /**
@@ -6690,26 +6719,26 @@ export function usePrepareConfigStorageSetMinimumPositionSize(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setMinimumPositionSize">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setMinimumPositionSize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setMinimumPositionSize">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setMinimumPositionSize">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"setOracle"`.
  */
 export function usePrepareConfigStorageSetOracle(
-  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setOracle">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setOracle">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setOracle",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setOracle">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setOracle">);
 }
 
 /**
@@ -6719,26 +6748,26 @@ export function usePrepareConfigStorageSetPnlFactor(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setPnlFactor">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setPnlFactor",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setPnlFactor">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setPnlFactor">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"setSGlp"`.
  */
 export function usePrepareConfigStorageSetSGlp(
-  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setSGlp">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setSGlp">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setSGlp",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setSGlp">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setSGlp">);
 }
 
 /**
@@ -6748,13 +6777,13 @@ export function usePrepareConfigStorageSetServiceExecutor(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setServiceExecutor">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setServiceExecutor",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setServiceExecutor">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setServiceExecutor">);
 }
 
 /**
@@ -6764,13 +6793,13 @@ export function usePrepareConfigStorageSetServiceExecutors(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setServiceExecutors">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setServiceExecutors",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setServiceExecutors">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setServiceExecutors">);
 }
 
 /**
@@ -6780,13 +6809,13 @@ export function usePrepareConfigStorageSetSwapConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setSwapConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setSwapConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setSwapConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setSwapConfig">);
 }
 
 /**
@@ -6796,13 +6825,13 @@ export function usePrepareConfigStorageSetTradeServiceHooks(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setTradeServiceHooks">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setTradeServiceHooks",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setTradeServiceHooks">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setTradeServiceHooks">);
 }
 
 /**
@@ -6812,26 +6841,26 @@ export function usePrepareConfigStorageSetTradingConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "setTradingConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setTradingConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setTradingConfig">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setTradingConfig">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link configStorageABI}__ and `functionName` set to `"setWeth"`.
  */
 export function usePrepareConfigStorageSetWeth(
-  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setWeth">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof configStorageABI, "setWeth">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "setWeth",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setWeth">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "setWeth">);
 }
 
 /**
@@ -6841,37 +6870,37 @@ export function usePrepareConfigStorageTransferOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof configStorageABI, "transferOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: configStorageABI,
     functionName: "transferOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof configStorageABI, "transferOwnership">)
+  } as UsePrepareContractWriteConfig<typeof configStorageABI, "transferOwnership">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__.
  */
 export function useConfigStorageEvent<TEventName extends string>(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, TEventName>, "abi"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, TEventName>, "abi"> = {} as any
 ) {
   return useContractEvent({ abi: configStorageABI, ...config } as UseContractEventConfig<
     typeof configStorageABI,
     TEventName
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"Initialized"`.
  */
 export function useConfigStorageInitializedEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "Initialized">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "Initialized">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: configStorageABI, eventName: "Initialized", ...config } as UseContractEventConfig<
     typeof configStorageABI,
     "Initialized"
-  >)
+  >);
 }
 
 /**
@@ -6881,26 +6910,26 @@ export function useConfigStorageLogAddAssetClassConfigEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogAddAssetClassConfig">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogAddAssetClassConfig",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogAddAssetClassConfig">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogAddAssetClassConfig">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogAddMarketConfig"`.
  */
 export function useConfigStorageLogAddMarketConfigEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogAddMarketConfig">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogAddMarketConfig">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogAddMarketConfig",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogAddMarketConfig">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogAddMarketConfig">);
 }
 
 /**
@@ -6910,38 +6939,38 @@ export function useConfigStorageLogAddOrUpdateHlpTokenConfigsEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogAddOrUpdateHLPTokenConfigs">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogAddOrUpdateHLPTokenConfigs",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogAddOrUpdateHLPTokenConfigs">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogAddOrUpdateHLPTokenConfigs">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogDelistMarket"`.
  */
 export function useConfigStorageLogDelistMarketEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogDelistMarket">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogDelistMarket">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: configStorageABI, eventName: "LogDelistMarket", ...config } as UseContractEventConfig<
     typeof configStorageABI,
     "LogDelistMarket"
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogRemoveUnderlying"`.
  */
 export function useConfigStorageLogRemoveUnderlyingEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogRemoveUnderlying">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogRemoveUnderlying">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogRemoveUnderlying",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogRemoveUnderlying">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogRemoveUnderlying">);
 }
 
 /**
@@ -6951,38 +6980,38 @@ export function useConfigStorageLogSetAssetClassConfigByIndexEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogSetAssetClassConfigByIndex">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetAssetClassConfigByIndex",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetAssetClassConfigByIndex">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetAssetClassConfigByIndex">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetAssetConfig"`.
  */
 export function useConfigStorageLogSetAssetConfigEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetAssetConfig">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetAssetConfig">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetAssetConfig",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetAssetConfig">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetAssetConfig">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetCalculator"`.
  */
 export function useConfigStorageLogSetCalculatorEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetCalculator">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetCalculator">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: configStorageABI, eventName: "LogSetCalculator", ...config } as UseContractEventConfig<
     typeof configStorageABI,
     "LogSetCalculator"
-  >)
+  >);
 }
 
 /**
@@ -6992,73 +7021,64 @@ export function useConfigStorageLogSetCollateralTokenConfigEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogSetCollateralTokenConfig">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetCollateralTokenConfig",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetCollateralTokenConfig">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetCollateralTokenConfig">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetConfigExecutor"`.
  */
 export function useConfigStorageLogSetConfigExecutorEvent(
-  config: Omit<
-    UseContractEventConfig<typeof configStorageABI, "LogSetConfigExecutor">,
-    "abi" | "eventName"
-  > = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetConfigExecutor">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetConfigExecutor",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetConfigExecutor">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetConfigExecutor">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetDynamicEnabled"`.
  */
 export function useConfigStorageLogSetDynamicEnabledEvent(
-  config: Omit<
-    UseContractEventConfig<typeof configStorageABI, "LogSetDynamicEnabled">,
-    "abi" | "eventName"
-  > = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetDynamicEnabled">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetDynamicEnabled",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetDynamicEnabled">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetDynamicEnabled">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetHLP"`.
  */
 export function useConfigStorageLogSetHlpEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetHLP">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetHLP">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: configStorageABI, eventName: "LogSetHLP", ...config } as UseContractEventConfig<
     typeof configStorageABI,
     "LogSetHLP"
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetHlpTokenConfig"`.
  */
 export function useConfigStorageLogSetHlpTokenConfigEvent(
-  config: Omit<
-    UseContractEventConfig<typeof configStorageABI, "LogSetHlpTokenConfig">,
-    "abi" | "eventName"
-  > = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetHlpTokenConfig">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetHlpTokenConfig",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetHlpTokenConfig">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetHlpTokenConfig">);
 }
 
 /**
@@ -7068,13 +7088,13 @@ export function useConfigStorageLogSetLiquidationConfigEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogSetLiquidationConfig">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetLiquidationConfig",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetLiquidationConfig">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetLiquidationConfig">);
 }
 
 /**
@@ -7084,13 +7104,13 @@ export function useConfigStorageLogSetLiquidityConfigEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogSetLiquidityConfig">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetLiquidityConfig",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetLiquidityConfig">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetLiquidityConfig">);
 }
 
 /**
@@ -7100,26 +7120,26 @@ export function useConfigStorageLogSetLiquidityEnabledEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogSetLiquidityEnabled">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetLiquidityEnabled",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetLiquidityEnabled">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetLiquidityEnabled">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetMarketConfig"`.
  */
 export function useConfigStorageLogSetMarketConfigEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetMarketConfig">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetMarketConfig">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetMarketConfig",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetMarketConfig">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetMarketConfig">);
 }
 
 /**
@@ -7129,37 +7149,37 @@ export function useConfigStorageLogSetMinimumPositionSizeEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogSetMinimumPositionSize">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetMinimumPositionSize",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetMinimumPositionSize">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetMinimumPositionSize">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetOracle"`.
  */
 export function useConfigStorageLogSetOracleEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetOracle">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetOracle">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: configStorageABI, eventName: "LogSetOracle", ...config } as UseContractEventConfig<
     typeof configStorageABI,
     "LogSetOracle"
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetPnlFactor"`.
  */
 export function useConfigStorageLogSetPnlFactorEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetPnlFactor">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetPnlFactor">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: configStorageABI, eventName: "LogSetPnlFactor", ...config } as UseContractEventConfig<
     typeof configStorageABI,
     "LogSetPnlFactor"
-  >)
+  >);
 }
 
 /**
@@ -7169,37 +7189,37 @@ export function useConfigStorageLogSetServiceExecutorEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogSetServiceExecutor">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetServiceExecutor",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetServiceExecutor">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetServiceExecutor">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetSwapConfig"`.
  */
 export function useConfigStorageLogSetSwapConfigEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetSwapConfig">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetSwapConfig">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: configStorageABI, eventName: "LogSetSwapConfig", ...config } as UseContractEventConfig<
     typeof configStorageABI,
     "LogSetSwapConfig"
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetToken"`.
  */
 export function useConfigStorageLogSetTokenEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetToken">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetToken">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: configStorageABI, eventName: "LogSetToken", ...config } as UseContractEventConfig<
     typeof configStorageABI,
     "LogSetToken"
-  >)
+  >);
 }
 
 /**
@@ -7209,49 +7229,46 @@ export function useConfigStorageLogSetTradeServiceHooksEvent(
   config: Omit<
     UseContractEventConfig<typeof configStorageABI, "LogSetTradeServiceHooks">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetTradeServiceHooks",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetTradeServiceHooks">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetTradeServiceHooks">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"LogSetTradingConfig"`.
  */
 export function useConfigStorageLogSetTradingConfigEvent(
-  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetTradingConfig">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "LogSetTradingConfig">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "LogSetTradingConfig",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "LogSetTradingConfig">)
+  } as UseContractEventConfig<typeof configStorageABI, "LogSetTradingConfig">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link configStorageABI}__ and `eventName` set to `"OwnershipTransferred"`.
  */
 export function useConfigStorageOwnershipTransferredEvent(
-  config: Omit<
-    UseContractEventConfig<typeof configStorageABI, "OwnershipTransferred">,
-    "abi" | "eventName"
-  > = {} as any,
+  config: Omit<UseContractEventConfig<typeof configStorageABI, "OwnershipTransferred">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: configStorageABI,
     eventName: "OwnershipTransferred",
     ...config,
-  } as UseContractEventConfig<typeof configStorageABI, "OwnershipTransferred">)
+  } as UseContractEventConfig<typeof configStorageABI, "OwnershipTransferred">);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link crossMarginHandlerABI}__.
  */
 export function useCrossMarginHandler(config: Omit<UseContractConfig, "abi"> = {} as any) {
-  return useContract({ abi: crossMarginHandlerABI, ...config })
+  return useContract({ abi: crossMarginHandlerABI, ...config });
 }
 
 /**
@@ -7259,175 +7276,175 @@ export function useCrossMarginHandler(config: Omit<UseContractConfig, "abi"> = {
  */
 export function useCrossMarginHandlerRead<
   TFunctionName extends string,
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, TFunctionName>,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, TFunctionName>
 >(config: Omit<UseContractReadConfig<typeof crossMarginHandlerABI, TFunctionName, TSelectData>, "abi"> = {} as any) {
   return useContractRead({ abi: crossMarginHandlerABI, ...config } as UseContractReadConfig<
     typeof crossMarginHandlerABI,
     TFunctionName,
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"crossMarginService"`.
  */
 export function useCrossMarginHandlerCrossMarginService<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "crossMarginService">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "crossMarginService">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "crossMarginService", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "crossMarginService",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "crossMarginService", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "crossMarginService", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"getActiveWithdrawOrders"`.
  */
 export function useCrossMarginHandlerGetActiveWithdrawOrders<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "getActiveWithdrawOrders">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "getActiveWithdrawOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "getActiveWithdrawOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "getActiveWithdrawOrders",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "getActiveWithdrawOrders", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "getActiveWithdrawOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"getExecutedWithdrawOrders"`.
  */
 export function useCrossMarginHandlerGetExecutedWithdrawOrders<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "getExecutedWithdrawOrders">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "getExecutedWithdrawOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "getExecutedWithdrawOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "getExecutedWithdrawOrders",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "getExecutedWithdrawOrders", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "getExecutedWithdrawOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"getWithdrawOrderLength"`.
  */
 export function useCrossMarginHandlerGetWithdrawOrderLength<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "getWithdrawOrderLength">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "getWithdrawOrderLength">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "getWithdrawOrderLength", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "getWithdrawOrderLength",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "getWithdrawOrderLength", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "getWithdrawOrderLength", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"getWithdrawOrders"`.
  */
 export function useCrossMarginHandlerGetWithdrawOrders<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "getWithdrawOrders">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "getWithdrawOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "getWithdrawOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "getWithdrawOrders",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "getWithdrawOrders", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "getWithdrawOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"maxExecutionChuck"`.
  */
 export function useCrossMarginHandlerMaxExecutionChuck<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "maxExecutionChuck">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "maxExecutionChuck">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "maxExecutionChuck", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "maxExecutionChuck",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "maxExecutionChuck", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "maxExecutionChuck", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"minExecutionOrderFee"`.
  */
 export function useCrossMarginHandlerMinExecutionOrderFee<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "minExecutionOrderFee">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "minExecutionOrderFee">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "minExecutionOrderFee", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "minExecutionOrderFee",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "minExecutionOrderFee", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "minExecutionOrderFee", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"nextExecutionOrderIndex"`.
  */
 export function useCrossMarginHandlerNextExecutionOrderIndex<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "nextExecutionOrderIndex">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "nextExecutionOrderIndex">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "nextExecutionOrderIndex", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "nextExecutionOrderIndex",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "nextExecutionOrderIndex", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "nextExecutionOrderIndex", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"orderExecutors"`.
  */
 export function useCrossMarginHandlerOrderExecutors<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "orderExecutors">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "orderExecutors">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "orderExecutors", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "orderExecutors",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "orderExecutors", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "orderExecutors", TSelectData>);
 }
 
 /**
@@ -7437,13 +7454,13 @@ export function useCrossMarginHandlerOwner<TSelectData = ReadContractResult<type
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "owner", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: crossMarginHandlerABI, functionName: "owner", ...config } as UseContractReadConfig<
     typeof crossMarginHandlerABI,
     "owner",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -7453,49 +7470,49 @@ export function useCrossMarginHandlerPyth<TSelectData = ReadContractResult<typeo
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "pyth", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: crossMarginHandlerABI, functionName: "pyth", ...config } as UseContractReadConfig<
     typeof crossMarginHandlerABI,
     "pyth",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"subAccountExecutedWithdrawOrders"`.
  */
 export function useCrossMarginHandlerSubAccountExecutedWithdrawOrders<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "subAccountExecutedWithdrawOrders">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "subAccountExecutedWithdrawOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "subAccountExecutedWithdrawOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "subAccountExecutedWithdrawOrders",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "subAccountExecutedWithdrawOrders", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "subAccountExecutedWithdrawOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `functionName` set to `"withdrawOrders"`.
  */
 export function useCrossMarginHandlerWithdrawOrders<
-  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "withdrawOrders">,
+  TSelectData = ReadContractResult<typeof crossMarginHandlerABI, "withdrawOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof crossMarginHandlerABI, "withdrawOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: crossMarginHandlerABI,
     functionName: "withdrawOrders",
     ...config,
-  } as UseContractReadConfig<typeof crossMarginHandlerABI, "withdrawOrders", TSelectData>)
+  } as UseContractReadConfig<typeof crossMarginHandlerABI, "withdrawOrders", TSelectData>);
 }
 
 /**
@@ -7509,13 +7526,13 @@ export function useCrossMarginHandlerWrite<TMode extends WriteContractMode, TFun
         TFunctionName
       >
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, TFunctionName> & {
-        abi?: never
-      } = {} as any,
+        abi?: never;
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, TFunctionName>({
     abi: crossMarginHandlerABI,
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7529,15 +7546,15 @@ export function useCrossMarginHandlerCancelWithdrawOrder<TMode extends WriteCont
         "cancelWithdrawOrder"
       > & { functionName?: "cancelWithdrawOrder" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "cancelWithdrawOrder"> & {
-        abi?: never
-        functionName?: "cancelWithdrawOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "cancelWithdrawOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "cancelWithdrawOrder">({
     abi: crossMarginHandlerABI,
     functionName: "cancelWithdrawOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7551,15 +7568,15 @@ export function useCrossMarginHandlerConvertSGlpCollateral<TMode extends WriteCo
         "convertSGlpCollateral"
       > & { functionName?: "convertSGlpCollateral" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "convertSGlpCollateral"> & {
-        abi?: never
-        functionName?: "convertSGlpCollateral"
-      } = {} as any,
+        abi?: never;
+        functionName?: "convertSGlpCollateral";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "convertSGlpCollateral">({
     abi: crossMarginHandlerABI,
     functionName: "convertSGlpCollateral",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7573,15 +7590,15 @@ export function useCrossMarginHandlerCreateWithdrawCollateralOrder<TMode extends
         "createWithdrawCollateralOrder"
       > & { functionName?: "createWithdrawCollateralOrder" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "createWithdrawCollateralOrder"> & {
-        abi?: never
-        functionName?: "createWithdrawCollateralOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "createWithdrawCollateralOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "createWithdrawCollateralOrder">({
     abi: crossMarginHandlerABI,
     functionName: "createWithdrawCollateralOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7595,15 +7612,15 @@ export function useCrossMarginHandlerDepositCollateral<TMode extends WriteContra
         "depositCollateral"
       > & { functionName?: "depositCollateral" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "depositCollateral"> & {
-        abi?: never
-        functionName?: "depositCollateral"
-      } = {} as any,
+        abi?: never;
+        functionName?: "depositCollateral";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "depositCollateral">({
     abi: crossMarginHandlerABI,
     functionName: "depositCollateral",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7617,15 +7634,15 @@ export function useCrossMarginHandlerExecuteOrder<TMode extends WriteContractMod
         "executeOrder"
       > & { functionName?: "executeOrder" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "executeOrder"> & {
-        abi?: never
-        functionName?: "executeOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "executeOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "executeOrder">({
     abi: crossMarginHandlerABI,
     functionName: "executeOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7639,15 +7656,15 @@ export function useCrossMarginHandlerExecuteWithdrawOrder<TMode extends WriteCon
         "executeWithdrawOrder"
       > & { functionName?: "executeWithdrawOrder" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "executeWithdrawOrder"> & {
-        abi?: never
-        functionName?: "executeWithdrawOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "executeWithdrawOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "executeWithdrawOrder">({
     abi: crossMarginHandlerABI,
     functionName: "executeWithdrawOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7661,15 +7678,15 @@ export function useCrossMarginHandlerInitialize<TMode extends WriteContractMode>
         "initialize"
       > & { functionName?: "initialize" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "initialize"> & {
-        abi?: never
-        functionName?: "initialize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "initialize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "initialize">({
     abi: crossMarginHandlerABI,
     functionName: "initialize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7683,15 +7700,15 @@ export function useCrossMarginHandlerRenounceOwnership<TMode extends WriteContra
         "renounceOwnership"
       > & { functionName?: "renounceOwnership" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "renounceOwnership"> & {
-        abi?: never
-        functionName?: "renounceOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "renounceOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "renounceOwnership">({
     abi: crossMarginHandlerABI,
     functionName: "renounceOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7705,15 +7722,15 @@ export function useCrossMarginHandlerSetCrossMarginService<TMode extends WriteCo
         "setCrossMarginService"
       > & { functionName?: "setCrossMarginService" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "setCrossMarginService"> & {
-        abi?: never
-        functionName?: "setCrossMarginService"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setCrossMarginService";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "setCrossMarginService">({
     abi: crossMarginHandlerABI,
     functionName: "setCrossMarginService",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7727,15 +7744,15 @@ export function useCrossMarginHandlerSetMaxExecutionChuck<TMode extends WriteCon
         "setMaxExecutionChuck"
       > & { functionName?: "setMaxExecutionChuck" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "setMaxExecutionChuck"> & {
-        abi?: never
-        functionName?: "setMaxExecutionChuck"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMaxExecutionChuck";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "setMaxExecutionChuck">({
     abi: crossMarginHandlerABI,
     functionName: "setMaxExecutionChuck",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7749,15 +7766,15 @@ export function useCrossMarginHandlerSetMinExecutionFee<TMode extends WriteContr
         "setMinExecutionFee"
       > & { functionName?: "setMinExecutionFee" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "setMinExecutionFee"> & {
-        abi?: never
-        functionName?: "setMinExecutionFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMinExecutionFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "setMinExecutionFee">({
     abi: crossMarginHandlerABI,
     functionName: "setMinExecutionFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7771,15 +7788,15 @@ export function useCrossMarginHandlerSetOrderExecutor<TMode extends WriteContrac
         "setOrderExecutor"
       > & { functionName?: "setOrderExecutor" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "setOrderExecutor"> & {
-        abi?: never
-        functionName?: "setOrderExecutor"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setOrderExecutor";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "setOrderExecutor">({
     abi: crossMarginHandlerABI,
     functionName: "setOrderExecutor",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7793,15 +7810,15 @@ export function useCrossMarginHandlerSetPyth<TMode extends WriteContractMode>(
         "setPyth"
       > & { functionName?: "setPyth" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "setPyth"> & {
-        abi?: never
-        functionName?: "setPyth"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setPyth";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "setPyth">({
     abi: crossMarginHandlerABI,
     functionName: "setPyth",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -7815,27 +7832,27 @@ export function useCrossMarginHandlerTransferOwnership<TMode extends WriteContra
         "transferOwnership"
       > & { functionName?: "transferOwnership" }
     : UseContractWriteConfig<TMode, typeof crossMarginHandlerABI, "transferOwnership"> & {
-        abi?: never
-        functionName?: "transferOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "transferOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof crossMarginHandlerABI, "transferOwnership">({
     abi: crossMarginHandlerABI,
     functionName: "transferOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link crossMarginHandlerABI}__.
  */
 export function usePrepareCrossMarginHandlerWrite<TFunctionName extends string>(
-  config: Omit<UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, TFunctionName>, "abi"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, TFunctionName>, "abi"> = {} as any
 ) {
   return usePrepareContractWrite({ abi: crossMarginHandlerABI, ...config } as UsePrepareContractWriteConfig<
     typeof crossMarginHandlerABI,
     TFunctionName
-  >)
+  >);
 }
 
 /**
@@ -7845,13 +7862,13 @@ export function usePrepareCrossMarginHandlerCancelWithdrawOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "cancelWithdrawOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "cancelWithdrawOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "cancelWithdrawOrder">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "cancelWithdrawOrder">);
 }
 
 /**
@@ -7861,13 +7878,13 @@ export function usePrepareCrossMarginHandlerConvertSGlpCollateral(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "convertSGlpCollateral">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "convertSGlpCollateral",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "convertSGlpCollateral">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "convertSGlpCollateral">);
 }
 
 /**
@@ -7877,13 +7894,13 @@ export function usePrepareCrossMarginHandlerCreateWithdrawCollateralOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "createWithdrawCollateralOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "createWithdrawCollateralOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "createWithdrawCollateralOrder">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "createWithdrawCollateralOrder">);
 }
 
 /**
@@ -7893,13 +7910,13 @@ export function usePrepareCrossMarginHandlerDepositCollateral(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "depositCollateral">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "depositCollateral",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "depositCollateral">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "depositCollateral">);
 }
 
 /**
@@ -7909,13 +7926,13 @@ export function usePrepareCrossMarginHandlerExecuteOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "executeOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "executeOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "executeOrder">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "executeOrder">);
 }
 
 /**
@@ -7925,13 +7942,13 @@ export function usePrepareCrossMarginHandlerExecuteWithdrawOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "executeWithdrawOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "executeWithdrawOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "executeWithdrawOrder">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "executeWithdrawOrder">);
 }
 
 /**
@@ -7941,13 +7958,13 @@ export function usePrepareCrossMarginHandlerInitialize(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "initialize">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "initialize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "initialize">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "initialize">);
 }
 
 /**
@@ -7957,13 +7974,13 @@ export function usePrepareCrossMarginHandlerRenounceOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "renounceOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "renounceOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "renounceOwnership">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "renounceOwnership">);
 }
 
 /**
@@ -7973,13 +7990,13 @@ export function usePrepareCrossMarginHandlerSetCrossMarginService(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setCrossMarginService">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "setCrossMarginService",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setCrossMarginService">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setCrossMarginService">);
 }
 
 /**
@@ -7989,13 +8006,13 @@ export function usePrepareCrossMarginHandlerSetMaxExecutionChuck(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setMaxExecutionChuck">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "setMaxExecutionChuck",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setMaxExecutionChuck">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setMaxExecutionChuck">);
 }
 
 /**
@@ -8005,13 +8022,13 @@ export function usePrepareCrossMarginHandlerSetMinExecutionFee(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setMinExecutionFee">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "setMinExecutionFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setMinExecutionFee">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setMinExecutionFee">);
 }
 
 /**
@@ -8021,13 +8038,13 @@ export function usePrepareCrossMarginHandlerSetOrderExecutor(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setOrderExecutor">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "setOrderExecutor",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setOrderExecutor">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setOrderExecutor">);
 }
 
 /**
@@ -8037,13 +8054,13 @@ export function usePrepareCrossMarginHandlerSetPyth(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setPyth">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "setPyth",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setPyth">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "setPyth">);
 }
 
 /**
@@ -8053,37 +8070,37 @@ export function usePrepareCrossMarginHandlerTransferOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "transferOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: crossMarginHandlerABI,
     functionName: "transferOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "transferOwnership">)
+  } as UsePrepareContractWriteConfig<typeof crossMarginHandlerABI, "transferOwnership">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link crossMarginHandlerABI}__.
  */
 export function useCrossMarginHandlerEvent<TEventName extends string>(
-  config: Omit<UseContractEventConfig<typeof crossMarginHandlerABI, TEventName>, "abi"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof crossMarginHandlerABI, TEventName>, "abi"> = {} as any
 ) {
   return useContractEvent({ abi: crossMarginHandlerABI, ...config } as UseContractEventConfig<
     typeof crossMarginHandlerABI,
     TEventName
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `eventName` set to `"Initialized"`.
  */
 export function useCrossMarginHandlerInitializedEvent(
-  config: Omit<UseContractEventConfig<typeof crossMarginHandlerABI, "Initialized">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof crossMarginHandlerABI, "Initialized">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: crossMarginHandlerABI, eventName: "Initialized", ...config } as UseContractEventConfig<
     typeof crossMarginHandlerABI,
     "Initialized"
-  >)
+  >);
 }
 
 /**
@@ -8093,13 +8110,13 @@ export function useCrossMarginHandlerLogCancelWithdrawOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "LogCancelWithdrawOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "LogCancelWithdrawOrder",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogCancelWithdrawOrder">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogCancelWithdrawOrder">);
 }
 
 /**
@@ -8109,13 +8126,13 @@ export function useCrossMarginHandlerLogCreateWithdrawOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "LogCreateWithdrawOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "LogCreateWithdrawOrder",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogCreateWithdrawOrder">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogCreateWithdrawOrder">);
 }
 
 /**
@@ -8125,13 +8142,13 @@ export function useCrossMarginHandlerLogDepositCollateralEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "LogDepositCollateral">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "LogDepositCollateral",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogDepositCollateral">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogDepositCollateral">);
 }
 
 /**
@@ -8141,13 +8158,13 @@ export function useCrossMarginHandlerLogExecuteWithdrawOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "LogExecuteWithdrawOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "LogExecuteWithdrawOrder",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogExecuteWithdrawOrder">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogExecuteWithdrawOrder">);
 }
 
 /**
@@ -8157,13 +8174,13 @@ export function useCrossMarginHandlerLogMaxExecutionChuckEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "LogMaxExecutionChuck">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "LogMaxExecutionChuck",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogMaxExecutionChuck">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogMaxExecutionChuck">);
 }
 
 /**
@@ -8173,13 +8190,13 @@ export function useCrossMarginHandlerLogSetCrossMarginServiceEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetCrossMarginService">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "LogSetCrossMarginService",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetCrossMarginService">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetCrossMarginService">);
 }
 
 /**
@@ -8189,13 +8206,13 @@ export function useCrossMarginHandlerLogSetMinExecutionFeeEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetMinExecutionFee">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "LogSetMinExecutionFee",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetMinExecutionFee">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetMinExecutionFee">);
 }
 
 /**
@@ -8205,25 +8222,25 @@ export function useCrossMarginHandlerLogSetOrderExecutorEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetOrderExecutor">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "LogSetOrderExecutor",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetOrderExecutor">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetOrderExecutor">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link crossMarginHandlerABI}__ and `eventName` set to `"LogSetPyth"`.
  */
 export function useCrossMarginHandlerLogSetPythEvent(
-  config: Omit<UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetPyth">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof crossMarginHandlerABI, "LogSetPyth">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: crossMarginHandlerABI, eventName: "LogSetPyth", ...config } as UseContractEventConfig<
     typeof crossMarginHandlerABI,
     "LogSetPyth"
-  >)
+  >);
 }
 
 /**
@@ -8233,13 +8250,13 @@ export function useCrossMarginHandlerLogWithdrawCollateralEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "LogWithdrawCollateral">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "LogWithdrawCollateral",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogWithdrawCollateral">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "LogWithdrawCollateral">);
 }
 
 /**
@@ -8249,20 +8266,20 @@ export function useCrossMarginHandlerOwnershipTransferredEvent(
   config: Omit<
     UseContractEventConfig<typeof crossMarginHandlerABI, "OwnershipTransferred">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: crossMarginHandlerABI,
     eventName: "OwnershipTransferred",
     ...config,
-  } as UseContractEventConfig<typeof crossMarginHandlerABI, "OwnershipTransferred">)
+  } as UseContractEventConfig<typeof crossMarginHandlerABI, "OwnershipTransferred">);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link iGmxGlpManagerABI}__.
  */
 export function useIGmxGlpManager(config: Omit<UseContractConfig, "abi"> = {} as any) {
-  return useContract({ abi: iGmxGlpManagerABI, ...config })
+  return useContract({ abi: iGmxGlpManagerABI, ...config });
 }
 
 /**
@@ -8270,13 +8287,13 @@ export function useIGmxGlpManager(config: Omit<UseContractConfig, "abi"> = {} as
  */
 export function useIGmxGlpManagerRead<
   TFunctionName extends string,
-  TSelectData = ReadContractResult<typeof iGmxGlpManagerABI, TFunctionName>,
+  TSelectData = ReadContractResult<typeof iGmxGlpManagerABI, TFunctionName>
 >(config: Omit<UseContractReadConfig<typeof iGmxGlpManagerABI, TFunctionName, TSelectData>, "abi"> = {} as any) {
   return useContractRead({ abi: iGmxGlpManagerABI, ...config } as UseContractReadConfig<
     typeof iGmxGlpManagerABI,
     TFunctionName,
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -8286,31 +8303,31 @@ export function useIGmxGlpManagerGetAum<TSelectData = ReadContractResult<typeof 
   config: Omit<
     UseContractReadConfig<typeof iGmxGlpManagerABI, "getAum", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: iGmxGlpManagerABI, functionName: "getAum", ...config } as UseContractReadConfig<
     typeof iGmxGlpManagerABI,
     "getAum",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link iGmxGlpManagerABI}__ and `functionName` set to `"getAumInUsdg"`.
  */
 export function useIGmxGlpManagerGetAumInUsdg<
-  TSelectData = ReadContractResult<typeof iGmxGlpManagerABI, "getAumInUsdg">,
+  TSelectData = ReadContractResult<typeof iGmxGlpManagerABI, "getAumInUsdg">
 >(
   config: Omit<
     UseContractReadConfig<typeof iGmxGlpManagerABI, "getAumInUsdg", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: iGmxGlpManagerABI, functionName: "getAumInUsdg", ...config } as UseContractReadConfig<
     typeof iGmxGlpManagerABI,
     "getAumInUsdg",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -8320,13 +8337,13 @@ export function useIGmxGlpManagerGetAums<TSelectData = ReadContractResult<typeof
   config: Omit<
     UseContractReadConfig<typeof iGmxGlpManagerABI, "getAums", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: iGmxGlpManagerABI, functionName: "getAums", ...config } as UseContractReadConfig<
     typeof iGmxGlpManagerABI,
     "getAums",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -8336,10 +8353,10 @@ export function useIGmxGlpManagerWrite<TMode extends WriteContractMode, TFunctio
   config: TMode extends "prepared"
     ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof iGmxGlpManagerABI, string>["abi"], TFunctionName>
     : UseContractWriteConfig<TMode, typeof iGmxGlpManagerABI, TFunctionName> & {
-        abi?: never
-      } = {} as any,
+        abi?: never;
+      } = {} as any
 ) {
-  return useContractWrite<TMode, typeof iGmxGlpManagerABI, TFunctionName>({ abi: iGmxGlpManagerABI, ...config } as any)
+  return useContractWrite<TMode, typeof iGmxGlpManagerABI, TFunctionName>({ abi: iGmxGlpManagerABI, ...config } as any);
 }
 
 /**
@@ -8353,27 +8370,27 @@ export function useIGmxGlpManagerAddLiquidityForAccount<TMode extends WriteContr
         "addLiquidityForAccount"
       > & { functionName?: "addLiquidityForAccount" }
     : UseContractWriteConfig<TMode, typeof iGmxGlpManagerABI, "addLiquidityForAccount"> & {
-        abi?: never
-        functionName?: "addLiquidityForAccount"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addLiquidityForAccount";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof iGmxGlpManagerABI, "addLiquidityForAccount">({
     abi: iGmxGlpManagerABI,
     functionName: "addLiquidityForAccount",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link iGmxGlpManagerABI}__.
  */
 export function usePrepareIGmxGlpManagerWrite<TFunctionName extends string>(
-  config: Omit<UsePrepareContractWriteConfig<typeof iGmxGlpManagerABI, TFunctionName>, "abi"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof iGmxGlpManagerABI, TFunctionName>, "abi"> = {} as any
 ) {
   return usePrepareContractWrite({ abi: iGmxGlpManagerABI, ...config } as UsePrepareContractWriteConfig<
     typeof iGmxGlpManagerABI,
     TFunctionName
-  >)
+  >);
 }
 
 /**
@@ -8383,20 +8400,20 @@ export function usePrepareIGmxGlpManagerAddLiquidityForAccount(
   config: Omit<
     UsePrepareContractWriteConfig<typeof iGmxGlpManagerABI, "addLiquidityForAccount">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: iGmxGlpManagerABI,
     functionName: "addLiquidityForAccount",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof iGmxGlpManagerABI, "addLiquidityForAccount">)
+  } as UsePrepareContractWriteConfig<typeof iGmxGlpManagerABI, "addLiquidityForAccount">);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link limitTradeHandlerABI}__.
  */
 export function useLimitTradeHandler(config: Omit<UseContractConfig, "abi"> = {} as any) {
-  return useContract({ abi: limitTradeHandlerABI, ...config })
+  return useContract({ abi: limitTradeHandlerABI, ...config });
 }
 
 /**
@@ -8404,319 +8421,319 @@ export function useLimitTradeHandler(config: Omit<UseContractConfig, "abi"> = {}
  */
 export function useLimitTradeHandlerRead<
   TFunctionName extends string,
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, TFunctionName>,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, TFunctionName>
 >(config: Omit<UseContractReadConfig<typeof limitTradeHandlerABI, TFunctionName, TSelectData>, "abi"> = {} as any) {
   return useContractRead({ abi: limitTradeHandlerABI, ...config } as UseContractReadConfig<
     typeof limitTradeHandlerABI,
     TFunctionName,
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"activeLimitOrdersCount"`.
  */
 export function useLimitTradeHandlerActiveLimitOrdersCount<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "activeLimitOrdersCount">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "activeLimitOrdersCount">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "activeLimitOrdersCount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "activeLimitOrdersCount",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "activeLimitOrdersCount", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "activeLimitOrdersCount", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"activeMarketOrdersCount"`.
  */
 export function useLimitTradeHandlerActiveMarketOrdersCount<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "activeMarketOrdersCount">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "activeMarketOrdersCount">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "activeMarketOrdersCount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "activeMarketOrdersCount",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "activeMarketOrdersCount", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "activeMarketOrdersCount", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"activeOrdersCount"`.
  */
 export function useLimitTradeHandlerActiveOrdersCount<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "activeOrdersCount">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "activeOrdersCount">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "activeOrdersCount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "activeOrdersCount",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "activeOrdersCount", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "activeOrdersCount", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"delegations"`.
  */
 export function useLimitTradeHandlerDelegations<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "delegations">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "delegations">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "delegations", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: limitTradeHandlerABI, functionName: "delegations", ...config } as UseContractReadConfig<
     typeof limitTradeHandlerABI,
     "delegations",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"getAllActiveOrders"`.
  */
 export function useLimitTradeHandlerGetAllActiveOrders<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getAllActiveOrders">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getAllActiveOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "getAllActiveOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "getAllActiveOrders",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getAllActiveOrders", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getAllActiveOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"getAllActiveOrdersBySubAccount"`.
  */
 export function useLimitTradeHandlerGetAllActiveOrdersBySubAccount<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "getAllActiveOrdersBySubAccount",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getAllActiveOrdersBySubAccount", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"getLimitActiveOrders"`.
  */
 export function useLimitTradeHandlerGetLimitActiveOrders<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getLimitActiveOrders">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getLimitActiveOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "getLimitActiveOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "getLimitActiveOrders",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getLimitActiveOrders", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getLimitActiveOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"getLimitActiveOrdersBySubAccount"`.
  */
 export function useLimitTradeHandlerGetLimitActiveOrdersBySubAccount<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "getLimitActiveOrdersBySubAccount",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getLimitActiveOrdersBySubAccount", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"getMarketActiveOrders"`.
  */
 export function useLimitTradeHandlerGetMarketActiveOrders<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getMarketActiveOrders">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getMarketActiveOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "getMarketActiveOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "getMarketActiveOrders",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getMarketActiveOrders", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getMarketActiveOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"getMarketActiveOrdersBySubAccount"`.
  */
 export function useLimitTradeHandlerGetMarketActiveOrdersBySubAccount<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "getMarketActiveOrdersBySubAccount",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "getMarketActiveOrdersBySubAccount", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"isAllowAllExecutor"`.
  */
 export function useLimitTradeHandlerIsAllowAllExecutor<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "isAllowAllExecutor">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "isAllowAllExecutor">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "isAllowAllExecutor", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "isAllowAllExecutor",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "isAllowAllExecutor", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "isAllowAllExecutor", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"isGuaranteeLimitPrice"`.
  */
 export function useLimitTradeHandlerIsGuaranteeLimitPrice<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "isGuaranteeLimitPrice">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "isGuaranteeLimitPrice">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "isGuaranteeLimitPrice", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "isGuaranteeLimitPrice",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "isGuaranteeLimitPrice", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "isGuaranteeLimitPrice", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"limitOrders"`.
  */
 export function useLimitTradeHandlerLimitOrders<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "limitOrders">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "limitOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "limitOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: limitTradeHandlerABI, functionName: "limitOrders", ...config } as UseContractReadConfig<
     typeof limitTradeHandlerABI,
     "limitOrders",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"limitOrdersIndex"`.
  */
 export function useLimitTradeHandlerLimitOrdersIndex<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "limitOrdersIndex">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "limitOrdersIndex">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "limitOrdersIndex", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "limitOrdersIndex",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "limitOrdersIndex", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "limitOrdersIndex", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"minExecutionFee"`.
  */
 export function useLimitTradeHandlerMinExecutionFee<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "minExecutionFee">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "minExecutionFee">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "minExecutionFee", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "minExecutionFee",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "minExecutionFee", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "minExecutionFee", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"minExecutionTimestamp"`.
  */
 export function useLimitTradeHandlerMinExecutionTimestamp<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "minExecutionTimestamp">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "minExecutionTimestamp">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "minExecutionTimestamp", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "minExecutionTimestamp",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "minExecutionTimestamp", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "minExecutionTimestamp", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"orderExecutors"`.
  */
 export function useLimitTradeHandlerOrderExecutors<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "orderExecutors">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "orderExecutors">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "orderExecutors", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "orderExecutors",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "orderExecutors", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "orderExecutors", TSelectData>);
 }
 
 /**
@@ -8726,13 +8743,13 @@ export function useLimitTradeHandlerOwner<TSelectData = ReadContractResult<typeo
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "owner", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: limitTradeHandlerABI, functionName: "owner", ...config } as UseContractReadConfig<
     typeof limitTradeHandlerABI,
     "owner",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -8742,31 +8759,31 @@ export function useLimitTradeHandlerPyth<TSelectData = ReadContractResult<typeof
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "pyth", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: limitTradeHandlerABI, functionName: "pyth", ...config } as UseContractReadConfig<
     typeof limitTradeHandlerABI,
     "pyth",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"tradeService"`.
  */
 export function useLimitTradeHandlerTradeService<
-  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "tradeService">,
+  TSelectData = ReadContractResult<typeof limitTradeHandlerABI, "tradeService">
 >(
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "tradeService", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: limitTradeHandlerABI,
     functionName: "tradeService",
     ...config,
-  } as UseContractReadConfig<typeof limitTradeHandlerABI, "tradeService", TSelectData>)
+  } as UseContractReadConfig<typeof limitTradeHandlerABI, "tradeService", TSelectData>);
 }
 
 /**
@@ -8776,13 +8793,13 @@ export function useLimitTradeHandlerWeth<TSelectData = ReadContractResult<typeof
   config: Omit<
     UseContractReadConfig<typeof limitTradeHandlerABI, "weth", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: limitTradeHandlerABI, functionName: "weth", ...config } as UseContractReadConfig<
     typeof limitTradeHandlerABI,
     "weth",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -8796,13 +8813,13 @@ export function useLimitTradeHandlerWrite<TMode extends WriteContractMode, TFunc
         TFunctionName
       >
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, TFunctionName> & {
-        abi?: never
-      } = {} as any,
+        abi?: never;
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, TFunctionName>({
     abi: limitTradeHandlerABI,
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -8816,15 +8833,15 @@ export function useLimitTradeHandlerBatch<TMode extends WriteContractMode>(
         "batch"
       > & { functionName?: "batch" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "batch"> & {
-        abi?: never
-        functionName?: "batch"
-      } = {} as any,
+        abi?: never;
+        functionName?: "batch";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "batch">({
     abi: limitTradeHandlerABI,
     functionName: "batch",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -8838,15 +8855,15 @@ export function useLimitTradeHandlerCancelOrder<TMode extends WriteContractMode>
         "cancelOrder"
       > & { functionName?: "cancelOrder" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "cancelOrder"> & {
-        abi?: never
-        functionName?: "cancelOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "cancelOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "cancelOrder">({
     abi: limitTradeHandlerABI,
     functionName: "cancelOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -8860,15 +8877,15 @@ export function useLimitTradeHandlerCreateOrder<TMode extends WriteContractMode>
         "createOrder"
       > & { functionName?: "createOrder" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "createOrder"> & {
-        abi?: never
-        functionName?: "createOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "createOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "createOrder">({
     abi: limitTradeHandlerABI,
     functionName: "createOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -8882,15 +8899,15 @@ export function useLimitTradeHandlerExecuteLimitOrder<TMode extends WriteContrac
         "executeLimitOrder"
       > & { functionName?: "executeLimitOrder" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "executeLimitOrder"> & {
-        abi?: never
-        functionName?: "executeLimitOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "executeLimitOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "executeLimitOrder">({
     abi: limitTradeHandlerABI,
     functionName: "executeLimitOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -8904,15 +8921,15 @@ export function useLimitTradeHandlerExecuteOrders<TMode extends WriteContractMod
         "executeOrders"
       > & { functionName?: "executeOrders" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "executeOrders"> & {
-        abi?: never
-        functionName?: "executeOrders"
-      } = {} as any,
+        abi?: never;
+        functionName?: "executeOrders";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "executeOrders">({
     abi: limitTradeHandlerABI,
     functionName: "executeOrders",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -8926,15 +8943,15 @@ export function useLimitTradeHandlerInitialize<TMode extends WriteContractMode>(
         "initialize"
       > & { functionName?: "initialize" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "initialize"> & {
-        abi?: never
-        functionName?: "initialize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "initialize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "initialize">({
     abi: limitTradeHandlerABI,
     functionName: "initialize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -8948,15 +8965,15 @@ export function useLimitTradeHandlerMulticall<TMode extends WriteContractMode>(
         "multicall"
       > & { functionName?: "multicall" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "multicall"> & {
-        abi?: never
-        functionName?: "multicall"
-      } = {} as any,
+        abi?: never;
+        functionName?: "multicall";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "multicall">({
     abi: limitTradeHandlerABI,
     functionName: "multicall",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -8970,15 +8987,15 @@ export function useLimitTradeHandlerRenounceOwnership<TMode extends WriteContrac
         "renounceOwnership"
       > & { functionName?: "renounceOwnership" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "renounceOwnership"> & {
-        abi?: never
-        functionName?: "renounceOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "renounceOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "renounceOwnership">({
     abi: limitTradeHandlerABI,
     functionName: "renounceOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -8992,15 +9009,15 @@ export function useLimitTradeHandlerSetDelegate<TMode extends WriteContractMode>
         "setDelegate"
       > & { functionName?: "setDelegate" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "setDelegate"> & {
-        abi?: never
-        functionName?: "setDelegate"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setDelegate";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "setDelegate">({
     abi: limitTradeHandlerABI,
     functionName: "setDelegate",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -9014,15 +9031,15 @@ export function useLimitTradeHandlerSetGuaranteeLimitPrice<TMode extends WriteCo
         "setGuaranteeLimitPrice"
       > & { functionName?: "setGuaranteeLimitPrice" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "setGuaranteeLimitPrice"> & {
-        abi?: never
-        functionName?: "setGuaranteeLimitPrice"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setGuaranteeLimitPrice";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "setGuaranteeLimitPrice">({
     abi: limitTradeHandlerABI,
     functionName: "setGuaranteeLimitPrice",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -9036,15 +9053,15 @@ export function useLimitTradeHandlerSetIsAllowAllExecutor<TMode extends WriteCon
         "setIsAllowAllExecutor"
       > & { functionName?: "setIsAllowAllExecutor" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "setIsAllowAllExecutor"> & {
-        abi?: never
-        functionName?: "setIsAllowAllExecutor"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setIsAllowAllExecutor";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "setIsAllowAllExecutor">({
     abi: limitTradeHandlerABI,
     functionName: "setIsAllowAllExecutor",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -9058,15 +9075,15 @@ export function useLimitTradeHandlerSetMinExecutionFee<TMode extends WriteContra
         "setMinExecutionFee"
       > & { functionName?: "setMinExecutionFee" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "setMinExecutionFee"> & {
-        abi?: never
-        functionName?: "setMinExecutionFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMinExecutionFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "setMinExecutionFee">({
     abi: limitTradeHandlerABI,
     functionName: "setMinExecutionFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -9080,15 +9097,15 @@ export function useLimitTradeHandlerSetMinExecutionTimestamp<TMode extends Write
         "setMinExecutionTimestamp"
       > & { functionName?: "setMinExecutionTimestamp" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "setMinExecutionTimestamp"> & {
-        abi?: never
-        functionName?: "setMinExecutionTimestamp"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMinExecutionTimestamp";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "setMinExecutionTimestamp">({
     abi: limitTradeHandlerABI,
     functionName: "setMinExecutionTimestamp",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -9102,15 +9119,15 @@ export function useLimitTradeHandlerSetOrderExecutor<TMode extends WriteContract
         "setOrderExecutor"
       > & { functionName?: "setOrderExecutor" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "setOrderExecutor"> & {
-        abi?: never
-        functionName?: "setOrderExecutor"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setOrderExecutor";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "setOrderExecutor">({
     abi: limitTradeHandlerABI,
     functionName: "setOrderExecutor",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -9124,15 +9141,15 @@ export function useLimitTradeHandlerSetPyth<TMode extends WriteContractMode>(
         "setPyth"
       > & { functionName?: "setPyth" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "setPyth"> & {
-        abi?: never
-        functionName?: "setPyth"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setPyth";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "setPyth">({
     abi: limitTradeHandlerABI,
     functionName: "setPyth",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -9146,15 +9163,15 @@ export function useLimitTradeHandlerSetTradeService<TMode extends WriteContractM
         "setTradeService"
       > & { functionName?: "setTradeService" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "setTradeService"> & {
-        abi?: never
-        functionName?: "setTradeService"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setTradeService";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "setTradeService">({
     abi: limitTradeHandlerABI,
     functionName: "setTradeService",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -9168,15 +9185,15 @@ export function useLimitTradeHandlerTransferOwnership<TMode extends WriteContrac
         "transferOwnership"
       > & { functionName?: "transferOwnership" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "transferOwnership"> & {
-        abi?: never
-        functionName?: "transferOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "transferOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "transferOwnership">({
     abi: limitTradeHandlerABI,
     functionName: "transferOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -9190,40 +9207,40 @@ export function useLimitTradeHandlerUpdateOrder<TMode extends WriteContractMode>
         "updateOrder"
       > & { functionName?: "updateOrder" }
     : UseContractWriteConfig<TMode, typeof limitTradeHandlerABI, "updateOrder"> & {
-        abi?: never
-        functionName?: "updateOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "updateOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof limitTradeHandlerABI, "updateOrder">({
     abi: limitTradeHandlerABI,
     functionName: "updateOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link limitTradeHandlerABI}__.
  */
 export function usePrepareLimitTradeHandlerWrite<TFunctionName extends string>(
-  config: Omit<UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, TFunctionName>, "abi"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, TFunctionName>, "abi"> = {} as any
 ) {
   return usePrepareContractWrite({ abi: limitTradeHandlerABI, ...config } as UsePrepareContractWriteConfig<
     typeof limitTradeHandlerABI,
     TFunctionName
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `functionName` set to `"batch"`.
  */
 export function usePrepareLimitTradeHandlerBatch(
-  config: Omit<UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "batch">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "batch">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "batch",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "batch">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "batch">);
 }
 
 /**
@@ -9233,13 +9250,13 @@ export function usePrepareLimitTradeHandlerCancelOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "cancelOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "cancelOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "cancelOrder">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "cancelOrder">);
 }
 
 /**
@@ -9249,13 +9266,13 @@ export function usePrepareLimitTradeHandlerCreateOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "createOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "createOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "createOrder">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "createOrder">);
 }
 
 /**
@@ -9265,13 +9282,13 @@ export function usePrepareLimitTradeHandlerExecuteLimitOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "executeLimitOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "executeLimitOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "executeLimitOrder">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "executeLimitOrder">);
 }
 
 /**
@@ -9281,13 +9298,13 @@ export function usePrepareLimitTradeHandlerExecuteOrders(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "executeOrders">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "executeOrders",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "executeOrders">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "executeOrders">);
 }
 
 /**
@@ -9297,13 +9314,13 @@ export function usePrepareLimitTradeHandlerInitialize(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "initialize">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "initialize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "initialize">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "initialize">);
 }
 
 /**
@@ -9313,13 +9330,13 @@ export function usePrepareLimitTradeHandlerMulticall(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "multicall">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "multicall",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "multicall">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "multicall">);
 }
 
 /**
@@ -9329,13 +9346,13 @@ export function usePrepareLimitTradeHandlerRenounceOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "renounceOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "renounceOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "renounceOwnership">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "renounceOwnership">);
 }
 
 /**
@@ -9345,13 +9362,13 @@ export function usePrepareLimitTradeHandlerSetDelegate(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setDelegate">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "setDelegate",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setDelegate">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setDelegate">);
 }
 
 /**
@@ -9361,13 +9378,13 @@ export function usePrepareLimitTradeHandlerSetGuaranteeLimitPrice(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setGuaranteeLimitPrice">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "setGuaranteeLimitPrice",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setGuaranteeLimitPrice">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setGuaranteeLimitPrice">);
 }
 
 /**
@@ -9377,13 +9394,13 @@ export function usePrepareLimitTradeHandlerSetIsAllowAllExecutor(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setIsAllowAllExecutor">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "setIsAllowAllExecutor",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setIsAllowAllExecutor">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setIsAllowAllExecutor">);
 }
 
 /**
@@ -9393,13 +9410,13 @@ export function usePrepareLimitTradeHandlerSetMinExecutionFee(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setMinExecutionFee">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "setMinExecutionFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setMinExecutionFee">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setMinExecutionFee">);
 }
 
 /**
@@ -9409,13 +9426,13 @@ export function usePrepareLimitTradeHandlerSetMinExecutionTimestamp(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setMinExecutionTimestamp">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "setMinExecutionTimestamp",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setMinExecutionTimestamp">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setMinExecutionTimestamp">);
 }
 
 /**
@@ -9425,13 +9442,13 @@ export function usePrepareLimitTradeHandlerSetOrderExecutor(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setOrderExecutor">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "setOrderExecutor",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setOrderExecutor">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setOrderExecutor">);
 }
 
 /**
@@ -9441,13 +9458,13 @@ export function usePrepareLimitTradeHandlerSetPyth(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setPyth">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "setPyth",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setPyth">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setPyth">);
 }
 
 /**
@@ -9457,13 +9474,13 @@ export function usePrepareLimitTradeHandlerSetTradeService(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setTradeService">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "setTradeService",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setTradeService">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "setTradeService">);
 }
 
 /**
@@ -9473,13 +9490,13 @@ export function usePrepareLimitTradeHandlerTransferOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "transferOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "transferOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "transferOwnership">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "transferOwnership">);
 }
 
 /**
@@ -9489,37 +9506,37 @@ export function usePrepareLimitTradeHandlerUpdateOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "updateOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: limitTradeHandlerABI,
     functionName: "updateOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "updateOrder">)
+  } as UsePrepareContractWriteConfig<typeof limitTradeHandlerABI, "updateOrder">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link limitTradeHandlerABI}__.
  */
 export function useLimitTradeHandlerEvent<TEventName extends string>(
-  config: Omit<UseContractEventConfig<typeof limitTradeHandlerABI, TEventName>, "abi"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof limitTradeHandlerABI, TEventName>, "abi"> = {} as any
 ) {
   return useContractEvent({ abi: limitTradeHandlerABI, ...config } as UseContractEventConfig<
     typeof limitTradeHandlerABI,
     TEventName
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `eventName` set to `"Initialized"`.
  */
 export function useLimitTradeHandlerInitializedEvent(
-  config: Omit<UseContractEventConfig<typeof limitTradeHandlerABI, "Initialized">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof limitTradeHandlerABI, "Initialized">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: limitTradeHandlerABI, eventName: "Initialized", ...config } as UseContractEventConfig<
     typeof limitTradeHandlerABI,
     "Initialized"
-  >)
+  >);
 }
 
 /**
@@ -9529,13 +9546,13 @@ export function useLimitTradeHandlerLogCancelLimitOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogCancelLimitOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogCancelLimitOrder",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogCancelLimitOrder">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogCancelLimitOrder">);
 }
 
 /**
@@ -9545,13 +9562,13 @@ export function useLimitTradeHandlerLogCreateLimitOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogCreateLimitOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogCreateLimitOrder",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogCreateLimitOrder">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogCreateLimitOrder">);
 }
 
 /**
@@ -9561,13 +9578,29 @@ export function useLimitTradeHandlerLogExecuteLimitOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogExecuteLimitOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogExecuteLimitOrder",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogExecuteLimitOrder">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogExecuteLimitOrder">);
+}
+
+/**
+ * Wraps __{@link useContractEvent}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `eventName` set to `"LogExecuteLimitOrderFail"`.
+ */
+export function useLimitTradeHandlerLogExecuteLimitOrderFailEvent(
+  config: Omit<
+    UseContractEventConfig<typeof limitTradeHandlerABI, "LogExecuteLimitOrderFail">,
+    "abi" | "eventName"
+  > = {} as any
+) {
+  return useContractEvent({
+    abi: limitTradeHandlerABI,
+    eventName: "LogExecuteLimitOrderFail",
+    ...config,
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogExecuteLimitOrderFail">);
 }
 
 /**
@@ -9577,26 +9610,26 @@ export function useLimitTradeHandlerLogExecuteMarketOrderFailEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogExecuteMarketOrderFail">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogExecuteMarketOrderFail",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogExecuteMarketOrderFail">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogExecuteMarketOrderFail">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `eventName` set to `"LogSetDelegate"`.
  */
 export function useLimitTradeHandlerLogSetDelegateEvent(
-  config: Omit<UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetDelegate">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetDelegate">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogSetDelegate",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetDelegate">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetDelegate">);
 }
 
 /**
@@ -9606,13 +9639,13 @@ export function useLimitTradeHandlerLogSetGuaranteeLimitPriceEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetGuaranteeLimitPrice">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogSetGuaranteeLimitPrice",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetGuaranteeLimitPrice">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetGuaranteeLimitPrice">);
 }
 
 /**
@@ -9622,13 +9655,13 @@ export function useLimitTradeHandlerLogSetIsAllowAllExecutorEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetIsAllowAllExecutor">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogSetIsAllowAllExecutor",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetIsAllowAllExecutor">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetIsAllowAllExecutor">);
 }
 
 /**
@@ -9638,13 +9671,13 @@ export function useLimitTradeHandlerLogSetMinExecutionFeeEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetMinExecutionFee">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogSetMinExecutionFee",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetMinExecutionFee">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetMinExecutionFee">);
 }
 
 /**
@@ -9654,13 +9687,13 @@ export function useLimitTradeHandlerLogSetMinExecutionTimestampEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetMinExecutionTimestamp">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogSetMinExecutionTimestamp",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetMinExecutionTimestamp">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetMinExecutionTimestamp">);
 }
 
 /**
@@ -9670,25 +9703,25 @@ export function useLimitTradeHandlerLogSetOrderExecutorEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetOrderExecutor">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogSetOrderExecutor",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetOrderExecutor">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetOrderExecutor">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link limitTradeHandlerABI}__ and `eventName` set to `"LogSetPyth"`.
  */
 export function useLimitTradeHandlerLogSetPythEvent(
-  config: Omit<UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetPyth">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetPyth">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: limitTradeHandlerABI, eventName: "LogSetPyth", ...config } as UseContractEventConfig<
     typeof limitTradeHandlerABI,
     "LogSetPyth"
-  >)
+  >);
 }
 
 /**
@@ -9698,13 +9731,13 @@ export function useLimitTradeHandlerLogSetTradeServiceEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetTradeService">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogSetTradeService",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetTradeService">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogSetTradeService">);
 }
 
 /**
@@ -9714,13 +9747,13 @@ export function useLimitTradeHandlerLogUpdateLimitOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "LogUpdateLimitOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "LogUpdateLimitOrder",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogUpdateLimitOrder">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "LogUpdateLimitOrder">);
 }
 
 /**
@@ -9730,20 +9763,20 @@ export function useLimitTradeHandlerOwnershipTransferredEvent(
   config: Omit<
     UseContractEventConfig<typeof limitTradeHandlerABI, "OwnershipTransferred">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: limitTradeHandlerABI,
     eventName: "OwnershipTransferred",
     ...config,
-  } as UseContractEventConfig<typeof limitTradeHandlerABI, "OwnershipTransferred">)
+  } as UseContractEventConfig<typeof limitTradeHandlerABI, "OwnershipTransferred">);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link liquidityHandlerABI}__.
  */
 export function useLiquidityHandler(config: Omit<UseContractConfig, "abi"> = {} as any) {
-  return useContract({ abi: liquidityHandlerABI, ...config })
+  return useContract({ abi: liquidityHandlerABI, ...config });
 }
 
 /**
@@ -9751,229 +9784,229 @@ export function useLiquidityHandler(config: Omit<UseContractConfig, "abi"> = {} 
  */
 export function useLiquidityHandlerRead<
   TFunctionName extends string,
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, TFunctionName>,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, TFunctionName>
 >(config: Omit<UseContractReadConfig<typeof liquidityHandlerABI, TFunctionName, TSelectData>, "abi"> = {} as any) {
   return useContractRead({ abi: liquidityHandlerABI, ...config } as UseContractReadConfig<
     typeof liquidityHandlerABI,
     TFunctionName,
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"accountExecutedLiquidityOrders"`.
  */
 export function useLiquidityHandlerAccountExecutedLiquidityOrders<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "accountExecutedLiquidityOrders">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "accountExecutedLiquidityOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "accountExecutedLiquidityOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "accountExecutedLiquidityOrders",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "accountExecutedLiquidityOrders", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "accountExecutedLiquidityOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"getActiveLiquidityOrders"`.
  */
 export function useLiquidityHandlerGetActiveLiquidityOrders<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "getActiveLiquidityOrders">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "getActiveLiquidityOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "getActiveLiquidityOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "getActiveLiquidityOrders",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "getActiveLiquidityOrders", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "getActiveLiquidityOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"getExecutedLiquidityOrders"`.
  */
 export function useLiquidityHandlerGetExecutedLiquidityOrders<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "getExecutedLiquidityOrders">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "getExecutedLiquidityOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "getExecutedLiquidityOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "getExecutedLiquidityOrders",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "getExecutedLiquidityOrders", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "getExecutedLiquidityOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"getLiquidityOrderLength"`.
  */
 export function useLiquidityHandlerGetLiquidityOrderLength<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "getLiquidityOrderLength">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "getLiquidityOrderLength">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "getLiquidityOrderLength", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "getLiquidityOrderLength",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "getLiquidityOrderLength", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "getLiquidityOrderLength", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"getLiquidityOrders"`.
  */
 export function useLiquidityHandlerGetLiquidityOrders<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "getLiquidityOrders">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "getLiquidityOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "getLiquidityOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "getLiquidityOrders",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "getLiquidityOrders", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "getLiquidityOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"hlpStaking"`.
  */
 export function useLiquidityHandlerHlpStaking<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "hlpStaking">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "hlpStaking">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "hlpStaking", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: liquidityHandlerABI, functionName: "hlpStaking", ...config } as UseContractReadConfig<
     typeof liquidityHandlerABI,
     "hlpStaking",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"liquidityOrders"`.
  */
 export function useLiquidityHandlerLiquidityOrders<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "liquidityOrders">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "liquidityOrders">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "liquidityOrders", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "liquidityOrders",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "liquidityOrders", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "liquidityOrders", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"liquidityService"`.
  */
 export function useLiquidityHandlerLiquidityService<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "liquidityService">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "liquidityService">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "liquidityService", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "liquidityService",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "liquidityService", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "liquidityService", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"maxExecutionChunk"`.
  */
 export function useLiquidityHandlerMaxExecutionChunk<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "maxExecutionChunk">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "maxExecutionChunk">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "maxExecutionChunk", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "maxExecutionChunk",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "maxExecutionChunk", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "maxExecutionChunk", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"minExecutionOrderFee"`.
  */
 export function useLiquidityHandlerMinExecutionOrderFee<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "minExecutionOrderFee">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "minExecutionOrderFee">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "minExecutionOrderFee", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "minExecutionOrderFee",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "minExecutionOrderFee", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "minExecutionOrderFee", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"nextExecutionOrderIndex"`.
  */
 export function useLiquidityHandlerNextExecutionOrderIndex<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "nextExecutionOrderIndex">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "nextExecutionOrderIndex">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "nextExecutionOrderIndex", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "nextExecutionOrderIndex",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "nextExecutionOrderIndex", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "nextExecutionOrderIndex", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"orderExecutors"`.
  */
 export function useLiquidityHandlerOrderExecutors<
-  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "orderExecutors">,
+  TSelectData = ReadContractResult<typeof liquidityHandlerABI, "orderExecutors">
 >(
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "orderExecutors", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: liquidityHandlerABI,
     functionName: "orderExecutors",
     ...config,
-  } as UseContractReadConfig<typeof liquidityHandlerABI, "orderExecutors", TSelectData>)
+  } as UseContractReadConfig<typeof liquidityHandlerABI, "orderExecutors", TSelectData>);
 }
 
 /**
@@ -9983,13 +10016,13 @@ export function useLiquidityHandlerOwner<TSelectData = ReadContractResult<typeof
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "owner", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: liquidityHandlerABI, functionName: "owner", ...config } as UseContractReadConfig<
     typeof liquidityHandlerABI,
     "owner",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -9999,13 +10032,13 @@ export function useLiquidityHandlerPyth<TSelectData = ReadContractResult<typeof 
   config: Omit<
     UseContractReadConfig<typeof liquidityHandlerABI, "pyth", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: liquidityHandlerABI, functionName: "pyth", ...config } as UseContractReadConfig<
     typeof liquidityHandlerABI,
     "pyth",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -10019,13 +10052,13 @@ export function useLiquidityHandlerWrite<TMode extends WriteContractMode, TFunct
         TFunctionName
       >
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, TFunctionName> & {
-        abi?: never
-      } = {} as any,
+        abi?: never;
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, TFunctionName>({
     abi: liquidityHandlerABI,
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10039,15 +10072,15 @@ export function useLiquidityHandlerCancelLiquidityOrder<TMode extends WriteContr
         "cancelLiquidityOrder"
       > & { functionName?: "cancelLiquidityOrder" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "cancelLiquidityOrder"> & {
-        abi?: never
-        functionName?: "cancelLiquidityOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "cancelLiquidityOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "cancelLiquidityOrder">({
     abi: liquidityHandlerABI,
     functionName: "cancelLiquidityOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10061,15 +10094,15 @@ export function useLiquidityHandlerCreateAddLiquidityOrder<TMode extends WriteCo
         "createAddLiquidityOrder"
       > & { functionName?: "createAddLiquidityOrder" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "createAddLiquidityOrder"> & {
-        abi?: never
-        functionName?: "createAddLiquidityOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "createAddLiquidityOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "createAddLiquidityOrder">({
     abi: liquidityHandlerABI,
     functionName: "createAddLiquidityOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10083,15 +10116,15 @@ export function useLiquidityHandlerCreateRemoveLiquidityOrder<TMode extends Writ
         "createRemoveLiquidityOrder"
       > & { functionName?: "createRemoveLiquidityOrder" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "createRemoveLiquidityOrder"> & {
-        abi?: never
-        functionName?: "createRemoveLiquidityOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "createRemoveLiquidityOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "createRemoveLiquidityOrder">({
     abi: liquidityHandlerABI,
     functionName: "createRemoveLiquidityOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10105,15 +10138,15 @@ export function useLiquidityHandlerExecuteLiquidity<TMode extends WriteContractM
         "executeLiquidity"
       > & { functionName?: "executeLiquidity" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "executeLiquidity"> & {
-        abi?: never
-        functionName?: "executeLiquidity"
-      } = {} as any,
+        abi?: never;
+        functionName?: "executeLiquidity";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "executeLiquidity">({
     abi: liquidityHandlerABI,
     functionName: "executeLiquidity",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10127,15 +10160,15 @@ export function useLiquidityHandlerExecuteOrder<TMode extends WriteContractMode>
         "executeOrder"
       > & { functionName?: "executeOrder" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "executeOrder"> & {
-        abi?: never
-        functionName?: "executeOrder"
-      } = {} as any,
+        abi?: never;
+        functionName?: "executeOrder";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "executeOrder">({
     abi: liquidityHandlerABI,
     functionName: "executeOrder",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10149,15 +10182,15 @@ export function useLiquidityHandlerInitialize<TMode extends WriteContractMode>(
         "initialize"
       > & { functionName?: "initialize" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "initialize"> & {
-        abi?: never
-        functionName?: "initialize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "initialize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "initialize">({
     abi: liquidityHandlerABI,
     functionName: "initialize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10171,15 +10204,15 @@ export function useLiquidityHandlerRenounceOwnership<TMode extends WriteContract
         "renounceOwnership"
       > & { functionName?: "renounceOwnership" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "renounceOwnership"> & {
-        abi?: never
-        functionName?: "renounceOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "renounceOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "renounceOwnership">({
     abi: liquidityHandlerABI,
     functionName: "renounceOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10193,15 +10226,15 @@ export function useLiquidityHandlerSetHlpStaking<TMode extends WriteContractMode
         "setHlpStaking"
       > & { functionName?: "setHlpStaking" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "setHlpStaking"> & {
-        abi?: never
-        functionName?: "setHlpStaking"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setHlpStaking";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "setHlpStaking">({
     abi: liquidityHandlerABI,
     functionName: "setHlpStaking",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10215,15 +10248,15 @@ export function useLiquidityHandlerSetLiquidityService<TMode extends WriteContra
         "setLiquidityService"
       > & { functionName?: "setLiquidityService" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "setLiquidityService"> & {
-        abi?: never
-        functionName?: "setLiquidityService"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setLiquidityService";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "setLiquidityService">({
     abi: liquidityHandlerABI,
     functionName: "setLiquidityService",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10237,15 +10270,15 @@ export function useLiquidityHandlerSetMaxExecutionChunk<TMode extends WriteContr
         "setMaxExecutionChunk"
       > & { functionName?: "setMaxExecutionChunk" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "setMaxExecutionChunk"> & {
-        abi?: never
-        functionName?: "setMaxExecutionChunk"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMaxExecutionChunk";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "setMaxExecutionChunk">({
     abi: liquidityHandlerABI,
     functionName: "setMaxExecutionChunk",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10259,15 +10292,15 @@ export function useLiquidityHandlerSetMinExecutionFee<TMode extends WriteContrac
         "setMinExecutionFee"
       > & { functionName?: "setMinExecutionFee" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "setMinExecutionFee"> & {
-        abi?: never
-        functionName?: "setMinExecutionFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMinExecutionFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "setMinExecutionFee">({
     abi: liquidityHandlerABI,
     functionName: "setMinExecutionFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10281,15 +10314,15 @@ export function useLiquidityHandlerSetOrderExecutor<TMode extends WriteContractM
         "setOrderExecutor"
       > & { functionName?: "setOrderExecutor" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "setOrderExecutor"> & {
-        abi?: never
-        functionName?: "setOrderExecutor"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setOrderExecutor";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "setOrderExecutor">({
     abi: liquidityHandlerABI,
     functionName: "setOrderExecutor",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10303,15 +10336,15 @@ export function useLiquidityHandlerSetPyth<TMode extends WriteContractMode>(
         "setPyth"
       > & { functionName?: "setPyth" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "setPyth"> & {
-        abi?: never
-        functionName?: "setPyth"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setPyth";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "setPyth">({
     abi: liquidityHandlerABI,
     functionName: "setPyth",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -10325,27 +10358,27 @@ export function useLiquidityHandlerTransferOwnership<TMode extends WriteContract
         "transferOwnership"
       > & { functionName?: "transferOwnership" }
     : UseContractWriteConfig<TMode, typeof liquidityHandlerABI, "transferOwnership"> & {
-        abi?: never
-        functionName?: "transferOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "transferOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof liquidityHandlerABI, "transferOwnership">({
     abi: liquidityHandlerABI,
     functionName: "transferOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link liquidityHandlerABI}__.
  */
 export function usePrepareLiquidityHandlerWrite<TFunctionName extends string>(
-  config: Omit<UsePrepareContractWriteConfig<typeof liquidityHandlerABI, TFunctionName>, "abi"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof liquidityHandlerABI, TFunctionName>, "abi"> = {} as any
 ) {
   return usePrepareContractWrite({ abi: liquidityHandlerABI, ...config } as UsePrepareContractWriteConfig<
     typeof liquidityHandlerABI,
     TFunctionName
-  >)
+  >);
 }
 
 /**
@@ -10355,13 +10388,13 @@ export function usePrepareLiquidityHandlerCancelLiquidityOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "cancelLiquidityOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "cancelLiquidityOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "cancelLiquidityOrder">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "cancelLiquidityOrder">);
 }
 
 /**
@@ -10371,13 +10404,13 @@ export function usePrepareLiquidityHandlerCreateAddLiquidityOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "createAddLiquidityOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "createAddLiquidityOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "createAddLiquidityOrder">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "createAddLiquidityOrder">);
 }
 
 /**
@@ -10387,13 +10420,13 @@ export function usePrepareLiquidityHandlerCreateRemoveLiquidityOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "createRemoveLiquidityOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "createRemoveLiquidityOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "createRemoveLiquidityOrder">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "createRemoveLiquidityOrder">);
 }
 
 /**
@@ -10403,13 +10436,13 @@ export function usePrepareLiquidityHandlerExecuteLiquidity(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "executeLiquidity">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "executeLiquidity",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "executeLiquidity">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "executeLiquidity">);
 }
 
 /**
@@ -10419,13 +10452,13 @@ export function usePrepareLiquidityHandlerExecuteOrder(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "executeOrder">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "executeOrder",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "executeOrder">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "executeOrder">);
 }
 
 /**
@@ -10435,13 +10468,13 @@ export function usePrepareLiquidityHandlerInitialize(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "initialize">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "initialize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "initialize">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "initialize">);
 }
 
 /**
@@ -10451,13 +10484,13 @@ export function usePrepareLiquidityHandlerRenounceOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "renounceOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "renounceOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "renounceOwnership">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "renounceOwnership">);
 }
 
 /**
@@ -10467,13 +10500,13 @@ export function usePrepareLiquidityHandlerSetHlpStaking(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setHlpStaking">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "setHlpStaking",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setHlpStaking">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setHlpStaking">);
 }
 
 /**
@@ -10483,13 +10516,13 @@ export function usePrepareLiquidityHandlerSetLiquidityService(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setLiquidityService">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "setLiquidityService",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setLiquidityService">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setLiquidityService">);
 }
 
 /**
@@ -10499,13 +10532,13 @@ export function usePrepareLiquidityHandlerSetMaxExecutionChunk(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setMaxExecutionChunk">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "setMaxExecutionChunk",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setMaxExecutionChunk">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setMaxExecutionChunk">);
 }
 
 /**
@@ -10515,13 +10548,13 @@ export function usePrepareLiquidityHandlerSetMinExecutionFee(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setMinExecutionFee">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "setMinExecutionFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setMinExecutionFee">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setMinExecutionFee">);
 }
 
 /**
@@ -10531,29 +10564,26 @@ export function usePrepareLiquidityHandlerSetOrderExecutor(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setOrderExecutor">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "setOrderExecutor",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setOrderExecutor">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setOrderExecutor">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link liquidityHandlerABI}__ and `functionName` set to `"setPyth"`.
  */
 export function usePrepareLiquidityHandlerSetPyth(
-  config: Omit<
-    UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setPyth">,
-    "abi" | "functionName"
-  > = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setPyth">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "setPyth",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setPyth">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "setPyth">);
 }
 
 /**
@@ -10563,37 +10593,37 @@ export function usePrepareLiquidityHandlerTransferOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "transferOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: liquidityHandlerABI,
     functionName: "transferOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "transferOwnership">)
+  } as UsePrepareContractWriteConfig<typeof liquidityHandlerABI, "transferOwnership">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link liquidityHandlerABI}__.
  */
 export function useLiquidityHandlerEvent<TEventName extends string>(
-  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, TEventName>, "abi"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, TEventName>, "abi"> = {} as any
 ) {
   return useContractEvent({ abi: liquidityHandlerABI, ...config } as UseContractEventConfig<
     typeof liquidityHandlerABI,
     TEventName
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link liquidityHandlerABI}__ and `eventName` set to `"Initialized"`.
  */
 export function useLiquidityHandlerInitializedEvent(
-  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, "Initialized">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, "Initialized">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: liquidityHandlerABI, eventName: "Initialized", ...config } as UseContractEventConfig<
     typeof liquidityHandlerABI,
     "Initialized"
-  >)
+  >);
 }
 
 /**
@@ -10603,13 +10633,13 @@ export function useLiquidityHandlerLogCancelLiquidityOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof liquidityHandlerABI, "LogCancelLiquidityOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "LogCancelLiquidityOrder",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogCancelLiquidityOrder">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogCancelLiquidityOrder">);
 }
 
 /**
@@ -10619,13 +10649,13 @@ export function useLiquidityHandlerLogCreateAddLiquidityOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof liquidityHandlerABI, "LogCreateAddLiquidityOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "LogCreateAddLiquidityOrder",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogCreateAddLiquidityOrder">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogCreateAddLiquidityOrder">);
 }
 
 /**
@@ -10635,13 +10665,13 @@ export function useLiquidityHandlerLogCreateRemoveLiquidityOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof liquidityHandlerABI, "LogCreateRemoveLiquidityOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "LogCreateRemoveLiquidityOrder",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogCreateRemoveLiquidityOrder">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogCreateRemoveLiquidityOrder">);
 }
 
 /**
@@ -10651,38 +10681,38 @@ export function useLiquidityHandlerLogExecuteLiquidityOrderEvent(
   config: Omit<
     UseContractEventConfig<typeof liquidityHandlerABI, "LogExecuteLiquidityOrder">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "LogExecuteLiquidityOrder",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogExecuteLiquidityOrder">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogExecuteLiquidityOrder">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link liquidityHandlerABI}__ and `eventName` set to `"LogRefund"`.
  */
 export function useLiquidityHandlerLogRefundEvent(
-  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, "LogRefund">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, "LogRefund">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: liquidityHandlerABI, eventName: "LogRefund", ...config } as UseContractEventConfig<
     typeof liquidityHandlerABI,
     "LogRefund"
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link liquidityHandlerABI}__ and `eventName` set to `"LogSetHlpStaking"`.
  */
 export function useLiquidityHandlerLogSetHlpStakingEvent(
-  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, "LogSetHlpStaking">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, "LogSetHlpStaking">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "LogSetHlpStaking",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetHlpStaking">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetHlpStaking">);
 }
 
 /**
@@ -10692,13 +10722,13 @@ export function useLiquidityHandlerLogSetLiquidityServiceEvent(
   config: Omit<
     UseContractEventConfig<typeof liquidityHandlerABI, "LogSetLiquidityService">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "LogSetLiquidityService",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetLiquidityService">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetLiquidityService">);
 }
 
 /**
@@ -10708,13 +10738,13 @@ export function useLiquidityHandlerLogSetMaxExecutionChunkEvent(
   config: Omit<
     UseContractEventConfig<typeof liquidityHandlerABI, "LogSetMaxExecutionChunk">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "LogSetMaxExecutionChunk",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetMaxExecutionChunk">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetMaxExecutionChunk">);
 }
 
 /**
@@ -10724,13 +10754,13 @@ export function useLiquidityHandlerLogSetMinExecutionFeeEvent(
   config: Omit<
     UseContractEventConfig<typeof liquidityHandlerABI, "LogSetMinExecutionFee">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "LogSetMinExecutionFee",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetMinExecutionFee">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetMinExecutionFee">);
 }
 
 /**
@@ -10740,25 +10770,25 @@ export function useLiquidityHandlerLogSetOrderExecutorEvent(
   config: Omit<
     UseContractEventConfig<typeof liquidityHandlerABI, "LogSetOrderExecutor">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "LogSetOrderExecutor",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetOrderExecutor">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "LogSetOrderExecutor">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link liquidityHandlerABI}__ and `eventName` set to `"LogSetPyth"`.
  */
 export function useLiquidityHandlerLogSetPythEvent(
-  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, "LogSetPyth">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof liquidityHandlerABI, "LogSetPyth">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: liquidityHandlerABI, eventName: "LogSetPyth", ...config } as UseContractEventConfig<
     typeof liquidityHandlerABI,
     "LogSetPyth"
-  >)
+  >);
 }
 
 /**
@@ -10768,20 +10798,20 @@ export function useLiquidityHandlerOwnershipTransferredEvent(
   config: Omit<
     UseContractEventConfig<typeof liquidityHandlerABI, "OwnershipTransferred">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: liquidityHandlerABI,
     eventName: "OwnershipTransferred",
     ...config,
-  } as UseContractEventConfig<typeof liquidityHandlerABI, "OwnershipTransferred">)
+  } as UseContractEventConfig<typeof liquidityHandlerABI, "OwnershipTransferred">);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link oracleMiddlewareABI}__.
  */
 export function useOracleMiddleware(config: Omit<UseContractConfig, "abi"> = {} as any) {
-  return useContract({ abi: oracleMiddlewareABI, ...config })
+  return useContract({ abi: oracleMiddlewareABI, ...config });
 }
 
 /**
@@ -10789,103 +10819,103 @@ export function useOracleMiddleware(config: Omit<UseContractConfig, "abi"> = {} 
  */
 export function useOracleMiddlewareRead<
   TFunctionName extends string,
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, TFunctionName>,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, TFunctionName>
 >(config: Omit<UseContractReadConfig<typeof oracleMiddlewareABI, TFunctionName, TSelectData>, "abi"> = {} as any) {
   return useContractRead({ abi: oracleMiddlewareABI, ...config } as UseContractReadConfig<
     typeof oracleMiddlewareABI,
     TFunctionName,
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"assetPriceConfigs"`.
  */
 export function useOracleMiddlewareAssetPriceConfigs<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "assetPriceConfigs">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "assetPriceConfigs">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "assetPriceConfigs", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: oracleMiddlewareABI,
     functionName: "assetPriceConfigs",
     ...config,
-  } as UseContractReadConfig<typeof oracleMiddlewareABI, "assetPriceConfigs", TSelectData>)
+  } as UseContractReadConfig<typeof oracleMiddlewareABI, "assetPriceConfigs", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"getLatestAdaptivePrice"`.
  */
 export function useOracleMiddlewareGetLatestAdaptivePrice<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "getLatestAdaptivePrice">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "getLatestAdaptivePrice">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestAdaptivePrice", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: oracleMiddlewareABI,
     functionName: "getLatestAdaptivePrice",
     ...config,
-  } as UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestAdaptivePrice", TSelectData>)
+  } as UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestAdaptivePrice", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"getLatestAdaptivePriceWithMarketStatus"`.
  */
 export function useOracleMiddlewareGetLatestAdaptivePriceWithMarketStatus<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "getLatestAdaptivePriceWithMarketStatus">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "getLatestAdaptivePriceWithMarketStatus">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestAdaptivePriceWithMarketStatus", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: oracleMiddlewareABI,
     functionName: "getLatestAdaptivePriceWithMarketStatus",
     ...config,
-  } as UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestAdaptivePriceWithMarketStatus", TSelectData>)
+  } as UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestAdaptivePriceWithMarketStatus", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"getLatestPrice"`.
  */
 export function useOracleMiddlewareGetLatestPrice<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "getLatestPrice">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "getLatestPrice">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestPrice", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: oracleMiddlewareABI,
     functionName: "getLatestPrice",
     ...config,
-  } as UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestPrice", TSelectData>)
+  } as UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestPrice", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"getLatestPriceWithMarketStatus"`.
  */
 export function useOracleMiddlewareGetLatestPriceWithMarketStatus<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "getLatestPriceWithMarketStatus">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "getLatestPriceWithMarketStatus">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestPriceWithMarketStatus", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: oracleMiddlewareABI,
     functionName: "getLatestPriceWithMarketStatus",
     ...config,
-  } as UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestPriceWithMarketStatus", TSelectData>)
+  } as UseContractReadConfig<typeof oracleMiddlewareABI, "getLatestPriceWithMarketStatus", TSelectData>);
 }
 
 /**
@@ -10895,31 +10925,31 @@ export function useOracleMiddlewareIsUpdater<TSelectData = ReadContractResult<ty
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "isUpdater", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: oracleMiddlewareABI, functionName: "isUpdater", ...config } as UseContractReadConfig<
     typeof oracleMiddlewareABI,
     "isUpdater",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"marketStatus"`.
  */
 export function useOracleMiddlewareMarketStatus<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "marketStatus">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "marketStatus">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "marketStatus", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: oracleMiddlewareABI, functionName: "marketStatus", ...config } as UseContractReadConfig<
     typeof oracleMiddlewareABI,
     "marketStatus",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -10929,85 +10959,85 @@ export function useOracleMiddlewareOwner<TSelectData = ReadContractResult<typeof
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "owner", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: oracleMiddlewareABI, functionName: "owner", ...config } as UseContractReadConfig<
     typeof oracleMiddlewareABI,
     "owner",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"unsafeGetLatestAdaptivePrice"`.
  */
 export function useOracleMiddlewareUnsafeGetLatestAdaptivePrice<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePrice">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePrice">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePrice", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: oracleMiddlewareABI,
     functionName: "unsafeGetLatestAdaptivePrice",
     ...config,
-  } as UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePrice", TSelectData>)
+  } as UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePrice", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"unsafeGetLatestAdaptivePriceWithMarketStatus"`.
  */
 export function useOracleMiddlewareUnsafeGetLatestAdaptivePriceWithMarketStatus<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePriceWithMarketStatus">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePriceWithMarketStatus">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePriceWithMarketStatus", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: oracleMiddlewareABI,
     functionName: "unsafeGetLatestAdaptivePriceWithMarketStatus",
     ...config,
-  } as UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePriceWithMarketStatus", TSelectData>)
+  } as UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestAdaptivePriceWithMarketStatus", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"unsafeGetLatestPrice"`.
  */
 export function useOracleMiddlewareUnsafeGetLatestPrice<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "unsafeGetLatestPrice">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "unsafeGetLatestPrice">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestPrice", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: oracleMiddlewareABI,
     functionName: "unsafeGetLatestPrice",
     ...config,
-  } as UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestPrice", TSelectData>)
+  } as UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestPrice", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `functionName` set to `"unsafeGetLatestPriceWithMarketStatus"`.
  */
 export function useOracleMiddlewareUnsafeGetLatestPriceWithMarketStatus<
-  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "unsafeGetLatestPriceWithMarketStatus">,
+  TSelectData = ReadContractResult<typeof oracleMiddlewareABI, "unsafeGetLatestPriceWithMarketStatus">
 >(
   config: Omit<
     UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestPriceWithMarketStatus", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: oracleMiddlewareABI,
     functionName: "unsafeGetLatestPriceWithMarketStatus",
     ...config,
-  } as UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestPriceWithMarketStatus", TSelectData>)
+  } as UseContractReadConfig<typeof oracleMiddlewareABI, "unsafeGetLatestPriceWithMarketStatus", TSelectData>);
 }
 
 /**
@@ -11021,13 +11051,13 @@ export function useOracleMiddlewareWrite<TMode extends WriteContractMode, TFunct
         TFunctionName
       >
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, TFunctionName> & {
-        abi?: never
-      } = {} as any,
+        abi?: never;
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, TFunctionName>({
     abi: oracleMiddlewareABI,
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11041,15 +11071,15 @@ export function useOracleMiddlewareInitialize<TMode extends WriteContractMode>(
         "initialize"
       > & { functionName?: "initialize" }
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, "initialize"> & {
-        abi?: never
-        functionName?: "initialize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "initialize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, "initialize">({
     abi: oracleMiddlewareABI,
     functionName: "initialize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11063,15 +11093,15 @@ export function useOracleMiddlewareRenounceOwnership<TMode extends WriteContract
         "renounceOwnership"
       > & { functionName?: "renounceOwnership" }
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, "renounceOwnership"> & {
-        abi?: never
-        functionName?: "renounceOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "renounceOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, "renounceOwnership">({
     abi: oracleMiddlewareABI,
     functionName: "renounceOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11085,15 +11115,15 @@ export function useOracleMiddlewareSetAssetPriceConfig<TMode extends WriteContra
         "setAssetPriceConfig"
       > & { functionName?: "setAssetPriceConfig" }
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, "setAssetPriceConfig"> & {
-        abi?: never
-        functionName?: "setAssetPriceConfig"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setAssetPriceConfig";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, "setAssetPriceConfig">({
     abi: oracleMiddlewareABI,
     functionName: "setAssetPriceConfig",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11107,15 +11137,15 @@ export function useOracleMiddlewareSetAssetPriceConfigs<TMode extends WriteContr
         "setAssetPriceConfigs"
       > & { functionName?: "setAssetPriceConfigs" }
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, "setAssetPriceConfigs"> & {
-        abi?: never
-        functionName?: "setAssetPriceConfigs"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setAssetPriceConfigs";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, "setAssetPriceConfigs">({
     abi: oracleMiddlewareABI,
     functionName: "setAssetPriceConfigs",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11129,15 +11159,15 @@ export function useOracleMiddlewareSetMarketStatus<TMode extends WriteContractMo
         "setMarketStatus"
       > & { functionName?: "setMarketStatus" }
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, "setMarketStatus"> & {
-        abi?: never
-        functionName?: "setMarketStatus"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMarketStatus";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, "setMarketStatus">({
     abi: oracleMiddlewareABI,
     functionName: "setMarketStatus",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11151,15 +11181,15 @@ export function useOracleMiddlewareSetMaxTrustPriceAge<TMode extends WriteContra
         "setMaxTrustPriceAge"
       > & { functionName?: "setMaxTrustPriceAge" }
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, "setMaxTrustPriceAge"> & {
-        abi?: never
-        functionName?: "setMaxTrustPriceAge"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMaxTrustPriceAge";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, "setMaxTrustPriceAge">({
     abi: oracleMiddlewareABI,
     functionName: "setMaxTrustPriceAge",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11173,15 +11203,15 @@ export function useOracleMiddlewareSetMultipleMarketStatus<TMode extends WriteCo
         "setMultipleMarketStatus"
       > & { functionName?: "setMultipleMarketStatus" }
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, "setMultipleMarketStatus"> & {
-        abi?: never
-        functionName?: "setMultipleMarketStatus"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setMultipleMarketStatus";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, "setMultipleMarketStatus">({
     abi: oracleMiddlewareABI,
     functionName: "setMultipleMarketStatus",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11195,15 +11225,15 @@ export function useOracleMiddlewareSetUpdater<TMode extends WriteContractMode>(
         "setUpdater"
       > & { functionName?: "setUpdater" }
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, "setUpdater"> & {
-        abi?: never
-        functionName?: "setUpdater"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setUpdater";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, "setUpdater">({
     abi: oracleMiddlewareABI,
     functionName: "setUpdater",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11217,27 +11247,27 @@ export function useOracleMiddlewareTransferOwnership<TMode extends WriteContract
         "transferOwnership"
       > & { functionName?: "transferOwnership" }
     : UseContractWriteConfig<TMode, typeof oracleMiddlewareABI, "transferOwnership"> & {
-        abi?: never
-        functionName?: "transferOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "transferOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof oracleMiddlewareABI, "transferOwnership">({
     abi: oracleMiddlewareABI,
     functionName: "transferOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link oracleMiddlewareABI}__.
  */
 export function usePrepareOracleMiddlewareWrite<TFunctionName extends string>(
-  config: Omit<UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, TFunctionName>, "abi"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, TFunctionName>, "abi"> = {} as any
 ) {
   return usePrepareContractWrite({ abi: oracleMiddlewareABI, ...config } as UsePrepareContractWriteConfig<
     typeof oracleMiddlewareABI,
     TFunctionName
-  >)
+  >);
 }
 
 /**
@@ -11247,13 +11277,13 @@ export function usePrepareOracleMiddlewareInitialize(
   config: Omit<
     UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "initialize">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: oracleMiddlewareABI,
     functionName: "initialize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "initialize">)
+  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "initialize">);
 }
 
 /**
@@ -11263,13 +11293,13 @@ export function usePrepareOracleMiddlewareRenounceOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "renounceOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: oracleMiddlewareABI,
     functionName: "renounceOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "renounceOwnership">)
+  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "renounceOwnership">);
 }
 
 /**
@@ -11279,13 +11309,13 @@ export function usePrepareOracleMiddlewareSetAssetPriceConfig(
   config: Omit<
     UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setAssetPriceConfig">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: oracleMiddlewareABI,
     functionName: "setAssetPriceConfig",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setAssetPriceConfig">)
+  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setAssetPriceConfig">);
 }
 
 /**
@@ -11295,13 +11325,13 @@ export function usePrepareOracleMiddlewareSetAssetPriceConfigs(
   config: Omit<
     UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setAssetPriceConfigs">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: oracleMiddlewareABI,
     functionName: "setAssetPriceConfigs",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setAssetPriceConfigs">)
+  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setAssetPriceConfigs">);
 }
 
 /**
@@ -11311,13 +11341,13 @@ export function usePrepareOracleMiddlewareSetMarketStatus(
   config: Omit<
     UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setMarketStatus">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: oracleMiddlewareABI,
     functionName: "setMarketStatus",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setMarketStatus">)
+  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setMarketStatus">);
 }
 
 /**
@@ -11327,13 +11357,13 @@ export function usePrepareOracleMiddlewareSetMaxTrustPriceAge(
   config: Omit<
     UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setMaxTrustPriceAge">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: oracleMiddlewareABI,
     functionName: "setMaxTrustPriceAge",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setMaxTrustPriceAge">)
+  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setMaxTrustPriceAge">);
 }
 
 /**
@@ -11343,13 +11373,13 @@ export function usePrepareOracleMiddlewareSetMultipleMarketStatus(
   config: Omit<
     UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setMultipleMarketStatus">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: oracleMiddlewareABI,
     functionName: "setMultipleMarketStatus",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setMultipleMarketStatus">)
+  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setMultipleMarketStatus">);
 }
 
 /**
@@ -11359,13 +11389,13 @@ export function usePrepareOracleMiddlewareSetUpdater(
   config: Omit<
     UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setUpdater">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: oracleMiddlewareABI,
     functionName: "setUpdater",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setUpdater">)
+  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "setUpdater">);
 }
 
 /**
@@ -11375,49 +11405,49 @@ export function usePrepareOracleMiddlewareTransferOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "transferOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: oracleMiddlewareABI,
     functionName: "transferOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "transferOwnership">)
+  } as UsePrepareContractWriteConfig<typeof oracleMiddlewareABI, "transferOwnership">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link oracleMiddlewareABI}__.
  */
 export function useOracleMiddlewareEvent<TEventName extends string>(
-  config: Omit<UseContractEventConfig<typeof oracleMiddlewareABI, TEventName>, "abi"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof oracleMiddlewareABI, TEventName>, "abi"> = {} as any
 ) {
   return useContractEvent({ abi: oracleMiddlewareABI, ...config } as UseContractEventConfig<
     typeof oracleMiddlewareABI,
     TEventName
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `eventName` set to `"Initialized"`.
  */
 export function useOracleMiddlewareInitializedEvent(
-  config: Omit<UseContractEventConfig<typeof oracleMiddlewareABI, "Initialized">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof oracleMiddlewareABI, "Initialized">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: oracleMiddlewareABI, eventName: "Initialized", ...config } as UseContractEventConfig<
     typeof oracleMiddlewareABI,
     "Initialized"
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `eventName` set to `"LogSetAdapter"`.
  */
 export function useOracleMiddlewareLogSetAdapterEvent(
-  config: Omit<UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetAdapter">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetAdapter">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: oracleMiddlewareABI, eventName: "LogSetAdapter", ...config } as UseContractEventConfig<
     typeof oracleMiddlewareABI,
     "LogSetAdapter"
-  >)
+  >);
 }
 
 /**
@@ -11427,13 +11457,13 @@ export function useOracleMiddlewareLogSetAssetPriceConfigEvent(
   config: Omit<
     UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetAssetPriceConfig">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: oracleMiddlewareABI,
     eventName: "LogSetAssetPriceConfig",
     ...config,
-  } as UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetAssetPriceConfig">)
+  } as UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetAssetPriceConfig">);
 }
 
 /**
@@ -11443,13 +11473,13 @@ export function useOracleMiddlewareLogSetMarketStatusEvent(
   config: Omit<
     UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetMarketStatus">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: oracleMiddlewareABI,
     eventName: "LogSetMarketStatus",
     ...config,
-  } as UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetMarketStatus">)
+  } as UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetMarketStatus">);
 }
 
 /**
@@ -11459,25 +11489,25 @@ export function useOracleMiddlewareLogSetMaxTrustPriceAgeEvent(
   config: Omit<
     UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetMaxTrustPriceAge">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: oracleMiddlewareABI,
     eventName: "LogSetMaxTrustPriceAge",
     ...config,
-  } as UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetMaxTrustPriceAge">)
+  } as UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetMaxTrustPriceAge">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link oracleMiddlewareABI}__ and `eventName` set to `"LogSetUpdater"`.
  */
 export function useOracleMiddlewareLogSetUpdaterEvent(
-  config: Omit<UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetUpdater">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof oracleMiddlewareABI, "LogSetUpdater">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: oracleMiddlewareABI, eventName: "LogSetUpdater", ...config } as UseContractEventConfig<
     typeof oracleMiddlewareABI,
     "LogSetUpdater"
-  >)
+  >);
 }
 
 /**
@@ -11487,20 +11517,20 @@ export function useOracleMiddlewareOwnershipTransferredEvent(
   config: Omit<
     UseContractEventConfig<typeof oracleMiddlewareABI, "OwnershipTransferred">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: oracleMiddlewareABI,
     eventName: "OwnershipTransferred",
     ...config,
-  } as UseContractEventConfig<typeof oracleMiddlewareABI, "OwnershipTransferred">)
+  } as UseContractEventConfig<typeof oracleMiddlewareABI, "OwnershipTransferred">);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link perpStorageABI}__.
  */
 export function usePerpStorage(config: Omit<UseContractConfig, "abi"> = {} as any) {
-  return useContract({ abi: perpStorageABI, ...config })
+  return useContract({ abi: perpStorageABI, ...config });
 }
 
 /**
@@ -11508,13 +11538,13 @@ export function usePerpStorage(config: Omit<UseContractConfig, "abi"> = {} as an
  */
 export function usePerpStorageRead<
   TFunctionName extends string,
-  TSelectData = ReadContractResult<typeof perpStorageABI, TFunctionName>,
+  TSelectData = ReadContractResult<typeof perpStorageABI, TFunctionName>
 >(config: Omit<UseContractReadConfig<typeof perpStorageABI, TFunctionName, TSelectData>, "abi"> = {} as any) {
   return useContractRead({ abi: perpStorageABI, ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     TFunctionName,
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -11524,85 +11554,85 @@ export function usePerpStorageAssetClasses<TSelectData = ReadContractResult<type
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "assetClasses", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "assetClasses", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "assetClasses",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"getActivePositionIds"`.
  */
 export function usePerpStorageGetActivePositionIds<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "getActivePositionIds">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "getActivePositionIds">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getActivePositionIds", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: perpStorageABI,
     functionName: "getActivePositionIds",
     ...config,
-  } as UseContractReadConfig<typeof perpStorageABI, "getActivePositionIds", TSelectData>)
+  } as UseContractReadConfig<typeof perpStorageABI, "getActivePositionIds", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"getActivePositions"`.
  */
 export function usePerpStorageGetActivePositions<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "getActivePositions">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "getActivePositions">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getActivePositions", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: perpStorageABI,
     functionName: "getActivePositions",
     ...config,
-  } as UseContractReadConfig<typeof perpStorageABI, "getActivePositions", TSelectData>)
+  } as UseContractReadConfig<typeof perpStorageABI, "getActivePositions", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"getActiveSubAccounts"`.
  */
 export function usePerpStorageGetActiveSubAccounts<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "getActiveSubAccounts">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "getActiveSubAccounts">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getActiveSubAccounts", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: perpStorageABI,
     functionName: "getActiveSubAccounts",
     ...config,
-  } as UseContractReadConfig<typeof perpStorageABI, "getActiveSubAccounts", TSelectData>)
+  } as UseContractReadConfig<typeof perpStorageABI, "getActiveSubAccounts", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"getAssetClassByIndex"`.
  */
 export function usePerpStorageGetAssetClassByIndex<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "getAssetClassByIndex">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "getAssetClassByIndex">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getAssetClassByIndex", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: perpStorageABI,
     functionName: "getAssetClassByIndex",
     ...config,
-  } as UseContractReadConfig<typeof perpStorageABI, "getAssetClassByIndex", TSelectData>)
+  } as UseContractReadConfig<typeof perpStorageABI, "getAssetClassByIndex", TSelectData>);
 }
 
 /**
@@ -11612,85 +11642,85 @@ export function usePerpStorageGetGlobalState<TSelectData = ReadContractResult<ty
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getGlobalState", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "getGlobalState", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "getGlobalState",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"getMarketByIndex"`.
  */
 export function usePerpStorageGetMarketByIndex<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "getMarketByIndex">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "getMarketByIndex">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getMarketByIndex", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "getMarketByIndex", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "getMarketByIndex",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"getNumberOfSubAccountPosition"`.
  */
 export function usePerpStorageGetNumberOfSubAccountPosition<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "getNumberOfSubAccountPosition">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "getNumberOfSubAccountPosition">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getNumberOfSubAccountPosition", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: perpStorageABI,
     functionName: "getNumberOfSubAccountPosition",
     ...config,
-  } as UseContractReadConfig<typeof perpStorageABI, "getNumberOfSubAccountPosition", TSelectData>)
+  } as UseContractReadConfig<typeof perpStorageABI, "getNumberOfSubAccountPosition", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"getPositionById"`.
  */
 export function usePerpStorageGetPositionById<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "getPositionById">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "getPositionById">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getPositionById", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "getPositionById", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "getPositionById",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"getPositionBySubAccount"`.
  */
 export function usePerpStorageGetPositionBySubAccount<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "getPositionBySubAccount">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "getPositionBySubAccount">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getPositionBySubAccount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: perpStorageABI,
     functionName: "getPositionBySubAccount",
     ...config,
-  } as UseContractReadConfig<typeof perpStorageABI, "getPositionBySubAccount", TSelectData>)
+  } as UseContractReadConfig<typeof perpStorageABI, "getPositionBySubAccount", TSelectData>);
 }
 
 /**
@@ -11700,13 +11730,13 @@ export function usePerpStorageGetPositionIds<TSelectData = ReadContractResult<ty
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "getPositionIds", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "getPositionIds", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "getPositionIds",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -11716,42 +11746,39 @@ export function usePerpStorageGlobalState<TSelectData = ReadContractResult<typeo
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "globalState", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "globalState", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "globalState",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"markets"`.
  */
 export function usePerpStorageMarkets<TSelectData = ReadContractResult<typeof perpStorageABI, "markets">>(
-  config: Omit<
-    UseContractReadConfig<typeof perpStorageABI, "markets", TSelectData>,
-    "abi" | "functionName"
-  > = {} as any,
+  config: Omit<UseContractReadConfig<typeof perpStorageABI, "markets", TSelectData>, "abi" | "functionName"> = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "markets", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "markets",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"owner"`.
  */
 export function usePerpStorageOwner<TSelectData = ReadContractResult<typeof perpStorageABI, "owner">>(
-  config: Omit<UseContractReadConfig<typeof perpStorageABI, "owner", TSelectData>, "abi" | "functionName"> = {} as any,
+  config: Omit<UseContractReadConfig<typeof perpStorageABI, "owner", TSelectData>, "abi" | "functionName"> = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "owner", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "owner",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -11761,67 +11788,67 @@ export function usePerpStoragePositions<TSelectData = ReadContractResult<typeof 
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "positions", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "positions", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "positions",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"serviceExecutors"`.
  */
 export function usePerpStorageServiceExecutors<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "serviceExecutors">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "serviceExecutors">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "serviceExecutors", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: perpStorageABI, functionName: "serviceExecutors", ...config } as UseContractReadConfig<
     typeof perpStorageABI,
     "serviceExecutors",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"subAccountBorrowingFee"`.
  */
 export function usePerpStorageSubAccountBorrowingFee<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "subAccountBorrowingFee">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "subAccountBorrowingFee">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "subAccountBorrowingFee", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: perpStorageABI,
     functionName: "subAccountBorrowingFee",
     ...config,
-  } as UseContractReadConfig<typeof perpStorageABI, "subAccountBorrowingFee", TSelectData>)
+  } as UseContractReadConfig<typeof perpStorageABI, "subAccountBorrowingFee", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"subAccountPositionIds"`.
  */
 export function usePerpStorageSubAccountPositionIds<
-  TSelectData = ReadContractResult<typeof perpStorageABI, "subAccountPositionIds">,
+  TSelectData = ReadContractResult<typeof perpStorageABI, "subAccountPositionIds">
 >(
   config: Omit<
     UseContractReadConfig<typeof perpStorageABI, "subAccountPositionIds", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: perpStorageABI,
     functionName: "subAccountPositionIds",
     ...config,
-  } as UseContractReadConfig<typeof perpStorageABI, "subAccountPositionIds", TSelectData>)
+  } as UseContractReadConfig<typeof perpStorageABI, "subAccountPositionIds", TSelectData>);
 }
 
 /**
@@ -11831,10 +11858,10 @@ export function usePerpStorageWrite<TMode extends WriteContractMode, TFunctionNa
   config: TMode extends "prepared"
     ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof perpStorageABI, string>["abi"], TFunctionName>
     : UseContractWriteConfig<TMode, typeof perpStorageABI, TFunctionName> & {
-        abi?: never
-      } = {} as any,
+        abi?: never;
+      } = {} as any
 ) {
-  return useContractWrite<TMode, typeof perpStorageABI, TFunctionName>({ abi: perpStorageABI, ...config } as any)
+  return useContractWrite<TMode, typeof perpStorageABI, TFunctionName>({ abi: perpStorageABI, ...config } as any);
 }
 
 /**
@@ -11848,15 +11875,15 @@ export function usePerpStorageDecreasePositionSize<TMode extends WriteContractMo
         "decreasePositionSize"
       > & { functionName?: "decreasePositionSize" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "decreasePositionSize"> & {
-        abi?: never
-        functionName?: "decreasePositionSize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "decreasePositionSize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "decreasePositionSize">({
     abi: perpStorageABI,
     functionName: "decreasePositionSize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11870,15 +11897,15 @@ export function usePerpStorageDecreaseReserved<TMode extends WriteContractMode>(
         "decreaseReserved"
       > & { functionName?: "decreaseReserved" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "decreaseReserved"> & {
-        abi?: never
-        functionName?: "decreaseReserved"
-      } = {} as any,
+        abi?: never;
+        functionName?: "decreaseReserved";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "decreaseReserved">({
     abi: perpStorageABI,
     functionName: "decreaseReserved",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11892,15 +11919,15 @@ export function usePerpStorageIncreasePositionSize<TMode extends WriteContractMo
         "increasePositionSize"
       > & { functionName?: "increasePositionSize" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "increasePositionSize"> & {
-        abi?: never
-        functionName?: "increasePositionSize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "increasePositionSize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "increasePositionSize">({
     abi: perpStorageABI,
     functionName: "increasePositionSize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11914,15 +11941,15 @@ export function usePerpStorageInitialize<TMode extends WriteContractMode>(
         "initialize"
       > & { functionName?: "initialize" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "initialize"> & {
-        abi?: never
-        functionName?: "initialize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "initialize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "initialize">({
     abi: perpStorageABI,
     functionName: "initialize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11936,15 +11963,15 @@ export function usePerpStorageRemovePositionFromSubAccount<TMode extends WriteCo
         "removePositionFromSubAccount"
       > & { functionName?: "removePositionFromSubAccount" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "removePositionFromSubAccount"> & {
-        abi?: never
-        functionName?: "removePositionFromSubAccount"
-      } = {} as any,
+        abi?: never;
+        functionName?: "removePositionFromSubAccount";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "removePositionFromSubAccount">({
     abi: perpStorageABI,
     functionName: "removePositionFromSubAccount",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11958,15 +11985,15 @@ export function usePerpStorageRenounceOwnership<TMode extends WriteContractMode>
         "renounceOwnership"
       > & { functionName?: "renounceOwnership" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "renounceOwnership"> & {
-        abi?: never
-        functionName?: "renounceOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "renounceOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "renounceOwnership">({
     abi: perpStorageABI,
     functionName: "renounceOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -11980,15 +12007,15 @@ export function usePerpStorageSavePosition<TMode extends WriteContractMode>(
         "savePosition"
       > & { functionName?: "savePosition" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "savePosition"> & {
-        abi?: never
-        functionName?: "savePosition"
-      } = {} as any,
+        abi?: never;
+        functionName?: "savePosition";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "savePosition">({
     abi: perpStorageABI,
     functionName: "savePosition",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12002,15 +12029,15 @@ export function usePerpStorageSetServiceExecutorBatch<TMode extends WriteContrac
         "setServiceExecutorBatch"
       > & { functionName?: "setServiceExecutorBatch" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "setServiceExecutorBatch"> & {
-        abi?: never
-        functionName?: "setServiceExecutorBatch"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setServiceExecutorBatch";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "setServiceExecutorBatch">({
     abi: perpStorageABI,
     functionName: "setServiceExecutorBatch",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12024,15 +12051,15 @@ export function usePerpStorageSetServiceExecutors<TMode extends WriteContractMod
         "setServiceExecutors"
       > & { functionName?: "setServiceExecutors" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "setServiceExecutors"> & {
-        abi?: never
-        functionName?: "setServiceExecutors"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setServiceExecutors";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "setServiceExecutors">({
     abi: perpStorageABI,
     functionName: "setServiceExecutors",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12046,15 +12073,15 @@ export function usePerpStorageTransferOwnership<TMode extends WriteContractMode>
         "transferOwnership"
       > & { functionName?: "transferOwnership" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "transferOwnership"> & {
-        abi?: never
-        functionName?: "transferOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "transferOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "transferOwnership">({
     abi: perpStorageABI,
     functionName: "transferOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12068,15 +12095,15 @@ export function usePerpStorageUpdateAssetClass<TMode extends WriteContractMode>(
         "updateAssetClass"
       > & { functionName?: "updateAssetClass" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "updateAssetClass"> & {
-        abi?: never
-        functionName?: "updateAssetClass"
-      } = {} as any,
+        abi?: never;
+        functionName?: "updateAssetClass";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "updateAssetClass">({
     abi: perpStorageABI,
     functionName: "updateAssetClass",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12090,15 +12117,15 @@ export function usePerpStorageUpdateGlobalLongMarketById<TMode extends WriteCont
         "updateGlobalLongMarketById"
       > & { functionName?: "updateGlobalLongMarketById" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "updateGlobalLongMarketById"> & {
-        abi?: never
-        functionName?: "updateGlobalLongMarketById"
-      } = {} as any,
+        abi?: never;
+        functionName?: "updateGlobalLongMarketById";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "updateGlobalLongMarketById">({
     abi: perpStorageABI,
     functionName: "updateGlobalLongMarketById",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12112,15 +12139,15 @@ export function usePerpStorageUpdateGlobalShortMarketById<TMode extends WriteCon
         "updateGlobalShortMarketById"
       > & { functionName?: "updateGlobalShortMarketById" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "updateGlobalShortMarketById"> & {
-        abi?: never
-        functionName?: "updateGlobalShortMarketById"
-      } = {} as any,
+        abi?: never;
+        functionName?: "updateGlobalShortMarketById";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "updateGlobalShortMarketById">({
     abi: perpStorageABI,
     functionName: "updateGlobalShortMarketById",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12134,15 +12161,15 @@ export function usePerpStorageUpdateGlobalState<TMode extends WriteContractMode>
         "updateGlobalState"
       > & { functionName?: "updateGlobalState" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "updateGlobalState"> & {
-        abi?: never
-        functionName?: "updateGlobalState"
-      } = {} as any,
+        abi?: never;
+        functionName?: "updateGlobalState";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "updateGlobalState">({
     abi: perpStorageABI,
     functionName: "updateGlobalState",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12156,27 +12183,27 @@ export function usePerpStorageUpdateMarket<TMode extends WriteContractMode>(
         "updateMarket"
       > & { functionName?: "updateMarket" }
     : UseContractWriteConfig<TMode, typeof perpStorageABI, "updateMarket"> & {
-        abi?: never
-        functionName?: "updateMarket"
-      } = {} as any,
+        abi?: never;
+        functionName?: "updateMarket";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof perpStorageABI, "updateMarket">({
     abi: perpStorageABI,
     functionName: "updateMarket",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link perpStorageABI}__.
  */
 export function usePreparePerpStorageWrite<TFunctionName extends string>(
-  config: Omit<UsePrepareContractWriteConfig<typeof perpStorageABI, TFunctionName>, "abi"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof perpStorageABI, TFunctionName>, "abi"> = {} as any
 ) {
   return usePrepareContractWrite({ abi: perpStorageABI, ...config } as UsePrepareContractWriteConfig<
     typeof perpStorageABI,
     TFunctionName
-  >)
+  >);
 }
 
 /**
@@ -12186,13 +12213,13 @@ export function usePreparePerpStorageDecreasePositionSize(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "decreasePositionSize">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "decreasePositionSize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "decreasePositionSize">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "decreasePositionSize">);
 }
 
 /**
@@ -12202,13 +12229,13 @@ export function usePreparePerpStorageDecreaseReserved(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "decreaseReserved">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "decreaseReserved",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "decreaseReserved">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "decreaseReserved">);
 }
 
 /**
@@ -12218,26 +12245,26 @@ export function usePreparePerpStorageIncreasePositionSize(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "increasePositionSize">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "increasePositionSize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "increasePositionSize">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "increasePositionSize">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"initialize"`.
  */
 export function usePreparePerpStorageInitialize(
-  config: Omit<UsePrepareContractWriteConfig<typeof perpStorageABI, "initialize">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof perpStorageABI, "initialize">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "initialize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "initialize">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "initialize">);
 }
 
 /**
@@ -12247,13 +12274,13 @@ export function usePreparePerpStorageRemovePositionFromSubAccount(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "removePositionFromSubAccount">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "removePositionFromSubAccount",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "removePositionFromSubAccount">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "removePositionFromSubAccount">);
 }
 
 /**
@@ -12263,29 +12290,26 @@ export function usePreparePerpStorageRenounceOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "renounceOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "renounceOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "renounceOwnership">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "renounceOwnership">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"savePosition"`.
  */
 export function usePreparePerpStorageSavePosition(
-  config: Omit<
-    UsePrepareContractWriteConfig<typeof perpStorageABI, "savePosition">,
-    "abi" | "functionName"
-  > = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof perpStorageABI, "savePosition">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "savePosition",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "savePosition">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "savePosition">);
 }
 
 /**
@@ -12295,13 +12319,13 @@ export function usePreparePerpStorageSetServiceExecutorBatch(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "setServiceExecutorBatch">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "setServiceExecutorBatch",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "setServiceExecutorBatch">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "setServiceExecutorBatch">);
 }
 
 /**
@@ -12311,13 +12335,13 @@ export function usePreparePerpStorageSetServiceExecutors(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "setServiceExecutors">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "setServiceExecutors",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "setServiceExecutors">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "setServiceExecutors">);
 }
 
 /**
@@ -12327,13 +12351,13 @@ export function usePreparePerpStorageTransferOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "transferOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "transferOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "transferOwnership">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "transferOwnership">);
 }
 
 /**
@@ -12343,13 +12367,13 @@ export function usePreparePerpStorageUpdateAssetClass(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "updateAssetClass">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "updateAssetClass",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateAssetClass">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateAssetClass">);
 }
 
 /**
@@ -12359,13 +12383,13 @@ export function usePreparePerpStorageUpdateGlobalLongMarketById(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "updateGlobalLongMarketById">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "updateGlobalLongMarketById",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateGlobalLongMarketById">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateGlobalLongMarketById">);
 }
 
 /**
@@ -12375,13 +12399,13 @@ export function usePreparePerpStorageUpdateGlobalShortMarketById(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "updateGlobalShortMarketById">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "updateGlobalShortMarketById",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateGlobalShortMarketById">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateGlobalShortMarketById">);
 }
 
 /**
@@ -12391,86 +12415,83 @@ export function usePreparePerpStorageUpdateGlobalState(
   config: Omit<
     UsePrepareContractWriteConfig<typeof perpStorageABI, "updateGlobalState">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "updateGlobalState",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateGlobalState">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateGlobalState">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link perpStorageABI}__ and `functionName` set to `"updateMarket"`.
  */
 export function usePreparePerpStorageUpdateMarket(
-  config: Omit<
-    UsePrepareContractWriteConfig<typeof perpStorageABI, "updateMarket">,
-    "abi" | "functionName"
-  > = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof perpStorageABI, "updateMarket">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: perpStorageABI,
     functionName: "updateMarket",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateMarket">)
+  } as UsePrepareContractWriteConfig<typeof perpStorageABI, "updateMarket">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link perpStorageABI}__.
  */
 export function usePerpStorageEvent<TEventName extends string>(
-  config: Omit<UseContractEventConfig<typeof perpStorageABI, TEventName>, "abi"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof perpStorageABI, TEventName>, "abi"> = {} as any
 ) {
   return useContractEvent({ abi: perpStorageABI, ...config } as UseContractEventConfig<
     typeof perpStorageABI,
     TEventName
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link perpStorageABI}__ and `eventName` set to `"Initialized"`.
  */
 export function usePerpStorageInitializedEvent(
-  config: Omit<UseContractEventConfig<typeof perpStorageABI, "Initialized">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof perpStorageABI, "Initialized">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: perpStorageABI, eventName: "Initialized", ...config } as UseContractEventConfig<
     typeof perpStorageABI,
     "Initialized"
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link perpStorageABI}__ and `eventName` set to `"LogSetServiceExecutor"`.
  */
 export function usePerpStorageLogSetServiceExecutorEvent(
-  config: Omit<UseContractEventConfig<typeof perpStorageABI, "LogSetServiceExecutor">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof perpStorageABI, "LogSetServiceExecutor">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: perpStorageABI,
     eventName: "LogSetServiceExecutor",
     ...config,
-  } as UseContractEventConfig<typeof perpStorageABI, "LogSetServiceExecutor">)
+  } as UseContractEventConfig<typeof perpStorageABI, "LogSetServiceExecutor">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link perpStorageABI}__ and `eventName` set to `"OwnershipTransferred"`.
  */
 export function usePerpStorageOwnershipTransferredEvent(
-  config: Omit<UseContractEventConfig<typeof perpStorageABI, "OwnershipTransferred">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof perpStorageABI, "OwnershipTransferred">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: perpStorageABI,
     eventName: "OwnershipTransferred",
     ...config,
-  } as UseContractEventConfig<typeof perpStorageABI, "OwnershipTransferred">)
+  } as UseContractEventConfig<typeof perpStorageABI, "OwnershipTransferred">);
 }
 
 /**
  * Wraps __{@link useContract}__ with `abi` set to __{@link vaultStorageABI}__.
  */
 export function useVaultStorage(config: Omit<UseContractConfig, "abi"> = {} as any) {
-  return useContract({ abi: vaultStorageABI, ...config })
+  return useContract({ abi: vaultStorageABI, ...config });
 }
 
 /**
@@ -12478,31 +12499,31 @@ export function useVaultStorage(config: Omit<UseContractConfig, "abi"> = {} as a
  */
 export function useVaultStorageRead<
   TFunctionName extends string,
-  TSelectData = ReadContractResult<typeof vaultStorageABI, TFunctionName>,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, TFunctionName>
 >(config: Omit<UseContractReadConfig<typeof vaultStorageABI, TFunctionName, TSelectData>, "abi"> = {} as any) {
   return useContractRead({ abi: vaultStorageABI, ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     TFunctionName,
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"borrowingFeeDebt"`.
  */
 export function useVaultStorageBorrowingFeeDebt<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "borrowingFeeDebt">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "borrowingFeeDebt">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "borrowingFeeDebt", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "borrowingFeeDebt", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "borrowingFeeDebt",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -12512,139 +12533,139 @@ export function useVaultStorageDevFees<TSelectData = ReadContractResult<typeof v
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "devFees", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "devFees", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "devFees",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"fundingFeeDebt"`.
  */
 export function useVaultStorageFundingFeeDebt<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "fundingFeeDebt">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "fundingFeeDebt">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "fundingFeeDebt", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "fundingFeeDebt", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "fundingFeeDebt",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"fundingFeeReserve"`.
  */
 export function useVaultStorageFundingFeeReserve<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "fundingFeeReserve">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "fundingFeeReserve">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "fundingFeeReserve", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
     functionName: "fundingFeeReserve",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "fundingFeeReserve", TSelectData>)
+  } as UseContractReadConfig<typeof vaultStorageABI, "fundingFeeReserve", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"getTraderTokens"`.
  */
 export function useVaultStorageGetTraderTokens<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "getTraderTokens">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "getTraderTokens">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "getTraderTokens", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "getTraderTokens", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "getTraderTokens",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"globalBorrowingFeeDebt"`.
  */
 export function useVaultStorageGlobalBorrowingFeeDebt<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "globalBorrowingFeeDebt">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "globalBorrowingFeeDebt">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "globalBorrowingFeeDebt", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
     functionName: "globalBorrowingFeeDebt",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "globalBorrowingFeeDebt", TSelectData>)
+  } as UseContractReadConfig<typeof vaultStorageABI, "globalBorrowingFeeDebt", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"globalFundingFeeDebt"`.
  */
 export function useVaultStorageGlobalFundingFeeDebt<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "globalFundingFeeDebt">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "globalFundingFeeDebt">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "globalFundingFeeDebt", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
     functionName: "globalFundingFeeDebt",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "globalFundingFeeDebt", TSelectData>)
+  } as UseContractReadConfig<typeof vaultStorageABI, "globalFundingFeeDebt", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"globalLossDebt"`.
  */
 export function useVaultStorageGlobalLossDebt<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "globalLossDebt">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "globalLossDebt">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "globalLossDebt", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "globalLossDebt", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "globalLossDebt",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"globalTradingFeeDebt"`.
  */
 export function useVaultStorageGlobalTradingFeeDebt<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "globalTradingFeeDebt">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "globalTradingFeeDebt">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "globalTradingFeeDebt", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
     functionName: "globalTradingFeeDebt",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "globalTradingFeeDebt", TSelectData>)
+  } as UseContractReadConfig<typeof vaultStorageABI, "globalTradingFeeDebt", TSelectData>);
 }
 
 /**
@@ -12654,31 +12675,31 @@ export function useVaultStorageHlpLiquidity<TSelectData = ReadContractResult<typ
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "hlpLiquidity", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "hlpLiquidity", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "hlpLiquidity",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"hlpLiquidityDebtUSDE30"`.
  */
 export function useVaultStorageHlpLiquidityDebtUsde30<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "hlpLiquidityDebtUSDE30">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "hlpLiquidityDebtUSDE30">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "hlpLiquidityDebtUSDE30", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
     functionName: "hlpLiquidityDebtUSDE30",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "hlpLiquidityDebtUSDE30", TSelectData>)
+  } as UseContractReadConfig<typeof vaultStorageABI, "hlpLiquidityDebtUSDE30", TSelectData>);
 }
 
 /**
@@ -12688,26 +12709,26 @@ export function useVaultStorageLossDebt<TSelectData = ReadContractResult<typeof 
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "lossDebt", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "lossDebt", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "lossDebt",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"owner"`.
  */
 export function useVaultStorageOwner<TSelectData = ReadContractResult<typeof vaultStorageABI, "owner">>(
-  config: Omit<UseContractReadConfig<typeof vaultStorageABI, "owner", TSelectData>, "abi" | "functionName"> = {} as any,
+  config: Omit<UseContractReadConfig<typeof vaultStorageABI, "owner", TSelectData>, "abi" | "functionName"> = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "owner", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "owner",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -12717,67 +12738,67 @@ export function useVaultStorageProtocolFees<TSelectData = ReadContractResult<typ
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "protocolFees", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "protocolFees", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "protocolFees",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"serviceExecutors"`.
  */
 export function useVaultStorageServiceExecutors<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "serviceExecutors">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "serviceExecutors">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "serviceExecutors", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "serviceExecutors", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "serviceExecutors",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"strategyAllowances"`.
  */
 export function useVaultStorageStrategyAllowances<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "strategyAllowances">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "strategyAllowances">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "strategyAllowances", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
     functionName: "strategyAllowances",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "strategyAllowances", TSelectData>)
+  } as UseContractReadConfig<typeof vaultStorageABI, "strategyAllowances", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"strategyFunctionSigAllowances"`.
  */
 export function useVaultStorageStrategyFunctionSigAllowances<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "strategyFunctionSigAllowances">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "strategyFunctionSigAllowances">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "strategyFunctionSigAllowances", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
     functionName: "strategyFunctionSigAllowances",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "strategyFunctionSigAllowances", TSelectData>)
+  } as UseContractReadConfig<typeof vaultStorageABI, "strategyFunctionSigAllowances", TSelectData>);
 }
 
 /**
@@ -12787,31 +12808,31 @@ export function useVaultStorageTotalAmount<TSelectData = ReadContractResult<type
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "totalAmount", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "totalAmount", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "totalAmount",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"traderBalances"`.
  */
 export function useVaultStorageTraderBalances<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "traderBalances">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "traderBalances">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "traderBalances", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "traderBalances", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "traderBalances",
     TSelectData
-  >)
+  >);
 }
 
 /**
@@ -12821,67 +12842,67 @@ export function useVaultStorageTraderTokens<TSelectData = ReadContractResult<typ
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "traderTokens", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "traderTokens", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "traderTokens",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"tradingFeeDebt"`.
  */
 export function useVaultStorageTradingFeeDebt<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "tradingFeeDebt">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "tradingFeeDebt">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "tradingFeeDebt", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({ abi: vaultStorageABI, functionName: "tradingFeeDebt", ...config } as UseContractReadConfig<
     typeof vaultStorageABI,
     "tradingFeeDebt",
     TSelectData
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"validateAddTraderToken"`.
  */
 export function useVaultStorageValidateAddTraderToken<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "validateAddTraderToken">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "validateAddTraderToken">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "validateAddTraderToken", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
     functionName: "validateAddTraderToken",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "validateAddTraderToken", TSelectData>)
+  } as UseContractReadConfig<typeof vaultStorageABI, "validateAddTraderToken", TSelectData>);
 }
 
 /**
  * Wraps __{@link useContractRead}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"validateRemoveTraderToken"`.
  */
 export function useVaultStorageValidateRemoveTraderToken<
-  TSelectData = ReadContractResult<typeof vaultStorageABI, "validateRemoveTraderToken">,
+  TSelectData = ReadContractResult<typeof vaultStorageABI, "validateRemoveTraderToken">
 >(
   config: Omit<
     UseContractReadConfig<typeof vaultStorageABI, "validateRemoveTraderToken", TSelectData>,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractRead({
     abi: vaultStorageABI,
     functionName: "validateRemoveTraderToken",
     ...config,
-  } as UseContractReadConfig<typeof vaultStorageABI, "validateRemoveTraderToken", TSelectData>)
+  } as UseContractReadConfig<typeof vaultStorageABI, "validateRemoveTraderToken", TSelectData>);
 }
 
 /**
@@ -12891,10 +12912,10 @@ export function useVaultStorageWrite<TMode extends WriteContractMode, TFunctionN
   config: TMode extends "prepared"
     ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof vaultStorageABI, string>["abi"], TFunctionName>
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, TFunctionName> & {
-        abi?: never
-      } = {} as any,
+        abi?: never;
+      } = {} as any
 ) {
-  return useContractWrite<TMode, typeof vaultStorageABI, TFunctionName>({ abi: vaultStorageABI, ...config } as any)
+  return useContractWrite<TMode, typeof vaultStorageABI, TFunctionName>({ abi: vaultStorageABI, ...config } as any);
 }
 
 /**
@@ -12908,15 +12929,15 @@ export function useVaultStorageAddBorrowingFeeDebt<TMode extends WriteContractMo
         "addBorrowingFeeDebt"
       > & { functionName?: "addBorrowingFeeDebt" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addBorrowingFeeDebt"> & {
-        abi?: never
-        functionName?: "addBorrowingFeeDebt"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addBorrowingFeeDebt";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "addBorrowingFeeDebt">({
     abi: vaultStorageABI,
     functionName: "addBorrowingFeeDebt",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12925,18 +12946,18 @@ export function useVaultStorageAddBorrowingFeeDebt<TMode extends WriteContractMo
 export function useVaultStorageAddFee<TMode extends WriteContractMode>(
   config: TMode extends "prepared"
     ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof vaultStorageABI, "addFee">["abi"], "addFee"> & {
-        functionName?: "addFee"
+        functionName?: "addFee";
       }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addFee"> & {
-        abi?: never
-        functionName?: "addFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "addFee">({
     abi: vaultStorageABI,
     functionName: "addFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12950,15 +12971,15 @@ export function useVaultStorageAddFundingFee<TMode extends WriteContractMode>(
         "addFundingFee"
       > & { functionName?: "addFundingFee" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addFundingFee"> & {
-        abi?: never
-        functionName?: "addFundingFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addFundingFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "addFundingFee">({
     abi: vaultStorageABI,
     functionName: "addFundingFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12972,15 +12993,15 @@ export function useVaultStorageAddFundingFeeDebt<TMode extends WriteContractMode
         "addFundingFeeDebt"
       > & { functionName?: "addFundingFeeDebt" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addFundingFeeDebt"> & {
-        abi?: never
-        functionName?: "addFundingFeeDebt"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addFundingFeeDebt";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "addFundingFeeDebt">({
     abi: vaultStorageABI,
     functionName: "addFundingFeeDebt",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -12994,15 +13015,15 @@ export function useVaultStorageAddHlpLiquidity<TMode extends WriteContractMode>(
         "addHLPLiquidity"
       > & { functionName?: "addHLPLiquidity" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addHLPLiquidity"> & {
-        abi?: never
-        functionName?: "addHLPLiquidity"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addHLPLiquidity";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "addHLPLiquidity">({
     abi: vaultStorageABI,
     functionName: "addHLPLiquidity",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13016,15 +13037,15 @@ export function useVaultStorageAddHlpLiquidityDebtUsde30<TMode extends WriteCont
         "addHlpLiquidityDebtUSDE30"
       > & { functionName?: "addHlpLiquidityDebtUSDE30" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addHlpLiquidityDebtUSDE30"> & {
-        abi?: never
-        functionName?: "addHlpLiquidityDebtUSDE30"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addHlpLiquidityDebtUSDE30";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "addHlpLiquidityDebtUSDE30">({
     abi: vaultStorageABI,
     functionName: "addHlpLiquidityDebtUSDE30",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13038,15 +13059,15 @@ export function useVaultStorageAddLossDebt<TMode extends WriteContractMode>(
         "addLossDebt"
       > & { functionName?: "addLossDebt" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addLossDebt"> & {
-        abi?: never
-        functionName?: "addLossDebt"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addLossDebt";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "addLossDebt">({
     abi: vaultStorageABI,
     functionName: "addLossDebt",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13060,15 +13081,15 @@ export function useVaultStorageAddTradingFeeDebt<TMode extends WriteContractMode
         "addTradingFeeDebt"
       > & { functionName?: "addTradingFeeDebt" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "addTradingFeeDebt"> & {
-        abi?: never
-        functionName?: "addTradingFeeDebt"
-      } = {} as any,
+        abi?: never;
+        functionName?: "addTradingFeeDebt";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "addTradingFeeDebt">({
     abi: vaultStorageABI,
     functionName: "addTradingFeeDebt",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13082,15 +13103,15 @@ export function useVaultStorageBorrowFundingFeeFromHlpToTrader<TMode extends Wri
         "borrowFundingFeeFromHlpToTrader"
       > & { functionName?: "borrowFundingFeeFromHlpToTrader" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "borrowFundingFeeFromHlpToTrader"> & {
-        abi?: never
-        functionName?: "borrowFundingFeeFromHlpToTrader"
-      } = {} as any,
+        abi?: never;
+        functionName?: "borrowFundingFeeFromHlpToTrader";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "borrowFundingFeeFromHlpToTrader">({
     abi: vaultStorageABI,
     functionName: "borrowFundingFeeFromHlpToTrader",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13104,15 +13125,15 @@ export function useVaultStorageConvertFundingFeeReserveWithHlp<TMode extends Wri
         "convertFundingFeeReserveWithHLP"
       > & { functionName?: "convertFundingFeeReserveWithHLP" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "convertFundingFeeReserveWithHLP"> & {
-        abi?: never
-        functionName?: "convertFundingFeeReserveWithHLP"
-      } = {} as any,
+        abi?: never;
+        functionName?: "convertFundingFeeReserveWithHLP";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "convertFundingFeeReserveWithHLP">({
     abi: vaultStorageABI,
     functionName: "convertFundingFeeReserveWithHLP",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13121,18 +13142,18 @@ export function useVaultStorageConvertFundingFeeReserveWithHlp<TMode extends Wri
 export function useVaultStorageCook<TMode extends WriteContractMode>(
   config: TMode extends "prepared"
     ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof vaultStorageABI, "cook">["abi"], "cook"> & {
-        functionName?: "cook"
+        functionName?: "cook";
       }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "cook"> & {
-        abi?: never
-        functionName?: "cook"
-      } = {} as any,
+        abi?: never;
+        functionName?: "cook";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "cook">({
     abi: vaultStorageABI,
     functionName: "cook",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13146,15 +13167,15 @@ export function useVaultStorageDecreaseTraderBalance<TMode extends WriteContract
         "decreaseTraderBalance"
       > & { functionName?: "decreaseTraderBalance" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "decreaseTraderBalance"> & {
-        abi?: never
-        functionName?: "decreaseTraderBalance"
-      } = {} as any,
+        abi?: never;
+        functionName?: "decreaseTraderBalance";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "decreaseTraderBalance">({
     abi: vaultStorageABI,
     functionName: "decreaseTraderBalance",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13168,15 +13189,15 @@ export function useVaultStorageIncreaseTraderBalance<TMode extends WriteContract
         "increaseTraderBalance"
       > & { functionName?: "increaseTraderBalance" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "increaseTraderBalance"> & {
-        abi?: never
-        functionName?: "increaseTraderBalance"
-      } = {} as any,
+        abi?: never;
+        functionName?: "increaseTraderBalance";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "increaseTraderBalance">({
     abi: vaultStorageABI,
     functionName: "increaseTraderBalance",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13190,15 +13211,15 @@ export function useVaultStorageInitialize<TMode extends WriteContractMode>(
         "initialize"
       > & { functionName?: "initialize" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "initialize"> & {
-        abi?: never
-        functionName?: "initialize"
-      } = {} as any,
+        abi?: never;
+        functionName?: "initialize";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "initialize">({
     abi: vaultStorageABI,
     functionName: "initialize",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13212,15 +13233,15 @@ export function useVaultStoragePayBorrowingFee<TMode extends WriteContractMode>(
         "payBorrowingFee"
       > & { functionName?: "payBorrowingFee" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "payBorrowingFee"> & {
-        abi?: never
-        functionName?: "payBorrowingFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "payBorrowingFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "payBorrowingFee">({
     abi: vaultStorageABI,
     functionName: "payBorrowingFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13234,15 +13255,15 @@ export function useVaultStoragePayFundingFeeFromFundingFeeReserveToTrader<TMode 
         "payFundingFeeFromFundingFeeReserveToTrader"
       > & { functionName?: "payFundingFeeFromFundingFeeReserveToTrader" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "payFundingFeeFromFundingFeeReserveToTrader"> & {
-        abi?: never
-        functionName?: "payFundingFeeFromFundingFeeReserveToTrader"
-      } = {} as any,
+        abi?: never;
+        functionName?: "payFundingFeeFromFundingFeeReserveToTrader";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "payFundingFeeFromFundingFeeReserveToTrader">({
     abi: vaultStorageABI,
     functionName: "payFundingFeeFromFundingFeeReserveToTrader",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13256,15 +13277,15 @@ export function useVaultStoragePayFundingFeeFromHlpToTrader<TMode extends WriteC
         "payFundingFeeFromHlpToTrader"
       > & { functionName?: "payFundingFeeFromHlpToTrader" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "payFundingFeeFromHlpToTrader"> & {
-        abi?: never
-        functionName?: "payFundingFeeFromHlpToTrader"
-      } = {} as any,
+        abi?: never;
+        functionName?: "payFundingFeeFromHlpToTrader";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "payFundingFeeFromHlpToTrader">({
     abi: vaultStorageABI,
     functionName: "payFundingFeeFromHlpToTrader",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13278,15 +13299,15 @@ export function useVaultStoragePayFundingFeeFromTraderToFundingFeeReserve<TMode 
         "payFundingFeeFromTraderToFundingFeeReserve"
       > & { functionName?: "payFundingFeeFromTraderToFundingFeeReserve" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "payFundingFeeFromTraderToFundingFeeReserve"> & {
-        abi?: never
-        functionName?: "payFundingFeeFromTraderToFundingFeeReserve"
-      } = {} as any,
+        abi?: never;
+        functionName?: "payFundingFeeFromTraderToFundingFeeReserve";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "payFundingFeeFromTraderToFundingFeeReserve">({
     abi: vaultStorageABI,
     functionName: "payFundingFeeFromTraderToFundingFeeReserve",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13300,15 +13321,15 @@ export function useVaultStoragePayFundingFeeFromTraderToHlp<TMode extends WriteC
         "payFundingFeeFromTraderToHlp"
       > & { functionName?: "payFundingFeeFromTraderToHlp" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "payFundingFeeFromTraderToHlp"> & {
-        abi?: never
-        functionName?: "payFundingFeeFromTraderToHlp"
-      } = {} as any,
+        abi?: never;
+        functionName?: "payFundingFeeFromTraderToHlp";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "payFundingFeeFromTraderToHlp">({
     abi: vaultStorageABI,
     functionName: "payFundingFeeFromTraderToHlp",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13317,18 +13338,18 @@ export function useVaultStoragePayFundingFeeFromTraderToHlp<TMode extends WriteC
 export function useVaultStoragePayHlp<TMode extends WriteContractMode>(
   config: TMode extends "prepared"
     ? UseContractWriteConfig<TMode, PrepareWriteContractResult<typeof vaultStorageABI, "payHlp">["abi"], "payHlp"> & {
-        functionName?: "payHlp"
+        functionName?: "payHlp";
       }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "payHlp"> & {
-        abi?: never
-        functionName?: "payHlp"
-      } = {} as any,
+        abi?: never;
+        functionName?: "payHlp";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "payHlp">({
     abi: vaultStorageABI,
     functionName: "payHlp",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13342,15 +13363,15 @@ export function useVaultStoragePayTraderProfit<TMode extends WriteContractMode>(
         "payTraderProfit"
       > & { functionName?: "payTraderProfit" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "payTraderProfit"> & {
-        abi?: never
-        functionName?: "payTraderProfit"
-      } = {} as any,
+        abi?: never;
+        functionName?: "payTraderProfit";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "payTraderProfit">({
     abi: vaultStorageABI,
     functionName: "payTraderProfit",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13364,15 +13385,15 @@ export function useVaultStoragePayTradingFee<TMode extends WriteContractMode>(
         "payTradingFee"
       > & { functionName?: "payTradingFee" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "payTradingFee"> & {
-        abi?: never
-        functionName?: "payTradingFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "payTradingFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "payTradingFee">({
     abi: vaultStorageABI,
     functionName: "payTradingFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13386,15 +13407,15 @@ export function useVaultStoragePullToken<TMode extends WriteContractMode>(
         "pullToken"
       > & { functionName?: "pullToken" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "pullToken"> & {
-        abi?: never
-        functionName?: "pullToken"
-      } = {} as any,
+        abi?: never;
+        functionName?: "pullToken";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "pullToken">({
     abi: vaultStorageABI,
     functionName: "pullToken",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13408,15 +13429,15 @@ export function useVaultStoragePushToken<TMode extends WriteContractMode>(
         "pushToken"
       > & { functionName?: "pushToken" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "pushToken"> & {
-        abi?: never
-        functionName?: "pushToken"
-      } = {} as any,
+        abi?: never;
+        functionName?: "pushToken";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "pushToken">({
     abi: vaultStorageABI,
     functionName: "pushToken",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13430,15 +13451,15 @@ export function useVaultStorageRemoveFundingFee<TMode extends WriteContractMode>
         "removeFundingFee"
       > & { functionName?: "removeFundingFee" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "removeFundingFee"> & {
-        abi?: never
-        functionName?: "removeFundingFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "removeFundingFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "removeFundingFee">({
     abi: vaultStorageABI,
     functionName: "removeFundingFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13452,15 +13473,15 @@ export function useVaultStorageRemoveHlpLiquidity<TMode extends WriteContractMod
         "removeHLPLiquidity"
       > & { functionName?: "removeHLPLiquidity" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "removeHLPLiquidity"> & {
-        abi?: never
-        functionName?: "removeHLPLiquidity"
-      } = {} as any,
+        abi?: never;
+        functionName?: "removeHLPLiquidity";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "removeHLPLiquidity">({
     abi: vaultStorageABI,
     functionName: "removeHLPLiquidity",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13474,15 +13495,15 @@ export function useVaultStorageRemoveHlpLiquidityDebtUsde30<TMode extends WriteC
         "removeHlpLiquidityDebtUSDE30"
       > & { functionName?: "removeHlpLiquidityDebtUSDE30" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "removeHlpLiquidityDebtUSDE30"> & {
-        abi?: never
-        functionName?: "removeHlpLiquidityDebtUSDE30"
-      } = {} as any,
+        abi?: never;
+        functionName?: "removeHlpLiquidityDebtUSDE30";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "removeHlpLiquidityDebtUSDE30">({
     abi: vaultStorageABI,
     functionName: "removeHlpLiquidityDebtUSDE30",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13496,15 +13517,15 @@ export function useVaultStorageRenounceOwnership<TMode extends WriteContractMode
         "renounceOwnership"
       > & { functionName?: "renounceOwnership" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "renounceOwnership"> & {
-        abi?: never
-        functionName?: "renounceOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "renounceOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "renounceOwnership">({
     abi: vaultStorageABI,
     functionName: "renounceOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13518,15 +13539,15 @@ export function useVaultStorageRepayFundingFeeDebtFromTraderToHlp<TMode extends 
         "repayFundingFeeDebtFromTraderToHlp"
       > & { functionName?: "repayFundingFeeDebtFromTraderToHlp" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "repayFundingFeeDebtFromTraderToHlp"> & {
-        abi?: never
-        functionName?: "repayFundingFeeDebtFromTraderToHlp"
-      } = {} as any,
+        abi?: never;
+        functionName?: "repayFundingFeeDebtFromTraderToHlp";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "repayFundingFeeDebtFromTraderToHlp">({
     abi: vaultStorageABI,
     functionName: "repayFundingFeeDebtFromTraderToHlp",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13540,15 +13561,15 @@ export function useVaultStorageSetServiceExecutorBatch<TMode extends WriteContra
         "setServiceExecutorBatch"
       > & { functionName?: "setServiceExecutorBatch" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "setServiceExecutorBatch"> & {
-        abi?: never
-        functionName?: "setServiceExecutorBatch"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setServiceExecutorBatch";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "setServiceExecutorBatch">({
     abi: vaultStorageABI,
     functionName: "setServiceExecutorBatch",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13562,15 +13583,15 @@ export function useVaultStorageSetServiceExecutors<TMode extends WriteContractMo
         "setServiceExecutors"
       > & { functionName?: "setServiceExecutors" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "setServiceExecutors"> & {
-        abi?: never
-        functionName?: "setServiceExecutors"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setServiceExecutors";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "setServiceExecutors">({
     abi: vaultStorageABI,
     functionName: "setServiceExecutors",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13584,15 +13605,15 @@ export function useVaultStorageSetStrategyAllowance<TMode extends WriteContractM
         "setStrategyAllowance"
       > & { functionName?: "setStrategyAllowance" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "setStrategyAllowance"> & {
-        abi?: never
-        functionName?: "setStrategyAllowance"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setStrategyAllowance";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "setStrategyAllowance">({
     abi: vaultStorageABI,
     functionName: "setStrategyAllowance",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13606,15 +13627,15 @@ export function useVaultStorageSetStrategyFunctionSigAllowance<TMode extends Wri
         "setStrategyFunctionSigAllowance"
       > & { functionName?: "setStrategyFunctionSigAllowance" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "setStrategyFunctionSigAllowance"> & {
-        abi?: never
-        functionName?: "setStrategyFunctionSigAllowance"
-      } = {} as any,
+        abi?: never;
+        functionName?: "setStrategyFunctionSigAllowance";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "setStrategyFunctionSigAllowance">({
     abi: vaultStorageABI,
     functionName: "setStrategyFunctionSigAllowance",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13628,15 +13649,15 @@ export function useVaultStorageSubBorrowingFeeDebt<TMode extends WriteContractMo
         "subBorrowingFeeDebt"
       > & { functionName?: "subBorrowingFeeDebt" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "subBorrowingFeeDebt"> & {
-        abi?: never
-        functionName?: "subBorrowingFeeDebt"
-      } = {} as any,
+        abi?: never;
+        functionName?: "subBorrowingFeeDebt";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "subBorrowingFeeDebt">({
     abi: vaultStorageABI,
     functionName: "subBorrowingFeeDebt",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13650,15 +13671,15 @@ export function useVaultStorageSubFundingFeeDebt<TMode extends WriteContractMode
         "subFundingFeeDebt"
       > & { functionName?: "subFundingFeeDebt" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "subFundingFeeDebt"> & {
-        abi?: never
-        functionName?: "subFundingFeeDebt"
-      } = {} as any,
+        abi?: never;
+        functionName?: "subFundingFeeDebt";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "subFundingFeeDebt">({
     abi: vaultStorageABI,
     functionName: "subFundingFeeDebt",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13672,15 +13693,15 @@ export function useVaultStorageSubLossDebt<TMode extends WriteContractMode>(
         "subLossDebt"
       > & { functionName?: "subLossDebt" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "subLossDebt"> & {
-        abi?: never
-        functionName?: "subLossDebt"
-      } = {} as any,
+        abi?: never;
+        functionName?: "subLossDebt";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "subLossDebt">({
     abi: vaultStorageABI,
     functionName: "subLossDebt",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13694,15 +13715,15 @@ export function useVaultStorageSubTradingFeeDebt<TMode extends WriteContractMode
         "subTradingFeeDebt"
       > & { functionName?: "subTradingFeeDebt" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "subTradingFeeDebt"> & {
-        abi?: never
-        functionName?: "subTradingFeeDebt"
-      } = {} as any,
+        abi?: never;
+        functionName?: "subTradingFeeDebt";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "subTradingFeeDebt">({
     abi: vaultStorageABI,
     functionName: "subTradingFeeDebt",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13716,15 +13737,15 @@ export function useVaultStorageTransfer<TMode extends WriteContractMode>(
         "transfer"
       > & { functionName?: "transfer" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "transfer"> & {
-        abi?: never
-        functionName?: "transfer"
-      } = {} as any,
+        abi?: never;
+        functionName?: "transfer";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "transfer">({
     abi: vaultStorageABI,
     functionName: "transfer",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13738,15 +13759,15 @@ export function useVaultStorageTransferOwnership<TMode extends WriteContractMode
         "transferOwnership"
       > & { functionName?: "transferOwnership" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "transferOwnership"> & {
-        abi?: never
-        functionName?: "transferOwnership"
-      } = {} as any,
+        abi?: never;
+        functionName?: "transferOwnership";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "transferOwnership">({
     abi: vaultStorageABI,
     functionName: "transferOwnership",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13760,15 +13781,15 @@ export function useVaultStorageWithdrawDevFee<TMode extends WriteContractMode>(
         "withdrawDevFee"
       > & { functionName?: "withdrawDevFee" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "withdrawDevFee"> & {
-        abi?: never
-        functionName?: "withdrawDevFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "withdrawDevFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "withdrawDevFee">({
     abi: vaultStorageABI,
     functionName: "withdrawDevFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13782,15 +13803,15 @@ export function useVaultStorageWithdrawFee<TMode extends WriteContractMode>(
         "withdrawFee"
       > & { functionName?: "withdrawFee" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "withdrawFee"> & {
-        abi?: never
-        functionName?: "withdrawFee"
-      } = {} as any,
+        abi?: never;
+        functionName?: "withdrawFee";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "withdrawFee">({
     abi: vaultStorageABI,
     functionName: "withdrawFee",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
@@ -13804,27 +13825,27 @@ export function useVaultStorageWithdrawSurplusFromFundingFeeReserveToHlp<TMode e
         "withdrawSurplusFromFundingFeeReserveToHLP"
       > & { functionName?: "withdrawSurplusFromFundingFeeReserveToHLP" }
     : UseContractWriteConfig<TMode, typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP"> & {
-        abi?: never
-        functionName?: "withdrawSurplusFromFundingFeeReserveToHLP"
-      } = {} as any,
+        abi?: never;
+        functionName?: "withdrawSurplusFromFundingFeeReserveToHLP";
+      } = {} as any
 ) {
   return useContractWrite<TMode, typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP">({
     abi: vaultStorageABI,
     functionName: "withdrawSurplusFromFundingFeeReserveToHLP",
     ...config,
-  } as any)
+  } as any);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__.
  */
 export function usePrepareVaultStorageWrite<TFunctionName extends string>(
-  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, TFunctionName>, "abi"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, TFunctionName>, "abi"> = {} as any
 ) {
   return usePrepareContractWrite({ abi: vaultStorageABI, ...config } as UsePrepareContractWriteConfig<
     typeof vaultStorageABI,
     TFunctionName
-  >)
+  >);
 }
 
 /**
@@ -13834,26 +13855,26 @@ export function usePrepareVaultStorageAddBorrowingFeeDebt(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "addBorrowingFeeDebt">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "addBorrowingFeeDebt",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addBorrowingFeeDebt">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addBorrowingFeeDebt">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"addFee"`.
  */
 export function usePrepareVaultStorageAddFee(
-  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFee">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFee">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "addFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFee">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFee">);
 }
 
 /**
@@ -13863,13 +13884,13 @@ export function usePrepareVaultStorageAddFundingFee(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFundingFee">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "addFundingFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFundingFee">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFundingFee">);
 }
 
 /**
@@ -13879,13 +13900,13 @@ export function usePrepareVaultStorageAddFundingFeeDebt(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFundingFeeDebt">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "addFundingFeeDebt",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFundingFeeDebt">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addFundingFeeDebt">);
 }
 
 /**
@@ -13895,13 +13916,13 @@ export function usePrepareVaultStorageAddHlpLiquidity(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "addHLPLiquidity">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "addHLPLiquidity",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addHLPLiquidity">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addHLPLiquidity">);
 }
 
 /**
@@ -13911,29 +13932,26 @@ export function usePrepareVaultStorageAddHlpLiquidityDebtUsde30(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "addHlpLiquidityDebtUSDE30">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "addHlpLiquidityDebtUSDE30",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addHlpLiquidityDebtUSDE30">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addHlpLiquidityDebtUSDE30">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"addLossDebt"`.
  */
 export function usePrepareVaultStorageAddLossDebt(
-  config: Omit<
-    UsePrepareContractWriteConfig<typeof vaultStorageABI, "addLossDebt">,
-    "abi" | "functionName"
-  > = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "addLossDebt">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "addLossDebt",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addLossDebt">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addLossDebt">);
 }
 
 /**
@@ -13943,13 +13961,13 @@ export function usePrepareVaultStorageAddTradingFeeDebt(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "addTradingFeeDebt">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "addTradingFeeDebt",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addTradingFeeDebt">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "addTradingFeeDebt">);
 }
 
 /**
@@ -13959,13 +13977,13 @@ export function usePrepareVaultStorageBorrowFundingFeeFromHlpToTrader(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "borrowFundingFeeFromHlpToTrader">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "borrowFundingFeeFromHlpToTrader",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "borrowFundingFeeFromHlpToTrader">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "borrowFundingFeeFromHlpToTrader">);
 }
 
 /**
@@ -13975,26 +13993,26 @@ export function usePrepareVaultStorageConvertFundingFeeReserveWithHlp(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "convertFundingFeeReserveWithHLP">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "convertFundingFeeReserveWithHLP",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "convertFundingFeeReserveWithHLP">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "convertFundingFeeReserveWithHLP">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"cook"`.
  */
 export function usePrepareVaultStorageCook(
-  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "cook">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "cook">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "cook",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "cook">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "cook">);
 }
 
 /**
@@ -14004,13 +14022,13 @@ export function usePrepareVaultStorageDecreaseTraderBalance(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "decreaseTraderBalance">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "decreaseTraderBalance",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "decreaseTraderBalance">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "decreaseTraderBalance">);
 }
 
 /**
@@ -14020,26 +14038,26 @@ export function usePrepareVaultStorageIncreaseTraderBalance(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "increaseTraderBalance">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "increaseTraderBalance",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "increaseTraderBalance">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "increaseTraderBalance">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"initialize"`.
  */
 export function usePrepareVaultStorageInitialize(
-  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "initialize">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "initialize">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "initialize",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "initialize">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "initialize">);
 }
 
 /**
@@ -14049,13 +14067,13 @@ export function usePrepareVaultStoragePayBorrowingFee(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "payBorrowingFee">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "payBorrowingFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payBorrowingFee">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payBorrowingFee">);
 }
 
 /**
@@ -14065,13 +14083,13 @@ export function usePrepareVaultStoragePayFundingFeeFromFundingFeeReserveToTrader
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromFundingFeeReserveToTrader">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "payFundingFeeFromFundingFeeReserveToTrader",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromFundingFeeReserveToTrader">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromFundingFeeReserveToTrader">);
 }
 
 /**
@@ -14081,13 +14099,13 @@ export function usePrepareVaultStoragePayFundingFeeFromHlpToTrader(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromHlpToTrader">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "payFundingFeeFromHlpToTrader",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromHlpToTrader">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromHlpToTrader">);
 }
 
 /**
@@ -14097,13 +14115,13 @@ export function usePrepareVaultStoragePayFundingFeeFromTraderToFundingFeeReserve
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromTraderToFundingFeeReserve">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "payFundingFeeFromTraderToFundingFeeReserve",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromTraderToFundingFeeReserve">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromTraderToFundingFeeReserve">);
 }
 
 /**
@@ -14113,26 +14131,26 @@ export function usePrepareVaultStoragePayFundingFeeFromTraderToHlp(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromTraderToHlp">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "payFundingFeeFromTraderToHlp",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromTraderToHlp">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payFundingFeeFromTraderToHlp">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"payHlp"`.
  */
 export function usePrepareVaultStoragePayHlp(
-  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "payHlp">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "payHlp">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "payHlp",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payHlp">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payHlp">);
 }
 
 /**
@@ -14142,13 +14160,13 @@ export function usePrepareVaultStoragePayTraderProfit(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "payTraderProfit">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "payTraderProfit",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payTraderProfit">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payTraderProfit">);
 }
 
 /**
@@ -14158,39 +14176,39 @@ export function usePrepareVaultStoragePayTradingFee(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "payTradingFee">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "payTradingFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payTradingFee">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "payTradingFee">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"pullToken"`.
  */
 export function usePrepareVaultStoragePullToken(
-  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "pullToken">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "pullToken">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "pullToken",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "pullToken">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "pullToken">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"pushToken"`.
  */
 export function usePrepareVaultStoragePushToken(
-  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "pushToken">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "pushToken">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "pushToken",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "pushToken">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "pushToken">);
 }
 
 /**
@@ -14200,13 +14218,13 @@ export function usePrepareVaultStorageRemoveFundingFee(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeFundingFee">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "removeFundingFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeFundingFee">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeFundingFee">);
 }
 
 /**
@@ -14216,13 +14234,13 @@ export function usePrepareVaultStorageRemoveHlpLiquidity(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeHLPLiquidity">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "removeHLPLiquidity",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeHLPLiquidity">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeHLPLiquidity">);
 }
 
 /**
@@ -14232,13 +14250,13 @@ export function usePrepareVaultStorageRemoveHlpLiquidityDebtUsde30(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeHlpLiquidityDebtUSDE30">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "removeHlpLiquidityDebtUSDE30",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeHlpLiquidityDebtUSDE30">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "removeHlpLiquidityDebtUSDE30">);
 }
 
 /**
@@ -14248,13 +14266,13 @@ export function usePrepareVaultStorageRenounceOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "renounceOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "renounceOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "renounceOwnership">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "renounceOwnership">);
 }
 
 /**
@@ -14264,13 +14282,13 @@ export function usePrepareVaultStorageRepayFundingFeeDebtFromTraderToHlp(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "repayFundingFeeDebtFromTraderToHlp">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "repayFundingFeeDebtFromTraderToHlp",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "repayFundingFeeDebtFromTraderToHlp">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "repayFundingFeeDebtFromTraderToHlp">);
 }
 
 /**
@@ -14280,13 +14298,13 @@ export function usePrepareVaultStorageSetServiceExecutorBatch(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "setServiceExecutorBatch">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "setServiceExecutorBatch",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "setServiceExecutorBatch">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "setServiceExecutorBatch">);
 }
 
 /**
@@ -14296,13 +14314,13 @@ export function usePrepareVaultStorageSetServiceExecutors(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "setServiceExecutors">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "setServiceExecutors",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "setServiceExecutors">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "setServiceExecutors">);
 }
 
 /**
@@ -14312,13 +14330,13 @@ export function usePrepareVaultStorageSetStrategyAllowance(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "setStrategyAllowance">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "setStrategyAllowance",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "setStrategyAllowance">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "setStrategyAllowance">);
 }
 
 /**
@@ -14328,13 +14346,13 @@ export function usePrepareVaultStorageSetStrategyFunctionSigAllowance(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "setStrategyFunctionSigAllowance">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "setStrategyFunctionSigAllowance",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "setStrategyFunctionSigAllowance">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "setStrategyFunctionSigAllowance">);
 }
 
 /**
@@ -14344,13 +14362,13 @@ export function usePrepareVaultStorageSubBorrowingFeeDebt(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "subBorrowingFeeDebt">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "subBorrowingFeeDebt",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "subBorrowingFeeDebt">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "subBorrowingFeeDebt">);
 }
 
 /**
@@ -14360,29 +14378,26 @@ export function usePrepareVaultStorageSubFundingFeeDebt(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "subFundingFeeDebt">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "subFundingFeeDebt",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "subFundingFeeDebt">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "subFundingFeeDebt">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"subLossDebt"`.
  */
 export function usePrepareVaultStorageSubLossDebt(
-  config: Omit<
-    UsePrepareContractWriteConfig<typeof vaultStorageABI, "subLossDebt">,
-    "abi" | "functionName"
-  > = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "subLossDebt">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "subLossDebt",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "subLossDebt">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "subLossDebt">);
 }
 
 /**
@@ -14392,26 +14407,26 @@ export function usePrepareVaultStorageSubTradingFeeDebt(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "subTradingFeeDebt">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "subTradingFeeDebt",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "subTradingFeeDebt">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "subTradingFeeDebt">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"transfer"`.
  */
 export function usePrepareVaultStorageTransfer(
-  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "transfer">, "abi" | "functionName"> = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "transfer">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "transfer",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "transfer">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "transfer">);
 }
 
 /**
@@ -14421,13 +14436,13 @@ export function usePrepareVaultStorageTransferOwnership(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "transferOwnership">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "transferOwnership",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "transferOwnership">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "transferOwnership">);
 }
 
 /**
@@ -14437,29 +14452,26 @@ export function usePrepareVaultStorageWithdrawDevFee(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawDevFee">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "withdrawDevFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawDevFee">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawDevFee">);
 }
 
 /**
  * Wraps __{@link usePrepareContractWrite}__ with `abi` set to __{@link vaultStorageABI}__ and `functionName` set to `"withdrawFee"`.
  */
 export function usePrepareVaultStorageWithdrawFee(
-  config: Omit<
-    UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawFee">,
-    "abi" | "functionName"
-  > = {} as any,
+  config: Omit<UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawFee">, "abi" | "functionName"> = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "withdrawFee",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawFee">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawFee">);
 }
 
 /**
@@ -14469,53 +14481,50 @@ export function usePrepareVaultStorageWithdrawSurplusFromFundingFeeReserveToHlp(
   config: Omit<
     UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP">,
     "abi" | "functionName"
-  > = {} as any,
+  > = {} as any
 ) {
   return usePrepareContractWrite({
     abi: vaultStorageABI,
     functionName: "withdrawSurplusFromFundingFeeReserveToHLP",
     ...config,
-  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP">)
+  } as UsePrepareContractWriteConfig<typeof vaultStorageABI, "withdrawSurplusFromFundingFeeReserveToHLP">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link vaultStorageABI}__.
  */
 export function useVaultStorageEvent<TEventName extends string>(
-  config: Omit<UseContractEventConfig<typeof vaultStorageABI, TEventName>, "abi"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof vaultStorageABI, TEventName>, "abi"> = {} as any
 ) {
   return useContractEvent({ abi: vaultStorageABI, ...config } as UseContractEventConfig<
     typeof vaultStorageABI,
     TEventName
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link vaultStorageABI}__ and `eventName` set to `"Initialized"`.
  */
 export function useVaultStorageInitializedEvent(
-  config: Omit<UseContractEventConfig<typeof vaultStorageABI, "Initialized">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof vaultStorageABI, "Initialized">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({ abi: vaultStorageABI, eventName: "Initialized", ...config } as UseContractEventConfig<
     typeof vaultStorageABI,
     "Initialized"
-  >)
+  >);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link vaultStorageABI}__ and `eventName` set to `"LogSetServiceExecutor"`.
  */
 export function useVaultStorageLogSetServiceExecutorEvent(
-  config: Omit<
-    UseContractEventConfig<typeof vaultStorageABI, "LogSetServiceExecutor">,
-    "abi" | "eventName"
-  > = {} as any,
+  config: Omit<UseContractEventConfig<typeof vaultStorageABI, "LogSetServiceExecutor">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: vaultStorageABI,
     eventName: "LogSetServiceExecutor",
     ...config,
-  } as UseContractEventConfig<typeof vaultStorageABI, "LogSetServiceExecutor">)
+  } as UseContractEventConfig<typeof vaultStorageABI, "LogSetServiceExecutor">);
 }
 
 /**
@@ -14525,13 +14534,13 @@ export function useVaultStorageLogSetStrategyAllowanceEvent(
   config: Omit<
     UseContractEventConfig<typeof vaultStorageABI, "LogSetStrategyAllowance">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: vaultStorageABI,
     eventName: "LogSetStrategyAllowance",
     ...config,
-  } as UseContractEventConfig<typeof vaultStorageABI, "LogSetStrategyAllowance">)
+  } as UseContractEventConfig<typeof vaultStorageABI, "LogSetStrategyAllowance">);
 }
 
 /**
@@ -14541,37 +14550,37 @@ export function useVaultStorageLogSetStrategyFunctionSigAllowanceEvent(
   config: Omit<
     UseContractEventConfig<typeof vaultStorageABI, "LogSetStrategyFunctionSigAllowance">,
     "abi" | "eventName"
-  > = {} as any,
+  > = {} as any
 ) {
   return useContractEvent({
     abi: vaultStorageABI,
     eventName: "LogSetStrategyFunctionSigAllowance",
     ...config,
-  } as UseContractEventConfig<typeof vaultStorageABI, "LogSetStrategyFunctionSigAllowance">)
+  } as UseContractEventConfig<typeof vaultStorageABI, "LogSetStrategyFunctionSigAllowance">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link vaultStorageABI}__ and `eventName` set to `"LogSetTraderBalance"`.
  */
 export function useVaultStorageLogSetTraderBalanceEvent(
-  config: Omit<UseContractEventConfig<typeof vaultStorageABI, "LogSetTraderBalance">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof vaultStorageABI, "LogSetTraderBalance">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: vaultStorageABI,
     eventName: "LogSetTraderBalance",
     ...config,
-  } as UseContractEventConfig<typeof vaultStorageABI, "LogSetTraderBalance">)
+  } as UseContractEventConfig<typeof vaultStorageABI, "LogSetTraderBalance">);
 }
 
 /**
  * Wraps __{@link useContractEvent}__ with `abi` set to __{@link vaultStorageABI}__ and `eventName` set to `"OwnershipTransferred"`.
  */
 export function useVaultStorageOwnershipTransferredEvent(
-  config: Omit<UseContractEventConfig<typeof vaultStorageABI, "OwnershipTransferred">, "abi" | "eventName"> = {} as any,
+  config: Omit<UseContractEventConfig<typeof vaultStorageABI, "OwnershipTransferred">, "abi" | "eventName"> = {} as any
 ) {
   return useContractEvent({
     abi: vaultStorageABI,
     eventName: "OwnershipTransferred",
     ...config,
-  } as UseContractEventConfig<typeof vaultStorageABI, "OwnershipTransferred">)
+  } as UseContractEventConfig<typeof vaultStorageABI, "OwnershipTransferred">);
 }

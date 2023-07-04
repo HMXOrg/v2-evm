@@ -16,4 +16,5 @@ export default [
   "EcoPythCalldataBuilder.json",
   // GMX
   "IGmxGlpManager.json",
+  "TradeService.json",
 ];

@@ -95,7 +95,11 @@
     "readline-sync": "^1.4.10",
     "ts-node": "^10.9.1",
     "typechain": "^8.0.0",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "@safe-global/safe-core-sdk": "^3.2.2",
+    "@safe-global/safe-core-sdk-types": "^1.8.0",
+    "@safe-global/safe-ethers-lib": "^1.8.0",
+    "@safe-global/safe-service-client": "^1.5.0"
   },
   "dependencies": {
     "@openzeppelin/hardhat-upgrades": "^1.22.1",

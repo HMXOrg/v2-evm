@@ -499,7 +499,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _vars.position.lastFundingAccrued,
       _vars.position.realizedPnl,
       _vars.position.reserveValueE30,
-      _vars.isNewPosition ? _vars.adaptivePriceE30 : _vars.closePriceE30
+      _vars.adaptivePriceE30
     );
   }
 
@@ -888,6 +888,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
         _vars.perpStorage.savePosition(_vars.accountInfo.subAccount, _vars.positionId, _vars.position);
       } else {
+        _vars.position.realizedPnl += _vars.realizedPnl;
         _vars.perpStorage.removePositionFromSubAccount(_vars.accountInfo.subAccount, _vars.positionId);
       }
 

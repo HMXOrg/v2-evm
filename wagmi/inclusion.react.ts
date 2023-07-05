@@ -13,5 +13,5 @@ export default [
   "IGmxGlpManager.json",
   // Balance
   "MockBalancerPool.json",
-  "MockVaultStorage.json",
+  "MockBalancerVault.json",
 ];

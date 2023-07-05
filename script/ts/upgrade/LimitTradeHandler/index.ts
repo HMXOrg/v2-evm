@@ -1,34 +1,28 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers, tenderly, upgrades, network } from "hardhat";
-import { getConfig, writeConfigFile } from "../../utils/config";
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-
-const BigNumber = ethers.BigNumber;
-const config = getConfig();
+import { ethers, tenderly, upgrades, getChainId } from "hardhat";
+import { loadConfig } from "../../utils/config";
+import signers from "../../entities/signers";
+import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
 async function main() {
-  const deployer = (await ethers.getSigners())[0];
+  const chainId = Number(await getChainId());
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
+  const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
-  const Contract = await ethers.getContractFactory("LimitTradeHandler", deployer);
-  const TARGET_ADDRESS = config.handlers.limitTrade;
+  const LimitTradeHandler = await ethers.getContractFactory("LimitTradeHandler", deployer);
+  const limitTradeHandler = config.handlers.limitTrade;
 
-  console.log(`> Preparing to upgrade LimitTradeHandler`);
-  const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract, {
+  console.log(`[upgrade/LimitTradeHandler] Preparing to upgrade LimitTradeHandler`);
+  const newImplementation = await upgrades.prepareUpgrade(limitTradeHandler, LimitTradeHandler, {
     unsafeAllow: ["delegatecall"],
   });
-  console.log(`> Done`);
+  console.log(`[upgrade/LimitTradeHandler] Done`);
 
-  console.log(`> New LimitTradeHandler Implementation address: ${newImplementation}`);
-  const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract, {
-    unsafeAllow: ["delegatecall"],
-  });
-  console.log(`> ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
-  console.log(`> Waiting for tx to be mined...`);
-  await upgradeTx.deployTransaction.wait(3);
-  console.log(`> Tx is mined!`);
+  console.log(`[upgrade/LimitTradeHandler] New LimitTradeHandler Implementation address: ${newImplementation}`);
+  await proxyAdminWrapper.upgrade(limitTradeHandler, newImplementation.toString());
+  console.log(`[upgrade/LimitTradeHandler] Upgraded!`);
 
-  console.log(`> Verify contract on Tenderly`);
+  console.log(`[upgrade/LimitTradeHandler] Verify contract on Tenderly`);
   await tenderly.verify({
     address: newImplementation.toString(),
     name: "LimitTradeHandler",

@@ -11,4 +11,7 @@ export default [
   "OracleMiddleware.json",
   // GMX
   "IGmxGlpManager.json",
+  // Balance
+  "MockBalancerPool.json",
+  "MockVaultStorage.json",
 ];

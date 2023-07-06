@@ -22,6 +22,7 @@ async function main() {
   await tx.wait(1);
   console.log("[EcoPyth] Finished");
 }
+
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

@@ -27,7 +27,8 @@
     "pythAdapter": "0x34338314236df25220b55F90F7E8Fc30B620D242",
     "sglpStakedAdapter": "0x9F09b53ee28a93951fe546dEfB24C0f908eEda22",
     "middleware": "0x9c83e1046dA4727F05C6764c017C6E1757596592",
-    "ecoPythCalldataBuilder": "0x44E31321E748dDc768a019aee4c62c14E53424F1"
+    "ecoPythCalldataBuilder": "0x44E31321E748dDc768a019aee4c62c14E53424F1",
+    "unsafeEcoPythCalldataBuilder": "0xf83F17c87356a3a83fCd464aa1179D619EdF6642"
   },
   "tokens": {
     "hlp": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",

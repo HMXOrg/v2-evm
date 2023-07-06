@@ -54,7 +54,7 @@ export function writeConfigFile(config: any) {
     default:
       throw Error("Unsupported network");
   }
-  console.log(`> Writing ${filePath}`);
+  console.log(`[utils/config] Writing ${filePath}`);
   fs.writeFileSync(filePath, JSON.stringify(config, null, 2));
-  console.log("> ✅ Done");
+  console.log("[utils/config] ✅ Done");
 }

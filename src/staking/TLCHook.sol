@@ -24,12 +24,15 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   address public tlc;
   address public tlcStaking;
 
-  mapping(uint256 => uint256) public marketWeights;
+  // mapping weight with the marketIndex
+  mapping(uint256 marketIndex => uint256 weight) public marketWeights;
 
   modifier onlyTradeService() {
     if (msg.sender != tradeService) revert TradingStakingHook_Forbidden();
     _;
   }
+
+  event SetNewWeight(uint256 marketIndex, uint256 weight);
 
   function initialize(address _tradeService, address _tlc, address _tlcStaking) external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -68,7 +71,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
     TraderLoyaltyCredit _tlc = TraderLoyaltyCredit(tlc);
     TLCStaking _tlcStaking = TLCStaking(tlcStaking);
     // Calculate mint amount which is equal to sizeDelta but convert decimal from 1e30 to 1e18
-    // This is to make the TLC token composable as ERC20 with regular 18 decimals
+    // This is to make the TLC token composable as ERC20 with regular 18 decimals, also wighted
     uint256 weight = marketWeights[_marketIndex] == 0 ? BPS : marketWeights[_marketIndex];
     uint256 _mintAmount = _sizeDelta.mulDiv(weight, 1e12) / BPS;
 
@@ -79,6 +82,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
 
   function setMarketWeight(uint256 _marketIndex, uint256 _weight) external onlyOwner {
     marketWeights[_marketIndex] = _weight;
+    emit SetNewWeight(_marketIndex, _weight);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

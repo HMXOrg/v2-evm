@@ -4,11 +4,11 @@ import signers from "../../entities/signers";
 import { loadConfig } from "../../utils/config";
 
 const assertIds = [
-  ethers.utils.formatBytes32String("AUD"),
-  ethers.utils.formatBytes32String("GBP"),
-  ethers.utils.formatBytes32String("ADA"),
-  ethers.utils.formatBytes32String("MATIC"),
-  ethers.utils.formatBytes32String("SUI"),
+  ethers.utils.formatBytes32String("ARB"),
+  ethers.utils.formatBytes32String("OP"),
+  ethers.utils.formatBytes32String("LTC"),
+  ethers.utils.formatBytes32String("COIN"),
+  ethers.utils.formatBytes32String("GOOG"),
 ];
 
 async function main() {
@@ -22,6 +22,7 @@ async function main() {
   await tx.wait(1);
   console.log("[EcoPyth] Finished");
 }
+
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

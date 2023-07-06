@@ -18,7 +18,10 @@ import { PythLib } from "@hmx/libraries/PythLib.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 
-contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
+/// @title UnsafeEcoPythCalldataBuilder
+/// @dev This contract is used when listing new markets only.
+/// @dev It will skip certain checks to allow listing new markets.
+contract UnsafeEcoPythCalldataBuilder is IEcoPythCalldataBuilder {
   bytes32 internal constant GLP_ASSET_ID = 0x474c500000000000000000000000000000000000000000000000000000000000;
 
   IEcoPyth public ecoPyth;
@@ -34,11 +37,20 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
   }
 
   function isOverMaxDiff(bytes32 _assetId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
-    PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(_assetId);
-    if (_ecoPythPrice.price * 10000 > _price * int32(_maxDiffBps)) {
+    int64 _latestPrice = 0;
+    // If cannot get price from EcoPyth, then assume the price is 1e8.
+    // Cases where EcoPyth cannot return price:
+    // - New assets that are not listed on EcoPyth yet.
+    // - New assets that over previous array length
+    try ecoPyth.getPriceUnsafe(_assetId) returns (PythStructs.Price memory _ecoPythPrice) {
+      _latestPrice = _ecoPythPrice.price;
+    } catch {
+      _latestPrice = _price;
+    }
+    if (_latestPrice * 10000 > _price * int32(_maxDiffBps)) {
       return true;
     }
-    if (_ecoPythPrice.price * int32(_maxDiffBps) < _price * 10000) {
+    if (_latestPrice * int32(_maxDiffBps) < _price * 10000) {
       return true;
     }
     return false;

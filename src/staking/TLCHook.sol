@@ -15,8 +15,7 @@ import { FullMath } from "../libraries/FullMath.sol";
 contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   using FullMath for uint256;
 
-  error TradingStakingHook_Forbidden();
-  error WeightIsZero();
+  error TLCHook_Forbidden();
 
   uint256 internal constant BPS = 10_000;
 
@@ -28,7 +27,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   mapping(uint256 marketIndex => uint256 weight) public marketWeights;
 
   modifier onlyTradeService() {
-    if (msg.sender != tradeService) revert TradingStakingHook_Forbidden();
+    if (msg.sender != tradeService) revert TLCHook_Forbidden();
     _;
   }
 

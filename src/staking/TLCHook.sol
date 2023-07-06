@@ -32,7 +32,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
     _;
   }
 
-  event SetNewWeight(uint256 marketIndex, uint256 weight);
+  event SetMarketWeight(uint256 marketIndex, uint256 weight);
 
   function initialize(address _tradeService, address _tlc, address _tlcStaking) external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -82,7 +82,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
 
   function setMarketWeight(uint256 _marketIndex, uint256 _weight) external onlyOwner {
     marketWeights[_marketIndex] = _weight;
-    emit SetNewWeight(_marketIndex, _weight);
+    emit SetMarketWeight(_marketIndex, _weight);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

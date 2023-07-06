@@ -1,30 +1,25 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers, tenderly, upgrades, network } from "hardhat";
-import { getConfig, writeConfigFile } from "../../utils/config";
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-
-const BigNumber = ethers.BigNumber;
-const config = getConfig();
+import { ethers, tenderly, upgrades } from "hardhat";
+import { getConfig } from "../../utils/config";
+import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
 async function main() {
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const config = getConfig();
   const deployer = (await ethers.getSigners())[0];
+  const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
-  const Contract = await ethers.getContractFactory("TradeHelper", deployer);
-  const TARGET_ADDRESS = config.helpers.trade;
+  const TradeHelper = await ethers.getContractFactory("TradeHelper", deployer);
+  const tradeHelperAddress = config.helpers.trade;
 
-  console.log(`> Preparing to upgrade TradeHelper`);
-  const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);
-  console.log(`> Done`);
+  console.log(`[upgrade/TradeHelper] Preparing to upgrade TradeHelper`);
+  const newImplementation = await upgrades.prepareUpgrade(tradeHelperAddress, TradeHelper);
+  console.log(`[upgrade/TradeHelper] Done`);
 
-  console.log(`> New TradeHelper Implementation address: ${newImplementation}`);
-  const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract);
-  console.log(`> ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
-  console.log(`> Waiting for tx to be mined...`);
-  await upgradeTx.deployTransaction.wait(3);
-  console.log(`> Tx is mined!`);
+  console.log(`[upgrade/TradeHelper] New TradeHelper Implementation address: ${newImplementation}`);
+  await proxyAdminWrapper.upgrade(tradeHelperAddress, newImplementation.toString());
+  console.log(`[upgrade/TradeHelper] Done`);
 
-  console.log(`> Verify contract on Tenderly`);
+  console.log(`[upgrade/TradeHelper] Verify contract on Tenderly`);
   await tenderly.verify({
     address: newImplementation.toString(),
     name: "TradeHelper",

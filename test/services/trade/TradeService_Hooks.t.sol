@@ -20,6 +20,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ITLCStaking } from "@hmx/staking/interfaces/ITLCStaking.sol";
 import { IEpochRewarder } from "@hmx/staking/interfaces/IEpochRewarder.sol";
 import { console } from "forge-std/console.sol";
+import { ITLCHook } from "@hmx/services/interfaces/ITLCHook.sol";
 
 contract TradeService_Hooks is TradeService_Base {
   MockErc20 internal rewardToken;
@@ -337,5 +338,35 @@ contract TradeService_Hooks is TradeService_Base {
     // assert that after harvest, TLC balance should remain the same; no burning of TLC
     assertEq(tlcStaking.getUserTokenAmount(0, BOB), 400_000 ether);
     assertEq(tlcStaking.getUserTokenAmount(1 weeks, BOB), 0 ether);
+  }
+
+  function testCorrectness_mintWeightedTLC() external {
+    // setup
+    // TVL
+    // 1000000 USDT -> 1000000 USD
+    mockCalculator.setHLPValue(1_000_000 * 1e30);
+    // ALICE add collateral
+    // 10000 USDT -> free collateral -> 10000 USD
+    mockCalculator.setFreeCollateral(10_000 * 1e30);
+
+    ITLCHook _tlcHook = ITLCHook(address(tlcHook));
+    assertEq(_tlcHook.marketWeights(ethMarketIndex), 0);
+    
+    // Alice open pos
+    uint256 tlcBefore = tlcStaking.getUserTokenAmount(0, ALICE);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 25 * 1e30, 0);
+    uint256 tlcAfter = tlcStaking.getUserTokenAmount(0, ALICE);
+    uint256 receivedTLCOnDefaultWeight = tlcAfter - tlcBefore;
+
+    // SET WEIGHT
+    uint256 newWeight = 18_640;
+    _tlcHook.setMarketWeight(ethMarketIndex, newWeight);
+    assertEq(_tlcHook.marketWeights(ethMarketIndex), newWeight);
+
+    uint256 _tlcBefore = tlcStaking.getUserTokenAmount(0, ALICE);
+    tradeService.increasePosition(ALICE, 0, ethMarketIndex, 25 * 1e30, 0);
+    uint256 _tlcAfter = tlcStaking.getUserTokenAmount(0, ALICE);
+    uint256 receivedTLCOnNewWeight = _tlcAfter - _tlcBefore;
+    assertEq(receivedTLCOnNewWeight / receivedTLCOnDefaultWeight, newWeight / 10_000); // weight.div(BPS)
   }
 }

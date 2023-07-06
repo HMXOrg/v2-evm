@@ -1,27 +1,26 @@
 import { ethers, tenderly, upgrades, getChainId } from "hardhat";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
+import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
 async function main() {
   const chainId = Number(await getChainId());
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
+  const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
-  const Contract = await ethers.getContractFactory("LiquidityHandler", deployer);
-  const TARGET_ADDRESS = config.handlers.liquidity;
+  const LiquidityHandler = await ethers.getContractFactory("LiquidityHandler", deployer);
+  const liquidityHandler = config.handlers.liquidity;
 
-  console.log(`> Preparing to upgrade LiquidityHandler`);
-  const newImplementation = await upgrades.prepareUpgrade(TARGET_ADDRESS, Contract);
-  console.log(`> Done`);
+  console.log(`[upgrade/LiquidityHandler] Preparing to upgrade LiquidityHandler`);
+  const newImplementation = await upgrades.prepareUpgrade(liquidityHandler, LiquidityHandler);
+  console.log(`[upgrade/LiquidityHandler] Done`);
 
-  console.log(`> New LiquidityHandler Implementation address: ${newImplementation}`);
-  const upgradeTx = await upgrades.upgradeProxy(TARGET_ADDRESS, Contract);
-  console.log(`> ⛓ Tx is submitted: ${upgradeTx.deployTransaction.hash}`);
-  console.log(`> Waiting for tx to be mined...`);
-  await upgradeTx.deployTransaction.wait(3);
-  console.log(`> Tx is mined!`);
+  console.log(`[upgrade/LiquidityHandler] New LiquidityHandler Implementation address: ${newImplementation}`);
+  await proxyAdminWrapper.upgrade(liquidityHandler, newImplementation.toString());
+  console.log(`[upgrade/LiquidityHandler] Upgraded!`);
 
-  console.log(`> Verify contract on Tenderly`);
+  console.log(`[upgrade/LiquidityHandler] Verify contract on Tenderly`);
   await tenderly.verify({
     address: newImplementation.toString(),
     name: "LiquidityHandler",

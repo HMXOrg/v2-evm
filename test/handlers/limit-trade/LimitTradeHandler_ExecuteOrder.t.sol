@@ -6,6 +6,7 @@ pragma solidity 0.8.18;
 
 import { LimitTradeHandler_Base, IConfigStorage, IPerpStorage } from "./LimitTradeHandler_Base.t.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
+import { LimitTradeHandler } from "@hmx/handlers/LimitTradeHandler.sol";
 
 // What is this test DONE
 // - revert
@@ -47,6 +48,20 @@ struct PriceFeed {
 }
 
 contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
+  event LogExecuteLimitOrderFail(
+    address indexed account,
+    uint256 indexed subAccountId,
+    uint256 orderIndex,
+    uint256 marketIndex,
+    int256 sizeDelta,
+    uint256 triggerPrice,
+    bool triggerAboveThreshold,
+    uint256 executionFee,
+    bool reduceOnly,
+    address tpToken,
+    string errMsg
+  );
+
   bytes[] internal priceData;
   bytes32[] internal priceUpdateData;
   bytes32[] internal publishTimeUpdateData;
@@ -182,7 +197,6 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setMarketStatus(1);
     mockOracle.setPriceStale(false);
 
-    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MarketIsClosed()"));
     address[] memory accounts = new address[](1);
     uint8[] memory subAccountIds = new uint8[](1);
     uint256[] memory orderIndexes = new uint256[](1);
@@ -222,7 +236,6 @@ contract LimitTradeHandler_ExecuteOrder is LimitTradeHandler_Base {
     mockOracle.setMarketStatus(2);
     mockOracle.setPriceStale(false);
 
-    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_InvalidPriceForExecution()"));
     address[] memory accounts = new address[](1);
     uint8[] memory subAccountIds = new uint8[](1);
     uint256[] memory orderIndexes = new uint256[](1);

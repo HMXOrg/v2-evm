@@ -13,7 +13,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const deployerAddress = await deployer.getAddress();
 
-  const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
+  const pyth = EcoPyth__factory.connect("0xc2c45a6d0FD1A74888aAE64a45144165fB90e109", deployer);
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);

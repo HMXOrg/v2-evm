@@ -26,7 +26,7 @@ export async function getUpdatePriceData(
 
   const table = [];
 
-  const MAX_PRICE_DIFF = 900_00;
+  const MAX_PRICE_DIFF = 1500_00;
   // https://xc-mainnet.pyth.network
   // https://xc-testnet.pyth.network
   const connection = new EvmPriceServiceConnection("https://xc-mainnet.pyth.network", {
@@ -80,7 +80,7 @@ export async function getUpdatePriceData(
         .join("")
   );
   const ecoPythCalldataBuilder = EcoPythCalldataBuilder__factory.connect(
-    "0x44E31321E748dDc768a019aee4c62c14E53424F1",
+    "0xf83F17c87356a3a83fCd464aa1179D619EdF6642",
     provider
   );
   const [minPublishedTime, priceUpdateData, publishTimeDiffUpdateData] = await ecoPythCalldataBuilder.build(buildData);

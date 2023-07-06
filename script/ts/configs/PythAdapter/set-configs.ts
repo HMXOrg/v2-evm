@@ -5,28 +5,28 @@ import signers from "../../entities/signers";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("AUD"),
-    pythPriceId: ethers.utils.formatBytes32String("AUD"),
+    assetId: ethers.utils.formatBytes32String("ARB"),
+    pythPriceId: ethers.utils.formatBytes32String("ARB"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("GBP"),
-    pythPriceId: ethers.utils.formatBytes32String("GBP"),
+    assetId: ethers.utils.formatBytes32String("OP"),
+    pythPriceId: ethers.utils.formatBytes32String("OP"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("ADA"),
-    pythPriceId: ethers.utils.formatBytes32String("ADA"),
+    assetId: ethers.utils.formatBytes32String("LTC"),
+    pythPriceId: ethers.utils.formatBytes32String("LTC"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("MATIC"),
-    pythPriceId: ethers.utils.formatBytes32String("MATIC"),
+    assetId: ethers.utils.formatBytes32String("COIN"),
+    pythPriceId: ethers.utils.formatBytes32String("COIN"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("SUI"),
-    pythPriceId: ethers.utils.formatBytes32String("SUI"),
+    assetId: ethers.utils.formatBytes32String("GOOG"),
+    pythPriceId: ethers.utils.formatBytes32String("GOOG"),
     inverse: false,
   },
 ];

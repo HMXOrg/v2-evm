@@ -7,33 +7,33 @@ async function main() {
   const config = loadConfig(42161);
   const assetConfigs = [
     {
-      assetId: ethers.utils.formatBytes32String("AUD"),
+      assetId: ethers.utils.formatBytes32String("ARB"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 5, // 5 minutes
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("OP"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 5, // 5 minutes
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("LTC"),
+      confidenceThreshold: 0,
+      trustPriceAge: 60 * 5, // 5 minutes
+      adapter: config.oracles.pythAdapter,
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("COIN"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 60 * 24 * 3, // 3 days
       adapter: config.oracles.pythAdapter,
     },
     {
-      assetId: ethers.utils.formatBytes32String("GBP"),
+      assetId: ethers.utils.formatBytes32String("GOOG"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 60 * 24 * 3, // 3 days
-      adapter: config.oracles.pythAdapter,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("ADA"),
-      confidenceThreshold: 0,
-      trustPriceAge: 60 * 5, // 5 minutes
-      adapter: config.oracles.pythAdapter,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("MATIC"),
-      confidenceThreshold: 0,
-      trustPriceAge: 60 * 5, // 5 minutes
-      adapter: config.oracles.pythAdapter,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("SUI"),
-      confidenceThreshold: 0,
-      trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,
     },
   ];

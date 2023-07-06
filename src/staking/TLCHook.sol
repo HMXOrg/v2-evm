@@ -17,7 +17,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
 
   error TLCHook_Forbidden();
 
-  uint256 internal constant BPS = 10_000;
+  uint32 internal constant BPS = 100_00;
 
   address public tradeService;
   address public tlc;
@@ -72,7 +72,7 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
     // Calculate mint amount which is equal to sizeDelta but convert decimal from 1e30 to 1e18
     // This is to make the TLC token composable as ERC20 with regular 18 decimals, also wighted
     uint256 weight = marketWeights[_marketIndex] == 0 ? BPS : marketWeights[_marketIndex];
-    uint256 _mintAmount = _sizeDelta.mulDiv(weight, 1e12) / BPS;
+    uint256 _mintAmount = _sizeDelta.mulDiv(weight, 1e16); // 1e16 = (1e30 / 1e18) * BPS, optimized math
 
     _tlc.mint(address(this), _mintAmount);
     _tlc.approve(address(_tlcStaking), _mintAmount);
@@ -80,9 +80,8 @@ contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   }
 
   function setMarketWeight(uint256 _marketIndex, uint256 _weight) external onlyOwner {
-    uint256 oldWeight = marketWeights[_marketIndex];
+    emit LogSetMarketWeight(_marketIndex, marketWeights[_marketIndex], _weight);
     marketWeights[_marketIndex] = _weight;
-    emit LogSetMarketWeight(_marketIndex, oldWeight, _weight);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

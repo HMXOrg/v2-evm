@@ -4,6 +4,7 @@ forge-std/=lib/forge-std/src/
 pyth-sdk-solidity/=lib/pyth-sdk-solidity/
 @chainlink/=lib/chainlink/
 @solmate/=lib/solmate/src/
+@aperture-finance/uni-v3-lib/=lib/uni-v3-lib/src/
 
 @config/=config/default/
 @hmx/=src/

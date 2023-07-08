@@ -8,7 +8,7 @@ async function main() {
   console.log(`Deploying UnsafeEcoPythCalldataBuilder Contract`);
   const UnsafeEcoPythCalldataBuilder = await ethers.getContractFactory("UnsafeEcoPythCalldataBuilder", deployer);
   const unsafeEcoPythCalldataBuilder = await UnsafeEcoPythCalldataBuilder.deploy(
-    config.oracles.ecoPyth,
+    config.oracles.ecoPyth2,
     config.vendors.gmx.glpManager,
     config.tokens.sglp
   );

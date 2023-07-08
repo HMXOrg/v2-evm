@@ -1,25 +1,28 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers } from "hardhat";
 import { EcoPyth__factory } from "../../../../typechain";
-import { getConfig } from "../../utils/config";
-
-const config = getConfig();
-
-const inputs = [{ updater: "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872", isUpdater: true }];
+import { loadConfig } from "../../utils/config";
+import signers from "../../entities/signers";
 
 async function main() {
-  const deployer = (await ethers.getSigners())[0];
-  const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
+  const config = loadConfig(42161);
 
-  console.log("> EcoPyth Set Updaters...");
+  const inputs = [
+    { updater: config.handlers.bot, isUpdater: true },
+    { updater: config.handlers.crossMargin, isUpdater: true },
+    { updater: config.handlers.limitTrade, isUpdater: true },
+    { updater: config.handlers.liquidity, isUpdater: true },
+  ];
+
+  const deployer = signers.deployer(42161);
+  const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
+
+  console.log("[configs/EcoPyth] Set Updaters...");
   await (
     await ecoPyth.setUpdaters(
       inputs.map((each) => each.updater),
       inputs.map((each) => each.isUpdater)
     )
   ).wait();
-  console.log("> EcoPyth Set Updaters success!");
+  console.log("[configs/EcoPyth] Set Updaters success!");
 }
 main().catch((error) => {
   console.error(error);

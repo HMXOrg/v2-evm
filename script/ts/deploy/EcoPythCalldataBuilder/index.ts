@@ -7,7 +7,7 @@ async function main() {
 
   console.log(`Deploying EcoPythCalldataBuilder Contract`);
   const Contract = await ethers.getContractFactory("EcoPythCalldataBuilder", deployer);
-  const contract = await Contract.deploy(config.oracles.ecoPyth, config.vendors.gmx.glpManager, config.tokens.sglp);
+  const contract = await Contract.deploy(config.oracles.ecoPyth2, config.vendors.gmx.glpManager, config.tokens.sglp);
   await contract.deployed();
   console.log(`Deployed at: ${contract.address}`);
 

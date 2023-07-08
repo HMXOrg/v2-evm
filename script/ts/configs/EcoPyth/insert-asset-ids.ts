@@ -34,7 +34,7 @@ async function main() {
   const deployer = signers.deployer(42161);
   const config = loadConfig(42161);
 
-  const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
+  const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
   console.log("[EcoPyth] Inserting asset IDs...");
   const tx = await ecoPyth.insertAssetIds(assertIds);
   console.log(`[EcoPyth] Tx: ${tx.hash}`);

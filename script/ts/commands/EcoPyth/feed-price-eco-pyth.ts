@@ -13,7 +13,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const deployerAddress = await deployer.getAddress();
 
-  const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
+  const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
@@ -34,7 +34,10 @@ async function main(chainId: number) {
   console.log("Allow deployer to update price feeds...");
   await (await pyth.setUpdater(deployerAddress, true)).wait();
   console.log("Update price feeds...");
-  await (await pyth.updatePriceFeeds(priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas)).wait();
+  const tx = await (
+    await pyth.updatePriceFeeds(priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas)
+  ).wait();
+  console.log(`Done: ${tx.transactionHash}`);
   console.log("Disallow deployer to update price feeds...");
   await (await pyth.setUpdater(deployerAddress, false)).wait();
   console.log("Feed Price success!");

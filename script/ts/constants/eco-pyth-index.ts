@@ -21,6 +21,11 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0x2a01deaec9e51a579277b34b122399984d0bbf57e2458a7e42fecd2829867a0d", // ADAUSD
   "0x5de33a9112c2b700b8d30b8a3402c103578ccfa2765696471cc672bd5cf6ac52", // MATICUSD
   "0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744", // SUIUSD
+  "0x3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5", // ARBUSD
+  "0x385f64d993f7b77d8182ed5003d97c60aa3361f3cecfe711544d2d59165e9bdf", // OPUSD
+  "0x6e3f3fa8253588df9326580180233eb791e03b443a3ba7a1d892e73874e19a54", // LTCUSD
+  "0xfee33f2a978bf32dd6b662b65ba8083c6773b494f8401194ec1870c640860245", // COINUSD
+  "0xe65ff435be42630439c96396653a342829e877e2aafaeaf1a10d0ee5fd2cf3f2", // GOOGUSD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -42,6 +47,11 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("ADA"),
   ethers.utils.formatBytes32String("MATIC"),
   ethers.utils.formatBytes32String("SUI"),
+  ethers.utils.formatBytes32String("ARB"),
+  ethers.utils.formatBytes32String("OP"),
+  ethers.utils.formatBytes32String("LTC"),
+  ethers.utils.formatBytes32String("COIN"),
+  ethers.utils.formatBytes32String("GOOG"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -63,4 +73,9 @@ export const ecoPythHoomanReadableByIndex = [
   "ADA",
   "MATIC",
   "SUI",
+  "ARB",
+  "OP",
+  "LTC",
+  "COIN",
+  "GOOG",
 ];

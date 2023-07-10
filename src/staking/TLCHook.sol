@@ -10,7 +10,7 @@ import { ITradeService } from "../services/interfaces/ITradeService.sol";
 import { ITradingStaking } from "./interfaces/ITradingStaking.sol";
 import { TraderLoyaltyCredit } from "@hmx/tokens/TraderLoyaltyCredit.sol";
 import { TLCStaking } from "@hmx/staking/TLCStaking.sol";
-import { FullMath } from "../libraries/FullMath.sol";
+import { FullMath } from "@hmx/libraries/FullMath.sol";
 
 contract TLCHook is ITradeServiceHook, OwnableUpgradeable {
   using FullMath for uint256;

@@ -18,8 +18,6 @@ import { PythLib } from "@hmx/libraries/PythLib.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 
-import { console2 } from "forge-std/console2.sol";
-
 contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
   bytes32 internal constant GLP_ASSET_ID = 0x474c500000000000000000000000000000000000000000000000000000000000;
 

@@ -1,5 +1,7 @@
 {
   "proxyAdmin": "0x2E7983f9A1D08c57989eEA20adC9242321dA6589",
+  "timelock": "0xF3CcdE1c41bc4Bf1eA991cDcA3Eb595fd4921eEF",
+  "safe": "0x6409ba830719cd0fE27ccB3051DF1b399C90df4a",
   "storages": {
     "config": "0xF4F7123fFe42c4C90A4bCDD2317D397E0B7d7cc0",
     "perp": "0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303",
@@ -22,10 +24,12 @@
   },
   "oracles": {
     "ecoPyth": "0x06d35ecf6A2799f99482c6F15f146326Dd0FF1C6",
+    "ecoPyth2": "0x8dc6A40465128B20DC712C6B765a5171EF30bB7B",
     "pythAdapter": "0x34338314236df25220b55F90F7E8Fc30B620D242",
     "sglpStakedAdapter": "0x9F09b53ee28a93951fe546dEfB24C0f908eEda22",
     "middleware": "0x9c83e1046dA4727F05C6764c017C6E1757596592",
-    "ecoPythCalldataBuilder": "0x44E31321E748dDc768a019aee4c62c14E53424F1"
+    "ecoPythCalldataBuilder": "0x86508504B72aD65d565Fe75516Af2281a64ab664",
+    "unsafeEcoPythCalldataBuilder": "0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F"
   },
   "tokens": {
     "hlp": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",
@@ -60,7 +64,7 @@
   "staking": {
     "trading": "",
     "tlc": "",
-    "hlp": ""
+    "hlp": "0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C"
   },
-  "rewardDistributor": ""
+  "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D"
 }

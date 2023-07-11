@@ -1,4 +1,7 @@
 {
+  "proxyAdmin": "",
+  "timelock": "",
+  "safe": "",
   "storages": {
     "config": "0x439860Bea87C4De1757e30Cb4073578CE450Cbbd",
     "perp": "0x58120a4f1959D1670e84BBBc1C403e08cD152bae",
@@ -24,7 +27,8 @@
     "pythAdapter": "0x16450238B44856BBb050Fb77611f79b0dB2f1E37",
     "sglpStakedAdapter": "",
     "middleware": "0x0DbdfF9CeE7cA35C8bcd48B031f8C2aB274F4552",
-    "ecoPythCalldataBuilder": "0x2426028a97052D9A8Dc6ff9a3eb96d2AD587136B"
+    "ecoPythCalldataBuilder": "0x2426028a97052D9A8Dc6ff9a3eb96d2AD587136B",
+    "unsafeEcoPythCalldataBuilder": ""
   },
   "tokens": {
     "hlp": "0x9772cE382D33573850f029c56828dff7717b3282",

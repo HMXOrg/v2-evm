@@ -6,6 +6,7 @@ import {
   ecoPythHoomanReadableByIndex,
   ecoPythPriceFeedIdsByIndex,
 } from "../constants/eco-pyth-index";
+import { loadConfig } from "./config";
 
 function _priceToPriceE8(price: string, expo: number) {
   const targetBN = ethers.BigNumber.from(8);
@@ -25,8 +26,10 @@ export async function getUpdatePriceData(
   let hashedVaas = "";
 
   const table = [];
+  const chainId = (await provider.getNetwork()).chainId;
+  const config = loadConfig(chainId);
 
-  const MAX_PRICE_DIFF = 900_00;
+  const MAX_PRICE_DIFF = 1500_00;
   // https://xc-mainnet.pyth.network
   // https://xc-testnet.pyth.network
   const connection = new EvmPriceServiceConnection("https://xc-mainnet.pyth.network", {
@@ -80,7 +83,7 @@ export async function getUpdatePriceData(
         .join("")
   );
   const ecoPythCalldataBuilder = EcoPythCalldataBuilder__factory.connect(
-    "0x44E31321E748dDc768a019aee4c62c14E53424F1",
+    config.oracles.unsafeEcoPythCalldataBuilder,
     provider
   );
   const [minPublishedTime, priceUpdateData, publishTimeDiffUpdateData] = await ecoPythCalldataBuilder.build(buildData);

@@ -5,11 +5,11 @@ interface IReinvestNonHlpTokenStrategy {
   struct ExecuteParams {
     address token;
     uint256 amount;
-    uint256 minAmountOutMinUSD;
-    uint256 minAmountOutMinGlp;
+    uint256 minAmountOutUSD;
+    uint256 minAmountOutGlp;
   }
 
-  function execute() external;
+  function execute(ExecuteParams[] calldata _params) external;
 
   function setWhiteListExecutor(address _executor, bool _active) external;
 

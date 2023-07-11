@@ -9,6 +9,58 @@ const inputs = [
     assetId: ethers.utils.formatBytes32String("ETH"),
     status: 2,
   },
+  {
+    assetId: ethers.utils.formatBytes32String("BTC"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("AAPL"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("JPY"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("XAU"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("AMZN"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("TSLA"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("EUR"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("XAG"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("AUD"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("GBP"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("ADA"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("MATIC"),
+    status: 2,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("SUI"),
+    status: 2,
+  },
 ];
 
 async function main() {

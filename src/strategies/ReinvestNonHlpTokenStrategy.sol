@@ -43,18 +43,12 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
   event SetMinTvlBPS(uint16 _oldMinTvlBps, uint16 _newMinTvlBps);
   event SetWhitelistExecutor(address indexed _account, bool _active);
 
-  struct ExecuteParams {
-    address token;
-    uint256 amount;
-    uint256 minAmountOutMinUSD;
-    uint256 minAmountOutMinGlp;
-  }
-
   modifier onlyWhitelist() {
     // if not whitelist
-    if (whitelistExecutors[msg.sender] == 1) {
+    if (!whitelistExecutors[msg.sender]) {
       revert ReinvestNonHlpTokenStrategy_OnlyWhitelist();
     }
+    _;
   }
 
   function initialize(
@@ -75,7 +69,7 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
     calculator = ICalculator(_calculator);
     treasury = _treasury;
     strategyBPS = _strategyBPS;
-    minTvlBPS = _minTvlBps;
+    minTvlBPS = _minTvlBPS;
   }
 
   function setWhiteListExecutor(address _executor, bool _active) external onlyOwner {
@@ -112,7 +106,7 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
 
   /// @dev when depositing ETH, just input the msg.value() and leave _token & _amount empty
   ///      NOTE If msg.value is not ZERO, will automatically reinvest in ETH with msg.value
-  function execute(ExecuteParams[] _params) external onlyWhitelist {
+  function execute(ExecuteParams[] calldata _params) external onlyWhitelist {
     // SLOADS, gas opt.
     IERC20Upgradeable _sglp = sglp;
     IVaultStorage _vaultStorage = vaultStorage;
@@ -121,29 +115,38 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
 
     uint256 hlpValueBefore = _calculator.getHLPValueE30(true);
     for (uint256 i = 0; i < _params.length; ) {
-      if (_params[i].token == address(0) || _param[i].amount == 0) {
+      // ignore if either value is zero
+      if (_params[i].token == address(0) || _params[i].amount == 0) {
         continue;
       }
       IERC20Upgradeable _token = IERC20Upgradeable(_params[i].token);
       {
-        // Reinvest to GLP
         uint256 strategyFee = (_params[i].amount * strategyBPS) / BPS;
         uint256 realizedAmount = _params[i].amount - strategyFee;
-        _token.approve(address(glpManager), realizedAmount);
-        _rewardRouter.mintAndStakeGlp(
+        // Cook
+        bytes memory _calldata = abi.encodeWithSelector(
+          IGmxRewardRouterV2.mintAndStakeGlp.selector,
           address(_token),
           realizedAmount,
           _params[i].minAmountOutUSD,
           _params[i].minAmountOutGlp
         );
-      }
-      // Settle
-      uint256 sGlpBalance = _sglp.balanceOf(address(this));
-      _token.safeTransfer(treasury, ststrategyFee);
+        // Reinvest to GLP
+        _token.approve(address(glpManager), realizedAmount);
+        _vaultStorage.cook(address(_token), address(_rewardRouter), _calldata);
+        // _rewardRouter.mintAndStakeGlp(
+        //   address(_token),
+        //   realizedAmount,
+        //   _params[i].minAmountOutUSD,
+        //   _params[i].minAmountOutGlp
+        // );
 
+        // Settle
+        _token.safeTransfer(treasury, strategyFee);
+      }
       // Update accounting.
       _vaultStorage.pullToken(address(_sglp));
-      _vaultStorage.addHLPLiquidity(address(_sglp), sGlpBalance);
+      _vaultStorage.addHLPLiquidity(address(_sglp), _sglp.balanceOf(address(this)));
       unchecked {
         ++i;
       }

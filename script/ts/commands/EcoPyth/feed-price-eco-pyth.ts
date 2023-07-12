@@ -6,6 +6,7 @@ import { loadConfig } from "../../utils/config";
 import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
+import { refreshAssetIds } from "../../utils/hmx-api";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
@@ -30,6 +31,9 @@ async function main(chainId: number) {
       return;
   }
 
+  console.log("Refreshing Asset Ids at HMX API...");
+  await refreshAssetIds(chainId);
+  console.log("Success!");
   console.log("Feed Price...");
   console.log("Allow deployer to update price feeds...");
   await (await pyth.setUpdater(deployerAddress, true)).wait();

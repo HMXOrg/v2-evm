@@ -35,7 +35,7 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
   modifier onlyWhitelist() {
     // if not whitelist
     if (!whitelistExecutors[msg.sender]) {
-      revert ReinvestNonHlpTokenStrategy_OnlyWhitelist();
+      revert ReinvestNonHlpTokenStrategy_OnlyWhitelisted();
     }
     _;
   }
@@ -112,25 +112,17 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
     uint256 _minAmountOutGlp
   ) internal returns (uint256 receivedGlp) {
     // declare struct to pass to vaultStorage.cook()
-    IVaultStorage.CookParams[] memory cookParams = new IVaultStorage.CookParams[](3);
+    IVaultStorage.CookParams[] memory cookParams = new IVaultStorage.CookParams[](2);
     IERC20Upgradeable _sglp = sglp;
     // SLOAD
     IVaultStorage _vaultStorage = vaultStorage;
-
-    // prepare bytes data and push it to array of CookParams[]
-    bytes memory _calldataApproveVault = abi.encodeWithSelector(
-      IERC20Upgradeable.approve.selector,
-      address(_vaultStorage),
-      _amount
-    );
-    cookParams[0] = IVaultStorage.CookParams(_token, _token, _calldataApproveVault);
 
     bytes memory _calldataApproveGlpManager = abi.encodeWithSelector(
       IERC20Upgradeable.approve.selector,
       address(glpManager),
       _amount
     );
-    cookParams[1] = IVaultStorage.CookParams(_token, _token, _calldataApproveGlpManager);
+    cookParams[0] = IVaultStorage.CookParams(_token, _token, _calldataApproveGlpManager);
 
     bytes memory _calldataMintAndStake = abi.encodeWithSelector(
       IGmxRewardRouterV2.mintAndStakeGlp.selector,
@@ -139,10 +131,10 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
       _minAmountOutUSD,
       _minAmountOutGlp
     );
-    cookParams[2] = IVaultStorage.CookParams(_token, address(rewardRouter), _calldataMintAndStake);
+    cookParams[1] = IVaultStorage.CookParams(_token, address(rewardRouter), _calldataMintAndStake);
     // cook! execute all func.
     bytes[] memory returnData = _vaultStorage.cook(cookParams);
-    receivedGlp = abi.decode(returnData[2], (uint256));
+    receivedGlp = abi.decode(returnData[cookParams.length - 1], (uint256));
     // update accounting
     _vaultStorage.pullToken(_token);
     _vaultStorage.removeHLPLiquidity(_token, _amount);

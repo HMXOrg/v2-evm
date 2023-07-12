@@ -19,7 +19,7 @@ interface IWithdrawGlpStrategy {
     uint256 minOut;
   }
 
-  function execute(ExecuteParams[] calldata params) external returns (uint256 receivedGlp);
+  function execute(ExecuteParams[] calldata params) external;
 
   function setWhiteListExecutor(address executor, bool active) external;
 }

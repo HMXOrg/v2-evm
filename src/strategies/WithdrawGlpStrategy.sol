@@ -68,7 +68,7 @@ contract WithdrawGlpStrategy is OwnableUpgradeable, IWithdrawGlpStrategy {
     minTvlBPS = _newMinTvlBps;
   }
 
-  function execute(ExecuteParams[] calldata _params) external onlyWhitelist returns (uint256 amountOut) {
+  function execute(ExecuteParams[] calldata _params) external onlyWhitelist {
     if (_params.length == 0) revert WithdrawGlpStrategy_ParamsIsEmpty();
 
     // SLOAD
@@ -91,7 +91,7 @@ contract WithdrawGlpStrategy is OwnableUpgradeable, IWithdrawGlpStrategy {
         address(glpManager),
         _params[i].glpAmount
       );
-      cookParams[0] = IVaultStorage.CookParams(_params[i].token, address(_sglp), _calldataApproveGlpManager);
+      cookParams[0] = IVaultStorage.CookParams(address(_sglp), address(_sglp), _calldataApproveGlpManager);
 
       bytes memory _callData = abi.encodeWithSelector(
         IGmxRewardRouterV2.unstakeAndRedeemGlp.selector,
@@ -105,7 +105,6 @@ contract WithdrawGlpStrategy is OwnableUpgradeable, IWithdrawGlpStrategy {
       // withdraw sGLP from GMX
       bytes[] memory returnData = vaultStorage.cook(cookParams);
       uint256 receivedAmount = abi.decode(returnData[cookParams.length - 1], (uint256));
-      amountOut += receivedAmount;
 
       // update accounting
       _vaultStorage.pullToken(address(_sglp));
@@ -122,7 +121,6 @@ contract WithdrawGlpStrategy is OwnableUpgradeable, IWithdrawGlpStrategy {
       // math opt.
       if ((diffHlp * BPS) >= (minTvlBPS * hlpValueBefore)) revert WithdrawGlpStrategy_HlpTvlDropExceedMin();
     }
-    return amountOut;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

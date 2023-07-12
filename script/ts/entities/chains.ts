@@ -23,5 +23,6 @@ export default {
     name: "arbitrum_goerli",
     rpc: process.env.ARBITRUM_GOERLI_RPC,
     jsonRpcProvider: new ethers.providers.JsonRpcProvider(process.env.ARBITRUM_GOERLI_RPC),
+    safeTxServiceUrl: "https://safe-transaction-arbitrum.safe.global/",
   },
 } as { [chainId: number]: ChainEntity };

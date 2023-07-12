@@ -17,13 +17,7 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpTokenStrategy {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
-  error ReinvestNonHlpTokenStrategy_OnlyWhitelist();
-  error ReinvestNonHlpTokenStrategy_AddressIsZero();
-  error ReinvestNonHlpTokenStrategy_AmountIsZero();
-  error ReinvestNonHlpTokenStrategy_HlpTvlDropExceedMin();
-
   IERC20Upgradeable public sglp;
-
   ICalculator public calculator;
 
   IVaultStorage public vaultStorage;
@@ -32,14 +26,9 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
 
   mapping(address => bool) public whitelistExecutors;
 
-  address public treasury;
-
-  uint16 public strategyBPS;
   uint16 public minTvlBPS;
   uint16 public constant BPS = 100_00;
 
-  event SetTreasury(address _oldTreasury, address _newTreasury);
-  event SetStrategyBPS(uint16 _oldStrategyBps, uint16 _newStrategyBps);
   event SetMinTvlBPS(uint16 _oldMinTvlBps, uint16 _newMinTvlBps);
   event SetWhitelistExecutor(address indexed _account, bool _active);
 
@@ -57,8 +46,6 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
     address _vaultStorage,
     address _glpManager,
     address _calculator,
-    address _treasury,
-    uint16 _strategyBPS,
     uint16 _minTvlBPS
   ) external initializer {
     __Ownable_init();
@@ -67,8 +54,6 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
     vaultStorage = IVaultStorage(_vaultStorage);
     glpManager = IGmxGlpManager(_glpManager);
     calculator = ICalculator(_calculator);
-    treasury = _treasury;
-    strategyBPS = _strategyBPS;
     minTvlBPS = _minTvlBPS;
   }
 
@@ -80,81 +65,89 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
     emit SetWhitelistExecutor(_executor, _active);
   }
 
-  function setStrategyBPS(uint16 _newStrategyBps) external onlyOwner {
-    if (_newStrategyBps == 0) {
-      revert ReinvestNonHlpTokenStrategy_AmountIsZero();
-    }
-    emit SetStrategyBPS(strategyBPS, _newStrategyBps);
-    strategyBPS = _newStrategyBps;
-  }
-
-  function setMinTvlBPS(uint16 _oldMinTvlBps, uint16 _newMinTvlBps) external onlyOwner {
+  function setMinTvlBPS(uint16 _newMinTvlBps) external onlyOwner {
     if (_newMinTvlBps == 0) {
       revert ReinvestNonHlpTokenStrategy_AmountIsZero();
     }
-    emit SetMinTvlBPS(_oldMinTvlBps, _newMinTvlBps);
+    emit SetMinTvlBPS(minTvlBPS, _newMinTvlBps);
     minTvlBPS = _newMinTvlBps;
   }
 
-  function setTreasury(address _newTreasury) external onlyOwner {
-    if (_newTreasury == address(0)) {
-      revert ReinvestNonHlpTokenStrategy_AddressIsZero();
-    }
-    emit SetTreasury(treasury, _newTreasury);
-    treasury = _newTreasury;
-  }
-
-  /// @dev when depositing ETH, just input the msg.value() and leave _token & _amount empty
-  ///      NOTE If msg.value is not ZERO, will automatically reinvest in ETH with msg.value
-  function execute(ExecuteParams[] calldata _params) external onlyWhitelist {
+  function execute(ExecuteParams[] calldata _params) external onlyWhitelist returns (uint256 receivedGlp) {
+    if (_params.length == 0) revert ReinvestNonHlpTokenStrategy_ParamsIsEmpty();
     // SLOADS, gas opt.
-    IERC20Upgradeable _sglp = sglp;
-    IVaultStorage _vaultStorage = vaultStorage;
-    IGmxRewardRouterV2 _rewardRouter = rewardRouter;
     ICalculator _calculator = calculator;
 
     uint256 hlpValueBefore = _calculator.getHLPValueE30(true);
+    receivedGlp = 0;
     for (uint256 i = 0; i < _params.length; ) {
       // ignore if either value is zero
       if (_params[i].token == address(0) || _params[i].amount == 0) {
         continue;
       }
+      // declare token
       IERC20Upgradeable _token = IERC20Upgradeable(_params[i].token);
-      {
-        uint256 strategyFee = (_params[i].amount * strategyBPS) / BPS;
-        uint256 realizedAmount = _params[i].amount - strategyFee;
-        // Cook
-        bytes memory _calldata = abi.encodeWithSelector(
-          IGmxRewardRouterV2.mintAndStakeGlp.selector,
-          address(_token),
-          realizedAmount,
-          _params[i].minAmountOutUSD,
-          _params[i].minAmountOutGlp
-        );
-        // Reinvest to GLP
-        _token.approve(address(glpManager), realizedAmount);
-        _vaultStorage.cook(address(_token), address(_rewardRouter), _calldata);
-        // _rewardRouter.mintAndStakeGlp(
-        //   address(_token),
-        //   realizedAmount,
-        //   _params[i].minAmountOutUSD,
-        //   _params[i].minAmountOutGlp
-        // );
-
-        // Settle
-        _token.safeTransfer(treasury, strategyFee);
-      }
-      // Update accounting.
-      _vaultStorage.pullToken(address(_sglp));
-      _vaultStorage.addHLPLiquidity(address(_sglp), _sglp.balanceOf(address(this)));
+      // cook
+      receivedGlp += _cookAtVaultStorage(
+        address(_token),
+        _params[i].amount,
+        _params[i].minAmountOutUSD,
+        _params[i].minAmountOutGlp
+      );
       unchecked {
         ++i;
       }
     }
-    uint256 hlpValueAfter = _calculator.getHLPValueE30(true);
-    if (((hlpValueBefore - hlpValueAfter) * 1e8) < (minTvlBPS * hlpValueBefore)) {
-      revert ReinvestNonHlpTokenStrategy_HlpTvlDropExceedMin();
+    if (_calculator.getHLPValueE30(true) < hlpValueBefore) {
+      uint256 diffHlp = hlpValueBefore - _calculator.getHLPValueE30(true);
+      // math opt.
+      if ((diffHlp * BPS) >= (minTvlBPS * hlpValueBefore)) revert ReinvestNonHlpTokenStrategy_HlpTvlDropExceedMin();
     }
+  }
+
+  function _cookAtVaultStorage(
+    address _token,
+    uint256 _amount,
+    uint256 _minAmountOutUSD,
+    uint256 _minAmountOutGlp
+  ) internal returns (uint256 receivedGlp) {
+    // declare struct to pass to vaultStorage.cook()
+    IVaultStorage.CookParams[] memory cookParams = new IVaultStorage.CookParams[](3);
+    IERC20Upgradeable _sglp = sglp;
+    // SLOAD
+    IVaultStorage _vaultStorage = vaultStorage;
+
+    // prepare bytes data and push it to array of CookParams[]
+    bytes memory _calldataApproveVault = abi.encodeWithSelector(
+      IERC20Upgradeable.approve.selector,
+      address(_vaultStorage),
+      _amount
+    );
+    cookParams[0] = IVaultStorage.CookParams(_token, _token, _calldataApproveVault);
+
+    bytes memory _calldataApproveGlpManager = abi.encodeWithSelector(
+      IERC20Upgradeable.approve.selector,
+      address(glpManager),
+      _amount
+    );
+    cookParams[1] = IVaultStorage.CookParams(_token, _token, _calldataApproveGlpManager);
+
+    bytes memory _calldataMintAndStake = abi.encodeWithSelector(
+      IGmxRewardRouterV2.mintAndStakeGlp.selector,
+      _token,
+      _amount,
+      _minAmountOutUSD,
+      _minAmountOutGlp
+    );
+    cookParams[2] = IVaultStorage.CookParams(_token, address(rewardRouter), _calldataMintAndStake);
+    // cook! execute all func.
+    bytes[] memory returnData = _vaultStorage.cook(cookParams);
+    receivedGlp = uint256(bytes32(returnData[2]));
+    // update accounting
+    _vaultStorage.pullToken(_token);
+    _vaultStorage.removeHLPLiquidity(_token, _amount);
+    _vaultStorage.pullToken(address(_sglp));
+    _vaultStorage.addHLPLiquidity(address(_sglp), receivedGlp);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

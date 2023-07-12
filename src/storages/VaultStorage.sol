@@ -543,8 +543,19 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
       if (!strategyFunctionAllowExecutes[_params[i].token][_params[i].target][functionSig])
         revert IVaultStorage_Forbidden();
 
+      uint256 balanceTokenBefore = IERC20Upgradeable(_params[i].token).balanceOf(address(this));
+
       (bool _success, bytes memory _returnData) = _params[i].target.call(_params[i].callData);
       require(_success, _getRevertMsg(_returnData));
+
+      uint256 balanceTokenAfter = IERC20Upgradeable(_params[i].token).balanceOf(address(this));
+
+      if (balanceTokenAfter > balanceTokenBefore) {
+        totalAmount[_params[i].token] += balanceTokenAfter - balanceTokenBefore;
+      } else if (balanceTokenAfter < balanceTokenBefore) {
+        totalAmount[_params[i].token] -= balanceTokenBefore - balanceTokenAfter;
+      }
+
       returnData[i] = _returnData;
       unchecked {
         ++i;

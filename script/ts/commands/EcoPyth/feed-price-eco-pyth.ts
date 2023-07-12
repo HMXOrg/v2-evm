@@ -6,13 +6,14 @@ import { loadConfig } from "../../utils/config";
 import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
-import { refreshAssetIds } from "../../utils/hmx-api";
+import HMXAPIWrapper from "../../wrappers/HMXAPIWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
   const deployer = signers.deployer(chainId);
   const deployerAddress = await deployer.getAddress();
+  const hmxApi = new HMXAPIWrapper(chainId);
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
 
@@ -32,7 +33,7 @@ async function main(chainId: number) {
   }
 
   console.log("Refreshing Asset Ids at HMX API...");
-  await refreshAssetIds(chainId);
+  await hmxApi.refreshAssetIds();
   console.log("Success!");
   console.log("Feed Price...");
   console.log("Allow deployer to update price feeds...");

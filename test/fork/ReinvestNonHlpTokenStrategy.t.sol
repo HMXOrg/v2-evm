@@ -6,7 +6,6 @@ pragma solidity 0.8.18;
 
 import "forge-std/console.sol";
 import { GlpStrategy_Base } from "./GlpStrategy_Base.t.fork.sol";
-import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
 import { IReinvestNonHlpTokenStrategy } from "@hmx/strategies/interfaces/IReinvestNonHlpTokenStrategy.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
@@ -22,8 +21,6 @@ contract ReinvestNonHlpTokenStrategy is GlpStrategy_Base {
     deal(usdcAddress, address(vaultStorage), 10000 * 1e6);
     vaultStorage.pullToken(usdcAddress);
     vaultStorage.addHLPLiquidity(usdcAddress, 10000 * 1e6);
-    IERC20Upgradeable(usdcAddress).approve(address(reinvestStrategy), type(uint256).max);
-    IERC20Upgradeable(wethAddress).approve(address(reinvestStrategy), type(uint256).max);
   }
 
   function testCorrectness_ReinvestSuccess() external {
@@ -35,10 +32,9 @@ contract ReinvestNonHlpTokenStrategy is GlpStrategy_Base {
 
     uint256 usdcBefore = vaultStorage.hlpLiquidity(usdcAddress);
     uint256 wethBefore = vaultStorage.hlpLiquidity(wethAddress);
-
     uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
+
     uint256 receivedGlp = reinvestStrategy.execute(params);
-    uint256 sGlpAfter = vaultStorage.hlpLiquidity(address(sglp));
 
     // USDC
     assertEq(vaultStorage.hlpLiquidity(usdcAddress), usdcBefore - usdcAmount);
@@ -47,7 +43,7 @@ contract ReinvestNonHlpTokenStrategy is GlpStrategy_Base {
     assertEq(vaultStorage.hlpLiquidity(wethAddress), wethBefore - wethAmount);
     assertEq(vaultStorage.hlpLiquidity(wethAddress), vaultStorage.totalAmount(wethAddress));
     // sGLP
-    assertEq(receivedGlp, sGlpAfter - sGlpBefore);
+    assertEq(receivedGlp, vaultStorage.hlpLiquidity(address(sglp)) - sGlpBefore);
   }
 
   function testRevert_ReinvestEmptyParams() external {

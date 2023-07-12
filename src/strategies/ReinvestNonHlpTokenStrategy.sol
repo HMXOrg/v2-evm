@@ -142,7 +142,7 @@ contract ReinvestNonHlpTokenStrategy is OwnableUpgradeable, IReinvestNonHlpToken
     cookParams[2] = IVaultStorage.CookParams(_token, address(rewardRouter), _calldataMintAndStake);
     // cook! execute all func.
     bytes[] memory returnData = _vaultStorage.cook(cookParams);
-    receivedGlp = uint256(bytes32(returnData[2]));
+    receivedGlp = abi.decode(returnData[2], (uint256));
     // update accounting
     _vaultStorage.pullToken(_token);
     _vaultStorage.removeHLPLiquidity(_token, _amount);

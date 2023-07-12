@@ -5,7 +5,7 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 
 interface IReinvestNonHlpTokenStrategy {
   // error
-  error ReinvestNonHlpTokenStrategy_OnlyWhitelist();
+  error ReinvestNonHlpTokenStrategy_OnlyWhitelisted();
   error ReinvestNonHlpTokenStrategy_AddressIsZero();
   error ReinvestNonHlpTokenStrategy_AmountIsZero();
   error ReinvestNonHlpTokenStrategy_HlpTvlDropExceedMin();

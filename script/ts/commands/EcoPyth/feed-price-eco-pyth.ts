@@ -6,7 +6,7 @@ import { loadConfig } from "../../utils/config";
 import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
-import HMXAPIWrapper from "../../wrappers/HMXAPIWrapper";
+import HMXAPIWrapper from "../../wrappers/HMXApiWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);

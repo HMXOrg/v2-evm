@@ -28,6 +28,7 @@ import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
+import { IReinvestNonHlpTokenStrategy } from "@hmx/strategies/interfaces/IReinvestNonHlpTokenStrategy.sol";
 
 // GMX
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
@@ -148,6 +149,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   IStakedGlpStrategy stakedGlpStrategy;
   IConvertedGlpStrategy convertedGlpStrategy;
+  IReinvestNonHlpTokenStrategy reinvestStrategy;
 
   /* Testers */
   LiquidityTester liquidityTester;
@@ -169,6 +171,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     {
       stakedGlpStrategy.setWhiteListExecutor(address(keeper), true);
       convertedGlpStrategy.setWhiteListExecutor(address(crossMarginService), true);
+      reinvestStrategy.setWhiteListExecutor(address(this), true);
     }
 
     // Config
@@ -188,6 +191,8 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       vaultStorage.setServiceExecutors(address(crossMarginService), true);
       vaultStorage.setServiceExecutors(address(stakedGlpStrategy), true);
       vaultStorage.setServiceExecutors(address(convertedGlpStrategy), true);
+      vaultStorage.setServiceExecutors(address(reinvestStrategy), true);
+      vaultStorage.setServiceExecutors(address(this), true);
 
       vaultStorage.setStrategyAllowance(address(sglp), address(stakedGlpStrategy), address(rewardTracker));
 
@@ -198,10 +203,32 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
         address(stakedGlpStrategy),
         IGmxRewardTracker.claim.selector
       );
+
       vaultStorage.setStrategyFunctionSigAllowance(
         address(sglp),
         address(convertedGlpStrategy),
         IGmxRewardRouterV2.unstakeAndRedeemGlp.selector
+      );
+
+      vaultStorage.setStrategyFunctionSigAllowance(
+        address(sglp),
+        address(reinvestStrategy),
+        IGmxRewardRouterV2.mintAndStakeGlp.selector
+      );
+
+      vaultStorage.setStrategyFunctionAllowExecutes(usdcAddress, usdcAddress, IERC20Upgradeable.approve.selector, true);
+      vaultStorage.setStrategyFunctionAllowExecutes(wethAddress, wethAddress, IERC20Upgradeable.approve.selector, true);
+      vaultStorage.setStrategyFunctionAllowExecutes(
+        usdcAddress,
+        address(rewardRouter),
+        IGmxRewardRouterV2.mintAndStakeGlp.selector,
+        true
+      );
+      vaultStorage.setStrategyFunctionAllowExecutes(
+        wethAddress,
+        address(rewardRouter),
+        IGmxRewardRouterV2.mintAndStakeGlp.selector,
+        true
       );
 
       perpStorage.setServiceExecutors(address(liquidityService), true);
@@ -303,6 +330,17 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     // convertedGlp strategy
     convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(address(proxyAdmin), sglp, rewardRouter, vaultStorage);
 
+    // reinvest non-hlp token strategy
+    reinvestStrategy = Deployer.deployReinvestNonHlpTokenStrategy(
+      address(proxyAdmin),
+      address(sglp),
+      address(rewardRouter),
+      address(vaultStorage),
+      address(glpManager),
+      address(calculator),
+      1000
+    );
+
     //deploy liquidityService
     liquidityService = Deployer.deployLiquidityService(
       address(proxyAdmin),
@@ -355,9 +393,10 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     );
 
     // Add glp as a liquidity token
-    address[] memory _tokens = new address[](2);
+    address[] memory _tokens = new address[](3);
     _tokens[0] = address(sGlpAddress);
     _tokens[1] = address(usdc);
+    _tokens[2] = wethAddress;
 
     IConfigStorage.HLPTokenConfig[] memory _hlpTokenConfig = new IConfigStorage.HLPTokenConfig[](_tokens.length);
 
@@ -368,6 +407,11 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     });
     _hlpTokenConfig[1] = _buildAcceptedHLPTokenConfig({
       _targetWeight: 0.05 * 1e18,
+      _bufferLiquidity: 0,
+      _maxWeightDiff: 0.95 * 1e18
+    });
+    _hlpTokenConfig[2] = _buildAcceptedHLPTokenConfig({
+      _targetWeight: 0,
       _bufferLiquidity: 0,
       _maxWeightDiff: 0.95 * 1e18
     });
@@ -449,11 +493,11 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       AssetPythPriceData({
         assetId: ethAssetId,
         priceId: ethAssetId,
-        price: 1 * 1e8,
+        price: 1889.82 * 1e8,
         exponent: -8,
         inverse: false,
         conf: 0,
-        tickPrice: 0
+        tickPrice: 75446
       })
     );
     AssetPythPriceData memory _data;

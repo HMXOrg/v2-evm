@@ -186,6 +186,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       configStorage.setHLP(address(hlpV2));
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
+      // NOTE: change to rebalanceHandler later.
       configStorage.setServiceExecutor(address(rebalanceHLPService), address(crossMarginHandler), true);
     }
 

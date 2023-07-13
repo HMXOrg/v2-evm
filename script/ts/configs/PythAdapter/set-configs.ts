@@ -2,38 +2,24 @@ import { ethers } from "ethers";
 import { PythAdapter__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
+import { Command } from "commander";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("ARB"),
-    pythPriceId: ethers.utils.formatBytes32String("ARB"),
+    assetId: ethers.utils.formatBytes32String("BNB"),
+    pythPriceId: ethers.utils.formatBytes32String("BNB"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("OP"),
-    pythPriceId: ethers.utils.formatBytes32String("OP"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("LTC"),
-    pythPriceId: ethers.utils.formatBytes32String("LTC"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("COIN"),
-    pythPriceId: ethers.utils.formatBytes32String("COIN"),
-    inverse: false,
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("GOOG"),
-    pythPriceId: ethers.utils.formatBytes32String("GOOG"),
+    assetId: ethers.utils.formatBytes32String("SOL"),
+    pythPriceId: ethers.utils.formatBytes32String("SOL"),
     inverse: false,
   },
 ];
 
-async function main() {
-  const config = loadConfig(42161);
-  const deployer = signers.deployer(42161);
+async function main(chainId: number) {
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
 
   console.log("[PythAdapter] Setting configs...");
@@ -46,7 +32,14 @@ async function main() {
   console.log(`[PythAdapter] Tx: ${tx.hash}`);
   console.log("[PythAdapter] Finished");
 }
-main().catch((error) => {
+
+const program = new Command();
+
+program.requiredOption("--chain-id <chainId>", "chain id", parseInt);
+
+const opts = program.parse(process.argv).opts();
+
+main(opts.chainId).catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

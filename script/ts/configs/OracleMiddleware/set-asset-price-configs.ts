@@ -2,43 +2,26 @@ import { ethers } from "ethers";
 import { OracleMiddleware__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
+import { Command } from "commander";
 
-async function main() {
-  const config = loadConfig(42161);
+async function main(chainId: number) {
+  const config = loadConfig(chainId);
   const assetConfigs = [
     {
-      assetId: ethers.utils.formatBytes32String("ARB"),
+      assetId: ethers.utils.formatBytes32String("BNB"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,
     },
     {
-      assetId: ethers.utils.formatBytes32String("OP"),
+      assetId: ethers.utils.formatBytes32String("SOL"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
-      adapter: config.oracles.pythAdapter,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("LTC"),
-      confidenceThreshold: 0,
-      trustPriceAge: 60 * 5, // 5 minutes
-      adapter: config.oracles.pythAdapter,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("COIN"),
-      confidenceThreshold: 0,
-      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
-      adapter: config.oracles.pythAdapter,
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("GOOG"),
-      confidenceThreshold: 0,
-      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
       adapter: config.oracles.pythAdapter,
     },
   ];
 
-  const deployer = signers.deployer(42161);
+  const deployer = signers.deployer(chainId);
   const oracle = OracleMiddleware__factory.connect(config.oracles.middleware, deployer);
 
   console.log("[OracleMiddleware] Setting asset price configs...");
@@ -52,7 +35,16 @@ async function main() {
   await tx.wait(1);
   console.log("[OracleMiddleware] Finished");
 }
-main().catch((error) => {
+
+const prog = new Command();
+
+prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
+
+prog.parse(process.argv);
+
+const opts = prog.opts();
+
+main(opts.chainId).catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

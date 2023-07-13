@@ -6,14 +6,14 @@ import { loadConfig } from "../../utils/config";
 import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
-import HMXAPIWrapper from "../../wrappers/HMXApiWrapper";
+import HmxApiWrapper from "../../wrappers/HmxApiWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
   const deployer = signers.deployer(chainId);
   const deployerAddress = await deployer.getAddress();
-  const hmxApi = new HMXAPIWrapper(chainId);
+  const hmxApi = new HmxApiWrapper(chainId);
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
 

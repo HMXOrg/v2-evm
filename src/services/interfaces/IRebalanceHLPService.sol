@@ -11,9 +11,6 @@ interface IRebalanceHLPService {
   // error
   error RebalanceHLPService_OnlyWhitelisted();
   error RebalanceHLPService_AddressIsZero();
-  error RebalanceHLPService_AmountIsZero();
-  error RebalanceHLPService_HlpTvlDropExceedMin();
-  error RebalanceHLPService_ParamsIsEmpty();
 
   /// @param token: the address of ERC20 token that will be converted into GLP.
   /// @param amount: the amount of token to convert to GLP.

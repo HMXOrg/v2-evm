@@ -7,6 +7,7 @@ interface IExt01Handler {
   /**
    * Errors
    */
+  error IExt01Handler_BadAddress();
   error IExt01Handler_BadAmount();
   error IExt01Handler_BadOrderType();
   error IExt01Handler_InsufficientExecutionFee();

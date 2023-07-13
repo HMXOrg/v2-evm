@@ -45,6 +45,20 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     uint256 minToAmount,
     bytes data
   );
+  event LogSetCrossMarginService(
+    CrossMarginService indexed prevCrossMarginService,
+    CrossMarginService indexed newCrossMarginService
+  );
+  event LogSetLiquidationService(
+    LiquidationService indexed oldLiquidationService,
+    LiquidationService newLiquidationService
+  );
+  event LogSetLiquidityService(LiquidityService indexed oldLiquidityService, LiquidityService newLiquidityService);
+  event LogMaxExecutionChuck(uint256 prevMaxExecutionChuck, uint256 newMaxExecutionChuck);
+  event LogSetMinExecutionFee(uint24 indexed orderType, uint256 prevMinExecutionFee, uint256 newMinExecutionFee);
+  event LogSetOrderExecutor(address indexed executor, bool prevIsAllow, bool isAllow);
+  event LogSetPyth(IEcoPyth indexed prevPyth, IEcoPyth indexed newPyth);
+  event LogSetTradeService(TradeService indexed oldTradeService, TradeService newTradeService);
   event LogExecuteOrderResult(
     uint256 indexed orderId,
     uint24 orderType,
@@ -398,5 +412,87 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   /// @notice Validate only accepted collateral tokens
   function _revertOnNotAcceptedCollateral(address _token) internal view {
     ConfigStorage(CrossMarginService(crossMarginService).configStorage()).validateAcceptedCollateral(_token);
+  }
+
+  /*
+   * Setters
+   */
+
+  /// @notice Sets a new CrossMarginService contract address.
+  /// @param _crossMarginService The new CrossMarginService contract address.
+  function setCrossMarginService(address _crossMarginService) external onlyOwner {
+    if (_crossMarginService == address(0)) revert IExt01Handler_BadAddress();
+    emit LogSetCrossMarginService(crossMarginService, CrossMarginService(_crossMarginService));
+    crossMarginService = CrossMarginService(_crossMarginService);
+
+    // Sanity check
+    crossMarginService.vaultStorage();
+  }
+
+  /// @notice Set a new LiquidationService
+  /// @param _liquidationService The new LiquidationService contract address.
+  function setLiquidationService(address _liquidationService) external onlyOwner {
+    if (_liquidationService == address(0)) revert IExt01Handler_BadAddress();
+    emit LogSetLiquidationService(liquidationService, LiquidationService(_liquidationService));
+    liquidationService = LiquidationService(_liquidationService);
+
+    // Sanity check
+    liquidationService.vaultStorage();
+  }
+
+  /// @notice Set a new LiquidityService
+  /// @param _liquidityService The new LiquidityService contract address.
+  function setLiquidityService(address _liquidityService) external onlyOwner {
+    if (_liquidityService == address(0)) revert IExt01Handler_BadAddress();
+    emit LogSetLiquidityService(liquidityService, LiquidityService(_liquidityService));
+    liquidityService = LiquidityService(_liquidityService);
+
+    // Sanity check
+    liquidityService.vaultStorage();
+  }
+
+  /// @notice Set a new TradeService
+  /// @param _tradeService The new TradeService contract address.
+  function setTradeService(address _tradeService) external onlyOwner {
+    if (_tradeService == address(0)) revert IExt01Handler_BadAddress();
+    emit LogSetTradeService(tradeService, TradeService(_tradeService));
+    tradeService = TradeService(_tradeService);
+
+    // Sanity check
+    tradeService.vaultStorage();
+  }
+
+  /// @notice Sets a new Pyth contract address.
+  /// @param _pyth The new Pyth contract address.
+  function setPyth(address _pyth) external onlyOwner {
+    if (_pyth == address(0)) revert IExt01Handler_BadAddress();
+    emit LogSetPyth(pyth, IEcoPyth(_pyth));
+    pyth = IEcoPyth(_pyth);
+
+    // Sanity check
+    IEcoPyth(_pyth).getAssetIds();
+  }
+
+  /// @notice setMinExecutionFee
+  /// @param _orderType Order type to set min execution fee
+  /// @param _newMinExecutionFee minExecutionFee in ethers
+  function setMinExecutionFee(uint24 _orderType, uint128 _newMinExecutionFee) external nonReentrant onlyOwner {
+    emit LogSetMinExecutionFee(_orderType, minExecutionOrderOf[_orderType], _newMinExecutionFee);
+    minExecutionOrderOf[_orderType] = _newMinExecutionFee;
+  }
+
+  /// @notice setMaxExecutionChuck
+  /// @param _maxExecutionChuck maximum check sizes when execute orders
+  function setMaxExecutionChuck(uint256 _maxExecutionChuck) external nonReentrant onlyOwner {
+    emit LogMaxExecutionChuck(maxExecutionChuck, _maxExecutionChuck);
+    maxExecutionChuck = _maxExecutionChuck;
+  }
+
+  /// @notice setOrderExecutor
+  /// @param _executor address who will be executor
+  /// @param _isAllow flag to allow to execute
+  function setOrderExecutor(address _executor, bool _isAllow) external onlyOwner {
+    emit LogSetOrderExecutor(_executor, orderExecutors[_executor], _isAllow);
+    orderExecutors[_executor] = _isAllow;
   }
 }

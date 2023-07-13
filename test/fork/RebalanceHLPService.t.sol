@@ -15,9 +15,9 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   function setUp() public override {
     super.setUp();
 
-    deal(wethAddress, address(vaultStorage), 1_000 ether);
+    deal(wethAddress, address(vaultStorage), 100 ether);
     vaultStorage.pullToken(wethAddress);
-    vaultStorage.addHLPLiquidity(wethAddress, 1_000 ether);
+    vaultStorage.addHLPLiquidity(wethAddress, 100 ether);
     deal(usdcAddress, address(vaultStorage), 10000 * 1e6);
     vaultStorage.pullToken(usdcAddress);
     vaultStorage.addHLPLiquidity(usdcAddress, 10000 * 1e6);
@@ -35,7 +35,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     uint256 wethBefore = vaultStorage.hlpLiquidity(wethAddress);
     uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
 
-    uint256 receivedGlp = rebalanceHLPSerivce.execute(params);
+    uint256 receivedGlp = rebalanceHLPService.execute(params);
 
     // USDC
     assertEq(vaultStorage.hlpLiquidity(usdcAddress), usdcBefore - usdcAmount);
@@ -47,13 +47,20 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     assertEq(receivedGlp, vaultStorage.hlpLiquidity(address(sglp)) - sGlpBefore);
 
     // make sure that the allowance is zero
-    assertEq(IERC20Upgradeable(usdcAddress).allowance(address(rebalanceHLPSerivce), address(glpManager)), 0);
-    assertEq(IERC20Upgradeable(wethAddress).allowance(address(rebalanceHLPSerivce), address(glpManager)), 0);
+    assertEq(IERC20Upgradeable(usdcAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
+    assertEq(IERC20Upgradeable(wethAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
   }
 
-  function testRevert_ReinvestEmptyParams() external {
+  function testRevert_RebalanceEmptyParams() external {
     IRebalanceHLPService.ExecuteParams[] memory params;
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_ParamsIsEmpty.selector);
-    rebalanceHLPSerivce.execute(params);
+    rebalanceHLPService.execute(params);
+  }
+
+  function testRevert_RebalanceOverAmount() external {
+    IRebalanceHLPService.ExecuteParams[] memory params = new IRebalanceHLPService.ExecuteParams[](1);
+    uint256 usdcAmount = 100_000 * 1e6;
+    params[0] = IRebalanceHLPService.ExecuteParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
+    rebalanceHLPService.execute(params);
   }
 }

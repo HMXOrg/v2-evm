@@ -122,7 +122,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   // services
   ILiquidityService liquidityService;
   ICrossMarginService crossMarginService;
-  IRebalanceHLPService rebalanceHLPSerivce;
+  IRebalanceHLPService rebalanceHLPService;
 
   // TOKENS
   IERC20Upgradeable sglp;
@@ -173,7 +173,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     {
       stakedGlpStrategy.setWhiteListExecutor(address(keeper), true);
       convertedGlpStrategy.setWhiteListExecutor(address(crossMarginService), true);
-      rebalanceHLPSerivce.setWhiteListExecutor(address(this), true);
+      rebalanceHLPService.setWhiteListExecutor(address(this), true);
       // withdrawStrategy.setWhiteListExecutor(address(this), true);
     }
 
@@ -186,14 +186,14 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       configStorage.setHLP(address(hlpV2));
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
-      configStorage.setServiceExecutor(address(rebalanceHLPSerivce), address(crossMarginHandler), true);
+      configStorage.setServiceExecutor(address(rebalanceHLPService), address(crossMarginHandler), true);
     }
 
     // Setup Storages
     {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(crossMarginService), true);
-      vaultStorage.setServiceExecutors(address(rebalanceHLPSerivce), true);
+      vaultStorage.setServiceExecutors(address(rebalanceHLPService), true);
       vaultStorage.setServiceExecutors(address(stakedGlpStrategy), true);
       vaultStorage.setServiceExecutors(address(convertedGlpStrategy), true);
       // vaultStorage.setServiceExecutors(address(withdrawStrategy), true);
@@ -348,7 +348,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(convertedGlpStrategy)
     );
 
-    rebalanceHLPSerivce = Deployer.deployRebalanceHLPService(
+    rebalanceHLPService = Deployer.deployRebalanceHLPService(
       address(proxyAdmin),
       address(sglp),
       address(rewardRouter),

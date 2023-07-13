@@ -7,6 +7,7 @@ pragma solidity 0.8.18;
 import "forge-std/console.sol";
 import { GlpStrategy_Base } from "./GlpStrategy_Base.t.fork.sol";
 import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
+import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 contract RebalanceHLPSerivce is GlpStrategy_Base {
@@ -23,7 +24,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     vaultStorage.addHLPLiquidity(usdcAddress, 10000 * 1e6);
   }
 
-  function testCorrectness_Rebalance_Success() external {
+  function testCorrectness_Rebalance_ReinvestSuccess() external {
     IRebalanceHLPService.ExecuteReinvestParams[] memory params = new IRebalanceHLPService.ExecuteReinvestParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 1 * 1e18;
@@ -51,9 +52,55 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     assertEq(IERC20Upgradeable(wethAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
   }
 
+  function testCorrectness_Rebalance_WithdrawSuccess() external {
+    IRebalanceHLPService.ExecuteReinvestParams[] memory params = new IRebalanceHLPService.ExecuteReinvestParams[](2);
+    uint256 usdcAmount = 1000 * 1e6;
+    uint256 wethAmount = 1 * 1e18;
+    params[0] = IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, usdcAmount, 990 * 1e6, 100);
+    params[1] = IRebalanceHLPService.ExecuteReinvestParams(wethAddress, wethAmount, 95 * 1e16, 100);
+
+    uint256 sGlpBefore = vaultStorage.totalAmount(address(sglp));
+    uint256 receivedGlp = rebalanceHLPHandler.executeLogicReinvestNonHLP(params);
+
+    uint256 sglpAmount = 15 * 1e18;
+
+    assertEq(receivedGlp, vaultStorage.totalAmount(address(sglp)) - sGlpBefore);
+
+    IRebalanceHLPService.ExecuteWithdrawParams[] memory _params = new IRebalanceHLPService.ExecuteWithdrawParams[](2);
+    _params[0] = IRebalanceHLPService.ExecuteWithdrawParams(usdcAddress, sglpAmount, 0);
+    _params[1] = IRebalanceHLPService.ExecuteWithdrawParams(wethAddress, sglpAmount, 0);
+
+    uint256 usdcBalanceBefore = vaultStorage.totalAmount(usdcAddress);
+    uint256 wethBalanceBefore = vaultStorage.totalAmount(wethAddress);
+
+    uint256 sglpBefore = vaultStorage.hlpLiquidity(address(sglp));
+    uint256 usdcHlpBefore = vaultStorage.hlpLiquidity(usdcAddress);
+    uint256 wethHlpBefore = vaultStorage.hlpLiquidity(wethAddress);
+
+    IRebalanceHLPService.WithdrawGLPResult[] memory result = rebalanceHLPHandler.executeLogicWithdrawGLP(_params);
+
+    uint256 usdcBalanceAfter = vaultStorage.totalAmount(usdcAddress);
+    uint256 wethBalanceAfter = vaultStorage.totalAmount(wethAddress);
+
+    uint256 sglpAfter = vaultStorage.hlpLiquidity(address(sglp));
+    uint256 usdcHlpAfter = vaultStorage.hlpLiquidity(usdcAddress);
+    uint256 wethHlpAfter = vaultStorage.hlpLiquidity(wethAddress);
+
+    assertTrue(usdcBalanceAfter > usdcBalanceBefore);
+    assertTrue(wethBalanceAfter > wethBalanceBefore);
+
+    assertTrue(usdcHlpAfter > usdcHlpBefore);
+    assertTrue(wethHlpAfter > wethHlpBefore);
+
+    assertEq(usdcBalanceAfter - usdcBalanceBefore, result[0].amount);
+    assertEq(wethBalanceAfter - wethBalanceBefore, result[1].amount);
+
+    assertEq(sglpBefore - sglpAfter, sglpAmount * 2);
+  }
+
   function testRevert_Rebalance_EmptyParams() external {
     IRebalanceHLPService.ExecuteReinvestParams[] memory params;
-    vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_ParamsIsEmpty.selector);
+    vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_ParamsIsEmpty.selector);
     rebalanceHLPHandler.executeLogicReinvestNonHLP(params);
   }
 
@@ -67,8 +114,15 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
 
   function testRevert_Rebalance_NotWhitelisted() external {
     IRebalanceHLPService.ExecuteReinvestParams[] memory params;
-    vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_OnlyWhitelisted.selector);
+    vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_OnlyWhitelisted.selector);
     vm.prank(ALICE);
     rebalanceHLPHandler.executeLogicReinvestNonHLP(params);
+  }
+
+  function testRevert_Rebalance_WithdrawExceedingAmount() external {
+    IRebalanceHLPService.ExecuteWithdrawParams[] memory params = new IRebalanceHLPService.ExecuteWithdrawParams[](1);
+    params[0] = IRebalanceHLPService.ExecuteWithdrawParams(usdcAddress, 1e30, 0);
+    vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_InvalidTokenAmount.selector);
+    rebalanceHLPHandler.executeLogicWithdrawGLP(params);
   }
 }

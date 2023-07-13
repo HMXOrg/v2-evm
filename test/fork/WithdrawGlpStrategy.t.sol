@@ -37,7 +37,7 @@ contract WithdrawGlpStrategy is GlpStrategy_Base {
 
   function testCorrectness_WithdrawGlpSuccess() external {
     IWithdrawGlpStrategy.ExecuteParams[] memory params = new IWithdrawGlpStrategy.ExecuteParams[](1);
-    params[0] = IWithdrawGlpStrategy.ExecuteParams(usdcAddress, 1 * 1e6, 0);
+    params[0] = IWithdrawGlpStrategy.ExecuteParams(usdcAddress, 100 * 1e18, 0);
     // params[1] = IWithdrawGlpStrategy.ExecuteParams(wethAddress, 0, 0);
 
     uint256 usdcBefore = vaultStorage.hlpLiquidity(usdcAddress);
@@ -55,7 +55,7 @@ contract WithdrawGlpStrategy is GlpStrategy_Base {
     // assertFalse(vaultStorage.hlpLiquidity(wethAddress) > wethBefore);
     assertEq(vaultStorage.hlpLiquidity(wethAddress), vaultStorage.totalAmount(wethAddress));
     // sGLP
-    assertEq(1e6, sGlpBefore - sGlpAfter);
+    assertEq(100 * 1e18, sGlpBefore - sGlpAfter);
   }
 
   function testRevert_WithdrawGlpEmptyParams() external {

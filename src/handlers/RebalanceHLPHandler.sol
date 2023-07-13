@@ -34,7 +34,7 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
 
   IERC20Upgradeable public sglp;
 
-  uint16 public minExecutionFee;
+  uint16 public minExecutionFeeBPS;
 
   mapping(address => bool) public whitelistExecutors;
 
@@ -50,7 +50,11 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     _;
   }
 
-  function initialize(address _rebalanceHLPService, address _calculator, uint16 _minExecutionFee) external initializer {
+  function initialize(
+    address _rebalanceHLPService,
+    address _calculator,
+    uint16 _minExecutionFeeBPS
+  ) external initializer {
     __Ownable_init();
     __ReentrancyGuard_init();
     // gas opt
@@ -59,7 +63,7 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     vaultStorage = _service.vaultStorage();
     sglp = _service.sglp();
     calculator = ICalculator(_calculator);
-    minExecutionFee = _minExecutionFee;
+    minExecutionFeeBPS = _minExecutionFeeBPS;
   }
 
   function setWhiteListExecutor(address _executor, bool _active) external onlyOwner {
@@ -70,12 +74,12 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     emit LogSetWhitelistExecutor(_executor, _active);
   }
 
-  function setMinExecutionFee(uint16 _newExecutionFee) external onlyOwner {
-    if (_newExecutionFee == 0) {
+  function setMinExecutionFeeBPS(uint16 _newExecutionFeeBPS) external onlyOwner {
+    if (_newExecutionFeeBPS == 0) {
       revert RebalanceHLPHandler_AmountIsZero();
     }
-    emit LogSetMinExecutionFee(minExecutionFee, _newExecutionFee);
-    minExecutionFee = _newExecutionFee;
+    emit LogSetMinExecutionFee(minExecutionFeeBPS, _newExecutionFeeBPS);
+    minExecutionFeeBPS = _newExecutionFeeBPS;
   }
 
   function setRebalanceHLPService(address _newService) external nonReentrant onlyOwner {
@@ -96,7 +100,6 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     // Execute logic at Service
     receivedGlp = service.executReinvestNonHLP(_params);
-
     _validateHLPValue(totalHlpValueBefore);
   }
 
@@ -147,10 +150,10 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     }
   }
 
-  function _validateHLPValue(uint256 valueBefore) internal view {
+  function _validateHLPValue(uint256 _valueBefore) internal view {
     uint256 hlpValue = calculator.getHLPValueE30(true);
-    uint256 diff = valueBefore - hlpValue;
-    if ((diff * BPS) >= (minExecutionFee * valueBefore)) {
+    uint256 diff = _valueBefore - hlpValue;
+    if ((diff * (BPS ** 2)) >= (minExecutionFeeBPS * _valueBefore)) {
       revert RebalanceHLPHandler_HlpTvlDropExceedMin();
     }
   }

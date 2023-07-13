@@ -28,7 +28,7 @@ interface IRebalanceHLPHandler {
   // Setter
   function setWhiteListExecutor(address executor, bool active) external;
 
-  function setMinExecutionFee(uint16 minTvlBPS) external;
+  function setMinExecutionFeeBPS(uint16 minTvlBPS) external;
 
   function setRebalanceHLPService(address _newService) external;
 
@@ -41,7 +41,7 @@ interface IRebalanceHLPHandler {
 
   function calculator() external view returns (ICalculator);
 
-  function minExecutionFee() external view returns (uint16);
+  function minExecutionFeeBPS() external view returns (uint16);
 
   function whitelistExecutors(address executor) external view returns (bool);
 }

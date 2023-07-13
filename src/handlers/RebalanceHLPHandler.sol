@@ -123,6 +123,9 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
       if (_params[i].amount > _vaultStorage.totalAmount(_params[i].token)) {
         revert RebalanceHLPHandler_InvalidTokenAmount();
       }
+      unchecked {
+        ++i;
+      }
     }
   }
 
@@ -135,17 +138,21 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
         revert RebalanceHLPHandler_InvalidTokenAddress();
       }
       totalGlpAccum += _params[i].glpAmount;
+      unchecked {
+        ++i;
+      }
     }
     if (_vaultStorage.totalAmount(address(sglp)) < totalGlpAccum) {
       revert RebalanceHLPHandler_InvalidTokenAmount();
     }
   }
 
-  function _validateHLPValue(uint256 valueBefore) internal {
+  function _validateHLPValue(uint256 valueBefore) internal view {
     uint256 hlpValue = calculator.getHLPValueE30(true);
     uint256 diff = valueBefore - hlpValue;
-
-    if ((diff * BPS) >= (minExecutionFee * valueBefore)) revert RebalanceHLPHandler_HlpTvlDropExceedMin();
+    if ((diff * BPS) >= (minExecutionFee * valueBefore)) {
+      revert RebalanceHLPHandler_HlpTvlDropExceedMin();
+    }
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

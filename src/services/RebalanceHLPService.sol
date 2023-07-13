@@ -5,14 +5,17 @@
 pragma solidity 0.8.18;
 
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
-import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
-import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
-import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
-import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
+
+// lib
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+
+// interface
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
+import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
+import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 
 contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
   using SafeERC20Upgradeable for IERC20Upgradeable;

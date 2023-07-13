@@ -11,6 +11,8 @@ interface ICrossMarginService {
   error ICrossMarginService_WithdrawBalanceBelowIMR();
   error ICrossMarginHandler_NoFundingFeeSurplus();
   error ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
+  error ICrossMarginService_NotAllowedExtension();
+  error ICrossMarginService_Slippage();
 
   /**
    * States
@@ -41,12 +43,4 @@ interface ICrossMarginService {
   function setConfigStorage(address _configStorage) external;
 
   function setVaultStorage(address _vaultStorage) external;
-
-  function convertSGlpCollateral(
-    address _primaryAccount,
-    uint8 _subAccountId,
-    address _tokenOut,
-    uint256 _amountIn,
-    uint256 _minAmountOut
-  ) external returns (uint256);
 }

@@ -8,6 +8,8 @@ pragma solidity 0.8.18;
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
 import { SafeCastUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/math/SafeCastUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
+import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 // contracts
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
@@ -20,7 +22,8 @@ import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // Interfaces
-import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
+import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
+import { ISwitchCollateralExt } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralExt.sol";
 
 /**
  * @title CrossMarginService
@@ -29,6 +32,7 @@ import { ICrossMarginService } from "./interfaces/ICrossMarginService.sol";
 contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginService {
   using SafeCastUpgradeable for uint256;
   using SafeCastUpgradeable for int256;
+  using SafeERC20Upgradeable for ERC20Upgradeable;
 
   /**
    * Events
@@ -76,6 +80,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public vaultStorage;
   address public calculator;
   address public perpStorage;
+  /// @notice DEPRECATED.
   address public convertedSglpStrategy;
 
   /// @dev Initializes the CrossMarginService contract.
@@ -272,31 +277,76 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     emit LogWithdrawFundingFeeSurplus(_vars.fundingFeeSurplusValue);
   }
 
-  function convertSGlpCollateral(
-    address _primaryAccount,
-    uint8 _subAccountId,
-    address _tokenOut,
-    uint256 _amountIn,
-    uint256 _minAmountOut
-  ) external nonReentrant onlyWhitelistedExecutor returns (uint256 _amountOut) {
-    // Get trader's sub-account address
+  struct SwitchCollateralParams {
+    address primaryAccount;
+    uint8 subAccountId;
+    address tokenIn;
+    address tokenOut;
+    uint256 amountIn;
+    uint256 minAmountOut;
+    bytes data;
+  }
+
+  function switchCollateral(
+    SwitchCollateralParams calldata _params
+  )
+    external
+    nonReentrant
+    onlyWhitelistedExecutor
+    onlyAcceptedToken(_params.tokenIn)
+    onlyAcceptedToken(_params.tokenOut)
+    returns (uint256 _amountOut)
+  {
+    // Casting dependencies
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     Calculator _calculator = Calculator(calculator);
-    _amountOut = ConvertedGlpStrategy(convertedSglpStrategy).execute(_tokenOut, _amountIn, _minAmountOut);
 
-    // Adjusting trader balance
-    address _subAccount = HMXLib.getSubAccount(_primaryAccount, _subAccountId);
-    _vaultStorage.decreaseTraderBalance(_subAccount, _configStorage.sglp(), _amountIn);
-    _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _amountOut);
+    // Decode
+    (ISwitchCollateralExt _switchCollateralExt, bytes memory _switchCollateralExtData) = abi.decode(
+      _params.data,
+      (ISwitchCollateralExt, bytes)
+    );
+
+    // Check
+    // Check if _switchCollateralExt is allowed
+    if (!_configStorage.switchCollateralExts(address(_switchCollateralExt), _params.tokenIn))
+      revert ICrossMarginService_NotAllowedExtension();
+
+    // Get trader's sub-account address
+    address _subAccount = HMXLib.getSubAccount(_params.primaryAccount, _params.subAccountId);
+
+    // Decrease trader's balance right here to prevent malicious _switchCollateralExtData
+    // We will treat as this amount is flashed transfered to _switchCollateralExt
+    // and expect that after _switchCollateralExt done its job, the account should still healthy.
+    // Hence, if the malicious _switchCollateralExtData make the account unhealthy by cross-contract
+    // reentrancy attack, we will revert the tx.
+    _vaultStorage.decreaseTraderBalance(_subAccount, _params.tokenIn, _params.amountIn);
+    // Push token to _switchCollateralExt
+    _vaultStorage.pushToken(_params.tokenIn, address(_switchCollateralExt), _params.amountIn);
+
+    // Run _switchCollateralExt, it will send back _tokenOut to this contract
+    _amountOut = _switchCollateralExt.run(
+      _params.tokenIn,
+      _params.tokenOut,
+      _params.amountIn,
+      _params.minAmountOut,
+      _switchCollateralExtData
+    );
+    // Check slippage
+    if (_amountOut < _params.minAmountOut) revert ICrossMarginService_Slippage();
+
+    // Send _tokenOut to VaultStorage and pull
+    ERC20Upgradeable(_params.tokenOut).safeTransfer(address(_vaultStorage), _amountOut);
+    uint256 _deltaBalance = _vaultStorage.pullToken(_params.tokenOut);
+    if (_deltaBalance < _amountOut) revert ICrossMarginService_InvalidDepositBalance();
+    // Increase trader's balance
+    _vaultStorage.increaseTraderBalance(_subAccount, _params.tokenOut, _amountOut);
 
     // Calculate validation for if new Equity is below IMR or not
     int256 equity = _calculator.getEquity(_subAccount, 0, 0);
     if (equity < 0 || uint256(equity) < _calculator.getIMR(_subAccount))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();
-
-    emit LogConvertSGlpCollateral(_primaryAccount, _subAccountId, _tokenOut, _amountIn, _amountOut);
-    return _amountOut;
   }
 
   /**

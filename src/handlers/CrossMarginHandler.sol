@@ -524,23 +524,6 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     emit LogSetOrderExecutor(_executor, _isAllow);
   }
 
-  /// @notice convert collateral
-  function convertSGlpCollateral(
-    uint8 _subAccountId,
-    address _tokenOut,
-    uint256 _amountIn,
-    uint256 _minAmountOut
-  ) external nonReentrant onlyAcceptedToken(_tokenOut) returns (uint256 _amountOut) {
-    return
-      CrossMarginService(crossMarginService).convertSGlpCollateral(
-        msg.sender,
-        _subAccountId,
-        _tokenOut,
-        _amountIn,
-        _minAmountOut
-      );
-  }
-
   /**
    * Private Functions
    */

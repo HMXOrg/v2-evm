@@ -11,9 +11,9 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
 // Interfaces
-import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
-import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
-import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -49,6 +49,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogDelistMarket(uint256 marketIndex);
   event LogAddOrUpdateHLPTokenConfigs(address _token, HLPTokenConfig _config, HLPTokenConfig _newConfig);
   event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
+  event LogSetSwitchCollateralExtension(address _token, address _extension, bool _prevAllow, bool _newAllow);
 
   /**
    * Constants
@@ -90,8 +91,10 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   MarketConfig[] public marketConfigs;
   AssetClassConfig[] public assetClassConfigs;
   address[] public tradeServiceHooks;
-
+  // Executors
   mapping(address => bool) public configExecutors;
+  // SwithCollateral Extensions
+  mapping(address token => mapping(address extension => bool isAllow)) public switchCollateralExts;
 
   /**
    * Modifiers
@@ -486,6 +489,13 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     emit LogSetToken(sglp, _sglp);
     sglp = _sglp;
+  }
+
+  function setSwitchCollateralExtension(address _token, address _extension, bool _isAllow) external onlyOwner {
+    if (!_token.isContract() || !_extension.isContract()) revert IConfigStorage_BadArgs();
+
+    emit LogSetSwitchCollateralExtension(_token, _extension, switchCollateralExts[_token][_extension], _isAllow);
+    switchCollateralExts[_token][_extension] = _isAllow;
   }
 
   /// @notice add or update accepted tokens of HLP

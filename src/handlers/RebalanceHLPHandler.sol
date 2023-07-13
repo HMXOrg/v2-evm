@@ -152,9 +152,11 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
 
   function _validateHLPValue(uint256 _valueBefore) internal view {
     uint256 hlpValue = calculator.getHLPValueE30(true);
-    uint256 diff = _valueBefore - hlpValue;
-    if ((diff * (BPS ** 2)) >= (minExecutionFeeBPS * _valueBefore)) {
-      revert RebalanceHLPHandler_HlpTvlDropExceedMin();
+    if (_valueBefore < hlpValue) {
+      uint256 diff = _valueBefore < hlpValue;
+      if ((diff * (BPS ** 2)) >= (minExecutionFeeBPS * _valueBefore)) {
+        revert RebalanceHLPHandler_HlpTvlDropExceedMin();
+      }
     }
   }
 

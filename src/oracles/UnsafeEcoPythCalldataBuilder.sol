@@ -43,7 +43,8 @@ contract UnsafeEcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     // - New assets that are not listed on EcoPyth yet.
     // - New assets that over previous array length
     try ecoPyth.getPriceUnsafe(_assetId) returns (PythStructs.Price memory _ecoPythPrice) {
-      _latestPrice = _ecoPythPrice.price;
+      // If price is exactly 1e8, then assume the price is not available.
+      _latestPrice = _ecoPythPrice.price == 1e8 ? _price : _ecoPythPrice.price;
     } catch {
       _latestPrice = _price;
     }

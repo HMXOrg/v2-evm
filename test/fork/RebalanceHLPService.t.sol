@@ -23,7 +23,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     vaultStorage.addHLPLiquidity(usdcAddress, 10000 * 1e6);
   }
 
-  function testCorrectness_ReinvestSuccess() external {
+  function testCorrectness_RebalanceSuccess() external {
     IRebalanceHLPService.ExecuteParams[] memory params = new IRebalanceHLPService.ExecuteParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 1 * 1e18;

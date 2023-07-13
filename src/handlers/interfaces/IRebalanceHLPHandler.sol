@@ -33,13 +33,15 @@ interface IRebalanceHLPHandler {
   function setRebalanceHLPService(address _newService) external;
 
   // Get storage
+  function service() external view returns (IRebalanceHLPService);
+
   function sglp() external view returns (IERC20Upgradeable);
 
   function vaultStorage() external view returns (IVaultStorage);
 
   function calculator() external view returns (ICalculator);
 
-  function minTvlBPS() external view returns (uint16);
+  function minExecutionFee() external view returns (uint16);
 
-  function whiteliseExecutors(address executor) external view returns (bool);
+  function whitelistExecutors(address executor) external view returns (bool);
 }

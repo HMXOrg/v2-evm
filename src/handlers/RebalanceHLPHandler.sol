@@ -28,15 +28,15 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
 
   uint16 public constant BPS = 100_00;
 
-  IRebalanceHLPService service;
-  IVaultStorage vaultStorage;
-  ICalculator calculator;
+  IRebalanceHLPService public service;
+  IVaultStorage public vaultStorage;
+  ICalculator public calculator;
 
-  IERC20Upgradeable sglp;
+  IERC20Upgradeable public sglp;
 
   uint16 public minExecutionFee;
 
-  mapping(address => bool) whitelistExecutors;
+  mapping(address => bool) public whitelistExecutors;
 
   event LogSetWhitelistExecutor(address indexed _account, bool _active);
   event LogSetMinExecutionFee(uint16 _oldFee, uint16 _newFee);

@@ -56,5 +56,5 @@ interface IRebalanceHLPService {
 
   function glpManager() external view returns (IGmxGlpManager);
 
-  function whiteliseExecutors(address executor) external view returns (bool);
+  function whitelistExecutors(address executor) external view returns (bool);
 }

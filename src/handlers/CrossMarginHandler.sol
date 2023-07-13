@@ -14,7 +14,7 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
-import { IWNative } from "../interfaces/IWNative.sol";
+import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
@@ -88,9 +88,9 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
   uint256 public maxExecutionChuck; // maximum execution order sizes per request
 
-  WithdrawOrder[] public withdrawOrders; // all withdrawOrder
+  WithdrawOrder[] public withdrawOrders; // all withdrawOrders
   mapping(address => WithdrawOrder[]) public subAccountExecutedWithdrawOrders; // subAccount -> executed orders
-  mapping(address => bool) public orderExecutors; //address -> flag to execute
+  mapping(address => bool) public orderExecutors; // address -> flag to execute
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _crossMarginService Address of the CrossMarginService contract.
@@ -193,7 +193,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   }
 
   /**
-   * CALCULATION
+   * Deposit Collateral
    */
 
   /// @notice Deposits the specified amount of collateral token into the user's sub-account.
@@ -233,6 +233,10 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     emit LogDepositCollateral(msg.sender, _subAccountId, _token, _amount);
   }
+
+  /**
+   * Withdraw Collateral
+   */
 
   /// @notice Creates a new withdraw order to withdraw the specified amount of collateral token from the user's sub-account.
   /// @param _subAccountId ID of the user's sub-account.
@@ -462,7 +466,7 @@ contract CrossMarginHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   }
 
   /**
-   * GETTER
+   * Getters
    */
 
   /// @notice Returns all pending withdraw orders.

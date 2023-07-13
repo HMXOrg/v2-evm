@@ -280,10 +280,10 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   struct SwitchCollateralParams {
     address primaryAccount;
     uint8 subAccountId;
-    address tokenIn;
-    address tokenOut;
-    uint256 amountIn;
-    uint256 minAmountOut;
+    address fromToken;
+    address toToken;
+    uint256 fromAmount;
+    uint256 minToAmount;
     bytes data;
   }
 
@@ -293,9 +293,9 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     external
     nonReentrant
     onlyWhitelistedExecutor
-    onlyAcceptedToken(_params.tokenIn)
-    onlyAcceptedToken(_params.tokenOut)
-    returns (uint256 _amountOut)
+    onlyAcceptedToken(_params.fromToken)
+    onlyAcceptedToken(_params.toToken)
+    returns (uint256 _toAmount)
   {
     // Casting dependencies
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
@@ -310,7 +310,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Check
     // Check if _switchCollateralExt is allowed
-    if (!_configStorage.switchCollateralExts(address(_switchCollateralExt), _params.tokenIn))
+    if (!_configStorage.switchCollateralExts(address(_switchCollateralExt), _params.fromToken))
       revert ICrossMarginService_NotAllowedExtension();
 
     // Get trader's sub-account address
@@ -321,27 +321,27 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // and expect that after _switchCollateralExt done its job, the account should still healthy.
     // Hence, if the malicious _switchCollateralExtData make the account unhealthy by cross-contract
     // reentrancy attack, we will revert the tx.
-    _vaultStorage.decreaseTraderBalance(_subAccount, _params.tokenIn, _params.amountIn);
+    _vaultStorage.decreaseTraderBalance(_subAccount, _params.fromToken, _params.fromAmount);
     // Push token to _switchCollateralExt
-    _vaultStorage.pushToken(_params.tokenIn, address(_switchCollateralExt), _params.amountIn);
+    _vaultStorage.pushToken(_params.fromToken, address(_switchCollateralExt), _params.fromAmount);
 
     // Run _switchCollateralExt, it will send back _tokenOut to this contract
-    _amountOut = _switchCollateralExt.run(
-      _params.tokenIn,
-      _params.tokenOut,
-      _params.amountIn,
-      _params.minAmountOut,
+    _toAmount = _switchCollateralExt.run(
+      _params.fromToken,
+      _params.toToken,
+      _params.fromAmount,
+      _params.minToAmount,
       _switchCollateralExtData
     );
     // Check slippage
-    if (_amountOut < _params.minAmountOut) revert ICrossMarginService_Slippage();
+    if (_toAmount < _params.minToAmount) revert ICrossMarginService_Slippage();
 
-    // Send _tokenOut to VaultStorage and pull
-    ERC20Upgradeable(_params.tokenOut).safeTransfer(address(_vaultStorage), _amountOut);
-    uint256 _deltaBalance = _vaultStorage.pullToken(_params.tokenOut);
-    if (_deltaBalance < _amountOut) revert ICrossMarginService_InvalidDepositBalance();
+    // Send toToken to VaultStorage and pull
+    ERC20Upgradeable(_params.toToken).safeTransfer(address(_vaultStorage), _toAmount);
+    uint256 _deltaBalance = _vaultStorage.pullToken(_params.toToken);
+    if (_deltaBalance < _toAmount) revert ICrossMarginService_InvalidDepositBalance();
     // Increase trader's balance
-    _vaultStorage.increaseTraderBalance(_subAccount, _params.tokenOut, _amountOut);
+    _vaultStorage.increaseTraderBalance(_subAccount, _params.toToken, _toAmount);
 
     // Calculate validation for if new Equity is below IMR or not
     int256 equity = _calculator.getEquity(_subAccount, 0, 0);

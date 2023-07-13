@@ -24,18 +24,18 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   }
 
   function testCorrectness_Rebalance_Success() external {
-    IRebalanceHLPService.ExecuteParams[] memory params = new IRebalanceHLPService.ExecuteParams[](2);
+    IRebalanceHLPService.ExecuteReinvestParams[] memory params = new IRebalanceHLPService.ExecuteReinvestParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 1 * 1e18;
 
-    params[0] = IRebalanceHLPService.ExecuteParams(usdcAddress, usdcAmount, 990 * 1e6, 100);
-    params[1] = IRebalanceHLPService.ExecuteParams(wethAddress, wethAmount, 95 * 1e16, 100);
+    params[0] = IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, usdcAmount, 990 * 1e6, 100);
+    params[1] = IRebalanceHLPService.ExecuteReinvestParams(wethAddress, wethAmount, 95 * 1e16, 100);
 
     uint256 usdcBefore = vaultStorage.hlpLiquidity(usdcAddress);
     uint256 wethBefore = vaultStorage.hlpLiquidity(wethAddress);
     uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
 
-    uint256 receivedGlp = rebalanceHLPService.execute(params);
+    uint256 receivedGlp = rebalanceHLPHandler.executeLogicReinvestNonHLP(params);
 
     // USDC
     assertEq(vaultStorage.hlpLiquidity(usdcAddress), usdcBefore - usdcAmount);
@@ -52,23 +52,23 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   }
 
   function testRevert_Rebalance_EmptyParams() external {
-    IRebalanceHLPService.ExecuteParams[] memory params;
+    IRebalanceHLPService.ExecuteReinvestParams[] memory params;
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_ParamsIsEmpty.selector);
-    rebalanceHLPService.execute(params);
+    rebalanceHLPHandler.executeLogicReinvestNonHLP(params);
   }
 
   function testRevert_Rebalance_OverAmount() external {
-    IRebalanceHLPService.ExecuteParams[] memory params = new IRebalanceHLPService.ExecuteParams[](1);
+    IRebalanceHLPService.ExecuteReinvestParams[] memory params = new IRebalanceHLPService.ExecuteReinvestParams[](1);
     uint256 usdcAmount = 100_000 * 1e6;
     vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
-    params[0] = IRebalanceHLPService.ExecuteParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
-    rebalanceHLPService.execute(params);
+    params[0] = IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
+    rebalanceHLPHandler.executeLogicReinvestNonHLP(params);
   }
 
   function testRevert_Rebalance_NotWhitelisted() external {
-    IRebalanceHLPService.ExecuteParams[] memory params;
+    IRebalanceHLPService.ExecuteReinvestParams[] memory params;
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_OnlyWhitelisted.selector);
     vm.prank(ALICE);
-    rebalanceHLPService.execute(params);
+    rebalanceHLPHandler.executeLogicReinvestNonHLP(params);
   }
 }

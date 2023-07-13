@@ -11,8 +11,10 @@ interface IRebalanceHLPService {
   error RebalanceHLPService_HlpTvlDropExceedMin();
   error RebalanceHLPService_ParamsIsEmpty();
 
-  /// @param _minUsdg: the minimum acceptable USD value of the GLP purchased
-  /// @param _minGlp: the minimum acceptable GLP amount
+  /// @param token: the address of ERC20 token that will be converted into GLP.
+  /// @param amount: the amount of token to convert to GLP.
+  /// @param minAmountOutUSD: the minimum acceptable USD value of the GLP purchased
+  /// @param minAmountOutGlp: the minimum acceptable GLP amount
   struct ExecuteParams {
     address token;
     uint256 amount;

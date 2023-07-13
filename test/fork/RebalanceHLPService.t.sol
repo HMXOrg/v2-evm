@@ -23,7 +23,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     vaultStorage.addHLPLiquidity(usdcAddress, 10000 * 1e6);
   }
 
-  function testCorrectness_RebalanceSuccess() external {
+  function testCorrectness_Rebalance_Success() external {
     IRebalanceHLPService.ExecuteParams[] memory params = new IRebalanceHLPService.ExecuteParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 1 * 1e18;
@@ -51,17 +51,24 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     assertEq(IERC20Upgradeable(wethAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
   }
 
-  function testRevert_RebalanceEmptyParams() external {
+  function testRevert_Rebalance_EmptyParams() external {
     IRebalanceHLPService.ExecuteParams[] memory params;
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_ParamsIsEmpty.selector);
     rebalanceHLPService.execute(params);
   }
 
-  function testRevert_RebalanceOverAmount() external {
+  function testRevert_Rebalance_OverAmount() external {
     IRebalanceHLPService.ExecuteParams[] memory params = new IRebalanceHLPService.ExecuteParams[](1);
     uint256 usdcAmount = 100_000 * 1e6;
     vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
     params[0] = IRebalanceHLPService.ExecuteParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
+    rebalanceHLPService.execute(params);
+  }
+
+  function testRevert_Rebalance_NotWhitelisted() external {
+    IRebalanceHLPService.ExecuteParams[] memory params;
+    vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_OnlyWhitelisted.selector);
+    vm.prank(ALICE);
     rebalanceHLPService.execute(params);
   }
 }

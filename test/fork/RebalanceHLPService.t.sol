@@ -27,7 +27,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   function testCorrectness_Rebalance_ReinvestSuccess() external {
     IRebalanceHLPService.ExecuteReinvestParams[] memory params = new IRebalanceHLPService.ExecuteReinvestParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
-    uint256 wethAmount = 1 * 1e18;
+    uint256 wethAmount = 10 * 1e18;
 
     params[0] = IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, usdcAmount, 990 * 1e6, 100);
     params[1] = IRebalanceHLPService.ExecuteReinvestParams(wethAddress, wethAmount, 95 * 1e16, 100);
@@ -96,6 +96,10 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     assertEq(wethBalanceAfter - wethBalanceBefore, result[1].amount);
 
     assertEq(sglpBefore - sglpAfter, sglpAmount * 2);
+
+    // make sure that the allowance is zero
+    assertEq(IERC20Upgradeable(usdcAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
+    assertEq(IERC20Upgradeable(wethAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
   }
 
   function testRevert_Rebalance_EmptyParams() external {

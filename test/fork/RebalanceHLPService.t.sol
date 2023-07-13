@@ -60,6 +60,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   function testRevert_RebalanceOverAmount() external {
     IRebalanceHLPService.ExecuteParams[] memory params = new IRebalanceHLPService.ExecuteParams[](1);
     uint256 usdcAmount = 100_000 * 1e6;
+    vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
     params[0] = IRebalanceHLPService.ExecuteParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
     rebalanceHLPService.execute(params);
   }

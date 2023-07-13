@@ -30,6 +30,7 @@ import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginServic
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
+import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
@@ -46,7 +47,6 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
-import { IReinvestNonHlpTokenStrategy } from "@hmx/strategies/interfaces/IReinvestNonHlpTokenStrategy.sol";
 import { IWithdrawGlpStrategy } from "@hmx/strategies/interfaces/IWithdrawGlpStrategy.sol";
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
@@ -419,6 +419,31 @@ library Deployer {
     return ILiquidityService(payable(_proxy));
   }
 
+  function deployRebalanceHLPService(
+    address _proxyAdmin,
+    address _sglp,
+    address _rewardsRouter,
+    address _vaultStorage,
+    address _glpManager,
+    address _calculator,
+    uint16 _minTvlBPS
+  ) internal returns (IRebalanceHLPService) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPService.sol/RebalanceHLPService.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,address,address,uint16)")),
+      _sglp,
+      _rewardsRouter,
+      _vaultStorage,
+      _glpManager,
+      _calculator,
+      _minTvlBPS
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPService(payable(_proxy));
+  }
+
   /**
    * Helpers
    */
@@ -495,55 +520,30 @@ library Deployer {
     return IConvertedGlpStrategy(payable(_proxy));
   }
 
-  function deployReinvestNonHlpTokenStrategy(
-    address _proxyAdmin,
-    address _sglp,
-    address _rewardsRouter,
-    address _vaultStorage,
-    address _glpManager,
-    address _calculator,
-    uint16 _minTvlBPS
-  ) internal returns (IReinvestNonHlpTokenStrategy) {
-    bytes memory _logicBytecode = abi.encodePacked(
-      vm.getCode("./out/ReinvestNonHlpTokenStrategy.sol/ReinvestNonHlpTokenStrategy.json")
-    );
-    bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,address,uint16)")),
-      _sglp,
-      _rewardsRouter,
-      _vaultStorage,
-      _glpManager,
-      _calculator,
-      _minTvlBPS
-    );
-    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IReinvestNonHlpTokenStrategy(payable(_proxy));
-  }
-
-  function deployWithdrawGlpStrategy(
-    address _proxyAdmin,
-    address _sglp,
-    address _rewardsRouter,
-    address _vaultStorage,
-    address _glpManager,
-    address _calculator,
-    uint16 _minTvlBPS
-  ) internal returns (IWithdrawGlpStrategy) {
-    bytes memory _logicBytecode = abi.encodePacked(
-      vm.getCode("./out/WithdrawGlpStrategy.sol/WithdrawGlpStrategy.json")
-    );
-    bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,address,uint16)")),
-      _sglp,
-      _rewardsRouter,
-      _vaultStorage,
-      _glpManager,
-      _calculator,
-      _minTvlBPS
-    );
-    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-    return IWithdrawGlpStrategy(payable(_proxy));
-  }
+  // function deployWithdrawGlpStrategy(
+  //   address _proxyAdmin,
+  //   address _sglp,
+  //   address _rewardsRouter,
+  //   address _vaultStorage,
+  //   address _glpManager,
+  //   address _calculator,
+  //   uint16 _minTvlBPS
+  // ) internal returns (IWithdrawGlpStrategy) {
+  //   bytes memory _logicBytecode = abi.encodePacked(
+  //     vm.getCode("./out/WithdrawGlpStrategy.sol/WithdrawGlpStrategy.json")
+  //   );
+  //   bytes memory _initializer = abi.encodeWithSelector(
+  //     bytes4(keccak256("initialize(address,address,address,address,address,uint16)")),
+  //     _sglp,
+  //     _rewardsRouter,
+  //     _vaultStorage,
+  //     _glpManager,
+  //     _calculator,
+  //     _minTvlBPS
+  //   );
+  //   address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+  //   return IWithdrawGlpStrategy(payable(_proxy));
+  // }
 
   /**
    * Private Functions

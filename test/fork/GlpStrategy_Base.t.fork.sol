@@ -30,7 +30,6 @@ import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
-// import { IWithdrawGlpStrategy } from "@hmx/strategies/interfaces/IWithdrawGlpStrategy.sol";
 
 // GMX
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
@@ -153,7 +152,6 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   IStakedGlpStrategy stakedGlpStrategy;
   IConvertedGlpStrategy convertedGlpStrategy;
-  // IWithdrawGlpStrategy withdrawStrategy;
 
   /* Testers */
   LiquidityTester liquidityTester;
@@ -176,7 +174,6 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       stakedGlpStrategy.setWhiteListExecutor(address(keeper), true);
       convertedGlpStrategy.setWhiteListExecutor(address(crossMarginService), true);
       rebalanceHLPService.setWhiteListExecutor(address(this), true);
-      // withdrawStrategy.setWhiteListExecutor(address(this), true);
     }
 
     // Config
@@ -198,12 +195,10 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       vaultStorage.setServiceExecutors(address(rebalanceHLPService), true);
       vaultStorage.setServiceExecutors(address(stakedGlpStrategy), true);
       vaultStorage.setServiceExecutors(address(convertedGlpStrategy), true);
-      // vaultStorage.setServiceExecutors(address(withdrawStrategy), true);
       vaultStorage.setServiceExecutors(address(this), true);
 
       vaultStorage.setStrategyAllowance(address(sglp), address(stakedGlpStrategy), address(rewardTracker));
       vaultStorage.setStrategyAllowance(address(sglp), address(convertedGlpStrategy), address(rewardRouter));
-      // vaultStorage.setStrategyAllowance(address(sglp), address(withdrawStrategy), address(rewardRouter));
 
       vaultStorage.setStrategyFunctionSigAllowance(
         address(sglp),
@@ -216,12 +211,6 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
         address(convertedGlpStrategy),
         IGmxRewardRouterV2.unstakeAndRedeemGlp.selector
       );
-
-      // vaultStorage.setStrategyFunctionSigAllowance(
-      //   address(sglp),
-      //   address(withdrawStrategy),
-      //   IGmxRewardRouterV2.mintAndStakeGlp.selector
-      // );
 
       perpStorage.setServiceExecutors(address(liquidityService), true);
     }
@@ -321,17 +310,6 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
     // convertedGlp strategy
     convertedGlpStrategy = Deployer.deployConvertedGlpStrategy(address(proxyAdmin), sglp, rewardRouter, vaultStorage);
-
-    // withdraw GLP strategy
-    // withdrawStrategy = Deployer.deployWithdrawGlpStrategy(
-    //   address(proxyAdmin),
-    //   address(sglp),
-    //   address(rewardRouter),
-    //   address(vaultStorage),
-    //   address(glpManager),
-    //   address(calculator),
-    //   1000
-    // );
 
     //deploy liquidityService
     liquidityService = Deployer.deployLiquidityService(

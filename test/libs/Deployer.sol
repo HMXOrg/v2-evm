@@ -48,7 +48,6 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
-import { IWithdrawGlpStrategy } from "@hmx/strategies/interfaces/IWithdrawGlpStrategy.sol";
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
@@ -535,31 +534,6 @@ library Deployer {
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IConvertedGlpStrategy(payable(_proxy));
   }
-
-  // function deployWithdrawGlpStrategy(
-  //   address _proxyAdmin,
-  //   address _sglp,
-  //   address _rewardsRouter,
-  //   address _vaultStorage,
-  //   address _glpManager,
-  //   address _calculator,
-  //   uint16 _minTvlBPS
-  // ) internal returns (IWithdrawGlpStrategy) {
-  //   bytes memory _logicBytecode = abi.encodePacked(
-  //     vm.getCode("./out/WithdrawGlpStrategy.sol/WithdrawGlpStrategy.json")
-  //   );
-  //   bytes memory _initializer = abi.encodeWithSelector(
-  //     bytes4(keccak256("initialize(address,address,address,address,address,uint16)")),
-  //     _sglp,
-  //     _rewardsRouter,
-  //     _vaultStorage,
-  //     _glpManager,
-  //     _calculator,
-  //     _minTvlBPS
-  //   );
-  //   address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
-  //   return IWithdrawGlpStrategy(payable(_proxy));
-  // }
 
   /**
    * Private Functions

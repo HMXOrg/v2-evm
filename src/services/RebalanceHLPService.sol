@@ -35,7 +35,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
   modifier onlyWhitelisted() {
     // if not whitelist
     if (!whitelistExecutors[msg.sender]) {
-      revert ReinvestNonHlpTokenStrategy_OnlyWhitelisted();
+      revert RebalanceHLPService_OnlyWhitelisted();
     }
     _;
   }
@@ -59,7 +59,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
 
   function setWhiteListExecutor(address _executor, bool _active) external onlyOwner {
     if (_executor == address(0)) {
-      revert ReinvestNonHlpTokenStrategy_AddressIsZero();
+      revert RebalanceHLPService_AddressIsZero();
     }
     whitelistExecutors[_executor] = _active;
     emit LogSetWhitelistExecutor(_executor, _active);
@@ -67,18 +67,19 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
 
   function setMinTvlBPS(uint16 _newMinTvlBps) external onlyOwner {
     if (_newMinTvlBps == 0) {
-      revert ReinvestNonHlpTokenStrategy_AmountIsZero();
+      revert RebalanceHLPService_AmountIsZero();
     }
     emit LogSetMinTvlBPS(minTvlBPS, _newMinTvlBps);
     minTvlBPS = _newMinTvlBps;
   }
 
   function execute(ExecuteParams[] calldata _params) external onlyWhitelisted returns (uint256 receivedGlp) {
-    if (_params.length == 0) revert ReinvestNonHlpTokenStrategy_ParamsIsEmpty();
+    if (_params.length == 0) revert RebalanceHLPService_ParamsIsEmpty();
     // SLOADS, gas opt.
     ICalculator _calculator = calculator;
     IERC20Upgradeable _sglp = sglp;
     IVaultStorage _vaultStorage = vaultStorage;
+    address _glpManager = address(glpManager);
 
     uint256 hlpValueBefore = _calculator.getHLPValueE30(true);
     receivedGlp = 0;
@@ -95,13 +96,16 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
       _vaultStorage.removeHLPLiquidity(_params[i].token, _params[i].amount);
 
       // mint n stake
-      _token.safeApprove(address(glpManager), _params[i].amount);
+      // user increaseAllowance instead, as approve() is deprecated.
+      _token.safeIncreaseAllowance(address(glpManager), _params[i].amount);
       receivedGlp += rewardRouter.mintAndStakeGlp(
         _params[i].token,
         _params[i].amount,
         _params[i].minAmountOutUSD,
         _params[i].minAmountOutGlp
       );
+      // make sure the allowance is zero, in case of dust
+      _token.safeDecreaseAllowance(_glpManager, _token.allowance(address(this), _glpManager));
       unchecked {
         ++i;
       }
@@ -109,7 +113,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     if (_calculator.getHLPValueE30(true) < hlpValueBefore) {
       uint256 diffHlp = hlpValueBefore - _calculator.getHLPValueE30(true);
       // math opt.
-      if ((diffHlp * BPS) >= (minTvlBPS * hlpValueBefore)) revert ReinvestNonHlpTokenStrategy_HlpTvlDropExceedMin();
+      if ((diffHlp * BPS) >= (minTvlBPS * hlpValueBefore)) revert RebalanceHLPService_HlpTvlDropExceedMin();
     }
     // send accum GLP back to vault
     _sglp.safeTransfer(address(vaultStorage), receivedGlp);

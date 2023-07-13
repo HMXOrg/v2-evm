@@ -16,12 +16,6 @@ interface IVaultStorage {
   error IVaultStorage_InvalidAddress();
   error IVaultStorage_ParamsIsEmpty();
 
-  struct CookParams {
-    address token;
-    address target;
-    bytes callData;
-  }
-
   /**
    * Functions
    */
@@ -85,18 +79,9 @@ interface IVaultStorage {
 
   function cook(address _token, address _target, bytes calldata _callData) external returns (bytes memory);
 
-  function cook(CookParams[] calldata params) external returns (bytes[] memory);
-
   function setStrategyAllowance(address _token, address _strategy, address _target) external;
 
   function setStrategyFunctionSigAllowance(address _token, address _strategy, bytes4 _target) external;
-
-  function setStrategyFunctionAllowExecutes(
-    address _token,
-    address _strategy,
-    bytes4 _targetFunction,
-    bool _allowance
-  ) external;
 
   function globalBorrowingFeeDebt() external returns (uint256);
 

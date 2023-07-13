@@ -73,8 +73,6 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   mapping(address => bool) public serviceExecutors;
   // mapping(token => strategy => target => isAllow?)
   mapping(address token => mapping(address strategy => bytes4 functionSig)) public strategyFunctionSigAllowances;
-  mapping(address token => mapping(address strategy => mapping(bytes4 functionSig => bool isAllow)))
-    public strategyFunctionAllowExecutes;
 
   /**
    * Modifiers
@@ -481,22 +479,6 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     strategyFunctionSigAllowances[_token][_strategy] = _target;
   }
 
-  function setStrategyFunctionAllowExecutes(
-    address _token,
-    address _strategy,
-    bytes4 _targetFunc,
-    bool _newAllowance
-  ) external onlyOwner {
-    emit LogSetStrategyFunctionAllowExecute(
-      _token,
-      _strategy,
-      _targetFunc,
-      strategyFunctionAllowExecutes[_token][_strategy][_targetFunc],
-      _newAllowance
-    );
-    strategyFunctionAllowExecutes[_token][_strategy][_targetFunc] = _newAllowance;
-  }
-
   function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
     // If the _res length is less than 68, then the transaction failed silently (without a revert message)
     if (_returnData.length < 68) return "Transaction reverted silently";
@@ -526,42 +508,6 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     require(_success, _getRevertMsg(_returnData));
 
     return _returnData;
-  }
-
-  /// @notice invoking the target contract using call data.
-  /// @param _params Array of struct CookParams, which contains
-  ///   - _token The token to cook
-  ///   - _target target to execute callData
-  ///   - _callData call data signature
-  function cook(CookParams[] calldata _params) external returns (bytes[] memory) {
-    // Check
-    if (_params.length == 0) revert IVaultStorage_ParamsIsEmpty();
-    bytes[] memory returnData = new bytes[](_params.length);
-    for (uint i = 0; i < _params.length; ) {
-      // Only whitelisted function sig can be performed by the strategy
-      bytes4 functionSig = bytes4(_params[i].callData[:4]);
-      if (!strategyFunctionAllowExecutes[_params[i].token][_params[i].target][functionSig])
-        revert IVaultStorage_Forbidden();
-
-      uint256 balanceTokenBefore = IERC20Upgradeable(_params[i].token).balanceOf(address(this));
-
-      (bool _success, bytes memory _returnData) = _params[i].target.call(_params[i].callData);
-      require(_success, _getRevertMsg(_returnData));
-
-      uint256 balanceTokenAfter = IERC20Upgradeable(_params[i].token).balanceOf(address(this));
-
-      if (balanceTokenAfter > balanceTokenBefore) {
-        totalAmount[_params[i].token] += balanceTokenAfter - balanceTokenBefore;
-      } else if (balanceTokenAfter < balanceTokenBefore) {
-        totalAmount[_params[i].token] -= balanceTokenBefore - balanceTokenAfter;
-      }
-
-      returnData[i] = _returnData;
-      unchecked {
-        ++i;
-      }
-    }
-    return returnData;
   }
 
   /**

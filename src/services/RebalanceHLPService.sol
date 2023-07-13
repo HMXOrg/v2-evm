@@ -88,6 +88,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
       if (_params[i].token == address(0) || _params[i].amount == 0) {
         continue;
       }
+
       // declare token
       IERC20Upgradeable _token = IERC20Upgradeable(_params[i].token);
 
@@ -95,8 +96,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
       _vaultStorage.pushToken(_params[i].token, address(this), _params[i].amount);
       _vaultStorage.removeHLPLiquidity(_params[i].token, _params[i].amount);
 
-      // mint n stake
-      // user increaseAllowance instead, as approve() is deprecated.
+      // mint n stake, sanity check
       _token.safeIncreaseAllowance(_glpManager, _params[i].amount);
       receivedGlp += rewardRouter.mintAndStakeGlp(
         _params[i].token,

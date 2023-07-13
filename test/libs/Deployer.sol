@@ -25,6 +25,7 @@ import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandle
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
+import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
@@ -253,6 +254,25 @@ library Deployer {
     return IBotHandler(payable(_proxy));
   }
 
+  function deployRebalanceHLPHandler(
+    address _proxyAdmin,
+    address _rebalanceHLPService,
+    address _calculator,
+    uint16 _minExecutionFee
+  ) internal returns (IRebalanceHLPHandler) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPHandler.sol/RebalanceHLPHandler.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint16)")),
+      _rebalanceHLPService,
+      _calculator,
+      _minExecutionFee
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPHandler(payable(_proxy));
+  }
+
   /**
    * Staking
    */
@@ -424,21 +444,17 @@ library Deployer {
     address _sglp,
     address _rewardsRouter,
     address _vaultStorage,
-    address _glpManager,
-    address _calculator,
-    uint16 _minTvlBPS
+    address _glpManager
   ) internal returns (IRebalanceHLPService) {
     bytes memory _logicBytecode = abi.encodePacked(
       vm.getCode("./out/RebalanceHLPService.sol/RebalanceHLPService.json")
     );
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,address,uint16)")),
+      bytes4(keccak256("initialize(address,address,address,address)")),
       _sglp,
       _rewardsRouter,
       _vaultStorage,
-      _glpManager,
-      _calculator,
-      _minTvlBPS
+      _glpManager
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IRebalanceHLPService(payable(_proxy));

@@ -14,6 +14,7 @@ import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
 
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
@@ -118,6 +119,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   // handlers
   ILiquidityHandler liquidityHandler;
   ICrossMarginHandler crossMarginHandler;
+  IRebalanceHLPHandler rebalanceHLPHandler;
 
   // services
   ILiquidityService liquidityService;
@@ -186,8 +188,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       configStorage.setHLP(address(hlpV2));
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
-      // NOTE: change to rebalanceHandler later.
-      configStorage.setServiceExecutor(address(rebalanceHLPService), address(crossMarginHandler), true);
+      configStorage.setServiceExecutor(address(rebalanceHLPService), address(rebalanceHLPHandler), true);
     }
 
     // Setup Storages
@@ -354,9 +355,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(sglp),
       address(rewardRouter),
       address(vaultStorage),
-      address(glpManager),
-      address(calculator),
-      1000
+      address(glpManager)
     );
 
     //deploy liquidityHandler
@@ -373,6 +372,12 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(pyth),
       executionOrderFee,
       maxExecutionChuck
+    );
+    rebalanceHLPHandler = Deployer.deployRebalanceHLPHandler(
+      address(proxyAdmin),
+      address(rebalanceHLPService),
+      address(calculator),
+      1000
     );
   }
 

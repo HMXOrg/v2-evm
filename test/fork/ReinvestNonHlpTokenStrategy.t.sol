@@ -27,6 +27,7 @@ contract ReinvestNonHlpTokenStrategy is GlpStrategy_Base {
     IReinvestNonHlpTokenStrategy.ExecuteParams[] memory params = new IReinvestNonHlpTokenStrategy.ExecuteParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 1 * 1e18;
+
     params[0] = IReinvestNonHlpTokenStrategy.ExecuteParams(usdcAddress, usdcAmount, 990 * 1e6, 100);
     params[1] = IReinvestNonHlpTokenStrategy.ExecuteParams(wethAddress, wethAmount, 95 * 1e16, 100);
 

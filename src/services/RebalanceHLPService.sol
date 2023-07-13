@@ -97,15 +97,13 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
 
       // mint n stake
       // user increaseAllowance instead, as approve() is deprecated.
-      _token.safeIncreaseAllowance(address(glpManager), _params[i].amount);
+      _token.safeIncreaseAllowance(_glpManager, _params[i].amount);
       receivedGlp += rewardRouter.mintAndStakeGlp(
         _params[i].token,
         _params[i].amount,
         _params[i].minAmountOutUSD,
         _params[i].minAmountOutGlp
       );
-      // make sure the allowance is zero, in case of dust
-      _token.safeDecreaseAllowance(_glpManager, _token.allowance(address(this), _glpManager));
       unchecked {
         ++i;
       }

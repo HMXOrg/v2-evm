@@ -17,19 +17,19 @@ interface IRebalanceHLPHandler {
 
   // execute logic
   function executeLogicReinvestNonHLP(
-    IRebalanceHLPService.ExecuteReinvestParams[] calldata params
-  )
-    external
-    returns (
-      // bytes32[] memory _priceData,
-      // bytes32[] memory _publishTimeData,
-      // uint256 _minPublishTime,
-      // bytes32 _encodedVaas
-      uint256 receivedGlp
-    );
+    IRebalanceHLPService.ExecuteReinvestParams[] calldata params,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external returns (uint256 receivedGlp);
 
   function executeLogicWithdrawGLP(
-    IRebalanceHLPService.ExecuteWithdrawParams[] calldata params
+    IRebalanceHLPService.ExecuteWithdrawParams[] calldata params,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external returns (IRebalanceHLPService.WithdrawGLPResult[] memory result);
 
   // Setter

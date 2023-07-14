@@ -358,7 +358,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(calculator),
       address(configStorage),
       address(pyth),
-      1000
+      10
     );
   }
 
@@ -505,6 +505,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     pyth.setUpdater(address(this), true);
     // pyth.setUpdater(address(keeper), true);
     pyth.setUpdater(address(liquidityHandler), true);
+    pyth.setUpdater(address(rebalanceHLPHandler), true);
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
     pyth.updatePriceFeeds(priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));

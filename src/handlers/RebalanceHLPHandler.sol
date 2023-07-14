@@ -21,6 +21,8 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
+import "forge-std/console.sol";
+
 /// @title RebalanceHLPHandler
 /// @notice This contract handles liquidity orders for adding or removing liquidity from a pool
 contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IRebalanceHLPHandler {
@@ -82,29 +84,42 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   }
 
   function executeLogicReinvestNonHLP(
-    IRebalanceHLPService.ExecuteReinvestParams[] calldata _params
+    IRebalanceHLPService.ExecuteReinvestParams[] calldata _params,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external onlyWhitelisted returns (uint256 receivedGlp) {
     if (_params.length == 0) revert RebalanceHLPHandler_ParamsIsEmpty();
     _validateReinvestInput(_params);
     // Update the price and publish time data using the Pyth oracle
     // slither-disable-next-line arbitrary-send-eth
-    //IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
     // Get current HLP value
     uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     // Execute logic at Service
     receivedGlp = service.executReinvestNonHLP(_params);
+    // Validate HLP Value
     _validateHLPValue(totalHlpValueBefore);
   }
 
   function executeLogicWithdrawGLP(
-    IRebalanceHLPService.ExecuteWithdrawParams[] calldata _params
+    IRebalanceHLPService.ExecuteWithdrawParams[] calldata _params,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
   ) external nonReentrant onlyWhitelisted returns (IRebalanceHLPService.WithdrawGLPResult[] memory result) {
     if (_params.length == 0) revert RebalanceHLPHandler_ParamsIsEmpty();
     _validateWithdrawInput(_params);
+    // Update the price and publish time data using the Pyth oracle
+    // slither-disable-next-line arbitrary-send-eth
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
     // Get current HLP value
     uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     // Execute logic at Service
     result = service.executeWithdrawGLP(_params);
+    // Validate HLP Value
     _validateHLPValue(totalHlpValueBefore);
   }
 
@@ -112,10 +127,10 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     // SLOAD
     IVaultStorage _vaultStorage = vaultStorage;
     for (uint256 i = 0; i < _params.length; ) {
-      if (_vaultStorage.totalAmount(_params[i].token) == 0) {
+      if (_params[i].token == address(0)) {
         revert RebalanceHLPHandler_InvalidTokenAddress();
       }
-      if (_params[i].amount > _vaultStorage.totalAmount(_params[i].token)) {
+      if ((_params[i].amount > _vaultStorage.totalAmount(_params[i].token)) || (_params[i].amount == 0)) {
         revert RebalanceHLPHandler_InvalidTokenAmount();
       }
       unchecked {
@@ -129,6 +144,9 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     IVaultStorage _vaultStorage = vaultStorage;
     uint256 totalGlpAccum = 0;
     for (uint256 i = 0; i < _params.length; ) {
+      if (_params[i].token == address(0)) {
+        revert RebalanceHLPHandler_InvalidTokenAddress();
+      }
       totalGlpAccum += _params[i].glpAmount;
       unchecked {
         ++i;

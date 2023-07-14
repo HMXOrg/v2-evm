@@ -44,4 +44,28 @@ interface IExt01Handler {
     bytes data;
     CrossMarginService crossMarginService;
   }
+
+  struct CreateExtOrderParams {
+    uint24 orderType;
+    uint128 executionFee;
+    bytes data;
+  }
+
+  function createExtOrder(CreateExtOrderParams memory _params) external payable returns (uint256 _orderId);
+
+  function executeOrders(
+    uint256 _endIndex,
+    address payable _feeReceiver,
+    bytes32[] memory _priceData,
+    bytes32[] memory _publishTimeData,
+    uint256 _minPublishTime,
+    bytes32 _encodedVaas
+  ) external;
+
+  /**
+   * Setters
+   */
+  function setOrderExecutor(address _executor, bool _isAllow) external;
+
+  function setMinExecutionFee(uint24 _orderType, uint128 _minExecutionFee) external;
 }

@@ -130,12 +130,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     pyth.getAssetIds();
   }
 
-  struct CreateExtOrderParams {
-    uint24 orderType;
-    uint128 executionFee;
-    bytes data;
-  }
-
   struct CreateSwitchCollateralOrderParams {
     uint8 subAccountId;
     address fromToken;

@@ -429,9 +429,11 @@ async function main(chainId: number) {
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
-  console.log("[ConfigStorage] Adding new market config...");
+  console.log("[ConfigStorage] Setting market config...");
   for (let i = 0; i < marketConfigs.length; i++) {
-    console.log(`[ConfigStorage] Adding ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`);
+    console.log(
+      `[ConfigStorage] Setting ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`
+    );
     const existingMarketConfig = await configStorage.marketConfigs(marketConfigs[i].marketIndex);
     if (existingMarketConfig.assetId !== marketConfigs[i].assetId) {
       console.log(`marketIndex ${marketConfigs[i].marketIndex} wrong asset id`);

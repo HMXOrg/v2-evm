@@ -10,6 +10,10 @@ const inputs = [
     executorAddress: config.rewardDistributor,
     isServiceExecutor: true,
   },
+  {
+    executorAddress: config.services.rebalanceHLP,
+    isServiceExecutor: true,
+  },
 ];
 
 async function main() {

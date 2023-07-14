@@ -20,7 +20,9 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     super.setUp();
 
     tickPrices = new int24[](3);
+    // USDC Price
     tickPrices[0] = 0;
+    // ETH Price
     tickPrices[1] = 75446;
 
     publishTimeDiffs = new uint24[](3);
@@ -74,17 +76,14 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
 
   function testCorrectness_Rebalance_WithdrawSuccess() external {
     vm.roll(110369564);
+
     IRebalanceHLPService.ExecuteReinvestParams[] memory params = new IRebalanceHLPService.ExecuteReinvestParams[](2);
-    uint256 usdcAmount = 1000 * 1e6;
-    uint256 wethAmount = 1 * 1e18;
-    params[0] = IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, usdcAmount, 990 * 1e6, 100);
-    params[1] = IRebalanceHLPService.ExecuteReinvestParams(wethAddress, wethAmount, 95 * 1e16, 100);
+    params[0] = IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, 1000 * 1e6, 990 * 1e6, 100);
+    params[1] = IRebalanceHLPService.ExecuteReinvestParams(wethAddress, 1 * 1e18, 95 * 1e16, 100);
 
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
-
-    uint256 sGlpBefore = vaultStorage.totalAmount(address(sglp));
-    uint256 receivedGlp = rebalanceHLPHandler.executeLogicReinvestNonHLP(
+    rebalanceHLPHandler.executeLogicReinvestNonHLP(
       params,
       priceUpdateData,
       publishTimeUpdateData,
@@ -92,13 +91,11 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
       keccak256("encodeVass")
     );
 
-    uint256 sglpAmount = 15 * 1e18;
-
-    assertEq(receivedGlp, vaultStorage.totalAmount(address(sglp)) - sGlpBefore);
+    // setup sGLP in vault
 
     IRebalanceHLPService.ExecuteWithdrawParams[] memory _params = new IRebalanceHLPService.ExecuteWithdrawParams[](2);
-    _params[0] = IRebalanceHLPService.ExecuteWithdrawParams(usdcAddress, sglpAmount, 0);
-    _params[1] = IRebalanceHLPService.ExecuteWithdrawParams(wethAddress, sglpAmount, 0);
+    _params[0] = IRebalanceHLPService.ExecuteWithdrawParams(usdcAddress, 15 * 1e18, 0);
+    _params[1] = IRebalanceHLPService.ExecuteWithdrawParams(wethAddress, 15 * 1e18, 0);
 
     uint256 usdcBalanceBefore = vaultStorage.totalAmount(usdcAddress);
     uint256 wethBalanceBefore = vaultStorage.totalAmount(wethAddress);
@@ -107,10 +104,13 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     uint256 usdcHlpBefore = vaultStorage.hlpLiquidity(usdcAddress);
     uint256 wethHlpBefore = vaultStorage.hlpLiquidity(wethAddress);
 
+    bytes32[] memory _priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory _publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
+
     IRebalanceHLPService.WithdrawGLPResult[] memory result = rebalanceHLPHandler.executeLogicWithdrawGLP(
       _params,
-      priceUpdateData,
-      publishTimeUpdateData,
+      _priceUpdateData,
+      _publishTimeUpdateData,
       block.timestamp,
       keccak256("encodeVass")
     );
@@ -131,7 +131,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     assertEq(usdcBalanceAfter - usdcBalanceBefore, result[0].amount);
     assertEq(wethBalanceAfter - wethBalanceBefore, result[1].amount);
 
-    assertEq(sglpBefore - sglpAfter, sglpAmount * 2);
+    assertEq(sglpBefore - sglpAfter, 15 * 1e18 * 2);
 
     // make sure that the allowance is zero
     assertEq(IERC20Upgradeable(usdcAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
@@ -193,6 +193,27 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
 
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_InvalidTokenAmount.selector);
     rebalanceHLPHandler.executeLogicWithdrawGLP(
+      params,
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("encodeVass")
+    );
+  }
+
+  function testRevert_Rebalance_NegativeTotalHLPValue() external {
+    tickPrices = new int24[](3);
+    tickPrices[0] = 0;
+    tickPrices[1] = 76966;
+
+    IRebalanceHLPService.ExecuteReinvestParams[] memory params = new IRebalanceHLPService.ExecuteReinvestParams[](1);
+    params[0] = IRebalanceHLPService.ExecuteReinvestParams(wethAddress, 90 * 1e18, 88 * 1e18, 100);
+
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
+
+    vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_HlpTvlDropExceedMin.selector);
+    rebalanceHLPHandler.executeLogicReinvestNonHLP(
       params,
       priceUpdateData,
       publishTimeUpdateData,

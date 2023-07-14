@@ -158,17 +158,21 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   }
 
   function _validateHLPValue(uint256 _valueBefore) internal view {
+    console.log("Before:", _valueBefore);
     uint256 hlpValue = calculator.getHLPValueE30(true);
+    console.log("After:", hlpValue);
     if (_valueBefore > hlpValue) {
       uint256 diff = _valueBefore - hlpValue;
+      console.log("diff:", diff);
+
       /**
-      EQ:  ( Before - After )              minHLPValueLossBPS
-            ----------------   *  BPS  =   ------------------   ; BPS = 1e4
-                Before                            BPS
+      EQ:  ( Before - After )          minHLPValueLossBPS
+            ----------------     >      ----------------
+                Before                        BPS
       
-      To reduce the div,   ( Before - After ) * (BPS**2)  = minHLPValueLossBPS * Before
+      To reduce the div,   ( Before - After ) * (BPS**2) = minHLPValueLossBPS * Before
        */
-      if ((diff * 1e8) >= (minHLPValueLossBPS * _valueBefore)) {
+      if ((diff * 1e4) > (minHLPValueLossBPS * _valueBefore)) {
         revert RebalanceHLPHandler_HlpTvlDropExceedMin();
       }
     }

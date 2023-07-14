@@ -8,7 +8,6 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 interface IRebalanceHLPHandler {
   // error
-  error RebalanceHLPHandler_OnlyWhitelisted();
   error RebalanceHLPHandler_ParamsIsEmpty();
   error RebalanceHLPHandler_AddressIsZero();
   error RebalanceHLPHandler_AmountIsZero();
@@ -19,16 +18,22 @@ interface IRebalanceHLPHandler {
   // execute logic
   function executeLogicReinvestNonHLP(
     IRebalanceHLPService.ExecuteReinvestParams[] calldata params
-  ) external returns (uint256 receivedGlp);
+  )
+    external
+    returns (
+      // bytes32[] memory _priceData,
+      // bytes32[] memory _publishTimeData,
+      // uint256 _minPublishTime,
+      // bytes32 _encodedVaas
+      uint256 receivedGlp
+    );
 
   function executeLogicWithdrawGLP(
     IRebalanceHLPService.ExecuteWithdrawParams[] calldata params
   ) external returns (IRebalanceHLPService.WithdrawGLPResult[] memory result);
 
   // Setter
-  function setWhiteListExecutor(address executor, bool active) external;
-
-  function setMinExecutionFeeBPS(uint16 minTvlBPS) external;
+  function setMinHLPValueLossBPS(uint16 minTvlBPS) external;
 
   function setRebalanceHLPService(address _newService) external;
 
@@ -41,7 +46,5 @@ interface IRebalanceHLPHandler {
 
   function calculator() external view returns (ICalculator);
 
-  function minExecutionFeeBPS() external view returns (uint16);
-
-  function whitelistExecutors(address executor) external view returns (bool);
+  function minHLPValueLossBPS() external view returns (uint16);
 }

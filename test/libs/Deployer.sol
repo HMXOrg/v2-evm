@@ -257,15 +257,19 @@ library Deployer {
     address _proxyAdmin,
     address _rebalanceHLPService,
     address _calculator,
+    address _configStorage,
+    address _pyth,
     uint16 _minExecutionFee
   ) internal returns (IRebalanceHLPHandler) {
     bytes memory _logicBytecode = abi.encodePacked(
       vm.getCode("./out/RebalanceHLPHandler.sol/RebalanceHLPHandler.json")
     );
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,uint16)")),
+      bytes4(keccak256("initialize(address,address,address,address,uint16)")),
       _rebalanceHLPService,
       _calculator,
+      _configStorage,
+      _pyth,
       _minExecutionFee
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
@@ -442,18 +446,20 @@ library Deployer {
     address _proxyAdmin,
     address _sglp,
     address _rewardsRouter,
+    address _glpManager,
     address _vaultStorage,
-    address _glpManager
+    address _configStorage
   ) internal returns (IRebalanceHLPService) {
     bytes memory _logicBytecode = abi.encodePacked(
       vm.getCode("./out/RebalanceHLPService.sol/RebalanceHLPService.json")
     );
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address)")),
+      bytes4(keccak256("initialize(address,address,address,address,address)")),
       _sglp,
       _rewardsRouter,
+      _glpManager,
       _vaultStorage,
-      _glpManager
+      _configStorage
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IRebalanceHLPService(payable(_proxy));

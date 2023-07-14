@@ -16,46 +16,36 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
   IERC20Upgradeable public sglp;
-  IVaultStorage public vaultStorage;
   IGmxRewardRouterV2 public rewardRouter;
   IGmxGlpManager public glpManager;
 
-  mapping(address => bool) public whitelistExecutors;
-
-  event LogSetWhitelistExecutor(address indexed _account, bool _active);
+  IVaultStorage public vaultStorage;
+  IConfigStorage public configStorage;
 
   modifier onlyWhitelisted() {
-    // if not whitelist
-    if (!whitelistExecutors[msg.sender]) {
-      revert RebalanceHLPService_OnlyWhitelisted();
-    }
+    configStorage.validateServiceExecutor(address(this), msg.sender);
     _;
   }
 
   function initialize(
     address _sglp,
     address _rewardRouter,
+    address _glpManager,
     address _vaultStorage,
-    address _glpManager
+    address _configStorage
   ) external initializer {
-    __Ownable_init();
+    OwnableUpgradeable.__Ownable_init();
     sglp = IERC20Upgradeable(_sglp);
     rewardRouter = IGmxRewardRouterV2(_rewardRouter);
-    vaultStorage = IVaultStorage(_vaultStorage);
     glpManager = IGmxGlpManager(_glpManager);
-  }
-
-  function setWhiteListExecutor(address _executor, bool _active) external onlyOwner {
-    if (_executor == address(0)) {
-      revert RebalanceHLPService_AddressIsZero();
-    }
-    whitelistExecutors[_executor] = _active;
-    emit LogSetWhitelistExecutor(_executor, _active);
+    vaultStorage = IVaultStorage(_vaultStorage);
+    configStorage = IConfigStorage(_configStorage);
   }
 
   function executeWithdrawGLP(

@@ -173,8 +173,6 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     {
       stakedGlpStrategy.setWhiteListExecutor(address(keeper), true);
       convertedGlpStrategy.setWhiteListExecutor(address(crossMarginService), true);
-      rebalanceHLPService.setWhiteListExecutor(address(rebalanceHLPHandler), true);
-      rebalanceHLPHandler.setWhiteListExecutor(address(this), true);
     }
 
     // Config
@@ -187,6 +185,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
       configStorage.setServiceExecutor(address(rebalanceHLPService), address(rebalanceHLPHandler), true);
+      configStorage.setServiceExecutor(address(rebalanceHLPHandler), address(this), true);
     }
 
     // Setup Storages
@@ -333,8 +332,9 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(proxyAdmin),
       address(sglp),
       address(rewardRouter),
+      address(glpManager),
       address(vaultStorage),
-      address(glpManager)
+      address(configStorage)
     );
 
     //deploy liquidityHandler
@@ -356,6 +356,8 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(proxyAdmin),
       address(rebalanceHLPService),
       address(calculator),
+      address(configStorage),
+      address(pyth),
       1000
     );
   }

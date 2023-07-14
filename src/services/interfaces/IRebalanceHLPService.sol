@@ -8,10 +8,6 @@ import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 interface IRebalanceHLPService {
-  // error
-  error RebalanceHLPService_OnlyWhitelisted();
-  error RebalanceHLPService_AddressIsZero();
-
   /// @param token: the address of ERC20 token that will be converted into GLP.
   /// @param amount: the amount of token to convert to GLP.
   /// @param minAmountOutUSD: the minimum acceptable USD value of the GLP purchased
@@ -41,9 +37,6 @@ interface IRebalanceHLPService {
     ExecuteWithdrawParams[] calldata params
   ) external returns (WithdrawGLPResult[] memory result);
 
-  // Setter
-  function setWhiteListExecutor(address executor, bool active) external;
-
   // Get storage
   function sglp() external view returns (IERC20Upgradeable);
 
@@ -52,6 +45,4 @@ interface IRebalanceHLPService {
   function rewardRouter() external view returns (IGmxRewardRouterV2);
 
   function glpManager() external view returns (IGmxGlpManager);
-
-  function whitelistExecutors(address executor) external view returns (bool);
 }

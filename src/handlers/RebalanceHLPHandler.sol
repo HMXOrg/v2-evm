@@ -18,7 +18,7 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
+import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 /// @title RebalanceHLPHandler
@@ -26,60 +26,51 @@ import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC
 contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IRebalanceHLPHandler {
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
-  uint16 public constant BPS = 100_00;
-
   IRebalanceHLPService public service;
   IVaultStorage public vaultStorage;
+  IConfigStorage public configStorage;
   ICalculator public calculator;
-
+  IEcoPyth public pyth;
   IERC20Upgradeable public sglp;
 
-  uint16 public minExecutionFeeBPS;
+  uint16 public minHLPValueLossBPS;
 
   mapping(address => bool) public whitelistExecutors;
 
-  event LogSetWhitelistExecutor(address indexed _account, bool _active);
-  event LogSetMinExecutionFee(uint16 _oldFee, uint16 _newFee);
+  event LogSetMinHLPValueLossBPS(uint16 _oldFee, uint16 _newFee);
   event LogSetRebalanceHLPService(address indexed _oldService, address indexed _newService);
 
   modifier onlyWhitelisted() {
-    // if not whitelist
-    if (!whitelistExecutors[msg.sender]) {
-      revert RebalanceHLPHandler_OnlyWhitelisted();
-    }
+    configStorage.validateServiceExecutor(address(this), msg.sender);
     _;
   }
 
   function initialize(
     address _rebalanceHLPService,
     address _calculator,
-    uint16 _minExecutionFeeBPS
+    address _configStorage,
+    address _pyth,
+    uint16 _minHLPValueLossBPS
   ) external initializer {
-    __Ownable_init();
-    __ReentrancyGuard_init();
+    OwnableUpgradeable.__Ownable_init();
+    ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     // gas opt
     IRebalanceHLPService _service = IRebalanceHLPService(_rebalanceHLPService);
     service = _service;
     vaultStorage = _service.vaultStorage();
     sglp = _service.sglp();
     calculator = ICalculator(_calculator);
-    minExecutionFeeBPS = _minExecutionFeeBPS;
+    configStorage = IConfigStorage(_configStorage);
+    pyth = IEcoPyth(_pyth);
+    minHLPValueLossBPS = _minHLPValueLossBPS;
   }
 
-  function setWhiteListExecutor(address _executor, bool _active) external onlyOwner {
-    if (_executor == address(0)) {
-      revert RebalanceHLPHandler_AddressIsZero();
-    }
-    whitelistExecutors[_executor] = _active;
-    emit LogSetWhitelistExecutor(_executor, _active);
-  }
-
-  function setMinExecutionFeeBPS(uint16 _newExecutionFeeBPS) external onlyOwner {
-    if (_newExecutionFeeBPS == 0) {
+  function setMinHLPValueLossBPS(uint16 _HLPValueLossBPS) external onlyOwner {
+    if (_HLPValueLossBPS == 0) {
       revert RebalanceHLPHandler_AmountIsZero();
     }
-    emit LogSetMinExecutionFee(minExecutionFeeBPS, _newExecutionFeeBPS);
-    minExecutionFeeBPS = _newExecutionFeeBPS;
+    emit LogSetMinHLPValueLossBPS(minHLPValueLossBPS, _HLPValueLossBPS);
+    minHLPValueLossBPS = _HLPValueLossBPS;
   }
 
   function setRebalanceHLPService(address _newService) external nonReentrant onlyOwner {
@@ -92,10 +83,12 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
 
   function executeLogicReinvestNonHLP(
     IRebalanceHLPService.ExecuteReinvestParams[] calldata _params
-  ) external nonReentrant onlyWhitelisted returns (uint256 receivedGlp) {
+  ) external onlyWhitelisted returns (uint256 receivedGlp) {
     if (_params.length == 0) revert RebalanceHLPHandler_ParamsIsEmpty();
     _validateReinvestInput(_params);
-
+    // Update the price and publish time data using the Pyth oracle
+    // slither-disable-next-line arbitrary-send-eth
+    //IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
     // Get current HLP value
     uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     // Execute logic at Service
@@ -112,7 +105,6 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     // Execute logic at Service
     result = service.executeWithdrawGLP(_params);
-
     _validateHLPValue(totalHlpValueBefore);
   }
 
@@ -137,9 +129,6 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     IVaultStorage _vaultStorage = vaultStorage;
     uint256 totalGlpAccum = 0;
     for (uint256 i = 0; i < _params.length; ) {
-      if (_vaultStorage.totalAmount(_params[i].token) == 0) {
-        revert RebalanceHLPHandler_InvalidTokenAddress();
-      }
       totalGlpAccum += _params[i].glpAmount;
       unchecked {
         ++i;
@@ -154,7 +143,14 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     uint256 hlpValue = calculator.getHLPValueE30(true);
     if (_valueBefore > hlpValue) {
       uint256 diff = _valueBefore - hlpValue;
-      if ((diff * (BPS ** 2)) >= (minExecutionFeeBPS * _valueBefore)) {
+      /**
+      EQ:  ( Before - After )              minHLPValueLossBPS
+            ----------------   *  BPS  =   ------------------   ; BPS = 1e4
+                Before                            BPS
+      
+      To reduce the div,   ( Before - After ) * (BPS**2)  = minHLPValueLossBPS * Before
+       */
+      if ((diff * 1e8) >= (minHLPValueLossBPS * _valueBefore)) {
         revert RebalanceHLPHandler_HlpTvlDropExceedMin();
       }
     }

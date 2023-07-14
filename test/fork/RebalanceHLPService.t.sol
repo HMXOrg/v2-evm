@@ -9,6 +9,7 @@ import { GlpStrategy_Base } from "./GlpStrategy_Base.t.fork.sol";
 import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 contract RebalanceHLPSerivce is GlpStrategy_Base {
   uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
@@ -53,6 +54,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   }
 
   function testCorrectness_Rebalance_WithdrawSuccess() external {
+    vm.roll(110369564);
     IRebalanceHLPService.ExecuteReinvestParams[] memory params = new IRebalanceHLPService.ExecuteReinvestParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 1 * 1e18;
@@ -100,6 +102,8 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     // make sure that the allowance is zero
     assertEq(IERC20Upgradeable(usdcAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
     assertEq(IERC20Upgradeable(wethAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
+
+    assertEq(block.number, 110369564);
   }
 
   function testRevert_Rebalance_EmptyParams() external {
@@ -111,14 +115,14 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   function testRevert_Rebalance_OverAmount() external {
     IRebalanceHLPService.ExecuteReinvestParams[] memory params = new IRebalanceHLPService.ExecuteReinvestParams[](1);
     uint256 usdcAmount = 100_000 * 1e6;
-    vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
+    vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_InvalidTokenAmount.selector);
     params[0] = IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
     rebalanceHLPHandler.executeLogicReinvestNonHLP(params);
   }
 
   function testRevert_Rebalance_NotWhitelisted() external {
     IRebalanceHLPService.ExecuteReinvestParams[] memory params;
-    vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_OnlyWhitelisted.selector);
+    vm.expectRevert(IConfigStorage.IConfigStorage_NotWhiteListed.selector);
     vm.prank(ALICE);
     rebalanceHLPHandler.executeLogicReinvestNonHLP(params);
   }

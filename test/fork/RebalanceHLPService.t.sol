@@ -160,7 +160,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
     uint256 usdcAmount = 100_000 * 1e6;
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_InvalidTokenAmount.selector);
-    IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
+    params[0] = IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
     rebalanceHLPHandler.executeLogicReinvestNonHLP(
       params,
       priceUpdateData,

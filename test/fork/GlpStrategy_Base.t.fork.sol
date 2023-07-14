@@ -173,6 +173,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     {
       stakedGlpStrategy.setWhiteListExecutor(address(keeper), true);
       convertedGlpStrategy.setWhiteListExecutor(address(crossMarginService), true);
+      rebalanceHLPHandler.setWhiteListExecutor(address(this), true);
     }
 
     // Config
@@ -358,7 +359,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(calculator),
       address(configStorage),
       address(pyth),
-      10
+      50
     );
   }
 

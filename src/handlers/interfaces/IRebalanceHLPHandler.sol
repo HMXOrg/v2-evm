@@ -14,6 +14,7 @@ interface IRebalanceHLPHandler {
   error RebalanceHLPHandler_InvalidTokenAddress();
   error RebalanceHLPHandler_InvalidTokenAmount();
   error RebalanceHLPHandler_HlpTvlDropExceedMin();
+  error RebalanceHLPHandler_NotWhiteListed();
 
   // execute logic
   function executeLogicReinvestNonHLP(
@@ -36,6 +37,8 @@ interface IRebalanceHLPHandler {
   function setMinHLPValueLossBPS(uint16 minTvlBPS) external;
 
   function setRebalanceHLPService(address _newService) external;
+
+  function setWhiteListExecutor(address _executor, bool _isAllow) external;
 
   // Get storage
   function service() external view returns (IRebalanceHLPService);

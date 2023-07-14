@@ -41,9 +41,10 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
 
   event LogSetMinHLPValueLossBPS(uint16 _oldFee, uint16 _newFee);
   event LogSetRebalanceHLPService(address indexed _oldService, address indexed _newService);
+  event LogSetWhitelistExecutor(address indexed _executor, bool _isAllow);
 
   modifier onlyWhitelisted() {
-    configStorage.validateServiceExecutor(address(this), msg.sender);
+    if (!whitelistExecutors[msg.sender]) revert IRebalanceHLPHandler.RebalanceHLPHandler_NotWhiteListed();
     _;
   }
 
@@ -65,6 +66,14 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     configStorage = IConfigStorage(_configStorage);
     pyth = IEcoPyth(_pyth);
     minHLPValueLossBPS = _minHLPValueLossBPS;
+  }
+
+  function setWhiteListExecutor(address _executor, bool _isAllow) external onlyOwner {
+    if (_executor == address(0)) {
+      revert RebalanceHLPHandler_AddressIsZero();
+    }
+    whitelistExecutors[_executor] = _isAllow;
+    emit LogSetWhitelistExecutor(_executor, _isAllow);
   }
 
   function setMinHLPValueLossBPS(uint16 _HLPValueLossBPS) external onlyOwner {

@@ -174,7 +174,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     IRebalanceHLPService.ExecuteReinvestParams[] memory params;
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
-    vm.expectRevert(IConfigStorage.IConfigStorage_NotWhiteListed.selector);
+    vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_NotWhiteListed.selector);
     vm.prank(ALICE);
     rebalanceHLPHandler.executeLogicReinvestNonHLP(
       params,

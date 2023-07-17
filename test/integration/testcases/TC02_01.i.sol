@@ -16,7 +16,7 @@ contract TC02_01 is BaseIntTest_WithActions {
   // This integration test add position max size limit into test
   function testCorrectness_TC0201_TradeWithTakeProfitScenario() external {
     // Set max position size to 300 USD
-    limitTradeHandler.setPositionSizeLimit(300 * 1e30, 100_000 * 1e30);
+    limitTradeHandler.setPositionSizeLimit(0, 300 * 1e30, 100_000 * 1e30);
 
     // prepare token for wallet
 
@@ -102,19 +102,22 @@ contract TC02_01 is BaseIntTest_WithActions {
     skip(60);
 
     // T3: ALICE market buy weth with 200,000 USD (1000x) at price 20,000 USD
-    // should revert InsufficientFreeCollateral
+    // should revert Max Position Size
     // note: price has no changed
-    marketBuy(
-      ALICE,
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MaxPositionSize()"));
+    limitTradeHandler.createOrder{ value: executionOrderFee }(
       0,
       wethMarketIndex,
-      100_000 * 1e30,
-      address(0),
-      tickPrices,
-      publishTimeDiff,
-      block.timestamp,
-      "ILimitTradeHandler_MaxPositionSize()"
+      int256(100_000 * 1e30),
+      0, // trigger price always be 0
+      type(uint256).max,
+      true, // trigger above threshold
+      executionOrderFee, // 0.0001 ether
+      false, // reduce only (allow flip or not)
+      address(0)
     );
+    vm.stopPrank();
 
     // T4: ALICE market buy weth with 300 USD at price 20,000 USD
     //     Then Alice should has Long Position in WETH market
@@ -124,6 +127,14 @@ contract TC02_01 is BaseIntTest_WithActions {
     IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 300 * 1e30);
 
+    marketBuy(ALICE, 0, wbtcMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    _positionId = keccak256(abi.encodePacked(ALICE, wbtcMarketIndex));
+    _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 300 * 1e30);
+
+    // T5: ALICE try to increase her 300 USD to 301 USD
+    // should revert cuz max is 300 USD
+    // should revert Max Position Size
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MaxPositionSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(
@@ -140,10 +151,15 @@ contract TC02_01 is BaseIntTest_WithActions {
     vm.stopPrank();
 
     // Set max position size to 1 USD
-    limitTradeHandler.setPositionSizeLimit(1 * 1e30, 300 * 1e30);
+    limitTradeHandler.setPositionSizeLimit(0, 1 * 1e30, 300 * 1e30);
 
+    _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
     _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 300 * 1e30);
+
+    // T6: ALICE try to decrease her 300 USD to 299 USD
+    // should revert cuz max is 1 USD
+    // should revert Max Position Size
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MaxPositionSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(
@@ -159,10 +175,15 @@ contract TC02_01 is BaseIntTest_WithActions {
     );
     vm.stopPrank();
 
+    // T7: ALICE try to fully close her 300 USD position
+    // should work
     marketSell(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
     _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 0);
 
+    // T8: ALICE try to sell with 400 USD
+    // should revert from max trade size
     vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MaxTradeSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(

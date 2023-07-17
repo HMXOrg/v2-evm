@@ -116,8 +116,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address tpToken,
     bytes errMsg
   );
-  event LogSetPositionSizeLimit(uint256 oldPositionSizeLimit, uint256 newPositionSizeLimit);
-  event LogSetTradeSizeLimit(uint256 oldTradeSizeLimit, uint256 newTradeSizeLimit);
+  event LogSetPositionSizeLimit(uint8 assetClass, uint256 oldPositionSizeLimit, uint256 newPositionSizeLimit);
+  event LogSetTradeSizeLimit(uint8 assetClass, uint256 oldTradeSizeLimit, uint256 newTradeSizeLimit);
 
   /**
    * Structs
@@ -137,6 +137,12 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool isNewPosition;
     bool isMarketOrder;
     int256 sizeDelta;
+    ConfigStorage.MarketConfig marketConfig;
+  }
+
+  struct CreateOrderVars {
+    ConfigStorage.MarketConfig marketConfig;
+    PerpStorage.Position existingPosition;
   }
 
   struct ValidatePositionOrderPriceVars {
@@ -183,8 +189,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   mapping(address => EnumerableSet.UintSet) private subAccountActiveMarketOrderPointers;
   mapping(address => EnumerableSet.UintSet) private subAccountActiveLimitOrderPointers;
 
-  uint256 public positionSizeLimit;
-  uint256 public tradeSizeLimit;
+  mapping(uint8 assetClass => uint256 sizeLimit) public positionSizeLimit;
+  mapping(uint8 assetClass => uint256 sizeLimit) public tradeSizeLimit;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _weth Address of WETH.
@@ -464,19 +470,28 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bool _reduceOnly,
     address _tpToken
   ) internal {
+    CreateOrderVars memory vars;
     // Get the sub-account and order index for the limit order
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
 
-    if (tradeSizeLimit > 0 && !_reduceOnly && HMXLib.abs(_sizeDelta) > tradeSizeLimit) {
+    vars.marketConfig = ConfigStorage(TradeService(tradeService).configStorage()).getMarketConfigByIndex(_marketIndex);
+
+    if (
+      tradeSizeLimit[vars.marketConfig.assetClass] > 0 &&
+      !_reduceOnly &&
+      HMXLib.abs(_sizeDelta) > tradeSizeLimit[vars.marketConfig.assetClass]
+    ) {
       revert ILimitTradeHandler_MaxTradeSize();
     }
 
-    PerpStorage.Position memory _existingPosition = PerpStorage(TradeService(tradeService).perpStorage())
-      .getPositionById(HMXLib.getPositionId(_subAccount, _marketIndex));
-    if (positionSizeLimit > 0 && _existingPosition.positionSizeE30 != 0 && !_reduceOnly) {
-      if (HMXLib.abs(_existingPosition.positionSizeE30 + _sizeDelta) > positionSizeLimit)
-        revert ILimitTradeHandler_MaxPositionSize();
+    vars.existingPosition = PerpStorage(TradeService(tradeService).perpStorage()).getPositionById(
+      HMXLib.getPositionId(_subAccount, _marketIndex)
+    );
+    if (positionSizeLimit[vars.marketConfig.assetClass] > 0 && !_reduceOnly) {
+      if (
+        HMXLib.abs(vars.existingPosition.positionSizeE30 + _sizeDelta) > positionSizeLimit[vars.marketConfig.assetClass]
+      ) revert ILimitTradeHandler_MaxPositionSize();
     }
 
     // Create the limit order
@@ -696,9 +711,13 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       vars.positionId
     );
 
-    if (positionSizeLimit > 0 && !vars.order.reduceOnly) {
-      if (HMXLib.abs(_existingPosition.positionSizeE30 + vars.order.sizeDelta) > positionSizeLimit)
-        revert ILimitTradeHandler_MaxPositionSize();
+    vars.marketConfig = ConfigStorage(_tradeService.configStorage()).getMarketConfigByIndex(vars.order.marketIndex);
+
+    if (positionSizeLimit[vars.marketConfig.assetClass] > 0 && !vars.order.reduceOnly) {
+      if (
+        HMXLib.abs(_existingPosition.positionSizeE30 + vars.order.sizeDelta) >
+        positionSizeLimit[vars.marketConfig.assetClass]
+      ) revert ILimitTradeHandler_MaxPositionSize();
     }
 
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
@@ -1150,12 +1169,16 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     emit LogSetOrderExecutor(_executor, _isAllow);
   }
 
-  function setPositionSizeLimit(uint256 _positionSizeLimit, uint256 _tradeSizeLimit) external nonReentrant onlyOwner {
-    emit LogSetPositionSizeLimit(positionSizeLimit, _positionSizeLimit);
-    emit LogSetTradeSizeLimit(tradeSizeLimit, _tradeSizeLimit);
+  function setPositionSizeLimit(
+    uint8 _assetClass,
+    uint256 _positionSizeLimit,
+    uint256 _tradeSizeLimit
+  ) external nonReentrant onlyOwner {
+    emit LogSetPositionSizeLimit(_assetClass, positionSizeLimit[_assetClass], _positionSizeLimit);
+    emit LogSetTradeSizeLimit(_assetClass, tradeSizeLimit[_assetClass], _tradeSizeLimit);
 
-    positionSizeLimit = _positionSizeLimit;
-    tradeSizeLimit = _tradeSizeLimit;
+    positionSizeLimit[_assetClass] = _positionSizeLimit;
+    tradeSizeLimit[_assetClass] = _tradeSizeLimit;
   }
 
   /// @notice Sets a new Pyth contract address.

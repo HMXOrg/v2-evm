@@ -209,5 +209,5 @@ interface ILimitTradeHandler {
     uint256 _offset
   ) external view returns (LimitOrder[] memory _orders);
 
-  function setPositionSizeLimit(uint256 _positionSizeLimit, uint256 _tradeSizeLimit) external;
+  function setPositionSizeLimit(uint8 _assetClass, uint256 _positionSizeLimit, uint256 _tradeSizeLimit) external;
 }

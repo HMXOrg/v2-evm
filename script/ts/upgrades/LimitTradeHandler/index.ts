@@ -19,7 +19,10 @@ async function main() {
   console.log(`[upgrade/LimitTradeHandler] Done`);
 
   console.log(`[upgrade/LimitTradeHandler] New LimitTradeHandler Implementation address: ${newImplementation}`);
-  await proxyAdminWrapper.upgrade(limitTradeHandler, newImplementation.toString());
+  console.log("limitTradeHandler", limitTradeHandler, "newImplementation", newImplementation.toString());
+  const upgradeTx = await upgrades.upgradeProxy(limitTradeHandler, LimitTradeHandler, {
+    unsafeAllow: ["delegatecall"],
+  });
   console.log(`[upgrade/LimitTradeHandler] Upgraded!`);
 
   console.log(`[upgrade/LimitTradeHandler] Verify contract on Tenderly`);

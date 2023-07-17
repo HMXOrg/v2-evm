@@ -7,5 +7,7 @@ node_modules
 typechain
 broadcast/
 
+script/ts/inputs/
+
 .env
 .DS_Store

@@ -1,38 +1,37 @@
-import { getChainId } from "hardhat";
 import { VaultStorage__factory } from "../../../../typechain";
-import { getConfig, loadConfig } from "../../utils/config";
+import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
+import { Command } from "commander";
 
-const config = getConfig();
-
-const inputs = [
-  {
-    executorAddress: config.rewardDistributor,
-    isServiceExecutor: true,
-  },
-  {
-    executorAddress: config.services.rebalanceHLP,
-    isServiceExecutor: true,
-  },
-];
-
-async function main() {
-  const chainId = Number(await getChainId());
+async function main(chainId: number) {
   const config = loadConfig(chainId);
+  const inputs = [
+    {
+      executorAddress: config.handlers.bot,
+      isServiceExecutor: true,
+    },
+  ];
+
   const deployer = signers.deployer(chainId);
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, deployer);
 
-  console.log("> VaultStorage: Set Service Executors...");
+  console.log("[configs/VaultStorage] VaultStorage: Set Service Executors...");
   await (
     await vaultStorage.setServiceExecutorBatch(
       inputs.map((each) => each.executorAddress),
       inputs.map((each) => each.isServiceExecutor)
     )
   ).wait();
-  console.log("> VaultStorage: Set Service Executors success!");
+  console.log("[configs/VaultStorage] VaultStorage: Set Service Executors success!");
 }
 
-main().catch((error) => {
+const program = new Command();
+
+program.requiredOption("--chain-id <chain-id>", "chain id", parseInt);
+
+const opts = program.parse(process.argv).opts();
+
+main(opts.chainId).catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

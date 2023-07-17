@@ -9,7 +9,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
 
   const positionSizeLimit = ethers.utils.parseUnits("1000", 30);
-  const tradeSizeLimit = ethers.utils.parseUnits("1000", 30);
+  const tradeSizeLimit = ethers.utils.parseUnits("100000", 30);
 
   console.log("> LimitTradeHandler: Set Position and Trade Size Limit...");
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);

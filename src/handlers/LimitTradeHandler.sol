@@ -696,7 +696,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       vars.positionId
     );
 
-    if (positionSizeLimit > 0 && _existingPosition.positionSizeE30 != 0 && !vars.order.reduceOnly) {
+    if (positionSizeLimit > 0 && !vars.order.reduceOnly) {
       if (HMXLib.abs(_existingPosition.positionSizeE30 + vars.order.sizeDelta) > positionSizeLimit)
         revert ILimitTradeHandler_MaxPositionSize();
     }

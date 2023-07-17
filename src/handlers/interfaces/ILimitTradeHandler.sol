@@ -207,4 +207,6 @@ interface ILimitTradeHandler {
     uint256 _limit,
     uint256 _offset
   ) external view returns (LimitOrder[] memory _orders);
+
+  function setPositionSizeLimit(uint256 _positionSizeLimit) external;
 }

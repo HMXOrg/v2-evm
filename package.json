@@ -89,6 +89,7 @@
     "@wagmi/cli": "^0.1.14",
     "axios": "^1.4.0",
     "commander": "^11.0.0",
+    "csvtojson": "^2.0.10",
     "dotenv": "^16.0.0",
     "ethers": "5.7",
     "hardhat": "^2.9.1",

@@ -14,17 +14,16 @@ type ExecuteReinvestParams = {
   minAmountOutGlp: number;
 };
 
-async function main() {
-  const chainId: number = 42161;
+async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
-  const signer = signers.deployer(chainId);
+  const deployer = signers.deployer(chainId);
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
 
   console.log("[RebalanceHLP] executeReinvestNonHLP...");
-  const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, signer);
+  const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, deployer);
   const params: [ExecuteReinvestParams] = [
     {
       token: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
@@ -47,14 +46,14 @@ async function main() {
   console.log("[RebalanceHLPHandler] Finished");
 }
 
-// const prog = new Command();
-// prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
+const prog = new Command();
+prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
 
-// prog.parse(process.argv);
+prog.parse(process.argv);
 
-// const opts = prog.opts();
+const opts = prog.parse(process.argv).opts();
 
-main()
+main(opts.chainId)
   .then(() => {
     process.exit(0);
   })

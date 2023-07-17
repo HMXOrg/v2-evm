@@ -29,7 +29,7 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      assetId: ethers.utils.formatBytes32String("ARB"),
+      assetId: ethers.utils.formatBytes32String("BNB"),
       increasePositionFeeRateBPS: 7, // 0.07%
       decreasePositionFeeRateBPS: 7, // 0.07%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
@@ -39,79 +39,28 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("250000000", 30), // 250 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
         maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("5000000", 30),
       maxShortPositionSize: ethers.utils.parseUnits("5000000", 30),
     },
     {
-      assetId: ethers.utils.formatBytes32String("OP"),
+      assetId: ethers.utils.formatBytes32String("SOL"),
       increasePositionFeeRateBPS: 7, // 0.07%
       decreasePositionFeeRateBPS: 7, // 0.07%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
       maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 150000, // 1500%
+      maxProfitRateBPS: 150000, // 1000%
       assetClass: assetClasses.crypto,
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("250000000", 30), // 250 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
         maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("5000000", 30),
       maxShortPositionSize: ethers.utils.parseUnits("5000000", 30),
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("LTC"),
-      increasePositionFeeRateBPS: 7, // 0.07%
-      decreasePositionFeeRateBPS: 7, // 0.07%
-      initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
-      maintenanceMarginFractionBPS: 50, // MMF = 0.5%
-      maxProfitRateBPS: 150000, // 1500%
-      assetClass: assetClasses.crypto,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("250000000", 30), // 250 M
-        maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
-      },
-      maxLongPositionSize: ethers.utils.parseUnits("5000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("5000000", 30),
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("COIN"),
-      increasePositionFeeRateBPS: 5, // 0.05%
-      decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
-      maintenanceMarginFractionBPS: 100, // MMF = 1%
-      maxProfitRateBPS: 100000, // 1000%
-      assetClass: assetClasses.equity,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1b
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      maxLongPositionSize: ethers.utils.parseUnits("10000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("10000000", 30),
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("GOOG"),
-      increasePositionFeeRateBPS: 5, // 0.05%
-      decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
-      maintenanceMarginFractionBPS: 100, // MMF = 1%
-      maxProfitRateBPS: 100000, // 1000%
-      assetClass: assetClasses.equity,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1b
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      maxLongPositionSize: ethers.utils.parseUnits("10000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("10000000", 30),
     },
   ];
 

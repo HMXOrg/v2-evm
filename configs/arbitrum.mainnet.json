@@ -1,5 +1,6 @@
 {
   "proxyAdmin": "0x2E7983f9A1D08c57989eEA20adC9242321dA6589",
+  "multicall": "0xcA11bde05977b3631167028862bE2a173976CA11",
   "timelock": "0xF3CcdE1c41bc4Bf1eA991cDcA3Eb595fd4921eEF",
   "safe": "0x6409ba830719cd0fE27ccB3051DF1b399C90df4a",
   "storages": {
@@ -29,7 +30,7 @@
     "sglpStakedAdapter": "0x9F09b53ee28a93951fe546dEfB24C0f908eEda22",
     "middleware": "0x9c83e1046dA4727F05C6764c017C6E1757596592",
     "ecoPythCalldataBuilder": "0x86508504B72aD65d565Fe75516Af2281a64ab664",
-    "unsafeEcoPythCalldataBuilder": "0x4c3eC30d33c6CfC8B0806Bf049eA907FE4a0AB4F"
+    "unsafeEcoPythCalldataBuilder": "0xa3187B97CEC0854A5ed3B11ffEeD50E5a1A1593f"
   },
   "tokens": {
     "hlp": "0x4307fbDCD9Ec7AEA5a1c2958deCaa6f316952bAb",

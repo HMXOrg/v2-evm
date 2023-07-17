@@ -26,6 +26,8 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0x6e3f3fa8253588df9326580180233eb791e03b443a3ba7a1d892e73874e19a54", // LTCUSD
   "0xfee33f2a978bf32dd6b662b65ba8083c6773b494f8401194ec1870c640860245", // COINUSD
   "0xe65ff435be42630439c96396653a342829e877e2aafaeaf1a10d0ee5fd2cf3f2", // GOOGUSD
+  "0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f", // BNBUSD
+  "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d", // SOLUSD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -52,6 +54,8 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("LTC"),
   ethers.utils.formatBytes32String("COIN"),
   ethers.utils.formatBytes32String("GOOG"),
+  ethers.utils.formatBytes32String("BNB"),
+  ethers.utils.formatBytes32String("SOL"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -78,4 +82,6 @@ export const ecoPythHoomanReadableByIndex = [
   "LTC",
   "COIN",
   "GOOG",
+  "BNB",
+  "SOL",
 ];

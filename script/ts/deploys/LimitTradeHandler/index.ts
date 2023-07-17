@@ -1,33 +1,33 @@
-import { ethers, tenderly, upgrades, network } from "hardhat";
-import { getConfig, writeConfigFile } from "../../utils/config";
-import { getImplementationAddress } from "@openzeppelin/upgrades-core";
-
-const BigNumber = ethers.BigNumber;
-const config = getConfig();
-
-const minExecutionFee = ethers.utils.parseEther("0.0003"); // 0.0003 ether
-const minExecutionTimestamp = 60 * 60 * 5; // 5 minutes
+import { ethers, tenderly, upgrades, getChainId } from "hardhat";
+import { loadConfig } from "../../utils/config";
+import signers from "../../entities/signers";
+import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
 async function main() {
-  const deployer = (await ethers.getSigners())[0];
+  const chainId = Number(await getChainId());
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
+  const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
-  const Contract = await ethers.getContractFactory("LimitTradeHandler", deployer);
+  const LimitTradeHandler = await ethers.getContractFactory("LimitTradeHandler", deployer);
+  const limitTradeHandler = config.handlers.limitTrade;
+
+  const minExecutionFee = ethers.utils.parseEther("0.0003"); // 0.0003 ether
+  const minExecutionTimestamp = 60 * 60 * 5; // 5 minutes
+
+  console.log(`[upgrade/LimitTradeHandler] Deploying`);
   const contract = await upgrades.deployProxy(
-    Contract,
+    LimitTradeHandler,
     [config.tokens.weth, config.services.trade, config.oracles.ecoPyth, minExecutionFee, minExecutionTimestamp],
     {
       unsafeAllow: ["delegatecall"],
     }
   );
-  await contract.deployed();
-  console.log(`Deploying LimitTradeHandler Contract`);
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[upgrade/LimitTradeHandler] Deployed!`);
 
-  config.handlers.limitTrade = contract.address;
-  writeConfigFile(config);
-
+  console.log(`[upgrade/LimitTradeHandler] Verify contract on Tenderly`);
   await tenderly.verify({
-    address: await getImplementationAddress(network.provider, contract.address),
+    address: contract.address,
     name: "LimitTradeHandler",
   });
 }

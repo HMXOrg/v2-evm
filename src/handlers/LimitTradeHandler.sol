@@ -468,7 +468,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
 
-    if (tradeSizeLimit > 0 && HMXLib.abs(_sizeDelta) > tradeSizeLimit) {
+    if (tradeSizeLimit > 0 && !_reduceOnly && HMXLib.abs(_sizeDelta) > tradeSizeLimit) {
       revert ILimitTradeHandler_MaxTradeSize();
     }
 

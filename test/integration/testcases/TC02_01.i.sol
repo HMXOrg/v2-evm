@@ -177,5 +177,34 @@ contract TC02_01 is BaseIntTest_WithActions {
       address(0)
     );
     vm.stopPrank();
+
+    // TP/SL order should be creatable
+    vm.startPrank(ALICE);
+    limitTradeHandler.createOrder{ value: executionOrderFee }(
+      0,
+      wethMarketIndex,
+      type(int256).max,
+      0, // trigger price always be 0
+      type(uint256).max,
+      true, // trigger above threshold
+      executionOrderFee, // 0.0001 ether
+      true, // reduce only (allow flip or not)
+      address(0)
+    );
+    vm.stopPrank();
+
+    vm.startPrank(ALICE);
+    limitTradeHandler.createOrder{ value: executionOrderFee }(
+      0,
+      wethMarketIndex,
+      type(int256).min,
+      0, // trigger price always be 0
+      type(uint256).max,
+      true, // trigger above threshold
+      executionOrderFee, // 0.0001 ether
+      true, // reduce only (allow flip or not)
+      address(0)
+    );
+    vm.stopPrank();
   }
 }

@@ -15,7 +15,8 @@
     "liquidity": "0x83E5FaA30e05e0e1Df94D1b743583DBD8cC23619"
   },
   "helpers": {
-    "trade": "0x845CBF46Aa4c4d1f0090c949C46294103aeF4519"
+    "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a",
+    "maxPositionHelper": ""
   },
   "services": {
     "crossMargin": "0x9061B0c73e834ef38082cdC19D7ad385a51871C1",

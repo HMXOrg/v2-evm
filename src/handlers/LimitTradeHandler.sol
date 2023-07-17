@@ -117,6 +117,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bytes errMsg
   );
   event LogSetPositionSizeLimit(uint256 oldPositionSizeLimit, uint256 newPositionSizeLimit);
+  event LogSetTradeSizeLimit(uint256 oldTradeSizeLimit, uint256 newTradeSizeLimit);
 
   /**
    * Structs
@@ -183,6 +184,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   mapping(address => EnumerableSet.UintSet) private subAccountActiveLimitOrderPointers;
 
   uint256 public positionSizeLimit;
+  uint256 public tradeSizeLimit;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _weth Address of WETH.
@@ -465,6 +467,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     // Get the sub-account and order index for the limit order
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
+
+    if (tradeSizeLimit > 0 && HMXLib.abs(_sizeDelta) > tradeSizeLimit) {
+      revert ILimitTradeHandler_MaxTradeSize();
+    }
 
     PerpStorage.Position memory _existingPosition = PerpStorage(TradeService(tradeService).perpStorage())
       .getPositionById(HMXLib.getPositionId(_subAccount, _marketIndex));
@@ -1144,9 +1150,12 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     emit LogSetOrderExecutor(_executor, _isAllow);
   }
 
-  function setPositionSizeLimit(uint256 _positionSizeLimit) external nonReentrant onlyOwner {
+  function setPositionSizeLimit(uint256 _positionSizeLimit, uint256 _tradeSizeLimit) external nonReentrant onlyOwner {
     emit LogSetPositionSizeLimit(positionSizeLimit, _positionSizeLimit);
+    emit LogSetTradeSizeLimit(tradeSizeLimit, _tradeSizeLimit);
+
     positionSizeLimit = _positionSizeLimit;
+    tradeSizeLimit = _tradeSizeLimit;
   }
 
   /// @notice Sets a new Pyth contract address.

@@ -15,7 +15,8 @@ contract TC02_01 is BaseIntTest_WithActions {
   // TC02.1 - trader could take profit both long and short position
   // This integration test add position max size limit into test
   function testCorrectness_TC0201_TradeWithTakeProfitScenario() external {
-    limitTradeHandler.setPositionSizeLimit(300 * 1e30);
+    // Set max position size to 300 USD
+    limitTradeHandler.setPositionSizeLimit(300 * 1e30, 100_000 * 1e30);
 
     // prepare token for wallet
 
@@ -123,7 +124,7 @@ contract TC02_01 is BaseIntTest_WithActions {
     IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
     assertEq(_position.positionSizeE30, 300 * 1e30);
 
-    vm.prank(ALICE);
+    vm.startPrank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MaxPositionSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(
       0,
@@ -136,5 +137,45 @@ contract TC02_01 is BaseIntTest_WithActions {
       false, // reduce only (allow flip or not)
       address(0)
     );
+    vm.stopPrank();
+
+    // Set max position size to 1 USD
+    limitTradeHandler.setPositionSizeLimit(1 * 1e30, 300 * 1e30);
+
+    _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 300 * 1e30);
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MaxPositionSize()"));
+    limitTradeHandler.createOrder{ value: executionOrderFee }(
+      0,
+      wethMarketIndex,
+      -int256(1 * 1e30),
+      0, // trigger price always be 0
+      type(uint256).max,
+      true, // trigger above threshold
+      executionOrderFee, // 0.0001 ether
+      false, // reduce only (allow flip or not)
+      address(0)
+    );
+    vm.stopPrank();
+
+    marketSell(ALICE, 0, wethMarketIndex, 300 * 1e30, address(0), tickPrices, publishTimeDiff, block.timestamp);
+    _position = perpStorage.getPositionById(_positionId);
+    assertEq(_position.positionSizeE30, 0);
+
+    vm.startPrank(ALICE);
+    vm.expectRevert(abi.encodeWithSignature("ILimitTradeHandler_MaxTradeSize()"));
+    limitTradeHandler.createOrder{ value: executionOrderFee }(
+      0,
+      wethMarketIndex,
+      -int256(400 * 1e30),
+      0, // trigger price always be 0
+      type(uint256).max,
+      true, // trigger above threshold
+      executionOrderFee, // 0.0001 ether
+      false, // reduce only (allow flip or not)
+      address(0)
+    );
+    vm.stopPrank();
   }
 }

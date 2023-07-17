@@ -1,16 +1,14 @@
-import { ethers, tenderly, upgrades, getChainId } from "hardhat";
-import { loadConfig } from "../../utils/config";
+import { ethers, tenderly, upgrades, getChainId, network } from "hardhat";
+import { loadConfig, writeConfigFile } from "../../utils/config";
 import signers from "../../entities/signers";
-import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
 async function main() {
   const chainId = Number(await getChainId());
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
   const LimitTradeHandler = await ethers.getContractFactory("LimitTradeHandler", deployer);
-  const limitTradeHandler = config.handlers.limitTrade;
 
   const minExecutionFee = ethers.utils.parseEther("0.0003"); // 0.0003 ether
   const minExecutionTimestamp = 60 * 60 * 5; // 5 minutes
@@ -23,11 +21,13 @@ async function main() {
       unsafeAllow: ["delegatecall"],
     }
   );
+  config.handlers.limitTrade = contract.address;
+  writeConfigFile(config);
   console.log(`[upgrade/LimitTradeHandler] Deployed!`);
 
   console.log(`[upgrade/LimitTradeHandler] Verify contract on Tenderly`);
   await tenderly.verify({
-    address: contract.address,
+    address: await getImplementationAddress(network.provider, contract.address),
     name: "LimitTradeHandler",
   });
 }

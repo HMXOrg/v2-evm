@@ -21,8 +21,6 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
-import "forge-std/console.sol";
-
 /// @title RebalanceHLPHandler
 /// @notice This contract handles liquidity orders for adding or removing liquidity from a pool
 contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IRebalanceHLPHandler {
@@ -167,13 +165,9 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   }
 
   function _validateHLPValue(uint256 _valueBefore) internal view {
-    console.log("Before:", _valueBefore);
     uint256 hlpValue = calculator.getHLPValueE30(true);
-    console.log("After:", hlpValue);
     if (_valueBefore > hlpValue) {
       uint256 diff = _valueBefore - hlpValue;
-      console.log("diff:", diff);
-
       /**
       EQ:  ( Before - After )          minHLPValueLossBPS
             ----------------     >      ----------------

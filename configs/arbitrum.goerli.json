@@ -40,7 +40,7 @@
     "usdc": "0x38934bDf2462768388829194fD40a43eD9916B4C",
     "dai": "0xaFefd85e3803CeD051200867eAAf1AA1BbDcBE16",
     "sglp": "0x3eDd3F503688f258D8dEC86d6f2D3236D4492245",
-    "traderLoyaltyCredit": "0xeE63257A30a24000503994b33f5e981bEc2E9e5b"
+    "traderLoyaltyCredit": "0xB8880717681cA218d8f8eF6679a23894a5745473"
   },
   "vendors": {
     "gmx": {
@@ -55,7 +55,7 @@
   },
   "hooks": {
     "tradingStaking": "0x2F5E3c8eF4fE60C8cbaF78743f02AD22F4322cd8",
-    "tlc": "0x9C5Ca4F18335c48613Da0aD3E52eDf1fE2Db39Ff"
+    "tlc": "0x51461a3d67B2489e4879587404a0B51dA166DFd3"
   },
   "calculator": "0xCd6a5d5D7028D3EF48e25B626180b256EF901C4a",
   "accountAbstraction": {

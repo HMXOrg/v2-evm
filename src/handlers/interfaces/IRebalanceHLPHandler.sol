@@ -18,7 +18,7 @@ interface IRebalanceHLPHandler {
 
   // execute logic
   function addGlp(
-    IRebalanceHLPService.ExecuteReinvestParams[] calldata params,
+    IRebalanceHLPService.AddGlpParams[] calldata params,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
     uint256 _minPublishTime,
@@ -26,21 +26,21 @@ interface IRebalanceHLPHandler {
   ) external returns (uint256 receivedGlp);
 
   function withdrawGlp(
-    IRebalanceHLPService.ExecuteWithdrawParams[] calldata params,
+    IRebalanceHLPService.WithdrawGlpParams[] calldata params,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
     uint256 _minPublishTime,
     bytes32 _encodedVaas
-  ) external returns (IRebalanceHLPService.WithdrawGLPResult[] memory result);
+  ) external returns (IRebalanceHLPService.WithdrawGlpResult[] memory result);
 
-  // Setter
+  // Setters
   function setMinHLPValueLossBPS(uint16 minTvlBPS) external;
 
   function setRebalanceHLPService(address _newService) external;
 
   function setWhiteListExecutor(address _executor, bool _isAllow) external;
 
-  // Get storage
+  // Getters
   function service() external view returns (IRebalanceHLPService);
 
   function sglp() external view returns (IERC20Upgradeable);

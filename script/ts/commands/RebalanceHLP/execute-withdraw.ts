@@ -9,7 +9,7 @@ import { Address } from "wagmi";
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
 
-type ExecuteWithdrawParams = {
+type WithdrawGlpParams = {
   token: Address;
   glpAmount: BigNumber;
   minOut: number;
@@ -26,14 +26,14 @@ async function main() {
 
   console.log("[RebalanceHLP] executeWithdrawGLP...");
   const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, signer);
-  const params: [ExecuteWithdrawParams] = [
+  const params: [WithdrawGlpParams] = [
     {
       token: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
       glpAmount: BigNumber.from("1000000000000000000"),
       minOut: 1000,
     },
   ];
-  const tx = await handler.executeLogicWithdrawGLP(
+  const tx = await handler.withdrawGlp(
     params,
     priceUpdateData,
     publishTimeDiffUpdateData,

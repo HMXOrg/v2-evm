@@ -12,30 +12,29 @@ interface IRebalanceHLPService {
   /// @param amount: the amount of token to convert to GLP.
   /// @param minAmountOutUSD: the minimum acceptable USD value of the GLP purchased
   /// @param minAmountOutGlp: the minimum acceptable GLP amount
-  struct ExecuteReinvestParams {
+
+  struct AddGlpParams {
     address token;
     uint256 amount;
     uint256 minAmountOutUSD;
     uint256 minAmountOutGlp;
   }
 
-  struct ExecuteWithdrawParams {
+  struct WithdrawGlpParams {
     address token;
     uint256 glpAmount;
     uint256 minOut;
   }
 
-  struct WithdrawGLPResult {
+  struct WithdrawGlpResult {
     address token;
     uint256 amount;
   }
 
   // execute reinvesting
-  function executReinvestNonHLP(ExecuteReinvestParams[] calldata params) external returns (uint256 receivedGlp);
+  function addGlp(AddGlpParams[] calldata params) external returns (uint256 receivedGlp);
 
-  function executeWithdrawGLP(
-    ExecuteWithdrawParams[] calldata params
-  ) external returns (WithdrawGLPResult[] memory result);
+  function withdrawGlp(WithdrawGlpParams[] calldata params) external returns (WithdrawGlpResult[] memory result);
 
   // Get storage
   function sglp() external view returns (IERC20Upgradeable);

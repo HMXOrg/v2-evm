@@ -4,7 +4,7 @@
 
 pragma solidity 0.8.18;
 
-// base
+// lib
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
@@ -13,13 +13,10 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/
 // interfaces
 import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
-
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
-import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
 /// @title RebalanceHLPHandler
 /// @notice This contract handles liquidity orders for adding or removing liquidity from a pool
@@ -66,32 +63,8 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     minHLPValueLossBPS = _minHLPValueLossBPS;
   }
 
-  function setWhiteListExecutor(address _executor, bool _isAllow) external onlyOwner {
-    if (_executor == address(0)) {
-      revert RebalanceHLPHandler_AddressIsZero();
-    }
-    whitelistExecutors[_executor] = _isAllow;
-    emit LogSetWhitelistExecutor(_executor, _isAllow);
-  }
-
-  function setMinHLPValueLossBPS(uint16 _HLPValueLossBPS) external onlyOwner {
-    if (_HLPValueLossBPS == 0) {
-      revert RebalanceHLPHandler_AmountIsZero();
-    }
-    emit LogSetMinHLPValueLossBPS(minHLPValueLossBPS, _HLPValueLossBPS);
-    minHLPValueLossBPS = _HLPValueLossBPS;
-  }
-
-  function setRebalanceHLPService(address _newService) external nonReentrant onlyOwner {
-    if (_newService == address(0)) {
-      revert RebalanceHLPHandler_AddressIsZero();
-    }
-    emit LogSetRebalanceHLPService(address(service), _newService);
-    service = IRebalanceHLPService(_newService);
-  }
-
   function addGlp(
-    IRebalanceHLPService.ExecuteReinvestParams[] calldata _params,
+    IRebalanceHLPService.AddGlpParams[] calldata _params,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
     uint256 _minPublishTime,
@@ -105,18 +78,18 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     // Get current HLP value
     uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     // Execute logic at Service
-    receivedGlp = service.executReinvestNonHLP(_params);
+    receivedGlp = service.addGlp(_params);
     // Validate HLP Value
     _validateHLPValue(totalHlpValueBefore);
   }
 
   function withdrawGlp(
-    IRebalanceHLPService.ExecuteWithdrawParams[] calldata _params,
+    IRebalanceHLPService.WithdrawGlpParams[] calldata _params,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
     uint256 _minPublishTime,
     bytes32 _encodedVaas
-  ) external nonReentrant onlyWhitelisted returns (IRebalanceHLPService.WithdrawGLPResult[] memory result) {
+  ) external nonReentrant onlyWhitelisted returns (IRebalanceHLPService.WithdrawGlpResult[] memory result) {
     if (_params.length == 0) revert RebalanceHLPHandler_ParamsIsEmpty();
     _validateWithdrawInput(_params);
     // Update the price and publish time data using the Pyth oracle
@@ -125,12 +98,12 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     // Get current HLP value
     uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     // Execute logic at Service
-    result = service.executeWithdrawGLP(_params);
+    result = service.withdrawGlp(_params);
     // Validate HLP Value
     _validateHLPValue(totalHlpValueBefore);
   }
 
-  function _validateReinvestInput(IRebalanceHLPService.ExecuteReinvestParams[] calldata _params) internal {
+  function _validateReinvestInput(IRebalanceHLPService.AddGlpParams[] calldata _params) internal {
     // SLOAD
     IVaultStorage _vaultStorage = vaultStorage;
     for (uint256 i = 0; i < _params.length; ) {
@@ -146,7 +119,7 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     }
   }
 
-  function _validateWithdrawInput(IRebalanceHLPService.ExecuteWithdrawParams[] calldata _params) internal {
+  function _validateWithdrawInput(IRebalanceHLPService.WithdrawGlpParams[] calldata _params) internal {
     // SLOAD
     IVaultStorage _vaultStorage = vaultStorage;
     uint256 totalGlpAccum = 0;
@@ -179,6 +152,30 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
         revert RebalanceHLPHandler_HlpTvlDropExceedMin();
       }
     }
+  }
+
+  function setWhiteListExecutor(address _executor, bool _isAllow) external onlyOwner {
+    if (_executor == address(0)) {
+      revert RebalanceHLPHandler_AddressIsZero();
+    }
+    whitelistExecutors[_executor] = _isAllow;
+    emit LogSetWhitelistExecutor(_executor, _isAllow);
+  }
+
+  function setMinHLPValueLossBPS(uint16 _HLPValueLossBPS) external onlyOwner {
+    if (_HLPValueLossBPS == 0) {
+      revert RebalanceHLPHandler_AmountIsZero();
+    }
+    emit LogSetMinHLPValueLossBPS(minHLPValueLossBPS, _HLPValueLossBPS);
+    minHLPValueLossBPS = _HLPValueLossBPS;
+  }
+
+  function setRebalanceHLPService(address _newService) external nonReentrant onlyOwner {
+    if (_newService == address(0)) {
+      revert RebalanceHLPHandler_AddressIsZero();
+    }
+    emit LogSetRebalanceHLPService(address(service), _newService);
+    service = IRebalanceHLPService(_newService);
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

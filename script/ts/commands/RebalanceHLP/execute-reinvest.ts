@@ -7,7 +7,7 @@ import { ecoPythPriceFeedIdsByIndex } from "../../constants/eco-pyth-index";
 import chains from "../../entities/chains";
 import { Address } from "wagmi";
 
-type ExecuteReinvestParams = {
+type AddGlpParams = {
   token: Address;
   amount: number;
   minAmountOutUSD: number;
@@ -24,7 +24,7 @@ async function main(chainId: number) {
 
   console.log("[RebalanceHLP] executeReinvestNonHLP...");
   const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, deployer);
-  const params: [ExecuteReinvestParams] = [
+  const params: [AddGlpParams] = [
     {
       token: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
       amount: 10000000,
@@ -32,14 +32,9 @@ async function main(chainId: number) {
       minAmountOutUSD: 10000,
     },
   ];
-  const tx = await handler.executeLogicReinvestNonHLP(
-    params,
-    priceUpdateData,
-    publishTimeDiffUpdateData,
-    minPublishedTime,
-    hashedVaas,
-    { gasLimit: 10000000 }
-  );
+  const tx = await handler.addGlp(params, priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas, {
+    gasLimit: 10000000,
+  });
 
   console.log(`[RebalanceHLPHandler] Tx: ${tx.hash}`);
   await tx.wait(1);

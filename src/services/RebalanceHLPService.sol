@@ -4,13 +4,12 @@
 
 pragma solidity 0.8.18;
 
-import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
-
 // lib
+import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
-// interface
+// interfaces
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
@@ -48,14 +47,14 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     configStorage = IConfigStorage(_configStorage);
   }
 
-  function executeWithdrawGLP(
-    ExecuteWithdrawParams[] calldata _params
-  ) external onlyWhitelisted returns (WithdrawGLPResult[] memory returnData) {
+  function withdrawGlp(
+    WithdrawGlpParams[] calldata _params
+  ) external onlyWhitelisted returns (WithdrawGlpResult[] memory returnData) {
     // SLOADS, gas opt.
     IVaultStorage _vaultStorage = vaultStorage;
     IERC20Upgradeable _sglp = sglp;
 
-    returnData = new WithdrawGLPResult[](_params.length);
+    returnData = new WithdrawGlpResult[](_params.length);
 
     for (uint256 i = 0; i < _params.length; ) {
       // Set default for return data
@@ -83,9 +82,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     }
   }
 
-  function executReinvestNonHLP(
-    ExecuteReinvestParams[] calldata _params
-  ) external onlyWhitelisted returns (uint256 receivedGlp) {
+  function addGlp(AddGlpParams[] calldata _params) external onlyWhitelisted returns (uint256 receivedGlp) {
     // SLOADS, gas opt.
     IERC20Upgradeable _sglp = sglp;
     IVaultStorage _vaultStorage = vaultStorage;

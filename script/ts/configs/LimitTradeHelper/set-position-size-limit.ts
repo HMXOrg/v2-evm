@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
 import { ethers } from "ethers";
-import { MaxPositionHelper__factory } from "../../../../typechain";
+import { LimitTradeHelper__factory } from "../../../../typechain";
 import assetClasses from "../../entities/asset-classes";
 
 async function main(chainId: number) {
@@ -13,10 +13,10 @@ async function main(chainId: number) {
   const positionSizeLimit = ethers.utils.parseUnits("500000", 30);
   const tradeSizeLimit = ethers.utils.parseUnits("300000", 30);
 
-  console.log("> MaxPositionHelper: Set Position and Trade Size Limit...");
-  const maxPositionHelper = MaxPositionHelper__factory.connect(config.helpers.maxPositionHelper, deployer);
-  await (await maxPositionHelper.setPositionSizeLimit(assetClass, positionSizeLimit, tradeSizeLimit)).wait();
-  console.log("> MaxPositionHelper: Set Position and Trade Size Limit success!");
+  console.log("> LimitTradeHelper: Set Position and Trade Size Limit...");
+  const limitTradeHelper = LimitTradeHelper__factory.connect(config.helpers.limitTrade, deployer);
+  await (await limitTradeHelper.setPositionSizeLimit(assetClass, positionSizeLimit, tradeSizeLimit)).wait();
+  console.log("> LimitTradeHelper: Set Position and Trade Size Limit success!");
 }
 
 const prog = new Command();

@@ -56,7 +56,7 @@ contract TradingStakingHook is ITradeServiceHook, OwnableUpgradeable {
     uint256 userTokenAmount = ts.getUserTokenAmount(_marketIndex, _primaryAccount);
     if (userTokenAmount >= amountToWithdraw) {
       ts.withdraw(_primaryAccount, _marketIndex, amountToWithdraw);
-    } else {
+    } else if (userTokenAmount > 0) {
       ts.withdraw(_primaryAccount, _marketIndex, userTokenAmount);
     }
   }

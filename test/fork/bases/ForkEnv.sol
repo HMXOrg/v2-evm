@@ -29,6 +29,7 @@ import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 /// Vendors
 import { IPermit2 } from "@hmx/interfaces/uniswap/IPermit2.sol";
+import { IUniversalRouter } from "@hmx/interfaces/uniswap/IUniversalRouter.sol";
 
 library ForkEnv {
   /// Account
@@ -61,7 +62,8 @@ library ForkEnv {
   VaultStorage internal constant vaultStorage = VaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
 
   /// Vendors
-  address internal constant uniswapUniversalRouter = 0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD;
+  IUniversalRouter internal constant uniswapUniversalRouter =
+    IUniversalRouter(0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD);
   IPermit2 internal constant uniswapPermit2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
 
   /// Tokens

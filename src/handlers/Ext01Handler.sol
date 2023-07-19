@@ -408,6 +408,11 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     ConfigStorage(CrossMarginService(crossMarginService).configStorage()).validateAcceptedCollateral(_token);
   }
 
+  receive() external payable {
+    // @dev Cannot enable this check due to Solidity Fallback Function Gas Limit introduced in 0.8.17.
+    // ref - https://stackoverflow.com/questions/74930609/solidity-fallback-function-gas-limit
+  }
+
   /*
    * Setters
    */

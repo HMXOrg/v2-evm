@@ -310,7 +310,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Check
     // Check if _switchCollateralExt is allowed
-    if (!_configStorage.switchCollateralExts(address(_switchCollateralExt), _params.fromToken))
+    if (!_configStorage.switchCollateralExts(_params.fromToken, address(_switchCollateralExt)))
       revert ICrossMarginService_NotAllowedExtension();
 
     // Get trader's sub-account address
@@ -343,7 +343,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // Increase trader's balance
     _vaultStorage.increaseTraderBalance(_subAccount, _params.toToken, _toAmount);
 
-    // Calculate validation for if new Equity is below IMR or not
+    // Calculate validation if new Equity is below IMR or not
     int256 equity = _calculator.getEquity(_subAccount, 0, 0);
     if (equity < 0 || uint256(equity) < _calculator.getIMR(_subAccount))
       revert ICrossMarginService_WithdrawBalanceBelowIMR();

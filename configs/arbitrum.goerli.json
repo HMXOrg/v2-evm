@@ -30,7 +30,7 @@
     "sglpStakedAdapter": "",
     "middleware": "0x0DbdfF9CeE7cA35C8bcd48B031f8C2aB274F4552",
     "ecoPythCalldataBuilder": "0x2426028a97052D9A8Dc6ff9a3eb96d2AD587136B",
-    "unsafeEcoPythCalldataBuilder": ""
+    "unsafeEcoPythCalldataBuilder": "0x0D62AAFf97Ca14c0c8e6552F848986F0A359b7E9"
   },
   "tokens": {
     "hlp": "0x9772cE382D33573850f029c56828dff7717b3282",

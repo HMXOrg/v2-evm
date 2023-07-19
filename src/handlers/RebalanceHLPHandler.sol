@@ -90,7 +90,7 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     service = IRebalanceHLPService(_newService);
   }
 
-  function executeLogicReinvestNonHLP(
+  function addGlp(
     IRebalanceHLPService.ExecuteReinvestParams[] calldata _params,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
@@ -110,7 +110,7 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     _validateHLPValue(totalHlpValueBefore);
   }
 
-  function executeLogicWithdrawGLP(
+  function withdrawGlp(
     IRebalanceHLPService.ExecuteWithdrawParams[] calldata _params,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,

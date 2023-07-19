@@ -17,7 +17,7 @@ interface IRebalanceHLPHandler {
   error RebalanceHLPHandler_NotWhiteListed();
 
   // execute logic
-  function executeLogicReinvestNonHLP(
+  function addGlp(
     IRebalanceHLPService.ExecuteReinvestParams[] calldata params,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
@@ -25,7 +25,7 @@ interface IRebalanceHLPHandler {
     bytes32 _encodedVaas
   ) external returns (uint256 receivedGlp);
 
-  function executeLogicWithdrawGLP(
+  function withdrawGlp(
     IRebalanceHLPService.ExecuteWithdrawParams[] calldata params,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,

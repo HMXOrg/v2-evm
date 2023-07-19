@@ -52,7 +52,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
 
-    uint256 receivedGlp = rebalanceHLPHandler.executeLogicReinvestNonHLP(
+    uint256 receivedGlp = rebalanceHLPHandler.addGlp(
       params,
       priceUpdateData,
       publishTimeUpdateData,
@@ -83,7 +83,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
 
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
-    rebalanceHLPHandler.executeLogicReinvestNonHLP(
+    rebalanceHLPHandler.addGlp(
       params,
       priceUpdateData,
       publishTimeUpdateData,
@@ -107,7 +107,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     bytes32[] memory _priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory _publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
 
-    IRebalanceHLPService.WithdrawGLPResult[] memory result = rebalanceHLPHandler.executeLogicWithdrawGLP(
+    IRebalanceHLPService.WithdrawGLPResult[] memory result = rebalanceHLPHandler.withdrawGlp(
       _params,
       _priceUpdateData,
       _publishTimeUpdateData,
@@ -145,7 +145,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_ParamsIsEmpty.selector);
-    rebalanceHLPHandler.executeLogicReinvestNonHLP(
+    rebalanceHLPHandler.addGlp(
       params,
       priceUpdateData,
       publishTimeUpdateData,
@@ -161,7 +161,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     uint256 usdcAmount = 100_000 * 1e6;
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_InvalidTokenAmount.selector);
     params[0] = IRebalanceHLPService.ExecuteReinvestParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
-    rebalanceHLPHandler.executeLogicReinvestNonHLP(
+    rebalanceHLPHandler.addGlp(
       params,
       priceUpdateData,
       publishTimeUpdateData,
@@ -176,7 +176,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_NotWhiteListed.selector);
     vm.prank(ALICE);
-    rebalanceHLPHandler.executeLogicReinvestNonHLP(
+    rebalanceHLPHandler.addGlp(
       params,
       priceUpdateData,
       publishTimeUpdateData,
@@ -192,7 +192,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
 
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_InvalidTokenAmount.selector);
-    rebalanceHLPHandler.executeLogicWithdrawGLP(
+    rebalanceHLPHandler.withdrawGlp(
       params,
       priceUpdateData,
       publishTimeUpdateData,
@@ -213,7 +213,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
 
     vm.expectRevert(IRebalanceHLPHandler.RebalanceHLPHandler_HlpTvlDropExceedMin.selector);
-    rebalanceHLPHandler.executeLogicReinvestNonHLP(
+    rebalanceHLPHandler.addGlp(
       params,
       priceUpdateData,
       publishTimeUpdateData,

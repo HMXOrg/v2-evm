@@ -41,7 +41,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -59,7 +59,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -77,7 +77,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -95,7 +95,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -113,7 +113,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -131,7 +131,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -149,7 +149,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -167,7 +167,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -185,7 +185,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -203,7 +203,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -221,7 +221,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -239,7 +239,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -347,7 +347,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
         maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -365,7 +365,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -383,7 +383,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
         maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
@@ -401,7 +401,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
         maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
@@ -419,7 +419,7 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
         maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),

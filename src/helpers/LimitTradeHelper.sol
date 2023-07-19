@@ -24,26 +24,26 @@ contract LimitTradeHelper is Ownable {
   }
 
   function validate(
-    bool isRevert,
     address mainAccount,
     uint8 subAccountId,
     uint256 marketIndex,
     bool reduceOnly,
-    int256 sizeDelta
+    int256 sizeDelta,
+    bool isRevert
   ) external view returns (bool) {
     address _subAccount = HMXLib.getSubAccount(mainAccount, subAccountId);
-    uint8 assetClass = configStorage.getMarketConfigByIndex(marketIndex).assetClass;
-    int256 positionSizeE30 = perpStorage
+    uint8 _assetClass = configStorage.getMarketConfigByIndex(marketIndex).assetClass;
+    int256 _positionSizeE30 = perpStorage
       .getPositionById(HMXLib.getPositionId(_subAccount, marketIndex))
       .positionSizeE30;
 
-    if (tradeSizeLimit[assetClass] > 0 && !reduceOnly && HMXLib.abs(sizeDelta) > tradeSizeLimit[assetClass]) {
+    if (tradeSizeLimit[_assetClass] > 0 && !reduceOnly && HMXLib.abs(sizeDelta) > tradeSizeLimit[_assetClass]) {
       if (isRevert) revert MaxTradeSize();
       else return false;
     }
 
-    if (positionSizeLimit[assetClass] > 0 && !reduceOnly) {
-      if (HMXLib.abs(positionSizeE30 + sizeDelta) > positionSizeLimit[assetClass]) {
+    if (positionSizeLimit[_assetClass] > 0 && !reduceOnly) {
+      if (HMXLib.abs(_positionSizeE30 + sizeDelta) > positionSizeLimit[_assetClass]) {
         if (isRevert) revert MaxPositionSize();
         else return false;
       }

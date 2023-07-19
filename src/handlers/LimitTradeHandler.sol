@@ -467,7 +467,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
 
     if (address(limitTradeHelper) != address(0))
-      limitTradeHelper.validate(true, _msgSender(), _subAccountId, _marketIndex, _reduceOnly, _sizeDelta);
+      limitTradeHelper.validate(_msgSender(), _subAccountId, _marketIndex, _reduceOnly, _sizeDelta, true);
 
     // Create the limit order
     LimitOrder memory _order = LimitOrder({
@@ -688,12 +688,12 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     if (address(limitTradeHelper) != address(0))
       limitTradeHelper.validate(
-        true,
         vars.order.account,
         vars.order.subAccountId,
         vars.order.marketIndex,
         vars.order.reduceOnly,
-        vars.order.sizeDelta
+        vars.order.sizeDelta,
+        true
       );
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;

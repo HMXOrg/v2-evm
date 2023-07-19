@@ -12,7 +12,7 @@
   },
   "helpers": {
     "trade": "",
-    "maxPositionHelper": ""
+    "limitTradeHelper": ""
   },
   "services": {
     "crossMargin": "",

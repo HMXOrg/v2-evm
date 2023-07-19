@@ -9,7 +9,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
-contract MaxPositionHelper is Ownable {
+contract LimitTradeHelper is Ownable {
   error MaxTradeSize();
   error MaxPositionSize();
 

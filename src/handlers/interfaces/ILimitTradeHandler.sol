@@ -209,5 +209,5 @@ interface ILimitTradeHandler {
     uint256 _offset
   ) external view returns (LimitOrder[] memory _orders);
 
-  function setMaxPositionHelper(address _maxPositionHelper) external;
+  function setLimitTradeHelper(address _limitTradeHelper) external;
 }

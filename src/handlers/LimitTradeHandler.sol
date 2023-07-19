@@ -22,7 +22,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
-import { MaxPositionHelper } from "@hmx/helpers/MaxPositionHelper.sol";
+import { LimitTradeHelper } from "@hmx/helpers/LimitTradeHelper.sol";
 
 /// @title LimitTradeHandler
 /// @notice This contract handles the create, update, and cancel for the Trading module.
@@ -182,7 +182,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   mapping(address => EnumerableSet.UintSet) private subAccountActiveMarketOrderPointers;
   mapping(address => EnumerableSet.UintSet) private subAccountActiveLimitOrderPointers;
 
-  MaxPositionHelper public maxPositionHelper;
+  LimitTradeHelper public limitTradeHelper;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _weth Address of WETH.
@@ -466,8 +466,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
 
-    if (address(maxPositionHelper) != address(0))
-      maxPositionHelper.validate(true, _msgSender(), _subAccountId, _marketIndex, _reduceOnly, _sizeDelta);
+    if (address(limitTradeHelper) != address(0))
+      limitTradeHelper.validate(true, _msgSender(), _subAccountId, _marketIndex, _reduceOnly, _sizeDelta);
 
     // Create the limit order
     LimitOrder memory _order = LimitOrder({
@@ -686,8 +686,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
       vars.positionId
     );
 
-    if (address(maxPositionHelper) != address(0))
-      maxPositionHelper.validate(
+    if (address(limitTradeHelper) != address(0))
+      limitTradeHelper.validate(
         true,
         vars.order.account,
         vars.order.subAccountId,
@@ -1155,8 +1155,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     IEcoPyth(_pyth).getAssetIds();
   }
 
-  function setMaxPositionHelper(address _maxPositionHelper) external onlyOwner {
-    maxPositionHelper = MaxPositionHelper(_maxPositionHelper);
+  function setLimitTradeHelper(address _limitTradeHelper) external onlyOwner {
+    limitTradeHelper = LimitTradeHelper(_limitTradeHelper);
   }
 
   function multicall(bytes[] calldata data) external returns (bytes[] memory results) {

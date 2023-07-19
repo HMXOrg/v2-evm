@@ -5,18 +5,18 @@ async function main() {
   const config = getConfig();
   const deployer = (await ethers.getSigners())[0];
 
-  console.log(`Deploying MaxPositionHelper Contract`);
-  const Contract = await ethers.getContractFactory("MaxPositionHelper", deployer);
+  console.log(`Deploying LimitTradeHelper Contract`);
+  const Contract = await ethers.getContractFactory("LimitTradeHelper", deployer);
   const contract = await Contract.deploy(config.storages.config, config.storages.perp);
   await contract.deployed();
   console.log(`Deployed at: ${contract.address}`);
 
-  config.helpers.maxPositionHelper = contract.address;
+  config.helpers.limitTrade = contract.address;
   writeConfigFile(config);
 
   await tenderly.verify({
     address: contract.address,
-    name: "MaxPositionHelper",
+    name: "LimitTradeHelper",
   });
 }
 

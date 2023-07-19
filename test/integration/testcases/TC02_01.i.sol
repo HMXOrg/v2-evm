@@ -8,20 +8,20 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { BaseIntTest_WithActions } from "@hmx-test/integration/99_BaseIntTest_WithActions.i.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
-import { MaxPositionHelper } from "@hmx/helpers/MaxPositionHelper.sol";
+import { LimitTradeHelper } from "@hmx/helpers/LimitTradeHelper.sol";
 
 contract TC02_01 is BaseIntTest_WithActions {
   bytes[] internal updatePriceData;
-  MaxPositionHelper internal maxPositionHelper;
+  LimitTradeHelper internal limitTradeHelper;
 
   // TC02.1 - trader could take profit both long and short position
   // This integration test add position max size limit into test
   function testCorrectness_TC0201_TradeWithTakeProfitScenario() external {
-    maxPositionHelper = new MaxPositionHelper(address(configStorage), address(perpStorage));
+    limitTradeHelper = new LimitTradeHelper(address(configStorage), address(perpStorage));
 
     // Set max position size to 300 USD
-    limitTradeHandler.setMaxPositionHelper(address(maxPositionHelper));
-    maxPositionHelper.setPositionSizeLimit(0, 300 * 1e30, 100_000 * 1e30);
+    limitTradeHandler.setLimitTradeHelper(address(limitTradeHelper));
+    limitTradeHelper.setPositionSizeLimit(0, 300 * 1e30, 100_000 * 1e30);
 
     // prepare token for wallet
 
@@ -156,7 +156,7 @@ contract TC02_01 is BaseIntTest_WithActions {
     vm.stopPrank();
 
     // Set max position size to 1 USD
-    maxPositionHelper.setPositionSizeLimit(0, 1 * 1e30, 300 * 1e30);
+    limitTradeHelper.setPositionSizeLimit(0, 1 * 1e30, 300 * 1e30);
 
     _positionId = keccak256(abi.encodePacked(ALICE, wethMarketIndex));
     _position = perpStorage.getPositionById(_positionId);

@@ -81,6 +81,82 @@ contract UniswapUniversalRouterSwitchCollateral_ForkTest is TestBase, Cheats, St
     vm.label(address(ForkEnv.crossMarginService), "crossMarginService");
   }
 
+  function testRevert_WhenFromTokenNotCollateral() external {
+    vm.startPrank(USER);
+    vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
+    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 1,
+        executionFee: 0.1 * 1e9,
+        data: abi.encode(
+          0,
+          address(ForkEnv.pendle),
+          address(ForkEnv.weth),
+          79115385,
+          41433673370671066,
+          abi.encode(address(uniswapUniversalRouterSwitchCollateralExt), new bytes(0))
+        )
+      })
+    );
+    vm.stopPrank();
+  }
+
+  function testRevert_WhenToTokenNotCollateral() external {
+    vm.startPrank(USER);
+    vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedCollateral()"));
+    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 1,
+        executionFee: 0.1 * 1e9,
+        data: abi.encode(
+          0,
+          address(ForkEnv.usdc_e),
+          address(ForkEnv.pendle),
+          79115385,
+          41433673370671066,
+          abi.encode(address(uniswapUniversalRouterSwitchCollateralExt), new bytes(0))
+        )
+      })
+    );
+    vm.stopPrank();
+  }
+
+  function testRevert_WhenSlippage() external {
+    vm.startPrank(USER);
+    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 1,
+        executionFee: 0.1 * 1e9,
+        data: abi.encode(
+          0,
+          address(ForkEnv.usdc_e),
+          address(ForkEnv.weth),
+          79115385,
+          41433673370671066,
+          abi.encode(address(uniswapUniversalRouterSwitchCollateralExt), new bytes(0))
+        )
+      })
+    );
+    vm.stopPrank();
+
+    vm.startPrank(EXT01_EXECUTOR);
+    // Taken price data from https://arbiscan.io/tx/0x2a1bea44f6b1858aef7661b19cec49a4d74e3c9fd1fedb7ab26b09ac712cc0ad
+    // as it is a closest block but change ETH to tick 0 which equals to 1 USD.
+    bytes32[] memory _priceData = new bytes32[](3);
+    _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
+    _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
+    _priceData[2] = 0x000f9e00b0e500b5af00bc5300d656007f720000000000000000000000000000;
+    bytes32[] memory _publishTimeData = new bytes32[](3);
+    _publishTimeData[0] = bytes32(0);
+    _publishTimeData[1] = bytes32(0);
+    _publishTimeData[2] = bytes32(0);
+    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    vm.stopPrank();
+
+    // Trader balance should be the same
+    assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.usdc_e)), 79115385);
+  }
+
   function testRevert_WhenNotSwapMakesEquityBelowIMR() external {
     vm.startPrank(USER);
     ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
@@ -115,5 +191,42 @@ contract UniswapUniversalRouterSwitchCollateral_ForkTest is TestBase, Cheats, St
 
     // Trader balance should be the same
     assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.usdc_e)), 79115385);
+  }
+
+  function testCorrectness_WhenSwapSuccessfully() external {
+    vm.startPrank(USER);
+    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 1,
+        executionFee: 0.1 * 1e9,
+        data: abi.encode(
+          0,
+          address(ForkEnv.usdc_e),
+          address(ForkEnv.weth),
+          79115385,
+          41433673370671065,
+          abi.encode(address(uniswapUniversalRouterSwitchCollateralExt), new bytes(0))
+        )
+      })
+    );
+    vm.stopPrank();
+
+    vm.startPrank(EXT01_EXECUTOR);
+    // Taken price data from https://arbiscan.io/tx/0x2a1bea44f6b1858aef7661b19cec49a4d74e3c9fd1fedb7ab26b09ac712cc0ad
+    // as it is a closest block but change ETH to tick 0 which equals to 1 USD.
+    bytes32[] memory _priceData = new bytes32[](3);
+    _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
+    _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
+    _priceData[2] = 0x000f9e00b0e500b5af00bc5300d656007f720000000000000000000000000000;
+    bytes32[] memory _publishTimeData = new bytes32[](3);
+    _publishTimeData[0] = bytes32(0);
+    _publishTimeData[1] = bytes32(0);
+    _publishTimeData[2] = bytes32(0);
+    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    vm.stopPrank();
+
+    // Trader balance should be the same
+    assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.usdc_e)), 0);
+    assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.weth)), 41433673370671065);
   }
 }

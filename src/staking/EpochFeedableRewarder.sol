@@ -129,7 +129,7 @@ contract EpochFeedableRewarder is OwnableUpgradeable {
 
       // If userShare is zero, then the user will not be eligible for reward in that epoch.
       // If accumRewardPerShare is zero, then the reward might not be distributed for that epoch yet. We will skip without burning user share.
-      if (userShare > 0 && accumRewardPerShare > 0) {
+      if (!isClaimed[epochTimestamp][userAddress] && userShare > 0 && accumRewardPerShare > 0) {
         // Calculate pending reward
         pendingRewardAmount = (userShare * accumRewardPerShare) / ACC_REWARD_PRECISION;
         totalRewardAmount += pendingRewardAmount;

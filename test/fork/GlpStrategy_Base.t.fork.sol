@@ -335,7 +335,9 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(rewardRouter),
       address(glpManager),
       address(vaultStorage),
-      address(configStorage)
+      address(configStorage),
+      address(calculator),
+      50
     );
 
     //deploy liquidityHandler
@@ -356,10 +358,8 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     rebalanceHLPHandler = Deployer.deployRebalanceHLPHandler(
       address(proxyAdmin),
       address(rebalanceHLPService),
-      address(calculator),
       address(configStorage),
-      address(pyth),
-      50
+      address(pyth)
     );
   }
 

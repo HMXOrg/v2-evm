@@ -26,18 +26,25 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
 
   IVaultStorage public vaultStorage;
   IConfigStorage public configStorage;
+  ICalculator public calculator;
+
+  uint16 public minHLPValueLossBPS;
 
   modifier onlyWhitelisted() {
     configStorage.validateServiceExecutor(address(this), msg.sender);
     _;
   }
 
+  event LogSetMinHLPValueLossBPS(uint16 oldValue, uint16 newValue);
+
   function initialize(
     address _sglp,
     address _rewardRouter,
     address _glpManager,
     address _vaultStorage,
-    address _configStorage
+    address _configStorage,
+    address _calculator,
+    uint16 _minHLPValueLossBPS
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     sglp = IERC20Upgradeable(_sglp);
@@ -45,6 +52,8 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     glpManager = IGmxGlpManager(_glpManager);
     vaultStorage = IVaultStorage(_vaultStorage);
     configStorage = IConfigStorage(_configStorage);
+    calculator = ICalculator(_calculator);
+    minHLPValueLossBPS = _minHLPValueLossBPS;
   }
 
   function withdrawGlp(
@@ -54,8 +63,23 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     IVaultStorage _vaultStorage = vaultStorage;
     IERC20Upgradeable _sglp = sglp;
 
+    // validate input
+    uint256 totalGlpAccum = 0;
+    for (uint256 i = 0; i < _params.length; ) {
+      if (_params[i].token == address(0)) {
+        revert RebalanceHLPService_InvalidTokenAddress();
+      }
+      totalGlpAccum += _params[i].glpAmount;
+      unchecked {
+        ++i;
+      }
+    }
+    if (_vaultStorage.totalAmount(address(sglp)) < totalGlpAccum) {
+      revert RebalanceHLPService_InvalidTokenAmount();
+    }
+    // Get current HLP value
+    uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     returnData = new WithdrawGlpResult[](_params.length);
-
     for (uint256 i = 0; i < _params.length; ) {
       // Set default for return data
       returnData[i].token = _params[i].token;
@@ -80,6 +104,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
         ++i;
       }
     }
+    _validateHLPValue(totalHlpValueBefore);
   }
 
   function addGlp(AddGlpParams[] calldata _params) external onlyWhitelisted returns (uint256 receivedGlp) {
@@ -87,6 +112,20 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     IERC20Upgradeable _sglp = sglp;
     IVaultStorage _vaultStorage = vaultStorage;
 
+    // validate input
+    for (uint256 i = 0; i < _params.length; ) {
+      if (_params[i].token == address(0)) {
+        revert RebalanceHLPService_InvalidTokenAddress();
+      }
+      if ((_params[i].amount > _vaultStorage.totalAmount(_params[i].token)) || (_params[i].amount == 0)) {
+        revert RebalanceHLPService_InvalidTokenAmount();
+      }
+      unchecked {
+        ++i;
+      }
+    }
+    // Get current HLP value
+    uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     receivedGlp = 0;
     for (uint256 i = 0; i < _params.length; ) {
       // declare token
@@ -115,6 +154,33 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     // send token back to vault, add HLP liq.
     _vaultStorage.pullToken(address(_sglp));
     _vaultStorage.addHLPLiquidity(address(_sglp), receivedGlp);
+
+    _validateHLPValue(totalHlpValueBefore);
+  }
+
+  function _validateHLPValue(uint256 _valueBefore) internal view {
+    uint256 hlpValue = calculator.getHLPValueE30(true);
+    if (_valueBefore > hlpValue) {
+      uint256 diff = _valueBefore - hlpValue;
+      /**
+      EQ:  ( Before - After )          minHLPValueLossBPS
+            ----------------     >      ----------------
+                Before                        BPS
+      
+      To reduce the div,   ( Before - After ) * (BPS**2) = minHLPValueLossBPS * Before
+       */
+      if ((diff * 1e4) > (minHLPValueLossBPS * _valueBefore)) {
+        revert RebalanceHLPService_HlpTvlDropExceedMin();
+      }
+    }
+  }
+
+  function setMinHLPValueLossBPS(uint16 _HLPValueLossBPS) external onlyOwner {
+    if (_HLPValueLossBPS == 0) {
+      revert RebalanceHLPService_AmountIsZero();
+    }
+    emit LogSetMinHLPValueLossBPS(minHLPValueLossBPS, _HLPValueLossBPS);
+    minHLPValueLossBPS = _HLPValueLossBPS;
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

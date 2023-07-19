@@ -9,7 +9,7 @@ async function main(chainId: number) {
 
   console.log("> LimitTradeHandler: Set Max Position Helper...");
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  await (await limitTradeHandler.setLimitTradeHelper(config.helpers.limitTradeHelper)).wait();
+  await (await limitTradeHandler.setLimitTradeHelper(config.helpers.limitTrade)).wait();
   console.log("> LimitTradeHandler: Set Max Position Helper success!");
 }
 

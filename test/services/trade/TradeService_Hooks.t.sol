@@ -338,6 +338,10 @@ contract TradeService_Hooks is TradeService_Base {
     // assert that after harvest, TLC balance should remain the same; no burning of TLC
     assertEq(tlcStaking.getUserTokenAmount(0, BOB), 400_000 ether);
     assertEq(tlcStaking.getUserTokenAmount(1 weeks, BOB), 0 ether);
+
+    // Pending reward of ALICE and BOB should be zero after claimed
+    assertEq(tlcRewarder.pendingReward(0, type(uint256).max, ALICE), 0);
+    assertEq(tlcRewarder.pendingReward(0, type(uint256).max, BOB), 0);
   }
 
   function testCorrectness_mintWeightedTLC() external {
@@ -351,7 +355,7 @@ contract TradeService_Hooks is TradeService_Base {
 
     ITLCHook _tlcHook = ITLCHook(address(tlcHook));
     assertEq(_tlcHook.marketWeights(ethMarketIndex), 0);
-    
+
     // Alice open pos
     uint256 tlcBefore = tlcStaking.getUserTokenAmount(0, ALICE);
     tradeService.increasePosition(ALICE, 0, ethMarketIndex, 25 * 1e30, 0);

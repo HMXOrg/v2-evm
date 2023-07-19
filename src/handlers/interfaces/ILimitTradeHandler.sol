@@ -189,6 +189,8 @@ interface ILimitTradeHandler {
 
   function getLimitActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders);
 
+  function activeLimitOrdersCount() external view returns (uint256);
+
   function getAllActiveOrdersBySubAccount(
     address _subAccount,
     uint256 _limit,

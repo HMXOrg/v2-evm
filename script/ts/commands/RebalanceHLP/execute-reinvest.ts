@@ -15,8 +15,7 @@ type AddGlpParams = {
   minAmountOutGlp: number;
 };
 
-async function main() {
-  const chainId = 42161;
+async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
   const deployer = signers.deployer(chainId);
@@ -54,14 +53,14 @@ async function main() {
   console.log("[RebalanceHLPHandler] Finished");
 }
 
-// const prog = new Command();
-// prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
+const prog = new Command();
+prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
 
-// prog.parse(process.argv);
+prog.parse(process.argv);
 
-// const opts = prog.parse(process.argv).opts();
+const opts = prog.parse(process.argv).opts();
 
-main()
+main(opts.chainId)
   .then(() => {
     process.exit(0);
   })

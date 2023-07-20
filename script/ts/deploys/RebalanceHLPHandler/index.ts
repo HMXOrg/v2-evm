@@ -7,18 +7,14 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
-const minHLPValueLossBPS = 50; // 0.5 %
-
 async function main() {
   const deployer = (await ethers.getSigners())[0];
 
   const Contract = await ethers.getContractFactory("RebalanceHLPHandler", deployer);
   const contract = await upgrades.deployProxy(Contract, [
     config.services.rebalanceHLP,
-    config.calculator,
     config.storages.config,
     config.oracles.ecoPyth,
-    minHLPValueLossBPS,
   ]);
   await contract.deployed();
 

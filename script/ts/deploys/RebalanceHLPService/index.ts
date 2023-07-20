@@ -4,6 +4,7 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
 const BigNumber = ethers.BigNumber;
 const config = getConfig();
+const minHLPValueLossBPS = 50; // 0.5 %
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
@@ -15,6 +16,8 @@ async function main() {
     config.vendors.gmx.glpManager,
     config.storages.vault,
     config.storages.config,
+    config.calculator,
+    minHLPValueLossBPS,
   ]);
 
   await contract.deployed();

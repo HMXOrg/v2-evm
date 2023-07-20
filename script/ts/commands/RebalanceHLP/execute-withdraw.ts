@@ -6,7 +6,7 @@ import { getUpdatePriceData } from "../../utils/price";
 import { ecoPythPriceFeedIdsByIndex } from "../../constants/eco-pyth-index";
 import chains from "../../entities/chains";
 import { Address } from "wagmi";
-import { ethers } from "hardhat";
+import * as readlineSync from "readline-sync";
 import { BigNumber } from "ethers";
 
 type WithdrawGlpParams = {
@@ -15,14 +15,24 @@ type WithdrawGlpParams = {
   minOut: number;
 };
 
-async function main() {
-  const chainId: number = 42161;
+async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
   const signer = signers.deployer(chainId);
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
+  const confirm = readlineSync.question("Confirm to update price feeds? (y/n): ");
+  switch (confirm) {
+    case "y":
+      break;
+    case "n":
+      console.log("Feed Price cancelled!");
+      return;
+    default:
+      console.log("Invalid input!");
+      return;
+  }
 
   console.log("[RebalanceHLP] executeWithdrawGLP...");
   const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, signer);
@@ -47,14 +57,14 @@ async function main() {
   console.log("[RebalanceHLPHandler] Finished");
 }
 
-// const prog = new Command();
-// prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
+const prog = new Command();
+prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
 
-// prog.parse(process.argv);
+prog.parse(process.argv);
 
-// const opts = prog.opts();
+const opts = prog.opts();
 
-main()
+main(opts.chainId)
   .then(() => {
     process.exit(0);
   })

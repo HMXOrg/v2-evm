@@ -8,13 +8,13 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const assetConfigs = [
     {
-      assetId: ethers.utils.formatBytes32String("BNB"),
+      assetId: ethers.utils.formatBytes32String("QQQ"),
       confidenceThreshold: 0,
-      trustPriceAge: 60 * 5, // 5 minutes
+      trustPriceAge: 60 * 60 * 24 * 3, // 3 days
       adapter: config.oracles.pythAdapter,
     },
     {
-      assetId: ethers.utils.formatBytes32String("SOL"),
+      assetId: ethers.utils.formatBytes32String("XRP"),
       confidenceThreshold: 0,
       trustPriceAge: 60 * 5, // 5 minutes
       adapter: config.oracles.pythAdapter,

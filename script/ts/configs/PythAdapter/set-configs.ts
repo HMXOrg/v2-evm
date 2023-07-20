@@ -6,13 +6,13 @@ import { Command } from "commander";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("BNB"),
-    pythPriceId: ethers.utils.formatBytes32String("BNB"),
+    assetId: ethers.utils.formatBytes32String("QQQ"),
+    pythPriceId: ethers.utils.formatBytes32String("QQQ"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("SOL"),
-    pythPriceId: ethers.utils.formatBytes32String("SOL"),
+    assetId: ethers.utils.formatBytes32String("XRP"),
+    pythPriceId: ethers.utils.formatBytes32String("XRP"),
     inverse: false,
   },
 ];

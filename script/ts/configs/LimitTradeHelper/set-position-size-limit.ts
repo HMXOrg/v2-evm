@@ -31,15 +31,18 @@ async function main(chainId: number) {
       positionSizeLimit: ethers.utils.parseUnits("2500000", 30), // 2.5M
     },
   ];
-  const assetClass = assetClasses.commodities;
-  const positionSizeLimit = ethers.utils.parseUnits("500000", 30);
-  const tradeSizeLimit = ethers.utils.parseUnits("300000", 30);
 
   console.log("> LimitTradeHelper: Set Position and Trade Size Limit...");
   const limitTradeHelper = LimitTradeHelper__factory.connect(config.helpers.limitTrade, deployer);
-  const tx = await limitTradeHelper.setPositionSizeLimit(assetClass, positionSizeLimit, tradeSizeLimit);
-  console.log(`Tx: ${tx.hash}`);
-  await tx.wait();
+  for (let i = 0; i < inputs.length; i++) {
+    const tx = await limitTradeHelper.setPositionSizeLimit(
+      inputs[i].assetClass,
+      inputs[i].positionSizeLimit,
+      inputs[i].tradeSizeLimit
+    );
+    console.log(`Tx: ${tx.hash}`);
+    await tx.wait();
+  }
   console.log("> LimitTradeHelper: Set Position and Trade Size Limit success!");
 }
 

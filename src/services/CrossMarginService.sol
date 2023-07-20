@@ -287,6 +287,8 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     bytes data;
   }
 
+  /// @notice Switch from one collateral token to another.
+  /// @param _params The parameters for the switch.
   function switchCollateral(
     SwitchCollateralParams calldata _params
   )

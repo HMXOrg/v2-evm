@@ -17,8 +17,10 @@ import { Cheats } from "@hmx-test/base/Cheats.sol";
 import { Deployer } from "@hmx-test/libs/Deployer.sol";
 
 /// HMX
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { GlpSwitchCollateralExt } from "@hmx/extensions/switch-collateral/GlpSwitchCollateralExt.sol";
+import { UniswapUniversalRouterSwitchCollateralExt } from "@hmx/extensions/switch-collateral/UniswapUniversalRouterSwitchCollateralExt.sol";
 
 contract GlpSwitchCollateralExt_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
   uint256 constant V3_SWAP_EXACT_IN = 0x00;
@@ -29,6 +31,7 @@ contract GlpSwitchCollateralExt_ForkTest is TestBase, Cheats, StdAssertions, Std
 
   IExt01Handler internal ext01Handler;
   GlpSwitchCollateralExt internal glpSwitchCollateralExt;
+  UniswapUniversalRouterSwitchCollateralExt internal uniswapUniversalRouterSwitchCollateralExt;
 
   function setUp() external {
     vm.createSelectFork(vm.rpcUrl("arbitrum_fork"), 113073035);
@@ -39,6 +42,44 @@ contract GlpSwitchCollateralExt_ForkTest is TestBase, Cheats, StdAssertions, Std
     vm.stopPrank();
 
     vm.startPrank(ForkEnv.deployer);
+    // Add ARB as collateral
+    ForkEnv.configStorage.setAssetConfig(
+      "ARB",
+      IConfigStorage.AssetConfig({
+        assetId: "ARB",
+        tokenAddress: address(ForkEnv.arb),
+        decimals: 18,
+        isStableCoin: false
+      })
+    );
+    ForkEnv.configStorage.setCollateralTokenConfig(
+      "ARB",
+      IConfigStorage.CollateralTokenConfig({
+        collateralFactorBPS: 0.6 * 100_00,
+        accepted: true,
+        settleStrategy: address(0)
+      })
+    );
+    // Deploy UniswapUniversalRouterSwitchCollateralExt
+    uniswapUniversalRouterSwitchCollateralExt = UniswapUniversalRouterSwitchCollateralExt(
+      address(
+        Deployer.deployUniswapUniversalRouterSwitchCollateralExt(
+          address(ForkEnv.uniswapPermit2),
+          address(ForkEnv.uniswapUniversalRouter)
+        )
+      )
+    );
+    uniswapUniversalRouterSwitchCollateralExt.setPathOf(
+      address(ForkEnv.arb),
+      address(ForkEnv.weth),
+      abi.encodePacked(ForkEnv.arb, uint24(500), ForkEnv.weth)
+    );
+    uniswapUniversalRouterSwitchCollateralExt.setPathOf(
+      address(ForkEnv.weth),
+      address(ForkEnv.arb),
+      abi.encodePacked(ForkEnv.weth, uint24(500), ForkEnv.arb)
+    );
+    // Deploy GlpSwitchCollateralExt
     glpSwitchCollateralExt = GlpSwitchCollateralExt(
       address(
         Deployer.deployGlpSwitchCollateralExt(
@@ -51,6 +92,7 @@ contract GlpSwitchCollateralExt_ForkTest is TestBase, Cheats, StdAssertions, Std
         )
       )
     );
+    // Deploy Ext01Handler
     ext01Handler = Deployer.deployExt01Handler(
       address(ForkEnv.proxyAdmin),
       address(ForkEnv.crossMarginService),
@@ -60,6 +102,7 @@ contract GlpSwitchCollateralExt_ForkTest is TestBase, Cheats, StdAssertions, Std
       address(ForkEnv.ecoPyth2),
       50
     );
+    // Settings
     ext01Handler.setOrderExecutor(EXT01_EXECUTOR, true);
     ext01Handler.setMinExecutionFee(1, 0.1 * 1e9);
     ForkEnv.ecoPyth2.setUpdater(address(ext01Handler), true);
@@ -72,6 +115,17 @@ contract GlpSwitchCollateralExt_ForkTest is TestBase, Cheats, StdAssertions, Std
     ForkEnv.configStorage.setServiceExecutors(_services, _handlers, _isAllows);
     ForkEnv.configStorage.setSwitchCollateralExtension(address(ForkEnv.sGlp), address(glpSwitchCollateralExt), true);
     ForkEnv.configStorage.setSwitchCollateralExtension(address(ForkEnv.weth), address(glpSwitchCollateralExt), true);
+    ForkEnv.configStorage.setSwitchCollateralExtension(address(ForkEnv.arb), address(glpSwitchCollateralExt), true);
+    ForkEnv.configStorage.setSwitchCollateralExtension(
+      address(ForkEnv.weth),
+      address(uniswapUniversalRouterSwitchCollateralExt),
+      true
+    );
+    ForkEnv.configStorage.setSwitchCollateralExtension(
+      address(ForkEnv.arb),
+      address(uniswapUniversalRouterSwitchCollateralExt),
+      true
+    );
     vm.stopPrank();
 
     vm.label(address(ext01Handler), "ext01Handler");
@@ -284,5 +338,95 @@ contract GlpSwitchCollateralExt_ForkTest is TestBase, Cheats, StdAssertions, Std
     // Trader balance should be the same
     assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.weth)), 0);
     assertEq(_sGlpAfter - _sGlpBefore, 74640579149339718);
+  }
+
+  function testCorrectness_WhenSwitchCollateralFromSglpToAnyErc20() external {
+    vm.startPrank(USER);
+    // Create switch collateral order from sGLP -> ARB
+    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 1,
+        executionFee: 0.1 * 1e9,
+        data: abi.encode(
+          SUB_ACCOUNT_ID,
+          address(ForkEnv.sGlp),
+          address(ForkEnv.arb),
+          ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp)),
+          0,
+          abi.encode(
+            address(glpSwitchCollateralExt),
+            abi.encode(address(uniswapUniversalRouterSwitchCollateralExt), new bytes(0))
+          )
+        )
+      })
+    );
+    vm.stopPrank();
+
+    vm.startPrank(EXT01_EXECUTOR);
+    // Taken price data from https://arbiscan.io/tx/0x2a1bea44f6b1858aef7661b19cec49a4d74e3c9fd1fedb7ab26b09ac712cc0ad
+    uint256 _arbBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.arb));
+    bytes32[] memory _priceData = new bytes32[](3);
+    _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
+    _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
+    _priceData[2] = 0x000f9e00b0e500b5af00bc5300d656007f720000000000000000000000000000;
+    bytes32[] memory _publishTimeData = new bytes32[](3);
+    _publishTimeData[0] = bytes32(0);
+    _publishTimeData[1] = bytes32(0);
+    _publishTimeData[2] = bytes32(0);
+    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    vm.stopPrank();
+    uint256 _arbAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.arb));
+
+    // Trader balance should be the same
+    assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp)), 0);
+    assertEq(_arbAfter - _arbBefore, 3970232321595248857);
+  }
+
+  function testCorrectness_WhenSwitchCollateralFromAnyErc20ToSglp() external {
+    // Motherload ARB for USER
+    motherload(address(ForkEnv.arb), USER, 1000 * 1e18);
+
+    vm.startPrank(USER);
+    // Deposit ARB to the cross margin account
+    ForkEnv.arb.approve(address(ForkEnv.crossMarginHandler), 1000 * 1e18);
+    ForkEnv.crossMarginHandler.depositCollateral(SUB_ACCOUNT_ID, address(ForkEnv.arb), 1000 * 1e18, false);
+    // Create switch collateral order from sGLP -> ARB
+    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 1,
+        executionFee: 0.1 * 1e9,
+        data: abi.encode(
+          SUB_ACCOUNT_ID,
+          address(ForkEnv.arb),
+          address(ForkEnv.sGlp),
+          ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.arb)),
+          0,
+          abi.encode(
+            address(glpSwitchCollateralExt),
+            abi.encode(address(uniswapUniversalRouterSwitchCollateralExt), new bytes(0))
+          )
+        )
+      })
+    );
+    vm.stopPrank();
+
+    vm.startPrank(EXT01_EXECUTOR);
+    // Taken price data from https://arbiscan.io/tx/0x2a1bea44f6b1858aef7661b19cec49a4d74e3c9fd1fedb7ab26b09ac712cc0ad
+    uint256 _sGlpBefore = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp));
+    bytes32[] memory _priceData = new bytes32[](3);
+    _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
+    _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
+    _priceData[2] = 0x000f9e00b0e500b5af00bc5300d656007f720000000000000000000000000000;
+    bytes32[] memory _publishTimeData = new bytes32[](3);
+    _publishTimeData[0] = bytes32(0);
+    _publishTimeData[1] = bytes32(0);
+    _publishTimeData[2] = bytes32(0);
+    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    vm.stopPrank();
+    uint256 _sGlpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp));
+
+    // Trader balance should be the same
+    assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.arb)), 0);
+    assertEq(_sGlpAfter - _sGlpBefore, 1251816487838549309485);
   }
 }

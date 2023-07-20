@@ -491,11 +491,42 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     sglp = _sglp;
   }
 
-  function setSwitchCollateralExtension(address _token, address _extension, bool _isAllow) external onlyOwner {
+  /// @notice Perform the actual set switch collateral extension.
+  /// @param _token The token address to set.
+  /// @param _extension The extension address to set.
+  /// @param _isAllow The isAllow value to set.
+  function _setSwitchCollateralExtension(address _token, address _extension, bool _isAllow) internal {
     if (!_token.isContract() || !_extension.isContract()) revert IConfigStorage_BadArgs();
 
     emit LogSetSwitchCollateralExtension(_token, _extension, switchCollateralExts[_token][_extension], _isAllow);
     switchCollateralExts[_token][_extension] = _isAllow;
+  }
+
+  /// @notice Set switch collateral extension
+  /// @param _token The token address to set.
+  /// @param _extension The extension address to set.
+  /// @param _isAllow The isAllow value to set.
+  function setSwitchCollateralExtension(address _token, address _extension, bool _isAllow) external onlyOwner {
+    _setSwitchCollateralExtension(_token, _extension, _isAllow);
+  }
+
+  /// @notice Batch set switch collateral extensions
+  /// @param _tokens The token addresses to set.
+  /// @param _extensions The extension addresses to set.
+  /// @param _isAllows The isAllow values to set.
+  function setSwitchCollateralExtensions(
+    address[] calldata _tokens,
+    address[] calldata _extensions,
+    bool[] calldata _isAllows
+  ) external onlyOwner {
+    if (_tokens.length != _extensions.length || _extensions.length != _isAllows.length) revert IConfigStorage_BadLen();
+    uint256 _len = _tokens.length;
+    for (uint256 i = 0; i < _len; ) {
+      _setSwitchCollateralExtension(_tokens[i], _extensions[i], _isAllows[i]);
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @notice add or update accepted tokens of HLP

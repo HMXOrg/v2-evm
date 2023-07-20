@@ -20,7 +20,7 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { UniswapUniversalRouterSwitchCollateralExt } from "@hmx/extensions/switch-collateral/UniswapUniversalRouterSwitchCollateralExt.sol";
 
-contract UniswapUniversalRouterSwitchCollateral_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
+contract UniswapUniversalRouterSwitchCollateralExt_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
   uint256 constant V3_SWAP_EXACT_IN = 0x00;
 
   address internal constant EXT01_EXECUTOR = 0x7FDD623c90a0097465170EdD352Be27A9f3ad817;

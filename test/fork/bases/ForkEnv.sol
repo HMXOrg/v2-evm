@@ -86,4 +86,5 @@ library ForkEnv {
   IERC20 internal constant usdt = IERC20(0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9);
   IERC20 internal constant dai = IERC20(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
   IERC20 internal constant pendle = IERC20(0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8);
+  IERC20 internal constant arb = IERC20(0x912CE59144191C1204E64559FE8253a0e49E6548);
 }

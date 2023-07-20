@@ -82,13 +82,14 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
 
       // Check
       // Check if _switchCollateralExt is allowed
-      if (!configStorage.switchCollateralExts(_tokenIn, address(weth))) revert GlpSwitchCollateralExt_Forbidden();
+      if (!configStorage.switchCollateralExts(_tokenIn, address(_switchCollateralExt)))
+        revert GlpSwitchCollateralExt_Forbidden();
 
       // Transfer to _switchCollateralExt
       ERC20(_tokenIn).safeTransfer(address(_switchCollateralExt), _amountIn);
 
       // Run _switchCollateralExt
-      _amountOut = _switchCollateralExt.run(_tokenIn, address(weth), _amountIn, 0, _switchCollateralExtData);
+      _amountIn = _switchCollateralExt.run(_tokenIn, address(weth), _amountIn, 0, _switchCollateralExtData);
 
       // Re-assign _tokenIn to be WETH
       _tokenIn = address(weth);
@@ -128,7 +129,8 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
 
       // Check
       // Check if _switchCollateralExt is allowed
-      if (!configStorage.switchCollateralExts(_backFromGlp, _tokenOut)) revert GlpSwitchCollateralExt_Forbidden();
+      if (!configStorage.switchCollateralExts(_backFromGlp, address(_switchCollateralExt)))
+        revert GlpSwitchCollateralExt_Forbidden();
 
       // Transfer to _switchCollateralExt
       ERC20(_backFromGlp).safeTransfer(address(_switchCollateralExt), _amountOut);

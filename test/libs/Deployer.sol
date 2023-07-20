@@ -537,6 +537,23 @@ library Deployer {
       );
   }
 
+  function deployGlpSwitchCollateralExt(
+    address _configStorage,
+    address _weth,
+    address _sGlp,
+    address _glpManager,
+    address _gmxVault,
+    address _gmxRewardRouter
+  ) internal returns (ISwitchCollateralExt) {
+    return
+      ISwitchCollateralExt(
+        deployContractWithArguments(
+          "GlpSwitchCollateralExt",
+          abi.encode(_configStorage, _weth, _sGlp, _glpManager, _gmxVault, _gmxRewardRouter)
+        )
+      );
+  }
+
   /**
    * Private Functions
    */

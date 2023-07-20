@@ -311,6 +311,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     _revertOnNotAcceptedCollateral(_fromToken);
     _revertOnNotAcceptedCollateral(_toToken);
     if (_fromAmount == 0) revert IExt01Handler_BadAmount();
+    if (_fromToken == _toToken) revert IExt01Handler_SameFromToToken();
 
     emit LogCreateSwitchCollateralOrder(
       msg.sender,

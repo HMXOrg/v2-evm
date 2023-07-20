@@ -31,14 +31,14 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
   IGmxRewardRouterV2 public gmxRewardRouter;
 
   constructor(
-    IConfigStorage _configStorage,
+    address _configStorage,
     address _weth,
     address _sGlp,
     address _glpManager,
     address _gmxVault,
     address _gmxRewardRouter
   ) {
-    configStorage = _configStorage;
+    configStorage = IConfigStorage(_configStorage);
     weth = ERC20(_weth);
     sGlp = ERC20(_sGlp);
     glpManager = IGmxGlpManager(_glpManager);
@@ -94,8 +94,8 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
       _tokenIn = address(weth);
     }
 
-    ERC20(_tokenIn).approve(address(glpManager), _amountOut);
-    _amountOut = gmxRewardRouter.mintAndStakeGlp(address(_tokenIn), _amountOut, 0, 0);
+    ERC20(_tokenIn).approve(address(glpManager), _amountIn);
+    _amountOut = gmxRewardRouter.mintAndStakeGlp(address(_tokenIn), _amountIn, 0, 0);
 
     // Transfer sGlp to out to msg.sender
     sGlp.safeTransfer(msg.sender, _amountOut);
@@ -128,13 +128,16 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
 
       // Check
       // Check if _switchCollateralExt is allowed
-      if (!configStorage.switchCollateralExts(address(weth), _tokenOut)) revert GlpSwitchCollateralExt_Forbidden();
+      if (!configStorage.switchCollateralExts(_backFromGlp, _tokenOut)) revert GlpSwitchCollateralExt_Forbidden();
 
       // Transfer to _switchCollateralExt
-      weth.safeTransfer(address(_switchCollateralExt), _amountOut);
+      ERC20(_backFromGlp).safeTransfer(address(_switchCollateralExt), _amountOut);
 
       // Run _switchCollateralExt
-      _amountOut = _switchCollateralExt.run(address(weth), _tokenOut, _amountOut, 0, _switchCollateralExtData);
+      _amountOut = _switchCollateralExt.run(_backFromGlp, _tokenOut, _amountOut, 0, _switchCollateralExtData);
     }
+
+    // Transfer _tokenOut to msg.sender
+    ERC20(_tokenOut).safeTransfer(msg.sender, _amountOut);
   }
 }

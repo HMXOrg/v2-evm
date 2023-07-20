@@ -28,8 +28,13 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 /// Vendors
+/// Uniswap
 import { IPermit2 } from "@hmx/interfaces/uniswap/IPermit2.sol";
 import { IUniversalRouter } from "@hmx/interfaces/uniswap/IUniversalRouter.sol";
+/// GMX
+import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
+import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
+import { IGmxVault } from "@hmx/interfaces/gmx/IGmxVault.sol";
 
 library ForkEnv {
   /// Account
@@ -62,9 +67,17 @@ library ForkEnv {
   VaultStorage internal constant vaultStorage = VaultStorage(0x56CC5A9c0788e674f17F7555dC8D3e2F1C0313C0);
 
   /// Vendors
+  /// Uniswap
   IUniversalRouter internal constant uniswapUniversalRouter =
     IUniversalRouter(0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD);
   IPermit2 internal constant uniswapPermit2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
+
+  /// GMX
+  IERC20 internal constant sGlp = IERC20(0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf);
+  IGmxGlpManager internal constant glpManager = IGmxGlpManager(0x3963FfC9dff443c2A94f21b129D429891E32ec18);
+  IGmxRewardRouterV2 internal constant gmxRewardRouterV2 =
+    IGmxRewardRouterV2(0xB95DB5B167D75e6d04227CfFFA61069348d271F5);
+  IGmxVault internal constant gmxVault = IGmxVault(0x489ee077994B6658eAfA855C308275EAd8097C4A);
 
   /// Tokens
   IERC20 internal constant usdc_e = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);

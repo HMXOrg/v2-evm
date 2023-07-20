@@ -13,6 +13,7 @@ interface IExt01Handler {
   error IExt01Handler_InsufficientExecutionFee();
   error IExt01Handler_InCorrectValueTransfer();
   error IExt01Handler_NoOrder();
+  error IExt01Handler_SameFromToToken();
   error IExt01Handler_Unauthorized();
 
   /**

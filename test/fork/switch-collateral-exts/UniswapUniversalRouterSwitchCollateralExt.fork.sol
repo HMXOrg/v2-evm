@@ -121,6 +121,26 @@ contract UniswapUniversalRouterSwitchCollateral_ForkTest is TestBase, Cheats, St
     vm.stopPrank();
   }
 
+  function testRevert_WhenFromAndToTokenAreSame() external {
+    vm.startPrank(USER);
+    vm.expectRevert(abi.encodeWithSignature("IExt01Handler_SameFromToToken()"));
+    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 1,
+        executionFee: 0.1 * 1e9,
+        data: abi.encode(
+          0,
+          address(ForkEnv.usdc_e),
+          address(ForkEnv.usdc_e),
+          79115385,
+          41433673370671066,
+          abi.encode(address(uniswapUniversalRouterSwitchCollateralExt), new bytes(0))
+        )
+      })
+    );
+    vm.stopPrank();
+  }
+
   function testRevert_WhenSlippage() external {
     vm.startPrank(USER);
     ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
@@ -157,7 +177,7 @@ contract UniswapUniversalRouterSwitchCollateral_ForkTest is TestBase, Cheats, St
     assertEq(ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.usdc_e)), 79115385);
   }
 
-  function testRevert_WhenNotSwapMakesEquityBelowIMR() external {
+  function testRevert_WhenSwitchCollateralMakesEquityBelowIMR() external {
     vm.startPrank(USER);
     ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({

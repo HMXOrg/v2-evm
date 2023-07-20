@@ -16,9 +16,9 @@ async function main() {
   const multicall = new MultiCall(provider);
 
   const perpStorage = PerpStorage__factory.connect(config.storages.perp, provider);
-  const activePositions = await perpStorage.getActivePositions(100, 0);
+  const activePositions = await perpStorage.getActivePositions(1000, 0);
 
-  const numberOfMarkets = 15;
+  const numberOfMarkets = 24;
   const result = [];
   for (let i = 0; i < numberOfMarkets; i++) {
     const inputs = [
@@ -72,6 +72,64 @@ async function main() {
     });
   }
   console.table(result);
+
+  const inputs = [
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "fundingFeeReserve",
+      args: [config.tokens.weth],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "fundingFeeReserve",
+      args: [config.tokens.wbtc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "fundingFeeReserve",
+      args: [config.tokens.usdc],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "fundingFeeReserve",
+      args: [config.tokens.usdt],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "fundingFeeReserve",
+      args: [config.tokens.dai],
+    },
+    {
+      interface: VaultStorage__factory.abi,
+      target: config.storages.vault,
+      function: "fundingFeeReserve",
+      args: [config.tokens.sglp],
+    },
+  ];
+  const [
+    ,
+    [
+      wethFundingFeeReserve,
+      wbtcFundingFeeReserve,
+      usdcFundingFeeReserve,
+      usdtFundingFeeReserve,
+      daiFundingFeeReserve,
+      sglpFundingFeeReserve,
+    ],
+  ] = await multicall.multiCall(inputs as any);
+  console.table({
+    wethFundingFeeReserve: formatUnits(wethFundingFeeReserve, 18),
+    wbtcFundingFeeReserve: formatUnits(wbtcFundingFeeReserve, 8),
+    usdcFundingFeeReserve: formatUnits(usdcFundingFeeReserve, 6),
+    usdtFundingFeeReserve: formatUnits(usdtFundingFeeReserve, 6),
+    daiFundingFeeReserve: formatUnits(daiFundingFeeReserve, 18),
+    sglpFundingFeeReserve: formatUnits(sglpFundingFeeReserve, 18),
+  });
 }
 
 function getFundingFee(size: BigNumber, currentFundingAccrued: BigNumber, lastFundingAccrued: BigNumber): BigNumber {

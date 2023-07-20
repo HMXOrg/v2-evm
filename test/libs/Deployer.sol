@@ -49,7 +49,7 @@ import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpS
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
-import { OrderReader } from "@hmx/reader/OrderReader.sol";
+import { OrderReader } from "@hmx/readers/OrderReader.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);

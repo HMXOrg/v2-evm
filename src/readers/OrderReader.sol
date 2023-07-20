@@ -5,15 +5,10 @@
 pragma solidity 0.8.18;
 
 // interfaces
-import { ConfigStorage } from "../storages/ConfigStorage.sol";
-import { PerpStorage } from "../storages/PerpStorage.sol";
-import { LimitTradeHandler } from "../handlers/LimitTradeHandler.sol";
-import { OracleMiddleware } from "../oracles/OracleMiddleware.sol";
-
-import { IConfigStorage } from "../storages/interfaces/IConfigStorage.sol";
-import { IPerpStorage } from "../storages/interfaces/IPerpStorage.sol";
-import { ILimitTradeHandler } from "../handlers/interfaces/ILimitTradeHandler.sol";
-import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
+import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
+import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 
 contract OrderReader {
   IConfigStorage public configStorage;
@@ -33,26 +28,26 @@ contract OrderReader {
     bool[] isInValidMarket;
     ILimitTradeHandler.LimitOrder[] executableOrders;
     IConfigStorage.MarketConfig[] marketConfigs;
-    uint256 ordersCount;
-    uint256 startIndex;
-    uint256 endIndex;
+    uint128 ordersCount;
+    uint64 startIndex;
+    uint64 endIndex;
   }
 
   function getExecutableOrders(
-    uint256 _limit,
-    uint256 _offset,
+    uint64 _limit,
+    uint64 _offset,
     bytes32[] memory _assetIds,
-    uint256[] memory _prices
+    uint64[] memory _prices
   ) external view returns (ILimitTradeHandler.LimitOrder[] memory) {
     ExecutableOrderVars memory vars;
     // get active orders
     vars.orders = limitTradeHandler.getLimitActiveOrders(_limit, _offset);
-    vars.ordersCount = limitTradeHandler.activeLimitOrdersCount();
+    vars.ordersCount = uint128(limitTradeHandler.activeLimitOrdersCount());
     vars.startIndex = _offset;
     vars.endIndex = _offset + _limit;
     if (vars.startIndex > vars.ordersCount) return vars.executableOrders;
     if (vars.endIndex > vars.ordersCount) {
-      vars.endIndex = vars.ordersCount;
+      vars.endIndex = uint64(vars.ordersCount);
     }
     // get merket configs
     vars.marketConfigs = configStorage.getMarketConfigs();
@@ -73,9 +68,13 @@ contract OrderReader {
     }
 
     vars.executableOrders = new ILimitTradeHandler.LimitOrder[](vars.endIndex - vars.startIndex);
+    ILimitTradeHandler.LimitOrder memory _order;
+    address _subAccount;
+    bytes32 _positionId;
+    IPerpStorage.Position memory _position;
     len = vars.orders.length;
     for (uint256 i = 0; i < len; i++) {
-      ILimitTradeHandler.LimitOrder memory _order = vars.orders[i];
+      _order = vars.orders[i];
       {
         if (vars.isInValidMarket[_order.marketIndex]) {
           continue;
@@ -92,9 +91,9 @@ contract OrderReader {
         }
         // check Tp/Sl order
         if (_isTpSlOrder(_order)) {
-          address _subAccount = _getSubAccount(_order.account, _order.subAccountId);
-          bytes32 _positionId = _getPositionId(_subAccount, _order.marketIndex);
-          IPerpStorage.Position memory _position = perpStorage.getPositionById(_positionId);
+          _subAccount = _getSubAccount(_order.account, _order.subAccountId);
+          _positionId = _getPositionId(_subAccount, _order.marketIndex);
+          _position = perpStorage.getPositionById(_positionId);
           if (_isPositionClose(_position)) {
             continue;
           }
@@ -133,12 +132,12 @@ contract OrderReader {
   function _getPrice(
     bytes32 _assetId,
     bytes32[] memory _assetIds,
-    uint256[] memory _prices
+    uint64[] memory _prices
   ) internal pure returns (uint256) {
     uint256 _len = _assetIds.length;
     for (uint256 i; i < _len; ) {
       if (_assetIds[i] == _assetId) {
-        return _prices[i];
+        return uint256(_prices[i]) * 1e22;
       }
       unchecked {
         ++i;

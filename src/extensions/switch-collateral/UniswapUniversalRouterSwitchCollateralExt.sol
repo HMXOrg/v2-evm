@@ -4,7 +4,7 @@
 
 pragma solidity 0.8.18;
 
-// libs
+// bases
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -30,6 +30,10 @@ contract UniswapUniversalRouterSwitchCollateralExt is Ownable, ISwitchCollateral
     universalRouter = IUniversalRouter(_universalRouter);
   }
 
+  /// @notice Run the extension logic to swap on Uniswap V3.
+  /// @param _tokenIn The token to swap from.
+  /// @param _tokenOut The token to swap to.
+  /// @param _amountIn The amount of _tokenIn to swap.
   function run(
     address _tokenIn,
     address _tokenOut,

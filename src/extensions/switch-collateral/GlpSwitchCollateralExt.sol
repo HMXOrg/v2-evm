@@ -4,7 +4,7 @@
 
 pragma solidity 0.8.18;
 
-// libs
+// bases
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -46,6 +46,12 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
     gmxRewardRouter = IGmxRewardRouterV2(_gmxRewardRouter);
   }
 
+  /// @notice Run the extension logic.
+  /// @dev This function supports both switching to and from sGlp.
+  /// @param _tokenIn The token to switch from.
+  /// @param _tokenOut The token to switch to.
+  /// @param _amountIn The amount of _tokenIn to switch.
+  /// @param _data The encoded data for the sub-extension.
   function run(
     address _tokenIn,
     address _tokenOut,
@@ -63,6 +69,10 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
     }
   }
 
+  /// @notice Perform the switch to sGlp.
+  /// @param _tokenIn The token to switch from.
+  /// @param _amountIn The amount of _tokenIn to switch.
+  /// @param _data The encoded data for the sub-extension.
   function _toGlp(
     address _tokenIn,
     uint256 _amountIn,
@@ -102,6 +112,10 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
     sGlp.safeTransfer(msg.sender, _amountOut);
   }
 
+  /// @notice Perform the switch from sGlp.
+  /// @param _tokenOut The token to switch to.
+  /// @param _amountIn The amount of sGlp to switch.
+  /// @param _data The encoded data for the sub-extension.
   function _fromGlp(
     address _tokenOut,
     uint256 _amountIn,

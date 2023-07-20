@@ -7,10 +7,10 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
 
-  console.log("> LimitTradeHandler: Set Max Position Helper...");
+  console.log("> LimitTradeHandler: Set Limit Trade Helper...");
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
   await (await limitTradeHandler.setLimitTradeHelper(config.helpers.limitTrade)).wait();
-  console.log("> LimitTradeHandler: Set Max Position Helper success!");
+  console.log("> LimitTradeHandler: Set Limit Trade Helper success!");
 }
 
 const prog = new Command();

@@ -110,7 +110,7 @@ contract TC02_01 is BaseIntTest_WithActions {
     // should revert Max Position Size
     // note: price has no changed
     vm.startPrank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("MaxPositionSize()"));
+    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MaxPositionSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(
       0,
       wethMarketIndex,
@@ -141,7 +141,7 @@ contract TC02_01 is BaseIntTest_WithActions {
     // should revert cuz max is 300 USD
     // should revert Max Position Size
     vm.startPrank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("MaxPositionSize()"));
+    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MaxPositionSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(
       0,
       wethMarketIndex,
@@ -166,7 +166,7 @@ contract TC02_01 is BaseIntTest_WithActions {
     // should revert cuz max is 1 USD
     // should revert Max Position Size
     vm.startPrank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("MaxPositionSize()"));
+    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MaxPositionSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(
       0,
       wethMarketIndex,
@@ -190,7 +190,7 @@ contract TC02_01 is BaseIntTest_WithActions {
     // T8: ALICE try to sell with 400 USD
     // should revert from max trade size
     vm.startPrank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("MaxTradeSize()"));
+    vm.expectRevert(abi.encodeWithSignature("LimitTradeHelper_MaxTradeSize()"));
     limitTradeHandler.createOrder{ value: executionOrderFee }(
       0,
       wethMarketIndex,

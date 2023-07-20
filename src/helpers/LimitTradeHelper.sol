@@ -18,7 +18,7 @@ contract LimitTradeHelper is Ownable {
   mapping(uint8 assetClass => uint256 sizeLimit) public positionSizeLimit;
   mapping(uint8 assetClass => uint256 sizeLimit) public tradeSizeLimit;
 
-  constructor(address _configStorage, address _perpStorage) Ownable() {
+  constructor(address _configStorage, address _perpStorage) {
     configStorage = ConfigStorage(_configStorage);
     perpStorage = PerpStorage(_perpStorage);
   }

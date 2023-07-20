@@ -10,8 +10,10 @@ import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 
 contract LimitTradeHelper is Ownable {
-  error MaxTradeSize();
-  error MaxPositionSize();
+  error LimitTradeHelper_MaxTradeSize();
+  error LimitTradeHelper_MaxPositionSize();
+
+  event LogSetPositionSizeLimit(uint8 _assetClass, uint256 _positionSizeLimit, uint256 _tradeSizeLimit);
 
   ConfigStorage public configStorage;
   PerpStorage public perpStorage;
@@ -38,13 +40,13 @@ contract LimitTradeHelper is Ownable {
       .positionSizeE30;
 
     if (tradeSizeLimit[_assetClass] > 0 && !reduceOnly && HMXLib.abs(sizeDelta) > tradeSizeLimit[_assetClass]) {
-      if (isRevert) revert MaxTradeSize();
+      if (isRevert) revert LimitTradeHelper_MaxTradeSize();
       else return false;
     }
 
     if (positionSizeLimit[_assetClass] > 0 && !reduceOnly) {
       if (HMXLib.abs(_positionSizeE30 + sizeDelta) > positionSizeLimit[_assetClass]) {
-        if (isRevert) revert MaxPositionSize();
+        if (isRevert) revert LimitTradeHelper_MaxPositionSize();
         else return false;
       }
     }
@@ -56,6 +58,7 @@ contract LimitTradeHelper is Ownable {
     uint256 _positionSizeLimit,
     uint256 _tradeSizeLimit
   ) external onlyOwner {
+    emit LogSetPositionSizeLimit(_assetClass, _positionSizeLimit, _tradeSizeLimit);
     // Not logging event to save gas
     positionSizeLimit[_assetClass] = _positionSizeLimit;
     tradeSizeLimit[_assetClass] = _tradeSizeLimit;

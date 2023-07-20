@@ -34,7 +34,7 @@ contract UniswapUniversalRouterSwitchCollateralExt is Ownable, ISwitchCollateral
     address _tokenIn,
     address _tokenOut,
     uint256 _amountIn,
-    uint256 _minAmountOut,
+    uint256 /* _minAmountOut */,
     bytes calldata /* _data */
   ) external override returns (uint256 _amountOut) {
     // Check
@@ -54,7 +54,7 @@ contract UniswapUniversalRouterSwitchCollateralExt is Ownable, ISwitchCollateral
     uint256 _balanceBefore = ERC20(_tokenOut).balanceOf(address(this));
     // 0x00 => V3_SWAP_EXACT_IN
     bytes[] memory _inputs = new bytes[](1);
-    _inputs[0] = abi.encode(address(this), _amountIn, _minAmountOut, pathOf[_tokenIn][_tokenOut], true);
+    _inputs[0] = abi.encode(address(this), _amountIn, 0, pathOf[_tokenIn][_tokenOut], true);
     universalRouter.execute(abi.encodePacked(bytes1(uint8(0x00))), _inputs);
     _amountOut = ERC20(_tokenOut).balanceOf(address(this)) - _balanceBefore;
 

@@ -112,7 +112,7 @@ interface IConfigStorage {
 
   function tokenAssetIds(address _token) external view returns (bytes32);
 
-  function switchCollateralExts(address _token, address _ext) external view returns (bool);
+  function switchCollateralRouter() external view returns (address);
 
   /**
    * Functions

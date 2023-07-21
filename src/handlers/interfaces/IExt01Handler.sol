@@ -38,11 +38,9 @@ interface IExt01Handler {
   struct SwitchCollateralOrder {
     address primaryAccount;
     uint8 subAccountId;
-    address fromToken;
-    address toToken;
-    uint256 fromAmount;
+    uint248 amount;
+    address[] path;
     uint256 minToAmount;
-    bytes data;
     CrossMarginService crossMarginService;
   }
 

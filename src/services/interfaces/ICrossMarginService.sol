@@ -5,13 +5,14 @@ interface ICrossMarginService {
   /**
    * Errors
    */
-  error ICrossMarginService_InvalidDepositBalance();
   error ICrossMarginService_InvalidAddress();
+  error ICrossMarginService_InvalidAmount();
+  error ICrossMarginService_InvalidDepositBalance();
   error ICrossMarginService_InsufficientBalance();
   error ICrossMarginService_WithdrawBalanceBelowIMR();
   error ICrossMarginHandler_NoFundingFeeSurplus();
   error ICrossMarginHandler_FundingFeeSurplusCannotBeCovered();
-  error ICrossMarginService_NotAllowedExtension();
+  error ICrossMarginService_InvalidPath();
   error ICrossMarginService_Slippage();
 
   /**

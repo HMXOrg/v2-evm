@@ -23,7 +23,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 // Interfaces
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
-import { ISwitchCollateralExt } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralExt.sol";
+import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 /**
  * @title CrossMarginService
@@ -280,70 +280,54 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   struct SwitchCollateralParams {
     address primaryAccount;
     uint8 subAccountId;
-    address fromToken;
-    address toToken;
-    uint256 fromAmount;
+    uint248 amount;
+    address[] path;
     uint256 minToAmount;
-    bytes data;
   }
 
   /// @notice Switch from one collateral token to another.
   /// @param _params The parameters for the switch.
   function switchCollateral(
     SwitchCollateralParams calldata _params
-  )
-    external
-    nonReentrant
-    onlyWhitelistedExecutor
-    onlyAcceptedToken(_params.fromToken)
-    onlyAcceptedToken(_params.toToken)
-    returns (uint256 _toAmount)
-  {
+  ) external nonReentrant onlyWhitelistedExecutor returns (uint256 _toAmount) {
+    // Checks
+    // Check if path is valid
+    if (_params.path.length < 2) revert ICrossMarginService_InvalidPath();
+    // Check if switch from one collateral token to another
+    ConfigStorage(configStorage).validateAcceptedCollateral(_params.path[0]);
+    ConfigStorage(configStorage).validateAcceptedCollateral(_params.path[_params.path.length - 1]);
+    // Check if amount is valid.
+    if (_params.amount == 0) revert ICrossMarginService_InvalidAmount();
+
     // Casting dependencies
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
     ConfigStorage _configStorage = ConfigStorage(configStorage);
     Calculator _calculator = Calculator(calculator);
-
-    // Decode
-    (ISwitchCollateralExt _switchCollateralExt, bytes memory _switchCollateralExtData) = abi.decode(
-      _params.data,
-      (ISwitchCollateralExt, bytes)
-    );
-
-    // Check
-    // Check if _switchCollateralExt is allowed
-    if (!_configStorage.switchCollateralExts(_params.fromToken, address(_switchCollateralExt)))
-      revert ICrossMarginService_NotAllowedExtension();
+    ISwitchCollateralRouter _switchCollateralRouter = ISwitchCollateralRouter(_configStorage.switchCollateralRouter());
+    (address _tokenIn, address _tokenOut) = (_params.path[0], _params.path[_params.path.length - 1]);
 
     // Get trader's sub-account address
     address _subAccount = HMXLib.getSubAccount(_params.primaryAccount, _params.subAccountId);
 
-    // Decrease trader's balance right here to prevent malicious _switchCollateralExtData
-    // We will treat as this amount is flashed transfered to _switchCollateralExt
-    // and expect that after _switchCollateralExt done its job, the account should still healthy.
-    // Hence, if the malicious _switchCollateralExtData make the account unhealthy by cross-contract
-    // reentrancy attack, we will revert the tx.
-    _vaultStorage.decreaseTraderBalance(_subAccount, _params.fromToken, _params.fromAmount);
-    // Push token to _switchCollateralExt
-    _vaultStorage.pushToken(_params.fromToken, address(_switchCollateralExt), _params.fromAmount);
+    // Decrease trader's balance right here to prevent cross-contract reentrancy attack
+    // We will treat as this amount is flashed transfered to _switchCollateralRouter
+    // and expect that after _switchCollateralRouter done its job, the account should still healthy.
+    // Hence, if the account unhealthy by cross-contract reentrancy attack, it will be reverted at the end.
+    _vaultStorage.decreaseTraderBalance(_subAccount, _tokenIn, _params.amount);
+    // Push token to _switchCollateralRouter
+    _vaultStorage.pushToken(_tokenIn, address(_switchCollateralRouter), _params.amount);
 
-    // Run _switchCollateralExt, it will send back _tokenOut to this contract
-    _toAmount = _switchCollateralExt.run(
-      _params.fromToken,
-      _params.toToken,
-      _params.fromAmount,
-      _params.minToAmount,
-      _switchCollateralExtData
-    );
+    // Run _switchCollateralRouter, it will send back _tokenOut to this contract
+    _toAmount = _switchCollateralRouter.execute(uint256(_params.amount), _params.path);
     // Check slippage
     if (_toAmount < _params.minToAmount) revert ICrossMarginService_Slippage();
 
-    // Send toToken to VaultStorage and pull
-    ERC20Upgradeable(_params.toToken).safeTransfer(address(_vaultStorage), _toAmount);
-    uint256 _deltaBalance = _vaultStorage.pullToken(_params.toToken);
+    // Send last token to VaultStorage and pull
+    ERC20Upgradeable(_tokenOut).safeTransfer(address(_vaultStorage), _toAmount);
+    uint256 _deltaBalance = _vaultStorage.pullToken(_tokenOut);
     if (_deltaBalance < _toAmount) revert ICrossMarginService_InvalidDepositBalance();
     // Increase trader's balance
-    _vaultStorage.increaseTraderBalance(_subAccount, _params.toToken, _toAmount);
+    _vaultStorage.increaseTraderBalance(_subAccount, _tokenOut, _toAmount);
 
     // Calculate validation if new Equity is below IMR or not
     int256 equity = _calculator.getEquity(_subAccount, 0, 0);

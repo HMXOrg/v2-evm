@@ -14,6 +14,7 @@ import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/Ad
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
+import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -49,7 +50,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogDelistMarket(uint256 marketIndex);
   event LogAddOrUpdateHLPTokenConfigs(address _token, HLPTokenConfig _config, HLPTokenConfig _newConfig);
   event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
-  event LogSetSwitchCollateralExtension(address _token, address _extension, bool _prevAllow, bool _newAllow);
+  event LogSetSwitchCollateralRouter(address prevRouter, address newRouter);
 
   /**
    * Constants
@@ -93,8 +94,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   address[] public tradeServiceHooks;
   // Executors
   mapping(address => bool) public configExecutors;
-  // SwithCollateral Extensions
-  mapping(address token => mapping(address extension => bool isAllow)) public switchCollateralExts;
+  // SwithCollateralRouter
+  address public switchCollateralRouter;
 
   /**
    * Modifiers
@@ -491,42 +492,11 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     sglp = _sglp;
   }
 
-  /// @notice Perform the actual set switch collateral extension.
-  /// @param _token The token address to set.
-  /// @param _extension The extension address to set.
-  /// @param _isAllow The isAllow value to set.
-  function _setSwitchCollateralExtension(address _token, address _extension, bool _isAllow) internal {
-    if (!_token.isContract() || !_extension.isContract()) revert IConfigStorage_BadArgs();
-
-    emit LogSetSwitchCollateralExtension(_token, _extension, switchCollateralExts[_token][_extension], _isAllow);
-    switchCollateralExts[_token][_extension] = _isAllow;
-  }
-
-  /// @notice Set switch collateral extension
-  /// @param _token The token address to set.
-  /// @param _extension The extension address to set.
-  /// @param _isAllow The isAllow value to set.
-  function setSwitchCollateralExtension(address _token, address _extension, bool _isAllow) external onlyOwner {
-    _setSwitchCollateralExtension(_token, _extension, _isAllow);
-  }
-
-  /// @notice Batch set switch collateral extensions
-  /// @param _tokens The token addresses to set.
-  /// @param _extensions The extension addresses to set.
-  /// @param _isAllows The isAllow values to set.
-  function setSwitchCollateralExtensions(
-    address[] calldata _tokens,
-    address[] calldata _extensions,
-    bool[] calldata _isAllows
-  ) external onlyOwner {
-    if (_tokens.length != _extensions.length || _extensions.length != _isAllows.length) revert IConfigStorage_BadLen();
-    uint256 _len = _tokens.length;
-    for (uint256 i = 0; i < _len; ) {
-      _setSwitchCollateralExtension(_tokens[i], _extensions[i], _isAllows[i]);
-      unchecked {
-        ++i;
-      }
-    }
+  /// @notice Set switch collateral router.
+  /// @param _newSwitchCollateralRouter The new switch collateral router.
+  function setSwitchCollateralRouter(address _newSwitchCollateralRouter) external onlyOwner {
+    emit LogSetSwitchCollateralRouter(switchCollateralRouter, _newSwitchCollateralRouter);
+    switchCollateralRouter = _newSwitchCollateralRouter;
   }
 
   /// @notice add or update accepted tokens of HLP

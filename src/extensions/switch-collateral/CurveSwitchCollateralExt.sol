@@ -48,13 +48,7 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
   /// @param _tokenIn The token to swap from.
   /// @param _tokenOut The token to swap to.
   /// @param _amountIn The amount of _tokenIn to swap.
-  function run(
-    address _tokenIn,
-    address _tokenOut,
-    uint256 _amountIn,
-    uint256 /* _minAmountOut */,
-    bytes calldata /* _data */
-  ) external override returns (uint256 _amountOut) {
+  function run(address _tokenIn, address _tokenOut, uint256 _amountIn) external override returns (uint256 _amountOut) {
     // SLOAD
     PoolConfig memory _poolConfig = poolConfigOf[_tokenIn][_tokenOut];
 

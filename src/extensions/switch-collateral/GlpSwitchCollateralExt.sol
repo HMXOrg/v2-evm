@@ -21,8 +21,7 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
 
   error GlpSwitchCollateralExt_Forbidden();
   error GlpSwitchCollateralExt_NotSupported();
-
-  IConfigStorage public configStorage;
+  error GlpSwitchCollateralExt_TokenNotWhitelisted();
 
   ERC20 public weth;
   ERC20 public sGlp;
@@ -30,15 +29,7 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
   IGmxVault public gmxVault;
   IGmxRewardRouterV2 public gmxRewardRouter;
 
-  constructor(
-    address _configStorage,
-    address _weth,
-    address _sGlp,
-    address _glpManager,
-    address _gmxVault,
-    address _gmxRewardRouter
-  ) {
-    configStorage = IConfigStorage(_configStorage);
+  constructor(address _weth, address _sGlp, address _glpManager, address _gmxVault, address _gmxRewardRouter) {
     weth = ERC20(_weth);
     sGlp = ERC20(_sGlp);
     glpManager = IGmxGlpManager(_glpManager);
@@ -51,19 +42,14 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
   /// @param _tokenIn The token to switch from.
   /// @param _tokenOut The token to switch to.
   /// @param _amountIn The amount of _tokenIn to switch.
-  /// @param _data The encoded data for the sub-extension.
-  function run(
-    address _tokenIn,
-    address _tokenOut,
-    uint256 _amountIn,
-    uint256 _minAmountOut,
-    bytes calldata _data
-  ) external override returns (uint256 _amountOut) {
+  function run(address _tokenIn, address _tokenOut, uint256 _amountIn) external override returns (uint256 _amountOut) {
     // Check
     if (_tokenOut == address(sGlp)) {
-      _amountOut = _toGlp(_tokenIn, _amountIn, _minAmountOut, _data);
+      if (!gmxVault.whitelistedTokens(_tokenIn)) revert GlpSwitchCollateralExt_TokenNotWhitelisted();
+      _amountOut = _toGlp(_tokenIn, _amountIn);
     } else if (_tokenIn == address(sGlp)) {
-      _amountOut = _fromGlp(_tokenOut, _amountIn, _minAmountOut, _data);
+      if (!gmxVault.whitelistedTokens(_tokenOut)) revert GlpSwitchCollateralExt_TokenNotWhitelisted();
+      _amountOut = _fromGlp(_tokenOut, _amountIn);
     } else {
       revert GlpSwitchCollateralExt_NotSupported();
     }
@@ -72,39 +58,7 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
   /// @notice Perform the switch to sGlp.
   /// @param _tokenIn The token to switch from.
   /// @param _amountIn The amount of _tokenIn to switch.
-  /// @param _data The encoded data for the sub-extension.
-  function _toGlp(
-    address _tokenIn,
-    uint256 _amountIn,
-    uint256 /* _minAmountOut */,
-    bytes memory _data
-  ) internal returns (uint256 _amountOut) {
-    if (!gmxVault.whitelistedTokens(_tokenIn)) {
-      // If tokenIn is not in GMX's Vault, then swap it to WETH first.
-      // However, _tokenIn can be a primative ERC20 or a yield bearing token
-      // so we will rely on the injected sub-extension to handle this.
-
-      // Decode data
-      (ISwitchCollateralExt _switchCollateralExt, bytes memory _switchCollateralExtData) = abi.decode(
-        _data,
-        (ISwitchCollateralExt, bytes)
-      );
-
-      // Check
-      // Check if _switchCollateralExt is allowed
-      if (!configStorage.switchCollateralExts(_tokenIn, address(_switchCollateralExt)))
-        revert GlpSwitchCollateralExt_Forbidden();
-
-      // Transfer to _switchCollateralExt
-      ERC20(_tokenIn).safeTransfer(address(_switchCollateralExt), _amountIn);
-
-      // Run _switchCollateralExt
-      _amountIn = _switchCollateralExt.run(_tokenIn, address(weth), _amountIn, 0, _switchCollateralExtData);
-
-      // Re-assign _tokenIn to be WETH
-      _tokenIn = address(weth);
-    }
-
+  function _toGlp(address _tokenIn, uint256 _amountIn) internal returns (uint256 _amountOut) {
     ERC20(_tokenIn).approve(address(glpManager), _amountIn);
     _amountOut = gmxRewardRouter.mintAndStakeGlp(address(_tokenIn), _amountIn, 0, 0);
 
@@ -115,44 +69,8 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
   /// @notice Perform the switch from sGlp.
   /// @param _tokenOut The token to switch to.
   /// @param _amountIn The amount of sGlp to switch.
-  /// @param _data The encoded data for the sub-extension.
-  function _fromGlp(
-    address _tokenOut,
-    uint256 _amountIn,
-    uint256 /* _minAmountOut */,
-    bytes memory _data
-  ) internal returns (uint256 _amountOut) {
-    address _backFromGlp = _tokenOut;
-    bool _executeSubExt = false;
-    if (!gmxVault.whitelistedTokens(_tokenOut)) {
-      // if _tokenOut is not in GMX's Vault, then force it to be WETH first.
-      // And we will need to execute sub-extension
-      _backFromGlp = address(weth);
-      _executeSubExt = true;
-    }
-
-    _amountOut = gmxRewardRouter.unstakeAndRedeemGlp(_backFromGlp, _amountIn, 0, address(this));
-    if (_executeSubExt) {
-      // If tokenOut is not in GMX's Vault, then we will rely on the injected sub-extension to handle this.
-
-      // Decode data
-      (ISwitchCollateralExt _switchCollateralExt, bytes memory _switchCollateralExtData) = abi.decode(
-        _data,
-        (ISwitchCollateralExt, bytes)
-      );
-
-      // Check
-      // Check if _switchCollateralExt is allowed
-      if (!configStorage.switchCollateralExts(_backFromGlp, address(_switchCollateralExt)))
-        revert GlpSwitchCollateralExt_Forbidden();
-
-      // Transfer to _switchCollateralExt
-      ERC20(_backFromGlp).safeTransfer(address(_switchCollateralExt), _amountOut);
-
-      // Run _switchCollateralExt
-      _amountOut = _switchCollateralExt.run(_backFromGlp, _tokenOut, _amountOut, 0, _switchCollateralExtData);
-    }
-
+  function _fromGlp(address _tokenOut, uint256 _amountIn) internal returns (uint256 _amountOut) {
+    _amountOut = gmxRewardRouter.unstakeAndRedeemGlp(_tokenOut, _amountIn, 0, address(this));
     // Transfer _tokenOut to msg.sender
     ERC20(_tokenOut).safeTransfer(msg.sender, _amountOut);
   }

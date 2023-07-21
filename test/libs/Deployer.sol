@@ -54,6 +54,7 @@ import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrateg
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
 
 import { ISwitchCollateralExt } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralExt.sol";
+import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
@@ -527,6 +528,11 @@ library Deployer {
   /**
    * Extensions
    */
+
+  function deploySwitchCollateralRouter() internal returns (ISwitchCollateralRouter) {
+    return ISwitchCollateralRouter(deployContract("SwitchCollateralRouter"));
+  }
+
   function deployUniswapUniversalRouterSwitchCollateralExt(
     address _permit2,
     address _universalRouter
@@ -542,7 +548,6 @@ library Deployer {
   }
 
   function deployGlpSwitchCollateralExt(
-    address _configStorage,
     address _weth,
     address _sGlp,
     address _glpManager,
@@ -553,7 +558,7 @@ library Deployer {
       ISwitchCollateralExt(
         deployContractWithArguments(
           "GlpSwitchCollateralExt",
-          abi.encode(_configStorage, _weth, _sGlp, _glpManager, _gmxVault, _gmxRewardRouter)
+          abi.encode(_weth, _sGlp, _glpManager, _gmxVault, _gmxRewardRouter)
         )
       );
   }

@@ -31,19 +31,16 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   event LogSwitchCollateral(
     address indexed primaryAccount,
     uint256 indexed subAccountId,
-    address fromToken,
-    address toToken,
+    address[] path,
     uint256 fromAmount,
     uint256 toAmount
   );
   event LogCreateSwitchCollateralOrder(
     address indexed account,
     uint8 indexed subAccountId,
-    address fromToken,
-    address toToken,
-    uint256 fromAmount,
-    uint256 minToAmount,
-    bytes data
+    uint248 amount,
+    address[] path,
+    uint256 minToAmount
   );
   event LogSetCrossMarginService(
     CrossMarginService indexed prevCrossMarginService,
@@ -132,11 +129,9 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
 
   struct CreateSwitchCollateralOrderParams {
     uint8 subAccountId;
-    address fromToken;
-    address toToken;
-    uint256 fromAmount;
+    uint248 amount;
+    address[] path;
     uint256 minToAmount;
-    bytes data;
   }
 
   /**
@@ -162,23 +157,17 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
 
     // Create order according to the command
     if (_params.orderType == 1) {
-      // OrderType 1 == Create switch collateral order
+      // OrderType 1 = Create switch collateral order
       CreateSwitchCollateralOrderParams memory _localVars;
-      (
-        _localVars.subAccountId,
-        _localVars.fromToken,
-        _localVars.toToken,
-        _localVars.fromAmount,
-        _localVars.minToAmount,
-        _localVars.data
-      ) = abi.decode(_params.data, (uint8, address, address, uint256, uint256, bytes));
+      (_localVars.subAccountId, _localVars.amount, _localVars.path, _localVars.minToAmount) = abi.decode(
+        _params.data,
+        (uint8, uint248, address[], uint256)
+      );
       _rawOrder = _createSwitchCollateralOrder(
         _localVars.subAccountId,
-        _localVars.fromToken,
-        _localVars.toToken,
-        _localVars.fromAmount,
-        _localVars.minToAmount,
-        _localVars.data
+        _localVars.amount,
+        _localVars.path,
+        _localVars.minToAmount
       );
     }
 
@@ -294,44 +283,31 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
 
   /// @notice Creates a new switch collateral order to facilitate the switch of collateral token from one to another.
   /// @param _subAccountId ID of the user's sub-account.
-  /// @param _fromToken Address of the collateral token to switch from.
-  /// @param _toToken Address of the collateral token to switch to.
-  /// @param _fromAmount Amount of _fromToken to switch.
+  /// @param _amount Amount of path[0] to switch.
+  /// @param _path Path of the switch collateral.
   /// @param _minToAmount Minimum amount to be received.
-  /// @param _data Extra data for switch collateral extension.
   function _createSwitchCollateralOrder(
     uint8 _subAccountId,
-    address _fromToken,
-    address _toToken,
-    uint256 _fromAmount,
-    uint256 _minToAmount,
-    bytes memory _data
+    uint248 _amount,
+    address[] memory _path,
+    uint256 _minToAmount
   ) internal returns (bytes memory _rawOrder) {
     // Check
+    (address _fromToken, address _toToken) = (_path[0], _path[_path.length - 1]);
     _revertOnNotAcceptedCollateral(_fromToken);
     _revertOnNotAcceptedCollateral(_toToken);
-    if (_fromAmount == 0) revert IExt01Handler_BadAmount();
+    if (_amount == 0) revert IExt01Handler_BadAmount();
     if (_fromToken == _toToken) revert IExt01Handler_SameFromToToken();
 
-    emit LogCreateSwitchCollateralOrder(
-      msg.sender,
-      _subAccountId,
-      _fromToken,
-      _toToken,
-      _fromAmount,
-      _minToAmount,
-      _data
-    );
+    emit LogCreateSwitchCollateralOrder(msg.sender, _subAccountId, _amount, _path, _minToAmount);
 
     _rawOrder = abi.encode(
       SwitchCollateralOrder({
         primaryAccount: msg.sender,
         subAccountId: _subAccountId,
-        fromToken: _fromToken,
-        toToken: _toToken,
-        fromAmount: _fromAmount,
+        amount: _amount,
+        path: _path,
         minToAmount: _minToAmount,
-        data: _data,
         crossMarginService: crossMarginService
       })
     );
@@ -343,22 +319,13 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       CrossMarginService.SwitchCollateralParams(
         _order.primaryAccount,
         _order.subAccountId,
-        _order.fromToken,
-        _order.toToken,
-        _order.fromAmount,
-        _order.minToAmount,
-        _order.data
+        _order.amount,
+        _order.path,
+        _order.minToAmount
       )
     );
 
-    emit LogSwitchCollateral(
-      _order.primaryAccount,
-      _order.subAccountId,
-      _order.fromToken,
-      _order.toToken,
-      _order.fromAmount,
-      _toAmount
-    );
+    emit LogSwitchCollateral(_order.primaryAccount, _order.subAccountId, _order.path, _order.amount, _toAmount);
   }
 
   /// @notice Returns all pending extended orders.

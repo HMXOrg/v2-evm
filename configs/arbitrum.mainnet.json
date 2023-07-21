@@ -15,7 +15,8 @@
     "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6"
   },
   "helpers": {
-    "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C"
+    "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",
+    "limitTrade": ""
   },
   "services": {
     "crossMargin": "0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A",
@@ -68,5 +69,8 @@
     "tlc": "",
     "hlp": "0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C"
   },
-  "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D"
+  "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",
+  "reader": {
+    "order": "0x1EF528Fd3771a87F568A2E39422B5f00F473389E"
+  }
 }

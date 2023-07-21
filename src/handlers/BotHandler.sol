@@ -288,7 +288,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     uint8[] memory _subAccountIds,
     uint256[] memory _marketIndexes,
     address[] memory _tpTokens
-  ) internal nonReentrant {
+  ) internal {
     // SLOAD
     TradeService _tradeService = TradeService(tradeService);
     uint256 len = _accounts.length;

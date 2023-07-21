@@ -9,6 +9,5 @@ export default defineConfig({
     foundry({
       include: inclusion,
     }),
-    react(),
   ],
 });

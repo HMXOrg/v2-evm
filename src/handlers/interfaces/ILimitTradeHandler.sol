@@ -29,6 +29,8 @@ interface ILimitTradeHandler {
   error ILimitTradeHandler_Unauthorized();
   error ILimitTradeHandler_BadCalldata();
   error ILimitTradeHandler_PriceSlippage();
+  error ILimitTradeHandler_MaxPositionSize();
+  error ILimitTradeHandler_MaxTradeSize();
 
   /**
    * Enums
@@ -189,6 +191,8 @@ interface ILimitTradeHandler {
 
   function getLimitActiveOrders(uint256 _limit, uint256 _offset) external view returns (LimitOrder[] memory _orders);
 
+  function activeLimitOrdersCount() external view returns (uint256);
+
   function getAllActiveOrdersBySubAccount(
     address _subAccount,
     uint256 _limit,
@@ -206,4 +210,6 @@ interface ILimitTradeHandler {
     uint256 _limit,
     uint256 _offset
   ) external view returns (LimitOrder[] memory _orders);
+
+  function setLimitTradeHelper(address _limitTradeHelper) external;
 }

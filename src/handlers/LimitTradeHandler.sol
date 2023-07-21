@@ -22,6 +22,7 @@ import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ILimitTradeHandler } from "./interfaces/ILimitTradeHandler.sol";
 import { IWNative } from "../interfaces/IWNative.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { LimitTradeHelper } from "@hmx/helpers/LimitTradeHelper.sol";
 
 /// @title LimitTradeHandler
 /// @notice This contract handles the create, update, and cancel for the Trading module.
@@ -180,6 +181,8 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
   mapping(address => EnumerableSet.UintSet) private subAccountActiveOrderPointers;
   mapping(address => EnumerableSet.UintSet) private subAccountActiveMarketOrderPointers;
   mapping(address => EnumerableSet.UintSet) private subAccountActiveLimitOrderPointers;
+
+  LimitTradeHelper public limitTradeHelper;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _weth Address of WETH.
@@ -463,6 +466,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = limitOrdersIndex[_subAccount];
 
+    if (address(limitTradeHelper) != address(0))
+      limitTradeHelper.validate(_msgSender(), _subAccountId, _marketIndex, _reduceOnly, _sizeDelta, true);
+
     // Create the limit order
     LimitOrder memory _order = LimitOrder({
       account: _msgSender(),
@@ -679,6 +685,16 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     PerpStorage.Position memory _existingPosition = PerpStorage(_tradeService.perpStorage()).getPositionById(
       vars.positionId
     );
+
+    if (address(limitTradeHelper) != address(0))
+      limitTradeHelper.validate(
+        vars.order.account,
+        vars.order.subAccountId,
+        vars.order.marketIndex,
+        vars.order.reduceOnly,
+        vars.order.sizeDelta,
+        true
+      );
     vars.positionIsLong = _existingPosition.positionSizeE30 > 0;
     vars.isNewPosition = _existingPosition.positionSizeE30 == 0;
 
@@ -1137,6 +1153,10 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // Sanity check
     IEcoPyth(_pyth).getAssetIds();
+  }
+
+  function setLimitTradeHelper(address _limitTradeHelper) external onlyOwner {
+    limitTradeHelper = LimitTradeHelper(_limitTradeHelper);
   }
 
   function multicall(bytes[] calldata data) external returns (bytes[] memory results) {

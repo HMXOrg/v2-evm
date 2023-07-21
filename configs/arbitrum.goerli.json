@@ -15,7 +15,8 @@
     "liquidity": "0x42A460211d20EbCaA6982AE5f4b602dCB9973B1c"
   },
   "helpers": {
-    "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a"
+    "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a",
+    "limitTrade": ""
   },
   "services": {
     "crossMargin": "0x932BDbdd8Ea527f1531DCf36b6e10c4138006A14",

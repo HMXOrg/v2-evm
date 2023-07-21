@@ -41,7 +41,8 @@
     "usdc": "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
     "dai": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
     "sglp": "0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf",
-    "traderLoyaltyCredit": ""
+    "traderLoyaltyCredit": "",
+    "arb": "0x912CE59144191C1204E64559FE8253a0e49E6548"
   },
   "vendors": {
     "gmx": {
@@ -68,5 +69,8 @@
     "tlc": "",
     "hlp": "0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C"
   },
-  "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D"
+  "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",
+  "reader": {
+    "order": "0x1EF528Fd3771a87F568A2E39422B5f00F473389E"
+  }
 }

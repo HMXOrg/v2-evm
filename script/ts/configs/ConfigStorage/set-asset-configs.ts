@@ -1,81 +1,49 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
 import { ethers } from "hardhat";
-import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "../../../../typechain";
-import { getConfig } from "../../utils/config";
+import { ConfigStorage__factory } from "../../../../typechain";
+import { loadConfig } from "../../utils/config";
+import { Command } from "commander";
+import signers from "../../entities/signers";
 
-const config = getConfig();
-const inputs = [
-  {
-    assetId: ethers.utils.formatBytes32String("ETH"),
-    config: {
-      assetId: ethers.utils.formatBytes32String("ETH"),
-      tokenAddress: config.tokens.weth,
-      decimals: 18,
-      isStableCoin: false,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("BTC"),
-    config: {
-      assetId: ethers.utils.formatBytes32String("BTC"),
-      tokenAddress: config.tokens.wbtc,
-      decimals: 8,
-      isStableCoin: false,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("DAI"),
-    config: {
-      assetId: ethers.utils.formatBytes32String("DAI"),
-      tokenAddress: config.tokens.dai,
-      decimals: 18,
-      isStableCoin: true,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("USDC"),
-    config: {
-      assetId: ethers.utils.formatBytes32String("USDC"),
-      tokenAddress: config.tokens.usdc,
-      decimals: 6,
-      isStableCoin: true,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("USDT"),
-    config: {
-      assetId: ethers.utils.formatBytes32String("USDT"),
-      tokenAddress: config.tokens.usdt,
-      decimals: 6,
-      isStableCoin: true,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("GLP"),
-    config: {
-      assetId: ethers.utils.formatBytes32String("GLP"),
-      tokenAddress: config.tokens.sglp,
-      decimals: 18,
-      isStableCoin: false,
-    },
-  },
-];
-
-async function main() {
-  const deployer = (await ethers.getSigners())[0];
+async function main(chainId: number) {
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
+  const inputs = [
+    {
+      assetId: ethers.utils.formatBytes32String("ARB"),
+      config: {
+        assetId: ethers.utils.formatBytes32String("ARB"),
+        tokenAddress: config.tokens.arb,
+        decimals: 18,
+        isStableCoin: false,
+      },
+    },
+  ];
+
   console.log("> ConfigStorage: Set Asset Configs...");
-  await (
-    await configStorage.setAssetConfigs(
-      inputs.map((each) => each.assetId),
-      inputs.map((each) => each.config)
-    )
-  ).wait();
+  const tx = await configStorage.setAssetConfigs(
+    inputs.map((each) => each.assetId),
+    inputs.map((each) => each.config)
+  );
+  console.log(`Tx hash: ${tx.hash}`);
+  await tx.wait();
   console.log("> ConfigStorage: Set Asset Configs success!");
 }
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+
+const prog = new Command();
+
+prog.requiredOption("--chain-id <number>", "chain id", parseInt);
+
+prog.parse(process.argv);
+
+const opts = prog.opts();
+
+main(opts.chainId)
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });

@@ -68,5 +68,8 @@
     "tlc": "0x66C834D1Db278299D69C6C3d93Da910304bbb8Fb",
     "hlp": "0x3633D9e0C17635E2035BC50e352a5B91b1a9052B"
   },
-  "rewardDistributor": ""
+  "rewardDistributor": "",
+  "reader": {
+    "order": "0xa3dFEcc6BA851a6d5246DeC88723D2D55Aa9338A"
+  }
 }

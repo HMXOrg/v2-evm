@@ -25,21 +25,12 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   event LogSetTraderBalance(address indexed trader, address token, uint balance);
   event LogSetServiceExecutor(address indexed executorAddress, bool isServiceExecutor);
   event LogSetStrategyAllowance(address indexed token, address strategy, address prevTarget, address newTarget);
-  event LogSetStrategyFunctionAllowExecute(
-    address token,
-    address strategy,
-    bytes4 functionSig,
-    bool oldAllowance,
-    bool newAllowance
-  );
   event LogSetStrategyFunctionSigAllowance(
     address indexed token,
     address strategy,
     bytes4 prevFunctionSig,
     bytes4 newFunctionSig
   );
-
-  error Test();
 
   /**
    * States

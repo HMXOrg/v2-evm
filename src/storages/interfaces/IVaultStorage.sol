@@ -14,7 +14,6 @@ interface IVaultStorage {
   error IVaultStorage_TargetNotContract();
   error IVaultStorage_BadLen();
   error IVaultStorage_InvalidAddress();
-  error IVaultStorage_ParamsIsEmpty();
 
   /**
    * Functions

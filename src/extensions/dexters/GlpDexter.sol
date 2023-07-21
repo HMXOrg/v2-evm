@@ -11,17 +11,17 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 // interfaces
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
-import { ISwitchCollateralExt } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralExt.sol";
+import { IDexter } from "@hmx/extensions/dexters/interfaces/IDexter.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxVault } from "@hmx/interfaces/gmx/IGmxVault.sol";
 
-contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
+contract GlpDexter is Ownable, IDexter {
   using SafeERC20 for ERC20;
 
-  error GlpSwitchCollateralExt_Forbidden();
-  error GlpSwitchCollateralExt_NotSupported();
-  error GlpSwitchCollateralExt_TokenNotWhitelisted();
+  error GlpDexter_Forbidden();
+  error GlpDexter_NotSupported();
+  error GlpDexter_TokenNotWhitelisted();
 
   ERC20 public weth;
   ERC20 public sGlp;
@@ -45,13 +45,13 @@ contract GlpSwitchCollateralExt is Ownable, ISwitchCollateralExt {
   function run(address _tokenIn, address _tokenOut, uint256 _amountIn) external override returns (uint256 _amountOut) {
     // Check
     if (_tokenOut == address(sGlp)) {
-      if (!gmxVault.whitelistedTokens(_tokenIn)) revert GlpSwitchCollateralExt_TokenNotWhitelisted();
+      if (!gmxVault.whitelistedTokens(_tokenIn)) revert GlpDexter_TokenNotWhitelisted();
       _amountOut = _toGlp(_tokenIn, _amountIn);
     } else if (_tokenIn == address(sGlp)) {
-      if (!gmxVault.whitelistedTokens(_tokenOut)) revert GlpSwitchCollateralExt_TokenNotWhitelisted();
+      if (!gmxVault.whitelistedTokens(_tokenOut)) revert GlpDexter_TokenNotWhitelisted();
       _amountOut = _fromGlp(_tokenOut, _amountIn);
     } else {
-      revert GlpSwitchCollateralExt_NotSupported();
+      revert GlpDexter_NotSupported();
     }
   }
 

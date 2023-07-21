@@ -20,9 +20,9 @@ import { Deployer } from "@hmx-test/libs/Deployer.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { SwitchCollateralRouter } from "@hmx/extensions/switch-collateral/SwitchCollateralRouter.sol";
-import { GlpSwitchCollateralExt } from "@hmx/extensions/switch-collateral/GlpSwitchCollateralExt.sol";
-import { UniswapUniversalRouterSwitchCollateralExt } from "@hmx/extensions/switch-collateral/UniswapUniversalRouterSwitchCollateralExt.sol";
-import { CurveSwitchCollateralExt } from "@hmx/extensions/switch-collateral/CurveSwitchCollateralExt.sol";
+import { GlpDexter } from "@hmx/extensions/dexters/GlpDexter.sol";
+import { UniswapDexter } from "@hmx/extensions/dexters/UniswapDexter.sol";
+import { CurveDexter } from "@hmx/extensions/dexters/CurveDexter.sol";
 
 contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, StdCheatsSafe {
   uint256 constant V3_SWAP_EXACT_IN = 0x00;
@@ -33,9 +33,9 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
 
   IExt01Handler internal ext01Handler;
   SwitchCollateralRouter internal switchCollateralRouter;
-  GlpSwitchCollateralExt internal glpSwitchCollateralExt;
-  UniswapUniversalRouterSwitchCollateralExt internal uniswapUniversalRouterSwitchCollateralExt;
-  CurveSwitchCollateralExt internal curveSwitchCollateralExt;
+  GlpDexter internal glpDexter;
+  UniswapDexter internal uniswapDexter;
+  CurveDexter internal curveDexter;
 
   function setUp() external {
     vm.createSelectFork(vm.rpcUrl("arbitrum_fork"), 113073035);
@@ -85,47 +85,28 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
         settleStrategy: address(0)
       })
     );
-    // Deploy UniswapUniversalRouterSwitchCollateralExt
-    uniswapUniversalRouterSwitchCollateralExt = UniswapUniversalRouterSwitchCollateralExt(
-      address(
-        Deployer.deployUniswapUniversalRouterSwitchCollateralExt(
-          address(ForkEnv.uniswapPermit2),
-          address(ForkEnv.uniswapUniversalRouter)
-        )
-      )
+    // Deploy UniswapDexter
+    uniswapDexter = UniswapDexter(
+      address(Deployer.deployUniswapDexter(address(ForkEnv.uniswapPermit2), address(ForkEnv.uniswapUniversalRouter)))
     );
-    uniswapUniversalRouterSwitchCollateralExt.setPathOf(
+    uniswapDexter.setPathOf(
       address(ForkEnv.arb),
       address(ForkEnv.weth),
       abi.encodePacked(ForkEnv.arb, uint24(500), ForkEnv.weth)
     );
-    uniswapUniversalRouterSwitchCollateralExt.setPathOf(
+    uniswapDexter.setPathOf(
       address(ForkEnv.weth),
       address(ForkEnv.arb),
       abi.encodePacked(ForkEnv.weth, uint24(500), ForkEnv.arb)
     );
-    // Deploy CurveSwitchCollateralExt
-    curveSwitchCollateralExt = CurveSwitchCollateralExt(
-      payable(address(Deployer.deployCurveSwitchCollateralExt(address(ForkEnv.weth))))
-    );
-    curveSwitchCollateralExt.setPoolConfigOf(
-      address(ForkEnv.weth),
-      address(ForkEnv.wstEth),
-      address(ForkEnv.curveWstEthPool),
-      0,
-      1
-    );
-    curveSwitchCollateralExt.setPoolConfigOf(
-      address(ForkEnv.wstEth),
-      address(ForkEnv.weth),
-      address(ForkEnv.curveWstEthPool),
-      1,
-      0
-    );
-    // Deploy GlpSwitchCollateralExt
-    glpSwitchCollateralExt = GlpSwitchCollateralExt(
+    // Deploy CurveDexter
+    curveDexter = CurveDexter(payable(address(Deployer.deployCurveDexter(address(ForkEnv.weth)))));
+    curveDexter.setPoolConfigOf(address(ForkEnv.weth), address(ForkEnv.wstEth), address(ForkEnv.curveWstEthPool), 0, 1);
+    curveDexter.setPoolConfigOf(address(ForkEnv.wstEth), address(ForkEnv.weth), address(ForkEnv.curveWstEthPool), 1, 0);
+    // Deploy GlpDexter
+    glpDexter = GlpDexter(
       address(
-        Deployer.deployGlpSwitchCollateralExt(
+        Deployer.deployGlpDexter(
           address(ForkEnv.weth),
           address(ForkEnv.sGlp),
           address(ForkEnv.glpManager),
@@ -158,36 +139,12 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _isAllows[0] = true;
     ForkEnv.configStorage.setServiceExecutors(_services, _handlers, _isAllows);
     ForkEnv.configStorage.setSwitchCollateralRouter(address(switchCollateralRouter));
-    switchCollateralRouter.setSwitchCollateralExt(
-      address(ForkEnv.sGlp),
-      address(ForkEnv.weth),
-      address(glpSwitchCollateralExt)
-    );
-    switchCollateralRouter.setSwitchCollateralExt(
-      address(ForkEnv.weth),
-      address(ForkEnv.sGlp),
-      address(glpSwitchCollateralExt)
-    );
-    switchCollateralRouter.setSwitchCollateralExt(
-      address(ForkEnv.arb),
-      address(ForkEnv.weth),
-      address(uniswapUniversalRouterSwitchCollateralExt)
-    );
-    switchCollateralRouter.setSwitchCollateralExt(
-      address(ForkEnv.weth),
-      address(ForkEnv.arb),
-      address(uniswapUniversalRouterSwitchCollateralExt)
-    );
-    switchCollateralRouter.setSwitchCollateralExt(
-      address(ForkEnv.weth),
-      address(ForkEnv.wstEth),
-      address(curveSwitchCollateralExt)
-    );
-    switchCollateralRouter.setSwitchCollateralExt(
-      address(ForkEnv.wstEth),
-      address(ForkEnv.weth),
-      address(curveSwitchCollateralExt)
-    );
+    switchCollateralRouter.setDexterOf(address(ForkEnv.sGlp), address(ForkEnv.weth), address(glpDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.sGlp), address(glpDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.arb), address(ForkEnv.weth), address(uniswapDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.arb), address(uniswapDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.wstEth), address(curveDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.wstEth), address(ForkEnv.weth), address(curveDexter));
     vm.stopPrank();
 
     vm.label(address(ext01Handler), "ext01Handler");

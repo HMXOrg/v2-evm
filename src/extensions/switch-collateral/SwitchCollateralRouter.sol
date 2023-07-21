@@ -11,33 +11,28 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 // interfaces
 import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
-import { ISwitchCollateralExt } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralExt.sol";
+import { IDexter } from "@hmx/extensions/dexters/interfaces/IDexter.sol";
 
 contract SwitchCollateralRouter is Ownable, ISwitchCollateralRouter {
   using SafeERC20 for ERC20;
 
-  error SwitchCollateralRouter_NotFoundSwitchCollateralExt();
+  error SwitchCollateralRouter_NotFoundDexter();
 
-  mapping(address tokenIn => mapping(address tokenOut => ISwitchCollateralExt)) public switchCollateralExtOf;
+  mapping(address tokenIn => mapping(address tokenOut => IDexter)) public dexterOf;
 
-  event LogSetSwitchCollateralExt(
-    address indexed tokenIn,
-    address indexed tokenOut,
-    ISwitchCollateralExt prevSwitchCollateralExt,
-    ISwitchCollateralExt switchCollateralExt
-  );
+  event LogSetDexter(address indexed tokenIn, address indexed tokenOut, IDexter prevDexter, IDexter newDexter);
 
   function execute(uint256 _amount, address[] calldata _path) external returns (uint256 _amountOut) {
     for (uint i = 0; i < _path.length - 1; i++) {
       (address _tokenIn, address _tokenOut) = (_path[i], _path[i + 1]);
-      ISwitchCollateralExt _switchCollateralExt = switchCollateralExtOf[_tokenIn][_tokenOut];
+      IDexter _dexter = dexterOf[_tokenIn][_tokenOut];
 
-      // Check if the switch collateral extension is registered.
-      if (address(_switchCollateralExt) == address(0)) revert SwitchCollateralRouter_NotFoundSwitchCollateralExt();
+      // Check if the dexterOf[tokenIn][tokenOut] is registered.
+      if (address(_dexter) == address(0)) revert SwitchCollateralRouter_NotFoundDexter();
 
-      // Execute the switch collateral extension.
-      ERC20(_tokenIn).safeTransfer(address(_switchCollateralExt), _amount);
-      _amount = _switchCollateralExt.run(_tokenIn, _tokenOut, _amount);
+      // Execute dexter
+      ERC20(_tokenIn).safeTransfer(address(_dexter), _amount);
+      _amount = _dexter.run(_tokenIn, _tokenOut, _amount);
     }
 
     // Return the amount of the last token.
@@ -49,17 +44,8 @@ contract SwitchCollateralRouter is Ownable, ISwitchCollateralRouter {
   /*
    * Setters
    */
-  function setSwitchCollateralExt(
-    address _tokenIn,
-    address _tokenOut,
-    address _switchCollateralExt
-  ) external onlyOwner {
-    emit LogSetSwitchCollateralExt(
-      _tokenIn,
-      _tokenOut,
-      switchCollateralExtOf[_tokenIn][_tokenOut],
-      ISwitchCollateralExt(_switchCollateralExt)
-    );
-    switchCollateralExtOf[_tokenIn][_tokenOut] = ISwitchCollateralExt(_switchCollateralExt);
+  function setDexterOf(address _tokenIn, address _tokenOut, address _switchCollateralExt) external onlyOwner {
+    emit LogSetDexter(_tokenIn, _tokenOut, dexterOf[_tokenIn][_tokenOut], IDexter(_switchCollateralExt));
+    dexterOf[_tokenIn][_tokenOut] = IDexter(_switchCollateralExt);
   }
 }

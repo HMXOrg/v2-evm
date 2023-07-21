@@ -12,9 +12,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 // interfaces
 import { IPermit2 } from "@hmx/interfaces/uniswap/IPermit2.sol";
 import { IUniversalRouter } from "@hmx/interfaces/uniswap/IUniversalRouter.sol";
-import { ISwitchCollateralExt } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralExt.sol";
+import { IDexter } from "@hmx/extensions/dexters/interfaces/IDexter.sol";
 
-contract UniswapUniversalRouterSwitchCollateralExt is Ownable, ISwitchCollateralExt {
+contract UniswapDexter is Ownable, IDexter {
   using SafeERC20 for ERC20;
 
   error UniswapUniversalRouterSwitchCollateralExt_BadPath();

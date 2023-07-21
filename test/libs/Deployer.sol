@@ -53,7 +53,7 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
 
-import { ISwitchCollateralExt } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralExt.sol";
+import { IDexter } from "@hmx/extensions/dexters/interfaces/IDexter.sol";
 import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
@@ -533,33 +533,24 @@ library Deployer {
     return ISwitchCollateralRouter(deployContract("SwitchCollateralRouter"));
   }
 
-  function deployUniswapUniversalRouterSwitchCollateralExt(
-    address _permit2,
-    address _universalRouter
-  ) internal returns (ISwitchCollateralExt) {
-    return
-      ISwitchCollateralExt(
-        deployContractWithArguments("UniswapUniversalRouterSwitchCollateralExt", abi.encode(_permit2, _universalRouter))
-      );
+  function deployUniswapDexter(address _permit2, address _universalRouter) internal returns (IDexter) {
+    return IDexter(deployContractWithArguments("UniswapDexter", abi.encode(_permit2, _universalRouter)));
   }
 
-  function deployCurveSwitchCollateralExt(address _weth) internal returns (ISwitchCollateralExt) {
-    return ISwitchCollateralExt(deployContractWithArguments("CurveSwitchCollateralExt", abi.encode(_weth)));
+  function deployCurveDexter(address _weth) internal returns (IDexter) {
+    return IDexter(deployContractWithArguments("CurveDexter", abi.encode(_weth)));
   }
 
-  function deployGlpSwitchCollateralExt(
+  function deployGlpDexter(
     address _weth,
     address _sGlp,
     address _glpManager,
     address _gmxVault,
     address _gmxRewardRouter
-  ) internal returns (ISwitchCollateralExt) {
+  ) internal returns (IDexter) {
     return
-      ISwitchCollateralExt(
-        deployContractWithArguments(
-          "GlpSwitchCollateralExt",
-          abi.encode(_weth, _sGlp, _glpManager, _gmxVault, _gmxRewardRouter)
-        )
+      IDexter(
+        deployContractWithArguments("GlpDexter", abi.encode(_weth, _sGlp, _glpManager, _gmxVault, _gmxRewardRouter))
       );
   }
 

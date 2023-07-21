@@ -10,15 +10,15 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // interfaces
-import { ISwitchCollateralExt } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralExt.sol";
+import { IDexter } from "@hmx/extensions/dexters/interfaces/IDexter.sol";
 import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
-contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
+contract CurveDexter is Ownable, IDexter {
   using SafeERC20 for ERC20;
 
-  error CurveSwitchCollateralExt_PoolNotSet();
-  error CurveSwitchCollateralExt_WrongCoin();
+  error CurveDexter_PoolNotSet();
+  error CurveDexter_WrongCoin();
 
   struct PoolConfig {
     IStableSwap pool;
@@ -54,20 +54,20 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
 
     // Check
     // If poolConfig not set, then revert
-    if (address(_poolConfig.pool) == address(0)) revert CurveSwitchCollateralExt_PoolNotSet();
+    if (address(_poolConfig.pool) == address(0)) revert CurveDexter_PoolNotSet();
     // If fromIndex is invalid
     if (
       (address(_tokenIn) != address(weth) &&
         _poolConfig.pool.coins(uint256(int256(_poolConfig.fromIndex))) != _tokenIn) ||
       (address(_tokenIn) == address(weth) &&
         _poolConfig.pool.coins(uint256(int256(_poolConfig.fromIndex))) != CURVE_ETH)
-    ) revert CurveSwitchCollateralExt_WrongCoin();
+    ) revert CurveDexter_WrongCoin();
     // If toIndex is invalid
     if (
       (address(_tokenOut) != address(weth) &&
         _poolConfig.pool.coins(uint256(int256(_poolConfig.toIndex))) != _tokenOut) ||
       (address(_tokenOut) == address(weth) && _poolConfig.pool.coins(uint256(int256(_poolConfig.toIndex))) != CURVE_ETH)
-    ) revert CurveSwitchCollateralExt_WrongCoin();
+    ) revert CurveDexter_WrongCoin();
 
     // Approve tokenIn to pool if needed
     ERC20 _tIn = ERC20(_tokenIn);

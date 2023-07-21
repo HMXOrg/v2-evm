@@ -18,6 +18,7 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
   using SafeERC20 for ERC20;
 
   error CurveSwitchCollateralExt_PoolNotSet();
+  error CurveSwitchCollateralExt_WrongCoin();
 
   struct PoolConfig {
     IStableSwap pool;
@@ -43,6 +44,10 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
     weth = IWNative(_weth);
   }
 
+  /// @notice Run the extension logic to swap on Curve.
+  /// @param _tokenIn The token to swap from.
+  /// @param _tokenOut The token to swap to.
+  /// @param _amountIn The amount of _tokenIn to swap.
   function run(
     address _tokenIn,
     address _tokenOut,
@@ -56,6 +61,19 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
     // Check
     // If poolConfig not set, then revert
     if (address(_poolConfig.pool) == address(0)) revert CurveSwitchCollateralExt_PoolNotSet();
+    // If fromIndex is invalid
+    if (
+      (address(_tokenIn) != address(weth) &&
+        _poolConfig.pool.coins(uint256(int256(_poolConfig.fromIndex))) != _tokenIn) ||
+      (address(_tokenIn) == address(weth) &&
+        _poolConfig.pool.coins(uint256(int256(_poolConfig.fromIndex))) != CURVE_ETH)
+    ) revert CurveSwitchCollateralExt_WrongCoin();
+    // If toIndex is invalid
+    if (
+      (address(_tokenOut) != address(weth) &&
+        _poolConfig.pool.coins(uint256(int256(_poolConfig.toIndex))) != _tokenOut) ||
+      (address(_tokenOut) == address(weth) && _poolConfig.pool.coins(uint256(int256(_poolConfig.toIndex))) != CURVE_ETH)
+    ) revert CurveSwitchCollateralExt_WrongCoin();
 
     // Approve tokenIn to pool if needed
     ERC20 _tIn = ERC20(_tokenIn);

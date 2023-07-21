@@ -40,7 +40,8 @@
     "usdc": "0x38934bDf2462768388829194fD40a43eD9916B4C",
     "dai": "0xaFefd85e3803CeD051200867eAAf1AA1BbDcBE16",
     "sglp": "0x3eDd3F503688f258D8dEC86d6f2D3236D4492245",
-    "traderLoyaltyCredit": "0x362c3EFD05D199D290083e475F7f63aF424acF08"
+    "traderLoyaltyCredit": "0x362c3EFD05D199D290083e475F7f63aF424acF08",
+    "arb": ""
   },
   "vendors": {
     "gmx": {

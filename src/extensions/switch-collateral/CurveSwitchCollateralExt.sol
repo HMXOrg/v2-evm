@@ -25,7 +25,7 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
     int128 fromIndex;
     int128 toIndex;
   }
-  mapping(address => mapping(address => PoolConfig)) public poolOf;
+  mapping(address => mapping(address => PoolConfig)) public poolConfigOf;
   IWNative public immutable weth;
   address internal constant CURVE_ETH = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
@@ -56,7 +56,7 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
     bytes calldata /* _data */
   ) external override returns (uint256 _amountOut) {
     // SLOAD
-    PoolConfig memory _poolConfig = poolOf[_tokenIn][_tokenOut];
+    PoolConfig memory _poolConfig = poolConfigOf[_tokenIn][_tokenOut];
 
     // Check
     // If poolConfig not set, then revert
@@ -77,11 +77,26 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
 
     // Approve tokenIn to pool if needed
     ERC20 _tIn = ERC20(_tokenIn);
-    if (_tIn.allowance(address(this), address(_poolConfig.pool)) < _amountIn)
-      _tIn.safeApprove(address(_poolConfig.pool), type(uint256).max);
+    bool _isTokenInWeth = address(_tokenIn) == address(weth);
+    if (!_isTokenInWeth) {
+      // If tokenIn is not WETH, then approve tokenIn to pool
+      if (_tIn.allowance(address(this), address(_poolConfig.pool)) < _amountIn)
+        _tIn.safeApprove(address(_poolConfig.pool), type(uint256).max);
 
-    // Swap
-    _amountOut = _poolConfig.pool.exchange(_poolConfig.fromIndex, _poolConfig.toIndex, _amountIn, 0);
+      // Swap
+      _amountOut = _poolConfig.pool.exchange(_poolConfig.fromIndex, _poolConfig.toIndex, _amountIn, 0);
+    } else {
+      // If tokenIn is WETH, then unwrap it
+      weth.withdraw(_amountIn);
+
+      // Swap
+      _amountOut = _poolConfig.pool.exchange{ value: _amountIn }(
+        _poolConfig.fromIndex,
+        _poolConfig.toIndex,
+        _amountIn,
+        0
+      );
+    }
 
     // If tokenOut is ETH, then wrap ETH
     if (_poolConfig.pool.coins(uint256(int256(_poolConfig.toIndex))) == CURVE_ETH) {
@@ -102,7 +117,7 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
   /// @param _pool Curve pool address.
   /// @param _fromIndex Index of tokenIn in the pool.
   /// @param _toIndex Index of tokenOut in the pool.
-  function setPoolConfig(
+  function setPoolConfigOf(
     address _tokenIn,
     address _tokenOut,
     address _pool,
@@ -110,7 +125,7 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
     int128 _toIndex
   ) external onlyOwner {
     // SLOAD
-    PoolConfig memory _prevPoolConfig = poolOf[_tokenIn][_tokenOut];
+    PoolConfig memory _prevPoolConfig = poolConfigOf[_tokenIn][_tokenOut];
     emit LogSetPoolConfig(
       _tokenIn,
       _tokenOut,
@@ -121,6 +136,12 @@ contract CurveSwitchCollateralExt is Ownable, ISwitchCollateralExt {
       _fromIndex,
       _toIndex
     );
-    poolOf[_tokenIn][_tokenOut] = PoolConfig({ pool: IStableSwap(_pool), fromIndex: _fromIndex, toIndex: _toIndex });
+    poolConfigOf[_tokenIn][_tokenOut] = PoolConfig({
+      pool: IStableSwap(_pool),
+      fromIndex: _fromIndex,
+      toIndex: _toIndex
+    });
   }
+
+  receive() external payable {}
 }

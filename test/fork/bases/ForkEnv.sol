@@ -10,6 +10,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// Oracles
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
+import { IPythAdapter } from "@hmx/oracles/interfaces/IPythAdapter.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 
 /// Handlers
 import { CrossMarginHandler } from "@hmx/handlers/CrossMarginHandler.sol";
@@ -35,6 +37,8 @@ import { IUniversalRouter } from "@hmx/interfaces/uniswap/IUniversalRouter.sol";
 import { IGmxRewardRouterV2 } from "@hmx/interfaces/gmx/IGmxRewardRouterV2.sol";
 import { IGmxGlpManager } from "@hmx/interfaces/gmx/IGmxGlpManager.sol";
 import { IGmxVault } from "@hmx/interfaces/gmx/IGmxVault.sol";
+/// Curve
+import { IStableSwap } from "@hmx/interfaces/curve/IStableSwap.sol";
 
 library ForkEnv {
   /// Account
@@ -47,6 +51,8 @@ library ForkEnv {
   /// Protocol
   /// Oracles
   IEcoPyth internal constant ecoPyth2 = IEcoPyth(0x8dc6A40465128B20DC712C6B765a5171EF30bB7B);
+  IPythAdapter internal constant pythAdapter = IPythAdapter(0x34338314236df25220b55F90F7E8Fc30B620D242);
+  IOracleMiddleware internal constant oracleMiddleware = IOracleMiddleware(0x9c83e1046dA4727F05C6764c017C6E1757596592);
   /// Handlers
   CrossMarginHandler internal constant crossMarginHandler =
     CrossMarginHandler(payable(0xB189532c581afB4Fbe69aF6dC3CD36769525d446));
@@ -71,13 +77,14 @@ library ForkEnv {
   IUniversalRouter internal constant uniswapUniversalRouter =
     IUniversalRouter(0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD);
   IPermit2 internal constant uniswapPermit2 = IPermit2(0x000000000022D473030F116dDEE9F6B43aC78BA3);
-
   /// GMX
   IERC20 internal constant sGlp = IERC20(0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf);
   IGmxGlpManager internal constant glpManager = IGmxGlpManager(0x3963FfC9dff443c2A94f21b129D429891E32ec18);
   IGmxRewardRouterV2 internal constant gmxRewardRouterV2 =
     IGmxRewardRouterV2(0xB95DB5B167D75e6d04227CfFFA61069348d271F5);
   IGmxVault internal constant gmxVault = IGmxVault(0x489ee077994B6658eAfA855C308275EAd8097C4A);
+  /// Curve
+  IStableSwap internal constant curveWstEthPool = IStableSwap(0x6eB2dc694eB516B16Dc9FBc678C60052BbdD7d80);
 
   /// Tokens
   IERC20 internal constant usdc_e = IERC20(0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8);
@@ -87,4 +94,5 @@ library ForkEnv {
   IERC20 internal constant dai = IERC20(0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1);
   IERC20 internal constant pendle = IERC20(0x0c880f6761F1af8d9Aa9C466984b80DAb9a8c9e8);
   IERC20 internal constant arb = IERC20(0x912CE59144191C1204E64559FE8253a0e49E6548);
+  IERC20 internal constant wstEth = IERC20(0x5979D7b546E38E414F7E9822514be443A4800529);
 }

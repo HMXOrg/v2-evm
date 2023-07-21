@@ -537,6 +537,10 @@ library Deployer {
       );
   }
 
+  function deployCurveSwitchCollateralExt(address _weth) internal returns (ISwitchCollateralExt) {
+    return ISwitchCollateralExt(deployContractWithArguments("CurveSwitchCollateralExt", abi.encode(_weth)));
+  }
+
   function deployGlpSwitchCollateralExt(
     address _configStorage,
     address _weth,

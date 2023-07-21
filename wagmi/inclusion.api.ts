@@ -17,4 +17,6 @@ export default [
   // GMX
   "IGmxGlpManager.json",
   "TradeService.json",
+  // Reader
+  "OrderReader.json",
 ];

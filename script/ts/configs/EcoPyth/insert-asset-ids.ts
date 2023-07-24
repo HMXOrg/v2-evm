@@ -4,7 +4,7 @@ import signers from "../../entities/signers";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 
-const ASSET_IDS = [ethers.utils.formatBytes32String("BNB"), ethers.utils.formatBytes32String("SOL")];
+const ASSET_IDS = [ethers.utils.formatBytes32String("QQQ"), ethers.utils.formatBytes32String("XRP")];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);

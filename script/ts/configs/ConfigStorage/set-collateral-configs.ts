@@ -15,7 +15,7 @@ async function main(chainId: number) {
     {
       assetId: ethers.utils.formatBytes32String("ARB"),
       collateralConfig: {
-        collateralFactorBPS: 0.6 * BPS,
+        collateralFactorBPS: 0.85 * BPS,
         accepted: true,
         settleStrategy: ethers.constants.AddressZero,
       },

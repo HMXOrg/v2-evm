@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
 import { ConfigStorage__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";

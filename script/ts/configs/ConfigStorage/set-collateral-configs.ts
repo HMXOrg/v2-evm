@@ -1,76 +1,50 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers } from "hardhat";
-import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "../../../../typechain";
-import { getConfig } from "../../utils/config";
+import { ethers } from "ethers";
+import { ConfigStorage__factory } from "../../../../typechain";
+import { loadConfig } from "../../utils/config";
+import { Command } from "commander";
+import signers from "../../entities/signers";
 
-const config = getConfig();
 const BPS = 10000;
-const inputs = [
-  {
-    assetId: ethers.utils.formatBytes32String("ETH"),
-    collateralConfig: {
-      collateralFactorBPS: 0.85 * BPS,
-      accepted: true,
-      settleStrategy: ethers.constants.AddressZero,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("BTC"),
-    collateralConfig: {
-      collateralFactorBPS: 0.85 * BPS,
-      accepted: true,
-      settleStrategy: ethers.constants.AddressZero,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("DAI"),
-    collateralConfig: {
-      collateralFactorBPS: 1 * BPS,
-      accepted: true,
-      settleStrategy: ethers.constants.AddressZero,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("USDC"),
-    collateralConfig: {
-      collateralFactorBPS: 1 * BPS,
-      accepted: true,
-      settleStrategy: ethers.constants.AddressZero,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("USDT"),
-    collateralConfig: {
-      collateralFactorBPS: 1 * BPS,
-      accepted: true,
-      settleStrategy: ethers.constants.AddressZero,
-    },
-  },
-  {
-    assetId: ethers.utils.formatBytes32String("GLP"),
-    collateralConfig: {
-      collateralFactorBPS: 0.8 * BPS,
-      accepted: true,
-      settleStrategy: ethers.constants.AddressZero,
-    },
-  },
-];
 
-async function main() {
-  const deployer = (await ethers.getSigners())[0];
+async function main(chainId: number) {
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
+  const inputs = [
+    {
+      assetId: ethers.utils.formatBytes32String("ARB"),
+      collateralConfig: {
+        collateralFactorBPS: 0.85 * BPS,
+        accepted: true,
+        settleStrategy: ethers.constants.AddressZero,
+      },
+    },
+  ];
+
   console.log("> ConfigStorage: Set Collateral Configs...");
-  await (
-    await configStorage.setCollateralTokenConfigs(
-      inputs.map((each) => each.assetId),
-      inputs.map((each) => each.collateralConfig)
-    )
-  ).wait();
+  const tx = await configStorage.setCollateralTokenConfigs(
+    inputs.map((each) => each.assetId),
+    inputs.map((each) => each.collateralConfig)
+  );
+  console.log(`Tx hash: ${tx.hash}`);
+  await tx.wait();
   console.log("> ConfigStorage: Set Collateral Configs success!");
 }
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+
+const prog = new Command();
+
+prog.requiredOption("--chain-id <number>", "chain id", parseInt);
+
+prog.parse(process.argv);
+
+const opts = prog.opts();
+
+main(opts.chainId)
+  .then(() => {
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });

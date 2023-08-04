@@ -25,11 +25,13 @@ import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandle
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
+import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
+import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
@@ -253,6 +255,25 @@ library Deployer {
     return IBotHandler(payable(_proxy));
   }
 
+  function deployRebalanceHLPHandler(
+    address _proxyAdmin,
+    address _rebalanceHLPService,
+    address _configStorage,
+    address _pyth
+  ) internal returns (IRebalanceHLPHandler) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPHandler.sol/RebalanceHLPHandler.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address)")),
+      _rebalanceHLPService,
+      _configStorage,
+      _pyth
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPHandler(payable(_proxy));
+  }
+
   /**
    * Staking
    */
@@ -417,6 +438,33 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ILiquidityService(payable(_proxy));
+  }
+
+  function deployRebalanceHLPService(
+    address _proxyAdmin,
+    address _sglp,
+    address _rewardsRouter,
+    address _glpManager,
+    address _vaultStorage,
+    address _configStorage,
+    address _calculator,
+    uint16 _minHLPValueLossBPS
+  ) internal returns (IRebalanceHLPService) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPService.sol/RebalanceHLPService.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,address,address,address,uint16)")),
+      _sglp,
+      _rewardsRouter,
+      _glpManager,
+      _vaultStorage,
+      _configStorage,
+      _calculator,
+      _minHLPValueLossBPS
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPService(payable(_proxy));
   }
 
   /**

@@ -24,7 +24,7 @@
     "liquidity": "0xE7D96684A56e60ffBAAe0fC0683879da48daB383",
     "liquidation": "0x34E89DEd96340A177856fD822366AfC584438750",
     "trade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E",
-    "rebalanceHLP": "0xa1609dc379198EacA136931B709c97AB0365DCd9"
+    "rebalanceHLP": ""
   },
   "oracles": {
     "ecoPyth": "0x06d35ecf6A2799f99482c6F15f146326Dd0FF1C6",

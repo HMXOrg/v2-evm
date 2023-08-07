@@ -13,7 +13,7 @@
     "crossMargin": "0xB189532c581afB4Fbe69aF6dC3CD36769525d446",
     "limitTrade": "0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6",
     "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6",
-    "rebalanceHLP": "0x153C872085f04a942e71a6a763fC2B284B4C5e5d"
+    "rebalanceHLP": ""
   },
   "helpers": {
     "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",

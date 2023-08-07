@@ -41,13 +41,16 @@ async function main(chainId: number) {
     config.rewardDistributor,
   ];
 
-  console.log(`Transfer Ownership to ${newOwner}...`);
+  console.log(`[config/Ownable] Transfer Ownership to ${newOwner}...`);
+  let nonce = await deployer.getTransactionCount()
+  const promises = []
   for (let i = 0; i < contracts.length; i++) {
-    const contract = OwnableUpgradeable__factory.connect(contracts[i], deployer);
-    const tx = await contract.transferOwnership(newOwner);
-    console.log(`Tx: ${tx.hash}`);
+    const ownable = OwnableUpgradeable__factory.connect(contracts[i], deployer);
+    promises.push(ownable.transferOwnership(newOwner, { nonce: nonce++}));
   }
-  console.log("Transfer Ownership Finished");
+  const txs = await Promise.all(promises)
+  await txs[txs.length - 1].wait(1)
+  console.log(`[config/Ownable] Ownership transferred!`);
 }
 
 const prog = new Command();

@@ -1,11 +1,8 @@
-import { BigNumber, ethers } from "ethers";
-import chains from "../entities/chains";
-import { loadConfig } from "../utils/config";
+import { ethers } from "ethers";
+import chains from "../../entities/chains";
+import { loadConfig } from "../../utils/config";
 import MultiCall from "@indexed-finance/multicall";
-import { OwnableUpgradeable__factory } from "../../../typechain";
-
-const ONE_ETHER = ethers.utils.parseEther("1");
-const formatUnits = ethers.utils.formatUnits;
+import { OwnableUpgradeable__factory } from "../../../../typechain";
 
 async function main() {
   const chain = chains[42161];
@@ -37,7 +34,6 @@ async function main() {
   ];
 
   const [, owners] = await multicall.multiCall(OwnableUpgradeable__factory.createInterface(), inputs);
-  console.log(owners);
   console.table({
     timelock: owners[0],
     configStorage: owners[1],

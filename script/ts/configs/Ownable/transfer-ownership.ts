@@ -22,7 +22,6 @@ async function main(chainId: number) {
   }
 
   const contracts = [
-    config.timelock,
     config.storages.config,
     config.storages.perp,
     config.storages.vault,
@@ -32,11 +31,9 @@ async function main(chainId: number) {
     config.handlers.liquidity,
     config.oracles.ecoPyth,
     config.oracles.ecoPyth2,
-    config.oracles.ecoPythCalldataBuilder,
     config.oracles.middleware,
     config.oracles.pythAdapter,
     config.oracles.sglpStakedAdapter,
-    config.oracles.unsafeEcoPythCalldataBuilder,
     config.tokens.hlp,
     config.strategies.stakedGlpStrategy,
     config.strategies.convertedGlpStrategy,

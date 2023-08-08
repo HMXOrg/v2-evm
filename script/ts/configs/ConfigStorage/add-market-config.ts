@@ -4,6 +4,7 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import signers from "../../entities/signers";
 import assetClasses from "../../entities/asset-classes";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 type AddMarketConfig = {
   assetId: string;
@@ -64,13 +65,18 @@ async function main(chainId: number) {
     },
   ];
 
+  const safeWrapper = new SafeWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   console.log("[ConfigStorage] Adding new market config...");
   for (let i = 0; i < marketConfigs.length; i++) {
     console.log(`[ConfigStorage] Adding ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`);
-    const tx = await configStorage.addMarketConfig(marketConfigs[i]);
-    console.log(`[ConfigStorage] Tx: ${tx.hash}`);
+    const tx = await safeWrapper.proposeTransaction(
+      configStorage.address,
+      0,
+      configStorage.interface.encodeFunctionData("addMarketConfig", [marketConfigs[i]])
+    );
+    console.log(`[ConfigStorage] Tx: ${tx}`);
   }
   console.log("[ConfigStorage] Finished");
 }

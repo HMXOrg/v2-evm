@@ -6,13 +6,12 @@ import { loadConfig } from "../../utils/config";
 import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
-import HmxApiWrapper from "../../wrappers/HmxApiWrapper";
+import HmxApiWrapper from "../../wrappers/HMXApiWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const provider = chains[chainId].jsonRpcProvider;
   const deployer = signers.deployer(chainId);
-  const deployerAddress = await deployer.getAddress();
   const hmxApi = new HmxApiWrapper(chainId);
 
   const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
@@ -20,32 +19,27 @@ async function main(chainId: number) {
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
   console.table(readableTable);
-  const confirm = readlineSync.question("Confirm to update price feeds? (y/n): ");
+  const confirm = readlineSync.question(`[cmds/EcoPyth] Confirm to update price feeds? (y/n): `);
   switch (confirm) {
     case "y":
       break;
     case "n":
-      console.log("Feed Price cancelled!");
+      console.log("[cmds/EcoPyth] Feed Price cancelled!");
       return;
     default:
-      console.log("Invalid input!");
+      console.log("[cmds/EcoPyth] Invalid input!");
       return;
   }
 
-  console.log("Refreshing Asset Ids at HMX API...");
+  console.log("[cmds/EcoPyth] Refreshing Asset Ids at HMX API...");
   await hmxApi.refreshAssetIds();
-  console.log("Success!");
-  console.log("Feed Price...");
-  console.log("Allow deployer to update price feeds...");
-  await (await pyth.setUpdater(deployerAddress, true)).wait();
-  console.log("Update price feeds...");
+  console.log("[cmds/EcoPyth] Success!");
+  console.log("[cmds/EcoPyth] Feed Price...");
   const tx = await (
     await pyth.updatePriceFeeds(priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas)
   ).wait();
-  console.log(`Done: ${tx.transactionHash}`);
-  console.log("Disallow deployer to update price feeds...");
-  await (await pyth.setUpdater(deployerAddress, false)).wait();
-  console.log("Feed Price success!");
+  console.log(`[cmds/EcoPyth] Done: ${tx.transactionHash}`);
+  console.log("[cmds/EcoPyth] Feed Price success!");
 }
 
 const prog = new Command();

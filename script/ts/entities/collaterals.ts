@@ -28,4 +28,8 @@ export default {
     address: "0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf",
     decimals: 18,
   },
+  ARB: {
+    address: "0x912CE59144191C1204E64559FE8253a0e49E6548",
+    decimals: 18,
+  },
 } as { [collateralSymbol: string]: CollateralEntity };

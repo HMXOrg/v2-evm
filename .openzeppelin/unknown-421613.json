@@ -10579,11 +10579,7 @@
           },
           "t_enum(WithdrawOrderStatus)24148": {
             "label": "enum ICrossMarginHandler.WithdrawOrderStatus",
-            "members": [
-              "PENDING",
-              "SUCCESS",
-              "FAIL"
-            ],
+            "members": ["PENDING", "SUCCESS", "FAIL"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_array(t_struct(WithdrawOrder)24173_storage)dyn_storage)": {
@@ -11232,11 +11228,7 @@
           },
           "t_enum(LiquidityOrderStatus)24708": {
             "label": "enum ILiquidityHandler.LiquidityOrderStatus",
-            "members": [
-              "PENDING",
-              "SUCCESS",
-              "FAIL"
-            ],
+            "members": ["PENDING", "SUCCESS", "FAIL"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_array(t_struct(LiquidityOrder)24734_storage)dyn_storage)": {
@@ -17277,11 +17269,7 @@
           },
           "t_enum(WithdrawOrderStatus)24234": {
             "label": "enum ICrossMarginHandler.WithdrawOrderStatus",
-            "members": [
-              "PENDING",
-              "SUCCESS",
-              "FAIL"
-            ],
+            "members": ["PENDING", "SUCCESS", "FAIL"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_array(t_struct(WithdrawOrder)24259_storage)dyn_storage)": {
@@ -22722,11 +22710,7 @@
           },
           "t_enum(WithdrawOrderStatus)27415": {
             "label": "enum ICrossMarginHandler.WithdrawOrderStatus",
-            "members": [
-              "PENDING",
-              "SUCCESS",
-              "FAIL"
-            ],
+            "members": ["PENDING", "SUCCESS", "FAIL"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_array(t_struct(WithdrawOrder)27440_storage)dyn_storage)": {
@@ -22979,11 +22963,7 @@
           },
           "t_enum(LiquidityOrderStatus)27977": {
             "label": "enum ILiquidityHandler.LiquidityOrderStatus",
-            "members": [
-              "PENDING",
-              "SUCCESS",
-              "FAIL"
-            ],
+            "members": ["PENDING", "SUCCESS", "FAIL"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_array(t_struct(LiquidityOrder)28003_storage)dyn_storage)": {
@@ -24770,11 +24750,7 @@
           },
           "t_enum(LiquidityOrderStatus)28340": {
             "label": "enum ILiquidityHandler.LiquidityOrderStatus",
-            "members": [
-              "PENDING",
-              "SUCCESS",
-              "FAIL"
-            ],
+            "members": ["PENDING", "SUCCESS", "FAIL"],
             "numberOfBytes": "1"
           },
           "t_mapping(t_address,t_array(t_struct(LiquidityOrder)28366_storage)dyn_storage)": {

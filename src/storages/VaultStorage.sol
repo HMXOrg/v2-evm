@@ -62,6 +62,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   mapping(address => mapping(address => address)) public strategyAllowances;
   // mapping(service executor address => allow)
   mapping(address => bool) public serviceExecutors;
+  // mapping(token => strategy => target => isAllow?)
   mapping(address token => mapping(address strategy => bytes4 functionSig)) public strategyFunctionSigAllowances;
 
   /**

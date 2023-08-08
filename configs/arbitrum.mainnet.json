@@ -12,17 +12,19 @@
     "bot": "0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671",
     "crossMargin": "0xB189532c581afB4Fbe69aF6dC3CD36769525d446",
     "limitTrade": "0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6",
-    "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6"
+    "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6",
+    "rebalanceHLP": "0x153C872085f04a942e71a6a763fC2B284B4C5e5d"
   },
   "helpers": {
     "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",
-    "limitTrade": ""
+    "limitTrade": "0xCdF0793dD5877E66B971CE3487214DbaD059d4BF"
   },
   "services": {
     "crossMargin": "0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A",
     "liquidity": "0xE7D96684A56e60ffBAAe0fC0683879da48daB383",
     "liquidation": "0x34E89DEd96340A177856fD822366AfC584438750",
-    "trade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E"
+    "trade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E",
+    "rebalanceHLP": "0xa1609dc379198EacA136931B709c97AB0365DCd9"
   },
   "oracles": {
     "ecoPyth": "0x06d35ecf6A2799f99482c6F15f146326Dd0FF1C6",

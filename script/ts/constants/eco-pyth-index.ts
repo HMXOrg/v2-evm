@@ -28,6 +28,8 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0xe65ff435be42630439c96396653a342829e877e2aafaeaf1a10d0ee5fd2cf3f2", // GOOGUSD
   "0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f", // BNBUSD
   "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d", // SOLUSD
+  "0x9695e2b96ea7b3859da9ed25b7a46a920a776e2fdae19a7bcfdf2b219230452d", // QQQUSD
+  "0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8", // XRPUSD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -56,6 +58,8 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("GOOG"),
   ethers.utils.formatBytes32String("BNB"),
   ethers.utils.formatBytes32String("SOL"),
+  ethers.utils.formatBytes32String("QQQ"),
+  ethers.utils.formatBytes32String("XRP"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -84,4 +88,6 @@ export const ecoPythHoomanReadableByIndex = [
   "GOOG",
   "BNB",
   "SOL",
+  "QQQ",
+  "XRP",
 ];

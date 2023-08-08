@@ -2,6 +2,8 @@ import { network } from "hardhat";
 import * as fs from "fs";
 import ArbitrumGoerliConfig from "../../../configs/arbitrum.goerli.json";
 import ArbitrumMainnetConfig from "../../../configs/arbitrum.mainnet.json";
+import ArbitrumMainnetMarketConfig from "../../../configs/.arbitrum.one.market.json";
+import ArbitrumGoerliMarketConfig from "../../../configs/.arbitrum.goerli.market.json";
 
 export function loadConfig(chainId: number) {
   if (chainId === 42161) {
@@ -11,6 +13,16 @@ export function loadConfig(chainId: number) {
     return ArbitrumGoerliConfig;
   }
   throw new Error("not found config");
+}
+
+export function loadMarketConfig(chainId: number) {
+  if (chainId === 42161) {
+    return ArbitrumMainnetMarketConfig;
+  }
+  if (chainId === 421613) {
+    return ArbitrumGoerliMarketConfig;
+  }
+  throw new Error("not found market config");
 }
 
 export function getConfig() {

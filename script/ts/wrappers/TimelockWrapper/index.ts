@@ -55,7 +55,7 @@ export default class TimelockWrapper {
 
     let txHash = "";
     if (compareAddress(timelockAdmin, signerAddress)) {
-      console.log(`> Queue tx for: ${info}`);
+      console.log(`[wrapper/TimelockWrapper] Queue tx for: ${info}`);
       const queueTx = await this.timelock.queueTransaction(
         target,
         value,
@@ -68,7 +68,7 @@ export default class TimelockWrapper {
       txHash = queueTx.hash;
     } else if (compareAddress(timelockAdmin, this.safe.getAddress())) {
       if (!this.forkMode) {
-        console.log(`> Propose tx for: ${info}`);
+        console.log(`[wrapper/TimelockWrapper] Propose tx for: ${info}`);
         info = `MultiSign: ${info}`;
         txHash = await this.safe.proposeTransaction(
           this.timelock.address,
@@ -82,7 +82,7 @@ export default class TimelockWrapper {
           ])
         );
       } else {
-        console.log(`> 🍴 Fork mode is ON, skip proposing tx and queue directly as multisig`);
+        console.log(`[wrapper/TimelockWrapper] 🍴 Fork mode is ON, skip proposing tx and queue directly as multisig`);
         const jsonRpcProvider = chains[this.chainId].jsonRpcProvider;
         const multiSigAsSigner = jsonRpcProvider.getSigner(this.safe.getAddress());
         const timelockAsMultiSig = new ethers.Contract(this.timelock.address, TimelockAbi, multiSigAsSigner);
@@ -117,7 +117,7 @@ export default class TimelockWrapper {
     });
 
     const executionTx = `await timelock.executeTransaction('${target}', '${value}', '${signature}', ethers.utils.defaultAbiCoder.encode([${paramTypesStr}], [${paramsStr}]), '${eta}')`;
-    console.log(`> ⛓ Queued at: ${txHash}`);
+    console.log(`[wrapper/TimelockWrapper] ⛓ Queued at: ${txHash}`);
     return {
       info: info,
       chainId: this.chainId,
@@ -145,7 +145,7 @@ export default class TimelockWrapper {
     eta: ethers.BigNumberish,
     overrides?: ethers.Overrides
   ): Promise<TimelockWrapperTransaction> {
-    console.log(`> Execute tx for: ${info}`);
+    console.log(`[wrapper/TimelockWrapper] Execute tx for: ${info}`);
     const etaBN = ethers.BigNumber.from(eta);
     const signerAddress = await this.signer.getAddress();
     const timelockAdmin = await this.timelock.admin();
@@ -162,7 +162,7 @@ export default class TimelockWrapper {
       );
       await queueTx.wait();
       txHash = queueTx.hash;
-      console.log("> ⛓ Executed at:", txHash);
+      console.log("[wrapper/TimelockWrapper] ⛓ Executed at:", txHash);
     } else if (compareAddress(timelockAdmin, this.safe.getAddress())) {
       if (!this.forkMode) {
         txHash = await this.safe.proposeTransaction(
@@ -176,9 +176,9 @@ export default class TimelockWrapper {
             eta,
           ])
         );
-        console.log("> Proposed at:", txHash);
+        console.log("[wrapper/TimelockWrapper] Proposed at:", txHash);
       } else {
-        console.log(`> 🍴 Fork mode is ON, skip proposing tx and execute directly as multisig`);
+        console.log(`[wrapper/TimelockWrapper] 🍴 Fork mode is ON, skip proposing tx and execute directly as multisig`);
         const jsonRpcProvider = chains[this.chainId].jsonRpcProvider;
         const multiSigAsSigner = jsonRpcProvider.getSigner(this.safe.getAddress());
         const timelockAsMultiSig = new ethers.Contract(this.timelock.address, TimelockAbi, multiSigAsSigner);
@@ -193,7 +193,7 @@ export default class TimelockWrapper {
         ).hash;
       }
     }
-    console.log(`> Done.`);
+    console.log(`[wrapper/TimelockWrapper] Done.`);
 
     return {
       info: info,

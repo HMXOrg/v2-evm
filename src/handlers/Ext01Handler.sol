@@ -36,7 +36,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     uint256 toAmount
   );
   event LogCreateSwitchCollateralOrder(
-    address indexed account,
+    address indexed primaryAccount,
     uint8 indexed subAccountId,
     uint248 amount,
     address[] path,
@@ -48,14 +48,17 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   );
   event LogSetLiquidationService(
     LiquidationService indexed oldLiquidationService,
-    LiquidationService newLiquidationService
+    LiquidationService indexed newLiquidationService
   );
-  event LogSetLiquidityService(LiquidityService indexed oldLiquidityService, LiquidityService newLiquidityService);
+  event LogSetLiquidityService(
+    LiquidityService indexed oldLiquidityService,
+    LiquidityService indexed newLiquidityService
+  );
   event LogMaxExecutionChuck(uint256 prevMaxExecutionChuck, uint256 newMaxExecutionChuck);
   event LogSetMinExecutionFee(uint24 indexed orderType, uint256 prevMinExecutionFee, uint256 newMinExecutionFee);
   event LogSetOrderExecutor(address indexed executor, bool prevIsAllow, bool isAllow);
   event LogSetPyth(IEcoPyth indexed prevPyth, IEcoPyth indexed newPyth);
-  event LogSetTradeService(TradeService indexed oldTradeService, TradeService newTradeService);
+  event LogSetTradeService(TradeService indexed oldTradeService, TradeService indexed newTradeService);
   event LogExecuteOrderResult(
     uint256 indexed orderId,
     uint24 orderType,

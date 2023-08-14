@@ -16,6 +16,8 @@ import { IDexter } from "@hmx/extensions/dexters/interfaces/IDexter.sol";
 contract SwitchCollateralRouter is Ownable, ISwitchCollateralRouter {
   using SafeERC20 for ERC20;
 
+  error SwitchCollateral_BadAmount();
+  error SwitchCollateral_BadPath();
   error SwitchCollateralRouter_NotFoundDexter();
 
   mapping(address tokenIn => mapping(address tokenOut => IDexter)) public dexterOf;
@@ -23,6 +25,8 @@ contract SwitchCollateralRouter is Ownable, ISwitchCollateralRouter {
   event LogSetDexter(address indexed tokenIn, address indexed tokenOut, IDexter prevDexter, IDexter newDexter);
 
   function execute(uint256 _amount, address[] calldata _path) external returns (uint256 _amountOut) {
+    if (_amount == 0) revert SwitchCollateral_BadAmount();
+    if (_path.length < 2) revert SwitchCollateral_BadPath();
     for (uint i = 0; i < _path.length - 1; i++) {
       (address _tokenIn, address _tokenOut) = (_path[i], _path[i + 1]);
       IDexter _dexter = dexterOf[_tokenIn][_tokenOut];

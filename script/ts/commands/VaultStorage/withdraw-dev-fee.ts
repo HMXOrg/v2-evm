@@ -8,11 +8,13 @@ import collaterals from "../../entities/collaterals";
 import { ethers } from "ethers";
 import * as readlineSync from "readline-sync";
 import { TREASURY_ADDRESS } from "../../constants/important-addresses";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
   const chainInfo = chains[chainId];
+  const safeWrapper = new SafeWrapper(chainId, signer);
 
   console.log(`[cmds/VaultStorage] Withdraw dev fee to ${TREASURY_ADDRESS}...`);
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, signer);
@@ -41,14 +43,19 @@ async function main(chainId: number) {
       return;
   }
 
-  let nonce = await signer.getTransactionCount();
-  const txs = await Promise.all(
-    Object.entries(collaterals).map((c, i) =>
-      vaultStorage.withdrawDevFee(c[1].address, devFees[i], TREASURY_ADDRESS, { nonce: nonce++ })
-    )
-  );
-  console.log("Txs: ", txs.map((tx) => tx.hash).join(", "));
-  console.log("[cmds/VaultStorage] Withdraw dev fee success!");
+  let i = 0;
+  for (const [key, c] of Object.entries(collaterals)) {
+    const tx = await safeWrapper.proposeTransaction(
+      vaultStorage.address,
+      0,
+      vaultStorage.interface.encodeFunctionData("withdrawDevFee", [c.address, devFees[i], TREASURY_ADDRESS])
+    );
+    console.log(
+      `[cmds/VaultStorage] Proposed tx to withdraw ${ethers.utils.formatUnits(devFees[i++], c.decimals)} ${key}: ${tx}`
+    );
+  }
+
+  console.log("[cmds/VaultStorage] Finished");
 }
 
 const program = new Command();

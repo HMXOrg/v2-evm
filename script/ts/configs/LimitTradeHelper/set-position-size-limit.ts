@@ -4,6 +4,7 @@ import signers from "../../entities/signers";
 import { ethers } from "ethers";
 import { LimitTradeHelper__factory } from "../../../../typechain";
 import assetClasses from "../../entities/asset-classes";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
@@ -12,38 +13,42 @@ async function main(chainId: number) {
   const inputs = [
     {
       assetClass: assetClasses.crypto,
-      tradeSizeLimit: ethers.utils.parseUnits("300000", 30), // 300k
-      positionSizeLimit: ethers.utils.parseUnits("500000", 30), // 500k
+      tradeSizeLimit: ethers.utils.parseUnits("750000", 30), // 750
+      positionSizeLimit: ethers.utils.parseUnits("1500000", 30), // 1.5M
     },
     {
       assetClass: assetClasses.equity,
-      tradeSizeLimit: ethers.utils.parseUnits("300000", 30), // 300k
-      positionSizeLimit: ethers.utils.parseUnits("500000", 30), // 500k
+      tradeSizeLimit: ethers.utils.parseUnits("750000", 30), // 750
+      positionSizeLimit: ethers.utils.parseUnits("1500000", 30), // 1.5M
     },
     {
       assetClass: assetClasses.commodities,
-      tradeSizeLimit: ethers.utils.parseUnits("300000", 30), // 300k
-      positionSizeLimit: ethers.utils.parseUnits("500000", 30), // 500k
+      tradeSizeLimit: ethers.utils.parseUnits("750000", 30), // 750
+      positionSizeLimit: ethers.utils.parseUnits("1500000", 30), // 1.5M
     },
     {
       assetClass: assetClasses.forex,
-      tradeSizeLimit: ethers.utils.parseUnits("1000000", 30), // 1M
-      positionSizeLimit: ethers.utils.parseUnits("2500000", 30), // 2.5M
+      tradeSizeLimit: ethers.utils.parseUnits("2000000", 30), // 2M
+      positionSizeLimit: ethers.utils.parseUnits("3000000", 30), // 3M
     },
   ];
 
-  console.log("> LimitTradeHelper: Set Position and Trade Size Limit...");
+  console.log("[configs/ConfigStorage] LimitTradeHelper: Set Position and Trade Size Limit...");
   const limitTradeHelper = LimitTradeHelper__factory.connect(config.helpers.limitTrade, deployer);
+  const safeWrapper = new SafeWrapper(chainId, deployer);
   for (let i = 0; i < inputs.length; i++) {
-    const tx = await limitTradeHelper.setPositionSizeLimit(
-      inputs[i].assetClass,
-      inputs[i].positionSizeLimit,
-      inputs[i].tradeSizeLimit
+    const tx = await safeWrapper.proposeTransaction(
+      limitTradeHelper.address,
+      0,
+      limitTradeHelper.interface.encodeFunctionData("setPositionSizeLimit", [
+        inputs[i].assetClass,
+        inputs[i].positionSizeLimit,
+        inputs[i].tradeSizeLimit,
+      ])
     );
-    console.log(`Tx: ${tx.hash}`);
-    await tx.wait();
+    console.log(`[configs/ConfigStorage] Proposed tx to update position size limit: ${tx}`);
   }
-  console.log("> LimitTradeHelper: Set Position and Trade Size Limit success!");
+  console.log("[configs/ConfigStorage] Done");
 }
 
 const prog = new Command();

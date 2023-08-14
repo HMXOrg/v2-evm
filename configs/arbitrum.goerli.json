@@ -12,16 +12,19 @@
     "bot": "0xe0cb00Ed6f01226763e74f3f617F952f99643eC7",
     "crossMargin": "0xF4573e1354ee94eBB5B5C1C2Ae9A8Fa6fF4203dF",
     "limitTrade": "0x43C3f523d6D17a99A2E59A997dfe059b7a5a95e2",
-    "liquidity": "0x42A460211d20EbCaA6982AE5f4b602dCB9973B1c"
+    "liquidity": "0x42A460211d20EbCaA6982AE5f4b602dCB9973B1c",
+    "rebalanceHLP": "0xA02eD38bA283f2A529d0582Ee3cc2f8725765db8"
   },
   "helpers": {
-    "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a"
+    "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a",
+    "limitTrade": ""
   },
   "services": {
     "crossMargin": "0x932BDbdd8Ea527f1531DCf36b6e10c4138006A14",
     "liquidity": "0x686fA9AA62A8571Be022ba72f93Da83D8b9814e5",
     "liquidation": "0x7e7923f809345A919f28cA1dE5a5B375b3B1874b",
-    "trade": "0x937DbD8bB0E155D4c3773dE366E4ae9f421411e2"
+    "trade": "0x937DbD8bB0E155D4c3773dE366E4ae9f421411e2",
+    "rebalanceHLP": "0x0E7D2A832e6087BF45a55e15C5F8D48539cbDD48"
   },
   "oracles": {
     "ecoPyth": "0xBaDB27718087B8d2D490479515E6222D9A20CDf4",
@@ -40,7 +43,8 @@
     "usdc": "0x38934bDf2462768388829194fD40a43eD9916B4C",
     "dai": "0xaFefd85e3803CeD051200867eAAf1AA1BbDcBE16",
     "sglp": "0x3eDd3F503688f258D8dEC86d6f2D3236D4492245",
-    "traderLoyaltyCredit": "0x362c3EFD05D199D290083e475F7f63aF424acF08"
+    "traderLoyaltyCredit": "0x362c3EFD05D199D290083e475F7f63aF424acF08",
+    "arb": ""
   },
   "vendors": {
     "gmx": {
@@ -67,5 +71,8 @@
     "tlc": "0xD04d22f868316B510F924ee6749aABf2ef3E1ACD",
     "hlp": ""
   },
-  "rewardDistributor": ""
+  "rewardDistributor": "",
+  "reader": {
+    "order": "0xa3dFEcc6BA851a6d5246DeC88723D2D55Aa9338A"
+  }
 }

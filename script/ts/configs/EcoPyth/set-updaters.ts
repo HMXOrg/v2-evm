@@ -10,6 +10,7 @@ async function main() {
     { updater: config.handlers.crossMargin, isUpdater: true },
     { updater: config.handlers.limitTrade, isUpdater: true },
     { updater: config.handlers.liquidity, isUpdater: true },
+    { updater: config.handlers.rebalanceHLP, isUpdater: true },
   ];
 
   const deployer = signers.deployer(42161);

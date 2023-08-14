@@ -11,7 +11,8 @@
     "liquidity": ""
   },
   "helpers": {
-    "trade": ""
+    "trade": "",
+    "limitTradeHelper": ""
   },
   "services": {
     "crossMargin": "",

@@ -12,16 +12,19 @@
     "bot": "0xD4CcbDEbE59E84546fd3c4B91fEA86753Aa3B671",
     "crossMargin": "0xB189532c581afB4Fbe69aF6dC3CD36769525d446",
     "limitTrade": "0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6",
-    "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6"
+    "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6",
+    "rebalanceHLP": ""
   },
   "helpers": {
-    "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C"
+    "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",
+    "limitTrade": "0xCdF0793dD5877E66B971CE3487214DbaD059d4BF"
   },
   "services": {
     "crossMargin": "0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A",
     "liquidity": "0xE7D96684A56e60ffBAAe0fC0683879da48daB383",
     "liquidation": "0x34E89DEd96340A177856fD822366AfC584438750",
-    "trade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E"
+    "trade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E",
+    "rebalanceHLP": ""
   },
   "oracles": {
     "ecoPyth": "0x06d35ecf6A2799f99482c6F15f146326Dd0FF1C6",
@@ -40,7 +43,8 @@
     "usdc": "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
     "dai": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
     "sglp": "0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf",
-    "traderLoyaltyCredit": ""
+    "traderLoyaltyCredit": "",
+    "arb": "0x912CE59144191C1204E64559FE8253a0e49E6548"
   },
   "vendors": {
     "gmx": {
@@ -67,5 +71,8 @@
     "tlc": "",
     "hlp": "0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C"
   },
-  "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D"
+  "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",
+  "reader": {
+    "order": "0x1EF528Fd3771a87F568A2E39422B5f00F473389E"
+  }
 }

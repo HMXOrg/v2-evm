@@ -3,12 +3,11 @@ import chains from "../../entities/chains";
 import { loadConfig } from "../../utils/config";
 import collaterals from "../../entities/collaterals";
 import { VaultStorage__factory } from "../../../../typechain";
-import { getSubAccount } from "../../utils/account";
 import _ from "lodash";
 import { Command } from "commander";
 import { MulticallWrapper } from "../../wrappers/MulticallWrapper";
 import { IMultiContractCall } from "../../wrappers/MulticallWrapper/interface";
-import { readCsv } from "../../utils/file";
+import { StatSubgraphWrapper } from "../../wrappers/StatSubgraphWrapper";
 
 type CheckTotalTable = {
   collateralSymbol: string;
@@ -23,12 +22,13 @@ type CheckTotalTable = {
 };
 
 type AccountRow = {
-  primaryAccount: string;
+  subAccount: string;
 };
 
-async function main(chainId: number, accountPath: string, blockNumber?: number) {
-  const accountRows: Array<AccountRow> = await readCsv(accountPath);
-  accountRows.push({ primaryAccount: "0x3231C08B500bb26e0654cb0338F135CeD44d6B84" }); // liquidator
+async function main(chainId: number, blockNumber?: number) {
+  const statSubgraph = new StatSubgraphWrapper(chains[chainId].statSubgraphUrl);
+  const accountRows: Array<AccountRow> = await statSubgraph.getSubAccountStats();
+  accountRows.push({ subAccount: "0x3231C08B500bb26e0654cb0338F135CeD44d6B84" }); // liquidator
 
   const chain = chains[chainId];
   const config = loadConfig(chainId);
@@ -44,13 +44,11 @@ async function main(chainId: number, accountPath: string, blockNumber?: number) 
     let multicallCallData: Array<IMultiContractCall> = [];
     // Check all trader's collateral
     for (const row of accountRows) {
-      for (let i = 0; i < 6; i++) {
-        multicallCallData.push({
-          contract: vaultStorage,
-          function: "traderBalances",
-          params: [getSubAccount(row.primaryAccount, i), collateral.address],
-        });
-      }
+      multicallCallData.push({
+        contract: vaultStorage,
+        function: "traderBalances",
+        params: [row.subAccount, collateral.address],
+      });
     }
     // Chunk it to escape max code size exceeded
     const chunks = _.chunk(multicallCallData, 20);
@@ -110,12 +108,11 @@ async function main(chainId: number, accountPath: string, blockNumber?: number) 
 const program = new Command();
 
 program.requiredOption("--chain-id <number>", "chain id", parseInt);
-program.requiredOption("--account-path <path>", "account path");
 program.option("--block-number <number>", "block number", parseInt);
 
 const options = program.parse(process.argv).opts();
 
-main(options.chainId, options.accountPath, options.blockNumber)
+main(options.chainId, options.blockNumber)
   .then(() => {
     process.exit(0);
   })

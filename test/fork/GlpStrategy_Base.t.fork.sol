@@ -14,9 +14,11 @@ import { IWNative } from "@hmx/interfaces/IWNative.sol";
 
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
 
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
+import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { IHLP } from "@hmx/contracts/interfaces/IHLP.sol";
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IOracleAdapter } from "@hmx/oracles/interfaces/IOracleAdapter.sol";
@@ -116,10 +118,12 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
   // handlers
   ILiquidityHandler liquidityHandler;
   ICrossMarginHandler crossMarginHandler;
+  IRebalanceHLPHandler rebalanceHLPHandler;
 
   // services
   ILiquidityService liquidityService;
   ICrossMarginService crossMarginService;
+  IRebalanceHLPService rebalanceHLPService;
 
   // TOKENS
   IERC20Upgradeable sglp;
@@ -169,6 +173,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     {
       stakedGlpStrategy.setWhiteListExecutor(address(keeper), true);
       convertedGlpStrategy.setWhiteListExecutor(address(crossMarginService), true);
+      rebalanceHLPHandler.setWhiteListExecutor(address(this), true);
     }
 
     // Config
@@ -180,17 +185,20 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       configStorage.setHLP(address(hlpV2));
       configStorage.setServiceExecutor(address(liquidityService), address(liquidityHandler), true);
       configStorage.setServiceExecutor(address(crossMarginService), address(crossMarginHandler), true);
+      configStorage.setServiceExecutor(address(rebalanceHLPService), address(rebalanceHLPHandler), true);
+      configStorage.setServiceExecutor(address(rebalanceHLPHandler), address(this), true);
     }
 
     // Setup Storages
     {
       vaultStorage.setServiceExecutors(address(liquidityService), true);
       vaultStorage.setServiceExecutors(address(crossMarginService), true);
+      vaultStorage.setServiceExecutors(address(rebalanceHLPService), true);
       vaultStorage.setServiceExecutors(address(stakedGlpStrategy), true);
       vaultStorage.setServiceExecutors(address(convertedGlpStrategy), true);
+      vaultStorage.setServiceExecutors(address(this), true);
 
       vaultStorage.setStrategyAllowance(address(sglp), address(stakedGlpStrategy), address(rewardTracker));
-
       vaultStorage.setStrategyAllowance(address(sglp), address(convertedGlpStrategy), address(rewardRouter));
 
       vaultStorage.setStrategyFunctionSigAllowance(
@@ -198,6 +206,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
         address(stakedGlpStrategy),
         IGmxRewardTracker.claim.selector
       );
+
       vaultStorage.setStrategyFunctionSigAllowance(
         address(sglp),
         address(convertedGlpStrategy),
@@ -320,6 +329,17 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(convertedGlpStrategy)
     );
 
+    rebalanceHLPService = Deployer.deployRebalanceHLPService(
+      address(proxyAdmin),
+      address(sglp),
+      address(rewardRouter),
+      address(glpManager),
+      address(vaultStorage),
+      address(configStorage),
+      address(calculator),
+      50
+    );
+
     //deploy liquidityHandler
     liquidityHandler = Deployer.deployLiquidityHandler(
       address(proxyAdmin),
@@ -334,6 +354,12 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(pyth),
       executionOrderFee,
       maxExecutionChuck
+    );
+    rebalanceHLPHandler = Deployer.deployRebalanceHLPHandler(
+      address(proxyAdmin),
+      address(rebalanceHLPService),
+      address(configStorage),
+      address(pyth)
     );
   }
 
@@ -355,9 +381,10 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     );
 
     // Add glp as a liquidity token
-    address[] memory _tokens = new address[](2);
+    address[] memory _tokens = new address[](3);
     _tokens[0] = address(sGlpAddress);
     _tokens[1] = address(usdc);
+    _tokens[2] = wethAddress;
 
     IConfigStorage.HLPTokenConfig[] memory _hlpTokenConfig = new IConfigStorage.HLPTokenConfig[](_tokens.length);
 
@@ -368,6 +395,11 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     });
     _hlpTokenConfig[1] = _buildAcceptedHLPTokenConfig({
       _targetWeight: 0.05 * 1e18,
+      _bufferLiquidity: 0,
+      _maxWeightDiff: 0.95 * 1e18
+    });
+    _hlpTokenConfig[2] = _buildAcceptedHLPTokenConfig({
+      _targetWeight: 0,
       _bufferLiquidity: 0,
       _maxWeightDiff: 0.95 * 1e18
     });
@@ -449,11 +481,11 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       AssetPythPriceData({
         assetId: ethAssetId,
         priceId: ethAssetId,
-        price: 1 * 1e8,
+        price: 1889.82 * 1e8,
         exponent: -8,
         inverse: false,
         conf: 0,
-        tickPrice: 0
+        tickPrice: 75446
       })
     );
     AssetPythPriceData memory _data;
@@ -474,6 +506,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     pyth.setUpdater(address(this), true);
     // pyth.setUpdater(address(keeper), true);
     pyth.setUpdater(address(liquidityHandler), true);
+    pyth.setUpdater(address(rebalanceHLPHandler), true);
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiff);
     pyth.updatePriceFeeds(priceUpdateData, publishTimeUpdateData, block.timestamp, keccak256("someEncodedVaas"));

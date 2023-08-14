@@ -31,11 +31,13 @@ import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
+import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ITradeService } from "@hmx/services/interfaces/ITradeService.sol";
 import { ILiquidationService } from "@hmx/services/interfaces/ILiquidationService.sol";
 import { ILiquidityService } from "@hmx/services/interfaces/ILiquidityService.sol";
+import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 import { IRewarder } from "@hmx/staking/interfaces/IRewarder.sol";
@@ -57,6 +59,8 @@ import { IDexter } from "@hmx/extensions/dexters/interfaces/IDexter.sol";
 import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
+
+import { OrderReader } from "@hmx/readers/OrderReader.sol";
 
 library Deployer {
   Vm internal constant vm = Vm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -283,6 +287,25 @@ library Deployer {
     return IBotHandler(payable(_proxy));
   }
 
+  function deployRebalanceHLPHandler(
+    address _proxyAdmin,
+    address _rebalanceHLPService,
+    address _configStorage,
+    address _pyth
+  ) internal returns (IRebalanceHLPHandler) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPHandler.sol/RebalanceHLPHandler.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address)")),
+      _rebalanceHLPService,
+      _configStorage,
+      _pyth
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPHandler(payable(_proxy));
+  }
+
   /**
    * Staking
    */
@@ -449,6 +472,33 @@ library Deployer {
     return ILiquidityService(payable(_proxy));
   }
 
+  function deployRebalanceHLPService(
+    address _proxyAdmin,
+    address _sglp,
+    address _rewardsRouter,
+    address _glpManager,
+    address _vaultStorage,
+    address _configStorage,
+    address _calculator,
+    uint16 _minHLPValueLossBPS
+  ) internal returns (IRebalanceHLPService) {
+    bytes memory _logicBytecode = abi.encodePacked(
+      vm.getCode("./out/RebalanceHLPService.sol/RebalanceHLPService.json")
+    );
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,address,address,address,uint16)")),
+      _sglp,
+      _rewardsRouter,
+      _glpManager,
+      _vaultStorage,
+      _configStorage,
+      _calculator,
+      _minHLPValueLossBPS
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IRebalanceHLPService(payable(_proxy));
+  }
+
   /**
    * Helpers
    */
@@ -552,6 +602,15 @@ library Deployer {
       IDexter(
         deployContractWithArguments("GlpDexter", abi.encode(_weth, _sGlp, _glpManager, _gmxVault, _gmxRewardRouter))
       );
+  }
+
+  function deployOrderReader(
+    address _configStorage,
+    address _perpStorage,
+    address _oracleMiddleware,
+    address _limitTradeHandler
+  ) internal returns (OrderReader) {
+    return new OrderReader(_configStorage, _perpStorage, _oracleMiddleware, _limitTradeHandler);
   }
 
   /**

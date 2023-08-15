@@ -45,15 +45,23 @@ import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 // HMX
 import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
+import { SwitchCollateralRouter } from "@hmx/extensions/switch-collateral/SwitchCollateralRouter.sol";
+
+// DEXTOR
+import { GlpDexter } from "@hmx/extensions/dexters/GlpDexter.sol";
+import { UniswapDexter } from "@hmx/extensions/dexters/UniswapDexter.sol";
+import { CurveDexter } from "@hmx/extensions/dexters/CurveDexter.sol";
 
 // OZ
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { ERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/ERC20Upgradeable.sol";
 
-//tester
+// tester
 import { LiquidityTester } from "@hmx-test/testers/LiquidityTester.sol";
-//deployment
+// deployment
 import { Deployment } from "@hmx-script/foundry/Deployment.s.sol";
+// fork
+import { ForkEnv } from "@hmx-test/fork/bases/ForkEnv.sol";
 
 // Mock
 import { MockWNative } from "@hmx-test/mocks/MockWNative.sol";
@@ -152,6 +160,12 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
 
   IStakedGlpStrategy stakedGlpStrategy;
   IConvertedGlpStrategy convertedGlpStrategy;
+
+  // Router and Dextors
+  SwitchCollateralRouter internal switchCollateralRouter;
+  GlpDexter internal glpDexter;
+  UniswapDexter internal uniswapDexter;
+  CurveDexter internal curveDexter;
 
   /* Testers */
   LiquidityTester liquidityTester;
@@ -329,6 +343,46 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(convertedGlpStrategy)
     );
 
+    // Deploy UniswapDexter
+    uniswapDexter = UniswapDexter(
+      address(Deployer.deployUniswapDexter(address(ForkEnv.uniswapPermit2), address(ForkEnv.uniswapUniversalRouter)))
+    );
+    uniswapDexter.setPathOf(
+      address(ForkEnv.arb),
+      address(ForkEnv.weth),
+      abi.encodePacked(ForkEnv.arb, uint24(500), ForkEnv.weth)
+    );
+    uniswapDexter.setPathOf(
+      address(ForkEnv.weth),
+      address(ForkEnv.arb),
+      abi.encodePacked(ForkEnv.weth, uint24(500), ForkEnv.arb)
+    );
+    // Deploy CurveDexter
+    curveDexter = CurveDexter(payable(address(Deployer.deployCurveDexter(address(ForkEnv.weth)))));
+    curveDexter.setPoolConfigOf(address(ForkEnv.weth), address(ForkEnv.wstEth), address(ForkEnv.curveWstEthPool), 0, 1);
+    curveDexter.setPoolConfigOf(address(ForkEnv.wstEth), address(ForkEnv.weth), address(ForkEnv.curveWstEthPool), 1, 0);
+    // Deploy GLPDexter
+    glpDexter = GlpDexter(
+      address(
+        Deployer.deployGlpDexter(
+          address(ForkEnv.weth),
+          address(ForkEnv.sGlp),
+          address(ForkEnv.glpManager),
+          address(ForkEnv.gmxVault),
+          address(ForkEnv.gmxRewardRouterV2)
+        )
+      )
+    );
+
+    // Deploy SwitchCollateralRouter
+    switchCollateralRouter = SwitchCollateralRouter(address(Deployer.deploySwitchCollateralRouter()));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.sGlp), address(ForkEnv.weth), address(glpDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.sGlp), address(glpDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.arb), address(ForkEnv.weth), address(uniswapDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.arb), address(uniswapDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.weth), address(ForkEnv.wstEth), address(curveDexter));
+    switchCollateralRouter.setDexterOf(address(ForkEnv.wstEth), address(ForkEnv.weth), address(curveDexter));
+
     rebalanceHLPService = Deployer.deployRebalanceHLPService(
       address(proxyAdmin),
       address(sglp),
@@ -337,6 +391,7 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
       address(vaultStorage),
       address(configStorage),
       address(calculator),
+      address(switchCollateralRouter),
       50
     );
 

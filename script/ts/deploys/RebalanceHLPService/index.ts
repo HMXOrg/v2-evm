@@ -17,6 +17,7 @@ async function main() {
     config.storages.vault,
     config.storages.config,
     config.calculator,
+    config.switchCollateral,
     minHLPValueLossBPS,
   ]);
 

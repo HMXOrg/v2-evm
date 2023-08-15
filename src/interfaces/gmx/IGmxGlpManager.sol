@@ -8,6 +8,8 @@ interface IGmxGlpManager {
 
   function getAumInUsdg(bool useMaxPrice) external view returns (uint256);
 
+  function getPrice(bool useMaxPrice) external view returns (uint256);
+
   function addLiquidityForAccount(
     address _fundingAccount,
     address _account,

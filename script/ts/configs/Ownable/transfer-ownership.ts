@@ -21,35 +21,17 @@ async function main(chainId: number) {
       return;
   }
 
-  const contracts = [
-    config.storages.config,
-    config.storages.perp,
-    config.storages.vault,
-    config.handlers.bot,
-    config.handlers.crossMargin,
-    config.handlers.limitTrade,
-    config.handlers.liquidity,
-    config.oracles.ecoPyth,
-    config.oracles.ecoPyth2,
-    config.oracles.middleware,
-    config.oracles.pythAdapter,
-    config.oracles.sglpStakedAdapter,
-    config.tokens.hlp,
-    config.strategies.stakedGlpStrategy,
-    config.strategies.convertedGlpStrategy,
-    config.calculator,
-    config.rewardDistributor,
-  ];
+  const contracts = [config.hooks.tradingStaking, config.hooks.tlc];
 
   console.log(`[config/Ownable] Transfer Ownership to ${newOwner}...`);
-  let nonce = await deployer.getTransactionCount()
-  const promises = []
+  let nonce = await deployer.getTransactionCount();
+  const promises = [];
   for (let i = 0; i < contracts.length; i++) {
     const ownable = OwnableUpgradeable__factory.connect(contracts[i], deployer);
-    promises.push(ownable.transferOwnership(newOwner, { nonce: nonce++}));
+    promises.push(ownable.transferOwnership(newOwner, { nonce: nonce++ }));
   }
-  const txs = await Promise.all(promises)
-  await txs[txs.length - 1].wait(1)
+  const txs = await Promise.all(promises);
+  await txs[txs.length - 1].wait(1);
   console.log(`[config/Ownable] Ownership transferred!`);
 }
 

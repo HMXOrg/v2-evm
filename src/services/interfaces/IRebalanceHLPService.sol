@@ -16,6 +16,7 @@ interface IRebalanceHLPService {
 
   /// @param token: the address of ERC20 token that will be converted into GLP.
   /// @param tokenMed: Medium token for swapping, in case of swap before rebalance.
+  ///                  Set address(0) if swap is no need.
   /// @param amount: the amount of token to convert to GLP.
   /// @param minAmountOutUSD: the minimum acceptable USD value of the GLP purchased
   /// @param minAmountOutGlp: the minimum acceptable GLP amount

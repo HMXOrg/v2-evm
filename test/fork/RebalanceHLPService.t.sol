@@ -17,6 +17,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   uint24[] internal publishTimeDiffs;
 
   address constant ARB = 0x912CE59144191C1204E64559FE8253a0e49E6548;
+  address constant wstETH = 0x5979D7b546E38E414F7E9822514be443A4800529;
 
   function setUp() public override {
     super.setUp();
@@ -40,6 +41,9 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     deal(ARB, address(vaultStorage), 100 ether);
     vaultStorage.pullToken(ARB);
     vaultStorage.addHLPLiquidity(ARB, 100 ether);
+    deal(wstETH, address(vaultStorage), 100 ether);
+    vaultStorage.pullToken(wstETH);
+    vaultStorage.addHLPLiquidity(wstETH, 100 ether);
   }
 
   function testCorrectness_Rebalance_ReinvestSuccess() external {
@@ -228,18 +232,26 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   }
 
   function testCorrectness_Rebalance_SwapReinvestSuccess() external {
-    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
+    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
     uint256 arbAmount = 10 * 1e18;
 
     params[0] = IRebalanceHLPService.AddGlpParams(
-      ARB, // ARB, to be swapped
-      wethAddress,
+      ARB, // to be swapped
+      wethAddress, // to be received
+      arbAmount,
+      95 * 1e16,
+      100
+    );
+    params[1] = IRebalanceHLPService.AddGlpParams(
+      wstETH, // to be swapped
+      wethAddress, // to be received
       arbAmount,
       95 * 1e16,
       100
     );
 
     uint256 arbBefore = vaultStorage.hlpLiquidity(ARB);
+    uint256 wstETHBefore = vaultStorage.hlpLiquidity(wstETH);
     uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
 
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
@@ -253,9 +265,12 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
       keccak256("encodeVass")
     );
 
-    // WETH
+    // ARB
     assertEq(vaultStorage.hlpLiquidity(ARB), vaultStorage.totalAmount(ARB));
     assertEq(vaultStorage.hlpLiquidity(ARB), arbBefore - arbAmount);
+    // wstETH
+    assertEq(vaultStorage.hlpLiquidity(wstETH), vaultStorage.totalAmount(wstETH));
+    assertEq(vaultStorage.hlpLiquidity(wstETH), wstETHBefore - arbAmount);
     // sGLP
     assertEq(receivedGlp, vaultStorage.hlpLiquidity(address(sglp)) - sGlpBefore);
 

@@ -150,7 +150,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
       } else {
         // get Token from vault, remove HLP liq.
         _vaultStorage.pushToken(_params[i].token, address(this), _params[i].amount);
-        _vaultStorage.removeHLPLiquidity(address(rebalanceToken), realizedAmountToAdd);
+        _vaultStorage.removeHLPLiquidity(_param[i].token, realizedAmountToAdd);
 
         rebalanceToken = IERC20Upgradeable(_params[i].token);
         realizedAmountToAdd = _params[i].amount;

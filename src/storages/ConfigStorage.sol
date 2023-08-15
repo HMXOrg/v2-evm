@@ -11,9 +11,10 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
 // Interfaces
-import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
-import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
-import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
+import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -49,6 +50,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogDelistMarket(uint256 marketIndex);
   event LogAddOrUpdateHLPTokenConfigs(address _token, HLPTokenConfig _config, HLPTokenConfig _newConfig);
   event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
+  event LogSetSwitchCollateralRouter(address prevRouter, address newRouter);
 
   /**
    * Constants
@@ -90,8 +92,10 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   MarketConfig[] public marketConfigs;
   AssetClassConfig[] public assetClassConfigs;
   address[] public tradeServiceHooks;
-
+  // Executors
   mapping(address => bool) public configExecutors;
+  // SwithCollateralRouter
+  address public switchCollateralRouter;
 
   /**
    * Modifiers
@@ -486,6 +490,13 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
 
     emit LogSetToken(sglp, _sglp);
     sglp = _sglp;
+  }
+
+  /// @notice Set switch collateral router.
+  /// @param _newSwitchCollateralRouter The new switch collateral router.
+  function setSwitchCollateralRouter(address _newSwitchCollateralRouter) external onlyOwner {
+    emit LogSetSwitchCollateralRouter(switchCollateralRouter, _newSwitchCollateralRouter);
+    switchCollateralRouter = _newSwitchCollateralRouter;
   }
 
   /// @notice add or update accepted tokens of HLP

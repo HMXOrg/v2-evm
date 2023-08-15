@@ -1,28 +1,27 @@
 import { EcoPyth__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main() {
   const config = loadConfig(42161);
 
-  const inputs = [
-    { updater: config.handlers.bot, isUpdater: true },
-    { updater: config.handlers.crossMargin, isUpdater: true },
-    { updater: config.handlers.limitTrade, isUpdater: true },
-    { updater: config.handlers.liquidity, isUpdater: true },
-    { updater: config.handlers.rebalanceHLP, isUpdater: true },
-  ];
+  const inputs = [{ updater: "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872", isUpdater: true }];
 
   const deployer = signers.deployer(42161);
+  const safeWrapper = new SafeWrapper(42161, deployer);
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
 
   console.log("[configs/EcoPyth] Set Updaters...");
-  await (
-    await ecoPyth.setUpdaters(
+  const tx = await safeWrapper.proposeTransaction(
+    ecoPyth.address,
+    0,
+    ecoPyth.interface.encodeFunctionData("setUpdaters", [
       inputs.map((each) => each.updater),
-      inputs.map((each) => each.isUpdater)
-    )
-  ).wait();
+      inputs.map((each) => each.isUpdater),
+    ])
+  );
+  console.log(`[configs/EcoPyth] Tx: ${tx}`);
   console.log("[configs/EcoPyth] Set Updaters success!");
 }
 main().catch((error) => {

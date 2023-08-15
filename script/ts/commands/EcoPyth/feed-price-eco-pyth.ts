@@ -6,7 +6,7 @@ import { loadConfig } from "../../utils/config";
 import { getUpdatePriceData } from "../../utils/price";
 import signers from "../../entities/signers";
 import chains from "../../entities/chains";
-import HmxApiWrapper from "../../wrappers/HmxApiWrapper";
+import HmxApiWrapper from "../../wrappers/HMXApiWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
@@ -36,15 +36,10 @@ async function main(chainId: number) {
   await hmxApi.refreshAssetIds();
   console.log("Success!");
   console.log("Feed Price...");
-  console.log("Allow deployer to update price feeds...");
-  await (await pyth.setUpdater(deployerAddress, true)).wait();
-  console.log("Update price feeds...");
   const tx = await (
     await pyth.updatePriceFeeds(priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas)
   ).wait();
   console.log(`Done: ${tx.transactionHash}`);
-  console.log("Disallow deployer to update price feeds...");
-  await (await pyth.setUpdater(deployerAddress, false)).wait();
   console.log("Feed Price success!");
 }
 

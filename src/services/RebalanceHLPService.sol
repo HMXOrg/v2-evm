@@ -16,6 +16,7 @@ import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
   using SafeERC20Upgradeable for IERC20Upgradeable;
@@ -27,6 +28,8 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
   IVaultStorage public vaultStorage;
   IConfigStorage public configStorage;
   ICalculator public calculator;
+
+  ISwitchCollateralRouter public switchRouter;
 
   uint16 public minHLPValueLossBPS;
 
@@ -44,6 +47,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     address _vaultStorage,
     address _configStorage,
     address _calculator,
+    address _switchCollateralRouter,
     uint16 _minHLPValueLossBPS
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
@@ -53,6 +57,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     vaultStorage = IVaultStorage(_vaultStorage);
     configStorage = IConfigStorage(_configStorage);
     calculator = ICalculator(_calculator);
+    switchRouter = ISwitchCollateralRouter(_switchCollateralRouter);
     minHLPValueLossBPS = _minHLPValueLossBPS;
   }
 
@@ -111,6 +116,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     // SLOADS, gas opt.
     IERC20Upgradeable _sglp = sglp;
     IVaultStorage _vaultStorage = vaultStorage;
+    ISwitchCollateralRouter _switchRouter = switchRouter;
 
     // validate input
     for (uint256 i = 0; i < _params.length; ) {
@@ -128,18 +134,32 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     uint256 totalHlpValueBefore = calculator.getHLPValueE30(true);
     receivedGlp = 0;
     for (uint256 i = 0; i < _params.length; ) {
-      // declare token
-      IERC20Upgradeable _token = IERC20Upgradeable(_params[i].token);
+      IERC20Upgradeable rebalanceToken;
+      uint256 realizedAmountToAdd;
+      if (_params[i].tokenMed != address(0)) {
+        address[] memory path = new address[](2);
+        path[0] = _params[i].token;
+        path[1] = _params[i].tokenMed;
 
-      // get Token from vault, remove HLP liq.
-      _vaultStorage.pushToken(_params[i].token, address(this), _params[i].amount);
-      _vaultStorage.removeHLPLiquidity(_params[i].token, _params[i].amount);
+        // get first Token from vault, remove HLP liq.
+        _vaultStorage.pushToken(_params[i].token, address(_switchRouter), _params[i].amount);
+        _vaultStorage.removeHLPLiquidity(_params[i].token, _params[i].amount);
 
+        rebalanceToken = IERC20Upgradeable(_params[i].tokenMed);
+        realizedAmountToAdd = _switchRouter.execute(_params[i].amount, path);
+      } else {
+        // get Token from vault, remove HLP liq.
+        _vaultStorage.pushToken(_params[i].token, address(this), _params[i].amount);
+        _vaultStorage.removeHLPLiquidity(address(rebalanceToken), realizedAmountToAdd);
+
+        rebalanceToken = IERC20Upgradeable(_params[i].token);
+        realizedAmountToAdd = _params[i].amount;
+      }
       // mint n stake, sanity check
-      _token.safeIncreaseAllowance(address(glpManager), _params[i].amount);
+      rebalanceToken.safeIncreaseAllowance(address(glpManager), realizedAmountToAdd);
       receivedGlp += rewardRouter.mintAndStakeGlp(
-        _params[i].token,
-        _params[i].amount,
+        address(rebalanceToken),
+        realizedAmountToAdd,
         _params[i].minAmountOutUSD,
         _params[i].minAmountOutGlp
       );

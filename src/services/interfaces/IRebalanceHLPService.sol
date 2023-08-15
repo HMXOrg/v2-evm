@@ -15,11 +15,13 @@ interface IRebalanceHLPService {
   error RebalanceHLPService_AmountIsZero();
 
   /// @param token: the address of ERC20 token that will be converted into GLP.
+  /// @param tokenMed: Medium token for swapping, in case of swap before rebalance.
   /// @param amount: the amount of token to convert to GLP.
   /// @param minAmountOutUSD: the minimum acceptable USD value of the GLP purchased
   /// @param minAmountOutGlp: the minimum acceptable GLP amount
   struct AddGlpParams {
     address token;
+    address tokenMed;
     uint256 amount;
     uint256 minAmountOutUSD;
     uint256 minAmountOutGlp;

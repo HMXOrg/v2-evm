@@ -3,18 +3,23 @@ import { EcoPyth__factory } from "../../../../typechain";
 import signers from "../../entities/signers";
 import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const ASSET_IDS = [ethers.utils.formatBytes32String("QQQ"), ethers.utils.formatBytes32String("XRP")];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const config = loadConfig(chainId);
+  const safeWrappar = new SafeWrapper(chainId, deployer);
 
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
   console.log("[EcoPyth] Inserting asset IDs...");
-  const tx = await ecoPyth.insertAssetIds(ASSET_IDS);
-  console.log(`[EcoPyth] Tx: ${tx.hash}`);
-  await tx.wait(1);
+  const tx = await safeWrappar.proposeTransaction(
+    ecoPyth.address,
+    0,
+    ecoPyth.interface.encodeFunctionData("insertAssetIds", [ASSET_IDS])
+  );
+  console.log(`[EcoPyth] Tx: ${tx}`);
   console.log("[EcoPyth] Finished");
 }
 

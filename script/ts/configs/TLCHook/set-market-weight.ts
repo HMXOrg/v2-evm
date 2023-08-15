@@ -113,18 +113,6 @@ async function main(chainId: number) {
       marketIndex: 23, // XRPUSD
       weightBPS: 7 * BPS,
     },
-    {
-      marketIndex: 24, // NVDAUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 25, // LINKUSD
-      weightBPS: 7 * BPS,
-    },
-    {
-      marketIndex: 26, // CHFUSD
-      weightBPS: BPS,
-    },
   ];
 
   const tlcHook = TLCHook__factory.connect(config.hooks.tlc, deployer);

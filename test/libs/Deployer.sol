@@ -4,6 +4,11 @@
 
 pragma solidity 0.8.18;
 
+// OZ
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+
+// Forge
 import { Vm } from "forge-std/Vm.sol";
 
 // Interfaces
@@ -25,6 +30,7 @@ import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandle
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
+import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
 
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
@@ -48,6 +54,9 @@ import { IGmxRewardTracker } from "@hmx/interfaces/gmx/IGmxRewardTracker.sol";
 
 import { IStakedGlpStrategy } from "@hmx/strategies/interfaces/IStakedGlpStrategy.sol";
 import { IConvertedGlpStrategy } from "@hmx/strategies/interfaces/IConvertedGlpStrategy.sol";
+
+import { IDexter } from "@hmx/extensions/dexters/interfaces/IDexter.sol";
+import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 
@@ -234,6 +243,29 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ILimitTradeHandler(payable(_proxy));
+  }
+
+  function deployExt01Handler(
+    address _proxyAdmin,
+    address _crossMarginService,
+    address _liquidationService,
+    address _liquidityService,
+    address _tradeService,
+    address _pyth,
+    uint256 _maxExecutionChuck
+  ) internal returns (IExt01Handler) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/Ext01Handler.sol/Ext01Handler.json"));
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,address,address,address,uint256)")),
+      _crossMarginService,
+      _liquidationService,
+      _liquidityService,
+      _tradeService,
+      _pyth,
+      _maxExecutionChuck
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return IExt01Handler(payable(_proxy));
   }
 
   function deployBotHandler(
@@ -544,8 +576,33 @@ library Deployer {
   }
 
   /**
-   * Reader
+   * Extensions
    */
+
+  function deploySwitchCollateralRouter() internal returns (ISwitchCollateralRouter) {
+    return ISwitchCollateralRouter(deployContract("SwitchCollateralRouter"));
+  }
+
+  function deployUniswapDexter(address _permit2, address _universalRouter) internal returns (IDexter) {
+    return IDexter(deployContractWithArguments("UniswapDexter", abi.encode(_permit2, _universalRouter)));
+  }
+
+  function deployCurveDexter(address _weth) internal returns (IDexter) {
+    return IDexter(deployContractWithArguments("CurveDexter", abi.encode(_weth)));
+  }
+
+  function deployGlpDexter(
+    address _weth,
+    address _sGlp,
+    address _glpManager,
+    address _gmxVault,
+    address _gmxRewardRouter
+  ) internal returns (IDexter) {
+    return
+      IDexter(
+        deployContractWithArguments("GlpDexter", abi.encode(_weth, _sGlp, _glpManager, _gmxVault, _gmxRewardRouter))
+      );
+  }
 
   function deployOrderReader(
     address _configStorage,
@@ -587,6 +644,11 @@ library Deployer {
         revert(0, 0)
       }
     }
+  }
+
+  function upgrade(string memory _contractName, address _proxyAdmin, address _proxy) internal {
+    address _newImpl = deployContract(_contractName);
+    ProxyAdmin(_proxyAdmin).upgrade(TransparentUpgradeableProxy(payable(_proxy)), _newImpl);
   }
 
   function _setupUpgradeable(

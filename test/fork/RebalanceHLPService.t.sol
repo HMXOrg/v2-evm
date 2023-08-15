@@ -216,7 +216,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     tickPrices[1] = 76966;
 
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
-    params[0] = IRebalanceHLPService.AddGlpParams(wethAddress, address(0), 90 * 1e18, 88 * 1e18, 100);
+    params[0] = IRebalanceHLPService.AddGlpParams(wethAddress, address(0), 90 * 1e18, 88 * 1e18, 100 * 1e18);
 
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);

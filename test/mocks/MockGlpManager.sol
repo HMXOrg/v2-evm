@@ -42,4 +42,8 @@ contract MockGlpManager is IGmxGlpManager {
   ) external pure returns (uint256) {
     return 0;
   }
+
+  function getPrice(bool _useMaxPrice) external view {
+    return 0;
+  }
 }

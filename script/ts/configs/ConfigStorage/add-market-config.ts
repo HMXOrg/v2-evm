@@ -30,7 +30,7 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      assetId: ethers.utils.formatBytes32String("QQQ"),
+      assetId: ethers.utils.formatBytes32String("NVDA"),
       increasePositionFeeRateBPS: 5, // 0.05%
       decreasePositionFeeRateBPS: 5, // 0.05%
       initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
@@ -47,7 +47,7 @@ async function main(chainId: number) {
       maxShortPositionSize: ethers.utils.parseUnits("2500000", 30),
     },
     {
-      assetId: ethers.utils.formatBytes32String("XRP"),
+      assetId: ethers.utils.formatBytes32String("LINK"),
       increasePositionFeeRateBPS: 7, // 0.07%
       decreasePositionFeeRateBPS: 7, // 0.07%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
@@ -58,10 +58,27 @@ async function main(chainId: number) {
       active: true,
       fundingRate: {
         maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
-        maxFundingRate: ethers.utils.parseUnits("9", 18), // 900% per day
+        maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
       },
-      maxLongPositionSize: ethers.utils.parseUnits("1000000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("1000000", 30),
+      maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("2500000", 30),
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("CHF"),
+      increasePositionFeeRateBPS: 1, // 0.01%
+      decreasePositionFeeRateBPS: 1, // 0.01%
+      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
+      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
+      maxProfitRateBPS: 200000, // 2000%
+      assetClass: assetClasses.forex,
+      allowIncreasePosition: true,
+      active: true,
+      fundingRate: {
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
+        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
+      },
+      maxLongPositionSize: ethers.utils.parseUnits("3000000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("3000000", 30),
     },
   ];
 

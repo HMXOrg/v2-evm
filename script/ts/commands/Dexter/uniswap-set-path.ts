@@ -15,7 +15,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const dexter = UniswapDexter__factory.connect(config.extension.dexter.uniswapV3, deployer);
 
-  const txs: Array<SetPathConfig> = [
+  const params: Array<SetPathConfig> = [
     {
       tokenIn: config.tokens.arb,
       tokenOut: config.tokens.weth,
@@ -35,11 +35,11 @@ async function main(chainId: number) {
   ];
 
   console.log("[UniswapDexter] Setting path config...");
-  for (let i = 0; i < txs.length; i++) {
-    const tx = await dexter.setPathOf(txs[i].tokenIn, txs[i].tokenOut, txs[i].path, {
+  for (let i = 0; i < params.length; i++) {
+    const tx = await dexter.setPathOf(params[i].tokenIn, params[i].tokenOut, params[i].path, {
       gasLimit: 10000000,
     });
-    console.log(`[UniswapDexter] Tx - Set Path of (${txs[i].tokenIn}, ${txs[i].tokenOut}): ${tx.hash}`);
+    console.log(`[UniswapDexter] Tx - Set Path of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`);
     await tx.wait(1);
   }
 

@@ -13,7 +13,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
   const dexter = SwitchCollateralRouter__factory.connect(config.extension.switchCollateralRouter, deployer);
-  const txs: Array<SetDexter> = [
+  const params: Array<SetDexter> = [
     {
       tokenIn: config.tokens.sglp,
       tokenOut: config.tokens.weth,
@@ -47,11 +47,11 @@ async function main(chainId: number) {
   ];
 
   console.log("[SwitchCollateral] Setting dexter ...");
-  for (let i = 0; i < txs.length; i++) {
-    const tx = await dexter.setDexterOf(txs[i].tokenIn, txs[i].tokenOut, txs[i].dexter, {
+  for (let i = 0; i < params.length; i++) {
+    const tx = await dexter.setDexterOf(params[i].tokenIn, params[i].tokenOut, params[i].dexter, {
       gasLimit: 10000000,
     });
-    console.log(`[SwitchCollateral] Tx - Set Dexter of (${txs[i].tokenIn}, ${txs[i].tokenOut}): ${tx.hash}`);
+    console.log(`[SwitchCollateral] Tx - Set Dexter of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`);
     await tx.wait(1);
   }
   console.log("[SwitchCollateralRouter] Finished");

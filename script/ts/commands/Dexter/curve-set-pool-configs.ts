@@ -16,7 +16,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const dexter = CurveDexter__factory.connect(config.extension.dexter.curve, deployer);
 
-  const txs: Array<SetPoolConfig> = [
+  const params: Array<SetPoolConfig> = [
     {
       tokenIn: config.tokens.weth,
       tokenOut: config.tokens.wstEth,
@@ -34,18 +34,18 @@ async function main(chainId: number) {
   ];
 
   console.log("[CurveDexter] Setting pool config...");
-  for (let i = 0; i < txs.length; i++) {
+  for (let i = 0; i < params.length; i++) {
     const tx = await dexter.setPoolConfigOf(
-      txs[i].tokenIn,
-      txs[i].tokenOut,
-      txs[i].pool,
-      txs[i].fromIndex,
-      txs[i].toIndex,
+      params[i].tokenIn,
+      params[i].tokenOut,
+      params[i].pool,
+      params[i].fromIndex,
+      params[i].toIndex,
       {
         gasLimit: 10000000,
       }
     );
-    console.log(`[CurveDexter] Tx - Set Pool Config of (${txs[i].tokenIn}, ${txs[i].tokenOut}): ${tx.hash}`);
+    console.log(`[CurveDexter] Tx - Set Pool Config of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`);
     await tx.wait(1);
   }
   console.log("[CurveDexter] Finished");

@@ -46,15 +46,17 @@ async function main(chainId: number) {
     },
   ];
 
-  console.log("[SwitchCollateral] Setting dexter ...");
+  console.log("[cmds/SwitchCollateralRouter] Setting dexter ...");
   for (let i = 0; i < params.length; i++) {
     const tx = await dexter.setDexterOf(params[i].tokenIn, params[i].tokenOut, params[i].dexter, {
       gasLimit: 10000000,
     });
-    console.log(`[SwitchCollateral] Tx - Set Dexter of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`);
+    console.log(
+      `[cmds/SwitchCollateralRouter] Tx - Set Dexter of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`
+    );
     await tx.wait(1);
   }
-  console.log("[SwitchCollateralRouter] Finished");
+  console.log("[cmds/SwitchCollateralRouter] Finished");
 }
 
 const prog = new Command();

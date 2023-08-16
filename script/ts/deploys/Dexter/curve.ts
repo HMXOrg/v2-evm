@@ -8,8 +8,8 @@ async function main() {
   const contract = await ethers.deployContract("CurveDexter", [config.tokens.weth], deployer);
 
   await contract.deployed();
-  console.log(`Deploying CurveDexter Contract`);
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[deploys/Dexter] Deploying CurveDexter Contract`);
+  console.log(`[deploys/Dexter] Deployed at: ${contract.address}`);
 
   config.extension.dexter.curve = contract.address;
   writeConfigFile(config);

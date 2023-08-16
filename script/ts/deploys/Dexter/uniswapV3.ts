@@ -12,8 +12,8 @@ async function main() {
   );
 
   await contract.deployed();
-  console.log(`Deploying UniswapDexter Contract`);
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[deploys/Dexter] Deploying UniswapDexter Contract`);
+  console.log(`[deploys/Dexter] Deployed at: ${contract.address}`);
 
   config.extension.dexter.uniswapV3 = contract.address;
   writeConfigFile(config);

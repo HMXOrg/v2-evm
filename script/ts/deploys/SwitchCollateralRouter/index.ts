@@ -8,8 +8,8 @@ async function main() {
   const contract = await ethers.deployContract("SwitchCollateralRouter", deployer);
 
   await contract.deployed();
-  console.log(`Deploying SwitchCollateralRouter Contract`);
-  console.log(`Deployed at: ${contract.address}`);
+  console.log(`[deploys/SwitchCollateralRouter] Deploying SwitchCollateralRouter Contract`);
+  console.log(`[deploys/SwitchCollateralRouter] Deployed at: ${contract.address}`);
 
   config.extension.switchCollateralRouter = contract.address;
   writeConfigFile(config);

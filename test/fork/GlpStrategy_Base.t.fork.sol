@@ -413,7 +413,6 @@ abstract contract GlpStrategy_Base is TestBase, StdAssertions, StdCheats {
     rebalanceHLPHandler = Deployer.deployRebalanceHLPHandler(
       address(proxyAdmin),
       address(rebalanceHLPService),
-      address(configStorage),
       address(pyth)
     );
   }

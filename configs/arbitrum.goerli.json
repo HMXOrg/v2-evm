@@ -53,6 +53,13 @@
       "rewardRouterV2": "0xB95DB5B167D75e6d04227CfFFA61069348d271F5",
       "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6",
       "gmxVault": ""
+    },
+    "uniswap": {
+      "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
+      "universalRouter": "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+    },
+    "curve": {
+      "wstEthPool": ""
     }
   },
   "strategies": {
@@ -83,11 +90,6 @@
       "uniswapV3": "",
       "curve": "",
       "glp": ""
-    },
-    "uniswapConfig": {
-      "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
-      "universalRouter": "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
-    },
-    "curveWstEthPool": ""
+    }
   }
 }

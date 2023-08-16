@@ -4,18 +4,13 @@ import { RebalanceHLPHandler__factory } from "../../../../typechain";
 import signers from "../../entities/signers";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
-const BigNumber = ethers.BigNumber;
 const config = getConfig();
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];
 
   const Contract = await ethers.getContractFactory("RebalanceHLPHandler", deployer);
-  const contract = await upgrades.deployProxy(Contract, [
-    config.services.rebalanceHLP,
-    config.storages.config,
-    config.oracles.ecoPyth,
-  ]);
+  const contract = await upgrades.deployProxy(Contract, [config.services.rebalanceHLP, config.oracles.ecoPyth]);
   await contract.deployed();
 
   console.log(`Deploying RebalanceHLPHandler Contract`);

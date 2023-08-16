@@ -28,7 +28,7 @@ contract OrderReader_GetExecutable is TestBase, StdAssertions, StdCheatsSafe {
     orderReader = Deployer.deployOrderReader(_configStorage, _perpStorage, _oracleMiddleware, _limitTradeHandler);
   }
 
-  function testCorrectness_getExecutableOrder() external {
+  function testCorrectness_getExecutableOrder() external view {
     bytes32[] memory _assetIds = new bytes32[](27);
     _assetIds[0] = 0x4554480000000000000000000000000000000000000000000000000000000000;
     _assetIds[1] = 0x4254430000000000000000000000000000000000000000000000000000000000;

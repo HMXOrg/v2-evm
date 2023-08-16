@@ -45,7 +45,7 @@
     "sglp": "0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf",
     "traderLoyaltyCredit": "0x1fDcB022daECA9326a37A318f143A0feD61abba6",
     "arb": "0x912CE59144191C1204E64559FE8253a0e49E6548",
-    "wstEth": ""
+    "wstEth": "0x5979d7b546e38e414f7e9822514be443a4800529"
   },
   "vendors": {
     "gmx": {
@@ -58,7 +58,7 @@
       "universalRouter": "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
     },
     "curve": {
-      "wstEthPool": ""
+      "wstEthPool": "0x6eb2dc694eb516b16dc9fbc678c60052bbdd7d80"
     }
   },
   "strategies": {

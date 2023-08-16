@@ -7,7 +7,7 @@ async function main() {
   const deployer = (await ethers.getSigners())[0];
   const contract = await ethers.deployContract(
     "UniswapDexter",
-    [config.extension.uniswapConfig.permit2, config.extension.uniswapConfig.universalRouter],
+    [config.vendors.uniswap.permit2, config.vendors.uniswap.universalRouter],
     deployer
   );
 

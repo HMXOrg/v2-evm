@@ -16,7 +16,7 @@ async function main() {
     config.storages.vault,
     config.storages.config,
     config.calculator,
-    config.switchCollateralRouter,
+    config.extension.switchCollateralRouter,
     minHLPValueLossBPS,
   ]);
 

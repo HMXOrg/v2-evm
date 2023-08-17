@@ -11,12 +11,12 @@
   "handlers": {
     "bot": "0x4310118114Cb9696C85054905aA07bc4ca971d50",
     "crossMargin": "0x180248C398729Ff41706eD52503E5A9fc3320d86",
-    "limitTrade": "0xF39528BbE70fddC341A14CaF76D6C9dbB96636cE",
+    "limitTrade": "0xd3b1A8Bd503f83849FF35d72c6EE0127327a9912",
     "liquidity": "0x83E5FaA30e05e0e1Df94D1b743583DBD8cC23619"
   },
   "helpers": {
     "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a",
-    "limitTrade": "0x8802D8B2D26086d32DAA8183512FBDD13C41BF90"
+    "limitTrade": "0xe8500F30e575b1a6d07640fC0dD0EA764D5edB94"
   },
   "services": {
     "crossMargin": "0x9061B0c73e834ef38082cdC19D7ad385a51871C1",

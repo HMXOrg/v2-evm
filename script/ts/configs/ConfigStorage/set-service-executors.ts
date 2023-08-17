@@ -40,11 +40,6 @@ const inputs = [
     executorAddress: config.services.liquidation,
     isServiceExecutor: true,
   },
-  {
-    contractAddress: config.services.rebalanceHLP,
-    executorAddress: config.handlers.rebalanceHLP,
-    isServiceExecutor: true,
-  },
 ];
 
 async function main() {

@@ -10,7 +10,7 @@ async function main() {
   const deployer = (await ethers.getSigners())[0];
 
   const Contract = await ethers.getContractFactory("RebalanceHLPHandler", deployer);
-  const contract = await upgrades.deployProxy(Contract, [config.services.rebalanceHLP, config.oracles.ecoPyth]);
+  const contract = await upgrades.deployProxy(Contract, [config.services.rebalanceHLP, config.oracles.ecoPyth2]);
   await contract.deployed();
 
   console.log(`Deploying RebalanceHLPHandler Contract`);

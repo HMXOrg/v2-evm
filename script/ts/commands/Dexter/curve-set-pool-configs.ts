@@ -31,6 +31,20 @@ async function main(chainId: number) {
       fromIndex: 1,
       toIndex: 0,
     },
+    {
+      tokenIn: config.tokens.usdc,
+      tokenOut: config.tokens.usdt,
+      pool: "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+      fromIndex: 0,
+      toIndex: 1,
+    },
+    {
+      tokenIn: config.tokens.usdt,
+      tokenOut: config.tokens.usdc,
+      pool: "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+      fromIndex: 1,
+      toIndex: 0,
+    },
   ];
 
   console.log("[CurveDexter] Setting pool config...");

@@ -58,6 +58,20 @@ async function main(chainId: number) {
       minAmountOutUSD: Zero,
     },
     {
+      token: config.tokens.usdt,
+      tokenMedium: config.tokens.usdc,
+      amount: await vault.hlpLiquidity(config.tokens.usdt),
+      minAmountOutGlp: Zero,
+      minAmountOutUSD: Zero,
+    },
+    {
+      token: config.tokens.wbtc,
+      tokenMedium: ZEROADDRESS,
+      amount: await vault.hlpLiquidity(config.tokens.wbtc),
+      minAmountOutGlp: Zero,
+      minAmountOutUSD: Zero,
+    },
+    {
       token: config.tokens.arb,
       tokenMedium: config.tokens.weth,
       amount: await vault.hlpLiquidity(config.tokens.arb),

@@ -10,9 +10,9 @@ import * as readlineSync from "readline-sync";
 import { BigNumber } from "ethers";
 
 type WithdrawGlpParams = {
-  token: Address;
+  token: string;
   glpAmount: BigNumber;
-  minOut: number;
+  minOut: BigNumber;
 };
 
 async function main(chainId: number) {
@@ -40,7 +40,7 @@ async function main(chainId: number) {
     {
       token: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
       glpAmount: BigNumber.from("1000000000000000000"),
-      minOut: 1000,
+      minOut: BigNumber.from(1000),
     },
   ];
   const tx = await handler.withdrawGlp(

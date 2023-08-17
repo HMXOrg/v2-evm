@@ -1,21 +1,22 @@
 import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
-import { RebalanceHLPHandler__factory } from "../../../../typechain";
+import { RebalanceHLPHandler__factory, VaultStorage__factory } from "../../../../typechain";
 import { getUpdatePriceData } from "../../utils/price";
 import { ecoPythPriceFeedIdsByIndex } from "../../constants/eco-pyth-index";
 import chains from "../../entities/chains";
-import { Address } from "wagmi";
 import * as readlineSync from "readline-sync";
+import { BigNumber } from "ethers";
 
 const ZEROADDRESS = "0x0000000000000000000000000000000000000000";
+const Zero = BigNumber.from(0);
 
 type AddGlpParams = {
-  token: Address;
-  tokenMedium: Address;
-  amount: number;
-  minAmountOutUSD: number;
-  minAmountOutGlp: number;
+  token: string;
+  tokenMedium: string;
+  amount: BigNumber;
+  minAmountOutUSD: BigNumber;
+  minAmountOutGlp: BigNumber;
 };
 
 async function main(chainId: number) {
@@ -38,16 +39,33 @@ async function main(chainId: number) {
       return;
   }
   console.log("[RebalanceHLP] executeReinvestNonHLP...");
+  const vault = VaultStorage__factory.connect(config.storages.vault, deployer);
   const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, deployer);
-  const params: [AddGlpParams] = [
+
+  const params: AddGlpParams[] = [
     {
-      token: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
+      token: config.tokens.dai,
       tokenMedium: ZEROADDRESS,
-      amount: 10000000,
-      minAmountOutGlp: 10000,
-      minAmountOutUSD: 10000,
+      amount: await vault.hlpLiquidity(config.tokens.dai),
+      minAmountOutGlp: Zero,
+      minAmountOutUSD: Zero,
+    },
+    {
+      token: config.tokens.weth,
+      tokenMedium: ZEROADDRESS,
+      amount: await vault.hlpLiquidity(config.tokens.weth),
+      minAmountOutGlp: Zero,
+      minAmountOutUSD: Zero,
+    },
+    {
+      token: config.tokens.arb,
+      tokenMedium: config.tokens.weth,
+      amount: await vault.hlpLiquidity(config.tokens.arb),
+      minAmountOutGlp: Zero,
+      minAmountOutUSD: Zero,
     },
   ];
+
   const tx = await handler.addGlp(params, priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas, {
     gasLimit: 10000000,
   });

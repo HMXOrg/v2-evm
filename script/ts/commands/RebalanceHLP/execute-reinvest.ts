@@ -6,9 +6,9 @@ import { getUpdatePriceData } from "../../utils/price";
 import { ecoPythPriceFeedIdsByIndex } from "../../constants/eco-pyth-index";
 import chains from "../../entities/chains";
 import * as readlineSync from "readline-sync";
-import { BigNumber } from "ethers";
+import { BigNumber, ethers } from "ethers";
 
-const ZEROADDRESS = "0x0000000000000000000000000000000000000000";
+const ZEROADDRESS = ethers.constants.AddressZero;
 const Zero = BigNumber.from(0);
 
 type AddGlpParams = {

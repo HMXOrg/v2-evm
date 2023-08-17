@@ -19,23 +19,18 @@ async function main(chainId: number) {
     {
       tokenIn: config.tokens.arb,
       tokenOut: config.tokens.weth,
-      path: ethers.utils.defaultAbiCoder.encode(
-        ["address", "uint24", "address"],
-        [config.tokens.arb, 500, config.tokens.weth]
-      ),
+      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.arb, 500, config.tokens.weth]),
     },
     {
       tokenIn: config.tokens.weth,
       tokenOut: config.tokens.arb,
-      path: ethers.utils.defaultAbiCoder.encode(
-        ["address", "uint24", "address"],
-        [config.tokens.weth, 500, config.tokens.arb]
-      ),
+      path: ethers.utils.solidityPack(["address", "uint24", "address"], [config.tokens.weth, 500, config.tokens.arb]),
     },
   ];
 
   console.log("[cmds/UniswapDexter] Setting path config...");
   for (let i = 0; i < params.length; i++) {
+    console.log(params[i].path);
     const tx = await dexter.setPathOf(params[i].tokenIn, params[i].tokenOut, params[i].path, {
       gasLimit: 10000000,
     });

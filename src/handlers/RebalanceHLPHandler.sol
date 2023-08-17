@@ -13,9 +13,7 @@ import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/
 // interfaces
 import { IRebalanceHLPService } from "@hmx/services/interfaces/IRebalanceHLPService.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
-import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 
 /// @title RebalanceHLPHandler
@@ -25,7 +23,6 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
 
   IRebalanceHLPService public service;
   IVaultStorage public vaultStorage;
-  IConfigStorage public configStorage;
   IEcoPyth public pyth;
   IERC20Upgradeable public sglp;
 
@@ -42,7 +39,7 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     _;
   }
 
-  function initialize(address _rebalanceHLPService, address _configStorage, address _pyth) external initializer {
+  function initialize(address _rebalanceHLPService, address _pyth) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
     // gas opt
@@ -50,7 +47,6 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     service = _service;
     vaultStorage = _service.vaultStorage();
     sglp = _service.sglp();
-    configStorage = IConfigStorage(_configStorage);
     pyth = IEcoPyth(_pyth);
   }
 

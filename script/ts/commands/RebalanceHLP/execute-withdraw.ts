@@ -5,9 +5,10 @@ import { RebalanceHLPHandler__factory } from "../../../../typechain";
 import { getUpdatePriceData } from "../../utils/price";
 import { ecoPythPriceFeedIdsByIndex } from "../../constants/eco-pyth-index";
 import chains from "../../entities/chains";
-import { Address } from "wagmi";
 import * as readlineSync from "readline-sync";
-import { BigNumber } from "ethers";
+import { BigNumber, ethers } from "ethers";
+
+const Zero = BigNumber.from(0);
 
 type WithdrawGlpParams = {
   token: string;
@@ -22,6 +23,7 @@ async function main(chainId: number) {
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
+  console.table(readableTable);
   const confirm = readlineSync.question("Confirm to update price feeds? (y/n): ");
   switch (confirm) {
     case "y":
@@ -36,11 +38,16 @@ async function main(chainId: number) {
 
   console.log("[RebalanceHLP] executeWithdrawGLP...");
   const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, signer);
-  const params: [WithdrawGlpParams] = [
+  const params: WithdrawGlpParams[] = [
     {
-      token: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
-      glpAmount: BigNumber.from("1000000000000000000"),
-      minOut: BigNumber.from(1000),
+      token: config.tokens.weth,
+      glpAmount: ethers.utils.parseUnits("1000000", 18),
+      minOut: Zero,
+    },
+    {
+      token: config.tokens.weth,
+      glpAmount: ethers.utils.parseUnits("1000000", 18),
+      minOut: Zero,
     },
   ];
   const tx = await handler.withdrawGlp(

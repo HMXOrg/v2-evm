@@ -44,6 +44,16 @@ async function main(chainId: number) {
       tokenOut: config.tokens.wstEth,
       dexter: config.extension.dexter.curve,
     },
+    {
+      tokenIn: config.tokens.usdc,
+      tokenOut: config.tokens.usdt,
+      dexter: config.extension.dexter.curve,
+    },
+    {
+      tokenIn: config.tokens.usdt,
+      tokenOut: config.tokens.usdc,
+      dexter: config.extension.dexter.curve,
+    },
   ];
 
   console.log("[cmds/SwitchCollateralRouter] Setting dexter ...");

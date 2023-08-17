@@ -19,6 +19,8 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   address constant ARB = 0x912CE59144191C1204E64559FE8253a0e49E6548;
   address constant wstETH = 0x5979D7b546E38E414F7E9822514be443A4800529;
 
+  uint256 fixedBlock = 121867415;
+
   function setUp() public override {
     super.setUp();
 
@@ -26,7 +28,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     // USDC Price
     tickPrices[0] = 0;
     // ETH Price
-    tickPrices[1] = 75446;
+    tickPrices[1] = 73926;
 
     publishTimeDiffs = new uint24[](3);
     publishTimeDiffs[0] = 0;
@@ -47,6 +49,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
   }
 
   function testCorrectness_Rebalance_ReinvestSuccess() external {
+    vm.roll(fixedBlock);
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 10 * 1e18;

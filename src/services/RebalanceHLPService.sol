@@ -136,16 +136,16 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
     for (uint256 i = 0; i < _params.length; ) {
       IERC20Upgradeable rebalanceToken;
       uint256 realizedAmountToAdd;
-      if (_params[i].tokenMed != address(0)) {
+      if (_params[i].tokenMedium != address(0)) {
         address[] memory path = new address[](2);
         path[0] = _params[i].token;
-        path[1] = _params[i].tokenMed;
+        path[1] = _params[i].tokenMedium;
 
         // get first Token from vault, remove HLP liq.
         _vaultStorage.pushToken(_params[i].token, address(_switchRouter), _params[i].amount);
         _vaultStorage.removeHLPLiquidity(_params[i].token, _params[i].amount);
 
-        rebalanceToken = IERC20Upgradeable(_params[i].tokenMed);
+        rebalanceToken = IERC20Upgradeable(_params[i].tokenMedium);
         realizedAmountToAdd = _switchRouter.execute(_params[i].amount, path);
       } else {
         // get Token from vault, remove HLP liq.

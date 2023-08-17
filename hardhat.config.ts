@@ -27,7 +27,7 @@ const config: HardhatUserConfig = {
       url: process.env.TENDERLY_RPC || "",
       accounts:
         process.env.MAINNET_PRIVATE_KEY !== undefined
-          ? [process.env.MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]
+          ? [process.env.MAINNET_PRIVATE_KEY]
           : [],
     },
     arbitrum: {
@@ -39,7 +39,7 @@ const config: HardhatUserConfig = {
       chainId: 421613,
       accounts:
         process.env.MAINNET_PRIVATE_KEY !== undefined
-          ? [process.env.MAINNET_PRIVATE_KEY, process.env.POSITION_MANAGER_PRIVATE_KEY!]
+          ? [process.env.MAINNET_PRIVATE_KEY]
           : [],
     },
   },

@@ -13,7 +13,7 @@
     "crossMargin": "0xB189532c581afB4Fbe69aF6dC3CD36769525d446",
     "limitTrade": "0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6",
     "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6",
-    "rebalanceHLP": "0x153C872085f04a942e71a6a763fC2B284B4C5e5d"
+    "rebalanceHLP": ""
   },
   "helpers": {
     "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",
@@ -24,7 +24,7 @@
     "liquidity": "0xE7D96684A56e60ffBAAe0fC0683879da48daB383",
     "liquidation": "0x34E89DEd96340A177856fD822366AfC584438750",
     "trade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E",
-    "rebalanceHLP": "0xa1609dc379198EacA136931B709c97AB0365DCd9"
+    "rebalanceHLP": ""
   },
   "oracles": {
     "ecoPyth": "0x06d35ecf6A2799f99482c6F15f146326Dd0FF1C6",
@@ -43,7 +43,7 @@
     "usdc": "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
     "dai": "0xda10009cbd5d07dd0cecc66161fc93d7c9000da1",
     "sglp": "0x5402B5F40310bDED796c7D0F3FF6683f5C0cFfdf",
-    "traderLoyaltyCredit": "",
+    "traderLoyaltyCredit": "0x1fDcB022daECA9326a37A318f143A0feD61abba6",
     "arb": "0x912CE59144191C1204E64559FE8253a0e49E6548"
   },
   "vendors": {
@@ -58,8 +58,8 @@
     "convertedGlpStrategy": "0xF0D92907236418Fa8Ee900E384b4c6928f7cADfc"
   },
   "hooks": {
-    "tradingStaking": "",
-    "tlc": ""
+    "tradingStaking": "0xA2a59aF14eF3e4fFf67C9B536041faee656B96DA",
+    "tlc": "0x8E1F4c78BF13273c4D67E5DC3D322b0891254988"
   },
   "calculator": "0x0FdE910552977041Dc8c7ef652b5a07B40B9e006",
   "accountAbstraction": {
@@ -67,8 +67,8 @@
     "factory": ""
   },
   "staking": {
-    "trading": "",
-    "tlc": "",
+    "trading": "0x31d0314F6382cf662a3b87237Bd6c9E5C464150B",
+    "tlc": "0x03BaC369E37a78420dDc284ff6e7E94D15571BbA",
     "hlp": "0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C"
   },
   "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",

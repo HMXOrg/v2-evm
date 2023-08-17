@@ -123,7 +123,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
       if (_params[i].token == address(0)) {
         revert RebalanceHLPService_InvalidTokenAddress();
       }
-      if ((_params[i].amount > _vaultStorage.totalAmount(_params[i].token)) || (_params[i].amount == 0)) {
+      if ((_params[i].amount > _vaultStorage.hlpLiquidity(_params[i].token)) || (_params[i].amount == 0)) {
         revert RebalanceHLPService_InvalidTokenAmount();
       }
       unchecked {

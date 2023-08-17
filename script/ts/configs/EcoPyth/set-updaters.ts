@@ -10,7 +10,7 @@ async function main(chainId: number) {
 
   const inputs = [{ updater: "0x6a5D2BF8ba767f7763cd342Cb62C5076f9924872", isUpdater: true }];
 
-  const deployer = signers.deployer(42161);
+  const deployer = signers.deployer(chainId);
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
 
   console.log("[configs/EcoPyth] Set Updaters...");

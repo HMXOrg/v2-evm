@@ -5,10 +5,15 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import SafeWrapper from "../../wrappers/SafeWrapper";
 
-const ASSET_IDS = [ethers.utils.formatBytes32String("QQQ"), ethers.utils.formatBytes32String("XRP")];
+const ASSET_IDS = [
+  ethers.utils.formatBytes32String("NVDA"),
+  ethers.utils.formatBytes32String("LINK"),
+  ethers.utils.formatBytes32String("CHF"),
+];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
+  const safeWrapper = new SafeWrapper(chainId, deployer);
   const config = loadConfig(chainId);
   const safeWrappar = new SafeWrapper(chainId, deployer);
 

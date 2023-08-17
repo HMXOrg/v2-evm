@@ -12,7 +12,7 @@ const ZEROADDRESS = "0x0000000000000000000000000000000000000000";
 
 type AddGlpParams = {
   token: Address;
-  tokenMed: Address;
+  tokenMedium: Address;
   amount: number;
   minAmountOutUSD: number;
   minAmountOutGlp: number;
@@ -42,7 +42,7 @@ async function main(chainId: number) {
   const params: [AddGlpParams] = [
     {
       token: "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8",
-      tokenMed: ZEROADDRESS,
+      tokenMedium: ZEROADDRESS,
       amount: 10000000,
       minAmountOutGlp: 10000,
       minAmountOutUSD: 10000,

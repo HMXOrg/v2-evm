@@ -62,7 +62,7 @@ prog.requiredOption("--chain-id <chainId>", "chain id", parseInt);
 
 prog.parse(process.argv);
 
-const opts = prog.parse(process.argv).opts();
+const opts = prog.opts();
 
 main(opts.chainId)
   .then(() => {

@@ -79,7 +79,7 @@ contract RebalanceHLPService is OwnableUpgradeable, IRebalanceHLPService {
         ++i;
       }
     }
-    if (_vaultStorage.totalAmount(address(sglp)) < totalGlpAccum) {
+    if (_vaultStorage.hlpLiquidity(address(sglp)) < totalGlpAccum) {
       revert RebalanceHLPService_InvalidTokenAmount();
     }
     // Get current HLP value

@@ -2,7 +2,6 @@ import { ethers, tenderly, upgrades, network } from "hardhat";
 import { getConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
-const BigNumber = ethers.BigNumber;
 const config = getConfig();
 const minHLPValueLossBPS = 50; // 0.5 %
 
@@ -17,6 +16,7 @@ async function main() {
     config.storages.vault,
     config.storages.config,
     config.calculator,
+    config.extension.switchCollateralRouter,
     minHLPValueLossBPS,
   ]);
 

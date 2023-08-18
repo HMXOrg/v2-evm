@@ -366,7 +366,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.isLong,
         _vars.closePriceE30,
         _vars.position.avgEntryPriceE30,
-        _vars.position.lastIncreaseTimestamp
+        _vars.position.lastIncreaseTimestamp,
+        _vars.position.marketIndex
       );
 
       // Prevents increasing the position if it has already reached a profit greater than the reserved value
@@ -818,7 +819,8 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.isLongPosition,
         _vars.closePrice,
         _vars.position.avgEntryPriceE30,
-        _vars.position.lastIncreaseTimestamp
+        _vars.position.lastIncreaseTimestamp,
+        _vars.position.marketIndex
       );
 
       // if trader has profit more than our reserved value then trader's profit maximum is reserved value

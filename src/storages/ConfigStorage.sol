@@ -51,6 +51,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogAddOrUpdateHLPTokenConfigs(address _token, HLPTokenConfig _config, HLPTokenConfig _newConfig);
   event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
   event LogSetSwitchCollateralRouter(address prevRouter, address newRouter);
+  event LogMinProfitDuration(uint256 indexed marketIndex, uint256 minProfitDuration);
 
   /**
    * Constants
@@ -96,6 +97,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   mapping(address => bool) public configExecutors;
   // SwithCollateralRouter
   address public switchCollateralRouter;
+  // Min Profit Duration by Market
+  mapping(uint256 marketIndex => uint256 minProfitDuration) public minProfitDurations;
 
   /**
    * Modifiers
@@ -621,6 +624,22 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     emit LogSetTradeServiceHooks(tradeServiceHooks, _newHooks);
 
     tradeServiceHooks = _newHooks;
+  }
+
+  function setMinProfitDurations(
+    uint256[] calldata _marketIndexs,
+    uint256[] calldata _minProfitDurations
+  ) external onlyOwner {
+    if (_marketIndexs.length != _minProfitDurations.length) revert IConfigStorage_BadArgs();
+
+    for (uint256 i = 0; i < _marketIndexs.length; i++) {
+      minProfitDurations[_marketIndexs[i]] = _minProfitDurations[i];
+
+      emit LogMinProfitDuration(_marketIndexs[i], _minProfitDurations[i]);
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

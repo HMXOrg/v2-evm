@@ -21,7 +21,7 @@ async function main(chainId: number) {
       return;
   }
 
-  const contracts = [config.hooks.tradingStaking, config.hooks.tlc];
+  const contracts = [config.helpers.limitTrade];
 
   console.log(`[config/Ownable] Transfer Ownership to ${newOwner}...`);
   let nonce = await deployer.getTransactionCount();

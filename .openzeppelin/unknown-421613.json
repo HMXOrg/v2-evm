@@ -16937,7 +16937,7 @@
             "slot": "101",
             "type": "t_address",
             "contract": "Calculator",
-            "src": "src/contracts/Calculator.sol:40"
+            "src": "src/contracts/Calculator.sol:43"
           },
           {
             "label": "vaultStorage",
@@ -16945,7 +16945,7 @@
             "slot": "102",
             "type": "t_address",
             "contract": "Calculator",
-            "src": "src/contracts/Calculator.sol:41"
+            "src": "src/contracts/Calculator.sol:44"
           },
           {
             "label": "configStorage",
@@ -16953,7 +16953,7 @@
             "slot": "103",
             "type": "t_address",
             "contract": "Calculator",
-            "src": "src/contracts/Calculator.sol:42"
+            "src": "src/contracts/Calculator.sol:45"
           },
           {
             "label": "perpStorage",
@@ -16961,7 +16961,7 @@
             "slot": "104",
             "type": "t_address",
             "contract": "Calculator",
-            "src": "src/contracts/Calculator.sol:43"
+            "src": "src/contracts/Calculator.sol:46"
           }
         ],
         "types": {
@@ -27632,6 +27632,114 @@
           "t_uint64": {
             "label": "uint64",
             "numberOfBytes": "8"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    },
+    "64ee93fcaaa92021ddf520a742b37995ec96e58080b260a157d37c77661fdfa0": {
+      "address": "0xaa37B7186fC838c345a2D22aAeb163E3de1F5780",
+      "txHash": "0x136705f37376ad4b02c47329b4db8ebb9a976acdc2de0364213e8eb528cd7342",
+      "layout": {
+        "solcVersion": "0.8.18",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "52",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "oracle",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "Calculator",
+            "src": "src/contracts/Calculator.sol:43"
+          },
+          {
+            "label": "vaultStorage",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_address",
+            "contract": "Calculator",
+            "src": "src/contracts/Calculator.sol:44"
+          },
+          {
+            "label": "configStorage",
+            "offset": 0,
+            "slot": "103",
+            "type": "t_address",
+            "contract": "Calculator",
+            "src": "src/contracts/Calculator.sol:45"
+          },
+          {
+            "label": "perpStorage",
+            "offset": 0,
+            "slot": "104",
+            "type": "t_address",
+            "contract": "Calculator",
+            "src": "src/contracts/Calculator.sol:46"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
           },
           "t_uint8": {
             "label": "uint8",

@@ -228,4 +228,8 @@ interface IConfigStorage {
   function delistMarket(uint256 _marketIndex) external;
 
   function removeAcceptedToken(address _token) external;
+
+  function minProfitDurations(uint256 marketIndex) external returns (uint256 minProfitDuration);
+
+  function setMinProfitDurations(uint256[] calldata _marketIndexs, uint256[] calldata _minProfitDurations) external;
 }

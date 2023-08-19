@@ -175,7 +175,8 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
       _position.positionSizeE30 > 0,
       _adaptivePriceE30,
       _position.avgEntryPriceE30,
-      _position.lastIncreaseTimestamp
+      _position.lastIncreaseTimestamp,
+      _position.marketIndex
     );
 
     // Check if there is a profit and the delta is greater than the reserve value

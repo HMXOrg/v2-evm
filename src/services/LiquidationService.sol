@@ -354,7 +354,8 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           _vars.position.positionSizeE30 > 0,
           _adaptivePrice,
           _vars.position.avgEntryPriceE30,
-          _vars.position.lastIncreaseTimestamp
+          _vars.position.lastIncreaseTimestamp,
+          _vars.position.marketIndex
         );
 
         // if trader has profit more than reserved value then trader's profit maximum is reserved value

@@ -31,7 +31,8 @@ export default class {
       await this.safeWrapper.proposeTransaction(
         this.proxyAdmin.address,
         0,
-        this.proxyAdmin.interface.encodeFunctionData("upgrade", [proxyAddress, implementationAddress])
+        this.proxyAdmin.interface.encodeFunctionData("upgrade", [proxyAddress, implementationAddress]),
+        { nonce: 102 }
       );
       console.log(`[wrapper/ProxyAdmin] Done`);
     } else if (compareAddress(owner, timelockOwner)) {

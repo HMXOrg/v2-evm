@@ -651,7 +651,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
           if (_var.delta >= _var.position.reserveValueE30) {
             _var.delta = _var.position.reserveValueE30;
           }
-          _unrealizedPnlE30 += int256((pnlFactorBps * _var.delta) / BPS);
+          _unrealizedPnlE30 += int256(_var.delta);
         } else {
           _unrealizedPnlE30 -= int256(_var.delta);
         }
@@ -676,7 +676,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
           int256 _proportionalElapsedInDay = int256(proportionalElapsedInDay(_var.position.marketIndex));
           int256 nextFundingRate = _market.currentFundingRate +
             ((_getFundingRateVelocity(_var.position.marketIndex) * _proportionalElapsedInDay) / 1e18);
-          int256 lastFundingAccrued = _market.fundingAccrued;
+          int256 lastFundingAccrued = _var.position.lastFundingAccrued;
           int256 currentFundingAccrued = _market.fundingAccrued +
             ((_market.currentFundingRate + nextFundingRate) * _proportionalElapsedInDay) /
             2 /
@@ -695,6 +695,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     if (_len != 0) {
       // Calculate liquidation fee
       _unrealizedFeeE30 += int256(liquidationFee);
+    }
+
+    if (_unrealizedPnlE30 > 0) {
+      _unrealizedPnlE30 = ((pnlFactorBps * _unrealizedPnlE30.toUint256()) / BPS).toInt256();
     }
 
     return (_unrealizedPnlE30, _unrealizedFeeE30);

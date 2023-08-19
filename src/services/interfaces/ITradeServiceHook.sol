@@ -20,4 +20,6 @@ interface ITradeServiceHook {
     uint256 sizeDelta,
     bytes32 data
   ) external;
+
+  function setWhitelistedCallers(address[] calldata _callers, bool[] calldata _isWhitelisteds) external;
 }

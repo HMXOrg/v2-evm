@@ -6,9 +6,6 @@ import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import signers from "../../entities/signers";
 import ProxyAdminWrapper from "../../wrappers/ProxyAdminWrapper";
 
-const BigNumber = ethers.BigNumber;
-const config = getConfig();
-
 async function main() {
   const chainId = Number(await getChainId());
   const config = loadConfig(chainId);

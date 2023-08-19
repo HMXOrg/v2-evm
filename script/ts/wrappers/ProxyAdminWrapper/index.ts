@@ -21,8 +21,11 @@ export default class {
 
   async upgrade(proxyAddress: string, implementationAddress: string) {
     const owner = await this.proxyAdmin.owner();
+    console.log("owner", owner);
     const signer = await this.signer.getAddress();
+    console.log("signer", signer);
     const timelockOwner = this.timelockWrapper.getAddress();
+    console.log("timelockOwner", timelockOwner);
 
     if (compareAddress(owner, this.safeWrapper.getAddress())) {
       // Safe is the owner of the ProxyAdmin

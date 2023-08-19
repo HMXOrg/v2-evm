@@ -21,7 +21,7 @@ async function main(chainId: number) {
     },
   ];
 
-  const tradingStakingHook = TradingStakingHook__factory.connect(config.hooks.tlc, deployer);
+  const tradingStakingHook = TradingStakingHook__factory.connect(config.hooks.tradingStaking, deployer);
   const owner = await tradingStakingHook.owner();
   console.log(`[configs/TradingStakingHook] Set Whitelisted Callers`);
   if (compareAddress(owner, config.safe)) {

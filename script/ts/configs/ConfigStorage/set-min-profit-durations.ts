@@ -13,7 +13,11 @@ async function main(chainId: number) {
   const inputs = [
     {
       marketIndex: 0,
-      minProfitDuration: 60,
+      minProfitDuration: 60 * 5,
+    },
+    {
+      marketIndex: 1,
+      minProfitDuration: 30,
     },
   ];
 

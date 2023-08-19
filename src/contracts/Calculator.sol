@@ -675,7 +675,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
           int256 _proportionalElapsedInDay = int256(proportionalElapsedInDay(_var.position.marketIndex));
           int256 nextFundingRate = _market.currentFundingRate +
             ((_getFundingRateVelocity(_var.position.marketIndex) * _proportionalElapsedInDay) / 1e18);
-          int256 lastFundingAccrued = _market.fundingAccrued;
+          int256 lastFundingAccrued = _var.position.lastFundingAccrued;
           int256 currentFundingAccrued = _market.fundingAccrued +
             ((_market.currentFundingRate + nextFundingRate) * _proportionalElapsedInDay) /
             2 /

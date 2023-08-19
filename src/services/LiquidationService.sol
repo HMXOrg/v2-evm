@@ -22,6 +22,7 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 
 // interfaces
 import { ILiquidationService } from "./interfaces/ILiquidationService.sol";
+import { ITradeServiceHook } from "@hmx/services/interfaces/ITradeServiceHook.sol";
 
 /// @title LiquidationService
 /// @dev This contract implements the ILiquidationService interface and provides functionality for liquidating sub-accounts by resetting their positions' value in storage.
@@ -366,6 +367,13 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
 
         _vars.perpStorage.decreaseReserved(_vars.marketConfig.assetClass, _vars.position.reserveValueE30);
 
+        _decreasePositionHooks(
+          _vars.position.primaryAccount,
+          _vars.position.subAccountId,
+          _vars.position.marketIndex,
+          absPositionSize
+        );
+
         // remove the position's value in storage
         _vars.perpStorage.removePositionFromSubAccount(_subAccount, _vars.positionId);
 
@@ -397,6 +405,21 @@ contract LiquidationService is ReentrancyGuardUpgradeable, ILiquidationService, 
           );
       }
 
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _decreasePositionHooks(
+    address _primaryAccount,
+    uint256 _subAccountId,
+    uint256 _marketIndex,
+    uint256 _sizeDelta
+  ) private {
+    address[] memory _hooks = ConfigStorage(configStorage).getTradeServiceHooks();
+    for (uint256 i; i < _hooks.length; ) {
+      ITradeServiceHook(_hooks[i]).onDecreasePosition(_primaryAccount, _subAccountId, _marketIndex, _sizeDelta, "");
       unchecked {
         ++i;
       }

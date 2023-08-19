@@ -16,6 +16,11 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
 
   uint24[] internal publishTimeDiffs;
 
+  address constant ARB = 0x912CE59144191C1204E64559FE8253a0e49E6548;
+  address constant wstETH = 0x5979D7b546E38E414F7E9822514be443A4800529;
+
+  uint256 fixedBlock = 121867415;
+
   function setUp() public override {
     super.setUp();
 
@@ -23,7 +28,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     // USDC Price
     tickPrices[0] = 0;
     // ETH Price
-    tickPrices[1] = 75446;
+    tickPrices[1] = 73926;
 
     publishTimeDiffs = new uint24[](3);
     publishTimeDiffs[0] = 0;
@@ -35,15 +40,22 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     deal(usdcAddress, address(vaultStorage), 10000 * 1e6);
     vaultStorage.pullToken(usdcAddress);
     vaultStorage.addHLPLiquidity(usdcAddress, 10000 * 1e6);
+    deal(ARB, address(vaultStorage), 100 ether);
+    vaultStorage.pullToken(ARB);
+    vaultStorage.addHLPLiquidity(ARB, 100 ether);
+    deal(wstETH, address(vaultStorage), 100 ether);
+    vaultStorage.pullToken(wstETH);
+    vaultStorage.addHLPLiquidity(wstETH, 100 ether);
   }
 
   function testCorrectness_Rebalance_ReinvestSuccess() external {
+    vm.roll(fixedBlock);
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
     uint256 usdcAmount = 1000 * 1e6;
     uint256 wethAmount = 10 * 1e18;
 
-    params[0] = IRebalanceHLPService.AddGlpParams(usdcAddress, usdcAmount, 990 * 1e6, 100);
-    params[1] = IRebalanceHLPService.AddGlpParams(wethAddress, wethAmount, 95 * 1e16, 100);
+    params[0] = IRebalanceHLPService.AddGlpParams(usdcAddress, address(0), usdcAmount, 990 * 1e6, 100);
+    params[1] = IRebalanceHLPService.AddGlpParams(wethAddress, address(0), wethAmount, 95 * 1e16, 100);
 
     uint256 usdcBefore = vaultStorage.hlpLiquidity(usdcAddress);
     uint256 wethBefore = vaultStorage.hlpLiquidity(wethAddress);
@@ -78,8 +90,8 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     vm.roll(110369564);
 
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
-    params[0] = IRebalanceHLPService.AddGlpParams(usdcAddress, 1000 * 1e6, 990 * 1e6, 100);
-    params[1] = IRebalanceHLPService.AddGlpParams(wethAddress, 1 * 1e18, 95 * 1e16, 100);
+    params[0] = IRebalanceHLPService.AddGlpParams(usdcAddress, address(0), 1000 * 1e6, 990 * 1e6, 100);
+    params[1] = IRebalanceHLPService.AddGlpParams(wethAddress, address(0), 1 * 1e18, 95 * 1e16, 100);
 
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
@@ -160,7 +172,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
     uint256 usdcAmount = 100_000 * 1e6;
     vm.expectRevert(IRebalanceHLPService.RebalanceHLPService_InvalidTokenAmount.selector);
-    params[0] = IRebalanceHLPService.AddGlpParams(usdcAddress, usdcAmount, 99_000 * 1e6, 10_000);
+    params[0] = IRebalanceHLPService.AddGlpParams(usdcAddress, address(0), usdcAmount, 99_000 * 1e6, 10_000);
     rebalanceHLPHandler.addGlp(
       params,
       priceUpdateData,
@@ -207,7 +219,7 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
     tickPrices[1] = 76966;
 
     IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](1);
-    params[0] = IRebalanceHLPService.AddGlpParams(wethAddress, 90 * 1e18, 88 * 1e18, 100);
+    params[0] = IRebalanceHLPService.AddGlpParams(wethAddress, address(0), 90 * 1e18, 88 * 1e18, 100 * 1e18);
 
     bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
     bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
@@ -220,5 +232,52 @@ contract RebalanceHLPSerivce is GlpStrategy_Base {
       block.timestamp,
       keccak256("encodeVass")
     );
+  }
+
+  function testCorrectness_Rebalance_SwapReinvestSuccess() external {
+    IRebalanceHLPService.AddGlpParams[] memory params = new IRebalanceHLPService.AddGlpParams[](2);
+    uint256 arbAmount = 10 * 1e18;
+
+    params[0] = IRebalanceHLPService.AddGlpParams(
+      ARB, // to be swapped
+      wethAddress, // to be received
+      arbAmount,
+      95 * 1e16,
+      100
+    );
+    params[1] = IRebalanceHLPService.AddGlpParams(
+      wstETH, // to be swapped
+      wethAddress, // to be received
+      arbAmount,
+      95 * 1e16,
+      100
+    );
+
+    uint256 arbBefore = vaultStorage.hlpLiquidity(ARB);
+    uint256 wstETHBefore = vaultStorage.hlpLiquidity(wstETH);
+    uint256 sGlpBefore = vaultStorage.hlpLiquidity(address(sglp));
+
+    bytes32[] memory priceUpdateData = pyth.buildPriceUpdateData(tickPrices);
+    bytes32[] memory publishTimeUpdateData = pyth.buildPublishTimeUpdateData(publishTimeDiffs);
+
+    uint256 receivedGlp = rebalanceHLPHandler.addGlp(
+      params,
+      priceUpdateData,
+      publishTimeUpdateData,
+      block.timestamp,
+      keccak256("encodeVass")
+    );
+
+    // ARB
+    assertEq(vaultStorage.hlpLiquidity(ARB), vaultStorage.totalAmount(ARB));
+    assertEq(vaultStorage.hlpLiquidity(ARB), arbBefore - arbAmount);
+    // wstETH
+    assertEq(vaultStorage.hlpLiquidity(wstETH), vaultStorage.totalAmount(wstETH));
+    assertEq(vaultStorage.hlpLiquidity(wstETH), wstETHBefore - arbAmount);
+    // sGLP
+    assertEq(receivedGlp, vaultStorage.hlpLiquidity(address(sglp)) - sGlpBefore);
+
+    // make sure that the allowance is zero
+    assertEq(IERC20Upgradeable(wethAddress).allowance(address(rebalanceHLPService), address(glpManager)), 0);
   }
 }

@@ -41,13 +41,22 @@
     "dai": "0xaFefd85e3803CeD051200867eAAf1AA1BbDcBE16",
     "sglp": "0x3eDd3F503688f258D8dEC86d6f2D3236D4492245",
     "traderLoyaltyCredit": "0xB8880717681cA218d8f8eF6679a23894a5745473",
-    "arb": "0xCa2d9AB2995dfE4e97E363088954C6eE7CadaA42"
+    "arb": "0xCa2d9AB2995dfE4e97E363088954C6eE7CadaA42",
+    "wstEth": ""
   },
   "vendors": {
     "gmx": {
       "glpManager": "0x3963FfC9dff443c2A94f21b129D429891E32ec18",
       "rewardRouterV2": "0xB95DB5B167D75e6d04227CfFFA61069348d271F5",
-      "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6"
+      "rewardTracker": "0x4e971a87900b931fF39d1Aad67697F49835400b6",
+      "gmxVault": ""
+    },
+    "uniswap": {
+      "permit2": "0x000000000022d473030f116ddee9f6b43ac78ba3",
+      "universalRouter": "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+    },
+    "curve": {
+      "wstEthPool": ""
     }
   },
   "strategies": {
@@ -68,8 +77,17 @@
     "tlc": "0x66C834D1Db278299D69C6C3d93Da910304bbb8Fb",
     "hlp": "0x3633D9e0C17635E2035BC50e352a5B91b1a9052B"
   },
+  "switchCollateralRouter": "",
   "rewardDistributor": "",
   "reader": {
     "order": "0xa3dFEcc6BA851a6d5246DeC88723D2D55Aa9338A"
+  },
+  "extension": {
+    "switchCollateralRouter": "",
+    "dexter": {
+      "uniswapV3": "",
+      "curve": "",
+      "glp": ""
+    }
   }
 }

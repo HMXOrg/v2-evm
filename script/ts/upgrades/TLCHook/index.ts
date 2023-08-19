@@ -15,21 +15,21 @@ async function main() {
   const deployer = signers.deployer(chainId);
   const proxyAdminWrapper = new ProxyAdminWrapper(chainId, deployer);
 
-  const TradingStakingHook = await ethers.getContractFactory("TradingStakingHook", deployer);
-  const tradingStakingHook = config.hooks.tradingStaking;
+  const TLCHook = await ethers.getContractFactory("TLCHook", deployer);
+  const tlcHook = config.hooks.tlc;
 
-  console.log(`[upgrade/TradingStakingHook] Preparing to upgrade TradingStakingHook`);
-  const newImplementation = await upgrades.prepareUpgrade(tradingStakingHook, TradingStakingHook);
-  console.log(`[upgrade/TradingStakingHook] Done`);
+  console.log(`[upgrade/TLCHook] Preparing to upgrade TLCHook`);
+  const newImplementation = await upgrades.prepareUpgrade(tlcHook, TLCHook);
+  console.log(`[upgrade/TLCHook] Done`);
 
-  console.log(`[upgrade/TradingStakingHook] New TradingStakingHook Implementation address: ${newImplementation}`);
-  await proxyAdminWrapper.upgrade(tradingStakingHook, newImplementation.toString());
-  console.log(`[upgrade/TradingStakingHook] Upgraded!`);
+  console.log(`[upgrade/TLCHook] New TLCHook Implementation address: ${newImplementation}`);
+  await proxyAdminWrapper.upgrade(tlcHook, newImplementation.toString());
+  console.log(`[upgrade/TLCHook] Upgraded!`);
 
-  console.log(`[upgrade/TradingStakingHook] Verify contract on Tenderly`);
+  console.log(`[upgrade/TLCHook] Verify contract on Tenderly`);
   await tenderly.verify({
     address: newImplementation.toString(),
-    name: "TradingStakingHook",
+    name: "TLCHook",
   });
 }
 

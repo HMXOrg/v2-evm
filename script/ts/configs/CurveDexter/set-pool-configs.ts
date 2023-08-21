@@ -33,7 +33,7 @@ async function main(chainId: number) {
     },
   ];
 
-  console.log("[CurveDexter] Setting pool config...");
+  console.log("[configs/CurveDexter] Setting pool config...");
   for (let i = 0; i < params.length; i++) {
     const tx = await dexter.setPoolConfigOf(
       params[i].tokenIn,
@@ -42,10 +42,12 @@ async function main(chainId: number) {
       params[i].fromIndex,
       params[i].toIndex
     );
-    console.log(`[CurveDexter] Tx - Set Pool Config of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`);
+    console.log(
+      `[configs/CurveDexter] Tx - Set Pool Config of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`
+    );
     await tx.wait(1);
   }
-  console.log("[CurveDexter] Finished");
+  console.log("[configs/CurveDexter] Finished");
 }
 
 const prog = new Command();

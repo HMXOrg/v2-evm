@@ -13,6 +13,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
   const dexter = SwitchCollateralRouter__factory.connect(config.extension.switchCollateralRouter, deployer);
+
   const params: Array<SetDexter> = [
     {
       tokenIn: config.tokens.sglp,
@@ -35,16 +36,6 @@ async function main(chainId: number) {
       dexter: config.extension.dexter.uniswapV3,
     },
     {
-      tokenIn: config.tokens.wstEth,
-      tokenOut: config.tokens.weth,
-      dexter: config.extension.dexter.curve,
-    },
-    {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.wstEth,
-      dexter: config.extension.dexter.curve,
-    },
-    {
       tokenIn: config.tokens.usdc,
       tokenOut: config.tokens.usdt,
       dexter: config.extension.dexter.curve,
@@ -56,17 +47,15 @@ async function main(chainId: number) {
     },
   ];
 
-  console.log("[cmds/SwitchCollateralRouter] Setting dexter ...");
+  console.log("[SwitchCollateralRouter] Setting dexter ...");
   for (let i = 0; i < params.length; i++) {
-    const tx = await dexter.setDexterOf(params[i].tokenIn, params[i].tokenOut, params[i].dexter, {
-      gasLimit: 10000000,
-    });
+    const tx = await dexter.setDexterOf(params[i].tokenIn, params[i].tokenOut, params[i].dexter);
     console.log(
-      `[cmds/SwitchCollateralRouter] Tx - Set Dexter of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`
+      `[SwitchCollateralRouter] Tx - Set Dexter of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`
     );
     await tx.wait(1);
   }
-  console.log("[cmds/SwitchCollateralRouter] Finished");
+  console.log("[SwitchCollateralRouter] Finished");
 }
 
 const prog = new Command();

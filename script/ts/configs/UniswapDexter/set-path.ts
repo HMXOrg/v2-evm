@@ -28,17 +28,15 @@ async function main(chainId: number) {
     },
   ];
 
-  console.log("[cmds/UniswapDexter] Setting path config...");
+  console.log("[UniswapDexter] Setting path config...");
   for (let i = 0; i < params.length; i++) {
     console.log(params[i].path);
-    const tx = await dexter.setPathOf(params[i].tokenIn, params[i].tokenOut, params[i].path, {
-      gasLimit: 10000000,
-    });
-    console.log(`[cmds/UniswapDexter] Tx - Set Path of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`);
+    const tx = await dexter.setPathOf(params[i].tokenIn, params[i].tokenOut, params[i].path);
+    console.log(`[UniswapDexter] Tx - Set Path of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`);
     await tx.wait(1);
   }
 
-  console.log("[cmds/UniswapDexter] Finished");
+  console.log("[UniswapDexter] Finished");
 }
 
 const prog = new Command();

@@ -1,68 +1,56 @@
-import { ethers } from "hardhat";
-import { ConfigStorage__factory, EcoPyth__factory, PythAdapter__factory } from "../../../../typechain";
-import { getConfig } from "../../utils/config";
+import { ConfigStorage__factory } from "../../../../typechain";
+import { loadConfig } from "../../utils/config";
+import signers from "../../entities/signers";
+import SafeWrapper from "../../wrappers/SafeWrapper";
+import { Command } from "commander";
+import { compareAddress } from "../../utils/address";
 
-const config = getConfig();
-
-const inputs = [
-  {
-    contractAddress: config.services.crossMargin,
-    executorAddress: config.handlers.crossMargin,
-    isServiceExecutor: true,
-  },
-  {
-    contractAddress: config.services.liquidity,
-    executorAddress: config.handlers.liquidity,
-    isServiceExecutor: true,
-  },
-  {
-    contractAddress: config.services.liquidation,
-    executorAddress: config.handlers.bot,
-    isServiceExecutor: true,
-  },
-  {
-    contractAddress: config.services.trade,
-    executorAddress: config.handlers.limitTrade,
-    isServiceExecutor: true,
-  },
-  {
-    contractAddress: config.services.trade,
-    executorAddress: config.handlers.bot,
-    isServiceExecutor: true,
-  },
-  {
-    contractAddress: config.helpers.trade,
-    executorAddress: config.services.trade,
-    isServiceExecutor: true,
-  },
-  {
-    contractAddress: config.helpers.trade,
-    executorAddress: config.services.liquidation,
-    isServiceExecutor: true,
-  },
-  {
-    contractAddress: config.services.rebalanceHLP,
-    executorAddress: config.handlers.rebalanceHLP,
-    isServiceExecutor: true,
-  },
-];
-
-async function main() {
-  const deployer = (await ethers.getSigners())[0];
+async function main(chainId: number) {
+  const config = loadConfig(chainId);
+  const deployer = signers.deployer(chainId);
+  const safeWrapper = new SafeWrapper(chainId, signers.deployer(chainId));
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
-  console.log("> ConfigStorage: Set Service Executors...");
-  await (
-    await configStorage.setServiceExecutors(
+  const inputs = [
+    {
+      contractAddress: config.services.rebalanceHLP,
+      executorAddress: config.handlers.rebalanceHLP,
+      isServiceExecutor: true,
+    },
+  ];
+
+  console.log("[configs/ConfigStorage] Set Service Executors...");
+  const owner = await configStorage.owner();
+  if (compareAddress(owner, config.safe)) {
+    const tx = await safeWrapper.proposeTransaction(
+      configStorage.address,
+      0,
+      configStorage.interface.encodeFunctionData("setServiceExecutors", [
+        inputs.map((each) => each.contractAddress),
+        inputs.map((each) => each.executorAddress),
+        inputs.map((each) => each.isServiceExecutor),
+      ])
+    );
+    console.log(`[configs/ConfigStorage] Tx: ${tx}`);
+  } else {
+    const tx = await configStorage.setServiceExecutors(
       inputs.map((each) => each.contractAddress),
       inputs.map((each) => each.executorAddress),
       inputs.map((each) => each.isServiceExecutor)
-    )
-  ).wait();
-  console.log("> ConfigStorage: Set Service Executors success!");
+    );
+    console.log(`[configs/ConfigStorage] Tx: ${tx.hash}`);
+    await tx.wait(1);
+  }
+  console.log("[configs/ConfigStorage] Set Service Executors success!");
 }
 
-main().catch((error) => {
+const program = new Command();
+
+program.requiredOption("--chain-id <chainId>", "chain id", parseInt);
+
+const opts = program.parse(process.argv).opts();
+
+main(opts.chainId).catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

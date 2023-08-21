@@ -18,30 +18,16 @@ async function main(chainId: number) {
 
   const params: Array<SetPoolConfig> = [
     {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.wstEth,
-      pool: config.vendors.curve.wstEthPool,
-      fromIndex: 0,
-      toIndex: 1,
-    },
-    {
-      tokenIn: config.tokens.wstEth,
-      tokenOut: config.tokens.weth,
-      pool: config.vendors.curve.wstEthPool,
-      fromIndex: 1,
-      toIndex: 0,
-    },
-    {
       tokenIn: config.tokens.usdc,
       tokenOut: config.tokens.usdt,
-      pool: "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+      pool: config.vendors.curve.usdcUsdtPool,
       fromIndex: 0,
       toIndex: 1,
     },
     {
       tokenIn: config.tokens.usdt,
       tokenOut: config.tokens.usdc,
-      pool: "0x7f90122bf0700f9e7e1f688fe926940e8839f353",
+      pool: config.vendors.curve.usdcUsdtPool,
       fromIndex: 1,
       toIndex: 0,
     },
@@ -54,10 +40,7 @@ async function main(chainId: number) {
       params[i].tokenOut,
       params[i].pool,
       params[i].fromIndex,
-      params[i].toIndex,
-      {
-        gasLimit: 10000000,
-      }
+      params[i].toIndex
     );
     console.log(`[CurveDexter] Tx - Set Pool Config of (${params[i].tokenIn}, ${params[i].tokenOut}): ${tx.hash}`);
     await tx.wait(1);

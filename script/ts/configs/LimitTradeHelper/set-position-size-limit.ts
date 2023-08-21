@@ -13,23 +13,23 @@ async function main(chainId: number) {
   const inputs = [
     {
       assetClass: assetClasses.crypto,
-      tradeSizeLimit: ethers.utils.parseUnits("750000", 30), // 750
-      positionSizeLimit: ethers.utils.parseUnits("1500000", 30), // 1.5M
+      tradeSizeLimit: 0,
+      positionSizeLimit: 0,
     },
     {
       assetClass: assetClasses.equity,
-      tradeSizeLimit: ethers.utils.parseUnits("750000", 30), // 750
-      positionSizeLimit: ethers.utils.parseUnits("1500000", 30), // 1.5M
+      tradeSizeLimit: 0, // 500k
+      positionSizeLimit: 0, // 1M
     },
     {
       assetClass: assetClasses.commodities,
-      tradeSizeLimit: ethers.utils.parseUnits("750000", 30), // 750
-      positionSizeLimit: ethers.utils.parseUnits("1500000", 30), // 1.5M
+      tradeSizeLimit: 0, // 500k
+      positionSizeLimit: 0, // 1M
     },
     {
       assetClass: assetClasses.forex,
-      tradeSizeLimit: ethers.utils.parseUnits("2000000", 30), // 2M
-      positionSizeLimit: ethers.utils.parseUnits("3000000", 30), // 3M
+      tradeSizeLimit: 0, // 500k
+      positionSizeLimit: 0, // 1M
     },
   ];
 

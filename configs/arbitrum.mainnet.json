@@ -80,7 +80,6 @@
     "tlc": "0x03BaC369E37a78420dDc284ff6e7E94D15571BbA",
     "hlp": "0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C"
   },
-  "switchCollateralRouter": "",
   "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",
   "reader": {
     "order": "0x1EF528Fd3771a87F568A2E39422B5f00F473389E"

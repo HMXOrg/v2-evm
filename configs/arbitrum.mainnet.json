@@ -17,7 +17,7 @@
   },
   "helpers": {
     "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",
-    "limitTrade": "0xCdF0793dD5877E66B971CE3487214DbaD059d4BF"
+    "limitTrade": "0x3131d2cad2095A5DFacB643f9Eec532Aa0b0aE62"
   },
   "services": {
     "crossMargin": "0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A",
@@ -80,7 +80,6 @@
     "tlc": "0x03BaC369E37a78420dDc284ff6e7E94D15571BbA",
     "hlp": "0xbE8f8AF5953869222eA8D39F1Be9d03766010B1C"
   },
-  "switchCollateralRouter": "",
   "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",
   "reader": {
     "order": "0x1EF528Fd3771a87F568A2E39422B5f00F473389E"

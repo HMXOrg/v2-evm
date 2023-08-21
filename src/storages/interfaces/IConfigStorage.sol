@@ -15,6 +15,7 @@ interface IConfigStorage {
   error IConfigStorage_NotAcceptedLiquidity();
   error IConfigStorage_MaxFeeBps();
   error IConfigStorage_InvalidAssetClass();
+  error IConfigStorage_MaxDurationForMinProfit();
 
   /**
    * Structs

@@ -632,10 +632,15 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   ) external onlyOwner {
     if (_marketIndexs.length != _minProfitDurations.length) revert IConfigStorage_BadArgs();
 
-    for (uint256 i = 0; i < _marketIndexs.length; i++) {
+    uint256 MAX_DURATION = 30 minutes;
+
+    for (uint256 i = 0; i < _marketIndexs.length; ) {
+      if (_minProfitDurations[i] > MAX_DURATION) revert IConfigStorage_MaxDurationForMinProfit();
+
       minProfitDurations[_marketIndexs[i]] = _minProfitDurations[i];
 
       emit LogMinProfitDuration(_marketIndexs[i], _minProfitDurations[i]);
+
       unchecked {
         ++i;
       }

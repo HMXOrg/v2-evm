@@ -98,18 +98,24 @@ contract TradeService_BorrowingFee is TradeService_Base {
     {
       tradeService.increasePosition(ALICE, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
       IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(0);
-      // 0.0001 * 180000 / 1000000.6885 * (120 - 101) = 0.000341999764533162 | 0.000009 + 0.000341999764533162 = 0.000350999764533162
-      assertEq(_assetClass.sumBorrowingRate, 0.000350999764533162 * 1e18);
+      // 0.0001 * 180000 / 1000000.486 * (120 - 101) = 0.000341999833788081
+      // 0.000009 + 0.000341999833788081 = 0.000350999833788081
+      assertEq(_assetClass.sumBorrowingRate, 0.00035099983378808 * 1e18);
       assertEq(_assetClass.lastBorrowingTime, 120);
 
-      // Fee: (0.000350999764533162 - 0.000009) * 180000 = 61.55995761596916
-      // 99.19 - 61.55995761596916 = 37.63004238403084
-      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 37.630043 * 1e6);
+      // Fee: (0.000350999833788081 - 0.000009) * 180000 = 61.5599700818546
+      // 99.19 - 61.5599700818546 = 37.6300299181454
+      assertEq(vaultStorage.traderBalances(aliceAddress, address(usdt)), 37.630030 * 1e6);
 
-      // 61.55995761596916 * 85% = 52.325964 | 1000000.6885 + 52.325964 = 1000053.014464
-      assertEq(vaultStorage.hlpLiquidity(address(usdt)), 1000053.014464 * 1e6);
-      // 61.55995761596916 * 15% = 9.233993 | 0.1215 + 9.233993 = 9.355493
-      assertEq(vaultStorage.devFees(address(usdt)), 9.355493 * 1e6);
+      // 61.5599700818546 * 0.25 = 15.3899925204637
+      // 0.2025 + 15.3899925204637 = 15.592492
+      assertEq(vaultStorage.protocolFees(address(usdt)), 15.592492 * 1e6);
+      // 61.5599700818546 * 0.60 = 36.9359820491128
+      // 1000000.486 + 36.9359820491128 = 1000037.42198205
+      assertEq(vaultStorage.hlpLiquidity(address(usdt)), 1000037.421983 * 1e6);
+      // 61.5599700818546 * 0.15 = 9.23399551227819
+      // 0.1215 + 9.23399551227819 = 9.35549551227819
+      assertEq(vaultStorage.devFees(address(usdt)), 9.355495 * 1e6);
     }
   }
 
@@ -353,11 +359,11 @@ contract TradeService_BorrowingFee is TradeService_Base {
 
     vm.warp(102);
     {
-      // Last fee to Hlp = 0.81 * 85% = 0.6885
-      // Hlp Value = 1000000 + 0.6885 = 1000000.6885
-      // BorrowingRate: 0.0001 * 135000 / 1000000.6885 * (102 - 101) = 0.000013499990705256
-      // BorrowingFee: 0.000013499990705256 * 135000 = 1.82249874520956
-      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 1.82249874520956 * 1e30, "PendingBorrowingFee T102");
+      // Last fee to Hlp = 0.81 * 60% = 0.486
+      // Hlp Value = 1000000 + 0.486 = 1000000.486
+      // BorrowingRate: 0.0001 * 135000 / 1000000.486 * (102 - 101) = 0.000013499993439003
+      // BorrowingFee: 0.000013499993439003 * 135000 = 1.822499114265405
+      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 1.822499114265405 * 1e30, "PendingBorrowingFee T102");
     }
 
     vm.warp(110);
@@ -366,39 +372,40 @@ contract TradeService_BorrowingFee is TradeService_Base {
       tradeService.increasePosition(BOB, 0, ethMarketIndex, 1_000_000 * 1e30, 0);
       IPerpStorage.AssetClass memory _assetClass = perpStorage.getAssetClassByIndex(0);
 
-      // 0.0001 * 135000 / 1000000.6885 * (110 - 101) = 0.000121499916347307 | 0.000009 + 0.000121499916347307 = 0.000130499916347307
+      // 0.0001 * 135000 / 1000000.486 * (110 - 101) = 0.000121499940951029
+      // 0.000009 + 0.000121499940951029 = 0.000130499940951028
       assertEq(_assetClass.reserveValueE30, 225000 * 1e30);
-      assertEq(_assetClass.sumBorrowingRate, 0.000130499916347307 * 1e18);
+      assertEq(_assetClass.sumBorrowingRate, 0.000130499940951028 * 1e18);
       assertEq(_assetClass.lastBorrowingTime, 110);
 
       // SumFee = 0.81 + (nextBorrowingRate * reserveValue)
-      // 0.81 + (0.000121499916347307 * 135000) ~= 17.212488706886445
-      assertEq(_assetClass.sumBorrowingFeeE30, 17.212488706886445 * 1e30);
+      // 0.81 + (0.000121499940951029 * 135000) ~= 17.2124920283889
+      assertEq(_assetClass.sumBorrowingFeeE30, 17.21249202838878 * 1e30);
       // SumSettledFee = Alice(T:100 to 101)
       //               = 0.81
       // So, it remains the same
       assertEq(_assetClass.sumSettledBorrowingFeeE30, 0.81 * 1e30);
 
       // At this point, can still ignore BOB, as BOB has just joined, timeDelta = 0
-      // Last fee to Hlp = 0.81 * 85% = 0.6885
-      // Hlp Value = 1000000 + 0.6885 = 1000000.6885
-      // BorrowingRate: 0.0001 * 135000 / 1000000.6885 * (110 - 101) = 0.000121499916347307
-      // BorrowingFee: 0.000121499916347307 * 135000 = 16.402488706886444
-      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 16.402488706886445 * 1e30, "PendingBorrowingFee T110");
+      // Last fee to Hlp = 0.81 * 60% = 0.486
+      // Hlp Value = 1000000 + 0.486 = 1000000.486
+      // BorrowingRate: 0.0001 * 135000 / 1000000.486 * (110 - 101) = 0.000121499940951029
+      // BorrowingFee: 0.000121499940951029 * 135000 = 16.4024920283889
+      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 16.40249202838878 * 1e30, "PendingBorrowingFee T110");
     }
 
     vm.warp(120);
     {
-      // Last fee to Hlp = 0.81 * 85% = 0.6885
-      // Hlp Value = 1000000 + 0.6885 = 1000000.6885
+      // Last fee to Hlp = 0.81 * 60% = 0.486
+      // Hlp Value = 1000000 + 0.486 = 1000000.486
 
       // T110-120 portion
-      // BorrowingRate: 0.0001 * 225000 / 1000000.6885 * (120 - 110) = 0.000224999845087606
-      // BorrowingFee: 0.000224999845087606 * 225000 = 50.62496514471135
+      // BorrowingRate: 0.0001 * 225000 / 1000000.486 * (120 - 110) = 0.000224999890650053
+      // BorrowingFee: 0.000224999890650053 * 225000 = 50.6249753962619
 
       // Final anwser = (T110-120 portion) + (T101-110 portion)
-      // = 50.62496514471135 + 16.402488706886445 = 67.027453851597795
-      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 67.027453851597795 * 1e30, "PendingBorrowingFee T120");
+      // = 50.6249753962619 + 16.4024920283889 = 67.0274674246508
+      assertEq(mockCalculator.getPendingBorrowingFeeE30(), 67.027467424650705 * 1e30, "PendingBorrowingFee T120");
     }
   }
 }

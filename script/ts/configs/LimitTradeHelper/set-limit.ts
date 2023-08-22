@@ -8,34 +8,9 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 14,
-      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
-      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
-    },
-    {
-      marketIndex: 15,
-      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
-      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
-    },
-    {
-      marketIndex: 16,
-      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
-      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
-    },
-    {
-      marketIndex: 17,
-      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
-      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
-    },
-    {
-      marketIndex: 21,
-      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
-      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
-    },
-    {
-      marketIndex: 25,
-      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
-      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
+      marketIndex: 20,
+      positionSizeLimit: ethers.utils.parseUnits("200000", 30),
+      tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
     },
   ];
 
@@ -59,7 +34,7 @@ async function main(chainId: number) {
   const tx = await safeWrapper.proposeTransaction(
     limitTradeHelper.address,
     0,
-    limitTradeHelper.interface.encodeFunctionData("setLimitByMarketIndex", [
+    limitTradeHelper.interface.encodeFunctionData("setLimit", [
       inputs.map((input) => input.marketIndex),
       inputs.map((input) => input.positionSizeLimit),
       inputs.map((input) => input.tradeSizeLimit),

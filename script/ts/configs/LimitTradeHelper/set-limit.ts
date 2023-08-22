@@ -34,7 +34,7 @@ async function main(chainId: number) {
   const tx = await safeWrapper.proposeTransaction(
     limitTradeHelper.address,
     0,
-    limitTradeHelper.interface.encodeFunctionData("setLimitByMarketIndex", [
+    limitTradeHelper.interface.encodeFunctionData("setLimit", [
       inputs.map((input) => input.marketIndex),
       inputs.map((input) => input.positionSizeLimit),
       inputs.map((input) => input.tradeSizeLimit),

@@ -2,6 +2,7 @@ import { LimitTradeHandler__factory } from "../../../../typechain";
 import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
+import { ethers } from "ethers";
 import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main(chainId: number) {
@@ -9,14 +10,17 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const safeWrapper = new SafeWrapper(chainId, deployer);
 
-  console.log("[configs/LimitTradeHandler] Set Limit Trade Helper...");
+  const minExecutionTimestamp = 60 * 3; // 3 mins
+
+  console.log("[LimitTradeHandler] setMinExecutionTimestamp...");
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
   const tx = await safeWrapper.proposeTransaction(
     limitTradeHandler.address,
     0,
-    limitTradeHandler.interface.encodeFunctionData("setLimitTradeHelper", [config.helpers.limitTrade])
+    limitTradeHandler.interface.encodeFunctionData("setMinExecutionTimestamp", [minExecutionTimestamp])
   );
-  console.log(`[configs/LimitTradeHandler] Proposed tx: ${tx}`);
+  console.log(`[LimitTradeHandler] Tx: ${tx}`);
+  console.log("[LimitTradeHandler] setMinExecutionTimestamp success!");
 }
 
 const prog = new Command();

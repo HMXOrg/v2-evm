@@ -11,12 +11,16 @@ import { ITradingStaking } from "@hmx/staking/interfaces/ITradingStaking.sol";
 
 contract TradingStakingHook is ITradeServiceHook, OwnableUpgradeable {
   error TradingStakingHook_Forbidden();
+  error TradingStakingHook_BadArgs();
+
+  event LogSetWhitelistedCaller(address indexed caller, bool isWhitelisted);
 
   address public tradingStaking;
   address public tradeService;
+  mapping(address whitelisted => bool isWhitelisted) public whitelistedCallers;
 
-  modifier onlyTradeService() {
-    if (msg.sender != tradeService) revert TradingStakingHook_Forbidden();
+  modifier onlyWhitelistedCaller() {
+    if (!whitelistedCallers[msg.sender]) revert TradingStakingHook_Forbidden();
     _;
   }
 
@@ -37,7 +41,7 @@ contract TradingStakingHook is ITradeServiceHook, OwnableUpgradeable {
     uint256 _marketIndex,
     uint256 _sizeDelta,
     bytes32
-  ) external onlyTradeService {
+  ) external onlyWhitelistedCaller {
     ITradingStaking ts = ITradingStaking(tradingStaking);
     if (ts.isMarketIndex(_marketIndex)) {
       ts.deposit(_primaryAccount, _marketIndex, _sizeDelta / 1e12);
@@ -50,7 +54,7 @@ contract TradingStakingHook is ITradeServiceHook, OwnableUpgradeable {
     uint256 _marketIndex,
     uint256 _sizeDelta,
     bytes32
-  ) external onlyTradeService {
+  ) external onlyWhitelistedCaller {
     ITradingStaking ts = ITradingStaking(tradingStaking);
     uint256 amountToWithdraw = _sizeDelta / 1e12;
     uint256 userTokenAmount = ts.getUserTokenAmount(_marketIndex, _primaryAccount);
@@ -58,6 +62,19 @@ contract TradingStakingHook is ITradeServiceHook, OwnableUpgradeable {
       ts.withdraw(_primaryAccount, _marketIndex, amountToWithdraw);
     } else if (userTokenAmount > 0) {
       ts.withdraw(_primaryAccount, _marketIndex, userTokenAmount);
+    }
+  }
+
+  function setWhitelistedCallers(address[] calldata _callers, bool[] calldata _isWhitelisteds) external onlyOwner {
+    if (_callers.length != _isWhitelisteds.length) revert TradingStakingHook_BadArgs();
+    for (uint256 i = 0; i < _callers.length; ) {
+      whitelistedCallers[_callers[i]] = _isWhitelisteds[i];
+
+      emit LogSetWhitelistedCaller(_callers[i], _isWhitelisteds[i]);
+
+      unchecked {
+        ++i;
+      }
     }
   }
 

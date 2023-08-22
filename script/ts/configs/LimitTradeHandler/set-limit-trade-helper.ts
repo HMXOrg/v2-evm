@@ -11,12 +11,8 @@ async function main(chainId: number) {
 
   console.log("[configs/LimitTradeHandler] Set Limit Trade Helper...");
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  const tx = await safeWrapper.proposeTransaction(
-    limitTradeHandler.address,
-    0,
-    limitTradeHandler.interface.encodeFunctionData("setLimitTradeHelper", [config.helpers.limitTrade])
-  );
-  console.log(`[configs/LimitTradeHandler] Proposed tx: ${tx}`);
+  await (await limitTradeHandler.setLimitTradeHelper(config.helpers.limitTrade)).wait();
+  // console.log(`[configs/LimitTradeHandler] Proposed tx: ${tx.hash}`);
 }
 
 const prog = new Command();

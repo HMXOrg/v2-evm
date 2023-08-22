@@ -191,6 +191,36 @@
       "slug": "xrp-usd",
       "assetSymbol": "Crypto.XRP",
       "sortIndex": 10
+    },
+    {
+      "index": 24,
+      "name": "NVDAUSD",
+      "assetId": "0x4e56444100000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "nvda-usd",
+      "assetSymbol": "Equity.US.NVDA",
+      "quotedAssetSymbol": "FX.USD",
+      "sortIndex": 4008
+    },
+    {
+      "index": 25,
+      "name": "LINKUSD",
+      "assetId": "0x4c494e4b00000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "link-usd",
+      "assetSymbol": "Crypto.LINK",
+      "quotedAssetSymbol": "FX.USD",
+      "sortIndex": 11
+    },
+    {
+      "index": 26,
+      "name": "USDCHF",
+      "assetId": "0x4348460000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-chf",
+      "assetSymbol": "FX.CHF",
+      "quotedAssetSymbol": "FX.USD",
+      "sortIndex": 2004
     }
   ],
   "assets": {

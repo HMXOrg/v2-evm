@@ -8,9 +8,139 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
+      marketIndex: 0,
+      tradeSizeLimit: ethers.utils.parseUnits("750000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1500000", 30),
+    },
+    {
+      marketIndex: 1,
+      tradeSizeLimit: ethers.utils.parseUnits("750000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1500000", 30),
+    },
+    {
+      marketIndex: 2,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 3,
+      tradeSizeLimit: ethers.utils.parseUnits("2000000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("3000000", 30),
+    },
+    {
+      marketIndex: 4,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 5,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 6,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 7,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 8,
+      tradeSizeLimit: ethers.utils.parseUnits("2000000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("3000000", 30),
+    },
+    {
+      marketIndex: 9,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 10,
+      tradeSizeLimit: ethers.utils.parseUnits("2000000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("3000000", 30),
+    },
+    {
+      marketIndex: 11,
+      tradeSizeLimit: ethers.utils.parseUnits("2000000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("3000000", 30),
+    },
+    {
+      marketIndex: 12,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 13,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 14,
+      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
+    },
+    {
+      marketIndex: 15,
+      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
+    },
+    {
+      marketIndex: 16,
+      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
+    },
+    {
+      marketIndex: 17,
+      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
+    },
+    {
+      marketIndex: 18,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 19,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
       marketIndex: 20,
-      positionSizeLimit: ethers.utils.parseUnits("200000", 30),
       tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("200000", 30),
+    },
+    {
+      marketIndex: 21,
+      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
+    },
+    {
+      marketIndex: 22,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 23,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 24,
+      tradeSizeLimit: ethers.utils.parseUnits("500000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("1000000", 30),
+    },
+    {
+      marketIndex: 25,
+      tradeSizeLimit: ethers.utils.parseUnits("50000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("50000", 30),
+    },
+    {
+      marketIndex: 26,
+      tradeSizeLimit: ethers.utils.parseUnits("2000000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("3000000", 30),
     },
   ];
 
@@ -31,15 +161,12 @@ async function main(chainId: number) {
       };
     })
   );
-  const tx = await safeWrapper.proposeTransaction(
-    limitTradeHelper.address,
-    0,
-    limitTradeHelper.interface.encodeFunctionData("setLimit", [
-      inputs.map((input) => input.marketIndex),
-      inputs.map((input) => input.positionSizeLimit),
-      inputs.map((input) => input.tradeSizeLimit),
-    ])
+  const tx = await limitTradeHelper.setLimit(
+    inputs.map((input) => input.marketIndex),
+    inputs.map((input) => input.positionSizeLimit),
+    inputs.map((input) => input.tradeSizeLimit)
   );
+  await tx.wait();
   console.log(`[configs/LimitTradeHelper] Proposed tx to set limit by market index: ${tx}`);
 }
 

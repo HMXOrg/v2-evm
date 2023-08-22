@@ -16,7 +16,7 @@
   },
   "helpers": {
     "trade": "0xEcE4e6457E68c88B11cEddA47B35942434Cf6e2a",
-    "limitTrade": "0xe8500F30e575b1a6d07640fC0dD0EA764D5edB94"
+    "limitTrade": "0xc55eDcf390B58F79fCFF16bb9349714473e057a3"
   },
   "services": {
     "crossMargin": "0x9061B0c73e834ef38082cdC19D7ad385a51871C1",

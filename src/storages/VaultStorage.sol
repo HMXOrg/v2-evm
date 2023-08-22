@@ -31,6 +31,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     bytes4 prevFunctionSig,
     bytes4 newFunctionSig
   );
+  event LogSetHmxStakerBps(uint256 oldBps, uint256 newBps);
 
   /**
    * States
@@ -64,6 +65,8 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
   mapping(address => bool) public serviceExecutors;
   // mapping(token => strategy => target => isAllow?)
   mapping(address token => mapping(address strategy => bytes4 functionSig)) public strategyFunctionSigAllowances;
+
+  uint256 public hmxStakerBps;
 
   /**
    * Modifiers
@@ -257,7 +260,9 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
     // Increase the amount to devFees and hlpLiquidity
     devFees[_token] += _devFeeAmount;
-    hlpLiquidity[_token] += _hlpFeeAmount;
+    uint256 _toProtocolFees = ((_devFeeAmount + _hlpFeeAmount) * hmxStakerBps) / 1e4;
+    hlpLiquidity[_token] += (_hlpFeeAmount - _toProtocolFees);
+    protocolFees[_token] += _toProtocolFees;
   }
 
   function payFundingFeeFromTraderToHlp(
@@ -468,6 +473,12 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
       _target
     );
     strategyFunctionSigAllowances[_token][_strategy] = _target;
+  }
+
+  function setHmxStakerBps(uint256 _hmxStakerBps) external onlyOwner {
+    if (_hmxStakerBps > 5000) revert IVaultStorage_BadHmxStakerBps();
+    emit LogSetHmxStakerBps(hmxStakerBps, _hmxStakerBps);
+    hmxStakerBps = _hmxStakerBps;
   }
 
   function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {

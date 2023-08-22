@@ -14,6 +14,7 @@ interface IVaultStorage {
   error IVaultStorage_TargetNotContract();
   error IVaultStorage_BadLen();
   error IVaultStorage_InvalidAddress();
+  error IVaultStorage_BadHmxStakerBps();
 
   /**
    * Functions
@@ -85,4 +86,6 @@ interface IVaultStorage {
   function globalBorrowingFeeDebt() external returns (uint256);
 
   function globalLossDebt() external returns (uint256);
+
+  function setHmxStakerBps(uint256 _hmxStakerBps) external;
 }

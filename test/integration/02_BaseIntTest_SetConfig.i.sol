@@ -56,6 +56,11 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
         maxPosition: 10
       })
     );
+    uint256[] memory _marketIndexs = new uint256[](1);
+    _marketIndexs[0] = 0;
+    uint256[] memory _minProfitDurations = new uint256[](1);
+    _minProfitDurations[0] = 15;
+    configStorage.setMinProfitDurations(_marketIndexs, _minProfitDurations);
   }
 
   function _setUpAssetClassConfigs() private {

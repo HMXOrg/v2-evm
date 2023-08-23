@@ -29,8 +29,8 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     lens = lens_;
   }
 
-  function isOverMaxDiff(bytes32 _priceId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
-    PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(_priceId);
+  function isOverMaxDiff(bytes32 _assetId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
+    PythStructs.Price memory _ecoPythPrice = ecoPyth.getPriceUnsafe(_assetId);
     if (_ecoPythPrice.price * 10000 > _price * int32(_maxDiffBps)) {
       return true;
     }
@@ -54,10 +54,10 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     _minPublishTime = type(uint256).max;
     for (uint _i = 0; _i < _data.length; ) {
       // Check if price vs last price on EcoPyth is not over max diff
-      address priceAdapter = address(lens.priceAdapterById(_data[_i].priceId));
+      address priceAdapter = address(lens.priceAdapterById(_data[_i].assetId));
       if (priceAdapter == address(0)) {
         // If this is an off-chain price, then check the diff.
-        require(!isOverMaxDiff(_data[_i].priceId, _data[_i].priceE8, _data[_i].maxDiffBps), "OVER_DIFF");
+        require(!isOverMaxDiff(_data[_i].assetId, _data[_i].priceE8, _data[_i].maxDiffBps), "OVER_DIFF");
       }
 
       // Find the minimum publish time
@@ -74,7 +74,7 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     uint24[] memory _publishTimeDiffs = new uint24[](_data.length);
     for (uint _i = 0; _i < _data.length; ) {
       // Build the price update calldata
-      IPriceAdapter priceAdapter = lens.priceAdapterById(_data[_i].priceId);
+      IPriceAdapter priceAdapter = lens.priceAdapterById(_data[_i].assetId);
       if (address(priceAdapter) == address(0)) {
         // If data is not GLP, then make tick rightaway.
         _ticks[_i] = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(PythLib.convertToUint(_data[_i].priceE8, -8, 18)));

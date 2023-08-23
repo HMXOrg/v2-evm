@@ -29,13 +29,13 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     lens = lens_;
   }
 
-  function isOverMaxDiff(bytes32 _priceId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
+  function isOverMaxDiff(bytes32 _assetId, int64 _price, uint32 _maxDiffBps) internal view returns (bool) {
     int64 _latestPrice = 0;
     // If cannot get price from EcoPyth, then assume the price is 1e8.
     // Cases where EcoPyth cannot return price:
     // - New assets that are not listed on EcoPyth yet.
     // - New assets that over previous array length
-    try ecoPyth.getPriceUnsafe(_priceId) returns (PythStructs.Price memory _ecoPythPrice) {
+    try ecoPyth.getPriceUnsafe(_assetId) returns (PythStructs.Price memory _ecoPythPrice) {
       // If price is exactly 1e8, then assume the price is not available.
       _latestPrice = _ecoPythPrice.price == 1e8 ? _price : _ecoPythPrice.price;
     } catch {
@@ -64,10 +64,10 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     _minPublishTime = type(uint256).max;
     for (uint _i = 0; _i < _data.length; ) {
       // Check if price vs last price on EcoPyth is not over max diff
-      address priceAdapter = address(lens.priceAdapterById(_data[_i].priceId));
+      address priceAdapter = address(lens.priceAdapterById(_data[_i].assetId));
       if (priceAdapter == address(0)) {
         // If this is an off-chain price, then check the diff.
-        require(!isOverMaxDiff(_data[_i].priceId, _data[_i].priceE8, _data[_i].maxDiffBps), "OVER_DIFF");
+        require(!isOverMaxDiff(_data[_i].assetId, _data[_i].priceE8, _data[_i].maxDiffBps), "OVER_DIFF");
       }
 
       // Find the minimum publish time
@@ -84,7 +84,7 @@ contract EcoPythCalldataBuilder is IEcoPythCalldataBuilder {
     uint24[] memory _publishTimeDiffs = new uint24[](_data.length);
     for (uint _i = 0; _i < _data.length; ) {
       // Build the price update calldata
-      IPriceAdapter priceAdapter = lens.priceAdapterById(_data[_i].priceId);
+      IPriceAdapter priceAdapter = lens.priceAdapterById(_data[_i].assetId);
       if (address(priceAdapter) == address(0)) {
         // If data is not GLP, then make tick rightaway.
         _ticks[_i] = TickMath.getTickAtSqrtRatio(SqrtX96Codec.encode(PythLib.convertToUint(_data[_i].priceE8, -8, 18)));

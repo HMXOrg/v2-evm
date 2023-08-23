@@ -33,7 +33,7 @@ interface IRebalanceHLPHandler {
   // Setters
   function setRebalanceHLPService(address _newService) external;
 
-  function setWhiteListExecutor(address _executor, bool _isAllow) external;
+  function setWhitelistExecutor(address _executor, bool _isAllow) external;
 
   // Getters
   function service() external view returns (IRebalanceHLPService);

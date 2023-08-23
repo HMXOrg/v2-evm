@@ -3,7 +3,7 @@ pragma solidity 0.8.18;
 
 interface IEcoPythCalldataBuilder {
   struct BuildData {
-    bytes32 assetId;
+    bytes32 priceId;
     int64 priceE8;
     uint160 publishTime;
     uint32 maxDiffBps;

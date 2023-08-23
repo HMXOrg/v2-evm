@@ -38,13 +38,13 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
     // Assuming the new price of "0" is 0.49999999 which less than maxDiffBps
     IEcoPythCalldataBuilder.BuildData[] memory _data = new IEcoPythCalldataBuilder.BuildData[](2);
     _data[0] = IEcoPythCalldataBuilder.BuildData({
-      assetId: "0",
+      priceId: "0",
       priceE8: 49999999,
       publishTime: 0,
       maxDiffBps: 15000
     });
     _data[1] = IEcoPythCalldataBuilder.BuildData({
-      assetId: "1",
+      priceId: "1",
       priceE8: 19_000.25 * 10 ** 8,
       publishTime: 0,
       maxDiffBps: 15000
@@ -59,13 +59,13 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
     // Assuming the new price of "0" is 1.50000001 which more than maxDiffBps
     IEcoPythCalldataBuilder.BuildData[] memory _data = new IEcoPythCalldataBuilder.BuildData[](2);
     _data[0] = IEcoPythCalldataBuilder.BuildData({
-      assetId: "0",
+      priceId: "0",
       priceE8: 150000001,
       publishTime: 0,
       maxDiffBps: 15000
     });
     _data[1] = IEcoPythCalldataBuilder.BuildData({
-      assetId: "1",
+      priceId: "1",
       priceE8: 19_000.25 * 10 ** 8,
       publishTime: 0,
       maxDiffBps: 15000
@@ -79,19 +79,19 @@ contract EcoPythCalldataBuilder_BuildTest is EcoPythCalldataBuilder_BaseTest {
   function testCorrectness_WhenNewPriceIsValid() external {
     IEcoPythCalldataBuilder.BuildData[] memory _data = new IEcoPythCalldataBuilder.BuildData[](3);
     _data[0] = IEcoPythCalldataBuilder.BuildData({
-      assetId: "0",
+      priceId: "0",
       priceE8: 1.5 * 10 ** 8,
       publishTime: 1688,
       maxDiffBps: 15000
     });
     _data[1] = IEcoPythCalldataBuilder.BuildData({
-      assetId: "1",
+      priceId: "1",
       priceE8: 19_000.25 * 10 ** 8,
       publishTime: 1689,
       maxDiffBps: 15000
     });
     _data[2] = IEcoPythCalldataBuilder.BuildData({
-      assetId: "GLP",
+      priceId: "GLP",
       priceE8: 1.01 * 1e8,
       publishTime: 0,
       maxDiffBps: 15000

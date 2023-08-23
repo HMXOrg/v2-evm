@@ -60,6 +60,10 @@
     },
     "curve": {
       "wstEthPool": "0x6eb2dc694eb516b16dc9fbc678c60052bbdd7d80"
+    },
+    "chainlink": {
+      "wstEthEthPriceFeed": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
+      "ethUsdPriceFeed": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
     }
   },
   "strategies": {

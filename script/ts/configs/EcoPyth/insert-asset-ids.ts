@@ -6,9 +6,9 @@ import { Command } from "commander";
 import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const ASSET_IDS = [
-  ethers.utils.formatBytes32String("NVDA"),
-  ethers.utils.formatBytes32String("LINK"),
-  ethers.utils.formatBytes32String("CHF"),
+  ethers.utils.formatBytes32String("DOGEUSD"),
+  ethers.utils.formatBytes32String("USDCAD"),
+  ethers.utils.formatBytes32String("USDSGD"),
 ];
 
 async function main(chainId: number) {
@@ -17,14 +17,9 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const safeWrappar = new SafeWrapper(chainId, deployer);
 
-  const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
+  const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
   console.log("[EcoPyth] Inserting asset IDs...");
-  const tx = await safeWrappar.proposeTransaction(
-    ecoPyth.address,
-    0,
-    ecoPyth.interface.encodeFunctionData("insertAssetIds", [ASSET_IDS])
-  );
-  console.log(`[EcoPyth] Tx: ${tx}`);
+  await (await ecoPyth.insertAssetIds(ASSET_IDS)).wait();
   console.log("[EcoPyth] Finished");
 }
 

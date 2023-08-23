@@ -14,7 +14,7 @@ async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
   const hmxApi = new HmxApiWrapper(chainId);
 
-  const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth2, deployer);
+  const pyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
 
   const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
     await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
@@ -36,7 +36,9 @@ async function main(chainId: number) {
   console.log("[cmds/EcoPyth] Success!");
   console.log("[cmds/EcoPyth] Feed Price...");
   const tx = await (
-    await pyth.updatePriceFeeds(priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas)
+    await pyth.updatePriceFeeds(priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas, {
+      gasLimit: 10000000,
+    })
   ).wait();
   console.log(`[cmds/EcoPyth] Done: ${tx.transactionHash}`);
   console.log("[cmds/EcoPyth] Feed Price success!");

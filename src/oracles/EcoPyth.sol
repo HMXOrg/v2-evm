@@ -166,6 +166,7 @@ contract EcoPyth is OwnableUpgradeable, IEcoPyth {
     if (_index == 0) revert EcoPyth_InvalidArgs();
 
     mapAssetIdToIndex[_assetId] = _index;
+    assetIds[_index] = _assetId;
 
     emit SetAssetId(_index, _assetId);
 

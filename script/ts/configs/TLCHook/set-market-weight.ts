@@ -20,15 +20,15 @@ async function main(chainId: number) {
 
   const weightConfigs: Array<WeightConfig> = [
     {
-      marketIndex: 24, // NVDAUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 25, // LINKUSD
+      marketIndex: 27, // DOGEUSD
       weightBPS: 7 * BPS,
     },
     {
-      marketIndex: 26, // USDCHF
+      marketIndex: 28, // USDCAD
+      weightBPS: 1 * BPS,
+    },
+    {
+      marketIndex: 29, // USDSGD
       weightBPS: 1 * BPS,
     },
   ];
@@ -40,12 +40,7 @@ async function main(chainId: number) {
     const marketIndex = weightConfigs[i].marketIndex;
     const market = marketConfig.markets[marketIndex];
     console.log(`[configs/TLCHook] Set Weight for Market Index: ${market.name}...`);
-    const tx = await safeWrapper.proposeTransaction(
-      tlcHook.address,
-      0,
-      tlcHook.interface.encodeFunctionData("setMarketWeight", [marketIndex, weightConfigs[i].weightBPS])
-    );
-    console.log(`[configs/TLCHook] Proposed tx: ${tx}`);
+    await (await tlcHook.setMarketWeight(marketIndex, weightConfigs[i].weightBPS)).wait();
   }
   console.log("[configs/TLCHook] Finished");
 }

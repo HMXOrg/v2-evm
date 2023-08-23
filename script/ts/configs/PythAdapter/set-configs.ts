@@ -7,18 +7,18 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("NVDA"),
-    pythPriceId: ethers.utils.formatBytes32String("NVDA"),
+    assetId: ethers.utils.formatBytes32String("DOGE"),
+    pythPriceId: ethers.utils.formatBytes32String("DOGEUSD"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("LINK"),
-    pythPriceId: ethers.utils.formatBytes32String("LINK"),
+    assetId: ethers.utils.formatBytes32String("CAD"),
+    pythPriceId: ethers.utils.formatBytes32String("USDCAD"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("CHF"),
-    pythPriceId: ethers.utils.formatBytes32String("CHF"),
+    assetId: ethers.utils.formatBytes32String("SGD"),
+    pythPriceId: ethers.utils.formatBytes32String("USDSGD"),
     inverse: false,
   },
 ];
@@ -30,16 +30,13 @@ async function main(chainId: number) {
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
 
   console.log("[PythAdapter] Setting configs...");
-  const tx = await safeWrapper.proposeTransaction(
-    pythAdapter.address,
-    0,
-    pythAdapter.interface.encodeFunctionData("setConfigs", [
+  await (
+    await pythAdapter.setConfigs(
       inputs.map((each) => each.assetId),
       inputs.map((each) => each.pythPriceId),
-      inputs.map((each) => each.inverse),
-    ])
-  );
-  console.log(`[PythAdapter] Tx: ${tx}`);
+      inputs.map((each) => each.inverse)
+    )
+  ).wait();
   console.log("[PythAdapter] Finished");
 }
 

@@ -10,7 +10,9 @@ async function main() {
   const deployer = (await ethers.getSigners())[0];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  console.log(await configStorage.getLiquidityConfig());
+  console.log(await configStorage.marketConfigs(26));
+  console.log(await configStorage.marketConfigs(27));
+  console.log(await configStorage.marketConfigs(28));
 }
 
 main().catch((error) => {

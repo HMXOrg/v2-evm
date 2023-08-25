@@ -35,16 +35,6 @@ async function main(chainId: number) {
       dexter: config.extension.dexter.uniswapV3,
     },
     {
-      tokenIn: config.tokens.wstEth,
-      tokenOut: config.tokens.weth,
-      dexter: config.extension.dexter.curve,
-    },
-    {
-      tokenIn: config.tokens.weth,
-      tokenOut: config.tokens.wstEth,
-      dexter: config.extension.dexter.curve,
-    },
-    {
       tokenIn: config.tokens.usdc,
       tokenOut: config.tokens.usdt,
       dexter: config.extension.dexter.curve,

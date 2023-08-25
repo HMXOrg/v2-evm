@@ -19,6 +19,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 // Interfaces
 import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 
 contract Calculator is OwnableUpgradeable, ICalculator {
   using SafeCastUpgradeable for int256;
@@ -1086,6 +1087,58 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   function _getTradingFee(uint256 _size, uint256 _baseFeeRateBPS) internal pure returns (uint256 tradingFee) {
     return (_size * _baseFeeRateBPS) / BPS;
+  }
+
+  function getDelta(IPerpStorage.Position memory position, uint256 _markPrice) public view returns (bool, uint256) {
+    // Check for invalid input: averagePrice cannot be zero.
+    if (position.avgEntryPriceE30 == 0) return (false, 0);
+
+    // Calculate the difference between the average price and the fixed price.
+    uint256 priceDelta;
+    unchecked {
+      priceDelta = position.avgEntryPriceE30 > _markPrice
+        ? position.avgEntryPriceE30 - _markPrice
+        : _markPrice - position.avgEntryPriceE30;
+    }
+
+    uint256 _size = HMXLib.abs(position.positionSizeE30);
+
+    // Calculate the delta, adjusted for the size of the order.
+    uint256 delta = (_size * priceDelta) / position.avgEntryPriceE30;
+
+    // Determine if the position is profitable or not based on the averagePrice and the mark price.
+    bool isProfit;
+    bool _isLong = position.positionSizeE30 > 0;
+    if (_isLong) {
+      isProfit = _markPrice > position.avgEntryPriceE30;
+    } else {
+      isProfit = _markPrice < position.avgEntryPriceE30;
+    }
+
+    // In case of profit, we need to check the current timestamp against minProfitDuration
+    // in order to prevent front-run attack, or price manipulation.
+    // Check `isProfit` first, to save SLOAD in loss case.
+    if (isProfit) {
+      uint256 minProfitDuration = ConfigStorage(configStorage).minProfitDurations(position.marketIndex);
+      if (block.timestamp < position.lastIncreaseTimestamp + minProfitDuration) {
+        PerpStorage.Market memory _market = PerpStorage(perpStorage).getMarketByIndex(position.marketIndex);
+        ConfigStorage.MarketConfig memory _marketConfig = ConfigStorage(configStorage).getMarketConfigByIndex(
+          position.marketIndex
+        );
+        OracleMiddleware(oracle).getLatestAdaptivePrice(
+          _marketConfig.assetId,
+          _isLong, // if current position is SHORT position, then we use max price
+          (int(_market.longPositionSize) - int(_market.shortPositionSize)),
+          -position.positionSizeE30,
+          _marketConfig.fundingRate.maxSkewScaleUSD,
+          0
+        );
+        return (isProfit, 0);
+      }
+    }
+
+    // Return the values of isProfit and delta.
+    return (isProfit, delta);
   }
 
   function getDelta(

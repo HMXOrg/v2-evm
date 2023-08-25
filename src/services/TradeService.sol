@@ -394,6 +394,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     }
 
     // update the position size by adding the new size delta
+    _vars.position.lastIncreasePositionSize = _vars.position.positionSizeE30;
     _vars.position.positionSizeE30 += _sizeDelta;
     _vars.position.lastIncreaseTimestamp = block.timestamp;
 

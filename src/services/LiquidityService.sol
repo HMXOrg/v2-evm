@@ -19,6 +19,7 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 /**
  * @title LiquidityService
@@ -385,31 +386,27 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     LiquidityAction _action
   ) private returns (uint256 _amountAfterFee) {
     // SLOAD
-    uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_token);
+    address _configStorage = configStorage;
+    address _vaultStorage = vaultStorage;
+    uint256 _decimals = ConfigStorage(_configStorage).getAssetTokenDecimal(_token);
+    IConfigStorage.TradingConfig memory tradingConfig = ConfigStorage(_configStorage).getTradingConfig();
 
     // calculate and accounting fee collect amount
     uint256 _feeTokenAmount = (_amount * _feeBPS) / BPS;
-    VaultStorage(vaultStorage).addFee(_token, _feeTokenAmount);
+    uint256 _devFeeAmount = (_feeTokenAmount * tradingConfig.devFeeRateBPS) / BPS;
+    VaultStorage(_vaultStorage).addDevFee(_token, _devFeeAmount);
+    uint256 feeAfterDev = _feeTokenAmount - _devFeeAmount;
+    VaultStorage(_vaultStorage).addFee(_token, feeAfterDev);
 
     if (_action == LiquidityAction.SWAP) {
-      emit CollectSwapFee(_account, _token, (_feeTokenAmount * _tokenPriceUsd) / 10 ** _decimals, _feeTokenAmount);
+      emit CollectSwapFee(_account, _token, (feeAfterDev * _tokenPriceUsd) / 10 ** _decimals, feeAfterDev);
     } else if (_action == LiquidityAction.ADD_LIQUIDITY) {
-      emit CollectAddLiquidityFee(
-        _account,
-        _token,
-        (_feeTokenAmount * _tokenPriceUsd) / 10 ** _decimals,
-        _feeTokenAmount
-      );
+      emit CollectAddLiquidityFee(_account, _token, (feeAfterDev * _tokenPriceUsd) / 10 ** _decimals, feeAfterDev);
     } else if (_action == LiquidityAction.REMOVE_LIQUIDITY) {
-      emit CollectRemoveLiquidityFee(
-        _account,
-        _token,
-        (_feeTokenAmount * _tokenPriceUsd) / 10 ** _decimals,
-        _feeTokenAmount
-      );
+      emit CollectRemoveLiquidityFee(_account, _token, (feeAfterDev * _tokenPriceUsd) / 10 ** _decimals, feeAfterDev);
     }
 
-    return _amount - _feeTokenAmount;
+    return _amount - feeAfterDev;
   }
 
   function _validateHLPHealthCheck(address _token) private view {

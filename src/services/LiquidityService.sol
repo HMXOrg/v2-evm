@@ -19,7 +19,6 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 
 // interfaces
 import { ILiquidityService } from "./interfaces/ILiquidityService.sol";
-import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
 /**
  * @title LiquidityService
@@ -389,7 +388,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     address _configStorage = configStorage;
     address _vaultStorage = vaultStorage;
     uint256 _decimals = ConfigStorage(_configStorage).getAssetTokenDecimal(_token);
-    IConfigStorage.TradingConfig memory tradingConfig = ConfigStorage(_configStorage).getTradingConfig();
+    ConfigStorage.TradingConfig memory tradingConfig = ConfigStorage(_configStorage).getTradingConfig();
 
     // calculate and accounting fee collect amount
     uint256 _feeTokenAmount = (_amount * _feeBPS) / BPS;

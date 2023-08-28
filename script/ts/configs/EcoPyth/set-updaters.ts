@@ -8,18 +8,21 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const safeWrapper = new SafeWrapper(chainId, signers.deployer(chainId));
 
-  const inputs = [{ updater: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a", isUpdater: true }];
+  const inputs = [{ updater: config.handlers.rebalanceHLP, isUpdater: true }];
 
   const deployer = signers.deployer(chainId);
   const ecoPyth = EcoPyth__factory.connect(config.oracles.ecoPyth, deployer);
 
-  console.log("[configs/EcoPyth] Set Updaters...");
-  await (
-    await ecoPyth.setUpdaters(
+  console.log("[configs/EcoPyth] Proposing to set updaters...");
+  const tx = await safeWrapper.proposeTransaction(
+    ecoPyth.address,
+    0,
+    ecoPyth.interface.encodeFunctionData("setUpdaters", [
       inputs.map((each) => each.updater),
-      inputs.map((each) => each.isUpdater)
-    )
-  ).wait();
+      inputs.map((each) => each.isUpdater),
+    ])
+  );
+  console.log(`[configs/EcoPyth] Proposed tx: ${tx}`);
   console.log("[configs/EcoPyth] Set Updaters success!");
 }
 

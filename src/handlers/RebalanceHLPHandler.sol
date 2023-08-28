@@ -80,7 +80,7 @@ contract RebalanceHLPHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     result = service.withdrawGlp(_params);
   }
 
-  function setWhiteListExecutor(address _executor, bool _isAllow) external onlyOwner {
+  function setWhitelistExecutor(address _executor, bool _isAllow) external onlyOwner {
     if (_executor == address(0)) {
       revert RebalanceHLPHandler_AddressIsZero();
     }

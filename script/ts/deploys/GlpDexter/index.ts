@@ -18,8 +18,8 @@ async function main() {
   );
 
   await contract.deployed();
-  console.log(`[deploys/Dexter] Deploying GlpDexter Contract`);
-  console.log(`[deploys/Dexter] Deployed at: ${contract.address}`);
+  console.log(`[deploys/GlpDexter] Deploying GlpDexter Contract`);
+  console.log(`[deploys/GlpDexter] Deployed at: ${contract.address}`);
 
   config.extension.dexter.glp = contract.address;
   writeConfigFile(config);

@@ -3,7 +3,7 @@ import { getConfig, writeConfigFile } from "../../utils/config";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 
 const config = getConfig();
-const minHLPValueLossBPS = 50; // 0.5 %
+const minHLPValueLossBPS = 50; // 0.5%
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];

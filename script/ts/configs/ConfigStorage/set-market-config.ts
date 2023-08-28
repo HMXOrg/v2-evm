@@ -76,8 +76,8 @@ async function main(chainId: number) {
       maxFundingRate: 1,
       maxSkewScaleUSD: 1000000000,
       assetId: "AAPL",
-      allowIncreasePosition: true,
-      active: true,
+      allowIncreasePosition: false,
+      active: false,
     },
     {
       marketIndex: 5,
@@ -92,8 +92,8 @@ async function main(chainId: number) {
       maxFundingRate: 1,
       maxSkewScaleUSD: 1000000000,
       assetId: "AMZN",
-      allowIncreasePosition: true,
-      active: true,
+      allowIncreasePosition: false,
+      active: false,
     },
     {
       marketIndex: 6,
@@ -108,8 +108,8 @@ async function main(chainId: number) {
       maxFundingRate: 1,
       maxSkewScaleUSD: 1000000000,
       assetId: "MSFT",
-      allowIncreasePosition: true,
-      active: true,
+      allowIncreasePosition: false,
+      active: false,
     },
     {
       marketIndex: 7,
@@ -124,8 +124,8 @@ async function main(chainId: number) {
       maxFundingRate: 1,
       maxSkewScaleUSD: 1000000000,
       assetId: "TSLA",
-      allowIncreasePosition: true,
-      active: true,
+      allowIncreasePosition: false,
+      active: false,
     },
     {
       marketIndex: 18,
@@ -140,8 +140,8 @@ async function main(chainId: number) {
       maxFundingRate: 1,
       maxSkewScaleUSD: 500000000,
       assetId: "COIN",
-      allowIncreasePosition: true,
-      active: true,
+      allowIncreasePosition: false,
+      active: false,
     },
     {
       marketIndex: 19,
@@ -156,8 +156,8 @@ async function main(chainId: number) {
       maxFundingRate: 1,
       maxSkewScaleUSD: 1000000000,
       assetId: "GOOG",
-      allowIncreasePosition: true,
-      active: true,
+      allowIncreasePosition: false,
+      active: false,
     },
     {
       marketIndex: 22,
@@ -172,8 +172,8 @@ async function main(chainId: number) {
       maxFundingRate: 1,
       maxSkewScaleUSD: 1000000000,
       assetId: "QQQ",
-      allowIncreasePosition: true,
-      active: true,
+      allowIncreasePosition: false,
+      active: false,
     },
     {
       marketIndex: 24,
@@ -188,8 +188,8 @@ async function main(chainId: number) {
       maxFundingRate: 1,
       maxSkewScaleUSD: 1000000000,
       assetId: "NVDA",
-      allowIncreasePosition: true,
-      active: true,
+      allowIncreasePosition: false,
+      active: false,
     },
   ];
 

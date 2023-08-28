@@ -16,8 +16,44 @@ async function main(chainId: number) {
   const accountList = [
     {
       account: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a",
-      subAccountId: 0,
-      marketIndex: 2,
+      subAccountId: 4,
+      marketIndex: 24,
+      tpToken: config.tokens.usdc,
+    },
+    {
+      account: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a",
+      subAccountId: 3,
+      marketIndex: 19,
+      tpToken: config.tokens.usdc,
+    },
+    {
+      account: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a",
+      subAccountId: 3,
+      marketIndex: 5,
+      tpToken: config.tokens.usdc,
+    },
+    {
+      account: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a",
+      subAccountId: 3,
+      marketIndex: 6,
+      tpToken: config.tokens.usdc,
+    },
+    {
+      account: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a",
+      subAccountId: 4,
+      marketIndex: 7,
+      tpToken: config.tokens.usdc,
+    },
+    {
+      account: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a",
+      subAccountId: 4,
+      marketIndex: 18,
+      tpToken: config.tokens.usdc,
+    },
+    {
+      account: "0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a",
+      subAccountId: 4,
+      marketIndex: 19,
       tpToken: config.tokens.usdc,
     },
   ];

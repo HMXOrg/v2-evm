@@ -11,10 +11,12 @@ async function main(chainId: number) {
   const signer = signers.deployer(chainId);
 
   const perpStorage = PerpStorage__factory.connect(config.storages.perp, provider);
-  const activePositions = await perpStorage.getActivePositions(1000, 0);
-  console.log("account,marketIndex,positionSizeE30");
+  const activePositions = await perpStorage.getActivePositions(2000, 0);
+  console.log("account,subAccountId,marketIndex,positionSizeE30");
   activePositions.forEach((each) => {
-    console.log(`${each.primaryAccount},${each.marketIndex.toString()},${each.positionSizeE30.toString()}`);
+    console.log(
+      `${each.primaryAccount},${each.subAccountId},${each.marketIndex.toString()},${each.positionSizeE30.toString()}`
+    );
   });
 }
 

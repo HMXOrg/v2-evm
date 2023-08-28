@@ -15,7 +15,7 @@ const config = getConfig();
 const BigNumber = ethers.BigNumber;
 const parseUnits = ethers.utils.parseUnits;
 
-const positionManagers = ["0x3231C08B500bb26e0654cb0338F135CeD44d6B84", "0xF1235511e36f2F4D578555218c41fe1B1B5dcc1E"];
+const positionManagers = ["0x6629eC35c8Aa279BA45Dbfb575c728d3812aE31a"];
 
 async function main() {
   const deployer = (await ethers.getSigners())[0];

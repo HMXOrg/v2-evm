@@ -370,6 +370,24 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     uint256 _marketIndex,
     MarketConfig calldata _newConfig
   ) external onlyOwner returns (MarketConfig memory _marketConfig) {
+    return _setMarketConfig(_marketIndex, _newConfig);
+  }
+
+  function setMarketConfigs(uint256[] calldata _marketIndexes, MarketConfig[] calldata _newConfigs) external onlyOwner {
+    if (_marketIndexes.length != _newConfigs.length) revert IConfigStorage_BadLen();
+
+    for (uint256 i = 0; i < _marketIndexes.length; ) {
+      _setMarketConfig(_marketIndexes[i], _newConfigs[i]);
+      unchecked {
+        ++i;
+      }
+    }
+  }
+
+  function _setMarketConfig(
+    uint256 _marketIndex,
+    MarketConfig calldata _newConfig
+  ) internal returns (MarketConfig memory _marketConfig) {
     if (_newConfig.increasePositionFeeRateBPS > MAX_FEE_BPS || _newConfig.decreasePositionFeeRateBPS > MAX_FEE_BPS)
       revert IConfigStorage_MaxFeeBps();
     if (_newConfig.assetClass > assetClassConfigs.length - 1) revert IConfigStorage_InvalidAssetClass();

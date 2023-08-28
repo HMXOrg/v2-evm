@@ -154,6 +154,10 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     protocolFees[_token] += _amount;
   }
 
+  function addDevFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
+    devFees[_token] += _amount;
+  }
+
   function addFundingFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
     fundingFeeReserve[_token] += _amount;
   }

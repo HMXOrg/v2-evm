@@ -847,19 +847,9 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _vars.globalState = _vars.perpStorage.getGlobalState();
       _vars.assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
 
-      // update global storage
-      // to calculate new global reserve = current global reserve - reserve delta (position reserve * (position size delta / current position size))
-      _vars.globalState.reserveValueE30 -=
-        (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
-        _vars.absPositionSizeE30;
-      _vars.assetClass.reserveValueE30 -=
-        (_vars.position.reserveValueE30 * _vars.positionSizeE30ToDecrease) /
-        _vars.absPositionSizeE30;
-      _vars.perpStorage.updateGlobalState(_vars.globalState);
-      _vars.perpStorage.updateAssetClass(_marketConfig.assetClass, _vars.assetClass);
-
-      // update assetClass state after update reserveValueE30
-      _vars.assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
+      // update global storage by removing the reserveValueE30 of the position first
+      _vars.globalState.reserveValueE30 -= _vars.position.reserveValueE30;
+      _vars.assetClass.reserveValueE30 -= _vars.position.reserveValueE30;
 
       // partial close position
       if (_temp.newAbsPositionSizeE30 != 0) {
@@ -882,11 +872,19 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
           BPS;
         _vars.position.realizedPnl += _vars.realizedPnl;
 
+        // Add the new reserveValueE30 from the position to the globalState and assetClass
+        _vars.globalState.reserveValueE30 += _vars.position.reserveValueE30;
+        _vars.assetClass.reserveValueE30 += _vars.position.reserveValueE30;
+
         _vars.perpStorage.savePosition(_vars.accountInfo.subAccount, _vars.positionId, _vars.position);
       } else {
         _vars.position.realizedPnl += _vars.realizedPnl;
         _vars.perpStorage.removePositionFromSubAccount(_vars.accountInfo.subAccount, _vars.positionId);
       }
+
+      // Update globalState and assetClass with the new reserveValueE30
+      _vars.perpStorage.updateGlobalState(_vars.globalState);
+      _vars.perpStorage.updateAssetClass(_marketConfig.assetClass, _vars.assetClass);
 
       // update counter trade states
       {

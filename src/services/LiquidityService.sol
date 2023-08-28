@@ -375,7 +375,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @param _amount The amount of the token to collect as a fee.
   /// @param _feeBPS The fee percentage, represented as basis points.
   /// @param _action The liquidity action that triggered the fee collection.
-  /// @return _amountAfterFee The amount of tokens actually collected as a fee.
+  /// @return _amountAfterFee The amount of tokens after cauculating fee.
   function _collectFee(
     address _token,
     address _account,
@@ -405,7 +405,8 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
       emit CollectRemoveLiquidityFee(_account, _token, (feeAfterDev * _tokenPriceUsd) / 10 ** _decimals, feeAfterDev);
     }
 
-    return _amount - feeAfterDev;
+    // total amountOut does not change, only the fee distribution does, hence remain `_amount - feeTokenAmount`
+    return _amount - _feeTokenAmount;
   }
 
   function _validateHLPHealthCheck(address _token) private view {

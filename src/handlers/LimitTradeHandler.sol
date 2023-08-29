@@ -753,7 +753,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
             _sizeDelta: vars.sizeDelta,
             _limitPriceE30: _isGuaranteeLimitPrice ? vars.order.triggerPrice : 0
           });
-        } else if (!vars.positionIsLong) {
+        } else {
           bool _flipSide = vars.sizeDelta > (-_existingPosition.positionSizeE30);
           if (_flipSide) {
             // Flip the position

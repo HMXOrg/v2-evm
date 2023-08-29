@@ -571,7 +571,7 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
     bytes32 _encodedVaas,
     bool _isRevert
   ) internal {
-    if (_accounts.length != _subAccountIds.length && _accounts.length != _orderIndexes.length)
+    if (_accounts.length != _subAccountIds.length || _accounts.length != _orderIndexes.length)
       revert ILimitTradeHandler_InvalidArraySize();
 
     // Update price to Pyth

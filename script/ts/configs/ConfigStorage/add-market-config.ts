@@ -30,24 +30,7 @@ async function main(chainId: number) {
 
   const marketConfigs: Array<AddMarketConfig> = [
     {
-      assetId: ethers.utils.formatBytes32String("NVDA"),
-      increasePositionFeeRateBPS: 5, // 0.05%
-      decreasePositionFeeRateBPS: 5, // 0.05%
-      initialMarginFractionBPS: 200, // IMF = 2%, Max leverage = 50
-      maintenanceMarginFractionBPS: 100, // MMF = 1%
-      maxProfitRateBPS: 100000, // 1000%
-      assetClass: assetClasses.equity,
-      allowIncreasePosition: true,
-      active: true,
-      fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
-        maxFundingRate: ethers.utils.parseUnits("1", 18), // 100% per day
-      },
-      maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
-      maxShortPositionSize: ethers.utils.parseUnits("2500000", 30),
-    },
-    {
-      assetId: ethers.utils.formatBytes32String("LINK"),
+      assetId: ethers.utils.formatBytes32String("DOGE"),
       increasePositionFeeRateBPS: 7, // 0.07%
       decreasePositionFeeRateBPS: 7, // 0.07%
       initialMarginFractionBPS: 100, // IMF = 1%, Max leverage = 100
@@ -57,14 +40,31 @@ async function main(chainId: number) {
       allowIncreasePosition: true,
       active: true,
       fundingRate: {
-        maxSkewScaleUSD: ethers.utils.parseUnits("500000000", 30), // 500 M
-        maxFundingRate: ethers.utils.parseUnits("8", 18), // 800% per day
+        maxSkewScaleUSD: ethers.utils.parseUnits("200000000", 30), // 200 M
+        maxFundingRate: ethers.utils.parseUnits("8", 18), // 100% per day
       },
       maxLongPositionSize: ethers.utils.parseUnits("2500000", 30),
       maxShortPositionSize: ethers.utils.parseUnits("2500000", 30),
     },
     {
-      assetId: ethers.utils.formatBytes32String("CHF"),
+      assetId: ethers.utils.formatBytes32String("CAD"),
+      increasePositionFeeRateBPS: 1, // 0.01%
+      decreasePositionFeeRateBPS: 1, // 0.01%
+      initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
+      maintenanceMarginFractionBPS: 5, // MMF = 0.05%
+      maxProfitRateBPS: 200000, // 2000%
+      assetClass: assetClasses.forex,
+      allowIncreasePosition: true,
+      active: true,
+      fundingRate: {
+        maxSkewScaleUSD: ethers.utils.parseUnits("1000000000", 30), // 1000 M
+        maxFundingRate: ethers.utils.parseUnits("1", 18), // 800% per day
+      },
+      maxLongPositionSize: ethers.utils.parseUnits("3000000", 30),
+      maxShortPositionSize: ethers.utils.parseUnits("3000000", 30),
+    },
+    {
+      assetId: ethers.utils.formatBytes32String("SGD"),
       increasePositionFeeRateBPS: 1, // 0.01%
       decreasePositionFeeRateBPS: 1, // 0.01%
       initialMarginFractionBPS: 10, // IMF = 0.1%, Max leverage = 1000
@@ -85,17 +85,19 @@ async function main(chainId: number) {
   const safeWrapper = new SafeWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
-  console.log("[ConfigStorage] Adding new market config...");
+  console.log("[configs/ConfigStorage] Adding new market config...");
   for (let i = 0; i < marketConfigs.length; i++) {
-    console.log(`[ConfigStorage] Adding ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`);
+    console.log(
+      `[configs/ConfigStorage] Adding ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`
+    );
     const tx = await safeWrapper.proposeTransaction(
       configStorage.address,
       0,
       configStorage.interface.encodeFunctionData("addMarketConfig", [marketConfigs[i]])
     );
-    console.log(`[ConfigStorage] Tx: ${tx}`);
+    console.log(`[configs/ConfigStorage] Tx: ${tx}`);
   }
-  console.log("[ConfigStorage] Finished");
+  console.log("[configs/ConfigStorage] Finished");
 }
 
 const prog = new Command();

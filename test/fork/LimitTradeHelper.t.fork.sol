@@ -54,7 +54,13 @@ contract LimitTradeHelper_fork is TestBase, StdAssertions, StdCheatsSafe {
       0x97e94BdA44a2Df784Ab6535aaE2D62EFC6D2e303
     );
     limitTradeHandler.setLimitTradeHelper(address(limitTradeHelper));
-    limitTradeHelper.setPositionSizeLimit(0, 500_000 * 1e30, 300_000 * 1e30);
+    uint256[] memory marketIndexes = new uint256[](1);
+    marketIndexes[0] = 1;
+    uint256[] memory positionSizeLimits = new uint256[](1);
+    positionSizeLimits[0] = 500_000 * 1e30;
+    uint256[] memory tradeSizeLimits = new uint256[](1);
+    tradeSizeLimits[0] = 300_000 * 1e30;
+    limitTradeHelper.setLimit(marketIndexes, positionSizeLimits, tradeSizeLimits);
     vm.stopPrank();
 
     vm.prank(positionOwner);

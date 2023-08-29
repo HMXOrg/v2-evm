@@ -179,6 +179,7 @@ contract TC38 is BaseIntTest_WithActions {
         true,
         bobClosePrice,
         bobPosition.avgEntryPriceE30,
+        0,
         0
       );
 
@@ -195,6 +196,7 @@ contract TC38 is BaseIntTest_WithActions {
         true,
         carolClosePrice,
         carolPosition.avgEntryPriceE30,
+        0,
         0
       );
 

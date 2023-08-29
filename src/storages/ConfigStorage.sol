@@ -11,9 +11,10 @@ import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/
 import { AddressUpgradeable } from "@openzeppelin-upgradeable/contracts/utils/AddressUpgradeable.sol";
 
 // Interfaces
-import { IConfigStorage } from "./interfaces/IConfigStorage.sol";
-import { ICalculator } from "../contracts/interfaces/ICalculator.sol";
-import { IOracleMiddleware } from "../oracles/interfaces/IOracleMiddleware.sol";
+import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+import { IOracleMiddleware } from "@hmx/oracles/interfaces/IOracleMiddleware.sol";
+import { ISwitchCollateralRouter } from "@hmx/extensions/switch-collateral/interfaces/ISwitchCollateralRouter.sol";
 
 /// @title ConfigStorage
 /// @notice storage contract to keep configs
@@ -49,6 +50,8 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   event LogDelistMarket(uint256 marketIndex);
   event LogAddOrUpdateHLPTokenConfigs(address _token, HLPTokenConfig _config, HLPTokenConfig _newConfig);
   event LogSetTradeServiceHooks(address[] oldHooks, address[] newHooks);
+  event LogSetSwitchCollateralRouter(address prevRouter, address newRouter);
+  event LogMinProfitDuration(uint256 indexed marketIndex, uint256 minProfitDuration);
 
   /**
    * Constants
@@ -90,8 +93,12 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
   MarketConfig[] public marketConfigs;
   AssetClassConfig[] public assetClassConfigs;
   address[] public tradeServiceHooks;
-
+  // Executors
   mapping(address => bool) public configExecutors;
+  // SwithCollateralRouter
+  address public switchCollateralRouter;
+  // Min Profit Duration by Market
+  mapping(uint256 marketIndex => uint256 minProfitDuration) public minProfitDurations;
 
   /**
    * Modifiers
@@ -488,6 +495,13 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     sglp = _sglp;
   }
 
+  /// @notice Set switch collateral router.
+  /// @param _newSwitchCollateralRouter The new switch collateral router.
+  function setSwitchCollateralRouter(address _newSwitchCollateralRouter) external onlyOwner {
+    emit LogSetSwitchCollateralRouter(switchCollateralRouter, _newSwitchCollateralRouter);
+    switchCollateralRouter = _newSwitchCollateralRouter;
+  }
+
   /// @notice add or update accepted tokens of HLP
   /// @dev This function only allows to add new token or update existing token,
   /// any attempt to remove token will be reverted.
@@ -610,6 +624,27 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     emit LogSetTradeServiceHooks(tradeServiceHooks, _newHooks);
 
     tradeServiceHooks = _newHooks;
+  }
+
+  function setMinProfitDurations(
+    uint256[] calldata _marketIndexs,
+    uint256[] calldata _minProfitDurations
+  ) external onlyOwner {
+    if (_marketIndexs.length != _minProfitDurations.length) revert IConfigStorage_BadArgs();
+
+    uint256 MAX_DURATION = 30 minutes;
+
+    for (uint256 i = 0; i < _marketIndexs.length; ) {
+      if (_minProfitDurations[i] > MAX_DURATION) revert IConfigStorage_MaxDurationForMinProfit();
+
+      minProfitDurations[_marketIndexs[i]] = _minProfitDurations[i];
+
+      emit LogMinProfitDuration(_marketIndexs[i], _minProfitDurations[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

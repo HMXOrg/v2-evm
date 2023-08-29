@@ -2,15 +2,21 @@ import { LimitTradeHandler__factory } from "../../../../typechain";
 import { Command } from "commander";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
+  const safeWrapper = new SafeWrapper(chainId, deployer);
 
-  console.log("> LimitTradeHandler: Set Limit Trade Helper...");
+  console.log("[configs/LimitTradeHandler] Set Limit Trade Helper...");
   const limitTradeHandler = LimitTradeHandler__factory.connect(config.handlers.limitTrade, deployer);
-  await (await limitTradeHandler.setLimitTradeHelper(config.helpers.limitTrade)).wait();
-  console.log("> LimitTradeHandler: Set Limit Trade Helper success!");
+  const tx = await safeWrapper.proposeTransaction(
+    limitTradeHandler.address,
+    0,
+    limitTradeHandler.interface.encodeFunctionData("setLimitTradeHelper", [config.helpers.limitTrade])
+  );
+  console.log(`[configs/LimitTradeHandler] Proposed tx: ${tx}`);
 }
 
 const prog = new Command();

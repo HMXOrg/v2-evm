@@ -77,6 +77,14 @@ contract TradeService_Hooks is TradeService_Base {
     ethMarketRewarder.feed(100 ether, 365 days);
 
     tlc.setMinter(address(tlcHook), true);
+
+    address[] memory whitelistedCallers = new address[](1);
+    whitelistedCallers[0] = address(tradeService);
+    bool[] memory isWhitelisteds = new bool[](1);
+    isWhitelisteds[0] = true;
+
+    tlcHook.setWhitelistedCallers(whitelistedCallers, isWhitelisteds);
+    tradingStakingHook.setWhitelistedCallers(whitelistedCallers, isWhitelisteds);
   }
 
   function testRevert_TradingStaking_UnknownMarketIndex() external {

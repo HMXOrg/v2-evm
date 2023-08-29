@@ -115,7 +115,8 @@ interface ICalculator {
     bool _isLong,
     uint256 _markPrice,
     uint256 _averagePrice,
-    uint256 _lastIncreaseTimestamp
+    uint256 _lastIncreaseTimestamp,
+    uint256 _marketIndex
   ) external view returns (bool, uint256);
 
   function getPendingBorrowingFeeE30() external view returns (uint256);

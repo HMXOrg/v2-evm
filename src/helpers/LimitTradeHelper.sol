@@ -13,12 +13,13 @@ contract LimitTradeHelper is Ownable {
   error LimitTradeHelper_MaxTradeSize();
   error LimitTradeHelper_MaxPositionSize();
 
-  event LogSetPositionSizeLimit(uint8 _assetClass, uint256 _positionSizeLimit, uint256 _tradeSizeLimit);
+  event LogSetLimit(uint256 _marketIndex, uint256 _positionSizeLimitOf, uint256 _tradeSizeLimitOf);
 
   ConfigStorage public configStorage;
   PerpStorage public perpStorage;
-  mapping(uint8 assetClass => uint256 sizeLimit) public positionSizeLimit;
-  mapping(uint8 assetClass => uint256 sizeLimit) public tradeSizeLimit;
+
+  mapping(uint256 marketIndex => uint256 sizeLimit) public positionSizeLimitOf;
+  mapping(uint256 marketIndex => uint256 sizeLimit) public tradeSizeLimitOf;
 
   constructor(address _configStorage, address _perpStorage) {
     configStorage = ConfigStorage(_configStorage);
@@ -34,33 +35,48 @@ contract LimitTradeHelper is Ownable {
     bool isRevert
   ) external view returns (bool) {
     address _subAccount = HMXLib.getSubAccount(mainAccount, subAccountId);
-    uint8 _assetClass = configStorage.getMarketConfigByIndex(marketIndex).assetClass;
     int256 _positionSizeE30 = perpStorage
       .getPositionById(HMXLib.getPositionId(_subAccount, marketIndex))
       .positionSizeE30;
 
-    if (tradeSizeLimit[_assetClass] > 0 && !reduceOnly && HMXLib.abs(sizeDelta) > tradeSizeLimit[_assetClass]) {
+    // Check trade size limit as per market
+    if (tradeSizeLimitOf[marketIndex] > 0 && !reduceOnly && HMXLib.abs(sizeDelta) > tradeSizeLimitOf[marketIndex]) {
       if (isRevert) revert LimitTradeHelper_MaxTradeSize();
       else return false;
     }
 
-    if (positionSizeLimit[_assetClass] > 0 && !reduceOnly) {
-      if (HMXLib.abs(_positionSizeE30 + sizeDelta) > positionSizeLimit[_assetClass]) {
-        if (isRevert) revert LimitTradeHelper_MaxPositionSize();
-        else return false;
-      }
+    // Check position size limit as per market
+    if (
+      positionSizeLimitOf[marketIndex] > 0 &&
+      !reduceOnly &&
+      HMXLib.abs(_positionSizeE30 + sizeDelta) > positionSizeLimitOf[marketIndex]
+    ) {
+      if (isRevert) revert LimitTradeHelper_MaxPositionSize();
+      else return false;
     }
+
     return true;
   }
 
-  function setPositionSizeLimit(
-    uint8 _assetClass,
-    uint256 _positionSizeLimit,
-    uint256 _tradeSizeLimit
+  function setLimit(
+    uint256[] calldata _marketIndexes,
+    uint256[] calldata _positionSizeLimits,
+    uint256[] calldata _tradeSizeLimits
   ) external onlyOwner {
-    emit LogSetPositionSizeLimit(_assetClass, _positionSizeLimit, _tradeSizeLimit);
-    // Not logging event to save gas
-    positionSizeLimit[_assetClass] = _positionSizeLimit;
-    tradeSizeLimit[_assetClass] = _tradeSizeLimit;
+    require(
+      _marketIndexes.length == _positionSizeLimits.length && _positionSizeLimits.length == _tradeSizeLimits.length,
+      "length not match"
+    );
+    uint256 _len = _marketIndexes.length;
+    for (uint256 i = 0; i < _len; ) {
+      positionSizeLimitOf[_marketIndexes[i]] = _positionSizeLimits[i];
+      tradeSizeLimitOf[_marketIndexes[i]] = _tradeSizeLimits[i];
+
+      emit LogSetLimit(_marketIndexes[i], _positionSizeLimits[i], _tradeSizeLimits[i]);
+
+      unchecked {
+        ++i;
+      }
+    }
   }
 }

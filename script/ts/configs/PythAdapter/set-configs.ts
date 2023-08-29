@@ -3,16 +3,22 @@ import { PythAdapter__factory } from "../../../../typechain";
 import { loadConfig } from "../../utils/config";
 import signers from "../../entities/signers";
 import { Command } from "commander";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("QQQ"),
-    pythPriceId: ethers.utils.formatBytes32String("QQQ"),
+    assetId: ethers.utils.formatBytes32String("DOGE"),
+    pythPriceId: ethers.utils.formatBytes32String("DOGE"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("XRP"),
-    pythPriceId: ethers.utils.formatBytes32String("XRP"),
+    assetId: ethers.utils.formatBytes32String("CAD"),
+    pythPriceId: ethers.utils.formatBytes32String("CAD"),
+    inverse: false,
+  },
+  {
+    assetId: ethers.utils.formatBytes32String("SGD"),
+    pythPriceId: ethers.utils.formatBytes32String("SGD"),
     inverse: false,
   },
 ];
@@ -20,16 +26,20 @@ const inputs = [
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
+  const safeWrapper = new SafeWrapper(chainId, deployer);
   const pythAdapter = PythAdapter__factory.connect(config.oracles.pythAdapter, deployer);
 
   console.log("[PythAdapter] Setting configs...");
-
-  const tx = await pythAdapter.setConfigs(
-    inputs.map((each) => each.assetId),
-    inputs.map((each) => each.pythPriceId),
-    inputs.map((each) => each.inverse)
+  const tx = await safeWrapper.proposeTransaction(
+    pythAdapter.address,
+    0,
+    pythAdapter.interface.encodeFunctionData("setConfigs", [
+      inputs.map((each) => each.assetId),
+      inputs.map((each) => each.pythPriceId),
+      inputs.map((each) => each.inverse),
+    ])
   );
-  console.log(`[PythAdapter] Tx: ${tx.hash}`);
+  console.log(`[PythAdapter] Tx: ${tx}`);
   console.log("[PythAdapter] Finished");
 }
 

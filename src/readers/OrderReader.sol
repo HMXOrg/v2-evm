@@ -64,7 +64,6 @@ contract OrderReader {
         vars.isInValidMarket[i] = true;
         continue;
       }
-      vars.isInValidMarket[i] = false;
     }
 
     vars.executableOrders = new ILimitTradeHandler.LimitOrder[](vars.endIndex - vars.startIndex);

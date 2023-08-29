@@ -395,7 +395,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   /// @notice Set new TradeHelper contract address.
   /// @param _tradeHelper New TradeHelper contract address.
   function setTradeHelper(address _tradeHelper) external nonReentrant onlyOwner {
-    if (_tradeHelper == address(0)) revert ITradeService_InvalidAddress();
+    if (_tradeHelper == address(0)) revert ICrossMarginService_InvalidAddress();
 
     emit LogSetTradeHelper(tradeHelper, _tradeHelper);
     tradeHelper = _tradeHelper;

@@ -776,7 +776,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
         _vars.accountInfo.subAccount,
         _vars.position,
         _vars.positionSizeE30ToDecrease,
-        _marketConfig.increasePositionFeeRateBPS,
+        _marketConfig.decreasePositionFeeRateBPS,
         _marketConfig.assetClass,
         _vars.marketIndex
       );

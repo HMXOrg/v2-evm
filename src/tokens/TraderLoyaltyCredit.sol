@@ -4,28 +4,10 @@
 
 pragma solidity 0.8.18;
 
-import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { ITraderLoyaltyCredit } from "@hmx/tokens/interfaces/ITraderLoyaltyCredit.sol";
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
-import { SafeERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
-  using SafeERC20Upgradeable for IERC20Upgradeable;
-  /**
-   * @dev Emitted when `value` tokens are moved from one account (`from`) to
-   * another (`to`).
-   *
-   * Note that `value` may be zero.
-   */
-  event Transfer(address indexed from, address indexed to, uint256 value);
-
-  /**
-   * @dev Emitted when the allowance of a `spender` for an `user` is set by
-   * a call to {approve}. `value` is the new allowance.
-   */
-  event Approval(address indexed user, address indexed spender, uint256 value);
-  event FeedReward(address indexed feeder, uint256 indexed epochTimestamp, uint256 rewardAmount);
-  event Claim(address indexed user, uint256 indexed epochTimestamp, uint256 userShare, uint256 rewardAmount);
   event SetMinter(address indexed minter, bool mintable);
 
   mapping(uint256 => mapping(address => uint256)) private _balances;
@@ -39,10 +21,10 @@ contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
   string private constant _symbol = "TLC";
   uint256 public constant epochLength = 1 weeks;
 
-  mapping(address => bool) minter;
+  mapping(address => bool) public minter;
 
   modifier onlyMinter() {
-    require(minter[msg.sender], "TLC: Not Minter");
+    if (!minter[msg.sender]) revert TLC_NotMinter();
     _;
   }
 
@@ -109,8 +91,7 @@ contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
    * - the caller must have a balance of at least `amount`.
    */
   function transfer(address to, uint256 amount) public returns (bool) {
-    address user = msg.sender;
-    _transfer(getCurrentEpochTimestamp(), user, to, amount);
+    _transfer(getCurrentEpochTimestamp(), msg.sender, to, amount);
     return true;
   }
 
@@ -195,7 +176,7 @@ contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
   function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
     address user = msg.sender;
     uint256 currentAllowance = allowance(user, spender);
-    require(currentAllowance >= subtractedValue, "TLC: decreased allowance below zero");
+    if (currentAllowance < subtractedValue) revert TLC_AllowanceBelowZero();
     unchecked {
       _approve(user, spender, currentAllowance - subtractedValue);
     }
@@ -218,13 +199,13 @@ contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
    * - `from` must have a balance of at least `amount`.
    */
   function _transfer(uint256 epochTimestamp, address from, address to, uint256 amount) internal {
-    require(from != address(0), "TLC: transfer from the zero address");
-    require(to != address(0), "TLC: transfer to the zero address");
+    if (from == address(0)) revert TLC_TransferFromZeroAddress();
+    if (to == address(0)) revert TLC_TransferToZeroAddress();
 
     _beforeTokenTransfer(from, to, amount);
 
     uint256 fromBalance = _balances[epochTimestamp][from];
-    require(fromBalance >= amount, "TLC: transfer amount exceeds balance");
+    if (fromBalance < amount) revert TLC_TransferAmountExceedsBalance();
     unchecked {
       _balances[epochTimestamp][from] = fromBalance - amount;
       // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
@@ -247,7 +228,7 @@ contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
    * - `account` cannot be the zero address.
    */
   function mint(address account, uint256 amount) external onlyMinter {
-    require(account != address(0), "TLC: mint to the zero address");
+    if (account == address(0)) revert TLC_MintToZeroAddress();
 
     _beforeTokenTransfer(address(0), account, amount);
 
@@ -277,12 +258,12 @@ contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
    * - `account` must have at least `amount` tokens.
    */
   function _burn(uint256 epochTimestamp, address account, uint256 amount) internal virtual {
-    require(account != address(0), "TLC: burn from the zero address");
+    if (account == address(0)) revert TLC_BurnFromZeroAddress();
 
     _beforeTokenTransfer(account, address(0), amount);
 
     uint256 accountBalance = _balances[epochTimestamp][account];
-    require(accountBalance >= amount, "TLC: burn amount exceeds balance");
+    if (accountBalance < amount) revert TLC_BurnAmountExceedsBalance();
     unchecked {
       _balances[epochTimestamp][account] = accountBalance - amount;
       // Overflow not possible: amount <= accountBalance <= totalSupply.
@@ -309,8 +290,8 @@ contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
    * - `spender` cannot be the zero address.
    */
   function _approve(address user, address spender, uint256 amount) internal {
-    require(user != address(0), "TLC: approve from the zero address");
-    require(spender != address(0), "TLC: approve to the zero address");
+    if (user == address(0)) revert TLC_ApproveFromZeroAddress();
+    if (spender == address(0)) revert TLC_ApproveToZeroAddress();
 
     _allowances[user][spender] = amount;
     emit Approval(user, spender, amount);
@@ -327,7 +308,7 @@ contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
   function _spendAllowance(address user, address spender, uint256 amount) internal {
     uint256 currentAllowance = allowance(user, spender);
     if (currentAllowance != type(uint256).max) {
-      require(currentAllowance >= amount, "TLC: insufficient allowance");
+      if (currentAllowance < amount) revert TLC_InsufficientAllowance();
       unchecked {
         _approve(user, spender, currentAllowance - amount);
       }
@@ -374,6 +355,10 @@ contract TraderLoyaltyCredit is OwnableUpgradeable, ITraderLoyaltyCredit {
     minter[_minter] = _mintable;
 
     emit SetMinter(_minter, _mintable);
+  }
+
+  function isMinter(address _minter) external view returns (bool) {
+    return minter[_minter];
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor

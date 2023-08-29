@@ -722,9 +722,9 @@ contract LimitTradeHandler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IL
 
     // Execute the order
     if (vars.order.reduceOnly) {
-      bool isCloseLong = (vars.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
-      bool isCloseShort = (vars.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
-      bool isClosePosition = !vars.isNewPosition && (isCloseLong || isCloseShort);
+      bool isDecreaseShort = (vars.sizeDelta > 0 && _existingPosition.positionSizeE30 < 0);
+      bool isDecreaseLong = (vars.sizeDelta < 0 && _existingPosition.positionSizeE30 > 0);
+      bool isClosePosition = !vars.isNewPosition && (isDecreaseShort || isDecreaseLong);
       if (isClosePosition) {
         _tradeService.decreasePosition({
           _account: vars.order.account,

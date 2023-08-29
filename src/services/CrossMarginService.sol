@@ -20,6 +20,7 @@ import { Calculator } from "@hmx/contracts/Calculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConvertedGlpStrategy } from "@hmx/strategies/ConvertedGlpStrategy.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 
 // Interfaces
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
@@ -57,6 +58,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 amountIn,
     uint256 amountOut
   );
+  event LogSetTradeHelper(address indexed oldTradeHelper, address newTradeHelper);
 
   /**
    * Structs
@@ -82,6 +84,7 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   address public perpStorage;
   /// @notice DEPRECATED.
   address public convertedSglpStrategy;
+  address public tradeHelper;
 
   /// @dev Initializes the CrossMarginService contract.
   /// @param _configStorage The address of the ConfigStorage contract.
@@ -233,12 +236,16 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     for (uint256 i = 0; i < len; ) {
       PerpStorage.Market memory _market = _perpStorage.getMarketByIndex(i);
 
-      // Only sum up the negative funding fee,
-      // (negative funding fee means trader will receive funding fee)
-      // we only care about negative funding fee here because
-      // we would like to know how much the protocol owed the traders,
-      // so that we will not withdraw too much funding fee surplus to the point that we can't pay the traders
-      if (_market.accumFundingLong < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
+      // Update funding rate of the market to the latest value
+      if (tradeHelper != address(0)) TradeHelper(tradeHelper).updateFundingRate(i);
+
+      if (_market.accumFundingLong < 0)
+        // Only sum up the negative funding fee,
+        // (negative funding fee means trader will receive funding fee)
+        // we only care about negative funding fee here because
+        // we would like to know how much the protocol owed the traders,
+        // so that we will not withdraw too much funding fee surplus to the point that we can't pay the traders
+        _vars.fundingFeeBookValue += uint256(-_market.accumFundingLong);
       if (_market.accumFundingShort < 0) _vars.fundingFeeBookValue += uint256(-_market.accumFundingShort);
 
       unchecked {
@@ -383,6 +390,18 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
 
     // Sanity check
     Calculator(_calculator).oracle();
+  }
+
+  /// @notice Set new TradeHelper contract address.
+  /// @param _tradeHelper New TradeHelper contract address.
+  function setTradeHelper(address _tradeHelper) external nonReentrant onlyOwner {
+    if (_tradeHelper == address(0)) revert ITradeService_InvalidAddress();
+
+    emit LogSetTradeHelper(tradeHelper, _tradeHelper);
+    tradeHelper = _tradeHelper;
+
+    // Sanity check
+    TradeHelper(_tradeHelper).perpStorage();
   }
 
   /**

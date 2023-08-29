@@ -9,6 +9,9 @@ import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 import { IPerpStorage } from "@hmx/storages/interfaces/IPerpStorage.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
+// libs
+import { SqrtX96Codec } from "@hmx/libraries/SqrtX96Codec.sol";
+import { TickMath } from "@hmx/libraries/TickMath.sol";
 
 contract OrderReader {
   IConfigStorage public configStorage;
@@ -28,6 +31,7 @@ contract OrderReader {
     bool[] isInValidMarket;
     ILimitTradeHandler.LimitOrder[] executableOrders;
     IConfigStorage.MarketConfig[] marketConfigs;
+    uint256[] prices;
     uint128 ordersCount;
     uint64 startIndex;
     uint64 endIndex;
@@ -36,8 +40,8 @@ contract OrderReader {
   function getExecutableOrders(
     uint64 _limit,
     uint64 _offset,
-    bytes32[] memory _assetIds,
-    uint64[] memory _prices
+    uint64[] memory _prices,
+    bool[] memory _shouldInverts
   ) external view returns (ILimitTradeHandler.LimitOrder[] memory) {
     ExecutableOrderVars memory vars;
     // get active orders
@@ -67,6 +71,12 @@ contract OrderReader {
       vars.isInValidMarket[i] = false;
     }
 
+    len = _prices.length;
+    vars.prices = new uint256[](len);
+    for (uint256 i = 0; i < len; i++) {
+      vars.prices[i] = _convertPrice(_prices[i], _shouldInverts[i]);
+    }
+
     vars.executableOrders = new ILimitTradeHandler.LimitOrder[](vars.endIndex - vars.startIndex);
     ILimitTradeHandler.LimitOrder memory _order;
     address _subAccount;
@@ -81,11 +91,7 @@ contract OrderReader {
         }
         // validate price
         if (
-          !_validateExecutableOrder(
-            _order.triggerPrice,
-            _order.triggerAboveThreshold,
-            _getPrice(vars.marketConfigs[_order.marketIndex].assetId, _assetIds, _prices)
-          )
+          !_validateExecutableOrder(_order.triggerPrice, _order.triggerAboveThreshold, vars.prices[_order.marketIndex])
         ) {
           continue;
         }
@@ -129,20 +135,16 @@ contract OrderReader {
     return keccak256(abi.encodePacked(_subAccount, _marketIndex));
   }
 
-  function _getPrice(
-    bytes32 _assetId,
-    bytes32[] memory _assetIds,
-    uint64[] memory _prices
-  ) internal pure returns (uint256) {
-    uint256 _len = _assetIds.length;
-    for (uint256 i; i < _len; ) {
-      if (_assetIds[i] == _assetId) {
-        return uint256(_prices[i]) * 1e22;
-      }
-      unchecked {
-        ++i;
-      }
-    }
-    return 0;
+  function _convertPrice(uint64 _priceE8, bool _shouldInvert) internal pure returns (uint256) {
+    uint160 _priceE18 = SqrtX96Codec.encode(uint(_priceE8) * 10 ** uint32(10));
+    int24 _tick = TickMath.getTickAtSqrtRatio(_priceE18);
+    uint160 _sqrtPriceX96 = TickMath.getSqrtRatioAtTick(_tick);
+    uint256 _spotPrice = SqrtX96Codec.decode(_sqrtPriceX96);
+    uint256 _priceE30 = _spotPrice * 1e12;
+
+    if (!_shouldInvert) return _priceE30;
+
+    if (_priceE30 == 0) return 0;
+    return 10 ** 60 / _priceE30;
   }
 }

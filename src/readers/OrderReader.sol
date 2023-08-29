@@ -11,10 +11,10 @@ import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 
 contract OrderReader {
-  IConfigStorage public configStorage;
-  ILimitTradeHandler public limitTradeHandler;
-  OracleMiddleware public oracleMiddleware;
-  IPerpStorage public perpStorage;
+  IConfigStorage public immutable configStorage;
+  ILimitTradeHandler public immutable limitTradeHandler;
+  OracleMiddleware public immutable oracleMiddleware;
+  IPerpStorage public immutable perpStorage;
 
   constructor(address _configStorage, address _perpStorage, address _oracleMiddleware, address _limitTradeHandler) {
     configStorage = IConfigStorage(_configStorage);

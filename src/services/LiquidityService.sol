@@ -375,7 +375,7 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
   /// @param _amount The amount of the token to collect as a fee.
   /// @param _feeBPS The fee percentage, represented as basis points.
   /// @param _action The liquidity action that triggered the fee collection.
-  /// @return _amountAfterFee The amount of tokens actually collected as a fee.
+  /// @return _amountAfterFee The amount of tokens after calculating fee.
   function _collectFee(
     address _token,
     address _account,
@@ -385,31 +385,28 @@ contract LiquidityService is OwnableUpgradeable, ReentrancyGuardUpgradeable, ILi
     LiquidityAction _action
   ) private returns (uint256 _amountAfterFee) {
     // SLOAD
-    uint256 _decimals = ConfigStorage(configStorage).getAssetTokenDecimal(_token);
+    address _configStorage = configStorage;
+    address _vaultStorage = vaultStorage;
+    uint256 _decimals = ConfigStorage(_configStorage).getAssetTokenDecimal(_token);
+    ConfigStorage.TradingConfig memory tradingConfig = ConfigStorage(_configStorage).getTradingConfig();
 
     // calculate and accounting fee collect amount
     uint256 _feeTokenAmount = (_amount * _feeBPS) / BPS;
-    VaultStorage(vaultStorage).addFee(_token, _feeTokenAmount);
+    uint256 _devFeeAmount = (_feeTokenAmount * tradingConfig.devFeeRateBPS) / BPS;
+    VaultStorage(_vaultStorage).addDevFee(_token, _devFeeAmount);
+    uint256 feeAfterDev = _feeTokenAmount - _devFeeAmount;
+    VaultStorage(_vaultStorage).addFee(_token, feeAfterDev);
 
     if (_action == LiquidityAction.SWAP) {
-      emit CollectSwapFee(_account, _token, (_feeTokenAmount * _tokenPriceUsd) / 10 ** _decimals, _feeTokenAmount);
+      emit CollectSwapFee(_account, _token, (feeAfterDev * _tokenPriceUsd) / 10 ** _decimals, feeAfterDev);
     } else if (_action == LiquidityAction.ADD_LIQUIDITY) {
-      emit CollectAddLiquidityFee(
-        _account,
-        _token,
-        (_feeTokenAmount * _tokenPriceUsd) / 10 ** _decimals,
-        _feeTokenAmount
-      );
+      emit CollectAddLiquidityFee(_account, _token, (feeAfterDev * _tokenPriceUsd) / 10 ** _decimals, feeAfterDev);
     } else if (_action == LiquidityAction.REMOVE_LIQUIDITY) {
-      emit CollectRemoveLiquidityFee(
-        _account,
-        _token,
-        (_feeTokenAmount * _tokenPriceUsd) / 10 ** _decimals,
-        _feeTokenAmount
-      );
+      emit CollectRemoveLiquidityFee(_account, _token, (feeAfterDev * _tokenPriceUsd) / 10 ** _decimals, feeAfterDev);
     }
 
-    return _amount - _feeTokenAmount;
+    // total amountOut does not change, only the fee distribution does, hence remain `_amount - feeTokenAmount`
+    _amountAfterFee = _amount - _feeTokenAmount;
   }
 
   function _validateHLPHealthCheck(address _token) private view {

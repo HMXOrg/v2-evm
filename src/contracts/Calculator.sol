@@ -75,13 +75,17 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     // SLOAD
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
-    // hlpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee
+    // hlpAUM = value of all asset + pnlShort + pnlLong + pendingBorrowingFee + fundingFeeDebt
     uint256 pendingBorrowingFeeE30 = _getPendingBorrowingFeeE30();
     uint256 borrowingFeeDebt = _vaultStorage.globalBorrowingFeeDebt();
     int256 pnlE30 = _getGlobalPNLE30();
 
     uint256 lossDebt = _vaultStorage.globalLossDebt();
-    uint256 aum = _getHLPValueE30(_isMaxPrice) + pendingBorrowingFeeE30 + borrowingFeeDebt + lossDebt;
+    uint256 aum = _getHLPValueE30(_isMaxPrice) +
+      pendingBorrowingFeeE30 +
+      borrowingFeeDebt +
+      lossDebt +
+      _vaultStorage.hlpLiquidityDebtUSDE30();
 
     if (pnlE30 < 0) {
       uint256 _pnl = uint256(-pnlE30);

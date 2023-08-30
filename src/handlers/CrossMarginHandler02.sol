@@ -114,11 +114,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   /// @param _crossMarginService Address of the CrossMarginService contract.
   /// @param _pyth Address of the Pyth contract.
   /// @param _minExecutionOrderFee Minimum execution fee for a withdrawal order.
-  function initialize(
-    address _crossMarginService,
-    address _pyth,
-    uint256 _minExecutionOrderFee,
-  ) external initializer {
+  function initialize(address _crossMarginService, address _pyth, uint256 _minExecutionOrderFee) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
 
@@ -130,63 +126,6 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     pyth = _pyth;
     minExecutionOrderFee = _minExecutionOrderFee;
   }
-
-  // function getActiveWithdrawOrders(
-  //   uint256 _limit,
-  //   uint256 _offset
-  // ) external view returns (WithdrawOrder[] memory _withdrawOrder) {
-  //   // // Find the _returnCount
-  //   // uint256 _returnCount;
-  //   // {
-  //   //   uint256 _activeOrderCount = withdrawOrders.length - nextExecutionOrderIndex;
-  //   //   uint256 _afterOffsetCount = _activeOrderCount > _offset ? (_activeOrderCount - _offset) : 0;
-  //   //   _returnCount = _afterOffsetCount > _limit ? _limit : _afterOffsetCount;
-  //   //   if (_returnCount == 0) return _withdrawOrder;
-  //   // }
-  //   // // Initialize order array
-  //   // _withdrawOrder = new WithdrawOrder[](_returnCount);
-  //   // // Build the array
-  //   // {
-  //   //   for (uint i = 0; i < _returnCount; ) {
-  //   //     _withdrawOrder[i] = withdrawOrders[nextExecutionOrderIndex + _offset + i];
-  //   //     unchecked {
-  //   //       ++i;
-  //   //     }
-  //   //   }
-  //   //   return _withdrawOrder;
-  //   // }
-  //   _withdrawOrder = new WithdrawOrder[](1);
-  // }
-
-  // function getExecutedWithdrawOrders(
-  //   address _subAccount,
-  //   uint256 _limit,
-  //   uint256 _offset
-  // ) external view returns (WithdrawOrder[] memory _withdrawOrder) {
-  //   // Find the _returnCount and
-  //   uint256 _returnCount;
-  //   {
-  //     uint256 _exeuctedOrderCount = subAccountExecutedWithdrawOrders[_subAccount].length;
-  //     uint256 _afterOffsetCount = _exeuctedOrderCount > _offset ? (_exeuctedOrderCount - _offset) : 0;
-  //     _returnCount = _afterOffsetCount > _limit ? _limit : _afterOffsetCount;
-
-  //     if (_returnCount == 0) return _withdrawOrder;
-  //   }
-
-  //   // Initialize order array
-  //   _withdrawOrder = new WithdrawOrder[](_returnCount);
-
-  //   // Build the array
-  //   {
-  //     for (uint i = 0; i < _returnCount; ) {
-  //       _withdrawOrder[i] = subAccountExecutedWithdrawOrders[_subAccount][_offset + i];
-  //       unchecked {
-  //         ++i;
-  //       }
-  //     }
-  //     return _withdrawOrder;
-  //   }
-  // }
 
   /**
    * Modifiers
@@ -323,6 +262,73 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     );
   }
 
+  /// @notice Executes a single withdraw order by transferring the specified amount of collateral token to the user's wallet.
+  /// @param _order WithdrawOrder struct representing the order to execute.
+  function executeWithdrawOrder(WithdrawOrder memory _order) external {
+    // if not in executing state, then revert
+    if (msg.sender != address(this)) revert ICrossMarginHandler_Unauthorized();
+    if (
+      _order.shouldUnwrap &&
+      _order.token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()
+    ) revert ICrossMarginHandler_NotWNativeToken();
+
+    // Call service to withdraw collateral
+    if (_order.shouldUnwrap) {
+      // Withdraw wNative straight to this contract first.
+      _order.crossMarginService.withdrawCollateral(
+        _order.account,
+        _order.subAccountId,
+        _order.token,
+        _order.amount,
+        address(this)
+      );
+      _transferOutEth(_order.amount, _order.account);
+    } else {
+      // Withdraw _token straight to the user
+      _order.crossMarginService.withdrawCollateral(
+        _order.account,
+        _order.subAccountId,
+        _order.token,
+        _order.amount,
+        _order.account
+      );
+    }
+
+    emit LogWithdrawCollateral(_order.account, _order.subAccountId, _order.token, _order.amount);
+  }
+
+  /// @notice Cancels the specified withdraw order.
+  /// @param _orderIndex Index of the order to cancel.
+  function cancelWithdrawOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
+    address subAccount = HMXLib.getSubAccount(msg.sender, _subAccountId);
+
+    // SLOAD
+    WithdrawOrder memory _order = withdrawOrders[subAccount][_orderIndex];
+    // Check if this order still exists
+    if (_order.account == address(0)) revert ICrossMarginHandler_NonExistentOrder();
+    // validate if msg.sender is not owned the order, then revert
+    if (msg.sender != _order.account) revert ICrossMarginHandler_NotOrderOwner();
+
+    _removeOrder(subAccount, _orderIndex);
+
+    // refund the _order.executionFee
+    _transferOutETH(_order.executionFee, msg.sender);
+
+    emit LogCancelWithdrawOrder(
+      payable(msg.sender),
+      _order.subAccountId,
+      _orderIndex,
+      _order.token,
+      _order.amount,
+      _order.executionFee,
+      _order.shouldUnwrap
+    );
+  }
+
+  /**
+   * Internals
+   */
+
   function _executeOrders(
     address[] memory _accounts,
     uint8[] memory _subAccountIds,
@@ -403,6 +409,14 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     subAccountActiveOrderPointers[_subAccount].add(_pointer);
   }
 
+  function _removeOrder(address _subAccount, uint256 _orderIndex) internal {
+    delete withdrawOrders[_subAccount][_orderIndex];
+
+    uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
+    activeOrderPointers.remove(_pointer);
+    subAccountActiveOrderPointers[_subAccount].remove(_pointer);
+  }
+
   function _handleOrderFail(ExecuteOrderVars memory vars, bytes memory errMsg, bool _isRevert) internal {
     if (_isRevert) {
       require(false, string(errMsg));
@@ -420,79 +434,36 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     }
   }
 
-  function _encodePointer(address _account, uint96 _index) internal pure returns (uint256 _pointer) {
-    return uint256(bytes32(abi.encodePacked(_account, _index)));
-  }
-
-  /// @notice Executes a single withdraw order by transferring the specified amount of collateral token to the user's wallet.
-  /// @param _order WithdrawOrder struct representing the order to execute.
-  function executeWithdrawOrder(WithdrawOrder memory _order) external {
-    // if not in executing state, then revert
-    if (msg.sender != address(this)) revert ICrossMarginHandler_Unauthorized();
-    if (
-      _order.shouldUnwrap &&
-      _order.token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()
-    ) revert ICrossMarginHandler_NotWNativeToken();
-
-    // Call service to withdraw collateral
-    if (_order.shouldUnwrap) {
-      // Withdraw wNative straight to this contract first.
-      _order.crossMarginService.withdrawCollateral(
-        _order.account,
-        _order.subAccountId,
-        _order.token,
-        _order.amount,
-        address(this)
-      );
-      _transferOutEth(_order.amount, _order.account);
-    } else {
-      // Withdraw _token straight to the user
-      _order.crossMarginService.withdrawCollateral(
-        _order.account,
-        _order.subAccountId,
-        _order.token,
-        _order.amount,
-        _order.account
-      );
+  function _getOrders(
+    EnumerableSet.UintSet storage _pointers,
+    uint256 _limit,
+    uint256 _offset
+  ) internal view returns (WithdrawOrder[] memory _orders) {
+    uint256 _len = _pointers.length();
+    uint256 _startIndex = _offset;
+    uint256 _endIndex = _offset + _limit;
+    if (_startIndex > _len) return _orders;
+    if (_endIndex > _len) {
+      _endIndex = _len;
     }
 
-    emit LogWithdrawCollateral(_order.account, _order.subAccountId, _order.token, _order.amount);
+    _orders = new WithdrawOrder[](_endIndex - _startIndex);
+
+    for (uint256 i = _startIndex; i < _endIndex; ) {
+      (address _account, uint96 _index) = _decodePointer(_pointers.at(i));
+      WithdrawOrder memory _order = withdrawOrders[_account][_index];
+
+      _orders[i - _offset] = _order;
+      unchecked {
+        ++i;
+      }
+    }
+
+    return _orders;
   }
 
-  /// @notice Cancels the specified withdraw order.
-  /// @param _orderIndex Index of the order to cancel.
-  function cancelWithdrawOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
-    address subAccount = HMXLib.getSubAccount(msg.sender, _subAccountId);
-
-    // SLOAD
-    WithdrawOrder memory _order = withdrawOrders[subAccount][_orderIndex];
-    // Check if this order still exists
-    if (_order.account == address(0)) revert ICrossMarginHandler_NonExistentOrder();
-    // validate if msg.sender is not owned the order, then revert
-    if (msg.sender != _order.account) revert ICrossMarginHandler_NotOrderOwner();
-
-    _removeOrder(subAccount, _orderIndex);
-
-    // refund the _order.executionFee
-    _transferOutETH(_order.executionFee, msg.sender);
-
-    emit LogCancelWithdrawOrder(
-      payable(msg.sender),
-      _order.subAccountId,
-      _orderIndex,
-      _order.token,
-      _order.amount,
-      _order.executionFee,
-      _order.shouldUnwrap
-    );
-  }
-
-  function _removeOrder(address _subAccount, uint256 _orderIndex) internal {
-    delete withdrawOrders[_subAccount][_orderIndex];
-
-    uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
-    activeOrderPointers.remove(_pointer);
-    subAccountActiveOrderPointers[_subAccount].remove(_pointer);
+  function _encodePointer(address _account, uint96 _index) internal pure returns (uint256 _pointer) {
+    return uint256(bytes32(abi.encodePacked(_account, _index)));
   }
 
   /**
@@ -508,6 +479,17 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   /// @notice get withdraw orders length
   function getWithdrawOrderLength() external view returns (uint256) {
     // return withdrawOrders.length;
+  }
+
+  function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (WithdrawOrder[] memory _orders) {
+    return _getOrders(activeOrderPointers, _limit, _offset);
+  }
+
+  function getAllExecutedOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _orders) {
+    return _getOrders(executedOrderPointers, _limit, _offset);
   }
 
   /**

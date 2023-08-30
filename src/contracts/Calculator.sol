@@ -70,7 +70,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return HLP Value in E30 format
+  /// @return aum HLP Value in E30 format
   function getAUME30(bool _isMaxPrice) external view returns (uint256 aum) {
     // SLOAD
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
@@ -169,7 +169,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @param _underlyingAssetId the underlying asset id, the one we want to find the value
   /// @param _configStorage config storage
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return HLP Value
+  /// @return value HLP Value
   function _getHLPUnderlyingAssetValueE30(
     bytes32 _underlyingAssetId,
     ConfigStorage _configStorage,

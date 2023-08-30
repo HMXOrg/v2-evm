@@ -18,6 +18,8 @@ interface ICrossMarginHandler {
   error ICrossMarginHandler_NotWNativeToken();
   error ICrossMarginHandler_Unauthorized();
   error ICrossMarginHandler_BadAmount();
+  error ICrossMarginHandler_InvalidArraySize();
+  error ICrossMarginHandler_NonExistentOrder();
 
   /**
    * Structs
@@ -29,7 +31,7 @@ interface ICrossMarginHandler {
   }
 
   struct WithdrawOrder {
-    uint256 orderId;
+    uint256 orderIndex;
     uint256 amount;
     uint256 executionFee;
     uint48 createdTimestamp;

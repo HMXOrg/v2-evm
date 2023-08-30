@@ -140,14 +140,14 @@ contract TC30 is BaseIntTest_WithActions {
     {
       address _usdc = address(usdc);
       assertHLPLiquidity(_usdc, 19840.4960000 * 1e6);
-      assertEq(vaultStorage.protocolFees(_usdc), 160.004 * 1e6, "Vault's Fee USDC is not matched");
+      assertEq(vaultStorage.protocolFees(_usdc), (160.004 * 9000 * 1e6) / 1e4, "Vault's Fee USDC is not matched");
     }
 
     //assert BTC
     {
       address _wbtc = address(wbtc);
       assertHLPLiquidity(_wbtc, 1.49665 * 1e8);
-      assertEq(vaultStorage.protocolFees(_wbtc), 0.00335 * 1e8, "Vault's Fee WBTC is not matched");
+      assertEq(vaultStorage.protocolFees(_wbtc), (0.00335 * 1e8 * 9000) / 1e4, "Vault's Fee WBTC is not matched");
     }
 
     // assert FEEVER
@@ -292,7 +292,7 @@ contract TC30 is BaseIntTest_WithActions {
       assertTokenBalanceOf(ALICE, _wbtc, 1.48707144 * 1e8);
       //bob remove liquidity in usdc only
       assertTokenBalanceOf(BOB, _wbtc, 0);
-      assertEq(vaultStorage.protocolFees(_wbtc), 0.01292856 * 1e8, "Vault's Fee WBTC is not matched");
+      assertEq(vaultStorage.protocolFees(_wbtc), 0.01163571 * 1e8, "Vault's Fee WBTC is not matched"); // due to the precision, hence the value mismatched a bit, rounding to the exact val. from (0.01292856 * 1e8 * 9000) / 1e4 to 1163571
     }
 
     //assert usdc
@@ -300,7 +300,7 @@ contract TC30 is BaseIntTest_WithActions {
       address _usdc = address(usdc);
       assertTokenBalanceOf(ALICE, _usdc, 9_847 * 1e6);
       assertTokenBalanceOf(BOB, _usdc, 9_993.496 * 1e6);
-      assertEq(vaultStorage.protocolFees(_usdc), 160.004 * 1e6, "Vault's Fee USDC is not matched");
+      assertEq(vaultStorage.protocolFees(_usdc), (160.004 * 1e6 * 9000) / 1e4, "Vault's Fee USDC is not matched");
     }
   }
 }

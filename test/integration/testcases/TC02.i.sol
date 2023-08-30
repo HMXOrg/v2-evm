@@ -57,7 +57,13 @@ contract TC02 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  = 0 + 0.003 = 0.00309563 btc
 
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T1: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: (0.003 * 1e8 * 9000) / 1e4,
+        _devFee: 0.003 * 1e7,
+        _fundingFeeReserve: 0,
+        _str: "T1: "
+      });
 
       // Finally after Bob add liquidity Vault balance should be correct
       // note: token balance is including all liquidity, dev fee and protocol fee
@@ -90,7 +96,13 @@ contract TC02 is BaseIntTest_WithActions {
 
       // And Alice should not pay any fee
       // note: vault's fees should be same with T1
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T2: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: (0.003 * 1e8 * 9000) / 1e4,
+        _devFee: 0.003 * 1e7,
+        _fundingFeeReserve: 0,
+        _str: "T2: "
+      });
     }
 
     // time passed for 60 seconds
@@ -204,8 +216,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.997 btc
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00301275 * 1e8,
-        _devFee: 0.00000225 * 1e8,
+        _fee: 0.00271215 * 1e8,
+        _devFee: 0.0003015 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T4: "
       });
@@ -410,8 +422,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Assert Vault
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00301913 * 1e8,
-        _devFee: 0.00000337 * 1e8,
+        _fee: 0.00271890 * 1e8,
+        _devFee: 0.00030225 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T6: "
       });
@@ -545,8 +557,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.99662501 btc
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00309563 * 1e8,
-        _devFee: 0.00001687 * 1e8,
+        _fee: 0.0027999 * 1e8,
+        _devFee: 0.00031125 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T7: "
       });
@@ -744,8 +756,8 @@ contract TC02 is BaseIntTest_WithActions {
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00317213 * 1e8,
-        _devFee: 0.00003038 * 1e8,
+        _fee: 0.0028809 * 1e8,
+        _devFee: 0.00032026 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T8: "
       });
@@ -935,8 +947,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.01 btc
 
       // Vault's fees before settle payment
-      //    BTC - protocol fee  = 0.00317213 btc
-      //        - dev fee       = 0.00003038 btc
+      //    BTC - protocol fee  = 0.0028809 btc
+      //        - dev fee       = 0.00032026 btc
 
       // HLP's liquidity before settle payment
       //    BTC - 0.99572425 btc
@@ -945,9 +957,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Bob has to pay
       //    Trading fee   - 3 USD
       //      BTC - 3 / 17500               = 0.00017142 btc
-      //          - pay for dev (15%)       = 0.00002571 btc
-      //          - pay for protocol (85%)  = 0.00017142 - 0.00002571
-      //                                    = 0.00014571 btc
+      //          - pay for dev (10%)       = 0.00001714 btc
+      //          - pay for protocol (90%)  = 0.00015428
 
       // And HLP has to pay
       //     nothing
@@ -958,13 +969,13 @@ contract TC02 is BaseIntTest_WithActions {
       assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.00982858 * 1e8, "T12: ");
 
       // Vault's fees after settle payment
-      //    BTC - protocol fee  = 0.00317213 + 0.00014571 = 0.00331784 btc
-      //        - dev fee       = 0.00003038 + 0.00002571 = 0.00005609 btc
+      //    BTC - protocol fee  = 0.0028809 + 0.00015428 = 0.00303518 btc
+      //        - dev fee       = 0.00032026 + 0.00001714 = 0.0003374 btc
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00331784 * 1e8,
-        _devFee: 0.00005609 * 1e8,
+        _fee: 0.00303518 * 1e8,
+        _devFee: 0.0003374 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T12: "
       });
@@ -1148,8 +1159,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.00982858 btc
 
       // Vault's fees before settle payment
-      //    BTC - protocol fee  = 0.00331784 btc
-      //        - dev fee       = 0.00005609 btc
+      //    BTC - protocol fee  = 0.00303518 btc
+      //        - dev fee       = 0.0003374 btc
 
       // HLP's liquidity before settle payment
       //    BTC - 0.99572425 btc
@@ -1158,14 +1169,12 @@ contract TC02 is BaseIntTest_WithActions {
       // Bob has to pay
       //    Trading fee - 3 USD
       //      BTC - 3 / 18900.01                    = 0.00015873 btc
-      //          - pay for dev (15%)               = 0.00002380 btc
-      //          - pay for protocol (85%)          = 0.00015873 - 0.00002380
-      //                                            = 0.00013493 btc
+      //          - pay for dev (10%)               = 0.00001587 btc
+      //          - pay for protocol (90%)          = 0.00014286
       //    Borrowing fee - 0.02440433326798917 USD
       //      BTC - 0.02440433326798917 / 18900.01  = 0.00000129 btc
-      //          - pay for dev (15%)               = 0.00000019 btc
-      //          - pay for HLP (85%)               = 0.00000129 - 0.00000019
-      //                                            = 0.0000011
+      //          - pay for dev (10%)               = 0.00000012 btc
+      //          - pay for HLP (90%)               = 0.00000117
       //    Funding fee - 0.00072 USD
       //      BTC - 0.00072 / 18900.01              = 0.00000003 btc
       //          - pay for funding fee (100%)      = 0.00000003 btc
@@ -1182,14 +1191,14 @@ contract TC02 is BaseIntTest_WithActions {
       assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.01760503 * 1e8, "T15: ");
 
       // Vault's fees after settle payment
-      //    BTC - protocol fee  = 0.00331784 + 0.00013493              = 0.00345277 btc
-      //        - dev fee       = 0.00005609 + 0.00002380 + 0.00000019 = 0.00008008 btc
+      //    BTC - protocol fee  = 0.00303518 + 0.00014286              = 0.00317804 btc
+      //        - dev fee       = 0.0003374 + 0.00001587 + 0.00000012  = 0.00035339 btc
       //        - funding fee   = 0.00000014 + 0.00000003              = 0.00000017 btc
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00345277 * 1e8,
-        _devFee: 0.00008008 * 1e8,
+        _fee: 0.00317804 * 1e8,
+        _devFee: 0.00035339 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T15: "
       });
@@ -1364,8 +1373,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.01760503 btc
 
       // Vault's fees before settle payment
-      //    BTC - protocol fee  = 0.00345277 btc
-      //        - dev fee       = 0.00008008 btc
+      //    BTC - protocol fee  = 0.00317804 btc
+      //        - dev fee       = 0.00035339 btc
       //        - funding fee   = 0.00000017 btc
 
       // HLP's liquidity before settle payment
@@ -1375,9 +1384,8 @@ contract TC02 is BaseIntTest_WithActions {
       // Bob has to pay
       //    Trading fee - 3 USD
       //      BTC - 3 / 21500                    = 0.00013953 btc
-      //          - pay for dev (15%)            = 0.00002092 btc
-      //          - pay for protocol (85%)       = 0.00013953 - 0.00002092
-      //                                         = 0.00011861 btc
+      //          - pay for dev (10%)            = 0.00001395 btc
+      //          - pay for protocol (90%)       = 0.00012558
 
       // And HLP has to pay
       //    nothing
@@ -1389,14 +1397,14 @@ contract TC02 is BaseIntTest_WithActions {
       assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.01746550 * 1e8, "T17: ");
 
       // Vault's fees after settle payment
-      //    BTC - protocol fee  = 0.00345277 + 0.00011861 = 0.00357138 btc
-      //        - dev fee       = 0.00008008 + 0.00002092 = 0.00010100 btc
+      //    BTC - protocol fee  = 0.00317804 + 0.00012558 = 0.00330362 btc
+      //        - dev fee       = 0.00035339 + 0.00001395 = 0.00036734 btc
       //        - funding fee   = 0.00000017              = 0.00000017 btc
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00357138 * 1e8,
-        _devFee: 0.00010100 * 1e8,
+        _fee: 0.00330362 * 1e8,
+        _devFee: 0.00036734 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T17: "
       });
@@ -1591,8 +1599,8 @@ contract TC02 is BaseIntTest_WithActions {
       //    BTC - 0.01746550 btc
 
       // Vault's fees before settle payment
-      //    BTC - protocol fee  = 0.00331784 btc
-      //        - dev fee       = 0.00005609 btc
+      //    BTC - protocol fee  = 0.00330362 btc
+      //        - dev fee       = 0.00036734 btc
 
       // HLP's liquidity before settle payment
       //    BTC - 0.98778885 btc
@@ -1601,14 +1609,12 @@ contract TC02 is BaseIntTest_WithActions {
       // Bob has to pay
       //    Trading fee - 3 USD
       //      BTC - 3 / 17500                       = 0.00017142 btc
-      //          - pay for dev (15%)               = 0.00002571 btc
-      //          - pay for protocol (85%)          = 0.00017142 - 0.00002571
-      //                                            = 0.00014571 btc
+      //          - pay for dev (10%)               = 0.00001714 btc
+      //          - pay for protocol (90%)          = 0.00015428
       //    Borrowing fee - 0.02656843109739486 USD
       //      BTC - 0.02656843109739486 / 17500     = 0.00000151 btc
-      //          - pay for dev (15%)               = 0.00000022 btc
-      //          - pay for HLP (85%)               = 0.00000151 - 0.00000022
-      //                                            = 0.00000129 btc
+      //          - pay for dev (10%)               = 0.00000015 btc
+      //          - pay for HLP (90%)               = 0.00000136
       //    Funding fee - 0.00072 USD
       //      BTC - 0.00072 / 17500                 = 0.00000004 btc
       //          - pay for funding fee (100%)      = 0.00000004 btc
@@ -1624,14 +1630,14 @@ contract TC02 is BaseIntTest_WithActions {
       assertSubAccountTokenBalance(_bobSubAccount0, address(wbtc), true, 0.03272110 * 1e8, "T19: ");
 
       // Vault's fees after settle payment
-      //    BTC - protocol fee  = 0.00357138 + 0.00014571              = 0.00371709 btc
-      //        - dev fee       = 0.00010100 + 0.00002571 + 0.00000022 = 0.00012693 btc
+      //    BTC - protocol fee  = 0.00330362 + 0.00015428              = 0.0034579 btc
+      //        - dev fee       = 0.00036734 + 0.00001714 + 0.00000015 = 0.00038463 btc
       //        - funding fee   = 0.00000017 + 0.00000004              = 0.00000021 btc
 
       assertVaultsFees({
         _token: address(wbtc),
-        _fee: 0.00371709 * 1e8,
-        _devFee: 0.00012693 * 1e8,
+        _fee: 0.0034579 * 1e8,
+        _devFee: 0.00038463 * 1e8,
         _fundingFeeReserve: 0,
         _str: "T19: "
       });

@@ -88,11 +88,6 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   }
 
   /**
-   * Constants
-   */
-  uint64 internal constant RATE_PRECISION = 1e18;
-
-  /**
    * States
    */
   address public crossMarginService;

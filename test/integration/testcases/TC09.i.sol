@@ -100,12 +100,7 @@ contract TC09 is BaseIntTest_WithActions {
        */
       address aliceSubAccount1 = getSubAccount(ALICE, 0);
       assertSubAccountTokenBalance(ALICE, address(wbtc), true, 1213266);
-      assertVaultsFees(
-        address(wbtc),
-        protocolFeesBefore + (0.00135 * 1e8),
-        devFeesBefore + (0.00015731 * 1e8) + 6583,
-        0
-      ); // Have no idea where this 6583 comes from. TO DO.
+      assertVaultsFees(address(wbtc), protocolFeesBefore + (0.00135 * 1e8), 300000 + 15001 + 5000 + 15001 + 7313, 0); // calculate 2 times for tradingFee
       assertHLPLiquidity(address(wbtc), hlpLiquidityBefore + 0.03383251 * 1e8);
       assertSubAccountTokenBalance(BOT, address(wbtc), true, 0.00025 * 1e8);
       assertNumberOfPosition(aliceSubAccount1, 0);

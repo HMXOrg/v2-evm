@@ -85,12 +85,19 @@ async function main(chainId: number) {
   const safeWrapper = new SafeWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
-  console.log("[ConfigStorage] Adding new market config...");
+  console.log("[configs/ConfigStorage] Adding new market config...");
   for (let i = 0; i < marketConfigs.length; i++) {
-    console.log(`[ConfigStorage] Adding ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`);
-    await (await configStorage.addMarketConfig(marketConfigs[i])).wait();
+    console.log(
+      `[configs/ConfigStorage] Adding ${ethers.utils.parseBytes32String(marketConfigs[i].assetId)} market config...`
+    );
+    const tx = await safeWrapper.proposeTransaction(
+      configStorage.address,
+      0,
+      configStorage.interface.encodeFunctionData("addMarketConfig", [marketConfigs[i]])
+    );
+    console.log(`[configs/ConfigStorage] Tx: ${tx}`);
   }
-  console.log("[ConfigStorage] Finished");
+  console.log("[configs/ConfigStorage] Finished");
 }
 
 const prog = new Command();

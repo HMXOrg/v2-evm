@@ -6,14 +6,13 @@ import { Command } from "commander";
 import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const ASSET_IDS = [
-  ethers.utils.formatBytes32String("DOGEUSD"),
-  ethers.utils.formatBytes32String("USDCAD"),
-  ethers.utils.formatBytes32String("USDSGD"),
+  ethers.utils.formatBytes32String("DOGE"),
+  ethers.utils.formatBytes32String("CAD"),
+  ethers.utils.formatBytes32String("SGD"),
 ];
 
 async function main(chainId: number) {
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
   const config = loadConfig(chainId);
   const safeWrappar = new SafeWrapper(chainId, deployer);
 

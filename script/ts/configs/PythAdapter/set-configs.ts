@@ -8,17 +8,17 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 const inputs = [
   {
     assetId: ethers.utils.formatBytes32String("DOGE"),
-    pythPriceId: ethers.utils.formatBytes32String("DOGEUSD"),
+    pythPriceId: ethers.utils.formatBytes32String("DOGE"),
     inverse: false,
   },
   {
     assetId: ethers.utils.formatBytes32String("CAD"),
-    pythPriceId: ethers.utils.formatBytes32String("USDCAD"),
+    pythPriceId: ethers.utils.formatBytes32String("CAD"),
     inverse: false,
   },
   {
     assetId: ethers.utils.formatBytes32String("SGD"),
-    pythPriceId: ethers.utils.formatBytes32String("USDSGD"),
+    pythPriceId: ethers.utils.formatBytes32String("SGD"),
     inverse: false,
   },
 ];

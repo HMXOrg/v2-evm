@@ -10,17 +10,13 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
 
-  const inputs = [
-    { marketIndex: 27, minProfitDuration: 300 },
-    { marketIndex: 28, minProfitDuration: 60 },
-    { marketIndex: 29, minProfitDuration: 60 },
-  ];
+  const inputs = [{ marketIndex: 13, minProfitDuration: 300 }];
 
   const safeWrapper = new SafeWrapper(chainId, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
   const owner = await configStorage.owner();
 
-  console.log("[ConfigStorage] Set Min Profit Duration by Market Index...");
+  console.log("[configs/ConfigStorage] Set Min Profit Duration by Market Index...");
   if (compareAddress(owner, safeWrapper.getAddress())) {
     const tx = await safeWrapper.proposeTransaction(
       configStorage.address,
@@ -30,17 +26,15 @@ async function main(chainId: number) {
         inputs.map((each) => each.minProfitDuration),
       ])
     );
-    console.log(`[ConfigStorage] Tx: ${tx}`);
+    console.log(`[configs/ConfigStorage] Proposed Tx: ${tx}`);
   } else {
     const tx = await configStorage.setMinProfitDurations(
       inputs.map((each) => each.marketIndex),
       inputs.map((each) => each.minProfitDuration)
     );
-    console.log(`[ConfigStorage] Tx: ${tx}`);
+    console.log(`[config/ConfigStorage] Tx: ${tx}`);
     await tx.wait();
   }
-
-  console.log("[ConfigStorage] Finished");
 }
 
 const prog = new Command();

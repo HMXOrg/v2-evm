@@ -847,7 +847,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
       _vars.globalState = _vars.perpStorage.getGlobalState();
       _vars.assetClass = _vars.perpStorage.getAssetClassByIndex(_marketConfig.assetClass);
 
-      // update global storage by removing the reserveValueE30 of the position first
+      // Update global storage by removing the reserveValueE30 of the position first
       _vars.globalState.reserveValueE30 -= _vars.position.reserveValueE30;
       _vars.assetClass.reserveValueE30 -= _vars.position.reserveValueE30;
 

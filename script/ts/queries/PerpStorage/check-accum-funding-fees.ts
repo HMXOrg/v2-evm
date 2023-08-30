@@ -20,6 +20,7 @@ async function main() {
 
   const numberOfMarkets = 24;
   const result = [];
+  let totalFundingFee = BigNumber.from(0);
   for (let i = 0; i < numberOfMarkets; i++) {
     const inputs = [
       {
@@ -62,6 +63,8 @@ async function main() {
       const fundingFee = getFundingFee(each.positionSizeE30, newFundingAccrued, each.lastFundingAccrued);
       allFundingFee = allFundingFee.add(fundingFee);
     });
+
+    totalFundingFee = totalFundingFee.add(accumFundingLong).add(accumFundingShort);
 
     result.push({
       market: i,

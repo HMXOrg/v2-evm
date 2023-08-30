@@ -7,6 +7,7 @@ import { ecoPythPriceFeedIdsByIndex } from "../../constants/eco-pyth-index";
 import chains from "../../entities/chains";
 import * as readlineSync from "readline-sync";
 import { BigNumber, ethers } from "ethers";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const ZEROADDRESS = ethers.constants.AddressZero;
 const Zero = BigNumber.from(0);
@@ -21,27 +22,10 @@ type AddGlpParams = {
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
-  const provider = chains[chainId].jsonRpcProvider;
   const deployer = signers.deployer(chainId);
-
-  const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
-    await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
-  console.table(readableTable);
-  const confirm = readlineSync.question("Confirm to update price feeds? (y/n): ");
-  switch (confirm) {
-    case "y":
-      break;
-    case "n":
-      console.log("Feed Price cancelled!");
-      return;
-    default:
-      console.log("Invalid input!");
-      return;
-  }
-  console.log("[RebalanceHLP] executeReinvestNonHLP...");
+  const safeWrapper = new SafeWrapper(chainId, deployer);
   const vault = VaultStorage__factory.connect(config.storages.vault, deployer);
   const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, deployer);
-
   const params: AddGlpParams[] = [
     {
       token: config.tokens.dai,
@@ -80,13 +64,35 @@ async function main(chainId: number) {
     },
   ];
 
-  const tx = await handler.addGlp(params, priceUpdateData, publishTimeDiffUpdateData, minPublishedTime, hashedVaas, {
-    gasLimit: 10000000,
-  });
+  const provider = chains[chainId].jsonRpcProvider;
 
-  console.log(`[RebalanceHLPHandler] Tx: ${tx.hash}`);
-  await tx.wait(1);
-  console.log("[RebalanceHLPHandler] Finished");
+  const [readableTable, minPublishedTime, priceUpdateData, publishTimeDiffUpdateData, hashedVaas] =
+    await getUpdatePriceData(ecoPythPriceFeedIdsByIndex, provider);
+  console.table(readableTable);
+  const confirm = readlineSync.question("Confirm to update price feeds? (y/n): ");
+  switch (confirm) {
+    case "y":
+      break;
+    case "n":
+      console.log("Feed Price cancelled!");
+      return;
+    default:
+      console.log("Invalid input!");
+      return;
+  }
+  console.log("[cmds/RebalanceHLP] Proposing reinvest GLP tx...");
+  const tx = await safeWrapper.proposeTransaction(
+    handler.address,
+    0,
+    handler.interface.encodeFunctionData("addGlp", [
+      params,
+      priceUpdateData,
+      publishTimeDiffUpdateData,
+      minPublishedTime,
+      hashedVaas,
+    ])
+  );
+  console.log(`[cmds/RebalanceHLPHandler] Proposed tx: ${tx}`);
 }
 
 const prog = new Command();

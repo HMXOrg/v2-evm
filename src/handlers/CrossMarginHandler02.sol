@@ -190,14 +190,13 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   /// @param _amount Amount of collateral token to withdraw.
   /// @param _executionFee Execution fee to pay for this order.
   /// @param _shouldUnwrap Whether to unwrap WETH into native ETH after withdrawing.
-  /// @return _orderId The ID of the newly created withdraw order.
   function createWithdrawCollateralOrder(
     uint8 _subAccountId,
     address _token,
     uint256 _amount,
     uint256 _executionFee,
     bool _shouldUnwrap
-  ) external payable nonReentrant onlyAcceptedToken(_token) returns (uint256 _orderId) {
+  ) external payable nonReentrant onlyAcceptedToken(_token) returns (uint256 _orderIndex) {
     if (_amount == 0) revert ICrossMarginHandler02_BadAmount();
     if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler02_InsufficientExecutionFee();
     if (msg.value != _executionFee) revert ICrossMarginHandler02_InCorrectValueTransfer();
@@ -210,8 +209,6 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     // Get the sub-account and order index for the limit order
     address subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
     uint256 _orderIndex = withdrawOrdersIndex[subAccount];
-
-    // _orderId = withdrawOrders.length;
 
     WithdrawOrder memory order = WithdrawOrder({
       account: payable(msg.sender),
@@ -229,8 +226,8 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
 
     _addOrder(order, subAccount, _orderIndex);
 
-    emit LogCreateWithdrawOrder(msg.sender, _subAccountId, _orderId, _token, _amount, _executionFee, _shouldUnwrap);
-    return _orderId;
+    emit LogCreateWithdrawOrder(msg.sender, _subAccountId, _orderIndex, _token, _amount, _executionFee, _shouldUnwrap);
+    return _orderIndex;
   }
 
   function executeOrders(

@@ -73,7 +73,13 @@ contract TC02_01 is BaseIntTest_WithActions {
       // In Summarize Vault's fees
       //    BTC - protocol fee  = 0 + 0.003 = 0.00309563 btc
 
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T1: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: (0.003 * 1e8 * 9000) / 1e4,
+        _devFee: 0.003 * 1e7,
+        _fundingFeeReserve: 0,
+        _str: "T1: "
+      });
 
       // Finally after Bob add liquidity Vault balance should be correct
       // note: token balance is including all liquidity, dev fee and protocol fee
@@ -106,7 +112,13 @@ contract TC02_01 is BaseIntTest_WithActions {
 
       // And Alice should not pay any fee
       // note: vault's fees should be same with T1
-      assertVaultsFees({ _token: address(wbtc), _fee: 0.003 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T2: " });
+      assertVaultsFees({
+        _token: address(wbtc),
+        _fee: ((0.003 * 1e8) * 9000) / 1e4,
+        _devFee: 0.003 * 1e7,
+        _fundingFeeReserve: 0,
+        _str: "T2: "
+      });
     }
 
     // time passed for 60 seconds

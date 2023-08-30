@@ -7,12 +7,12 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
 
-  console.log("[StakedGlpStrategy] Reinvest...");
+  console.log("[cmds/StakedGlpStrategy] Reinvest...");
   const stakedGlpStrategy = StakedGlpStrategy__factory.connect(config.strategies.stakedGlpStrategy, signer);
   const tx = await stakedGlpStrategy.execute();
-  console.log(`[StakedGlpStrategy] Tx: ${tx.hash}`);
+  console.log(`[cmds/StakedGlpStrategy] Tx: ${tx.hash}`);
   await tx.wait(1);
-  console.log("[StakedGlpStrategy] Finished");
+  console.log("[cmds/StakedGlpStrategy] Finished");
 }
 
 const prog = new Command();

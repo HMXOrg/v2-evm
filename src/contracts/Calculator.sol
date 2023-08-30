@@ -235,12 +235,10 @@ contract Calculator is OwnableUpgradeable, ICalculator {
         );
       }
 
-      {
-        unchecked {
-          ++i;
-          totalPnlLong += _pnlLongE30;
-          totalPnlShort += _pnlShortE30;
-        }
+      unchecked {
+        ++i;
+        totalPnlLong += _pnlLongE30;
+        totalPnlShort += _pnlShortE30;
       }
     }
 

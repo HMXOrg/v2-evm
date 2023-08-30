@@ -558,7 +558,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     VaultStorage vaultStorage;
     ConfigStorage configStorage;
     OracleMiddleware oracle;
-    uint256 decimals;
+    uint8 decimals;
     uint256 amount;
     uint256 priceE30;
     bytes32 tokenAssetId;

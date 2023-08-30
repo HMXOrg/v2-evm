@@ -45,9 +45,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
   event LogSetPyth(address indexed oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
-  event LogSetLimitGasUsage(uint256 _oldValue, uint256 _newValue);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
-  event LogMaxExecutionChuck(uint256 oldValue, uint256 newValue);
   event LogCreateWithdrawOrder(
     address indexed account,
     uint8 indexed subAccountId,
@@ -101,8 +99,6 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   address public pyth;
 
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
-  uint256 public maxExecutionChuck; // maximum execution order sizes per request
-  uint256 public limitGasUsage;
 
   mapping(address => bool) public orderExecutors; // address -> flag to execute
   mapping(address => mapping(uint256 => WithdrawOrder)) public withdrawOrders; // The last limit order index of each sub-account
@@ -122,7 +118,6 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     address _crossMarginService,
     address _pyth,
     uint256 _minExecutionOrderFee,
-    uint256 _maxExecutionChuck
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -134,7 +129,6 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     crossMarginService = _crossMarginService;
     pyth = _pyth;
     minExecutionOrderFee = _minExecutionOrderFee;
-    maxExecutionChuck = _maxExecutionChuck;
   }
 
   // function getActiveWithdrawOrders(
@@ -329,29 +323,6 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     );
   }
 
-  function executeOrders(
-    address[] memory _accounts,
-    uint8[] memory _subAccountIds,
-    uint256[] memory _orderIndexes,
-    address payable _feeReceiver,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas
-  ) external nonReentrant onlyOrderExecutor {
-    _executeOrders(
-      _accounts,
-      _subAccountIds,
-      _orderIndexes,
-      _feeReceiver,
-      _priceData,
-      _publishTimeData,
-      _minPublishTime,
-      _encodedVaas,
-      false
-    );
-  }
-
   function _executeOrders(
     address[] memory _accounts,
     uint8[] memory _subAccountIds,
@@ -363,7 +334,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     bytes32 _encodedVaas,
     bool _isRevert
   ) internal {
-    if (_accounts.length != _subAccountIds.length && _accounts.length != _orderIndexes.length)
+    if (_accounts.length != _subAccountIds.length || _accounts.length != _orderIndexes.length)
       revert ICrossMarginHandler_InvalidArraySize();
 
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
@@ -405,7 +376,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     if (vars.order.amount == 0) return 0;
 
     // try executing order
-    try this.executeWithdrawOrder{ gas: limitGasUsage }(vars.order) {
+    try this.executeWithdrawOrder(vars.order) {
       // Execution succeeded, store the executed order pointer
       uint256 _pointer = _encodePointer(vars.subAccount, uint96(_orderIndex));
       executedOrderPointers.add(_pointer);
@@ -473,11 +444,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
         _order.amount,
         address(this)
       );
-      // Then we unwrap the wNative token. The receiving amount should be the exact same as _amount. (No fee deducted when withdraw)
-      IWNative(_order.token).withdraw(_order.amount);
-
-      // slither-disable-next-line arbitrary-send-eth
-      payable(_order.account).transfer(_order.amount);
+      _transferOutEth(_order.amount, _order.account);
     } else {
       // Withdraw _token straight to the user
       _order.crossMarginService.withdrawCollateral(
@@ -576,24 +543,12 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     minExecutionOrderFee = _newMinExecutionFee;
   }
 
-  /// @notice setMaxExecutionChuck
-  /// @param _maxExecutionChuck maximum check sizes when execute orders
-  function setMaxExecutionChuck(uint256 _maxExecutionChuck) external nonReentrant onlyOwner {
-    emit LogMaxExecutionChuck(maxExecutionChuck, _maxExecutionChuck);
-    maxExecutionChuck = _maxExecutionChuck;
-  }
-
   /// @notice setOrderExecutor
   /// @param _executor address who will be executor
   /// @param _isAllow flag to allow to execute
   function setOrderExecutor(address _executor, bool _isAllow) external nonReentrant onlyOwner {
     orderExecutors[_executor] = _isAllow;
     emit LogSetOrderExecutor(_executor, _isAllow);
-  }
-
-  function setLimitGasUsage(uint256 _newGasLimit) external nonReentrant onlyOwner {
-    emit LogSetLimitGasUsage(limitGasUsage, _newGasLimit);
-    limitGasUsage = _newGasLimit;
   }
 
   /**

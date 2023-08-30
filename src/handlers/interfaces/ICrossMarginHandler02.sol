@@ -48,8 +48,6 @@ interface ICrossMarginHandler02 {
    * States
    */
 
-  function nextExecutionOrderIndex() external view returns (uint256);
-
   function crossMarginService() external returns (address);
 
   function pyth() external returns (address);
@@ -68,13 +66,16 @@ interface ICrossMarginHandler02 {
     bool _shouldUnwrap
   ) external payable returns (uint256 _orderId);
 
-  function executeOrder(
-    uint256 _endIndex,
+  function executeOrders(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _orderIndexes,
     address payable _feeReceiver,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
     uint256 _minPublishTime,
-    bytes32 _encodedVaas
+    bytes32 _encodedVaas,
+    bool _isRevert
   ) external;
 
   function setCrossMarginService(address _address) external;
@@ -85,19 +86,12 @@ interface ICrossMarginHandler02 {
 
   function setMinExecutionFee(uint256 _newMinExecutionFee) external;
 
-  function setMaxExecutionChuck(uint256 _maxExecutionChuck) external;
-
-  function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrder);
-
-  function getWithdrawOrderLength() external view returns (uint256);
-
-  function getActiveWithdrawOrders(
+  function getAllActiveOrders(
     uint256 _limit,
     uint256 _offset
   ) external view returns (WithdrawOrder[] memory _withdrawOrder);
 
-  function getExecutedWithdrawOrders(
-    address _account,
+  function getAllExecutedOrders(
     uint256 _limit,
     uint256 _offset
   ) external view returns (WithdrawOrder[] memory _withdrawOrder);

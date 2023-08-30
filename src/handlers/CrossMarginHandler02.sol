@@ -277,7 +277,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
         _order.amount,
         address(this)
       );
-      _transferOutEth(_order.amount, _order.account);
+      _transferOutETH(_order.amount, _order.account);
     } else {
       // Withdraw _token straight to the user
       _order.crossMarginService.withdrawCollateral(
@@ -461,20 +461,13 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     return uint256(bytes32(abi.encodePacked(_account, _index)));
   }
 
+  function _decodePointer(uint256 _pointer) internal pure returns (address _account, uint96 _index) {
+    return (address(uint160(_pointer >> 96)), uint96(_pointer));
+  }
+
   /**
    * Getters
    */
-
-  /// @notice Returns all pending withdraw orders.
-  /// @return _withdrawOrders An array of WithdrawOrder structs representing all pending withdraw orders.
-  function getWithdrawOrders() external view returns (WithdrawOrder[] memory _withdrawOrders) {
-    // return withdrawOrders;
-  }
-
-  /// @notice get withdraw orders length
-  function getWithdrawOrderLength() external view returns (uint256) {
-    // return withdrawOrders.length;
-  }
 
   function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (WithdrawOrder[] memory _orders) {
     return _getOrders(activeOrderPointers, _limit, _offset);

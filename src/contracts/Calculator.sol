@@ -71,7 +71,7 @@ contract Calculator is OwnableUpgradeable, ICalculator {
   /// @notice getAUME30
   /// @param _isMaxPrice Use Max or Min Price
   /// @return HLP Value in E30 format
-  function getAUME30(bool _isMaxPrice) external view returns (uint256) {
+  function getAUME30(bool _isMaxPrice) external view returns (uint256 aum) {
     // SLOAD
     VaultStorage _vaultStorage = VaultStorage(vaultStorage);
 
@@ -81,7 +81,8 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     int256 pnlE30 = _getGlobalPNLE30();
 
     uint256 lossDebt = _vaultStorage.globalLossDebt();
-    uint256 aum = _getHLPValueE30(_isMaxPrice) +
+    aum =
+      _getHLPValueE30(_isMaxPrice) +
       pendingBorrowingFeeE30 +
       borrowingFeeDebt +
       lossDebt +
@@ -94,8 +95,6 @@ contract Calculator is OwnableUpgradeable, ICalculator {
     } else {
       aum += uint256(pnlE30);
     }
-
-    return aum;
   }
 
   function getGlobalPNLE30() external view returns (int256) {

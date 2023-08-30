@@ -221,6 +221,36 @@
       "assetSymbol": "FX.CHF",
       "quotedAssetSymbol": "FX.USD",
       "sortIndex": 2004
+    },
+    {
+      "index": 27,
+      "name": "DOGEUSD",
+      "assetId": "0x444f474500000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "doge-usd",
+      "assetSymbol": "Crypto.DOGE",
+      "quotedAssetSymbol": "Crypto.DOGE",
+      "sortIndex": 2004
+    },
+    {
+      "index": 28,
+      "name": "USDCAD",
+      "assetId": "0x4341440000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-cad",
+      "assetSymbol": "FX.CAD",
+      "quotedAssetSymbol": "FX.USD",
+      "sortIndex": 2004
+    },
+    {
+      "index": 29,
+      "name": "USDSGD",
+      "assetId": "0x5347440000000000000000000000000000000000000000000000000000000000",
+      "quotedAssetId": "0x",
+      "slug": "usd-sgd",
+      "assetSymbol": "FX.SGD",
+      "quotedAssetSymbol": "FX.USD",
+      "sortIndex": 2004
     }
   ],
   "assets": {

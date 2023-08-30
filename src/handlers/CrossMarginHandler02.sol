@@ -12,7 +12,7 @@ import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/O
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 // interfaces
-import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
+import { ICrossMarginHandler02 } from "@hmx/handlers/interfaces/ICrossMarginHandler02.sol";
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 import { IEcoPyth } from "@hmx/oracles/interfaces/IEcoPyth.sol";
 import { IWNative } from "@hmx/interfaces/IWNative.sol";
@@ -23,7 +23,7 @@ import { HMXLib } from "@hmx/libraries/HMXLib.sol";
 
 /// @title CrossMarginHandler
 /// @notice This contract handles the deposit and withdrawal of collateral tokens for the Cross Margin Trading module.
-contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginHandler {
+contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, ICrossMarginHandler02 {
   using SafeERC20Upgradeable for ERC20Upgradeable;
   using EnumerableSet for EnumerableSet.UintSet;
 
@@ -134,7 +134,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
 
   /// @notice Validate only whitelisted executors to call function
   modifier onlyOrderExecutor() {
-    if (!orderExecutors[msg.sender]) revert ICrossMarginHandler_NotWhitelisted();
+    if (!orderExecutors[msg.sender]) revert ICrossMarginHandler02_NotWhitelisted();
     _;
   }
 
@@ -153,14 +153,14 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     uint256 _amount,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_token) {
-    if (_amount == 0) revert ICrossMarginHandler_BadAmount();
+    if (_amount == 0) revert ICrossMarginHandler02_BadAmount();
     // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
 
     if (_shouldWrap) {
       // Prevent mismatch msgValue and the input amount
       if (msg.value != _amount) {
-        revert ICrossMarginHandler_MismatchMsgValue();
+        revert ICrossMarginHandler02_MismatchMsgValue();
       }
 
       // Wrap the native to wNative. The _token must be wNative.
@@ -198,11 +198,11 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     uint256 _executionFee,
     bool _shouldUnwrap
   ) external payable nonReentrant onlyAcceptedToken(_token) returns (uint256 _orderId) {
-    if (_amount == 0) revert ICrossMarginHandler_BadAmount();
-    if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler_InsufficientExecutionFee();
-    if (msg.value != _executionFee) revert ICrossMarginHandler_InCorrectValueTransfer();
+    if (_amount == 0) revert ICrossMarginHandler02_BadAmount();
+    if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler02_InsufficientExecutionFee();
+    if (msg.value != _executionFee) revert ICrossMarginHandler02_InCorrectValueTransfer();
     if (_shouldUnwrap && _token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth())
-      revert ICrossMarginHandler_NotWNativeToken();
+      revert ICrossMarginHandler02_NotWNativeToken();
 
     // convert native to WNative (including executionFee)
     _transferInETH();
@@ -261,11 +261,11 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   /// @param _order WithdrawOrder struct representing the order to execute.
   function executeWithdrawOrder(WithdrawOrder memory _order) external {
     // if not in executing state, then revert
-    if (msg.sender != address(this)) revert ICrossMarginHandler_Unauthorized();
+    if (msg.sender != address(this)) revert ICrossMarginHandler02_Unauthorized();
     if (
       _order.shouldUnwrap &&
       _order.token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()
-    ) revert ICrossMarginHandler_NotWNativeToken();
+    ) revert ICrossMarginHandler02_NotWNativeToken();
 
     // Call service to withdraw collateral
     if (_order.shouldUnwrap) {
@@ -300,9 +300,9 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     // SLOAD
     WithdrawOrder memory _order = withdrawOrders[subAccount][_orderIndex];
     // Check if this order still exists
-    if (_order.account == address(0)) revert ICrossMarginHandler_NonExistentOrder();
+    if (_order.account == address(0)) revert ICrossMarginHandler02_NonExistentOrder();
     // validate if msg.sender is not owned the order, then revert
-    if (msg.sender != _order.account) revert ICrossMarginHandler_NotOrderOwner();
+    if (msg.sender != _order.account) revert ICrossMarginHandler02_NotOrderOwner();
 
     _removeOrder(subAccount, _orderIndex);
 
@@ -336,7 +336,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     bool _isRevert
   ) internal {
     if (_accounts.length != _subAccountIds.length || _accounts.length != _orderIndexes.length)
-      revert ICrossMarginHandler_InvalidArraySize();
+      revert ICrossMarginHandler02_InvalidArraySize();
 
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
@@ -371,7 +371,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
     vars.orderIndex = _orderIndex;
 
     // Check if this order still exists
-    if (vars.order.account == address(0)) revert ICrossMarginHandler_NonExistentOrder();
+    if (vars.order.account == address(0)) revert ICrossMarginHandler02_NonExistentOrder();
 
     // ignore this order, if amount = 0
     if (vars.order.amount == 0) return 0;
@@ -494,7 +494,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   /// @notice Sets a new CrossMarginService contract address.
   /// @param _crossMarginService The new CrossMarginService contract address.
   function setCrossMarginService(address _crossMarginService) external nonReentrant onlyOwner {
-    if (_crossMarginService == address(0)) revert ICrossMarginHandler_InvalidAddress();
+    if (_crossMarginService == address(0)) revert ICrossMarginHandler02_InvalidAddress();
     emit LogSetCrossMarginService(crossMarginService, _crossMarginService);
     crossMarginService = _crossMarginService;
 
@@ -505,7 +505,7 @@ contract CrossMarginHandle02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, 
   /// @notice Sets a new Pyth contract address.
   /// @param _pyth The new Pyth contract address.
   function setPyth(address _pyth) external nonReentrant onlyOwner {
-    if (_pyth == address(0)) revert ICrossMarginHandler_InvalidAddress();
+    if (_pyth == address(0)) revert ICrossMarginHandler02_InvalidAddress();
     emit LogSetPyth(pyth, _pyth);
     pyth = _pyth;
 

@@ -3,23 +3,23 @@ pragma solidity 0.8.18;
 
 import { CrossMarginService } from "@hmx/services/CrossMarginService.sol";
 
-interface ICrossMarginHandler {
+interface ICrossMarginHandler02 {
   /**
    * Errors
    */
-  error ICrossMarginHandler_InvalidAddress();
-  error ICrossMarginHandler_MismatchMsgValue();
-  error ICrossMarginHandler_InCorrectValueTransfer();
-  error ICrossMarginHandler_NotWhitelisted();
-  error ICrossMarginHandler_InsufficientExecutionFee();
-  error ICrossMarginHandler_NoOrder();
-  error ICrossMarginHandler_NotOrderOwner();
-  error ICrossMarginHandler_NotExecutionState();
-  error ICrossMarginHandler_NotWNativeToken();
-  error ICrossMarginHandler_Unauthorized();
-  error ICrossMarginHandler_BadAmount();
-  error ICrossMarginHandler_InvalidArraySize();
-  error ICrossMarginHandler_NonExistentOrder();
+  error ICrossMarginHandler02_InvalidAddress();
+  error ICrossMarginHandler02_MismatchMsgValue();
+  error ICrossMarginHandler02_InCorrectValueTransfer();
+  error ICrossMarginHandler02_NotWhitelisted();
+  error ICrossMarginHandler02_InsufficientExecutionFee();
+  error ICrossMarginHandler02_NoOrder();
+  error ICrossMarginHandler02_NotOrderOwner();
+  error ICrossMarginHandler02_NotExecutionState();
+  error ICrossMarginHandler02_NotWNativeToken();
+  error ICrossMarginHandler02_Unauthorized();
+  error ICrossMarginHandler02_BadAmount();
+  error ICrossMarginHandler02_InvalidArraySize();
+  error ICrossMarginHandler02_NonExistentOrder();
 
   /**
    * Structs

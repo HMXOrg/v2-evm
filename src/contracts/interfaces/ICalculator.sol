@@ -2,7 +2,6 @@
 pragma solidity 0.8.18;
 
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
-import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 
 interface ICalculator {
   /**

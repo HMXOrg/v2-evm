@@ -333,7 +333,7 @@ contract ConfigStorage is IConfigStorage, OwnableUpgradeable {
     bool[] calldata _isServiceExecutors
   ) external onlyOwner {
     if (
-      _contractAddresses.length != _executorAddresses.length && _executorAddresses.length != _isServiceExecutors.length
+      _contractAddresses.length != _executorAddresses.length || _executorAddresses.length != _isServiceExecutors.length
     ) revert IConfigStorage_BadArgs();
 
     for (uint256 i = 0; i < _contractAddresses.length; ) {

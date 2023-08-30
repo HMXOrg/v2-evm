@@ -78,7 +78,7 @@ contract LiquidityTester is StdAssertions {
     assertApproxEqRel(vaultStorage.protocolFees(_token), _expectedData.fee, MAX_DIFF, "Protocol Fee");
     assertApproxEqRel(
       vaultStorage.totalAmount(_token),
-      vaultStorage.hlpLiquidity(_token) + vaultStorage.protocolFees(_token),
+      vaultStorage.hlpLiquidity(_token) + vaultStorage.protocolFees(_token) + vaultStorage.devFees(_token),
       MAX_DIFF
     );
 

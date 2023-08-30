@@ -52,7 +52,7 @@ contract TC01 is BaseIntTest_WithActions {
         totalAmount: _amount,
         hlpLiquidity: 49_850_000,
         hlpAmount: 0 ether, //
-        fee: 150_000, //fee = 0.5e8( 0.5e8 -0.3%) = 0.0015 * 1e8
+        fee: 135_000, //fee = 0.5e8( 0.5e8 -0.3%) = 0.0015 * 1e8; dev fee 10%; (0.0015 * 1e8) - (0.0015 * 1e7)
         executionFee: _totalExecutionOrderFee
       })
     );
@@ -108,8 +108,8 @@ contract TC01 is BaseIntTest_WithActions {
         totalAmount: 49_501_400, //(0.5 e8 - 0.005)+ 1400 fee
         hlpLiquidity: 49_350_000, // 49_850_000 - 500_000
         hlpAmount: 0 ether, // 9970 -100 (remove lq)
-        //fee Alice addLiquidity (150_000) + fee Alice removeLiquidity(100 hlp => 500_000-(500_000-0.28%) => 1,400 ) = 151400
-        fee: 151_400,
+        //fee Alice addLiquidity (135_000) + fee Alice removeLiquidity(100 hlp => 500_000-(500_000-0.28%) => 1,400 ) = 151400 * 90 / 100 = 136260
+        fee: 136260,
         executionFee: _totalExecutionOrderFee
       })
     );
@@ -155,7 +155,7 @@ contract TC01 is BaseIntTest_WithActions {
         totalAmount: 50001400, //49_501_400 + 500_000
         hlpLiquidity: 49_848_400, //49_350_000
         hlpAmount: 0,
-        fee: 153_000, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000
+        fee: 137_700, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000 * 90 / 100 = 137700
         executionFee: _totalExecutionOrderFee
       })
     );
@@ -188,7 +188,7 @@ contract TC01 is BaseIntTest_WithActions {
         totalAmount: 50001400, //49_501_400 + 500_000
         hlpLiquidity: 49_848_400, //49_350_000
         hlpAmount: 0 ether,
-        fee: 153_000, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000
+        fee: 137_700, // oldFee => 151_400 + (500_000 *0.32%) => 151_400+1600 => 153000 * 90 / 100 => 137700
         executionFee: _totalExecutionOrderFee
       })
     );
@@ -224,7 +224,7 @@ contract TC01 is BaseIntTest_WithActions {
         totalAmount: 927_760,
         hlpLiquidity: 498_400,
         hlpAmount: 0, // ALICE HLP AMOUNT SHOULD BE 0
-        fee: 429_360, //153_000 + 276_360
+        fee: 386_424, //(153_000 + 276_36)0 * 90 / 100
         executionFee: _totalExecutionOrderFee
       })
     );

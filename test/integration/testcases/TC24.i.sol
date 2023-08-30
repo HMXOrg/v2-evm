@@ -351,8 +351,15 @@ contract TC24 is BaseIntTest_WithActions {
     //          - distribute all to protocol fee
 
     // In Summarize Vault's fees
-    //    BTC - protocol fee  = 0 + 0.15 = 0.15 btc
-    assertVaultsFees({ _token: address(wbtc), _fee: 0.15 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T1: " });
+    //    BTC - protocol fee  = 0 + 0.15 = 0.15 btc * 0.9 = 0.135
+    //                                  dev fee: 0.015
+    assertVaultsFees({
+      _token: address(wbtc),
+      _fee: 0.135 * 1e8,
+      _devFee: 0.015 * 1e8,
+      _fundingFeeReserve: 0,
+      _str: "T1: "
+    });
 
     // And accum funding fee
     // accumFundingLong = 0
@@ -385,7 +392,13 @@ contract TC24 is BaseIntTest_WithActions {
 
     // And Alice should not pay any fee
     // note: vault's fees should be same with T1
-    assertVaultsFees({ _token: address(wbtc), _fee: 0.15 * 1e8, _devFee: 0, _fundingFeeReserve: 0, _str: "T2: " });
+    assertVaultsFees({
+      _token: address(wbtc),
+      _fee: 0.135 * 1e8,
+      _devFee: 0.015 * 1e8,
+      _fundingFeeReserve: 0,
+      _str: "T2: "
+    });
 
     // And accum funding fee
     // accumFundingLong = 0

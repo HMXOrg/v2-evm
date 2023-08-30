@@ -21,7 +21,7 @@ async function main(chainId: number) {
       return;
   }
 
-  const contracts = [config.helpers.limitTrade];
+  const contracts = [config.handlers.rebalanceHLP];
 
   console.log(`[config/Ownable] Transfer Ownership to ${newOwner}...`);
   let nonce = await deployer.getTransactionCount();

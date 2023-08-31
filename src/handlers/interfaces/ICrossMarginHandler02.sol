@@ -89,10 +89,24 @@ interface ICrossMarginHandler02 {
   function getAllActiveOrders(
     uint256 _limit,
     uint256 _offset
-  ) external view returns (WithdrawOrder[] memory _withdrawOrder);
+  ) external view returns (WithdrawOrder[] memory _withdrawOrders);
 
   function getAllExecutedOrders(
     uint256 _limit,
     uint256 _offset
-  ) external view returns (WithdrawOrder[] memory _withdrawOrder);
+  ) external view returns (WithdrawOrder[] memory _withdrawOrders);
+
+  function withdrawOrdersIndex(address _subAccount) external view returns (uint256 orderIndex);
+
+  function getAllActiveOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _orders);
+
+  function getAllExecutedOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _orders);
 }

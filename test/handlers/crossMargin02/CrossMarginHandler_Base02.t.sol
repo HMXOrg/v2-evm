@@ -136,9 +136,7 @@ contract CrossMarginHandler_Base02 is BaseTest {
   }
 
   function simulateAliceDepositToken(address _token, uint256 _depositAmount) internal {
-    vm.deal(ALICE, 10 ether);
     vm.startPrank(ALICE);
-    weth.deposit{ value: 10 ether }();
     MockErc20(_token).approve(address(crossMarginHandler), _depositAmount);
     MockErc20(_token).approve(address(vaultStorage), _depositAmount);
     crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, _token, _depositAmount, false);

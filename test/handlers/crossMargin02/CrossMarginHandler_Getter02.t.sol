@@ -16,6 +16,7 @@ import "forge-std/console.sol";
 contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
   function setUp() public virtual override {
     super.setUp();
+    weth.mint(ALICE, 10 ether);
     simulateAliceDepositToken(address(weth), 10 ether);
   }
 
@@ -208,5 +209,17 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
       assertEq(_orders[1].executedTimestamp, 201);
       assertEq(uint(_orders[1].status), 1); // success
     }
+  }
+
+  function testCorrectness_handler02_cancelOrder() external {
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
+    // Open an order
+    uint256 orderIndex = simulateAliceCreateWithdrawOrder();
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 1);
+    ICrossMarginHandler02.WithdrawOrder[] memory _orders = crossMarginHandler.getAllActiveOrders(2, 0);
+    // cancel, should have 0 active
+    vm.prank(ALICE);
+    crossMarginHandler.cancelWithdrawOrder(SUB_ACCOUNT_NO, orderIndex);
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
   }
 }

@@ -119,7 +119,7 @@ contract CrossMarginHandler_Base02 is BaseTest {
     );
 
     // Mock gas for handler used for update Pyth's prices
-    vm.deal(address(crossMarginHandler), 10 ether);
+    vm.deal(address(crossMarginHandler), 1 ether);
 
     // Set market status
     oracleMiddleware.setUpdater(address(this), true);
@@ -138,19 +138,19 @@ contract CrossMarginHandler_Base02 is BaseTest {
   function simulateAliceDepositToken(address _token, uint256 _depositAmount) internal {
     vm.startPrank(ALICE);
     MockErc20(_token).approve(address(crossMarginHandler), _depositAmount);
-    MockErc20(_token).approve(address(vaultStorage), _depositAmount);
+    // MockErc20(_token).approve(address(vaultStorage), _depositAmount);
     crossMarginHandler.depositCollateral(SUB_ACCOUNT_NO, _token, _depositAmount, false);
     vm.stopPrank();
   }
 
   function simulateAliceCreateWithdrawOrder() internal returns (uint256 orderIndex) {
-    vm.deal(ALICE, 0.1 ether);
+    vm.deal(ALICE, 0.0001 ether);
 
     vm.prank(ALICE);
     orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: executionOrderFee }(
       SUB_ACCOUNT_NO,
       address(weth),
-      1 ether,
+      0.0001 ether,
       0.0001 ether,
       false
     );

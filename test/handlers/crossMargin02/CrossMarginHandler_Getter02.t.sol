@@ -16,8 +16,6 @@ import "forge-std/console.sol";
 contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
   function setUp() public virtual override {
     super.setUp();
-    weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), 10 ether);
   }
 
   /**
@@ -25,6 +23,9 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
    */
 
   function testCorrectness_crossMarginHandler02_getAllActiveOrders() external {
+    weth.mint(ALICE, 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
+
     assertEq(crossMarginHandler.getAllActiveOrders(1, 0).length, 0);
 
     address[] memory accounts = new address[](5);
@@ -60,6 +61,9 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
   }
 
   function testCorrectness_crossMarginHandler02_getActiveWithdrawOrders() external {
+    weth.mint(ALICE, 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
+
     assertEq(crossMarginHandler.getAllActiveOrders(10, 0).length, 0);
     // Open 5 orders
     address[] memory accounts = new address[](5);
@@ -105,6 +109,9 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
   }
 
   function testCorrectness_crossMarginHandler02_getAllExecutedOrders() external {
+    weth.mint(ALICE, 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
+
     assertEq(crossMarginHandler.getAllExecutedOrders(10, 0).length, 0);
     // Open 5 orders
     address[] memory accounts = new address[](5);
@@ -162,7 +169,7 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
 
   function testCorrectness_crossMarginHandler02_getWithdrawOrders_timestampCorrectness() external {
     weth.mint(ALICE, 10 ether);
-    simulateAliceDepositToken(address(weth), (1.5 ether));
+    simulateAliceDepositToken(address(weth), (10 ether));
 
     vm.warp(block.timestamp + 100);
 
@@ -211,8 +218,7 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
     }
   }
 
-  function testCorrectness_handler02_cancelOrder() external {
-    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
+  function testCorrectness_handler02_userCancelOrder() external {
     // Open an order
     uint256 orderIndex = simulateAliceCreateWithdrawOrder();
     assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 1);
@@ -220,6 +226,22 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
     // cancel, should have 0 active
     vm.prank(ALICE);
     crossMarginHandler.cancelWithdrawOrder(SUB_ACCOUNT_NO, orderIndex);
+    _orders = crossMarginHandler.getAllActiveOrders(2, 0);
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
+  }
+
+  function testCorrectness_handler02_cancelOrderWhenFail() external {
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    // Open an order
+    uint256 orderIndex = simulateAliceCreateWithdrawOrder();
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ACCOUNT_NO;
+    orderIndexes[0] = orderIndex;
+    simulateExecuteWithdrawOrder(accounts, subAccountIds, orderIndexes);
+    assertEq(crossMarginHandler.getAllExecutedOrders(5, 0).length, 0);
     assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
   }
 }

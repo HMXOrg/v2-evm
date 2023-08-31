@@ -240,17 +240,28 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     bytes32 _encodedVaas,
     bool _isRevert
   ) external nonReentrant onlyOrderExecutor {
-    _executeOrders(
-      _accounts,
-      _subAccountIds,
-      _orderIndexes,
-      _feeReceiver,
-      _priceData,
-      _publishTimeData,
-      _minPublishTime,
-      _encodedVaas,
-      _isRevert
-    );
+    if (_accounts.length != _subAccountIds.length || _accounts.length != _orderIndexes.length)
+      revert ICrossMarginHandler02_InvalidArraySize();
+
+    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+
+    ExecuteOrderVars memory vars;
+    vars.feeReceiver = _feeReceiver;
+    vars.priceData = _priceData;
+    vars.publishTimeData = _publishTimeData;
+    vars.minPublishTime = _minPublishTime;
+    vars.encodedVaas = _encodedVaas;
+
+    uint256 totalFeeReceiver;
+    for (uint256 i = 0; i < _accounts.length; ) {
+      totalFeeReceiver += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
+
+      unchecked {
+        ++i;
+      }
+    }
+    // Pay total collected fees to the executor
+    _transferOutETH(totalFeeReceiver, _feeReceiver);
   }
 
   /// @notice Executes a single withdraw order by transferring the specified amount of collateral token to the user's wallet.
@@ -319,41 +330,6 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   /**
    * Internals
    */
-
-  function _executeOrders(
-    address[] memory _accounts,
-    uint8[] memory _subAccountIds,
-    uint256[] memory _orderIndexes,
-    address payable _feeReceiver,
-    bytes32[] memory _priceData,
-    bytes32[] memory _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas,
-    bool _isRevert
-  ) internal {
-    if (_accounts.length != _subAccountIds.length || _accounts.length != _orderIndexes.length)
-      revert ICrossMarginHandler02_InvalidArraySize();
-
-    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
-
-    ExecuteOrderVars memory vars;
-    vars.feeReceiver = _feeReceiver;
-    vars.priceData = _priceData;
-    vars.publishTimeData = _publishTimeData;
-    vars.minPublishTime = _minPublishTime;
-    vars.encodedVaas = _encodedVaas;
-
-    uint256 totalFeeReceiver;
-    for (uint256 i = 0; i < _accounts.length; ) {
-      totalFeeReceiver += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
-
-      unchecked {
-        ++i;
-      }
-    }
-    // Pay total collected fees to the executor
-    _transferOutETH(totalFeeReceiver, _feeReceiver);
-  }
 
   function _executeOrder(
     ExecuteOrderVars memory vars,

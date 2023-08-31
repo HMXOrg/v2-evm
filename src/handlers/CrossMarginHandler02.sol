@@ -260,8 +260,8 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
         ++i;
       }
     }
-    // Pay total collected fees to the executor
-    _transferOutETH(totalFeeReceiver, _feeReceiver);
+    // // Pay total collected fees to the executor
+    // _transferOutETH(totalFeeReceiver, _feeReceiver);
   }
 
   /// @notice Executes a single withdraw order by transferring the specified amount of collateral token to the user's wallet.
@@ -302,7 +302,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   /// @notice Cancels the specified withdraw order.
   /// @param _orderIndex Index of the order to cancel.
   function cancelWithdrawOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
-    _cancelWithdrawOrder(msg.sender, _subAccountId, _orderIndex);
+    _cancelWithdrawOrder(msg.sender, _subAccountId, _orderIndex, msg.sender);
   }
 
   /**
@@ -340,7 +340,12 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     _totalFeeReceiver = vars.order.executionFee;
   }
 
-  function _cancelWithdrawOrder(address _account, uint8 _subAccountId, uint256 _orderIndex) internal {
+  function _cancelWithdrawOrder(
+    address _account,
+    uint8 _subAccountId,
+    uint256 _orderIndex,
+    address _feeReceiver
+  ) internal {
     address subAccount = HMXLib.getSubAccount(_account, _subAccountId);
     // SLOAD
     WithdrawOrder memory _order = withdrawOrders[subAccount][_orderIndex];
@@ -352,10 +357,10 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     _removeOrder(subAccount, _orderIndex);
 
     // refund the _order.executionFee
-    _transferOutETH(_order.executionFee, msg.sender);
+    _transferOutETH(_order.executionFee, _feeReceiver);
 
     emit LogCancelWithdrawOrder(
-      payable(msg.sender),
+      payable(_order.account),
       _order.subAccountId,
       _orderIndex,
       _order.token,
@@ -410,7 +415,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
       );
 
       vars.order.status = WithdrawOrderStatus.FAIL;
-      _cancelWithdrawOrder(vars.order.account, vars.order.subAccountId, vars.orderIndex);
+      _cancelWithdrawOrder(vars.order.account, vars.order.subAccountId, vars.orderIndex, vars.feeReceiver);
     }
   }
 

@@ -43,7 +43,7 @@ contract CrossMarginHandler_WithdrawCollateral is CrossMarginHandler_Base02 {
       simulateAliceDepositToken(address(weth), (7 ether));
       vm.deal(ALICE, 3 ether);
       vm.startPrank(ALICE);
-      crossMarginHandler.depositCollateral{ value: 3 ether }(SUB_ACCOUNT_NO, address(weth), 3 ether, true);
+      crossMarginHandler.depositCollateral{ value: 3 ether }(ALICE, SUB_ACCOUNT_NO, address(weth), 3 ether, true);
       vm.stopPrank();
     }
 

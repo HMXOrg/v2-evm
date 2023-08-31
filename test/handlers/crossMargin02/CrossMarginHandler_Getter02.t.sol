@@ -225,7 +225,7 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
     ICrossMarginHandler02.WithdrawOrder[] memory _orders = crossMarginHandler.getAllActiveOrders(2, 0);
     // cancel, should have 0 active
     vm.prank(ALICE);
-    crossMarginHandler.cancelWithdrawOrder(SUB_ACCOUNT_NO, orderIndex);
+    crossMarginHandler.cancelWithdrawOrder(ALICE, SUB_ACCOUNT_NO, orderIndex);
     _orders = crossMarginHandler.getAllActiveOrders(2, 0);
     assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
   }
@@ -237,11 +237,52 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
     uint256[] memory orderIndexes = new uint256[](1);
     // Open an order
     uint256 orderIndex = simulateAliceCreateWithdrawOrder();
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 1);
+
     accounts[0] = ALICE;
     subAccountIds[0] = SUB_ACCOUNT_NO;
     orderIndexes[0] = orderIndex;
     simulateExecuteWithdrawOrder(accounts, subAccountIds, orderIndexes);
+
     assertEq(crossMarginHandler.getAllExecutedOrders(5, 0).length, 0);
     assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
+  }
+
+  function testCorrectnes_handler02_receiverGetFee() external {
+    assertEq(crossMarginHandler.getAllActiveOrders(1, 0).length, 0);
+
+    address[] memory accounts = new address[](5);
+    uint8[] memory subAccountIds = new uint8[](5);
+    uint256[] memory orderIndexes = new uint256[](5);
+
+    // Open 2, failed
+    for (uint256 i = 0; i < 2; i++) {
+      uint256 orderIndex = simulateAliceCreateWithdrawOrder();
+      accounts[i] = ALICE;
+      subAccountIds[i] = SUB_ACCOUNT_NO;
+      orderIndexes[i] = orderIndex;
+    }
+
+    weth.mint(ALICE, 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
+
+    // Open 3, success
+    for (uint256 i = 2; i < 5; i++) {
+      uint256 orderIndex = simulateAliceCreateWithdrawOrder();
+      accounts[i] = ALICE;
+      subAccountIds[i] = SUB_ACCOUNT_NO;
+      orderIndexes[i] = orderIndex;
+    }
+
+    assertEq(crossMarginHandler.getAllActiveOrders(10, 0).length, 5);
+
+    // Execute them, and open 2 more orders
+    // total fee = 5 * 0.0001 ETH = 0.0005 ETH
+    uint256 balanceBefore = FEEVER.balance;
+    simulateExecuteWithdrawOrder(accounts, subAccountIds, orderIndexes);
+    assertEq(crossMarginHandler.getAllActiveOrders(10, 0).length, 0);
+    uint256 receivedFee = FEEVER.balance - balanceBefore;
+    assertEq(crossMarginHandler.getAllExecutedOrders(10, 0).length, 5);
+    assertEq(receivedFee, 0.0005 ether);
   }
 }

@@ -78,6 +78,8 @@ interface ICrossMarginHandler02 {
     bool _isRevert
   ) external;
 
+  function cancelWithdrawOrder(uint8 subAccountIds, uint256 orderIndex) external;
+
   function setCrossMarginService(address _address) external;
 
   function setPyth(address _address) external;

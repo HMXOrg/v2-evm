@@ -100,10 +100,10 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   mapping(address => uint256) public withdrawOrdersIndex; // The last withdraw order index of each sub-account
 
   // Pointers
-  EnumerableSet.UintSet private activeOrderPointers;
-  EnumerableSet.UintSet private executedOrderPointers;
-  mapping(address => EnumerableSet.UintSet) private subAccountActiveOrderPointers;
-  mapping(address => EnumerableSet.UintSet) private subAccountExecutedOrderPointers;
+  EnumerableSet.UintSet private _activeOrderPointers;
+  EnumerableSet.UintSet private _executedOrderPointers;
+  mapping(address => EnumerableSet.UintSet) private _subAccountActiveOrderPointers;
+  mapping(address => EnumerableSet.UintSet) private _subAccountExecutedOrderPointers;
 
   /// @notice Initializes the CrossMarginHandler contract with the provided configuration parameters.
   /// @param _crossMarginService Address of the CrossMarginService contract.
@@ -328,7 +328,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
 
     // try executing order
     try this.executeWithdrawOrder(vars.order) {
-      _executedOrder(vars.subAccount, _orderIndex);
+      _handleOrderSuccess(vars.subAccount, _orderIndex);
     } catch Error(string memory errMsg) {
       _handleOrderFail(vars, bytes(errMsg), _isRevert);
     } catch Panic(uint /*errorCode*/) {
@@ -344,7 +344,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     address subAccount = HMXLib.getSubAccount(_account, _subAccountId);
     // SLOAD
     WithdrawOrder memory _order = withdrawOrders[subAccount][_orderIndex];
-    delete withdrawOrders[subAccount][_orderindex];
+    delete withdrawOrders[subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ICrossMarginHandler02_NonExistentOrder();
     // validate if msg.sender is not owned the order, then revert
@@ -371,11 +371,11 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     withdrawOrders[_subAccount][_orderIndex] = _order;
 
     uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
-    activeOrderPointers.add(_pointer);
-    subAccountActiveOrderPointers[_subAccount].add(_pointer);
+    _activeOrderPointers.add(_pointer);
+    _subAccountActiveOrderPointers[_subAccount].add(_pointer);
   }
 
-  function _executedOrder(address _subAccount, uint256 _orderIndex) internal {
+  function _handleOrderSuccess(address _subAccount, uint256 _orderIndex) internal {
     _removeOrder(_subAccount, _orderIndex);
 
     WithdrawOrder storage order = withdrawOrders[_subAccount][_orderIndex];
@@ -383,14 +383,14 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     order.executedTimestamp = uint48(block.timestamp);
     // Execution succeeded, store the executed order pointer
     uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
-    executedOrderPointers.add(_pointer);
-    subAccountExecutedOrderPointers[_subAccount].add(_pointer);
+    _executedOrderPointers.add(_pointer);
+    _subAccountExecutedOrderPointers[_subAccount].add(_pointer);
   }
 
   function _removeOrder(address _subAccount, uint256 _orderIndex) internal {
     uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
-    activeOrderPointers.remove(_pointer);
-    subAccountActiveOrderPointers[_subAccount].remove(_pointer);
+    _activeOrderPointers.remove(_pointer);
+    _subAccountActiveOrderPointers[_subAccount].remove(_pointer);
   }
 
   function _handleOrderFail(ExecuteOrderVars memory vars, bytes memory errMsg, bool _isRevert) internal {
@@ -454,14 +454,14 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
    */
 
   function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (WithdrawOrder[] memory _orders) {
-    return _getOrders(activeOrderPointers, _limit, _offset);
+    return _getOrders(_activeOrderPointers, _limit, _offset);
   }
 
   function getAllExecutedOrders(
     uint256 _limit,
     uint256 _offset
   ) external view returns (WithdrawOrder[] memory _orders) {
-    return _getOrders(executedOrderPointers, _limit, _offset);
+    return _getOrders(_executedOrderPointers, _limit, _offset);
   }
 
   function getAllActiveOrdersBySubAccount(
@@ -469,7 +469,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     uint256 _limit,
     uint256 _offset
   ) external view returns (WithdrawOrder[] memory _orders) {
-    return _getOrders(subAccountActiveOrderPointers[_subAccount], _limit, _offset);
+    return _getOrders(_subAccountActiveOrderPointers[_subAccount], _limit, _offset);
   }
 
   function getAllExecutedOrdersBySubAccount(
@@ -477,7 +477,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     uint256 _limit,
     uint256 _offset
   ) external view returns (WithdrawOrder[] memory _orders) {
-    return _getOrders(subAccountExecutedOrderPointers[_subAccount], _limit, _offset);
+    return _getOrders(_subAccountExecutedOrderPointers[_subAccount], _limit, _offset);
   }
 
   /**

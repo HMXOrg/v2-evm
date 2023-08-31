@@ -2,14 +2,22 @@ import { loadConfig } from "../../utils/config";
 import { Command } from "commander";
 import { RebalanceHLPHandler__factory } from "../../../../typechain";
 import signers from "../../entities/signers";
+import SafeWrapper from "../../wrappers/SafeWrapper";
 
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const user = config.safe;
-  const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, signers.deployer(42161));
-  const tx = await handler.setWhitelistExecutor(user, true, { gasLimit: 10000000 });
-  await tx.wait(1);
-  console.log(`Set whitelist to address: ${user}`);
+  const deployer = signers.deployer(chainId);
+  const safeWrapper = new SafeWrapper(chainId, deployer);
+
+  console.log(`[configs/RebalanceHLPHandler] Set whitelist to address: ${user}`);
+  const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, deployer);
+  const tx = await safeWrapper.proposeTransaction(
+    handler.address,
+    0,
+    handler.interface.encodeFunctionData("setWhitelistExecutor", [user, true])
+  );
+  console.log(`[configs/RebalanceHLPHandler] Proposed tx: ${tx}`);
 }
 
 const prog = new Command();

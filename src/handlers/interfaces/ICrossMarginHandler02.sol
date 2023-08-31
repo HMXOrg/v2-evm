@@ -38,7 +38,6 @@ interface ICrossMarginHandler02 {
     uint48 executedTimestamp;
     address payable account;
     address token;
-    CrossMarginService crossMarginService;
     uint8 subAccountId;
     WithdrawOrderStatus status; // 0 = pending, 1 = execution success, 2 = execution fail
     bool shouldUnwrap;
@@ -56,9 +55,16 @@ interface ICrossMarginHandler02 {
    * Functions
    */
 
-  function depositCollateral(uint8 _subAccountId, address _token, uint256 _amount, bool _shouldWrap) external payable;
+  function depositCollateral(
+    address _mainAccount,
+    uint8 _subAccountId,
+    address _token,
+    uint256 _amount,
+    bool _shouldWrap
+  ) external payable;
 
   function createWithdrawCollateralOrder(
+    address _mainAccount,
     uint8 _subAccountId,
     address _token,
     uint256 _amount,
@@ -78,7 +84,7 @@ interface ICrossMarginHandler02 {
     bool _isRevert
   ) external;
 
-  function cancelWithdrawOrder(uint8 subAccountIds, uint256 orderIndex) external;
+  function cancelWithdrawOrder(address _mainAccount, uint8 subAccountIds, uint256 orderIndex) external;
 
   function setCrossMarginService(address _address) external;
 

@@ -43,6 +43,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     uint256 amount
   );
   event LogSetCrossMarginService(address indexed oldCrossMarginService, address newCrossMarginService);
+  event LogSetDelegate(address sender, address delegate);
   event LogSetPyth(address indexed oldPyth, address newPyth);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
@@ -92,12 +93,14 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
    */
   address public crossMarginService;
   address public pyth;
+  address private _senderOverride;
 
   uint256 public minExecutionOrderFee; // minimum execution order fee in native token amount
 
   mapping(address => bool) public orderExecutors; // address -> flag to execute
   mapping(address => mapping(uint256 => WithdrawOrder)) public withdrawOrders; // The last limit order index of each sub-account
   mapping(address => uint256) public withdrawOrdersIndex; // The last withdraw order index of each sub-account
+  mapping(address => address) public delegations; // The mapping of mainAccount => Smart Wallet to be used for Account Abstraction
 
   // Pointers
   EnumerableSet.UintSet private _activeOrderPointers;
@@ -138,6 +141,22 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     _;
   }
 
+  modifier delegate(address _mainAccount) {
+    if (delegations[_mainAccount] == msg.sender) {
+      _senderOverride = _mainAccount;
+    }
+    _;
+    _senderOverride = address(0);
+  }
+
+  function _msgSender() internal view override returns (address) {
+    if (_senderOverride == address(0)) {
+      return msg.sender;
+    } else {
+      return _senderOverride;
+    }
+  }
+
   /**
    * Deposit Collateral
    */
@@ -148,11 +167,12 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   /// @param _amount Amount of collateral token to deposit.
   /// @param _shouldWrap Whether to wrap native ETH into WETH before depositing.
   function depositCollateral(
+    address _mainAccount,
     uint8 _subAccountId,
     address _token,
     uint256 _amount,
     bool _shouldWrap
-  ) external payable nonReentrant onlyAcceptedToken(_token) {
+  ) external payable nonReentrant onlyAcceptedToken(_token) delegate(_mainAccount) {
     if (_amount == 0) revert ICrossMarginHandler02_BadAmount();
     // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
@@ -171,13 +191,13 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
       ERC20Upgradeable(_token).safeTransfer(_crossMarginService.vaultStorage(), _amount);
     } else {
       // Transfer depositing token from trader's wallet to VaultStorage
-      ERC20Upgradeable(_token).safeTransferFrom(msg.sender, _crossMarginService.vaultStorage(), _amount);
+      ERC20Upgradeable(_token).safeTransferFrom(_msgSender(), _crossMarginService.vaultStorage(), _amount);
     }
 
     // Call service to deposit collateral
-    _crossMarginService.depositCollateral(msg.sender, _subAccountId, _token, _amount);
+    _crossMarginService.depositCollateral(_msgSender(), _subAccountId, _token, _amount);
 
-    emit LogDepositCollateral(msg.sender, _subAccountId, _token, _amount);
+    emit LogDepositCollateral(_msgSender(), _subAccountId, _token, _amount);
   }
 
   /**
@@ -191,12 +211,13 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   /// @param _executionFee Execution fee to pay for this order.
   /// @param _shouldUnwrap Whether to unwrap WETH into native ETH after withdrawing.
   function createWithdrawCollateralOrder(
+    address _mainAccount,
     uint8 _subAccountId,
     address _token,
     uint256 _amount,
     uint256 _executionFee,
     bool _shouldUnwrap
-  ) external payable nonReentrant onlyAcceptedToken(_token) returns (uint256 _orderIndex) {
+  ) external payable nonReentrant onlyAcceptedToken(_token) delegate(_mainAccount) returns (uint256 _orderIndex) {
     if (_amount == 0) revert ICrossMarginHandler02_BadAmount();
     if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler02_InsufficientExecutionFee();
     if (msg.value != _executionFee) revert ICrossMarginHandler02_InCorrectValueTransfer();
@@ -211,14 +232,13 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     _orderIndex = withdrawOrdersIndex[subAccount];
 
     WithdrawOrder memory order = WithdrawOrder({
-      account: payable(msg.sender),
+      account: payable(_msgSender()),
       orderIndex: _orderIndex,
       token: _token,
       amount: _amount,
       executionFee: _executionFee,
       shouldUnwrap: _shouldUnwrap,
       subAccountId: _subAccountId,
-      crossMarginService: CrossMarginService(crossMarginService),
       createdTimestamp: uint48(block.timestamp),
       executedTimestamp: 0,
       status: WithdrawOrderStatus.PENDING
@@ -226,7 +246,15 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
 
     _addOrder(order, subAccount, _orderIndex);
 
-    emit LogCreateWithdrawOrder(msg.sender, _subAccountId, _orderIndex, _token, _amount, _executionFee, _shouldUnwrap);
+    emit LogCreateWithdrawOrder(
+      _msgSender(),
+      _subAccountId,
+      _orderIndex,
+      _token,
+      _amount,
+      _executionFee,
+      _shouldUnwrap
+    );
   }
 
   function executeOrders(
@@ -260,8 +288,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
         ++i;
       }
     }
-    // // Pay total collected fees to the executor
-    // _transferOutETH(totalFeeReceiver, _feeReceiver);
+    _transferOutETH(totalFeeReceiver, _feeReceiver);
   }
 
   /// @notice Executes a single withdraw order by transferring the specified amount of collateral token to the user's wallet.
@@ -269,15 +296,15 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   function executeWithdrawOrder(WithdrawOrder memory _order) external {
     // if not in executing state, then revert
     if (msg.sender != address(this)) revert ICrossMarginHandler02_Unauthorized();
-    if (
-      _order.shouldUnwrap &&
-      _order.token != ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()
-    ) revert ICrossMarginHandler02_NotWNativeToken();
+    // SLOAD
+    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+    if (_order.shouldUnwrap && _order.token != ConfigStorage(_crossMarginService.configStorage()).weth())
+      revert ICrossMarginHandler02_NotWNativeToken();
 
     // Call service to withdraw collateral
     if (_order.shouldUnwrap) {
       // Withdraw wNative straight to this contract first.
-      _order.crossMarginService.withdrawCollateral(
+      _crossMarginService.withdrawCollateral(
         _order.account,
         _order.subAccountId,
         _order.token,
@@ -287,7 +314,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
       _transferOutETH(_order.amount, _order.account);
     } else {
       // Withdraw _token straight to the user
-      _order.crossMarginService.withdrawCollateral(
+      _crossMarginService.withdrawCollateral(
         _order.account,
         _order.subAccountId,
         _order.token,
@@ -301,8 +328,12 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
 
   /// @notice Cancels the specified withdraw order.
   /// @param _orderIndex Index of the order to cancel.
-  function cancelWithdrawOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
-    _cancelWithdrawOrder(msg.sender, _subAccountId, _orderIndex, msg.sender);
+  function cancelWithdrawOrder(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _orderIndex
+  ) external nonReentrant delegate(_mainAccount) {
+    _cancelWithdrawOrder(_msgSender(), _subAccountId, _orderIndex);
   }
 
   /**
@@ -340,24 +371,21 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     _totalFeeReceiver = vars.order.executionFee;
   }
 
-  function _cancelWithdrawOrder(
-    address _account,
-    uint8 _subAccountId,
-    uint256 _orderIndex,
-    address _feeReceiver
-  ) internal {
+  function _cancelWithdrawOrder(address _account, uint8 _subAccountId, uint256 _orderIndex) internal {
     address subAccount = HMXLib.getSubAccount(_account, _subAccountId);
     // SLOAD
     WithdrawOrder memory _order = withdrawOrders[subAccount][_orderIndex];
     // Check if this order still exists
     if (_order.account == address(0)) revert ICrossMarginHandler02_NonExistentOrder();
     // validate if msg.sender is not owned the order, then revert
-    if (msg.sender != _order.account && !orderExecutors[msg.sender]) revert ICrossMarginHandler02_NotOrderOwner();
+    if (_msgSender() != _order.account && !orderExecutors[_msgSender()]) revert ICrossMarginHandler02_NotOrderOwner();
 
     _removeOrder(subAccount, _orderIndex);
 
-    // refund the _order.executionFee
-    _transferOutETH(_order.executionFee, _feeReceiver);
+    // refund the _order.executionFee if the caller is not executor
+    if (!orderExecutors[_msgSender()]) {
+      _transferOutETH(_order.executionFee, _order.account);
+    }
 
     emit LogCancelWithdrawOrder(
       payable(_order.account),
@@ -415,7 +443,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
       );
 
       vars.order.status = WithdrawOrderStatus.FAIL;
-      _cancelWithdrawOrder(vars.order.account, vars.order.subAccountId, vars.orderIndex, vars.feeReceiver);
+      _cancelWithdrawOrder(vars.order.account, vars.order.subAccountId, vars.orderIndex);
     }
   }
 
@@ -489,6 +517,10 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   /**
    * Setters
    */
+  function setDelegate(address _delegate) external {
+    delegations[msg.sender] = _delegate;
+    emit LogSetDelegate(msg.sender, _delegate);
+  }
 
   /// @notice Sets a new CrossMarginService contract address.
   /// @param _crossMarginService The new CrossMarginService contract address.
@@ -544,7 +576,8 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   /// @param _amountOut Amount of ETH to be transferred
   /// @param _receiver The receiver of ETH in its native form. The receiver must be able to accept native token.
   function _transferOutETH(uint256 _amountOut, address _receiver) private {
-    IWNative(ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth()).withdraw(_amountOut);
+    CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
+    IWNative(ConfigStorage(_crossMarginService.configStorage()).weth()).withdraw(_amountOut);
     // slither-disable-next-line arbitrary-send-eth
     // To mitigate potential attacks, the call method is utilized,
     // allowing the contract to bypass any revert calls from the destination address.
@@ -553,7 +586,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     (bool success, ) = _receiver.call{ value: _amountOut, gas: 2300 }("");
     // send WNative instead when native token transfer fail
     if (!success) {
-      address weth = ConfigStorage(CrossMarginService(crossMarginService).configStorage()).weth();
+      address weth = ConfigStorage(_crossMarginService.configStorage()).weth();
       IWNative(weth).deposit{ value: _amountOut }();
       IWNative(weth).transfer(_receiver, _amountOut);
     }

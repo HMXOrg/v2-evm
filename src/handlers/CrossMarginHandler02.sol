@@ -302,29 +302,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   /// @notice Cancels the specified withdraw order.
   /// @param _orderIndex Index of the order to cancel.
   function cancelWithdrawOrder(uint8 _subAccountId, uint256 _orderIndex) external nonReentrant {
-    address subAccount = HMXLib.getSubAccount(msg.sender, _subAccountId);
-
-    // SLOAD
-    WithdrawOrder memory _order = withdrawOrders[subAccount][_orderIndex];
-    // Check if this order still exists
-    if (_order.account == address(0)) revert ICrossMarginHandler02_NonExistentOrder();
-    // validate if msg.sender is not owned the order, then revert
-    if (msg.sender != _order.account) revert ICrossMarginHandler02_NotOrderOwner();
-
-    _removeOrder(subAccount, _orderIndex);
-
-    // refund the _order.executionFee
-    _transferOutETH(_order.executionFee, msg.sender);
-
-    emit LogCancelWithdrawOrder(
-      payable(msg.sender),
-      _order.subAccountId,
-      _orderIndex,
-      _order.token,
-      _order.amount,
-      _order.executionFee,
-      _order.shouldUnwrap
-    );
+    _cancelWithdrawOrder(msg.sender, _subAccountId, _orderIndex);
   }
 
   /**
@@ -360,6 +338,32 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     }
 
     _totalFeeReceiver = vars.order.executionFee;
+  }
+
+  function _cancelWithdrawOrder(address _account, uint8 _subAccountId, uint256 _orderIndex) internal {
+    address subAccount = HMXLib.getSubAccount(_account, _subAccountId);
+    // SLOAD
+    WithdrawOrder memory _order = withdrawOrders[subAccount][_orderIndex];
+    delete withdrawOrders[subAccount][_orderindex];
+    // Check if this order still exists
+    if (_order.account == address(0)) revert ICrossMarginHandler02_NonExistentOrder();
+    // validate if msg.sender is not owned the order, then revert
+    if (msg.sender != _order.account && !orderExecutors[msg.sender]) revert ICrossMarginHandler02_NotOrderOwner();
+
+    _removeOrder(subAccount, _orderIndex);
+
+    // refund the _order.executionFee
+    _transferOutETH(_order.executionFee, msg.sender);
+
+    emit LogCancelWithdrawOrder(
+      payable(msg.sender),
+      _order.subAccountId,
+      _orderIndex,
+      _order.token,
+      _order.amount,
+      _order.executionFee,
+      _order.shouldUnwrap
+    );
   }
 
   function _addOrder(WithdrawOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
@@ -405,7 +409,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
       );
 
       vars.order.status = WithdrawOrderStatus.FAIL;
-      this.cancelWithdrawOrder(vars.order.subAccountId, vars.orderIndex);
+      _cancelWithdrawOrder(vars.order.account, vars.order.subAccountId, vars.orderIndex);
     }
   }
 

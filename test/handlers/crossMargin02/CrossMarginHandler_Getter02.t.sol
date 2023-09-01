@@ -301,12 +301,8 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
 
     vm.prank(ALICE);
     crossMarginHandler.setDelegate(address(aliceAA));
-
-    weth.mint(address(aliceAA), 10 ether);
-    vm.startPrank(address(aliceAA));
-    MockErc20(address(weth)).approve(address(crossMarginHandler), 10 ether);
-    crossMarginHandler.depositCollateral(address(aliceAA), SUB_ACCOUNT_NO, address(weth), 10 ether, false);
-    vm.stopPrank();
+    weth.mint(ALICE, 10 ether);
+    simulateAliceDepositToken(address(weth), 10 ether);
 
     address[] memory accounts = new address[](5);
     uint8[] memory subAccountIds = new uint8[](5);
@@ -317,7 +313,7 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
       vm.deal(address(aliceAA), 0.0001 ether);
       vm.prank(address(aliceAA));
       uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: 0.0001 ether }(
-        address(aliceAA),
+        ALICE,
         SUB_ACCOUNT_NO,
         address(weth),
         1 ether,
@@ -325,15 +321,25 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
         false
       );
 
-      accounts[i] = address(aliceAA);
+      accounts[i] = ALICE;
       subAccountIds[i] = SUB_ACCOUNT_NO;
       orderIndexes[i] = orderIndex;
     }
 
     assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 5);
 
+    uint256 balanceBeforeDel = weth.balanceOf(address(aliceAA));
+    uint256 balanceBeforeAl = weth.balanceOf(ALICE);
+
     // Execute them, and open 2 more orders
     simulateExecuteWithdrawOrder(accounts, subAccountIds, orderIndexes);
+
+    uint256 balanceAfterDel = weth.balanceOf(address(aliceAA));
+    uint256 balanceAfterAl = weth.balanceOf(ALICE);
+
+    assertEq(balanceAfterAl - balanceBeforeAl, 5 ether);
+    assertEq(balanceAfterDel, balanceBeforeDel);
+    // assertEq(balanceBeforeDel, balanceAfterDel);
 
     assertEq(crossMarginHandler.getAllExecutedOrders(5, 0).length, 5);
   }

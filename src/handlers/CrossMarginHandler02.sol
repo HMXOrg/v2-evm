@@ -375,6 +375,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     address subAccount = HMXLib.getSubAccount(_account, _subAccountId);
     // SLOAD
     WithdrawOrder memory _order = withdrawOrders[subAccount][_orderIndex];
+
     // Check if this order still exists
     if (_order.account == address(0)) revert ICrossMarginHandler02_NonExistentOrder();
     // validate if msg.sender is not owned the order, then revert

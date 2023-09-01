@@ -88,6 +88,8 @@ interface ICrossMarginHandler02 {
 
   function setCrossMarginService(address _address) external;
 
+  function setDelegate(address _delegate) external;
+
   function setPyth(address _address) external;
 
   function setOrderExecutor(address _executor, bool _isAllow) external;

@@ -11,11 +11,19 @@ import { CrossMarginHandler_Base02 } from "./CrossMarginHandler_Base02.t.sol";
 import { ICrossMarginService } from "@hmx/services/interfaces/ICrossMarginService.sol";
 import { ICrossMarginHandler02 } from "@hmx/handlers/interfaces/ICrossMarginHandler02.sol";
 
+import { MockAccountAbstraction } from "../../mocks/MockAccountAbstraction.sol";
+import { MockEntryPoint } from "../../mocks/MockEntryPoint.sol";
+import { MockErc20 } from "@hmx-test/base/BaseTest.sol";
+
 import "forge-std/console.sol";
 
 contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
+  MockEntryPoint entryPoint;
+
   function setUp() public virtual override {
     super.setUp();
+
+    entryPoint = new MockEntryPoint();
   }
 
   /**
@@ -222,11 +230,11 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
     // Open an order
     uint256 orderIndex = simulateAliceCreateWithdrawOrder();
     assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 1);
-    ICrossMarginHandler02.WithdrawOrder[] memory _orders = crossMarginHandler.getAllActiveOrders(2, 0);
     // cancel, should have 0 active
+    uint256 balanceBefore = ALICE.balance;
     vm.prank(ALICE);
     crossMarginHandler.cancelWithdrawOrder(ALICE, SUB_ACCOUNT_NO, orderIndex);
-    _orders = crossMarginHandler.getAllActiveOrders(2, 0);
+    assertEq(ALICE.balance - balanceBefore, 0.0001 ether);
     assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 0);
   }
 
@@ -284,5 +292,49 @@ contract CrossMarginHandler_Getter is CrossMarginHandler_Base02 {
     uint256 receivedFee = FEEVER.balance - balanceBefore;
     assertEq(crossMarginHandler.getAllExecutedOrders(10, 0).length, 5);
     assertEq(receivedFee, 0.0005 ether);
+  }
+
+  function testCorrectnes_handler02_viaDelegate() external {
+    assertEq(crossMarginHandler.getAllActiveOrders(1, 0).length, 0);
+
+    MockAccountAbstraction aliceAA = new MockAccountAbstraction(address(entryPoint));
+
+    vm.prank(ALICE);
+    crossMarginHandler.setDelegate(address(aliceAA));
+
+    weth.mint(address(aliceAA), 10 ether);
+    vm.startPrank(address(aliceAA));
+    MockErc20(address(weth)).approve(address(crossMarginHandler), 10 ether);
+    crossMarginHandler.depositCollateral(address(aliceAA), SUB_ACCOUNT_NO, address(weth), 10 ether, false);
+    vm.stopPrank();
+
+    address[] memory accounts = new address[](5);
+    uint8[] memory subAccountIds = new uint8[](5);
+    uint256[] memory orderIndexes = new uint256[](5);
+
+    // Open 5 orders
+    for (uint256 i = 0; i < 5; i++) {
+      vm.deal(address(aliceAA), 0.0001 ether);
+      vm.prank(address(aliceAA));
+      uint256 orderIndex = crossMarginHandler.createWithdrawCollateralOrder{ value: 0.0001 ether }(
+        address(aliceAA),
+        SUB_ACCOUNT_NO,
+        address(weth),
+        1 ether,
+        0.0001 ether,
+        false
+      );
+
+      accounts[i] = address(aliceAA);
+      subAccountIds[i] = SUB_ACCOUNT_NO;
+      orderIndexes[i] = orderIndex;
+    }
+
+    assertEq(crossMarginHandler.getAllActiveOrders(5, 0).length, 5);
+
+    // Execute them, and open 2 more orders
+    simulateExecuteWithdrawOrder(accounts, subAccountIds, orderIndexes);
+
+    assertEq(crossMarginHandler.getAllExecutedOrders(5, 0).length, 5);
   }
 }

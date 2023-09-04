@@ -13,43 +13,68 @@ import { SqrtX96Codec } from "@hmx/libraries/SqrtX96Codec.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
 
 contract LiquidationReader {
-  IPerpStorage public perpStorage;
-  ICalculator public calculator;
+  IPerpStorage immutable perpStorage;
+  ICalculator immutable calculator;
+
+  error LiquidationReader_InvalidArray();
 
   constructor(address _perpStorage, address _calculator) {
     perpStorage = IPerpStorage(_perpStorage);
     calculator = ICalculator(_calculator);
   }
 
+  /// @notice Get the liquidatable sub-accounts.
+  /// @param _limit The maximum number of sub-accounts to retrieve.
+  /// @param _offset The offset for fetching sub-accounts.
+  /// @param _assetIds An array of asset IDs.
+  /// @param _pricesE8 An array of prices in E8 format corresponding to the asset IDs.
+  /// @param _shouldInverts An array of boolean values indicating whether to invert prices for the asset IDs.
+  /// @return liquidatableSubAccounts An array of sub-account addresses that meet the liquidation criteria.
   function getLiquidatableSubAccount(
     uint64 _limit,
     uint64 _offset,
     bytes32[] memory _assetIds,
-    uint64[] memory _prices,
+    uint64[] memory _pricesE8,
     bool[] memory _shouldInverts
   ) external view returns (address[] memory) {
+    if (_assetIds.length != _pricesE8.length || _pricesE8.length != _shouldInverts.length)
+      revert LiquidationReader_InvalidArray();
+
+    // Get active sub-accounts based on the provided limit and offset.
     address[] memory subAccounts = perpStorage.getActiveSubAccounts(_limit, _offset);
 
-    uint256[] memory prices;
-    uint256 len = _prices.length;
-    prices = new uint256[](len);
-    for (uint256 i = 0; i < len; i++) {
+    // Convert prices from E8 to E30 format.
+    uint256[] memory pricesE30;
+    uint256 len = _pricesE8.length;
+    pricesE30 = new uint256[](len);
+    for (uint256 i; i < len; ) {
       if (_assetIds[i] == bytes32(abi.encodePacked("GLP"))) {
-        prices[i] = uint256(_prices[i]) * 1e22;
+        pricesE30[i] = uint256(_pricesE8[i]) * 1e22;
         continue;
       }
-      prices[i] = _convertPrice(_prices[i], _shouldInverts[i]);
+      pricesE30[i] = _convertPrice(_pricesE8[i], _shouldInverts[i]);
+
+      unchecked {
+        ++i;
+      }
     }
 
     len = subAccounts.length;
     address[] memory liquidatableSubAccounts = new address[](len);
-    for (uint256 i = 0; i < len; i++) {
-      int256 _equityValueE30 = calculator.getEquityWithInjectedPrices(subAccounts[i], _assetIds, prices);
+    // Iterate through each sub-account to check if it's liquidatable.
+    for (uint256 i; i < len; ) {
+      // Calculate the equity value and MMR for the sub-account.
+      int256 _equityValueE30 = calculator.getEquityWithInjectedPrices(subAccounts[i], _assetIds, pricesE30);
       uint256 _mmrValueE30 = calculator.getMMR(subAccounts[i]);
 
+      // Check if the sub-account should be liquidated based on criteria.
       bool _shouldLiquidate = _checkLiquidate(_equityValueE30, _mmrValueE30);
       if (_shouldLiquidate) {
         liquidatableSubAccounts[i] = subAccounts[i];
+      }
+
+      unchecked {
+        ++i;
       }
     }
 

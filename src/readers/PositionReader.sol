@@ -24,6 +24,8 @@ contract PositionReader {
   IOracleMiddleware immutable oracleMiddleware;
   ICalculator immutable calculator;
 
+  error PositionReader_InvalidArray();
+
   constructor(address _configStorage, address _perpStorage, address _oracleMiddleware, address _calculator) {
     configStorage = IConfigStorage(_configStorage);
     perpStorage = IPerpStorage(_perpStorage);
@@ -31,12 +33,21 @@ contract PositionReader {
     calculator = ICalculator(_calculator);
   }
 
-  function getLiquidatableSubAccount(
+  /// @notice Get the force-take max profitable position IDs.
+  /// @param _limit The maximum number of position IDs to retrieve.
+  /// @param _offset The offset for fetching position IDs.
+  /// @param _pricesE8 An array of prices in E8 format.
+  /// @param _shouldInverts An array of boolean values indicating whether to invert prices.
+  /// @return forceTakeMaxProfitablePositionIds An array of position IDs that meet the criteria.
+  function getForceTakeMaxProfitablePositionIds(
     uint64 _limit,
     uint64 _offset,
     uint64[] memory _pricesE8,
     bool[] memory _shouldInverts
   ) external view returns (bytes32[] memory) {
+    if (_pricesE8.length != _shouldInverts.length) revert PositionReader_InvalidArray();
+
+    // Convert prices from E8 to E30 format.
     uint256 len = _pricesE8.length;
     uint256[] memory pricesE30 = new uint256[](len);
     for (uint256 i; i < len; ) {
@@ -46,14 +57,17 @@ contract PositionReader {
       }
     }
 
+    // Get active position IDs based on the provided limit and offset.
     bytes32[] memory positionIds = perpStorage.getActivePositionIds(_limit, _offset);
     len = positionIds.length;
-    bytes32[] memory forceTakemaxProfitablePositionIds = new bytes32[](len);
+    bytes32[] memory forceTakeMaxProfitablePositionIds = new bytes32[](len);
+    // Iterate through each position ID to check if it's max profitable.
     for (uint256 i; i < len; ) {
       IPerpStorage.Position memory position = perpStorage.getPositionById(positionIds[i]);
       IConfigStorage.MarketConfig memory marketConfig = configStorage.getMarketConfigByIndex(position.marketIndex);
       PerpStorage.Market memory market = perpStorage.getMarketByIndex(position.marketIndex);
 
+      // Get the latest adaptive price for the position.
       (uint256 _adaptivePriceE30, ) = oracleMiddleware.unsafeGetLatestAdaptivePrice(
         marketConfig.assetId,
         true,
@@ -63,6 +77,7 @@ contract PositionReader {
         pricesE30[position.marketIndex]
       );
 
+      // Calculate the delta
       (bool _isProfit, uint256 _delta) = calculator.getDelta(
         HMXLib.abs(position.positionSizeE30),
         position.positionSizeE30 > 0,
@@ -71,10 +86,10 @@ contract PositionReader {
         position.lastIncreaseTimestamp,
         position.marketIndex
       );
-
+      // Check if it's a max profitable position.
       bool isMaxProfit = _checkMaxProfit(_isProfit, _delta, position.reserveValueE30);
       if (isMaxProfit) {
-        forceTakemaxProfitablePositionIds[i] = positionIds[i];
+        forceTakeMaxProfitablePositionIds[i] = positionIds[i];
       }
 
       unchecked {
@@ -82,7 +97,7 @@ contract PositionReader {
       }
     }
 
-    return forceTakemaxProfitablePositionIds;
+    return forceTakeMaxProfitablePositionIds;
   }
 
   function _checkMaxProfit(bool _isProfit, uint256 _delta, uint256 _reserveValueE30) internal pure returns (bool) {

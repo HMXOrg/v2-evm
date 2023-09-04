@@ -19,4 +19,5 @@ export default [
   "TradeService.json",
   // Reader
   "OrderReader.json",
+  "PositionReader.json",
 ];

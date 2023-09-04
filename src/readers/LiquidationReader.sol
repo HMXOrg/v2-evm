@@ -24,15 +24,15 @@ contract LiquidationReader {
   }
 
   /// @notice Get the liquidatable sub-accounts.
-  /// @param _limit The maximum number of sub-accounts to retrieve.
-  /// @param _offset The offset for fetching sub-accounts.
+  /// @param _activeSubaccountLimit The maximum number of sub-accounts to retrieve.
+  /// @param _activeSubaccountOffset The offset for fetching sub-accounts.
   /// @param _assetIds An array of asset IDs.
   /// @param _pricesE8 An array of prices in E8 format corresponding to the asset IDs.
   /// @param _shouldInverts An array of boolean values indicating whether to invert prices for the asset IDs.
   /// @return liquidatableSubAccounts An array of sub-account addresses that meet the liquidation criteria.
   function getLiquidatableSubAccount(
-    uint64 _limit,
-    uint64 _offset,
+    uint64 _activeSubaccountLimit,
+    uint64 _activeSubaccountOffset,
     bytes32[] memory _assetIds,
     uint64[] memory _pricesE8,
     bool[] memory _shouldInverts
@@ -41,7 +41,7 @@ contract LiquidationReader {
       revert LiquidationReader_InvalidArray();
 
     // Get active sub-accounts based on the provided limit and offset.
-    address[] memory subAccounts = perpStorage.getActiveSubAccounts(_limit, _offset);
+    address[] memory subAccounts = perpStorage.getActiveSubAccounts(_activeSubaccountLimit, _activeSubaccountOffset);
 
     // Convert prices from E8 to E30 format.
     uint256[] memory pricesE30;

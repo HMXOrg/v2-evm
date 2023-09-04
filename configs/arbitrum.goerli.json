@@ -84,7 +84,7 @@
   "rewardDistributor": "",
   "reader": {
     "order": "0xa3dFEcc6BA851a6d5246DeC88723D2D55Aa9338A",
-    "liquidation": "0x521b19347Fdc10C933d32F1e468525E02b0A69Eb"
+    "liquidation": "0x964b7D869b128cCe75E433424F08a6765978E2f9"
   },
   "extension": {
     "switchCollateralRouter": "",

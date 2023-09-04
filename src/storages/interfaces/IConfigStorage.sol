@@ -233,4 +233,8 @@ interface IConfigStorage {
   function minProfitDurations(uint256 marketIndex) external returns (uint256 minProfitDuration);
 
   function setMinProfitDurations(uint256[] calldata _marketIndexs, uint256[] calldata _minProfitDurations) external;
+
+  function minimumPositionSize() external view returns (uint256);
+
+  function getAssetClassConfigsLength() external view returns (uint256);
 }

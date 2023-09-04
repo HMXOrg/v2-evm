@@ -34,14 +34,14 @@ contract PositionReader {
   }
 
   /// @notice Get the force-take max profitable position IDs.
-  /// @param _limit The maximum number of position IDs to retrieve.
-  /// @param _offset The offset for fetching position IDs.
+  /// @param _activePositionLimit The maximum number of position IDs to retrieve.
+  /// @param _activePositionOffset The offset for fetching position IDs.
   /// @param _pricesE8 An array of prices in E8 format.
   /// @param _shouldInverts An array of boolean values indicating whether to invert prices.
   /// @return forceTakeMaxProfitablePositionIds An array of position IDs that meet the criteria.
   function getForceTakeMaxProfitablePositionIds(
-    uint64 _limit,
-    uint64 _offset,
+    uint64 _activePositionLimit,
+    uint64 _activePositionOffset,
     uint64[] memory _pricesE8,
     bool[] memory _shouldInverts
   ) external view returns (bytes32[] memory) {
@@ -58,7 +58,7 @@ contract PositionReader {
     }
 
     // Get active position IDs based on the provided limit and offset.
-    bytes32[] memory positionIds = perpStorage.getActivePositionIds(_limit, _offset);
+    bytes32[] memory positionIds = perpStorage.getActivePositionIds(_activePositionLimit, _activePositionOffset);
     len = positionIds.length;
     bytes32[] memory forceTakeMaxProfitablePositionIds = new bytes32[](len);
     // Iterate through each position ID to check if it's max profitable.

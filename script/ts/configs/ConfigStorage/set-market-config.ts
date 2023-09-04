@@ -411,7 +411,7 @@ async function main(chainId: number) {
   ];
 
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   console.log("[ConfigStorage] Setting market config...");
   for (let i = 0; i < marketConfigs.length; i++) {

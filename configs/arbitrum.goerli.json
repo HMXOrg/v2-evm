@@ -83,7 +83,8 @@
   },
   "rewardDistributor": "",
   "reader": {
-    "order": "0xa3dFEcc6BA851a6d5246DeC88723D2D55Aa9338A"
+    "order": "0xa3dFEcc6BA851a6d5246DeC88723D2D55Aa9338A",
+    "liquidation": "0xC53d0ED402829dA090E609fAA47774ffEDB074fa"
   },
   "extension": {
     "switchCollateralRouter": "",

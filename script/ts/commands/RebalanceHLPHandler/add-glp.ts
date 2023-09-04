@@ -23,7 +23,7 @@ type AddGlpParams = {
 async function main(chainId: number) {
   const config = loadConfig(chainId);
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const vault = VaultStorage__factory.connect(config.storages.vault, deployer);
   const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, deployer);
   const params: AddGlpParams[] = [

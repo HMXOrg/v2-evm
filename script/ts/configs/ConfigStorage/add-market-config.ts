@@ -82,7 +82,7 @@ async function main(chainId: number) {
     },
   ];
 
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
   const configStorage = ConfigStorage__factory.connect(config.storages.config, deployer);
 
   console.log("[configs/ConfigStorage] Adding new market config...");

@@ -5,7 +5,6 @@ import SafeServiceClient from "@safe-global/safe-service-client";
 import { ethers } from "ethers";
 import chains from "../../entities/chains";
 import { SafeProposeTransactionOptions } from "./type";
-import { loadConfig } from "../../utils/config";
 
 export default class SafeWrapper {
   private _safeAddress: string;
@@ -13,10 +12,9 @@ export default class SafeWrapper {
   private _safeServiceClient: SafeServiceClient;
   private _signer: ethers.Signer;
 
-  constructor(chainId: number, signer: ethers.Signer) {
+  constructor(chainId: number, safeAddress: string, signer: ethers.Signer) {
     const chainInfo = chains[chainId];
-    const config = loadConfig(chainId);
-    this._safeAddress = config.safe;
+    this._safeAddress = safeAddress;
     this._ethAdapter = new EthersAdapter({
       ethers,
       signerOrProvider: signer,

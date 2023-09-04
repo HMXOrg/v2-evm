@@ -283,9 +283,13 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     }
   }
 
-  function _handleFailedError(GenericOrder memory _order, string memory errMsg) internal {
-    emit LogExecuteOrderResult(_order.orderIndex, _order.orderType, _order.executionFee, false, errMsg);
-    _order.status = OrderStatus.FAIL;
+  function _handleFailedError(GenericOrder memory _order, string memory errMsg, bool _isRevert) internal {
+    if (_isRevert) {
+      require(false, string(errMsg));
+    } else {
+      emit LogExecuteOrderResult(_order.orderIndex, _order.orderType, _order.executionFee, false, errMsg);
+      _order.status = OrderStatus.FAIL;
+    }
   }
 
   function _handleOrderSuccess(address _subAccount, uint256 _orderIndex) internal {
@@ -358,11 +362,11 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
         // update order status
         _handleOrderSuccess(vars.subAccount, _orderIndex);
       } catch Error(string memory errMsg) {
-        _handleFailedError(vars.order, errMsg);
+        _handleFailedError(vars.order, errMsg, _isRevert);
       } catch Panic(uint /*errorCode*/) {
-        _handleFailedError(vars.order, "Panic occurred while executing the switch collateral order");
+        _handleFailedError(vars.order, "Panic occurred while executing the switch collateral order", _isRevert);
       } catch (bytes memory errMsg) {
-        _handleFailedError(vars.order, string(errMsg));
+        _handleFailedError(vars.order, string(errMsg), _isRevert);
       }
 
       // Assign execution time

@@ -15,6 +15,8 @@ interface IExt01Handler {
   error IExt01Handler_NoOrder();
   error IExt01Handler_SameFromToToken();
   error IExt01Handler_Unauthorized();
+  error IExt01Handler_InvalidArraySize();
+  error IExt01Handler_NonExistentOrder();
 
   /**
    * Structs
@@ -26,7 +28,7 @@ interface IExt01Handler {
   }
 
   struct GenericOrder {
-    uint248 orderId;
+    uint256 orderIndex;
     OrderStatus status;
     uint48 createdTimestamp;
     uint48 executedTimestamp;
@@ -38,6 +40,7 @@ interface IExt01Handler {
   struct SwitchCollateralOrder {
     address primaryAccount;
     uint8 subAccountId;
+    uint256 orderIndex;
     uint248 amount;
     address[] path;
     uint256 minToAmount;
@@ -47,18 +50,23 @@ interface IExt01Handler {
   struct CreateExtOrderParams {
     uint24 orderType;
     uint128 executionFee;
+    address mainAccount;
+    uint8 subAccountId;
     bytes data;
   }
 
-  function createExtOrder(CreateExtOrderParams memory _params) external payable returns (uint256 _orderId);
+  function createExtOrder(CreateExtOrderParams memory _params) external payable returns (uint256 _orderIndex);
 
   function executeOrders(
-    uint256 _endIndex,
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _orderIndexes,
     address payable _feeReceiver,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
     uint256 _minPublishTime,
-    bytes32 _encodedVaas
+    bytes32 _encodedVaas,
+    bool _isRevert
   ) external;
 
   /**
@@ -67,4 +75,25 @@ interface IExt01Handler {
   function setOrderExecutor(address _executor, bool _isAllow) external;
 
   function setMinExecutionFee(uint24 _orderType, uint128 _minExecutionFee) external;
+
+  function setDelegate(address _delegate) external;
+
+  /**
+    Getters
+   */
+  function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (GenericOrder[] memory _orders);
+
+  function getAllExecutedOrders(uint256 _limit, uint256 _offset) external view returns (GenericOrder[] memory _orders);
+
+  function getAllActiveOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (GenericOrder[] memory _orders);
+
+  function getAllExecutedOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (GenericOrder[] memory _orders);
 }

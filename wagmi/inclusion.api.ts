@@ -20,4 +20,5 @@ export default [
   // Reader
   "OrderReader.json",
   "PositionReader.json",
+  "LiquidationReader.json",
 ];

@@ -14,7 +14,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const signer = signers.deployer(chainId);
   const chainInfo = chains[chainId];
-  const safeWrapper = new SafeWrapper(chainId, signer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, signer);
 
   console.log(`[cmds/VaultStorage] Withdraw dev fee to ${TREASURY_ADDRESS}...`);
   const vaultStorage = VaultStorage__factory.connect(config.storages.vault, signer);

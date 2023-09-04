@@ -8,7 +8,7 @@ async function main(chainId: number) {
   const config = loadConfig(chainId);
   const user = config.safe;
   const deployer = signers.deployer(chainId);
-  const safeWrapper = new SafeWrapper(chainId, deployer);
+  const safeWrapper = new SafeWrapper(chainId, config.safe, deployer);
 
   console.log(`[configs/RebalanceHLPHandler] Set whitelist to address: ${user}`);
   const handler = RebalanceHLPHandler__factory.connect(config.handlers.rebalanceHLP, deployer);

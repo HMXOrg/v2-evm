@@ -14,10 +14,10 @@ import { SqrtX96Codec } from "@hmx/libraries/SqrtX96Codec.sol";
 import { TickMath } from "@hmx/libraries/TickMath.sol";
 
 contract OrderReader {
-  IConfigStorage public configStorage;
-  ILimitTradeHandler public limitTradeHandler;
-  OracleMiddleware public oracleMiddleware;
-  IPerpStorage public perpStorage;
+  IConfigStorage immutable configStorage;
+  ILimitTradeHandler immutable limitTradeHandler;
+  OracleMiddleware immutable oracleMiddleware;
+  IPerpStorage immutable perpStorage;
 
   constructor(address _configStorage, address _perpStorage, address _oracleMiddleware, address _limitTradeHandler) {
     configStorage = IConfigStorage(_configStorage);
@@ -100,6 +100,7 @@ contract OrderReader {
           _subAccount = _getSubAccount(_order.account, _order.subAccountId);
           _positionId = _getPositionId(_subAccount, _order.marketIndex);
           _position = perpStorage.getPositionById(_positionId);
+          // check position
           if (_isPositionClose(_position)) {
             continue;
           }

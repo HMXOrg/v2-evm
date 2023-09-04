@@ -48,12 +48,7 @@ contract LiquidationReader {
     uint256 len = _pricesE8.length;
     pricesE30 = new uint256[](len);
     for (uint256 i; i < len; ) {
-      if (_assetIds[i] == bytes32(abi.encodePacked("GLP"))) {
-        pricesE30[i] = uint256(_pricesE8[i]) * 1e22;
-      } else {
-        pricesE30[i] = _convertPrice(_pricesE8[i], _shouldInverts[i]);
-      }
-
+      pricesE30[i] = _convertPrice(_pricesE8[i], _shouldInverts[i]);
       unchecked {
         ++i;
       }

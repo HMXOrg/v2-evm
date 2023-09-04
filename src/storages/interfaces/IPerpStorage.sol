@@ -99,4 +99,8 @@ interface IPerpStorage {
   function setServiceExecutors(address _executorAddress, bool _isServiceExecutor) external;
 
   function decreaseReserved(uint8 _assetClassIndex, uint256 _reserve) external;
+
+  function getActivePositionIds(uint256 _limit, uint256 _offset) external view returns (bytes32[] memory _ids);
+
+  function getActiveSubAccounts(uint256 _limit, uint256 _offset) external view returns (address[] memory _subAccounts);
 }

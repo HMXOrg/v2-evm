@@ -81,10 +81,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     address payable feeReceiver;
     uint256 orderIndex;
     uint256 minPublishTime;
-    bool positionIsLong;
-    bool isNewPosition;
-    bool isMarketOrder;
-    int256 sizeDelta;
   }
 
   /**
@@ -112,7 +108,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   mapping(address => EnumerableSet.UintSet) private _subAccountActiveOrderPointers;
   mapping(address => EnumerableSet.UintSet) private _subAccountExecutedOrderPointers;
 
-  GenericOrder[] public orders; // All extended orders
   mapping(address => bool) public orderExecutors; // address -> flag to execute
 
   /// @notice Validate only whitelisted executors to call function
@@ -358,9 +353,9 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     // Skip cancelled order
     if (vars.order.orderType != 0) {
       try this.executeOrder(vars.order) {
-        emit LogExecuteOrderResult(vars.order.orderIndex, vars.order.orderType, vars.order.executionFee, true, "");
         // update order status
         _handleOrderSuccess(vars.subAccount, _orderIndex);
+        emit LogExecuteOrderResult(vars.order.orderIndex, vars.order.orderType, vars.order.executionFee, true, "");
       } catch Error(string memory errMsg) {
         _handleFailedError(vars.order, errMsg, _isRevert);
       } catch Panic(uint /*errorCode*/) {
@@ -370,7 +365,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       }
 
       // Assign execution time
-      vars.order.executedTimestamp = uint48(block.timestamp);
       _totalFeeReceived = vars.order.executionFee;
     }
   }

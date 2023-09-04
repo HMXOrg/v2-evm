@@ -37,6 +37,12 @@ contract OrderReader {
     uint64 endIndex;
   }
 
+  /// @notice Get executable limit orders.
+  /// @param _limit The maximum number of executable orders to retrieve.
+  /// @param _offset The offset for fetching executable orders.
+  /// @param _prices An array of prices corresponding to the market indices.
+  /// @param _shouldInverts An array of boolean values indicating whether to invert prices for the markets.
+  /// @return executableOrders An array of executable limit orders that meet the criteria.
   function getExecutableOrders(
     uint64 _limit,
     uint64 _offset,

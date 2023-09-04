@@ -217,7 +217,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     _orderIndex = genericOrdersIndex[_subAccount];
 
     GenericOrder memory order = GenericOrder({
-      orderIndex: _orderIndex,
+      orderIndex: uint248(_orderIndex),
       status: OrderStatus.PENDING,
       createdTimestamp: uint48(block.timestamp),
       executedTimestamp: 0,
@@ -254,8 +254,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     vars.encodedVaas = _encodedVaas;
 
     uint256 totalFeeReceiver;
-
-    for (uint256 i = 0; i <= _accounts.length; ) {
+    for (uint256 i = 0; i < _accounts.length; ) {
       totalFeeReceiver += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
       unchecked {
         ++i;

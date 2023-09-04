@@ -28,7 +28,7 @@ interface IExt01Handler {
   }
 
   struct GenericOrder {
-    uint256 orderIndex;
+    uint248 orderIndex;
     OrderStatus status;
     uint48 createdTimestamp;
     uint48 executedTimestamp;

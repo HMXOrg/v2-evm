@@ -84,6 +84,7 @@
   "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",
   "reader": {
     "order": "0x1EF528Fd3771a87F568A2E39422B5f00F473389E",
+    "position": "",
     "liquidation": ""
   },
   "extension": {

@@ -9,6 +9,7 @@ import { TestBase } from "forge-std/Base.sol";
 import { StdCheatsSafe } from "forge-std/StdCheats.sol";
 import { StdAssertions } from "forge-std/StdAssertions.sol";
 import { console2 } from "forge-std/console2.sol";
+import { console } from "forge-std/console.sol";
 import { stdJson } from "forge-std/StdJson.sol";
 
 /// HMX tests
@@ -38,7 +39,7 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
   CurveDexter internal curveDexter;
 
   function setUp() external {
-    vm.createSelectFork(vm.rpcUrl("arbitrum_fork"), 113073035);
+    vm.createSelectFork(vm.envString("ARBITRUM_ONE_FORK"), 113073035);
 
     vm.startPrank(ForkEnv.multiSig);
     Deployer.upgrade("ConfigStorage", address(ForkEnv.proxyAdmin), address(ForkEnv.configStorage));
@@ -124,8 +125,7 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
       address(ForkEnv.liquidationService),
       address(ForkEnv.liquidityService),
       address(ForkEnv.tradeService),
-      address(ForkEnv.ecoPyth2),
-      50
+      address(ForkEnv.ecoPyth2)
     );
     // Settings
     ext01Handler.setOrderExecutor(EXT01_EXECUTOR, true);
@@ -161,6 +161,8 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(0, 79115385, _path, 41433673370671066)
       })
     );
@@ -177,6 +179,8 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(0, 79115385, _path, 41433673370671066)
       })
     );
@@ -193,6 +197,8 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(0, 79115385, _path, 41433673370671066)
       })
     );
@@ -204,10 +210,12 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     address[] memory _path = new address[](2);
     _path[0] = address(ForkEnv.sGlp);
     _path[1] = address(ForkEnv.weth);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, 5000000000000000000, _path, 2652487522183761)
       })
     );
@@ -224,7 +232,23 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
-    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    address[] memory accounts = new address[](1);
+    accounts[0] = USER;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = SUB_ACCOUNT_ID;
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = _orderIndex;
+    ext01Handler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
+      payable(EXT01_EXECUTOR),
+      _priceData,
+      _publishTimeData,
+      block.timestamp,
+      "",
+      false
+    );
     vm.stopPrank();
 
     // Trader balance should be the same
@@ -236,10 +260,12 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     address[] memory _path = new address[](2);
     _path[0] = address(ForkEnv.sGlp);
     _path[1] = address(ForkEnv.weth);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, 5000000000000000000, _path, 0)
       })
     );
@@ -256,7 +282,23 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
-    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    address[] memory accounts = new address[](1);
+    accounts[0] = USER;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = SUB_ACCOUNT_ID;
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = _orderIndex;
+    ext01Handler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
+      payable(EXT01_EXECUTOR),
+      _priceData,
+      _publishTimeData,
+      block.timestamp,
+      "",
+      false
+    );
     vm.stopPrank();
 
     // Trader balance should be the same
@@ -268,10 +310,12 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     address[] memory _path = new address[](2);
     _path[0] = address(ForkEnv.sGlp);
     _path[1] = address(ForkEnv.weth);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, 5000000000000000000, _path, 0)
       })
     );
@@ -288,7 +332,23 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
-    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    address[] memory accounts = new address[](1);
+    accounts[0] = USER;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = SUB_ACCOUNT_ID;
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = _orderIndex;
+    ext01Handler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
+      payable(EXT01_EXECUTOR),
+      _priceData,
+      _publishTimeData,
+      block.timestamp,
+      "",
+      false
+    );
     vm.stopPrank();
     uint256 _wethAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.weth));
 
@@ -302,10 +362,12 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     address[] memory _path = new address[](2);
     _path[0] = address(ForkEnv.weth);
     _path[1] = address(ForkEnv.sGlp);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.weth)), _path, 0)
       })
     );
@@ -322,7 +384,23 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
-    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    address[] memory accounts = new address[](1);
+    accounts[0] = USER;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = SUB_ACCOUNT_ID;
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = _orderIndex;
+    ext01Handler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
+      payable(EXT01_EXECUTOR),
+      _priceData,
+      _publishTimeData,
+      block.timestamp,
+      "",
+      false
+    );
     vm.stopPrank();
     uint256 _sGlpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp));
 
@@ -338,10 +416,12 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _path[0] = address(ForkEnv.sGlp);
     _path[1] = address(ForkEnv.weth);
     _path[2] = address(ForkEnv.arb);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp)), _path, 0)
       })
     );
@@ -358,8 +438,26 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
-    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    address[] memory accounts = new address[](1);
+    accounts[0] = USER;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = SUB_ACCOUNT_ID;
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = _orderIndex;
+    ext01Handler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
+      payable(EXT01_EXECUTOR),
+      _priceData,
+      _publishTimeData,
+      block.timestamp,
+      "",
+      false
+    );
     vm.stopPrank();
+    IExt01Handler.GenericOrder[] memory orders = ext01Handler.getAllActiveOrders(4, 0);
+    console.log("executed:", orders[0].executedTimestamp);
     uint256 _arbAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.arb));
 
     // Trader balance should be the same
@@ -380,10 +478,12 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _path[0] = address(ForkEnv.arb);
     _path[1] = address(ForkEnv.weth);
     _path[2] = address(ForkEnv.sGlp);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.arb)), _path, 0)
       })
     );
@@ -400,7 +500,23 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
-    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    address[] memory accounts = new address[](1);
+    accounts[0] = USER;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = SUB_ACCOUNT_ID;
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = _orderIndex;
+    ext01Handler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
+      payable(EXT01_EXECUTOR),
+      _priceData,
+      _publishTimeData,
+      block.timestamp,
+      "",
+      false
+    );
     vm.stopPrank();
     uint256 _sGlpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp));
 
@@ -416,10 +532,12 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _path[0] = address(ForkEnv.sGlp);
     _path[1] = address(ForkEnv.weth);
     _path[2] = address(ForkEnv.wstEth);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp)), _path, 0)
       })
     );
@@ -437,7 +555,23 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
-    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    address[] memory accounts = new address[](1);
+    accounts[0] = USER;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = SUB_ACCOUNT_ID;
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = _orderIndex;
+    ext01Handler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
+      payable(EXT01_EXECUTOR),
+      _priceData,
+      _publishTimeData,
+      block.timestamp,
+      "",
+      false
+    );
     vm.stopPrank();
     uint256 _wstEthAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.wstEth));
 
@@ -457,10 +591,12 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _path[0] = address(ForkEnv.wstEth);
     _path[1] = address(ForkEnv.weth);
     _path[2] = address(ForkEnv.sGlp);
-    ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
       IExt01Handler.CreateExtOrderParams({
         orderType: 1,
         executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
         data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.wstEth)), _path, 0)
       })
     );
@@ -478,7 +614,23 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     _publishTimeData[0] = bytes32(0);
     _publishTimeData[1] = bytes32(0);
     _publishTimeData[2] = bytes32(0);
-    ext01Handler.executeOrders(1, payable(EXT01_EXECUTOR), _priceData, _publishTimeData, block.timestamp, "");
+    address[] memory accounts = new address[](1);
+    accounts[0] = USER;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = SUB_ACCOUNT_ID;
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = _orderIndex;
+    ext01Handler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
+      payable(EXT01_EXECUTOR),
+      _priceData,
+      _publishTimeData,
+      block.timestamp,
+      "",
+      false
+    );
     vm.stopPrank();
     uint256 _sGlpAfter = ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp));
 

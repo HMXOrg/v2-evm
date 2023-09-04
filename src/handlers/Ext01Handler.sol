@@ -7,6 +7,7 @@ pragma solidity 0.8.18;
 /// Bases
 import { OwnableUpgradeable } from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /// Interfaces
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
@@ -67,6 +68,22 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     string errMsg
   );
 
+  struct ExecuteOrderVars {
+    GenericOrder order;
+    address subAccount;
+    bytes32 positionId;
+    bytes32 encodedVaas;
+    bytes32[] priceData;
+    bytes32[] publishTimeData;
+    address payable feeReceiver;
+    uint256 orderIndex;
+    uint256 minPublishTime;
+    bool positionIsLong;
+    bool isNewPosition;
+    bool isMarketOrder;
+    int256 sizeDelta;
+  }
+
   /**
    * Configuration States
    */
@@ -79,9 +96,16 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   /**
    * Storage States
    */
-  uint256 public nextExecutionOrderIndex; // The index of the next executable order that should be executed
   mapping(uint24 orderType => uint128 minExecutionFee) public minExecutionOrderOf; // Minimum execution fee of each orderType
-  uint256 public maxExecutionChuck; // Maximum execution order sizes per request
+  mapping(address => mapping(uint256 => GenericOrder)) public genericOrders; // Array of Orders of each sub-account
+  mapping(address => uint256) public genericOrdersIndex; // The last limit order index of each sub-account
+  mapping(address => address) public delegations; // The mapping of mainAccount => Smart Wallet to be used for Account Abstraction
+
+  // Pointers
+  EnumerableSet.UintSet private _activeOrderPointers;
+  EnumerableSet.UintSet private _executedOrderPointers;
+  mapping(address => EnumerableSet.UintSet) private _subAccountActiveOrderPointers;
+  mapping(address => EnumerableSet.UintSet) private _subAccountExecutedOrderPointers;
 
   GenericOrder[] public orders; // All extended orders
   mapping(address => bool) public orderExecutors; // address -> flag to execute
@@ -90,6 +114,22 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   modifier onlyOrderExecutor() {
     if (!orderExecutors[msg.sender]) revert IExt01Handler_Unauthorized();
     _;
+  }
+
+  modifier delegate(address _mainAccount) {
+    if (delegations[_mainAccount] == msg.sender) {
+      senderOverride = _mainAccount;
+    }
+    _;
+    senderOverride = address(0);
+  }
+
+  function _msgSender() internal view override returns (address) {
+    if (senderOverride == address(0)) {
+      return msg.sender;
+    } else {
+      return senderOverride;
+    }
   }
 
   /// @custom:oz-upgrades-unsafe-allow constructor
@@ -109,7 +149,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     address _liquidityService,
     address _tradeService,
     address _pyth,
-    uint256 _maxExecutionChuck
   ) external initializer {
     OwnableUpgradeable.__Ownable_init();
     ReentrancyGuardUpgradeable.__ReentrancyGuard_init();
@@ -119,8 +158,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     liquidityService = LiquidityService(_liquidityService);
     tradeService = TradeService(_tradeService);
     pyth = IEcoPyth(_pyth);
-
-    maxExecutionChuck = _maxExecutionChuck;
 
     // Sanity check
     crossMarginService.vaultStorage();
@@ -143,8 +180,12 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
 
   function createExtOrder(
     CreateExtOrderParams memory _params
-  ) external payable nonReentrant returns (uint256 _orderId) {
+  ) external payable nonReentrant delegate(_params.mainAccount) returns (uint256 _orderId) {
     // Check
+    // Check if overrided _msgSender() is the same as _mainAccount.
+    // If msg.sender is not a delegatee, _msgSender() won't be overrided
+    // which then makes _msgSender() to become msg.sender not the _mainAccount.
+    if (_mainAccount != _msgSender()) revert IExt01Handler_Unauthorized();
     // 0 = Cancelled order
     if (_params.orderType == 0) revert IExt01Handler_BadOrderType();
     uint128 _minExecutionFee = minExecutionOrderOf[_params.orderType];
@@ -155,9 +196,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     // This should just only a executionFee
     _transferInETH();
 
-    _orderId = orders.length;
     bytes memory _rawOrder;
-
     // Create order according to the command
     if (_params.orderType == 1) {
       // OrderType 1 = Create switch collateral order
@@ -174,92 +213,55 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       );
     }
 
-    orders.push(
-      GenericOrder({
-        orderId: uint248(_orderId),
-        status: OrderStatus.PENDING,
-        createdTimestamp: uint48(block.timestamp),
-        executedTimestamp: 0,
-        orderType: uint24(_params.orderType),
-        executionFee: uint128(0),
-        rawOrder: _rawOrder
-      })
-    );
+    address _subAccount = HMXLib.getSubAccount(_msgSender(), _params.subAccountId);
+    uint256 _orderIndex = genericOrdersIndex[_subAccount];
+      
+    Generic memory order = GenericOrder({
+      orderId: _orderIndex,
+      status: OrderStatus.PENDING,
+      createdTimestamp: uint48(block.timestamp),
+      executedTimestamp: 0,
+      orderType: uint24(_params.orderType),
+      executionFee: uint128(0),
+      rawOrder: _rawOrder
+    });
+
+    _addOrder(order, _subAccount, _orderIndex);
   }
 
   function executeOrders(
-    uint256 _endIndex,
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _orderIndexes,
     address payable _feeReceiver,
     bytes32[] memory _priceData,
     bytes32[] memory _publishTimeData,
     uint256 _minPublishTime,
-    bytes32 _encodedVaas
+    bytes32 _encodedVaas,
+    bool _isRevert
   ) external nonReentrant onlyOrderExecutor {
-    // SLOAD
-    uint256 _nextExecutionOrderIndex = nextExecutionOrderIndex;
 
-    // Get the number of ext orders
-    uint256 _orderLength = orders.length;
-
-    // Ensure there are orders to execute
-    if (_nextExecutionOrderIndex == _orderLength) revert IExt01Handler_NoOrder();
-
-    // Set the end index to the latest order index if it exceeds the number of orders
-    uint256 _latestOrderIndex = _orderLength - 1;
-    if (_endIndex > _latestOrderIndex) {
-      _endIndex = _latestOrderIndex;
-    }
-
-    // split execution into chunk for preventing exceed block gas limit
-    if (_endIndex - _nextExecutionOrderIndex > maxExecutionChuck)
-      _endIndex = _nextExecutionOrderIndex + maxExecutionChuck;
+    if (_accounts.length != _subAccountIds.length || _accounts.length != _orderIndexes.length)
+      revert IExt01Handler_InvalidArraySize();
 
     // Update the price and publish time data using the Pyth oracle
     IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
 
-    // Initialize variables for the execution loop
-    GenericOrder memory _order;
-    uint128 _totalFeeReceived;
-    uint128 _executionFee;
+    ExecuteOrderVars memory vars;
+    vars.feeReceiver = _feeReceiver;
+    vars.priceData = _priceData;
+    vars.publishTimeData = _publishTimeData;
+    vars.minPublishTime = _minPublishTime;
+    vars.encodedVaas = _encodedVaas;
 
-    for (uint256 i = _nextExecutionOrderIndex; i <= _endIndex; ) {
-      _order = orders[i];
+    uint256 totalFeeReceiver;
 
-      // Skip cancelled order
-      if (_order.orderType == 0) {
-        unchecked {
-          ++i;
-        }
-        continue;
-      }
-
-      _executionFee = _order.executionFee;
-
-      try this.executeOrder(_order) {
-        emit LogExecuteOrderResult(_order.orderId, _order.orderType, _order.executionFee, true, "");
-        // update order status
-        _order.status = OrderStatus.SUCCESS;
-      } catch Error(string memory errMsg) {
-        _handleFailedError(_order, errMsg);
-      } catch Panic(uint /*errorCode*/) {
-        _handleFailedError(_order, "Panic occurred while executing the switch collateral order");
-      } catch (bytes memory errMsg) {
-        _handleFailedError(_order, string(errMsg));
-      }
-
-      // Assign execution time
-      _order.executedTimestamp = uint48(block.timestamp);
-      _totalFeeReceived += _executionFee;
-
-      // Clear executed switch collateral order
-      delete orders[i];
-
+    for (uint256 i = 0; i <= _accounts.length; ) {
+      totalFeeReceiver += _executeOrder(vars, _account[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
       unchecked {
         ++i;
       }
     }
-
-    nextExecutionOrderIndex = _endIndex + 1;
     // Pay execution fee to the executor
     _transferOutETH(_totalFeeReceived, _feeReceiver);
   }
@@ -278,6 +280,18 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   function _handleFailedError(GenericOrder memory _order, string memory errMsg) internal {
     emit LogExecuteOrderResult(_order.orderId, _order.orderType, _order.executionFee, false, errMsg);
     _order.status = OrderStatus.FAIL;
+  }
+
+  function _handleOrderSuccess(address _subAccount, uint256 _orderIndex) internal {
+    _removeOrder(_subAccount, _orderIndex);
+
+    GenericOrder storage order = genericOrders[_subAccount][_orderIndex];
+    order.status = OrderStatus.SUCCESS;
+    order.executedTimestamp = uint48(block.timestamp);
+    // Execution succeeded, store the executed order pointer
+    uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
+    _executedOrderPointers.add(_pointer);
+    _subAccountExecutedOrderPointers[_subAccount].add(_pointer);
   }
 
   /**
@@ -304,16 +318,56 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
 
     emit LogCreateSwitchCollateralOrder(msg.sender, _subAccountId, _amount, _path, _minToAmount);
 
-    _rawOrder = abi.encode(
-      SwitchCollateralOrder({
-        primaryAccount: msg.sender,
+    address _subAccount = HMXLib.getSubAccount(_msgSender(), _subAccountId);
+    uint256 _orderIndex = genericOrdersIndex[_subAccount];
+
+    SwitchCollateralOrder memory order = SwitchCollateralOrder({
+        primaryAccount: _msgSender(),
         subAccountId: _subAccountId,
+        orderIndex: _orderIndex,
         amount: _amount,
         path: _path,
         minToAmount: _minToAmount,
         crossMarginService: crossMarginService
-      })
-    );
+      });
+
+    _rawOrder = abi.encode(order);
+  }
+
+  function _executeOrder(
+    ExecuteOrderVars memory vars,
+    address _account,
+    uint8 _subAccountId,
+    uint256 _orderIndex,
+    bool _isRevert
+  ) internal return (uint256 _totalFeeReceived) {
+    vars.subAccount = HMXLib.getSubAccount(_account, _subAccountId);
+    vars.order = genericOrders[vars.subAccount][_orderIndex];
+    vars.orderIndex = _orderIndex;
+
+    // Check if this order still exists
+    if (vars.order.account == address(0)) revert IExt01Handler_NonExistentOrder();
+
+    // Skip cancelled order
+    if (vars.order.orderType != 0) {
+      try this.executeOrder(vars.order) {
+        emit LogExecuteOrderResult(vars.order.orderId, vars.order.orderType, vars.order.executionFee, true, "");
+        // update order status
+        _handleOrderSuccess(vars.subAccount, _orderIndex);
+      } catch Error(string memory errMsg) {
+        _handleFailedError(vars.order, errMsg);
+      } catch Panic(uint /*errorCode*/) {
+        _handleFailedError(vars.order, "Panic occurred while executing the switch collateral order");
+      } catch (bytes memory errMsg) {
+        _handleFailedError(vars.order, string(errMsg));
+      }
+
+      // Assign execution time
+      vars.order.executedTimestamp = uint48(block.timestamp);
+      _totalFeeReceived = vars.order.executionFee;
+    }
+
+   
   }
 
   function _executeSwitchCollateralOrder(SwitchCollateralOrder memory _order) internal {
@@ -331,15 +385,56 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     emit LogSwitchCollateral(_order.primaryAccount, _order.subAccountId, _order.path, _order.amount, _toAmount);
   }
 
-  /// @notice Returns all pending extended orders.
-  /// @return _extOrders An array of extended orders.
-  function getOrders() external view returns (GenericOrder[] memory _extOrders) {
-    return orders;
+  function _addOrder(GenericOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
+    genericOrdersIndex[_subAccount] = _orderIndex + 1;
+    genericOrders[_subAccount][_orderIndex] = _order;
+
+    uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
+    _activeOrderPointers.add(_pointer);
+    _subAccountActiveOrderPointers[_subAccount].add(_pointer);
   }
 
-  /// @notice Get order length.
-  function getOrderLength() external view returns (uint256) {
-    return orders.length;
+  function _removeOrder(GenericOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
+    delete genericOrders[_subAccount][_orderIndex];
+
+    uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
+    _activeOrderPointers.remove(_pointer);
+    _subAccountActiveOrderPointers[_subAccount].remove(_pointer);
+  }
+
+  function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (WithdrawOrder[] memory _orders) {
+    return _getOrders(_activeOrderPointers, _limit, _offset);
+  }
+
+  function getAllExecutedOrders(
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _orders) {
+    return _getOrders(_executedOrderPointers, _limit, _offset);
+  }
+
+  function getAllActiveOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _orders) {
+    return _getOrders(_subAccountActiveOrderPointers[_subAccount], _limit, _offset);
+  }
+
+  function getAllExecutedOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (WithdrawOrder[] memory _orders) {
+    return _getOrders(_subAccountExecutedOrderPointers[_subAccount], _limit, _offset);
+  }
+
+  function _encodePointer(address _account, uint96 _index) internal pure returns (uint256 _pointer) {
+    return uint256(bytes32(abi.encodePacked(_account, _index)));
+  }
+
+  function _decodePointer(uint256 _pointer) internal pure returns (address _account, uint96 _index) {
+    return (address(uint160(_pointer >> 96)), uint96(_pointer));
   }
 
   /**
@@ -430,6 +525,11 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
 
     // Sanity check
     tradeService.vaultStorage();
+  }
+
+  function setDelegate(address _delegate) external {
+    delegations[msg.sender] = _delegate;
+    emit LogSetDelegate(msg.sender, _delegate);
   }
 
   /// @notice Sets a new Pyth contract address.

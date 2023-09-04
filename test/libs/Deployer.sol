@@ -271,18 +271,16 @@ library Deployer {
     address _liquidationService,
     address _liquidityService,
     address _tradeService,
-    address _pyth,
-    uint256 _maxExecutionChuck
+    address _pyth
   ) internal returns (IExt01Handler) {
     bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/Ext01Handler.sol/Ext01Handler.json"));
     bytes memory _initializer = abi.encodeWithSelector(
-      bytes4(keccak256("initialize(address,address,address,address,address,uint256)")),
+      bytes4(keccak256("initialize(address,address,address,address,address)")),
       _crossMarginService,
       _liquidationService,
       _liquidityService,
       _tradeService,
-      _pyth,
-      _maxExecutionChuck
+      _pyth
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return IExt01Handler(payable(_proxy));

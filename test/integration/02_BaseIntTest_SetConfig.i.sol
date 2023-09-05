@@ -51,7 +51,7 @@ abstract contract BaseIntTest_SetConfig is BaseIntTest {
     configStorage.setTradingConfig(
       IConfigStorage.TradingConfig({
         fundingInterval: 1, // second
-        devFeeRateBPS: 1500, // 15%
+        devFeeRateBPS: 1000, // 10%
         minProfitDuration: 15, // second
         maxPosition: 10
       })

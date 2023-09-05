@@ -42,10 +42,11 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   event LogSetMinExecutionFee(uint256 oldValue, uint256 newValue);
   event LogSetMaxExecutionChunk(uint256 oldValue, uint256 newValue);
   event LogSetPyth(address oldPyth, address newPyth);
+  event LogSetDelegate(address indexed mainAccount, address indexed delegateAccount);
   event LogSetOrderExecutor(address executor, bool isAllow);
   event LogCreateAddLiquidityOrder(
     address indexed account,
-    uint256 indexed orderId,
+    uint256 indexed orderIndex,
     address indexed tokenIn,
     uint256 amountIn,
     uint256 minOut,
@@ -54,7 +55,7 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   );
   event LogCreateRemoveLiquidityOrder(
     address indexed account,
-    uint256 indexed orderId,
+    uint256 indexed orderIndex,
     address indexed tokenOut,
     uint256 amountIn,
     uint256 minOut,
@@ -64,7 +65,7 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   );
   event LogExecuteLiquidityOrder(
     address indexed account,
-    uint256 indexed orderId,
+    uint256 indexed orderIndex,
     address indexed token,
     uint256 amount,
     uint256 minOut,
@@ -75,7 +76,7 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   );
   event LogCancelLiquidityOrder(
     address indexed account,
-    uint256 indexed orderId,
+    uint256 indexed orderIndex,
     address indexed token,
     uint256 amount,
     uint256 minOut,
@@ -83,7 +84,7 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   );
   event LogRefund(
     address indexed account,
-    uint256 indexed orderId,
+    uint256 indexed orderIndex,
     address indexed token,
     uint256 amount,
     bool isNativeOut
@@ -453,12 +454,14 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       try this.executeLiquidity(vars.order) returns (uint256 actualOut) {
         emit LogExecuteLiquidityOrder(
           vars.order.account,
-          vars.order.orderId,
+          vars.orderIndex,
           vars.order.token,
           vars.order.amount,
           vars.order.minOut,
           vars.order.isAdd,
-          actualOut
+          actualOut,
+          true,
+          ""
         );
         // update order status
         _handleOrderSuccess(vars.subAccount, _orderIndex);
@@ -481,13 +484,13 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     } else {
       emit LogExecuteLiquidityOrder(
         order.account,
-        order.orderId,
+        order.orderIndex,
         order.token,
         order.amount,
         order.minOut,
         order.isAdd,
         0,
-        true,
+        false,
         errMsg
       );
       //refund in case of revert as order
@@ -583,13 +586,13 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
       } else {
         IERC20Upgradeable(_order.token).safeTransfer(_account, _amount);
       }
-      emit LogRefund(_account, _order.orderId, _order.token, _amount, _order.isNativeOut);
+      emit LogRefund(_account, _order.orderIndex, _order.token, _amount, _order.isNativeOut);
     }
     // Remove Liquidity order
     else {
       address hlp = ConfigStorage(LiquidityService(liquidityService).configStorage()).hlp();
       IERC20Upgradeable(hlp).safeTransfer(_account, _amount);
-      emit LogRefund(_account, _order.orderId, hlp, _amount, false);
+      emit LogRefund(_account, _order.orderIndex, hlp, _amount, false);
     }
   }
 

@@ -43,60 +43,67 @@ interface ILiquidityHandler02 {
   }
 
   /**
-   * States
-   */
-  function nextExecutionOrderIndex() external view returns (uint256);
-
-  /**
    * Functions
    */
   function createAddLiquidityOrder(
-    address _tokenBuy,
+    address _mainAccount,
+    uint8 _subAccountId,
+    address _tokenIn,
     uint256 _amountIn,
     uint256 _minOut,
     uint256 _executionFee,
-    bool _shouldUnwrap
-  ) external payable returns (uint256);
+    bool _shouldWrap
+  ) external payable returns (uint256 _orderIndex);
 
   function createRemoveLiquidityOrder(
-    address _tokenSell,
+    address _mainAccount,
+    uint8 _subAccountId,
+    address _tokenOut,
     uint256 _amountIn,
     uint256 _minOut,
     uint256 _executionFee,
-    bool _shouldUnwrap
-  ) external payable returns (uint256);
+    bool _isNativeOut
+  ) external payable returns (uint256 _orderIndex);
 
-  function executeOrder(
-    uint256 _endIndex,
+  function executeOrders(
+    address[] memory _accounts,
+    uint8[] memory _subAccountIds,
+    uint256[] memory _orderIndexes,
     address payable _feeReceiver,
     bytes32[] calldata _priceData,
     bytes32[] calldata _publishTimeData,
     uint256 _minPublishTime,
-    bytes32 _encodedVaas
+    bytes32 _encodedVaas,
+    bool _isRevert
   ) external;
-
-  function cancelLiquidityOrder(uint256 _orderIndex) external;
-
-  function getLiquidityOrders() external view returns (LiquidityOrder[] memory);
-
-  function getLiquidityOrderLength() external view returns (uint256);
-
-  function setOrderExecutor(address _executor, bool _isOk) external;
 
   function executeLiquidity(LiquidityOrder calldata _order) external returns (uint256);
 
-  function getActiveLiquidityOrders(
+  function cancelLiquidityOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) external;
+
+  /** Getters */
+  function getAllActiveOrders(uint256 _limit, uint256 _offset) external view returns (LiquidityOrder[] memory _orders);
+
+  function getAllExecutedOrders(
     uint256 _limit,
     uint256 _offset
-  ) external view returns (LiquidityOrder[] memory _liquidityOrders);
+  ) external view returns (LiquidityOrder[] memory _orders);
 
-  function getExecutedLiquidityOrders(
-    address _account,
+  function getAllActiveOrdersBySubAccount(
+    address _subAccount,
     uint256 _limit,
     uint256 _offset
-  ) external view returns (LiquidityOrder[] memory _liquidityOrders);
+  ) external view returns (LiquidityOrder[] memory _orders);
 
-  function setMaxExecutionChunk(uint256 _maxExecutionChunk) external;
+  function getAllExecutedOrdersBySubAccount(
+    address _subAccount,
+    uint256 _limit,
+    uint256 _offset
+  ) external view returns (LiquidityOrder[] memory _orders);
+
+  function setOrderExecutor(address _executor, bool _isOk) external;
+
+  function setDelegate(address _delegate) external;
 
   function setMinExecutionFee(uint256 _newMinExecutionFee) external;
 

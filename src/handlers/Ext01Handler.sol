@@ -254,7 +254,8 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     vars.encodedVaas = _encodedVaas;
 
     uint256 totalFeeReceiver;
-    for (uint256 i = 0; i < _accounts.length; ) {
+    uint256 length = _accounts.length;
+    for (uint256 i = 0; i < length; ) {
       totalFeeReceiver += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
       unchecked {
         ++i;

@@ -313,50 +313,44 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   }
 
   /// @notice Executes liquidity orders within the given range, updating price data and publishing time data as necessary.
-  /// @param _accounts The array of main account.
-  /// @param _subAccountIds The array of subAccount id.
-  /// @param _orderIndexes The array of orderIndex to be executed.
-  /// @param _feeReceiver The address to receive the total execution fee for all executed liquidity orders.
-  /// @param _priceData Price data from the Pyth oracle.
-  /// @param _publishTimeData Publish time data from the Pyth oracle.
-  /// @param _minPublishTime Minimum publish time for the Pyth oracle data.
-  /// @param _encodedVaas Encoded VaaS data for the Pyth oracle.
-  // slither-disable-next-line reentrancy-eth
-  function executeOrders(
-    address[] memory _accounts,
-    uint8[] memory _subAccountIds,
-    uint256[] memory _orderIndexes,
-    address payable _feeReceiver,
-    bytes32[] calldata _priceData,
-    bytes32[] calldata _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas,
-    bool _isRevert
-  ) external nonReentrant onlyOrderExecutor {
-    if (_accounts.length != _subAccountIds.length || _accounts.length != _orderIndexes.length)
-      revert ILiquidityHandler02_InvalidArraySize();
+  /// @param _params store all data needed to execute, avoid stack-too-deep
+  function executeOrders(ExecuteOrdersParam memory _params) external nonReentrant onlyOrderExecutor {
+    if (
+      _params.accounts.length != _params.subAccountIds.length || _params.accounts.length != _params.orderIndexes.length
+    ) revert ILiquidityHandler02_InvalidArraySize();
 
     // slither-disable-next-line arbitrary-send-eth
-    IEcoPyth(pyth).updatePriceFeeds(_priceData, _publishTimeData, _minPublishTime, _encodedVaas);
+    IEcoPyth(pyth).updatePriceFeeds(
+      _params.priceData,
+      _params.publishTimeData,
+      _params.minPublishTime,
+      _params.encodedVaas
+    );
 
     ExecuteOrderVars memory vars;
-    vars.feeReceiver = _feeReceiver;
-    vars.priceData = _priceData;
-    vars.publishTimeData = _publishTimeData;
-    vars.minPublishTime = _minPublishTime;
-    vars.encodedVaas = _encodedVaas;
+    vars.feeReceiver = _params.feeReceiver;
+    vars.priceData = _params.priceData;
+    vars.publishTimeData = _params.publishTimeData;
+    vars.minPublishTime = _params.minPublishTime;
+    vars.encodedVaas = _params.encodedVaas;
 
     uint256 _totalFeeReceiver;
-    uint256 length = _accounts.length;
+    uint256 length = _params.accounts.length;
     for (uint256 i = 0; i < length; ) {
-      _totalFeeReceiver += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
+      _totalFeeReceiver += _executeOrder(
+        vars,
+        _params.accounts[i],
+        _params.subAccountIds[i],
+        _params.orderIndexes[i],
+        _params.isRevert
+      );
       unchecked {
         ++i;
       }
     }
 
     // Pay total collected fees to the executor
-    _transferOutETH(_totalFeeReceiver, _feeReceiver);
+    _transferOutETH(_totalFeeReceiver, _params.feeReceiver);
   }
 
   /// @notice execute either addLiquidity or removeLiquidity

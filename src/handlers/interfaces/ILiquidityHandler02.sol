@@ -42,6 +42,18 @@ interface ILiquidityHandler02 {
     LiquidityOrderStatus status;
   }
 
+  struct ExecuteOrdersParam {
+    address[] accounts;
+    uint8[] subAccountIds;
+    uint256[] orderIndexes;
+    address payable feeReceiver;
+    bytes32[] priceData;
+    bytes32[] publishTimeData;
+    uint256 minPublishTime;
+    bytes32 encodedVaas;
+    bool isRevert;
+  }
+
   /**
    * Functions
    */
@@ -65,17 +77,7 @@ interface ILiquidityHandler02 {
     bool _isNativeOut
   ) external payable returns (uint256 _orderIndex);
 
-  function executeOrders(
-    address[] memory _accounts,
-    uint8[] memory _subAccountIds,
-    uint256[] memory _orderIndexes,
-    address payable _feeReceiver,
-    bytes32[] calldata _priceData,
-    bytes32[] calldata _publishTimeData,
-    uint256 _minPublishTime,
-    bytes32 _encodedVaas,
-    bool _isRevert
-  ) external;
+  function executeOrders(ExecuteOrdersParam memory _params) external;
 
   function executeLiquidity(LiquidityOrder calldata _order) external returns (uint256);
 

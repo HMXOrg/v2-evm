@@ -30,9 +30,12 @@ export const ecoPythPriceFeedIdsByIndex = [
   "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d", // SOLUSD
   "0x9695e2b96ea7b3859da9ed25b7a46a920a776e2fdae19a7bcfdf2b219230452d", // QQQUSD
   "0xec5d399846a9209f3fe5881d70aae9268c94339ff9817e8d18ff19fa05eea1c8", // XRPUSD
-  "0xb1073854ed24cbc755dc527418f52b7d271f6cc967bbf8d8129112b18860a593", // NVDA
-  "0x8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221", // LINK
-  "0x0b1e3297e69f162877b577b0d6a47a0d63b2392bc8499e6540da4187a63e28f8", // CHF
+  "0xb1073854ed24cbc755dc527418f52b7d271f6cc967bbf8d8129112b18860a593", // NVDAUSD
+  "0x8ac0c70fff57e9aefdf5edf44b51d62c2d433653cbb2cf5cc06bb115af04d221", // LINKUSD
+  "0x0b1e3297e69f162877b577b0d6a47a0d63b2392bc8499e6540da4187a63e28f8", // USDCHF
+  "0xdcef50dd0a4cd2dcc17e45df1676dcb336a11a61c69df7a0299b0150c672d25c", // DOGEUSD
+  "0x3112b03a41c910ed446852aacf67118cb1bec67b2cd0b9a214c58cc0eaa2ecca", // USDCAD
+  "0x396a969a9c1480fa15ed50bc59149e2c0075a72fe8f458ed941ddec48bdb4918", // USDSGD
 ];
 export const ecoPythAssetIdByIndex = [
   "0x4554480000000000000000000000000000000000000000000000000000000000", // ETH
@@ -66,6 +69,9 @@ export const ecoPythAssetIdByIndex = [
   ethers.utils.formatBytes32String("NVDA"),
   ethers.utils.formatBytes32String("LINK"),
   ethers.utils.formatBytes32String("CHF"),
+  ethers.utils.formatBytes32String("DOGE"),
+  ethers.utils.formatBytes32String("CAD"),
+  ethers.utils.formatBytes32String("SGD"),
 ];
 export const ecoPythHoomanReadableByIndex = [
   "ETH",
@@ -99,4 +105,7 @@ export const ecoPythHoomanReadableByIndex = [
   "NVDA",
   "LINK",
   "CHF",
+  "DOGE",
+  "CAD",
+  "SGD",
 ];

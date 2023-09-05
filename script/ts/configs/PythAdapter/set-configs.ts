@@ -7,18 +7,18 @@ import SafeWrapper from "../../wrappers/SafeWrapper";
 
 const inputs = [
   {
-    assetId: ethers.utils.formatBytes32String("NVDA"),
-    pythPriceId: ethers.utils.formatBytes32String("NVDA"),
+    assetId: ethers.utils.formatBytes32String("DOGE"),
+    pythPriceId: ethers.utils.formatBytes32String("DOGE"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("LINK"),
-    pythPriceId: ethers.utils.formatBytes32String("LINK"),
+    assetId: ethers.utils.formatBytes32String("CAD"),
+    pythPriceId: ethers.utils.formatBytes32String("CAD"),
     inverse: false,
   },
   {
-    assetId: ethers.utils.formatBytes32String("CHF"),
-    pythPriceId: ethers.utils.formatBytes32String("CHF"),
+    assetId: ethers.utils.formatBytes32String("SGD"),
+    pythPriceId: ethers.utils.formatBytes32String("SGD"),
     inverse: false,
   },
 ];

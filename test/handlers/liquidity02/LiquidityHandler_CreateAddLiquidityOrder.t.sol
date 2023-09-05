@@ -36,7 +36,6 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base02 {
 
     vm.prank(ALICE);
     vm.expectRevert(abi.encodeWithSignature("IConfigStorage_NotAcceptedLiquidity()"));
-
     liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
       ALICE,
       SUB_ID,
@@ -51,10 +50,10 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base02 {
   function test_revert_InsufficientExecutionFee() external {
     wbtc.mint(ALICE, 1 ether);
     vm.deal(ALICE, 5 ether);
-    vm.prank(ALICE);
+    vm.startPrank(ALICE);
 
     wbtc.approve(address(liquidityHandler), 1 ether);
-    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_InsufficientExecutionFee()"));
+    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler02_InsufficientExecutionFee()"));
     liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
       ALICE,
       SUB_ID,
@@ -64,14 +63,15 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base02 {
       3 ether,
       false
     );
+    vm.stopPrank();
   }
 
   function test_revert_incorrectValueTransfer() external {
     wbtc.mint(ALICE, 1 ether);
     vm.deal(ALICE, 5 ether);
-    vm.prank(ALICE);
+    vm.startPrank(ALICE);
     wbtc.approve(address(liquidityHandler), 1 ether);
-    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_InCorrectValueTransfer()"));
+    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler02_InCorrectValueTransfer()"));
     liquidityHandler.createAddLiquidityOrder{ value: 3 ether }(
       ALICE,
       SUB_ID,
@@ -81,14 +81,15 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base02 {
       5 ether,
       false
     );
+    vm.stopPrank();
   }
 
   function test_revert_nativeIncorrectValueTransfer() external {
     wbtc.mint(ALICE, 1 ether);
     vm.deal(ALICE, 5 ether);
-    vm.prank(ALICE);
+    vm.startPrank(ALICE);
     wbtc.approve(address(liquidityHandler), 1 ether);
-    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler_InCorrectValueTransfer()"));
+    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler02_InCorrectValueTransfer()"));
     liquidityHandler.createAddLiquidityOrder{ value: 3 ether }(
       ALICE,
       SUB_ID,
@@ -98,6 +99,7 @@ contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base02 {
       5 ether,
       false
     );
+    vm.stopPrank();
   }
 
   function test_revert_hlpCircuitBreaker() external {

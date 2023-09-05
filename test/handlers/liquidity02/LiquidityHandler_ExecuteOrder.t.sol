@@ -7,6 +7,11 @@ pragma solidity 0.8.18;
 import { LiquidityHandler_Base02, IConfigStorage, IPerpStorage } from "./LiquidityHandler_Base02.t.sol";
 import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler02.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+import { MockAccountAbstraction } from "../../mocks/MockAccountAbstraction.sol";
+import { MockEntryPoint } from "../../mocks/MockEntryPoint.sol";
+
+import "forge-std/console.sol";
 // - revert
 //   - Try directCall executeLiquidity
 //   - Try directCall refund
@@ -50,10 +55,15 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
   bytes32[] internal priceUpdateData;
   bytes32[] internal publishTimeUpdateData;
 
+  MockEntryPoint entryPoint;
+
   function setUp() public override {
     super.setUp();
-
+    vm.prank(ALICE);
+    liquidityHandler.setDelegate(ALICE);
     liquidityHandler.setOrderExecutor(address(this), true);
+
+    entryPoint = new MockEntryPoint();
   }
 
   /**
@@ -98,13 +108,13 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     uint256 _orderIndex = _createAddLiquidityWBTCOrder();
 
     vm.prank(BOB);
-    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler02_NotOrderOwner()"));
+    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler02_InvalidOrder()"));
     liquidityHandler.cancelLiquidityOrder(ALICE, SUB_ID, _orderIndex);
   }
 
   function test_revert_cancelOrder_uncreatedOrder02() external {
     vm.prank(ALICE);
-    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler02_NoOrder()"));
+    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler02_InvalidOrder()"));
     liquidityHandler.cancelLiquidityOrder(ALICE, SUB_ID, 0);
   }
 
@@ -141,330 +151,93 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
 
     // Assertion after Executed Order
     ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
-    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
     //user have to get refund
     assertEq(activeOrders.length, 0, "Should have none active order");
     assertEq(executedOrders.length, 0, "Should have none executed order");
     assertEq(wbtc.balanceOf(ALICE), 1 ether);
   }
 
-  // function test_correctness_userRefund_addLiquidity_revertAsBytes02() external {
-  //   mockLiquidityService.setReverted(true);
-  //   mockLiquidityService.setRevertAsMessage(false);
+  function test_correctness_userRefund_removeLiquidity_revertAsMessage02() external {
+    mockLiquidityService.setReverted(true);
+    mockLiquidityService.setRevertAsMessage(true);
 
-  //   uint256 _orderIndex = _createAddLiquidityWBTCOrder();
-  //   uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
+    uint256 _orderIndex = _createRemoveLiquidityOrder();
 
-  //   // Handler executor
-  //   assertEq(_nextExecutionOrderIndex, 0, "nextExecutionOrderIndex");
-  //   liquidityHandler.executeOrder(
-  //     _orderIndex,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
+    ILiquidityHandler02.ExecuteOrdersParam memory params;
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ID;
+    orderIndexes[0] = _orderIndex;
 
-  //   // Assertion after Executed Order
-  //   _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
-  //   ILiquidityHandler02.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
-  //   //user have to get refund
-  //   assertEq(_nextExecutionOrderIndex, 1, "nextExecutionOrderIndex After executed");
-  //   assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
-  //   assertEq(wbtc.balanceOf(ALICE), 1 ether);
-  // }
+    params.accounts = accounts;
+    params.subAccountIds = subAccountIds;
+    params.orderIndexes = orderIndexes;
+    params.feeReceiver = payable(FEEVER);
+    params.priceData = priceUpdateData;
+    params.publishTimeData = publishTimeUpdateData;
+    params.minPublishTime = block.timestamp;
+    params.encodedVaas = keccak256("someEncodedVaas");
+    params.isRevert = false;
 
-  // function test_correctness_userRefund_removeLiquidity_revertAsMessage02() external {
-  //   mockLiquidityService.setReverted(true);
-  //   mockLiquidityService.setRevertAsMessage(true);
+    // Handler executor
+    liquidityHandler.executeOrders(params);
 
-  //   _createRemoveLiquidityOrder();
+    // Assertion after ExecuteOrder
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
+    //user have to get refund
+    assertEq(activeOrders.length, 0, "Should have none active order");
+    assertEq(executedOrders.length, 0, "Should have none executed order");
+    assertEq(hlp.balanceOf(ALICE), 5 ether);
+  }
 
-  //   // Handler executor
-  //   ILiquidityHandler02.LiquidityOrder[] memory _ordersBefore = liquidityHandler.getLiquidityOrders();
-  //   liquidityHandler.executeOrder(
-  //     _ordersBefore.length - 1,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
+  function test_correctness_executeOrder_IncreaseOneOrder02() external {
+    uint256 _orderIndex = _createAddLiquidityWBTCOrder();
 
-  //   // Assertion after ExecuteOrder
-  //   ILiquidityHandler02.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
-  //   uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
+    ILiquidityHandler02.ExecuteOrdersParam memory params;
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ID;
+    orderIndexes[0] = _orderIndex;
 
-  //   //user have to get refund
-  //   assertEq(_nextExecutionOrderIndex, 1, "nextExecutionOrderIndex After executed");
-  //   assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
-  //   assertEq(hlp.balanceOf(ALICE), 5 ether);
-  // }
+    params.accounts = accounts;
+    params.subAccountIds = subAccountIds;
+    params.orderIndexes = orderIndexes;
+    params.feeReceiver = payable(FEEVER);
+    params.priceData = priceUpdateData;
+    params.publishTimeData = publishTimeUpdateData;
+    params.minPublishTime = block.timestamp;
+    params.encodedVaas = keccak256("someEncodedVaas");
+    params.isRevert = true;
 
-  // function test_correctness_userRefund_removeLiquidity_revertAsBytes02() external {
-  //   mockLiquidityService.setReverted(true);
-  //   mockLiquidityService.setRevertAsMessage(false);
+    // Handler executor
+    liquidityHandler.executeOrders(params);
 
-  //   _createRemoveLiquidityOrder();
+    // Assertion after Executed Order
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
+    //user have to get refund
+    assertEq(activeOrders.length, 0, "Should have none active order");
+    assertEq(executedOrders.length, 1, "Should have one executed order");
+  }
 
-  //   // Handler executor
-  //   ILiquidityHandler02.LiquidityOrder[] memory _ordersBefore = liquidityHandler.getLiquidityOrders();
-  //   liquidityHandler.executeOrder(
-  //     _ordersBefore.length - 1,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
-
-  //   // Assertion after ExecuteOrder
-  //   ILiquidityHandler02.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
-  //   uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
-
-  //   //user have to get refund
-  //   assertEq(_nextExecutionOrderIndex, 1, "nextExecutionOrderIndex After executed");
-  //   assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
-  //   assertEq(hlp.balanceOf(ALICE), 5 ether);
-  // }
-
-  // function test_correctness_executeOrder_IncreaseOneOrder02() external {
-  //   uint256 _orderIndex = _createAddLiquidityWBTCOrder();
-  //   uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
-
-  //   // Handler executor
-  //   assertEq(_nextExecutionOrderIndex, 0, "LastExecutedOrderIndex Before Execute");
-  //   liquidityHandler.executeOrder(
-  //     _orderIndex,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
-
-  //   // Assertion after Executed Order
-  //   _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
-  //   ILiquidityHandler02.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
-
-  //   assertEq(_nextExecutionOrderIndex, 1, "LastExecutedOrderIndex After Excuted");
-  //   assertEq(_ordersAfter.length, _nextExecutionOrderIndex, "OrderAfter size != lastExecutedOrderIndex");
-  // }
-
-  // /// @dev hlp burn and receive tokenOut in service
-  // function test_correctness_executeOrder_createRemoveLiquidityOrder02() external {
-  //   _createRemoveLiquidityOrder();
-
-  //   // Handler executor
-  //   ILiquidityHandler02.LiquidityOrder[] memory _ordersBefore = liquidityHandler.getLiquidityOrders();
-  //   liquidityHandler.executeOrder(
-  //     _ordersBefore.length - 1,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
-  //   // Assertion after ExecuteOrder
-  //   ILiquidityHandler02.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
-  //   uint256 _nextExecutionOrderIndex = liquidityHandler.nextExecutionOrderIndex();
-
-  //   assertEq(_ordersAfter.length, 1, "Order Amount After Executed Order");
-  //   assertEq(liquidityHandler.nextExecutionOrderIndex(), 1, "Order Index After Executed Order");
-  //   assertEq(wbtc.balanceOf(ALICE), 5 ether, "ALICE received balance");
-  //   assertEq(_ordersAfter.length, _nextExecutionOrderIndex, "OrderAfter size != lastExecutedOrderIndex");
-  // }
-
-  // function test_correctness_executeOrder_createRemoveLiquidityOrders02() external {
-  //   _createRemoveLiquidityOrder();
-  //   _createRemoveLiquidityOrder();
-
-  //   // Handler executor
-  //   ILiquidityHandler02.LiquidityOrder[] memory _orders = liquidityHandler.getLiquidityOrders();
-
-  //   liquidityHandler.executeOrder(
-  //     _orders.length - 1,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
-
-  //   assertEq(_orders.length, 2, "Order Amount After Executed Order");
-  //   assertEq(liquidityHandler.nextExecutionOrderIndex(), 2, "Order Index After Executed Order");
-  //   assertEq(wbtc.balanceOf(ALICE), 10 ether, "ALICE received balance");
-  // }
-
-  // /// @dev hlp burn and receive tokenOut in service
-  // function test_correctness_executeOrder_native_createRemoveLiquidityOrder02() external {
-  //   // 1 Create Native add liquidity
-  //   vm.deal(ALICE, 10 ether); //5 for executeOrderFee , 5 for create liquidity position
-  //   vm.startPrank(ALICE);
-
-  //   uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 10 ether }(
-  //     address(weth),
-  //     5 ether,
-  //     0,
-  //     5 ether,
-  //     true
-  //   );
-
-  //   ILiquidityHandler02.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders();
-  //   vm.stopPrank();
-
-  //   // 2 Assert LIquidity Order
-  //   assertEq(_beforeExecuteOrders.length, 1, "Order Amount After Created Order");
-  //   assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Created Order");
-
-  //   assertEq(_beforeExecuteOrders[_orderIndex].account, ALICE, "Alice Order.account");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].token, address(weth), "Alice Order.token");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].amount, 5 ether, "Alice Order.amount");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].minOut, 0, "Alice Order.minOut");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].actualAmountOut, 0, "Alice Order.actualAmountOut");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].isAdd, true, "Alice Order.isAdd");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].executionFee, 5 ether, "Alice Order.executionFee");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
-
-  //   // 3 execute create native order
-  //   liquidityHandler.executeOrder(
-  //     _orderIndex,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
-
-  //   // 4 Assertion after ExecuteOrder
-  //   ILiquidityHandler02.LiquidityOrder[] memory _aliceOrdersAfter = liquidityHandler.getLiquidityOrders();
-
-  //   assertEq(_aliceOrdersAfter.length, 1, "Order Amount After Executed Order");
-  //   assertEq(liquidityHandler.nextExecutionOrderIndex(), 1, "Order Index After Executed Order");
-  //   assertEq(ALICE.balance, 0, "ALICE received balance");
-
-  //   // 5 Create remove Liquidity order
-  //   _orderIndex = _createRemoveLiquidityNativeOrder();
-  //   // 6 execute liquidity order
-  //   liquidityHandler.executeOrder(
-  //     _orderIndex,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
-
-  //   _aliceOrdersAfter = liquidityHandler.getLiquidityOrders();
-
-  //   // 7 Assertion after ExecuteOrder
-  //   assertEq(_aliceOrdersAfter.length, 2, "Order Amount After Executed Order");
-  //   assertEq(liquidityHandler.nextExecutionOrderIndex(), 2, "Order Index After Executed Order");
-  //   assertEq(ALICE.balance, 5 ether, "ALICE received balance");
-  // }
-
-  // function test_correctness_executeOrder_native_refundCreateLiquidityOrder02() external {
-  //   mockLiquidityService.setReverted(true);
-  //   mockLiquidityService.setRevertAsMessage(false);
-
-  //   // 1 Create Native add liquidity
-  //   vm.deal(ALICE, 10 ether); //5 for executeOrderFee , 5 for create liquidity position
-  //   vm.startPrank(ALICE);
-
-  //   uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 10 ether }(
-  //     address(weth),
-  //     5 ether,
-  //     0,
-  //     5 ether,
-  //     true
-  //   );
-
-  //   ILiquidityHandler02.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getLiquidityOrders();
-  //   vm.stopPrank();
-
-  //   // 2 Assert LIquidity Order
-  //   assertEq(_beforeExecuteOrders.length, 1, "Order Amount After Created Order");
-  //   assertEq(liquidityHandler.nextExecutionOrderIndex(), 0, "Order Index After Created Order");
-
-  //   assertEq(_beforeExecuteOrders[_orderIndex].account, ALICE, "Alice Order.account");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].token, address(weth), "Alice Order.token");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].amount, 5 ether, "Alice Order.amount");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].minOut, 0, "Alice Order.minOut");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].actualAmountOut, 0, "Alice Order.actualAmountOut");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].isAdd, true, "Alice Order.isAdd");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].executionFee, 5 ether, "Alice Order.executionFee");
-  //   assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
-
-  //   // 3 execute create native order
-  //   liquidityHandler.executeOrder(
-  //     _orderIndex,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
-
-  //   // Assertion after Executed Order
-  //   ILiquidityHandler02.LiquidityOrder[] memory _ordersAfter = liquidityHandler.getLiquidityOrders();
-  //   //user have to get refund
-  //   assertEq(liquidityHandler.nextExecutionOrderIndex(), 1, "nextExecutionOrderIndex After executed");
-  //   assertEq(_ordersAfter[0].amount, 0, "Amount order should be removed");
-
-  //   //alice will get 5 ether from order.amount (Native)
-  //   assertEq(ALICE.balance, _beforeExecuteOrders[_orderIndex].amount, "Alice refund Balance");
-  // }
-
-  // function test_correctness_cancelOrder02() external {
-  //   uint256 _orderIndex = _createAddLiquidityWBTCOrder();
-  //   _createAddLiquidityWBTCOrder();
-  //   _createAddLiquidityWBTCOrder();
-
-  //   vm.prank(ALICE);
-  //   liquidityHandler.cancelLiquidityOrder(_orderIndex);
-
-  //   ILiquidityHandler02.LiquidityOrder[] memory aliceOrders = liquidityHandler.getLiquidityOrders();
-  //   assertEq(aliceOrders[0].account, address(0), "Alice account address");
-
-  //   liquidityHandler.executeOrder(
-  //     type(uint256).max,
-  //     payable(FEEVER),
-  //     priceUpdateData,
-  //     publishTimeUpdateData,
-  //     block.timestamp,
-  //     keccak256("someEncodedVaas")
-  //   );
-
-  //   assertEq(liquidityHandler.nextExecutionOrderIndex(), 3);
-  // }
-
-  // function test_correctness_refunding_when_cancelOrder02() external {
-  //   uint256 _orderIndex = _createAddLiquidityWBTCOrder();
-
-  //   // Check Alice balance before cancel
-  //   assertEq(wbtc.balanceOf(ALICE), 0 ether);
-  //   assertEq(ALICE.balance, 0 ether);
-
-  //   // Cancel
-  //   vm.prank(ALICE);
-  //   liquidityHandler.cancelLiquidityOrder(_orderIndex);
-
-  //   // Check Alice balance after cancel
-  //   assertEq(wbtc.balanceOf(ALICE), 1 ether);
-  //   assertEq(ALICE.balance, 5 ether);
-  // }
-
-  function _createAddLiquidityWBTCOrder() internal returns (uint256) {
-    vm.deal(ALICE, 5 ether); //deal with out of gas
+  function test_correctness_executeOrder_IncreaseOneOrder_delegate() external {
     wbtc.mint(ALICE, 1 ether);
 
+    MockAccountAbstraction DELEGATE = new MockAccountAbstraction(address(entryPoint));
+    vm.deal(address(DELEGATE), 5 ether); //deal with out of gas
+
     vm.startPrank(ALICE);
-
+    liquidityHandler.setDelegate(address(DELEGATE));
     wbtc.approve(address(liquidityHandler), type(uint256).max);
+    vm.stopPrank();
 
-    ILiquidityHandler02.LiquidityOrder[] memory _beforeCreateOrders = liquidityHandler.getAllActiveOrders(10, 0);
-
+    vm.prank(address(DELEGATE));
     uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
       ALICE,
       SUB_ID,
@@ -478,25 +251,367 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     // Assertion after createLiquidity
     // alice should has 0 wbtc (open order),  (5 weth left)
     // handler should has 1 order on alice
+
+    ILiquidityHandler02.ExecuteOrdersParam memory params;
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ID;
+    orderIndexes[0] = _orderIndex;
+
+    params.accounts = accounts;
+    params.subAccountIds = subAccountIds;
+    params.orderIndexes = orderIndexes;
+    params.feeReceiver = payable(FEEVER);
+    params.priceData = priceUpdateData;
+    params.publishTimeData = publishTimeUpdateData;
+    params.minPublishTime = block.timestamp;
+    params.encodedVaas = keccak256("someEncodedVaas");
+    params.isRevert = true;
+
+    // Handler executor
+    liquidityHandler.executeOrders(params);
+
+    // Assertion after Executed Order
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
+    //user have to get refund
+    assertEq(activeOrders.length, 0, "Should have none active order");
+    assertEq(executedOrders.length, 1, "Should have one executed order");
+  }
+
+  /// @dev hlp burn and receive tokenOut in service
+  function test_correctness_executeOrder_createRemoveLiquidityOrder02() external {
+    uint256 orderIndex = _createRemoveLiquidityOrder();
+
+    ILiquidityHandler02.ExecuteOrdersParam memory params;
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ID;
+    orderIndexes[0] = orderIndex;
+
+    params.accounts = accounts;
+    params.subAccountIds = subAccountIds;
+    params.orderIndexes = orderIndexes;
+    params.feeReceiver = payable(FEEVER);
+    params.priceData = priceUpdateData;
+    params.publishTimeData = publishTimeUpdateData;
+    params.minPublishTime = block.timestamp;
+    params.encodedVaas = keccak256("someEncodedVaas");
+    params.isRevert = true;
+
+    // Handler executor
+    liquidityHandler.executeOrders(params);
+
+    // Assertion after Executed Order
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
+
+    assertEq(activeOrders.length, 0, "Active Order Amount After Executed Order");
+    assertEq(executedOrders.length, 1, "Order Amount After Executed Order");
+    assertEq(wbtc.balanceOf(ALICE), 5 ether, "ALICE received balance");
+  }
+
+  function test_correctness_executeOrder_createRemoveLiquidityOrders02() external {
+    uint256 index1 = _createRemoveLiquidityOrder();
+    uint256 index2 = _createRemoveLiquidityOrder();
+
+    // Handler executor
+    ILiquidityHandler02.ExecuteOrdersParam memory params;
+    address[] memory accounts = new address[](2);
+    uint8[] memory subAccountIds = new uint8[](2);
+    uint256[] memory orderIndexes = new uint256[](2);
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ID;
+    orderIndexes[0] = index1;
+    accounts[1] = ALICE;
+    subAccountIds[1] = SUB_ID;
+    orderIndexes[1] = index2;
+
+    params.accounts = accounts;
+    params.subAccountIds = subAccountIds;
+    params.orderIndexes = orderIndexes;
+    params.feeReceiver = payable(FEEVER);
+    params.priceData = priceUpdateData;
+    params.publishTimeData = publishTimeUpdateData;
+    params.minPublishTime = block.timestamp;
+    params.encodedVaas = keccak256("someEncodedVaas");
+    params.isRevert = true;
+
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrdersBefore = liquidityHandler.getAllActiveOrders(10, 0);
+    assertEq(activeOrdersBefore.length, 2, "Should have none active order");
+
+    liquidityHandler.executeOrders(params);
+
+    // Assertion after Executed Order
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
+    //user have to get refund
+    assertEq(activeOrders.length, 0, "Should have none active order");
+    assertEq(executedOrders.length, 2, "Should have none executed order");
+    assertEq(wbtc.balanceOf(ALICE), 10 ether, "ALICE received balance");
+  }
+
+  /// @dev hlp burn and receive tokenOut in service
+  function test_correctness_executeOrder_native_createRemoveLiquidityOrder02() external {
+    // 1 Create Native add liquidity
+    vm.deal(ALICE, 10 ether); //5 for executeOrderFee , 5 for create liquidity position
+    vm.prank(ALICE);
+    uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 10 ether }(
+      ALICE,
+      SUB_ID,
+      address(weth),
+      5 ether,
+      0,
+      5 ether,
+      true
+    );
+
+    ILiquidityHandler02.LiquidityOrder memory beforeExecuteOrder = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
+      ALICE,
+      SUB_ID,
+      _orderIndex
+    );
+
+    // 2 Assert LIquidity Order
+    assertEq(beforeExecuteOrder.account, ALICE, "Alice Order.account");
+    assertEq(beforeExecuteOrder.token, address(weth), "Alice Order.token");
+    assertEq(beforeExecuteOrder.amount, 5 ether, "Alice Order.amount");
+    assertEq(beforeExecuteOrder.minOut, 0, "Alice Order.minOut");
+    assertEq(beforeExecuteOrder.actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(beforeExecuteOrder.isAdd, true, "Alice Order.isAdd");
+    assertEq(beforeExecuteOrder.executionFee, 5 ether, "Alice Order.executionFee");
+    assertEq(beforeExecuteOrder.isNativeOut, true, "Alice Order.isNativeOut");
+
+    ILiquidityHandler02.ExecuteOrdersParam memory params;
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ID;
+    orderIndexes[0] = _orderIndex;
+
+    params.accounts = accounts;
+    params.subAccountIds = subAccountIds;
+    params.orderIndexes = orderIndexes;
+    params.feeReceiver = payable(FEEVER);
+    params.priceData = priceUpdateData;
+    params.publishTimeData = publishTimeUpdateData;
+    params.minPublishTime = block.timestamp;
+    params.encodedVaas = keccak256("someEncodedVaas");
+    params.isRevert = false;
+
+    // 3 execute create native order
+    liquidityHandler.executeOrders(params);
+
+    // 4 Assertion after ExecuteOrder
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
+    assertEq(activeOrders.length, 0, "Active Order Amount After Executed Order");
+    assertEq(executedOrders.length, 1, "Executed Order Amount After Executed Order");
+    assertEq(ALICE.balance, 0, "ALICE received balance");
+
+    // 5 Create remove Liquidity order
+    uint256 _orderIndex02 = _createRemoveLiquidityNativeOrder();
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders02 = liquidityHandler.getAllActiveOrders(10, 0);
+    assertEq(activeOrders02.length, 1, "Active Order Amount");
+
+    // 6 execute liquidity order
+    orderIndexes[0] = _orderIndex02;
+    params.orderIndexes = orderIndexes;
+
+    liquidityHandler.executeOrders(params);
+
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders03 = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders02 = liquidityHandler.getAllExecutedOrders(10, 0);
+
+    // 7 Assertion after ExecuteOrder
+    assertEq(activeOrders03.length, 0, "Order Amount After Executed Order");
+    assertEq(executedOrders02.length, 2, "Executed Order Amount After Executed Order");
+    assertEq(ALICE.balance, 5 ether, "ALICE received balance");
+  }
+
+  function test_correctness_executeOrder_native_refundCreateLiquidityOrder02() external {
+    mockLiquidityService.setReverted(true);
+    mockLiquidityService.setRevertAsMessage(false);
+
+    // 1 Create Native add liquidity
+    vm.deal(ALICE, 10 ether); //5 for executeOrderFee , 5 for create liquidity position
+    vm.startPrank(ALICE);
+
+    uint256 _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 10 ether }(
+      ALICE,
+      SUB_ID,
+      address(weth),
+      5 ether,
+      0,
+      5 ether,
+      true
+    );
+
+    ILiquidityHandler02.LiquidityOrder memory _beforeExecuteOrder = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
+      ALICE,
+      SUB_ID,
+      _orderIndex
+    );
+    vm.stopPrank();
+
+    // 2 Assert LIquidity Order
+    assertEq(_beforeExecuteOrder.account, ALICE, "Alice Order.account");
+    assertEq(_beforeExecuteOrder.token, address(weth), "Alice Order.token");
+    assertEq(_beforeExecuteOrder.amount, 5 ether, "Alice Order.amount");
+    assertEq(_beforeExecuteOrder.minOut, 0, "Alice Order.minOut");
+    assertEq(_beforeExecuteOrder.actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(_beforeExecuteOrder.isAdd, true, "Alice Order.isAdd");
+    assertEq(_beforeExecuteOrder.executionFee, 5 ether, "Alice Order.executionFee");
+    assertEq(_beforeExecuteOrder.isNativeOut, true, "Alice Order.isNativeOut");
+
+    ILiquidityHandler02.ExecuteOrdersParam memory params;
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ID;
+    orderIndexes[0] = _orderIndex;
+
+    params.accounts = accounts;
+    params.subAccountIds = subAccountIds;
+    params.orderIndexes = orderIndexes;
+    params.feeReceiver = payable(FEEVER);
+    params.priceData = priceUpdateData;
+    params.publishTimeData = publishTimeUpdateData;
+    params.minPublishTime = block.timestamp;
+    params.encodedVaas = keccak256("someEncodedVaas");
+    params.isRevert = false;
+
+    // 3 execute create native order
+    liquidityHandler.executeOrders(params);
+
+    // Assertion after Executed Order
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
+
+    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
+      ALICE,
+      SUB_ID,
+      _orderIndex
+    );
+    //user have to get refund
+    assertEq(activeOrders.length, 0, "Should have none active order");
+    assertEq(executedOrders.length, 0, "Should have none executed order");
+    assertEq(order.amount, 0, "Amount in order should be decreased to 0");
+
+    //alice will get 5 ether from order.amount (Native)
+    assertEq(ALICE.balance, _beforeExecuteOrder.amount, "Alice refund Balance");
+  }
+
+  function test_correctness_cancelOrder02() external {
+    assertEq(liquidityHandler.getAllActiveOrders(5, 0).length, 0);
+    uint256 _orderIndex01 = _createAddLiquidityWBTCOrder();
+    uint256 _orderIndex02 = _createAddLiquidityWBTCOrder();
+    uint256 _orderIndex03 = _createAddLiquidityWBTCOrder();
+    assertEq(liquidityHandler.getAllActiveOrders(5, 0).length, 3);
+
+    vm.prank(ALICE);
+    liquidityHandler.cancelLiquidityOrder(ALICE, SUB_ID, _orderIndex01);
+    assertEq(liquidityHandler.getAllActiveOrders(5, 0).length, 2);
+
+    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
+      ALICE,
+      SUB_ID,
+      _orderIndex01
+    );
+    assertEq(order.account, address(0), "Alice account address");
+
+    ILiquidityHandler02.ExecuteOrdersParam memory params;
+    address[] memory accounts = new address[](2);
+    uint8[] memory subAccountIds = new uint8[](2);
+    uint256[] memory orderIndexes = new uint256[](2);
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ID;
+    orderIndexes[0] = _orderIndex02;
+    accounts[1] = ALICE;
+    subAccountIds[1] = SUB_ID;
+    orderIndexes[1] = _orderIndex03;
+
+    params.accounts = accounts;
+    params.subAccountIds = subAccountIds;
+    params.orderIndexes = orderIndexes;
+    params.feeReceiver = payable(FEEVER);
+    params.priceData = priceUpdateData;
+    params.publishTimeData = publishTimeUpdateData;
+    params.minPublishTime = block.timestamp;
+    params.encodedVaas = keccak256("someEncodedVaas");
+    params.isRevert = false;
+
+    liquidityHandler.executeOrders(params);
+
+    assertEq(liquidityHandler.getAllExecutedOrders(5, 0).length, 2);
+    assertEq(liquidityHandler.getAllActiveOrders(5, 0).length, 0);
+  }
+
+  function test_correctness_refunding_when_cancelOrder02() external {
+    uint256 _orderIndex = _createAddLiquidityWBTCOrder();
+
+    // Check Alice balance before cancel
+    assertEq(wbtc.balanceOf(ALICE), 0 ether);
+    assertEq(ALICE.balance, 0 ether);
+
+    // Cancel
+    vm.prank(ALICE);
+    liquidityHandler.cancelLiquidityOrder(ALICE, SUB_ID, _orderIndex);
+
+    // Check Alice balance after cancel
+    assertEq(wbtc.balanceOf(ALICE), 1 ether);
+    assertEq(ALICE.balance, 5 ether);
+  }
+
+  function _createAddLiquidityWBTCOrder() internal returns (uint256 _orderIndex) {
+    vm.deal(ALICE, 5 ether); //deal with out of gas
+    wbtc.mint(ALICE, 1 ether);
+
+    ILiquidityHandler02.LiquidityOrder[] memory _beforeCreateOrders = liquidityHandler.getAllActiveOrders(10, 0);
+
+    vm.startPrank(ALICE);
+    wbtc.approve(address(liquidityHandler), type(uint256).max);
+    _orderIndex = liquidityHandler.createAddLiquidityOrder{ value: 5 ether }(
+      ALICE,
+      SUB_ID,
+      address(wbtc),
+      1 ether,
+      1 ether,
+      5 ether,
+      false
+    );
+
+    // Assertion after createLiquidity
+    // alice should has 0 wbtc (open order),  (5 weth left)
+    // handler should has 1 order on alice
+    vm.stopPrank();
     assertEq(wbtc.balanceOf(ALICE), 0, "User Liquidity Balance");
 
     ILiquidityHandler02.LiquidityOrder[] memory _beforeExecuteOrders = liquidityHandler.getAllActiveOrders(10, 0);
-    vm.stopPrank();
-
     assertEq(_beforeExecuteOrders.length, _beforeCreateOrders.length + 1, "Order Amount After Created Order");
 
-    assertEq(_beforeExecuteOrders[_orderIndex].account, ALICE, "Alice Order.account");
-    assertEq(_beforeExecuteOrders[_orderIndex].token, address(wbtc), "Alice Order.token");
-    assertEq(_beforeExecuteOrders[_orderIndex].amount, 1 ether, "Alice Order.amount");
-    assertEq(_beforeExecuteOrders[_orderIndex].minOut, 1 ether, "Alice Order.minOut");
-    assertEq(_beforeExecuteOrders[_orderIndex].actualAmountOut, 0, "Alice Order.actualAmountOut");
-    assertEq(_beforeExecuteOrders[_orderIndex].isAdd, true, "Alice Order.isAdd");
-    assertEq(_beforeExecuteOrders[_orderIndex].isNativeOut, false, "Alice Order.isNativeOut");
+    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
+      ALICE,
+      SUB_ID,
+      _orderIndex
+    );
 
-    return _orderIndex;
+    assertEq(order.account, ALICE, "Alice Order.account");
+    assertEq(order.token, address(wbtc), "Alice Order.token");
+    assertEq(order.amount, 1 ether, "Alice Order.amount");
+    assertEq(order.minOut, 1 ether, "Alice Order.minOut");
+    assertEq(order.actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(order.isAdd, true, "Alice Order.isAdd");
+    assertEq(order.isNativeOut, false, "Alice Order.isNativeOut");
   }
 
-  function _createRemoveLiquidityOrder() internal returns (uint256) {
+  function _createRemoveLiquidityOrder() internal returns (uint256 _orderIndex) {
     vm.deal(ALICE, 5 ether);
     hlp.mint(ALICE, 5 ether);
 
@@ -504,7 +619,7 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     hlp.approve(address(liquidityHandler), type(uint256).max);
 
     // hlpIn 5 ether, executionfee 5
-    uint256 _index = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(
+    _orderIndex = liquidityHandler.createRemoveLiquidityOrder{ value: 5 ether }(
       ALICE,
       SUB_ID,
       address(wbtc),
@@ -517,17 +632,19 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
 
     assertEq(hlp.balanceOf(ALICE), 0, "User HLP Balance");
 
-    ILiquidityHandler02.LiquidityOrder[] memory _orders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
+      ALICE,
+      SUB_ID,
+      _orderIndex
+    );
 
-    assertEq(_orders[_index].account, ALICE, "Alice Order.account");
-    assertEq(_orders[_index].token, address(wbtc), "Alice Order.token");
-    assertEq(_orders[_index].amount, 5 ether, "Alice HLP Order.amount");
-    assertEq(_orders[_index].minOut, 0, "Alice WBTC Order.minOut");
-    assertEq(_orders[_index].actualAmountOut, 0, "Alice Order.actualAmountOut");
-    assertEq(_orders[_index].isAdd, false, "Alice Order.isAdd");
-    assertEq(_orders[_index].isNativeOut, false, "Alice Order.isNativeOut");
-
-    return _index;
+    assertEq(order.account, ALICE, "Alice Order.account");
+    assertEq(order.token, address(wbtc), "Alice Order.token");
+    assertEq(order.amount, 5 ether, "Alice HLP Order.amount");
+    assertEq(order.minOut, 0, "Alice WBTC Order.minOut");
+    assertEq(order.actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(order.isAdd, false, "Alice Order.isAdd");
+    assertEq(order.isNativeOut, false, "Alice Order.isNativeOut");
   }
 
   function _createRemoveLiquidityNativeOrder() internal returns (uint256 _orderIndex) {
@@ -557,17 +674,19 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     );
     assertEq(hlp.balanceOf(ALICE), 0, "User HLP Balance");
 
-    ILiquidityHandler02.LiquidityOrder[] memory _orders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder memory order = liquidityHandler.getLiquidityOrderOfAccountPerIndex(
+      ALICE,
+      SUB_ID,
+      _orderIndex
+    );
 
-    assertEq(_orders[_orderIndex].account, ALICE, "Alice Order.account");
-    assertEq(_orders[_orderIndex].token, address(weth), "Alice Order.token");
-    assertEq(_orders[_orderIndex].amount, _amount, "Alice HLP Order.amount");
-    assertEq(_orders[_orderIndex].minOut, 0, "Alice WBTC Order.minOut");
-    assertEq(_orders[_orderIndex].actualAmountOut, 0, "Alice Order.actualAmountOut");
-    assertEq(_orders[_orderIndex].isAdd, false, "Alice Order.isAdd");
-    assertEq(_orders[_orderIndex].executionFee, 5 ether, "Alice Execute fee");
-    assertEq(_orders[_orderIndex].isNativeOut, true, "Alice Order.isNativeOut");
-
-    return _orderIndex;
+    assertEq(order.account, ALICE, "Alice Order.account");
+    assertEq(order.token, address(weth), "Alice Order.token");
+    assertEq(order.amount, _amount, "Alice HLP Order.amount");
+    assertEq(order.minOut, 0, "Alice WBTC Order.minOut");
+    assertEq(order.actualAmountOut, 0, "Alice Order.actualAmountOut");
+    assertEq(order.isAdd, false, "Alice Order.isAdd");
+    assertEq(order.executionFee, 5 ether, "Alice Execute fee");
+    assertEq(order.isNativeOut, true, "Alice Order.isNativeOut");
   }
 }

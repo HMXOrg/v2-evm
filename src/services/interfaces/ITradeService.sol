@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
++import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
+
+
 interface ITradeService {
   /**
    * Errors
@@ -29,6 +32,8 @@ interface ITradeService {
   /**
    * States
    */
+  function calculator() external view returns (ICalculator);
+
   function configStorage() external view returns (address);
 
   function perpStorage() external view returns (address);

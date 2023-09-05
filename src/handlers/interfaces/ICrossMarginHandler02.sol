@@ -12,9 +12,7 @@ interface ICrossMarginHandler02 {
   error ICrossMarginHandler02_InCorrectValueTransfer();
   error ICrossMarginHandler02_NotWhitelisted();
   error ICrossMarginHandler02_InsufficientExecutionFee();
-  error ICrossMarginHandler02_NoOrder();
   error ICrossMarginHandler02_NotOrderOwner();
-  error ICrossMarginHandler02_NotExecutionState();
   error ICrossMarginHandler02_NotWNativeToken();
   error ICrossMarginHandler02_Unauthorized();
   error ICrossMarginHandler02_BadAmount();

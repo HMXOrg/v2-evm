@@ -174,6 +174,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     bool _shouldWrap
   ) external payable nonReentrant onlyAcceptedToken(_token) delegate(_mainAccount) {
     if (_amount == 0) revert ICrossMarginHandler02_BadAmount();
+    if (_mainAccount != _msgSender()) revert ICrossMarginHandler02_Unauthorized();
     // SLOAD
     CrossMarginService _crossMarginService = CrossMarginService(crossMarginService);
 
@@ -218,6 +219,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     uint256 _executionFee,
     bool _shouldUnwrap
   ) external payable nonReentrant onlyAcceptedToken(_token) delegate(_mainAccount) returns (uint256 _orderIndex) {
+    if (_mainAccount != _msgSender()) revert ICrossMarginHandler02_Unauthorized();
     if (_amount == 0) revert ICrossMarginHandler02_BadAmount();
     if (_executionFee < minExecutionOrderFee) revert ICrossMarginHandler02_InsufficientExecutionFee();
     if (msg.value != _executionFee) revert ICrossMarginHandler02_InCorrectValueTransfer();

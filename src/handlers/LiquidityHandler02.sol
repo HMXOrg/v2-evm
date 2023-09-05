@@ -441,8 +441,6 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         _handleOrderFail(vars.order, _subAccountId, string(errMsg), _isRevert);
       }
 
-      console.log("order:", vars.order.amount);
-
       // Assign execution time
       _totalFeeReceived = vars.order.executionFee;
     }
@@ -453,16 +451,16 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     // SLOAD
     LiquidityOrder memory _order = liquidityOrders[subAccount][_orderIndex];
 
-    if (_order.account == address(0)) revert ILiquidityHandler02_NoOrder();
     // validate if msg.sender is not owned the order, then revert
-    if (_msgSender() != _order.account && !orderExecutors[_msgSender()]) revert ILiquidityHandler02_NotOrderOwner();
+    if (_msgSender() != _order.account && !orderExecutors[_msgSender()]) revert ILiquidityHandler02_InvalidOrder();
 
     _removeOrder(subAccount, _orderIndex);
 
     // refund the _order.executionFee to user if the caller is a user
     if (!orderExecutors[_msgSender()]) {
-      _refund(_order);
+      _transferOutETH(_order.executionFee, _order.account);
     }
+    _refund(_order);
 
     emit LogCancelLiquidityOrder(
       payable(_order.account),
@@ -497,11 +495,10 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         errMsg
       );
     }
-    //refund in case of revert as order
-    _refund(order);
     order.status = LiquidityOrderStatus.FAIL;
     order.amount = 0;
 
+    // order.amount will be refunded in _cancelOrder();
     _cancelOrder(order.account, _subAccountId, order.orderIndex);
   }
 
@@ -655,6 +652,15 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint256 _offset
   ) external view returns (LiquidityOrder[] memory _orders) {
     return _getOrders(_subAccountExecutedOrderPointers[_subAccount], _limit, _offset);
+  }
+
+  function getLiquidityOrderOfAccountPerIndex(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _orderIndex
+  ) external view returns (LiquidityOrder memory _order) {
+    address subAccount = HMXLib.getSubAccount(_mainAccount, _subAccountId);
+    return liquidityOrders[subAccount][_orderIndex];
   }
 
   /**

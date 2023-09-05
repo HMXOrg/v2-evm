@@ -22,8 +22,6 @@ import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler0
 //   - Try executeOrder_createAddLiquidityOrder_multiple
 
 contract LiquidityHandler_CreateAddLiquidityOrder is LiquidityHandler_Base02 {
-  uint8 internal constant SUB_ID = 0;
-
   function setUp() public override {
     super.setUp();
 

@@ -13,6 +13,7 @@ import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler0
 
 contract LiquidityHandler_Base02 is BaseTest {
   ILiquidityHandler02 liquidityHandler;
+  uint8 internal constant SUB_ID = 0;
 
   function setUp() public virtual {
     liquidityHandler = Deployer.deployLiquidityHandler02(

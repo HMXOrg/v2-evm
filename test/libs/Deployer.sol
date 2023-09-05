@@ -231,7 +231,7 @@ library Deployer {
     address _pyth,
     uint256 _executionOrderFee
   ) internal returns (ILiquidityHandler02) {
-    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LiquidityHandler.sol/LiquidityHandler.json"));
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LiquidityHandler02.sol/LiquidityHandler02.json"));
     bytes memory _initializer = abi.encodeWithSelector(
       bytes4(keccak256("initialize(address,address,uint256)")),
       _liquidityService,

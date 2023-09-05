@@ -284,14 +284,6 @@ contract CrossMarginService is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     emit LogWithdrawFundingFeeSurplus(_vars.fundingFeeSurplusValue);
   }
 
-  struct SwitchCollateralParams {
-    address primaryAccount;
-    uint8 subAccountId;
-    uint248 amount;
-    address[] path;
-    uint256 minToAmount;
-  }
-
   /// @notice Switch from one collateral token to another.
   /// @param _params The parameters for the switch.
   function switchCollateral(

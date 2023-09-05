@@ -29,6 +29,7 @@ import { IVaultStorage } from "@hmx/storages/interfaces/IVaultStorage.sol";
 import { ICrossMarginHandler } from "@hmx/handlers/interfaces/ICrossMarginHandler.sol";
 import { IBotHandler } from "@hmx/handlers/interfaces/IBotHandler.sol";
 import { ILiquidityHandler } from "@hmx/handlers/interfaces/ILiquidityHandler.sol";
+import { ILiquidityHandler02 } from "@hmx/handlers/interfaces/ILiquidityHandler02.sol";
 import { ILimitTradeHandler } from "@hmx/handlers/interfaces/ILimitTradeHandler.sol";
 import { IExt01Handler } from "@hmx/handlers/interfaces/IExt01Handler.sol";
 import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHandler.sol";
@@ -222,6 +223,23 @@ library Deployer {
     );
     address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
     return ILiquidityHandler(payable(_proxy));
+  }
+
+  function deployLiquidityHandler02(
+    address _proxyAdmin,
+    address _liquidityService,
+    address _pyth,
+    uint256 _executionOrderFee
+  ) internal returns (ILiquidityHandler02) {
+    bytes memory _logicBytecode = abi.encodePacked(vm.getCode("./out/LiquidityHandler.sol/LiquidityHandler.json"));
+    bytes memory _initializer = abi.encodeWithSelector(
+      bytes4(keccak256("initialize(address,address,uint256)")),
+      _liquidityService,
+      _pyth,
+      _executionOrderFee
+    );
+    address _proxy = _setupUpgradeable(_logicBytecode, _initializer, _proxyAdmin);
+    return ILiquidityHandler02(payable(_proxy));
   }
 
   function deployLimitTradeHandler(

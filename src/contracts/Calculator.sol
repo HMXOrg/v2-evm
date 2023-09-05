@@ -146,23 +146,20 @@ contract Calculator is OwnableUpgradeable, ICalculator {
 
   /// @notice GetHLPValue in E30
   /// @param _isMaxPrice Use Max or Min Price
-  /// @return HLP Value
-  function _getHLPValueE30(bool _isMaxPrice) internal view returns (uint256) {
+  /// @return assetValue HLP Value
+  function _getHLPValueE30(bool _isMaxPrice) internal view returns (uint256 assetValue) {
     ConfigStorage _configStorage = ConfigStorage(configStorage);
 
     bytes32[] memory _hlpAssetIds = _configStorage.getHlpAssetIds();
-    uint256 assetValue = 0;
     uint256 _len = _hlpAssetIds.length;
 
-    for (uint256 i = 0; i < _len; ) {
-      uint256 value = _getHLPUnderlyingAssetValueE30(_hlpAssetIds[i], _configStorage, _isMaxPrice);
+    for (uint256 i; i < _len; ) {
+      assetValue += _getHLPUnderlyingAssetValueE30(_hlpAssetIds[i], _configStorage, _isMaxPrice);
+
       unchecked {
-        assetValue += value;
         ++i;
       }
     }
-
-    return assetValue;
   }
 
   /// @notice Get HLP underlying asset value in E30

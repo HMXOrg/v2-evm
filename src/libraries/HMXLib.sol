@@ -5,8 +5,6 @@
 pragma solidity 0.8.18;
 
 library HMXLib {
-  error HMXLib_WrongSubAccountId();
-
   function getSubAccount(address _primary, uint8 _subAccountId) internal pure returns (address _subAccount) {
     return address(uint160(_primary) ^ uint160(_subAccountId));
   }

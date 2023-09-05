@@ -37,19 +37,19 @@ interface ICalculator {
   /**
    * States
    */
-  function oracle() external returns (address _address);
+  function oracle() external view returns (address _address);
 
-  function vaultStorage() external returns (address _address);
+  function vaultStorage() external view returns (address _address);
 
-  function configStorage() external returns (address _address);
+  function configStorage() external view returns (address _address);
 
-  function perpStorage() external returns (address _address);
+  function perpStorage() external view returns (address _address);
 
   /**
    * Functions
    */
 
-  function getAUME30(bool isMaxPrice) external returns (uint256);
+  function getAUME30(bool isMaxPrice) external view returns (uint256);
 
   function getGlobalPNLE30() external view returns (int256);
 
@@ -61,7 +61,7 @@ interface ICalculator {
     bytes32 _assetId
   ) external view returns (int256 _freeCollateral);
 
-  function getHLPPrice(uint256 aum, uint256 supply) external returns (uint256);
+  function getHLPPrice(uint256 aum, uint256 supply) external view returns (uint256);
 
   function getMintAmount(uint256 _aum, uint256 _totalSupply, uint256 _amount) external view returns (uint256);
 
@@ -69,13 +69,13 @@ interface ICalculator {
     address _token,
     uint256 _tokenValue,
     ConfigStorage _configStorage
-  ) external returns (uint32);
+  ) external view returns (uint32);
 
   function getRemoveLiquidityFeeBPS(
     address _token,
     uint256 _tokenValueE30,
     ConfigStorage _configStorage
-  ) external returns (uint32);
+  ) external view returns (uint32);
 
   function getEquity(
     address _subAccount,
@@ -99,7 +99,7 @@ interface ICalculator {
 
   function getMMR(address _subAccount) external view returns (uint256 _mmrValueE30);
 
-  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external returns (uint256);
+  function getSettlementFeeRate(address _token, uint256 _liquidityUsdDelta) external view returns (uint256);
 
   function getCollateralValue(
     address _subAccount,

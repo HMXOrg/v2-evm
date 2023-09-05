@@ -27,7 +27,7 @@ import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
-import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 /// @title BotHandler
 contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandler {
@@ -134,7 +134,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     PerpStorage _perpStorage = PerpStorage(TradeService(tradeService).perpStorage());
     ConfigStorage _configStorage = ConfigStorage(TradeService(tradeService).configStorage());
     OracleMiddleware _oracle = OracleMiddleware(_configStorage.oracle());
-    Calculator _calculator = TradeService(tradeService).calculator();
+    ICalculator _calculator = TradeService(tradeService).calculator();
 
     // Get Position
     IPerpStorage.Position memory _position = _perpStorage.getPositionById(_positionIds);
@@ -381,7 +381,7 @@ contract BotHandler is ReentrancyGuardUpgradeable, OwnableUpgradeable, IBotHandl
     bytes32[] memory _injectedAssetIds,
     uint256[] memory _injectedPrices
   ) external view returns (bool) {
-    Calculator calculator = TradeService(tradeService).calculator();
+    ICalculator calculator = TradeService(tradeService).calculator();
 
     // Get sub-account's equity
     int256 _equityValueE30 = calculator.getEquityWithInjectedPrices(_subAccount, _injectedAssetIds, _injectedPrices);

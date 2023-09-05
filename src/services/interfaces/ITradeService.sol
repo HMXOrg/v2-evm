@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.18;
 
-+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
-
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 
 interface ITradeService {
   /**

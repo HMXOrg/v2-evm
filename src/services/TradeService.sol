@@ -14,7 +14,7 @@ import { FullMath } from "@hmx/libraries/FullMath.sol";
 import { PerpStorage } from "@hmx/storages/PerpStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
-import { Calculator } from "@hmx/contracts/Calculator.sol";
+import { ICalculator } from "@hmx/contracts/interfaces/ICalculator.sol";
 import { OracleMiddleware } from "@hmx/oracles/OracleMiddleware.sol";
 import { TradeHelper } from "@hmx/helpers/TradeHelper.sol";
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
@@ -109,7 +109,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     PerpStorage.Position position;
     OracleMiddleware oracle;
     ConfigStorage configStorage;
-    Calculator calculator;
+    ICalculator calculator;
     PerpStorage perpStorage;
     TradeHelper tradeHelper;
   }
@@ -136,7 +136,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     bool isLongPosition;
     AccountInfo accountInfo;
     // for SLOAD
-    Calculator calculator;
+    ICalculator calculator;
     PerpStorage perpStorage;
     ConfigStorage configStorage;
     OracleMiddleware oracle;
@@ -174,7 +174,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   address public vaultStorage;
   address public configStorage;
   address public tradeHelper;
-  Calculator public calculator; // cache this from configStorage
+  ICalculator public calculator; // cache this from configStorage
 
   /// @notice Initializes the contract and sets the required contract addresses.
   /// @param _perpStorage Address of the PerpStorage contract.
@@ -199,7 +199,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     vaultStorage = _vaultStorage;
     configStorage = _configStorage;
     tradeHelper = _tradeHelper;
-    calculator = Calculator(ConfigStorage(_configStorage).calculator());
+    calculator = ICalculator(ConfigStorage(_configStorage).calculator());
   }
 
   /**
@@ -662,7 +662,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   /// @notice This function validates if deleverage is safe and healthy in Pool liquidity provider.
   function validateDeleverage() external view {
     // SLOAD
-    Calculator _calculator = calculator;
+    ICalculator _calculator = calculator;
     uint256 _aum = _calculator.getAUME30(false);
     uint256 _tvl = _calculator.getHLPValueE30(false);
 
@@ -673,7 +673,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
 
   /// @notice Reloads the configuration for the contract.
   function reloadConfig() external nonReentrant onlyOwner {
-    calculator = Calculator(ConfigStorage(configStorage).calculator());
+    calculator = ICalculator(ConfigStorage(configStorage).calculator());
   }
 
   /**
@@ -721,10 +721,10 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
     if (_calculator == address(0)) revert ITradeService_InvalidAddress();
 
     emit LogSetCalculator(address(calculator), _calculator);
-    calculator = Calculator(_calculator);
+    calculator = ICalculator(_calculator);
 
     // Sanity check
-    Calculator(_calculator).oracle();
+    ICalculator(_calculator).oracle();
   }
 
   /// @notice Set new TradeHelper contract address.
@@ -1091,7 +1091,7 @@ contract TradeService is ReentrancyGuardUpgradeable, ITradeService, OwnableUpgra
   /// @param _limitAssetId Asset to be overwritten by _limitPriceE30
   function _subAccountHealthCheck(address _subAccount, uint256 _limitPriceE30, bytes32 _limitAssetId) private view {
     // SLOAD
-    Calculator _calculator = calculator;
+    ICalculator _calculator = calculator;
 
     // check sub account is healthy
     int256 _subAccountEquity = _calculator.getEquity(_subAccount, _limitPriceE30, _limitAssetId);

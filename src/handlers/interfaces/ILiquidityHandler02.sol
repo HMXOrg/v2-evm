@@ -13,8 +13,7 @@ interface ILiquidityHandler02 {
   error ILiquidityHandler02_NotWhitelisted();
   error ILiquidityHandler02_InvalidAddress();
   error ILiquidityHandler02_NotExecutionState();
-  error ILiquidityHandler02_NoOrder();
-  error ILiquidityHandler02_NotOrderOwner();
+  error ILiquidityHandler02_InvalidOrder();
   error ILiquidityHandler02_NotWNativeToken();
   error ILiquidityHandler02_Unauthorized();
 
@@ -102,6 +101,12 @@ interface ILiquidityHandler02 {
     uint256 _limit,
     uint256 _offset
   ) external view returns (LiquidityOrder[] memory _orders);
+
+  function getLiquidityOrderOfAccountPerIndex(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _orderIndex
+  ) external view returns (LiquidityOrder memory _order);
 
   function setOrderExecutor(address _executor, bool _isOk) external;
 

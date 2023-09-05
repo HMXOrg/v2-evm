@@ -400,33 +400,7 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     uint8 _subAccountId,
     uint256 _orderIndex
   ) external nonReentrant delegate(_mainAccount) {
-    if (_mainAccount != _msgSender()) revert ILiquidityHandler02_Unauthorized();
-
-    address subAccount = HMXLib.getSubAccount(_mainAccount, _subAccountId);
-    // SLOAD
-    LiquidityOrder memory _order = liquidityOrders[subAccount][_orderIndex];
-
-    if (_order.account == address(0)) revert ILiquidityHandler02_NoOrder();
-    // validate if msg.sender is not owned the order, then revert
-    if (_msgSender() != _order.account && !orderExecutors[_msgSender()]) revert ILiquidityHandler02_NotOrderOwner();
-
-    _removeOrder(subAccount, _orderIndex);
-
-    // refund the _order.executionFee to user if the caller is a user
-    if (!orderExecutors[_msgSender()]) {
-      _refund(_order);
-    }
-
-    emit LogCancelLiquidityOrder(
-      payable(_order.account),
-      _orderIndex,
-      _order.token,
-      _order.amount,
-      _order.minOut,
-      _order.isAdd
-    );
-
-    delete liquidityOrders[subAccount][_orderIndex];
+    _cancelOrder(_msgSender(), _subAccountId, _orderIndex);
   }
 
   /**
@@ -460,19 +434,54 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         // update order status
         _handleOrderSuccess(vars.subAccount, _orderIndex);
       } catch Error(string memory errMsg) {
-        _handleOrderFail(vars.order, errMsg, _isRevert);
+        _handleOrderFail(vars.order, _subAccountId, errMsg, _isRevert);
       } catch Panic(uint /*errorCode*/) {
-        _handleOrderFail(vars.order, "Panic occurred while executing the withdraw order", _isRevert);
+        _handleOrderFail(vars.order, _subAccountId, "Panic occurred while executing the withdraw order", _isRevert);
       } catch (bytes memory errMsg) {
-        _handleOrderFail(vars.order, string(errMsg), _isRevert);
+        _handleOrderFail(vars.order, _subAccountId, string(errMsg), _isRevert);
       }
+
+      console.log("order:", vars.order.amount);
 
       // Assign execution time
       _totalFeeReceived = vars.order.executionFee;
     }
   }
 
-  function _handleOrderFail(LiquidityOrder memory order, string memory errMsg, bool _isRevert) internal {
+  function _cancelOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) internal {
+    address subAccount = HMXLib.getSubAccount(_mainAccount, _subAccountId);
+    // SLOAD
+    LiquidityOrder memory _order = liquidityOrders[subAccount][_orderIndex];
+
+    if (_order.account == address(0)) revert ILiquidityHandler02_NoOrder();
+    // validate if msg.sender is not owned the order, then revert
+    if (_msgSender() != _order.account && !orderExecutors[_msgSender()]) revert ILiquidityHandler02_NotOrderOwner();
+
+    _removeOrder(subAccount, _orderIndex);
+
+    // refund the _order.executionFee to user if the caller is a user
+    if (!orderExecutors[_msgSender()]) {
+      _refund(_order);
+    }
+
+    emit LogCancelLiquidityOrder(
+      payable(_order.account),
+      _orderIndex,
+      _order.token,
+      _order.amount,
+      _order.minOut,
+      _order.isAdd
+    );
+
+    delete liquidityOrders[subAccount][_orderIndex];
+  }
+
+  function _handleOrderFail(
+    LiquidityOrder memory order,
+    uint8 _subAccountId,
+    string memory errMsg,
+    bool _isRevert
+  ) internal {
     if (_isRevert) {
       require(false, errMsg);
     } else {
@@ -487,10 +496,13 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
         false,
         errMsg
       );
-      //refund in case of revert as order
-      _refund(order);
-      order.status = LiquidityOrderStatus.FAIL;
     }
+    //refund in case of revert as order
+    _refund(order);
+    order.status = LiquidityOrderStatus.FAIL;
+    order.amount = 0;
+
+    _cancelOrder(order.account, _subAccountId, order.orderIndex);
   }
 
   function _handleOrderSuccess(address _subAccount, uint256 _orderIndex) internal {
@@ -515,8 +527,6 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
   }
 
   function _removeOrder(address _subAccount, uint256 _orderIndex) internal {
-    // NOTE delete liquidityOrders[_subAccount][_orderIndex];
-
     uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
     _activeOrderPointers.remove(_pointer);
     _subAccountActiveOrderPointers[_subAccount].remove(_pointer);

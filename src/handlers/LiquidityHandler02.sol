@@ -346,8 +346,8 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     vars.encodedVaas = _encodedVaas;
 
     uint256 _totalFeeReceiver;
-
-    for (uint256 i = 0; i < _accounts.length; ) {
+    uint256 length = _accounts.length;
+    for (uint256 i = 0; i < length; ) {
       _totalFeeReceiver += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
       unchecked {
         ++i;

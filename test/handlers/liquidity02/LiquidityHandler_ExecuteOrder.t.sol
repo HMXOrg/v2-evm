@@ -689,4 +689,40 @@ contract LiquidityHandler_ExecuteOrder is LiquidityHandler_Base02 {
     assertEq(order.executionFee, 5 ether, "Alice Execute fee");
     assertEq(order.isNativeOut, true, "Alice Order.isNativeOut");
   }
+
+  function test_revert_executeOrder_canceledOrder() external {
+    uint256 _orderIndex = _createAddLiquidityWBTCOrder();
+
+    vm.prank(ALICE);
+    liquidityHandler.cancelLiquidityOrder(ALICE, SUB_ID, _orderIndex);
+
+    ILiquidityHandler02.ExecuteOrdersParam memory params;
+    address[] memory accounts = new address[](1);
+    uint8[] memory subAccountIds = new uint8[](1);
+    uint256[] memory orderIndexes = new uint256[](1);
+    accounts[0] = ALICE;
+    subAccountIds[0] = SUB_ID;
+    orderIndexes[0] = _orderIndex;
+
+    params.accounts = accounts;
+    params.subAccountIds = subAccountIds;
+    params.orderIndexes = orderIndexes;
+    params.feeReceiver = payable(FEEVER);
+    params.priceData = priceUpdateData;
+    params.publishTimeData = publishTimeUpdateData;
+    params.minPublishTime = block.timestamp;
+    params.encodedVaas = keccak256("someEncodedVaas");
+    params.isRevert = true;
+
+    // Handler executor
+    vm.expectRevert(abi.encodeWithSignature("ILiquidityHandler02_NonExistentOrder()"));
+    liquidityHandler.executeOrders(params);
+
+    // Assertion after Executed Order
+    ILiquidityHandler02.LiquidityOrder[] memory activeOrders = liquidityHandler.getAllActiveOrders(10, 0);
+    ILiquidityHandler02.LiquidityOrder[] memory executedOrders = liquidityHandler.getAllExecutedOrders(10, 0);
+    //user have to get refund
+    assertEq(activeOrders.length, 0, "Should have none active order");
+    assertEq(executedOrders.length, 0, "Should have none executed order");
+  }
 }

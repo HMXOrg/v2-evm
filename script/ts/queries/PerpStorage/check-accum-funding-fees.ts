@@ -16,10 +16,11 @@ async function main() {
   const multicall = new MultiCall(provider);
 
   const perpStorage = PerpStorage__factory.connect(config.storages.perp, provider);
-  const activePositions = await perpStorage.getActivePositions(100, 0);
+  const activePositions = await perpStorage.getActivePositions(2000, 0);
 
-  const numberOfMarkets = 15;
+  const numberOfMarkets = 27;
   const result = [];
+  let totalFundingFee = BigNumber.from(0);
   for (let i = 0; i < numberOfMarkets; i++) {
     const inputs = [
       {
@@ -63,6 +64,8 @@ async function main() {
       allFundingFee = allFundingFee.add(fundingFee);
     });
 
+    totalFundingFee = totalFundingFee.add(accumFundingLong).add(accumFundingShort);
+
     result.push({
       market: i,
       accumFundingLong: formatUnits(accumFundingLong, 30),
@@ -72,6 +75,7 @@ async function main() {
     });
   }
   console.table(result);
+  console.log(`Total Funding Fee ${formatUnits(totalFundingFee, 30)}`);
 }
 
 function getFundingFee(size: BigNumber, currentFundingAccrued: BigNumber, lastFundingAccrued: BigNumber): BigNumber {

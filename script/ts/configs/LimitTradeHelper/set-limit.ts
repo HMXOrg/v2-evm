@@ -8,9 +8,14 @@ import { ethers } from "ethers";
 async function main(chainId: number) {
   const inputs = [
     {
-      marketIndex: 20,
-      positionSizeLimit: ethers.utils.parseUnits("200000", 30),
+      marketIndex: 12,
       tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("100000", 30),
+    },
+    {
+      marketIndex: 13,
+      tradeSizeLimit: ethers.utils.parseUnits("100000", 30),
+      positionSizeLimit: ethers.utils.parseUnits("100000", 30),
     },
   ];
 
@@ -34,7 +39,7 @@ async function main(chainId: number) {
   const tx = await safeWrapper.proposeTransaction(
     limitTradeHelper.address,
     0,
-    limitTradeHelper.interface.encodeFunctionData("setLimitByMarketIndex", [
+    limitTradeHelper.interface.encodeFunctionData("setLimit", [
       inputs.map((input) => input.marketIndex),
       inputs.map((input) => input.positionSizeLimit),
       inputs.map((input) => input.tradeSizeLimit),

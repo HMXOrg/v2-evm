@@ -13,18 +13,18 @@
     "crossMargin": "0xB189532c581afB4Fbe69aF6dC3CD36769525d446",
     "limitTrade": "0xeE116128b9AAAdBcd1f7C18608C5114f594cf5D6",
     "liquidity": "0x1c6b1264B022dE3c6f2AddE01D11fFC654297ba6",
-    "rebalanceHLP": ""
+    "rebalanceHLP": "0x3b2AC5d307595726f9fDa14B319fd1497Ac853cc"
   },
   "helpers": {
     "trade": "0x963Cbe4cFcDC58795869be74b80A328b022DE00C",
-    "limitTrade": "0x3131d2cad2095A5DFacB643f9Eec532Aa0b0aE62"
+    "limitTrade": "0x0E7C0d58f2e4a6b28597D51a34C4b7acDA1Ee719"
   },
   "services": {
     "crossMargin": "0x0a8D9c0A4a039dDe3Cb825fF4c2f063f8B54313A",
     "liquidity": "0xE7D96684A56e60ffBAAe0fC0683879da48daB383",
     "liquidation": "0x34E89DEd96340A177856fD822366AfC584438750",
     "trade": "0xcf533D0eEFB072D1BB68e201EAFc5368764daA0E",
-    "rebalanceHLP": ""
+    "rebalanceHLP": "0xD63D4542AA563FdB10f4C3785a4B90e89Be197c0"
   },
   "oracles": {
     "ecoPyth": "0x06d35ecf6A2799f99482c6F15f146326Dd0FF1C6",
@@ -59,7 +59,8 @@
       "universalRouter": "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
     },
     "curve": {
-      "wstEthPool": "0x6eb2dc694eb516b16dc9fbc678c60052bbdd7d80"
+      "wstEthEthPool": "0x6eb2dc694eb516b16dc9fbc678c60052bbdd7d80",
+      "usdcUsdtPool": "0x7f90122bf0700f9e7e1f688fe926940e8839f353"
     },
     "chainlink": {
       "wstEthEthPriceFeed": "0xb523AE262D20A936BC152e6023996e46FDC2A95D",
@@ -86,14 +87,16 @@
   },
   "rewardDistributor": "0x0E303E9d98A3f88097B07BeFb510aA7a97Ff440D",
   "reader": {
-    "order": "0x1EF528Fd3771a87F568A2E39422B5f00F473389E"
+    "order": "0x1EF528Fd3771a87F568A2E39422B5f00F473389E",
+    "position": "",
+    "liquidation": ""
   },
   "extension": {
-    "switchCollateralRouter": "",
+    "switchCollateralRouter": "0x004d72A192db408B9a7c647c6a3c888dFEBC6A9B",
     "dexter": {
-      "uniswapV3": "",
-      "curve": "",
-      "glp": ""
+      "uniswapV3": "0xF91078e3D4612bd1185Dc9feEA08Ddb6Ad9EF0Ab",
+      "curve": "0xd84914c167863B6BA64A0E8abf6a51d9f25662df",
+      "glp": "0x42870d0079cD7acB71b3fe96EA4d77FBd1ccC820"
     }
   }
 }

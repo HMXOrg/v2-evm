@@ -20,15 +20,15 @@ async function main(chainId: number) {
 
   const weightConfigs: Array<WeightConfig> = [
     {
-      marketIndex: 24, // NVDAUSD
-      weightBPS: 5 * BPS,
-    },
-    {
-      marketIndex: 25, // LINKUSD
+      marketIndex: 27, // DOGEUSD
       weightBPS: 7 * BPS,
     },
     {
-      marketIndex: 26, // USDCHF
+      marketIndex: 28, // USDCAD
+      weightBPS: 1 * BPS,
+    },
+    {
+      marketIndex: 29, // USDSGD
       weightBPS: 1 * BPS,
     },
   ];

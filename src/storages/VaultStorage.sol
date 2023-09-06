@@ -31,6 +31,7 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
     bytes4 prevFunctionSig,
     bytes4 newFunctionSig
   );
+  event LogAddDevFee(address indexed token, uint256 devFeeAmount);
 
   /**
    * States
@@ -152,6 +153,11 @@ contract VaultStorage is OwnableUpgradeable, ReentrancyGuardUpgradeable, IVaultS
 
   function addFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
     protocolFees[_token] += _amount;
+  }
+
+  function addDevFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {
+    devFees[_token] += _amount;
+    emit LogAddDevFee(_token, _amount);
   }
 
   function addFundingFee(address _token, uint256 _amount) external onlyWhitelistedExecutor {

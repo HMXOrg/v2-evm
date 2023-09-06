@@ -18,12 +18,12 @@ async function main(chainId: number) {
     marketConfig.markets.reduce((acc, market) => {
       acc.push({
         contract: limitTradeHelper,
-        function: "positionSizeLimitByMarket",
+        function: "positionSizeLimitOf",
         params: [market.index],
       });
       acc.push({
         contract: limitTradeHelper,
-        function: "tradeSizeLimitByMarket",
+        function: "tradeSizeLimitOf",
         params: [market.index],
       });
 

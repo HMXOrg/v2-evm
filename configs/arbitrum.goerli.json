@@ -59,7 +59,8 @@
       "universalRouter": "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
     },
     "curve": {
-      "wstEthPool": ""
+      "wstEthPool": "",
+      "usdcUsdtPool": ""
     }
   },
   "strategies": {
@@ -82,7 +83,9 @@
   },
   "rewardDistributor": "",
   "reader": {
-    "order": "0xa3dFEcc6BA851a6d5246DeC88723D2D55Aa9338A"
+    "order": "0xa3dFEcc6BA851a6d5246DeC88723D2D55Aa9338A",
+    "position": "0xcf9Ef0465865522ee7BAFE895AD2a5c5f413C731",
+    "liquidation": "0xC53d0ED402829dA090E609fAA47774ffEDB074fa"
   },
   "extension": {
     "switchCollateralRouter": "",

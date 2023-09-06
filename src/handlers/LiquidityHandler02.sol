@@ -411,6 +411,9 @@ contract LiquidityHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable, I
     vars.order = liquidityOrders[vars.subAccount][_orderIndex];
     vars.orderIndex = _orderIndex;
 
+    // check if this order still exists
+    if (vars.order.account == address(0)) revert ILiquidityHandler02_NonExistentOrder();
+
     // Skip cancelled order
     if (vars.order.amount > 0) {
       try this.executeLiquidity(vars.order) returns (uint256 actualOut) {

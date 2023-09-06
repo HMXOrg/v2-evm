@@ -16,6 +16,7 @@ interface ILiquidityHandler02 {
   error ILiquidityHandler02_InvalidOrder();
   error ILiquidityHandler02_NotWNativeToken();
   error ILiquidityHandler02_Unauthorized();
+  error ILiquidityHandler02_NonExistentOrder();
 
   /**
    * Structs

@@ -807,4 +807,58 @@ contract SwitchCollateralRouter_ForkTest is TestBase, Cheats, StdAssertions, Std
     assertEq(ext01Handler.getAllActiveOrders(3, 0).length, 0);
     assertEq(ext01Handler.getAllExecutedOrders(3, 0).length, 0);
   }
+
+  function testRevert_ExecuteCanceledOrder() external {
+    vm.startPrank(USER);
+    // Create switch collateral order from sGLP -> wstETH
+    address[] memory _path = new address[](3);
+    _path[0] = address(ForkEnv.sGlp);
+    _path[1] = address(ForkEnv.weth);
+    _path[2] = address(ForkEnv.wstEth);
+    uint256 _orderIndex = ext01Handler.createExtOrder{ value: 0.1 * 1e9 }(
+      IExt01Handler.CreateExtOrderParams({
+        orderType: 1,
+        executionFee: 0.1 * 1e9,
+        mainAccount: USER,
+        subAccountId: SUB_ACCOUNT_ID,
+        data: abi.encode(SUB_ACCOUNT_ID, ForkEnv.vaultStorage.traderBalances(USER, address(ForkEnv.sGlp)), _path, 0)
+      })
+    );
+    vm.stopPrank();
+
+    vm.prank(USER);
+    ext01Handler.cancelOrder(USER, SUB_ACCOUNT_ID, _orderIndex);
+
+    vm.startPrank(EXT01_EXECUTOR);
+    // Taken price data from https://arbiscan.io/tx/0x2a1bea44f6b1858aef7661b19cec49a4d74e3c9fd1fedb7ab26b09ac712cc0ad
+    // Add 012bb4 => 76724 tick for wstETH price
+    bytes32[] memory _priceData = new bytes32[](3);
+    _priceData[0] = 0x0127130192adfffffe000001ffffff00cdac00c0fd01288100bef300e5df0000;
+    _priceData[1] = 0x00ddd500048e007ddd000094fff0c8000a18ffd2e7fff436fff3560008be0000;
+    _priceData[2] = 0x000f9e00b0e500b5af00bc5300d656007f72012bb40000000000000000000000;
+    bytes32[] memory _publishTimeData = new bytes32[](3);
+    _publishTimeData[0] = bytes32(0);
+    _publishTimeData[1] = bytes32(0);
+    _publishTimeData[2] = bytes32(0);
+    address[] memory accounts = new address[](1);
+    accounts[0] = USER;
+    uint8[] memory subAccountIds = new uint8[](1);
+    subAccountIds[0] = SUB_ACCOUNT_ID;
+    uint256[] memory orderIndexes = new uint256[](1);
+    orderIndexes[0] = _orderIndex;
+
+    vm.expectRevert(abi.encodeWithSignature("IExt01Handler_NonExistentOrder()"));
+    ext01Handler.executeOrders(
+      accounts,
+      subAccountIds,
+      orderIndexes,
+      payable(EXT01_EXECUTOR),
+      _priceData,
+      _publishTimeData,
+      block.timestamp,
+      "",
+      false
+    );
+    vm.stopPrank();
+  }
 }

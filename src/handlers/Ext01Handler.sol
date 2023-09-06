@@ -372,6 +372,8 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     vars.order = genericOrders[vars.subAccount][_orderIndex];
     vars.orderIndex = _orderIndex;
 
+    if (vars.order.createdTimestamp == 0) revert IExt01Handler_NonExistentOrder();
+
     // Skip cancelled order
     if (vars.order.orderType != 0) {
       try this.executeOrder(vars.order) {

@@ -21,11 +21,11 @@ import { LiquidityService } from "@hmx/services/LiquidityService.sol";
 import { TradeService } from "@hmx/services/TradeService.sol";
 
 /// Storages
-import { VaultStorage } from "@hmx/storages/VaultStorage.sol";
 import { ConfigStorage } from "@hmx/storages/ConfigStorage.sol";
 
 /// Libs
 import { HMXLib } from "@hmx/libraries/HMXLib.sol";
+import "forge-std/console.sol";
 
 /// @title Ext01Handler - Handler for extended actions which not related to core functionality.
 contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01Handler {
@@ -37,6 +37,14 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     address[] path,
     uint256 fromAmount,
     uint256 toAmount
+  );
+  event LogCancelOrder(
+    address indexed primaryAccount,
+    uint256 indexed orderIndex,
+    uint8 indexed subAccountId,
+    uint248 amount,
+    address[] path,
+    uint256 executionFee
   );
   event LogCreateSwitchCollateralOrder(
     address indexed primaryAccount,
@@ -57,7 +65,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     LiquidityService indexed oldLiquidityService,
     LiquidityService indexed newLiquidityService
   );
-  event LogMaxExecutionChuck(uint256 prevMaxExecutionChuck, uint256 newMaxExecutionChuck);
   event LogSetMinExecutionFee(uint24 indexed orderType, uint256 prevMinExecutionFee, uint256 newMinExecutionFee);
   event LogSetOrderExecutor(address indexed executor, bool prevIsAllow, bool isAllow);
   event LogSetPyth(IEcoPyth indexed prevPyth, IEcoPyth indexed newPyth);
@@ -222,7 +229,7 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
       createdTimestamp: uint48(block.timestamp),
       executedTimestamp: 0,
       orderType: uint24(_params.orderType),
-      executionFee: uint128(0),
+      executionFee: _params.executionFee,
       rawOrder: _rawOrder
     });
 
@@ -253,16 +260,16 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     vars.minPublishTime = _minPublishTime;
     vars.encodedVaas = _encodedVaas;
 
-    uint256 totalFeeReceiver;
+    uint256 totalFeeReceived;
     uint256 length = _accounts.length;
     for (uint256 i = 0; i < length; ) {
-      totalFeeReceiver += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
+      totalFeeReceived += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
       unchecked {
         ++i;
       }
     }
     // Pay execution fee to the executor
-    _transferOutETH(totalFeeReceiver, _feeReceiver);
+    _transferOutETH(totalFeeReceived, _feeReceiver);
   }
 
   function executeOrder(GenericOrder memory _order) external {
@@ -278,12 +285,27 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     }
   }
 
+  /// @notice Cancels the specified withdraw order.
+  /// @param _mainAccount main address of user
+  /// @param _subAccountId ID of the user's sub-account
+  /// @param _orderIndex index of user's order
+  function cancelOrder(
+    address _mainAccount,
+    uint8 _subAccountId,
+    uint256 _orderIndex
+  ) external nonReentrant delegate(_mainAccount) {
+    _cancelOrder(_msgSender(), _subAccountId, _orderIndex);
+  }
+
   function _handleFailedError(GenericOrder memory _order, string memory errMsg, bool _isRevert) internal {
     if (_isRevert) {
       require(false, string(errMsg));
     } else {
       emit LogExecuteOrderResult(_order.orderIndex, _order.orderType, _order.executionFee, false, errMsg);
       _order.status = OrderStatus.FAIL;
+
+      SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));
+      _cancelOrder(_switchCollateralOrder.primaryAccount, _switchCollateralOrder.subAccountId, _order.orderIndex);
     }
   }
 
@@ -384,6 +406,37 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
     emit LogSwitchCollateral(_order.primaryAccount, _order.subAccountId, _order.path, _order.amount, _toAmount);
   }
 
+  function _cancelOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) internal {
+    address subAccount = HMXLib.getSubAccount(_mainAccount, _subAccountId);
+    // SLOAD
+    GenericOrder memory _order = genericOrders[subAccount][_orderIndex];
+    SwitchCollateralOrder memory _switchCollateralOrder = abi.decode(_order.rawOrder, (SwitchCollateralOrder));
+
+    // Check if this order still exists
+    if (_switchCollateralOrder.primaryAccount == address(0)) revert IExt01Handler_NonExistentOrder();
+    // validate if msg.sender is not owned the order, then revert
+    if (_msgSender() != _switchCollateralOrder.primaryAccount && !orderExecutors[_msgSender()])
+      revert IExt01Handler_NotOrderOwner();
+
+    _removeOrder(subAccount, _orderIndex);
+
+    // refund the _order.executionFee if the caller is not executor
+    if (!orderExecutors[_msgSender()]) {
+      _transferOutETH(_order.executionFee, _switchCollateralOrder.primaryAccount);
+    }
+
+    emit LogCancelOrder(
+      payable(_switchCollateralOrder.primaryAccount),
+      _switchCollateralOrder.orderIndex,
+      _switchCollateralOrder.subAccountId,
+      _switchCollateralOrder.amount,
+      _switchCollateralOrder.path,
+      _order.executionFee
+    );
+
+    delete genericOrders[subAccount][_orderIndex];
+  }
+
   function _addOrder(GenericOrder memory _order, address _subAccount, uint256 _orderIndex) internal {
     genericOrdersIndex[_subAccount] = _orderIndex + 1;
     genericOrders[_subAccount][_orderIndex] = _order;
@@ -394,8 +447,6 @@ contract Ext01Handler is OwnableUpgradeable, ReentrancyGuardUpgradeable, IExt01H
   }
 
   function _removeOrder(address _subAccount, uint256 _orderIndex) internal {
-    delete genericOrders[_subAccount][_orderIndex];
-
     uint256 _pointer = _encodePointer(_subAccount, uint96(_orderIndex));
     _activeOrderPointers.remove(_pointer);
     _subAccountActiveOrderPointers[_subAccount].remove(_pointer);

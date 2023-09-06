@@ -12,11 +12,11 @@ interface IExt01Handler {
   error IExt01Handler_BadOrderType();
   error IExt01Handler_InsufficientExecutionFee();
   error IExt01Handler_InCorrectValueTransfer();
-  error IExt01Handler_NoOrder();
   error IExt01Handler_SameFromToToken();
   error IExt01Handler_Unauthorized();
   error IExt01Handler_InvalidArraySize();
   error IExt01Handler_NonExistentOrder();
+  error IExt01Handler_NotOrderOwner();
 
   /**
    * Structs
@@ -68,6 +68,8 @@ interface IExt01Handler {
     bytes32 _encodedVaas,
     bool _isRevert
   ) external;
+
+  function cancelOrder(address _mainAccount, uint8 _subAccountId, uint256 _orderIndex) external;
 
   /**
    * Setters

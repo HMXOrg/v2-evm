@@ -162,6 +162,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
    */
 
   /// @notice Deposits the specified amount of collateral token into the user's sub-account.
+  /// @param _mainAccount main address of user
   /// @param _subAccountId ID of the user's sub-account.
   /// @param _token Address of the collateral token to deposit.
   /// @param _amount Amount of collateral token to deposit.
@@ -206,6 +207,7 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
    */
 
   /// @notice Creates a new withdraw order to withdraw the specified amount of collateral token from the user's sub-account.
+  /// @param _mainAccount main address of user
   /// @param _subAccountId ID of the user's sub-account.
   /// @param _token Address of the collateral token to withdraw.
   /// @param _amount Amount of collateral token to withdraw.
@@ -282,16 +284,16 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
     vars.minPublishTime = _minPublishTime;
     vars.encodedVaas = _encodedVaas;
 
-    uint256 totalFeeReceiver;
+    uint256 totalFeeReceived;
     uint256 length = _accounts.length;
     for (uint256 i = 0; i < length; ) {
-      totalFeeReceiver += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
+      totalFeeReceived += _executeOrder(vars, _accounts[i], _subAccountIds[i], _orderIndexes[i], _isRevert);
 
       unchecked {
         ++i;
       }
     }
-    _transferOutETH(totalFeeReceiver, _feeReceiver);
+    _transferOutETH(totalFeeReceived, _feeReceiver);
   }
 
   /// @notice Executes a single withdraw order by transferring the specified amount of collateral token to the user's wallet.
@@ -330,7 +332,9 @@ contract CrossMarginHandler02 is OwnableUpgradeable, ReentrancyGuardUpgradeable,
   }
 
   /// @notice Cancels the specified withdraw order.
-  /// @param _orderIndex Index of the order to cancel.
+  /// @param _mainAccount main address of user
+  /// @param _subAccountId ID of the user's sub-account
+  /// @param _orderIndex index of user's order
   function cancelWithdrawOrder(
     address _mainAccount,
     uint8 _subAccountId,

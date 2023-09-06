@@ -11,7 +11,7 @@ import { IRebalanceHLPHandler } from "@hmx/handlers/interfaces/IRebalanceHLPHand
 import { IERC20Upgradeable } from "@openzeppelin-upgradeable/contracts/token/ERC20/IERC20Upgradeable.sol";
 import { IConfigStorage } from "@hmx/storages/interfaces/IConfigStorage.sol";
 
-contract RebalanceHLPSerivce is GlpStrategy_Base {
+contract RebalanceHLPService is GlpStrategy_Base {
   uint256 arbitrumForkId = vm.createSelectFork(vm.rpcUrl("arbitrum_fork"));
 
   uint24[] internal publishTimeDiffs;
